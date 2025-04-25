@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instance { get; private set; }
     public GameBoard Board { get; private set; }
+    public CameraCenterer cameraCenterer;
 
     private void Awake()
     {

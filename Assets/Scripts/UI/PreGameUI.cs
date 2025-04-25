@@ -7,6 +7,7 @@ public class PreGameUI : MonoBehaviour
     public TMP_Dropdown playerCountDropdown;
     public Button startButton;
     public GameManager gameManager;
+    public GameObject startGameUI;
 
     private void Start()
     {
@@ -19,6 +20,9 @@ public class PreGameUI : MonoBehaviour
         int playerCount = int.Parse(playerCountDropdown.options[selectedIndex].text);
 
         gameManager.InitializeGame(playerCount);
-        gameObject.SetActive(false); // hide UI
+        gameManager.cameraCenterer.CenterCameraSmooth();
+
+        startGameUI.SetActive(false); // Only hide the start-game controls, not the whole UI
     }
+
 }
