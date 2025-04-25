@@ -1,40 +1,25 @@
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 using UnityEngine;
+using FungusToast.Core;
 
-[ExecuteInEditMode]
 public class CameraCenterer : MonoBehaviour
 {
-    [Tooltip("Grid size to center and zoom the camera around.")]
-    public Vector2Int gridSize = new Vector2Int(100, 100);
+    [Tooltip("Reference to the GameManager.")]
+    public GameManager gameManager;
 
     void Start()
     {
-        // Ensure the camera is correctly positioned and zoomed at startup (in Play Mode)
         CenterCamera();
     }
 
-#if UNITY_EDITOR
-    void Update()
+    public void CenterCamera()
     {
-        // While not playing, keep the camera centered in the Scene/Game view
-        if (!EditorApplication.isPlaying)
-        {
-            CenterCamera();
-        }
-    }
-#endif
+        if (Camera.main == null || gameManager?.Board == null)
+            return;
 
-    void CenterCamera()
-    {
-        if (Camera.main != null)
-        {
-            // Position the camera in the center of the grid (x, y) and set depth to -10 (standard for 2D view)
-            Camera.main.transform.position = new Vector3(gridSize.x / 2f, gridSize.y / 2f, -10f);
+        int width = gameManager.Board.Width;
+        int height = gameManager.Board.Height;
 
-            // Set the orthographic size so the camera zooms out enough to show the whole grid
-            Camera.main.orthographicSize = Mathf.Max(gridSize.x, gridSize.y) / 2f;
-        }
+        Camera.main.transform.position = new Vector3(width / 2f, height / 2f, -10f);
+        Camera.main.orthographicSize = Mathf.Max(width, height) / 2f + 2f; // extra padding
     }
 }
