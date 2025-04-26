@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using FungusToast.Game;
 using FungusToast.Core;
+using System.Collections;
 
 namespace FungusToast.UI
 {
@@ -20,16 +21,19 @@ namespace FungusToast.UI
         public float pulseStrength = 0.05f;  // How much it grows/shrinks
         private Outline buttonOutline;
 
-        private Vector3 originalButtonScale;
-
-        [Header("Animation")]
+        // panel sliding stuff
+        [Header("Mutation Tree Slide Settings")]
         public float slideDuration = 0.5f;
+        public Vector2 hiddenPosition = new Vector2(-1920, 0); // Offscreen left
+        public Vector2 visiblePosition = new Vector2(0, 0);    // Centered onscreen
+        private RectTransform mutationTreeRect;
         private bool isTreeOpen = false;
 
-        private RectTransform mutationTreeRect;
+        private Vector3 originalButtonScale;
 
         private void Start()
         {
+            mutationTreePanel.SetActive(false); // Hide Mutation Tree Panel at start
             mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
             buttonOutline = spendPointsButton.GetComponent<Outline>();
             originalButtonScale = spendPointsButton.transform.localScale;
@@ -100,10 +104,47 @@ namespace FungusToast.UI
         public void OnSpendPointsClicked()
         {
             if (!isTreeOpen)
-                OpenTree();
+                StartCoroutine(SlideInTree());
             else
-                CloseTree();
+                StartCoroutine(SlideOutTree());
         }
+
+        private IEnumerator SlideInTree()
+        {
+            mutationTreePanel.SetActive(true); // Make sure it's active
+            isTreeOpen = true;
+
+            float elapsedTime = 0f;
+            Vector2 startingPos = mutationTreeRect.anchoredPosition;
+
+            while (elapsedTime < slideDuration)
+            {
+                mutationTreeRect.anchoredPosition = Vector2.Lerp(startingPos, visiblePosition, elapsedTime / slideDuration);
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+
+            mutationTreeRect.anchoredPosition = visiblePosition;
+        }
+
+        private IEnumerator SlideOutTree()
+        {
+            isTreeOpen = false;
+
+            float elapsedTime = 0f;
+            Vector2 startingPos = mutationTreeRect.anchoredPosition;
+
+            while (elapsedTime < slideDuration)
+            {
+                mutationTreeRect.anchoredPosition = Vector2.Lerp(startingPos, hiddenPosition, elapsedTime / slideDuration);
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+
+            mutationTreeRect.anchoredPosition = hiddenPosition;
+            mutationTreePanel.SetActive(false); // Hide panel after slide out
+        }
+
 
         private void OpenTree()
         {
