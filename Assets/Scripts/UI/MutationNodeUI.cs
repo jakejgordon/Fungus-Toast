@@ -1,43 +1,45 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using FungusToast.Core;
+using FungusToast.Core; // Assuming Mutation is in this namespace
 
-namespace FungusToast.UI
+public class MutationNodeUI : MonoBehaviour
 {
-    public class MutationNodeUI : MonoBehaviour
+    [Header("UI References")]
+    public Button upgradeButton;
+    public TextMeshProUGUI mutationNameText;
+    public TextMeshProUGUI levelText;
+
+    private Mutation mutation;
+    private MutationUIManager uiManager;
+
+    public void Initialize(Mutation mutation, MutationUIManager uiManager)
     {
-        [Header("UI References")]
-        public Button upgradeButton;
-        public TextMeshProUGUI mutationNameText;
-        public TextMeshProUGUI levelText;
+        this.mutation = mutation;
+        this.uiManager = uiManager;
 
-        private Mutation mutation;
-        private MutationUIManager uiManager;
+        mutationNameText.text = mutation.Name;
+        UpdateDisplay();
 
-        public void Initialize(Mutation mutation, MutationUIManager uiManager)
+        upgradeButton.onClick.AddListener(OnUpgradeClicked);
+    }
+
+    private void OnUpgradeClicked()
+    {
+        if (uiManager.TryUpgradeMutation(mutation))
         {
-            this.mutation = mutation;
-            this.uiManager = uiManager;
-
-            mutationNameText.text = mutation.Name;
             UpdateDisplay();
-
-            upgradeButton.onClick.AddListener(OnUpgradeClicked);
         }
+    }
 
-        private void UpdateDisplay()
-        {
-            levelText.text = $"Level {mutation.CurrentLevel}/{mutation.MaxLevel}";
-            upgradeButton.interactable = mutation.CanUpgrade();
-        }
+    private void UpdateDisplay()
+    {
+        levelText.text = $"Level {mutation.CurrentLevel}/{mutation.MaxLevel}";
 
-        private void OnUpgradeClicked()
+        // Disable button if fully upgraded
+        if (!mutation.CanUpgrade())
         {
-            if (uiManager.TryUpgradeMutation(mutation))
-            {
-                UpdateDisplay();
-            }
+            upgradeButton.interactable = false;
         }
     }
 }

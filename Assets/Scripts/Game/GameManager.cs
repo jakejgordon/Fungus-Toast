@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using FungusToast.Core;
 using FungusToast.Grid;
+using FungusToast.Game;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,6 +14,8 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
     public GameBoard Board { get; private set; }
     public CameraCenterer cameraCenterer;
+    [SerializeField] private MutationUIManager mutationUIManager;
+    [SerializeField] private MutationManager mutationManager;
 
     private void Awake()
     {
@@ -40,7 +43,11 @@ public class GameManager : MonoBehaviour
         Board = new GameBoard(boardWidth, boardHeight, playerCount);
         PlaceStartingSpores();
         gridVisualizer.RenderBoard(Board);
+
+        mutationManager.ResetMutationPoints();
+        mutationUIManager.SetSpendPointsButtonVisible(true);
     }
+
 
     //-- This places players roughly in a circle around the toast, spaced out evenly no matter the count (2, 3, 6, 8, etc.)
     public void PlaceStartingSpores()
