@@ -10,8 +10,10 @@ namespace FungusToast.Game
 
         private int currentMutationPoints;
         private List<Mutation> mutations;
+        private List<Mutation> rootMutations = new List<Mutation>();
+        public IReadOnlyList<Mutation> RootMutations => rootMutations;
 
-        public int CurrentMutationPoints => currentMutationPoints;
+        public int CurrentMutationPoints { get; private set; }
         public IReadOnlyList<Mutation> Mutations => mutations;
 
         void Start()
@@ -25,28 +27,45 @@ namespace FungusToast.Game
             currentMutationPoints = startingMutationPoints;
         }
 
+        
+
         private void InitializeMutations()
         {
-            mutations = new List<Mutation>
-            {
-                new Mutation("Growth Boost", "Increase chance to grow into adjacent cells.", 5, 1),
-                new Mutation("Spore Production", "Increase chance to release spores onto toast.", 5, 1),
-                new Mutation("Toxin Release", "Increase chance to kill adjacent enemy mold.", 5, 1),
-                new Mutation("Resilience", "Increase resistance to enemy attacks.", 5, 1),
-                new Mutation("Reclamation", "Allow growth into dead toast cells.", 5, 1)
-            };
+            // Example Tree
+            var growthBoost = new Mutation("Growth Boost");
+            var fastGrowth = new Mutation("Fast Growth");
+            var aggressiveExpansion = new Mutation("Aggressive Expansion");
+
+            growthBoost.Children.Add(fastGrowth);
+            fastGrowth.Children.Add(aggressiveExpansion);
+
+            var toxinResistance = new Mutation("Toxin Resistance");
+            var acidicMold = new Mutation("Acidic Mold");
+            var hardenedWalls = new Mutation("Hardened Cell Walls");
+
+            toxinResistance.Children.Add(acidicMold);
+            toxinResistance.Children.Add(hardenedWalls);
+
+            // Add to Root Mutations
+            rootMutations.Add(growthBoost);
+            rootMutations.Add(toxinResistance);
         }
+
 
         public bool TryUpgradeMutation(Mutation mutation)
         {
-            if (mutation.CanUpgrade() && currentMutationPoints >= mutation.CostPerLevel)
+            if (mutation == null)
+                return false;
+
+            if (CurrentMutationPoints >= mutation.PointsPerUpgrade && mutation.CanUpgrade())
             {
-                mutation.Upgrade();
-                currentMutationPoints -= mutation.CostPerLevel;
+                CurrentMutationPoints -= mutation.PointsPerUpgrade;
+                mutation.CurrentLevel++;
                 return true;
             }
 
             return false;
         }
+
     }
 }

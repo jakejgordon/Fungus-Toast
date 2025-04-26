@@ -111,7 +111,7 @@ namespace FungusToast.UI
 
         private IEnumerator SlideInTree()
         {
-            mutationTreePanel.SetActive(true); // Make sure it's active
+            mutationTreePanel.SetActive(true);
             isTreeOpen = true;
 
             float elapsedTime = 0f;
@@ -125,7 +125,11 @@ namespace FungusToast.UI
             }
 
             mutationTreeRect.anchoredPosition = visiblePosition;
+
+            // Populate the mutation nodes AFTER sliding in
+            PopulateMutationTree();
         }
+
 
         private IEnumerator SlideOutTree()
         {
@@ -185,5 +189,29 @@ namespace FungusToast.UI
             }
             return false;
         }
+
+        private void PopulateMutationTree()
+        {
+            // Clear any old nodes first
+            foreach (Transform child in mutationNodeParent)
+            {
+                Destroy(child.gameObject);
+            }
+
+            // Spawn all root-level mutations
+            foreach (var mutation in mutationManager.RootMutations)
+            {
+                CreateMutationNode(mutation);
+            }
+        }
+
+        private void CreateMutationNode(Mutation mutation)
+        {
+            GameObject nodeGO = Instantiate(mutationNodePrefab, mutationNodeParent);
+            MutationNodeUI nodeUI = nodeGO.GetComponent<MutationNodeUI>();
+
+            nodeUI.Initialize(mutation, this);
+        }
+
     }
 }

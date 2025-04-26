@@ -1,19 +1,20 @@
 namespace FungusToast.Core
 {
+    using System.Collections.Generic;
+
     public class Mutation
     {
-        public string Name { get; private set; }
-        public string Description { get; private set; }
-        public int CurrentLevel { get; private set; }
-        public int MaxLevel { get; private set; }
-        public int CostPerLevel { get; private set; }
+        public string Name;
+        public int CurrentLevel;
+        public int MaxLevel;
+        public int PointsPerUpgrade;
+        public List<Mutation> Children = new List<Mutation>();
 
-        public Mutation(string name, string description, int maxLevel, int costPerLevel)
+        public Mutation(string name, int maxLevel = 5, int pointsPerUpgrade = 1)
         {
             Name = name;
-            Description = description;
             MaxLevel = maxLevel;
-            CostPerLevel = costPerLevel;
+            PointsPerUpgrade = pointsPerUpgrade;
             CurrentLevel = 0;
         }
 
@@ -22,12 +23,10 @@ namespace FungusToast.Core
             return CurrentLevel < MaxLevel;
         }
 
-        public void Upgrade()
+        public bool IsUnlocked()
         {
-            if (CanUpgrade())
-            {
-                CurrentLevel++;
-            }
+            // For now, always true — later can depend on parent mutation level
+            return true;
         }
     }
 }
