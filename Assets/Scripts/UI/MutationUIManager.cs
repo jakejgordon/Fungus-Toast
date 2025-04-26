@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Game;
+using FungusToast.Core;
 
 namespace FungusToast.UI
 {
@@ -12,6 +13,9 @@ namespace FungusToast.UI
         public GameObject mutationTreePanel;
         public Button spendPointsButton;
         public TextMeshProUGUI spendPointsButtonText;
+        [Header("Mutation Node Prefab")]
+        public GameObject mutationNodePrefab;
+        public Transform mutationNodeParent;
 
         [Header("Animation")]
         public float slideDuration = 0.5f;
@@ -72,6 +76,26 @@ namespace FungusToast.UI
         {
             mutationTreePanel.SetActive(false);
             isTreeOpen = false;
+        }
+
+        private void SpawnMutationNodes()
+        {
+            foreach (var mutation in mutationManager.Mutations)
+            {
+                GameObject nodeGO = Instantiate(mutationNodePrefab, mutationNodeParent);
+                MutationNodeUI nodeUI = nodeGO.GetComponent<MutationNodeUI>();
+                nodeUI.Initialize(mutation, this);
+            }
+        }
+
+        public bool TryUpgradeMutation(Mutation mutation)
+        {
+            if (mutationManager.TryUpgradeMutation(mutation))
+            {
+                UpdateSpendPointsButton();
+                return true;
+            }
+            return false;
         }
     }
 }
