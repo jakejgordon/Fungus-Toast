@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      pink_mold_64x64_0: 4317639862244366185
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

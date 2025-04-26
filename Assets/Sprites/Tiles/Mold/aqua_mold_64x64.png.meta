@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      aqua_mold_64x64_0: 8983567343287524915
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
