@@ -22,23 +22,40 @@ namespace FungusToast.Game
 
         private void InitializeMutations()
         {
-            var growthBoost = new Mutation("Growth Boost");
-            var fastGrowth = new Mutation("Fast Growth");
-            var aggressiveExpansion = new Mutation("Aggressive Expansion");
+            var mycelialBloom = new Mutation(
+                "Mycelial Bloom",
+                MutationType.GrowthChance,
+                baseEffectValue: 0.01f, // +1% spread chance base
+                effectGrowthPerLevel: 0.005f // +0.5% per additional upgrade
+            );
 
-            growthBoost.Children.Add(fastGrowth);
-            fastGrowth.Children.Add(aggressiveExpansion);
+            var homeostaticHarmony = new Mutation(
+                "Homeostatic Harmony",
+                MutationType.DefenseSurvival,
+                baseEffectValue: 0.01f, // +1% survival base
+                effectGrowthPerLevel: 0.005f // +0.5% per upgrade
+            );
 
-            var toxinResistance = new Mutation("Toxin Resistance");
-            var acidicMold = new Mutation("Acidic Mold");
-            var hardenedWalls = new Mutation("Hardened Cell Walls");
+            var silentBlight = new Mutation(
+                "Silent Blight",
+                MutationType.EnemyDecayChance,
+                baseEffectValue: 0.01f, // +1% enemy death base
+                effectGrowthPerLevel: 0.005f
+            );
 
-            toxinResistance.Children.Add(acidicMold);
-            toxinResistance.Children.Add(hardenedWalls);
+            var adaptiveExpression = new Mutation(
+                "Adaptive Expression",
+                MutationType.BonusMutationPointChance,
+                baseEffectValue: 0.01f, // +1% bonus point chance
+                effectGrowthPerLevel: 0.005f
+            );
 
-            rootMutations.Add(growthBoost);
-            rootMutations.Add(toxinResistance);
+            rootMutations.Add(mycelialBloom);
+            rootMutations.Add(homeostaticHarmony);
+            rootMutations.Add(silentBlight);
+            rootMutations.Add(adaptiveExpression);
         }
+
 
         public bool TryUpgradeMutation(Mutation mutation)
         {

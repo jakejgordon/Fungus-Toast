@@ -16,7 +16,9 @@ public class MutationUIManager : MonoBehaviour
 
     [Header("Mutation Tree References")]
     [SerializeField] private GameObject mutationNodePrefab;
-    [SerializeField] private Transform mutationNodeParent; // typically the "Content" object inside a ScrollView
+    [SerializeField] private Transform mutationNodeParent;
+
+    [SerializeField] private TextMeshProUGUI dockButtonText;
 
     [Header("Tree Sliding Settings")]
     public float slideDuration = 0.5f;
@@ -101,13 +103,18 @@ public class MutationUIManager : MonoBehaviour
         ClearMutationNodes();
         PopulateMutationTree();
 
-        isSliding = false; // Allow clicks again
+        if (dockButtonText != null)
+            dockButtonText.text = "<";
+
+        isSliding = false;
     }
 
 
 
     private IEnumerator SlideOutTree()
     {
+        isSliding = true;
+
         isTreeOpen = false;
 
         float elapsedTime = 0f;
@@ -122,7 +129,14 @@ public class MutationUIManager : MonoBehaviour
 
         mutationTreeRect.anchoredPosition = hiddenPosition;
         mutationTreePanel.SetActive(false);
+
+        // 🆕 Update chevron
+        if (dockButtonText != null)
+            dockButtonText.text = ">";
+
+        isSliding = false;
     }
+
 
     private void CloseTreeInstant()
     {

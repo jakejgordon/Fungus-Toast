@@ -1,32 +1,36 @@
-namespace FungusToast.Core
+using FungusToast.Core;
+using System.Collections.Generic;
+
+public class Mutation
 {
-    using System.Collections.Generic;
+    public string Name { get; private set; }
+    public MutationType Type { get; private set; }
+    public float BaseEffectValue { get; private set; }
+    public float EffectGrowthPerLevel { get; private set; }
+    public List<Mutation> Children { get; private set; }
+    public int CurrentLevel { get; set; }
+    public int PointsPerUpgrade { get; private set; }
+    public int MaxLevel { get; private set; }
 
-    public class Mutation
+    public Mutation(string name, MutationType type, float baseEffectValue, float effectGrowthPerLevel, int pointsPerUpgrade = 1, int maxLevel = 5)
     {
-        public string Name;
-        public int CurrentLevel;
-        public int MaxLevel;
-        public int PointsPerUpgrade;
-        public List<Mutation> Children = new List<Mutation>();
+        Name = name;
+        Type = type;
+        BaseEffectValue = baseEffectValue;
+        EffectGrowthPerLevel = effectGrowthPerLevel;
+        PointsPerUpgrade = pointsPerUpgrade;
+        MaxLevel = maxLevel;
+        Children = new List<Mutation>();
+        CurrentLevel = 0;
+    }
 
-        public Mutation(string name, int maxLevel = 5, int pointsPerUpgrade = 1)
-        {
-            Name = name;
-            MaxLevel = maxLevel;
-            PointsPerUpgrade = pointsPerUpgrade;
-            CurrentLevel = 0;
-        }
+    public bool CanUpgrade()
+    {
+        return CurrentLevel < MaxLevel;
+    }
 
-        public bool CanUpgrade()
-        {
-            return CurrentLevel < MaxLevel;
-        }
-
-        public bool IsUnlocked()
-        {
-            // For now, always true — later can depend on parent mutation level
-            return true;
-        }
+    public float GetTotalEffect()
+    {
+        return BaseEffectValue + (CurrentLevel * EffectGrowthPerLevel);
     }
 }
