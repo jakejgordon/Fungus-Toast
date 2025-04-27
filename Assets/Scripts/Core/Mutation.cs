@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public class Mutation
 {
     public string Name { get; private set; }
+    public string Description { get; private set; } 
     public MutationType Type { get; private set; }
     public float BaseEffectValue { get; private set; }
     public float EffectGrowthPerLevel { get; private set; }
@@ -12,9 +13,10 @@ public class Mutation
     public int PointsPerUpgrade { get; private set; }
     public int MaxLevel { get; private set; }
 
-    public Mutation(string name, MutationType type, float baseEffectValue, float effectGrowthPerLevel, int pointsPerUpgrade = 1, int maxLevel = 5)
+    public Mutation(string name, string description, MutationType type, float baseEffectValue, float effectGrowthPerLevel, int pointsPerUpgrade = 1, int maxLevel = 5)
     {
         Name = name;
+        Description = description;
         Type = type;
         BaseEffectValue = baseEffectValue;
         EffectGrowthPerLevel = effectGrowthPerLevel;

@@ -1,9 +1,10 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using FungusToast.Core; // Assuming Mutation is in this namespace
+using FungusToast.Core;
+using UnityEngine.EventSystems; // 🆕 Needed for hover detection
 
-public class MutationNodeUI : MonoBehaviour
+public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("UI References")]
     public Button upgradeButton;
@@ -12,11 +13,13 @@ public class MutationNodeUI : MonoBehaviour
 
     private Mutation mutation;
     private MutationUIManager uiManager;
+    private string description;
 
     public void Initialize(Mutation mutation, MutationUIManager uiManager)
     {
         this.mutation = mutation;
         this.uiManager = uiManager;
+        this.description = mutation.Description;
 
         mutationNameText.text = mutation.Name;
         UpdateDisplay();
@@ -36,10 +39,26 @@ public class MutationNodeUI : MonoBehaviour
     {
         levelText.text = $"Level {mutation.CurrentLevel}/{mutation.MaxLevel}";
 
-        // Disable button if fully upgraded
         if (!mutation.CanUpgrade())
         {
             upgradeButton.interactable = false;
         }
+    }
+
+    public string GetDescription()
+    {
+        return description;
+    }
+
+    // Called when mouse pointer enters the button
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        uiManager.ShowMutationDescription(description);
+    }
+
+    // Called when mouse pointer exits the button
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        uiManager.ClearMutationDescription();
     }
 }

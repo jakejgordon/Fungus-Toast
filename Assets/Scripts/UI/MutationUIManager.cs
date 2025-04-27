@@ -20,6 +20,8 @@ public class MutationUIManager : MonoBehaviour
 
     [SerializeField] private TextMeshProUGUI dockButtonText;
 
+    [SerializeField] private TextMeshProUGUI mutationDescriptionText;
+
     [Header("Tree Sliding Settings")]
     public float slideDuration = 0.5f;
     public Vector2 hiddenPosition = new Vector2(-1920, 0);
@@ -35,23 +37,25 @@ public class MutationUIManager : MonoBehaviour
 
     private void Start()
     {
-        if (mutationManager == null)
-            mutationManager = FindFirstObjectByType<MutationManager>();
+        Debug.Log("MutationUIManager Start() running");
 
-        mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
-        buttonOutline = spendPointsButton.GetComponent<Outline>();
-
-        CloseTreeInstant();
-        mutationTreePanel.SetActive(false); // hide at start
+        if (mutationTreePanel != null)
+        {
+            mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
+            Debug.Log("mutationTreeRect assigned successfully.");
+        }
+        else
+        {
+            Debug.LogError("mutationTreePanel is NULL at Start()!");
+        }
 
         UpdateSpendPointsButton();
         originalButtonScale = spendPointsButton.transform.localScale;
-
-        // Wire up button click
         spendPointsButton.onClick.AddListener(OnSpendPointsClicked);
-
         SetSpendPointsButtonVisible(false);
     }
+
+
 
     private void Update()
     {
@@ -71,15 +75,25 @@ public class MutationUIManager : MonoBehaviour
 
     public void OnSpendPointsClicked()
     {
+        Debug.Log("Spend Points Button clicked!");
+
         if (isSliding)
-            return; // Prevent clicking while sliding
+        {
+            Debug.Log("Blocked click because already sliding");
+            return;
+        }
 
         if (!isTreeOpen)
+        {
+            Debug.Log("Starting SlideInTree coroutine");
             StartCoroutine(SlideInTree());
+        }
         else
+        {
+            Debug.Log("Starting SlideOutTree coroutine");
             StartCoroutine(SlideOutTree());
+        }
     }
-
 
     private IEnumerator SlideInTree()
     {
@@ -101,15 +115,13 @@ public class MutationUIManager : MonoBehaviour
         mutationTreeRect.anchoredPosition = visiblePosition;
 
         ClearMutationNodes();
-        PopulateMutationTree();
+        PopulateRootMutations();
 
         if (dockButtonText != null)
             dockButtonText.text = "<";
 
         isSliding = false;
     }
-
-
 
     private IEnumerator SlideOutTree()
     {
@@ -130,7 +142,7 @@ public class MutationUIManager : MonoBehaviour
         mutationTreeRect.anchoredPosition = hiddenPosition;
         mutationTreePanel.SetActive(false);
 
-        // 🆕 Update chevron
+        // Update chevron
         if (dockButtonText != null)
             dockButtonText.text = ">";
 
@@ -250,5 +262,47 @@ public class MutationUIManager : MonoBehaviour
             StartCoroutine(SlideInTree());
         }
     }
+
+    public void PopulateRootMutations()
+    {
+        foreach (var rootMutation in mutationManager.RootMutations)
+        {
+            CreateRootMutationButton(rootMutation);
+        }
+    }
+
+    private void CreateRootMutationButton(Mutation mutation)
+    {
+        GameObject buttonGO = Instantiate(mutationNodePrefab, mutationNodeParent);
+        MutationNodeUI nodeUI = buttonGO.GetComponent<MutationNodeUI>();
+        nodeUI.Initialize(mutation, this);
+
+        TextMeshProUGUI buttonText = buttonGO.GetComponentInChildren<TextMeshProUGUI>();
+        if (buttonText != null)
+        {
+            buttonText.text = mutation.Name;
+        }
+    }
+
+
+    public void ShowMutationDescription(string description)
+    {
+        if (mutationDescriptionText != null)
+        {
+            mutationDescriptionText.text = description;
+            mutationDescriptionText.gameObject.SetActive(true);  // Make sure it becomes visible!
+        }
+    }
+
+    public void ClearMutationDescription()
+    {
+        if (mutationDescriptionText != null)
+        {
+            mutationDescriptionText.text = "";
+            mutationDescriptionText.gameObject.SetActive(false);  // Hide it when not hovering
+        }
+    }
+
+
 
 }

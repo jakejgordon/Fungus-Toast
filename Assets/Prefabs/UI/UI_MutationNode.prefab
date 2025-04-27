@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 2672718641297230629}
   - component: {fileID: -3798851547235591309}
   m_Layer: 5
-  m_Name: MutationNode
+  m_Name: UI_MutationNode
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -162,9 +162,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1b52deac17a66a4580304bd3e65d4dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  upgradeButton: {fileID: 0}
-  mutationNameText: {fileID: 0}
-  levelText: {fileID: 0}
+  upgradeButton: {fileID: 1781363125137575679}
+  mutationNameText: {fileID: 6302684803533335425}
+  levelText: {fileID: 591126500463184302}
 --- !u!1 &4650433107335297427
 GameObject:
   m_ObjectHideFlags: 0

@@ -10,7 +10,7 @@ public class TileHoverHighlighter : MonoBehaviour
     public Tile pressedTile;
 
     private Vector3Int? lastHoveredCell = null;
-    private bool isAnimatingPress = false;  // NEW: flag to suppress hover
+    private bool isAnimatingPress = false;
 
     void Update()
     {

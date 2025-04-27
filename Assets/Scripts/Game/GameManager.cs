@@ -46,6 +46,7 @@ public class GameManager : MonoBehaviour
 
         mutationManager.ResetMutationPoints();
         mutationUIManager.SetSpendPointsButtonVisible(true);
+        mutationUIManager.PopulateRootMutations();
     }
 
 
