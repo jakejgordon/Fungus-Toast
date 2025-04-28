@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Core;
-using UnityEngine.EventSystems; // 🆕 Needed for hover detection
+using UnityEngine.EventSystems;
 
 public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
@@ -45,20 +45,16 @@ public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitH
         }
     }
 
-    public string GetDescription()
-    {
-        return description;
-    }
-
-    // Called when mouse pointer enters the button
     public void OnPointerEnter(PointerEventData eventData)
     {
-        uiManager.ShowMutationDescription(description);
+        if (uiManager != null)
+            uiManager.ShowMutationDescription(description, transform as RectTransform);
     }
 
-    // Called when mouse pointer exits the button
     public void OnPointerExit(PointerEventData eventData)
     {
-        uiManager.ClearMutationDescription();
+        if (uiManager != null)
+            uiManager.ClearMutationDescription();
     }
+
 }

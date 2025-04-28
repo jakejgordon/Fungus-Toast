@@ -21,6 +21,7 @@ public class MutationUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI dockButtonText;
 
     [SerializeField] private TextMeshProUGUI mutationDescriptionText;
+    [SerializeField] private GameObject mutationDescriptionBackground;
 
     [Header("Tree Sliding Settings")]
     public float slideDuration = 0.5f;
@@ -114,6 +115,12 @@ public class MutationUIManager : MonoBehaviour
 
         mutationTreeRect.anchoredPosition = visiblePosition;
 
+        Debug.Log("AFTER SlideInTree:");
+        Debug.Log($"Background Active: {mutationDescriptionBackground.activeSelf}");
+        Debug.Log($"Text Active: {mutationDescriptionText.gameObject.activeSelf}");
+        Debug.Log($"Text anchorMin: {mutationDescriptionText.rectTransform.anchorMin}");
+        Debug.Log($"Text anchorMax: {mutationDescriptionText.rectTransform.anchorMax}");
+
         ClearMutationNodes();
         PopulateRootMutations();
 
@@ -122,6 +129,7 @@ public class MutationUIManager : MonoBehaviour
 
         isSliding = false;
     }
+
 
     private IEnumerator SlideOutTree()
     {
@@ -285,23 +293,83 @@ public class MutationUIManager : MonoBehaviour
     }
 
 
-    public void ShowMutationDescription(string description)
+    private Coroutine tooltipFadeCoroutine;
+
+    public void ShowMutationDescription(string description, RectTransform sourceRect)
     {
+        if (mutationDescriptionBackground != null)
+        {
+            CanvasGroup cg = mutationDescriptionBackground.GetComponent<CanvasGroup>();
+            if (cg != null)
+            {
+                // If another fade is running, stop it
+                if (tooltipFadeCoroutine != null)
+                    StopCoroutine(tooltipFadeCoroutine);
+
+                tooltipFadeCoroutine = StartCoroutine(FadeTooltip(cg, 1f, 0.2f)); // Fade IN
+                cg.interactable = true;
+                cg.blocksRaycasts = true;
+            }
+        }
+
         if (mutationDescriptionText != null)
         {
+            mutationDescriptionText.gameObject.SetActive(true); // Stays active, now just visible/invisible
             mutationDescriptionText.text = description;
-            mutationDescriptionText.gameObject.SetActive(true);  // Make sure it becomes visible!
         }
+
+        if (sourceRect != null && mutationDescriptionBackground != null)
+        {
+            RectTransform descRect = mutationDescriptionBackground.GetComponent<RectTransform>();
+
+            Vector2 anchoredPosition = sourceRect.anchoredPosition;
+            float buttonHeight = sourceRect.rect.height;
+
+            anchoredPosition.y -= buttonHeight;
+            descRect.anchoredPosition = anchoredPosition;
+        }
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(mutationDescriptionBackground.GetComponent<RectTransform>());
     }
 
     public void ClearMutationDescription()
     {
+        if (mutationDescriptionBackground != null)
+        {
+            CanvasGroup cg = mutationDescriptionBackground.GetComponent<CanvasGroup>();
+            if (cg != null)
+            {
+                if (tooltipFadeCoroutine != null)
+                    StopCoroutine(tooltipFadeCoroutine);
+
+                tooltipFadeCoroutine = StartCoroutine(FadeTooltip(cg, 0f, 0.2f)); // Fade OUT
+                cg.interactable = false;
+                cg.blocksRaycasts = false;
+            }
+        }
+
         if (mutationDescriptionText != null)
         {
             mutationDescriptionText.text = "";
-            mutationDescriptionText.gameObject.SetActive(false);  // Hide it when not hovering
         }
     }
+
+
+    private IEnumerator FadeTooltip(CanvasGroup cg, float targetAlpha, float duration)
+    {
+        float startAlpha = cg.alpha;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            cg.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration);
+            yield return null;
+        }
+
+        cg.alpha = targetAlpha;
+    }
+
 
 
 
