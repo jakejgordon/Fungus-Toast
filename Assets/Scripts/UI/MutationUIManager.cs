@@ -291,11 +291,14 @@ public class MutationUIManager : MonoBehaviour
 
     public void PopulateRootMutations()
     {
+        Debug.Log($"Populating Root Mutations: {mutationManager.RootMutations.Count} mutations found.");
+
         foreach (var rootMutation in mutationManager.RootMutations)
         {
             CreateRootMutationButton(rootMutation);
         }
     }
+
 
     private void CreateRootMutationButton(Mutation mutation)
     {
