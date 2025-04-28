@@ -18,6 +18,9 @@ public class MutationUIManager : MonoBehaviour
     [SerializeField] private GameObject mutationNodePrefab;
     [SerializeField] private Transform mutationNodeParent;
 
+    [Header("Mutation Tree Layout Settings")]
+    [SerializeField] private Vector2 mutationButtonSize = new Vector2(120, 120);
+
     [SerializeField] private TextMeshProUGUI dockButtonText;
 
     [SerializeField] private TextMeshProUGUI mutationDescriptionText;
@@ -43,11 +46,25 @@ public class MutationUIManager : MonoBehaviour
         if (mutationTreePanel != null)
         {
             mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
-            Debug.Log("mutationTreeRect assigned successfully.");
         }
         else
         {
             Debug.LogError("mutationTreePanel is NULL at Start()!");
+        }
+
+        //  Dynamically adjust Grid Layout Group for Mutation Tree buttons
+        GridLayoutGroup grid = mutationNodeParent.GetComponent<GridLayoutGroup>();
+        if (grid != null)
+        {
+            grid.cellSize = mutationButtonSize;
+
+            // Optional: Set Spacing to be about 15%-20% of button size
+            float spacing = mutationButtonSize.x * 0.2f; // 20% of button width
+            grid.spacing = new Vector2(spacing, spacing);
+        }
+        else
+        {
+            Debug.LogWarning("GridLayoutGroup not found on mutationNodeParent!");
         }
 
         UpdateSpendPointsButton();
@@ -55,6 +72,7 @@ public class MutationUIManager : MonoBehaviour
         spendPointsButton.onClick.AddListener(OnSpendPointsClicked);
         SetSpendPointsButtonVisible(false);
     }
+
 
 
 
@@ -285,12 +303,11 @@ public class MutationUIManager : MonoBehaviour
         MutationNodeUI nodeUI = buttonGO.GetComponent<MutationNodeUI>();
         nodeUI.Initialize(mutation, this);
 
-        TextMeshProUGUI buttonText = buttonGO.GetComponentInChildren<TextMeshProUGUI>();
-        if (buttonText != null)
-        {
-            buttonText.text = mutation.Name;
-        }
+        RectTransform rect = buttonGO.GetComponent<RectTransform>();
+        rect.localScale = Vector3.one;
+        rect.sizeDelta = mutationButtonSize; // Use configured size
     }
+
 
 
     private Coroutine tooltipFadeCoroutine;
@@ -324,10 +341,17 @@ public class MutationUIManager : MonoBehaviour
 
             Vector2 anchoredPosition = sourceRect.anchoredPosition;
             float buttonHeight = sourceRect.rect.height;
+            float verticalOffset = buttonHeight + 20f; // Button height + breathing room
 
-            anchoredPosition.y -= buttonHeight;
+            // Set pivot so that left side of tooltip aligns with left side of button
+            descRect.pivot = new Vector2(0f, 1f); // (0,1) = Top-Left corner of the tooltip
+
+            // Set anchoredPosition so that tooltip's top-left corner matches button's bottom-left
+            anchoredPosition.y -= verticalOffset;
+
             descRect.anchoredPosition = anchoredPosition;
         }
+
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(mutationDescriptionBackground.GetComponent<RectTransform>());
     }

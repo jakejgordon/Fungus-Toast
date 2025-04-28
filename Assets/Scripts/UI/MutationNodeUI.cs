@@ -56,5 +56,4 @@ public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitH
         if (uiManager != null)
             uiManager.ClearMutationDescription();
     }
-
 }
