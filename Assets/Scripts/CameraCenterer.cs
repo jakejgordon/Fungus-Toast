@@ -1,5 +1,5 @@
 using UnityEngine;
-using FungusToast.Core;
+using FungusToast.Game;
 using System.Collections;
 
 public class CameraCenterer : MonoBehaviour
