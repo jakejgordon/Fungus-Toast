@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using FungusToast.Core;
+using FungusToast.Core.Mutations;
 using FungusToast.Game;
 
 public class MutationUIManager : MonoBehaviour
