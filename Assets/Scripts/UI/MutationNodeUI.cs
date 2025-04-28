@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Core.Mutations;
+using FungusToast.Game;
 using UnityEngine.EventSystems;
 
 public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
