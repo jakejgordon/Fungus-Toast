@@ -96,8 +96,10 @@ namespace FungusToast.Game
         public void Initialize(Player player)
         {
             humanPlayer = player;
+            humanTurnEnded = false;
             RefreshSpendPointsButtonUI();
         }
+
 
         public void OnSpendPointsClicked()
         {
@@ -356,9 +358,20 @@ namespace FungusToast.Game
             if (!humanTurnEnded && humanPlayer != null && humanPlayer.MutationPoints <= 0)
             {
                 humanTurnEnded = true;
-                Debug.Log("Human has spent all mutation points. Triggering AI spending...");
-                GameManager.Instance.SpendAllMutationPointsForAIPlayers();
+                Debug.Log("Human has spent all mutation points. Closing panel and triggering AI...");
+
+                StartCoroutine(ClosePanelThenTriggerAI());
             }
+        }
+
+        private IEnumerator ClosePanelThenTriggerAI()
+        {
+            if (isTreeOpen)
+            {
+                yield return StartCoroutine(SlideOutTree());
+            }
+
+            GameManager.Instance.SpendAllMutationPointsForAIPlayers();
         }
     }
 }

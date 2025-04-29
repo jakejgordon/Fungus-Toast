@@ -10,7 +10,7 @@ namespace FungusToast.Core.Players
         public AITypeEnum AIType { get; private set; }
         public int MutationPoints { get; set; }
 
-        public float GrowthChance { get; set; } = 0.75f;
+        public float GrowthChance { get; set; } = 0.05f;
 
 
         // New structure

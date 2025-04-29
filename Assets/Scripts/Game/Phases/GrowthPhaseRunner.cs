@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using FungusToast.Core;
@@ -16,6 +16,7 @@ namespace FungusToast.Game.Phases
         private GameBoard board;
         private List<Player> players;
         private GridVisualizer gridVisualizer;
+        private bool isRunning = false;
 
         public void Initialize(GameBoard board, List<Player> players, GridVisualizer gridVisualizer)
         {
@@ -26,14 +27,19 @@ namespace FungusToast.Game.Phases
 
         public void StartGrowthPhase()
         {
-            StartCoroutine(GrowthPhaseCoroutine());
+            if (!isRunning)
+            {
+                StartCoroutine(RunGrowthCycles());
+            }
         }
 
-        private IEnumerator GrowthPhaseCoroutine()
+        private IEnumerator RunGrowthCycles()
         {
+            isRunning = true;
+
             for (int cycle = 0; cycle < totalGrowthCycles; cycle++)
             {
-                Debug.Log($"Starting Growth Cycle {cycle + 1}/{totalGrowthCycles}");
+                Debug.Log($"🌱 Starting Growth Cycle {cycle + 1}/{totalGrowthCycles}");
 
                 GrowthEngine.ExecuteGrowthCycle(board, players);
                 gridVisualizer.RenderBoard(board);
@@ -41,14 +47,10 @@ namespace FungusToast.Game.Phases
                 yield return new WaitForSeconds(timeBetweenCycles);
             }
 
-            Debug.Log("Growth Phase complete. Proceeding to Victory Check...");
-            ProceedToVictoryCheck();
-        }
+            isRunning = false;
 
-        private void ProceedToVictoryCheck()
-        {
-            // Placeholder: Hook your Victory Check logic here
-            Debug.Log("Victory Check not implemented yet!");
+            Debug.Log("🌾 Growth Phase complete. Resetting mutation points.");
+            GameManager.Instance.OnGrowthPhaseComplete();
         }
     }
 }

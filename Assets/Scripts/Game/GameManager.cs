@@ -178,5 +178,18 @@ namespace FungusToast.Game
                 Debug.LogError("GrowthPhaseRunner is missing. Cannot start Growth Phase!");
             }
         }
+
+        public void OnGrowthPhaseComplete()
+        {
+            mutationManager.ResetMutationPoints(players);
+
+            Debug.Log("All players have received new mutation points.");
+
+            // Restart the Mutation Phase for the human
+            mutationUIManager.Initialize(humanPlayer);
+            mutationUIManager.SetSpendPointsButtonVisible(true);
+            mutationUIManager.PopulateRootMutations();
+        }
+
     }
 }
