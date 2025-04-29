@@ -1,27 +1,33 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using FungusToast.Core;
+using FungusToast.Core.Players;
 using FungusToast.Grid;
-using FungusToast.Game;
-using FungusToast.Core.Player; // <-- NEW: using for Player class
+using FungusToast.Game.Phases;
 
 namespace FungusToast.Game
 {
     public class GameManager : MonoBehaviour
     {
+        [Header("Board Settings")]
         public int boardWidth = 20;
         public int boardHeight = 20;
         public int playerCount = 2;
 
+        [Header("References")]
         public GridVisualizer gridVisualizer;
-
-        public static GameManager Instance { get; private set; }
-        public GameBoard Board { get; private set; }
         public CameraCenterer cameraCenterer;
 
         [SerializeField] private MutationUIManager mutationUIManager;
         [SerializeField] private MutationManager mutationManager;
+        [SerializeField] private GrowthPhaseRunner growthPhaseRunner;
 
-        private Player humanPlayer; // Human player reference
+        public static GameManager Instance { get; private set; }
+
+        public GameBoard Board { get; private set; }
+
+        private List<Player> players = new List<Player>();
+        private Player humanPlayer;
 
         private void Awake()
         {
@@ -38,22 +44,39 @@ namespace FungusToast.Game
         private void Start()
         {
             SetupPlayers();
+
+            if (growthPhaseRunner == null)
+            {
+                Debug.LogError("GrowthPhaseRunner not assigned to GameManager!");
+            }
+
             SetupBoard();
             SetupUI();
         }
 
         private void SetupPlayers()
         {
-            // Create a basic human player for now
+            players.Clear();
+
             humanPlayer = new Player(
                 playerId: 0,
                 playerName: "Human",
                 playerType: PlayerTypeEnum.Human,
-                aiType: AITypeEnum.Random // Irrelevant for humans
+                aiType: AITypeEnum.Random
             );
 
-            // Example: Starting mutation points
-            humanPlayer.MutationPoints = 5;
+            players.Add(humanPlayer);
+
+            for (int i = 1; i < playerCount; i++)
+            {
+                Player aiPlayer = new Player(
+                    playerId: i,
+                    playerName: $"AI Player {i}",
+                    playerType: PlayerTypeEnum.AI,
+                    aiType: AITypeEnum.Random
+                );
+                players.Add(aiPlayer);
+            }
         }
 
         private void SetupBoard()
@@ -86,36 +109,27 @@ namespace FungusToast.Game
         {
             playerCount = count;
 
-            // Recreate Players
             SetupPlayers();
-
-            // Reset the Board
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
 
-            // Place starting spores
             PlaceStartingSpores();
-
-            // Render the board
             gridVisualizer.RenderBoard(Board);
 
-            // Reset mutation system
-            mutationManager.ResetMutationPoints();
+            mutationManager.ResetMutationPoints(players);
 
-            // Reconnect UI
             mutationUIManager.Initialize(humanPlayer);
             mutationUIManager.SetSpendPointsButtonVisible(true);
             mutationUIManager.PopulateRootMutations();
         }
 
-        //-- This places players roughly in a circle around the toast, spaced out evenly no matter the count (2, 3, 6, 8, etc.)
         public void PlaceStartingSpores()
         {
             float radius = Mathf.Min(boardWidth, boardHeight) * 0.35f;
             Vector2 center = new Vector2(boardWidth / 2f, boardHeight / 2f);
 
-            for (int i = 0; i < playerCount; i++)
+            for (int i = 0; i < players.Count; i++)
             {
-                float angle = i * Mathf.PI * 2f / playerCount;
+                float angle = i * Mathf.PI * 2f / players.Count;
                 float x = center.x + radius * Mathf.Cos(angle);
                 float y = center.y + radius * Mathf.Sin(angle);
 
@@ -123,6 +137,45 @@ namespace FungusToast.Game
                 int py = Mathf.Clamp(Mathf.RoundToInt(y), 0, boardHeight - 1);
 
                 Board.PlaceInitialSpore(i, px, py);
+            }
+        }
+
+        public void SpendAllMutationPointsForAIPlayers()
+        {
+            foreach (Player player in players)
+            {
+                if (player.PlayerType == PlayerTypeEnum.AI)
+                {
+                    while (player.MutationPoints > 0)
+                    {
+                        SpendMutationPointRandomly(player);
+                    }
+                }
+            }
+
+            Debug.Log("All AI players have spent their mutation points.");
+
+            StartGrowthPhase();
+        }
+
+        private void SpendMutationPointRandomly(Player player)
+        {
+            player.MutationPoints--;
+
+            Debug.Log($"AI Player {player.PlayerId} spent 1 mutation point.");
+            // TODO: Future - actually pick random mutations instead of just burning points
+        }
+
+        private void StartGrowthPhase()
+        {
+            if (growthPhaseRunner != null)
+            {
+                growthPhaseRunner.Initialize(Board, players, gridVisualizer);
+                growthPhaseRunner.StartGrowthPhase();
+            }
+            else
+            {
+                Debug.LogError("GrowthPhaseRunner is missing. Cannot start Growth Phase!");
             }
         }
     }

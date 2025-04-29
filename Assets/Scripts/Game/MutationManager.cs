@@ -1,20 +1,18 @@
 using System.Collections.Generic;
 using FungusToast.Core;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Players;
 using UnityEngine;
 
 namespace FungusToast.Game
 {
     public class MutationManager : MonoBehaviour
     {
-        private List<Mutation> rootMutations = new List<Mutation>();
-
-        public IReadOnlyList<Mutation> RootMutations => rootMutations;
-
-        public int CurrentMutationPoints { get; private set; }
-
         [Header("Mutation Settings")]
         [SerializeField] private int startingMutationPoints = 5;
+
+        private List<Mutation> rootMutations = new List<Mutation>();
+        public IReadOnlyList<Mutation> RootMutations => rootMutations;
 
         private void Awake()
         {
@@ -65,25 +63,32 @@ namespace FungusToast.Game
             rootMutations.Add(adaptiveExpression);
         }
 
-
-        public bool TryUpgradeMutation(Mutation mutation)
+        public bool TryUpgradeMutation(Mutation mutation, Player player)
         {
-            if (mutation == null)
-                return false;
-
-            if (CurrentMutationPoints >= mutation.PointsPerUpgrade && mutation.CanUpgrade())
+            if (mutation == null || player == null)
             {
-                CurrentMutationPoints -= mutation.PointsPerUpgrade;
+                Debug.LogError("Null mutation or player in TryUpgradeMutation!");
+                return false;
+            }
+
+            if (player.MutationPoints >= mutation.PointsPerUpgrade && mutation.CanUpgrade())
+            {
+                player.MutationPoints -= mutation.PointsPerUpgrade;
                 mutation.CurrentLevel++;
+                Debug.Log($"Player {player.PlayerId} upgraded {mutation.Name} to Level {mutation.CurrentLevel}");
                 return true;
             }
 
+            Debug.LogWarning($"Player {player.PlayerId} failed to upgrade {mutation?.Name}: insufficient points or maxed out.");
             return false;
         }
 
-        public void ResetMutationPoints()
+        public void ResetMutationPoints(List<Player> players)
         {
-            CurrentMutationPoints = startingMutationPoints;
+            foreach (var player in players)
+            {
+                player.MutationPoints = startingMutationPoints;
+            }
         }
     }
 }

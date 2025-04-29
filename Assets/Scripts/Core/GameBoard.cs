@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using FungusToast.Core.Board;  // <-- for Tile and FungalCell
+using FungusToast.Core.Players;
 
 namespace FungusToast.Core
 {
@@ -6,46 +8,65 @@ namespace FungusToast.Core
     {
         public int Width { get; }
         public int Height { get; }
-        public TileState[,] Grid { get; }
-        public List<PlayerData> Players { get; }
+        public BoardTile[,] Grid { get; }
+        public List<Player> Players { get; } // <-- Updated: full Player objects now
 
         public GameBoard(int width, int height, int playerCount)
         {
             Width = width;
             Height = height;
-            Grid = new TileState[width, height];
-            Players = new List<PlayerData>();
+            Grid = new BoardTile[width, height];
+            Players = new List<Player>(playerCount); // <-- Players will be assigned externally now
 
             for (int x = 0; x < width; x++)
+            {
                 for (int y = 0; y < height; y++)
-                    Grid[x, y] = new TileState(x, y);
-
-            for (int i = 0; i < playerCount; i++)
-                Players.Add(new PlayerData(i, $"Mold {i + 1}"));
+                {
+                    Grid[x, y] = new BoardTile(x, y);
+                }
+            }
         }
 
-        public IEnumerable<TileState> GetNeighbors(TileState tile)
+        public IEnumerable<BoardTile> AllTiles()
         {
+            for (int x = 0; x < Width; x++)
+            {
+                for (int y = 0; y < Height; y++)
+                {
+                    yield return Grid[x, y];
+                }
+            }
+        }
+
+        public List<BoardTile> GetOrthogonalNeighbors(int x, int y)
+        {
+            List<BoardTile> neighbors = new List<BoardTile>();
+
             int[] dx = { -1, 0, 1, 0 };
             int[] dy = { 0, -1, 0, 1 };
 
             for (int d = 0; d < 4; d++)
             {
-                int nx = tile.X + dx[d];
-                int ny = tile.Y + dy[d];
+                int nx = x + dx[d];
+                int ny = y + dy[d];
 
                 if (nx >= 0 && ny >= 0 && nx < Width && ny < Height)
-                    yield return Grid[nx, ny];
+                {
+                    neighbors.Add(Grid[nx, ny]);
+                }
             }
+
+            return neighbors;
         }
 
         public void PlaceInitialSpore(int playerId, int x, int y)
         {
-            var tile = Grid[x, y];
-            tile.OwnerId = playerId;
-            tile.Status = TileStatus.Occupied;
-            tile.Age = 0;
+            BoardTile tile = Grid[x, y];
+
+            if (!tile.IsOccupied)
+            {
+                tile.PlaceFungalCell(new FungalCell(playerId));
+            }
         }
     }
 }
-

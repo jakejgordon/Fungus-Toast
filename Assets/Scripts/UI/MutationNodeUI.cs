@@ -30,11 +30,14 @@ public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 
     private void OnUpgradeClicked()
     {
+        Debug.Log($"Upgrade Button clicked for {mutation.Name}");
+
         if (uiManager.TryUpgradeMutation(mutation))
         {
-            UpdateDisplay();
+            UpdateDisplay(); // Update UI after upgrade
         }
     }
+
 
     private void UpdateDisplay()
     {

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using FungusToast.Core;
+using FungusToast.Core.Board; // <-- For BoardTile and FungalCell
 
 namespace FungusToast.Grid
 {
@@ -8,9 +9,9 @@ namespace FungusToast.Grid
     {
         [Header("Tilemap & Tiles")]
         public Tilemap tilemap;
-        public Tile baseTile;
-        public Tile deadTile;
-        public Tile[] playerMoldTiles; // Indexed by Player ID
+        public Tile baseTile;            // For empty toast spaces
+        public Tile deadTile;            // For dead mold
+        public Tile[] playerMoldTiles;   // For living mold, indexed by PlayerId
 
         public void RenderBoard(GameBoard board)
         {
@@ -20,25 +21,36 @@ namespace FungusToast.Grid
             {
                 for (int y = 0; y < board.Height; y++)
                 {
-                    TileState tile = board.Grid[x, y];
-                    Vector3Int pos = new Vector3Int(x, y, 0);
+                    BoardTile boardTile = board.Grid[x, y];
+                    Vector3Int tilemapPosition = new Vector3Int(x, y, 0);
 
-                    switch (tile.Status)
+                    if (!boardTile.IsOccupied)
                     {
-                        case TileStatus.Empty:
-                            tilemap.SetTile(pos, baseTile);
-                            break;
+                        // Empty Tile
+                        tilemap.SetTile(tilemapPosition, baseTile);
+                    }
+                    else
+                    {
+                        FungalCell fungalCell = boardTile.FungalCell;
 
-                        case TileStatus.Occupied:
-                            if (tile.OwnerId.HasValue && tile.OwnerId.Value < playerMoldTiles.Length)
-                                tilemap.SetTile(pos, playerMoldTiles[tile.OwnerId.Value]);
+                        if (fungalCell.IsAlive)
+                        {
+                            // Living mold
+                            int playerId = fungalCell.OwnerPlayerId;
+                            if (playerId >= 0 && playerId < playerMoldTiles.Length)
+                            {
+                                tilemap.SetTile(tilemapPosition, playerMoldTiles[playerId]);
+                            }
                             else
-                                tilemap.SetTile(pos, baseTile); // fallback
-                            break;
-
-                        case TileStatus.Dead:
-                            tilemap.SetTile(pos, deadTile);
-                            break;
+                            {
+                                tilemap.SetTile(tilemapPosition, baseTile); // Fallback if no player tile assigned
+                            }
+                        }
+                        else
+                        {
+                            // Dead mold
+                            tilemap.SetTile(tilemapPosition, deadTile);
+                        }
                     }
                 }
             }

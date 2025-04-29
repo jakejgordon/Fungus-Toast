@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using FungusToast.Core.Mutations; // Assuming your Mutation and PlayerMutation are under Core.Mutations
 
-namespace FungusToast.Core.Player
+namespace FungusToast.Core.Players
 {
     public class Player
     {
@@ -10,6 +9,9 @@ namespace FungusToast.Core.Player
         public PlayerTypeEnum PlayerType { get; private set; }
         public AITypeEnum AIType { get; private set; }
         public int MutationPoints { get; set; }
+
+        public float GrowthChance { get; set; } = 0.75f;
+
 
         // New structure
         public Dictionary<int, PlayerMutation> PlayerMutations { get; private set; } = new Dictionary<int, PlayerMutation>();

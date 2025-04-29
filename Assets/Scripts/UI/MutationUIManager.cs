@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Core.Mutations;
-using FungusToast.Core.Player; // <- New, since we're adding Player reference
+using FungusToast.Core.Players;
 
 namespace FungusToast.Game
 {
@@ -25,7 +25,6 @@ namespace FungusToast.Game
         [SerializeField] private Vector2 mutationButtonSize = new Vector2(120, 120);
 
         [SerializeField] private TextMeshProUGUI dockButtonText;
-
         [SerializeField] private TextMeshProUGUI mutationDescriptionText;
         [SerializeField] private GameObject mutationDescriptionBackground;
 
@@ -39,12 +38,12 @@ namespace FungusToast.Game
         public float pulseSpeed = 2f;
 
         private RectTransform mutationTreeRect;
-        private bool isTreeOpen = false;
         private Vector3 originalButtonScale;
+        private bool isTreeOpen = false;
         private bool isSliding = false;
 
-        private Player humanPlayer; // <- NEW
-
+        private Player humanPlayer;
+        private bool humanTurnEnded = false;
         private Coroutine tooltipFadeCoroutine;
 
         private void Start()
@@ -64,7 +63,7 @@ namespace FungusToast.Game
             if (grid != null)
             {
                 grid.cellSize = mutationButtonSize;
-                float spacing = mutationButtonSize.x * 0.2f; // 20% spacing
+                float spacing = mutationButtonSize.x * 0.2f;
                 grid.spacing = new Vector2(spacing, spacing);
             }
             else
@@ -82,7 +81,7 @@ namespace FungusToast.Game
         {
             RefreshSpendPointsButtonUI();
 
-            if (mutationManager.CurrentMutationPoints > 0)
+            if (humanPlayer != null && humanPlayer.MutationPoints > 0)
             {
                 AnimatePulse();
             }
@@ -141,9 +140,10 @@ namespace FungusToast.Game
 
         public bool TryUpgradeMutation(Mutation mutation)
         {
-            if (mutationManager.TryUpgradeMutation(mutation))
+            if (mutationManager.TryUpgradeMutation(mutation, humanPlayer))
             {
                 RefreshSpendPointsButtonUI();
+                TryEndHumanTurn();
                 return true;
             }
             return false;
@@ -270,16 +270,15 @@ namespace FungusToast.Game
 
             if (dockButtonText != null)
                 dockButtonText.text = ">";
-
             isSliding = false;
         }
 
         private void RefreshSpendPointsButtonUI()
         {
-            if (spendPointsButton == null || buttonOutline == null)
+            if (spendPointsButton == null || buttonOutline == null || humanPlayer == null)
                 return;
 
-            int points = humanPlayer?.MutationPoints ?? mutationManager.CurrentMutationPoints;
+            int points = humanPlayer.MutationPoints;
 
             if (points > 0)
             {
@@ -312,7 +311,10 @@ namespace FungusToast.Game
 
         private void ResetPulse()
         {
-            spendPointsButton.transform.localScale = originalButtonScale;
+            if (spendPointsButton != null)
+            {
+                spendPointsButton.transform.localScale = originalButtonScale;
+            }
         }
 
         private void ClearMutationNodes()
@@ -347,6 +349,16 @@ namespace FungusToast.Game
             }
 
             cg.alpha = targetAlpha;
+        }
+
+        private void TryEndHumanTurn()
+        {
+            if (!humanTurnEnded && humanPlayer != null && humanPlayer.MutationPoints <= 0)
+            {
+                humanTurnEnded = true;
+                Debug.Log("Human has spent all mutation points. Triggering AI spending...");
+                GameManager.Instance.SpendAllMutationPointsForAIPlayers();
+            }
         }
     }
 }
