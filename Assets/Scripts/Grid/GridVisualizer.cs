@@ -55,5 +55,16 @@ namespace FungusToast.Grid
                 }
             }
         }
+        public Tile GetTileForPlayer(int playerId)
+        {
+            if (playerMoldTiles != null && playerId >= 0 && playerId < playerMoldTiles.Length)
+            {
+                return playerMoldTiles[playerId];
+            }
+
+            Debug.LogWarning($"No tile found for Player ID {playerId}.");
+            return null;
+        }
+
     }
 }

@@ -27,7 +27,8 @@ namespace FungusToast.Game
                 $"Grants an additional +{(0.005f * 100f):F1}% chance to spread mold into adjacent cells each round.",
                 MutationType.GrowthChance,
                 baseEffectValue: 0.01f,
-                effectGrowthPerLevel: 0.005f
+                effectGrowthPerLevel: 0.005f,
+                maxLevel: 50
             );
 
             var homeostaticHarmony = new Mutation(
@@ -36,7 +37,8 @@ namespace FungusToast.Game
                 $"Provides an additional +{(0.005f * 100f):F1}% chance for your mold cells to survive decay events.",
                 MutationType.DefenseSurvival,
                 baseEffectValue: 0.01f,
-                effectGrowthPerLevel: 0.005f
+                effectGrowthPerLevel: 0.005f,
+                maxLevel: 50
             );
 
             var silentBlight = new Mutation(
@@ -45,7 +47,8 @@ namespace FungusToast.Game
                 $"Increases the chance by +{(0.005f * 100f):F1}% that enemy mold cells will die each growth round.",
                 MutationType.EnemyDecayChance,
                 baseEffectValue: 0.01f,
-                effectGrowthPerLevel: 0.005f
+                effectGrowthPerLevel: 0.005f,
+                maxLevel: 50
             );
 
             var adaptiveExpression = new Mutation(
@@ -54,7 +57,8 @@ namespace FungusToast.Game
                 $"Adds a +{(0.005f * 100f):F1}% chance to gain a bonus mutation point at the start of each turn.",
                 MutationType.BonusMutationPointChance,
                 baseEffectValue: 0.01f,
-                effectGrowthPerLevel: 0.005f
+                effectGrowthPerLevel: 0.005f,
+                maxLevel: 50
             );
 
             rootMutations.Add(mycelialBloom);
@@ -73,6 +77,8 @@ namespace FungusToast.Game
 
             if (player.MutationPoints >= mutation.PointsPerUpgrade && mutation.CanUpgrade())
             {
+                Debug.Log($"TryUpgradeMutation: Player {player.PlayerId} has {player.MutationPoints} points before upgrade.");
+
                 player.MutationPoints -= mutation.PointsPerUpgrade;
                 mutation.CurrentLevel++;
                 Debug.Log($"Player {player.PlayerId} upgraded {mutation.Name} to Level {mutation.CurrentLevel}");
