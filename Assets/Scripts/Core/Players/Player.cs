@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using FungusToast.Core.Growth;
+using FungusToast.Game;
 
 namespace FungusToast.Core.Players
 {
@@ -10,10 +12,8 @@ namespace FungusToast.Core.Players
         public AITypeEnum AIType { get; private set; }
         public int MutationPoints { get; set; }
 
-        public float GrowthChance { get; set; } = 0.05f;
+        public float GrowthChance { get; set; } = 0.02f;
 
-
-        // New structure
         public Dictionary<int, PlayerMutation> PlayerMutations { get; private set; } = new Dictionary<int, PlayerMutation>();
 
         public List<int> ControlledTileIds { get; private set; } = new List<int>();
@@ -32,11 +32,15 @@ namespace FungusToast.Core.Players
             Score = 0;
         }
 
-        public void AcquireMutation(int mutationId)
+        public void AcquireMutation(int mutationId, MutationManager mutationManager)
         {
             if (!PlayerMutations.ContainsKey(mutationId))
             {
-                PlayerMutations.Add(mutationId, new PlayerMutation(PlayerId, mutationId));
+                var mutation = mutationManager.GetMutationById(mutationId);
+                if (mutation != null)
+                {
+                    PlayerMutations.Add(mutationId, new PlayerMutation(PlayerId, mutationId, mutation));
+                }
             }
         }
 
@@ -59,6 +63,21 @@ namespace FungusToast.Core.Players
             return 0;
         }
 
+        public float GetMutationEffect(MutationType type)
+        {
+            float total = 0f;
+
+            foreach (var playerMutation in PlayerMutations.Values)
+            {
+                if (playerMutation.Mutation.Type == type)
+                {
+                    total += playerMutation.GetTotalEffect();
+                }
+            }
+
+            return total;
+        }
+
         public void AddControlledTile(int tileId)
         {
             if (!ControlledTileIds.Contains(tileId))
@@ -69,5 +88,28 @@ namespace FungusToast.Core.Players
         {
             ControlledTileIds.Remove(tileId);
         }
+
+        public float GetEffectiveGrowthChance()
+        {
+            float baseChance = 0.05f; // Base growth chance
+            float bonus = GetMutationEffect(MutationType.GrowthChance);
+            return baseChance + bonus;
+        }
+
+        public float GetEffectiveSelfDeathChance()
+        {
+            float baseChance = DeathEngine.BaseDeathChance;
+            float survivalBonus = GetMutationEffect(MutationType.DefenseSurvival);
+            return System.Math.Max(0f, baseChance - survivalBonus);
+        }
+
+
+        public float GetEffectiveDeathChanceFrom(Player otherPlayer)
+        {
+            float ownChance = GetEffectiveSelfDeathChance();
+            float addedRisk = otherPlayer.GetMutationEffect(MutationType.EnemyDecayChance);
+            return ownChance + addedRisk;
+        }
+
     }
 }

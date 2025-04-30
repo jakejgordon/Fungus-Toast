@@ -1,18 +1,34 @@
-public class PlayerMutation
+﻿using FungusToast.Core.Mutations;
+
+namespace FungusToast.Core.Players
 {
-    public int PlayerId { get; private set; }
-    public int MutationId { get; private set; }
-    public int CurrentLevel { get; private set; }
-
-    public PlayerMutation(int playerId, int mutationId)
+    public class PlayerMutation
     {
-        PlayerId = playerId;
-        MutationId = mutationId;
-        CurrentLevel = 1; // Starting at level 1 when first acquired
-    }
+        public int PlayerId { get; }
+        public int MutationId { get; }
+        public int CurrentLevel { get; private set; }
 
-    public void Upgrade()
-    {
-        CurrentLevel++;
+        public Mutation Mutation { get; }
+
+        public PlayerMutation(int playerId, int mutationId, Mutation mutation)
+        {
+            PlayerId = playerId;
+            MutationId = mutationId;
+            Mutation = mutation;
+            CurrentLevel = 0;
+        }
+
+        public void Upgrade()
+        {
+            if (Mutation != null && CurrentLevel < Mutation.MaxLevel)
+            {
+                CurrentLevel++;
+            }
+        }
+
+        public float GetTotalEffect()
+        {
+            return (CurrentLevel * Mutation.EffectPerLevel);
+        }
     }
 }

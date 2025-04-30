@@ -29,17 +29,19 @@ namespace FungusToast.Game.Phases
         {
             if (!isRunning)
             {
-                StartCoroutine(RunGrowthCycles());
+                StartCoroutine(RunFullGrowthPhase());
             }
         }
 
-        private IEnumerator RunGrowthCycles()
+        private IEnumerator RunFullGrowthPhase()
         {
             isRunning = true;
 
+            Debug.Log("🌱 Growth Phase Starting...");
+
             for (int cycle = 0; cycle < totalGrowthCycles; cycle++)
             {
-                Debug.Log($"🌱 Starting Growth Cycle {cycle + 1}/{totalGrowthCycles}");
+                Debug.Log($"🌿 Growth Cycle {cycle + 1}/{totalGrowthCycles}");
 
                 GrowthEngine.ExecuteGrowthCycle(board, players);
                 gridVisualizer.RenderBoard(board);
@@ -47,9 +49,15 @@ namespace FungusToast.Game.Phases
                 yield return new WaitForSeconds(timeBetweenCycles);
             }
 
-            isRunning = false;
+            Debug.Log("💀 Running Death Cycle...");
+            DeathEngine.ExecuteDeathCycle(board, players);
+            gridVisualizer.RenderBoard(board);
+
+            yield return new WaitForSeconds(timeBetweenCycles);
 
             Debug.Log("🌾 Growth Phase complete. Resetting mutation points.");
+            isRunning = false;
+
             GameManager.Instance.OnGrowthPhaseComplete();
         }
     }

@@ -81,8 +81,6 @@ namespace FungusToast.Game
 
         private void Update()
         {
-            RefreshSpendPointsButtonUI();
-
             if (humanPlayer != null && humanPlayer.MutationPoints > 0)
                 AnimatePulse();
             else
@@ -144,7 +142,7 @@ namespace FungusToast.Game
 
             foreach (var rootMutation in mutationManager.RootMutations)
             {
-                CreateRootMutationButton(rootMutation);
+                CreateRootMutationButton(rootMutation.Value);
             }
         }
 

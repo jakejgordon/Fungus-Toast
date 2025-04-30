@@ -51,8 +51,12 @@ namespace FungusToast.Game
             }
 
             SetupBoard();
+
+            gridVisualizer.Initialize(Board);
+
             SetupUI();
         }
+
 
         private void SetupPlayers()
         {
@@ -112,6 +116,8 @@ namespace FungusToast.Game
             SetupPlayers();
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
 
+            gridVisualizer.Initialize(Board);
+
             PlaceStartingSpores();
             gridVisualizer.RenderBoard(Board);
 
@@ -121,6 +127,7 @@ namespace FungusToast.Game
             mutationUIManager.SetSpendPointsButtonVisible(true);
             mutationUIManager.PopulateRootMutations();
         }
+
 
         public void PlaceStartingSpores()
         {
