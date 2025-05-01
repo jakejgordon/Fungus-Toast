@@ -8,7 +8,6 @@ using FungusToast.Game;
 public class UI_MoldProfilePanel : MonoBehaviour
 {
     [Header("UI References")]
-    public Image moldIconImage;
     public TextMeshProUGUI growthChanceText;
     public TextMeshProUGUI deathChanceText;
     public TextMeshProUGUI mpIncomeText;
@@ -25,12 +24,6 @@ public class UI_MoldProfilePanel : MonoBehaviour
     {
         if (trackedPlayer == null) return;
 
-        // Get sprite from PlayerUIBinder via GameManager
-        var binder = GameManager.Instance.GameUI.PlayerUIBinder;
-        Debug.Log($"[UI_MoldProfilePanel] binder: {binder}, player: {trackedPlayer}");
-        moldIconImage.sprite = binder.GetIcon(trackedPlayer);
-
-        // Call method from Player class for derived values
         growthChanceText.text = $"Hyphal Outgrowth Chance: {(trackedPlayer.GetEffectiveGrowthChance() * 100f):F2}%";
         deathChanceText.text = $"Mycelial Degradation: {(trackedPlayer.GetEffectiveSelfDeathChance() * 100f):F2}%";
         mpIncomeText.text = $"MP per Turn: {trackedPlayer.GetMutationPointIncome()}";
