@@ -63,6 +63,18 @@ namespace FungusToast.Game
                 maxLevel: 50
             );
             rootMutations[id++] = adaptiveExpression;
+
+            // Tier 2 mutation, requires Silent Blight
+            var encystedSpores = new Mutation(
+                "Encysted Spores",
+                $"Dormant spores deploy enzymatic agents that accelerate necrosis in isolated enemies. " +
+                $"Increases Silent Blight's decay penalty by +{(0.05f * 100f):F1}% when enemy cells are fully surrounded by living fungal cells.",
+                MutationType.EncystedSporeMultiplier,
+                effectPerLevel: 0.05f,
+                maxLevel: 5
+            );
+            encystedSpores.RequiredMutation = silentBlight;
+            silentBlight.Children.Add(encystedSpores);
         }
 
         public Mutation GetMutationById(int id)
@@ -72,7 +84,7 @@ namespace FungusToast.Game
                 return mutation;
             }
 
-            Debug.LogWarning($"⚠️ Mutation ID {id} not found in rootMutations.");
+            Debug.LogWarning($"\u26a0\ufe0f Mutation ID {id} not found in rootMutations.");
             return null;
         }
 
@@ -80,7 +92,15 @@ namespace FungusToast.Game
         {
             if (mutation == null || player == null)
             {
-                Debug.LogError("❌ Null mutation or player in TryUpgradeMutation!");
+                Debug.LogError("\u274c Null mutation or player in TryUpgradeMutation!");
+                return false;
+            }
+
+            // Prerequisite check for dependent mutations
+            if (mutation.RequiredMutation != null &&
+                player.GetMutationLevel(mutation.RequiredMutation.GetHashCode()) < 10)
+            {
+                Debug.LogWarning($"\u26a0\ufe0f Cannot upgrade {mutation.Name}: prerequisite not met.");
                 return false;
             }
 
@@ -90,11 +110,11 @@ namespace FungusToast.Game
 
                 player.MutationPoints -= mutation.PointsPerUpgrade;
                 mutation.CurrentLevel++;
-                Debug.Log($"✅ Player {player.PlayerId} upgraded {mutation.Name} to Level {mutation.CurrentLevel}");
+                Debug.Log($"\u2705 Player {player.PlayerId} upgraded {mutation.Name} to Level {mutation.CurrentLevel}");
                 return true;
             }
 
-            Debug.LogWarning($"⚠️ Player {player.PlayerId} failed to upgrade {mutation?.Name}: insufficient points or maxed out.");
+            Debug.LogWarning($"\u26a0\ufe0f Player {player.PlayerId} failed to upgrade {mutation?.Name}: insufficient points or maxed out.");
             return false;
         }
 
@@ -102,7 +122,8 @@ namespace FungusToast.Game
         {
             foreach (var player in players)
             {
-                player.MutationPoints = startingMutationPoints;
+                int bonus = player.GetBonusMutationPoints();
+                player.MutationPoints = startingMutationPoints + bonus;
             }
         }
     }

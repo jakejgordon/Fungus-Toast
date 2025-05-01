@@ -39,17 +39,21 @@ namespace FungusToast.Core.Growth
             {
                 if (!neighbor.IsOccupied)
                 {
-                    // Growth Attempt
                     float roll = Random.Range(0f, 1f);
                     if (roll <= owner.GrowthChance)
                     {
-                        // Successful Growth
-                        neighbor.PlaceFungalCell(new FungalCell(owner.PlayerId));
+                        int tileId = neighbor.Y * board.Width + neighbor.X;
+                        var newCell = new FungalCell(owner.PlayerId, tileId);
+
+                        neighbor.PlaceFungalCell(newCell);
+                        board.RegisterCell(newCell); // Ensure it's trackable via GameBoard.GetCell
+
                         break; // Only one growth per fungal cell per cycle
                     }
                 }
             }
         }
+
 
         private static void Shuffle<T>(List<T> list)
         {

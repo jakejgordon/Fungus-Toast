@@ -7,13 +7,13 @@ namespace FungusToast.Core.Board
         public int OwnerPlayerId { get; private set; }
         public bool IsAlive { get; private set; }
         public int ToxinLevel { get; private set; }
-
         public int GrowthCycleAge { get; private set; }
+        public int TileId { get; private set; }  // <-- Added for positional tracking
 
-
-        public FungalCell(int ownerPlayerId)
+        public FungalCell(int ownerPlayerId, int tileId)
         {
             OwnerPlayerId = ownerPlayerId;
+            TileId = tileId;
             IsAlive = true;
             ToxinLevel = 0;
         }
@@ -32,6 +32,7 @@ namespace FungusToast.Core.Board
         {
             ToxinLevel = System.Math.Max(0, ToxinLevel - amount);
         }
+
         public void IncrementGrowthAge()
         {
             GrowthCycleAge++;

@@ -11,6 +11,8 @@ public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitH
     public Button upgradeButton;
     public TextMeshProUGUI mutationNameText;
     public TextMeshProUGUI levelText;
+    public GameObject lockOverlay; // New: visual overlay
+    public CanvasGroup canvasGroup; // New: for dimming
 
     private Mutation mutation;
     private UI_MutationManager uiManager;
@@ -25,6 +27,7 @@ public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitH
         mutationNameText.text = mutation.Name;
         UpdateDisplay();
 
+        upgradeButton.onClick.RemoveAllListeners();
         upgradeButton.onClick.AddListener(OnUpgradeClicked);
     }
 
@@ -34,12 +37,11 @@ public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 
         if (uiManager.TryUpgradeMutation(mutation))
         {
-            UpdateDisplay(); // Update UI after upgrade
+            UpdateDisplay();
         }
     }
 
-
-    private void UpdateDisplay()
+    public void UpdateDisplay()
     {
         levelText.text = $"Level {mutation.CurrentLevel}/{mutation.MaxLevel}";
 
@@ -47,6 +49,23 @@ public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitH
         {
             upgradeButton.interactable = false;
         }
+    }
+
+    public void SetLockedState(string reason)
+    {
+        upgradeButton.interactable = false;
+        if (lockOverlay != null) lockOverlay.SetActive(true);
+        if (canvasGroup != null) canvasGroup.alpha = 0.5f;
+
+        // Optional tooltip
+        uiManager.ShowMutationDescription(reason, transform as RectTransform);
+    }
+
+    public void SetUnlockedState()
+    {
+        upgradeButton.interactable = true;
+        if (lockOverlay != null) lockOverlay.SetActive(false);
+        if (canvasGroup != null) canvasGroup.alpha = 1f;
     }
 
     public void OnPointerEnter(PointerEventData eventData)

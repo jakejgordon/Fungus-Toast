@@ -24,7 +24,6 @@ namespace FungusToast.UI
         [SerializeField] private Image playerMoldIcon;
         [SerializeField] private GridVisualizer gridVisualizer;
 
-
         [Header("Mutation Tree References")]
         [SerializeField] private GameObject mutationNodePrefab;
         [SerializeField] private Transform mutationNodeParent;
@@ -60,19 +59,6 @@ namespace FungusToast.UI
                 mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
             else
                 Debug.LogError("mutationTreePanel is NULL at Start()!");
-
-
-            GridLayoutGroup grid = mutationNodeParent.GetComponent<GridLayoutGroup>();
-            if (grid != null)
-            {
-                grid.cellSize = mutationButtonSize;
-                float spacing = mutationButtonSize.x * 0.2f;
-                grid.spacing = new Vector2(spacing, spacing);
-            }
-            else
-            {
-                Debug.LogWarning("GridLayoutGroup not found on mutationNodeParent!");
-            }
 
             RefreshSpendPointsButtonUI();
             originalButtonScale = spendPointsButton.transform.localScale;
@@ -119,8 +105,6 @@ namespace FungusToast.UI
             }
         }
 
-
-
         public void OnSpendPointsClicked()
         {
             if (isSliding) return;
@@ -137,15 +121,65 @@ namespace FungusToast.UI
                 spendPointsButton.gameObject.SetActive(visible);
         }
 
-        public void PopulateRootMutations()
+        public void PopulateAllMutations()
         {
             ClearMutationNodes();
 
-            foreach (var rootMutation in mutationManager.RootMutations)
+            int rootIndex = 0;
+            // Loop through the root mutations
+            foreach (var rootPair in mutationManager.RootMutations)
             {
-                CreateRootMutationButton(rootMutation.Value);
+                Mutation root = rootPair.Value;
+                // Starting position for the root (top of the screen)
+                Vector2 startPos = new Vector2(0, -rootIndex * (mutationButtonSize.y + 40)); // Adjust spacing as needed
+                                                                                             // Populate recursive call for children mutations
+                PopulateMutationRecursive(root, startPos, 0);
+                rootIndex++;
             }
         }
+
+
+        private void PopulateMutationRecursive(Mutation mutation, Vector2 position, int depth)
+        {
+            // Instantiate the mutation button and initialize it
+            GameObject buttonGO = Instantiate(mutationNodePrefab, mutationNodeParent);
+            MutationNodeUI nodeUI = buttonGO.GetComponent<MutationNodeUI>();
+            nodeUI.Initialize(mutation, this);
+
+            // Set RectTransform properties for manual layout positioning
+            RectTransform rect = buttonGO.GetComponent<RectTransform>();
+            rect.localScale = Vector3.one;
+            rect.sizeDelta = mutationButtonSize;
+            rect.anchoredPosition = position;
+
+            // Check if the mutation is locked due to a requirement
+            if (mutation.RequiredMutation != null)
+            {
+                int requiredLevel = 10; // Customize as needed
+                int currentLevel = mutation.RequiredMutation.CurrentLevel;
+
+                if (currentLevel < requiredLevel)
+                {
+                    nodeUI.SetLockedState($"Requires {mutation.RequiredMutation.Name} (Level {requiredLevel})\nCurrent: {currentLevel}");
+                    return;
+                }
+            }
+
+            nodeUI.SetUnlockedState();
+
+            // Define how much vertical and horizontal space to leave between nodes
+            float spacingY = mutationButtonSize.y + 40;  // Space between rows (vertical)
+            float spacingX = mutationButtonSize.x + 80;  // Space between columns (horizontal)
+
+            // Recursively place child mutations (vertically aligned under the parent)
+            for (int i = 0; i < mutation.Children.Count; i++)
+            {
+                // Position children mutations vertically, with a little horizontal offset for each
+                Vector2 childPos = position + new Vector2(spacingX, -(i + 1) * spacingY);
+                PopulateMutationRecursive(mutation.Children[i], childPos, depth + 1);
+            }
+        }
+
 
         public bool TryUpgradeMutation(Mutation mutation)
         {
@@ -160,7 +194,6 @@ namespace FungusToast.UI
             }
             return false;
         }
-
 
         public void TogglePanelDock()
         {
@@ -323,23 +356,6 @@ namespace FungusToast.UI
                 spendPointsButton.transform.localScale = originalButtonScale;
         }
 
-        private void ClearMutationNodes()
-        {
-            foreach (Transform child in mutationNodeParent)
-                Destroy(child.gameObject);
-        }
-
-        private void CreateRootMutationButton(Mutation mutation)
-        {
-            GameObject buttonGO = Instantiate(mutationNodePrefab, mutationNodeParent);
-            MutationNodeUI nodeUI = buttonGO.GetComponent<MutationNodeUI>();
-            nodeUI.Initialize(mutation, this);
-
-            RectTransform rect = buttonGO.GetComponent<RectTransform>();
-            rect.localScale = Vector3.one;
-            rect.sizeDelta = mutationButtonSize;
-        }
-
         private IEnumerator FadeTooltip(CanvasGroup cg, float targetAlpha, float duration)
         {
             float startAlpha = cg.alpha;
@@ -371,6 +387,14 @@ namespace FungusToast.UI
                 yield return StartCoroutine(SlideOutTree());
 
             GameManager.Instance.SpendAllMutationPointsForAIPlayers();
+        }
+
+        private void ClearMutationNodes()
+        {
+            foreach (Transform child in mutationNodeParent)
+            {
+                Destroy(child.gameObject);
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using FungusToast.Core.Board;
 using FungusToast.Core.Growth;
 using FungusToast.Game;
 
@@ -6,6 +7,8 @@ namespace FungusToast.Core.Players
 {
     public class Player
     {
+        private static readonly System.Random rng = new System.Random();
+
         public int PlayerId { get; private set; }
         public string PlayerName { get; private set; }
         public PlayerTypeEnum PlayerType { get; private set; }
@@ -119,11 +122,34 @@ namespace FungusToast.Core.Players
             return System.Math.Max(0f, baseChance - survivalBonus);
         }
 
-        public float GetEffectiveDeathChanceFrom(Player otherPlayer)
+        public float GetEffectiveDeathChanceFrom(Player attacker, FungalCell targetCell, GameBoard board)
         {
-            float ownChance = GetEffectiveSelfDeathChance();
-            float addedRisk = otherPlayer.GetMutationEffect(MutationType.EnemyDecayChance);
-            return ownChance + addedRisk;
+            float baseChance = GetEffectiveSelfDeathChance();           // Your own defense
+            float decayBoost = attacker.GetMutationEffect(MutationType.EnemyDecayChance); // Silent Blight
+
+            // ⬇️ Apply Encysted Spores bonus if target is surrounded
+            if (DeathEngine.IsCellSurrounded(targetCell.TileId, board))
+            {
+                float encystedBonus = attacker.GetMutationEffect(MutationType.EnemyDecayChance); // this already includes both SB and ES
+                float encystedSporeMultiplier = 1f + attacker.GetMutationEffect(MutationType.EncystedSporeMultiplier); // New mutation type if needed
+                decayBoost *= encystedSporeMultiplier;
+            }
+
+            return baseChance + decayBoost;
         }
+
+
+        public int GetBonusMutationPoints()
+        {
+            int bonusPoints = 0;
+
+            float bonusChance = GetMutationEffect(MutationType.BonusMutationPointChance); 
+
+            if (rng.NextDouble() < bonusChance)
+                bonusPoints += 1;
+
+            return bonusPoints;
+        }
+
     }
 }

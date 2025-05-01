@@ -40,10 +40,10 @@ namespace FungusToast.Core.Growth
 
                 float baseChance = BaseDeathChance;
                 float ageModifier = cell.GrowthCycleAge * BaseDeathChance;
-                float defenseBonus = player.GetEffectiveSelfDeathChance(); // reduces death chance
-                float enemyPressure = GetEnemyPressure(players, player);  // increases death chance
+                float defenseBonus = player.GetEffectiveSelfDeathChance();
+                float pressure = GetEnemyPressure(players, player, cell, board);
 
-                float finalChance = baseChance + ageModifier + enemyPressure - defenseBonus;
+                float finalChance = baseChance + ageModifier + pressure - defenseBonus;
                 finalChance = Mathf.Clamp01(finalChance);
 
                 float roll = (float)rng.NextDouble();
@@ -74,17 +74,35 @@ namespace FungusToast.Core.Growth
             return count;
         }
 
-        private static float GetEnemyPressure(List<Player> allPlayers, Player currentPlayer)
+        private static float GetEnemyPressure(List<Player> allPlayers, Player currentPlayer, FungalCell targetCell, GameBoard board)
         {
             float pressure = 0f;
+
             foreach (var enemy in allPlayers)
             {
                 if (enemy.PlayerId != currentPlayer.PlayerId)
                 {
-                    pressure += enemy.GetEffectiveDeathChanceFrom(currentPlayer);
+                    pressure += enemy.GetEffectiveDeathChanceFrom(currentPlayer, targetCell, board);
                 }
             }
+
             return pressure;
+        }
+
+        public static bool IsCellSurrounded(int tileId, GameBoard board)
+        {
+            var cell = board.GetCell(tileId);
+            if (cell == null) return false;
+
+            var neighborIds = board.GetAdjacentTileIds(tileId);
+            foreach (int neighborId in neighborIds)
+            {
+                var neighborCell = board.GetCell(neighborId);
+                if (neighborCell == null || !neighborCell.IsAlive)
+                    return false; // Found an empty or dead neighbor
+            }
+
+            return true;
         }
     }
 }

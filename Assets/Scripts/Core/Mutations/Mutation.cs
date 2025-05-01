@@ -12,6 +12,9 @@ namespace FungusToast.Core.Mutations
         public int PointsPerUpgrade { get; private set; }
         public int MaxLevel { get; private set; }
         public int CurrentLevel { get; set; }
+
+        public Mutation RequiredMutation { get; set; }
+
         public List<Mutation> Children { get; private set; }
 
         public Mutation(string name, string description, MutationType type, float effectPerLevel, int pointsPerUpgrade = 1, int maxLevel = 50)

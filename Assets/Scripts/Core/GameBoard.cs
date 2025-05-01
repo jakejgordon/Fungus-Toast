@@ -11,6 +11,8 @@ namespace FungusToast.Core
         public BoardTile[,] Grid { get; }
         public List<Player> Players { get; } // <-- Updated: full Player objects now
 
+        private Dictionary<int, FungalCell> tileIdToCell = new();
+
         public GameBoard(int width, int height, int playerCount)
         {
             Width = width;
@@ -65,8 +67,64 @@ namespace FungusToast.Core
 
             if (!tile.IsOccupied)
             {
-                tile.PlaceFungalCell(new FungalCell(playerId));
+                int tileId = y * Width + x; // consistent unique ID
+                var cell = new FungalCell(playerId, tileId);
+                tile.PlaceFungalCell(cell);
+                tileIdToCell[tileId] = cell;
             }
         }
+
+
+        public FungalCell GetCell(int tileId)
+        {
+            if (tileIdToCell.TryGetValue(tileId, out var cell))
+            {
+                return cell;
+            }
+
+            return null;
+        }
+
+        public void RegisterCell(FungalCell cell)
+        {
+            if (cell != null)
+            {
+                tileIdToCell[cell.TileId] = cell;
+            }
+        }
+
+        public List<int> GetAdjacentTileIds(int tileId)
+        {
+            var (x, y) = GetXYFromTileId(tileId);
+            List<int> neighbors = new List<int>();
+
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    if (dx == 0 && dy == 0) continue;
+
+                    int nx = x + dx;
+                    int ny = y + dy;
+
+                    if (nx >= 0 && ny >= 0 && nx < Width && ny < Height)
+                    {
+                        int neighborId = ny * Width + nx;
+                        neighbors.Add(neighborId);
+                    }
+                }
+            }
+
+            return neighbors;
+        }
+
+
+        private (int x, int y) GetXYFromTileId(int tileId)
+        {
+            int x = tileId % Width;
+            int y = tileId / Width;
+            return (x, y);
+        }
+
     }
 }

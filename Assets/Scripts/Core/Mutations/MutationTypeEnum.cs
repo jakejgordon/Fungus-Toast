@@ -7,5 +7,6 @@ namespace FungusToast.Core
         DefenseSurvival,
         EnemyDecayChance,
         BonusMutationPointChance,
+        EncystedSporeMultiplier,
     }
 }
