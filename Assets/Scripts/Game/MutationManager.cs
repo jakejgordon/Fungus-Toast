@@ -10,6 +10,7 @@ namespace FungusToast.Game
     {
         [Header("Mutation Settings")]
         [SerializeField] private int startingMutationPoints = 5;
+        public int BasePointsPerCycle => startingMutationPoints;
 
         private Dictionary<int, Mutation> rootMutations = new Dictionary<int, Mutation>();
         public IReadOnlyDictionary<int, Mutation> RootMutations => rootMutations;

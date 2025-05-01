@@ -4,6 +4,7 @@ using FungusToast.Core;
 using FungusToast.Core.Players;
 using FungusToast.Grid;
 using FungusToast.Game.Phases;
+using FungusToast.UI; // is this naughty?
 
 namespace FungusToast.Game
 {
@@ -18,9 +19,10 @@ namespace FungusToast.Game
         public GridVisualizer gridVisualizer;
         public CameraCenterer cameraCenterer;
 
-        [SerializeField] private MutationUIManager mutationUIManager;
         [SerializeField] private MutationManager mutationManager;
         [SerializeField] private GrowthPhaseRunner growthPhaseRunner;
+        [SerializeField] private GameUIManager gameUIManager;
+        public GameUIManager GameUI => gameUIManager;
 
         public static GameManager Instance { get; private set; }
 
@@ -62,13 +64,15 @@ namespace FungusToast.Game
         {
             players.Clear();
 
+            int baseMP = mutationManager.BasePointsPerCycle;
+
             humanPlayer = new Player(
                 playerId: 0,
                 playerName: "Human",
                 playerType: PlayerTypeEnum.Human,
                 aiType: AITypeEnum.Random
             );
-
+            humanPlayer.SetBaseMutationPoints(baseMP);
             players.Add(humanPlayer);
 
             for (int i = 1; i < playerCount; i++)
@@ -79,9 +83,36 @@ namespace FungusToast.Game
                     playerType: PlayerTypeEnum.AI,
                     aiType: AITypeEnum.Random
                 );
+                aiPlayer.SetBaseMutationPoints(baseMP);
                 players.Add(aiPlayer);
             }
+
+            // ✅ Assign icons BEFORE initializing the UI panel
+            foreach (var player in players)
+            {
+                Sprite icon = gridVisualizer.GetTileForPlayer(player.PlayerId)?.sprite;
+                if (icon != null)
+                {
+                    gameUIManager.PlayerUIBinder.AssignIcon(player, icon);
+                }
+                else
+                {
+                    Debug.LogWarning($"⚠️ No icon found for player {player.PlayerId}");
+                }
+            }
+
+            // ✅ Now safe to initialize the UI panel
+            if (gameUIManager.MoldProfilePanel != null)
+            {
+                gameUIManager.MoldProfilePanel.Initialize(humanPlayer);
+            }
+            else
+            {
+                Debug.LogError("MoldProfilePanel is not assigned in GameManager!");
+            }
         }
+
+
 
         private void SetupBoard()
         {
@@ -97,11 +128,11 @@ namespace FungusToast.Game
 
         private void SetupUI()
         {
-            if (mutationUIManager != null)
+            if (gameUIManager.MutationUIManager != null)
             {
-                mutationUIManager.Initialize(humanPlayer);
-                mutationUIManager.SetSpendPointsButtonVisible(true);
-                mutationUIManager.PopulateRootMutations();
+                gameUIManager.MutationUIManager.Initialize(humanPlayer);
+                gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+                gameUIManager.MutationUIManager.PopulateRootMutations();
             }
             else
             {
@@ -123,9 +154,9 @@ namespace FungusToast.Game
 
             mutationManager.ResetMutationPoints(players);
 
-            mutationUIManager.Initialize(humanPlayer);
-            mutationUIManager.SetSpendPointsButtonVisible(true);
-            mutationUIManager.PopulateRootMutations();
+            gameUIManager.MutationUIManager.Initialize(humanPlayer);
+            gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+            gameUIManager.MutationUIManager.PopulateRootMutations();
         }
 
 
@@ -193,9 +224,13 @@ namespace FungusToast.Game
             Debug.Log("All players have received new mutation points.");
 
             // Restart the Mutation Phase for the human
-            mutationUIManager.Initialize(humanPlayer);
-            mutationUIManager.SetSpendPointsButtonVisible(true);
-            mutationUIManager.PopulateRootMutations();
+            gameUIManager.MutationUIManager.Initialize(humanPlayer);
+            gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+            gameUIManager.MutationUIManager.PopulateRootMutations();
+            if (gameUIManager.MoldProfilePanel != null)
+            {
+                gameUIManager.MoldProfilePanel.Refresh();
+            }
         }
 
     }

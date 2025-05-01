@@ -8,11 +8,11 @@ using FungusToast.Core.Players;
 using UnityEngine.Tilemaps;
 using FungusToast.Grid;
 
-namespace FungusToast.Game
+namespace FungusToast.UI
 {
-    public class MutationUIManager : MonoBehaviour
+    public class UI_MutationManager : MonoBehaviour
     {
-        [Header("General UI References")]
+        [Header("General UI References")
         [SerializeField] private MutationManager mutationManager;
         [SerializeField] private GameObject mutationTreePanel;
         [SerializeField] private Button spendPointsButton;
@@ -153,6 +153,7 @@ namespace FungusToast.Game
             if (mutationManager.TryUpgradeMutation(mutation, humanPlayer))
             {
                 RefreshSpendPointsButtonUI();
+                GameManager.Instance.MoldProfilePanel.Refresh();
                 TryEndHumanTurn();
                 return true;
             }

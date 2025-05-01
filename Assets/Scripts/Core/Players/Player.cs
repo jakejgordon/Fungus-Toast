@@ -12,14 +12,15 @@ namespace FungusToast.Core.Players
         public AITypeEnum AIType { get; private set; }
         public int MutationPoints { get; set; }
 
-        public float GrowthChance { get; set; } = 0.02f;
+        public float GrowthChance { get; set; } = 0.10f;
 
         public Dictionary<int, PlayerMutation> PlayerMutations { get; private set; } = new Dictionary<int, PlayerMutation>();
-
         public List<int> ControlledTileIds { get; private set; } = new List<int>();
 
         public bool IsActive { get; set; }
         public int Score { get; set; }
+
+        private int baseMutationPoints = 5;
 
         public Player(int playerId, string playerName, PlayerTypeEnum playerType, AITypeEnum aiType = AITypeEnum.Random)
         {
@@ -30,6 +31,21 @@ namespace FungusToast.Core.Players
             MutationPoints = 0;
             IsActive = false;
             Score = 0;
+        }
+
+        public void SetBaseMutationPoints(int amount)
+        {
+            baseMutationPoints = amount;
+        }
+
+        public int GetMutationPointIncome()
+        {
+            int bonus = 0;
+
+            // Example: Add mutation-based bonuses here
+            bonus += (int)GetMutationEffect(MutationType.BonusMutationPointChance);
+
+            return baseMutationPoints + bonus;
         }
 
         public void AcquireMutation(int mutationId, MutationManager mutationManager)
@@ -103,13 +119,11 @@ namespace FungusToast.Core.Players
             return System.Math.Max(0f, baseChance - survivalBonus);
         }
 
-
         public float GetEffectiveDeathChanceFrom(Player otherPlayer)
         {
             float ownChance = GetEffectiveSelfDeathChance();
             float addedRisk = otherPlayer.GetMutationEffect(MutationType.EnemyDecayChance);
             return ownChance + addedRisk;
         }
-
     }
 }

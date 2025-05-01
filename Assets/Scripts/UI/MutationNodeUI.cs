@@ -2,8 +2,8 @@
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Core.Mutations;
-using FungusToast.Game;
 using UnityEngine.EventSystems;
+using FungusToast.UI;
 
 public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
@@ -13,10 +13,10 @@ public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitH
     public TextMeshProUGUI levelText;
 
     private Mutation mutation;
-    private MutationUIManager uiManager;
+    private UI_MutationManager uiManager;
     private string description;
 
-    public void Initialize(Mutation mutation, MutationUIManager uiManager)
+    public void Initialize(Mutation mutation, UI_MutationManager uiManager)
     {
         this.mutation = mutation;
         this.uiManager = uiManager;
