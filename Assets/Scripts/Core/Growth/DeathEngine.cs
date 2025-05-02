@@ -7,7 +7,9 @@ namespace FungusToast.Core.Growth
 {
     public static class DeathEngine
     {
-        public static float BaseDeathChance = 0.0005f;
+        // Tunable decay settings
+        public const float BaseDeathChance = 0.02f; // 2% base chance
+        public const float PerCycleAgeDecayIncrease = 0.005f; // +0.5% per cycle
 
         public static void ExecuteDeathCycle(GameBoard board, List<Player> players)
         {
@@ -39,7 +41,7 @@ namespace FungusToast.Core.Growth
                     continue;
 
                 float baseChance = BaseDeathChance;
-                float ageModifier = cell.GrowthCycleAge * BaseDeathChance;
+                float ageModifier = cell.GrowthCycleAge * PerCycleAgeDecayIncrease;
                 float defenseBonus = player.GetEffectiveSelfDeathChance();
                 float pressure = GetEnemyPressure(players, player, cell, board);
 
@@ -50,7 +52,7 @@ namespace FungusToast.Core.Growth
                 if (roll < finalChance)
                 {
                     cell.Kill();
-                    Debug.Log($"\u2620 Cell at ({tile.X},{tile.Y}) owned by Player {player.PlayerId} died. FinalChance={finalChance:P2}, Roll={roll:P2}");
+                    Debug.Log($"\u2620 Cell at ({tile.X},{tile.Y}) owned by Player {player.PlayerId} died. Age={cell.GrowthCycleAge}, FinalChance={finalChance:P2}, Roll={roll:P2}");
                 }
                 else
                 {

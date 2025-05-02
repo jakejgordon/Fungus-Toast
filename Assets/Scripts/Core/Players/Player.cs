@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using FungusToast.Core.Board;
 using FungusToast.Core.Growth;
+using FungusToast.Core.Mutations;
 using FungusToast.Game;
+using UnityEngine; // ✅ Needed for Debug.Log
 
 namespace FungusToast.Core.Players
 {
@@ -17,8 +19,8 @@ namespace FungusToast.Core.Players
 
         public float GrowthChance { get; set; } = 0.10f;
 
-        public Dictionary<int, PlayerMutation> PlayerMutations { get; private set; } = new Dictionary<int, PlayerMutation>();
-        public List<int> ControlledTileIds { get; private set; } = new List<int>();
+        public Dictionary<int, PlayerMutation> PlayerMutations { get; private set; } = new();
+        public List<int> ControlledTileIds { get; private set; } = new();
 
         public bool IsActive { get; set; }
         public int Score { get; set; }
@@ -43,11 +45,7 @@ namespace FungusToast.Core.Players
 
         public int GetMutationPointIncome()
         {
-            int bonus = 0;
-
-            // Example: Add mutation-based bonuses here
-            bonus += (int)GetMutationEffect(MutationType.BonusMutationPointChance);
-
+            int bonus = (int)GetMutationEffect(MutationType.BonusMutationPointChance);
             return baseMutationPoints + bonus;
         }
 
@@ -57,29 +55,48 @@ namespace FungusToast.Core.Players
             {
                 var mutation = mutationManager.GetMutationById(mutationId);
                 if (mutation != null)
-                {
-                    PlayerMutations.Add(mutationId, new PlayerMutation(PlayerId, mutationId, mutation));
-                }
+                    PlayerMutations[mutationId] = new PlayerMutation(PlayerId, mutationId, mutation);
             }
         }
 
-        public bool UpgradeMutation(int mutationId)
+        public bool TryUpgradeMutation(Mutation mutation)
         {
-            if (PlayerMutations.TryGetValue(mutationId, out var playerMutation))
+            if (mutation == null)
+                return false;
+
+            // Auto-acquire if not already owned
+            if (!PlayerMutations.ContainsKey(mutation.Id))
             {
+                // Optional: validate prerequisites here
+                PlayerMutations[mutation.Id] = new PlayerMutation(PlayerId, mutation.Id, mutation);
+                Debug.Log($"🧬 Player {PlayerId} auto-acquired {mutation.Name}");
+            }
+
+            var playerMutation = PlayerMutations[mutation.Id];
+
+            if (MutationPoints >= mutation.PointsPerUpgrade && playerMutation.CurrentLevel < mutation.MaxLevel)
+            {
+                MutationPoints -= mutation.PointsPerUpgrade;
                 playerMutation.Upgrade();
+                Debug.Log($"✅ Player {PlayerId} upgraded {mutation.Name} to Level {playerMutation.CurrentLevel} | Remaining MP: {MutationPoints}");
                 return true;
             }
+
+            Debug.LogWarning($"❌ Upgrade failed for {mutation.Name}: Not enough MP or already maxed.");
             return false;
+        }
+
+        public bool CanUpgrade(Mutation mutation)
+        {
+            return mutation != null &&
+                   PlayerMutations.TryGetValue(mutation.Id, out var playerMutation) &&
+                   MutationPoints >= mutation.PointsPerUpgrade &&
+                   playerMutation.CurrentLevel < mutation.MaxLevel;
         }
 
         public int GetMutationLevel(int mutationId)
         {
-            if (PlayerMutations.TryGetValue(mutationId, out var playerMutation))
-            {
-                return playerMutation.CurrentLevel;
-            }
-            return 0;
+            return PlayerMutations.TryGetValue(mutationId, out var pm) ? pm.CurrentLevel : 0;
         }
 
         public float GetMutationEffect(MutationType type)
@@ -89,9 +106,7 @@ namespace FungusToast.Core.Players
             foreach (var playerMutation in PlayerMutations.Values)
             {
                 if (playerMutation.Mutation.Type == type)
-                {
-                    total += playerMutation.GetTotalEffect();
-                }
+                    total += playerMutation.GetEffect(); // ✅ uses refactored method
             }
 
             return total;
@@ -110,7 +125,7 @@ namespace FungusToast.Core.Players
 
         public float GetEffectiveGrowthChance()
         {
-            float baseChance = 0.05f; // Base growth chance
+            float baseChance = 0.05f;
             float bonus = GetMutationEffect(MutationType.GrowthChance);
             return baseChance + bonus;
         }
@@ -119,37 +134,39 @@ namespace FungusToast.Core.Players
         {
             float baseChance = DeathEngine.BaseDeathChance;
             float survivalBonus = GetMutationEffect(MutationType.DefenseSurvival);
-            return System.Math.Max(0f, baseChance - survivalBonus);
+            return Mathf.Max(0f, baseChance - survivalBonus);
         }
 
         public float GetEffectiveDeathChanceFrom(Player attacker, FungalCell targetCell, GameBoard board)
         {
-            float baseChance = GetEffectiveSelfDeathChance();           // Your own defense
-            float decayBoost = attacker.GetMutationEffect(MutationType.EnemyDecayChance); // Silent Blight
+            float baseChance = GetEffectiveSelfDeathChance();
+            float decayBoost = attacker.GetMutationEffect(MutationType.EnemyDecayChance);
 
-            // ⬇️ Apply Encysted Spores bonus if target is surrounded
             if (DeathEngine.IsCellSurrounded(targetCell.TileId, board))
             {
-                float encystedBonus = attacker.GetMutationEffect(MutationType.EnemyDecayChance); // this already includes both SB and ES
-                float encystedSporeMultiplier = 1f + attacker.GetMutationEffect(MutationType.EncystedSporeMultiplier); // New mutation type if needed
+                float encystedSporeMultiplier = 1f + attacker.GetMutationEffect(MutationType.EncystedSporeMultiplier);
                 decayBoost *= encystedSporeMultiplier;
             }
 
             return baseChance + decayBoost;
         }
 
-
         public int GetBonusMutationPoints()
         {
             int bonusPoints = 0;
-
-            float bonusChance = GetMutationEffect(MutationType.BonusMutationPointChance); 
-
+            float bonusChance = GetMutationEffect(MutationType.BonusMutationPointChance);
             if (rng.NextDouble() < bonusChance)
                 bonusPoints += 1;
-
             return bonusPoints;
         }
 
+        public void LogOwnedMutations()
+        {
+            foreach (var m in PlayerMutations)
+            {
+                var pm = m.Value;
+                Debug.Log($"🧬 Player owns: {pm.Mutation.Name} (Level {pm.CurrentLevel}) [ID {pm.Mutation.Id}]");
+            }
+        }
     }
 }

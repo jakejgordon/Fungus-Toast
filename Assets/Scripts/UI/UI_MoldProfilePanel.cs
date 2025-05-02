@@ -22,11 +22,11 @@ public class UI_MoldProfilePanel : MonoBehaviour
 
     public void UpdateDisplay()
     {
-        if (trackedPlayer == null) return;
+       if (trackedPlayer == null) return;
 
         growthChanceText.text = $"Hyphal Outgrowth Chance: {(trackedPlayer.GetEffectiveGrowthChance() * 100f):F2}%";
-        deathChanceText.text = $"Mycelial Degradation: {(trackedPlayer.GetEffectiveSelfDeathChance() * 100f):F2}%";
-        mpIncomeText.text = $"MP per Turn: {trackedPlayer.GetMutationPointIncome()}";
+        deathChanceText.text = $"Decay Chance: {(trackedPlayer.GetEffectiveSelfDeathChance() * 100f):F2}%";
+        mpIncomeText.text = $"Mutation Points per Turn: {trackedPlayer.GetMutationPointIncome()}";
     }
 
     public void Refresh()

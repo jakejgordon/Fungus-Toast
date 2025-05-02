@@ -35,6 +35,9 @@ namespace FungusToast.UI
         [SerializeField] private TextMeshProUGUI mutationDescriptionText;
         [SerializeField] private GameObject mutationDescriptionBackground;
 
+        [Header("UI Wiring")]
+        [SerializeField] private UI_MoldProfilePanel moldProfilePanel;
+
         [Header("Tree Sliding Settings")]
         public float slideDuration = 0.5f;
         public Vector2 hiddenPosition = new Vector2(-1920, 0);
@@ -125,75 +128,82 @@ namespace FungusToast.UI
         {
             ClearMutationNodes();
 
+            if (humanPlayer == null)
+            {
+                Debug.LogError("❌ PopulateAllMutations called without a humanPlayer.");
+                return;
+            }
+
             int rootIndex = 0;
-            // Loop through the root mutations
+
             foreach (var rootPair in mutationManager.RootMutations)
             {
                 Mutation root = rootPair.Value;
-                // Starting position for the root (top of the screen)
-                Vector2 startPos = new Vector2(0, -rootIndex * (mutationButtonSize.y + 40)); // Adjust spacing as needed
-                                                                                             // Populate recursive call for children mutations
+
+                Vector2 startPos = new Vector2(0, -rootIndex * (mutationButtonSize.y + 40));
                 PopulateMutationRecursive(root, startPos, 0);
+
                 rootIndex++;
             }
         }
 
 
+
         private void PopulateMutationRecursive(Mutation mutation, Vector2 position, int depth)
         {
-            // Instantiate the mutation button and initialize it
             GameObject buttonGO = Instantiate(mutationNodePrefab, mutationNodeParent);
             MutationNodeUI nodeUI = buttonGO.GetComponent<MutationNodeUI>();
-            nodeUI.Initialize(mutation, this);
+            nodeUI.Initialize(mutation, humanPlayer, this);
 
-            // Set RectTransform properties for manual layout positioning
             RectTransform rect = buttonGO.GetComponent<RectTransform>();
             rect.localScale = Vector3.one;
             rect.sizeDelta = mutationButtonSize;
             rect.anchoredPosition = position;
 
-            // Check if the mutation is locked due to a requirement
+            // Check lock state based on player's mutation levels
             if (mutation.RequiredMutation != null)
             {
-                int requiredLevel = 10; // Customize as needed
-                int currentLevel = mutation.RequiredMutation.CurrentLevel;
+                int requiredLevel = mutation.RequiredLevel;
+                int playerLevel = humanPlayer.GetMutationLevel(mutation.RequiredMutation.Id);
 
-                if (currentLevel < requiredLevel)
+                if (playerLevel < requiredLevel)
                 {
-                    nodeUI.SetLockedState($"Requires {mutation.RequiredMutation.Name} (Level {requiredLevel})\nCurrent: {currentLevel}");
+                    nodeUI.SetLockedState($"Requires {mutation.RequiredMutation.Name} (Level {requiredLevel})\nCurrent: {playerLevel}");
                     return;
                 }
             }
 
             nodeUI.SetUnlockedState();
 
-            // Define how much vertical and horizontal space to leave between nodes
-            float spacingY = mutationButtonSize.y + 40;  // Space between rows (vertical)
-            float spacingX = mutationButtonSize.x + 80;  // Space between columns (horizontal)
+            float spacingY = mutationButtonSize.y + 40;
+            float spacingX = mutationButtonSize.x + 80;
 
-            // Recursively place child mutations (vertically aligned under the parent)
             for (int i = 0; i < mutation.Children.Count; i++)
             {
-                // Position children mutations vertically, with a little horizontal offset for each
                 Vector2 childPos = position + new Vector2(spacingX, -(i + 1) * spacingY);
                 PopulateMutationRecursive(mutation.Children[i], childPos, depth + 1);
             }
         }
 
 
+
         public bool TryUpgradeMutation(Mutation mutation)
         {
             Debug.Log($"TMutationUIManager.TryUpgradeMutation: Player {humanPlayer.PlayerId} has {humanPlayer.MutationPoints} points before upgrade.");
 
-            if (mutationManager.TryUpgradeMutation(mutation, humanPlayer))
+            if (humanPlayer.TryUpgradeMutation(mutation))
             {
                 RefreshSpendPointsButtonUI();
                 GameManager.Instance.GameUI.MoldProfilePanel.Refresh();
                 TryEndHumanTurn();
                 return true;
             }
+
+            Debug.LogWarning($"⚠️ Player {humanPlayer.PlayerId} failed to upgrade {mutation.Name}");
             return false;
         }
+
+
 
         public void TogglePanelDock()
         {
