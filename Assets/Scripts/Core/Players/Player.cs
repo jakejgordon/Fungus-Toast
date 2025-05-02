@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using FungusToast.Core.Board;
+using FungusToast.Core.Config;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Game;
@@ -61,10 +62,8 @@ namespace FungusToast.Core.Players
             if (mutation == null)
                 return false;
 
-            // Auto-acquire if not already owned
             if (!PlayerMutations.ContainsKey(mutation.Id))
             {
-                // Optional: validate prerequisites here
                 PlayerMutations[mutation.Id] = new PlayerMutation(PlayerId, mutation.Id, mutation);
             }
 
@@ -79,7 +78,6 @@ namespace FungusToast.Core.Players
 
             return false;
         }
-
 
         public bool CanUpgrade(Mutation mutation)
         {
@@ -121,30 +119,29 @@ namespace FungusToast.Core.Players
 
         public float GetEffectiveGrowthChance()
         {
-            float baseChance = 0.05f;
+            float baseChance = GameBalance.BaseGrowthChance;
             float bonus = GetMutationEffect(MutationType.GrowthChance);
             return baseChance + bonus;
         }
 
         public float GetEffectiveSelfDeathChance()
         {
-            float baseChance = DeathEngine.BaseDeathChance;
+            float baseChance = GameBalance.BaseDeathChance;
             float survivalBonus = GetMutationEffect(MutationType.DefenseSurvival);
             return System.Math.Max(0f, baseChance - survivalBonus);
         }
 
-        public float GetEffectiveDeathChanceFrom(Player attacker, FungalCell targetCell, GameBoard board)
+        public float GetOffensiveDecayModifierAgainst(FungalCell targetCell, GameBoard board)
         {
-            float baseChance = GetEffectiveSelfDeathChance();
-            float decayBoost = attacker.GetMutationEffect(MutationType.EnemyDecayChance);
+            float decayBoost = GetMutationEffect(MutationType.EnemyDecayChance);
 
             if (DeathEngine.IsCellSurrounded(targetCell.TileId, board))
             {
-                float encystedSporeMultiplier = 1f + attacker.GetMutationEffect(MutationType.EncystedSporeMultiplier);
+                float encystedSporeMultiplier = 1f + GetMutationEffect(MutationType.EncystedSporeMultiplier);
                 decayBoost *= encystedSporeMultiplier;
             }
 
-            return baseChance + decayBoost;
+            return decayBoost;
         }
 
         public int GetBonusMutationPoints()

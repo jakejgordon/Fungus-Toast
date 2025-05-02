@@ -2,14 +2,12 @@
 using UnityEngine;
 using FungusToast.Core.Board;
 using FungusToast.Core.Players;
+using FungusToast.Core.Config;
 
 namespace FungusToast.Core.Growth
 {
     public static class DeathEngine
     {
-        // Tunable decay settings
-        public const float BaseDeathChance = 0.02f; // 2% base chance
-        public const float PerCycleAgeDecayIncrease = 0.005f; // +0.5% per cycle
 
         public static void ExecuteDeathCycle(GameBoard board, List<Player> players)
         {
@@ -35,13 +33,12 @@ namespace FungusToast.Core.Growth
                     continue;
                 }
 
-                // Ensure player retains at least one cell
                 int playerLivingCells = CountLivingCells(board, player.PlayerId);
                 if (playerLivingCells <= 1)
                     continue;
 
-                float baseChance = BaseDeathChance;
-                float ageModifier = cell.GrowthCycleAge * PerCycleAgeDecayIncrease;
+                float baseChance = GameBalance.BaseDeathChance;
+                float ageModifier = cell.GrowthCycleAge * GameBalance.AgeDeathFactor;
                 float defenseBonus = player.GetEffectiveSelfDeathChance();
                 float pressure = GetEnemyPressure(players, player, cell, board);
 
@@ -84,7 +81,7 @@ namespace FungusToast.Core.Growth
             {
                 if (enemy.PlayerId != currentPlayer.PlayerId)
                 {
-                    pressure += enemy.GetEffectiveDeathChanceFrom(currentPlayer, targetCell, board);
+                    pressure += enemy.GetOffensiveDecayModifierAgainst(targetCell, board);
                 }
             }
 
@@ -101,7 +98,7 @@ namespace FungusToast.Core.Growth
             {
                 var neighborCell = board.GetCell(neighborId);
                 if (neighborCell == null || !neighborCell.IsAlive)
-                    return false; // Found an empty or dead neighbor
+                    return false;
             }
 
             return true;

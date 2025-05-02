@@ -3,19 +3,16 @@ using UnityEngine;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using FungusToast.Core;
+using FungusToast.Core.Config;
 
 namespace FungusToast.Game
 {
     public class MutationManager : MonoBehaviour
     {
-        [Header("Mutation Settings")]
-        [SerializeField] private int startingMutationPoints = 5;
-        public int BasePointsPerCycle => startingMutationPoints;
-
         private Dictionary<int, Mutation> rootMutations = new();
         public IReadOnlyDictionary<int, Mutation> RootMutations => rootMutations;
 
-        private Dictionary<int, Mutation> allMutations = new(); // ✅ new lookup by ID
+        private Dictionary<int, Mutation> allMutations = new();
 
         private void Awake()
         {
@@ -99,7 +96,7 @@ namespace FungusToast.Game
             foreach (var player in players)
             {
                 int bonus = player.GetBonusMutationPoints();
-                player.MutationPoints = startingMutationPoints + bonus;
+                player.MutationPoints = GameBalance.StartingMutationPoints + bonus;
             }
         }
     }

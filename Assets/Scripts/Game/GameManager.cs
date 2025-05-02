@@ -210,7 +210,7 @@ namespace FungusToast.Game
 
         public void OnGrowthPhaseComplete()
         {
-            mutationManager.ResetMutationPoints(players);
+            AssignMutationPoints();
 
             Debug.Log("All players have received new mutation points.");
 
@@ -223,5 +223,21 @@ namespace FungusToast.Game
                 gameUIManager.MoldProfilePanel.Refresh();
             }
         }
+
+
+        public void AssignMutationPoints()
+        {
+            foreach (var player in players)
+            {
+                int baseIncome = player.GetMutationPointIncome();    // base + mutations
+                int bonus = player.GetBonusMutationPoints();         // chance-based
+
+                player.MutationPoints = baseIncome + bonus;
+
+                // Optional: log or notify UI
+                Debug.Log($"🌱 Player {player.PlayerId} assigned {player.MutationPoints} MP (base: {baseIncome}, bonus: {bonus})");
+            }
+        }
+
     }
 }
