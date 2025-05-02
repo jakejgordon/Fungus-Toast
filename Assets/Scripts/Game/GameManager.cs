@@ -5,6 +5,7 @@ using FungusToast.Core.Players;
 using FungusToast.Grid;
 using FungusToast.Game.Phases;
 using FungusToast.UI;
+using FungusToast.Core.Config;
 
 namespace FungusToast.Game
 {
@@ -61,7 +62,7 @@ namespace FungusToast.Game
         {
             players.Clear();
 
-            int baseMP = mutationManager.BasePointsPerCycle;
+            int baseMP = GameBalance.StartingMutationPoints;
 
             humanPlayer = new Player(
                 playerId: 0,
