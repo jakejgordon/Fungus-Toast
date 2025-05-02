@@ -3,7 +3,6 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Game;
-using UnityEngine; // ✅ Needed for Debug.Log
 
 namespace FungusToast.Core.Players
 {
@@ -16,8 +15,6 @@ namespace FungusToast.Core.Players
         public PlayerTypeEnum PlayerType { get; private set; }
         public AITypeEnum AIType { get; private set; }
         public int MutationPoints { get; set; }
-
-        public float GrowthChance { get; set; } = 0.10f;
 
         public Dictionary<int, PlayerMutation> PlayerMutations { get; private set; } = new();
         public List<int> ControlledTileIds { get; private set; } = new();
@@ -69,7 +66,6 @@ namespace FungusToast.Core.Players
             {
                 // Optional: validate prerequisites here
                 PlayerMutations[mutation.Id] = new PlayerMutation(PlayerId, mutation.Id, mutation);
-                Debug.Log($"🧬 Player {PlayerId} auto-acquired {mutation.Name}");
             }
 
             var playerMutation = PlayerMutations[mutation.Id];
@@ -78,20 +74,20 @@ namespace FungusToast.Core.Players
             {
                 MutationPoints -= mutation.PointsPerUpgrade;
                 playerMutation.Upgrade();
-                Debug.Log($"✅ Player {PlayerId} upgraded {mutation.Name} to Level {playerMutation.CurrentLevel} | Remaining MP: {MutationPoints}");
                 return true;
             }
 
-            Debug.LogWarning($"❌ Upgrade failed for {mutation.Name}: Not enough MP or already maxed.");
             return false;
         }
 
+
         public bool CanUpgrade(Mutation mutation)
         {
-            return mutation != null &&
-                   PlayerMutations.TryGetValue(mutation.Id, out var playerMutation) &&
-                   MutationPoints >= mutation.PointsPerUpgrade &&
-                   playerMutation.CurrentLevel < mutation.MaxLevel;
+            if (mutation == null || !PlayerMutations.ContainsKey(mutation.Id))
+                return false;
+
+            var playerMutation = PlayerMutations[mutation.Id];
+            return MutationPoints >= mutation.PointsPerUpgrade && playerMutation.CurrentLevel < mutation.MaxLevel;
         }
 
         public int GetMutationLevel(int mutationId)
@@ -106,7 +102,7 @@ namespace FungusToast.Core.Players
             foreach (var playerMutation in PlayerMutations.Values)
             {
                 if (playerMutation.Mutation.Type == type)
-                    total += playerMutation.GetEffect(); // ✅ uses refactored method
+                    total += playerMutation.GetEffect();
             }
 
             return total;
@@ -134,7 +130,7 @@ namespace FungusToast.Core.Players
         {
             float baseChance = DeathEngine.BaseDeathChance;
             float survivalBonus = GetMutationEffect(MutationType.DefenseSurvival);
-            return Mathf.Max(0f, baseChance - survivalBonus);
+            return System.Math.Max(0f, baseChance - survivalBonus);
         }
 
         public float GetEffectiveDeathChanceFrom(Player attacker, FungalCell targetCell, GameBoard board)
@@ -165,7 +161,7 @@ namespace FungusToast.Core.Players
             foreach (var m in PlayerMutations)
             {
                 var pm = m.Value;
-                Debug.Log($"🧬 Player owns: {pm.Mutation.Name} (Level {pm.CurrentLevel}) [ID {pm.Mutation.Id}]");
+                UnityEngine.Debug.Log($"\U0001f9ec Player owns: {pm.Mutation.Name} (Level {pm.CurrentLevel}) [ID {pm.Mutation.Id}]");
             }
         }
     }

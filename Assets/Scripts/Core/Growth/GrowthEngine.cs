@@ -40,7 +40,8 @@ namespace FungusToast.Core.Growth
                 if (!neighbor.IsOccupied)
                 {
                     float roll = Random.Range(0f, 1f);
-                    if (roll <= owner.GrowthChance)
+                    float effectiveGrowthChance = owner.GetEffectiveGrowthChance();
+                    if (roll <= effectiveGrowthChance)
                     {
                         int tileId = neighbor.Y * board.Width + neighbor.X;
                         var newCell = new FungalCell(owner.PlayerId, tileId);
