@@ -57,7 +57,7 @@ namespace FungusToast.UI.MutationTree
 
                     var text = headerGO.GetComponentInChildren<TMPro.TextMeshProUGUI>();
                     if (text != null)
-                        text.text = metadata.Category.ToString();
+                        text.text = text.text = SplitCamelCase(metadata.Category.ToString());
                 }
 
                 // Add the mutation node
@@ -109,5 +109,15 @@ namespace FungusToast.UI.MutationTree
                 Destroy(column.GetChild(i).gameObject);
             }
         }
+
+        public static string SplitCamelCase(string input)
+        {
+            return System.Text.RegularExpressions.Regex.Replace(
+                input,
+                "(\\B[A-Z])",
+                " $1"
+            );
+        }
+
     }
 }
