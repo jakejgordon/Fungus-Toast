@@ -8,8 +8,10 @@ using FungusToast.Core.Players;
 using UnityEngine.Tilemaps;
 using FungusToast.Grid;
 using FungusToast.Game;
+using FungusToast.UI.MutationTree;
+using System.Linq;
 
-namespace FungusToast.UI
+namespace FungusToast.UI.MutationTree
 {
     public class UI_MutationManager : MonoBehaviour
     {
@@ -24,13 +26,10 @@ namespace FungusToast.UI
         [SerializeField] private Image playerMoldIcon;
         [SerializeField] private GridVisualizer gridVisualizer;
 
-        [Header("Mutation Tree References")]
-        [SerializeField] private GameObject mutationNodePrefab;
-        [SerializeField] private Transform mutationNodeParent;
+        [Header("Mutation Tree Dynamic UI")]
+        [SerializeField] private MutationTreeBuilder mutationTreeBuilder;
 
-        [Header("Mutation Tree Layout Settings")]
-        [SerializeField] private Vector2 mutationButtonSize = new Vector2(120, 120);
-
+        [Header("Tooltip and Dock")]
         [SerializeField] private TextMeshProUGUI dockButtonText;
         [SerializeField] private TextMeshProUGUI mutationDescriptionText;
         [SerializeField] private GameObject mutationDescriptionBackground;
@@ -59,9 +58,14 @@ namespace FungusToast.UI
         private void Start()
         {
             if (mutationTreePanel != null)
+            {
                 mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
+                // Leave active for initial layout
+            }
             else
+            {
                 Debug.LogError("mutationTreePanel is NULL at Start()!");
+            }
 
             RefreshSpendPointsButtonUI();
             originalButtonScale = spendPointsButton.transform.localScale;
@@ -106,6 +110,9 @@ namespace FungusToast.UI
                 Debug.LogWarning("Player tile or tile sprite is null.");
                 playerMoldIcon.enabled = false;
             }
+
+            PopulateAllMutations();
+            StartCoroutine(SlideOutTree());
         }
 
         public void OnSpendPointsClicked()
@@ -126,66 +133,17 @@ namespace FungusToast.UI
 
         public void PopulateAllMutations()
         {
-            ClearMutationNodes();
-
-            if (humanPlayer == null)
+            if (humanPlayer == null || mutationTreeBuilder == null || mutationManager == null)
             {
-                Debug.LogError("❌ PopulateAllMutations called without a humanPlayer.");
+                Debug.LogError("❌ Cannot build mutation tree — missing references.");
                 return;
             }
 
-            int rootIndex = 0;
+            var mutations = mutationManager.GetAllMutations().ToList();
+            var layout = MutationLayoutProvider.GetDefaultLayout();
 
-            foreach (var rootPair in mutationManager.RootMutations)
-            {
-                Mutation root = rootPair.Value;
-
-                Vector2 startPos = new Vector2(0, -rootIndex * (mutationButtonSize.y + 40));
-                PopulateMutationRecursive(root, startPos, 0);
-
-                rootIndex++;
-            }
+            mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
         }
-
-
-
-        private void PopulateMutationRecursive(Mutation mutation, Vector2 position, int depth)
-        {
-            GameObject buttonGO = Instantiate(mutationNodePrefab, mutationNodeParent);
-            MutationNodeUI nodeUI = buttonGO.GetComponent<MutationNodeUI>();
-            nodeUI.Initialize(mutation, humanPlayer, this);
-
-            RectTransform rect = buttonGO.GetComponent<RectTransform>();
-            rect.localScale = Vector3.one;
-            rect.sizeDelta = mutationButtonSize;
-            rect.anchoredPosition = position;
-
-            // Check lock state based on player's mutation levels
-            if (mutation.RequiredMutation != null)
-            {
-                int requiredLevel = mutation.RequiredLevel;
-                int playerLevel = humanPlayer.GetMutationLevel(mutation.RequiredMutation.Id);
-
-                if (playerLevel < requiredLevel)
-                {
-                    nodeUI.SetLockedState($"Requires {mutation.RequiredMutation.Name} (Level {requiredLevel})\nCurrent: {playerLevel}");
-                    return;
-                }
-            }
-
-            nodeUI.SetUnlockedState();
-
-            float spacingY = mutationButtonSize.y + 40;
-            float spacingX = mutationButtonSize.x + 80;
-
-            for (int i = 0; i < mutation.Children.Count; i++)
-            {
-                Vector2 childPos = position + new Vector2(spacingX, -(i + 1) * spacingY);
-                PopulateMutationRecursive(mutation.Children[i], childPos, depth + 1);
-            }
-        }
-
-
 
         public bool TryUpgradeMutation(Mutation mutation)
         {
@@ -202,8 +160,6 @@ namespace FungusToast.UI
             Debug.LogWarning($"⚠️ Player {humanPlayer.PlayerId} failed to upgrade {mutation.Name}");
             return false;
         }
-
-
 
         public void TogglePanelDock()
         {
@@ -323,18 +279,14 @@ namespace FungusToast.UI
 
         private void RefreshSpendPointsButtonUI()
         {
-            Debug.Log($"RefreshSpendPointsButtonUI() called");
-
             if (spendPointsButton == null || buttonOutline == null || humanPlayer == null)
                 return;
 
             int points = humanPlayer.MutationPoints;
-            Debug.Log($"RefreshSpendPointsButtonUI() made it to points assignment with {points} points.");
             if (points > 0)
             {
                 spendPointsButton.interactable = true;
                 spendPointsButtonText.text = $"Spend {points} Points!";
-                Debug.Log($"[UI] Updated button: {points} points");
                 buttonOutline.enabled = true;
             }
             else
@@ -386,7 +338,6 @@ namespace FungusToast.UI
             if (!humanTurnEnded && humanPlayer != null && humanPlayer.MutationPoints <= 0)
             {
                 humanTurnEnded = true;
-                Debug.Log("Human has spent all mutation points. Closing panel and triggering AI...");
                 StartCoroutine(ClosePanelThenTriggerAI());
             }
         }
@@ -397,14 +348,6 @@ namespace FungusToast.UI
                 yield return StartCoroutine(SlideOutTree());
 
             GameManager.Instance.SpendAllMutationPointsForAIPlayers();
-        }
-
-        private void ClearMutationNodes()
-        {
-            foreach (Transform child in mutationNodeParent)
-            {
-                Destroy(child.gameObject);
-            }
         }
     }
 }

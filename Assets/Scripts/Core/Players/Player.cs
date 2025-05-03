@@ -25,6 +25,8 @@ namespace FungusToast.Core.Players
 
         private int baseMutationPoints = 5;
 
+        public IMutationSpendingStrategy MutationStrategy { get; private set; }
+
         public Player(int playerId, string playerName, PlayerTypeEnum playerType, AITypeEnum aiType = AITypeEnum.Random)
         {
             PlayerId = playerId;
@@ -39,6 +41,11 @@ namespace FungusToast.Core.Players
         public void SetBaseMutationPoints(int amount)
         {
             baseMutationPoints = amount;
+        }
+
+        public void SetMutationStrategy(IMutationSpendingStrategy strategy)
+        {
+            MutationStrategy = strategy;
         }
 
         public int GetMutationPointIncome()
@@ -158,7 +165,7 @@ namespace FungusToast.Core.Players
             foreach (var m in PlayerMutations)
             {
                 var pm = m.Value;
-                UnityEngine.Debug.Log($"\U0001f9ec Player owns: {pm.Mutation.Name} (Level {pm.CurrentLevel}) [ID {pm.Mutation.Id}]");
+                UnityEngine.Debug.Log($"🧬 Player owns: {pm.Mutation.Name} (Level {pm.CurrentLevel}) [ID {pm.Mutation.Id}]");
             }
         }
     }

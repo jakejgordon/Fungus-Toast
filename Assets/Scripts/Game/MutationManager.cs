@@ -13,6 +13,7 @@ namespace FungusToast.Game
         public IReadOnlyDictionary<int, Mutation> RootMutations => rootMutations;
 
         private Dictionary<int, Mutation> allMutations = new();
+        public IReadOnlyDictionary<int, Mutation> AllMutations => allMutations;
 
         private void Awake()
         {
@@ -89,6 +90,11 @@ namespace FungusToast.Game
         public Mutation GetMutationById(int id)
         {
             return allMutations.TryGetValue(id, out var mutation) ? mutation : null;
+        }
+
+        public IReadOnlyCollection<Mutation> GetAllMutations()
+        {
+            return allMutations.Values;
         }
 
         public void ResetMutationPoints(List<Player> players)

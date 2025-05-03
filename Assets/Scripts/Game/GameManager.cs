@@ -6,6 +6,7 @@ using FungusToast.Grid;
 using FungusToast.Game.Phases;
 using FungusToast.UI;
 using FungusToast.Core.Config;
+using System.Linq;
 
 namespace FungusToast.Game
 {
@@ -94,7 +95,7 @@ namespace FungusToast.Game
                 }
                 else
                 {
-                    Debug.LogWarning($"⚠️ No icon found for player {player.PlayerId}");
+                    Debug.LogWarning($"\u26a0\ufe0f No icon found for player {player.PlayerId}");
                 }
             }
 
@@ -126,13 +127,14 @@ namespace FungusToast.Game
             {
                 gameUIManager.MutationUIManager.Initialize(humanPlayer);
                 gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-                gameUIManager.MutationUIManager.PopulateAllMutations();
+                gameUIManager.MutationUIManager.PopulateAllMutations(); // ✅ Add this line
             }
             else
             {
                 Debug.LogError("MutationUIManager reference not assigned in GameManager!");
             }
         }
+
 
         public void InitializeGame(int count)
         {
@@ -150,7 +152,6 @@ namespace FungusToast.Game
 
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-            gameUIManager.MutationUIManager.PopulateAllMutations();
         }
 
         public void PlaceStartingSpores()
@@ -177,23 +178,13 @@ namespace FungusToast.Game
             {
                 if (player.PlayerType == PlayerTypeEnum.AI)
                 {
-                    while (player.MutationPoints > 0)
-                    {
-                        SpendMutationPointRandomly(player);
-                    }
+                    player.MutationStrategy?.SpendMutationPoints(player, mutationManager.GetAllMutations().ToList());
                 }
             }
 
             Debug.Log("All AI players have spent their mutation points.");
 
             StartGrowthPhase();
-        }
-
-        private void SpendMutationPointRandomly(Player player)
-        {
-            player.MutationPoints--;
-
-            Debug.Log($"AI Player {player.PlayerId} spent 1 mutation point.");
         }
 
         private void StartGrowthPhase()
@@ -217,7 +208,6 @@ namespace FungusToast.Game
 
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-            gameUIManager.MutationUIManager.PopulateAllMutations();
 
             if (gameUIManager.MoldProfilePanel != null)
             {
@@ -225,20 +215,17 @@ namespace FungusToast.Game
             }
         }
 
-
         public void AssignMutationPoints()
         {
             foreach (var player in players)
             {
-                int baseIncome = player.GetMutationPointIncome();    // base + mutations
-                int bonus = player.GetBonusMutationPoints();         // chance-based
+                int baseIncome = player.GetMutationPointIncome();
+                int bonus = player.GetBonusMutationPoints();
 
                 player.MutationPoints = baseIncome + bonus;
 
-                // Optional: log or notify UI
                 Debug.Log($"🌱 Player {player.PlayerId} assigned {player.MutationPoints} MP (base: {baseIncome}, bonus: {bonus})");
             }
         }
-
     }
 }
