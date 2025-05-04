@@ -91,9 +91,17 @@ namespace FungusToast.Core.Players
             if (mutation == null)
                 return false;
 
+            if (mutation.RequiredMutation != null)
+            {
+                int requiredLevel = GetMutationLevel(mutation.RequiredMutation.Id);
+                if (requiredLevel < mutation.RequiredLevel)
+                    return false;
+            }
+
             int currentLevel = GetMutationLevel(mutation.Id);
             return MutationPoints >= mutation.PointsPerUpgrade && currentLevel < mutation.MaxLevel;
         }
+
 
 
         public int GetMutationLevel(int mutationId)
