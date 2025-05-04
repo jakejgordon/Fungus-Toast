@@ -35,12 +35,26 @@ namespace FungusToast.UI.MutationTree
 
         private void OnUpgradeClicked()
         {
-            if (player.TryUpgradeMutation(mutation))
+            if (!player.CanUpgrade(mutation))
+                return;
+
+            // Disable button immediately to prevent spam clicks
+            upgradeButton.interactable = false;
+
+            // Let the central manager handle the logic and side effects
+            bool success = uiManager.TryUpgradeMutation(mutation);
+
+            if (success)
             {
                 UpdateDisplay();
-                uiManager.TryUpgradeMutation(mutation);
+            }
+            else
+            {
+                // If it failed (e.g., race condition or bad state), re-enable the button
+                upgradeButton.interactable = true;
             }
         }
+
 
         private void UpdateDisplay()
         {
