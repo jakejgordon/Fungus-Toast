@@ -66,8 +66,8 @@ namespace FungusToast.Game
                 description: $"Epigenetic modifications increase genomic variability, accelerating adaptive potential. " +
                              $"Adds a +{(0.01f * 100f):F1}% chance to gain a bonus mutation point at the start of each turn.",
                 type: MutationType.BonusMutationPointChance,
-                effectPerLevel: 0.01f,
-                maxLevel: 50
+                effectPerLevel: 0.10f,
+                maxLevel: 10
             );
             rootMutations[adaptiveExpression.Id] = adaptiveExpression;
             allMutations[adaptiveExpression.Id] = adaptiveExpression;

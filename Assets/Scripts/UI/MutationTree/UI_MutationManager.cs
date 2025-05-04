@@ -168,6 +168,11 @@ namespace FungusToast.UI.MutationTree
                 StartCoroutine(SlideInTree());
         }
 
+        public void DebugClickTest()
+        {
+            Debug.Log("✅ Dock button works!");
+        }
+
         public void ShowMutationDescription(string description, RectTransform sourceRect)
         {
             if (mutationDescriptionBackground == null)
