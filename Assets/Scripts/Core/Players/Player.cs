@@ -43,6 +43,11 @@ namespace FungusToast.Core.Players
             baseMutationPoints = amount;
         }
 
+        public int GetBaseMutationPointIncome()
+        {
+            return baseMutationPoints;
+        }
+
         public void SetMutationStrategy(IMutationSpendingStrategy strategy)
         {
             MutationStrategy = strategy;
@@ -50,8 +55,8 @@ namespace FungusToast.Core.Players
 
         public int GetMutationPointIncome()
         {
-            int bonus = (int)GetMutationEffect(MutationType.BonusMutationPointChance);
-            return baseMutationPoints + bonus;
+            // Only return the fixed base; any chance-based bonus is handled separately
+            return baseMutationPoints;
         }
 
         public void AcquireMutation(int mutationId, MutationManager mutationManager)
@@ -184,7 +189,7 @@ namespace FungusToast.Core.Players
             foreach (var m in PlayerMutations)
             {
                 var pm = m.Value;
-                UnityEngine.Debug.Log($"\ud83e\uddea Player owns: {pm.Mutation.Name} (Level {pm.CurrentLevel}) [ID {pm.Mutation.Id}]");
+                UnityEngine.Debug.Log($"🧬 Player owns: {pm.Mutation.Name} (Level {pm.CurrentLevel}) [ID {pm.Mutation.Id}]");
             }
         }
     }

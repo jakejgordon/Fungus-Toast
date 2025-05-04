@@ -64,7 +64,7 @@ namespace FungusToast.Game
                 id: id++,
                 name: "Adaptive Expression",
                 description: $"Epigenetic modifications increase genomic variability, accelerating adaptive potential. " +
-                             $"Adds a +{(0.01f * 100f):F1}% chance to gain a bonus mutation point at the start of each turn.",
+                             $"Adds a +{(0.10f * 100f):F1}% chance to gain a bonus mutation point at the start of each turn.",
                 type: MutationType.BonusMutationPointChance,
                 effectPerLevel: 0.10f,
                 maxLevel: 10
@@ -95,11 +95,12 @@ namespace FungusToast.Game
 
         private void CreateDiagonalGrowthMutation(ref int id, string name, MutationType type, Mutation required)
         {
+            string direction = name.Split(' ')[1];
             var mutation = new Mutation(
                 id: id++,
                 name: name,
-                description: $"Specialized hyphae reach into {name.Split(' ')[1].ToLower()} territory. " +
-                             $"Adds +1.0% chance per level to grow mold {name.Split(' ')[1].ToLower()}.",
+                description: $"Specialized hyphae reach into {direction.ToLower()} territory. " +
+                             $"Adds +1.0% chance per level to grow mold {direction.ToLower()}.",
                 type: type,
                 effectPerLevel: 0.01f,
                 maxLevel: 10

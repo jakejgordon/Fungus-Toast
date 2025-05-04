@@ -83,6 +83,9 @@ namespace FungusToast.Game
                     aiType: AITypeEnum.Random
                 );
                 aiPlayer.SetBaseMutationPoints(baseMP);
+
+                aiPlayer.SetMutationStrategy(new RandomMutationSpendingStrategy());
+
                 players.Add(aiPlayer);
             }
 
