@@ -60,7 +60,6 @@ namespace FungusToast.UI.MutationTree
             if (mutationTreePanel != null)
             {
                 mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
-                // Leave active for initial layout
             }
             else
             {
@@ -171,41 +170,49 @@ namespace FungusToast.UI.MutationTree
 
         public void ShowMutationDescription(string description, RectTransform sourceRect)
         {
-            if (mutationDescriptionBackground != null)
-            {
-                CanvasGroup cg = mutationDescriptionBackground.GetComponent<CanvasGroup>();
-                if (cg != null)
-                {
-                    if (tooltipFadeCoroutine != null)
-                        StopCoroutine(tooltipFadeCoroutine);
+            if (mutationDescriptionBackground == null)
+                return;
 
-                    tooltipFadeCoroutine = StartCoroutine(FadeTooltip(cg, 1f, 0.2f));
-                    cg.interactable = true;
-                    cg.blocksRaycasts = true;
-                }
-            }
+            // Make sure it's active and on top
+            if (!mutationDescriptionBackground.activeSelf)
+                mutationDescriptionBackground.SetActive(true);
 
+            mutationDescriptionBackground.transform.SetAsLastSibling();
+
+            // Set the text
             if (mutationDescriptionText != null)
             {
                 mutationDescriptionText.gameObject.SetActive(true);
                 mutationDescriptionText.text = description;
             }
 
-            if (sourceRect != null && mutationDescriptionBackground != null)
+            // Fade in tooltip
+            CanvasGroup cg = mutationDescriptionBackground.GetComponent<CanvasGroup>();
+            if (cg != null)
             {
-                RectTransform descRect = mutationDescriptionBackground.GetComponent<RectTransform>();
+                if (tooltipFadeCoroutine != null)
+                    StopCoroutine(tooltipFadeCoroutine);
 
-                Vector2 anchoredPosition = sourceRect.anchoredPosition;
-                float verticalOffset = sourceRect.rect.height + 20f;
-
-                descRect.pivot = new Vector2(0f, 1f);
-                anchoredPosition.y -= verticalOffset;
-
-                descRect.anchoredPosition = anchoredPosition;
+                tooltipFadeCoroutine = StartCoroutine(FadeTooltip(cg, 1f, 0.2f));
+                cg.interactable = true;
+                cg.blocksRaycasts = true;
             }
 
-            LayoutRebuilder.ForceRebuildLayoutImmediate(mutationDescriptionBackground.GetComponent<RectTransform>());
+            // Tooltip positioning relative to mouse (for Screen Space - Overlay)
+            RectTransform descRect = mutationDescriptionBackground.GetComponent<RectTransform>();
+            descRect.pivot = new Vector2(0f, 1f); // top-left
+
+            Vector2 offset = new Vector2(20f, -20f); // right and down from the mouse
+            descRect.position = Input.mousePosition + (Vector3)offset;
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(descRect);
         }
+
+
+
+
+
+
 
         public void ClearMutationDescription()
         {
