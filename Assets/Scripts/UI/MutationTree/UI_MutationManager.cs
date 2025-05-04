@@ -55,17 +55,16 @@ namespace FungusToast.UI.MutationTree
         private bool humanTurnEnded = false;
         private Coroutine tooltipFadeCoroutine;
 
-        private void Start()
+        private void Awake()
         {
             if (mutationTreePanel != null)
-            {
                 mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
-            }
             else
-            {
-                Debug.LogError("mutationTreePanel is NULL at Start()!");
-            }
+                Debug.LogError("mutationTreePanel is NULL at Awake()!");
+        }
 
+        private void Start()
+        {
             RefreshSpendPointsButtonUI();
             originalButtonScale = spendPointsButton.transform.localScale;
             spendPointsButton.onClick.AddListener(OnSpendPointsClicked);
@@ -82,6 +81,9 @@ namespace FungusToast.UI.MutationTree
 
         public void Initialize(Player player)
         {
+            if (mutationTreeRect == null && mutationTreePanel != null)
+                mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
+
             if (gridVisualizer == null)
             {
                 Debug.LogError("❌ GridVisualizer is not assigned to MutationUIManager!");
@@ -178,20 +180,17 @@ namespace FungusToast.UI.MutationTree
             if (mutationDescriptionBackground == null)
                 return;
 
-            // Make sure it's active and on top
             if (!mutationDescriptionBackground.activeSelf)
                 mutationDescriptionBackground.SetActive(true);
 
             mutationDescriptionBackground.transform.SetAsLastSibling();
 
-            // Set the text
             if (mutationDescriptionText != null)
             {
                 mutationDescriptionText.gameObject.SetActive(true);
                 mutationDescriptionText.text = description;
             }
 
-            // Fade in tooltip
             CanvasGroup cg = mutationDescriptionBackground.GetComponent<CanvasGroup>();
             if (cg != null)
             {
@@ -203,21 +202,14 @@ namespace FungusToast.UI.MutationTree
                 cg.blocksRaycasts = true;
             }
 
-            // Tooltip positioning relative to mouse (for Screen Space - Overlay)
             RectTransform descRect = mutationDescriptionBackground.GetComponent<RectTransform>();
-            descRect.pivot = new Vector2(0f, 1f); // top-left
+            descRect.pivot = new Vector2(0f, 1f);
 
-            Vector2 offset = new Vector2(50, -50); // right and down from the mouse
+            Vector2 offset = new Vector2(50, -50);
             descRect.position = Input.mousePosition + (Vector3)offset;
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(descRect);
         }
-
-
-
-
-
-
 
         public void ClearMutationDescription()
         {

@@ -127,14 +127,12 @@ namespace FungusToast.Game
             {
                 gameUIManager.MutationUIManager.Initialize(humanPlayer);
                 gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-                gameUIManager.MutationUIManager.PopulateAllMutations(); // ✅ Add this line
             }
             else
             {
                 Debug.LogError("MutationUIManager reference not assigned in GameManager!");
             }
         }
-
 
         public void InitializeGame(int count)
         {
@@ -224,7 +222,7 @@ namespace FungusToast.Game
 
                 player.MutationPoints = baseIncome + bonus;
 
-                Debug.Log($"🌱 Player {player.PlayerId} assigned {player.MutationPoints} MP (base: {baseIncome}, bonus: {bonus})");
+                Debug.Log($"\ud83c\udf31 Player {player.PlayerId} assigned {player.MutationPoints} MP (base: {baseIncome}, bonus: {bonus})");
             }
         }
     }

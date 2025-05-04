@@ -27,13 +27,11 @@ namespace FungusToast.UI.MutationTree
                 return;
             }
 
-            // Clear existing children from each column
             ClearColumn(growthColumn);
             ClearColumn(resilienceColumn);
             ClearColumn(fungicideColumn);
             ClearColumn(driftColumn);
 
-            // Track which categories we've already created headers for
             HashSet<MutationCategory> createdHeaders = new HashSet<MutationCategory>();
 
             foreach (var mutation in mutations.OrderBy(m => m.Id))
@@ -46,11 +44,9 @@ namespace FungusToast.UI.MutationTree
 
                 RectTransform parentColumn = GetColumnForCategory(metadata.Category);
 
-                // Create a header for this category if not already added
                 if (!createdHeaders.Contains(metadata.Category))
                 {
                     createdHeaders.Add(metadata.Category);
-                    Debug.Log($"🧬 Placing {mutation.Name} under {metadata.Category} in {parentColumn.name}");
                     GameObject headerGO = Instantiate(categoryHeaderPrefab, parentColumn);
                     headerGO.name = $"Header_{metadata.Category}";
                     headerGO.transform.localScale = Vector3.one;
@@ -60,10 +56,10 @@ namespace FungusToast.UI.MutationTree
                         text.text = SplitCamelCase(metadata.Category.ToString());
                 }
 
-                // Add the mutation node
                 GameObject nodeGO = Instantiate(mutationNodePrefab, parentColumn);
                 nodeGO.name = $"MutationNode_{mutation.Name}";
                 nodeGO.transform.localScale = Vector3.one;
+
                 var mutationNodeLayout = nodeGO.GetComponent<LayoutElement>();
                 if (mutationNodeLayout != null)
                 {
@@ -73,10 +69,23 @@ namespace FungusToast.UI.MutationTree
 
                 MutationNodeUI nodeUI = nodeGO.GetComponent<MutationNodeUI>();
                 nodeUI.Initialize(mutation, player, uiManager);
+
+                // Bring lock overlay to front if it's present
+                var lockOverlay = nodeGO.transform.Find("UI_LockOverlay");
+                if (lockOverlay != null)
+                {
+                    lockOverlay.SetAsLastSibling();
+
+                    var image = lockOverlay.GetComponent<Image>();
+                    if (image != null && image.sprite == null)
+                    {
+                        Debug.LogWarning($"🔒 UI_LockOverlay exists on {mutation.Name} but has no sprite assigned.");
+                    }
+                }
+
                 Debug.Log($"{mutation.Name} parent = {parentColumn.name}, position = {nodeGO.transform.localPosition}, anchored = {nodeGO.GetComponent<RectTransform>().anchoredPosition}");
             }
         }
-
 
         private RectTransform GetColumnForCategory(MutationCategory category)
         {
@@ -119,6 +128,5 @@ namespace FungusToast.UI.MutationTree
                 " $1"
             );
         }
-
     }
 }
