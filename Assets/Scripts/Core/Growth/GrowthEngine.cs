@@ -33,28 +33,53 @@ namespace FungusToast.Core.Growth
 
         private static void TryExpandFromTile(GameBoard board, BoardTile sourceTile, Player owner)
         {
-            List<BoardTile> neighbors = board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y);
+            List<(BoardTile tile, float chance)> allTargets = new();
 
-            foreach (BoardTile neighbor in neighbors)
+            // Orthogonal directions
+            foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
             {
-                if (!neighbor.IsOccupied)
+                if (!tile.IsOccupied)
                 {
-                    float roll = Random.Range(0f, 1f);
-                    float effectiveGrowthChance = owner.GetEffectiveGrowthChance();
-                    if (roll <= effectiveGrowthChance)
-                    {
-                        int tileId = neighbor.Y * board.Width + neighbor.X;
-                        var newCell = new FungalCell(owner.PlayerId, tileId);
+                    allTargets.Add((tile, owner.GetEffectiveGrowthChance()));
+                }
+            }
 
-                        neighbor.PlaceFungalCell(newCell);
-                        board.RegisterCell(newCell); // Ensure it's trackable via GameBoard.GetCell
+            // Diagonal directions
+            var diagonals = new (int dx, int dy, float chance)[]
+            {
+                (-1,  1, owner.GetDiagonalGrowthChance(DiagonalDirection.Northwest)),
+                ( 1,  1, owner.GetDiagonalGrowthChance(DiagonalDirection.Northeast)),
+                ( 1, -1, owner.GetDiagonalGrowthChance(DiagonalDirection.Southeast)),
+                (-1, -1, owner.GetDiagonalGrowthChance(DiagonalDirection.Southwest)),
+            };
 
-                        break; // Only one growth per fungal cell per cycle
-                    }
+            foreach (var (dx, dy, chance) in diagonals)
+            {
+                int nx = sourceTile.X + dx;
+                int ny = sourceTile.Y + dy;
+                BoardTile tile = board.GetTile(nx, ny);
+                if (tile != null && !tile.IsOccupied && chance > 0)
+                {
+                    allTargets.Add((tile, chance));
+                }
+            }
+
+            // Attempt to grow into one random valid neighbor
+            Shuffle(allTargets);
+
+            foreach ((BoardTile neighbor, float chance) in allTargets)
+            {
+                float roll = Random.Range(0f, 1f);
+                if (roll <= chance)
+                {
+                    int tileId = neighbor.Y * board.Width + neighbor.X;
+                    var newCell = new FungalCell(owner.PlayerId, tileId);
+                    neighbor.PlaceFungalCell(newCell);
+                    board.RegisterCell(newCell);
+                    break;
                 }
             }
         }
-
 
         private static void Shuffle<T>(List<T> list)
         {
@@ -64,5 +89,13 @@ namespace FungusToast.Core.Growth
                 (list[i], list[j]) = (list[j], list[i]);
             }
         }
+    }
+
+    public enum DiagonalDirection
+    {
+        Northwest,
+        Northeast,
+        Southeast,
+        Southwest
     }
 }

@@ -102,8 +102,6 @@ namespace FungusToast.Core.Players
             return MutationPoints >= mutation.PointsPerUpgrade && currentLevel < mutation.MaxLevel;
         }
 
-
-
         public int GetMutationLevel(int mutationId)
         {
             return PlayerMutations.TryGetValue(mutationId, out var pm) ? pm.CurrentLevel : 0;
@@ -160,6 +158,18 @@ namespace FungusToast.Core.Players
             return decayBoost;
         }
 
+        public float GetDiagonalGrowthChance(DiagonalDirection direction)
+        {
+            return direction switch
+            {
+                DiagonalDirection.Northwest => GetMutationEffect(MutationType.GrowthDiagonal_NW),
+                DiagonalDirection.Northeast => GetMutationEffect(MutationType.GrowthDiagonal_NE),
+                DiagonalDirection.Southeast => GetMutationEffect(MutationType.GrowthDiagonal_SE),
+                DiagonalDirection.Southwest => GetMutationEffect(MutationType.GrowthDiagonal_SW),
+                _ => 0f
+            };
+        }
+
         public int GetBonusMutationPoints()
         {
             int bonusPoints = 0;
@@ -174,7 +184,7 @@ namespace FungusToast.Core.Players
             foreach (var m in PlayerMutations)
             {
                 var pm = m.Value;
-                UnityEngine.Debug.Log($"🧬 Player owns: {pm.Mutation.Name} (Level {pm.CurrentLevel}) [ID {pm.Mutation.Id}]");
+                UnityEngine.Debug.Log($"\ud83e\uddea Player owns: {pm.Mutation.Name} (Level {pm.CurrentLevel}) [ID {pm.Mutation.Id}]");
             }
         }
     }

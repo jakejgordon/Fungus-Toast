@@ -8,5 +8,9 @@ namespace FungusToast.Core
         EnemyDecayChance,
         BonusMutationPointChance,
         EncystedSporeMultiplier,
+        GrowthDiagonal_NW,
+        GrowthDiagonal_NE,
+        GrowthDiagonal_SE,
+        GrowthDiagonal_SW,
     }
 }

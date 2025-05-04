@@ -61,6 +61,15 @@ namespace FungusToast.Core
             return neighbors;
         }
 
+        public BoardTile GetTile(int x, int y)
+        {
+            if (x >= 0 && y >= 0 && x < Width && y < Height)
+            {
+                return Grid[x, y];
+            }
+            return null;
+        }
+
         public void PlaceInitialSpore(int playerId, int x, int y)
         {
             BoardTile tile = Grid[x, y];
@@ -73,7 +82,6 @@ namespace FungusToast.Core
                 tileIdToCell[tileId] = cell;
             }
         }
-
 
         public FungalCell GetCell(int tileId)
         {
@@ -118,13 +126,11 @@ namespace FungusToast.Core
             return neighbors;
         }
 
-
         private (int x, int y) GetXYFromTileId(int tileId)
         {
             int x = tileId % Width;
             int y = tileId / Width;
             return (x, y);
         }
-
     }
 }

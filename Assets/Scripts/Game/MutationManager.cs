@@ -85,6 +85,29 @@ namespace FungusToast.Game
             encystedSpores.RequiredLevel = 10;
             silentBlight.Children.Add(encystedSpores);
             allMutations[encystedSpores.Id] = encystedSpores;
+
+            // Diagonal Growth Mutations
+            CreateDiagonalGrowthMutation(ref id, "Tendril Northwest", MutationType.GrowthDiagonal_NW, mycelialBloom);
+            CreateDiagonalGrowthMutation(ref id, "Tendril Northeast", MutationType.GrowthDiagonal_NE, mycelialBloom);
+            CreateDiagonalGrowthMutation(ref id, "Tendril Southeast", MutationType.GrowthDiagonal_SE, mycelialBloom);
+            CreateDiagonalGrowthMutation(ref id, "Tendril Southwest", MutationType.GrowthDiagonal_SW, mycelialBloom);
+        }
+
+        private void CreateDiagonalGrowthMutation(ref int id, string name, MutationType type, Mutation required)
+        {
+            var mutation = new Mutation(
+                id: id++,
+                name: name,
+                description: $"Specialized hyphae reach into {name.Split(' ')[1].ToLower()} territory. " +
+                             $"Adds +1.0% chance per level to grow mold {name.Split(' ')[1].ToLower()}.",
+                type: type,
+                effectPerLevel: 0.01f,
+                maxLevel: 10
+            );
+            mutation.RequiredMutation = required;
+            mutation.RequiredLevel = 10;
+            required.Children.Add(mutation);
+            allMutations[mutation.Id] = mutation;
         }
 
         public Mutation GetMutationById(int id)
