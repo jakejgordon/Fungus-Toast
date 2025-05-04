@@ -57,7 +57,7 @@ namespace FungusToast.UI.MutationTree
 
                     var text = headerGO.GetComponentInChildren<TMPro.TextMeshProUGUI>();
                     if (text != null)
-                        text.text = text.text = SplitCamelCase(metadata.Category.ToString());
+                        text.text = SplitCamelCase(metadata.Category.ToString());
                 }
 
                 // Add the mutation node
@@ -73,6 +73,7 @@ namespace FungusToast.UI.MutationTree
 
                 MutationNodeUI nodeUI = nodeGO.GetComponent<MutationNodeUI>();
                 nodeUI.Initialize(mutation, player, uiManager);
+                Debug.Log($"{mutation.Name} parent = {parentColumn.name}, position = {nodeGO.transform.localPosition}, anchored = {nodeGO.GetComponent<RectTransform>().anchoredPosition}");
             }
         }
 
