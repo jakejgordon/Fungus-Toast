@@ -202,7 +202,7 @@ namespace FungusToast.UI.MutationTree
             RectTransform descRect = mutationDescriptionBackground.GetComponent<RectTransform>();
             descRect.pivot = new Vector2(0f, 1f); // top-left
 
-            Vector2 offset = new Vector2(20f, -20f); // right and down from the mouse
+            Vector2 offset = new Vector2(50, -50); // right and down from the mouse
             descRect.position = Input.mousePosition + (Vector3)offset;
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(descRect);
