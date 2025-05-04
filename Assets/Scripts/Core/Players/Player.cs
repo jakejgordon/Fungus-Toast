@@ -88,12 +88,13 @@ namespace FungusToast.Core.Players
 
         public bool CanUpgrade(Mutation mutation)
         {
-            if (mutation == null || !PlayerMutations.ContainsKey(mutation.Id))
+            if (mutation == null)
                 return false;
 
-            var playerMutation = PlayerMutations[mutation.Id];
-            return MutationPoints >= mutation.PointsPerUpgrade && playerMutation.CurrentLevel < mutation.MaxLevel;
+            int currentLevel = GetMutationLevel(mutation.Id);
+            return MutationPoints >= mutation.PointsPerUpgrade && currentLevel < mutation.MaxLevel;
         }
+
 
         public int GetMutationLevel(int mutationId)
         {
