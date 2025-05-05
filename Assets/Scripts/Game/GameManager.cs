@@ -8,7 +8,7 @@ using FungusToast.AI;
 using FungusToast.Core.Config;
 using System.Linq;
 using TMPro;
-using FungusToast.Core.Growth; // for DeathEngine
+using FungusToast.Core.Growth;
 
 namespace FungusToast.Game
 {
@@ -63,12 +63,7 @@ namespace FungusToast.Game
 
             int baseMP = GameBalance.StartingMutationPoints;
 
-            humanPlayer = new Player(
-                playerId: 0,
-                playerName: "Human",
-                playerType: PlayerTypeEnum.Human,
-                aiType: AITypeEnum.Random
-            );
+            humanPlayer = new Player(0, "Human", PlayerTypeEnum.Human, AITypeEnum.Random);
             humanPlayer.SetBaseMutationPoints(baseMP);
             players.Add(humanPlayer);
 
@@ -80,12 +75,7 @@ namespace FungusToast.Game
 
             for (int i = 1; i < playerCount; i++)
             {
-                Player aiPlayer = new Player(
-                    playerId: i,
-                    playerName: $"AI Player {i}",
-                    playerType: PlayerTypeEnum.AI,
-                    aiType: AITypeEnum.Random
-                );
+                var aiPlayer = new Player(i, $"AI Player {i}", PlayerTypeEnum.AI, AITypeEnum.Random);
                 aiPlayer.SetBaseMutationPoints(baseMP);
                 aiPlayer.SetMutationStrategy(strategyPool[Random.Range(0, strategyPool.Length)]);
                 players.Add(aiPlayer);
@@ -100,16 +90,13 @@ namespace FungusToast.Game
                     Debug.LogWarning($"⚠️ No icon found for player {player.PlayerId}");
             }
 
-            if (gameUIManager.MoldProfilePanel != null)
-                gameUIManager.MoldProfilePanel.Initialize(humanPlayer);
-            else
-                Debug.LogError("MoldProfilePanel is not assigned in GameManager!");
+            gameUIManager.MoldProfilePanel?.Initialize(humanPlayer);
+            gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
         }
 
         private void SetupBoard()
         {
             Board.PlaceInitialSpore(0, 2, 2);
-
             if (playerCount > 1)
                 Board.PlaceInitialSpore(1, boardWidth - 3, boardHeight - 3);
 
@@ -138,6 +125,7 @@ namespace FungusToast.Game
             gridVisualizer.Initialize(Board);
             PlaceStartingSpores();
             gridVisualizer.RenderBoard(Board);
+
             mutationManager.ResetMutationPoints(players);
 
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
@@ -153,12 +141,8 @@ namespace FungusToast.Game
             for (int i = 0; i < players.Count; i++)
             {
                 float angle = i * Mathf.PI * 2f / players.Count;
-                float x = center.x + radius * Mathf.Cos(angle);
-                float y = center.y + radius * Mathf.Sin(angle);
-
-                int px = Mathf.Clamp(Mathf.RoundToInt(x), 0, boardWidth - 1);
-                int py = Mathf.Clamp(Mathf.RoundToInt(y), 0, boardHeight - 1);
-
+                int px = Mathf.Clamp(Mathf.RoundToInt(center.x + radius * Mathf.Cos(angle)), 0, boardWidth - 1);
+                int py = Mathf.Clamp(Mathf.RoundToInt(center.y + radius * Mathf.Sin(angle)), 0, boardHeight - 1);
                 Board.PlaceInitialSpore(i, px, py);
             }
         }
@@ -194,8 +178,8 @@ namespace FungusToast.Game
             Debug.Log("💀 Running Death Cycle...");
             DeathEngine.ExecuteDeathCycle(Board, players);
             gridVisualizer.RenderBoard(Board);
+            gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
 
-            // After decay, return to mutation phase
             StartCoroutine(FinishDecayPhaseAfterDelay(1f));
         }
 
@@ -212,9 +196,8 @@ namespace FungusToast.Game
 
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-
-            if (gameUIManager.MoldProfilePanel != null)
-                gameUIManager.MoldProfilePanel.Refresh();
+            gameUIManager.MoldProfilePanel?.Refresh();
+            gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
 
             SetGamePhaseText("Mutation Phase");
         }
@@ -226,7 +209,6 @@ namespace FungusToast.Game
                 int baseIncome = player.GetMutationPointIncome();
                 int bonus = player.GetBonusMutationPoints();
                 player.MutationPoints = baseIncome + bonus;
-
                 Debug.Log($"🌱 Player {player.PlayerId} assigned {player.MutationPoints} MP (base: {baseIncome}, bonus: {bonus})");
             }
         }

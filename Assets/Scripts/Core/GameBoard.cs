@@ -132,5 +132,25 @@ namespace FungusToast.Core
             int y = tileId / Width;
             return (x, y);
         }
+
+        public List<FungalCell> GetAllCells()
+        {
+            return new List<FungalCell>(tileIdToCell.Values);
+        }
+
+        public List<FungalCell> GetAllCellsOwnedBy(int playerId)
+        {
+            List<FungalCell> result = new();
+
+            foreach (var cell in GetAllCells())
+            {
+                if (cell.OwnerPlayerId == playerId)
+                {
+                    result.Add(cell);
+                }
+            }
+
+            return result;
+        }
     }
 }

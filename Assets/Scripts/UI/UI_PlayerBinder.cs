@@ -7,6 +7,7 @@ namespace FungusToast.UI
     public class UI_PlayerBinder : MonoBehaviour
     {
         private Dictionary<Player, Sprite> playerMoldIcons = new();
+        private Dictionary<int, Sprite> playerIconById = new();
 
         /// <summary>
         /// Assigns a mold icon sprite to a player.
@@ -20,6 +21,7 @@ namespace FungusToast.UI
             }
 
             playerMoldIcons[player] = sprite;
+            playerIconById[player.PlayerId] = sprite;
         }
 
         /// <summary>
@@ -40,6 +42,14 @@ namespace FungusToast.UI
 
             Debug.LogError($"❌ No icon found for PlayerId {player.PlayerId} in UI_PlayerBinder.");
             return null;
+        }
+
+        /// <summary>
+        /// Retrieves the icon assigned to a playerId. Returns null if not found.
+        /// </summary>
+        public Sprite GetPlayerIcon(int playerId)
+        {
+            return playerIconById.TryGetValue(playerId, out var sprite) ? sprite : null;
         }
     }
 }
