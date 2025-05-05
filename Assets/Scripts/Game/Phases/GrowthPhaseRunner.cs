@@ -5,6 +5,7 @@ using FungusToast.Core;
 using FungusToast.Core.Players;
 using FungusToast.Core.Growth;
 using FungusToast.Grid;
+using FungusToast.Game; // To access GameManager
 
 namespace FungusToast.Game.Phases
 {
@@ -38,6 +39,7 @@ namespace FungusToast.Game.Phases
             isRunning = true;
 
             Debug.Log("🌱 Growth Phase Starting...");
+            GameManager.Instance.SetGamePhaseText("Growth Phase (Cycle 1/" + totalGrowthCycles + ")");
 
             for (int cycle = 0; cycle < totalGrowthCycles; cycle++)
             {
@@ -46,19 +48,15 @@ namespace FungusToast.Game.Phases
                 GrowthEngine.ExecuteGrowthCycle(board, players);
                 gridVisualizer.RenderBoard(board);
 
+                GameManager.Instance.SetGamePhaseText($"Growth Phase (Cycle {cycle + 1}/{totalGrowthCycles})");
+
                 yield return new WaitForSeconds(timeBetweenCycles);
             }
 
-            Debug.Log("💀 Running Death Cycle...");
-            DeathEngine.ExecuteDeathCycle(board, players);
-            gridVisualizer.RenderBoard(board);
-
-            yield return new WaitForSeconds(timeBetweenCycles);
-
-            Debug.Log("🌾 Growth Phase complete. Resetting mutation points.");
+            Debug.Log("🌾 Growth Cycles complete. Preparing for decay phase...");
             isRunning = false;
 
-            GameManager.Instance.OnGrowthPhaseComplete();
+            GameManager.Instance.StartDecayPhase(); // Now defers to GameManager to handle decay
         }
     }
 }

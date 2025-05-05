@@ -7,6 +7,8 @@ using FungusToast.Game.Phases;
 using FungusToast.AI;
 using FungusToast.Core.Config;
 using System.Linq;
+using TMPro;
+using FungusToast.Core.Growth; // for DeathEngine
 
 namespace FungusToast.Game
 {
@@ -24,6 +26,8 @@ namespace FungusToast.Game
         [SerializeField] private MutationManager mutationManager;
         [SerializeField] private GrowthPhaseRunner growthPhaseRunner;
         [SerializeField] private GameUIManager gameUIManager;
+        [SerializeField] private TextMeshProUGUI gamePhaseText;
+
         public GameUIManager GameUI => gameUIManager;
 
         public static GameManager Instance { get; private set; }
@@ -48,12 +52,6 @@ namespace FungusToast.Game
         private void Start()
         {
             SetupPlayers();
-
-            if (growthPhaseRunner == null)
-            {
-                Debug.LogError("GrowthPhaseRunner not assigned to GameManager!");
-            }
-
             SetupBoard();
             gridVisualizer.Initialize(Board);
             SetupUI();
@@ -74,7 +72,6 @@ namespace FungusToast.Game
             humanPlayer.SetBaseMutationPoints(baseMP);
             players.Add(humanPlayer);
 
-            // Define available AI strategies
             var strategyPool = new IMutationSpendingStrategy[]
             {
                 new RandomMutationSpendingStrategy(),
@@ -90,11 +87,7 @@ namespace FungusToast.Game
                     aiType: AITypeEnum.Random
                 );
                 aiPlayer.SetBaseMutationPoints(baseMP);
-
-                // Assign random strategy
-                var randomStrategy = strategyPool[Random.Range(0, strategyPool.Length)];
-                aiPlayer.SetMutationStrategy(randomStrategy);
-
+                aiPlayer.SetMutationStrategy(strategyPool[Random.Range(0, strategyPool.Length)]);
                 players.Add(aiPlayer);
             }
 
@@ -102,34 +95,23 @@ namespace FungusToast.Game
             {
                 Sprite icon = gridVisualizer.GetTileForPlayer(player.PlayerId)?.sprite;
                 if (icon != null)
-                {
                     gameUIManager.PlayerUIBinder.AssignIcon(player, icon);
-                }
                 else
-                {
-                    Debug.LogWarning($"\u26a0\ufe0f No icon found for player {player.PlayerId}");
-                }
+                    Debug.LogWarning($"⚠️ No icon found for player {player.PlayerId}");
             }
 
             if (gameUIManager.MoldProfilePanel != null)
-            {
                 gameUIManager.MoldProfilePanel.Initialize(humanPlayer);
-            }
             else
-            {
                 Debug.LogError("MoldProfilePanel is not assigned in GameManager!");
-            }
         }
-
 
         private void SetupBoard()
         {
             Board.PlaceInitialSpore(0, 2, 2);
 
             if (playerCount > 1)
-            {
                 Board.PlaceInitialSpore(1, boardWidth - 3, boardHeight - 3);
-            }
 
             gridVisualizer.RenderBoard(Board);
         }
@@ -147,22 +129,20 @@ namespace FungusToast.Game
             }
         }
 
-        public void InitializeGame(int count)
+        public void InitializeGame(int numberOfPlayers)
         {
-            playerCount = count;
+            playerCount = numberOfPlayers;
 
             SetupPlayers();
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
-
             gridVisualizer.Initialize(Board);
-
             PlaceStartingSpores();
             gridVisualizer.RenderBoard(Board);
-
             mutationManager.ResetMutationPoints(players);
 
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+            SetGamePhaseText("Mutation Phase");
         }
 
         public void PlaceStartingSpores()
@@ -188,13 +168,10 @@ namespace FungusToast.Game
             foreach (Player player in players)
             {
                 if (player.PlayerType == PlayerTypeEnum.AI)
-                {
                     player.MutationStrategy?.SpendMutationPoints(player, mutationManager.GetAllMutations().ToList());
-                }
             }
 
             Debug.Log("All AI players have spent their mutation points.");
-
             StartGrowthPhase();
         }
 
@@ -211,19 +188,35 @@ namespace FungusToast.Game
             }
         }
 
+        public void StartDecayPhase()
+        {
+            SetGamePhaseText("Decay Phase");
+            Debug.Log("💀 Running Death Cycle...");
+            DeathEngine.ExecuteDeathCycle(Board, players);
+            gridVisualizer.RenderBoard(Board);
+
+            // After decay, return to mutation phase
+            StartCoroutine(FinishDecayPhaseAfterDelay(1f));
+        }
+
+        private System.Collections.IEnumerator FinishDecayPhaseAfterDelay(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            OnGrowthPhaseComplete(); // Resets mutation points and starts Mutation Phase again
+        }
+
         public void OnGrowthPhaseComplete()
         {
             AssignMutationPoints();
-
             Debug.Log("All players have received new mutation points.");
 
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
 
             if (gameUIManager.MoldProfilePanel != null)
-            {
                 gameUIManager.MoldProfilePanel.Refresh();
-            }
+
+            SetGamePhaseText("Mutation Phase");
         }
 
         public void AssignMutationPoints()
@@ -232,11 +225,16 @@ namespace FungusToast.Game
             {
                 int baseIncome = player.GetMutationPointIncome();
                 int bonus = player.GetBonusMutationPoints();
-
                 player.MutationPoints = baseIncome + bonus;
 
-                Debug.Log($"\ud83c\udf31 Player {player.PlayerId} assigned {player.MutationPoints} MP (base: {baseIncome}, bonus: {bonus})");
+                Debug.Log($"🌱 Player {player.PlayerId} assigned {player.MutationPoints} MP (base: {baseIncome}, bonus: {bonus})");
             }
+        }
+
+        public void SetGamePhaseText(string phaseLabel)
+        {
+            if (gamePhaseText != null)
+                gamePhaseText.text = phaseLabel;
         }
     }
 }
