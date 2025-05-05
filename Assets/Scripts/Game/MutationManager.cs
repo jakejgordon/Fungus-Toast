@@ -31,7 +31,8 @@ namespace FungusToast.Game
                              $"Grants an additional +{(0.005f * 100f):F1}% chance to spread mold into adjacent cells each round.",
                 type: MutationType.GrowthChance,
                 effectPerLevel: 0.005f,
-                maxLevel: 100
+                maxLevel: 100,
+                category: MutationCategory.Growth
             );
             rootMutations[mycelialBloom.Id] = mycelialBloom;
             allMutations[mycelialBloom.Id] = mycelialBloom;
@@ -43,7 +44,8 @@ namespace FungusToast.Game
                              $"Provides an additional +{(0.0025f * 100f):F1}% chance for your mold cells to survive decay events.",
                 type: MutationType.DefenseSurvival,
                 effectPerLevel: 0.0025f,
-                maxLevel: 100
+                maxLevel: 100,
+                category: MutationCategory.CellularResilience
             );
             rootMutations[homeostaticHarmony.Id] = homeostaticHarmony;
             allMutations[homeostaticHarmony.Id] = homeostaticHarmony;
@@ -55,7 +57,8 @@ namespace FungusToast.Game
                              $"Increases the chance by +{(0.0025f * 100f):F1}% that enemy mold cells will die each growth round.",
                 type: MutationType.EnemyDecayChance,
                 effectPerLevel: 0.0025f,
-                maxLevel: 100
+                maxLevel: 100,
+                category: MutationCategory.Fungicide
             );
             rootMutations[silentBlight.Id] = silentBlight;
             allMutations[silentBlight.Id] = silentBlight;
@@ -67,7 +70,8 @@ namespace FungusToast.Game
                              $"Adds a +{(0.10f * 100f):F1}% chance to gain a bonus mutation point at the start of each turn.",
                 type: MutationType.BonusMutationPointChance,
                 effectPerLevel: 0.10f,
-                maxLevel: 10
+                maxLevel: 10,
+                category: MutationCategory.GeneticDrift
             );
             rootMutations[adaptiveExpression.Id] = adaptiveExpression;
             allMutations[adaptiveExpression.Id] = adaptiveExpression;
@@ -79,7 +83,8 @@ namespace FungusToast.Game
                              $"Increases Silent Blight's decay penalty by +{(0.05f * 100f):F1}% when enemy cells are fully surrounded by living fungal cells.",
                 type: MutationType.EncystedSporeMultiplier,
                 effectPerLevel: 0.05f,
-                maxLevel: 5
+                maxLevel: 5,
+                category: MutationCategory.Fungicide
             );
             encystedSpores.RequiredMutation = silentBlight;
             encystedSpores.RequiredLevel = 10;
@@ -103,7 +108,8 @@ namespace FungusToast.Game
                              $"Adds +1.0% chance per level to grow mold {direction.ToLower()}.",
                 type: type,
                 effectPerLevel: 0.01f,
-                maxLevel: 10
+                maxLevel: 10,
+                category: MutationCategory.Growth
             );
             mutation.RequiredMutation = required;
             mutation.RequiredLevel = 10;

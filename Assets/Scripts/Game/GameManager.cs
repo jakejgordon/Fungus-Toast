@@ -4,7 +4,7 @@ using FungusToast.Core;
 using FungusToast.Core.Players;
 using FungusToast.Grid;
 using FungusToast.Game.Phases;
-using FungusToast.UI;
+using FungusToast.AI;
 using FungusToast.Core.Config;
 using System.Linq;
 
@@ -74,6 +74,13 @@ namespace FungusToast.Game
             humanPlayer.SetBaseMutationPoints(baseMP);
             players.Add(humanPlayer);
 
+            // Define available AI strategies
+            var strategyPool = new IMutationSpendingStrategy[]
+            {
+                new RandomMutationSpendingStrategy(),
+                new GrowthThenDefenseSpendingStrategy()
+            };
+
             for (int i = 1; i < playerCount; i++)
             {
                 Player aiPlayer = new Player(
@@ -84,7 +91,9 @@ namespace FungusToast.Game
                 );
                 aiPlayer.SetBaseMutationPoints(baseMP);
 
-                aiPlayer.SetMutationStrategy(new RandomMutationSpendingStrategy());
+                // Assign random strategy
+                var randomStrategy = strategyPool[Random.Range(0, strategyPool.Length)];
+                aiPlayer.SetMutationStrategy(randomStrategy);
 
                 players.Add(aiPlayer);
             }
@@ -111,6 +120,7 @@ namespace FungusToast.Game
                 Debug.LogError("MoldProfilePanel is not assigned in GameManager!");
             }
         }
+
 
         private void SetupBoard()
         {

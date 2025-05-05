@@ -15,10 +15,12 @@ namespace FungusToast.Core.Mutations
 
         public Mutation RequiredMutation { get; set; }
         public int RequiredLevel { get; set; } = 0;
+        public MutationCategory Category { get; private set; }
 
         public List<Mutation> Children { get; private set; }
+       
 
-        public Mutation(int id, string name, string description, MutationType type, float effectPerLevel, int pointsPerUpgrade = 1, int maxLevel = 50)
+        public Mutation(int id, string name, string description, MutationType type, float effectPerLevel, int pointsPerUpgrade = 1, int maxLevel = 50, MutationCategory category = MutationCategory.Growth)
         {
             Id = id;
             Name = name;
