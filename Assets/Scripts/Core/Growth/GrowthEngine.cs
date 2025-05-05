@@ -76,6 +76,7 @@ namespace FungusToast.Core.Growth
                     var newCell = new FungalCell(owner.PlayerId, tileId);
                     neighbor.PlaceFungalCell(newCell);
                     board.RegisterCell(newCell);
+                    owner.ControlledTileIds.Add(tileId);
                     break;
                 }
             }

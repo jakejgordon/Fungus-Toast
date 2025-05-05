@@ -8,7 +8,6 @@ namespace FungusToast.Core.Growth
 {
     public static class DeathEngine
     {
-
         public static void ExecuteDeathCycle(GameBoard board, List<Player> players)
         {
             List<BoardTile> allLivingCells = new List<BoardTile>();
@@ -33,7 +32,7 @@ namespace FungusToast.Core.Growth
                     continue;
                 }
 
-                int playerLivingCells = CountLivingCells(board, player.PlayerId);
+                int playerLivingCells = player.ControlledTileIds.Count;
                 if (playerLivingCells <= 1)
                     continue;
 
@@ -49,28 +48,14 @@ namespace FungusToast.Core.Growth
                 if (roll < finalChance)
                 {
                     cell.Kill();
-                    Debug.Log($"\u2620 Cell at ({tile.X},{tile.Y}) owned by Player {player.PlayerId} died. Age={cell.GrowthCycleAge}, FinalChance={finalChance:P2}, Roll={roll:P2}");
+                    player.ControlledTileIds.Remove(cell.TileId); // ✅ Remove dead cell from live list
+                    Debug.Log($"💀 Cell at ({tile.X},{tile.Y}) owned by Player {player.PlayerId} died. Age={cell.GrowthCycleAge}, FinalChance={finalChance:P2}, Roll={roll:P2}");
                 }
                 else
                 {
                     cell.IncrementGrowthAge();
                 }
             }
-        }
-
-        private static int CountLivingCells(GameBoard board, int playerId)
-        {
-            int count = 0;
-            foreach (var tile in board.AllTiles())
-            {
-                if (tile.FungalCell != null &&
-                    tile.FungalCell.OwnerPlayerId == playerId &&
-                    tile.FungalCell.IsAlive)
-                {
-                    count++;
-                }
-            }
-            return count;
         }
 
         private static float GetEnemyPressure(List<Player> allPlayers, Player currentPlayer, FungalCell targetCell, GameBoard board)

@@ -1,4 +1,4 @@
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
@@ -7,14 +7,13 @@ using FungusToast.Game;
 
 namespace FungusToast.UI
 {
-
     public class UI_RightSidebar : MonoBehaviour
     {
         [Header("Player Summary Panel")]
         [SerializeField] private Transform playerSummaryContainer;
         [SerializeField] private GameObject playerSummaryPrefab;
 
-        private Dictionary<int, GameObject> playerSummaryRows = new();
+        private Dictionary<int, PlayerSummaryRow> playerSummaryRows = new();
 
         public void InitializePlayerSummaries(List<Player> players)
         {
@@ -25,17 +24,19 @@ namespace FungusToast.UI
 
             foreach (Player player in players)
             {
-                GameObject row = Instantiate(playerSummaryPrefab, playerSummaryContainer);
-                row.transform.localScale = Vector3.one;
+                GameObject rowGO = Instantiate(playerSummaryPrefab, playerSummaryContainer);
+                rowGO.transform.localScale = Vector3.one;
+
+                var row = rowGO.GetComponent<PlayerSummaryRow>();
+                if (row == null)
+                {
+                    Debug.LogError("❌ PlayerSummaryRow component missing on prefab!");
+                    continue;
+                }
+
+                row.SetIcon(GameManager.Instance.GameUI.PlayerUIBinder.GetPlayerIcon(player.PlayerId));
+                row.SetCounts("?", "?");
                 playerSummaryRows[player.PlayerId] = row;
-
-                var icon = row.transform.Find("UI_MoldIconImage").GetComponent<Image>();
-                var living = row.transform.Find("UI_LivingCellsText").GetComponent<TextMeshProUGUI>();
-                var dead = row.transform.Find("UI_DeadCellsText").GetComponent<TextMeshProUGUI>();
-
-                icon.sprite = GameManager.Instance.GameUI.PlayerUIBinder.GetPlayerIcon(player.PlayerId);
-                living.text = "Alive: ?";
-                dead.text = "Dead: ?";
             }
         }
 
@@ -45,13 +46,20 @@ namespace FungusToast.UI
             {
                 if (playerSummaryRows.TryGetValue(player.PlayerId, out var row))
                 {
-                    int alive = player.ControlledTileIds.Count;
-                    int dead = GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId).Count - alive;
+                    int alive = 0;
+                    int dead = 0;
 
-                    row.transform.Find("UI_LivingCellsText").GetComponent<TextMeshProUGUI>().text = $"Alive: {alive}";
-                    row.transform.Find("UI_DeadCellsText").GetComponent<TextMeshProUGUI>().text = $"Dead: {dead}";
+                    foreach (var cell in GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId))
+                    {
+                        if (cell.IsAlive) alive++;
+                        else dead++;
+                    }
+
+                    row.SetCounts(alive.ToString(), dead.ToString());
                 }
             }
         }
+
+
     }
 }
