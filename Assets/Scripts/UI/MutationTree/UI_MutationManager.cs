@@ -36,6 +36,7 @@ namespace FungusToast.UI.MutationTree
 
         [Header("UI Wiring")]
         [SerializeField] private UI_MoldProfilePanel moldProfilePanel;
+        [SerializeField] private TextMeshProUGUI mutationPointsCounterText;
 
         [Header("Tree Sliding Settings")]
         public float slideDuration = 0.5f;
@@ -48,6 +49,7 @@ namespace FungusToast.UI.MutationTree
 
         private RectTransform mutationTreeRect;
         private Vector3 originalButtonScale;
+        private Vector3 originalCounterScale;
         private bool isTreeOpen = false;
         private bool isSliding = false;
 
@@ -67,6 +69,9 @@ namespace FungusToast.UI.MutationTree
         {
             RefreshSpendPointsButtonUI();
             originalButtonScale = spendPointsButton.transform.localScale;
+            if (mutationPointsCounterText != null)
+                originalCounterScale = mutationPointsCounterText.transform.localScale;
+
             spendPointsButton.onClick.AddListener(OnSpendPointsClicked);
             SetSpendPointsButtonVisible(false);
         }
@@ -160,6 +165,58 @@ namespace FungusToast.UI.MutationTree
 
             Debug.LogWarning($"⚠️ Player {humanPlayer.PlayerId} failed to upgrade {mutation.Name}");
             return false;
+        }
+
+        private void RefreshSpendPointsButtonUI()
+        {
+            if (spendPointsButton == null || buttonOutline == null || humanPlayer == null)
+                return;
+
+            int points = humanPlayer.MutationPoints;
+            if (points > 0)
+            {
+                spendPointsButton.interactable = true;
+                spendPointsButtonText.text = $"Spend {points} Points!";
+                buttonOutline.enabled = true;
+            }
+            else
+            {
+                spendPointsButton.interactable = false;
+                spendPointsButtonText.text = "No Points Available";
+                buttonOutline.enabled = false;
+            }
+
+            if (mutationPointsCounterText != null)
+                mutationPointsCounterText.text = $"Mutation Points: {points}";
+        }
+
+        private void AnimatePulse()
+        {
+            float pulse = Mathf.Sin(Time.time * pulseSpeed);
+            float scale = 1f + pulse * pulseStrength;
+
+            if (spendPointsButton != null)
+                spendPointsButton.transform.localScale = originalButtonScale * scale;
+
+            if (mutationPointsCounterText != null)
+                mutationPointsCounterText.transform.localScale = originalCounterScale * scale;
+
+            if (buttonOutline != null)
+            {
+                Color baseColor = new Color(1f, 1f, 0.7f, 1f);
+                float normalizedPulse = (pulse + 1f) / 2f;
+                float alpha = Mathf.Lerp(0.5f, 1f, normalizedPulse);
+                buttonOutline.effectColor = new Color(baseColor.r, baseColor.g, baseColor.b, alpha);
+            }
+        }
+
+        private void ResetPulse()
+        {
+            if (spendPointsButton != null)
+                spendPointsButton.transform.localScale = originalButtonScale;
+
+            if (mutationPointsCounterText != null)
+                mutationPointsCounterText.transform.localScale = originalCounterScale;
         }
 
         public void TogglePanelDock()
@@ -279,47 +336,6 @@ namespace FungusToast.UI.MutationTree
                 dockButtonText.text = ">";
 
             isSliding = false;
-        }
-
-        private void RefreshSpendPointsButtonUI()
-        {
-            if (spendPointsButton == null || buttonOutline == null || humanPlayer == null)
-                return;
-
-            int points = humanPlayer.MutationPoints;
-            if (points > 0)
-            {
-                spendPointsButton.interactable = true;
-                spendPointsButtonText.text = $"Spend {points} Points!";
-                buttonOutline.enabled = true;
-            }
-            else
-            {
-                spendPointsButton.interactable = false;
-                spendPointsButtonText.text = "No Points Available";
-                buttonOutline.enabled = false;
-            }
-        }
-
-        private void AnimatePulse()
-        {
-            float pulse = Mathf.Sin(Time.time * pulseSpeed);
-            float scale = 1f + pulse * pulseStrength;
-            spendPointsButton.transform.localScale = originalButtonScale * scale;
-
-            if (buttonOutline != null)
-            {
-                Color baseColor = new Color(1f, 1f, 0.7f, 1f);
-                float normalizedPulse = (pulse + 1f) / 2f;
-                float alpha = Mathf.Lerp(0.5f, 1f, normalizedPulse);
-                buttonOutline.effectColor = new Color(baseColor.r, baseColor.g, baseColor.b, alpha);
-            }
-        }
-
-        private void ResetPulse()
-        {
-            if (spendPointsButton != null)
-                spendPointsButton.transform.localScale = originalButtonScale;
         }
 
         private IEnumerator FadeTooltip(CanvasGroup cg, float targetAlpha, float duration)
