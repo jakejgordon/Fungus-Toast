@@ -72,3 +72,12 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 .plastic/
+
+# Other developer/editor cruft
+*.merge
+.idea/
+*.sln.iml
+.env
+*.local
+notes.md
+test_output.txt
