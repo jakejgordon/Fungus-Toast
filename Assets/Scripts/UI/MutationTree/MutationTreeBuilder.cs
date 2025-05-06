@@ -19,12 +19,16 @@ namespace FungusToast.UI.MutationTree
         [SerializeField] private RectTransform fungicideColumn;
         [SerializeField] private RectTransform driftColumn;
 
-        public void BuildTree(IEnumerable<Mutation> mutations, Dictionary<int, MutationLayoutMetadata> layout, Player player, UI_MutationManager uiManager)
+        public List<MutationNodeUI> BuildTree(
+       IEnumerable<Mutation> mutations,
+       Dictionary<int, MutationLayoutMetadata> layout,
+       Player player,
+       UI_MutationManager uiManager)
         {
             if (growthColumn == null || resilienceColumn == null || fungicideColumn == null || driftColumn == null)
             {
                 Debug.LogError("❌ MutationTreeBuilder: One or more column containers are not assigned.");
-                return;
+                return new List<MutationNodeUI>();
             }
 
             ClearColumn(growthColumn);
@@ -33,6 +37,7 @@ namespace FungusToast.UI.MutationTree
             ClearColumn(driftColumn);
 
             HashSet<MutationCategory> createdHeaders = new HashSet<MutationCategory>();
+            List<MutationNodeUI> createdNodes = new List<MutationNodeUI>();
 
             foreach (var mutation in mutations.OrderBy(m => m.Id))
             {
@@ -83,9 +88,14 @@ namespace FungusToast.UI.MutationTree
                     }
                 }
 
+                createdNodes.Add(nodeUI);
+
                 Debug.Log($"{mutation.Name} parent = {parentColumn.name}, position = {nodeGO.transform.localPosition}, anchored = {nodeGO.GetComponent<RectTransform>().anchoredPosition}");
             }
+
+            return createdNodes;
         }
+
 
         private RectTransform GetColumnForCategory(MutationCategory category)
         {

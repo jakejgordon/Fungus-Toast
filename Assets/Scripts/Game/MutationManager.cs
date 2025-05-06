@@ -27,6 +27,7 @@ namespace FungusToast.Game
             public const int TendrilNortheast = 7;
             public const int TendrilSoutheast = 8;
             public const int TendrilSouthwest = 9;
+            public const int MutatorPhenotype = 10;
         }
 
         private void Awake()
@@ -123,6 +124,22 @@ namespace FungusToast.Game
             CreateDiagonalGrowthMutation(MutationIds.TendrilNortheast, "Tendril Northeast", MutationType.GrowthDiagonal_NE, mycelialBloom);
             CreateDiagonalGrowthMutation(MutationIds.TendrilSoutheast, "Tendril Southeast", MutationType.GrowthDiagonal_SE, mycelialBloom);
             CreateDiagonalGrowthMutation(MutationIds.TendrilSouthwest, "Tendril Southwest", MutationType.GrowthDiagonal_SW, mycelialBloom);
+
+            var mutatorPhenotype = new Mutation(
+                id: MutationManager.MutationIds.MutatorPhenotype,
+                name: "Mutator Phenotype",
+                description: $"Genomic instability accelerates adaptation. " +
+                             $"Grants a {(0.075f * 100f):F1}% chance per level to automatically upgrade a random owned mutation at the start of each turn.",
+                type: MutationType.AutoUpgradeRandom,
+                effectPerLevel: 0.075f, // 7.5% per level
+                maxLevel: 10,
+                category: MutationCategory.GeneticDrift
+            );
+            mutatorPhenotype.RequiredMutation = adaptiveExpression;
+            mutatorPhenotype.RequiredLevel = 5;
+            adaptiveExpression.Children.Add(mutatorPhenotype);
+            allMutations[mutatorPhenotype.Id] = mutatorPhenotype;
+
         }
 
         private void CreateDiagonalGrowthMutation(int id, string name, MutationType type, Mutation required)

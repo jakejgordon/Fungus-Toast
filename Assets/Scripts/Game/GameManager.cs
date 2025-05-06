@@ -90,7 +90,7 @@ namespace FungusToast.Game
                     Debug.LogWarning($"⚠️ No icon found for player {player.PlayerId}");
             }
 
-            gameUIManager.MoldProfilePanel?.Initialize(humanPlayer);
+            gameUIManager.MoldProfilePanel?.Initialize(humanPlayer, players);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
         }
 
@@ -210,8 +210,14 @@ namespace FungusToast.Game
                 int bonus = player.GetBonusMutationPoints();
                 player.MutationPoints = baseIncome + bonus;
                 Debug.Log($"🌱 Player {player.PlayerId} assigned {player.MutationPoints} MP (base: {baseIncome}, bonus: {bonus})");
+
+                // Trigger Mutator Phenotype auto-upgrade if owned
+                player.TryTriggerAutoUpgrade();
             }
+
+            gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
         }
+
 
         public void SetGamePhaseText(string phaseLabel)
         {

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Growth;
@@ -38,26 +39,13 @@ namespace FungusToast.Core.Players
             Score = 0;
         }
 
-        public void SetBaseMutationPoints(int amount)
-        {
-            baseMutationPoints = amount;
-        }
+        public void SetBaseMutationPoints(int amount) => baseMutationPoints = amount;
 
-        public int GetBaseMutationPointIncome()
-        {
-            return baseMutationPoints;
-        }
+        public int GetBaseMutationPointIncome() => baseMutationPoints;
 
-        public void SetMutationStrategy(IMutationSpendingStrategy strategy)
-        {
-            MutationStrategy = strategy;
-        }
+        public void SetMutationStrategy(IMutationSpendingStrategy strategy) => MutationStrategy = strategy;
 
-        public int GetMutationPointIncome()
-        {
-            // Only return the fixed base; any chance-based bonus is handled separately
-            return baseMutationPoints;
-        }
+        public int GetMutationPointIncome() => baseMutationPoints;
 
         public void AcquireMutation(int mutationId, MutationManager mutationManager)
         {
@@ -75,9 +63,7 @@ namespace FungusToast.Core.Players
                 return false;
 
             if (!PlayerMutations.ContainsKey(mutation.Id))
-            {
                 PlayerMutations[mutation.Id] = new PlayerMutation(PlayerId, mutation.Id, mutation);
-            }
 
             var playerMutation = PlayerMutations[mutation.Id];
 
@@ -150,6 +136,19 @@ namespace FungusToast.Core.Players
             return level * bonusPerLevel;
         }
 
+        public float GetBaseMycelialDegradationRisk(List<Player> allPlayers)
+        {
+            float baseChance = GameBalance.BaseDeathChance;
+
+            float totalEnemyPressure = allPlayers
+                .Where(p => p.PlayerId != this.PlayerId)
+                .Sum(p => p.GetMutationEffect(MutationType.EnemyDecayChance));
+
+            float defensiveBonus = GetEffectiveSelfDeathChance();
+
+            float result = baseChance + totalEnemyPressure - defensiveBonus;
+            return System.Math.Max(0f, result);
+        }
 
         public float GetOffensiveDecayModifierAgainst(FungalCell targetCell, GameBoard board)
         {
@@ -200,9 +199,54 @@ namespace FungusToast.Core.Players
             const int reductionPerLevel = 5;
 
             int level = GetMutationLevel(MutationManager.MutationIds.ChronoresilientCytoplasm);
-            return System.Math.Max(1, baseThreshold - (level * reductionPerLevel)); // Prevent threshold from dropping below 1
+            return System.Math.Max(1, baseThreshold - (level * reductionPerLevel));
         }
 
+        public void TryTriggerAutoUpgrade()
+        {
+            float chance = GetMutationEffect(MutationType.AutoUpgradeRandom);
+            if (rng.NextDouble() >= chance)
+                return;
 
+            var mutationManager = GameManager.Instance?.GetComponentInChildren<MutationManager>();
+            if (mutationManager == null)
+            {
+                UnityEngine.Debug.LogWarning("⚠️ MutationManager not found when trying to auto-upgrade.");
+                return;
+            }
+
+            var allEligible = mutationManager.GetAllMutations()
+                .Where(m => CanUpgrade(m))
+                .ToList();
+
+            if (allEligible.Count == 0)
+            {
+                UnityEngine.Debug.Log("💛 No eligible mutations to auto-upgrade.");
+                return;
+            }
+
+            var selected = allEligible[rng.Next(allEligible.Count)];
+            TryAutoUpgrade(selected);
+            UnityEngine.Debug.Log($"🧬 Mutator Phenotype triggered: Auto-upgraded {selected.Name} for Player {PlayerId}");
+        }
+
+        public bool TryAutoUpgrade(Mutation mutation)
+        {
+            if (mutation == null)
+                return false;
+
+            if (!PlayerMutations.ContainsKey(mutation.Id))
+                PlayerMutations[mutation.Id] = new PlayerMutation(PlayerId, mutation.Id, mutation);
+
+            var playerMutation = PlayerMutations[mutation.Id];
+
+            if (playerMutation.CurrentLevel < mutation.MaxLevel)
+            {
+                playerMutation.Upgrade();
+                return true;
+            }
+
+            return false;
+        }
     }
 }

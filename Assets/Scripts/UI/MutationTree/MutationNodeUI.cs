@@ -56,7 +56,7 @@ namespace FungusToast.UI.MutationTree
         }
 
 
-        private void UpdateDisplay()
+        public void UpdateDisplay()
         {
             int currentLevel = player.GetMutationLevel(mutation.Id);
             levelText.text = $"Level {currentLevel}/{mutation.MaxLevel}";

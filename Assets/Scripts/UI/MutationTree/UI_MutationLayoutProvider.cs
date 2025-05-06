@@ -26,6 +26,7 @@ namespace FungusToast.UI.MutationTree
 
                 // Utility
                 { 3, new MutationLayoutMetadata(3, 0, MutationCategory.GeneticDrift) },   // Adaptive Expression
+                { 10, new MutationLayoutMetadata(3, 1, MutationCategory.GeneticDrift) },  // Mutator Phenotype
             };
         }
     }

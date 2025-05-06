@@ -53,5 +53,11 @@ namespace FungusToast.Core.Players
         {
             return Mutation?.GetTotalEffect(CurrentLevel) ?? 0f;
         }
+
+        public bool CanAutoUpgrade()
+        {
+            return Mutation != null && CurrentLevel < Mutation.MaxLevel;
+        }
+
     }
 }

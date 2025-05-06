@@ -57,6 +57,8 @@ namespace FungusToast.UI.MutationTree
         private bool humanTurnEnded = false;
         private Coroutine tooltipFadeCoroutine;
 
+        private List<MutationNodeUI> mutationButtons = new();
+
         private void Awake()
         {
             if (mutationTreePanel != null)
@@ -148,7 +150,9 @@ namespace FungusToast.UI.MutationTree
             var mutations = mutationManager.GetAllMutations().ToList();
             var layout = MutationLayoutProvider.GetDefaultLayout();
 
-            mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
+            mutationButtons.Clear(); // reset in case we're rebuilding
+            mutationButtons = mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
+
         }
 
         public bool TryUpgradeMutation(Mutation mutation)
@@ -369,5 +373,14 @@ namespace FungusToast.UI.MutationTree
 
             GameManager.Instance.SpendAllMutationPointsForAIPlayers();
         }
+
+        public void RefreshAllMutationButtons()
+        {
+            foreach (var button in mutationButtons) // however you're storing them
+            {
+                button.UpdateDisplay(); // or whatever method you use to update level text and visuals
+            }
+        }
+
     }
 }
