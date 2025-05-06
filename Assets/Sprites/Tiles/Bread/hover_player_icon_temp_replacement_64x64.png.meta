@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      hover_player_icon_temp_replacement_64x64_0: 811760394802069073
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
