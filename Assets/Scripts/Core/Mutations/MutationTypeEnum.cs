@@ -12,5 +12,6 @@ namespace FungusToast.Core
         GrowthDiagonal_NE,
         GrowthDiagonal_SE,
         GrowthDiagonal_SW,
+        SelfAgeResetThreshold,
     }
 }

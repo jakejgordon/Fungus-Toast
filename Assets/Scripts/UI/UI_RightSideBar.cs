@@ -35,7 +35,7 @@ namespace FungusToast.UI
                 }
 
                 row.SetIcon(GameManager.Instance.GameUI.PlayerUIBinder.GetPlayerIcon(player.PlayerId));
-                row.SetCounts("?", "?");
+                row.SetCounts("1", "0");
                 playerSummaryRows[player.PlayerId] = row;
             }
         }

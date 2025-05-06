@@ -145,10 +145,11 @@ namespace FungusToast.Core.Players
 
         public float GetEffectiveSelfDeathChance()
         {
-            float baseChance = GameBalance.BaseDeathChance;
-            float survivalBonus = GetMutationEffect(MutationType.DefenseSurvival);
-            return System.Math.Max(0f, baseChance - survivalBonus);
+            const float bonusPerLevel = 0.0025f;
+            int level = GetMutationLevel(MutationManager.MutationIds.HomeostaticHarmony);
+            return level * bonusPerLevel;
         }
+
 
         public float GetOffensiveDecayModifierAgainst(FungalCell targetCell, GameBoard board)
         {
@@ -192,5 +193,16 @@ namespace FungusToast.Core.Players
                 UnityEngine.Debug.Log($"🧬 Player owns: {pm.Mutation.Name} (Level {pm.CurrentLevel}) [ID {pm.Mutation.Id}]");
             }
         }
+
+        public int GetSelfAgeResetThreshold()
+        {
+            const int baseThreshold = 50;
+            const int reductionPerLevel = 5;
+
+            int level = GetMutationLevel(MutationManager.MutationIds.ChronoresilientCytoplasm);
+            return System.Math.Max(1, baseThreshold - (level * reductionPerLevel)); // Prevent threshold from dropping below 1
+        }
+
+
     }
 }

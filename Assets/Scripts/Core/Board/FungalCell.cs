@@ -37,5 +37,11 @@ namespace FungusToast.Core.Board
         {
             GrowthCycleAge++;
         }
+
+        public void ResetGrowthCycleAge()
+        {
+            GrowthCycleAge = 0;
+        }
+
     }
 }
