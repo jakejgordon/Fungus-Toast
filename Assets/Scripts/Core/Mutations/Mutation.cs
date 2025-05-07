@@ -18,7 +18,7 @@ namespace FungusToast.Core.Mutations
         public MutationCategory Category { get; private set; }
 
         public List<Mutation> Children { get; private set; }
-       
+
 
         public Mutation(int id, string name, string description, MutationType type, float effectPerLevel, int pointsPerUpgrade = 1, int maxLevel = 50, MutationCategory category = MutationCategory.Growth)
         {
@@ -29,9 +29,10 @@ namespace FungusToast.Core.Mutations
             EffectPerLevel = effectPerLevel;
             PointsPerUpgrade = pointsPerUpgrade;
             MaxLevel = maxLevel;
-
+            Category = category;
             Children = new List<Mutation>();
         }
+
 
         /// <summary>
         /// Calculates whether the mutation can be upgraded based on current level.

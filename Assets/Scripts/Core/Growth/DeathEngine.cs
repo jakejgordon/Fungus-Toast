@@ -36,7 +36,7 @@ namespace FungusToast.Core.Growth
                     continue;
 
                 float baseChance = GameBalance.BaseDeathChance;
-                float ageModifier = cell.GrowthCycleAge * GameBalance.AgeDeathFactor;
+                float ageModifier = cell.GrowthCycleAge * GameBalance.AgeDeathFactorPerGrowthCycle;
                 float defenseBonus = player.GetEffectiveSelfDeathChance();
                 float pressure = GetEnemyPressure(players, player, cell, board);
 
