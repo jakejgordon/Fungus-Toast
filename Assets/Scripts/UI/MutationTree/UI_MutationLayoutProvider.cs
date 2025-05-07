@@ -19,6 +19,7 @@ namespace FungusToast.UI.MutationTree
                 // Defense
                 { 1, new MutationLayoutMetadata(1, 0, MutationCategory.CellularResilience) }, // Homeostatic Harmony
                 { 4, new MutationLayoutMetadata(1, 1, MutationCategory.CellularResilience) }, // Chronoresilient Cytoplasm
+                { 11, new MutationLayoutMetadata(1, 2, MutationCategory.CellularResilience) }, // Necrosporulation (dependent)
 
                 // Offense
                 { 2, new MutationLayoutMetadata(2, 0, MutationCategory.Fungicide) },      // Silent Blight

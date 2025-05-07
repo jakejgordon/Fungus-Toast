@@ -28,6 +28,7 @@ namespace FungusToast.Game
             public const int TendrilSoutheast = 8;
             public const int TendrilSouthwest = 9;
             public const int MutatorPhenotype = 10;
+            public const int Necrosporulation = 11;
         }
 
         private void Awake()
@@ -96,13 +97,28 @@ namespace FungusToast.Game
                              $"When a mold cell survives for a number of cycles equal to (50 − 5 × Level), its age resets to 0 instead of increasing Mycelial Degradation risk.",
                 type: MutationType.SelfAgeResetThreshold,
                 effectPerLevel: 5f,
-                maxLevel: 5,
+                maxLevel: 10,
                 category: MutationCategory.CellularResilience
             );
             chronoresilientCytoplasm.RequiredMutation = homeostaticHarmony;
             chronoresilientCytoplasm.RequiredLevel = 10;
             homeostaticHarmony.Children.Add(chronoresilientCytoplasm);
             allMutations[chronoresilientCytoplasm.Id] = chronoresilientCytoplasm;
+
+            var necrosporulation = new Mutation(
+                id: MutationIds.Necrosporulation,
+                name: "Necrosporulation",
+                description: $"Weakened mold cells release a last burst of life. " +
+                             $"When one of your cells dies, there's a +{(0.15f * 100f):F1}% chance per level to spawn a new cell on a random unoccupied tile.",
+                type: MutationType.SporeOnDeathChance,
+                effectPerLevel: 0.15f,
+                maxLevel: 5,
+                category: MutationCategory.CellularResilience
+            );
+            necrosporulation.RequiredMutation = chronoresilientCytoplasm;
+            necrosporulation.RequiredLevel = 5;
+            chronoresilientCytoplasm.Children.Add(necrosporulation);
+            allMutations[necrosporulation.Id] = necrosporulation;
 
             var encystedSpores = new Mutation(
                 id: MutationIds.EncystedSpores,
@@ -119,7 +135,6 @@ namespace FungusToast.Game
             silentBlight.Children.Add(encystedSpores);
             allMutations[encystedSpores.Id] = encystedSpores;
 
-            // Diagonal Growth Mutations
             CreateDiagonalGrowthMutation(MutationIds.TendrilNorthwest, "Tendril Northwest", MutationType.GrowthDiagonal_NW, mycelialBloom);
             CreateDiagonalGrowthMutation(MutationIds.TendrilNortheast, "Tendril Northeast", MutationType.GrowthDiagonal_NE, mycelialBloom);
             CreateDiagonalGrowthMutation(MutationIds.TendrilSoutheast, "Tendril Southeast", MutationType.GrowthDiagonal_SE, mycelialBloom);
@@ -131,7 +146,7 @@ namespace FungusToast.Game
                 description: $"Genomic instability accelerates adaptation. " +
                              $"Grants a {(0.075f * 100f):F1}% chance per level to automatically upgrade a random owned mutation at the start of each turn.",
                 type: MutationType.AutoUpgradeRandom,
-                effectPerLevel: 0.075f, // 7.5% per level
+                effectPerLevel: 0.075f,
                 maxLevel: 10,
                 category: MutationCategory.GeneticDrift
             );
@@ -139,7 +154,6 @@ namespace FungusToast.Game
             mutatorPhenotype.RequiredLevel = 5;
             adaptiveExpression.Children.Add(mutatorPhenotype);
             allMutations[mutatorPhenotype.Id] = mutatorPhenotype;
-
         }
 
         private void CreateDiagonalGrowthMutation(int id, string name, MutationType type, Mutation required)

@@ -152,5 +152,22 @@ namespace FungusToast.Core
 
             return result;
         }
+
+        public bool SpawnSporeForPlayer(Player player, int tileId)
+        {
+            var (x, y) = GetXYFromTileId(tileId);
+            var tile = GetTile(x, y);
+
+            if (tile == null || tile.IsOccupied)
+                return false;
+
+            var cell = new FungalCell(player.PlayerId, tileId);
+            tile.PlaceFungalCell(cell);
+            tileIdToCell[tileId] = cell;
+
+            player.ControlledTileIds.Add(tileId);
+            return true;
+        }
+
     }
 }
