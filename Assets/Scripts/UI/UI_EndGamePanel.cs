@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using FungusToast.Core;
 using FungusToast.Core.Players;
 using FungusToast.Game;
@@ -10,13 +12,14 @@ namespace FungusToast.UI
 {
     public class UI_EndGamePanel : MonoBehaviour
     {
+        /* ─────────── Inspector ─────────── */
         [Header("UI References")]
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private Transform resultsContainer;
         [SerializeField] private UI_GameEndPlayerResultsRow playerResultRowPrefab;
         [SerializeField] private Button closeButton;
 
-        /* ---------- Unity ---------- */
+        /* ─────────── Unity ─────────── */
         private void Awake()
         {
             if (playerResultRowPrefab == null)
@@ -26,14 +29,14 @@ namespace FungusToast.UI
             HideInstant();
         }
 
-        /* ---------- Public API ---------- */
+        /* ─────────── Public API ─────────── */
         public void ShowResults(List<Player> ranked, GameBoard board)
         {
-            /*── clear previous rows ───────────────────────────────────*/
+            /* clear previous rows */
             foreach (Transform child in resultsContainer)
                 Destroy(child.gameObject);
 
-            /*── build rows ────────────────────────────────────────────*/
+            /* build rows */
             int rank = 1;
             foreach (var p in ranked)
             {
@@ -46,13 +49,14 @@ namespace FungusToast.UI
                 rank++;
             }
 
-            /*── ACTIVATE first ────────────────────────────────────────*/
-            gameObject.SetActive(true);                 // must be active BEFORE coroutine
+            Debug.Log($"IsPrefabAsset={UnityEditor.PrefabUtility.IsPartOfPrefabAsset(gameObject)}");
+
+            /* activate first */
+            gameObject.SetActive(true);
             canvasGroup.alpha = 0f;
             canvasGroup.interactable = true;
             canvasGroup.blocksRaycasts = true;
 
-            /*── confirm state AFTER activation ───────────────────────*/
             Debug.Log($"[EndGamePanel] after SetActive: activeSelf={gameObject.activeSelf}, inHierarchy={gameObject.activeInHierarchy}");
 
             if (!gameObject.activeInHierarchy)
@@ -61,17 +65,15 @@ namespace FungusToast.UI
                 return;
             }
 
-            /*── fade in ───────────────────────────────────────────────*/
+            /* fade-in */
             StopAllCoroutines();
             StartCoroutine(FadeCanvasGroup(1f, 0.25f));
         }
 
-
-
-        /* ---------- Private helpers ---------- */
+        /* ─────────── Buttons / Helpers ─────────── */
         private void OnClose()
         {
-            HideInstant();   // optional: keep fade-out for polish
+            HideInstant();
             UnityEngine.SceneManagement.SceneManager.LoadScene(
                 UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
         }
@@ -85,17 +87,14 @@ namespace FungusToast.UI
             gameObject.SetActive(false);
         }
 
-        private System.Collections.IEnumerator FadeCanvasGroup(float targetAlpha, float duration)
+        private IEnumerator FadeCanvasGroup(float targetAlpha, float duration)
         {
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-
-            float startAlpha = canvasGroup.alpha;
+            float start = canvasGroup.alpha;
             float t = 0f;
             while (t < duration)
             {
                 t += Time.unscaledDeltaTime;
-                canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, t / duration);
+                canvasGroup.alpha = Mathf.Lerp(start, targetAlpha, t / duration);
                 yield return null;
             }
             canvasGroup.alpha = targetAlpha;

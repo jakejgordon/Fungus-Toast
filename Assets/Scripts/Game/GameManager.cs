@@ -225,6 +225,8 @@ namespace FungusToast.Game
             gameUIManager.RightSidebar.gameObject.SetActive(false);
             gameUIManager.LeftSidebar.gameObject.SetActive(false);
 
+            gameUIManager.EndGamePanel.gameObject.SetActive(true);
+
             // Show results
             gameUIManager.EndGamePanel.ShowResults(ranked, Board);
         }
