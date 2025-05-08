@@ -1,19 +1,21 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using FungusToast.Core;
-using FungusToast.Core.Players;
-using FungusToast.Grid;
-using FungusToast.Game.Phases;
-using FungusToast.AI;
-using FungusToast.Core.Config;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using UnityEngine;
+using FungusToast.AI;
+using FungusToast.Core;
+using FungusToast.Core.Config;
 using FungusToast.Core.Growth;
+using FungusToast.Core.Players;
+using FungusToast.Game.Phases;
+using FungusToast.Grid;
 
 namespace FungusToast.Game
 {
     public class GameManager : MonoBehaviour
     {
+        /* ─────────── Inspector ─────────── */
         [Header("Board Settings")]
         public int boardWidth = 20;
         public int boardHeight = 20;
@@ -28,15 +30,20 @@ namespace FungusToast.Game
         [SerializeField] private GameUIManager gameUIManager;
         [SerializeField] private TextMeshProUGUI gamePhaseText;
 
-        public GameUIManager GameUI => gameUIManager;
-
-        public static GameManager Instance { get; private set; }
+        /* ─────────── State ─────────── */
+        private bool isCountdownActive = false;
+        private int roundsRemainingUntilGameEnd = 0;
+        private bool gameEnded = false;
 
         public GameBoard Board { get; private set; }
+        public GameUIManager GameUI => gameUIManager;
+        public static GameManager Instance { get; private set; }
 
-        private List<Player> players = new List<Player>();
+        private readonly List<Player> players = new();
         private Player humanPlayer;
 
+        /* ───────────────────────────────────────────────────────── */
+        #region Unity Lifecycle
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -44,8 +51,8 @@ namespace FungusToast.Game
                 Destroy(gameObject);
                 return;
             }
-
             Instance = this;
+
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
         }
 
@@ -56,11 +63,13 @@ namespace FungusToast.Game
             gridVisualizer.Initialize(Board);
             SetupUI();
         }
+        #endregion
 
+        /* ───────────────────────────────────────────────────────── */
+        #region Setup
         private void SetupPlayers()
         {
             players.Clear();
-
             int baseMP = GameBalance.StartingMutationPoints;
 
             humanPlayer = new Player(0, "Human", PlayerTypeEnum.Human, AITypeEnum.Random);
@@ -75,19 +84,16 @@ namespace FungusToast.Game
 
             for (int i = 1; i < playerCount; i++)
             {
-                var aiPlayer = new Player(i, $"AI Player {i}", PlayerTypeEnum.AI, AITypeEnum.Random);
-                aiPlayer.SetBaseMutationPoints(baseMP);
-                aiPlayer.SetMutationStrategy(strategyPool[Random.Range(0, strategyPool.Length)]);
-                players.Add(aiPlayer);
+                var ai = new Player(i, $"AI Player {i}", PlayerTypeEnum.AI, AITypeEnum.Random);
+                ai.SetBaseMutationPoints(baseMP);
+                ai.SetMutationStrategy(strategyPool[Random.Range(0, strategyPool.Length)]);
+                players.Add(ai);
             }
 
-            foreach (var player in players)
+            foreach (var p in players)
             {
-                Sprite icon = gridVisualizer.GetTileForPlayer(player.PlayerId)?.sprite;
-                if (icon != null)
-                    gameUIManager.PlayerUIBinder.AssignIcon(player, icon);
-                else
-                    Debug.LogWarning($"⚠️ No icon found for player {player.PlayerId}");
+                var icon = gridVisualizer.GetTileForPlayer(p.PlayerId)?.sprite;
+                if (icon != null) gameUIManager.PlayerUIBinder.AssignIcon(p, icon);
             }
 
             gameUIManager.MoldProfilePanel?.Initialize(humanPlayer, players);
@@ -110,16 +116,157 @@ namespace FungusToast.Game
                 gameUIManager.MutationUIManager.Initialize(humanPlayer);
                 gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
             }
-            else
+        }
+        #endregion
+
+        /* ───────────────────────────────────────────────────────── */
+        #region Phase Flow
+        public void StartGrowthPhase()
+        {
+            if (growthPhaseRunner != null)
             {
-                Debug.LogError("MutationUIManager reference not assigned in GameManager!");
+                growthPhaseRunner.Initialize(Board, players, gridVisualizer);
+                growthPhaseRunner.StartGrowthPhase();
             }
         }
 
+        public void StartDecayPhase()
+        {
+            if (gameEnded) return;
+
+            SetGamePhaseText("Decay Phase");
+            DeathEngine.ExecuteDeathCycle(Board, players);
+            gridVisualizer.RenderBoard(Board);
+            gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
+
+            StartCoroutine(FinishDecayPhaseAfterDelay(1f));
+        }
+
+        private IEnumerator FinishDecayPhaseAfterDelay(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+
+            if (gameEnded) yield break;
+
+            CheckForEndgameCondition();
+            if (gameEnded) yield break;
+
+            OnGrowthPhaseComplete();
+        }
+
+        public void OnGrowthPhaseComplete()
+        {
+            if (gameEnded) return;
+
+            AssignMutationPoints();
+            gameUIManager.MutationUIManager.Initialize(humanPlayer);
+            gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+            gameUIManager.MoldProfilePanel?.Refresh();
+            gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
+
+            SetGamePhaseText("Mutation Phase");
+        }
+        #endregion
+
+        /* ───────────────────────────────────────────────────────── */
+        #region End-game Logic
+        private void CheckForEndgameCondition()
+        {
+            int totalTiles = Board.Width * Board.Height;
+            int occupiedTiles = Board.GetAllCells().Count;
+            float ratio = (float)occupiedTiles / totalTiles;
+
+            if (!isCountdownActive && ratio >= GameBalance.GameEndTileOccupancyThreshold)
+            {
+                isCountdownActive = true;
+                roundsRemainingUntilGameEnd = GameBalance.TurnsAfterEndGameTileOccupancyThresholdMet;
+                UpdateCountdownUI();
+            }
+            else if (isCountdownActive)
+            {
+                roundsRemainingUntilGameEnd--;
+                if (roundsRemainingUntilGameEnd <= 0)
+                {
+                    EndGame();
+                }
+                else
+                {
+                    UpdateCountdownUI();
+                }
+            }
+        }
+
+        private void UpdateCountdownUI()
+        {
+            if (!isCountdownActive)
+            {
+                gameUIManager.RightSidebar?.SetEndgameCountdownText(null);
+                return;
+            }
+
+            if (roundsRemainingUntilGameEnd == 1)
+                gameUIManager.RightSidebar?.SetEndgameCountdownText("<b><color=#FF0000>Final Round!</color></b>");
+            else
+                gameUIManager.RightSidebar?.SetEndgameCountdownText($"<b><color=#FFA500>Endgame in {roundsRemainingUntilGameEnd} rounds</color></b>");
+        }
+
+        private void EndGame()
+        {
+            if (gameEnded) return;
+            gameEnded = true;
+
+            var ranked = players
+                .OrderByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
+                .ThenByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => !c.IsAlive))
+                .ToList();
+
+            // Disable interactive UI
+            gameUIManager.MutationUIManager.gameObject.SetActive(false);
+            gameUIManager.RightSidebar.gameObject.SetActive(false);
+            gameUIManager.LeftSidebar.gameObject.SetActive(false);
+
+            // Show results
+            gameUIManager.EndGamePanel.ShowResults(ranked, Board);
+        }
+        #endregion
+
+        /* ───────────────────────────────────────────────────────── */
+        #region Utility
+        private void AssignMutationPoints()
+        {
+            foreach (var p in players)
+            {
+                int baseIncome = p.GetMutationPointIncome();
+                int bonus = p.GetBonusMutationPoints();
+                p.MutationPoints = baseIncome + bonus;
+                p.TryTriggerAutoUpgrade();
+            }
+            gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
+        }
+
+        public void SetGamePhaseText(string label)
+        {
+            if (gamePhaseText != null) gamePhaseText.text = label;
+        }
+        #endregion
+
+        /* ───────────────────────────────────────────────────────── */
+        /*  PUBLIC HELPERS EXPECTED BY UI_MutationManager + PreGameUI */
+        /* ───────────────────────────────────────────────────────── */
+
+        /// <summary>
+        /// Called by the pre-game menu. Re-initialises everything for N players.
+        /// </summary>
         public void InitializeGame(int numberOfPlayers)
         {
+            // clear any previous session
+            gameEnded = false;
+            isCountdownActive = false;
+            roundsRemainingUntilGameEnd = 0;
+
             playerCount = numberOfPlayers;
 
+            // fresh board + players
             SetupPlayers();
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
             gridVisualizer.Initialize(Board);
@@ -128,12 +275,32 @@ namespace FungusToast.Game
 
             mutationManager.ResetMutationPoints(players);
 
+            // refresh UI
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
             SetGamePhaseText("Mutation Phase");
         }
 
-        public void PlaceStartingSpores()
+        /// <summary>
+        /// Lets all AI players dump their mutation points at once, then starts the Growth Phase.
+        /// Used by UI_MutationManager.
+        /// </summary>
+        public void SpendAllMutationPointsForAIPlayers()
+        {
+            foreach (var p in players)
+            {
+                if (p.PlayerType == PlayerTypeEnum.AI)
+                    p.MutationStrategy?.SpendMutationPoints(p, mutationManager.GetAllMutations().ToList());
+            }
+
+            Debug.Log("All AI players have spent their mutation points.");
+            StartGrowthPhase();
+        }
+
+        /// <summary>
+        /// Spawns each player’s initial spore in a circle around board center.
+        /// </summary>
+        private void PlaceStartingSpores()
         {
             float radius = Mathf.Min(boardWidth, boardHeight) * 0.35f;
             Vector2 center = new Vector2(boardWidth / 2f, boardHeight / 2f);
@@ -147,82 +314,6 @@ namespace FungusToast.Game
             }
         }
 
-        public void SpendAllMutationPointsForAIPlayers()
-        {
-            foreach (Player player in players)
-            {
-                if (player.PlayerType == PlayerTypeEnum.AI)
-                    player.MutationStrategy?.SpendMutationPoints(player, mutationManager.GetAllMutations().ToList());
-            }
 
-            Debug.Log("All AI players have spent their mutation points.");
-            StartGrowthPhase();
-        }
-
-        private void StartGrowthPhase()
-        {
-            if (growthPhaseRunner != null)
-            {
-                growthPhaseRunner.Initialize(Board, players, gridVisualizer);
-                growthPhaseRunner.StartGrowthPhase();
-            }
-            else
-            {
-                Debug.LogError("GrowthPhaseRunner is missing. Cannot start Growth Phase!");
-            }
-        }
-
-        public void StartDecayPhase()
-        {
-            SetGamePhaseText("Decay Phase");
-            Debug.Log("💀 Running Death Cycle...");
-            DeathEngine.ExecuteDeathCycle(Board, players);
-            gridVisualizer.RenderBoard(Board);
-            gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
-
-            StartCoroutine(FinishDecayPhaseAfterDelay(1f));
-        }
-
-        private System.Collections.IEnumerator FinishDecayPhaseAfterDelay(float delay)
-        {
-            yield return new WaitForSeconds(delay);
-            OnGrowthPhaseComplete(); // Resets mutation points and starts Mutation Phase again
-        }
-
-        public void OnGrowthPhaseComplete()
-        {
-            AssignMutationPoints();
-            Debug.Log("All players have received new mutation points.");
-
-            gameUIManager.MutationUIManager.Initialize(humanPlayer);
-            gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-            gameUIManager.MoldProfilePanel?.Refresh();
-            gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
-
-            SetGamePhaseText("Mutation Phase");
-        }
-
-        public void AssignMutationPoints()
-        {
-            foreach (var player in players)
-            {
-                int baseIncome = player.GetMutationPointIncome();
-                int bonus = player.GetBonusMutationPoints();
-                player.MutationPoints = baseIncome + bonus;
-                Debug.Log($"🌱 Player {player.PlayerId} assigned {player.MutationPoints} MP (base: {baseIncome}, bonus: {bonus})");
-
-                // Trigger Mutator Phenotype auto-upgrade if owned
-                player.TryTriggerAutoUpgrade();
-            }
-
-            gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
-        }
-
-
-        public void SetGamePhaseText(string phaseLabel)
-        {
-            if (gamePhaseText != null)
-                gamePhaseText.text = phaseLabel;
-        }
     }
 }

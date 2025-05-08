@@ -12,6 +12,7 @@ namespace FungusToast.UI
         [Header("Player Summary Panel")]
         [SerializeField] private Transform playerSummaryContainer;
         [SerializeField] private GameObject playerSummaryPrefab;
+        [SerializeField] private TextMeshProUGUI endgameCountdownText;
 
         private Dictionary<int, PlayerSummaryRow> playerSummaryRows = new();
 
@@ -60,6 +61,13 @@ namespace FungusToast.UI
             }
         }
 
-
+        public void SetEndgameCountdownText(string message)
+        {
+            if (endgameCountdownText != null)
+            {
+                endgameCountdownText.text = message;
+                endgameCountdownText.gameObject.SetActive(!string.IsNullOrEmpty(message));
+            }
+        }
     }
 }
