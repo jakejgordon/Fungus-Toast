@@ -12,19 +12,19 @@ namespace FungusToast.Core.Players
     {
         private static readonly System.Random rng = new System.Random();
 
-        public int PlayerId { get; private set; }
-        public string PlayerName { get; private set; }
-        public PlayerTypeEnum PlayerType { get; private set; }
-        public AITypeEnum AIType { get; private set; }
+        public int PlayerId { get; }
+        public string PlayerName { get; }
+        public PlayerTypeEnum PlayerType { get; }
+        public AITypeEnum AIType { get; }
         public int MutationPoints { get; set; }
 
-        public Dictionary<int, PlayerMutation> PlayerMutations { get; private set; } = new();
-        public List<int> ControlledTileIds { get; private set; } = new();
+        public Dictionary<int, PlayerMutation> PlayerMutations { get; } = new();
+        public List<int> ControlledTileIds { get; } = new();
 
         public bool IsActive { get; set; }
         public int Score { get; set; }
 
-        private int baseMutationPoints = 5;
+        private int baseMutationPoints = GameBalance.StartingMutationPoints;
 
         public IMutationSpendingStrategy MutationStrategy { get; private set; }
 
@@ -34,138 +34,77 @@ namespace FungusToast.Core.Players
             PlayerName = playerName;
             PlayerType = playerType;
             AIType = aiType;
-            MutationPoints = 0;
-            IsActive = false;
-            Score = 0;
         }
+
+        /* ---------------- Mutation-point helpers ---------------- */
 
         public void SetBaseMutationPoints(int amount) => baseMutationPoints = amount;
-
         public int GetBaseMutationPointIncome() => baseMutationPoints;
 
-        public void SetMutationStrategy(IMutationSpendingStrategy strategy) => MutationStrategy = strategy;
+        //  🔄  Back-compat shim for older callers ---------------
+        public int GetMutationPointIncome() => GetBaseMutationPointIncome();
 
-        public int GetMutationPointIncome() => baseMutationPoints;
+        public void SetMutationStrategy(IMutationSpendingStrategy strat) => MutationStrategy = strat;
 
-        public void AcquireMutation(int mutationId, MutationManager mutationManager)
-        {
-            if (!PlayerMutations.ContainsKey(mutationId))
-            {
-                var mutation = mutationManager.GetMutationById(mutationId);
-                if (mutation != null)
-                    PlayerMutations[mutationId] = new PlayerMutation(PlayerId, mutationId, mutation);
-            }
-        }
+        /* ---------------- Growth / death chance --------------- */
 
-        public bool TryUpgradeMutation(Mutation mutation)
-        {
-            if (mutation == null)
-                return false;
-
-            if (!PlayerMutations.ContainsKey(mutation.Id))
-                PlayerMutations[mutation.Id] = new PlayerMutation(PlayerId, mutation.Id, mutation);
-
-            var playerMutation = PlayerMutations[mutation.Id];
-
-            if (MutationPoints >= mutation.PointsPerUpgrade && playerMutation.CurrentLevel < mutation.MaxLevel)
-            {
-                MutationPoints -= mutation.PointsPerUpgrade;
-                playerMutation.Upgrade();
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool CanUpgrade(Mutation mutation)
-        {
-            if (mutation == null)
-                return false;
-
-            foreach (var prereq in mutation.Prerequisites)
-            {
-                int prereqLevel = GetMutationLevel(prereq.MutationId);
-                if (prereqLevel < prereq.RequiredLevel)
-                    return false;
-            }
-
-            int currentLevel = GetMutationLevel(mutation.Id);
-            return MutationPoints >= mutation.PointsPerUpgrade && currentLevel < mutation.MaxLevel;
-        }
-
-        public int GetMutationLevel(int mutationId)
-        {
-            return PlayerMutations.TryGetValue(mutationId, out var pm) ? pm.CurrentLevel : 0;
-        }
-
-        public float GetMutationEffect(MutationType type)
-        {
-            float total = 0f;
-
-            foreach (var playerMutation in PlayerMutations.Values)
-            {
-                if (playerMutation.Mutation.Type == type)
-                    total += playerMutation.GetEffect();
-            }
-
-            return total;
-        }
-
-        public void AddControlledTile(int tileId)
-        {
-            if (!ControlledTileIds.Contains(tileId))
-                ControlledTileIds.Add(tileId);
-        }
-
-        public void RemoveControlledTile(int tileId)
-        {
-            ControlledTileIds.Remove(tileId);
-        }
-
-        public float GetEffectiveGrowthChance()
-        {
-            float baseChance = GameBalance.BaseGrowthChance;
-            float bonus = GetMutationEffect(MutationType.GrowthChance);
-            return baseChance + bonus;
-        }
+        public float GetEffectiveGrowthChance() =>
+            GameBalance.BaseGrowthChance + GetMutationEffect(MutationType.GrowthChance);
 
         public float GetEffectiveSelfDeathChance()
         {
-            const float bonusPerLevel = 0.0025f;
+            float bonusPerLevel = GameBalance.HomeostaticHarmonyEffectPerLevel;
             int level = GetMutationLevel(MutationManager.MutationIds.HomeostaticHarmony);
             return level * bonusPerLevel;
         }
 
         public float GetBaseMycelialDegradationRisk(List<Player> allPlayers)
         {
-            float baseChance = GameBalance.BaseDeathChance;
-
-            float totalEnemyPressure = allPlayers
-                .Where(p => p.PlayerId != this.PlayerId)
+            float enemyPressure = allPlayers
+                .Where(p => p.PlayerId != PlayerId)
                 .Sum(p => p.GetMutationEffect(MutationType.EnemyDecayChance));
 
-            float defensiveBonus = GetEffectiveSelfDeathChance();
-
-            float result = baseChance + totalEnemyPressure - defensiveBonus;
-            return System.Math.Max(0f, result);
+            return System.Math.Max(
+                0f,
+                GameBalance.BaseDeathChance + enemyPressure - GetEffectiveSelfDeathChance());
         }
 
-        public float GetOffensiveDecayModifierAgainst(FungalCell targetCell, GameBoard board)
+        public float GetEffectiveDeathChanceFrom(Player attacker, FungalCell targetCell, GameBoard board)
         {
-            float decayBoost = GetMutationEffect(MutationType.EnemyDecayChance);
+            float chance = GetEffectiveSelfDeathChance();
+            float decayBoost = attacker.GetMutationEffect(MutationType.EnemyDecayChance);
 
             if (DeathEngine.IsCellSurrounded(targetCell.TileId, board))
             {
-                float encystedSporeMultiplier = 1f + GetMutationEffect(MutationType.EncystedSporeMultiplier);
-                decayBoost *= encystedSporeMultiplier;
+                float encystMult = 1f + attacker.GetMutationEffect(MutationType.EncystedSporeMultiplier);
+                decayBoost *= encystMult;
             }
 
-            return decayBoost;
+            float toxinBoost = attacker.GetMutationEffect(MutationType.OpponentExtraDeathChance);
+            chance += decayBoost + toxinBoost;
+
+            return System.Math.Max(0f, chance);
         }
 
-        public float GetDiagonalGrowthChance(DiagonalDirection direction)
+        // 🔄  Back-compat helper used by DeathEngine -------------------------
+        public float GetOffensiveDecayModifierAgainst(FungalCell targetCell, GameBoard board)
         {
-            return direction switch
+            float boost = GetMutationEffect(MutationType.EnemyDecayChance);
+
+            if (DeathEngine.IsCellSurrounded(targetCell.TileId, board))
+            {
+                float encysted = 1f + GetMutationEffect(MutationType.EncystedSporeMultiplier);
+                boost *= encysted;
+            }
+
+            boost += GetMutationEffect(MutationType.OpponentExtraDeathChance);
+            return boost;
+        }
+
+        /* ---------------- Diagonal growth helpers ------------- */
+
+        public float GetDiagonalGrowthChance(DiagonalDirection dir) =>
+            dir switch
             {
                 DiagonalDirection.Northwest => GetMutationEffect(MutationType.GrowthDiagonal_NW),
                 DiagonalDirection.Northeast => GetMutationEffect(MutationType.GrowthDiagonal_NE),
@@ -173,80 +112,104 @@ namespace FungusToast.Core.Players
                 DiagonalDirection.Southwest => GetMutationEffect(MutationType.GrowthDiagonal_SW),
                 _ => 0f
             };
+
+        /* ---------------- Mutation level / effect ------------- */
+
+        public int GetMutationLevel(int mutationId) =>
+            PlayerMutations.TryGetValue(mutationId, out var pm) ? pm.CurrentLevel : 0;
+
+        public float GetMutationEffect(MutationType type) =>
+            PlayerMutations.Values.Where(pm => pm.Mutation.Type == type)
+                                  .Sum(pm => pm.GetEffect());
+
+        /* ---------------- Upgrade API ------------------------- */
+
+        public bool TryUpgradeMutation(Mutation mutation)
+        {
+            if (mutation == null) return false;
+
+            if (!PlayerMutations.ContainsKey(mutation.Id))
+                PlayerMutations[mutation.Id] = new PlayerMutation(PlayerId, mutation.Id, mutation);
+
+            var pm = PlayerMutations[mutation.Id];
+
+            if (MutationPoints >= mutation.PointsPerUpgrade && pm.CurrentLevel < mutation.MaxLevel)
+            {
+                MutationPoints -= mutation.PointsPerUpgrade;
+                pm.Upgrade();
+                return true;
+            }
+            return false;
         }
+
+        public bool CanUpgrade(Mutation mut)
+        {
+            if (mut == null) return false;
+
+            foreach (var pre in mut.Prerequisites)
+                if (GetMutationLevel(pre.MutationId) < pre.RequiredLevel)
+                    return false;
+
+            return MutationPoints >= mut.PointsPerUpgrade &&
+                   GetMutationLevel(mut.Id) < mut.MaxLevel;
+        }
+
+        /* ---------------- Bonus MP & auto-upgrade ------------- */
 
         public int GetBonusMutationPoints()
         {
-            int bonusPoints = 0;
-            float bonusChance = GetMutationEffect(MutationType.BonusMutationPointChance);
-            if (rng.NextDouble() < bonusChance)
-                bonusPoints += 1;
-            return bonusPoints;
-        }
-
-        public void LogOwnedMutations()
-        {
-            foreach (var m in PlayerMutations)
-            {
-                var pm = m.Value;
-                UnityEngine.Debug.Log($"🧬 Player owns: {pm.Mutation.Name} (Level {pm.CurrentLevel}) [ID {pm.Mutation.Id}]");
-            }
-        }
-
-        public int GetSelfAgeResetThreshold()
-        {
-            const int baseThreshold = 50;
-            const int reductionPerLevel = 5;
-
-            int level = GetMutationLevel(MutationManager.MutationIds.ChronoresilientCytoplasm);
-            return System.Math.Max(1, baseThreshold - (level * reductionPerLevel));
+            float chance = GetMutationEffect(MutationType.BonusMutationPointChance);
+            return rng.NextDouble() < chance ? 1 : 0;
         }
 
         public void TryTriggerAutoUpgrade()
         {
             float chance = GetMutationEffect(MutationType.AutoUpgradeRandom);
-            if (rng.NextDouble() >= chance)
-                return;
+            if (rng.NextDouble() >= chance) return;
 
-            var mutationManager = GameManager.Instance?.GetComponentInChildren<MutationManager>();
-            if (mutationManager == null)
-            {
-                UnityEngine.Debug.LogWarning("⚠️ MutationManager not found when trying to auto-upgrade.");
-                return;
-            }
+            var mm = GameManager.Instance?.GetComponentInChildren<MutationManager>();
+            if (mm == null) return;
 
-            var allEligible = mutationManager.GetAllMutations()
-                .Where(m => CanUpgrade(m))
-                .ToList();
+            var eligible = mm.GetAllMutations().Where(CanUpgrade).ToList();
+            if (eligible.Count == 0) return;
 
-            if (allEligible.Count == 0)
-            {
-                UnityEngine.Debug.Log("💛 No eligible mutations to auto-upgrade.");
-                return;
-            }
-
-            var selected = allEligible[rng.Next(allEligible.Count)];
-            TryAutoUpgrade(selected);
-            UnityEngine.Debug.Log($"🧬 Mutator Phenotype triggered: Auto-upgraded {selected.Name} for Player {PlayerId}");
+            var pick = eligible[rng.Next(eligible.Count)];
+            TryAutoUpgrade(pick);
         }
 
-        public bool TryAutoUpgrade(Mutation mutation)
+        private bool TryAutoUpgrade(Mutation mut)
         {
-            if (mutation == null)
-                return false;
+            if (mut == null) return false;
 
-            if (!PlayerMutations.ContainsKey(mutation.Id))
-                PlayerMutations[mutation.Id] = new PlayerMutation(PlayerId, mutation.Id, mutation);
+            if (!PlayerMutations.ContainsKey(mut.Id))
+                PlayerMutations[mut.Id] = new PlayerMutation(PlayerId, mut.Id, mut);
 
-            var playerMutation = PlayerMutations[mutation.Id];
-
-            if (playerMutation.CurrentLevel < mutation.MaxLevel)
+            var pm = PlayerMutations[mut.Id];
+            if (pm.CurrentLevel < mut.MaxLevel)
             {
-                playerMutation.Upgrade();
+                pm.Upgrade();
                 return true;
             }
-
             return false;
         }
+
+        /* ---------------- Age reset threshold ----------------- */
+
+        public int GetSelfAgeResetThreshold()
+        {
+            int level = GetMutationLevel(MutationManager.MutationIds.ChronoresilientCytoplasm);
+            int threshold = GameBalance.BaseAgeResetThreshold -
+                            (level * GameBalance.AgeResetReductionPerLevel);
+            return System.Math.Max(1, threshold);
+        }
+
+        /* ---------------- Tile bookkeeping ------------------- */
+
+        public void AddControlledTile(int id)
+        {
+            if (!ControlledTileIds.Contains(id))
+                ControlledTileIds.Add(id);
+        }
+        public void RemoveControlledTile(int id) => ControlledTileIds.Remove(id);
     }
 }

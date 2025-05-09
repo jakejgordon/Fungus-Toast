@@ -11,17 +11,14 @@ namespace FungusToast.Core.Growth
     {
         public static void ExecuteDeathCycle(GameBoard board, List<Player> players)
         {
-            List<BoardTile> allLivingCells = new List<BoardTile>();
+            /* 1) Collect all living cells -------------------------------- */
+            var livingTiles = new List<BoardTile>();
+            foreach (var t in board.AllTiles())
+                if (t.FungalCell != null && t.FungalCell.IsAlive)
+                    livingTiles.Add(t);
 
-            foreach (var tile in board.AllTiles())
-            {
-                if (tile.FungalCell != null && tile.FungalCell.IsAlive)
-                {
-                    allLivingCells.Add(tile);
-                }
-            }
-
-            foreach (var tile in allLivingCells)
+            /* 2) Evaluate each cell -------------------------------------- */
+            foreach (var tile in livingTiles)
             {
                 var cell = tile.FungalCell;
                 var player = players.Find(p => p.PlayerId == cell.OwnerPlayerId);
@@ -31,35 +28,34 @@ namespace FungusToast.Core.Growth
                     continue;
                 }
 
-                int playerLivingCells = player.ControlledTileIds.Count;
-                if (playerLivingCells <= 1)
+                // Never kill a player’s final cell
+                if (player.ControlledTileIds.Count <= 1)
                     continue;
 
-                float baseChance = GameBalance.BaseDeathChance;
-                float ageModifier = cell.GrowthCycleAge * GameBalance.AgeDeathFactorPerGrowthCycle;
+                float ageMod = cell.GrowthCycleAge * GameBalance.AgeDeathFactorPerGrowthCycle;
                 float defenseBonus = player.GetEffectiveSelfDeathChance();
                 float pressure = GetEnemyPressure(players, player, cell, board);
 
-                float finalChance = baseChance + ageModifier + pressure - defenseBonus;
-                finalChance = Mathf.Clamp01(finalChance);
+                float finalChance = Mathf.Clamp01(
+                    GameBalance.BaseDeathChance + ageMod + pressure - defenseBonus);
 
-                float roll = UnityEngine.Random.value;
-                if (roll < finalChance)
+                if (Random.value < finalChance)
                 {
+                    /* ---- Cell dies -------------------------------------- */
                     cell.Kill();
                     player.ControlledTileIds.Remove(cell.TileId);
-                    Debug.Log($"💀 Cell at ({tile.X},{tile.Y}) owned by Player {player.PlayerId} died. Age={cell.GrowthCycleAge}, FinalChance={finalChance:P2}, Roll={roll:P2}");
+                    Debug.Log($"💀 Cell ({tile.X},{tile.Y}) P{player.PlayerId} died. Age={cell.GrowthCycleAge}  Chance={finalChance:P2}");
 
-                    // 🧬 Try Necrosporulation
-                    TrySpawnSpore(player, board);
+                    TrySpawnSpore(player, board);   // Necrosporulation
                 }
                 else
                 {
-                    int threshold = player.GetSelfAgeResetThreshold();
-                    if (cell.GrowthCycleAge >= threshold)
+                    /* ---- Cell survives / rejuvenates ------------------- */
+                    int resetAt = player.GetSelfAgeResetThreshold();
+                    if (cell.GrowthCycleAge >= resetAt)
                     {
                         cell.ResetGrowthCycleAge();
-                        Debug.Log($"♻️ Cell at ({tile.X},{tile.Y}) rejuvenated (age reset to 0). Previous Age={threshold}");
+                        Debug.Log($"♻️ Cell ({tile.X},{tile.Y}) rejuvenated (reset at {resetAt}).");
                     }
                     else
                     {
@@ -69,65 +65,73 @@ namespace FungusToast.Core.Growth
             }
         }
 
+        /* ========== Necrosporulation helper ============================= */
+
         private static void TrySpawnSpore(Player player, GameBoard board)
         {
-            float sporeChance = player.GetMutationEffect(MutationType.SporeOnDeathChance);
-            if (sporeChance <= 0f)
-                return;
+            float chance = player.GetMutationEffect(MutationType.SporeOnDeathChance);
+            if (chance <= 0f || Random.value > chance) return;
 
-            float roll = UnityEngine.Random.value;
-            if (roll > sporeChance)
-                return;
+            var empty = new List<BoardTile>();
+            foreach (var t in board.AllTiles())
+                if (!t.IsOccupied) empty.Add(t);
+            if (empty.Count == 0) return;
 
-            List<BoardTile> availableTiles = new();
-            foreach (var tile in board.AllTiles())
-            {
-                if (!tile.IsOccupied)
-                {
-                    availableTiles.Add(tile);
-                }
-            }
-
-            if (availableTiles.Count == 0)
-                return;
-
-            var chosenTile = availableTiles[UnityEngine.Random.Range(0, availableTiles.Count)];
-            int tileId = chosenTile.Y * board.Width + chosenTile.X;
+            var spawn = empty[Random.Range(0, empty.Count)];
+            int tileId = spawn.Y * board.Width + spawn.X;
 
             if (board.SpawnSporeForPlayer(player, tileId))
-            {
-                Debug.Log($"🌱 Necrospore spawned for Player {player.PlayerId} at ({chosenTile.X},{chosenTile.Y})");
-            }
+                Debug.Log($"🌱 Necrospore for P{player.PlayerId} at ({spawn.X},{spawn.Y})");
         }
 
-        private static float GetEnemyPressure(List<Player> allPlayers, Player currentPlayer, FungalCell targetCell, GameBoard board)
-        {
-            float pressure = 0f;
+        /* ========== Enemy-pressure calculation ========================== */
 
+        private static float GetEnemyPressure(List<Player> allPlayers,
+                                              Player owner,
+                                              FungalCell targetCell,
+                                              GameBoard board)
+        {
+            float total = 0f;
+
+            /* 1) Precompute which enemies are actually adjacent ---------- */
+            var adjacentEnemyIds = new HashSet<int>();
+            foreach (int id in board.GetAdjacentTileIds(targetCell.TileId))
+            {
+                var n = board.GetCell(id);
+                if (n != null && n.IsAlive && n.OwnerPlayerId != owner.PlayerId)
+                    adjacentEnemyIds.Add(n.OwnerPlayerId);
+            }
+
+            /* 2) Sum each enemy’s modifiers ------------------------------ */
             foreach (var enemy in allPlayers)
             {
-                if (enemy.PlayerId != currentPlayer.PlayerId)
-                {
-                    pressure += enemy.GetOffensiveDecayModifierAgainst(targetCell, board);
-                }
+                if (enemy.PlayerId == owner.PlayerId) continue;
+
+                float boost = enemy.GetOffensiveDecayModifierAgainst(targetCell, board);
+
+                // Remove toxin portion if the enemy is not adjacent
+                if (!adjacentEnemyIds.Contains(enemy.PlayerId))
+                    boost -= enemy.GetMutationEffect(MutationType.OpponentExtraDeathChance);
+
+                if (boost < 0f) boost = 0f;
+                total += boost;
             }
 
-            return pressure;
+            return total;
         }
+
+        /* ========== Utility ============================================ */
 
         public static bool IsCellSurrounded(int tileId, GameBoard board)
         {
             var cell = board.GetCell(tileId);
             if (cell == null) return false;
 
-            var neighborIds = board.GetAdjacentTileIds(tileId);
-            foreach (int neighborId in neighborIds)
+            foreach (int nId in board.GetAdjacentTileIds(tileId))
             {
-                var neighborCell = board.GetCell(neighborId);
-                if (neighborCell == null || !neighborCell.IsAlive)
-                    return false;
+                var n = board.GetCell(nId);
+                if (n == null || !n.IsAlive) return false;
             }
-
             return true;
         }
     }

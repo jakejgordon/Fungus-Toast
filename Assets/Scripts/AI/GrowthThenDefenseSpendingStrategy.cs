@@ -1,23 +1,30 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
+using FungusToast.Game;                 // ← added so MutationSpendingHelper resolves
 
 namespace FungusToast.AI
 {
+    /// <summary>
+    /// Simple AI: spend points on Growth upgrades first, then Cellular-Resilience,
+    /// and finally fall back to a random pick if nothing else is affordable.
+    /// </summary>
     public class GrowthThenDefenseSpendingStrategy : IMutationSpendingStrategy
     {
         public void SpendMutationPoints(Player player, List<Mutation> allMutations)
         {
-            bool spent;
+            if (player == null || allMutations == null || allMutations.Count == 0)
+                return;
 
+            bool spent;
             do
             {
                 spent = false;
 
-                var growth = allMutations
-                    .Where(m => m.Category == MutationCategory.Growth && player.CanUpgrade(m));
-                foreach (var m in growth)
+                /* --- 1) Prioritise Growth mutations ---------------------- */
+                foreach (var m in allMutations
+                                 .Where(m => m.Category == MutationCategory.Growth && player.CanUpgrade(m)))
                 {
                     if (player.TryUpgradeMutation(m))
                     {
@@ -26,11 +33,11 @@ namespace FungusToast.AI
                     }
                 }
 
+                /* --- 2) If none, try Cellular Resilience ---------------- */
                 if (!spent)
                 {
-                    var defense = allMutations
-                        .Where(m => m.Category == MutationCategory.CellularResilience && player.CanUpgrade(m));
-                    foreach (var m in defense)
+                    foreach (var m in allMutations
+                                     .Where(m => m.Category == MutationCategory.CellularResilience && player.CanUpgrade(m)))
                     {
                         if (player.TryUpgradeMutation(m))
                         {
@@ -40,6 +47,7 @@ namespace FungusToast.AI
                     }
                 }
 
+                /* --- 3) Fallback: random affordable mutation ------------- */
                 if (!spent)
                 {
                     spent = MutationSpendingHelper.TrySpendRandomly(player, allMutations);
