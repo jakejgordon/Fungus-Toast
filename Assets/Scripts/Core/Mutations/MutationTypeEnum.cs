@@ -15,5 +15,6 @@ namespace FungusToast.Core
         SelfAgeResetThreshold,
         AutoUpgradeRandom,
         SporeOnDeathChance,
+        TendrilDirectionalMultiplier,
     }
 }

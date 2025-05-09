@@ -382,5 +382,9 @@ namespace FungusToast.UI.MutationTree
             }
         }
 
+        public Mutation GetMutationById(int id)
+        {
+            return mutationManager?.GetMutationById(id);
+        }
     }
 }

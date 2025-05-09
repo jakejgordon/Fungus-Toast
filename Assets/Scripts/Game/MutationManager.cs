@@ -29,6 +29,7 @@ namespace FungusToast.Game
             public const int TendrilSouthwest = 9;
             public const int MutatorPhenotype = 10;
             public const int Necrosporulation = 11;
+            public const int MycotropicInduction = 12;
         }
 
         private void Awake()
@@ -38,7 +39,26 @@ namespace FungusToast.Game
 
         private void InitializeMutations()
         {
-            var mycelialBloom = new Mutation(
+            Mutation MakeRoot(Mutation m)
+            {
+                rootMutations[m.Id] = m;
+                allMutations[m.Id] = m;
+                return m;
+            }
+
+            Mutation MakeChild(Mutation m, params MutationPrerequisite[] prereqs)
+            {
+                m.Prerequisites.AddRange(prereqs);
+                allMutations[m.Id] = m;
+                foreach (var prereq in prereqs)
+                {
+                    if (allMutations.TryGetValue(prereq.MutationId, out var parent))
+                        parent.Children.Add(m);
+                }
+                return m;
+            }
+
+            MakeRoot(new Mutation(
                 id: MutationIds.MycelialBloom,
                 name: "Mycelial Bloom",
                 description: $"Mycelium metabolizes carbohydrates at an accelerated rate, enhancing hyphal tip extension. " +
@@ -47,11 +67,9 @@ namespace FungusToast.Game
                 effectPerLevel: GameBalance.MycelialBloomEffectPerLevel,
                 maxLevel: GameBalance.MycelialBloomMaxLevel,
                 category: MutationCategory.Growth
-            );
-            rootMutations[mycelialBloom.Id] = mycelialBloom;
-            allMutations[mycelialBloom.Id] = mycelialBloom;
+            ));
 
-            var homeostaticHarmony = new Mutation(
+            MakeRoot(new Mutation(
                 id: MutationIds.HomeostaticHarmony,
                 name: "Homeostatic Harmony",
                 description: $"Internal turgor pressure and nutrient recycling mechanisms bolster cell viability under adverse conditions. " +
@@ -60,11 +78,9 @@ namespace FungusToast.Game
                 effectPerLevel: GameBalance.HomeostaticHarmonyEffectPerLevel,
                 maxLevel: GameBalance.HomeostaticHarmonyMaxLevel,
                 category: MutationCategory.CellularResilience
-            );
-            rootMutations[homeostaticHarmony.Id] = homeostaticHarmony;
-            allMutations[homeostaticHarmony.Id] = homeostaticHarmony;
+            ));
 
-            var silentBlight = new Mutation(
+            MakeRoot(new Mutation(
                 id: MutationIds.SilentBlight,
                 name: "Silent Blight",
                 description: $"Secondary metabolites subtly disrupt competing organisms' cellular respiration and membrane integrity. " +
@@ -73,11 +89,9 @@ namespace FungusToast.Game
                 effectPerLevel: GameBalance.SilentBlightEffectPerLevel,
                 maxLevel: GameBalance.SilentBlightMaxLevel,
                 category: MutationCategory.Fungicide
-            );
-            rootMutations[silentBlight.Id] = silentBlight;
-            allMutations[silentBlight.Id] = silentBlight;
+            ));
 
-            var adaptiveExpression = new Mutation(
+            MakeRoot(new Mutation(
                 id: MutationIds.AdaptiveExpression,
                 name: "Adaptive Expression",
                 description: $"Epigenetic modifications increase genomic variability, accelerating adaptive potential. " +
@@ -86,11 +100,9 @@ namespace FungusToast.Game
                 effectPerLevel: GameBalance.AdaptiveExpressionEffectPerLevel,
                 maxLevel: GameBalance.AdaptiveExpressionMaxLevel,
                 category: MutationCategory.GeneticDrift
-            );
-            rootMutations[adaptiveExpression.Id] = adaptiveExpression;
-            allMutations[adaptiveExpression.Id] = adaptiveExpression;
+            ));
 
-            var chronoresilientCytoplasm = new Mutation(
+            MakeChild(new Mutation(
                 id: MutationIds.ChronoresilientCytoplasm,
                 name: "Chronoresilient Cytoplasm",
                 description: $"Cells that endure long enough undergo cytoplasmic rejuvenation. " +
@@ -99,13 +111,10 @@ namespace FungusToast.Game
                 effectPerLevel: GameBalance.ChronoresilientCytoplasmEffectPerLevel,
                 maxLevel: GameBalance.ChronoresilientCytoplasmMaxLevel,
                 category: MutationCategory.CellularResilience
-            );
-            chronoresilientCytoplasm.RequiredMutation = homeostaticHarmony;
-            chronoresilientCytoplasm.RequiredLevel = 10;
-            homeostaticHarmony.Children.Add(chronoresilientCytoplasm);
-            allMutations[chronoresilientCytoplasm.Id] = chronoresilientCytoplasm;
+            ),
+            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 10));
 
-            var necrosporulation = new Mutation(
+            MakeChild(new Mutation(
                 id: MutationIds.Necrosporulation,
                 name: "Necrosporulation",
                 description: $"Weakened mold cells release a last burst of life. " +
@@ -114,13 +123,10 @@ namespace FungusToast.Game
                 effectPerLevel: GameBalance.NecrosporulationEffectPerLevel,
                 maxLevel: GameBalance.NecrosporulationMaxLevel,
                 category: MutationCategory.CellularResilience
-            );
-            necrosporulation.RequiredMutation = chronoresilientCytoplasm;
-            necrosporulation.RequiredLevel = 5;
-            chronoresilientCytoplasm.Children.Add(necrosporulation);
-            allMutations[necrosporulation.Id] = necrosporulation;
+            ),
+            new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 5));
 
-            var encystedSpores = new Mutation(
+            MakeChild(new Mutation(
                 id: MutationIds.EncystedSpores,
                 name: "Encysted Spores",
                 description: $"Dormant spores deploy enzymatic agents that accelerate necrosis in isolated enemies. " +
@@ -129,18 +135,15 @@ namespace FungusToast.Game
                 effectPerLevel: GameBalance.EncystedSporesEffectPerLevel,
                 maxLevel: GameBalance.EncystedSporesMaxLevel,
                 category: MutationCategory.Fungicide
-            );
-            encystedSpores.RequiredMutation = silentBlight;
-            encystedSpores.RequiredLevel = 10;
-            silentBlight.Children.Add(encystedSpores);
-            allMutations[encystedSpores.Id] = encystedSpores;
+            ),
+            new MutationPrerequisite(MutationIds.SilentBlight, 10));
 
-            CreateDiagonalGrowthMutation(MutationIds.TendrilNorthwest, "Tendril Northwest", MutationType.GrowthDiagonal_NW, mycelialBloom);
-            CreateDiagonalGrowthMutation(MutationIds.TendrilNortheast, "Tendril Northeast", MutationType.GrowthDiagonal_NE, mycelialBloom);
-            CreateDiagonalGrowthMutation(MutationIds.TendrilSoutheast, "Tendril Southeast", MutationType.GrowthDiagonal_SE, mycelialBloom);
-            CreateDiagonalGrowthMutation(MutationIds.TendrilSouthwest, "Tendril Southwest", MutationType.GrowthDiagonal_SW, mycelialBloom);
+            CreateDiagonalGrowthMutation(MutationIds.TendrilNorthwest, "Tendril Northwest", MutationType.GrowthDiagonal_NW, MutationIds.MycelialBloom);
+            CreateDiagonalGrowthMutation(MutationIds.TendrilNortheast, "Tendril Northeast", MutationType.GrowthDiagonal_NE, MutationIds.MycelialBloom);
+            CreateDiagonalGrowthMutation(MutationIds.TendrilSoutheast, "Tendril Southeast", MutationType.GrowthDiagonal_SE, MutationIds.MycelialBloom);
+            CreateDiagonalGrowthMutation(MutationIds.TendrilSouthwest, "Tendril Southwest", MutationType.GrowthDiagonal_SW, MutationIds.MycelialBloom);
 
-            var mutatorPhenotype = new Mutation(
+            MakeChild(new Mutation(
                 id: MutationIds.MutatorPhenotype,
                 name: "Mutator Phenotype",
                 description: $"Genomic instability accelerates adaptation. " +
@@ -149,14 +152,27 @@ namespace FungusToast.Game
                 effectPerLevel: GameBalance.MutatorPhenotypeEffectPerLevel,
                 maxLevel: GameBalance.MutatorPhenotypeMaxLevel,
                 category: MutationCategory.GeneticDrift
-            );
-            mutatorPhenotype.RequiredMutation = adaptiveExpression;
-            mutatorPhenotype.RequiredLevel = 5;
-            adaptiveExpression.Children.Add(mutatorPhenotype);
-            allMutations[mutatorPhenotype.Id] = mutatorPhenotype;
+            ),
+            new MutationPrerequisite(MutationIds.AdaptiveExpression, 5));
+
+            // New Tier 3 Growth Mutation
+            MakeChild(new Mutation(
+                id: MutationIds.MycotropicInduction,
+                name: "Mycotropic Induction",
+                description: $"A latent fungal directive harmonizes spore orientation, vastly enhancing diagonal propagation.\n" +
+                             $"Boosts the effect of all Tendril mutations by +{(GameBalance.MycotropicInductionEffectPerLevel * 100f):F1}% per level.",
+                type: MutationType.TendrilDirectionalMultiplier,
+                effectPerLevel: GameBalance.MycotropicInductionEffectPerLevel,
+                maxLevel: GameBalance.MycotropicInductionMaxLevel,
+                category: MutationCategory.Growth
+            ),
+            new MutationPrerequisite(MutationIds.TendrilNorthwest, 1),
+            new MutationPrerequisite(MutationIds.TendrilNortheast, 1),
+            new MutationPrerequisite(MutationIds.TendrilSoutheast, 1),
+            new MutationPrerequisite(MutationIds.TendrilSouthwest, 1));
         }
 
-        private void CreateDiagonalGrowthMutation(int id, string name, MutationType type, Mutation required)
+        private void CreateDiagonalGrowthMutation(int id, string name, MutationType type, int requiredMutationId)
         {
             string direction = name.Split(' ')[1];
             var mutation = new Mutation(
@@ -169,11 +185,11 @@ namespace FungusToast.Game
                 maxLevel: GameBalance.DiagonalGrowthMaxLevel,
                 category: MutationCategory.Growth
             );
-            mutation.RequiredMutation = required;
-            mutation.RequiredLevel = 10;
-            required.Children.Add(mutation);
+            mutation.Prerequisites.Add(new MutationPrerequisite(requiredMutationId, 10));
             allMutations[mutation.Id] = mutation;
+            allMutations[requiredMutationId].Children.Add(mutation);
         }
+
 
         public Mutation GetMutationById(int id)
         {

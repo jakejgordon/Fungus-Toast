@@ -44,14 +44,16 @@ namespace FungusToast.Core.Growth
                 }
             }
 
-            // Diagonal directions
+            float multiplier = 1f + owner.GetMutationEffect(MutationType.TendrilDirectionalMultiplier);
+
             var diagonals = new (int dx, int dy, float chance)[]
             {
-                (-1,  1, owner.GetDiagonalGrowthChance(DiagonalDirection.Northwest)),
-                ( 1,  1, owner.GetDiagonalGrowthChance(DiagonalDirection.Northeast)),
-                ( 1, -1, owner.GetDiagonalGrowthChance(DiagonalDirection.Southeast)),
-                (-1, -1, owner.GetDiagonalGrowthChance(DiagonalDirection.Southwest)),
+            (-1,  1, owner.GetDiagonalGrowthChance(DiagonalDirection.Northwest) * multiplier),
+            ( 1,  1, owner.GetDiagonalGrowthChance(DiagonalDirection.Northeast) * multiplier),
+            ( 1, -1, owner.GetDiagonalGrowthChance(DiagonalDirection.Southeast) * multiplier),
+            (-1, -1, owner.GetDiagonalGrowthChance(DiagonalDirection.Southwest) * multiplier),
             };
+
 
             foreach (var (dx, dy, chance) in diagonals)
             {

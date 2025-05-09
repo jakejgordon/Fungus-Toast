@@ -19,7 +19,9 @@ namespace FungusToast.Core.Config
         public const float NecrosporulationEffectPerLevel = 0.15f;
         public const float EncystedSporesEffectPerLevel = 0.05f;
         public const float MutatorPhenotypeEffectPerLevel = 0.075f;
-        public const float DiagonalGrowthEffectPerLevel = 0.01f;
+        public const float DiagonalGrowthEffectPerLevel = 0.015f;
+        public const float MycotropicInductionEffectPerLevel = 0.3f;
+        
 
         // Max Levels
         public const int MycelialBloomMaxLevel = 100;
@@ -31,5 +33,6 @@ namespace FungusToast.Core.Config
         public const int EncystedSporesMaxLevel = 5;
         public const int MutatorPhenotypeMaxLevel = 10;
         public const int DiagonalGrowthMaxLevel = 10;
+        public const int MycotropicInductionMaxLevel = 3;
     }
 }

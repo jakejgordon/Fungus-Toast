@@ -4,6 +4,7 @@ using TMPro;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using UnityEngine.EventSystems;
+using System.Text;
 
 namespace FungusToast.UI.MutationTree
 {
@@ -55,13 +56,21 @@ namespace FungusToast.UI.MutationTree
             }
         }
 
-
         public void UpdateDisplay()
         {
             int currentLevel = player.GetMutationLevel(mutation.Id);
             levelText.text = $"Level {currentLevel}/{mutation.MaxLevel}";
 
-            bool isLocked = mutation.RequiredMutation != null && player.GetMutationLevel(mutation.RequiredMutation.Id) < mutation.RequiredLevel;
+            bool isLocked = false;
+            foreach (var prereq in mutation.Prerequisites)
+            {
+                if (player.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel)
+                {
+                    isLocked = true;
+                    break;
+                }
+            }
+
             bool canAfford = player.MutationPoints >= mutation.PointsPerUpgrade;
             bool isMaxed = currentLevel >= mutation.MaxLevel;
 
@@ -76,12 +85,35 @@ namespace FungusToast.UI.MutationTree
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            uiManager.ShowMutationDescription(mutation.Description, transform as RectTransform);
+            var tooltipText = BuildTooltip();
+            uiManager.ShowMutationDescription(tooltipText, transform as RectTransform);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             uiManager.ClearMutationDescription();
+        }
+
+        private string BuildTooltip()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"<b>{mutation.Name}</b>");
+            sb.AppendLine();
+
+            if (mutation.Prerequisites.Count > 0)
+            {
+                sb.AppendLine("<i>Requires:</i>");
+                foreach (var prereq in mutation.Prerequisites)
+                {
+                    int ownedLevel = player.GetMutationLevel(prereq.MutationId);
+                    var prereqMutation = uiManager.GetMutationById(prereq.MutationId);
+                    sb.AppendLine($"- {prereqMutation?.Name ?? "Unknown"} (Level {ownedLevel}/{prereq.RequiredLevel})");
+                }
+                sb.AppendLine();
+            }
+
+            sb.AppendLine(mutation.Description);
+            return sb.ToString();
         }
     }
 }

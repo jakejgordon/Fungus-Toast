@@ -82,10 +82,10 @@ namespace FungusToast.Core.Players
             if (mutation == null)
                 return false;
 
-            if (mutation.RequiredMutation != null)
+            foreach (var prereq in mutation.Prerequisites)
             {
-                int requiredLevel = GetMutationLevel(mutation.RequiredMutation.Id);
-                if (requiredLevel < mutation.RequiredLevel)
+                int prereqLevel = GetMutationLevel(prereq.MutationId);
+                if (prereqLevel < prereq.RequiredLevel)
                     return false;
             }
 
