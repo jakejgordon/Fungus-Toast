@@ -7,8 +7,8 @@ namespace FungusToast.Core.Config
         public const float BaseDeathChance = 0.02f;
         public const float AgeDeathFactorPerGrowthCycle = 0.005f;
         public const int StartingMutationPoints = 5;
-        public const float GameEndTileOccupancyThreshold = 0.001f; //TESTING!!!
-        public const int TurnsAfterEndGameTileOccupancyThresholdMet = 1; //TESTING!!!
+        public const float GameEndTileOccupancyThreshold = 0.999f;
+        public const int TurnsAfterEndGameTileOccupancyThresholdMet = 3;
 
         // Mutation Effects
         public const float MycelialBloomEffectPerLevel = 0.005f;
