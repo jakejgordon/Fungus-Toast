@@ -4,7 +4,7 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
-using FungusToast.Game;
+using FungusToast.Core.AI;
 
 namespace FungusToast.Core.Players
 {
@@ -162,20 +162,19 @@ namespace FungusToast.Core.Players
             return rng.NextDouble() < chance ? 1 : 0;
         }
 
-        public void TryTriggerAutoUpgrade()
+        public void TryTriggerAutoUpgrade(List<Mutation> eligibleMutations)
         {
             float chance = GetMutationEffect(MutationType.AutoUpgradeRandom);
-            if (rng.NextDouble() >= chance) return;
+            if (rng.NextDouble() >= chance || eligibleMutations == null || eligibleMutations.Count == 0)
+                return;
 
-            var mm = GameManager.Instance?.GetComponentInChildren<MutationManager>();
-            if (mm == null) return;
+            var upgradable = eligibleMutations.Where(CanUpgrade).ToList();
+            if (upgradable.Count == 0) return;
 
-            var eligible = mm.GetAllMutations().Where(CanUpgrade).ToList();
-            if (eligible.Count == 0) return;
-
-            var pick = eligible[rng.Next(eligible.Count)];
+            var pick = upgradable[rng.Next(upgradable.Count)];
             TryAutoUpgrade(pick);
         }
+
 
         private bool TryAutoUpgrade(Mutation mut)
         {

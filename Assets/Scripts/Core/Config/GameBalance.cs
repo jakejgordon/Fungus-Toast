@@ -39,5 +39,8 @@ namespace FungusToast.Core.Config
         public const int MycotropicInductionMaxLevel = 3;
         public const int PutrefactiveMycotoxinMaxLevel = 5;
 
+        // Phase Timing
+        public const int TotalGrowthCycles = 5;
+        public const float TimeBetweenGrowthCycles = 1f;
     }
 }
