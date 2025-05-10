@@ -1,13 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using FungusToast.Core;
 using FungusToast.Core.Players;
 using FungusToast.Core.Growth;
 using FungusToast.Grid;
 using FungusToast.Game; // To access GameManager
 
-namespace FungusToast.Game.Phases
+namespace FungusToast.Core.Phases
 {
     public class GrowthPhaseRunner : MonoBehaviour
     {

@@ -8,7 +8,8 @@ using FungusToast.Core;
 using FungusToast.Core.Config;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Players;
-using FungusToast.Game.Phases;
+using FungusToast.Core.Mutations;
+using FungusToast.Core.Phases;
 using FungusToast.Grid;
 
 namespace FungusToast.Game

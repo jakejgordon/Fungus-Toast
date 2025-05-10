@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
-using FungusToast.Core;
 using FungusToast.Core.Config;
 
-namespace FungusToast.Game
+namespace FungusToast.Core.Mutations
 {
     public class MutationManager : MonoBehaviour
     {
