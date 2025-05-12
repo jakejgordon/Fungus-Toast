@@ -12,7 +12,7 @@ namespace FungusToast.UI
 {
     public class UI_MutationManager : MonoBehaviour
     {
-        [Header("General UI References")
+        [Header("General UI References")]
         [SerializeField] private MutationManager mutationManager;
         [SerializeField] private GameObject mutationTreePanel;
         [SerializeField] private Button spendPointsButton;

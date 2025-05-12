@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using FungusToast.Core.AI;
-using FungusToast.Core;
-using FungusToast.Core.Config;
-using FungusToast.Core.Growth;
-using FungusToast.Core.Players;
 using FungusToast.Core.Mutations;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.Cameras;
 using FungusToast.Unity.Phases;
 using FungusToast.Unity.UI;
+using FungusToast.Core;
+using FungusToast.Core.Players;
+using FungusToast.Core.Config;
+using FungusToast.Core.AI;
+using FungusToast.Core.Growth;
 
 namespace FungusToast.Unity
 {
