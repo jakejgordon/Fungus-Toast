@@ -1,4 +1,0 @@
-repository "Fungus Toast/Fungus Toast@2475819182254@cloud"
-  path "/"
-    br "/main"
-    co "/main"
