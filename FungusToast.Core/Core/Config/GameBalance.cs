@@ -42,5 +42,9 @@ namespace FungusToast.Core.Config
         // Phase Timing
         public const int TotalGrowthCycles = 5;
         public const float TimeBetweenGrowthCycles = 1f;
+
+        // board dimensions
+        public const int BoardWidth = 50;
+        public const int BoardHeight = 50;
     }
 }

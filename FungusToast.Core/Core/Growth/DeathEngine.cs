@@ -43,7 +43,6 @@ namespace FungusToast.Core.Growth
                 {
                     cell.Kill();
                     player.ControlledTileIds.Remove(cell.TileId);
-                    Console.WriteLine($"💀 Cell ({tile.X},{tile.Y}) P{player.PlayerId} died. Age={cell.GrowthCycleAge}  Chance={finalChance:P2}");
 
                     TrySpawnSpore(player, board);
                 }
@@ -53,7 +52,6 @@ namespace FungusToast.Core.Growth
                     if (cell.GrowthCycleAge >= resetAt)
                     {
                         cell.ResetGrowthCycleAge();
-                        Console.WriteLine($"♻️ Cell ({tile.X},{tile.Y}) rejuvenated (reset at {resetAt}).");
                     }
                     else
                     {
@@ -74,8 +72,7 @@ namespace FungusToast.Core.Growth
             var spawn = empty[rng.Next(0, empty.Count)];
             int tileId = spawn.Y * board.Width + spawn.X;
 
-            if (board.SpawnSporeForPlayer(player, tileId))
-                Console.WriteLine($"🌱 Necrospore for P{player.PlayerId} at ({spawn.X},{spawn.Y})");
+            board.SpawnSporeForPlayer(player, tileId);
         }
 
         private static float GetEnemyPressure(List<Player> allPlayers,
