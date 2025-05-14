@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using FungusToast.Core.AI;
 using FungusToast.Simulation.GameSimulation;
 using FungusToast.Simulation.GameSimulation.Models;
@@ -10,6 +11,10 @@ namespace FungusToast.Simulation.Analysis
     {
         private readonly GameSimulator simulator = new();
 
+        /// <summary>
+        /// Run a head-to-head matchup between two strategies across many games.
+        /// Players alternate between A and B for fairness. Requires even player count.
+        /// </summary>
         public List<GameResult> RunMatchups(
             IMutationSpendingStrategy strategyA,
             IMutationSpendingStrategy strategyB,
@@ -37,6 +42,25 @@ namespace FungusToast.Simulation.Analysis
                 }
 
                 var result = simulator.RunSimulation(strategies, seed: i);
+                results.Add(result);
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// Run games using a fixed list of strategies per match.
+        /// Useful for 1–8 player simulation loops.
+        /// </summary>
+        public List<GameResult> RunMatchups(List<IMutationSpendingStrategy> strategies, int gamesToPlay)
+        {
+            var results = new List<GameResult>();
+
+            for (int i = 0; i < gamesToPlay; i++)
+            {
+                // Optional: shuffle player order to reduce bias
+                var shuffled = strategies.OrderBy(_ => Guid.NewGuid()).ToList();
+                var result = simulator.RunSimulation(shuffled, seed: i);
                 results.Add(result);
             }
 

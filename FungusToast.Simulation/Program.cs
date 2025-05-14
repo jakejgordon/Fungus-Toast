@@ -3,27 +3,45 @@ using System.Collections.Generic;
 using FungusToast.Core.AI;
 using FungusToast.Simulation.Analysis;
 using FungusToast.Simulation.GameSimulation;
+using FungusToast.Simulation.GameSimulation.Models;
 
 class Program
 {
     static void Main()
     {
-        Console.WriteLine("Running simulation...");
+        Console.WriteLine("Running simulation with 4 players...\n");
 
-        // 🔁 Create fixed strategy instances
-        var rngA = new Random(1);
-        var rngB = new Random(2);
+        // 1. Declare/initialize strategies (one per player)
+        IMutationSpendingStrategy player0 = new SmartRandomMutationSpendingStrategy();
+        IMutationSpendingStrategy player1 = new SmartRandomMutationSpendingStrategy();//new RandomMutationSpendingStrategy();
+        IMutationSpendingStrategy player2 = new SmartRandomMutationSpendingStrategy();// new GrowthThenDefenseSpendingStrategy();
+        IMutationSpendingStrategy player3 = new SmartRandomMutationSpendingStrategy();//new GrowthThenDefenseSpendingStrategy();
 
-        IMutationSpendingStrategy strategyA = new RandomMutationSpendingStrategy();
-        IMutationSpendingStrategy strategyB = new SmartRandomMutationSpendingStrategy(); //new GrowthThenDefenseSpendingStrategy();
 
-        // 🏁 Run headless batch
+        // 2. Add all to a List in order
+        var strategies = new List<IMutationSpendingStrategy>
+        {
+            player0,
+            player1,
+            player2,
+            player3
+        };
+
+        // 3. Run simulation
         var runner = new MatchupRunner();
-        var results = runner.RunMatchups(strategyA, strategyB, gamesToPlay: 100);
+        var results = runner.RunMatchups(strategies, gamesToPlay: 1000);
 
-        // 📊 Print summary
+        // 4. Print strategy summary
         var aggregator = new MatchupStatsAggregator();
         aggregator.PrintSummary(results);
+
+        // 5. Analyze mutation impact
+        var impactTracker = new MutationImpactTracker();
+        foreach (var result in results)
+        {
+            impactTracker.TrackGameResult(result);
+        }
+        impactTracker.PrintReport();
 
         Console.WriteLine("\nSimulation complete. Press any key to exit.");
         Console.ReadKey();
