@@ -1,18 +1,18 @@
-# === UNITY PROJECT (Fungus Toast/) ===
+# === UNITY PROJECT STRUCTURE (portable) ===
 
-Fungus Toast/Library/
-Fungus Toast/Temp/
-Fungus Toast/Obj/
-Fungus Toast/Build/
-Fungus Toast/Builds/
-Fungus Toast/Logs/
-Fungus Toast/UserSettings/
-Fungus Toast/MemoryCaptures/
-Fungus Toast/Recordings/
-Fungus Toast/Output/
-Fungus Toast/.utmp/
-Fungus Toast/sysinfo.txt
-Fungus Toast/ignore.conf
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+[Oo]utput/
+.utmp/
+sysinfo.txt
+ignore.conf
 
 # Unity package artifacts
 *.apk
@@ -23,25 +23,20 @@ Fungus Toast/ignore.conf
 crashlytics-build.properties
 
 # Unity special folders and generated plugin support
-Fungus Toast/Assets/Plugins/Editor/JetBrains*
-Fungus Toast/Assets/AddressableAssetsData/*/*.bin*
-Fungus Toast/Assets/StreamingAssets/aa.meta
-Fungus Toast/Assets/StreamingAssets/aa/*
+Assets/Plugins/Editor/JetBrains*
+Assets/AddressableAssetsData/*/*.bin*
+Assets/StreamingAssets/aa.meta
+Assets/StreamingAssets/aa/*
 
 # Optional: exclude if you installed TextMesh Pro manually
-# Fungus Toast/Assets/TextMesh Pro/
+# Assets/TextMesh Pro/
 
-# Prevent accidental exclusion of real Unity assets
-!Fungus Toast/Assets/**
-!Fungus Toast/Assets/**/*.pdb
-!Fungus Toast/Assets/**/*.mdb
-
-# Unity-generated meta files (symbols)
+# Unity-generated meta files from debug symbols
 *.pidb.meta
 *.pdb.meta
 *.mdb.meta
 
-# === .NET BUILD OUTPUT (Core and Simulation) ===
+# === .NET BUILD OUTPUT (FungusToast.Core, Simulation) ===
 
 **/bin/
 **/obj/
@@ -62,9 +57,7 @@ Fungus Toast/Assets/StreamingAssets/aa/*
 ExportedObj/
 .consulo/
 
-*.csproj
 *.unityproj
-*.sln
 *.suo
 *.tmp
 *.user
@@ -75,6 +68,9 @@ ExportedObj/
 *.opendb
 *.VC.db
 
+# Keep Visual Studio configuration for required workloads
+!.vsconfig
+
 # === OS / TOOLING JUNK FILES ===
 
 .DS_Store
@@ -84,7 +80,3 @@ Thumbs.db
 # === PLASTIC SCM / UNITY COLLAB ===
 
 .plastic/
-
-# === SAFETY (explicitly allow Unity assets) ===
-
-!Fungus Toast/Assets/**
