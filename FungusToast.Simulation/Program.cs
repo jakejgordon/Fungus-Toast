@@ -14,8 +14,8 @@ class Program
         var rngA = new Random(1);
         var rngB = new Random(2);
 
-        IMutationSpendingStrategy strategyA = new SimpleAIStrategy();
-        IMutationSpendingStrategy strategyB = new GrowthThenDefenseSpendingStrategy();
+        IMutationSpendingStrategy strategyA = new RandomMutationSpendingStrategy();
+        IMutationSpendingStrategy strategyB = new SmartRandomMutationSpendingStrategy(); //new GrowthThenDefenseSpendingStrategy();
 
         // 🏁 Run headless batch
         var runner = new MatchupRunner();
