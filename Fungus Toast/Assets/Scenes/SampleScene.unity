@@ -701,7 +701,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 355076242}
-  - component: {fileID: 355076241}
+  - component: {fileID: 355076243}
   m_Layer: 0
   m_Name: MutationManager
   m_TagString: Untagged
@@ -709,18 +709,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &355076241
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 355076240}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5aa967e96fd52174380e2bab1e8788bf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &355076242
 Transform:
   m_ObjectHideFlags: 0
@@ -736,6 +724,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 548818018}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &355076243
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 355076240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf5273c0fc08ddc46a311017e1dc1247, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &359938533
 GameObject:
   m_ObjectHideFlags: 0
@@ -101635,7 +101635,7 @@ MonoBehaviour:
   playerCount: 1
   gridVisualizer: {fileID: 989759029}
   cameraCenterer: {fileID: 743098981}
-  mutationManager: {fileID: 355076241}
+  mutationManager: {fileID: 355076243}
   growthPhaseRunner: {fileID: 611285832}
   gameUIManager: {fileID: 948889969}
   gamePhaseText: {fileID: 1773201422}
@@ -104774,7 +104774,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0df038e849fe5e9408aba9abd6e5aba5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mutationManager: {fileID: 355076241}
+  mutationManager: {fileID: 355076243}
   mutationTreePanel: {fileID: 1493893195}
   spendPointsButton: {fileID: 1920153775}
   spendPointsButtonText: {fileID: 319804993}
