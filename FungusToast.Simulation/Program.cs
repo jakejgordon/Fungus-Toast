@@ -35,7 +35,7 @@ class Program
 
         // 3. Run simulation
         var runner = new MatchupRunner();
-        var results = runner.RunMatchups(strategies, gamesToPlay: 200);
+        var results = runner.RunMatchups(strategies, gamesToPlay: 100);
 
         // 4. Print strategy summary
         var aggregator = new MatchupStatsAggregator();

@@ -5,25 +5,26 @@ namespace FungusToast.Core.Config
         // Global Mechanics
         public const float BaseGrowthChance = 0.03f; 
         public const float BaseDeathChance = 0.01f;
-        public const float AgeDeathFactorPerGrowthCycle = 0.005f;
+        public const float AgeDeathFactorPerGrowthCycle = 0.004f;
         public const int StartingMutationPoints = 5;
         public const float GameEndTileOccupancyThreshold = 0.999f;
         public const int TurnsAfterEndGameTileOccupancyThresholdMet = 3;
         public const int BaseAgeResetThreshold = 50;
-        
+        public const float MaxEnemyDecayPressurePerCell = 0.25f;
+
 
         // Mutation Effects
         public const float MycelialBloomEffectPerLevel = 0.005f;
         public const float HomeostaticHarmonyEffectPerLevel = 0.0025f;
-        public const float SilentBlightEffectPerLevel = 0.0025f;
+        public const float SilentBlightEffectPerLevel = 0.001f;
         public const float AdaptiveExpressionEffectPerLevel = 0.10f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 5f;
         public const float NecrosporulationEffectPerLevel = 0.15f;
-        public const float EncystedSporesEffectPerLevel = 0.05f;
+        public const float EncystedSporesEffectPerLevel = 0.01f;
         public const float MutatorPhenotypeEffectPerLevel = 0.075f;
         public const float DiagonalGrowthEffectPerLevel = 0.015f;
         public const float MycotropicInductionEffectPerLevel = 0.3f;
-        public const float PutrefactiveMycotoxinEffectPerLevel = .06f;
+        public const float PutrefactiveMycotoxinEffectPerLevel = .05f;
         public const int AgeResetReductionPerLevel = 5;   // or cast the existing 5f
 
         // Max Levels

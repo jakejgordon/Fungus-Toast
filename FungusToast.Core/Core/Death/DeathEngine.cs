@@ -103,8 +103,10 @@ namespace FungusToast.Core.Death
             {
                 if (enemy.PlayerId == owner.PlayerId) continue;
 
+                // Base offensive decay modifier
                 float boost = enemy.GetOffensiveDecayModifierAgainst(targetCell, board);
 
+                // Add adjacency stacking
                 int adjacentOwnedByAttacker = board.GetAdjacentTileIds(targetCell.TileId)
                     .Select(id => board.GetCell(id))
                     .Where(cell => cell != null && cell.IsAlive && cell.OwnerPlayerId == enemy.PlayerId)
@@ -114,11 +116,18 @@ namespace FungusToast.Core.Death
                 float additionalBonus = adjacentOwnedByAttacker * toxinEffect;
                 boost += additionalBonus;
 
+                // Apply Encysted Spores multiplier if target is surrounded
+                if (IsCellSurrounded(targetCell.TileId, board))
+                {
+                    float encystMultiplier = enemy.GetMutationEffect(MutationType.EncystedSporeMultiplier);
+                    boost *= (1f + encystMultiplier);
+                }
+
                 if (boost < 0f) boost = 0f;
                 total += boost;
             }
 
-            return total;
+            return Math.Min(total, GameBalance.MaxEnemyDecayPressurePerCell);
         }
 
         public static bool IsCellSurrounded(int tileId, GameBoard board)
