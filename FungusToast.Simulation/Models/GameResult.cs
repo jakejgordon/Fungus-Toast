@@ -2,6 +2,8 @@
 using System.Linq;
 using FungusToast.Core;
 using FungusToast.Core.Players;
+using FungusToast.Core.Death;
+using FungusToast.Simulation.GameSimulation.Models;
 
 namespace FungusToast.Simulation.GameSimulation.Models
 {
@@ -13,27 +15,45 @@ namespace FungusToast.Simulation.GameSimulation.Models
 
         public static GameResult From(GameBoard board, List<Player> players, int turns)
         {
-            var results = players.Select(p =>
+            var playerResultMap = new Dictionary<int, PlayerResult>();
+
+            foreach (var player in players)
             {
-                var cells = board.GetAllCellsOwnedBy(p.PlayerId);
-                return new PlayerResult
+                var cells = board.GetAllCellsOwnedBy(player.PlayerId);
+
+                var pr = new PlayerResult
                 {
-                    PlayerId = p.PlayerId,
-                    StrategyName = p.MutationStrategy?.GetType().Name ?? "None",
+                    PlayerId = player.PlayerId,
+                    StrategyName = player.MutationStrategy?.GetType().Name ?? "None",
                     LivingCells = cells.Count(c => c.IsAlive),
                     DeadCells = cells.Count(c => !c.IsAlive),
-                    MutationLevels = p.PlayerMutations.ToDictionary(kv => kv.Key, kv => kv.Value.CurrentLevel),
+                    MutationLevels = player.PlayerMutations.ToDictionary(kv => kv.Key, kv => kv.Value.CurrentLevel),
 
-                    // New metrics
-                    EffectiveGrowthChance = p.GetEffectiveGrowthChance(),
-                    EffectiveSelfDeathChance = p.GetEffectiveSelfDeathChance(),
+                    EffectiveGrowthChance = player.GetEffectiveGrowthChance(),
+                    EffectiveSelfDeathChance = player.GetEffectiveSelfDeathChance(),
                     OffensiveDecayModifier = board.GetAllCells()
-                        .Where(c => c.IsAlive && c.OwnerPlayerId != p.PlayerId)
-                        .Select(c => p.GetOffensiveDecayModifierAgainst(c, board))
+                        .Where(c => c.IsAlive && c.OwnerPlayerId != player.PlayerId)
+                        .Select(c => player.GetOffensiveDecayModifierAgainst(c, board))
                         .DefaultIfEmpty(0f)
-                        .Average()
+                        .Average(),
+
+                    DeadCellDeathReasons = new List<DeathReason>()
                 };
-            }).ToList();
+
+                playerResultMap[player.PlayerId] = pr;
+            }
+
+            // Assign death reasons to the appropriate PlayerResult
+            foreach (var cell in board.GetAllCells())
+            {
+                if (!cell.IsAlive && cell.CauseOfDeath.HasValue &&
+                    playerResultMap.TryGetValue(cell.OwnerPlayerId, out var pr))
+                {
+                    pr.DeadCellDeathReasons.Add(cell.CauseOfDeath.Value);
+                }
+            }
+
+            var results = playerResultMap.Values.ToList();
 
             return new GameResult
             {

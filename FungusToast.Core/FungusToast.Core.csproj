@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="call &quot;C:\Users\jakej\FungusToast\FungusToast.Core\PostBuild_CopyAndTouch.bat&quot;&#xD;&#xA;" />
+    <Exec Command="call &quot;$(ProjectDir)PostBuild_CopyAndTouch.bat&quot;" />
   </Target>
 
 </Project>

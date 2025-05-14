@@ -5,6 +5,7 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.AI;
+using FungusToast.Core.Death;
 
 namespace FungusToast.Core.Players
 {

@@ -1,3 +1,4 @@
+using FungusToast.Core.Death;
 using FungusToast.Core.Players;
 
 namespace FungusToast.Core.Board
@@ -8,6 +9,9 @@ namespace FungusToast.Core.Board
         public bool IsAlive { get; private set; }
         public int ToxinLevel { get; private set; }
         public int GrowthCycleAge { get; private set; }
+
+        public DeathReason? CauseOfDeath { get; set; }
+
         public int TileId { get; private set; }  // <-- Added for positional tracking
 
         public FungalCell(int ownerPlayerId, int tileId)

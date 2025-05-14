@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Death;
 using FungusToast.Simulation.GameSimulation.Models;
 
 namespace FungusToast.Simulation.Analysis
@@ -19,6 +20,7 @@ namespace FungusToast.Simulation.Analysis
             var strategyStats = new Dictionary<string, (int wins, int games, int totalLiving, int totalDead, int mutationPointsSpent, float growthChance, float selfDeathChance, float decayMod)>();
             var mutationTotalsByStrategy = new Dictionary<string, Dictionary<int, (int totalLevel, int count)>>();
             var mutationImpact = new Dictionary<int, (int winsWithMutation, int uses, int totalLevel)>();
+            var deathReasonCounts = new Dictionary<DeathReason, int>();
 
             foreach (var result in results)
             {
@@ -76,6 +78,17 @@ namespace FungusToast.Simulation.Analysis
                         mi.totalLevel += kv.Value;
                         mutationImpact[kv.Key] = mi;
                     }
+
+                    // Death reason tallying
+                    if (pr.DeadCellDeathReasons != null)
+                    {
+                        foreach (var reason in pr.DeadCellDeathReasons)
+                        {
+                            if (!deathReasonCounts.ContainsKey(reason))
+                                deathReasonCounts[reason] = 0;
+                            deathReasonCounts[reason]++;
+                        }
+                    }
                 }
             }
 
@@ -128,6 +141,14 @@ namespace FungusToast.Simulation.Analysis
                 float winRate = (float)kv.Value.winsWithMutation / totalGames * 100;
                 float avgLevel = kv.Value.winsWithMutation > 0 ? (float)kv.Value.totalLevel / kv.Value.winsWithMutation : 0f;
                 Console.WriteLine($"{name,-32} | {winRate,6:F1}% | {kv.Value.uses,4} | {avgLevel,17:F2}");
+            }
+
+            Console.WriteLine("\nDeath Reason Summary:");
+            Console.WriteLine("Cause                        | Count");
+            Console.WriteLine("-----------------------------|--------");
+            foreach (var kv in deathReasonCounts.OrderByDescending(kv => kv.Value))
+            {
+                Console.WriteLine($"{kv.Key,-28} | {kv.Value,6}");
             }
         }
     }

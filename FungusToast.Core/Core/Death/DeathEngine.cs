@@ -6,7 +6,7 @@ using FungusToast.Core.Players;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 
-namespace FungusToast.Core.Growth
+namespace FungusToast.Core.Death
 {
     public static class DeathEngine
     {
@@ -30,33 +30,50 @@ namespace FungusToast.Core.Growth
                 }
 
                 if (player.ControlledTileIds.Count <= 1)
+                {
+                    cell.CauseOfDeath = DeathReason.Protected;
                     continue;
+                }
 
+                float baseChance = GameBalance.BaseDeathChance;
                 float ageMod = cell.GrowthCycleAge * GameBalance.AgeDeathFactorPerGrowthCycle;
                 float defenseBonus = player.GetEffectiveSelfDeathChance();
                 float pressure = GetEnemyPressure(players, player, cell, board);
 
-                float finalChance = Math.Clamp(
-                    GameBalance.BaseDeathChance + ageMod + pressure - defenseBonus, 0f, 1f);
+                float finalChance = Math.Clamp(baseChance + ageMod + pressure - defenseBonus, 0f, 1f);
 
-                if (rng.NextDouble() < finalChance)
+                bool died = false;
+
+                if (rng.NextDouble() < baseChance)
+                {
+                    cell.CauseOfDeath = DeathReason.Randomness;
+                    died = true;
+                }
+                else if (rng.NextDouble() < ageMod)
+                {
+                    cell.CauseOfDeath = DeathReason.Age;
+                    died = true;
+                }
+                else if (rng.NextDouble() < pressure)
+                {
+                    cell.CauseOfDeath = DeathReason.EnemyDecayPressure;
+                    died = true;
+                }
+
+                if (died)
                 {
                     cell.Kill();
                     player.ControlledTileIds.Remove(cell.TileId);
-
                     TrySpawnSpore(player, board);
                 }
                 else
                 {
+                    cell.CauseOfDeath = null; // Survived this cycle
                     int resetAt = player.GetSelfAgeResetThreshold();
                     if (cell.GrowthCycleAge >= resetAt)
-                    {
                         cell.ResetGrowthCycleAge();
-                    }
                     else
-                    {
                         cell.IncrementGrowthAge();
-                    }
                 }
             }
         }
@@ -88,7 +105,6 @@ namespace FungusToast.Core.Growth
 
                 float boost = enemy.GetOffensiveDecayModifierAgainst(targetCell, board);
 
-                // Add new bonus for each attacker-controlled adjacent tile
                 int adjacentOwnedByAttacker = board.GetAdjacentTileIds(targetCell.TileId)
                     .Select(id => board.GetCell(id))
                     .Where(cell => cell != null && cell.IsAlive && cell.OwnerPlayerId == enemy.PlayerId)

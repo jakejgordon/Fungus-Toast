@@ -13,6 +13,7 @@ using FungusToast.Core.Players;
 using FungusToast.Core.Config;
 using FungusToast.Core.AI;
 using FungusToast.Core.Growth;
+using FungusToast.Core.Death;
 
 namespace FungusToast.Unity
 {
