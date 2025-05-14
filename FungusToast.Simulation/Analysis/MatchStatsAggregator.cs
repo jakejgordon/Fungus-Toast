@@ -16,8 +16,8 @@ namespace FungusToast.Simulation.Analysis
             double sumSquaredDiffs = results.Sum(r => Math.Pow(r.TurnsPlayed - avgTurns, 2));
             double stdDevTurns = totalGames > 1 ? Math.Sqrt(sumSquaredDiffs / (totalGames - 1)) : 0;
 
-            // wins, games, alive, dead, mpSpent
-            var strategyStats = new Dictionary<string, (int wins, int games, int totalLiving, int totalDead, int mutationPointsSpent)>();
+            // wins, games, alive, dead, mpSpent, growth%, self-death%, decay mod
+            var strategyStats = new Dictionary<string, (int wins, int games, int totalLiving, int totalDead, int mutationPointsSpent, float sumGrowth, float sumSelfDeath, float sumDecayMod)>();
             var mutationTotalsByStrategy = new Dictionary<string, Dictionary<int, (int totalLevel, int count)>>();
 
             foreach (var result in results)
@@ -25,12 +25,11 @@ namespace FungusToast.Simulation.Analysis
                 var winner = result.PlayerResults.FirstOrDefault(p => p.PlayerId == result.WinnerId);
                 if (winner == null) continue;
 
-                // Count 1 win per game for the winner's strategy
                 var winnerStrategy = winner.StrategyName;
                 if (!string.IsNullOrWhiteSpace(winnerStrategy))
                 {
                     if (!strategyStats.ContainsKey(winnerStrategy))
-                        strategyStats[winnerStrategy] = (0, 0, 0, 0, 0);
+                        strategyStats[winnerStrategy] = (0, 0, 0, 0, 0, 0f, 0f, 0f);
 
                     var winEntry = strategyStats[winnerStrategy];
                     winEntry.wins++;
@@ -44,7 +43,7 @@ namespace FungusToast.Simulation.Analysis
                     string strategy = pr.StrategyName;
 
                     if (!strategyStats.ContainsKey(strategy))
-                        strategyStats[strategy] = (0, 0, 0, 0, 0);
+                        strategyStats[strategy] = (0, 0, 0, 0, 0, 0f, 0f, 0f);
 
                     var entry = strategyStats[strategy];
 
@@ -56,18 +55,17 @@ namespace FungusToast.Simulation.Analysis
 
                     entry.totalLiving += pr.LivingCells;
                     entry.totalDead += pr.DeadCells;
-
-                    // 🔢 Total mutation points spent = sum of all mutation levels * cost per level
-                    int mpSpent = pr.MutationLevels.Sum(kv =>
+                    entry.mutationPointsSpent += pr.MutationLevels.Sum(kv =>
                     {
                         var m = MutationRegistry.GetById(kv.Key);
                         return (m != null) ? m.PointsPerUpgrade * kv.Value : 0;
                     });
+                    entry.sumGrowth += pr.EffectiveGrowthChance;
+                    entry.sumSelfDeath += pr.EffectiveSelfDeathChance;
+                    entry.sumDecayMod += pr.OffensiveDecayModifier;
 
-                    entry.mutationPointsSpent += mpSpent;
                     strategyStats[strategy] = entry;
 
-                    // Mutation levels
                     if (!mutationTotalsByStrategy.ContainsKey(strategy))
                         mutationTotalsByStrategy[strategy] = new();
 
@@ -90,18 +88,21 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine($"Std Dev of Turns:   {stdDevTurns:F2}");
 
             Console.WriteLine("\nStrategy Summary:");
-            Console.WriteLine("Strategy                             | WinRate | Avg Alive | Avg Dead | Games | Avg MP Spent");
-            Console.WriteLine("-------------------------------------|---------|-----------|----------|-------|--------------");
+            Console.WriteLine("Strategy                             | WinRate | Avg Alive | Avg Dead | Games | Avg MP Spent | Growth% | SelfDeath% | DecayMod");
+            Console.WriteLine("-------------------------------------|---------|-----------|----------|-------|--------------|---------|------------|----------");
 
             foreach (var kvp in strategyStats.OrderByDescending(kvp => kvp.Value.wins))
             {
-                var (wins, games, living, dead, mpSpent) = kvp.Value;
+                var (wins, games, living, dead, mpSpent, sumGrowth, sumSelfDeath, sumDecayMod) = kvp.Value;
                 float winRate = (float)wins / games * 100;
                 float avgLiving = (float)living / games;
                 float avgDead = (float)dead / games;
                 float avgMpSpent = (float)mpSpent / games;
+                float avgGrowth = sumGrowth / games;
+                float avgSelfDeath = sumSelfDeath / games;
+                float avgDecay = sumDecayMod / games;
 
-                Console.WriteLine($"{kvp.Key,-37} | {winRate,6:F1}% | {avgLiving,9:F1} | {avgDead,8:F1} | {games,5} | {avgMpSpent,12:F1}");
+                Console.WriteLine($"{kvp.Key,-37} | {winRate,6:F1}% | {avgLiving,9:F1} | {avgDead,8:F1} | {games,5} | {avgMpSpent,12:F1} | {avgGrowth,7:P2} | {avgSelfDeath,10:P2} | {avgDecay,8:P2}");
             }
 
             Console.WriteLine("\nMutation Usage Per Strategy:");

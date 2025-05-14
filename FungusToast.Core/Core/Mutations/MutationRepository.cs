@@ -49,7 +49,19 @@ namespace FungusToast.Core.Mutations
             // Tier-3
             MakeChild(new Mutation(MutationIds.Necrosporulation, "Necrosporulation", "Spawn new cell on death.", MutationType.SporeOnDeathChance, GameBalance.NecrosporulationEffectPerLevel, 1, GameBalance.NecrosporulationMaxLevel, MutationCategory.CellularResilience), new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 5));
 
-            MakeChild(new Mutation(MutationIds.PutrefactiveMycotoxin, "Putrefactive Mycotoxin", "Extra death chance for adjacent enemies.", MutationType.OpponentExtraDeathChance, GameBalance.PutrefactiveMycotoxinEffectPerLevel, 1, GameBalance.PutrefactiveMycotoxinMaxLevel, MutationCategory.Fungicide), new MutationPrerequisite(MutationIds.EncystedSpores, 5));
+            MakeChild(
+                new Mutation(
+                    MutationIds.PutrefactiveMycotoxin,
+                    "Putrefactive Mycotoxin",
+                    "Adds death pressure for each adjacent tile owned by the attacker.",
+                    MutationType.OpponentExtraDeathChance,
+                    GameBalance.PutrefactiveMycotoxinEffectPerLevel,
+                    1,
+                    GameBalance.PutrefactiveMycotoxinMaxLevel,
+                    MutationCategory.Fungicide
+                ),
+                new MutationPrerequisite(MutationIds.EncystedSpores, 5)
+            );
 
             MakeChild(new Mutation(MutationIds.MycotropicInduction, "Mycotropic Induction", "Boosts tendril growth.", MutationType.TendrilDirectionalMultiplier, GameBalance.MycotropicInductionEffectPerLevel, 1, GameBalance.MycotropicInductionMaxLevel, MutationCategory.Growth),
                 new MutationPrerequisite(MutationIds.TendrilNorthwest, 1),

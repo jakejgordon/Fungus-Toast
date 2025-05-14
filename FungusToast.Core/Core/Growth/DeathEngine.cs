@@ -81,14 +81,6 @@ namespace FungusToast.Core.Growth
                                               GameBoard board)
         {
             float total = 0f;
-            var adjacentEnemyIds = new HashSet<int>();
-
-            foreach (int id in board.GetAdjacentTileIds(targetCell.TileId))
-            {
-                var n = board.GetCell(id);
-                if (n != null && n.IsAlive && n.OwnerPlayerId != owner.PlayerId)
-                    adjacentEnemyIds.Add(n.OwnerPlayerId);
-            }
 
             foreach (var enemy in allPlayers)
             {
@@ -96,8 +88,15 @@ namespace FungusToast.Core.Growth
 
                 float boost = enemy.GetOffensiveDecayModifierAgainst(targetCell, board);
 
-                if (!adjacentEnemyIds.Contains(enemy.PlayerId))
-                    boost -= enemy.GetMutationEffect(MutationType.OpponentExtraDeathChance);
+                // Add new bonus for each attacker-controlled adjacent tile
+                int adjacentOwnedByAttacker = board.GetAdjacentTileIds(targetCell.TileId)
+                    .Select(id => board.GetCell(id))
+                    .Where(cell => cell != null && cell.IsAlive && cell.OwnerPlayerId == enemy.PlayerId)
+                    .Count();
+
+                float toxinEffect = enemy.GetMutationEffect(MutationType.OpponentExtraDeathChance);
+                float additionalBonus = adjacentOwnedByAttacker * toxinEffect;
+                boost += additionalBonus;
 
                 if (boost < 0f) boost = 0f;
                 total += boost;

@@ -12,24 +12,30 @@ class Program
         Console.WriteLine("Running simulation with 4 players...\n");
 
         // 1. Declare/initialize strategies (one per player)
+        /*
         IMutationSpendingStrategy player0 = new SmartRandomMutationSpendingStrategy();
         IMutationSpendingStrategy player1 = new SmartRandomMutationSpendingStrategy();//new RandomMutationSpendingStrategy();
         IMutationSpendingStrategy player2 = new SmartRandomMutationSpendingStrategy();// new GrowthThenDefenseSpendingStrategy();
         IMutationSpendingStrategy player3 = new SmartRandomMutationSpendingStrategy();//new GrowthThenDefenseSpendingStrategy();
+        */
 
 
         // 2. Add all to a List in order
         var strategies = new List<IMutationSpendingStrategy>
         {
-            player0,
-            player1,
-            player2,
-            player3
+            new SmartRandomMutationSpendingStrategy(),
+            new SmartRandomMutationSpendingStrategy(),
+            new SmartRandomMutationSpendingStrategy(),
+            new SmartRandomMutationSpendingStrategy(),
+            new SmartRandomMutationSpendingStrategy(),
+            new SmartRandomMutationSpendingStrategy(),
+            new SmartRandomMutationSpendingStrategy(),
+            new SmartRandomMutationSpendingStrategy()
         };
 
         // 3. Run simulation
         var runner = new MatchupRunner();
-        var results = runner.RunMatchups(strategies, gamesToPlay: 1000);
+        var results = runner.RunMatchups(strategies, gamesToPlay: 200);
 
         // 4. Print strategy summary
         var aggregator = new MatchupStatsAggregator();
