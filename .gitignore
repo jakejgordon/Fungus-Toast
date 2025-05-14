@@ -68,6 +68,17 @@ ExportedObj/
 *.opendb
 *.VC.db
 
+# === Selective .csproj / .sln versioning ===
+# Ignore all, then allow known project files
+*.csproj
+*.sln
+
+!FungusToast.Core/FungusToast.Core.csproj
+!FungusToast.Simulation/FungusToast.Simulation.csproj
+!Assembly-CSharp.csproj
+!FungusToast.Unity.csproj
+!Fungus Toast.sln
+
 # Keep Visual Studio configuration for required workloads
 !.vsconfig
 
