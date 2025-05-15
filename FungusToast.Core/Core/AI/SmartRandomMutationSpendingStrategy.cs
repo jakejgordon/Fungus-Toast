@@ -33,10 +33,11 @@ namespace FungusToast.Core.AI
 
             foreach (var tier in upgradableMutations.Keys)
             {
-                double weight = 1.0 / Math.Pow(2, maxTier - tier); // e.g., T3 = 1.0, T2 = 0.5, T1 = 0.25
+                double weight = 1.0 / (1 + (maxTier - tier)); // new softer weight curve
                 tierWeights[tier] = weight;
                 totalWeight += weight;
             }
+
 
             // 3. Compute point allocation per tier
             var pointsByTier = new Dictionary<int, int>();
