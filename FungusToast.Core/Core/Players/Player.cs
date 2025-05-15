@@ -230,8 +230,9 @@ namespace FungusToast.Core.Players
 
             if (rng.NextDouble() < chance)
             {
-                return rng.Next(1, pm.CurrentLevel + 1); // 1 to CurrentLevel
+                return rng.Next(1, 2 * pm.CurrentLevel + 1); // 1 to 6 at max level
             }
+
 
             return 0;
         }

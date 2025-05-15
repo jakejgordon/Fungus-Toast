@@ -24,18 +24,14 @@ class Program
         var strategies = new List<IMutationSpendingStrategy>
         {
             new SmartRandomMutationSpendingStrategy(),
-            new SmartRandomMutationSpendingStrategy(),
-            new SmartRandomMutationSpendingStrategy(),
-            new SmartRandomMutationSpendingStrategy(),
-            new SmartRandomMutationSpendingStrategy(),
-            new SmartRandomMutationSpendingStrategy(),
-            new SmartRandomMutationSpendingStrategy(),
-            new SmartRandomMutationSpendingStrategy()
+            new GrowthThenDefenseSpendingStrategy(),
+            new RandomMutationSpendingStrategy(),
+            new MutationFocusedMutationSpendingStrategy()
         };
 
         // 3. Run simulation
         var runner = new MatchupRunner();
-        var results = runner.RunMatchups(strategies, gamesToPlay: 100);
+        var results = runner.RunMatchups(strategies, gamesToPlay: 200);
 
         // 4. Print strategy summary
         var aggregator = new MatchupStatsAggregator();

@@ -3,7 +3,7 @@ namespace FungusToast.Core.Config
     public static class GameBalance
     {
         // Global Mechanics
-        public const float BaseGrowthChance = 0.03f; 
+        public const float BaseGrowthChance = 0.015f; 
         public const float BaseDeathChance = 0.01f;
         public const float AgeDeathFactorPerGrowthCycle = 0.007f;
         public const int StartingMutationPoints = 5;
@@ -16,15 +16,15 @@ namespace FungusToast.Core.Config
 
 
         // Mutation Effects
-        public const float MycelialBloomEffectPerLevel = 0.005f;
+        public const float MycelialBloomEffectPerLevel = 0.003f;
         public const float HomeostaticHarmonyEffectPerLevel = 0.0025f;
         public const float SilentBlightEffectPerLevel = 0.001f;
         public const float AdaptiveExpressionEffectPerLevel = 0.10f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 5f;
-        public const float NecrosporulationEffectPerLevel = 0.15f;
+        public const float NecrosporulationEffectPerLevel = 0.1f;
         public const float EncystedSporesEffectPerLevel = 0.01f;
         public const float MutatorPhenotypeEffectPerLevel = 0.075f;
-        public const float DiagonalGrowthEffectPerLevel = 0.015f;
+        public const float DiagonalGrowthEffectPerLevel = 0.01f;
         public const float MycotropicInductionEffectPerLevel = 0.3f;
         public const float PutrefactiveMycotoxinEffectPerLevel = .05f;
         public const int AgeResetReductionPerLevel = 5;   // or cast the existing 5f
