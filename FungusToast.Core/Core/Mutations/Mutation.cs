@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core;
+using FungusToast.Core.Core.Mutations;
 using System.Collections.Generic;
 
 namespace FungusToast.Core.Mutations
@@ -13,6 +14,7 @@ namespace FungusToast.Core.Mutations
         public int PointsPerUpgrade { get; private set; }
         public int MaxLevel { get; private set; }
         public MutationCategory Category { get; private set; }
+        public MutationTier Tier { get; private set; }
 
         public List<MutationPrerequisite> Prerequisites { get; private set; }
         public List<Mutation> Children { get; private set; }
@@ -25,7 +27,8 @@ namespace FungusToast.Core.Mutations
             float effectPerLevel,
             int pointsPerUpgrade = 1,
             int maxLevel = 50,
-            MutationCategory category = MutationCategory.Growth)
+            MutationCategory category = MutationCategory.Growth,
+            MutationTier tier = MutationTier.Tier1)
         {
             Id = id;
             Name = name;
@@ -35,6 +38,7 @@ namespace FungusToast.Core.Mutations
             PointsPerUpgrade = pointsPerUpgrade;
             MaxLevel = maxLevel;
             Category = category;
+            Tier = tier;
 
             Prerequisites = new List<MutationPrerequisite>();
             Children = new List<Mutation>();
