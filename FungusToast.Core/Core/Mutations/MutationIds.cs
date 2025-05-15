@@ -16,5 +16,6 @@
         public const int Necrosporulation = 11;
         public const int MycotropicInduction = 12;
         public const int PutrefactiveMycotoxin = 13;
+        public const int AnabolicInversion = 14;
     }
 }

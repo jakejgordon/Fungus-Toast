@@ -11,6 +11,8 @@ namespace FungusToast.Core.Config
         public const int TurnsAfterEndGameTileOccupancyThresholdMet = 3;
         public const int BaseAgeResetThreshold = 50;
         public const float MaxEnemyDecayPressurePerCell = 0.25f;
+        public const float TimeBeforeDecayRender = 0.5f;
+        public const float TimeAfterDecayRender = 0.5f;
 
 
         // Mutation Effects
@@ -26,6 +28,8 @@ namespace FungusToast.Core.Config
         public const float MycotropicInductionEffectPerLevel = 0.3f;
         public const float PutrefactiveMycotoxinEffectPerLevel = .05f;
         public const int AgeResetReductionPerLevel = 5;   // or cast the existing 5f
+        public const int AnabolicInversionPointsPerUpgrade = 2;
+        public const float AnabolicInversionGapBonusPerLevel = 0.10f; // % chance per level
 
         // Max Levels
         public const int MycelialBloomMaxLevel = 100;
@@ -39,6 +43,7 @@ namespace FungusToast.Core.Config
         public const int DiagonalGrowthMaxLevel = 10;
         public const int MycotropicInductionMaxLevel = 3;
         public const int PutrefactiveMycotoxinMaxLevel = 5;
+        public const int AnabolicInversionMaxLevel = 3;
 
         // Phase Timing
         public const int TotalGrowthCycles = 5;

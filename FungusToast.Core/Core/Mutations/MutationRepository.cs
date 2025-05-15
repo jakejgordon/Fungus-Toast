@@ -63,6 +63,21 @@ namespace FungusToast.Core.Mutations
                 new MutationPrerequisite(MutationIds.EncystedSpores, 5)
             );
 
+            MakeChild(
+            new Mutation(
+                MutationIds.AnabolicInversion,
+                "Anabolic Inversion",
+                "If you lag behind in living cells, gain a chance to earn bonus mutation points during the mutation phase. The greater the gap, the higher the chance and reward.",
+                MutationType.BonusMutationPointChance,
+                GameBalance.AnabolicInversionGapBonusPerLevel,
+                GameBalance.AnabolicInversionPointsPerUpgrade,
+                GameBalance.AnabolicInversionMaxLevel,
+                MutationCategory.GeneticDrift
+            ),
+            new MutationPrerequisite(MutationIds.MutatorPhenotype, 3)
+);
+
+
             MakeChild(new Mutation(MutationIds.MycotropicInduction, "Mycotropic Induction", "Boosts tendril growth.", MutationType.TendrilDirectionalMultiplier, GameBalance.MycotropicInductionEffectPerLevel, 1, GameBalance.MycotropicInductionMaxLevel, MutationCategory.Growth),
                 new MutationPrerequisite(MutationIds.TendrilNorthwest, 1),
                 new MutationPrerequisite(MutationIds.TendrilNortheast, 1),

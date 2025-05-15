@@ -6,6 +6,7 @@ using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.AI;
 using FungusToast.Core.Death;
+using System;
 
 namespace FungusToast.Core.Players
 {
@@ -211,5 +212,44 @@ namespace FungusToast.Core.Players
                 ControlledTileIds.Add(id);
         }
         public void RemoveControlledTile(int id) => ControlledTileIds.Remove(id);
+
+        public int RollAnabolicInversionBonus(List<Player> allPlayers, System.Random rng)
+        {
+            if (!PlayerMutations.TryGetValue(MutationIds.AnabolicInversion, out var pm) || pm.CurrentLevel <= 0)
+                return 0;
+
+            int myCells = ControlledTileIds.Count;
+            var others = allPlayers.Where(p => p != this).ToList();
+            if (others.Count == 0) return 0;
+
+            float avgOthers = (float)others.Average(p => p.ControlledTileIds.Count);
+            if (avgOthers <= 0f) avgOthers = 1f;
+
+            float ratio = Math.Max(0f, Math.Min(1f, myCells / avgOthers)); // clamp between 0 and 1
+            float chance = (1f - ratio) + pm.CurrentLevel * GameBalance.AnabolicInversionGapBonusPerLevel;
+
+            if (rng.NextDouble() < chance)
+            {
+                return rng.Next(1, pm.CurrentLevel + 1); // 1 to CurrentLevel
+            }
+
+            return 0;
+        }
+
+        public int AssignMutationPoints(List<Player> allPlayers, System.Random rng, IEnumerable<Mutation>? allMutations = null)
+        {
+            int baseIncome = GetMutationPointIncome();
+            int bonus = GetBonusMutationPoints();
+            int undergrowth = RollAnabolicInversionBonus(allPlayers, rng);
+
+            MutationPoints = baseIncome + bonus + undergrowth;
+
+            if (allMutations != null)
+                TryTriggerAutoUpgrade(allMutations.ToList());
+
+            return MutationPoints;
+        }
+
+
     }
 }

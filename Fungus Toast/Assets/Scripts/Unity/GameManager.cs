@@ -14,6 +14,7 @@ using FungusToast.Core.Config;
 using FungusToast.Core.AI;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Death;
+using FungusToast.Core.Phases;
 
 namespace FungusToast.Unity
 {
@@ -33,6 +34,7 @@ namespace FungusToast.Unity
         [SerializeField] private GrowthPhaseRunner growthPhaseRunner;
         [SerializeField] private GameUIManager gameUIManager;
         [SerializeField] private TextMeshProUGUI gamePhaseText;
+        [SerializeField] private DecayPhaseRunner decayPhaseRunner;
 
         /* ─────────── State ─────────── */
         private bool isCountdownActive = false;
@@ -138,13 +140,21 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
-            SetGamePhaseText("Decay Phase");
-            DeathEngine.ExecuteDeathCycle(Board, players);
-            gridVisualizer.RenderBoard(Board);
-            gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
-
-            StartCoroutine(FinishDecayPhaseAfterDelay(1f));
+            decayPhaseRunner.Initialize(Board, players, gridVisualizer);
+            decayPhaseRunner.StartDecayPhase();
         }
+
+        public void OnDecayPhaseComplete()
+        {
+            if (gameEnded) return;
+
+            CheckForEndgameCondition();
+            if (gameEnded) return;
+
+            OnGrowthPhaseComplete();
+        }
+
+
 
         private IEnumerator FinishDecayPhaseAfterDelay(float delay)
         {
@@ -240,15 +250,16 @@ namespace FungusToast.Unity
         #region Utility
         private void AssignMutationPoints()
         {
-            foreach (var p in players)
-            {
-                int baseIncome = p.GetMutationPointIncome();
-                int bonus = p.GetBonusMutationPoints();
-                p.MutationPoints = baseIncome + bonus;
-                p.TryTriggerAutoUpgrade(mutationManager.AllMutations.Values.ToList());
-            }
+            var allMutations = mutationManager.AllMutations.Values.ToList();
+            var rng = new System.Random();
+
+            TurnEngine.AssignMutationPoints(players, allMutations, rng);
+
             gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
         }
+
+
+
 
         public void SetGamePhaseText(string label)
         {

@@ -26,13 +26,14 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.Necrosporulation,         new MutationLayoutMetadata(1, 2, MutationCategory.CellularResilience) },
 
                 /* ---------------- Fungicide (col 2) ----------------- */
-                { MutationIds.SilentBlight,         new MutationLayoutMetadata(2, 0, MutationCategory.Fungicide) },
-                { MutationIds.EncystedSpores,       new MutationLayoutMetadata(2, 1, MutationCategory.Fungicide) },
-                { MutationIds.PutrefactiveMycotoxin,new MutationLayoutMetadata(2, 2, MutationCategory.Fungicide) }, // NEW
+                { MutationIds.SilentBlight,          new MutationLayoutMetadata(2, 0, MutationCategory.Fungicide) },
+                { MutationIds.EncystedSpores,        new MutationLayoutMetadata(2, 1, MutationCategory.Fungicide) },
+                { MutationIds.PutrefactiveMycotoxin, new MutationLayoutMetadata(2, 2, MutationCategory.Fungicide) },
 
                 /* --------------- Genetic Drift (col 3) -------------- */
-                { MutationIds.AdaptiveExpression, new MutationLayoutMetadata(3, 0, MutationCategory.GeneticDrift) },
-                { MutationIds.MutatorPhenotype,   new MutationLayoutMetadata(3, 1, MutationCategory.GeneticDrift) },
+                { MutationIds.AdaptiveExpression,   new MutationLayoutMetadata(3, 0, MutationCategory.GeneticDrift) },
+                { MutationIds.MutatorPhenotype,     new MutationLayoutMetadata(3, 1, MutationCategory.GeneticDrift) },
+                { MutationIds.AnabolicInversion,    new MutationLayoutMetadata(3, 2, MutationCategory.GeneticDrift) }, // NEW
             };
     }
 }

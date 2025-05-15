@@ -5,8 +5,6 @@ using FungusToast.Core;
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
-using FungusToast.Core.Death;
-using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
@@ -20,8 +18,6 @@ namespace FungusToast.Simulation.GameSimulation
         {
             var rng = new Random(seed);
             var (players, board) = InitializeGame(strategies, rng);
-
-            var processor = new GrowthPhaseProcessor(board, players);
             var allMutations = MutationRegistry.GetAll().ToList();
 
             int turn = 0;
@@ -50,20 +46,11 @@ namespace FungusToast.Simulation.GameSimulation
                     }
                 }
 
-                // Mutation Phase
-                foreach (var player in players)
-                {
-                    player.MutationPoints = player.GetMutationPointIncome() + player.GetBonusMutationPoints();
-                    player.TryTriggerAutoUpgrade(allMutations);
-                    player.MutationStrategy?.SpendMutationPoints(player, allMutations);
-                }
+                // Full Turn: MP phase + growth + decay
+                TurnEngine.AssignMutationPoints(players, allMutations, rng);
+                TurnEngine.RunGrowthPhase(board, players);
+                TurnEngine.RunDecayPhase(board, players);
 
-                // Growth Phase
-                for (int cycle = 0; cycle < GameBalance.TotalGrowthCycles; cycle++)
-                    processor.ExecuteSingleCycle();
-
-                // Decay Phase
-                DeathEngine.ExecuteDeathCycle(board, players);
                 turn++;
             }
 

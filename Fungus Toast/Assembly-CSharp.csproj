@@ -66,6 +66,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_MutationManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_RightSideBar.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\SidebarResizer.cs" />
+    <Compile Include="Assets\Scripts\Unity\Phases\DecayPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationNodeUI.cs" />
     <Compile Include="Assets\Scripts\Unity\Cameras\CameraControls.cs" />
     <Compile Include="Assets\Scripts\Unity\Phases\GrowthPhaseRunner.cs" />
