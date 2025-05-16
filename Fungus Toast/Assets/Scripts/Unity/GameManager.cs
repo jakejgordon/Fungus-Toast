@@ -20,7 +20,6 @@ namespace FungusToast.Unity
 {
     public class GameManager : MonoBehaviour
     {
-        /* ─────────── Inspector ─────────── */
         [Header("Board Settings")]
         public int boardWidth = 20;
         public int boardHeight = 20;
@@ -36,7 +35,6 @@ namespace FungusToast.Unity
         [SerializeField] private TextMeshProUGUI gamePhaseText;
         [SerializeField] private DecayPhaseRunner decayPhaseRunner;
 
-        /* ─────────── State ─────────── */
         private bool isCountdownActive = false;
         private int roundsRemainingUntilGameEnd = 0;
         private bool gameEnded = false;
@@ -48,8 +46,6 @@ namespace FungusToast.Unity
         private readonly List<Player> players = new();
         private Player humanPlayer;
 
-        /* ───────────────────────────────────────────────────────── */
-        #region Unity Lifecycle
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -58,7 +54,6 @@ namespace FungusToast.Unity
                 return;
             }
             Instance = this;
-
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
         }
 
@@ -69,10 +64,7 @@ namespace FungusToast.Unity
             gridVisualizer.Initialize(Board);
             SetupUI();
         }
-        #endregion
 
-        /* ───────────────────────────────────────────────────────── */
-        #region Setup
         private void SetupPlayers()
         {
             players.Clear();
@@ -85,7 +77,9 @@ namespace FungusToast.Unity
             var strategyPool = new IMutationSpendingStrategy[]
             {
                 new RandomMutationSpendingStrategy(),
-                new GrowthThenDefenseSpendingStrategy()
+                new GrowthThenDefenseSpendingStrategy(),
+                new SmartRandomMutationSpendingStrategy(),
+                new MutationFocusedMutationSpendingStrategy()
             };
 
             for (int i = 1; i < playerCount; i++)
@@ -123,10 +117,7 @@ namespace FungusToast.Unity
                 gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
             }
         }
-        #endregion
 
-        /* ───────────────────────────────────────────────────────── */
-        #region Phase Flow
         public void StartGrowthPhase()
         {
             if (growthPhaseRunner != null)
@@ -154,20 +145,6 @@ namespace FungusToast.Unity
             OnGrowthPhaseComplete();
         }
 
-
-
-        private IEnumerator FinishDecayPhaseAfterDelay(float delay)
-        {
-            yield return new WaitForSeconds(delay);
-
-            if (gameEnded) yield break;
-
-            CheckForEndgameCondition();
-            if (gameEnded) yield break;
-
-            OnGrowthPhaseComplete();
-        }
-
         public void OnGrowthPhaseComplete()
         {
             if (gameEnded) return;
@@ -180,10 +157,7 @@ namespace FungusToast.Unity
 
             SetGamePhaseText("Mutation Phase");
         }
-        #endregion
 
-        /* ───────────────────────────────────────────────────────── */
-        #region End-game Logic
         private void CheckForEndgameCondition()
         {
             int totalTiles = Board.Width * Board.Height;
@@ -234,56 +208,36 @@ namespace FungusToast.Unity
                 .ThenByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => !c.IsAlive))
                 .ToList();
 
-            // Disable interactive UI
             gameUIManager.MutationUIManager.gameObject.SetActive(false);
             gameUIManager.RightSidebar.gameObject.SetActive(false);
             gameUIManager.LeftSidebar.gameObject.SetActive(false);
 
             gameUIManager.EndGamePanel.gameObject.SetActive(true);
-
-            // Show results
             gameUIManager.EndGamePanel.ShowResults(ranked, Board);
         }
-        #endregion
 
-        /* ───────────────────────────────────────────────────────── */
-        #region Utility
         private void AssignMutationPoints()
         {
             var allMutations = mutationManager.AllMutations.Values.ToList();
             var rng = new System.Random();
 
             TurnEngine.AssignMutationPoints(players, allMutations, rng);
-
             gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
         }
-
-
-
 
         public void SetGamePhaseText(string label)
         {
             if (gamePhaseText != null) gamePhaseText.text = label;
         }
-        #endregion
 
-        /* ───────────────────────────────────────────────────────── */
-        /*  PUBLIC HELPERS EXPECTED BY UI_MutationManager + PreGameUI */
-        /* ───────────────────────────────────────────────────────── */
-
-        /// <summary>
-        /// Called by the pre-game menu. Re-initialises everything for N players.
-        /// </summary>
         public void InitializeGame(int numberOfPlayers)
         {
-            // clear any previous session
             gameEnded = false;
             isCountdownActive = false;
             roundsRemainingUntilGameEnd = 0;
 
             playerCount = numberOfPlayers;
 
-            // fresh board + players
             SetupPlayers();
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
             gridVisualizer.Initialize(Board);
@@ -292,16 +246,11 @@ namespace FungusToast.Unity
 
             mutationManager.ResetMutationPoints(players);
 
-            // refresh UI
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
             SetGamePhaseText("Mutation Phase");
         }
 
-        /// <summary>
-        /// Lets all AI players dump their mutation points at once, then starts the Growth Phase.
-        /// Used by UI_MutationManager.
-        /// </summary>
         public void SpendAllMutationPointsForAIPlayers()
         {
             foreach (var p in players)
@@ -314,9 +263,6 @@ namespace FungusToast.Unity
             StartGrowthPhase();
         }
 
-        /// <summary>
-        /// Spawns each player’s initial spore in a circle around board center.
-        /// </summary>
         private void PlaceStartingSpores()
         {
             float radius = Mathf.Min(boardWidth, boardHeight) * 0.35f;
@@ -330,7 +276,5 @@ namespace FungusToast.Unity
                 Board.PlaceInitialSpore(i, px, py);
             }
         }
-
-
     }
 }

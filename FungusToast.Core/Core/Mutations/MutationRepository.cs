@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.Config;
+using FungusToast.Core.Core.Mutations;
 using System.Collections.Generic;
 
 namespace FungusToast.Core.Mutations
@@ -29,56 +30,38 @@ namespace FungusToast.Core.Mutations
                 return m;
             }
 
-            // Tier-1
-            MakeRoot(new Mutation(MutationIds.MycelialBloom, "Mycelial Bloom", "Grants outgrowth.", MutationType.GrowthChance, GameBalance.MycelialBloomEffectPerLevel, 1, GameBalance.MycelialBloomMaxLevel, MutationCategory.Growth));
-            MakeRoot(new Mutation(MutationIds.HomeostaticHarmony, "Homeostatic Harmony", "Improves decay survival.", MutationType.DefenseSurvival, GameBalance.HomeostaticHarmonyEffectPerLevel, 1, GameBalance.HomeostaticHarmonyMaxLevel, MutationCategory.CellularResilience));
-            MakeRoot(new Mutation(MutationIds.SilentBlight, "Silent Blight", "Increases enemy death chance.", MutationType.EnemyDecayChance, GameBalance.SilentBlightEffectPerLevel, 1, GameBalance.SilentBlightMaxLevel, MutationCategory.Fungicide));
-            MakeRoot(new Mutation(MutationIds.AdaptiveExpression, "Adaptive Expression", "Chance to gain bonus points.", MutationType.BonusMutationPointChance, GameBalance.AdaptiveExpressionEffectPerLevel, 1, GameBalance.AdaptiveExpressionMaxLevel, MutationCategory.GeneticDrift));
+            // Tier-1 Roots
+            MakeRoot(new Mutation(MutationIds.MycelialBloom, "Mycelial Bloom", "Grants outgrowth.", MutationType.GrowthChance, GameBalance.MycelialBloomEffectPerLevel, 1, GameBalance.MycelialBloomMaxLevel, MutationCategory.Growth, MutationTier.Tier1));
+            MakeRoot(new Mutation(MutationIds.HomeostaticHarmony, "Homeostatic Harmony", "Improves decay survival.", MutationType.DefenseSurvival, GameBalance.HomeostaticHarmonyEffectPerLevel, 1, GameBalance.HomeostaticHarmonyMaxLevel, MutationCategory.CellularResilience, MutationTier.Tier1));
+            MakeRoot(new Mutation(MutationIds.SilentBlight, "Silent Blight", "Increases enemy death chance.", MutationType.EnemyDecayChance, GameBalance.SilentBlightEffectPerLevel, 1, GameBalance.SilentBlightMaxLevel, MutationCategory.Fungicide, MutationTier.Tier1));
+            MakeRoot(new Mutation(MutationIds.AdaptiveExpression, "Adaptive Expression", "Chance to gain bonus points.", MutationType.BonusMutationPointChance, GameBalance.AdaptiveExpressionEffectPerLevel, 1, GameBalance.AdaptiveExpressionMaxLevel, MutationCategory.GeneticDrift, MutationTier.Tier1));
 
             // Tier-2
-            MakeChild(new Mutation(MutationIds.ChronoresilientCytoplasm, "Chronoresilient Cytoplasm", "Resets age.", MutationType.SelfAgeResetThreshold, GameBalance.ChronoresilientCytoplasmEffectPerLevel, 1, GameBalance.ChronoresilientCytoplasmMaxLevel, MutationCategory.CellularResilience), new MutationPrerequisite(MutationIds.HomeostaticHarmony, 10));
-            MakeChild(new Mutation(MutationIds.EncystedSpores, "Encysted Spores", "Decay bonus for surrounded enemies.", MutationType.EncystedSporeMultiplier, GameBalance.EncystedSporesEffectPerLevel, 1, GameBalance.EncystedSporesMaxLevel, MutationCategory.Fungicide), new MutationPrerequisite(MutationIds.SilentBlight, 10));
+            MakeChild(new Mutation(MutationIds.ChronoresilientCytoplasm, "Chronoresilient Cytoplasm", "Resets age.", MutationType.SelfAgeResetThreshold, GameBalance.ChronoresilientCytoplasmEffectPerLevel, 1, GameBalance.ChronoresilientCytoplasmMaxLevel, MutationCategory.CellularResilience, MutationTier.Tier2),
+                new MutationPrerequisite(MutationIds.HomeostaticHarmony, 10));
+
+            MakeChild(new Mutation(MutationIds.EncystedSpores, "Encysted Spores", "Decay bonus for surrounded enemies.", MutationType.EncystedSporeMultiplier, GameBalance.EncystedSporesEffectPerLevel, 1, GameBalance.EncystedSporesMaxLevel, MutationCategory.Fungicide, MutationTier.Tier2),
+                new MutationPrerequisite(MutationIds.SilentBlight, 10));
 
             AddTendril(MutationIds.TendrilNorthwest, "Northwest");
             AddTendril(MutationIds.TendrilNortheast, "Northeast");
             AddTendril(MutationIds.TendrilSoutheast, "Southeast");
             AddTendril(MutationIds.TendrilSouthwest, "Southwest");
 
-            MakeChild(new Mutation(MutationIds.MutatorPhenotype, "Mutator Phenotype", "Auto-upgrade mutation.", MutationType.AutoUpgradeRandom, GameBalance.MutatorPhenotypeEffectPerLevel, 1, GameBalance.MutatorPhenotypeMaxLevel, MutationCategory.GeneticDrift), new MutationPrerequisite(MutationIds.AdaptiveExpression, 5));
+            MakeChild(new Mutation(MutationIds.MutatorPhenotype, "Mutator Phenotype", "Auto-upgrade mutation.", MutationType.AutoUpgradeRandom, GameBalance.MutatorPhenotypeEffectPerLevel, 1, GameBalance.MutatorPhenotypeMaxLevel, MutationCategory.GeneticDrift, MutationTier.Tier2),
+                new MutationPrerequisite(MutationIds.AdaptiveExpression, 5));
 
             // Tier-3
-            MakeChild(new Mutation(MutationIds.Necrosporulation, "Necrosporulation", "Spawn new cell on death.", MutationType.SporeOnDeathChance, GameBalance.NecrosporulationEffectPerLevel, 1, GameBalance.NecrosporulationMaxLevel, MutationCategory.CellularResilience), new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 5));
+            MakeChild(new Mutation(MutationIds.Necrosporulation, "Necrosporulation", "Spawn new cell on death.", MutationType.SporeOnDeathChance, GameBalance.NecrosporulationEffectPerLevel, 1, GameBalance.NecrosporulationMaxLevel, MutationCategory.CellularResilience, MutationTier.Tier3),
+                new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 5));
 
-            MakeChild(
-                new Mutation(
-                    MutationIds.PutrefactiveMycotoxin,
-                    "Putrefactive Mycotoxin",
-                    "Adds death pressure for each adjacent tile owned by the attacker.",
-                    MutationType.OpponentExtraDeathChance,
-                    GameBalance.PutrefactiveMycotoxinEffectPerLevel,
-                    1,
-                    GameBalance.PutrefactiveMycotoxinMaxLevel,
-                    MutationCategory.Fungicide
-                ),
-                new MutationPrerequisite(MutationIds.EncystedSpores, 5)
-            );
+            MakeChild(new Mutation(MutationIds.PutrefactiveMycotoxin, "Putrefactive Mycotoxin", "Adds death pressure for each adjacent tile owned by the attacker.", MutationType.OpponentExtraDeathChance, GameBalance.PutrefactiveMycotoxinEffectPerLevel, 1, GameBalance.PutrefactiveMycotoxinMaxLevel, MutationCategory.Fungicide, MutationTier.Tier3),
+                new MutationPrerequisite(MutationIds.EncystedSpores, 5));
 
-            MakeChild(
-            new Mutation(
-                MutationIds.AnabolicInversion,
-                "Anabolic Inversion",
-                "If you lag behind in living cells, gain a chance to earn bonus mutation points during the mutation phase. The greater the gap, the higher the chance and reward.",
-                MutationType.BonusMutationPointChance,
-                GameBalance.AnabolicInversionGapBonusPerLevel,
-                GameBalance.AnabolicInversionPointsPerUpgrade,
-                GameBalance.AnabolicInversionMaxLevel,
-                MutationCategory.GeneticDrift
-            ),
-            new MutationPrerequisite(MutationIds.MutatorPhenotype, 3)
-);
+            MakeChild(new Mutation(MutationIds.AnabolicInversion, "Anabolic Inversion", "If you lag behind in living cells, gain a chance to earn bonus mutation points during the mutation phase. The greater the gap, the higher the chance and reward.", MutationType.BonusMutationPointChance, GameBalance.AnabolicInversionGapBonusPerLevel, GameBalance.AnabolicInversionPointsPerUpgrade, GameBalance.AnabolicInversionMaxLevel, MutationCategory.GeneticDrift, MutationTier.Tier3),
+                new MutationPrerequisite(MutationIds.MutatorPhenotype, 3));
 
-
-            MakeChild(new Mutation(MutationIds.MycotropicInduction, "Mycotropic Induction", "Boosts tendril growth.", MutationType.TendrilDirectionalMultiplier, GameBalance.MycotropicInductionEffectPerLevel, 1, GameBalance.MycotropicInductionMaxLevel, MutationCategory.Growth),
+            MakeChild(new Mutation(MutationIds.MycotropicInduction, "Mycotropic Induction", "Boosts tendril growth.", MutationType.TendrilDirectionalMultiplier, GameBalance.MycotropicInductionEffectPerLevel, 1, GameBalance.MycotropicInductionMaxLevel, MutationCategory.Growth, MutationTier.Tier3),
                 new MutationPrerequisite(MutationIds.TendrilNorthwest, 1),
                 new MutationPrerequisite(MutationIds.TendrilNortheast, 1),
                 new MutationPrerequisite(MutationIds.TendrilSoutheast, 1),
@@ -95,7 +78,8 @@ namespace FungusToast.Core.Mutations
                     "Southeast" => MutationType.GrowthDiagonal_SE,
                     "Southwest" => MutationType.GrowthDiagonal_SW,
                     _ => throw new System.Exception("Invalid direction")
-                }, GameBalance.DiagonalGrowthEffectPerLevel, 1, GameBalance.DiagonalGrowthMaxLevel, MutationCategory.Growth), new MutationPrerequisite(MutationIds.MycelialBloom, 10));
+                }, GameBalance.DiagonalGrowthEffectPerLevel, 1, GameBalance.DiagonalGrowthMaxLevel, MutationCategory.Growth, MutationTier.Tier2),
+                new MutationPrerequisite(MutationIds.MycelialBloom, 10));
             }
         }
     }

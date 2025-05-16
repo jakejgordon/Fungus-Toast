@@ -101639,6 +101639,7 @@ MonoBehaviour:
   growthPhaseRunner: {fileID: 611285832}
   gameUIManager: {fileID: 948889969}
   gamePhaseText: {fileID: 1773201422}
+  decayPhaseRunner: {fileID: 2138162645}
 --- !u!4 &548818018
 Transform:
   m_ObjectHideFlags: 0
@@ -101656,6 +101657,7 @@ Transform:
   - {fileID: 355076242}
   - {fileID: 611285831}
   - {fileID: 989759030}
+  - {fileID: 2138162646}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &565532745
@@ -107293,6 +107295,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2130155127}
   m_CullTransparentMesh: 1
+--- !u!1 &2138162644
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2138162646}
+  - component: {fileID: 2138162645}
+  m_Layer: 0
+  m_Name: DecayPhaseRunner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2138162645
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2138162644}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 849617fa58557ba4ea5770fed3423b57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &2138162646
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2138162644}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 548818018}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2143743640
 GameObject:
   m_ObjectHideFlags: 0
