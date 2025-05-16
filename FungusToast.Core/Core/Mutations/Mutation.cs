@@ -6,9 +6,12 @@ namespace FungusToast.Core.Mutations
 {
     public class Mutation
     {
-        public int Id { get; private set; } // ✅ Unique identifier per mutation
+        public int Id { get; private set; }
         public string Name { get; private set; }
         public string Description { get; private set; }
+
+        public string FlavorText { get; private set; } // Optional flavor text for the mutation
+
         public MutationType Type { get; private set; }
         public float EffectPerLevel { get; private set; }
         public int PointsPerUpgrade { get; private set; }

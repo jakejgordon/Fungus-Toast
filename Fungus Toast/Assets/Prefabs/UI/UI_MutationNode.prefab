@@ -283,6 +283,8 @@ MonoBehaviour:
   levelText: {fileID: 591126500463184302}
   lockOverlay: {fileID: 2732366040074389778}
   canvasGroup: {fileID: 6767836813942605554}
+  upgradeCostGroup: {fileID: 674577736683497479}
+  upgradeCostText: {fileID: 6556732343945841932}
 --- !u!225 &6767836813942605554
 CanvasGroup:
   m_ObjectHideFlags: 0

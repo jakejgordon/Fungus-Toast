@@ -17,6 +17,10 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private GameObject lockOverlay;
         [SerializeField] private CanvasGroup canvasGroup;
 
+        // New fields for cost display
+        [SerializeField] private GameObject upgradeCostGroup; // Group holding icon + text
+        [SerializeField] private TextMeshProUGUI upgradeCostText;
+
         private Mutation mutation;
         private UI_MutationManager uiManager;
         private Player player;
@@ -39,10 +43,8 @@ namespace FungusToast.Unity.UI.MutationTree
             if (!player.CanUpgrade(mutation))
                 return;
 
-            // Disable button immediately to prevent spam clicks
             upgradeButton.interactable = false;
 
-            // Let the central manager handle the logic and side effects
             bool success = uiManager.TryUpgradeMutation(mutation);
 
             if (success)
@@ -51,7 +53,6 @@ namespace FungusToast.Unity.UI.MutationTree
             }
             else
             {
-                // If it failed (e.g., race condition or bad state), re-enable the button
                 upgradeButton.interactable = true;
             }
         }
@@ -81,6 +82,17 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 canvasGroup.alpha = isLocked ? 0.5f : 1f;
             }
+
+            // Show or hide the cost badge
+            if (mutation.PointsPerUpgrade > 1)
+            {
+                upgradeCostGroup.SetActive(true);
+                upgradeCostText.text = $"x{mutation.PointsPerUpgrade}";
+            }
+            else
+            {
+                upgradeCostGroup.SetActive(false);
+            }
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -97,7 +109,12 @@ namespace FungusToast.Unity.UI.MutationTree
         private string BuildTooltip()
         {
             StringBuilder sb = new StringBuilder();
+
             sb.AppendLine($"<b>{mutation.Name}</b>");
+            sb.AppendLine($"<i>(Tier {mutation.Tier} • {mutation.Category})</i>");
+            sb.AppendLine();
+
+            sb.AppendLine($"<b>Upgrade Cost:</b> {mutation.PointsPerUpgrade} mutation point{(mutation.PointsPerUpgrade > 1 ? "s" : "")}");
             sb.AppendLine();
 
             if (mutation.Prerequisites.Count > 0)
@@ -113,6 +130,13 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             sb.AppendLine(mutation.Description);
+
+            if (!string.IsNullOrEmpty(mutation.FlavorText))
+            {
+                sb.AppendLine();
+                sb.AppendLine($"<i>{mutation.FlavorText}</i>");
+            }
+
             return sb.ToString();
         }
     }
