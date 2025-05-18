@@ -26,7 +26,6 @@ namespace FungusToast.Core.Mutations
             _ => 0
         };
 
-
         public List<MutationPrerequisite> Prerequisites { get; private set; }
         public List<Mutation> Children { get; private set; }
 
@@ -34,6 +33,7 @@ namespace FungusToast.Core.Mutations
             int id,
             string name,
             string description,
+            string flavorText,
             MutationType type,
             float effectPerLevel,
             int pointsPerUpgrade = 1,
@@ -44,6 +44,7 @@ namespace FungusToast.Core.Mutations
             Id = id;
             Name = name;
             Description = description;
+            FlavorText = flavorText;
             Type = type;
             EffectPerLevel = effectPerLevel;
             PointsPerUpgrade = pointsPerUpgrade;
