@@ -7,6 +7,7 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using UnityEngine.Tilemaps;
 using FungusToast.Unity.Grid;
+using FungusToast.Unity.UI.MutationTree;
 using System.Linq;
 
 namespace FungusToast.Unity.UI.MutationTree
@@ -31,6 +32,7 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private TextMeshProUGUI dockButtonText;
         [SerializeField] private TextMeshProUGUI mutationDescriptionText;
         [SerializeField] private GameObject mutationDescriptionBackground;
+        [SerializeField] private TooltipPositioner tooltipPositioner;
 
         [Header("UI Wiring")]
         [SerializeField] private UI_MoldProfilePanel moldProfilePanel;
@@ -150,7 +152,6 @@ namespace FungusToast.Unity.UI.MutationTree
 
             mutationButtons.Clear(); // reset in case we're rebuilding
             mutationButtons = mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
-
         }
 
         public bool TryUpgradeMutation(Mutation mutation)
@@ -234,9 +235,9 @@ namespace FungusToast.Unity.UI.MutationTree
             Debug.Log("✅ Dock button works!");
         }
 
-        public void ShowMutationDescription(string description, RectTransform sourceRect)
+        public void ShowMutationDescription(string description, Vector2 screenPosition)
         {
-            if (mutationDescriptionBackground == null)
+            if (mutationDescriptionBackground == null || tooltipPositioner == null)
                 return;
 
             if (!mutationDescriptionBackground.activeSelf)
@@ -261,13 +262,12 @@ namespace FungusToast.Unity.UI.MutationTree
                 cg.blocksRaycasts = true;
             }
 
+            tooltipPositioner.SetPosition(screenPosition);
+
             RectTransform descRect = mutationDescriptionBackground.GetComponent<RectTransform>();
-            descRect.pivot = new Vector2(0f, 1f);
-
-            Vector2 offset = new Vector2(50, -50);
-            descRect.position = Input.mousePosition + (Vector3)offset;
-
             LayoutRebuilder.ForceRebuildLayoutImmediate(descRect);
+
+            Debug.Log($"🧪 ShowTooltip called: screenPos={screenPosition}, tooltipAnchored={descRect.anchoredPosition}");
         }
 
         public void ClearMutationDescription()
@@ -288,6 +288,21 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (mutationDescriptionText != null)
                 mutationDescriptionText.text = "";
+        }
+
+        private IEnumerator FadeTooltip(CanvasGroup cg, float targetAlpha, float duration)
+        {
+            float startAlpha = cg.alpha;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                cg.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration);
+                yield return null;
+            }
+
+            cg.alpha = targetAlpha;
         }
 
         private IEnumerator SlideInTree()
@@ -340,21 +355,6 @@ namespace FungusToast.Unity.UI.MutationTree
             isSliding = false;
         }
 
-        private IEnumerator FadeTooltip(CanvasGroup cg, float targetAlpha, float duration)
-        {
-            float startAlpha = cg.alpha;
-            float elapsed = 0f;
-
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                cg.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration);
-                yield return null;
-            }
-
-            cg.alpha = targetAlpha;
-        }
-
         private void TryEndHumanTurn()
         {
             if (!humanTurnEnded && humanPlayer != null && humanPlayer.MutationPoints <= 0)
@@ -374,9 +374,9 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void RefreshAllMutationButtons()
         {
-            foreach (var button in mutationButtons) // however you're storing them
+            foreach (var button in mutationButtons)
             {
-                button.UpdateDisplay(); // or whatever method you use to update level text and visuals
+                button.UpdateDisplay();
             }
         }
 

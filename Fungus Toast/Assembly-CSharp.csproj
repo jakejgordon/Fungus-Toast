@@ -78,6 +78,7 @@
     <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameUIManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_EndGamePanel.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_TooltipPositioner.cs" />
     <Compile Include="Assets\Scripts\Unity\Cameras\CameraCenterer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationTreeBuilder.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_RemainingPointsPanel.cs" />

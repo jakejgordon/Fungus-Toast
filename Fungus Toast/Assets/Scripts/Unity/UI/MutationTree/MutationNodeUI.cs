@@ -17,8 +17,7 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private GameObject lockOverlay;
         [SerializeField] private CanvasGroup canvasGroup;
 
-        // New fields for cost display
-        [SerializeField] private GameObject upgradeCostGroup; // Group holding icon + text
+        [SerializeField] private GameObject upgradeCostGroup;
         [SerializeField] private TextMeshProUGUI upgradeCostText;
 
         private Mutation mutation;
@@ -83,7 +82,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 canvasGroup.alpha = isLocked ? 0.5f : 1f;
             }
 
-            // Show or hide the cost badge
             if (mutation.PointsPerUpgrade > 1)
             {
                 upgradeCostGroup.SetActive(true);
@@ -98,7 +96,8 @@ namespace FungusToast.Unity.UI.MutationTree
         public void OnPointerEnter(PointerEventData eventData)
         {
             var tooltipText = BuildTooltip();
-            uiManager.ShowMutationDescription(tooltipText, transform as RectTransform);
+            Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(null, transform.position);
+            uiManager.ShowMutationDescription(tooltipText, screenPosition);
         }
 
         public void OnPointerExit(PointerEventData eventData)
