@@ -96,9 +96,10 @@ namespace FungusToast.Unity.UI.MutationTree
         public void OnPointerEnter(PointerEventData eventData)
         {
             var tooltipText = BuildTooltip();
-            Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(null, transform.position);
+            Vector2 screenPosition = Input.mousePosition; // Use actual mouse position for consistent alignment
             uiManager.ShowMutationDescription(tooltipText, screenPosition);
         }
+
 
         public void OnPointerExit(PointerEventData eventData)
         {
