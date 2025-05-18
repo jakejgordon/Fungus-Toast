@@ -111,10 +111,10 @@ namespace FungusToast.Unity.UI.MutationTree
             StringBuilder sb = new StringBuilder();
 
             sb.AppendLine($"<b>{mutation.Name}</b>");
-            sb.AppendLine($"<i>(Tier {mutation.Tier} • {mutation.Category})</i>");
+            sb.AppendLine($"<i>(Tier {mutation.TierNumber} • {mutation.Category})</i>");
             sb.AppendLine();
 
-            sb.AppendLine($"<b>Upgrade Cost:</b> {mutation.PointsPerUpgrade} mutation point{(mutation.PointsPerUpgrade > 1 ? "s" : "")}");
+            sb.AppendLine($"<b>Cost:</b> {mutation.PointsPerUpgrade}");
             sb.AppendLine();
 
             if (mutation.Prerequisites.Count > 0)
