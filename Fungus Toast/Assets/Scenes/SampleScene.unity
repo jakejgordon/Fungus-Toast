@@ -101695,7 +101695,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 545782120}
-  m_Father: {fileID: 1493893196}
+  m_Father: {fileID: 1655698862}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
@@ -101755,7 +101755,7 @@ MonoBehaviour:
   m_IgnoreLayout: 0
   m_MinWidth: 250
   m_MinHeight: -1
-  m_PreferredWidth: 400
+  m_PreferredWidth: 550
   m_PreferredHeight: 450
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
@@ -101799,7 +101799,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tooltipRectTransform: {fileID: 565532746}
-  canvas: {fileID: 1655698861}
   horizontalOffset: 75
   verticalMargin: 10
 --- !u!1 &575988127
@@ -104903,7 +104902,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 565532746}
   - {fileID: 93928640}
   - {fileID: 1117693804}
   - {fileID: 541730891}
@@ -105659,6 +105657,7 @@ RectTransform:
   - {fileID: 456577070}
   - {fileID: 656464962}
   - {fileID: 1493893196}
+  - {fileID: 565532746}
   - {fileID: 193983060}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
