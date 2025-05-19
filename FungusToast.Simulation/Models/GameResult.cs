@@ -45,15 +45,17 @@ namespace FungusToast.Simulation.GameSimulation.Models
                 playerResultMap[player.PlayerId] = pr;
             }
 
-            // Assign death reasons to the appropriate PlayerResult
+
             foreach (var cell in board.GetAllCells())
             {
                 if (!cell.IsAlive && cell.CauseOfDeath.HasValue &&
-                    playerResultMap.TryGetValue(cell.OwnerPlayerId, out var pr))
+                    cell.LastOwnerPlayerId.HasValue &&
+                    playerResultMap.TryGetValue(cell.LastOwnerPlayerId.Value, out var pr))
                 {
                     pr.DeadCellDeathReasons.Add(cell.CauseOfDeath.Value);
                 }
             }
+
 
             var results = playerResultMap.Values.ToList();
 

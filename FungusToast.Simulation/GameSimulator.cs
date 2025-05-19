@@ -36,7 +36,7 @@ namespace FungusToast.Simulation.GameSimulation
                 int occupied = board.GetAllCells().Count;
                 int total = board.Width * board.Height;
                 float ratio = (float)occupied / total;
-                Console.WriteLine($"[Turn {turn}] Occupied Tiles: {occupied}/{total} ({ratio:P2})");
+                //Console.WriteLine($"[Turn {turn}] Occupied Tiles: {occupied}/{total} ({ratio:P2})");
 
                 if (!isCountdownActive && ratio >= GameBalance.GameEndTileOccupancyThreshold)
                 {

@@ -104,11 +104,7 @@ namespace FungusToast.Core.Growth
                         neighbor.PlaceFungalCell(newCell);
                         board.RegisterCell(newCell);
                         owner.AddControlledTile(tileId);
-                        Console.WriteLine($"[Growth] {sourceTile.TileId} grew into {tileId} with roll {roll:0.000} <= chance {chance:0.000}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"⚠️ Growth blocked — target tile {neighbor.TileId} was already occupied.");
+                        //Console.WriteLine($"[Growth] {sourceTile.TileId} grew into {tileId} with roll {roll:0.000} <= chance {chance:0.000}");
                     }
 
                     break; // Only one growth attempt per source tile

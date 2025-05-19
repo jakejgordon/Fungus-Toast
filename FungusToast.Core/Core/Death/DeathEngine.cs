@@ -3,6 +3,7 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
+using FungusToast.Core.Death;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,22 +33,21 @@ namespace FungusToast.Core.Death
 
                 if (player.ControlledTileIds.Count <= 1)
                 {
-                    cell.CauseOfDeath = DeathReason.Protected;
-                    continue;
+                    continue; // Skip killing player's last cell
                 }
 
-                float deathChance = MutationEffectProcessor.CalculateDeathChance(player, cell, board, players);
+                double roll = rng.NextDouble();
+                var (deathChance, reason) = MutationEffectProcessor.CalculateDeathChance(
+                    player, cell, board, players, roll);
 
-                if (rng.NextDouble() < deathChance)
+                if (reason.HasValue && roll < deathChance)
                 {
-                    cell.Kill(); // Sets CauseOfDeath internally
+                    cell.Kill(reason.Value);
                     player.ControlledTileIds.Remove(cell.TileId);
-
                     MutationEffectProcessor.TryTriggerSporeOnDeath(player, board, rng);
                 }
                 else
                 {
-                    cell.CauseOfDeath = null;
                     MutationEffectProcessor.AdvanceOrResetCellAge(player, cell);
                 }
             }

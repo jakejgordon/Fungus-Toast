@@ -66,35 +66,43 @@ namespace FungusToast.Core.Phases
             board.SpawnSporeForPlayer(player, tileId);
         }
 
-        public static float CalculateDeathChance(Player player, FungalCell cell, GameBoard board, List<Player> players)
+        public static (float chance, DeathReason? reason) CalculateDeathChance(
+            Player player,
+            FungalCell cell,
+            GameBoard board,
+            List<Player> players,
+            double roll)
         {
             float baseChance = GameBalance.BaseDeathChance;
             float ageMod = cell.GrowthCycleAge * GameBalance.AgeDeathFactorPerGrowthCycle;
-            float defenseBonus = player.GetEffectiveSelfDeathChance();
             float pressure = GetEnemyPressure(players, player, cell, board);
+            float defenseBonus = player.GetEffectiveSelfDeathChance();
 
-            float finalChance = Math.Clamp(baseChance + ageMod + pressure - defenseBonus, 0f, 1f);
+            float totalChance = baseChance + ageMod + pressure - defenseBonus;
+            float clampedChance = Math.Clamp(totalChance, 0f, 1f);
 
-            double roll = new Random().NextDouble();
-            if (roll < baseChance)
+            // Use un-clamped thresholds to preserve attribution logic
+            float thresholdRandom = baseChance;
+            float thresholdAge = baseChance + ageMod;
+            float thresholdEnemy = baseChance + ageMod + pressure;
+
+            if (roll < clampedChance)
             {
-                cell.CauseOfDeath = DeathReason.Randomness;
-            }
-            else if (roll < baseChance + ageMod)
-            {
-                cell.CauseOfDeath = DeathReason.Age;
-            }
-            else if (roll < baseChance + ageMod + pressure)
-            {
-                cell.CauseOfDeath = DeathReason.EnemyDecayPressure;
-            }
-            else
-            {
-                cell.CauseOfDeath = null; // survived
+                if (roll < thresholdRandom)
+                    return (clampedChance, DeathReason.Randomness);
+                else if (roll < thresholdAge)
+                    return (clampedChance, DeathReason.Age);
+                else
+                    return (clampedChance, DeathReason.EnemyDecayPressure);
             }
 
-            return finalChance;
+            // Survived — no death reason
+            return (clampedChance, null);
         }
+
+
+
+
 
         public static void AdvanceOrResetCellAge(Player player, FungalCell cell)
         {
