@@ -13,7 +13,7 @@ namespace FungusToast.Simulation.GameSimulation.Models
         public int TurnsPlayed { get; set; }
         public List<PlayerResult> PlayerResults { get; set; }
 
-        public static GameResult From(GameBoard board, List<Player> players, int turns)
+        public static GameResult From(GameBoard board, List<Player> players, int turns, Dictionary<int, int> reclaimsByPlayer)
         {
             var playerResultMap = new Dictionary<int, PlayerResult>();
 
@@ -37,7 +37,9 @@ namespace FungusToast.Simulation.GameSimulation.Models
                         .DefaultIfEmpty(0f)
                         .Average(),
 
-                    DeadCellDeathReasons = new List<DeathReason>()
+                    DeadCellDeathReasons = new List<DeathReason>(),
+
+                    ReclaimedCells = reclaimsByPlayer.TryGetValue(player.PlayerId, out var count) ? count : 0
                 };
 
                 playerResultMap[player.PlayerId] = pr;

@@ -17,5 +17,6 @@
         public const int MycotropicInduction = 12;
         public const int PutrefactiveMycotoxin = 13;
         public const int AnabolicInversion = 14;
+        public const int RegenerativeHyphae = 15;
     }
 }

@@ -9,6 +9,10 @@ namespace FungusToast.Simulation.GameSimulation.Models
         public string StrategyName { get; set; }
         public int LivingCells { get; set; }
         public int DeadCells { get; set; }
+
+        // 🧠 New: Total number of reclaimed cells
+        public int ReclaimedCells { get; set; }
+
         public Dictionary<int, int> MutationLevels { get; set; } = new();
 
         // Derived metrics for simulation analysis
@@ -16,7 +20,7 @@ namespace FungusToast.Simulation.GameSimulation.Models
         public float EffectiveSelfDeathChance { get; set; }
         public float OffensiveDecayModifier { get; set; }
 
-        // 🔍 New: Track cause of death for all dead cells this game
+        // 🔍 Track cause of death for all dead cells this game
         public List<DeathReason> DeadCellDeathReasons { get; set; } = new();
     }
 }

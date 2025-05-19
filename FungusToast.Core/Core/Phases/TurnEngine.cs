@@ -25,15 +25,17 @@ namespace FungusToast.Core.Phases
         }
 
         /// <summary>
-        /// Executes a full multi-cycle growth phase.
+        /// Executes a full multi-cycle growth phase, including mutation-based effects.
         /// </summary>
         public static void RunGrowthPhase(GameBoard board, List<Player> players)
         {
             var processor = new GrowthPhaseProcessor(board, players);
+            var rng = new Random();
 
             for (int cycle = 0; cycle < GameBalance.TotalGrowthCycles; cycle++)
             {
                 processor.ExecuteSingleCycle();
+                ApplyRegenerativeHyphaeReclaims(board, players, rng);
             }
         }
 
@@ -43,6 +45,44 @@ namespace FungusToast.Core.Phases
         public static void RunDecayPhase(GameBoard board, List<Player> players)
         {
             DeathEngine.ExecuteDeathCycle(board, players);
+        }
+
+        /// <summary>
+        /// Applies Regenerative Hyphae effects during growth: reclaim adjacent dead cells previously owned.
+        /// </summary>
+        private static void ApplyRegenerativeHyphaeReclaims(GameBoard board, List<Player> players, Random rng)
+        {
+            foreach (var player in players)
+            {
+                int level = player.GetMutationLevel(MutationIds.RegenerativeHyphae);
+                if (level <= 0)
+                    continue;
+
+                float reclaimChance = GameBalance.RegenerativeHyphaeReclaimChance * level;
+                var playerCells = board.GetAllCellsOwnedBy(player.PlayerId);
+
+                foreach (var cell in playerCells)
+                {
+                    var (x, y) = board.GetXYFromTileId(cell.TileId);
+                    var neighbors = board.GetOrthogonalNeighbors(x, y);
+
+                    foreach (var neighbor in neighbors)
+                    {
+                        var deadCell = neighbor.FungalCell;
+                        if (deadCell == null || deadCell.IsAlive)
+                            continue;
+
+                        if (deadCell.OriginalOwnerPlayerId != player.PlayerId)
+                            continue;
+
+                        if (rng.NextDouble() < reclaimChance)
+                        {
+                            deadCell.Reclaim(player.PlayerId);
+                            board.RegisterCell(deadCell);
+                        }
+                    }
+                }
+            }
         }
     }
 }

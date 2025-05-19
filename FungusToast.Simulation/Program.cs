@@ -26,12 +26,16 @@ class Program
             new SmartRandomMutationSpendingStrategy(),
             new GrowthThenDefenseSpendingStrategy(),
             new RandomMutationSpendingStrategy(),
+            new MutationFocusedMutationSpendingStrategy(),
+            new SmartRandomMutationSpendingStrategy(),
+            new GrowthThenDefenseSpendingStrategy(),
+            new RandomMutationSpendingStrategy(),
             new MutationFocusedMutationSpendingStrategy()
         };
 
         // 3. Run simulation
         var runner = new MatchupRunner();
-        var results = runner.RunMatchups(strategies, gamesToPlay: 200);
+        var results = runner.RunMatchups(strategies, gamesToPlay: 100);
 
         // 4. Print strategy summary
         var aggregator = new MatchupStatsAggregator();

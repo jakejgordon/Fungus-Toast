@@ -1,4 +1,4 @@
-using FungusToast.Core.Players;
+﻿using FungusToast.Core.Players;
 
 namespace FungusToast.Core.Board
 {
@@ -9,15 +9,11 @@ namespace FungusToast.Core.Board
 
         public FungalCell? FungalCell { get; private set; }
 
-        // Add TileId as a derived property (non-breaking)
         public int TileId => Y * GameBoardWidth + X;
-
         public bool IsOccupied => FungalCell != null;
 
-        // Backed static width value to compute tile IDs consistently
         private static int GameBoardWidth = 0;
 
-        // Called during board construction
         public static void SetBoardWidth(int width)
         {
             GameBoardWidth = width;
@@ -38,6 +34,27 @@ namespace FungusToast.Core.Board
         public void RemoveFungalCell()
         {
             FungalCell = null;
+        }
+
+        // ✅ Proxy accessors to simplify logic
+        public bool IsAlive => FungalCell != null && FungalCell.IsAlive;
+        public int OriginalOwnerPlayerId => FungalCell?.OriginalOwnerPlayerId ?? -1;
+
+        public void ReclaimAsLiving(int newOwnerPlayerId)
+        {
+            FungalCell?.Reclaim(newOwnerPlayerId);
+        }
+
+        public int GrowthCycleAge
+        {
+            get => FungalCell?.GrowthCycleAge ?? 0;
+            set
+            {
+                if (FungalCell != null)
+                {
+                    FungalCell.SetGrowthCycleAge(value);
+                }
+            }
         }
     }
 }

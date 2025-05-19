@@ -9,7 +9,7 @@ namespace FungusToast.Core
         public int Width { get; }
         public int Height { get; }
         public BoardTile[,] Grid { get; }
-        public List<Player> Players { get; } // <-- Updated: full Player objects now
+        public List<Player> Players { get; }
 
         private Dictionary<int, FungalCell> tileIdToCell = new();
 
@@ -18,7 +18,7 @@ namespace FungusToast.Core
             Width = width;
             Height = height;
             Grid = new BoardTile[width, height];
-            Players = new List<Player>(playerCount); // <-- Players will be assigned externally now
+            Players = new List<Player>(playerCount);
 
             for (int x = 0; x < width; x++)
             {
@@ -43,7 +43,6 @@ namespace FungusToast.Core
         public List<BoardTile> GetOrthogonalNeighbors(int x, int y)
         {
             List<BoardTile> neighbors = new List<BoardTile>();
-
             int[] dx = { -1, 0, 1, 0 };
             int[] dy = { 0, -1, 0, 1 };
 
@@ -61,6 +60,12 @@ namespace FungusToast.Core
             return neighbors;
         }
 
+        public List<BoardTile> GetOrthogonalNeighbors(int tileId)
+        {
+            var (x, y) = GetXYFromTileId(tileId);
+            return GetOrthogonalNeighbors(x, y);
+        }
+
         public BoardTile? GetTile(int x, int y)
         {
             if (x >= 0 && y >= 0 && x < Width && y < Height)
@@ -76,7 +81,7 @@ namespace FungusToast.Core
 
             if (!tile.IsOccupied)
             {
-                int tileId = y * Width + x; // consistent unique ID
+                int tileId = y * Width + x;
                 var cell = new FungalCell(playerId, tileId);
                 tile.PlaceFungalCell(cell);
                 tileIdToCell[tileId] = cell;
@@ -126,7 +131,7 @@ namespace FungusToast.Core
             return neighbors;
         }
 
-        private (int x, int y) GetXYFromTileId(int tileId)
+        public (int x, int y) GetXYFromTileId(int tileId)
         {
             int x = tileId % Width;
             int y = tileId / Width;
@@ -169,5 +174,12 @@ namespace FungusToast.Core
             return true;
         }
 
+        public int CountReclaimedCellsByPlayer(int playerId)
+        {
+            return tileIdToCell.Values.Count(c =>
+                c.IsAlive &&
+                c.OwnerPlayerId == playerId &&
+                c.OriginalOwnerPlayerId != playerId);
+        }
     }
 }

@@ -14,7 +14,13 @@ namespace FungusToast.Simulation.GameSimulation
 {
     public class GameSimulator
     {
-        public GameResult RunSimulation(List<IMutationSpendingStrategy> strategies, int seed)
+        public GameResult RunSimulation(
+            List<IMutationSpendingStrategy> strategies,
+            int seed,
+            int gameIndex = -1,
+            int totalGames = -1,
+            DateTime? startTime = null
+        )
         {
             var rng = new Random(seed);
             var (players, board) = InitializeGame(strategies, rng);
@@ -46,7 +52,6 @@ namespace FungusToast.Simulation.GameSimulation
                     }
                 }
 
-                // Full Turn: MP phase + growth + decay
                 TurnEngine.AssignMutationPoints(players, allMutations, rng);
                 TurnEngine.RunGrowthPhase(board, players);
                 TurnEngine.RunDecayPhase(board, players);
@@ -54,14 +59,30 @@ namespace FungusToast.Simulation.GameSimulation
                 turn++;
             }
 
-            var result = GameResult.From(board, players, turn);
+            var reclaimsByPlayer = players.ToDictionary(
+                p => p.PlayerId,
+                p => board.CountReclaimedCellsByPlayer(p.PlayerId)
+            );
 
-            // ✅ Summary output
-            var winner = result.PlayerResults.First(p => p.PlayerId == result.WinnerId);
-            Console.WriteLine($"Game complete (Turn {result.TurnsPlayed}) — Winner: Player {winner.PlayerId} ({winner.StrategyName})");
-            foreach (var pr in result.PlayerResults.OrderBy(p => p.PlayerId))
+            var result = GameResult.From(board, players, turn, reclaimsByPlayer);
+
+            if (gameIndex > 0 && totalGames > 0)
             {
-                Console.WriteLine($"  - Player {pr.PlayerId}: {pr.LivingCells} alive / {pr.DeadCells} dead ({pr.StrategyName})");
+                float percent = (float)gameIndex / totalGames * 100;
+                string elapsed = startTime.HasValue
+                    ? (DateTime.UtcNow - startTime.Value).ToString(@"hh\:mm\:ss")
+                    : "??";
+
+                Console.WriteLine($"Game {gameIndex}/{totalGames} complete — {percent:0.00}% (Elapsed: {elapsed})");
+            }
+            else
+            {
+                var winner = result.PlayerResults.First(p => p.PlayerId == result.WinnerId);
+                Console.WriteLine($"Game complete (Turn {result.TurnsPlayed}) — Winner: Player {winner.PlayerId} ({winner.StrategyName})");
+                foreach (var pr in result.PlayerResults.OrderBy(p => p.PlayerId))
+                {
+                    Console.WriteLine($"  - Player {pr.PlayerId}: {pr.LivingCells} alive / {pr.DeadCells} dead ({pr.StrategyName})");
+                }
             }
 
             return result;

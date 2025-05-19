@@ -25,6 +25,7 @@ namespace FungusToast.Simulation.Analysis
                 throw new ArgumentException("playersPerGame must be even for fair A vs B matchup");
 
             var results = new List<GameResult>();
+            var startTime = DateTime.UtcNow;
 
             for (int i = 0; i < gamesToPlay; i++)
             {
@@ -41,7 +42,14 @@ namespace FungusToast.Simulation.Analysis
                     strategies.Add(strategy);
                 }
 
-                var result = simulator.RunSimulation(strategies, seed: i);
+                var result = simulator.RunSimulation(
+                    strategies,
+                    seed: i,
+                    gameIndex: i + 1,
+                    totalGames: gamesToPlay,
+                    startTime: startTime
+                );
+
                 results.Add(result);
             }
 
@@ -55,12 +63,20 @@ namespace FungusToast.Simulation.Analysis
         public List<GameResult> RunMatchups(List<IMutationSpendingStrategy> strategies, int gamesToPlay)
         {
             var results = new List<GameResult>();
+            var startTime = DateTime.UtcNow;
 
             for (int i = 0; i < gamesToPlay; i++)
             {
-                // Optional: shuffle player order to reduce bias
                 var shuffled = strategies.OrderBy(_ => Guid.NewGuid()).ToList();
-                var result = simulator.RunSimulation(shuffled, seed: i);
+
+                var result = simulator.RunSimulation(
+                    shuffled,
+                    seed: i,
+                    gameIndex: i + 1,
+                    totalGames: gamesToPlay,
+                    startTime: startTime
+                );
+
                 results.Add(result);
             }
 

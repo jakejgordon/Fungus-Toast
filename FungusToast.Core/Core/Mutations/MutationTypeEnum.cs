@@ -17,5 +17,6 @@ namespace FungusToast.Core
         SporeOnDeathChance,
         TendrilDirectionalMultiplier,
         OpponentExtraDeathChance,
+        ReclaimOwnDeadCells,
     }
 }

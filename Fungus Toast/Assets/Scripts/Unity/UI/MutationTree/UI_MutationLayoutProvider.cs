@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FungusToast.Core.Mutations;
 
 namespace FungusToast.Unity.UI.MutationTree
@@ -13,12 +13,13 @@ namespace FungusToast.Unity.UI.MutationTree
             new Dictionary<int, MutationLayoutMetadata>
             {
                 /* ---------------- Growth (col 0) -------------------- */
-                { MutationIds.MycelialBloom,       new MutationLayoutMetadata(0, 0, MutationCategory.Growth) },
-                { MutationIds.TendrilNorthwest,    new MutationLayoutMetadata(0, 1, MutationCategory.Growth) },
-                { MutationIds.TendrilNortheast,    new MutationLayoutMetadata(0, 2, MutationCategory.Growth) },
-                { MutationIds.TendrilSoutheast,    new MutationLayoutMetadata(0, 3, MutationCategory.Growth) },
-                { MutationIds.TendrilSouthwest,    new MutationLayoutMetadata(0, 4, MutationCategory.Growth) },
-                { MutationIds.MycotropicInduction, new MutationLayoutMetadata(0, 5, MutationCategory.Growth) },
+                { MutationIds.MycelialBloom,         new MutationLayoutMetadata(0, 0, MutationCategory.Growth) },
+                { MutationIds.TendrilNorthwest,      new MutationLayoutMetadata(0, 1, MutationCategory.Growth) },
+                { MutationIds.TendrilNortheast,      new MutationLayoutMetadata(0, 2, MutationCategory.Growth) },
+                { MutationIds.TendrilSoutheast,      new MutationLayoutMetadata(0, 3, MutationCategory.Growth) },
+                { MutationIds.TendrilSouthwest,      new MutationLayoutMetadata(0, 4, MutationCategory.Growth) },
+                { MutationIds.MycotropicInduction,   new MutationLayoutMetadata(0, 5, MutationCategory.Growth) },
+                { MutationIds.RegenerativeHyphae,    new MutationLayoutMetadata(0, 6, MutationCategory.Growth) }, // ✅ Moved here
 
                 /* ------------ Cellular Resilience (col 1) ----------- */
                 { MutationIds.HomeostaticHarmony,       new MutationLayoutMetadata(1, 0, MutationCategory.CellularResilience) },
@@ -33,7 +34,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 /* --------------- Genetic Drift (col 3) -------------- */
                 { MutationIds.AdaptiveExpression,   new MutationLayoutMetadata(3, 0, MutationCategory.GeneticDrift) },
                 { MutationIds.MutatorPhenotype,     new MutationLayoutMetadata(3, 1, MutationCategory.GeneticDrift) },
-                { MutationIds.AnabolicInversion,    new MutationLayoutMetadata(3, 2, MutationCategory.GeneticDrift) }, // NEW
+                { MutationIds.AnabolicInversion,    new MutationLayoutMetadata(3, 2, MutationCategory.GeneticDrift) },
             };
     }
 }
