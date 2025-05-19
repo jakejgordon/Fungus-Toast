@@ -9,20 +9,14 @@ namespace FungusToast.Core.Board
 
         public FungalCell? FungalCell { get; private set; }
 
-        public int TileId => Y * GameBoardWidth + X;
+        public int TileId { get; }
         public bool IsOccupied => FungalCell != null;
 
-        private static int GameBoardWidth = 0;
-
-        public static void SetBoardWidth(int width)
-        {
-            GameBoardWidth = width;
-        }
-
-        public BoardTile(int x, int y)
+        public BoardTile(int x, int y, int boardWidth)
         {
             X = x;
             Y = y;
+            TileId = y * boardWidth + x;
             FungalCell = null;
         }
 

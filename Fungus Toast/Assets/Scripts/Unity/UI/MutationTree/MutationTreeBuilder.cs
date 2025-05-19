@@ -90,7 +90,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
                 createdNodes.Add(nodeUI);
 
-                Debug.Log($"{mutation.Name} parent = {parentColumn.name}, position = {nodeGO.transform.localPosition}, anchored = {nodeGO.GetComponent<RectTransform>().anchoredPosition}");
+                //Debug.Log($"{mutation.Name} parent = {parentColumn.name}, position = {nodeGO.transform.localPosition}, anchored = {nodeGO.GetComponent<RectTransform>().anchoredPosition}");
             }
 
             return createdNodes;
@@ -118,8 +118,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (growthColumn == null || resilienceColumn == null || fungicideColumn == null || driftColumn == null)
                 Debug.LogError("❌ One or more columns could not be found in AssignColumnParentsFromHierarchy().");
-            else
-                Debug.Log("✅ Successfully assigned all column parents at runtime.");
+            //else
+                //Debug.Log("✅ Successfully assigned all column parents at runtime.");
         }
 
         private void ClearColumn(RectTransform column)

@@ -40,7 +40,7 @@ namespace FungusToast.Unity.Grid
 
         void TriggerPressedAnimation(Vector3Int cell)
         {
-            Debug.Log($"Pressed tile triggered at: {cell}");
+            //Debug.Log($"Pressed tile triggered at: {cell}");
 
             isAnimatingPress = true;
             hoverTilemap.SetTile(cell, pressedTile);

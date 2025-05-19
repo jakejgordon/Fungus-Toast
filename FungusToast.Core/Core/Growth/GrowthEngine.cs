@@ -46,9 +46,13 @@ namespace FungusToast.Core.Growth
             // Orthogonal directions
             foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
             {
-                if (!tile.IsOccupied)
+                if (!tile.IsOccupied && tile.TileId != sourceTile.TileId)
                 {
                     allTargets.Add((tile, owner.GetEffectiveGrowthChance()));
+                }
+                else if (tile.TileId == sourceTile.TileId)
+                {
+                    Console.WriteLine($"⚠️ Skipping self in orthogonal neighbors: TileId {tile.TileId}");
                 }
             }
 
@@ -65,12 +69,23 @@ namespace FungusToast.Core.Growth
 
             foreach (var (dx, dy, chance) in diagonals)
             {
+                if (chance <= 0)
+                    continue;
+
                 int nx = sourceTile.X + dx;
                 int ny = sourceTile.Y + dy;
                 var maybeTile = board.GetTile(nx, ny);
-                if (maybeTile is { } tile && !tile.IsOccupied && chance > 0)
+
+                if (maybeTile is { } tile)
                 {
-                    allTargets.Add((tile, chance));
+                    if (!tile.IsOccupied && tile.TileId != sourceTile.TileId)
+                    {
+                        allTargets.Add((tile, chance));
+                    }
+                    else if (tile.TileId == sourceTile.TileId)
+                    {
+                        Console.WriteLine($"⚠️ Skipping self in diagonal neighbors: TileId {tile.TileId}");
+                    }
                 }
             }
 
@@ -96,10 +111,11 @@ namespace FungusToast.Core.Growth
                         Console.WriteLine($"⚠️ Growth blocked — target tile {neighbor.TileId} was already occupied.");
                     }
 
-                    break; // Only attempt one successful growth per cycle
+                    break; // Only one growth attempt per source tile
                 }
             }
         }
+
 
 
 

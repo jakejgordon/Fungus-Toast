@@ -24,7 +24,7 @@ namespace FungusToast.Core
             {
                 for (int y = 0; y < height; y++)
                 {
-                    Grid[x, y] = new BoardTile(x, y);
+                    Grid[x, y] = new BoardTile(x, y, width);
                 }
             }
         }
@@ -188,7 +188,5 @@ namespace FungusToast.Core
             var (x, y) = GetXYFromTileId(tileId);
             return GetTile(x, y);
         }
-
-
     }
 }

@@ -47,7 +47,7 @@ namespace FungusToast.Unity.UI
                 rank++;
             }
 
-            Debug.Log($"IsPrefabAsset={UnityEditor.PrefabUtility.IsPartOfPrefabAsset(gameObject)}");
+            //Debug.Log($"IsPrefabAsset={UnityEditor.PrefabUtility.IsPartOfPrefabAsset(gameObject)}");
 
             /* activate first */
             gameObject.SetActive(true);
@@ -55,7 +55,7 @@ namespace FungusToast.Unity.UI
             canvasGroup.interactable = true;
             canvasGroup.blocksRaycasts = true;
 
-            Debug.Log($"[EndGamePanel] after SetActive: activeSelf={gameObject.activeSelf}, inHierarchy={gameObject.activeInHierarchy}");
+            //Debug.Log($"[EndGamePanel] after SetActive: activeSelf={gameObject.activeSelf}, inHierarchy={gameObject.activeInHierarchy}");
 
             if (!gameObject.activeInHierarchy)
             {

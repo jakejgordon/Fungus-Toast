@@ -11,13 +11,13 @@ namespace FungusToast.Unity.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            Debug.Log($"👆 Hovering over mold icon for Player {playerId}");
+            //Debug.Log($"👆 Hovering over mold icon for Player {playerId}");
             gridVisualizer.HighlightPlayerTiles(playerId);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            Debug.Log($"👋 Mouse exited mold icon for Player {playerId}");
+            //Debug.Log($"👋 Mouse exited mold icon for Player {playerId}");
             gridVisualizer.ClearHighlights();
         }
     }

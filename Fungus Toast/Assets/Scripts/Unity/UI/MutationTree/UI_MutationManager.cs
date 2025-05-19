@@ -156,7 +156,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public bool TryUpgradeMutation(Mutation mutation)
         {
-            Debug.Log($"TMutationUIManager.TryUpgradeMutation: Player {humanPlayer.PlayerId} has {humanPlayer.MutationPoints} points before upgrade.");
+            //Debug.Log($"TMutationUIManager.TryUpgradeMutation: Player {humanPlayer.PlayerId} has {humanPlayer.MutationPoints} points before upgrade.");
 
             if (humanPlayer.TryUpgradeMutation(mutation))
             {
@@ -230,11 +230,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 StartCoroutine(SlideInTree());
         }
 
-        public void DebugClickTest()
-        {
-            Debug.Log("✅ Dock button works!");
-        }
-
         public void ShowMutationDescription(string description, Vector2 screenPosition)
         {
             if (mutationDescriptionBackground == null || tooltipPositioner == null)
@@ -267,7 +262,7 @@ namespace FungusToast.Unity.UI.MutationTree
             RectTransform descRect = mutationDescriptionBackground.GetComponent<RectTransform>();
             LayoutRebuilder.ForceRebuildLayoutImmediate(descRect);
 
-            Debug.Log($"🧪 ShowTooltip called: screenPos={screenPosition}, tooltipAnchored={descRect.anchoredPosition}");
+            //Debug.Log($"🧪 ShowTooltip called: screenPos={screenPosition}, tooltipAnchored={descRect.anchoredPosition}");
         }
 
         public void ClearMutationDescription()

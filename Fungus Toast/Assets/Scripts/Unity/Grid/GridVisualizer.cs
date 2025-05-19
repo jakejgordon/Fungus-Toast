@@ -78,7 +78,7 @@ namespace FungusToast.Unity.Grid
 
         public void HighlightPlayerTiles(int playerId)
         {
-            Debug.Log($"✨ HighlightPlayerTiles called for Player {playerId}");
+            //Debug.Log($"✨ HighlightPlayerTiles called for Player {playerId}");
 
             if (board == null || solidHighlightTile == null)
             {
@@ -102,7 +102,7 @@ namespace FungusToast.Unity.Grid
                     tilemap.RefreshTile(pos);
 
                     highlightedPositions.Add(pos);
-                    Debug.Log($"✅ Highlighted tile at {pos}");
+                    //Debug.Log($"✅ Highlighted tile at {pos}");
                 }
             }
 
