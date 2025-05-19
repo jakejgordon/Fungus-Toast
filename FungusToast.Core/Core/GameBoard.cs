@@ -179,7 +179,16 @@ namespace FungusToast.Core
             return tileIdToCell.Values.Count(c =>
                 c.IsAlive &&
                 c.OwnerPlayerId == playerId &&
-                c.OriginalOwnerPlayerId != playerId);
+                c.OriginalOwnerPlayerId == playerId &&
+                c.ReclaimCount > 0);
         }
+
+        public BoardTile? GetTileById(int tileId)
+        {
+            var (x, y) = GetXYFromTileId(tileId);
+            return GetTile(x, y);
+        }
+
+
     }
 }

@@ -36,6 +36,7 @@ namespace FungusToast.Simulation.GameSimulation
                 int occupied = board.GetAllCells().Count;
                 int total = board.Width * board.Height;
                 float ratio = (float)occupied / total;
+                Console.WriteLine($"[Turn {turn}] Occupied Tiles: {occupied}/{total} ({ratio:P2})");
 
                 if (!isCountdownActive && ratio >= GameBalance.GameEndTileOccupancyThreshold)
                 {
@@ -53,7 +54,8 @@ namespace FungusToast.Simulation.GameSimulation
                 }
 
                 TurnEngine.AssignMutationPoints(players, allMutations, rng);
-                TurnEngine.RunGrowthPhase(board, players);
+                MutationEffectProcessor.ApplyStartOfTurnEffects(board, players, rng);
+                TurnEngine.RunGrowthPhase(board, players, rng);
                 TurnEngine.RunDecayPhase(board, players);
 
                 turn++;
