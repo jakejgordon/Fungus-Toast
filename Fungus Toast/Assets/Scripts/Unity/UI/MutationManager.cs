@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
+using FungusToast.Core.Mutations;
+using FungusToast.Core.Players;
+using FungusToast.Core.Config;
 
-namespace FungusToast.Core.Mutations
+namespace FungusToast.Unity.UI
 {
     public class MutationManager : MonoBehaviour
     {
@@ -21,12 +24,12 @@ namespace FungusToast.Core.Mutations
 
         public IReadOnlyCollection<Mutation> GetAllMutations() => allMutations.Values;
 
-        public void ResetMutationPoints(List<Players.Player> players)
+        public void ResetMutationPoints(List<Player> players)
         {
             foreach (var player in players)
             {
                 int bonus = player.GetBonusMutationPoints();
-                player.MutationPoints = Config.GameBalance.StartingMutationPoints + bonus;
+                player.MutationPoints = GameBalance.StartingMutationPoints + bonus;
             }
         }
     }

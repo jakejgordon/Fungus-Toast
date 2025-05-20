@@ -15,14 +15,15 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// Assigns base, bonus, and mutation-derived points and triggers auto-upgrades and strategy spending.
         /// </summary>
-        public static void AssignMutationPoints(List<Player> players, List<Mutation> allMutations, Random rng)
+        public static void AssignMutationPoints(GameBoard board, List<Player> players, List<Mutation> allMutations, Random rng)
         {
             foreach (var player in players)
             {
                 player.AssignMutationPoints(players, rng, allMutations);
-                player.MutationStrategy?.SpendMutationPoints(player, allMutations);
+                player.MutationStrategy?.SpendMutationPoints(player, allMutations, board);
             }
         }
+
 
         /// <summary>
         /// Executes a full multi-cycle growth phase, including mutation-based pre-growth effects.

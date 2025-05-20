@@ -53,7 +53,8 @@ namespace FungusToast.Simulation.GameSimulation
                     }
                 }
 
-                TurnEngine.AssignMutationPoints(players, allMutations, rng);
+                TurnEngine.AssignMutationPoints(board, players, allMutations, rng);
+
                 MutationEffectProcessor.ApplyStartOfTurnEffects(board, players, rng);
                 TurnEngine.RunGrowthPhase(board, players, rng);
                 TurnEngine.RunDecayPhase(board, players);

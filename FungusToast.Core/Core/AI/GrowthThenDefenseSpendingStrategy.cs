@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using FungusToast.Core.Mutations;
+﻿using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 
 namespace FungusToast.Core.AI
@@ -9,12 +7,12 @@ namespace FungusToast.Core.AI
     /// Improved AI: invest modestly in tier 1 growth (≤30), then prioritize any higher-tier unlocked mutations,
     /// especially in Growth and Cellular Resilience. Fallback to random upgrades if nothing is available.
     /// </summary>
-    public class GrowthThenDefenseSpendingStrategy : IMutationSpendingStrategy
+    public class GrowthThenDefenseSpendingStrategy : MutationSpendingStrategyBase
     {
         private const int MaxMycelialBloomLevel = 30;
         private const int MycelialBloomId = MutationIds.MycelialBloom;
 
-        public void SpendMutationPoints(Player player, List<Mutation> allMutations)
+        public override void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board)
         {
             if (player == null || allMutations == null || allMutations.Count == 0)
                 return;
@@ -24,10 +22,10 @@ namespace FungusToast.Core.AI
             {
                 spent = false;
 
-                // --- 1) Prioritize higher-tier mutations (any category), prerequisites must be met ---
+                // 1) Prioritize higher-tier unlocked mutations with prerequisites
                 foreach (var m in allMutations
-                                 .Where(m => m.Prerequisites.Any() && player.CanUpgrade(m))
-                                 .OrderByDescending(m => m.EffectPerLevel)) // prefer stronger effects first
+                             .Where(m => m.Prerequisites.Any() && player.CanUpgrade(m))
+                             .OrderByDescending(m => m.EffectPerLevel))
                 {
                     if (player.TryUpgradeMutation(m))
                     {
@@ -36,9 +34,10 @@ namespace FungusToast.Core.AI
                     }
                 }
 
-                // --- 2) Invest in Mycelial Bloom up to max threshold ---
+                // 2) Level up Mycelial Bloom to the cap
                 var bloom = allMutations.FirstOrDefault(m => m.Id == MycelialBloomId);
-                if (!spent && bloom != null && player.CanUpgrade(bloom) &&
+                if (!spent && bloom != null &&
+                    player.CanUpgrade(bloom) &&
                     player.GetMutationLevel(MycelialBloomId) < MaxMycelialBloomLevel)
                 {
                     if (player.TryUpgradeMutation(bloom))
@@ -47,11 +46,13 @@ namespace FungusToast.Core.AI
                     }
                 }
 
-                // --- 3) Fill in early Growth mutations (excluding Bloom) if affordable ---
+                // 3) Fill in early Growth mutations (excluding Bloom)
                 if (!spent)
                 {
                     foreach (var m in allMutations
-                                     .Where(m => m.Category == MutationCategory.Growth && m.Id != MycelialBloomId && player.CanUpgrade(m)))
+                                 .Where(m => m.Category == MutationCategory.Growth &&
+                                             m.Id != MycelialBloomId &&
+                                             player.CanUpgrade(m)))
                     {
                         if (player.TryUpgradeMutation(m))
                         {
@@ -61,11 +62,12 @@ namespace FungusToast.Core.AI
                     }
                 }
 
-                // --- 4) Try Cellular Resilience upgrades ---
+                // 4) Try Cellular Resilience upgrades
                 if (!spent)
                 {
                     foreach (var m in allMutations
-                                     .Where(m => m.Category == MutationCategory.CellularResilience && player.CanUpgrade(m)))
+                                 .Where(m => m.Category == MutationCategory.CellularResilience &&
+                                             player.CanUpgrade(m)))
                     {
                         if (player.TryUpgradeMutation(m))
                         {
@@ -75,7 +77,7 @@ namespace FungusToast.Core.AI
                     }
                 }
 
-                // --- 5) Fallback: random upgrade if nothing else is valid ---
+                // 5) Fallback: random upgrade if nothing else is valid
                 if (!spent)
                 {
                     spent = MutationSpendingHelper.TrySpendRandomly(player, allMutations);
