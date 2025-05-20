@@ -26,8 +26,8 @@ namespace FungusToast.Core.Config
         public const float EncystedSporesEffectPerLevel = 0.01f;
         public const float MutatorPhenotypeEffectPerLevel = 0.075f;
         public const float DiagonalGrowthEffectPerLevel = 0.01f;
-        public const float MycotropicInductionEffectPerLevel = 0.3f;
-        public const float PutrefactiveMycotoxinEffectPerLevel = 0.05f;
+        public const float MycotropicInductionEffectPerLevel = 0.4f;
+        public const float PutrefactiveMycotoxinEffectPerLevel = 0.08f;
         public const int AgeResetReductionPerLevel = 5;
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
