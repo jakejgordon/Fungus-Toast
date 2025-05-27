@@ -31,7 +31,8 @@ namespace FungusToast.Core.Config
         public const int AgeResetReductionPerLevel = 5;
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
-        public const float RegenerativeHyphaeReclaimChance = 0.02f; 
+        public const float RegenerativeHyphaeReclaimChance = 0.02f;
+        public const float CreepingMoldMoveChancePerLevel = .02f;
 
         // Max Levels
         public const int MycelialBloomMaxLevel = 100;
@@ -47,6 +48,7 @@ namespace FungusToast.Core.Config
         public const int PutrefactiveMycotoxinMaxLevel = 5;
         public const int AnabolicInversionMaxLevel = 3;
         public const int RegenerativeHyphaeMaxLevel = 5;
+        public const int CreepingMoldMaxLevel = 1;
 
         // Phase Timing
         public const int TotalGrowthCycles = 5;
@@ -57,6 +59,7 @@ namespace FungusToast.Core.Config
         public const int BoardHeight = 100;
 
         
+
         public static class MutationCosts
         {
             public const int Tier1UpgradeCost = 1;

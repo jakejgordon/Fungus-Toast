@@ -3,9 +3,8 @@ using System.Linq;
 using FungusToast.Core;
 using FungusToast.Core.Players;
 using FungusToast.Core.Death;
-using FungusToast.Simulation.GameSimulation.Models;
 
-namespace FungusToast.Simulation.GameSimulation.Models
+namespace FungusToast.Simulation.Models
 {
     public class GameResult
     {
@@ -13,7 +12,7 @@ namespace FungusToast.Simulation.GameSimulation.Models
         public int TurnsPlayed { get; set; }
         public List<PlayerResult> PlayerResults { get; set; }
 
-        public static GameResult From(GameBoard board, List<Player> players, int turns, Dictionary<int, int> reclaimsByPlayer)
+        public static GameResult From(GameBoard board, List<Player> players, int turns, SimulationTrackingContext tracking)
         {
             var playerResultMap = new Dictionary<int, PlayerResult>();
 
@@ -39,7 +38,9 @@ namespace FungusToast.Simulation.GameSimulation.Models
 
                     DeadCellDeathReasons = new List<DeathReason>(),
 
-                    ReclaimedCells = reclaimsByPlayer.TryGetValue(player.PlayerId, out var count) ? count : 0
+                    ReclaimedCells = tracking.GetReclaimedCells(player.PlayerId),
+                    CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId)
+
                 };
 
                 playerResultMap[player.PlayerId] = pr;

@@ -5,12 +5,13 @@ using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace FungusToast.Core.Growth
 {
     public static class GrowthEngine
     {
-        public static void ExecuteGrowthCycle(GameBoard board, List<Player> players, Random rng)
+        public static void ExecuteGrowthCycle(GameBoard board, List<Player> players, Random rng, IGrowthObserver? observer = null)
         {
             var initialLivingCells = board
                 .GetAllCells()
@@ -33,13 +34,11 @@ namespace FungusToast.Core.Growth
             foreach (var (tile, cell) in activeFungalCells)
             {
                 var owner = players[cell.OwnerPlayerId];
-                TryExpandFromTile(board, tile, owner, rng);
+                TryExpandFromTile(board, tile, cell, owner, rng, observer);
             }
         }
 
-
-
-        private static void TryExpandFromTile(GameBoard board, BoardTile sourceTile, Player owner, Random rng)
+        private static void TryExpandFromTile(GameBoard board, BoardTile sourceTile, FungalCell sourceCell, Player owner, Random rng, IGrowthObserver? observer)
         {
             List<(BoardTile tile, float chance)> allTargets = new();
 
@@ -92,6 +91,8 @@ namespace FungusToast.Core.Growth
             // Shuffle and attempt to grow
             Shuffle(allTargets, rng);
 
+            bool attemptedCreepingMold = false;
+
             foreach ((BoardTile neighbor, float chance) in allTargets)
             {
                 float roll = (float)rng.NextDouble();
@@ -104,17 +105,22 @@ namespace FungusToast.Core.Growth
                         neighbor.PlaceFungalCell(newCell);
                         board.RegisterCell(newCell);
                         owner.AddControlledTile(tileId);
-                        //Console.WriteLine($"[Growth] {sourceTile.TileId} grew into {tileId} with roll {roll:0.000} <= chance {chance:0.000}");
                     }
+                    break; // successful growth ends turn
+                }
+                else if (!attemptedCreepingMold && !neighbor.IsOccupied)
+                {
+                    attemptedCreepingMold = true;
+                    bool crept = MutationEffectProcessor.TryCreepingMoldMove(owner, sourceCell, sourceTile, neighbor, rng, board);
 
-                    break; // Only one growth attempt per source tile
+                    if (crept)
+                    {
+                        observer?.RecordCreepingMoldMove(owner.PlayerId);
+                        break; // successful move ends turn
+                    }
                 }
             }
         }
-
-
-
-
 
 
         private static void Shuffle<T>(List<T> list, Random rng)

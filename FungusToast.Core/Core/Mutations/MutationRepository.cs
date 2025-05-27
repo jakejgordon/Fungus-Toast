@@ -199,7 +199,7 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.MycotropicInduction,
                 name: "Mycotropic Induction",
-                description: $"Each level increases all diagonal growth probabilities by {FormatPercent(GameBalance.MycotropicInductionEffectPerLevel)}.",
+                description: $"Each level increases all diagonal growth probabilities by a multiplier of {FormatPercent(GameBalance.MycotropicInductionEffectPerLevel)}.",
                 flavorText: "Signal transduction pathways activate branching vesicle recruitment along orthogonal gradients.",
                 type: MutationType.TendrilDirectionalMultiplier,
                 effectPerLevel: GameBalance.MycotropicInductionEffectPerLevel,
@@ -226,8 +226,23 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.Growth,
                 tier: MutationTier.Tier4
             ),
-                new MutationPrerequisite(MutationIds.HomeostaticHarmony, 10),
+                new MutationPrerequisite(MutationIds.Necrosporulation, 1),
                 new MutationPrerequisite(MutationIds.MycotropicInduction, 1));
+
+            MakeChild(new Mutation(
+                id: MutationIds.CreepingMold,
+                name: "Creeping Mold",
+                description: $"Each level grants a {FormatPercent(GameBalance.CreepingMoldMoveChancePerLevel)} chance to move into a target tile after a failed growth attempt (replaces the original cell).",
+                flavorText: "Hyphal strands abandon anchor points to invade fresh substrate through pseudopodial crawling.",
+                type: MutationType.CreepingMovementOnFailedGrowth,
+                effectPerLevel: GameBalance.CreepingMoldMoveChancePerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
+                maxLevel: GameBalance.CreepingMoldMaxLevel,
+                category: MutationCategory.Growth,
+                tier: MutationTier.Tier4
+            ),
+                new MutationPrerequisite(MutationIds.MycotropicInduction, 1));
+
 
             return (allMutations, rootMutations);
         }

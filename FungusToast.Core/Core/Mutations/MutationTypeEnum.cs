@@ -18,5 +18,6 @@ namespace FungusToast.Core
         TendrilDirectionalMultiplier,
         OpponentExtraDeathChance,
         ReclaimOwnDeadCells,
+        CreepingMovementOnFailedGrowth,
     }
 }

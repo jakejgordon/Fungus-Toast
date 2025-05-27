@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using FungusToast.Core.AI;
 using FungusToast.Simulation.Analysis;
-using FungusToast.Simulation.GameSimulation;
-using FungusToast.Simulation.GameSimulation.Models;
 
 class Program
 {
+    private const int NumberOfSimulationGames = 20;
     static void Main()
     {
         Console.WriteLine("Running simulation with 4 players...\n");
@@ -35,7 +34,7 @@ class Program
 
         // 3. Run simulation
         var runner = new MatchupRunner();
-        var results = runner.RunMatchups(strategies, gamesToPlay: 10);
+        var results = runner.RunMatchups(strategies, gamesToPlay: NumberOfSimulationGames);
 
         // 4. Print strategy summary
         var aggregator = new MatchupStatsAggregator();

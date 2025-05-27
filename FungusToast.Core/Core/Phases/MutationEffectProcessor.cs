@@ -152,5 +152,62 @@ namespace FungusToast.Core.Phases
         {
             return 1f + player.GetMutationEffect(MutationType.TendrilDirectionalMultiplier);
         }
+
+        public static bool TryCreepingMoldMove(
+            Player player,
+            FungalCell sourceCell,
+            BoardTile sourceTile,
+            BoardTile targetTile,
+            Random rng,
+            GameBoard board)
+        {
+            // 🛑 No mutation, no move
+            if (!player.PlayerMutations.TryGetValue(MutationIds.CreepingMold, out var creepingMold) || creepingMold.CurrentLevel == 0)
+                return false;
+
+            // 🛑 Don't abandon your last living cell
+            if (player.ControlledTileIds.Count <= 1)
+                return false;
+
+            // 🛑 Can’t move into an occupied tile
+            if (targetTile.IsOccupied)
+                return false;
+
+            // 🎲 Roll for success
+            float moveChance = creepingMold.CurrentLevel * GameBalance.CreepingMoldMoveChancePerLevel;
+            if (rng.NextDouble() > moveChance)
+                return false;
+
+            // 🧠 Count orthogonal empty neighbors
+            int sourceOpen = board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y)
+                                  .Count(n => !n.IsOccupied);
+
+            int targetOpen = board.GetOrthogonalNeighbors(targetTile.X, targetTile.Y)
+                                  .Count(n => !n.IsOccupied);
+
+            if (targetOpen < sourceOpen)
+                return false;
+
+            if (targetOpen < 2)
+                return false;
+
+
+            // ✅ Perform the move
+            var newCell = new FungalCell(player.PlayerId, targetTile.TileId);
+            targetTile.PlaceFungalCell(newCell);
+            player.AddControlledTile(targetTile.TileId);
+
+            sourceTile.RemoveFungalCell();
+            player.RemoveControlledTile(sourceCell.TileId);
+
+            return true;
+        }
+
+
+
+
+
+
+
     }
 }
