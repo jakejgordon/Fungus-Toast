@@ -6,6 +6,7 @@
         EnemyDecayPressure, // Death caused by modifiers from enemy mutations
         Randomness,         // Base chance not tied to age or enemy pressure
         Protected,          // Death was prevented (e.g., last living cell)
-        Unknown             // Fallback/default (should not be common)
+        Unknown,             // Fallback/default (should not be common)
+        Fungicide
     }
 }

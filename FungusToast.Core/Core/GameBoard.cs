@@ -188,5 +188,26 @@ namespace FungusToast.Core
             var (x, y) = GetXYFromTileId(tileId);
             return GetTile(x, y);
         }
+
+        public void PlaceToxinTile(int tileId, int ownerId, int expirationCycle)
+        {
+            tileIdToCell[tileId] = new FungalCell
+            {
+                OwnerPlayerId = ownerId,
+                IsAlive = false,
+                IsToxin = true,
+                ToxinExpirationCycle = expirationCycle
+            };
+        }
+
+        public List<int> GetAllTileIds() => new List<int>(tileIdToCell.Keys);
+
+        public void MarkAsToxinTile(int tileId, int ownerPlayerId, int expirationCycle)
+        {
+            var toxinCell = new FungalCell(ownerPlayerId, tileId);
+            toxinCell.ConvertToToxin(expirationCycle);
+            tileIdToCell[tileId] = toxinCell;
+        }
+
     }
 }

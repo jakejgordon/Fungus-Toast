@@ -47,6 +47,7 @@ namespace FungusToast.Core.Config
         public const int PutrefactiveMycotoxinMaxLevel = 5;
         public const int AnabolicInversionMaxLevel = 3;
         public const int RegenerativeHyphaeMaxLevel = 5;
+        public const int SporocidalBloomMaxLevel = 5;
 
         // Phase Timing
         public const int TotalGrowthCycles = 5;
@@ -56,7 +57,9 @@ namespace FungusToast.Core.Config
         public const int BoardWidth = 50;
         public const int BoardHeight = 50;
 
-        
+        // time-based effects on Fungal Cells
+        public const int ToxinTileDuration = 3;
+
         public static class MutationCosts
         {
             public const int Tier1UpgradeCost = 1;

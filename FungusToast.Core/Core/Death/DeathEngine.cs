@@ -15,6 +15,11 @@ namespace FungusToast.Core.Death
 
         public static void ExecuteDeathCycle(GameBoard board, List<Player> players)
         {
+            foreach (var player in players)
+            {
+                RunSporeDropIfApplicable(board, player);
+            }
+
             var livingTiles = board.AllTiles()
                                    .Where(t => t.FungalCell != null && t.FungalCell.IsAlive)
                                    .ToList();
@@ -49,6 +54,39 @@ namespace FungusToast.Core.Death
                 {
                     cell.CauseOfDeath = null;
                     MutationEffectProcessor.AdvanceOrResetCellAge(player, cell);
+                }
+            }
+        }
+
+        private static void RunSporeDropIfApplicable(GameBoard board, Player player)
+        {
+            int level = player.GetMutationLevel(MutationIds.SporocidalBloom);
+            if (level <= 0) return;
+
+            int livingCells = player.ControlledTileIds.Count;
+            int sporesToDrop = level * (int)Math.Floor(Math.Log(livingCells + 1, 2));
+
+            var allTileIds = board.AllTiles().Select(t => t.TileId).ToList();
+            var sporeRng = new Random(player.PlayerId + livingCells); // deterministic
+
+            for (int i = 0; i < sporesToDrop; i++)
+            {
+                int targetId = allTileIds[sporeRng.Next(allTileIds.Count)];
+                var tile = board.GetTileById(targetId);
+                if (tile?.FungalCell == null) continue;
+
+                var target = tile.FungalCell;
+                bool isEnemy = target.OwnerPlayerId != player.PlayerId;
+
+                if (target.IsAlive && isEnemy)
+                {
+                    target.Kill(DeathReason.Fungicide);
+                    player.ControlledTileIds.Remove(target.TileId);
+                    board.MarkAsToxinTile(tile.TileId, player.PlayerId, GameBalance.ToxinTileDuration);
+                }
+                else if (!target.IsAlive && isEnemy && target.OwnerPlayerId.HasValue)
+                {
+                    board.MarkAsToxinTile(tile.TileId, player.PlayerId, GameBalance.ToxinTileDuration);
                 }
             }
         }

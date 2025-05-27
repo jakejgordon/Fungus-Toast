@@ -229,6 +229,22 @@ namespace FungusToast.Core.Mutations
                 new MutationPrerequisite(MutationIds.HomeostaticHarmony, 10),
                 new MutationPrerequisite(MutationIds.MycotropicInduction, 1));
 
+            MakeChild(new Mutation(
+                id: MutationIds.SporocidalBloom,
+                name: "Sporocidal Bloom",
+                description: "Releases antifungal spores across the board. Each level increases the number of spores dropped based on your colony size. Spores kill enemy mold and convert the tile to toxin, rendering it unusable for several turns.",
+                flavorText: "Volatile antifungal spores are dispersed freely, obliterating competitors and toxifying the substrate with cytolytic residue.",
+                type: MutationType.FungicideSporeDrop,
+                effectPerLevel: 1f, // This will be interpreted dynamically via player size
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
+                maxLevel: GameBalance.SporocidalBloomMaxLevel,
+                category: MutationCategory.Fungicide,
+                tier: MutationTier.Tier4
+            ),
+                new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 1),
+                new MutationPrerequisite(MutationIds.Necrosporulation, 1));
+
+
             return (allMutations, rootMutations);
         }
     }
