@@ -22,7 +22,7 @@ namespace FungusToast.Core.Config
         public const float SilentBlightEffectPerLevel = 0.001f;
         public const float AdaptiveExpressionEffectPerLevel = 0.09f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 5f;
-        public const float NecrosporulationEffectPerLevel = 0.075f;
+        public const float NecrosporulationEffectPerLevel = 0.050f;
         public const float EncystedSporesEffectPerLevel = 0.01f;
         public const float MutatorPhenotypeEffectPerLevel = 0.075f;
         public const float DiagonalGrowthEffectPerLevel = 0.01f;
@@ -53,8 +53,8 @@ namespace FungusToast.Core.Config
         public const float TimeBetweenGrowthCycles = 1f;
 
         // Board dimensions
-        public const int BoardWidth = 50;
-        public const int BoardHeight = 50;
+        public const int BoardWidth = 100;
+        public const int BoardHeight = 100;
 
         
         public static class MutationCosts
@@ -62,6 +62,8 @@ namespace FungusToast.Core.Config
             public const int Tier1UpgradeCost = 1;
             public const int Tier2UpgradeCost = 2;
             public const int Tier3UpgradeCost = 3;
+            public const int Tier4UpgradeCost = 4;
+            public const int Tier5UpgradeCost = 5;
 
             public static int GetUpgradeCostByTier(MutationTier tier)
             {
@@ -70,6 +72,8 @@ namespace FungusToast.Core.Config
                     MutationTier.Tier1 => Tier1UpgradeCost,
                     MutationTier.Tier2 => Tier2UpgradeCost,
                     MutationTier.Tier3 => Tier3UpgradeCost,
+                    MutationTier.Tier4 => Tier4UpgradeCost,
+                    MutationTier.Tier5 => Tier5UpgradeCost,
                     _ => Tier1UpgradeCost,
                 };
             }
