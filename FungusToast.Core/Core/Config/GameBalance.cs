@@ -61,7 +61,7 @@ namespace FungusToast.Core.Config
 
 
         // time-based effects on Fungal Cells
-        public const int ToxinTileDuration = 3;
+        public const int ToxinTileDuration = 5;
 
         public static class MutationCosts
         {

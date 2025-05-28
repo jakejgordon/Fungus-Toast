@@ -63,11 +63,21 @@ namespace FungusToast.Core.Board
         public void DecrementToxinTimer()
         {
             if (ToxinTimer > 0)
+            {
                 ToxinTimer--;
 
-            if (ToxinTimer == 0)
-                ToxinOwnerPlayerId = -1;
+                if (ToxinTimer == 0)
+                {
+                    ToxinOwnerPlayerId = -1;
+
+                    if (FungalCell?.IsToxin == true)
+                    {
+                        RemoveFungalCell();
+                    }
+                }
+            }
         }
+
 
     }
 }

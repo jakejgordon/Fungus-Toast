@@ -258,9 +258,9 @@ namespace FungusToast.Core.Mutations
                 maxLevel: GameBalance.SporocidalBloomMaxLevel,
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier4
-            ));/*, TESTING!!!!
+            ),
             new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 1),
-            new MutationPrerequisite(MutationIds.Necrosporulation, 1));*/
+            new MutationPrerequisite(MutationIds.Necrosporulation, 1));
 
 
 

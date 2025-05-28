@@ -206,9 +206,10 @@ namespace FungusToast.Core
             tileIdToCell[tileId] = toxinCell;
 
             var (x, y) = GetXYFromTileId(tileId);
-            Grid[x, y].PlaceFungalCell(toxinCell);
+            var tile = Grid[x, y];
+            tile.PlaceFungalCell(toxinCell);
+            tile.PlaceToxin(ownerPlayerId, expirationCycle);
         }
-
 
     }
 }
