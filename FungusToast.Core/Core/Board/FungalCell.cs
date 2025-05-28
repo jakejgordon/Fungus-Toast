@@ -13,7 +13,13 @@ namespace FungusToast.Core.Board
         public int ToxinLevel { get; private set; } = 0;
         public int GrowthCycleAge { get; private set; } = 0;
 
-        public DeathReason? CauseOfDeath { get; set; }
+        public DeathReason? CauseOfDeath { get; private set; }
+
+        /// <summary>
+        /// The owner at the moment the cell died. Used for attribution in game result summaries.
+        /// </summary>
+        public int? LastOwnerPlayerId { get; private set; } = null;
+
         public int ReclaimCount { get; private set; } = 0;
 
         // 🆕 Toxin state
@@ -25,7 +31,7 @@ namespace FungusToast.Core.Board
         public FungalCell(int ownerPlayerId, int tileId)
         {
             OwnerPlayerId = ownerPlayerId;
-            OriginalOwnerPlayerId = ownerPlayerId; // Initially same
+            OriginalOwnerPlayerId = ownerPlayerId;
             TileId = tileId;
             IsAlive = true;
             ToxinLevel = 0;
@@ -44,13 +50,14 @@ namespace FungusToast.Core.Board
             CauseOfDeath = DeathReason.Fungicide;
         }
 
-        public void Kill(DeathReason reason = DeathReason.Unknown)
+        public void Kill(DeathReason reason)
         {
             if (!IsAlive)
                 return;
 
             IsAlive = false;
             CauseOfDeath = reason;
+            LastOwnerPlayerId = OwnerPlayerId;
         }
 
         public void Reclaim(int newOwnerPlayerId)
@@ -63,6 +70,7 @@ namespace FungusToast.Core.Board
             GrowthCycleAge = 0;
             ToxinLevel = 0;
             CauseOfDeath = null;
+            LastOwnerPlayerId = null;
             IsToxin = false;
             ToxinExpirationCycle = -1;
             ReclaimCount++;

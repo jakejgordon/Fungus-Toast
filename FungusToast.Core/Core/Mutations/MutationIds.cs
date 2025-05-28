@@ -18,6 +18,7 @@
         public const int PutrefactiveMycotoxin = 13;
         public const int AnabolicInversion = 14;
         public const int RegenerativeHyphae = 15;
-        public const int SporocidalBloom = 16;
+        public const int CreepingMold = 16;
+        public const int SporocidalBloom = 17;
     }
 }

@@ -221,7 +221,8 @@ namespace FungusToast.Unity
             var allMutations = mutationManager.AllMutations.Values.ToList();
             var rng = new System.Random();
 
-            TurnEngine.AssignMutationPoints(players, allMutations, rng);
+            TurnEngine.AssignMutationPoints(Board, players, allMutations, rng);
+
             gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
         }
 
@@ -256,7 +257,7 @@ namespace FungusToast.Unity
             foreach (var p in players)
             {
                 if (p.PlayerType == PlayerTypeEnum.AI)
-                    p.MutationStrategy?.SpendMutationPoints(p, mutationManager.GetAllMutations().ToList());
+                    p.MutationStrategy?.SpendMutationPoints(p, mutationManager.GetAllMutations().ToList(), Board);
             }
 
             Debug.Log("All AI players have spent their mutation points.");

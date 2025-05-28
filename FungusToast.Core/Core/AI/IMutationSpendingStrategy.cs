@@ -6,6 +6,6 @@ namespace FungusToast.Core.AI
 {
     public interface IMutationSpendingStrategy
     {
-        void SpendMutationPoints(Player player, List<Mutation> availableMutations);
+        void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board);
     }
 }

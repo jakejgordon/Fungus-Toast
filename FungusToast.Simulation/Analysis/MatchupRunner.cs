@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.AI;
 using FungusToast.Simulation.GameSimulation;
-using FungusToast.Simulation.GameSimulation.Models;
+using FungusToast.Simulation.Models;
 
 namespace FungusToast.Simulation.Analysis
 {

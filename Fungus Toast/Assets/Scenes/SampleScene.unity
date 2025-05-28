@@ -101630,8 +101630,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43aedea2ff546334abfa4d7043c2e355, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boardWidth: 50
-  boardHeight: 50
+  boardWidth: 200
+  boardHeight: 200
   playerCount: 1
   gridVisualizer: {fileID: 989759029}
   cameraCenterer: {fileID: 743098981}

@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core.Board;
 using FungusToast.Core.Core.Mutations;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 
 namespace FungusToast.Core.AI
 {
-    public class SmartRandomMutationSpendingStrategy : IMutationSpendingStrategy
+    public class SmartRandomMutationSpendingStrategy : MutationSpendingStrategyBase
     {
-        private static readonly Random rng = new();
-
-        public void SpendMutationPoints(Player player, List<Mutation> allMutations)
+        public override void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board)
         {
             if (player == null || allMutations == null || player.MutationPoints <= 0)
                 return;
@@ -67,6 +66,23 @@ namespace FungusToast.Core.AI
 
                     if (options.Count == 0) break;
 
+                    // Special logic for Tendril direction scoring
+                    if (tier.Key == MutationTier.Tier1 &&
+                        options.Any(m =>
+                        m.Type == MutationType.GrowthDiagonal_NW ||
+                        m.Type == MutationType.GrowthDiagonal_NE ||
+                        m.Type == MutationType.GrowthDiagonal_SE ||
+                        m.Type == MutationType.GrowthDiagonal_SW))
+                    {
+                        var smartPick = PickBestTendrilMutation(player, options, board);
+                        if (smartPick != null && player.TryUpgradeMutation(smartPick))
+                        {
+                            pointsByTier[tier.Key] -= smartPick.PointsPerUpgrade;
+                            continue;
+                        }
+                    }
+
+                    // Otherwise, random pick
                     var pick = options[rng.Next(options.Count)];
 
                     if (player.TryUpgradeMutation(pick))

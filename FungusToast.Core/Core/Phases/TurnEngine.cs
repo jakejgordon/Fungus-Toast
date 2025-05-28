@@ -7,6 +7,7 @@ using FungusToast.Core.Death;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
+using FungusToast.Core.Phases; // Needed for IGrowthObserver
 
 namespace FungusToast.Core.Phases
 {
@@ -15,21 +16,21 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// Assigns base, bonus, and mutation-derived points and triggers auto-upgrades and strategy spending.
         /// </summary>
-        public static void AssignMutationPoints(List<Player> players, List<Mutation> allMutations, Random rng)
+        public static void AssignMutationPoints(GameBoard board, List<Player> players, List<Mutation> allMutations, Random rng)
         {
             foreach (var player in players)
             {
                 player.AssignMutationPoints(players, rng, allMutations);
-                player.MutationStrategy?.SpendMutationPoints(player, allMutations);
+                player.MutationStrategy?.SpendMutationPoints(player, allMutations, board);
             }
         }
 
         /// <summary>
         /// Executes a full multi-cycle growth phase, including mutation-based pre-growth effects.
         /// </summary>
-        public static void RunGrowthPhase(GameBoard board, List<Player> players, Random rng)
+        public static void RunGrowthPhase(GameBoard board, List<Player> players, Random rng, IGrowthObserver? observer = null)
         {
-            var processor = new GrowthPhaseProcessor(board, players, rng);
+            var processor = new GrowthPhaseProcessor(board, players, rng, observer);
 
             for (int cycle = 0; cycle < GameBalance.TotalGrowthCycles; cycle++)
             {

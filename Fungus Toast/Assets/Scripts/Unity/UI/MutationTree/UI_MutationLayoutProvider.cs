@@ -19,12 +19,13 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.TendrilSoutheast,      new MutationLayoutMetadata(0, 3, MutationCategory.Growth) },
                 { MutationIds.TendrilSouthwest,      new MutationLayoutMetadata(0, 4, MutationCategory.Growth) },
                 { MutationIds.MycotropicInduction,   new MutationLayoutMetadata(0, 5, MutationCategory.Growth) },
-                { MutationIds.RegenerativeHyphae,    new MutationLayoutMetadata(0, 6, MutationCategory.Growth) }, // ✅ Moved here
+                { MutationIds.CreepingMold,          new MutationLayoutMetadata(0, 6, MutationCategory.Growth) },
 
                 /* ------------ Cellular Resilience (col 1) ----------- */
                 { MutationIds.HomeostaticHarmony,       new MutationLayoutMetadata(1, 0, MutationCategory.CellularResilience) },
                 { MutationIds.ChronoresilientCytoplasm, new MutationLayoutMetadata(1, 1, MutationCategory.CellularResilience) },
                 { MutationIds.Necrosporulation,         new MutationLayoutMetadata(1, 2, MutationCategory.CellularResilience) },
+                { MutationIds.RegenerativeHyphae,       new MutationLayoutMetadata(1, 3, MutationCategory.CellularResilience) },
 
                 /* ---------------- Fungicide (col 2) ----------------- */
                 { MutationIds.SilentBlight,          new MutationLayoutMetadata(2, 0, MutationCategory.Fungicide) },

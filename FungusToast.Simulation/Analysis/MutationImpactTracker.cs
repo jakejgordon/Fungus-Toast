@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.Mutations;
-using FungusToast.Simulation.GameSimulation.Models;
+using FungusToast.Simulation.Models;
 
 namespace FungusToast.Simulation.Analysis
 {

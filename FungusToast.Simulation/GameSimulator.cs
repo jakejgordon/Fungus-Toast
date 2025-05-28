@@ -8,7 +8,7 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
-using FungusToast.Simulation.GameSimulation.Models;
+using FungusToast.Simulation.Models;
 
 namespace FungusToast.Simulation.GameSimulation
 {
@@ -26,6 +26,8 @@ namespace FungusToast.Simulation.GameSimulation
             var (players, board) = InitializeGame(strategies, rng);
             var allMutations = MutationRegistry.GetAll().ToList();
 
+            var simTracking = new SimulationTrackingContext();
+
             int turn = 0;
             bool gameEnded = false;
             bool isCountdownActive = false;
@@ -36,7 +38,6 @@ namespace FungusToast.Simulation.GameSimulation
                 int occupied = board.GetAllCells().Count;
                 int total = board.Width * board.Height;
                 float ratio = (float)occupied / total;
-                Console.WriteLine($"[Turn {turn}] Occupied Tiles: {occupied}/{total} ({ratio:P2})");
 
                 if (!isCountdownActive && ratio >= GameBalance.GameEndTileOccupancyThreshold)
                 {
@@ -53,20 +54,22 @@ namespace FungusToast.Simulation.GameSimulation
                     }
                 }
 
-                TurnEngine.AssignMutationPoints(players, allMutations, rng);
+                TurnEngine.AssignMutationPoints(board, players, allMutations, rng);
                 MutationEffectProcessor.ApplyStartOfTurnEffects(board, players, rng);
-                TurnEngine.RunGrowthPhase(board, players, rng);
+                TurnEngine.RunGrowthPhase(board, players, rng, simTracking);
                 TurnEngine.RunDecayPhase(board, players);
 
                 turn++;
             }
 
-            var reclaimsByPlayer = players.ToDictionary(
-                p => p.PlayerId,
-                p => board.CountReclaimedCellsByPlayer(p.PlayerId)
-            );
+            // Track reclaimed cells per player
+            foreach (var player in players)
+            {
+                int reclaims = board.CountReclaimedCellsByPlayer(player.PlayerId);
+                simTracking.SetReclaims(player.PlayerId, reclaims);
+            }
 
-            var result = GameResult.From(board, players, turn, reclaimsByPlayer);
+            var result = GameResult.From(board, players, turn, simTracking);
 
             if (gameIndex > 0 && totalGames > 0)
             {
@@ -81,6 +84,7 @@ namespace FungusToast.Simulation.GameSimulation
             {
                 var winner = result.PlayerResults.First(p => p.PlayerId == result.WinnerId);
                 Console.WriteLine($"Game complete (Turn {result.TurnsPlayed}) — Winner: Player {winner.PlayerId} ({winner.StrategyName})");
+
                 foreach (var pr in result.PlayerResults.OrderBy(p => p.PlayerId))
                 {
                     Console.WriteLine($"  - Player {pr.PlayerId}: {pr.LivingCells} alive / {pr.DeadCells} dead ({pr.StrategyName})");

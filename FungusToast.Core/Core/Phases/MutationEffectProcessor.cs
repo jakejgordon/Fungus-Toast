@@ -66,35 +66,43 @@ namespace FungusToast.Core.Phases
             board.SpawnSporeForPlayer(player, tileId);
         }
 
-        public static float CalculateDeathChance(Player player, FungalCell cell, GameBoard board, List<Player> players)
+        public static (float chance, DeathReason? reason) CalculateDeathChance(
+            Player player,
+            FungalCell cell,
+            GameBoard board,
+            List<Player> players,
+            double roll)
         {
             float baseChance = GameBalance.BaseDeathChance;
             float ageMod = cell.GrowthCycleAge * GameBalance.AgeDeathFactorPerGrowthCycle;
-            float defenseBonus = player.GetEffectiveSelfDeathChance();
             float pressure = GetEnemyPressure(players, player, cell, board);
+            float defenseBonus = player.GetEffectiveSelfDeathChance();
 
-            float finalChance = Math.Clamp(baseChance + ageMod + pressure - defenseBonus, 0f, 1f);
+            float totalChance = baseChance + ageMod + pressure - defenseBonus;
+            float clampedChance = Math.Clamp(totalChance, 0f, 1f);
 
-            double roll = new Random().NextDouble();
-            if (roll < baseChance)
+            // Use un-clamped thresholds to preserve attribution logic
+            float thresholdRandom = baseChance;
+            float thresholdAge = baseChance + ageMod;
+            float thresholdEnemy = baseChance + ageMod + pressure;
+
+            if (roll < clampedChance)
             {
-                cell.CauseOfDeath = DeathReason.Randomness;
-            }
-            else if (roll < baseChance + ageMod)
-            {
-                cell.CauseOfDeath = DeathReason.Age;
-            }
-            else if (roll < baseChance + ageMod + pressure)
-            {
-                cell.CauseOfDeath = DeathReason.EnemyDecayPressure;
-            }
-            else
-            {
-                cell.CauseOfDeath = null; // survived
+                if (roll < thresholdRandom)
+                    return (clampedChance, DeathReason.Randomness);
+                else if (roll < thresholdAge)
+                    return (clampedChance, DeathReason.Age);
+                else
+                    return (clampedChance, DeathReason.EnemyDecayPressure);
             }
 
-            return finalChance;
+            // Survived — no death reason
+            return (clampedChance, null);
         }
+
+
+
+
 
         public static void AdvanceOrResetCellAge(Player player, FungalCell cell)
         {
@@ -144,5 +152,62 @@ namespace FungusToast.Core.Phases
         {
             return 1f + player.GetMutationEffect(MutationType.TendrilDirectionalMultiplier);
         }
+
+        public static bool TryCreepingMoldMove(
+            Player player,
+            FungalCell sourceCell,
+            BoardTile sourceTile,
+            BoardTile targetTile,
+            Random rng,
+            GameBoard board)
+        {
+            // 🛑 No mutation, no move
+            if (!player.PlayerMutations.TryGetValue(MutationIds.CreepingMold, out var creepingMold) || creepingMold.CurrentLevel == 0)
+                return false;
+
+            // 🛑 Don't abandon your last living cell
+            if (player.ControlledTileIds.Count <= 1)
+                return false;
+
+            // 🛑 Can’t move into an occupied tile
+            if (targetTile.IsOccupied)
+                return false;
+
+            // 🎲 Roll for success
+            float moveChance = creepingMold.CurrentLevel * GameBalance.CreepingMoldMoveChancePerLevel;
+            if (rng.NextDouble() > moveChance)
+                return false;
+
+            // 🧠 Count orthogonal empty neighbors
+            int sourceOpen = board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y)
+                                  .Count(n => !n.IsOccupied);
+
+            int targetOpen = board.GetOrthogonalNeighbors(targetTile.X, targetTile.Y)
+                                  .Count(n => !n.IsOccupied);
+
+            if (targetOpen < sourceOpen)
+                return false;
+
+            if (targetOpen < 2)
+                return false;
+
+
+            // ✅ Perform the move
+            var newCell = new FungalCell(player.PlayerId, targetTile.TileId);
+            targetTile.PlaceFungalCell(newCell);
+            player.AddControlledTile(targetTile.TileId);
+
+            sourceTile.RemoveFungalCell();
+            player.RemoveControlledTile(sourceCell.TileId);
+
+            return true;
+        }
+
+
+
+
+
+
+
     }
 }
