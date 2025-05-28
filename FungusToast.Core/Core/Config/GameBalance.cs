@@ -17,7 +17,7 @@ namespace FungusToast.Core.Config
         public const float TimeAfterDecayRender = 0.5f;
 
         // Mutation Effects
-        public const float MycelialBloomEffectPerLevel = 0.003f;
+        public const float MycelialBloomEffectPerLevel = 0.0025f;
         public const float HomeostaticHarmonyEffectPerLevel = 0.0025f;
         public const float SilentBlightEffectPerLevel = 0.001f;
         public const float AdaptiveExpressionEffectPerLevel = 0.09f;
@@ -31,8 +31,9 @@ namespace FungusToast.Core.Config
         public const int AgeResetReductionPerLevel = 5;
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
-        public const float RegenerativeHyphaeReclaimChance = 0.009f;
+        public const float RegenerativeHyphaeReclaimChance = 0.008f;
         public const float CreepingMoldMoveChancePerLevel = .025f;
+        public const float SporicialBloomEffectPerLevel = .08f;
 
         // Max Levels
         public const int MycelialBloomMaxLevel = 100;
@@ -62,6 +63,8 @@ namespace FungusToast.Core.Config
 
         // time-based effects on Fungal Cells
         public const int ToxinTileDuration = 5;
+
+        
 
         public static class MutationCosts
         {

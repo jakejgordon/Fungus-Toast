@@ -204,9 +204,33 @@ namespace FungusToast.Core.Phases
         }
 
 
+        public static int GetSporocidalSporeDropCount(Player player, int livingCellCount, Mutation sporocidalBloomMutation)
+        {
+            int level = player.GetMutationLevel(MutationIds.SporocidalBloom);
+            if (level <= 0 || livingCellCount == 0) return 0;
+
+            float effectPerLevel = sporocidalBloomMutation.EffectPerLevel;
+            float chancePerCell = level * effectPerLevel;
+
+            int totalSpores = 0;
+            var rng = new Random(player.PlayerId + livingCellCount); // deterministic per round
+
+            for (int i = 0; i < livingCellCount; i++)
+            {
+                if (rng.NextDouble() < chancePerCell)
+                    totalSpores++;
+            }
+
+            return totalSpores;
+        }
 
 
-
+        public static int ComputeSporocidalBloomSporeDropCount(int level, int livingCellCount, float effectPerLevel)
+        {
+            float dropRate = level * effectPerLevel; // e.g. level 1 = 0.07
+            float estimatedSpores = livingCellCount * dropRate;
+            return Math.Max(1, (int)Math.Round(estimatedSpores));
+        }
 
 
     }

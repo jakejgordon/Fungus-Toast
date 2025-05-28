@@ -5,21 +5,10 @@ using FungusToast.Simulation.Analysis;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 1000;
+    private const int NumberOfSimulationGames = 10;
+
     static void Main()
     {
-        Console.WriteLine("Running simulation with 4 players...\n");
-
-        // 1. Declare/initialize strategies (one per player)
-        /*
-        IMutationSpendingStrategy player0 = new SmartRandomMutationSpendingStrategy();
-        IMutationSpendingStrategy player1 = new SmartRandomMutationSpendingStrategy();//new RandomMutationSpendingStrategy();
-        IMutationSpendingStrategy player2 = new SmartRandomMutationSpendingStrategy();// new GrowthThenDefenseSpendingStrategy();
-        IMutationSpendingStrategy player3 = new SmartRandomMutationSpendingStrategy();//new GrowthThenDefenseSpendingStrategy();
-        */
-
-
-        // 2. Add all to a List in order
         var strategies = new List<IMutationSpendingStrategy>
         {
             new SmartRandomMutationSpendingStrategy(),
@@ -32,15 +21,18 @@ class Program
             new MutationFocusedMutationSpendingStrategy()
         };
 
-        // 3. Run simulation
+        int playerCount = strategies.Count;
+        Console.WriteLine($"Running simulation with {playerCount} players...\n");
+
+        // Run simulation
         var runner = new MatchupRunner();
         var results = runner.RunMatchups(strategies, gamesToPlay: NumberOfSimulationGames);
 
-        // 4. Print strategy summary
+        // Print strategy summary
         var aggregator = new MatchupStatsAggregator();
         aggregator.PrintSummary(results);
 
-        // 5. Analyze mutation impact
+        // Analyze mutation impact
         var impactTracker = new MutationImpactTracker();
         foreach (var result in results)
         {

@@ -7,6 +7,14 @@ namespace FungusToast.Core.Mutations
 {
     public static class MutationRepository
     {
+        public static readonly Dictionary<int, Mutation> All;
+        public static readonly Dictionary<int, Mutation> Roots;
+
+        static MutationRepository()
+        {
+            (All, Roots) = BuildFullMutationSet();
+        }
+
         public static (Dictionary<int, Mutation> all, Dictionary<int, Mutation> roots) BuildFullMutationSet()
         {
             var allMutations = new Dictionary<int, Mutation>();
@@ -247,13 +255,13 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.SporocidalBloom,
                 name: "Sporocidal Bloom",
-                description: "Each round, releases toxic spores that settle randomly across the board. " +
-                             "At level 1, spores are released at roughly 7% per living fungal cell. " +
-                             "At level 5, large colonies can exceed a 30% release rate per cell.",
+                description: $"Each round, releases toxic spores that settle randomly across the board. " +
+                             $"Each level releases spores at approximately {FormatPercent(0.07f)} per living fungal cell. " +
+                             $"For example, a colony with 40 living cells at level 3 will drop about 8 spores.",
                 flavorText: "Once mature, the colony begins to vent spores laced with cytotoxic compounds. " +
                             "These drifting agents settle on competitors and degrade viable mycelial tissue.",
                 type: MutationType.FungicideSporeDrop,
-                effectPerLevel: 0f, // Logic is handled dynamically, not per-level % here
+                effectPerLevel: GameBalance.SporicialBloomEffectPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
                 maxLevel: GameBalance.SporocidalBloomMaxLevel,
                 category: MutationCategory.Fungicide,
@@ -262,9 +270,8 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 1),
             new MutationPrerequisite(MutationIds.Necrosporulation, 1));
 
-
-
             return (allMutations, rootMutations);
         }
     }
 }
+

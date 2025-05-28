@@ -3,7 +3,6 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
-using FungusToast.Core.Death;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,9 +15,12 @@ namespace FungusToast.Core.Death
 
         public static void ExecuteDeathCycle(GameBoard board, List<Player> players)
         {
+            var (allMutations, _) = MutationRepository.BuildFullMutationSet();
+            var sporocidalBloom = allMutations[MutationIds.SporocidalBloom];
+
             foreach (var player in players)
             {
-                RunSporeDropIfApplicable(board, player);
+                RunSporeDropIfApplicable(board, player, sporocidalBloom);
             }
 
             var livingTiles = board.AllTiles()
@@ -37,9 +39,7 @@ namespace FungusToast.Core.Death
                 }
 
                 if (player.ControlledTileIds.Count <= 1)
-                {
-                    continue; // Skip killing player's last cell
-                }
+                    continue; // Don't kill last living cell
 
                 double roll = rng.NextDouble();
                 var (deathChance, reason) = MutationEffectProcessor.CalculateDeathChance(
@@ -58,16 +58,17 @@ namespace FungusToast.Core.Death
             }
         }
 
-        private static void RunSporeDropIfApplicable(GameBoard board, Player player)
+        private static void RunSporeDropIfApplicable(GameBoard board, Player player, Mutation sporocidalBloomMutation)
         {
-            int level = player.GetMutationLevel(MutationIds.SporocidalBloom);
+            int level = player.GetMutationLevel(sporocidalBloomMutation.Id);
             if (level <= 0) return;
 
             int livingCells = player.ControlledTileIds.Count;
-            int sporesToDrop = level * (int)Math.Floor(Math.Log(livingCells + 1, 2));
+            int sporesToDrop = MutationEffectProcessor.GetSporocidalSporeDropCount(
+                player, livingCells, sporocidalBloomMutation);
 
             var allTileIds = Enumerable.Range(0, board.Width * board.Height).ToList();
-            var sporeRng = new Random(player.PlayerId + livingCells); // deterministic
+            var sporeRng = new Random(player.PlayerId + livingCells); // deterministic per round
 
             for (int i = 0; i < sporesToDrop; i++)
             {
@@ -87,9 +88,7 @@ namespace FungusToast.Core.Death
                     board.MarkAsToxinTile(targetId, player.PlayerId, GameBalance.ToxinTileDuration);
                 }
             }
-
         }
-
 
         public static bool IsCellSurrounded(int tileId, GameBoard board)
         {
