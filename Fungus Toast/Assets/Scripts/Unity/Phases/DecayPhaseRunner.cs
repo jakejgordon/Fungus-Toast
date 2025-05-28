@@ -35,6 +35,12 @@ namespace FungusToast.Unity.Phases
             // Execute deaths
             DeathEngine.ExecuteDeathCycle(board, players);
 
+            // Decrement toxin timers and remove expired toxins
+            foreach (var tile in board.AllTiles())
+            {
+                tile.DecrementToxinTimer();
+            }
+
             // Optional: Wait before rendering deaths for dramatic pause
             yield return new WaitForSeconds(GameBalance.TimeBeforeDecayRender);
 

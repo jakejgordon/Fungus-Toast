@@ -22,7 +22,7 @@ namespace FungusToast.Core.Config
         public const float SilentBlightEffectPerLevel = 0.001f;
         public const float AdaptiveExpressionEffectPerLevel = 0.09f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 5f;
-        public const float NecrosporulationEffectPerLevel = 0.050f;
+        public const float NecrosporulationEffectPerLevel = 0.04f;
         public const float EncystedSporesEffectPerLevel = 0.01f;
         public const float MutatorPhenotypeEffectPerLevel = 0.075f;
         public const float DiagonalGrowthEffectPerLevel = 0.01f;
@@ -31,7 +31,7 @@ namespace FungusToast.Core.Config
         public const int AgeResetReductionPerLevel = 5;
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
-        public const float RegenerativeHyphaeReclaimChance = 0.01f;
+        public const float RegenerativeHyphaeReclaimChance = 0.009f;
         public const float CreepingMoldMoveChancePerLevel = .025f;
 
         // Max Levels
@@ -59,10 +59,6 @@ namespace FungusToast.Core.Config
         public const int BoardWidth = 100;
         public const int BoardHeight = 100;
 
-        
-
-        public const int BoardWidth = 50;
-        public const int BoardHeight = 50;
 
         // time-based effects on Fungal Cells
         public const int ToxinTileDuration = 3;

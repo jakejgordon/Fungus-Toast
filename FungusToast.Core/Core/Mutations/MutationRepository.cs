@@ -247,17 +247,21 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.SporocidalBloom,
                 name: "Sporocidal Bloom",
-                description: "Releases antifungal spores across the board. Each level increases the number of spores dropped based on your colony size. Spores kill enemy mold and convert the tile to toxin, rendering it unusable for several turns.",
-                flavorText: "Volatile antifungal spores are dispersed freely, obliterating competitors and toxifying the substrate with cytolytic residue.",
+                description: "Each round, releases toxic spores that settle randomly across the board. " +
+                             "At level 1, spores are released at roughly 7% per living fungal cell. " +
+                             "At level 5, large colonies can exceed a 30% release rate per cell.",
+                flavorText: "Once mature, the colony begins to vent spores laced with cytotoxic compounds. " +
+                            "These drifting agents settle on competitors and degrade viable mycelial tissue.",
                 type: MutationType.FungicideSporeDrop,
-                effectPerLevel: 1f, // This will be interpreted dynamically via player size
+                effectPerLevel: 0f, // Logic is handled dynamically, not per-level % here
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
                 maxLevel: GameBalance.SporocidalBloomMaxLevel,
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier4
-            ),
-                new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 1),
-                new MutationPrerequisite(MutationIds.Necrosporulation, 1));
+            ));/*, TESTING!!!!
+            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 1),
+            new MutationPrerequisite(MutationIds.Necrosporulation, 1));*/
+
 
 
             return (allMutations, rootMutations);

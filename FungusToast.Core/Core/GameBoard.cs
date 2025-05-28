@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FungusToast.Core.Board;  // <-- for Tile and FungalCell
 using FungusToast.Core.Players;
 
@@ -189,16 +189,12 @@ namespace FungusToast.Core
             return GetTile(x, y);
         }
 
-        public void PlaceToxinTile(int tileId, int ownerId, int expirationCycle)
+        public void PlaceToxinTile(int tileId, int ownerPlayerId, int duration)
         {
-            tileIdToCell[tileId] = new FungalCell
-            {
-                OwnerPlayerId = ownerId,
-                IsAlive = false,
-                IsToxin = true,
-                ToxinExpirationCycle = expirationCycle
-            };
+            var tile = GetTileById(tileId);
+            tile?.PlaceToxin(ownerPlayerId, duration);
         }
+
 
         public List<int> GetAllTileIds() => new List<int>(tileIdToCell.Keys);
 
@@ -206,8 +202,13 @@ namespace FungusToast.Core
         {
             var toxinCell = new FungalCell(ownerPlayerId, tileId);
             toxinCell.ConvertToToxin(expirationCycle);
+
             tileIdToCell[tileId] = toxinCell;
+
+            var (x, y) = GetXYFromTileId(tileId);
+            Grid[x, y].PlaceFungalCell(toxinCell);
         }
+
 
     }
 }

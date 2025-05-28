@@ -17,6 +17,9 @@ namespace FungusToast.Unity.Grid
         private GameBoard board;
         private List<Vector3Int> highlightedPositions = new List<Vector3Int>();
 
+        public Tile toxinOverlayTile;          // poison icon overlay
+        public Tilemap overlayTilemap;         // second tilemap for icons like poison
+
         [Header("Highlight Settings")]
         [SerializeField] private Tile solidHighlightTile;
 
@@ -28,6 +31,7 @@ namespace FungusToast.Unity.Grid
         public void RenderBoard(GameBoard board)
         {
             tilemap.ClearAllTiles();
+            overlayTilemap.ClearAllTiles(); // 💡 clear toxin overlays
 
             for (int x = 0; x < board.Width; x++)
             {
@@ -36,9 +40,27 @@ namespace FungusToast.Unity.Grid
                     BoardTile boardTile = board.Grid[x, y];
                     Vector3Int tilemapPosition = new Vector3Int(x, y, 0);
 
-                    if (!boardTile.IsOccupied)
+                    TileBase mainTile = baseTile;
+                    Color mainColor = Color.white;
+                    TileBase overlay = null;
+
+                    if (boardTile.ToxinTimer > 0 || (boardTile.FungalCell != null && boardTile.FungalCell.IsToxin))
                     {
-                        tilemap.SetTile(tilemapPosition, baseTile);
+                        // Show the owner's mold tile, darkened, plus overlay
+                        var toxinCell = boardTile.FungalCell;
+                        int ownerId = toxinCell?.OwnerPlayerId ?? -1;
+
+                        if (ownerId >= 0 && ownerId < playerMoldTiles.Length)
+                        {
+                            mainTile = playerMoldTiles[ownerId];
+                            mainColor = Color.black * 0.8f; // Apply dark tint
+                        }
+
+                        overlay = toxinOverlayTile;
+                    }
+                    else if (!boardTile.IsOccupied)
+                    {
+                        mainTile = baseTile;
                     }
                     else
                     {
@@ -48,22 +70,31 @@ namespace FungusToast.Unity.Grid
                         {
                             int playerId = fungalCell.OwnerPlayerId;
                             if (playerId >= 0 && playerId < playerMoldTiles.Length)
-                            {
-                                tilemap.SetTile(tilemapPosition, playerMoldTiles[playerId]);
-                            }
-                            else
-                            {
-                                tilemap.SetTile(tilemapPosition, baseTile);
-                            }
+                                mainTile = playerMoldTiles[playerId];
                         }
                         else
                         {
-                            tilemap.SetTile(tilemapPosition, deadTile);
+                            mainTile = deadTile;
                         }
+                    }
+
+                    tilemap.SetTile(tilemapPosition, mainTile);
+                    tilemap.SetTileFlags(tilemapPosition, TileFlags.None);
+                    tilemap.SetColor(tilemapPosition, mainColor);
+                    tilemap.RefreshTile(tilemapPosition);
+
+                    if (overlay != null)
+                    {
+                        overlayTilemap.SetTile(tilemapPosition, overlay);
+                        overlayTilemap.SetTileFlags(tilemapPosition, TileFlags.None);
+                        overlayTilemap.SetColor(tilemapPosition, Color.white);
+                        overlayTilemap.RefreshTile(tilemapPosition);
                     }
                 }
             }
         }
+
+
 
         public Tile GetTileForPlayer(int playerId)
         {

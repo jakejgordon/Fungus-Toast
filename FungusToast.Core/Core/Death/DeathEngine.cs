@@ -66,30 +66,30 @@ namespace FungusToast.Core.Death
             int livingCells = player.ControlledTileIds.Count;
             int sporesToDrop = level * (int)Math.Floor(Math.Log(livingCells + 1, 2));
 
-            var allTileIds = board.AllTiles().Select(t => t.TileId).ToList();
+            var allTileIds = Enumerable.Range(0, board.Width * board.Height).ToList();
             var sporeRng = new Random(player.PlayerId + livingCells); // deterministic
 
             for (int i = 0; i < sporesToDrop; i++)
             {
                 int targetId = allTileIds[sporeRng.Next(allTileIds.Count)];
-                var tile = board.GetTileById(targetId);
-                if (tile?.FungalCell == null) continue;
+                var targetTile = board.GetTileById(targetId);
+                var target = targetTile?.FungalCell;
 
-                var target = tile.FungalCell;
-                bool isEnemy = target.OwnerPlayerId != player.PlayerId;
+                bool isEnemy = target != null && target.OwnerPlayerId != player.PlayerId;
 
-                if (target.IsAlive && isEnemy)
+                if (target != null && target.IsAlive && isEnemy)
                 {
                     target.Kill(DeathReason.Fungicide);
-                    player.ControlledTileIds.Remove(target.TileId);
-                    board.MarkAsToxinTile(tile.TileId, player.PlayerId, GameBalance.ToxinTileDuration);
+                    board.MarkAsToxinTile(targetId, player.PlayerId, GameBalance.ToxinTileDuration);
                 }
-                else if (!target.IsAlive && isEnemy && target.OwnerPlayerId.HasValue)
+                else if ((target == null || !target.IsAlive) && (target == null || isEnemy))
                 {
-                    board.MarkAsToxinTile(tile.TileId, player.PlayerId, GameBalance.ToxinTileDuration);
+                    board.MarkAsToxinTile(targetId, player.PlayerId, GameBalance.ToxinTileDuration);
                 }
             }
+
         }
+
 
         public static bool IsCellSurrounded(int tileId, GameBoard board)
         {
