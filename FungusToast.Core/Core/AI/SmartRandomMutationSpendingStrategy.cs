@@ -69,10 +69,10 @@ namespace FungusToast.Core.AI
                     // Special logic for Tendril direction scoring
                     if (tier.Key == MutationTier.Tier1 &&
                         options.Any(m =>
-                        m.Type == MutationType.GrowthDiagonal_NW ||
-                        m.Type == MutationType.GrowthDiagonal_NE ||
-                        m.Type == MutationType.GrowthDiagonal_SE ||
-                        m.Type == MutationType.GrowthDiagonal_SW))
+                            m.Id == MutationIds.TendrilNorthwest ||
+                            m.Id == MutationIds.TendrilNortheast ||
+                            m.Id == MutationIds.TendrilSoutheast ||
+                            m.Id == MutationIds.TendrilSouthwest))
                     {
                         var smartPick = PickBestTendrilMutation(player, options, board);
                         if (smartPick != null && player.TryUpgradeMutation(smartPick))
@@ -82,8 +82,14 @@ namespace FungusToast.Core.AI
                         }
                     }
 
-                    // Otherwise, random pick
-                    var pick = options[rng.Next(options.Count)];
+                    // Prioritize some strategic mutations
+                    var prioritized = options.FirstOrDefault(m =>
+                        m.Id == MutationIds.AdaptiveExpression ||
+                        m.Id == MutationIds.MutatorPhenotype ||
+                        m.Id == MutationIds.RegenerativeHyphae ||
+                        m.Id == MutationIds.SilentBlight);
+
+                    var pick = prioritized ?? options[rng.Next(options.Count)];
 
                     if (player.TryUpgradeMutation(pick))
                     {
