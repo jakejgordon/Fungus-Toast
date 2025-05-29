@@ -18,11 +18,19 @@ namespace FungusToast.Core.Mutations
         public int MaxLevel { get; private set; }
         public MutationCategory Category { get; private set; }
         public MutationTier Tier { get; private set; }
+
         public int TierNumber => Tier switch
         {
             MutationTier.Tier1 => 1,
             MutationTier.Tier2 => 2,
             MutationTier.Tier3 => 3,
+            MutationTier.Tier4 => 4,
+            MutationTier.Tier5 => 5,
+            MutationTier.Tier6 => 6,
+            MutationTier.Tier7 => 7,
+            MutationTier.Tier8 => 8,
+            MutationTier.Tier9 => 9,
+            MutationTier.Tier10 => 10,
             _ => 0
         };
 
