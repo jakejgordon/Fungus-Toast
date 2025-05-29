@@ -1,4 +1,4 @@
-﻿namespace FungusToast.Core.Phases
+﻿namespace FungusToast.Core.Core.Metrics
 {
     public interface IGrowthObserver
     {

@@ -42,14 +42,18 @@ namespace FungusToast.Simulation.Analysis
                     strategies.Add(strategy);
                 }
 
+                var context = new SimulationTrackingContext();
+
                 var result = simulator.RunSimulation(
                     strategies,
                     seed: i,
                     gameIndex: i + 1,
                     totalGames: gamesToPlay,
-                    startTime: startTime
+                    startTime: startTime,
+                    context: context
                 );
 
+                ApplyTrackingContext(result, context);
                 results.Add(result);
             }
 
@@ -68,19 +72,34 @@ namespace FungusToast.Simulation.Analysis
             for (int i = 0; i < gamesToPlay; i++)
             {
                 var shuffled = strategies.OrderBy(_ => Guid.NewGuid()).ToList();
+                var context = new SimulationTrackingContext();
 
                 var result = simulator.RunSimulation(
                     shuffled,
                     seed: i,
                     gameIndex: i + 1,
                     totalGames: gamesToPlay,
-                    startTime: startTime
+                    startTime: startTime,
+                    context: context
                 );
 
+                ApplyTrackingContext(result, context);
                 results.Add(result);
             }
 
             return results;
         }
+
+        private void ApplyTrackingContext(GameResult result, SimulationTrackingContext context)
+        {
+            foreach (var pr in result.PlayerResults)
+            {
+                pr.CreepingMoldMoves = context.GetCreepingMoldMoves(pr.PlayerId);
+                pr.ReclaimedCells = context.GetReclaimedCells(pr.PlayerId);
+                pr.SporocidalSpores = context.GetSporocidalSporeDropCount(pr.PlayerId);
+                pr.NecroSpores = context.GetNecrosporeDropCount(pr.PlayerId);
+            }
+        }
+
     }
 }

@@ -19,14 +19,15 @@ namespace FungusToast.Simulation.GameSimulation
             int seed,
             int gameIndex = -1,
             int totalGames = -1,
-            DateTime? startTime = null
+            DateTime? startTime = null,
+            SimulationTrackingContext? context = null
         )
         {
             var rng = new Random(seed);
             var (players, board) = InitializeGame(strategies, rng);
             var allMutations = MutationRegistry.GetAll().ToList();
 
-            var simTracking = new SimulationTrackingContext();
+            var simTracking = context ?? new SimulationTrackingContext();
 
             int turn = 0;
             bool gameEnded = false;
@@ -57,7 +58,7 @@ namespace FungusToast.Simulation.GameSimulation
                 TurnEngine.AssignMutationPoints(board, players, allMutations, rng);
                 MutationEffectProcessor.ApplyStartOfTurnEffects(board, players, rng);
                 TurnEngine.RunGrowthPhase(board, players, rng, simTracking);
-                TurnEngine.RunDecayPhase(board, players);
+                TurnEngine.RunDecayPhase(board, players, simTracking);
 
                 turn++;
             }

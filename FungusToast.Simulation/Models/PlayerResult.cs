@@ -19,6 +19,9 @@ namespace FungusToast.Simulation.Models
 
         // 🧬 New for Creeping Mold tracking
         public int CreepingMoldMoves { get; set; }
-    }
 
+        // 🌱 New for Spore tracking
+        public int SporocidalSpores { get; set; }
+        public int NecroSpores { get; set; }
+    }
 }

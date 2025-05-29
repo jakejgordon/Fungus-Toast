@@ -69,7 +69,6 @@
     <Compile Include="Assets\Scripts\Unity\Phases\DecayPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationNodeUI.cs" />
     <Compile Include="Assets\Scripts\Unity\Cameras\CameraControls.cs" />
-    <Compile Include="Assets\Scripts\Unity\Phases\IGrowthObserver.cs" />
     <Compile Include="Assets\Scripts\Unity\Phases\GrowthPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationLayoutMetadata.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PlayerBinder.cs" />

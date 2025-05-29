@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using FungusToast.Core.Board;
+﻿using FungusToast.Core.Board;
 using FungusToast.Core.Config;
+using FungusToast.Core.Core.Metrics; // Needed for IGrowthObserver
 using FungusToast.Core.Death;
-using FungusToast.Core.Growth;
+using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
-using FungusToast.Core.Phases; // Needed for IGrowthObserver
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Core.Phases
 {
@@ -41,9 +41,10 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// Executes the decay phase for all living fungal cells.
         /// </summary>
-        public static void RunDecayPhase(GameBoard board, List<Player> players)
+        public static void RunDecayPhase(GameBoard board, List<Player> players, ISporeDropObserver? observer = null)
         {
-            DeathEngine.ExecuteDeathCycle(board, players);
+            DeathEngine.ExecuteDeathCycle(board, players, observer);
         }
+
     }
 }

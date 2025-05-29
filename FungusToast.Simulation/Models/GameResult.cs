@@ -12,6 +12,11 @@ namespace FungusToast.Simulation.Models
         public int TurnsPlayed { get; set; }
         public List<PlayerResult> PlayerResults { get; set; }
 
+        public Dictionary<int, int> SporesFromSporocidalBloom { get; set; } = new();
+        public Dictionary<int, int> SporesFromNecrosporulation { get; set; } = new();
+
+        public int ToxicTileCount { get; set; }
+
         public static GameResult From(GameBoard board, List<Player> players, int turns, SimulationTrackingContext tracking)
         {
             var playerResultMap = new Dictionary<int, PlayerResult>();
@@ -40,12 +45,10 @@ namespace FungusToast.Simulation.Models
 
                     ReclaimedCells = tracking.GetReclaimedCells(player.PlayerId),
                     CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId)
-
                 };
 
                 playerResultMap[player.PlayerId] = pr;
             }
-
 
             foreach (var cell in board.GetAllCells())
             {
@@ -57,6 +60,7 @@ namespace FungusToast.Simulation.Models
                 }
             }
 
+            int toxicTiles = board.GetAllCells().Count(c => c.IsToxin);
 
             var results = playerResultMap.Values.ToList();
 
@@ -64,7 +68,10 @@ namespace FungusToast.Simulation.Models
             {
                 WinnerId = results.OrderByDescending(r => r.LivingCells).First().PlayerId,
                 TurnsPlayed = turns,
-                PlayerResults = results
+                PlayerResults = results,
+                SporesFromSporocidalBloom = tracking.GetSporocidalSpores(),
+                SporesFromNecrosporulation = tracking.GetNecroSpores(),
+                ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin)
             };
         }
     }

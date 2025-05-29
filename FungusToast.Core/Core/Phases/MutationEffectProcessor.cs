@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using FungusToast.Core.Board;
+﻿using FungusToast.Core.Board;
 using FungusToast.Core.Config;
+using FungusToast.Core.Death;
+using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
-using FungusToast.Core.Death;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Core.Phases
 {
@@ -52,21 +53,28 @@ namespace FungusToast.Core.Phases
             }
         }
 
-        public static void TryTriggerSporeOnDeath(Player player, GameBoard board, Random rng)
-        {
-            float chance = player.GetMutationEffect(MutationType.SporeOnDeathChance);
-            if (chance <= 0f || rng.NextDouble() > chance) return;
+    public static void TryTriggerSporeOnDeath(
+        Player player,
+        GameBoard board,
+        Random rng,
+        ISporeDropObserver? observer = null)
+    {
+        float chance = player.GetMutationEffect(MutationType.SporeOnDeathChance);
+        if (chance <= 0f || rng.NextDouble() > chance) return;
 
-            var empty = board.AllTiles().Where(t => !t.IsOccupied).ToList();
-            if (empty.Count == 0) return;
+        var empty = board.AllTiles().Where(t => !t.IsOccupied).ToList();
+        if (empty.Count == 0) return;
 
-            var spawn = empty[rng.Next(0, empty.Count)];
-            int tileId = spawn.TileId;
+        var spawn = empty[rng.Next(0, empty.Count)];
+        int tileId = spawn.TileId;
 
-            board.SpawnSporeForPlayer(player, tileId);
-        }
+        board.SpawnSporeForPlayer(player, tileId);
 
-        public static (float chance, DeathReason? reason) CalculateDeathChance(
+        observer?.ReportNecrosporeDrop(player.PlayerId, 1);
+    }
+
+
+    public static (float chance, DeathReason? reason) CalculateDeathChance(
             Player player,
             FungalCell cell,
             GameBoard board,
@@ -231,6 +239,46 @@ namespace FungusToast.Core.Phases
             float estimatedSpores = livingCellCount * dropRate;
             return Math.Max(1, (int)Math.Round(estimatedSpores));
         }
+
+        public static int TryPlaceSporocidalSpores(
+            Player player,
+            GameBoard board,
+            Random rng,
+            Mutation sporocidalBloom,
+            ISporeDropObserver? tracking = null)
+        {
+            int level = player.GetMutationLevel(MutationIds.SporocidalBloom);
+            if (level <= 0) return 0;
+
+            int sporesPlaced = 0;
+            float dropChance = level * sporocidalBloom.EffectPerLevel;
+
+            var allLivingCells = board.GetAllCellsOwnedBy(player.PlayerId)
+                                      .Where(c => c.IsAlive).ToList();
+
+            foreach (var cell in allLivingCells)
+            {
+                if (rng.NextDouble() > dropChance)
+                    continue;
+
+                var (x, y) = board.GetXYFromTileId(cell.TileId);
+                var neighbors = board.GetOrthogonalNeighbors(x, y)
+                                     .Where(n => !n.IsOccupied).ToList();
+
+                if (neighbors.Count == 0)
+                    continue;
+
+                var target = neighbors[rng.Next(0, neighbors.Count)];
+                board.MarkAsToxinTile(target.TileId, player.PlayerId, GameBalance.ToxinTileDuration);
+
+                sporesPlaced++;
+
+                tracking?.ReportSporocidalSporeDrop(player.PlayerId, 1);
+            }
+
+            return sporesPlaced;
+        }
+
 
 
     }
