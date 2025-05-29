@@ -14,11 +14,13 @@ namespace FungusToast.Core.Phases
     {
         public static void ApplyStartOfTurnEffects(GameBoard board, List<Player> players, Random rng)
         {
-            ApplyRegenerativeHyphaeReclaims(board, players, rng);
+            //future use
         }
 
         public static void ApplyRegenerativeHyphaeReclaims(GameBoard board, List<Player> players, Random rng)
         {
+            var attemptedDeadCellReclaims = new HashSet<int>();
+
             foreach (var player in players)
             {
                 int level = player.GetMutationLevel(MutationIds.RegenerativeHyphae);
@@ -42,6 +44,11 @@ namespace FungusToast.Core.Phases
                         if (deadCell.OriginalOwnerPlayerId != player.PlayerId)
                             continue;
 
+                        if (attemptedDeadCellReclaims.Contains(deadCell.TileId))
+                            continue;
+
+                        attemptedDeadCellReclaims.Add(deadCell.TileId);
+
                         if (rng.NextDouble() < reclaimChance)
                         {
                             deadCell.Reclaim(player.PlayerId);
@@ -52,6 +59,7 @@ namespace FungusToast.Core.Phases
                 }
             }
         }
+
 
         public static void TryTriggerSporeOnDeath(
             Player player,

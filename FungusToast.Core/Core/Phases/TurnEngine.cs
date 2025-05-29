@@ -36,6 +36,8 @@ namespace FungusToast.Core.Phases
             {
                 processor.ExecuteSingleCycle();
             }
+
+            MutationEffectProcessor.ApplyRegenerativeHyphaeReclaims(board, players, rng);
         }
 
         /// <summary>

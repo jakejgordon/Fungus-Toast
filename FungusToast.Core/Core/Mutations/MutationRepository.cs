@@ -225,7 +225,8 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.RegenerativeHyphae,
                 name: "Regenerative Hyphae",
-                description: $"Each living cell has a {FormatPercent(GameBalance.RegenerativeHyphaeReclaimChance)} chance to reclaim an orthogonally adjacent dead cell it previously owned during the growth phase.",
+                description: $"After growth and before decay, each living cell has a {FormatPercent(GameBalance.RegenerativeHyphaeReclaimChance)} chance to reclaim one orthogonally adjacent dead cell it previously owned. " +
+                             $"Only one attempt can be made on each dead cell per round.",
                 flavorText: "Regrowth cascades from necrotic margins, guided by residual cytoplasmic signaling.",
                 type: MutationType.ReclaimOwnDeadCells,
                 effectPerLevel: GameBalance.RegenerativeHyphaeReclaimChance,
@@ -236,6 +237,7 @@ namespace FungusToast.Core.Mutations
             ),
                 new MutationPrerequisite(MutationIds.Necrosporulation, 1),
                 new MutationPrerequisite(MutationIds.MycotropicInduction, 1));
+
 
             MakeChild(new Mutation(
                 id: MutationIds.CreepingMold,
