@@ -4,5 +4,6 @@
     {
         void ReportSporocidalSporeDrop(int playerId, int count);
         void ReportNecrosporeDrop(int playerId, int count);
+        void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims);
     }
 }

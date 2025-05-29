@@ -211,5 +211,12 @@ namespace FungusToast.Core
             tile.PlaceToxin(ownerPlayerId, expirationCycle);
         }
 
+        public List<BoardTile> GetDeadTiles()
+        {
+            return AllTiles()
+                .Where(t => t.FungalCell != null && !t.FungalCell.IsAlive)
+                .ToList();
+        }
+
     }
 }

@@ -20,5 +20,6 @@
         public const int RegenerativeHyphae = 15;
         public const int CreepingMold = 16;
         public const int SporocidalBloom = 17;
+        public const int NecrophyticBloom = 18;
     }
 }

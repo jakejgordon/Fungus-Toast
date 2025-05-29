@@ -10,7 +10,7 @@ namespace FungusToast.Simulation.Models
     {
         public int WinnerId { get; set; }
         public int TurnsPlayed { get; set; }
-        public List<PlayerResult> PlayerResults { get; set; }
+        public List<PlayerResult> PlayerResults { get; set; } = new();
 
         public Dictionary<int, int> SporesFromSporocidalBloom { get; set; } = new();
         public Dictionary<int, int> SporesFromNecrosporulation { get; set; } = new();

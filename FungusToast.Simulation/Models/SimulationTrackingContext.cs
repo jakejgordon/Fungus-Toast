@@ -11,6 +11,9 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> sporocidalSporeDrops = new();
         private readonly Dictionary<int, int> necrosporeDrops = new();
 
+        private readonly Dictionary<int, int> necrophyticBloomSpores = new();      // 🆕
+        private readonly Dictionary<int, int> necrophyticBloomReclaims = new();    // 🆕
+
         public void RecordCreepingMoldMove(int playerId)
         {
             if (!creepingMoldMoves.ContainsKey(playerId))
@@ -46,14 +49,34 @@ namespace FungusToast.Simulation.Models
             necrosporeDrops[playerId] += count;
         }
 
+        public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims)
+        {
+            if (!necrophyticBloomSpores.ContainsKey(playerId))
+                necrophyticBloomSpores[playerId] = 0;
+
+            if (!necrophyticBloomReclaims.ContainsKey(playerId))
+                necrophyticBloomReclaims[playerId] = 0;
+
+            necrophyticBloomSpores[playerId] += sporesDropped;
+            necrophyticBloomReclaims[playerId] += successfulReclaims;
+        }
+
+        public int GetNecrophyticBloomSporeCount(int playerId) =>
+            necrophyticBloomSpores.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetNecrophyticBloomReclaimCount(int playerId) =>
+            necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
+
+        public Dictionary<int, int> GetSporocidalSpores() => new(sporocidalSporeDrops);
+        public Dictionary<int, int> GetNecroSpores() => new(necrosporeDrops);
+
+        public Dictionary<int, int> GetNecrophyticBloomSpores() => new(necrophyticBloomSpores);   // 🆕
+        public Dictionary<int, int> GetNecrophyticBloomReclaims() => new(necrophyticBloomReclaims); // 🆕
+
         public int GetSporocidalSporeDropCount(int playerId) =>
             sporocidalSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
 
         public int GetNecrosporeDropCount(int playerId) =>
             necrosporeDrops.TryGetValue(playerId, out var val) ? val : 0;
-
-        public Dictionary<int, int> GetSporocidalSpores() => new(sporocidalSporeDrops);
-
-        public Dictionary<int, int> GetNecroSpores() => new(necrosporeDrops);
     }
 }

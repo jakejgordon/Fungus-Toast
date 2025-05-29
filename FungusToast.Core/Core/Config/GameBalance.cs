@@ -15,6 +15,7 @@ namespace FungusToast.Core.Config
         public const float MaxEnemyDecayPressurePerCell = 0.25f;
         public const float TimeBeforeDecayRender = 0.5f;
         public const float TimeAfterDecayRender = 0.5f;
+        public const float NecrophyticBloomActivationThreshold = .20f;
 
         // Mutation Effects
         public const float MycelialBloomEffectPerLevel = 0.0025f;
@@ -34,6 +35,8 @@ namespace FungusToast.Core.Config
         public const float RegenerativeHyphaeReclaimChance = 0.007f;
         public const float CreepingMoldMoveChancePerLevel = .025f;
         public const float SporicialBloomEffectPerLevel = .08f;
+        public const int NecrophyticBloomBaseSpores = 2;
+        public static float NecrophyticBloomSporesPerLevel = 100;
 
         // Max Levels
         public const int MycelialBloomMaxLevel = 100;
@@ -51,6 +54,7 @@ namespace FungusToast.Core.Config
         public const int RegenerativeHyphaeMaxLevel = 5;
         public const int CreepingMoldMaxLevel = 3;
         public const int SporocidalBloomMaxLevel = 5;
+        public static int NecrophyticBloomMaxLevel = 5;
 
         // Phase Timing
         public const int TotalGrowthCycles = 5;

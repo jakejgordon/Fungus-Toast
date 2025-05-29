@@ -270,6 +270,24 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 1),
             new MutationPrerequisite(MutationIds.Necrosporulation, 1));
 
+            MakeChild(new Mutation(
+                id: MutationIds.NecrophyticBloom,
+                name: "Necrophytic Bloom",
+                description: $"Once {FormatPercent(GameBalance.NecrophyticBloomActivationThreshold)} of the board is occupied, this mutation activates. " +
+                             $"Each level grants a {FormatFloat(GameBalance.NecrophyticBloomSporesPerLevel)} spore drop per dead cell owned at activation. " +
+                             $"Each new death afterward also releases a spore. Spores attempt to reclaim dead tiles.",
+                flavorText: "When overcrowding threatens expansion, the colony enters a necrophytic phase, reanimating its fallen cells with explosive spore dispersal.",
+                type: MutationType.NecrophyticBloomSporeDrop,
+                effectPerLevel: GameBalance.NecrophyticBloomSporesPerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
+                maxLevel: GameBalance.NecrophyticBloomMaxLevel,
+                category: MutationCategory.Fungicide,
+                tier: MutationTier.Tier4
+            ),
+            new MutationPrerequisite(MutationIds.SporocidalBloom, 1),
+            new MutationPrerequisite(MutationIds.Necrosporulation, 1));
+
+
             return (allMutations, rootMutations);
         }
     }

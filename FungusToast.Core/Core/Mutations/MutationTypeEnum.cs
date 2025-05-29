@@ -20,5 +20,6 @@ namespace FungusToast.Core
         ReclaimOwnDeadCells,
         CreepingMovementOnFailedGrowth,
         FungicideSporeDrop,
+        NecrophyticBloomSporeDrop,
     }
 }
