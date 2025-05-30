@@ -5,6 +5,7 @@ namespace FungusToast.Core.Config
     public static class GameBalance
     {
         // Global Mechanics
+        public const int MaxNumberOfRoundsBeforeGameEndTrigger = 100;
         public const float BaseGrowthChance = 0.015f;
         public const float BaseDeathChance = 0.01f;
         public const float AgeDeathFactorPerGrowthCycle = 0.007f;

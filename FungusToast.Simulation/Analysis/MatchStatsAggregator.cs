@@ -12,6 +12,15 @@ namespace FungusToast.Simulation.Analysis
     {
         public void PrintSummary(List<GameResult> results)
         {
+            // Board-size header
+            int boardWidth = GameBalance.BoardWidth;
+            int boardHeight = GameBalance.BoardHeight;
+            int totalCells = boardWidth * boardHeight;
+
+            Console.WriteLine($"\nBoard Width:        {boardWidth}");
+            Console.WriteLine($"Board Height:       {boardHeight}");
+            Console.WriteLine($"Total Cells:        {totalCells}");
+
             int totalGames = results.Count;
             int totalTurns = results.Sum(r => r.TurnsPlayed);
             float avgTurns = totalGames > 0 ? (float)totalTurns / totalGames : 0;
