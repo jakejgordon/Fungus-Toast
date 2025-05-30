@@ -160,11 +160,7 @@ namespace FungusToast.Unity
 
         private void CheckForEndgameCondition()
         {
-            int totalTiles = Board.Width * Board.Height;
-            int occupiedTiles = Board.GetAllCells().Count;
-            float ratio = (float)occupiedTiles / totalTiles;
-
-            if (!isCountdownActive && ratio >= GameBalance.GameEndTileOccupancyThreshold)
+            if (!isCountdownActive && Board.ShouldTriggerEndgame())
             {
                 isCountdownActive = true;
                 roundsRemainingUntilGameEnd = GameBalance.TurnsAfterEndGameTileOccupancyThresholdMet;

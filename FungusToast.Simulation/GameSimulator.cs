@@ -34,13 +34,9 @@ namespace FungusToast.Simulation.GameSimulation
             bool isCountdownActive = false;
             int roundsRemainingUntilGameEnd = 0;
 
-            while (turn < 100 && !gameEnded)
+            while (turn < GameBalance.MaxNumberOfRoundsBeforeGameEndTrigger && !gameEnded)
             {
-                int occupied = board.GetAllCells().Count;
-                int total = board.Width * board.Height;
-                float ratio = (float)occupied / total;
-
-                if (!isCountdownActive && ratio >= GameBalance.GameEndTileOccupancyThreshold)
+                if (!isCountdownActive && board.ShouldTriggerEndgame())
                 {
                     isCountdownActive = true;
                     roundsRemainingUntilGameEnd = GameBalance.TurnsAfterEndGameTileOccupancyThresholdMet;

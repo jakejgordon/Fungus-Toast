@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
-using FungusToast.Core.Board;  // <-- for Tile and FungalCell
+﻿using FungusToast.Core.Board;  // <-- for Tile and FungalCell
+using FungusToast.Core.Config;
 using FungusToast.Core.Players;
+using System.Collections.Generic;
 
 namespace FungusToast.Core
 {
@@ -217,6 +218,19 @@ namespace FungusToast.Core
                 .Where(t => t.FungalCell != null && !t.FungalCell.IsAlive)
                 .ToList();
         }
+
+        public float GetOccupiedTileRatio()
+        {
+            int total = Width * Height;
+            int occupied = AllTiles().Count(t => t.FungalCell != null);
+            return (float)occupied / total;
+        }
+
+        public bool ShouldTriggerEndgame()
+        {
+            return GetOccupiedTileRatio() >= GameBalance.GameEndTileOccupancyThreshold;
+        }
+
 
     }
 }
