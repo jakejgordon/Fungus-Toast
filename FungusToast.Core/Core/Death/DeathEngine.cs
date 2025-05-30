@@ -1,102 +1,119 @@
-﻿using FungusToast.Core.Config;
-using FungusToast.Core.Mutations;
-using FungusToast.Core.Phases;
-using FungusToast.Core.Players;
-using FungusToast.Core.Metrics;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core.Board;
+using FungusToast.Core.Config;
+using FungusToast.Core.Mutations;
+using FungusToast.Core.Players;
+using FungusToast.Core.Phases;   // MutationEffectProcessor
+using FungusToast.Core.Metrics;
 
 namespace FungusToast.Core.Death
 {
+    /// <summary>
+    /// Orchestrates the Decay Phase for the entire board.
+    /// Performs no mutation mathematics—delegates that to MutationEffectProcessor.
+    /// </summary>
     public static class DeathEngine
     {
-        private static readonly Random rng = new();
-        private static bool bloomActivated = false;
+        private static readonly Random Rng = new();
+
+        // Tracks whether the 20 %-occupied trigger for Necrophytic Bloom has fired.
+        private static bool necrophyticActivated = false;
 
         public static void ExecuteDeathCycle(
             GameBoard board,
             List<Player> players,
             ISporeDropObserver? observer = null)
         {
+            // -----------------------------------------------------------------
+            // 1.  Per-turn spore effects (handled in processor)
+            // -----------------------------------------------------------------
             var (allMutations, _) = MutationRepository.BuildFullMutationSet();
-            var sporocidalBloom = allMutations[MutationIds.SporocidalBloom];
-            var necrophyticBloom = allMutations[MutationIds.NecrophyticBloom];
+            Mutation sporocidalBloom = allMutations[MutationIds.SporocidalBloom];
 
-            // 🔁 Drop toxic spores from living cells (Sporocidal Bloom)
-            foreach (var player in players)
+            foreach (var p in players)
             {
-                MutationEffectProcessor.TryPlaceSporocidalSpores(player, board, rng, sporocidalBloom, observer);
+                MutationEffectProcessor.TryPlaceSporocidalSpores(
+                    p, board, Rng, sporocidalBloom, observer);
             }
 
-            // 💀 Check board occupation for Necrophytic Bloom activation
-            float occupiedPercent = (float)(board.GetAllCells().Count) / (GameBalance.BoardWidth * GameBalance.BoardHeight);
+            // -----------------------------------------------------------------
+            // 2.  Necrophytic Bloom trigger (20 % board occupancy)
+            // -----------------------------------------------------------------
+            float occupiedPercent =
+                (float)board.GetAllCells().Count /
+                (GameBalance.BoardWidth * GameBalance.BoardHeight);
 
-            if (!bloomActivated && occupiedPercent >= 0.2f)
+            if (!necrophyticActivated && occupiedPercent >= 0.20f)
             {
-                bloomActivated = true;
+                necrophyticActivated = true;
 
-                foreach (var player in players)
+                foreach (var p in players)
                 {
-                    if (player.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
+                    if (p.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
                     {
                         MutationEffectProcessor.HandleNecrophyticBloomSporeDrop(
-                            player, board, rng, occupiedPercent, observer);
+                            p, board, Rng, occupiedPercent, observer);
                     }
                 }
             }
 
-            // ☠️ Begin death evaluation of all living cells
-            var livingTiles = board.AllTiles()
-                                   .Where(t => t.FungalCell != null && t.FungalCell.IsAlive)
-                                   .ToList();
+            // -----------------------------------------------------------------
+            // 3.  Evaluate death for every *living* cell
+            // -----------------------------------------------------------------
+            List<BoardTile> livingTiles = board.AllTiles()
+                .Where(t => t.FungalCell is { IsAlive: true })
+                .ToList();
 
-            foreach (var tile in livingTiles)
+            foreach (BoardTile tile in livingTiles)
             {
-                var cell = tile.FungalCell!;
-                var player = players.FirstOrDefault(p => p.PlayerId == cell.OwnerPlayerId);
+                FungalCell cell = tile.FungalCell!;
+                Player owner = players.First(p => p.PlayerId == cell.OwnerPlayerId);
 
-                if (player == null)
-                {
-                    Console.WriteLine($"[Warning] No player found for PlayerId {cell.OwnerPlayerId}");
-                    continue;
-                }
+                // Preserve the colony’s last cell.
+                if (owner.ControlledTileIds.Count <= 1) continue;
 
-                // 🔐 Don’t kill last living cell
-                if (player.ControlledTileIds.Count <= 1)
-                    continue;
+                double roll = Rng.NextDouble();
 
-                double roll = rng.NextDouble();
-                var (deathChance, reason) = MutationEffectProcessor.CalculateDeathChance(
-                    player, cell, board, players, roll);
+                (float _, DeathReason? reason) =
+                    MutationEffectProcessor.CalculateDeathChance(
+                        owner, cell, board, players, roll);
 
-                if (reason.HasValue && roll < deathChance)
+                if (reason.HasValue)
                 {
                     cell.Kill(reason.Value);
-                    player.ControlledTileIds.Remove(cell.TileId);
-                    MutationEffectProcessor.TryTriggerSporeOnDeath(player, board, rng, observer);
+                    owner.RemoveControlledTile(cell.TileId);
 
-                    if (bloomActivated && player.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
+                    // On-death spore drops & Necrophytic reactive spores
+                    MutationEffectProcessor.TryTriggerSporeOnDeath(owner, board, Rng, observer);
+
+                    if (necrophyticActivated &&
+                        owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
                     {
                         MutationEffectProcessor.HandleNecrophyticBloomSporeDrop(
-                            player, board, rng, occupiedPercent, observer);
+                            owner, board, Rng, occupiedPercent, observer);
                     }
                 }
                 else
                 {
-                    MutationEffectProcessor.AdvanceOrResetCellAge(player, cell);
+                    MutationEffectProcessor.AdvanceOrResetCellAge(owner, cell);
                 }
             }
         }
 
+        /// <summary>
+        /// True if every orthogonal neighbour of <paramref name="tileId"/> is alive.
+        /// Used by Putrefactive Mycotoxin & Encysted Spore logic.
+        /// </summary>
         public static bool IsCellSurrounded(int tileId, GameBoard board)
         {
-            var cell = board.GetCell(tileId);
+            FungalCell? cell = board.GetCell(tileId);
             if (cell == null) return false;
 
             foreach (int nId in board.GetAdjacentTileIds(tileId))
             {
-                var n = board.GetCell(nId);
+                FungalCell? n = board.GetCell(nId);
                 if (n == null || !n.IsAlive) return false;
             }
 

@@ -32,7 +32,7 @@ namespace FungusToast.Core.Death
                 if (cell.IsAlive && isEnemy)
                 {
                     // Kill and toxify
-                    cell.Kill(DeathReason.Fungicide);
+                    cell.Kill(DeathReason.SporocidalBloom);
                     board.PlaceToxinTile(targetId, player.PlayerId, currentCycle + GameBalance.ToxinTileDuration);
                 }
                 else if (!cell.IsAlive && isEnemy)

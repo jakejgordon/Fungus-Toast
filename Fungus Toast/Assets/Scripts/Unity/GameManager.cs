@@ -135,7 +135,7 @@ namespace FungusToast.Unity
             decayPhaseRunner.StartDecayPhase();
         }
 
-        public void OnDecayPhaseComplete()
+        public void OnRoundComplete()
         {
             if (gameEnded) return;
 

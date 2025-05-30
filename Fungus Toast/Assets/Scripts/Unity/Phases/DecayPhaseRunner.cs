@@ -54,7 +54,7 @@ namespace FungusToast.Unity.Phases
             yield return new WaitForSeconds(GameBalance.TimeAfterDecayRender);
 
             // Let GameManager continue
-            GameManager.Instance.OnDecayPhaseComplete();
+            GameManager.Instance.OnRoundComplete();
         }
     }
 }

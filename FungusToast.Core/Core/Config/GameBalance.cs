@@ -78,6 +78,7 @@ namespace FungusToast.Core.Config
             public const int Tier3UpgradeCost = 3;
             public const int Tier4UpgradeCost = 4;
             public const int Tier5UpgradeCost = 5;
+            public const int Tier6UpgradeCost = 6;
 
             public static int GetUpgradeCostByTier(MutationTier tier)
             {
@@ -88,7 +89,7 @@ namespace FungusToast.Core.Config
                     MutationTier.Tier3 => Tier3UpgradeCost,
                     MutationTier.Tier4 => Tier4UpgradeCost,
                     MutationTier.Tier5 => Tier5UpgradeCost,
-                    _ => Tier1UpgradeCost,
+                    _ => Tier6UpgradeCost,
                 };
             }
         }
