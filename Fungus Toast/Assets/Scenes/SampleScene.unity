@@ -102938,6 +102938,7 @@ GameObject:
   - component: {fileID: 836099358}
   - component: {fileID: 836099357}
   - component: {fileID: 836099359}
+  - component: {fileID: 836099360}
   m_Layer: 5
   m_Name: UI_PlayerMoldIcon
   m_TagString: Untagged
@@ -102962,7 +102963,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 100}
+  m_SizeDelta: {x: 0, y: 64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &836099357
 MonoBehaviour:
@@ -103016,6 +103017,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerId: 0
   gridVisualizer: {fileID: 989759029}
+--- !u!114 &836099360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 836099355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: 64
+  m_PreferredHeight: 64
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1 &883657647
 GameObject:
   m_ObjectHideFlags: 0
@@ -103354,20 +103375,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f778aa75d0d8a04eb45f90280b91d73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tilemap: {fileID: 382906180}
+  toastTilemap: {fileID: 382906180}
+  overlayTilemap: {fileID: 775599106}
   baseTile: {fileID: 11400000, guid: 320d89d12948e6245a2bc7e3a2112079, type: 2}
   deadTile: {fileID: 11400000, guid: 7a0e438ea482fe64f80233325794f059, type: 2}
   playerMoldTiles:
-  - {fileID: 11400000, guid: ab834b7dd21ec1f4e990c6aa50ba728a, type: 2}
+  - {fileID: 11400000, guid: 6eea3f7d7e9748046b04e8317f733a56, type: 2}
   - {fileID: 11400000, guid: fdcf0725e7a321c448973799570fdf2b, type: 2}
   - {fileID: 11400000, guid: 33b8982cb0049f24fa864f3c655abbfa, type: 2}
   - {fileID: 11400000, guid: f62090905f093cf4cb29dbd269bc8122, type: 2}
-  - {fileID: 11400000, guid: 836d983e86821cd43a9f5ee4261eba4a, type: 2}
+  - {fileID: 11400000, guid: ab834b7dd21ec1f4e990c6aa50ba728a, type: 2}
   - {fileID: 11400000, guid: dd331ca625e554a46ae48a1d0a3f205d, type: 2}
-  - {fileID: 11400000, guid: d35bee3440c8ffb4f861b8915889526b, type: 2}
+  - {fileID: 11400000, guid: b8298f4a214901048a20b4ba42e80599, type: 2}
   - {fileID: 11400000, guid: 79dc2f3c008fbc6499c900917e11cb93, type: 2}
   toxinOverlayTile: {fileID: 11400000, guid: b03fa0ef3f880e944836bca2e3270b89, type: 2}
-  overlayTilemap: {fileID: 775599106}
   solidHighlightTile: {fileID: 11400000, guid: 2948f1915b2f9f94faed40359df6b9d4, type: 2}
 --- !u!4 &989759030
 Transform:
@@ -103939,7 +103960,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 2
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -106734,7 +106755,7 @@ MonoBehaviour:
   m_IgnoreLayout: 0
   m_MinWidth: -1
   m_MinHeight: -1
-  m_PreferredWidth: 200
+  m_PreferredWidth: 220
   m_PreferredHeight: 40
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1

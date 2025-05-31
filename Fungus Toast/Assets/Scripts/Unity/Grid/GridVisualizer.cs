@@ -1,27 +1,26 @@
 ﻿using UnityEngine;
 using UnityEngine.Tilemaps;
 using FungusToast.Core;
-using FungusToast.Core.Board; // For BoardTile and FungalCell
+using FungusToast.Core.Board;
 using System.Collections.Generic;
 
 namespace FungusToast.Unity.Grid
 {
     public class GridVisualizer : MonoBehaviour
     {
-        [Header("Tilemap & Tiles")]
-        public Tilemap tilemap;
-        public Tile baseTile;            // For empty toast spaces
-        public Tile deadTile;            // For dead mold
-        public Tile[] playerMoldTiles;   // For living mold, indexed by PlayerId
+        [Header("Tilemaps")]
+        public Tilemap toastTilemap;      // Base toast layer
+        public Tilemap overlayTilemap;    // Fungal overlays and toxins
+
+        [Header("Tiles")]
+        public Tile baseTile;             // Toast base
+        public Tile deadTile;             // Dead mold
+        public Tile[] playerMoldTiles;    // Living mold, indexed by PlayerId
+        public Tile toxinOverlayTile;     // Toxin icon overlay
+        [SerializeField] private Tile solidHighlightTile; // Highlighting
 
         private GameBoard board;
         private List<Vector3Int> highlightedPositions = new List<Vector3Int>();
-
-        public Tile toxinOverlayTile;          // poison icon overlay
-        public Tilemap overlayTilemap;         // second tilemap for icons like poison
-
-        [Header("Highlight Settings")]
-        [SerializeField] private Tile solidHighlightTile;
 
         public void Initialize(GameBoard board)
         {
@@ -30,71 +29,72 @@ namespace FungusToast.Unity.Grid
 
         public void RenderBoard(GameBoard board)
         {
-            tilemap.ClearAllTiles();
-            overlayTilemap.ClearAllTiles(); // 💡 clear toxin overlays
+            toastTilemap.ClearAllTiles();
+            overlayTilemap.ClearAllTiles();
 
             for (int x = 0; x < board.Width; x++)
             {
                 for (int y = 0; y < board.Height; y++)
                 {
                     BoardTile boardTile = board.Grid[x, y];
-                    Vector3Int tilemapPosition = new Vector3Int(x, y, 0);
+                    Vector3Int pos = new Vector3Int(x, y, 0);
 
-                    TileBase mainTile = baseTile;
-                    Color mainColor = Color.white;
-                    TileBase overlay = null;
+                    // Always render the toast base
+                    toastTilemap.SetTile(pos, baseTile);
+                    toastTilemap.SetTileFlags(pos, TileFlags.None);
+                    toastTilemap.SetColor(pos, Color.white);
+
+                    // Determine overlay
+                    TileBase overlayTile = null;
+                    Color overlayColor = Color.white;
 
                     if (boardTile.ToxinTimer > 0 || (boardTile.FungalCell != null && boardTile.FungalCell.IsToxin))
                     {
-                        // Show the owner's mold tile, darkened, plus overlay
+                        // Toxin state — draw darkened mold tile with overlay icon
                         var toxinCell = boardTile.FungalCell;
                         int ownerId = toxinCell?.OwnerPlayerId ?? -1;
 
                         if (ownerId >= 0 && ownerId < playerMoldTiles.Length)
                         {
-                            mainTile = playerMoldTiles[ownerId];
-                            mainColor = Color.black * 0.8f; // Apply dark tint
+                            overlayTile = playerMoldTiles[ownerId];
+                            overlayColor = Color.black * 0.8f;
                         }
 
-                        overlay = toxinOverlayTile;
+                        // Add toxin icon overlay on top
+                        overlayTilemap.SetTile(pos, toxinOverlayTile);
+                        overlayTilemap.SetTileFlags(pos, TileFlags.None);
+                        overlayTilemap.SetColor(pos, Color.white);
                     }
-                    else if (!boardTile.IsOccupied)
+                    else if (boardTile.IsOccupied)
                     {
-                        mainTile = baseTile;
-                    }
-                    else
-                    {
-                        FungalCell fungalCell = boardTile.FungalCell;
+                        var fungalCell = boardTile.FungalCell;
 
                         if (fungalCell.IsAlive)
                         {
                             int playerId = fungalCell.OwnerPlayerId;
                             if (playerId >= 0 && playerId < playerMoldTiles.Length)
-                                mainTile = playerMoldTiles[playerId];
+                            {
+                                overlayTile = playerMoldTiles[playerId];
+                                overlayColor = Color.white;
+                            }
                         }
                         else
                         {
-                            mainTile = deadTile;
+                            overlayTile = deadTile;
+                            overlayColor = Color.white;
                         }
                     }
 
-                    tilemap.SetTile(tilemapPosition, mainTile);
-                    tilemap.SetTileFlags(tilemapPosition, TileFlags.None);
-                    tilemap.SetColor(tilemapPosition, mainColor);
-                    tilemap.RefreshTile(tilemapPosition);
-
-                    if (overlay != null)
+                    if (overlayTile != null)
                     {
-                        overlayTilemap.SetTile(tilemapPosition, overlay);
-                        overlayTilemap.SetTileFlags(tilemapPosition, TileFlags.None);
-                        overlayTilemap.SetColor(tilemapPosition, Color.white);
-                        overlayTilemap.RefreshTile(tilemapPosition);
+                        overlayTilemap.SetTile(pos, overlayTile);
+                        overlayTilemap.SetTileFlags(pos, TileFlags.None);
+                        overlayTilemap.SetColor(pos, overlayColor);
+                        overlayTilemap.RefreshTile(pos);
                     }
                 }
             }
         }
-
-
 
         public Tile GetTileForPlayer(int playerId)
         {
@@ -109,8 +109,6 @@ namespace FungusToast.Unity.Grid
 
         public void HighlightPlayerTiles(int playerId)
         {
-            //Debug.Log($"✨ HighlightPlayerTiles called for Player {playerId}");
-
             if (board == null || solidHighlightTile == null)
             {
                 Debug.LogError("❌ Board or Solid Highlight Tile not assigned!");
@@ -127,13 +125,12 @@ namespace FungusToast.Unity.Grid
                 {
                     Vector3Int pos = new Vector3Int(tile.X, tile.Y, 0);
 
-                    tilemap.SetTile(pos, solidHighlightTile); // visually replace the tile
-                    tilemap.SetTileFlags(pos, TileFlags.None);
-                    tilemap.SetColor(pos, Color.white); // ensure no residual tint
-                    tilemap.RefreshTile(pos);
+                    overlayTilemap.SetTile(pos, solidHighlightTile);
+                    overlayTilemap.SetTileFlags(pos, TileFlags.None);
+                    overlayTilemap.SetColor(pos, Color.white);
+                    overlayTilemap.RefreshTile(pos);
 
                     highlightedPositions.Add(pos);
-                    //Debug.Log($"✅ Highlighted tile at {pos}");
                 }
             }
 
@@ -150,34 +147,54 @@ namespace FungusToast.Unity.Grid
 
             foreach (var pos in highlightedPositions)
             {
-                var tile = board.Grid[pos.x, pos.y];
-                TileBase tileToRestore;
+                BoardTile boardTile = board.Grid[pos.x, pos.y];
+                TileBase overlayTile = null;
+                Color overlayColor = Color.white;
 
-                if (!tile.IsOccupied)
+                if (boardTile.ToxinTimer > 0 || (boardTile.FungalCell != null && boardTile.FungalCell.IsToxin))
                 {
-                    tileToRestore = baseTile;
+                    var toxinCell = boardTile.FungalCell;
+                    int ownerId = toxinCell?.OwnerPlayerId ?? -1;
+
+                    if (ownerId >= 0 && ownerId < playerMoldTiles.Length)
+                    {
+                        overlayTile = playerMoldTiles[ownerId];
+                        overlayColor = Color.black * 0.8f;
+                    }
+
+                    overlayTilemap.SetTile(pos, toxinOverlayTile);
+                    overlayTilemap.SetTileFlags(pos, TileFlags.None);
+                    overlayTilemap.SetColor(pos, Color.white);
                 }
-                else if (!tile.FungalCell.IsAlive)
+                else if (boardTile.IsOccupied)
                 {
-                    tileToRestore = deadTile;
-                }
-                else
-                {
-                    int playerId = tile.FungalCell.OwnerPlayerId;
-                    tileToRestore = (playerId >= 0 && playerId < playerMoldTiles.Length)
-                        ? playerMoldTiles[playerId]
-                        : baseTile;
+                    var fungalCell = boardTile.FungalCell;
+
+                    if (fungalCell.IsAlive)
+                    {
+                        int playerId = fungalCell.OwnerPlayerId;
+                        if (playerId >= 0 && playerId < playerMoldTiles.Length)
+                        {
+                            overlayTile = playerMoldTiles[playerId];
+                            overlayColor = Color.white;
+                        }
+                    }
+                    else
+                    {
+                        overlayTile = deadTile;
+                        overlayColor = Color.white;
+                    }
                 }
 
-                tilemap.SetTile(pos, tileToRestore);
-                tilemap.SetTileFlags(pos, TileFlags.None);
-                tilemap.SetColor(pos, Color.white); // Reset any tint that might have been applied
-                tilemap.RefreshTile(pos);
+                // Apply the correct overlay tile
+                overlayTilemap.SetTile(pos, overlayTile);
+                overlayTilemap.SetTileFlags(pos, TileFlags.None);
+                overlayTilemap.SetColor(pos, overlayColor);
+                overlayTilemap.RefreshTile(pos);
             }
 
             highlightedPositions.Clear();
         }
-
 
     }
 }
