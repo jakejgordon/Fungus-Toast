@@ -22,9 +22,8 @@ namespace FungusToast.Core.Board
 
         public int ReclaimCount { get; private set; } = 0;
 
-        // 🆕 Toxin state
+        // Toxin state
         public bool IsToxin { get; internal set; } = false;
-        public int ToxinExpirationCycle { get; internal set; } = -1;
 
         public FungalCell() { }
 
@@ -37,69 +36,24 @@ namespace FungusToast.Core.Board
             ToxinLevel = 0;
         }
 
-        // Alternate constructor for toxin tile
-        public FungalCell(int ownerPlayerId, int tileId, int toxinExpirationCycle,
-                  DeathReason reason)
+        /// <summary>
+        /// Alternate constructor for a cell that starts as a toxin.
+        /// </summary>
+        public FungalCell(int ownerPlayerId, int tileId, int toxinExpirationCycle, DeathReason reason)
         {
             OwnerPlayerId = ownerPlayerId;
             OriginalOwnerPlayerId = ownerPlayerId;
             TileId = tileId;
             IsAlive = false;
             IsToxin = true;
-            ToxinExpirationCycle = toxinExpirationCycle;
             CauseOfDeath = reason;
         }
 
-        /// <summary>
-        /// Marks this cell as a toxin tile without implying it died.
-        /// Used for cases like failed spore drops where no cell existed.
-        /// </summary>
         public void MarkAsToxin(int expirationCycle)
         {
             IsAlive = false;
             IsToxin = true;
-            ToxinExpirationCycle = expirationCycle;
-            CauseOfDeath = null;
-            LastOwnerPlayerId = null;
         }
-
-        public static void ConvertToToxin(
-           GameBoard board,
-           int tileId,
-           int expirationCycle,
-           DeathReason? reason = null)
-        {
-            var cell = board.GetCell(tileId);
-
-            if (cell != null)
-            {
-                if (cell.IsAlive)
-                {
-                    // Kill the cell and then mark as toxin
-                    cell.Kill(reason ?? DeathReason.Unknown);
-                    board.RemoveControlFromPlayer(tileId);
-                }
-
-                cell.ConvertToToxin(
-                    expirationCycle: expirationCycle,
-                    lastOwnerPlayerId: cell.LastOwnerPlayerId,
-                    reason: cell.CauseOfDeath);
-            }
-            else
-            {
-                // No fungal cell existed — create a new toxin with no death reason
-                var toxin = new FungalCell(-1, tileId);
-                toxin.ConvertToToxin(expirationCycle);
-                board.PlaceCell(tileId, toxin);
-            }
-
-            // Always place visual toxin overlay
-            var overlayTile = board.GetTileById(tileId);
-            overlayTile?.PlaceToxin(cell?.OwnerPlayerId ?? -1, expirationCycle);
-        }
-
-
-
 
 
         public void Kill(DeathReason reason)
@@ -124,7 +78,6 @@ namespace FungusToast.Core.Board
             CauseOfDeath = null;
             LastOwnerPlayerId = null;
             IsToxin = false;
-            ToxinExpirationCycle = -1;
             ReclaimCount++;
         }
 

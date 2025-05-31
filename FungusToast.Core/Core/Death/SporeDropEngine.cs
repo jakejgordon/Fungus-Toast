@@ -17,6 +17,7 @@ namespace FungusToast.Core.Death
 
             var rng = new Random(player.PlayerId + currentCycle); // deterministic randomness per player per cycle
             var allTileIds = board.GetAllTileIds();
+            int expirationCycle = currentCycle + GameBalance.ToxinTileDuration;
 
             for (int i = 0; i < sporesToDrop; i++)
             {
@@ -31,13 +32,11 @@ namespace FungusToast.Core.Death
 
                 if (cell.IsAlive && isEnemy)
                 {
-                    // Kill and toxify
-                    cell.Kill(DeathReason.SporocidalBloom);
-                    board.PlaceToxinTile(targetId, player.PlayerId, currentCycle + GameBalance.ToxinTileDuration);
+                    ToxinHelper.KillAndToxify(board, targetId, expirationCycle, DeathReason.SporocidalBloom);
                 }
                 else if (!cell.IsAlive && isEnemy)
                 {
-                    board.PlaceToxinTile(targetId, player.PlayerId, currentCycle + GameBalance.ToxinTileDuration);
+                    ToxinHelper.ConvertToToxin(board, targetId, expirationCycle);
                 }
             }
         }

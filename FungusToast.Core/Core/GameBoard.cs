@@ -1,8 +1,8 @@
-﻿using FungusToast.Core.Board;  // <-- for Tile and FungalCell
+﻿using FungusToast.Core.Board;
 using FungusToast.Core.Config;
-using FungusToast.Core.Death;
 using FungusToast.Core.Players;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Core
 {
@@ -105,6 +105,18 @@ namespace FungusToast.Core
             if (cell != null)
             {
                 tileIdToCell[cell.TileId] = cell;
+
+                var (x, y) = GetXYFromTileId(cell.TileId);
+                var tile = Grid[x, y];
+                tile.PlaceFungalCell(cell);
+            }
+        }
+
+        public void RemoveControlFromPlayer(int tileId)
+        {
+            foreach (var player in Players)
+            {
+                player.ControlledTileIds.Remove(tileId);
             }
         }
 
@@ -191,36 +203,7 @@ namespace FungusToast.Core
             return GetTile(x, y);
         }
 
-        public void PlaceToxinTile(int tileId, int ownerPlayerId, int duration)
-        {
-            var tile = GetTileById(tileId);
-            tile?.PlaceToxin(ownerPlayerId, duration);
-        }
-
-
         public List<int> GetAllTileIds() => new List<int>(tileIdToCell.Keys);
-
-        public void MarkAsToxinTile(
-            int tileId,
-            int ownerPlayerId,
-            int expirationCycle,
-            int? lastOwnerPlayerId = null,
-            DeathReason? reason = null)
-        {
-            var toxinCell = new FungalCell(ownerPlayerId, tileId);
-            toxinCell.ConvertToToxin(
-                expirationCycle: expirationCycle,
-                lastOwnerPlayerId: lastOwnerPlayerId,
-                reason: reason);
-
-            tileIdToCell[tileId] = toxinCell;
-
-            var (x, y) = GetXYFromTileId(tileId);
-            var tile = Grid[x, y];
-            tile.PlaceFungalCell(toxinCell);
-            tile.PlaceToxin(ownerPlayerId, expirationCycle);
-        }
-
 
         public List<BoardTile> GetDeadTiles()
         {
@@ -240,17 +223,5 @@ namespace FungusToast.Core
         {
             return GetOccupiedTileRatio() >= GameBalance.GameEndTileOccupancyThreshold;
         }
-
-        public void RemoveControlFromPlayer(int tileId)
-        {
-            var cell = GetCell(tileId);
-            if (cell == null || !cell.IsAlive)
-                return;
-
-            var player = Players.FirstOrDefault(p => p.PlayerId == cell.OwnerPlayerId);
-            player?.ControlledTileIds.Remove(tileId);
-        }
-
-
     }
 }

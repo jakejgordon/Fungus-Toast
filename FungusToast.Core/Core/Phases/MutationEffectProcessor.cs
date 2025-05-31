@@ -339,10 +339,10 @@ namespace FungusToast.Core.Phases
         }
 
         public static int TryPlaceSporocidalSpores(Player player,
-                                                   GameBoard board,
-                                                   Random rng,
-                                                   Mutation sporocidalBloom,
-                                                   ISporeDropObserver? observer = null)
+                                           GameBoard board,
+                                           Random rng,
+                                           Mutation sporocidalBloom,
+                                           ISporeDropObserver? observer = null)
         {
             int level = player.GetMutationLevel(MutationIds.SporocidalBloom);
             if (level == 0) return 0;
@@ -360,20 +360,29 @@ namespace FungusToast.Core.Phases
 
                 (int x, int y) = board.GetXYFromTileId(cell.TileId);
                 var neighbours = board.GetOrthogonalNeighbors(x, y)
-                                      .Where(n => !n.IsOccupied)
                                       .ToList();
+
                 if (neighbours.Count == 0) continue;
 
                 BoardTile target = neighbours[rng.Next(neighbours.Count)];
 
-                board.MarkAsToxinTile(
-                    target.TileId,
-                    player.PlayerId,
-                    GameBalance.ToxinTileDuration);
+                var cellAtTarget = board.GetCell(target.TileId);
+                if (cellAtTarget?.IsAlive == true)
+                {
+                    ToxinHelper.KillAndToxify(
+                        board,
+                        target.TileId,
+                        GameBalance.ToxinTileDuration,
+                        DeathReason.SporocidalBloom);
+                }
+                else
+                {
+                    ToxinHelper.ConvertToToxin(
+                        board,
+                        target.TileId,
+                        GameBalance.ToxinTileDuration);
+                }
 
-                board.GetCell(target.TileId)!
-                     .ConvertToToxin(GameBalance.ToxinTileDuration,
-                                     DeathReason.SporocidalBloom);
 
                 spores++;
                 observer?.ReportSporocidalSporeDrop(player.PlayerId, 1);
@@ -381,6 +390,7 @@ namespace FungusToast.Core.Phases
 
             return spores;
         }
+
 
         /* ────────────────────────────────────────────────────────────────
          * 6 ▸  NECROPHYTIC BLOOM HELPERS (unchanged)

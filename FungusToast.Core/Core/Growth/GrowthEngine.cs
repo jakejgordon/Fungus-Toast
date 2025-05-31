@@ -14,20 +14,14 @@ namespace FungusToast.Core.Growth
     {
         public static void ExecuteGrowthCycle(GameBoard board, List<Player> players, Random rng, IGrowthObserver? observer = null)
         {
-            var initialLivingCells = board
-                .GetAllCells()
-                .Where(cell => cell.IsAlive)
-                .ToList();
-
             List<(BoardTile tile, FungalCell cell)> activeFungalCells = new();
 
-            foreach (var cell in initialLivingCells)
+            foreach (var tile in board.AllTiles())
             {
-                var tile = board.GetTileById(cell.TileId);
-                if (tile != null)
-                {
-                    activeFungalCells.Add((tile, cell));
-                }
+                tile.DecrementToxinTimer();
+
+                if (tile.IsAlive)
+                    activeFungalCells.Add((tile, tile.FungalCell!));
             }
 
             Shuffle(activeFungalCells, rng);
@@ -38,6 +32,7 @@ namespace FungusToast.Core.Growth
                 TryExpandFromTile(board, tile, cell, owner, rng, observer);
             }
         }
+
 
         private static void TryExpandFromTile(GameBoard board, BoardTile sourceTile, FungalCell sourceCell, Player owner, Random rng, IGrowthObserver? observer)
         {
@@ -123,7 +118,6 @@ namespace FungusToast.Core.Growth
             }
         }
 
-
         private static void Shuffle<T>(List<T> list, Random rng)
         {
             for (int i = 0; i < list.Count; i++)
@@ -133,6 +127,8 @@ namespace FungusToast.Core.Growth
             }
         }
     }
+
+
 
     public enum DiagonalDirection
     {
