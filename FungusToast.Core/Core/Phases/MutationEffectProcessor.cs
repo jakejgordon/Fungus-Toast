@@ -29,17 +29,15 @@ namespace FungusToast.Core.Phases
         }
 
         public static void ApplyRegenerativeHyphaeReclaims(GameBoard board,
-                                                           List<Player> players,
-                                                           Random rng)
+                                                   List<Player> players,
+                                                   Random rng)
         {
             var attempted = new HashSet<int>();
 
             foreach (Player p in players)
             {
-                int lvl = p.GetMutationLevel(MutationIds.RegenerativeHyphae);
-                if (lvl == 0) continue;
-
-                float reclaimChance = GameBalance.RegenerativeHyphaeReclaimChance * lvl;
+                float reclaimChance = p.GetMutationEffect(MutationType.ReclaimOwnDeadCells);
+                if (reclaimChance <= 0f) continue;
 
                 foreach (FungalCell cell in board.GetAllCellsOwnedBy(p.PlayerId))
                 {
@@ -62,6 +60,7 @@ namespace FungusToast.Core.Phases
                 }
             }
         }
+
 
         public static void TryTriggerSporeOnDeath(Player player,
                                                   GameBoard board,
@@ -92,10 +91,6 @@ namespace FungusToast.Core.Phases
             double roll)
         {
             // A. Mutation-specific lethal checks (short-circuit on success)
-
-            // A-1  Sporocidal Bloom toxin tiles
-            if (cell.IsToxin)
-                return (1f, DeathReason.SporocidalBloom);
 
             // A-2  Putrefactive Mycotoxin
             if (CheckPutrefactiveMycotoxin(cell, board, allPlayers, out float pmChance) &&
@@ -164,63 +159,64 @@ namespace FungusToast.Core.Phases
             {
                 if (enemy.PlayerId == target.OwnerPlayerId) continue;
 
-                int lvl = enemy.GetMutationLevel(MutationIds.SilentBlight);
-                if (lvl == 0) continue;
-
-                bool adjacent = board.GetAdjacentTileIds(target.TileId)
-                                     .Select(board.GetCell)
-                                     .Any(c => c is { IsAlive: true } &&
-                                               c.OwnerPlayerId == enemy.PlayerId);
-
-                if (!adjacent) continue;
-
-                chance = lvl * GameBalance.SilentBlightEffectPerLevel;
-                return chance > 0f;
+                chance += enemy.GetMutationEffect(MutationType.EnemyDecayChance);
             }
-            return false;
+
+            return chance > 0f;
         }
+
+
 
         private static bool CheckEncystedSpores(FungalCell target,
-                                                GameBoard board,
-                                                List<Player> players,
-                                                out float chance)
+                                        GameBoard board,
+                                        List<Player> players,
+                                        out float chance)
         {
             chance = 0f;
-            if (!DeathEngine.IsCellSurrounded(target.TileId, board)) return false;
 
+            // Only applies if this cell is fully surrounded
+            if (!DeathEngine.IsCellSurrounded(target.TileId, board))
+                return false;
+
+            // Sum the actual Encysted Spore effect across all enemies
             foreach (Player enemy in players)
             {
                 if (enemy.PlayerId == target.OwnerPlayerId) continue;
 
-                float mult = enemy.GetMutationEffect(MutationType.EncystedSporeMultiplier);
-                if (mult <= 0f) continue;
-
-                chance = GameBalance.EncystedSporesEffectPerLevel * (1f + mult);
-                return chance > 0f;
+                chance += enemy.GetMutationEffect(MutationType.EncystedSporeMultiplier);
             }
-            return false;
+
+            return chance > 0f;
         }
+
 
         private static bool CheckPutrefactiveMycotoxin(FungalCell target,
-                                                       GameBoard board,
-                                                       List<Player> players,
-                                                       out float chance)
+                                               GameBoard board,
+                                               List<Player> players,
+                                               out float chance)
         {
             chance = 0f;
-            if (!DeathEngine.IsCellSurrounded(target.TileId, board)) return false;
 
-            foreach (Player enemy in players)
+            var adjacentTiles = board.GetAdjacentTileIds(target.TileId);
+
+            foreach (int tileId in adjacentTiles)
             {
-                if (enemy.PlayerId == target.OwnerPlayerId) continue;
+                FungalCell? neighbor = board.GetCell(tileId);
+                if (neighbor is null || !neighbor.IsAlive) continue;
+                if (neighbor.OwnerPlayerId == target.OwnerPlayerId) continue;
 
-                if (enemy.GetMutationLevel(MutationIds.PutrefactiveMycotoxin) > 0)
-                {
-                    chance = GameBalance.PutrefactiveMycotoxinEffectPerLevel;
-                    return true;
-                }
+                Player? enemy = players.FirstOrDefault(p => p.PlayerId == neighbor.OwnerPlayerId);
+                if (enemy == null) continue;
+
+                float effect = enemy.GetMutationEffect(MutationType.AdjacentFungicide);
+                chance += effect;
             }
-            return false;
+
+            return chance > 0f;
         }
+
+
+
 
         private static float GetEnemyPressure(List<Player> allPlayers,
                                               Player owner,
@@ -243,7 +239,7 @@ namespace FungusToast.Core.Phases
                                      c.OwnerPlayerId == enemy.PlayerId);
 
                 float toxinEffect =
-                    enemy.GetMutationEffect(MutationType.OpponentExtraDeathChance);
+                    enemy.GetMutationEffect(MutationType.AdjacentFungicide);
 
                 baseBoost += adjacentEnemy * toxinEffect;
 
@@ -344,10 +340,9 @@ namespace FungusToast.Core.Phases
                                            Mutation sporocidalBloom,
                                            ISporeDropObserver? observer = null)
         {
-            int level = player.GetMutationLevel(MutationIds.SporocidalBloom);
-            if (level == 0) return 0;
+            float dropChance = player.GetMutationEffect(MutationType.FungicideSporeDrop);
+            if (dropChance <= 0f) return 0;
 
-            float dropChance = level * sporocidalBloom.EffectPerLevel;
             int spores = 0;
 
             var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
@@ -359,9 +354,7 @@ namespace FungusToast.Core.Phases
                 if (rng.NextDouble() > dropChance) continue;
 
                 (int x, int y) = board.GetXYFromTileId(cell.TileId);
-                var neighbours = board.GetOrthogonalNeighbors(x, y)
-                                      .ToList();
-
+                var neighbours = board.GetOrthogonalNeighbors(x, y).ToList();
                 if (neighbours.Count == 0) continue;
 
                 BoardTile target = neighbours[rng.Next(neighbours.Count)];
@@ -383,13 +376,13 @@ namespace FungusToast.Core.Phases
                         GameBalance.ToxinTileDuration);
                 }
 
-
                 spores++;
                 observer?.ReportSporocidalSporeDrop(player.PlayerId, 1);
             }
 
             return spores;
         }
+
 
 
         /* ────────────────────────────────────────────────────────────────
@@ -418,29 +411,32 @@ namespace FungusToast.Core.Phases
         }
 
         public static void HandleNecrophyticBloomSporeDrop(Player player,
-                                                           GameBoard board,
-                                                           Random rng,
-                                                           float occupiedPercent,
-                                                           ISporeDropObserver? observer = null)
+                                                   GameBoard board,
+                                                   Random rng,
+                                                   float occupiedPercent,
+                                                   ISporeDropObserver? observer = null)
         {
             int spores = GetEffectiveSporesForNecrophyticBloom(player, occupiedPercent);
             if (spores <= 0) return;
 
-            List<BoardTile> deadTiles = board.GetDeadTiles();
+            var allTiles = board.AllTiles().ToList();
             int reclaims = 0;
 
-            for (int i = 0; i < spores && deadTiles.Count > 0; i++)
+            for (int i = 0; i < spores; i++)
             {
-                BoardTile target = deadTiles[rng.Next(deadTiles.Count)];
-                FungalCell cell = target.FungalCell!; // by definition dead
+                BoardTile target = allTiles[rng.Next(allTiles.Count)];
 
-                cell.Reclaim(player.PlayerId);
-                player.AddControlledTile(cell.TileId);
-                board.RegisterCell(cell);
-                reclaims++;
+                if (target.FungalCell != null && !target.FungalCell.IsAlive)
+                {
+                    target.FungalCell.Reclaim(player.PlayerId);
+                    player.AddControlledTile(target.TileId);
+                    board.RegisterCell(target.FungalCell);
+                    reclaims++;
+                }
             }
 
             observer?.ReportNecrophyticBloomSporeDrop(player.PlayerId, spores, reclaims);
         }
+
     }
 }

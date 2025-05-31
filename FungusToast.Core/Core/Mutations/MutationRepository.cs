@@ -183,7 +183,7 @@ namespace FungusToast.Core.Mutations
                 name: "Putrefactive Mycotoxin",
                 description: $"Each level adds a {FormatPercent(GameBalance.PutrefactiveMycotoxinEffectPerLevel)} death chance to enemy cells adjacent to tiles you control.",
                 flavorText: "Secretes lipid-bound mycotoxins through adjacent cell walls, disrupting membrane integrity.",
-                type: MutationType.OpponentExtraDeathChance,
+                type: MutationType.AdjacentFungicide,
                 effectPerLevel: GameBalance.PutrefactiveMycotoxinEffectPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
                 maxLevel: GameBalance.PutrefactiveMycotoxinMaxLevel,

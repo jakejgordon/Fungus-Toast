@@ -82,7 +82,7 @@ namespace FungusToast.Core.Players
                 decayBoost *= encystMult;
             }
 
-            float toxinBoost = attacker.GetMutationEffect(MutationType.OpponentExtraDeathChance);
+            float toxinBoost = attacker.GetMutationEffect(MutationType.AdjacentFungicide);
             chance += decayBoost + toxinBoost;
 
             return System.Math.Max(0f, chance);
@@ -99,7 +99,7 @@ namespace FungusToast.Core.Players
                 boost *= encysted;
             }
 
-            boost += GetMutationEffect(MutationType.OpponentExtraDeathChance);
+            boost += GetMutationEffect(MutationType.AdjacentFungicide);
             return boost;
         }
 
