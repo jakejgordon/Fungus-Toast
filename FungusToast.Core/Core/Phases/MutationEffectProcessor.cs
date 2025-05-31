@@ -79,61 +79,62 @@ namespace FungusToast.Core.Phases
             observer?.ReportNecrosporeDrop(player.PlayerId, 1);
         }
 
-        /* ────────────────────────────────────────────────────────────────
-         * 2 ▸  DEATH-CHANCE CALCULATION
-         * ────────────────────────────────────────────────────────────────*/
-
         public static (float chance, DeathReason? reason) CalculateDeathChance(
-            Player owner,
-            FungalCell cell,
-            GameBoard board,
-            List<Player> allPlayers,
-            double roll)
+    Player owner,
+    FungalCell cell,
+    GameBoard board,
+    List<Player> allPlayers,
+    double roll)
         {
-            // A. Mutation-specific lethal checks (short-circuit on success)
+            // Defensive mutation effects
+            float harmonyReduction = owner.GetMutationEffect(MutationType.DefenseSurvival);
+            float ageDelay = owner.GetMutationEffect(MutationType.SelfAgeResetThreshold);
 
-            // A-2  Putrefactive Mycotoxin
+            // Base and age death chances
+            float baseChance = Math.Max(0f, GameBalance.BaseDeathChance - harmonyReduction);
+
+            float ageComponent = cell.GrowthCycleAge > ageDelay
+                ? (cell.GrowthCycleAge - ageDelay) * GameBalance.AgeDeathFactorPerGrowthCycle
+                : 0f;
+
+            float ageChance = Math.Max(0f, ageComponent - harmonyReduction);
+
+            float totalFallbackChance = Math.Clamp(baseChance + ageChance, 0f, 1f);
+            float thresholdRandom = baseChance;
+            float thresholdAge = baseChance + ageChance;
+
+            if (roll < totalFallbackChance)
+            {
+                if (roll < thresholdRandom) return (totalFallbackChance, DeathReason.Randomness);
+                return (totalFallbackChance, DeathReason.Age);
+            }
+
+            // Mutation-specific lethal effects
             if (CheckPutrefactiveMycotoxin(cell, board, allPlayers, out float pmChance) &&
                 roll < pmChance)
             {
                 return (pmChance, DeathReason.PutrefactiveMycotoxin);
             }
 
-            // A-3  Encysted Spores
             if (CheckEncystedSpores(cell, board, allPlayers, out float esChance) &&
                 roll < esChance)
             {
                 return (esChance, DeathReason.EncystedSpores);
             }
 
-            // A-4  Silent Blight
             if (CheckSilentBlight(cell, board, allPlayers, out float sbChance) &&
                 roll < sbChance)
             {
                 return (sbChance, DeathReason.SilentBlight);
             }
 
-            // B. Fallback: randomness, age, generic pressure
-
-            float baseChance = GameBalance.BaseDeathChance;
-            float ageMod = cell.GrowthCycleAge *
-                               GameBalance.AgeDeathFactorPerGrowthCycle;
-            float pressure = GetEnemyPressure(allPlayers, owner, cell, board);
-            float defense = owner.GetEffectiveSelfDeathChance();
-
-            float total = Math.Clamp(baseChance + ageMod + pressure - defense, 0f, 1f);
-
-            float thrRnd = baseChance;
-            float thrAge = baseChance + ageMod;
-
-            if (roll < total)
-            {
-                if (roll < thrRnd) return (total, DeathReason.Randomness);
-                return (total, DeathReason.Age);
-            }
-
-            return (total, null);
+            return (totalFallbackChance, null);
         }
+
+
+
+
+        //TODO there are no mutations that affect this right now! Need to add one.
 
         public static void AdvanceOrResetCellAge(Player player, FungalCell cell)
         {

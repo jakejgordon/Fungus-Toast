@@ -125,7 +125,7 @@ namespace FungusToast.Core.Mutations
                 name: "Chronoresilient Cytoplasm",
                 description: $"Each level increases the age threshold before death risk begins by {FormatFloat(GameBalance.ChronoresilientCytoplasmEffectPerLevel)} growth cycles.",
                 flavorText: "Temporal buffering vesicles shield core organelles from oxidative stress.",
-                type: MutationType.SelfAgeResetThreshold,
+                type: MutationType.AgeAndRandomnessDecayResistance,
                 effectPerLevel: GameBalance.ChronoresilientCytoplasmEffectPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
                 maxLevel: GameBalance.ChronoresilientCytoplasmMaxLevel,

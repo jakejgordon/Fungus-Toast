@@ -21,5 +21,6 @@ namespace FungusToast.Core
         CreepingMovementOnFailedGrowth,
         FungicideSporeDrop,
         NecrophyticBloomSporeDrop,
+        AgeAndRandomnessDecayResistance,
     }
 }

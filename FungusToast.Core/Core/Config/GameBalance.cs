@@ -7,7 +7,7 @@ namespace FungusToast.Core.Config
         // Global Mechanics
         public const int MaxNumberOfRoundsBeforeGameEndTrigger = 100;
         public const float BaseGrowthChance = 0.015f;
-        public const float BaseDeathChance = 0.01f;
+        public const float BaseDeathChance = 0.015f;
         public const float AgeDeathFactorPerGrowthCycle = 0.007f;
         public const int StartingMutationPoints = 5;
         public const float GameEndTileOccupancyThreshold = 0.95f;
@@ -20,22 +20,22 @@ namespace FungusToast.Core.Config
 
         // Mutation Effects
         public const float MycelialBloomEffectPerLevel = 0.0025f;
-        public const float HomeostaticHarmonyEffectPerLevel = 0.0025f;
-        public const float SilentBlightEffectPerLevel = 0.001f;
+        public const float HomeostaticHarmonyEffectPerLevel = 0.003f;
+        public const float SilentBlightEffectPerLevel = 0.0002f;
         public const float AdaptiveExpressionEffectPerLevel = 0.09f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 5f;
         public const float NecrosporulationEffectPerLevel = 0.04f;
-        public const float EncystedSporesEffectPerLevel = 0.01f;
+        public const float EncystedSporesEffectPerLevel = 0.019f;
         public const float MutatorPhenotypeEffectPerLevel = 0.07f;
         public const float DiagonalGrowthEffectPerLevel = 0.01f;
         public const float MycotropicInductionEffectPerLevel = 0.45f;
-        public const float PutrefactiveMycotoxinEffectPerLevel = 0.09f;
+        public const float PutrefactiveMycotoxinEffectPerLevel = 0.099f;
         public const int AgeResetReductionPerLevel = 5;
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
         public const float RegenerativeHyphaeReclaimChance = 0.007f;
         public const float CreepingMoldMoveChancePerLevel = .025f;
-        public const float SporicialBloomEffectPerLevel = .08f;
+        public const float SporicialBloomEffectPerLevel = .1f;
         public const int NecrophyticBloomBaseSpores = 2;
         public static float NecrophyticBloomSporesPerLevel = 100;
 
