@@ -227,6 +227,7 @@ namespace FungusToast.Unity
             if (gamePhaseText != null) gamePhaseText.text = label;
         }
 
+        /*
         public void InitializeGame(int numberOfPlayers)
         {
             gameEnded = false;
@@ -247,6 +248,34 @@ namespace FungusToast.Unity
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
             SetGamePhaseText("Mutation Phase");
         }
+        */
+
+        public void InitializeGame(int numberOfPlayers)
+        {
+            gameEnded = false;
+            isCountdownActive = false;
+            roundsRemainingUntilGameEnd = 0;
+
+            playerCount = numberOfPlayers;
+
+            players.Clear();
+            Board = new GameBoard(boardWidth, boardHeight, playerCount);
+
+            SetupPlayers();
+            gridVisualizer.Initialize(Board);
+            PlaceStartingSpores();
+            gridVisualizer.RenderBoard(Board);
+
+            mutationManager.ResetMutationPoints(players);
+
+            gameUIManager.MutationUIManager.Initialize(humanPlayer);
+            gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+            SetGamePhaseText("Mutation Phase");
+
+            gameUIManager.MutationUIManager.gameObject.SetActive(true);
+            gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
+        }
+
 
         public void SpendAllMutationPointsForAIPlayers()
         {
