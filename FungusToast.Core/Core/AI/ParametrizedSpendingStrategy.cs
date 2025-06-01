@@ -18,14 +18,14 @@ namespace FungusToast.Core.AI
 
         public ParameterizedSpendingStrategy(
             string strategyName,
-            MutationTier maxTier,
             bool prioritizeHighTier,
-            List<MutationCategory> priorityMutationCategories)
+            List<MutationCategory> priorityMutationCategories,
+            MutationTier maxTier = MutationTier.Tier10)
         {
             StrategyName = strategyName;
-            this.maxTier = maxTier;
             this.prioritizeHighTier = prioritizeHighTier;
             this.priorityMutationCategories = priorityMutationCategories;
+            this.maxTier = maxTier;
         }
 
         public override void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board)

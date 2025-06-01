@@ -11,7 +11,7 @@ class Program
 
     static void Main()
     {
-        var growthAndResilienceStrategy = new ParameterizedSpendingStrategy(
+        var growthAndResilienceMax3HighTier = new ParameterizedSpendingStrategy(
             strategyName: "GrowthResilience_Max3_HighTier",
             maxTier: MutationTier.Tier3,
             prioritizeHighTier: true,
@@ -21,6 +21,25 @@ class Program
                 MutationCategory.CellularResilience
             });
 
+        var growthAndResilienceHighTier = new ParameterizedSpendingStrategy(
+            strategyName: "GrowthResilience_HighTier",
+            prioritizeHighTier: true,
+            priorityMutationCategories: new List<MutationCategory>
+            {
+                        MutationCategory.Growth,
+                        MutationCategory.CellularResilience
+            });
+
+        var growthResilienceGeneticDriftHighTier = new ParameterizedSpendingStrategy(
+            strategyName: "GrowthResilienceGeneticDrift_HighTier",
+            prioritizeHighTier: true,
+            priorityMutationCategories: new List<MutationCategory>
+            {
+                                MutationCategory.Growth,
+                                MutationCategory.CellularResilience,
+                                MutationCategory.GeneticDrift
+            });
+
         var strategies = new List<IMutationSpendingStrategy>
         {
             new SmartRandomMutationSpendingStrategy(),
@@ -28,9 +47,9 @@ class Program
             new RandomMutationSpendingStrategy(),
             new MutationFocusedMutationSpendingStrategy(),
             new SmartRandomMutationSpendingStrategy(),
-            growthAndResilienceStrategy,
-            new RandomMutationSpendingStrategy(),
-            new MutationFocusedMutationSpendingStrategy()
+            growthAndResilienceMax3HighTier,
+            growthAndResilienceHighTier,
+            growthResilienceGeneticDriftHighTier
         };
 
         int playerCount = strategies.Count;
