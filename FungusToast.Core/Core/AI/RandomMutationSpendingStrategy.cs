@@ -8,6 +8,8 @@ namespace FungusToast.Core.AI
     /// </summary>
     public class RandomMutationSpendingStrategy : IMutationSpendingStrategy
     {
+        public string StrategyName { get; } = "LegacyRandom";
+
         public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board)
         {
             while (player.MutationPoints > 0)

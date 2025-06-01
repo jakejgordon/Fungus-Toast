@@ -9,6 +9,8 @@ namespace FungusToast.Core.AI
     /// </summary>
     public class GrowthThenDefenseSpendingStrategy : MutationSpendingStrategyBase
     {
+        public override string StrategyName { get; } = "LegacyGrowthThenDefense";
+
         private const int MaxMycelialBloomLevel = 30;
         private const int MycelialBloomId = MutationIds.MycelialBloom;
 

@@ -13,6 +13,8 @@ namespace FungusToast.Core.AI
     /// </summary>
     public class MutationFocusedMutationSpendingStrategy : MutationSpendingStrategyBase
     {
+        public override string StrategyName { get; } = "LegacyMutationFocused";
+
         private readonly SmartRandomMutationSpendingStrategy fallbackStrategy = new();
 
         public override void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board)

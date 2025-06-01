@@ -10,6 +10,8 @@ namespace FungusToast.Core.AI
 {
     public class SmartRandomMutationSpendingStrategy : MutationSpendingStrategyBase
     {
+        public override string StrategyName { get; } = "LegacySmartRandom";
+
         public override void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board)
         {
             if (player == null || allMutations == null || player.MutationPoints <= 0)

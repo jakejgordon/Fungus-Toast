@@ -11,6 +11,8 @@ namespace FungusToast.Core.AI
     {
         protected static readonly Random rng = new();
 
+        public abstract string StrategyName { get; }
+
         public abstract void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board);
 
         protected Mutation? PickBestTendrilMutation(Player player, List<Mutation> options, GameBoard board)

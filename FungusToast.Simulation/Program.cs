@@ -1,7 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using FungusToast.Core.AI;
+﻿using FungusToast.Core.AI;
+using FungusToast.Core.Core.Mutations;
+using FungusToast.Core.Mutations;
 using FungusToast.Simulation.Analysis;
+using System;
+using System.Collections.Generic;
 
 class Program
 {
@@ -9,6 +11,16 @@ class Program
 
     static void Main()
     {
+        var growthAndResilienceStrategy = new ParameterizedSpendingStrategy(
+            strategyName: "GrowthResilience_Max3_HighTier",
+            maxTier: MutationTier.Tier3,
+            prioritizeHighTier: true,
+            priorityMutationCategories: new List<MutationCategory>
+            {
+                MutationCategory.Growth,
+                MutationCategory.CellularResilience
+            });
+
         var strategies = new List<IMutationSpendingStrategy>
         {
             new SmartRandomMutationSpendingStrategy(),
@@ -16,7 +28,7 @@ class Program
             new RandomMutationSpendingStrategy(),
             new MutationFocusedMutationSpendingStrategy(),
             new SmartRandomMutationSpendingStrategy(),
-            new GrowthThenDefenseSpendingStrategy(),
+            growthAndResilienceStrategy,
             new RandomMutationSpendingStrategy(),
             new MutationFocusedMutationSpendingStrategy()
         };
