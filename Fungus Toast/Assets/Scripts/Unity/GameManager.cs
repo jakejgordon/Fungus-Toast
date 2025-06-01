@@ -227,28 +227,6 @@ namespace FungusToast.Unity
             if (gamePhaseText != null) gamePhaseText.text = label;
         }
 
-        /*
-        public void InitializeGame(int numberOfPlayers)
-        {
-            gameEnded = false;
-            isCountdownActive = false;
-            roundsRemainingUntilGameEnd = 0;
-
-            playerCount = numberOfPlayers;
-
-            SetupPlayers();
-            Board = new GameBoard(boardWidth, boardHeight, playerCount);
-            gridVisualizer.Initialize(Board);
-            PlaceStartingSpores();
-            gridVisualizer.RenderBoard(Board);
-
-            mutationManager.ResetMutationPoints(players);
-
-            gameUIManager.MutationUIManager.Initialize(humanPlayer);
-            gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-            SetGamePhaseText("Mutation Phase");
-        }
-        */
 
         public void InitializeGame(int numberOfPlayers)
         {
@@ -258,8 +236,8 @@ namespace FungusToast.Unity
 
             playerCount = numberOfPlayers;
 
-            players.Clear();
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
+            InitializeShuffledPlayers();
 
             SetupPlayers();
             gridVisualizer.Initialize(Board);
@@ -275,6 +253,54 @@ namespace FungusToast.Unity
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
         }
+
+        private void InitializeShuffledPlayers()
+        {
+            players.Clear();
+            var baseMP = GameBalance.StartingMutationPoints;
+
+            // Step 1: Create list of player definitions (type + name)
+            var playerDefinitions = new List<(PlayerTypeEnum type, string name, IMutationSpendingStrategy strategy)>
+    {
+        (PlayerTypeEnum.Human, "Human", null)
+    };
+
+            var strategyPool = new IMutationSpendingStrategy[]
+            {
+                new RandomMutationSpendingStrategy(),
+                new GrowthThenDefenseSpendingStrategy(),
+                new SmartRandomMutationSpendingStrategy(),
+                new MutationFocusedMutationSpendingStrategy()
+            };
+
+            for (int i = 1; i < playerCount; i++)
+            {
+                var strategy = strategyPool[Random.Range(0, strategyPool.Length)];
+                playerDefinitions.Add((PlayerTypeEnum.AI, $"AI Player {i}", strategy));
+            }
+
+            // Step 2: Shuffle definitions
+            for (int i = 0; i < playerDefinitions.Count; i++)
+            {
+                int j = Random.Range(i, playerDefinitions.Count);
+                (playerDefinitions[i], playerDefinitions[j]) = (playerDefinitions[j], playerDefinitions[i]);
+            }
+
+            // Step 3: Create players with shuffled roles and sequential IDs
+            for (int i = 0; i < playerDefinitions.Count; i++)
+            {
+                var def = playerDefinitions[i];
+                var player = new Player(i, def.name, def.type, AITypeEnum.Random);
+                player.SetBaseMutationPoints(baseMP);
+                if (def.type == PlayerTypeEnum.AI)
+                    player.SetMutationStrategy(def.strategy);
+                players.Add(player);
+            }
+
+            humanPlayer = players.First(p => p.PlayerType == PlayerTypeEnum.Human);
+        }
+
+
 
 
         public void SpendAllMutationPointsForAIPlayers()
