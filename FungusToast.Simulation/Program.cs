@@ -7,10 +7,14 @@ using System.Collections.Generic;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 100;
+    private const int NumberOfSimulationGames = 10;
 
     static void Main()
     {
+        var highTier = new ParameterizedSpendingStrategy(
+            strategyName: "HighTier",
+            prioritizeHighTier: true);
+
         var growthAndResilienceMax3HighTier = new ParameterizedSpendingStrategy(
             strategyName: "GrowthResilience_Max3_HighTier",
             maxTier: MutationTier.Tier3,
@@ -46,7 +50,7 @@ class Program
             new GrowthThenDefenseSpendingStrategy(),
             new RandomMutationSpendingStrategy(),
             new MutationFocusedMutationSpendingStrategy(),
-            new SmartRandomMutationSpendingStrategy(),
+            highTier,
             growthAndResilienceMax3HighTier,
             growthAndResilienceHighTier,
             growthResilienceGeneticDriftHighTier

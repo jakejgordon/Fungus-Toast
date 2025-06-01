@@ -29,6 +29,7 @@ namespace FungusToast.Simulation.Models
                 {
                     PlayerId = player.PlayerId,
                     StrategyName = player.MutationStrategy?.StrategyName ?? "None",
+                    Strategy = player.MutationStrategy!,
                     LivingCells = cells.Count(c => c.IsAlive),
                     DeadCells = cells.Count(c => !c.IsAlive),
                     MutationLevels = player.PlayerMutations.ToDictionary(kv => kv.Key, kv => kv.Value.CurrentLevel),

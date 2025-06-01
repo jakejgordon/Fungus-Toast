@@ -27,6 +27,12 @@ namespace FungusToast.Core.Players
         /// </summary>
         public Mutation Mutation { get; }
 
+        /// <summary>
+        /// Indicates whether this mutation has reached its maximum level.
+        /// </summary>
+        public bool IsMaxedOut => Mutation != null && CurrentLevel >= Mutation.MaxLevel;
+
+
         public PlayerMutation(int playerId, int mutationId, Mutation mutation)
         {
             PlayerId = playerId;

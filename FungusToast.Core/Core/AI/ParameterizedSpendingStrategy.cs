@@ -11,15 +11,22 @@ namespace FungusToast.Core.AI
     public class ParameterizedSpendingStrategy : MutationSpendingStrategyBase
     {
         public override string StrategyName { get; }
+        public override MutationTier? MaxTier => maxTier;
+        public override bool? PrioritizeHighTier => prioritizeHighTier;
+
+        public override bool? UsesGrowth => GetCategories().Contains(MutationCategory.Growth);
+        public override bool? UsesCellularResilience => GetCategories().Contains(MutationCategory.CellularResilience);
+        public override bool? UsesFungicide => GetCategories().Contains(MutationCategory.Fungicide);
+        public override bool? UsesGeneticDrift => GetCategories().Contains(MutationCategory.GeneticDrift);
 
         private readonly MutationTier maxTier;
         private readonly bool prioritizeHighTier;
-        private readonly List<MutationCategory> priorityMutationCategories;
+        private readonly List<MutationCategory>? priorityMutationCategories;
 
         public ParameterizedSpendingStrategy(
             string strategyName,
             bool prioritizeHighTier,
-            List<MutationCategory> priorityMutationCategories,
+            List<MutationCategory>? priorityMutationCategories = null,
             MutationTier maxTier = MutationTier.Tier10)
         {
             StrategyName = strategyName;
@@ -33,13 +40,15 @@ namespace FungusToast.Core.AI
             if (player == null || allMutations == null || allMutations.Count == 0)
                 return;
 
+            var categories = GetCategories();
+
             bool spent;
             do
             {
                 spent = false;
 
                 // Step 1: Attempt within priority categories
-                foreach (var category in priorityMutationCategories)
+                foreach (var category in categories)
                 {
                     var candidates = allMutations
                         .Where(m =>
@@ -72,6 +81,11 @@ namespace FungusToast.Core.AI
                 }
 
             } while (spent && player.MutationPoints > 0);
+        }
+
+        private List<MutationCategory> GetCategories()
+        {
+            return priorityMutationCategories ?? Enum.GetValues(typeof(MutationCategory)).Cast<MutationCategory>().ToList();
         }
 
         private bool TrySpendWithinCategory(Player player, GameBoard board, List<Mutation> candidates)

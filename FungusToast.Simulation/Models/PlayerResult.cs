@@ -1,10 +1,12 @@
-﻿using FungusToast.Core.Death;
+﻿using FungusToast.Core.AI;
+using FungusToast.Core.Death;
 
 namespace FungusToast.Simulation.Models
 {
     public class PlayerResult
     {
         public int PlayerId { get; set; }
+        public required IMutationSpendingStrategy Strategy { get; set; }
         public string StrategyName { get; set; } = string.Empty;
         public int LivingCells { get; set; }
         public int DeadCells { get; set; }

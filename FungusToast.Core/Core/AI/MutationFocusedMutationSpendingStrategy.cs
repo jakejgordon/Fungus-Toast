@@ -1,9 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using FungusToast.Core.Board;
+﻿using FungusToast.Core.Board;
+using FungusToast.Core.Core.Mutations;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Core.AI
 {
@@ -14,6 +15,18 @@ namespace FungusToast.Core.AI
     public class MutationFocusedMutationSpendingStrategy : MutationSpendingStrategyBase
     {
         public override string StrategyName { get; } = "LegacyMutationFocused";
+
+        public override MutationTier? MaxTier => null;
+
+        public override bool? PrioritizeHighTier => true;
+
+        public override bool? UsesGrowth => false;
+
+        public override bool? UsesCellularResilience => false;
+
+        public override bool? UsesFungicide => false;
+
+        public override bool? UsesGeneticDrift => true;
 
         private readonly SmartRandomMutationSpendingStrategy fallbackStrategy = new();
 

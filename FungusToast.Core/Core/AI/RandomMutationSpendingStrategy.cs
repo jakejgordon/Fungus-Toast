@@ -1,3 +1,4 @@
+using FungusToast.Core.Core.Mutations;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 
@@ -9,6 +10,17 @@ namespace FungusToast.Core.AI
     public class RandomMutationSpendingStrategy : IMutationSpendingStrategy
     {
         public string StrategyName { get; } = "LegacyRandom";
+        public MutationTier? MaxTier => null;
+
+        public bool? PrioritizeHighTier => false;
+
+        public bool? UsesGrowth => true;
+
+        public bool? UsesCellularResilience => true;
+
+        public bool? UsesFungicide => true;
+
+        public bool? UsesGeneticDrift => true;
 
         public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board)
         {

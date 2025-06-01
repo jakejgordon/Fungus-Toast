@@ -1,4 +1,5 @@
-﻿using FungusToast.Core.Mutations;
+﻿using FungusToast.Core.Core.Mutations;
+using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 
 namespace FungusToast.Core.AI
@@ -10,6 +11,18 @@ namespace FungusToast.Core.AI
     public class GrowthThenDefenseSpendingStrategy : MutationSpendingStrategyBase
     {
         public override string StrategyName { get; } = "LegacyGrowthThenDefense";
+
+        public override MutationTier? MaxTier => null;
+
+        public override bool? PrioritizeHighTier => false;
+
+        public override bool? UsesGrowth => true;
+
+        public override bool? UsesCellularResilience => true;
+
+        public override bool? UsesFungicide => false;
+
+        public override bool? UsesGeneticDrift => false;
 
         private const int MaxMycelialBloomLevel = 30;
         private const int MycelialBloomId = MutationIds.MycelialBloom;
