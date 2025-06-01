@@ -76,6 +76,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\UI_MoldProfilePanel.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridFiller.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationManager.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\UI_PhaseBanner.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameUIManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_EndGamePanel.cs" />

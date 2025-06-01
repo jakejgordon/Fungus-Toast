@@ -123,6 +123,7 @@ namespace FungusToast.Unity
             if (growthPhaseRunner != null)
             {
                 growthPhaseRunner.Initialize(Board, players, gridVisualizer);
+                gameUIManager.PhaseBanner.Show("Growth Phase Begins!", 2f);
                 growthPhaseRunner.StartGrowthPhase();
             }
         }
@@ -132,6 +133,7 @@ namespace FungusToast.Unity
             if (gameEnded) return;
 
             decayPhaseRunner.Initialize(Board, players, gridVisualizer);
+            gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f);
             decayPhaseRunner.StartDecayPhase();
         }
 
@@ -155,6 +157,7 @@ namespace FungusToast.Unity
             gameUIManager.MoldProfilePanel?.Refresh();
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
 
+            gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
             SetGamePhaseText("Mutation Phase");
         }
 
@@ -248,6 +251,7 @@ namespace FungusToast.Unity
 
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+            gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
             SetGamePhaseText("Mutation Phase");
 
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
