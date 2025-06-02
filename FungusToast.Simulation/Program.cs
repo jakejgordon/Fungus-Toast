@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 1;
+    private const int NumberOfSimulationGames = 10;
 
     static void Main()
     {

@@ -140,17 +140,14 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine("\nPer-Player Summary:");
             Console.WriteLine(
                 $"{"Player",6} | {"Strategy",-40} | {"MaxTier",7} | {"High?",5} | {"Growth?",7} | {"Resist?",7} | {"Fungi?",6} | {"Drift?",6} | " +
-                $"{"WinRate",7} | {"Avg Alive",10} | {"Avg Dead",9} | {"Avg Reclaims",14} | {"Avg Mold Moves",15} | " +
-                $"{"Avg Bloom Spores",17} | {"Avg Necro Spores",17} | {"Avg Necrophytic",15} | {"Avg Reclaims NP",15} | " +
-                $"{"Avg MP Spent",13} | {"Growth%",7} | {"SelfDeath%",11} | {"DecayMod",9}");
+                $"{"WinRate",7} | {"Avg Alive",10} | {"Avg Dead",9} | {"Avg MP Spent",13} | " +
+                $"{"Growth%",7} | {"SelfDeath%",11} | {"DecayMod",9}");
 
-            Console.WriteLine(new string('-', 230));
+            Console.WriteLine(new string('-', 150));
 
             foreach (var (id, entry) in playerStats.OrderByDescending(kvp => (float)kvp.Value.wins / kvp.Value.appearances))
             {
-                var (strategyObj, wins, appearances, living, dead, reclaims, moldMoves,
-                     sporesBloom, sporesNecro, sporesNecrophytic, reclaimsNecrophytic,
-                     mpSpent, growth, selfDeath, decayMod) = entry;
+                var (strategyObj, wins, appearances, living, dead, _, _, _, _, _, _, mpSpent, growth, selfDeath, decayMod) = entry;
 
                 float winRate = appearances > 0 ? (float)wins / appearances * 100f : 0f;
 
@@ -159,40 +156,12 @@ namespace FungusToast.Simulation.Analysis
                     $"{BoolFlag(strategyObj.PrioritizeHighTier),5} | {BoolFlag(strategyObj.UsesGrowth),7} | {BoolFlag(strategyObj.UsesCellularResilience),7} | " +
                     $"{BoolFlag(strategyObj.UsesFungicide),6} | {BoolFlag(strategyObj.UsesGeneticDrift),6} | " +
                     $"{winRate,6:F1}% | {(float)living / appearances,10:F1} | {(float)dead / appearances,9:F1} | " +
-                    $"{(float)reclaims / appearances,14:F1} | {(float)moldMoves / appearances,15:F1} | " +
-                    $"{(float)sporesBloom / appearances,17:F1} | {(float)sporesNecro / appearances,17:F1} | " +
-                    $"{(float)sporesNecrophytic / appearances,15:F1} | {(float)reclaimsNecrophytic / appearances,15:F1} | " +
                     $"{(float)mpSpent / appearances,13:F1} | {growth / appearances * 100f,6:F2}% | {selfDeath / appearances * 100f,10:F2}% | {decayMod / appearances * 100f,8:F2}%");
             }
 
-            Console.WriteLine(new string('-', 230));
+            Console.WriteLine(new string('-', 150));
         }
 
-        /*
-        private void PrintMutationUsageByStrategy(Dictionary<string, Dictionary<int, List<(int level, bool isWinner)>>> data)
-        {
-            Console.WriteLine("\nStrategy-Mutation Usage Summary:");
-            Console.WriteLine("Strategy                              | Mutation Name                   | WinRate | Uses | Avg Level");
-            Console.WriteLine("-------------------------------------|----------------------------------|---------|------|------------");
-
-            foreach (var strategy in data.Keys.OrderBy(k => k))
-            {
-                foreach (var kv in data[strategy])
-                {
-                    var mutation = MutationRegistry.GetById(kv.Key);
-                    if (mutation == null) continue;
-
-                    var entries = kv.Value;
-                    int totalUses = entries.Count;
-                    int winUses = entries.Count(e => e.isWinner);
-                    float winRate = totalUses > 0 ? (float)winUses / totalUses * 100f : 0f;
-                    float avgLevel = (float)entries.Average(e => e.level);
-
-                    Console.WriteLine(
-                        $"{Truncate(strategy, 37),-37} | {Truncate(mutation.Name, 32),-32} | {winRate,6:F1}% | {totalUses,4} | {avgLevel,10:F2}");
-                }
-            }
-        }*/
 
 
         private void PrintDeathReasonSummary(Dictionary<DeathReason, int> deathReasonCounts)
