@@ -44,8 +44,8 @@ namespace FungusToast.Simulation.Analysis
         public void PrintReport()
         {
             Console.WriteLine("\nStrategy-Mutation Usage Summary:");
-            Console.WriteLine("Strategy                              | Mutation Name                   | Games Used | Avg Level");
-            Console.WriteLine("-------------------------------------|----------------------------------|------------|-----------");
+            Console.WriteLine("{0,-37} | {1,-32} | {2,10} | {3,10}", "Strategy", "Mutation Name", "Games Used", "Avg Level");
+            Console.WriteLine(new string('-', 37) + "-|-" + new string('-', 32) + "-|-" + new string('-', 10) + "-|-" + new string('-', 10));
 
             foreach (var strategy in strategyMutationLevels.Keys.OrderBy(k => k))
             {
@@ -63,11 +63,15 @@ namespace FungusToast.Simulation.Analysis
                     var mutation = MutationRegistry.GetById(mutationId);
                     string name = mutation?.Name ?? $"[ID {mutationId}]";
 
-                    Console.WriteLine(
-                        $"{Truncate(strategy, 37),-37} | {Truncate(name, 32),-32} | {gamesUsed,10} | {avgLevel,9:F2}");
+                    Console.WriteLine("{0,-37} | {1,-32} | {2,10} | {3,10:F2}",
+                        Truncate(strategy, 37),
+                        Truncate(name, 32),
+                        gamesUsed,
+                        avgLevel);
                 }
             }
         }
+
 
         private static string Truncate(string value, int maxLength)
         {

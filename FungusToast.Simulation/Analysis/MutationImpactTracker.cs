@@ -46,16 +46,19 @@ namespace FungusToast.Simulation.Analysis
         public void PrintReport()
         {
             Console.WriteLine("\nMutation Impact Analysis:");
-            Console.WriteLine("Mutation Name                   | WinRate | Uses | Avg Level in Wins");
-            Console.WriteLine("--------------------------------|---------|------|-------------------");
+            Console.WriteLine($"{"Mutation Name",-32} | {"WinRate",7} | {"Uses",5} | {"Avg Level in Wins",18}");
+            Console.WriteLine(new string('-', 70));
 
-            foreach (var stat in mutationStats.Values
-                         .OrderByDescending(s => s.WinRateWhenPresent))
+            foreach (var stat in mutationStats.Values.OrderByDescending(s => s.WinRateWhenPresent))
             {
                 Console.WriteLine(
-                    $"{stat.MutationName,-32} | {stat.WinRateWhenPresent,6:F1}% | {stat.TotalAppearances,4} | {stat.AvgLevelInWins,17:F2}");
+                    $"{Truncate(stat.MutationName, 32),-32} | {stat.WinRateWhenPresent,6:F1}% | {stat.TotalAppearances,5} | {stat.AvgLevelInWins,18:F2}");
             }
         }
+
+        private static string Truncate(string s, int maxLength) =>
+            s.Length <= maxLength ? s : s.Substring(0, maxLength - 1) + "…";
+
 
         private class MutationImpactStats
         {
