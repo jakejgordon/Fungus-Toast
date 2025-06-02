@@ -1,8 +1,4 @@
-﻿using FungusToast.Core;
-using FungusToast.Core.Core.Mutations;
-using System.Collections.Generic;
-
-namespace FungusToast.Core.Mutations
+﻿namespace FungusToast.Core.Mutations
 {
     public class Mutation
     {

@@ -1,13 +1,10 @@
 ﻿using FungusToast.Core.AI;
-using FungusToast.Core.Core.Mutations;
 using FungusToast.Core.Mutations;
 using FungusToast.Simulation.Analysis;
-using System;
-using System.Collections.Generic;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 10;
+    private const int NumberOfSimulationGames = 50;
 
     static void Main()
     {
@@ -56,9 +53,14 @@ class Program
             prioritizeHighTier: true,
             targetMutationIds: new List<int> { MutationIds.RegenerativeHyphae });
 
+        var powerMutations1 = new ParameterizedSpendingStrategy(
+            strategyName: "Power Mutations 1",
+            prioritizeHighTier: true,
+            targetMutationIds: new List<int> { MutationIds.AdaptiveExpression, MutationIds.Necrosporulation, MutationIds.RegenerativeHyphae });
+
         var strategies = new List<IMutationSpendingStrategy>
         {
-            new SmartRandomMutationSpendingStrategy(),
+            powerMutations1,
             new GrowthThenDefenseSpendingStrategy(),
             new RandomMutationSpendingStrategy(),
             max2,

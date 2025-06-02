@@ -1,4 +1,4 @@
-﻿using FungusToast.Core.Core.Mutations;
+﻿using FungusToast.Core.Mutations;
 
 namespace FungusToast.Core.Config
 {

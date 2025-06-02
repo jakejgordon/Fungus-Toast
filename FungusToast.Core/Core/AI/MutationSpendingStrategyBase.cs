@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using FungusToast.Core.Board;
-using FungusToast.Core.Core.Mutations;
-using FungusToast.Core.Mutations;
+﻿using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 
 namespace FungusToast.Core.AI

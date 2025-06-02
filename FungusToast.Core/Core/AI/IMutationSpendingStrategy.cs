@@ -1,7 +1,5 @@
-using FungusToast.Core.Core.Mutations;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
-using System.Collections.Generic;
 
 namespace FungusToast.Core.AI
 {

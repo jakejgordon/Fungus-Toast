@@ -1,6 +1,4 @@
 ﻿using FungusToast.Core.Config;
-using FungusToast.Core.Core.Mutations;
-using System.Collections.Generic;
 using System.Globalization;
 
 namespace FungusToast.Core.Mutations

@@ -1,10 +1,5 @@
-﻿using FungusToast.Core.Board;
-using FungusToast.Core.Core.Mutations;
-using FungusToast.Core.Mutations;
+﻿using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace FungusToast.Core.AI
 {
@@ -108,8 +103,14 @@ namespace FungusToast.Core.AI
             if (player == null || allMutations == null || allMutations.Count == 0)
                 return;
 
-            bool upgraded = false;
-            while (player.MutationPoints > 0)
+            SpendOnTargetChain(player, allMutations, board);
+            SpendFallbackPoints(player, allMutations, board);
+        }
+
+        private void SpendOnTargetChain(Player player, List<Mutation> allMutations, GameBoard board)
+        {
+            bool upgraded;
+            do
             {
                 upgraded = false;
 
@@ -123,56 +124,57 @@ namespace FungusToast.Core.AI
                         if (TryUpgradeWithTendrilAwareness(player, mutation, allMutations, board))
                         {
                             upgraded = true;
-                            break; // Try again from the start of the chain
+                            break;
                         }
                     }
                 }
 
-                if (!upgraded)
-                    break; // No prerequisite could be upgraded, move on
-            }
+            } while (upgraded && player.MutationPoints > 0);
+        }
 
-
-
-            var categories = GetCategories();
-
+        private void SpendFallbackPoints(Player player, List<Mutation> allMutations, GameBoard board)
+        {
             bool spent;
             do
             {
-                spent = false;
-
-                foreach (var category in categories)
-                {
-                    var candidates = allMutations
-                        .Where(m =>
-                            m.Category == category &&
-                            (int)m.Tier <= (int)maxTier &&
-                            player.CanUpgrade(m))
-                        .ToList();
-
-                    if (TrySpendWithinCategory(player, board, candidates))
-                    {
-                        spent = true;
-                        break;
-                    }
-                }
-
-                if (!spent)
-                {
-                    var fallbackCandidates = allMutations
-                        .Where(m => (int)m.Tier <= (int)maxTier && player.CanUpgrade(m))
-                        .ToList();
-
-                    spent = TrySpendWithinCategory(player, board, fallbackCandidates);
-                }
-
-                if (!spent)
-                {
-                    spent = MutationSpendingHelper.TrySpendRandomly(player, allMutations);
-                }
-
-            } while (spent && player.MutationPoints > 0);
+                spent = TrySpendByCategory(player, allMutations, board)
+                     || TrySpendFallback(player, allMutations, board)
+                     || TrySpendRandomly(player, allMutations);
+            }
+            while (spent && player.MutationPoints > 0);
         }
+
+        private bool TrySpendByCategory(Player player, List<Mutation> allMutations, GameBoard board)
+        {
+            foreach (var category in GetShuffledCategories())
+            {
+                var candidates = allMutations
+                    .Where(m => m.Category == category
+                                && (int)m.Tier <= (int)maxTier
+                                && player.CanUpgrade(m))
+                    .ToList();
+
+                if (TrySpendWithinCategory(player, board, candidates))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool TrySpendFallback(Player player, List<Mutation> allMutations, GameBoard board)
+        {
+            var fallbackCandidates = allMutations
+                .Where(m => (int)m.Tier <= (int)maxTier && player.CanUpgrade(m))
+                .ToList();
+
+            return TrySpendWithinCategory(player, board, fallbackCandidates);
+        }
+
+        private bool TrySpendRandomly(Player player, List<Mutation> allMutations)
+        {
+            return MutationSpendingHelper.TrySpendRandomly(player, allMutations);
+        }
+
 
         private List<MutationCategory> GetCategories()
         {
@@ -221,5 +223,13 @@ namespace FungusToast.Core.AI
                 || m.Id == MutationIds.TendrilSouthwest
                 || m.Id == MutationIds.TendrilSoutheast;
         }
+
+        private List<MutationCategory> GetShuffledCategories()
+        {
+            return GetCategories()
+                .OrderBy(_ => Guid.NewGuid())
+                .ToList();
+        }
+
     }
 }
