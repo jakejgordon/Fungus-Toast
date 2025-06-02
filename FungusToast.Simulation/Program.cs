@@ -93,7 +93,8 @@ class Program
         {
             usageTracker.TrackGameResult(result);
         }
-        usageTracker.PrintReport();
+        var allPlayerResults = results.SelectMany(r => r.PlayerResults).ToList();
+        usageTracker.PrintReport(allPlayerResults);
 
         Console.WriteLine("\nSimulation complete. Press any key to exit.");
         Console.ReadKey();
