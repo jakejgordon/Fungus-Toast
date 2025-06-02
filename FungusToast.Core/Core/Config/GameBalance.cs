@@ -21,7 +21,7 @@ namespace FungusToast.Core.Config
         // Mutation Effects
         public const float MycelialBloomEffectPerLevel = 0.0025f;
         public const float HomeostaticHarmonyEffectPerLevel = 0.003f;
-        public const float SilentBlightEffectPerLevel = 0.0002f;
+        public const float SilentBlightEffectPerLevel = 0.0003f;
         public const float AdaptiveExpressionEffectPerLevel = 0.09f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 5f;
         public const float NecrosporulationEffectPerLevel = 0.04f;
@@ -35,7 +35,7 @@ namespace FungusToast.Core.Config
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
         public const float RegenerativeHyphaeReclaimChance = 0.007f;
         public const float CreepingMoldMoveChancePerLevel = .025f;
-        public const float SporicialBloomEffectPerLevel = .1f;
+        public const float SporicialBloomEffectPerLevel = .15f;
         public const int NecrophyticBloomBaseSpores = 2;
         public static float NecrophyticBloomSporesPerLevel = 100;
 

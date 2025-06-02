@@ -22,14 +22,6 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine($"Board Height:       {boardHeight}");
             Console.WriteLine($"Total Cells:        {totalCells}");
 
-            // Aggregate game-level metrics
-            int totalGames = results.Count;
-            int totalTurns = results.Sum(r => r.TurnsPlayed);
-            float avgTurns = totalGames > 0 ? (float)totalTurns / totalGames : 0;
-            double sumSquaredDiffs = results.Sum(r => Math.Pow(r.TurnsPlayed - avgTurns, 2));
-            double stdDevTurns = totalGames > 1 ? Math.Sqrt(sumSquaredDiffs / (totalGames - 1)) : 0;
-
-            // Per-player stats map
             var playerStats = new Dictionary<int, (
                 IMutationSpendingStrategy strategyObj,
                 int wins,
@@ -47,8 +39,9 @@ namespace FungusToast.Simulation.Analysis
                 float selfDeathChance,
                 float decayMod)>();
 
-            // Death reason summary
             var deathReasonCounts = new Dictionary<DeathReason, int>();
+
+            //var mutationUsageByStrategy = new Dictionary<string, Dictionary<int, List<(int level, bool isWinner)>>>();
 
             foreach (var result in results)
             {
@@ -73,7 +66,7 @@ namespace FungusToast.Simulation.Analysis
                     entry.sporesFromNecrophytic += pr.NecrophyticSpores;
                     entry.reclaimsFromNecrophytic += pr.NecrophyticReclaims;
                     entry.mutationPointsSpent += pr.MutationLevels.Sum(kv =>
-                                                      (MutationRegistry.GetById(kv.Key)?.PointsPerUpgrade ?? 0) * kv.Value);
+                        (MutationRegistry.GetById(kv.Key)?.PointsPerUpgrade ?? 0) * kv.Value);
                     entry.growthChance += pr.EffectiveGrowthChance;
                     entry.selfDeathChance += pr.EffectiveSelfDeathChance;
                     entry.decayMod += pr.OffensiveDecayModifier;
@@ -88,20 +81,44 @@ namespace FungusToast.Simulation.Analysis
                             deathReasonCounts[reason]++;
                         }
                     }
+
+                    // Track mutation usage per strategy
+                    string strategyKey = pr.Strategy.StrategyName;
+                    /*
+                    if (!mutationUsageByStrategy.ContainsKey(strategyKey))
+                        mutationUsageByStrategy[strategyKey] = new Dictionary<int, List<(int, bool)>>();
+
+                    foreach (var kv in pr.MutationLevels)
+                    {
+                        if (!mutationUsageByStrategy[strategyKey].ContainsKey(kv.Key))
+                            mutationUsageByStrategy[strategyKey][kv.Key] = new List<(int, bool)>();
+
+                        mutationUsageByStrategy[strategyKey][kv.Key].Add((kv.Value, isWinner));
+                    }*/
                 }
             }
 
-            // Ensure all defined death reasons appear
             foreach (DeathReason reason in Enum.GetValues(typeof(DeathReason)))
                 if (!deathReasonCounts.ContainsKey(reason))
                     deathReasonCounts[reason] = 0;
 
-            // Game-level stats
+            PrintGameLevelStats(results, totalCells);
+            PrintDeathReasonSummary(deathReasonCounts);
+            PrintPlayerSummaryTable(playerStats);
+            //PrintMutationUsageByStrategy(mutationUsageByStrategy);
+        }
+
+
+        private void PrintGameLevelStats(List<GameResult> results, int totalCells)
+        {
+            int totalGames = results.Count;
             float avgLivingCells = (float)results.Average(r => r.PlayerResults.Sum(p => p.LivingCells));
             float avgDeadCells = (float)results.Average(r => r.PlayerResults.Sum(p => p.DeadCells));
             float avgEmptyCells = totalCells - avgLivingCells - avgDeadCells;
-            float avgSporesDropped = (float)results.Sum(r => r.SporesFromSporocidalBloom.Values.Sum()) / totalGames;
+            float avgSporesDropped = results.Sum(r => r.SporesFromSporocidalBloom.Values.Sum()) / totalGames;
             float avgToxicTiles = (float)results.Average(r => r.ToxicTileCount);
+            float avgTurns = (float)results.Average(r => r.TurnsPlayed);
+            double stdDevTurns = Math.Sqrt(results.Sum(r => Math.Pow(r.TurnsPlayed - avgTurns, 2)) / Math.Max(1, totalGames - 1));
 
             Console.WriteLine($"\nTotal Games Played: {totalGames}");
             Console.WriteLine($"Avg Turns per Game: {avgTurns:F1}");
@@ -111,20 +128,15 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine($"Avg Empty Cells:    {avgEmptyCells:F1}");
             Console.WriteLine($"Avg Spores Dropped: {avgSporesDropped:F1}");
             Console.WriteLine($"Avg Lingering Toxic Tiles: {avgToxicTiles:F1}");
+        }
 
-            // Death summary
-            int totalDeaths = deathReasonCounts.Values.Sum();
-            Console.WriteLine("\nDeath Reason Summary:");
-            Console.WriteLine($"Total Cells that Died: {totalDeaths}");
-            Console.WriteLine("Cause                        | Count | Percent");
-            Console.WriteLine("-----------------------------|-------|--------");
-            foreach (var kv in deathReasonCounts.OrderByDescending(kv => kv.Value))
-            {
-                float pct = totalDeaths > 0 ? kv.Value * 100f / totalDeaths : 0f;
-                Console.WriteLine($"{kv.Key,-28} | {kv.Value,5} | {pct,6:F1}%");
-            }
-
-            // Per-player table header
+        private void PrintPlayerSummaryTable(Dictionary<int, (
+            IMutationSpendingStrategy strategyObj, int wins, int appearances,
+            int living, int dead, int reclaims, int moldMoves,
+            int sporesBloom, int sporesNecro, int sporesNecrophytic,
+            int reclaimsNecrophytic, int mpSpent,
+            float growthChance, float selfDeathChance, float decayMod)> playerStats)
+        {
             Console.WriteLine("\nPer-Player Summary:");
             Console.WriteLine(
                 $"{"Player",6} | {"Strategy",-40} | {"MaxTier",7} | {"High?",5} | {"Growth?",7} | {"Resist?",7} | {"Fungi?",6} | {"Drift?",6} | " +
@@ -132,16 +144,7 @@ namespace FungusToast.Simulation.Analysis
                 $"{"Avg Bloom Spores",17} | {"Avg Necro Spores",17} | {"Avg Necrophytic",15} | {"Avg Reclaims NP",15} | " +
                 $"{"Avg MP Spent",13} | {"Growth%",7} | {"SelfDeath%",11} | {"DecayMod",9}");
 
-            Console.WriteLine(new string('-', 6) + "-|-" + new string('-', 40) + "-|-" + new string('-', 7) + "-|-" +
-                              new string('-', 5) + "-|-" + new string('-', 7) + "-|-" + new string('-', 7) + "-|-" +
-                              new string('-', 6) + "-|-" + new string('-', 6) + "-|-" +
-                              new string('-', 7) + "-|-" + new string('-', 10) + "-|-" + new string('-', 9) + "-|-" +
-                              new string('-', 14) + "-|-" + new string('-', 15) + "-|-" +
-                              new string('-', 17) + "-|-" + new string('-', 17) + "-|-" +
-                              new string('-', 15) + "-|-" + new string('-', 15) + "-|-" +
-                              new string('-', 13) + "-|-" + new string('-', 7) + "-|-" + new string('-', 11) + "-|-" +
-                              new string('-', 9));
-
+            Console.WriteLine(new string('-', 230));
 
             foreach (var (id, entry) in playerStats.OrderByDescending(kvp => (float)kvp.Value.wins / kvp.Value.appearances))
             {
@@ -150,39 +153,71 @@ namespace FungusToast.Simulation.Analysis
                      mpSpent, growth, selfDeath, decayMod) = entry;
 
                 float winRate = appearances > 0 ? (float)wins / appearances * 100f : 0f;
-                float avgLiving = (float)living / appearances;
-                float avgDead = (float)dead / appearances;
-                float avgRecl = (float)reclaims / appearances;
-                float avgMoves = (float)moldMoves / appearances;
-                float avgSBloom = (float)sporesBloom / appearances;
-                float avgSNecro = (float)sporesNecro / appearances;
-                float avgSNeoP = (float)sporesNecrophytic / appearances;
-                float avgRNeoP = (float)reclaimsNecrophytic / appearances;
-                float avgMP = (float)mpSpent / appearances;
-                float avgGrow = growth / appearances * 100f;
-                float avgSelf = selfDeath / appearances * 100f;
-                float avgDecay = decayMod / appearances * 100f;
-
-                string maxTier = strategyObj.MaxTier?.ToString() ?? "-";
-                string highTier = strategyObj.PrioritizeHighTier == true ? "Y" : "N";
-                string usesGrowth = strategyObj.UsesGrowth == true ? "Y" : "N";
-                string resist = strategyObj.UsesCellularResilience == true ? "Y" : "N";
-                string fungi = strategyObj.UsesFungicide == true ? "Y" : "N";
-                string drift = strategyObj.UsesGeneticDrift == true ? "Y" : "N";
-
-                string displayName = strategyObj.StrategyName.Length > 40
-                    ? strategyObj.StrategyName.Substring(0, 39) + "…"
-                    : strategyObj.StrategyName;
 
                 Console.WriteLine(
-                    $"{id,6} | {displayName,-40} | {maxTier,7} | {highTier,5} | {usesGrowth,7} | {resist,7} | {fungi,6} | {drift,6} | " +
-                    $"{winRate,6:F1}% | {avgLiving,10:F1} | {avgDead,9:F1} | {avgRecl,14:F1} | {avgMoves,15:F1} | " +
-                    $"{avgSBloom,17:F1} | {avgSNecro,17:F1} | {avgSNeoP,15:F1} | {avgRNeoP,15:F1} | " +
-                    $"{avgMP,13:F1} | {avgGrow,6:F2}% | {avgSelf,10:F2}% | {avgDecay,8:F2}%");
+                    $"{id,6} | {Truncate(strategyObj.StrategyName, 40),-40} | {strategyObj.MaxTier?.ToString() ?? "-",7} | " +
+                    $"{BoolFlag(strategyObj.PrioritizeHighTier),5} | {BoolFlag(strategyObj.UsesGrowth),7} | {BoolFlag(strategyObj.UsesCellularResilience),7} | " +
+                    $"{BoolFlag(strategyObj.UsesFungicide),6} | {BoolFlag(strategyObj.UsesGeneticDrift),6} | " +
+                    $"{winRate,6:F1}% | {(float)living / appearances,10:F1} | {(float)dead / appearances,9:F1} | " +
+                    $"{(float)reclaims / appearances,14:F1} | {(float)moldMoves / appearances,15:F1} | " +
+                    $"{(float)sporesBloom / appearances,17:F1} | {(float)sporesNecro / appearances,17:F1} | " +
+                    $"{(float)sporesNecrophytic / appearances,15:F1} | {(float)reclaimsNecrophytic / appearances,15:F1} | " +
+                    $"{(float)mpSpent / appearances,13:F1} | {growth / appearances * 100f,6:F2}% | {selfDeath / appearances * 100f,10:F2}% | {decayMod / appearances * 100f,8:F2}%");
             }
 
             Console.WriteLine(new string('-', 230));
         }
+
+        /*
+        private void PrintMutationUsageByStrategy(Dictionary<string, Dictionary<int, List<(int level, bool isWinner)>>> data)
+        {
+            Console.WriteLine("\nStrategy-Mutation Usage Summary:");
+            Console.WriteLine("Strategy                              | Mutation Name                   | WinRate | Uses | Avg Level");
+            Console.WriteLine("-------------------------------------|----------------------------------|---------|------|------------");
+
+            foreach (var strategy in data.Keys.OrderBy(k => k))
+            {
+                foreach (var kv in data[strategy])
+                {
+                    var mutation = MutationRegistry.GetById(kv.Key);
+                    if (mutation == null) continue;
+
+                    var entries = kv.Value;
+                    int totalUses = entries.Count;
+                    int winUses = entries.Count(e => e.isWinner);
+                    float winRate = totalUses > 0 ? (float)winUses / totalUses * 100f : 0f;
+                    float avgLevel = (float)entries.Average(e => e.level);
+
+                    Console.WriteLine(
+                        $"{Truncate(strategy, 37),-37} | {Truncate(mutation.Name, 32),-32} | {winRate,6:F1}% | {totalUses,4} | {avgLevel,10:F2}");
+                }
+            }
+        }*/
+
+
+        private void PrintDeathReasonSummary(Dictionary<DeathReason, int> deathReasonCounts)
+        {
+            int totalDeaths = deathReasonCounts.Values.Sum();
+
+            Console.WriteLine("\nDeath Reason Summary:");
+            Console.WriteLine($"Total Cells that Died: {totalDeaths}");
+            Console.WriteLine($"{"Cause",-30} | {"Count",5} | {"Percent",7}");
+            Console.WriteLine(new string('-', 45));
+
+            foreach (var kv in deathReasonCounts.OrderByDescending(kv => kv.Value))
+            {
+                string cause = kv.Key.ToString();
+                int count = kv.Value;
+                float percent = totalDeaths > 0 ? (float)count / totalDeaths * 100f : 0f;
+                Console.WriteLine($"{cause,-30} | {count,5} | {percent,6:F1}%");
+            }
+        }
+
+
+        private string BoolFlag(bool? val) => val == true ? "Y" : "N";
+
+        private string Truncate(string s, int max) =>
+            s.Length > max ? s.Substring(0, max - 1) + "…" : s;
 
 
     }

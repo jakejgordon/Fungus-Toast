@@ -7,10 +7,11 @@ using System.Collections.Generic;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 10;
+    private const int NumberOfSimulationGames = 200;
 
     static void Main()
     {
+
         var highTier = new ParameterizedSpendingStrategy(
             strategyName: "HighTier",
             prioritizeHighTier: true);
@@ -34,6 +35,7 @@ class Program
                         MutationCategory.CellularResilience
             });
 
+        /**last place in 10000 game simulation
         var growthResilienceGeneticDriftHighTier = new ParameterizedSpendingStrategy(
             strategyName: "GrowthResilienceGeneticDrift_HighTier",
             prioritizeHighTier: true,
@@ -43,17 +45,27 @@ class Program
                                 MutationCategory.CellularResilience,
                                 MutationCategory.GeneticDrift
             });
+        **/
+        
+        var max2 = new ParameterizedSpendingStrategy(
+            strategyName: "Max2",
+            prioritizeHighTier: false);
+
+        var regenerativeHyphaeFocus = new ParameterizedSpendingStrategy(
+            strategyName: "Regenerative Hyphae Focus",
+            prioritizeHighTier: true,
+            targetMutationIds: new List<int> { MutationIds.RegenerativeHyphae });
 
         var strategies = new List<IMutationSpendingStrategy>
         {
             new SmartRandomMutationSpendingStrategy(),
             new GrowthThenDefenseSpendingStrategy(),
             new RandomMutationSpendingStrategy(),
-            new MutationFocusedMutationSpendingStrategy(),
+            max2,
             highTier,
             growthAndResilienceMax3HighTier,
             growthAndResilienceHighTier,
-            growthResilienceGeneticDriftHighTier
+            regenerativeHyphaeFocus
         };
 
         int playerCount = strategies.Count;
@@ -74,6 +86,14 @@ class Program
             impactTracker.TrackGameResult(result);
         }
         impactTracker.PrintReport();
+
+        // Analyze per-strategy mutation usage
+        var usageTracker = new StrategyMutationUsageTracker();
+        foreach (var result in results)
+        {
+            usageTracker.TrackGameResult(result);
+        }
+        usageTracker.PrintReport();
 
         Console.WriteLine("\nSimulation complete. Press any key to exit.");
         Console.ReadKey();

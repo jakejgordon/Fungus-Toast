@@ -22,23 +22,117 @@ namespace FungusToast.Core.AI
         private readonly MutationTier maxTier;
         private readonly bool prioritizeHighTier;
         private readonly List<MutationCategory>? priorityMutationCategories;
+        private readonly List<Mutation> targetPrerequisiteChain;
+        private readonly Dictionary<int, int> requiredLevels;
 
         public ParameterizedSpendingStrategy(
             string strategyName,
             bool prioritizeHighTier,
             List<MutationCategory>? priorityMutationCategories = null,
-            MutationTier maxTier = MutationTier.Tier10)
+            MutationTier maxTier = MutationTier.Tier10,
+            List<int>? targetMutationIds = null)
         {
             StrategyName = strategyName;
             this.prioritizeHighTier = prioritizeHighTier;
             this.priorityMutationCategories = priorityMutationCategories;
             this.maxTier = maxTier;
+
+            targetPrerequisiteChain = new List<Mutation>();
+            requiredLevels = new Dictionary<int, int>();
+
+            if (targetMutationIds != null)
+            {
+                BuildTargetPrerequisiteChain(targetMutationIds);
+            }
+        }
+
+        private void BuildTargetPrerequisiteChain(List<int> targetMutationIds)
+        {
+            var visited = new HashSet<int>();
+            targetPrerequisiteChain.Clear();
+            requiredLevels.Clear();
+
+            //Console.WriteLine($"\n[{StrategyName}] Building full prerequisite chain for targets: {string.Join(", ", targetMutationIds)}");
+
+            foreach (int targetId in targetMutationIds)
+            {
+                if (!MutationRepository.All.TryGetValue(targetId, out var target))
+                {
+                    //Console.WriteLine($"[WARNING] Target mutation ID {targetId} not found.");
+                    continue;
+                }
+
+                Visit(target, requiredLevel: 1);
+            }
+
+            void Visit(Mutation mutation, int requiredLevel)
+            {
+                // Always track the highest required level seen for this mutation
+                if (requiredLevels.TryGetValue(mutation.Id, out var existingLevel))
+                {
+                    if (requiredLevel > existingLevel)
+                    {
+                        //Console.WriteLine($" - Updating required level for {mutation.Name} (ID {mutation.Id}) from {existingLevel} to {requiredLevel}");
+                        requiredLevels[mutation.Id] = requiredLevel;
+                    }
+                }
+                else
+                {
+                    requiredLevels[mutation.Id] = requiredLevel;
+                }
+
+                if (!visited.Add(mutation.Id))
+                    return; // already processed
+
+                // Recurse to prerequisites first
+                foreach (var prereq in mutation.Prerequisites)
+                {
+                    if (MutationRepository.All.TryGetValue(prereq.MutationId, out var prereqMutation))
+                    {
+                        Visit(prereqMutation, prereq.RequiredLevel);
+                    }
+                    else
+                    {
+                        //Console.WriteLine($"[WARNING] Prerequisite ID {prereq.MutationId} not found in repository.");
+                    }
+                }
+
+                // Then add to chain so prerequisites come first
+                //Console.WriteLine($" - Added {mutation.Name} (ID {mutation.Id}), required level = {requiredLevels[mutation.Id]}");
+                targetPrerequisiteChain.Add(mutation);
+            }
         }
 
         public override void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board)
         {
             if (player == null || allMutations == null || allMutations.Count == 0)
                 return;
+
+            bool upgraded = false;
+            while (player.MutationPoints > 0)
+            {
+                upgraded = false;
+
+                foreach (var mutation in targetPrerequisiteChain)
+                {
+                    int requiredLevel = requiredLevels.TryGetValue(mutation.Id, out var level) ? level : 1;
+                    int currentLevel = player.GetMutationLevel(mutation.Id);
+
+                    if (currentLevel < requiredLevel && player.CanUpgrade(mutation))
+                    {
+                        if (TryUpgradeWithTendrilAwareness(player, mutation, allMutations, board))
+                        {
+                            upgraded = true;
+                            break; // Try again from the start of the chain
+                        }
+                    }
+                }
+
+                if (!upgraded)
+                    break; // No prerequisite could be upgraded, move on
+            }
+
+
 
             var categories = GetCategories();
 
@@ -47,7 +141,6 @@ namespace FungusToast.Core.AI
             {
                 spent = false;
 
-                // Step 1: Attempt within priority categories
                 foreach (var category in categories)
                 {
                     var candidates = allMutations
@@ -64,7 +157,6 @@ namespace FungusToast.Core.AI
                     }
                 }
 
-                // Step 2: Fallback to all valid under max tier
                 if (!spent)
                 {
                     var fallbackCandidates = allMutations
@@ -74,7 +166,6 @@ namespace FungusToast.Core.AI
                     spent = TrySpendWithinCategory(player, board, fallbackCandidates);
                 }
 
-                // Step 3: Final fallback to random
                 if (!spent)
                 {
                     spent = MutationSpendingHelper.TrySpendRandomly(player, allMutations);
@@ -90,7 +181,6 @@ namespace FungusToast.Core.AI
 
         private bool TrySpendWithinCategory(Player player, GameBoard board, List<Mutation> candidates)
         {
-            // 1. High-tier priority logic
             if (prioritizeHighTier)
             {
                 foreach (var m in candidates
@@ -102,7 +192,6 @@ namespace FungusToast.Core.AI
                 }
             }
 
-            // 2. Remaining candidates
             foreach (var m in candidates)
             {
                 if (TryUpgradeWithTendrilAwareness(player, m, candidates, board))
@@ -114,7 +203,6 @@ namespace FungusToast.Core.AI
 
         private bool TryUpgradeWithTendrilAwareness(Player player, Mutation candidate, List<Mutation> allCandidates, GameBoard board)
         {
-            // If it's a Tendril, re-evaluate which Tendril is best
             if (IsTendril(candidate))
             {
                 var bestTendril = PickBestTendrilMutation(player, allCandidates.Where(IsTendril).ToList(), board);
@@ -123,7 +211,6 @@ namespace FungusToast.Core.AI
                 return false;
             }
 
-            // Otherwise, upgrade the candidate directly
             return player.TryUpgradeMutation(candidate);
         }
 
