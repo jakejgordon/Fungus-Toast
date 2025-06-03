@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -7,6 +7,7 @@ namespace FungusToast.Unity.UI
     public class UI_PhaseProgressTracker : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI mutationPhaseLabel;
+        [SerializeField] private TextMeshProUGUI growthPhaseLabel;
         [SerializeField] private List<TextMeshProUGUI> growthCycleLabels; // Should be exactly 5
         [SerializeField] private TextMeshProUGUI decayPhaseLabel;
 
@@ -32,8 +33,10 @@ namespace FungusToast.Unity.UI
             if (cycle >= 1 && cycle <= growthCycleLabels.Count)
             {
                 HighlightLabel(growthCycleLabels[cycle - 1]);
+                HighlightLabel(growthPhaseLabel);  // ← NEW
             }
         }
+
 
         public void HighlightDecayPhase()
         {
@@ -44,11 +47,13 @@ namespace FungusToast.Unity.UI
         private void ResetAllStyles()
         {
             SetDim(mutationPhaseLabel);
+            SetDim(growthPhaseLabel); 
             SetDim(decayPhaseLabel);
 
             foreach (var cycleLabel in growthCycleLabels)
                 SetDim(cycleLabel);
         }
+
 
         private void HighlightLabel(TextMeshProUGUI label)
         {
