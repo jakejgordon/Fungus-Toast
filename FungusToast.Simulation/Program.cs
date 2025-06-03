@@ -10,8 +10,9 @@ class Program
     {
 
         var highTier = new ParameterizedSpendingStrategy(
-            strategyName: "HighTier",
-            prioritizeHighTier: true);
+            strategyName: "Mutator Growth",
+            prioritizeHighTier: true,
+            targetMutationIds: new List<int> { MutationIds.AnabolicInversion, MutationIds.CreepingMold });
 
         var growthAndResilienceMax3HighTier = new ParameterizedSpendingStrategy(
             strategyName: "GrowthResilience_Max3_HighTier",

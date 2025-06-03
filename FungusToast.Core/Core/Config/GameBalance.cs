@@ -43,12 +43,12 @@ namespace FungusToast.Core.Config
         public const int MycelialBloomMaxLevel = 100;
         public const int HomeostaticHarmonyMaxLevel = 100;
         public const int SilentBlightMaxLevel = 100;
-        public const int AdaptiveExpressionMaxLevel = 10;
+        public const int DiagonalGrowthMaxLevel = 10;
         public const int ChronoresilientCytoplasmMaxLevel = 10;
         public const int NecrosporulationMaxLevel = 5;
         public const int EncystedSporesMaxLevel = 5;
-        public const int MutatorPhenotypeMaxLevel = 10; // Consider reducing to 7 if late-game inflation persists
-        public const int DiagonalGrowthMaxLevel = 10;
+        public const int MutatorPhenotypeMaxLevel = 15;
+        public const int AdaptiveExpressionMaxLevel = 10;
         public const int MycotropicInductionMaxLevel = 3;
         public const int PutrefactiveMycotoxinMaxLevel = 5;
         public const int AnabolicInversionMaxLevel = 3;

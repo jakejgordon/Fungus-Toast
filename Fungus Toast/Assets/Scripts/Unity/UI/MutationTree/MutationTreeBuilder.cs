@@ -20,10 +20,10 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private RectTransform driftColumn;
 
         public List<MutationNodeUI> BuildTree(
-       IEnumerable<Mutation> mutations,
-       Dictionary<int, MutationLayoutMetadata> layout,
-       Player player,
-       UI_MutationManager uiManager)
+            IEnumerable<Mutation> mutations,
+            Dictionary<int, MutationLayoutMetadata> layout,
+            Player player,
+            UI_MutationManager uiManager)
         {
             if (growthColumn == null || resilienceColumn == null || fungicideColumn == null || driftColumn == null)
             {
@@ -75,6 +75,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 MutationNodeUI nodeUI = nodeGO.GetComponent<MutationNodeUI>();
                 nodeUI.Initialize(mutation, player, uiManager);
 
+                // Debug layout info
+                RectTransform rt = nodeGO.GetComponent<RectTransform>();
+                Debug.Log($"📌 Built node for {mutation.Name} (ID {mutation.Id}) at col {metadata.Column}, row {metadata.Row}, parent = {parentColumn.name}, anchored pos = {rt?.anchoredPosition}");
+
                 // Bring lock overlay to front if it's present
                 var lockOverlay = nodeGO.transform.Find("UI_LockOverlay");
                 if (lockOverlay != null)
@@ -89,12 +93,11 @@ namespace FungusToast.Unity.UI.MutationTree
                 }
 
                 createdNodes.Add(nodeUI);
-
-                //Debug.Log($"{mutation.Name} parent = {parentColumn.name}, position = {nodeGO.transform.localPosition}, anchored = {nodeGO.GetComponent<RectTransform>().anchoredPosition}");
             }
 
             return createdNodes;
         }
+
 
 
         private RectTransform GetColumnForCategory(MutationCategory category)

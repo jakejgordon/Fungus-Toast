@@ -114,17 +114,18 @@ namespace FungusToast.Core.Mutations
             ));
 
             MakeRoot(new Mutation(
-                id: MutationIds.AdaptiveExpression,
-                name: "Adaptive Expression",
-                description: $"Each level grants a {FormatPercent(GameBalance.AdaptiveExpressionEffectPerLevel)} chance to gain an additional mutation point each round.",
-                flavorText: "Epigenetic drift activates opportunistic transcription bursts in volatile environments.",
-                type: MutationType.BonusMutationPointChance,
-                effectPerLevel: GameBalance.AdaptiveExpressionEffectPerLevel,
+                id: MutationIds.MutatorPhenotype,
+                name: "Mutator Phenotype",
+                description: $"Each level grants a {FormatPercent(GameBalance.MutatorPhenotypeEffectPerLevel)} chance to automatically upgrade a random mutation each round.",
+                flavorText: "Transposons disrupt regulatory silencing, igniting stochastic trait amplification.",
+                type: MutationType.AutoUpgradeRandom,
+                effectPerLevel: GameBalance.MutatorPhenotypeEffectPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier1),
-                maxLevel: GameBalance.AdaptiveExpressionMaxLevel,
+                maxLevel: GameBalance.MutatorPhenotypeMaxLevel,
                 category: MutationCategory.GeneticDrift,
                 tier: MutationTier.Tier1
             ));
+
 
             // Tier-2
             MakeChild(new Mutation(
@@ -159,17 +160,17 @@ namespace FungusToast.Core.Mutations
             AddTendril(MutationIds.TendrilSouthwest, "Southwest");
 
             MakeChild(new Mutation(
-                id: MutationIds.MutatorPhenotype,
-                name: "Mutator Phenotype",
-                description: $"Each level grants a {FormatPercent(GameBalance.MutatorPhenotypeEffectPerLevel)} chance to automatically upgrade a random mutation each round.",
-                flavorText: "Transposons disrupt regulatory silencing, igniting stochastic trait amplification.",
-                type: MutationType.AutoUpgradeRandom,
-                effectPerLevel: GameBalance.MutatorPhenotypeEffectPerLevel,
+                id: MutationIds.AdaptiveExpression,
+                name: "Adaptive Expression",
+                description: $"Each level grants a {FormatPercent(GameBalance.AdaptiveExpressionEffectPerLevel)} chance to gain an additional mutation point each round.",
+                flavorText: "Epigenetic drift activates opportunistic transcription bursts in volatile environments.",
+                type: MutationType.BonusMutationPointChance,
+                effectPerLevel: GameBalance.AdaptiveExpressionEffectPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
-                maxLevel: GameBalance.MutatorPhenotypeMaxLevel,
+                maxLevel: GameBalance.AdaptiveExpressionMaxLevel,
                 category: MutationCategory.GeneticDrift,
                 tier: MutationTier.Tier2
-            ), new MutationPrerequisite(MutationIds.AdaptiveExpression, 5));
+            ), new MutationPrerequisite(MutationIds.MutatorPhenotype, 5));
 
             // Tier-3
             MakeChild(new Mutation(
@@ -209,7 +210,7 @@ namespace FungusToast.Core.Mutations
                 maxLevel: GameBalance.AnabolicInversionMaxLevel,
                 category: MutationCategory.GeneticDrift,
                 tier: MutationTier.Tier3
-            ), new MutationPrerequisite(MutationIds.MutatorPhenotype, 3));
+            ), new MutationPrerequisite(MutationIds.AdaptiveExpression, 3));
 
             MakeChild(new Mutation(
                 id: MutationIds.MycotropicInduction,

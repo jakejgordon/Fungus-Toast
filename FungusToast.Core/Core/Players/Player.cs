@@ -7,6 +7,7 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.AI;
 using FungusToast.Core.Death;
 using System;
+using FungusToast.Core.Phases;
 
 namespace FungusToast.Core.Players
 {
@@ -164,21 +165,13 @@ namespace FungusToast.Core.Players
             return rng.NextDouble() < chance ? 1 : 0;
         }
 
-        public void TryTriggerAutoUpgrade(List<Mutation> eligibleMutations)
+        private bool IsEligibleForAutoUpgrade(Mutation mutation)
         {
-            float chance = GetMutationEffect(MutationType.AutoUpgradeRandom);
-            if (rng.NextDouble() >= chance || eligibleMutations == null || eligibleMutations.Count == 0)
-                return;
-
-            var upgradable = eligibleMutations.Where(CanUpgrade).ToList();
-            if (upgradable.Count == 0) return;
-
-            var pick = upgradable[rng.Next(upgradable.Count)];
-            TryAutoUpgrade(pick);
+            return (mutation.Tier == MutationTier.Tier1 || mutation.Tier == MutationTier.Tier2)
+                && (mutation.Category == MutationCategory.Growth || mutation.Category == MutationCategory.CellularResilience);
         }
 
-
-        private bool TryAutoUpgrade(Mutation mut)
+        internal bool TryAutoUpgrade(Mutation mut)
         {
             if (mut == null) return false;
 
@@ -237,7 +230,9 @@ namespace FungusToast.Core.Players
             return 0;
         }
 
-        public int AssignMutationPoints(List<Player> allPlayers, System.Random rng, IEnumerable<Mutation>? allMutations = null)
+        public int AssignMutationPoints(List<Player> allPlayers,
+                                        System.Random rng,
+                                        IEnumerable<Mutation>? allMutations = null)
         {
             int baseIncome = GetMutationPointIncome();
             int bonus = GetBonusMutationPoints();
@@ -246,11 +241,9 @@ namespace FungusToast.Core.Players
             MutationPoints = baseIncome + bonus + undergrowth;
 
             if (allMutations != null)
-                TryTriggerAutoUpgrade(allMutations.ToList());
+                MutationEffectProcessor.TryApplyMutatorPhenotype(this, allMutations.ToList(), rng);
 
             return MutationPoints;
         }
-
-
     }
 }

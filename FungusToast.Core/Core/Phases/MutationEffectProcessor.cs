@@ -439,5 +439,24 @@ namespace FungusToast.Core.Phases
             observer?.ReportNecrophyticBloomSporeDrop(player.PlayerId, spores, reclaims);
         }
 
+        public static void TryApplyMutatorPhenotype(Player player,
+                                            List<Mutation> allMutations,
+                                            Random rng)
+        {
+            float chance = player.GetMutationEffect(MutationType.AutoUpgradeRandom);
+            if (chance <= 0f || rng.NextDouble() >= chance) return;
+
+            var upgradable = allMutations
+                .Where(m => m.Tier == MutationTier.Tier1)
+                .Where(player.CanUpgrade)
+                .ToList();
+
+            if (upgradable.Count == 0) return;
+
+            var pick = upgradable[rng.Next(upgradable.Count)];
+            player.TryAutoUpgrade(pick);
+        }
+
+
     }
 }

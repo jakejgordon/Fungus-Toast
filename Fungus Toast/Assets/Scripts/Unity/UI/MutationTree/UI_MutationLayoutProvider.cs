@@ -3,7 +3,7 @@ using FungusToast.Core.Mutations;
 
 namespace FungusToast.Unity.UI.MutationTree
 {
-    public static class MutationLayoutProvider
+    public static class UI_MutationLayoutProvider
     {
         /// <summary>
         /// Column order: 0-Growth, 1-Cellular Resilience, 2-Fungicide, 3-Genetic Drift  
@@ -34,10 +34,11 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.SporocidalBloom,           new MutationLayoutMetadata(2, 3, MutationCategory.Fungicide) },
 
                 /* --------------- Genetic Drift (col 3) -------------- */
-                { MutationIds.AdaptiveExpression,        new MutationLayoutMetadata(3, 0, MutationCategory.GeneticDrift) },
-                { MutationIds.MutatorPhenotype,          new MutationLayoutMetadata(3, 1, MutationCategory.GeneticDrift) },
-                { MutationIds.AnabolicInversion,         new MutationLayoutMetadata(3, 2, MutationCategory.GeneticDrift) },
-                { MutationIds.NecrophyticBloom,         new MutationLayoutMetadata(3, 3, MutationCategory.GeneticDrift) }
+                { MutationIds.MutatorPhenotype,       new MutationLayoutMetadata(3, 1, MutationCategory.GeneticDrift) },
+                { MutationIds.AdaptiveExpression,     new MutationLayoutMetadata(3, 0, MutationCategory.GeneticDrift) },
+                { MutationIds.AnabolicInversion,      new MutationLayoutMetadata(3, 2, MutationCategory.GeneticDrift) },
+                { MutationIds.NecrophyticBloom,       new MutationLayoutMetadata(3, 3, MutationCategory.GeneticDrift) }
+
             };
     }
 }
