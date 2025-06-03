@@ -148,7 +148,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             var mutations = mutationManager.GetAllMutations().ToList();
-            var layout = MutationLayoutProvider.GetDefaultLayout();
+            var layout = UI_MutationLayoutProvider.GetDefaultLayout();
 
             mutationButtons.Clear(); // reset in case we're rebuilding
             mutationButtons = mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
