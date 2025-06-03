@@ -20,6 +20,11 @@ namespace FungusToast.Unity.UI
         [Header("Phase Transitions")]
         [SerializeField] private UI_PhaseBanner phaseBanner;
 
+        [Header("Phase Tracker")]
+        [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker;
+
+        public UI_PhaseProgressTracker PhaseProgressTracker => phaseProgressTracker;
+
         public UI_MutationManager MutationUIManager => mutationUIManager;
         public UI_MoldProfilePanel MoldProfilePanel => moldProfilePanel;
         public UI_PlayerBinder PlayerUIBinder => playerUIBinder;

@@ -15,7 +15,6 @@ using FungusToast.Core.AI;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Death;
 using FungusToast.Core.Phases;
-using FungusToast.Core.Core.Mutations;
 
 namespace FungusToast.Unity
 {
@@ -33,8 +32,8 @@ namespace FungusToast.Unity
         [SerializeField] private MutationManager mutationManager;
         [SerializeField] private GrowthPhaseRunner growthPhaseRunner;
         [SerializeField] private GameUIManager gameUIManager;
-        [SerializeField] private TextMeshProUGUI gamePhaseText;
         [SerializeField] private DecayPhaseRunner decayPhaseRunner;
+        [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker;
 
         private bool isCountdownActive = false;
         private int roundsRemainingUntilGameEnd = 0;
@@ -83,7 +82,8 @@ namespace FungusToast.Unity
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
             gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
-            SetGamePhaseText("Mutation Phase");
+            phaseProgressTracker?.ResetTracker();
+            phaseProgressTracker?.HighlightMutationPhase();
 
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
@@ -178,6 +178,7 @@ namespace FungusToast.Unity
             {
                 growthPhaseRunner.Initialize(Board, players, gridVisualizer);
                 gameUIManager.PhaseBanner.Show("Growth Phase Begins!", 2f);
+                phaseProgressTracker?.AdvanceToNextGrowthCycle(growthPhaseRunner.CurrentCycle);
                 growthPhaseRunner.StartGrowthPhase();
             }
         }
@@ -188,6 +189,7 @@ namespace FungusToast.Unity
 
             decayPhaseRunner.Initialize(Board, players, gridVisualizer);
             gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f);
+            phaseProgressTracker?.HighlightDecayPhase();
             decayPhaseRunner.StartDecayPhase();
         }
 
@@ -212,7 +214,7 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
 
             gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
-            SetGamePhaseText("Mutation Phase");
+            phaseProgressTracker?.HighlightMutationPhase();
         }
 
         private void CheckForEndgameCondition()
@@ -277,11 +279,6 @@ namespace FungusToast.Unity
             TurnEngine.AssignMutationPoints(Board, players, allMutations, rng);
 
             gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
-        }
-
-        public void SetGamePhaseText(string label)
-        {
-            if (gamePhaseText != null) gamePhaseText.text = label;
         }
 
         public void SpendAllMutationPointsForAIPlayers()

@@ -19,45 +19,56 @@ namespace FungusToast.Unity.Phases
         private bool isRunning = false;
         private System.Random rng = new();
 
+        private int currentCycle = 0;
+        public int CurrentCycle => currentCycle;
+
         public void Initialize(GameBoard board, List<Player> players, GridVisualizer gridVisualizer)
         {
             this.board = board;
             this.players = players;
             this.gridVisualizer = gridVisualizer;
             this.processor = new GrowthPhaseProcessor(board, players, rng);
+            currentCycle = 0;
+            isRunning = false;
         }
 
         public void StartGrowthPhase()
         {
-            if (!isRunning)
-            {
-                StartCoroutine(RunFullGrowthPhase());
-            }
+            if (isRunning) return;
+
+            isRunning = true;
+            currentCycle = 0;
+
+            GameManager.Instance.GameUI.PhaseProgressTracker?.AdvanceToNextGrowthCycle(1);
+            GameManager.Instance.GameUI.PhaseBanner.Show("Growth Phase Begins!", 2f);
+
+            StartCoroutine(RunNextCycle());
         }
 
-        private IEnumerator RunFullGrowthPhase()
+        private IEnumerator RunNextCycle()
         {
-            isRunning = true;
-            GameManager.Instance.SetGamePhaseText("Growth Phase (Cycle 1/" + GameBalance.TotalGrowthCycles + ")");
-            Debug.Log("🌱 Growth Phase Starting...");
-
-            for (int cycle = 0; cycle < GameBalance.TotalGrowthCycles; cycle++)
+            if (currentCycle >= GameBalance.TotalGrowthCycles)
             {
-                Debug.Log($"🌿 Growth Cycle {cycle + 1}/{GameBalance.TotalGrowthCycles}");
-
-                processor.ExecuteSingleCycle();
-                MutationEffectProcessor.ApplyStartOfTurnEffects(board, players, rng);
-                gridVisualizer.RenderBoard(board);
-
-                GameManager.Instance.SetGamePhaseText($"Growth Phase (Cycle {cycle + 1}/{GameBalance.TotalGrowthCycles})");
-
-                yield return new WaitForSeconds(GameBalance.TimeBetweenGrowthCycles);
+                Debug.Log("🌾 Growth complete. Preparing for decay phase...");
+                isRunning = false;
+                GameManager.Instance.StartDecayPhase();
+                yield break;
             }
 
-            Debug.Log("🌾 Growth Cycles complete. Preparing for decay phase...");
-            isRunning = false;
+            currentCycle++;
+            Debug.Log($"🌿 Growth Cycle {currentCycle}/{GameBalance.TotalGrowthCycles}");
 
-            GameManager.Instance.StartDecayPhase();
+            processor.ExecuteSingleCycle();
+            MutationEffectProcessor.ApplyStartOfTurnEffects(board, players, rng);
+            gridVisualizer.RenderBoard(board);
+
+            GameManager.Instance.GameUI.PhaseProgressTracker?.AdvanceToNextGrowthCycle(currentCycle);
+
+            // Optional: update right sidebar player stats per cycle
+            GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(players);
+
+            yield return new WaitForSeconds(GameBalance.TimeBetweenGrowthCycles);
+            StartCoroutine(RunNextCycle());
         }
     }
 }

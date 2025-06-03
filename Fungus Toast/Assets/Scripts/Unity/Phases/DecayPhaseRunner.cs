@@ -29,7 +29,6 @@ namespace FungusToast.Unity.Phases
 
         private IEnumerator RunDecayPhase()
         {
-            GameManager.Instance.SetGamePhaseText("Decay Phase");
             Debug.Log("💀 Decay Phase Starting...");
 
             // Execute deaths
