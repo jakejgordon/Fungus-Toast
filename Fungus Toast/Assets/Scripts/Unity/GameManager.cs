@@ -60,7 +60,6 @@ namespace FungusToast.Unity
         private void Start()
         {
             InitializeGame(playerCount);
-            gameUIManager.PhaseBanner.Show("New Game Settings", 5f);
         }
 
         public void InitializeGame(int numberOfPlayers)
@@ -82,7 +81,7 @@ namespace FungusToast.Unity
 
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-            gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
+            gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
             phaseProgressTracker?.ResetTracker();
             phaseProgressTracker?.HighlightMutationPhase();
 
