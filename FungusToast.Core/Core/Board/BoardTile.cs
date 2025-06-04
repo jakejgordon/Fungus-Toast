@@ -6,21 +6,17 @@ namespace FungusToast.Core.Board
     {
         public int X { get; private set; }
         public int Y { get; private set; }
+        public int TileId { get; }
 
         public FungalCell? FungalCell { get; private set; }
 
-        public int TileId { get; }
         public bool IsOccupied => FungalCell != null;
-
-        public int ToxinTimer { get; private set; } = 0;
-        public int ToxinOwnerPlayerId { get; private set; } = -1;
 
         public BoardTile(int x, int y, int boardWidth)
         {
             X = x;
             Y = y;
             TileId = y * boardWidth + x;
-            FungalCell = null;
         }
 
         public void PlaceFungalCell(FungalCell fungalCell)
@@ -34,7 +30,7 @@ namespace FungusToast.Core.Board
         }
 
         // ✅ Proxy accessors to simplify logic
-        public bool IsAlive => FungalCell != null && FungalCell.IsAlive;
+        public bool IsAlive => FungalCell?.IsAlive == true;
         public int OriginalOwnerPlayerId => FungalCell?.OriginalOwnerPlayerId ?? -1;
 
         public void ReclaimAsLiving(int newOwnerPlayerId)
@@ -53,31 +49,5 @@ namespace FungusToast.Core.Board
                 }
             }
         }
-
-        public void PlaceToxin(int ownerPlayerId, int duration)
-        {
-            ToxinTimer = duration;
-            ToxinOwnerPlayerId = ownerPlayerId;
-        }
-
-        public void DecrementToxinTimer()
-        {
-            if (ToxinTimer > 0)
-            {
-                ToxinTimer--;
-
-                if (ToxinTimer == 0)
-                {
-                    ToxinOwnerPlayerId = -1;
-
-                    if (FungalCell?.IsToxin == true)
-                    {
-                        RemoveFungalCell();
-                    }
-                }
-            }
-        }
-
-
     }
 }

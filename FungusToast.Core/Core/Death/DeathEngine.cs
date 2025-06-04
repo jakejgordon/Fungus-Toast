@@ -27,12 +27,17 @@ namespace FungusToast.Core.Death
             ISporeDropObserver? observer = null)
         {
             // -----------------------------------------------------------------
+            // 🧠 Randomize player order to avoid fixed turn advantage
+            // -----------------------------------------------------------------
+            List<Player> shuffledPlayers = players.OrderBy(_ => Rng.NextDouble()).ToList();
+
+            // -----------------------------------------------------------------
             // 1.  Per-turn spore effects (handled in processor)
             // -----------------------------------------------------------------
             var (allMutations, _) = MutationRepository.BuildFullMutationSet();
             Mutation sporocidalBloom = allMutations[MutationIds.SporocidalBloom];
 
-            foreach (var p in players)
+            foreach (var p in shuffledPlayers)
             {
                 MutationEffectProcessor.TryPlaceSporocidalSpores(
                     p, board, Rng, sporocidalBloom, observer);
@@ -42,14 +47,13 @@ namespace FungusToast.Core.Death
             // 2.  Necrophytic Bloom trigger (20 % board occupancy)
             // -----------------------------------------------------------------
             float occupiedPercent =
-                (float)board.GetAllCells().Count /
-                (GameBalance.BoardWidth * GameBalance.BoardHeight);
+                board.GetOccupiedTileRatio();
 
             if (!necrophyticActivated && occupiedPercent >= 0.20f)
             {
                 necrophyticActivated = true;
 
-                foreach (var p in players)
+                foreach (var p in shuffledPlayers)
                 {
                     if (p.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
                     {
@@ -102,22 +106,27 @@ namespace FungusToast.Core.Death
             }
         }
 
+
         /// <summary>
-        /// True if every orthogonal neighbour of <paramref name="tileId"/> is alive.
+        /// True if every neighboring tile (orthogonal and diagonal) of <paramref name="tileId"/> is occupied by a living cell.
         /// Used by Putrefactive Mycotoxin & Encysted Spore logic.
         /// </summary>
         public static bool IsCellSurrounded(int tileId, GameBoard board)
         {
-            FungalCell? cell = board.GetCell(tileId);
-            if (cell == null) return false;
+            var adjacentTileIds = board.GetAdjacentTileIds(tileId);
 
-            foreach (int nId in board.GetAdjacentTileIds(tileId))
+            foreach (int neighborId in adjacentTileIds)
             {
-                FungalCell? n = board.GetCell(nId);
-                if (n == null || !n.IsAlive) return false;
+                var neighbor = board.GetTileById(neighborId);
+
+                if (neighbor == null || neighbor.FungalCell == null)
+                    return false; // Unoccupied or out of bounds
             }
 
             return true;
         }
+
+
+
     }
 }

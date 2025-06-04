@@ -61,6 +61,7 @@ namespace FungusToast.Core.Players
             return level * bonusPerLevel;
         }
 
+        
         public float GetBaseMycelialDegradationRisk(List<Player> allPlayers)
         {
             float enemyPressure = allPlayers
@@ -72,7 +73,7 @@ namespace FungusToast.Core.Players
                 GameBalance.BaseDeathChance + enemyPressure - GetEffectiveSelfDeathChance());
         }
 
-        public float GetEffectiveDeathChanceFrom(Player attacker, FungalCell targetCell, GameBoard board)
+        /** appear to be unusedpublic float GetEffectiveDeathChanceFrom(Player attacker, FungalCell targetCell, GameBoard board)
         {
             float chance = GetEffectiveSelfDeathChance();
             float decayBoost = attacker.GetMutationEffect(MutationType.EnemyDecayChance);
@@ -88,6 +89,7 @@ namespace FungusToast.Core.Players
 
             return System.Math.Max(0f, chance);
         }
+        */
 
         // 🔄  Back-compat helper used by DeathEngine -------------------------
         public float GetOffensiveDecayModifierAgainst(FungalCell targetCell, GameBoard board)
@@ -171,7 +173,7 @@ namespace FungusToast.Core.Players
                 && (mutation.Category == MutationCategory.Growth || mutation.Category == MutationCategory.CellularResilience);
         }
 
-        internal bool TryAutoUpgrade(Mutation mut)
+        public bool TryAutoUpgrade(Mutation mut)
         {
             if (mut == null) return false;
 

@@ -6,6 +6,7 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Grid;
+using FungusToast.Core.Board;
 
 namespace FungusToast.Unity.Phases
 {
@@ -34,11 +35,15 @@ namespace FungusToast.Unity.Phases
             // Execute deaths
             DeathEngine.ExecuteDeathCycle(board, players);
 
-            // Decrement toxin timers and remove expired toxins
+            // Remove expired toxins
             foreach (var tile in board.AllTiles())
             {
-                tile.DecrementToxinTimer();
+                if (tile.FungalCell?.HasToxinExpired(board.CurrentGrowthCycle) == true)
+                {
+                    tile.FungalCell.ClearToxinState();
+                }
             }
+
 
             // Optional: Wait before rendering deaths for dramatic pause
             yield return new WaitForSeconds(GameBalance.TimeBeforeDecayRender);

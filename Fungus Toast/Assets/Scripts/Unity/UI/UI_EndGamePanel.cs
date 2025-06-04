@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using FungusToast.Core;
+using FungusToast.Core.Board;
 using FungusToast.Core.Players;
 using System.Linq;
 

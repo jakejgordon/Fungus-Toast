@@ -3,6 +3,7 @@ using System.Linq;
 using FungusToast.Core;
 using FungusToast.Core.Players;
 using FungusToast.Core.Death;
+using FungusToast.Core.Board;
 
 namespace FungusToast.Simulation.Models
 {

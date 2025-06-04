@@ -25,17 +25,17 @@ namespace FungusToast.Core.Config
         public const float AdaptiveExpressionEffectPerLevel = 0.09f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 5f;
         public const float NecrosporulationEffectPerLevel = 0.04f;
-        public const float EncystedSporesEffectPerLevel = 0.019f;
+        public const float EncystedSporesEffectPerLevel = 0.001f;
         public const float MutatorPhenotypeEffectPerLevel = 0.07f;
         public const float DiagonalGrowthEffectPerLevel = 0.01f;
         public const float MycotropicInductionEffectPerLevel = 0.45f;
-        public const float PutrefactiveMycotoxinEffectPerLevel = 0.099f;
+        public const float PutrefactiveMycotoxinEffectPerLevel = 0.12f;
         public const int AgeResetReductionPerLevel = 5;
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
         public const float RegenerativeHyphaeReclaimChance = 0.007f;
         public const float CreepingMoldMoveChancePerLevel = .025f;
-        public const float SporicialBloomEffectPerLevel = .15f;
+        public const float SporicialBloomEffectPerLevel = .2f;
         public const int NecrophyticBloomBaseSpores = 2;
         public static float NecrophyticBloomSporesPerLevel = 100;
 

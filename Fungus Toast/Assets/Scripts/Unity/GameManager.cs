@@ -15,6 +15,7 @@ using FungusToast.Core.AI;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Death;
 using FungusToast.Core.Phases;
+using FungusToast.Core.Board;
 
 namespace FungusToast.Unity
 {
@@ -110,9 +111,9 @@ namespace FungusToast.Unity
                 });
 
             var regenerativeHyphaeFocus = new ParameterizedSpendingStrategy(
-            strategyName: "Regenerative Hyphae Focus",
-            prioritizeHighTier: true,
-            targetMutationIds: new List<int> { MutationIds.RegenerativeHyphae });
+                strategyName: "Regenerative Hyphae Focus",
+                prioritizeHighTier: true,
+                targetMutationIds: new List<int> { MutationIds.RegenerativeHyphae });
 
             var powerMutations1 = new ParameterizedSpendingStrategy(
                 strategyName: "Power Mutations 1",
@@ -178,7 +179,7 @@ namespace FungusToast.Unity
             {
                 growthPhaseRunner.Initialize(Board, players, gridVisualizer);
                 gameUIManager.PhaseBanner.Show("Growth Phase Begins!", 2f);
-                phaseProgressTracker?.AdvanceToNextGrowthCycle(growthPhaseRunner.CurrentCycle);
+                phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
                 growthPhaseRunner.StartGrowthPhase();
             }
         }

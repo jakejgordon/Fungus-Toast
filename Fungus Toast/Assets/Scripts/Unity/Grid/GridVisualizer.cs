@@ -48,13 +48,12 @@ namespace FungusToast.Unity.Grid
                     TileBase overlayTile = null;
                     Color overlayColor = Color.white;
 
-                    if (boardTile.ToxinTimer > 0 || (boardTile.FungalCell != null && boardTile.FungalCell.IsToxin))
+                    if ((boardTile.FungalCell != null && boardTile.FungalCell.IsToxin))
                     {
-                        // Toxin state — draw darkened mold tile with overlay icon
                         var toxinCell = boardTile.FungalCell;
-                        int ownerId = toxinCell?.OwnerPlayerId ?? -1;
+                        int? ownerIdNullable = toxinCell?.OwnerPlayerId;
 
-                        if (ownerId >= 0 && ownerId < playerMoldTiles.Length)
+                        if (ownerIdNullable is int ownerId && ownerId >= 0 && ownerId < playerMoldTiles.Length)
                         {
                             overlayTile = playerMoldTiles[ownerId];
                             overlayColor = Color.black * 0.8f;
@@ -71,8 +70,8 @@ namespace FungusToast.Unity.Grid
 
                         if (fungalCell.IsAlive)
                         {
-                            int playerId = fungalCell.OwnerPlayerId;
-                            if (playerId >= 0 && playerId < playerMoldTiles.Length)
+                            int? playerIdNullable = fungalCell.OwnerPlayerId;
+                            if (playerIdNullable is int playerId && playerId >= 0 && playerId < playerMoldTiles.Length)
                             {
                                 overlayTile = playerMoldTiles[playerId];
                                 overlayColor = Color.white;
@@ -151,12 +150,12 @@ namespace FungusToast.Unity.Grid
                 TileBase overlayTile = null;
                 Color overlayColor = Color.white;
 
-                if (boardTile.ToxinTimer > 0 || (boardTile.FungalCell != null && boardTile.FungalCell.IsToxin))
+                if ((boardTile.FungalCell != null && boardTile.FungalCell.IsToxin))
                 {
                     var toxinCell = boardTile.FungalCell;
-                    int ownerId = toxinCell?.OwnerPlayerId ?? -1;
+                    int? ownerIdNullable = toxinCell?.OwnerPlayerId;
 
-                    if (ownerId >= 0 && ownerId < playerMoldTiles.Length)
+                    if (ownerIdNullable is int ownerId && ownerId >= 0 && ownerId < playerMoldTiles.Length)
                     {
                         overlayTile = playerMoldTiles[ownerId];
                         overlayColor = Color.black * 0.8f;
@@ -172,8 +171,8 @@ namespace FungusToast.Unity.Grid
 
                     if (fungalCell.IsAlive)
                     {
-                        int playerId = fungalCell.OwnerPlayerId;
-                        if (playerId >= 0 && playerId < playerMoldTiles.Length)
+                        int? playerIdNullable = fungalCell.OwnerPlayerId;
+                        if (playerIdNullable is int playerId && playerId >= 0 && playerId < playerMoldTiles.Length)
                         {
                             overlayTile = playerMoldTiles[playerId];
                             overlayColor = Color.white;

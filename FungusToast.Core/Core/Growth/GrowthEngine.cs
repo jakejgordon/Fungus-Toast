@@ -18,7 +18,10 @@ namespace FungusToast.Core.Growth
 
             foreach (var tile in board.AllTiles())
             {
-                tile.DecrementToxinTimer();
+                if (tile.FungalCell?.HasToxinExpired(board.CurrentGrowthCycle) == true)
+                {
+                    tile.FungalCell.ClearToxinState();
+                }
 
                 if (tile.IsAlive)
                     activeFungalCells.Add((tile, tile.FungalCell!));
@@ -28,10 +31,17 @@ namespace FungusToast.Core.Growth
 
             foreach (var (tile, cell) in activeFungalCells)
             {
-                var owner = players[cell.OwnerPlayerId];
+                if (!cell.OwnerPlayerId.HasValue)
+                {
+                    // Skip cells without an owner (e.g., toxins that were revived incorrectly or bugs)
+                    continue;
+                }
+
+                var owner = players[cell.OwnerPlayerId.Value];
                 TryExpandFromTile(board, tile, cell, owner, rng, observer);
             }
         }
+
 
 
         private static void TryExpandFromTile(GameBoard board, BoardTile sourceTile, FungalCell sourceCell, Player owner, Random rng, IGrowthObserver? observer)
@@ -99,7 +109,7 @@ namespace FungusToast.Core.Growth
                         int tileId = neighbor.TileId;
                         var newCell = new FungalCell(owner.PlayerId, tileId);
                         neighbor.PlaceFungalCell(newCell);
-                        board.RegisterCell(newCell);
+                        board.PlaceFungalCell(newCell);
                         owner.AddControlledTile(tileId);
                     }
                     break; // successful growth ends turn

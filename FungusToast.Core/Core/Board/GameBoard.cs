@@ -1,10 +1,10 @@
-﻿using FungusToast.Core.Board;
-using FungusToast.Core.Config;
+﻿using FungusToast.Core.Config;
 using FungusToast.Core.Players;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FungusToast.Core
+namespace FungusToast.Core.Board
 {
     public class GameBoard
     {
@@ -13,7 +13,9 @@ namespace FungusToast.Core
         public BoardTile[,] Grid { get; }
         public List<Player> Players { get; }
 
-        private Dictionary<int, FungalCell> tileIdToCell = new();
+        private readonly Dictionary<int, FungalCell> tileIdToCell = new();
+
+        public int CurrentGrowthCycle { get; private set; } = 0;
 
         public GameBoard(int width, int height, int playerCount)
         {
@@ -44,7 +46,7 @@ namespace FungusToast.Core
 
         public List<BoardTile> GetOrthogonalNeighbors(int x, int y)
         {
-            List<BoardTile> neighbors = new List<BoardTile>();
+            List<BoardTile> neighbors = new();
             int[] dx = { -1, 0, 1, 0 };
             int[] dy = { 0, -1, 0, 1 };
 
@@ -92,24 +94,15 @@ namespace FungusToast.Core
 
         public FungalCell? GetCell(int tileId)
         {
-            if (tileIdToCell.TryGetValue(tileId, out var cell))
-            {
-                return cell;
-            }
-
-            return null;
+            tileIdToCell.TryGetValue(tileId, out var cell);
+            return cell;
         }
 
-        public void RegisterCell(FungalCell cell)
+        public void PlaceFungalCell(FungalCell cell)
         {
-            if (cell != null)
-            {
-                tileIdToCell[cell.TileId] = cell;
-
-                var (x, y) = GetXYFromTileId(cell.TileId);
-                var tile = Grid[x, y];
-                tile.PlaceFungalCell(cell);
-            }
+            tileIdToCell[cell.TileId] = cell;
+            var (x, y) = GetXYFromTileId(cell.TileId);
+            Grid[x, y].PlaceFungalCell(cell);
         }
 
         public void RemoveControlFromPlayer(int tileId)
@@ -123,7 +116,7 @@ namespace FungusToast.Core
         public List<int> GetAdjacentTileIds(int tileId)
         {
             var (x, y) = GetXYFromTileId(tileId);
-            List<int> neighbors = new List<int>();
+            List<int> neighbors = new();
 
             for (int dx = -1; dx <= 1; dx++)
             {
@@ -154,22 +147,12 @@ namespace FungusToast.Core
 
         public List<FungalCell> GetAllCells()
         {
-            return new List<FungalCell>(tileIdToCell.Values);
+            return tileIdToCell.Values.ToList();
         }
 
         public List<FungalCell> GetAllCellsOwnedBy(int playerId)
         {
-            List<FungalCell> result = new();
-
-            foreach (var cell in GetAllCells())
-            {
-                if (cell.OwnerPlayerId == playerId)
-                {
-                    result.Add(cell);
-                }
-            }
-
-            return result;
+            return tileIdToCell.Values.Where(c => c.OwnerPlayerId == playerId).ToList();
         }
 
         public bool SpawnSporeForPlayer(Player player, int tileId)
@@ -203,13 +186,11 @@ namespace FungusToast.Core
             return GetTile(x, y);
         }
 
-        public List<int> GetAllTileIds() => new List<int>(tileIdToCell.Keys);
+        public List<int> GetAllTileIds() => tileIdToCell.Keys.ToList();
 
         public List<BoardTile> GetDeadTiles()
         {
-            return AllTiles()
-                .Where(t => t.FungalCell != null && !t.FungalCell.IsAlive)
-                .ToList();
+            return AllTiles().Where(t => t.FungalCell != null && !t.FungalCell.IsAlive).ToList();
         }
 
         public float GetOccupiedTileRatio()
@@ -222,6 +203,11 @@ namespace FungusToast.Core
         public bool ShouldTriggerEndgame()
         {
             return GetOccupiedTileRatio() >= GameBalance.GameEndTileOccupancyThreshold;
+        }
+
+        public void IncrementGrowthCycle()
+        {
+            CurrentGrowthCycle++;
         }
     }
 }

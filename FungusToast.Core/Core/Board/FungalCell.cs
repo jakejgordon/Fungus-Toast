@@ -6,12 +6,16 @@ namespace FungusToast.Core.Board
     public class FungalCell
     {
         public int OriginalOwnerPlayerId { get; private set; }
-        public int OwnerPlayerId { get; internal set; }
+        public int? OwnerPlayerId { get; internal set; }
         public int TileId { get; private set; }
 
         public bool IsAlive { get; internal set; } = true;
-        public int ToxinLevel { get; private set; } = 0;
         public int GrowthCycleAge { get; private set; } = 0;
+        public int ToxinExpirationCycle { get; private set; } = 0;
+
+        public bool IsToxin => ToxinExpirationCycle > 0;
+        public bool IsDead => !IsAlive && !IsToxin;
+        public bool IsReclaimable => IsDead && !IsToxin;
 
         public DeathReason? CauseOfDeath { get; private set; }
 
@@ -22,39 +26,18 @@ namespace FungusToast.Core.Board
 
         public int ReclaimCount { get; private set; } = 0;
 
-        // Toxin state
-        public bool IsToxin { get; internal set; } = false;
-
         public FungalCell() { }
 
-        public FungalCell(int ownerPlayerId, int tileId)
+        public FungalCell(int? ownerPlayerId, int tileId)
         {
             OwnerPlayerId = ownerPlayerId;
-            OriginalOwnerPlayerId = ownerPlayerId;
+            if (ownerPlayerId.HasValue)
+            {
+                OriginalOwnerPlayerId = ownerPlayerId.Value;
+            }
             TileId = tileId;
             IsAlive = true;
-            ToxinLevel = 0;
         }
-
-        /// <summary>
-        /// Alternate constructor for a cell that starts as a toxin.
-        /// </summary>
-        public FungalCell(int ownerPlayerId, int tileId, int toxinExpirationCycle, DeathReason reason)
-        {
-            OwnerPlayerId = ownerPlayerId;
-            OriginalOwnerPlayerId = ownerPlayerId;
-            TileId = tileId;
-            IsAlive = false;
-            IsToxin = true;
-            CauseOfDeath = reason;
-        }
-
-        public void MarkAsToxin(int expirationCycle)
-        {
-            IsAlive = false;
-            IsToxin = true;
-        }
-
 
         public void Kill(DeathReason reason)
         {
@@ -70,27 +53,16 @@ namespace FungusToast.Core.Board
         {
             if (IsAlive)
                 throw new InvalidOperationException("Cannot reclaim a living cell.");
+            if (IsToxin)
+                throw new InvalidOperationException("Cannot reclaim a toxic cell.");
 
             OwnerPlayerId = newOwnerPlayerId;
             IsAlive = true;
             GrowthCycleAge = 0;
-            ToxinLevel = 0;
             CauseOfDeath = null;
             LastOwnerPlayerId = null;
-            IsToxin = false;
+            ToxinExpirationCycle = 0;
             ReclaimCount++;
-        }
-
-        public void IncreaseToxin(int amount)
-        {
-            if (amount > 0)
-                ToxinLevel += amount;
-        }
-
-        public void DecreaseToxin(int amount)
-        {
-            if (amount > 0)
-                ToxinLevel = Math.Max(0, ToxinLevel - amount);
         }
 
         public void IncrementGrowthAge()
@@ -106,6 +78,41 @@ namespace FungusToast.Core.Board
         public void SetGrowthCycleAge(int age)
         {
             GrowthCycleAge = age;
+        }
+
+        public void MarkAsToxin(int expirationCycle)
+        {
+            if (IsAlive)
+                throw new InvalidOperationException("Cannot mark a living cell as toxin.");
+            if (expirationCycle <= 0)
+                throw new ArgumentOutOfRangeException(nameof(expirationCycle), "Expiration must be greater than 0.");
+
+            ToxinExpirationCycle = expirationCycle;
+        }
+
+        public void ConvertToToxin(int expirationCycle, int? ownerPlayerId = null, DeathReason? reason = null)
+        {
+            if (IsAlive)
+            {
+                Kill(reason ?? DeathReason.Unknown);
+            }
+
+            if (ownerPlayerId.HasValue)
+            {
+                OwnerPlayerId = ownerPlayerId;
+            }
+
+            ToxinExpirationCycle = expirationCycle;
+        }
+
+        public void ClearToxinState()
+        {
+            ToxinExpirationCycle = 0;
+        }
+
+        public bool HasToxinExpired(int currentGrowthCycle)
+        {
+            return IsToxin && currentGrowthCycle >= ToxinExpirationCycle;
         }
     }
 }

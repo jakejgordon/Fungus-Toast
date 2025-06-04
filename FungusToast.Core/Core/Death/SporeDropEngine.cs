@@ -1,4 +1,5 @@
-﻿using FungusToast.Core.Players;
+﻿/*
+using FungusToast.Core.Players;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 
@@ -42,3 +43,4 @@ namespace FungusToast.Core.Death
         }
     }
 }
+*/
