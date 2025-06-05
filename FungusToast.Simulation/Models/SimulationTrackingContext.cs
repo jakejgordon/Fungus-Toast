@@ -11,8 +11,8 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> mycotoxinTracerSporeDrops = new();
         private readonly Dictionary<int, int> sporocidalSporeDrops = new();
         private readonly Dictionary<int, int> necrosporeDrops = new();
-        private readonly Dictionary<int, int> necrophyticBloomSpores = new();      // 🆕
-        private readonly Dictionary<int, int> necrophyticBloomReclaims = new();    // 🆕
+        private readonly Dictionary<int, int> necrophyticBloomSpores = new();
+        private readonly Dictionary<int, int> necrophyticBloomReclaims = new();
 
         public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
 
@@ -36,11 +36,10 @@ namespace FungusToast.Simulation.Models
             reclaimedCells.TryGetValue(playerId, out var val) ? val : 0;
 
         public int GetNecrophyticBloomSpores(int playerId) =>
-    necrophyticBloomSpores.TryGetValue(playerId, out var val) ? val : 0;
+            necrophyticBloomSpores.TryGetValue(playerId, out var val) ? val : 0;
 
         public int GetNecrophyticBloomReclaims(int playerId) =>
             necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
-
 
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped)
         {
@@ -93,10 +92,16 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetNecroSpores() => new(necrosporeDrops);
         public Dictionary<int, int> GetNecrophyticBloomSpores() => new(necrophyticBloomSpores);
         public Dictionary<int, int> GetNecrophyticBloomReclaims() => new(necrophyticBloomReclaims);
+        public Dictionary<int, int> GetMycotoxinTracerSpores() => new(mycotoxinTracerSporeDrops);
+
         public int GetSporocidalSporeDropCount(int playerId) =>
             sporocidalSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
 
-        public int GetNecrosporeDropCount(int playerId) =>
+        public int GetNecrosporulationSporeDropCount(int playerId) =>
             necrosporeDrops.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetMycotoxinTracerSporeDropCount(int playerId) =>
+            mycotoxinTracerSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
+
     }
 }

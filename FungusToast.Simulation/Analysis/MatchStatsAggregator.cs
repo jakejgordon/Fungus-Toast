@@ -80,7 +80,7 @@ namespace FungusToast.Simulation.Analysis
                     entry.totalReclaims += pr.ReclaimedCells;
                     entry.totalMoldMoves += pr.CreepingMoldMoves;
                     entry.sporesFromBloom += pr.SporocidalSpores;
-                    entry.sporesFromNecro += pr.NecroSpores;
+                    entry.sporesFromNecro += pr.NecrosporulationSpores;
                     entry.sporesFromNecrophytic += pr.NecrophyticSpores;
                     entry.reclaimsFromNecrophytic += pr.NecrophyticReclaims;
                     entry.sporesFromMycotoxin += pr.MycotoxinTracerSpores;
