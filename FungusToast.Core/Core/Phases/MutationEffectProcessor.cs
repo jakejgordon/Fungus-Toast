@@ -454,7 +454,7 @@ namespace FungusToast.Core.Phases
             int livingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive);
 
             // 1. Randomized base toxin count based on level
-            int toxinsFromLevel = rng.Next(0, level + 1);
+            int toxinsFromLevel = rng.Next(0, (level + 1) / 2);
 
             // 2. Failed growth bonus scales with both fails and level
             float weightedFailures = failedGrowthsThisRound * level * GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel;
@@ -486,11 +486,16 @@ namespace FungusToast.Core.Phases
 
                 ToxinHelper.ConvertToToxin(board, chosen.TileId, GameBalance.MycotoxinTracerTileDuration);
                 placed++;
-                observer?.ReportMycotoxinTracerSporeDrop(player.PlayerId, 1);
+            }
+
+            if (placed > 0)
+            {
+                observer?.ReportMycotoxinTracerSporeDrop(player.PlayerId, placed);
             }
 
             return placed;
         }
+
 
 
 

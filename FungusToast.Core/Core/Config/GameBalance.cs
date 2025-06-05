@@ -21,10 +21,10 @@ namespace FungusToast.Core.Config
         // Mutation Effects
         public const float MycelialBloomEffectPerLevel = 0.0025f;
         public const float HomeostaticHarmonyEffectPerLevel = 0.003f;
-        public const float MycotoxinTracerEffectPerLevel = .01f;
-        public const float MycotoxinTracerFailedGrowthWeightPerLevel = 0.01f;
-        internal static int MycotoxinTracerTileDuration = 10;
-        public const int MycotoxinTracerMaxToxinsDivisor = 30;
+        //public const float MycotoxinTracerEffectPerLevel = .01f;
+        public const float MycotoxinTracerFailedGrowthWeightPerLevel = 0.005f;
+        public const int MycotoxinTracerTileDuration = 10;
+        public const int MycotoxinTracerMaxToxinsDivisor = 50;
         public const float AdaptiveExpressionEffectPerLevel = 0.09f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 5f;
         public const float NecrosporulationEffectPerLevel = 0.04f;

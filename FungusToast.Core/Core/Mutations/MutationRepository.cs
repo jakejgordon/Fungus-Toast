@@ -103,11 +103,11 @@ namespace FungusToast.Core.Mutations
             MakeRoot(new Mutation(
                 id: MutationIds.MycotoxinTracer,
                 name: "Mycotoxin Tracer",
-                description: "During each decay phase, you have a chance to release toxin spores based on this mutation’s level, the size of your colony, and recent failed growth attempts. " +
-                             "These spores do not kill, but temporarily block enemy growth and reclamation on nearby tiles.",
-                flavorText: "Non-lethal secretions disperse during decay, coating enemy territory in dormant toxins that inhibit encroachment.",
+                description: "During the decay phase, you release toxin spores based on this mutation’s level and your number of failed growth attempts. " +
+                             "These spores settle on nearby unoccupied tiles adjacent to enemies, creating temporary toxin zones that prevent enemy reclamation or growth.",
+                flavorText: "Microscopic chemical trails seep outward, clouding enemy borders in dormant inhibition fields.",
                 type: MutationType.FungicideToxinSpores,
-                effectPerLevel: GameBalance.MycotoxinTracerEffectPerLevel,  // still used for per-level RNG chance
+                effectPerLevel: GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier1),
                 maxLevel: 50,
                 category: MutationCategory.Fungicide,
