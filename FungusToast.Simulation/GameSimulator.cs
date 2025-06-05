@@ -15,13 +15,13 @@ namespace FungusToast.Simulation.GameSimulation
     public class GameSimulator
     {
         public GameResult RunSimulation(
-    List<IMutationSpendingStrategy> strategies,
-    int seed,
-    int gameIndex = -1,
-    int totalGames = -1,
-    DateTime? startTime = null,
-    SimulationTrackingContext? context = null
-)
+            List<IMutationSpendingStrategy> strategies,
+            int seed,
+            int gameIndex = -1,
+            int totalGames = -1,
+            DateTime? startTime = null,
+            SimulationTrackingContext? context = null
+        )
         {
             var rng = new Random(seed);
             var (players, board) = InitializeGame(strategies, rng);
@@ -54,7 +54,7 @@ namespace FungusToast.Simulation.GameSimulation
                 TurnEngine.AssignMutationPoints(board, players, allMutations, rng);
                 MutationEffectProcessor.ApplyStartOfTurnEffects(board, players, rng);
                 TurnEngine.RunGrowthPhase(board, players, rng, simTracking);
-                TurnEngine.RunDecayPhase(board, players, simTracking.FailedGrowthsByPlayerId);
+                TurnEngine.RunDecayPhase(board, players, simTracking.FailedGrowthsByPlayerId, simTracking);
 
                 turn++;
             }

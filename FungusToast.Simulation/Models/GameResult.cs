@@ -44,9 +44,11 @@ namespace FungusToast.Simulation.Models
                         .Average(),
 
                     DeadCellDeathReasons = new List<DeathReason>(),
-
+                    NecrophyticReclaims = tracking.GetNecrophyticBloomReclaimCount(player.PlayerId),
+                    NecrophyticSpores = tracking.GetNecrophyticBloomSporeDropCount(player.PlayerId),
                     ReclaimedCells = tracking.GetReclaimedCells(player.PlayerId),
-                    CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId)
+                    CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId),
+                    MycotoxinTracerSpores = tracking.GetMycotoxinSporeDropCount(player.PlayerId),
                 };
 
                 playerResultMap[player.PlayerId] = pr;
