@@ -18,19 +18,13 @@ namespace FungusToast.Core.Growth
             Random rng,
             IGrowthObserver? observer = null)
         {
+            board.IncrementGrowthCycle();
+
+            // Expire toxins before growth begins
+            board.ExpireToxinTiles(board.CurrentGrowthCycle);
+
             var failedGrowthsByPlayerId = players.ToDictionary(p => p.PlayerId, _ => 0);
             var activeFungalCells = new List<(BoardTile tile, FungalCell cell)>();
-
-            foreach (var tile in board.AllTiles())
-            {
-                if (tile.FungalCell?.HasToxinExpired(board.CurrentGrowthCycle) == true)
-                {
-                    tile.FungalCell.ClearToxinState();
-                }
-
-                if (tile.IsAlive)
-                    activeFungalCells.Add((tile, tile.FungalCell!));
-            }
 
             Shuffle(activeFungalCells, rng);
 

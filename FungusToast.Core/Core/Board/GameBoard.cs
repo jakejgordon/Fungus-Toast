@@ -211,5 +211,30 @@ namespace FungusToast.Core.Board
         {
             CurrentGrowthCycle++;
         }
+
+        public IEnumerable<BoardTile> AllToxinTiles()
+        {
+            return AllTiles().Where(t => t.FungalCell?.IsToxin == true);
+        }
+
+        public IEnumerable<FungalCell> AllToxinFungalCells()
+        {
+            return AllTiles()
+                .Select(t => t.FungalCell)
+                .Where(c => c?.IsToxin == true)
+                .Cast<FungalCell>();
+        }
+
+        public void ExpireToxinTiles(int currentGrowthCycle)
+        {
+            foreach (var cell in AllToxinFungalCells())
+            {
+                if (cell.HasToxinExpired(currentGrowthCycle))
+                {
+                    cell.ClearToxinState();
+                }
+            }
+        }
+
     }
 }
