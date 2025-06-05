@@ -23,17 +23,17 @@ namespace FungusToast.Unity.Phases
             this.gridVisualizer = gridVisualizer;
         }
 
-        public void StartDecayPhase()
+        public void StartDecayPhase(Dictionary<int, int> failedGrowthsByPlayerId)
         {
-            StartCoroutine(RunDecayPhase());
+            StartCoroutine(RunDecayPhase(failedGrowthsByPlayerId));
         }
 
-        private IEnumerator RunDecayPhase()
+        private IEnumerator RunDecayPhase(Dictionary<int, int> failedGrowthsByPlayerId)
         {
             Debug.Log("💀 Decay Phase Starting...");
 
             // Execute deaths
-            DeathEngine.ExecuteDeathCycle(board, players);
+            DeathEngine.ExecuteDeathCycle(board, players, failedGrowthsByPlayerId);
 
             // Remove expired toxins
             foreach (var tile in board.AllTiles())
@@ -44,21 +44,16 @@ namespace FungusToast.Unity.Phases
                 }
             }
 
-
-            // Optional: Wait before rendering deaths for dramatic pause
             yield return new WaitForSeconds(GameBalance.TimeBeforeDecayRender);
 
-            // Render decay results
             gridVisualizer.RenderBoard(board);
 
-            // Update UI (player summaries, etc.)
             GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(players);
 
-            // Optional: Additional delay
             yield return new WaitForSeconds(GameBalance.TimeAfterDecayRender);
 
-            // Let GameManager continue
             GameManager.Instance.OnRoundComplete();
         }
+
     }
 }

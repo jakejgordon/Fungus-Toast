@@ -22,5 +22,6 @@ namespace FungusToast.Core
         FungicideSporeDrop,
         NecrophyticBloomSporeDrop,
         AgeAndRandomnessDecayResistance,
+        FungicideToxinSpores,
     }
 }

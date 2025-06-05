@@ -18,6 +18,7 @@ namespace FungusToast.Unity.Phases
         private GridVisualizer gridVisualizer;
         private bool isRunning = false;
         private System.Random rng = new();
+        public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
 
         private int phaseCycle = 0; // 1–5 for UI display
 
@@ -60,7 +61,8 @@ namespace FungusToast.Unity.Phases
 
             Debug.Log($"🌿 Growth Cycle {phaseCycle}/{GameBalance.TotalGrowthCycles}");
 
-            processor.ExecuteSingleCycle();
+            var failedThisCycle = processor.ExecuteSingleCycle();
+            MergeFailedGrowths(failedThisCycle);
             MutationEffectProcessor.ApplyStartOfTurnEffects(board, players, rng);
             gridVisualizer.RenderBoard(board);
 
@@ -70,5 +72,17 @@ namespace FungusToast.Unity.Phases
             yield return new WaitForSeconds(GameBalance.TimeBetweenGrowthCycles);
             StartCoroutine(RunNextCycle());
         }
+
+        private void MergeFailedGrowths(Dictionary<int, int> failedThisCycle)
+        {
+            foreach (var kvp in failedThisCycle)
+            {
+                if (FailedGrowthsByPlayerId.ContainsKey(kvp.Key))
+                    FailedGrowthsByPlayerId[kvp.Key] += kvp.Value;
+                else
+                    FailedGrowthsByPlayerId[kvp.Key] = kvp.Value;
+            }
+        }
+
     }
 }

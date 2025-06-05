@@ -34,14 +34,13 @@ namespace FungusToast.Simulation.Analysis
                 int sporesFromNecro,
                 int sporesFromNecrophytic,
                 int reclaimsFromNecrophytic,
+                int sporesFromMycotoxin,
                 int mutationPointsSpent,
                 float growthChance,
                 float selfDeathChance,
                 float decayMod)>();
 
             var deathReasonCounts = new Dictionary<DeathReason, int>();
-
-            //var mutationUsageByStrategy = new Dictionary<string, Dictionary<int, List<(int level, bool isWinner)>>>();
 
             foreach (var result in results)
             {
@@ -51,7 +50,26 @@ namespace FungusToast.Simulation.Analysis
                     bool isWinner = id == result.WinnerId;
 
                     if (!playerStats.ContainsKey(id))
-                        playerStats[id] = (pr.Strategy, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0f, 0f, 0f);
+                    {
+                        playerStats[id] = (
+                            strategyObj: pr.Strategy,
+                            wins: 0,
+                            appearances: 0,
+                            totalLiving: 0,
+                            totalDead: 0,
+                            totalReclaims: 0,
+                            totalMoldMoves: 0,
+                            sporesFromBloom: 0,
+                            sporesFromNecro: 0,
+                            sporesFromNecrophytic: 0,
+                            reclaimsFromNecrophytic: 0,
+                            sporesFromMycotoxin: 0,
+                            mutationPointsSpent: 0,
+                            growthChance: 0f,
+                            selfDeathChance: 0f,
+                            decayMod: 0f
+                        );
+                    }
 
                     var entry = playerStats[id];
                     entry.appearances++;
@@ -65,6 +83,7 @@ namespace FungusToast.Simulation.Analysis
                     entry.sporesFromNecro += pr.NecroSpores;
                     entry.sporesFromNecrophytic += pr.NecrophyticSpores;
                     entry.reclaimsFromNecrophytic += pr.NecrophyticReclaims;
+                    entry.sporesFromMycotoxin += pr.MycotoxinTracerSpores;
                     entry.mutationPointsSpent += pr.MutationLevels.Sum(kv =>
                         (MutationRegistry.GetById(kv.Key)?.PointsPerUpgrade ?? 0) * kv.Value);
                     entry.growthChance += pr.EffectiveGrowthChance;
@@ -81,20 +100,6 @@ namespace FungusToast.Simulation.Analysis
                             deathReasonCounts[reason]++;
                         }
                     }
-
-                    // Track mutation usage per strategy
-                    string strategyKey = pr.Strategy.StrategyName;
-                    /*
-                    if (!mutationUsageByStrategy.ContainsKey(strategyKey))
-                        mutationUsageByStrategy[strategyKey] = new Dictionary<int, List<(int, bool)>>();
-
-                    foreach (var kv in pr.MutationLevels)
-                    {
-                        if (!mutationUsageByStrategy[strategyKey].ContainsKey(kv.Key))
-                            mutationUsageByStrategy[strategyKey][kv.Key] = new List<(int, bool)>();
-
-                        mutationUsageByStrategy[strategyKey][kv.Key].Add((kv.Value, isWinner));
-                    }*/
                 }
             }
 
@@ -105,9 +110,7 @@ namespace FungusToast.Simulation.Analysis
             PrintGameLevelStats(results, totalCells);
             PrintDeathReasonSummary(deathReasonCounts);
             PrintPlayerSummaryTable(playerStats);
-            //PrintMutationUsageByStrategy(mutationUsageByStrategy);
         }
-
 
         private void PrintGameLevelStats(List<GameResult> results, int totalCells)
         {
@@ -134,7 +137,7 @@ namespace FungusToast.Simulation.Analysis
             IMutationSpendingStrategy strategyObj, int wins, int appearances,
             int living, int dead, int reclaims, int moldMoves,
             int sporesBloom, int sporesNecro, int sporesNecrophytic,
-            int reclaimsNecrophytic, int mpSpent,
+            int reclaimsNecrophytic, int sporesMycotoxin, int mpSpent,
             float growthChance, float selfDeathChance, float decayMod)> playerStats)
         {
             Console.WriteLine("\nPer-Player Summary:");
@@ -147,7 +150,12 @@ namespace FungusToast.Simulation.Analysis
 
             foreach (var (id, entry) in playerStats.OrderByDescending(kvp => (float)kvp.Value.wins / kvp.Value.appearances))
             {
-                var (strategyObj, wins, appearances, living, dead, _, _, _, _, _, _, mpSpent, growth, selfDeath, decayMod) = entry;
+                var (
+                    strategyObj, wins, appearances, living, dead,
+                    reclaims, moldMoves, sporesBloom, sporesNecro,
+                    sporesNecrophytic, reclaimsNecrophytic, sporesMycotoxin,
+                    mpSpent, growth, selfDeath, decayMod
+                ) = entry;
 
                 float winRate = appearances > 0 ? (float)wins / appearances * 100f : 0f;
 
@@ -156,13 +164,11 @@ namespace FungusToast.Simulation.Analysis
                     $"{BoolFlag(strategyObj.PrioritizeHighTier),5} | {BoolFlag(strategyObj.UsesGrowth),7} | {BoolFlag(strategyObj.UsesCellularResilience),7} | " +
                     $"{BoolFlag(strategyObj.UsesFungicide),6} | {BoolFlag(strategyObj.UsesGeneticDrift),6} | " +
                     $"{winRate,6:F1}% | {(float)living / appearances,10:F1} | {(float)dead / appearances,9:F1} | " +
-                    $"{(float)mpSpent / appearances,13:F1} | {growth / appearances * 100f,6:F2}% | {selfDeath / appearances * 100f,10:F2}% | {decayMod / appearances * 100f,8:F2}%");
+                    $"{(float)mpSpent / appearances,13:F1} | {growth / appearances * 100f,6:F2}% | {selfDeath / appearances * 100f,10:F2}% | {decayMod / appearances,8:F2}%");
             }
 
             Console.WriteLine(new string('-', 150));
         }
-
-
 
         private void PrintDeathReasonSummary(Dictionary<DeathReason, int> deathReasonCounts)
         {
@@ -182,12 +188,9 @@ namespace FungusToast.Simulation.Analysis
             }
         }
 
-
         private string BoolFlag(bool? val) => val == true ? "Y" : "N";
 
         private string Truncate(string s, int max) =>
             s.Length > max ? s.Substring(0, max - 1) + "…" : s;
-
-
     }
 }

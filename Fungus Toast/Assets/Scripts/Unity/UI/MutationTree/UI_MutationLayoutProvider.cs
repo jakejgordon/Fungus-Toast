@@ -28,7 +28,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.RegenerativeHyphae,       new MutationLayoutMetadata(1, 3, MutationCategory.CellularResilience) },
 
                 /* ---------------- Fungicide (col 2) ----------------- */
-                { MutationIds.SilentBlight,              new MutationLayoutMetadata(2, 0, MutationCategory.Fungicide) },
+                { MutationIds.MycotoxinTracer,              new MutationLayoutMetadata(2, 0, MutationCategory.Fungicide) },
                 { MutationIds.EncystedSpores,            new MutationLayoutMetadata(2, 1, MutationCategory.Fungicide) },
                 { MutationIds.PutrefactiveMycotoxin,     new MutationLayoutMetadata(2, 2, MutationCategory.Fungicide) },
                 { MutationIds.SporocidalBloom,           new MutationLayoutMetadata(2, 3, MutationCategory.Fungicide) },

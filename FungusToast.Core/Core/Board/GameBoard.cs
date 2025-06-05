@@ -17,6 +17,8 @@ namespace FungusToast.Core.Board
 
         public int CurrentGrowthCycle { get; private set; } = 0;
 
+        public int TotalTiles => Width * Height;
+
         public GameBoard(int width, int height, int playerCount)
         {
             Width = width;

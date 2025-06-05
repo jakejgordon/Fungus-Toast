@@ -191,7 +191,7 @@ namespace FungusToast.Unity
             decayPhaseRunner.Initialize(Board, players, gridVisualizer);
             gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f);
             phaseProgressTracker?.HighlightDecayPhase();
-            decayPhaseRunner.StartDecayPhase();
+            decayPhaseRunner.StartDecayPhase(growthPhaseRunner.FailedGrowthsByPlayerId);
         }
 
         public void OnRoundComplete()

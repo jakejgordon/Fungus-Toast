@@ -1,5 +1,6 @@
 ﻿using FungusToast.Core.AI;
 using FungusToast.Core.Death;
+using System.Collections.Generic;
 
 namespace FungusToast.Simulation.Models
 {
@@ -26,5 +27,7 @@ namespace FungusToast.Simulation.Models
 
         public int NecrophyticSpores { get; set; }
         public int NecrophyticReclaims { get; set; }
+
+        public int MycotoxinTracerSpores { get; set; }
     }
 }

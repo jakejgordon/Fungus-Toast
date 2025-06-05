@@ -117,12 +117,6 @@ namespace FungusToast.Core.Phases
                 return (esChance, DeathReason.EncystedSpores);
             }
 
-            if (CheckSilentBlight(cell, board, allPlayers, out float sbChance) &&
-                roll < sbChance)
-            {
-                return (sbChance, DeathReason.SilentBlight);
-            }
-
             return (totalFallbackChance, null);
         }
 
@@ -444,5 +438,61 @@ namespace FungusToast.Core.Phases
 
             observer?.ReportNecrophyticBloomSporeDrop(player.PlayerId, spores, reclaims);
         }
+
+        public static int ApplyMycotoxinTracer(Player player,
+                                       GameBoard board,
+                                       int failedGrowthsThisRound,
+                                       Random rng,
+                                       ISporeDropObserver? observer = null)
+        {
+            int level = player.GetMutationLevel(MutationIds.MycotoxinTracer);
+            if (level == 0) return 0;
+
+            int totalTiles = board.TotalTiles;
+            int maxToxinsThisRound = totalTiles / GameBalance.MycotoxinTracerMaxToxinsDivisor;
+
+            int livingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive);
+
+            // 1. Randomized base toxin count based on level
+            int toxinsFromLevel = rng.Next(0, level + 1);
+
+            // 2. Failed growth bonus scales with both fails and level
+            float weightedFailures = failedGrowthsThisRound * level * GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel;
+            int toxinsFromFailures = rng.Next(0, (int)weightedFailures + 1);
+
+            int totalToxins = toxinsFromLevel + toxinsFromFailures;
+            totalToxins = Math.Min(totalToxins, maxToxinsThisRound);
+
+            if (totalToxins == 0) return 0;
+
+            // 3. Target tiles that are unoccupied, not toxic, and adjacent to enemy mold
+            List<BoardTile> candidateTiles = board.AllTiles()
+                .Where(t => !t.IsOccupied)
+                .Where(t =>
+                {
+                    return board.GetAdjacentTileIds(t.TileId)
+                                .Select(board.GetCell)
+                                .Any(c => c is { IsAlive: true } &&
+                                          c.OwnerPlayerId != player.PlayerId);
+                })
+                .ToList();
+
+            int placed = 0;
+            for (int i = 0; i < totalToxins && candidateTiles.Count > 0; i++)
+            {
+                int index = rng.Next(candidateTiles.Count);
+                BoardTile chosen = candidateTiles[index];
+                candidateTiles.RemoveAt(index);
+
+                ToxinHelper.ConvertToToxin(board, chosen.TileId, GameBalance.MycotoxinTracerTileDuration);
+                placed++;
+                observer?.ReportMycotoxinTracerSporeDrop(player.PlayerId, 1);
+            }
+
+            return placed;
+        }
+
+
+
     }
 }

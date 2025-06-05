@@ -4,15 +4,20 @@ using FungusToast.Simulation.Analysis;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 100;
+    private const int NumberOfSimulationGames = 1;
 
     static void Main()
     {
 
-        var highTier = new ParameterizedSpendingStrategy(
+        var mutatorGrowth = new ParameterizedSpendingStrategy(
             strategyName: "Mutator Growth",
             prioritizeHighTier: true,
             targetMutationIds: new List<int> { MutationIds.AnabolicInversion, MutationIds.CreepingMold });
+
+        var toxinBadGuy = new ParameterizedSpendingStrategy(
+            strategyName: "Toxin Bad Guy",
+            prioritizeHighTier: false,
+            targetMutationIds: new List<int> { MutationIds.NecrophyticBloom, MutationIds.PutrefactiveMycotoxin, MutationIds.CreepingMold });
 
         var growthAndResilienceMax3HighTier = new ParameterizedSpendingStrategy(
             strategyName: "GrowthResilience_Max3_HighTier",
@@ -62,10 +67,10 @@ class Program
         var strategies = new List<IMutationSpendingStrategy>
         {
             powerMutations1,
-            new GrowthThenDefenseSpendingStrategy(),
             new RandomMutationSpendingStrategy(),
             max2,
-            highTier,
+            toxinBadGuy,
+            mutatorGrowth,
             growthAndResilienceMax3HighTier,
             growthAndResilienceHighTier,
             regenerativeHyphaeFocus

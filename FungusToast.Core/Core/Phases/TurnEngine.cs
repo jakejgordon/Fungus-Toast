@@ -43,9 +43,9 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// Executes the decay phase for all living fungal cells.
         /// </summary>
-        public static void RunDecayPhase(GameBoard board, List<Player> players, ISporeDropObserver? observer = null)
+        public static void RunDecayPhase(GameBoard board, List<Player> players, Dictionary<int, int> failedGrowthsByPlayerId, ISporeDropObserver? observer = null)
         {
-            DeathEngine.ExecuteDeathCycle(board, players, observer);
+            DeathEngine.ExecuteDeathCycle(board, players, failedGrowthsByPlayerId, observer);
         }
 
     }

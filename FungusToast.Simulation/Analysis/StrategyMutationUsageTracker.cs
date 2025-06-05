@@ -60,6 +60,7 @@ namespace FungusToast.Simulation.Analysis
                 { nameof(PlayerResult.SporocidalSpores), (MutationIds.SporocidalBloom, "Sporicidal Drops") },
                 { nameof(PlayerResult.NecrophyticSpores), (MutationIds.NecrophyticBloom, "Necrophytic Spores") },
                 { nameof(PlayerResult.NecrophyticReclaims), (MutationIds.NecrophyticBloom, "Necrophytic Reclaims") },
+                { nameof(PlayerResult.MycotoxinTracerSpores), (MutationIds.MycotoxinTracer, "Mycotoxin Tiles") },
             };
 
             // Step 2: Aggregate effect counts from player results

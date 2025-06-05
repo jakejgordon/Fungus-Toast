@@ -22,9 +22,9 @@ namespace FungusToast.Core.Phases
             this.observer = observer;
         }
 
-        public void ExecuteSingleCycle()
+        public Dictionary<int, int> ExecuteSingleCycle()
         {
-            GrowthEngine.ExecuteGrowthCycle(board, players, rng, observer);
+            return GrowthEngine.ExecuteGrowthCycle(board, players, rng, observer);
         }
     }
 }

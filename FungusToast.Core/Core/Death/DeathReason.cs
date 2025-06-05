@@ -4,9 +4,6 @@
     {
         Age,
         Randomness,
-
-        // ── formerly “EnemyDecayPressure” ───────────
-        SilentBlight,
         EncystedSpores,
         PutrefactiveMycotoxin,
         SporocidalBloom,

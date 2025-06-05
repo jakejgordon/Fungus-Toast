@@ -8,11 +8,13 @@ namespace FungusToast.Simulation.Models
     {
         private readonly Dictionary<int, int> creepingMoldMoves = new();
         private readonly Dictionary<int, int> reclaimedCells = new();
+        private readonly Dictionary<int, int> mycotoxinTracerSporeDrops = new();
         private readonly Dictionary<int, int> sporocidalSporeDrops = new();
         private readonly Dictionary<int, int> necrosporeDrops = new();
-
         private readonly Dictionary<int, int> necrophyticBloomSpores = new();      // 🆕
         private readonly Dictionary<int, int> necrophyticBloomReclaims = new();    // 🆕
+
+        public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
 
         public void RecordCreepingMoldMove(int playerId)
         {
@@ -32,6 +34,21 @@ namespace FungusToast.Simulation.Models
 
         public int GetReclaimedCells(int playerId) =>
             reclaimedCells.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetNecrophyticBloomSpores(int playerId) =>
+    necrophyticBloomSpores.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetNecrophyticBloomReclaims(int playerId) =>
+            necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
+
+
+        public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped)
+        {
+            if (!mycotoxinTracerSporeDrops.ContainsKey(playerId))
+                mycotoxinTracerSporeDrops[playerId] = 0;
+
+            mycotoxinTracerSporeDrops[playerId] += sporesDropped;
+        }
 
         public void ReportSporocidalSporeDrop(int playerId, int count)
         {
@@ -61,18 +78,21 @@ namespace FungusToast.Simulation.Models
             necrophyticBloomReclaims[playerId] += successfulReclaims;
         }
 
-        public int GetNecrophyticBloomSporeCount(int playerId) =>
-            necrophyticBloomSpores.TryGetValue(playerId, out var val) ? val : 0;
+        public void RecordFailedGrowth(int playerId)
+        {
+            if (!FailedGrowthsByPlayerId.ContainsKey(playerId))
+                FailedGrowthsByPlayerId[playerId] = 0;
 
-        public int GetNecrophyticBloomReclaimCount(int playerId) =>
-            necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
+            FailedGrowthsByPlayerId[playerId]++;
+        }
+
+        public int GetFailedGrowthCount(int playerId) =>
+            FailedGrowthsByPlayerId.TryGetValue(playerId, out var val) ? val : 0;
 
         public Dictionary<int, int> GetSporocidalSpores() => new(sporocidalSporeDrops);
         public Dictionary<int, int> GetNecroSpores() => new(necrosporeDrops);
-
-        public Dictionary<int, int> GetNecrophyticBloomSpores() => new(necrophyticBloomSpores);   // 🆕
-        public Dictionary<int, int> GetNecrophyticBloomReclaims() => new(necrophyticBloomReclaims); // 🆕
-
+        public Dictionary<int, int> GetNecrophyticBloomSpores() => new(necrophyticBloomSpores);
+        public Dictionary<int, int> GetNecrophyticBloomReclaims() => new(necrophyticBloomReclaims);
         public int GetSporocidalSporeDropCount(int playerId) =>
             sporocidalSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
 

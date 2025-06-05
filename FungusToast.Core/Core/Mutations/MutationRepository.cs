@@ -101,17 +101,20 @@ namespace FungusToast.Core.Mutations
             ));
 
             MakeRoot(new Mutation(
-                id: MutationIds.SilentBlight,
-                name: "Silent Blight",
-                description: $"Each level increases the base decay chance of enemy cells by {FormatPercent(GameBalance.SilentBlightEffectPerLevel)}.",
-                flavorText: "A dormant enzymatic payload triggers necrotic collapse in adjacent competitors.",
-                type: MutationType.EnemyDecayChance,
-                effectPerLevel: GameBalance.SilentBlightEffectPerLevel,
+                id: MutationIds.MycotoxinTracer,
+                name: "Mycotoxin Tracer",
+                description: "During each decay phase, you have a chance to release toxin spores based on this mutation’s level, the size of your colony, and recent failed growth attempts. " +
+                             "These spores do not kill, but temporarily block enemy growth and reclamation on nearby tiles.",
+                flavorText: "Non-lethal secretions disperse during decay, coating enemy territory in dormant toxins that inhibit encroachment.",
+                type: MutationType.FungicideToxinSpores,
+                effectPerLevel: GameBalance.MycotoxinTracerEffectPerLevel,  // still used for per-level RNG chance
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier1),
-                maxLevel: GameBalance.SilentBlightMaxLevel,
+                maxLevel: 50,
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier1
             ));
+
+
 
             MakeRoot(new Mutation(
                 id: MutationIds.MutatorPhenotype,
@@ -152,7 +155,7 @@ namespace FungusToast.Core.Mutations
                 maxLevel: GameBalance.EncystedSporesMaxLevel,
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier2
-            ), new MutationPrerequisite(MutationIds.SilentBlight, 10));
+            ), new MutationPrerequisite(MutationIds.MycotoxinTracer, 10));
 
             AddTendril(MutationIds.TendrilNorthwest, "Northwest");
             AddTendril(MutationIds.TendrilNortheast, "Northeast");

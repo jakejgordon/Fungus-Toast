@@ -24,6 +24,7 @@ namespace FungusToast.Core.Death
         public static void ExecuteDeathCycle(
             GameBoard board,
             List<Player> players,
+            Dictionary<int, int> failedGrowthsByPlayerId,
             ISporeDropObserver? observer = null)
         {
             // -----------------------------------------------------------------
@@ -42,6 +43,15 @@ namespace FungusToast.Core.Death
                 MutationEffectProcessor.TryPlaceSporocidalSpores(
                     p, board, Rng, sporocidalBloom, observer);
             }
+
+            // 1b. Mycotoxin Tracer spores (decay-phase toxin drops)
+            foreach (var p in shuffledPlayers)
+            {
+                int failedGrowths = failedGrowthsByPlayerId.TryGetValue(p.PlayerId, out var v) ? v : 0;
+
+                MutationEffectProcessor.ApplyMycotoxinTracer(p, board, failedGrowths, Rng, observer);
+            }
+
 
             // -----------------------------------------------------------------
             // 2.  Necrophytic Bloom trigger (20 % board occupancy)
