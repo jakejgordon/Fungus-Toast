@@ -76,7 +76,7 @@ namespace FungusToast.Simulation.Models
                 PlayerResults = results,
                 SporesFromSporocidalBloom = tracking.GetSporocidalSpores(),
                 SporesFromNecrosporulation = tracking.GetNecroSpores(),
-                ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin)
+                ToxicTileCount = toxicTiles
             };
         }
 

@@ -4,7 +4,7 @@ using FungusToast.Simulation.Analysis;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 20;
+    private const int NumberOfSimulationGames = 100;
 
     static void Main()
     {
@@ -19,6 +19,11 @@ class Program
             prioritizeHighTier: false,
             targetMutationIds: new List<int> { MutationIds.NecrophyticBloom, MutationIds.PutrefactiveMycotoxin, MutationIds.CreepingMold });
 
+        var toxinBadGuyExtreme = new ParameterizedSpendingStrategy(
+            strategyName: "Maxed Mycotoxin Potentiation",
+            prioritizeHighTier: true,
+            targetMutationIds: new List<int> { MutationIds.MycotoxinPotentiation, MutationIds.MycotoxinTracer });
+
         var growthAndResilienceMax3HighTier = new ParameterizedSpendingStrategy(
             strategyName: "GrowthResilience_Max3_HighTier",
             maxTier: MutationTier.Tier3,
@@ -29,6 +34,7 @@ class Program
                 MutationCategory.CellularResilience
             });
 
+        /*
         var growthAndResilienceHighTier = new ParameterizedSpendingStrategy(
             strategyName: "GrowthResilience_HighTier",
             prioritizeHighTier: true,
@@ -37,7 +43,7 @@ class Program
                         MutationCategory.Growth,
                         MutationCategory.CellularResilience
             });
-
+        */
         /**last place in 10000 game simulation
         var growthResilienceGeneticDriftHighTier = new ParameterizedSpendingStrategy(
             strategyName: "GrowthResilienceGeneticDrift_HighTier",
@@ -72,7 +78,7 @@ class Program
             toxinBadGuy,
             mutatorGrowth,
             growthAndResilienceMax3HighTier,
-            growthAndResilienceHighTier,
+            toxinBadGuyExtreme,
             regenerativeHyphaeFocus
         };
 

@@ -115,12 +115,6 @@ namespace FungusToast.Unity.Grid
             {
                 var cell = tile.FungalCell;
 
-                if (cell?.IsToxin == false && !cell.IsAlive)
-                {
-                    // Skip expired toxin tiles — do not render any overlay
-                    return;
-                }
-
                 if (cell?.IsAlive == true)
                 {
                     int? playerId = cell.OwnerPlayerId;
@@ -150,6 +144,7 @@ namespace FungusToast.Unity.Grid
                 SetOverlayTile(pos, overlayTile, overlayColor);
             }
         }
+
 
         private void SetOverlayTile(Vector3Int pos, TileBase tile, Color color)
         {
