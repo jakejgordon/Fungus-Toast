@@ -4,7 +4,7 @@ using FungusToast.Simulation.Analysis;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 1;
+    private const int NumberOfSimulationGames = 100;
 
     static void Main()
     {
@@ -54,11 +54,16 @@ class Program
                                 MutationCategory.CellularResilience,
                                 MutationCategory.GeneticDrift
             });
-        **/
+        
         
         var max2 = new ParameterizedSpendingStrategy(
             strategyName: "Max2",
+            prioritizeHighTier: true);
+        **/
+        var min = new ParameterizedSpendingStrategy(
+            strategyName: "Min 1",
             prioritizeHighTier: false);
+
 
         var regenerativeHyphaeFocus = new ParameterizedSpendingStrategy(
             strategyName: "Regenerative Hyphae Focus",
@@ -74,7 +79,7 @@ class Program
         {
             powerMutations1,
             new RandomMutationSpendingStrategy(),
-            max2,
+            min,
             toxinBadGuy,
             mutatorGrowth,
             growthAndResilienceMax3HighTier,

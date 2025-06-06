@@ -16,8 +16,11 @@ namespace FungusToast.Simulation.Analysis
             int boardWidth = GameBalance.BoardWidth;
             int boardHeight = GameBalance.BoardHeight;
             int totalCells = boardWidth * boardHeight;
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
 
-            Console.WriteLine($"\nBoard Width:        {boardWidth}");
+            Console.WriteLine($"\n=== Fungus Toast Simulation Summary ===");
+            Console.WriteLine($"Simulation Date/Time: {timestamp}");
+            Console.WriteLine($"Board Width:        {boardWidth}");
             Console.WriteLine($"Board Height:       {boardHeight}");
             Console.WriteLine($"Total Cells:        {totalCells}");
 
@@ -125,7 +128,8 @@ namespace FungusToast.Simulation.Analysis
             float avgTurns = (float)results.Average(r => r.TurnsPlayed);
             double stdDevTurns = Math.Sqrt(results.Sum(r => Math.Pow(r.TurnsPlayed - avgTurns, 2)) / Math.Max(1, totalGames - 1));
 
-            Console.WriteLine($"\nTotal Games Played: {totalGames}");
+            Console.WriteLine($"\n=== Game-Level Stats ===");
+            Console.WriteLine($"Total Games Played: {totalGames}");
             Console.WriteLine($"Avg Turns per Game: {avgTurns:F1}");
             Console.WriteLine($"Std Dev of Turns:   {stdDevTurns:F2}");
             Console.WriteLine($"Avg Living Cells:   {avgLivingCells:F1}");
@@ -142,7 +146,7 @@ namespace FungusToast.Simulation.Analysis
             int reclaimsNecrophytic, int sporesMycotoxin, int toxinAuraKills, int mpSpent,
             float growthChance, float selfDeathChance, float decayMod)> playerStats)
         {
-            Console.WriteLine("\nPer-Player Summary:");
+            Console.WriteLine("\n=== Per-Player Summary ===");
             Console.WriteLine(
                 $"{"Player",6} | {"Strategy",-40} | {"WinRate",7} | {"Avg Alive",10} | {"Avg Dead",9} | " +
                 $"{"Avg Reclaims",13} | {"Aura Kills",10} | {"Avg MP Spent",13} | " +
@@ -175,7 +179,7 @@ namespace FungusToast.Simulation.Analysis
         {
             int totalDeaths = deathReasonCounts.Values.Sum();
 
-            Console.WriteLine("\nDeath Reason Summary:");
+            Console.WriteLine("\n=== Death Reason Summary ===");
             Console.WriteLine($"Total Cells that Died: {totalDeaths}");
             Console.WriteLine($"{"Cause",-30} | {"Count",5} | {"Percent",7}");
             Console.WriteLine(new string('-', 45));
@@ -188,8 +192,6 @@ namespace FungusToast.Simulation.Analysis
                 Console.WriteLine($"{cause,-30} | {count,5} | {percent,6:F1}%");
             }
         }
-
-        private string BoolFlag(bool? val) => val == true ? "Y" : "N";
 
         private string Truncate(string s, int max) =>
             s.Length > max ? s.Substring(0, max - 1) + "…" : s;
