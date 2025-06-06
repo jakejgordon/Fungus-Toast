@@ -13,6 +13,7 @@ namespace FungusToast.Unity.Grid
         public Tilemap toastTilemap;      // Base toast layer
         public Tilemap moldTilemap;       // Player mold layer (new)
         public Tilemap overlayTilemap;    // Toxin overlays and highlights
+        public Tilemap HoverTileMap;    // Toxin overlays and highlights
 
         [Header("Tiles")]
         public Tile baseTile;             // Toast base
@@ -53,13 +54,7 @@ namespace FungusToast.Unity.Grid
 
         public void HighlightPlayerTiles(int playerId)
         {
-            if (board == null || solidHighlightTile == null)
-            {
-                Debug.LogError("❌ Board or Solid Highlight Tile not assigned!");
-                return;
-            }
-
-            highlightedPositions.Clear();
+            HoverTileMap.ClearAllTiles();
 
             foreach (var tile in board.AllTiles())
             {
@@ -67,29 +62,17 @@ namespace FungusToast.Unity.Grid
                     tile.FungalCell.OwnerPlayerId == playerId)
                 {
                     Vector3Int pos = new Vector3Int(tile.X, tile.Y, 0);
-                    SetOverlayTile(pos, solidHighlightTile, Color.white);
-                    highlightedPositions.Add(pos);
+                    HoverTileMap.SetTile(pos, solidHighlightTile);
+                    HoverTileMap.SetTileFlags(pos, TileFlags.None);
+                    HoverTileMap.SetColor(pos, Color.white);
+                    HoverTileMap.RefreshTile(pos);
                 }
-            }
-
-            if (highlightedPositions.Count == 0)
-            {
-                Debug.LogWarning($"⚠️ No living fungal cells found for Player {playerId} to highlight.");
             }
         }
 
         public void ClearHighlights()
         {
-            if (board == null || highlightedPositions == null)
-                return;
-
-            foreach (var pos in highlightedPositions)
-            {
-                BoardTile tile = board.Grid[pos.x, pos.y];
-                RenderFungalCellOverlay(tile, pos);
-            }
-
-            highlightedPositions.Clear();
+            HoverTileMap.ClearAllTiles();
         }
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)

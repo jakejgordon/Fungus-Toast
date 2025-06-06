@@ -77,8 +77,8 @@ namespace FungusToast.Core.Config
 
         public static class MutationCosts
         {
-            public const int Tier1UpgradeCost = 2;
-            public const int Tier2UpgradeCost = 3;
+            public const int Tier1UpgradeCost = 1;
+            public const int Tier2UpgradeCost = 2;
             public const int Tier3UpgradeCost = 4;
             public const int Tier4UpgradeCost = 5;
             public const int Tier5UpgradeCost = 6;
