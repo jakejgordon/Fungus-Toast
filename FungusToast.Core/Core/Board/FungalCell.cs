@@ -39,6 +39,31 @@ namespace FungusToast.Core.Board
             IsAlive = true;
         }
 
+        /// <summary>
+        /// Create a toxin Fungal Cell
+        /// </summary>
+        /// <param name="ownerPlayerId"></param>
+        /// <param name="tileId"></param>
+        /// <param name="toxinExpirationCycle"></param>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public FungalCell(int? ownerPlayerId, int tileId, int toxinExpirationCycle)
+        {
+            if (toxinExpirationCycle <= 0)
+                throw new ArgumentOutOfRangeException(nameof(toxinExpirationCycle), "Expiration must be greater than 0.");
+
+            OwnerPlayerId = ownerPlayerId;
+            if (ownerPlayerId.HasValue)
+            {
+                OriginalOwnerPlayerId = ownerPlayerId.Value;
+            }
+
+            TileId = tileId;
+            IsAlive = false;
+            ToxinExpirationCycle = toxinExpirationCycle;
+            LastOwnerPlayerId = null; // It was never alive
+        }
+
+
         public void Kill(DeathReason reason)
         {
             if (!IsAlive)

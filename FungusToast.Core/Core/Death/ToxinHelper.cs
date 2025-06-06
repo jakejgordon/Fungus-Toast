@@ -20,11 +20,11 @@ namespace FungusToast.Core.Death
             }
             else
             {
-                var toxin = new FungalCell(ownerPlayerId, tileId);
-                toxin.ConvertToToxin(expirationCycle, ownerPlayerId);
-                board.PlaceFungalCell(toxin);
+                var toxin = new FungalCell(ownerPlayerId, tileId, expirationCycle); // uses new constructor
+                aboard.PlaceFungalCell(toxin);
             }
         }
+
 
         /// <summary>
         /// Cleanly kills and toxifies a living cell in one step.

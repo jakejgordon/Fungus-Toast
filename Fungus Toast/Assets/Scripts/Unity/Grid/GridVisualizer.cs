@@ -100,19 +100,30 @@ namespace FungusToast.Unity.Grid
                 int? ownerId = tile.FungalCell.OwnerPlayerId;
                 if (ownerId is int id && id >= 0 && id < playerMoldTiles.Length)
                 {
-                    overlayTile = playerMoldTiles[id];
-                    overlayColor = Color.black * 0.8f;
-                    SetOverlayTile(pos, overlayTile, overlayColor);
+                    // Show faded mold ownership tile on base toastTilemap
+                    toastTilemap.SetTile(pos, playerMoldTiles[id]);
+                    toastTilemap.SetTileFlags(pos, TileFlags.None);
+                    toastTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.4f));  // 40% opacity
                 }
 
-                // Toxin icon always goes on top
-                SetOverlayTile(pos, toxinOverlayTile, Color.white);
+                // Show toxin overlay symbol
+                overlayTilemap.SetTile(pos, toxinOverlayTile);
+                overlayTilemap.SetTileFlags(pos, TileFlags.None);
+                overlayTilemap.SetColor(pos, Color.white);
                 return;
             }
+
 
             if (tile.IsOccupied)
             {
                 var cell = tile.FungalCell;
+
+                if (cell?.IsToxin == false && !cell.IsAlive)
+                {
+                    // Skip expired toxin tiles — do not render any overlay
+                    return;
+                }
+
                 if (cell?.IsAlive == true)
                 {
                     int? playerId = cell.OwnerPlayerId;
@@ -126,6 +137,7 @@ namespace FungusToast.Unity.Grid
                     overlayTile = deadTile;
                 }
             }
+
 
             if (overlayTile != null)
             {

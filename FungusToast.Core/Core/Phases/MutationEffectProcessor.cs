@@ -348,6 +348,8 @@ namespace FungusToast.Core.Phases
                                    .Where(c => c.IsAlive)
                                    .ToList();
 
+            int expiration = board.CurrentGrowthCycle + GameBalance.SporocidalToxinTileDuration;
+
             foreach (FungalCell cell in livingCells)
             {
                 if (rng.NextDouble() > dropChance) continue;
@@ -362,8 +364,9 @@ namespace FungusToast.Core.Phases
                         ToxinHelper.KillAndToxify(
                             board,
                             neighbor.TileId,
-                            GameBalance.ToxinTileDuration,
-                            DeathReason.SporocidalBloom);
+                            expiration,
+                            DeathReason.SporocidalBloom,
+                            player.PlayerId);
 
                         spores++;
                         observer?.ReportSporocidalSporeDrop(player.PlayerId, 1);
@@ -374,7 +377,8 @@ namespace FungusToast.Core.Phases
                         ToxinHelper.ConvertToToxin(
                             board,
                             neighbor.TileId,
-                            GameBalance.ToxinTileDuration);
+                            expiration, 
+                            player.PlayerId);
 
                         spores++;
                         observer?.ReportSporocidalSporeDrop(player.PlayerId, 1);
@@ -484,7 +488,8 @@ namespace FungusToast.Core.Phases
                 BoardTile chosen = candidateTiles[index];
                 candidateTiles.RemoveAt(index);
 
-                ToxinHelper.ConvertToToxin(board, chosen.TileId, GameBalance.MycotoxinTracerTileDuration);
+                int expiration = board.CurrentGrowthCycle + GameBalance.MycotoxinTracerTileDuration;
+                ToxinHelper.ConvertToToxin(board, chosen.TileId, expiration, player.PlayerId);
                 placed++;
             }
 

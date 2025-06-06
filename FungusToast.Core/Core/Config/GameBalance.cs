@@ -23,7 +23,7 @@ namespace FungusToast.Core.Config
         public const float HomeostaticHarmonyEffectPerLevel = 0.003f;
         //public const float MycotoxinTracerEffectPerLevel = .01f;
         public const float MycotoxinTracerFailedGrowthWeightPerLevel = 0.005f;
-        public const int MycotoxinTracerTileDuration = 10;
+        public const int MycotoxinTracerTileDuration = 20;
         public const int MycotoxinTracerMaxToxinsDivisor = 50;
         public const float AdaptiveExpressionEffectPerLevel = 0.09f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 5f;
@@ -39,6 +39,7 @@ namespace FungusToast.Core.Config
         public const float RegenerativeHyphaeReclaimChance = 0.007f;
         public const float CreepingMoldMoveChancePerLevel = .025f;
         public const float SporicialBloomEffectPerLevel = .2f;
+        public const int SporocidalToxinTileDuration = 11;
         public const int NecrophyticBloomBaseSpores = 2;
         public static float NecrophyticBloomSporesPerLevel = 100;
 
@@ -58,8 +59,9 @@ namespace FungusToast.Core.Config
         public const int RegenerativeHyphaeMaxLevel = 5;
         public const int CreepingMoldMaxLevel = 3;
         public const int SporocidalBloomMaxLevel = 5;
-        public static int NecrophyticBloomMaxLevel = 5;
+        public const int NecrophyticBloomMaxLevel = 5;
         
+
         // Phase Timing
         public const int TotalGrowthCycles = 5;
         public const float TimeBetweenGrowthCycles = 1f;

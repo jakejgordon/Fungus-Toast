@@ -18,13 +18,11 @@ namespace FungusToast.Core.Growth
             Random rng,
             IGrowthObserver? observer = null)
         {
-            board.IncrementGrowthCycle();
-
             // Expire toxins before growth begins
             board.ExpireToxinTiles(board.CurrentGrowthCycle);
 
             var failedGrowthsByPlayerId = players.ToDictionary(p => p.PlayerId, _ => 0);
-            var activeFungalCells = new List<(BoardTile tile, FungalCell cell)>();
+            var activeFungalCells = board.AllLivingFungalCellsWithTiles().ToList();
 
             Shuffle(activeFungalCells, rng);
 
@@ -40,8 +38,12 @@ namespace FungusToast.Core.Growth
                     failedGrowthsByPlayerId[owner.PlayerId]++;
             }
 
+            board.IncrementGrowthCycle();
+
             return failedGrowthsByPlayerId;
         }
+
+
 
         private static bool TryExpandFromTile(
             GameBoard board,
@@ -112,9 +114,12 @@ namespace FungusToast.Core.Growth
             for (int i = 0; i < list.Count; i++)
             {
                 int j = rng.Next(i, list.Count);
-                (list[i], list[j]) = (list[j], list[i]);
+                T temp = list[i];
+                list[i] = list[j];
+                list[j] = temp;
             }
         }
+
     }
 
 
