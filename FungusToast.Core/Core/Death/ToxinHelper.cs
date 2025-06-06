@@ -21,7 +21,7 @@ namespace FungusToast.Core.Death
             else
             {
                 var toxin = new FungalCell(ownerPlayerId, tileId, expirationCycle); // uses new constructor
-                aboard.PlaceFungalCell(toxin);
+                board.PlaceFungalCell(toxin);
             }
         }
 

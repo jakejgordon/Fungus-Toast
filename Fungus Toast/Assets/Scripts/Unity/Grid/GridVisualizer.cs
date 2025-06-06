@@ -11,7 +11,8 @@ namespace FungusToast.Unity.Grid
     {
         [Header("Tilemaps")]
         public Tilemap toastTilemap;      // Base toast layer
-        public Tilemap overlayTilemap;    // Fungal overlays and toxins
+        public Tilemap moldTilemap;       // Player mold layer (new)
+        public Tilemap overlayTilemap;    // Toxin overlays and highlights
 
         [Header("Tiles")]
         public Tile baseTile;             // Toast base
@@ -31,6 +32,7 @@ namespace FungusToast.Unity.Grid
         public void RenderBoard(GameBoard board)
         {
             toastTilemap.ClearAllTiles();
+            moldTilemap.ClearAllTiles();
             overlayTilemap.ClearAllTiles();
 
             for (int x = 0; x < board.Width; x++)
@@ -92,7 +94,9 @@ namespace FungusToast.Unity.Grid
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
         {
+            TileBase moldTile = null;
             TileBase overlayTile = null;
+            Color moldColor = Color.white;
             Color overlayColor = Color.white;
 
             if (tile.FungalCell?.IsToxin == true)
@@ -100,21 +104,14 @@ namespace FungusToast.Unity.Grid
                 int? ownerId = tile.FungalCell.OwnerPlayerId;
                 if (ownerId is int id && id >= 0 && id < playerMoldTiles.Length)
                 {
-                    // Show faded mold ownership tile on base toastTilemap
-                    toastTilemap.SetTile(pos, playerMoldTiles[id]);
-                    toastTilemap.SetTileFlags(pos, TileFlags.None);
-                    toastTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.4f));  // 40% opacity
+                    moldTile = playerMoldTiles[id];
+                    moldColor = new Color(1f, 1f, 1f, 0.4f); // 40% opacity
                 }
 
-                // Show toxin overlay symbol
-                overlayTilemap.SetTile(pos, toxinOverlayTile);
-                overlayTilemap.SetTileFlags(pos, TileFlags.None);
-                overlayTilemap.SetColor(pos, Color.white);
-                return;
+                overlayTile = toxinOverlayTile;
+                overlayColor = Color.white;
             }
-
-
-            if (tile.IsOccupied)
+            else if (tile.IsOccupied)
             {
                 var cell = tile.FungalCell;
 
@@ -129,15 +126,24 @@ namespace FungusToast.Unity.Grid
                     int? playerId = cell.OwnerPlayerId;
                     if (playerId is int id && id >= 0 && id < playerMoldTiles.Length)
                     {
-                        overlayTile = playerMoldTiles[id];
+                        moldTile = playerMoldTiles[id];
+                        moldColor = Color.white;
                     }
                 }
                 else
                 {
                     overlayTile = deadTile;
+                    overlayColor = Color.white;
                 }
             }
 
+            if (moldTile != null)
+            {
+                moldTilemap.SetTile(pos, moldTile);
+                moldTilemap.SetTileFlags(pos, TileFlags.None);
+                moldTilemap.SetColor(pos, moldColor);
+                moldTilemap.RefreshTile(pos);
+            }
 
             if (overlayTile != null)
             {

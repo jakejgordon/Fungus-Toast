@@ -242,12 +242,13 @@ namespace FungusToast.Core.Board
 
         public void ExpireToxinTiles(int currentGrowthCycle)
         {
-            var allToxinTiles = AllToxinFungalCells();
+            var allToxinTiles = AllToxinFungalCells().ToList(); // Snapshot to avoid collection issues
             foreach (var cell in allToxinTiles)
             {
                 if (cell.HasToxinExpired(currentGrowthCycle))
                 {
-                    cell.ClearToxinState();
+                    var tile = GetTileById(cell.TileId);
+                    tile?.RemoveFungalCell(); // Clear the cell entirely from the board
                 }
             }
         }

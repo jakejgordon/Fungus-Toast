@@ -4,7 +4,7 @@ using FungusToast.Simulation.Analysis;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 1;
+    private const int NumberOfSimulationGames = 20;
 
     static void Main()
     {
