@@ -8,7 +8,6 @@ namespace FungusToast.Simulation.Analysis
 {
     public class StrategyMutationUsageTracker
     {
-        // strategy → mutationId → list of levels (including 0s for games where not used)
         private readonly Dictionary<string, Dictionary<int, List<int>>> strategyMutationLevels = new();
 
         public void TrackGameResult(GameResult result)
@@ -23,7 +22,6 @@ namespace FungusToast.Simulation.Analysis
                     strategyMutationLevels[strategy] = mutationDict;
                 }
 
-                // Get a full list of all mutation IDs used by this strategy so far
                 var knownMutationIds = new HashSet<int>(mutationDict.Keys);
                 var allMutationIds = new HashSet<int>(knownMutationIds.Union(player.MutationLevels.Keys));
 
@@ -51,7 +49,6 @@ namespace FungusToast.Simulation.Analysis
                               new string('-', 10) + "-|-" + new string('-', 10) + "-|-" +
                               new string('-', 20) + "-|-" + new string('-', 13));
 
-            // Step 1: Define which properties map to mutation effects
             var mutationEffectFields = new Dictionary<string, (int mutationId, string label)>
             {
                 { nameof(PlayerResult.ReclaimedCells), (MutationIds.RegenerativeHyphae, "Reclaims") },
@@ -61,9 +58,9 @@ namespace FungusToast.Simulation.Analysis
                 { nameof(PlayerResult.NecrophyticSpores), (MutationIds.NecrophyticBloom, "Necrophytic Spores") },
                 { nameof(PlayerResult.NecrophyticReclaims), (MutationIds.NecrophyticBloom, "Necrophytic Reclaims") },
                 { nameof(PlayerResult.MycotoxinTracerSpores), (MutationIds.MycotoxinTracer, "Mycotoxin Tiles") },
+                { nameof(PlayerResult.ToxinAuraKills), (MutationIds.MycotoxinPotentiation, "Toxin Aura Kills") },
             };
 
-            // Step 2: Aggregate effect counts from player results
             var mutationEffectSums = new Dictionary<string, Dictionary<int, (int count, string label)>>();
 
             foreach (var result in allPlayerResults)
@@ -92,11 +89,10 @@ namespace FungusToast.Simulation.Analysis
                 }
             }
 
-            // Step 3: Print usage + effect counts
             foreach (var strategy in strategyMutationLevels.Keys.OrderBy(k => k))
             {
                 var mutations = strategyMutationLevels[strategy];
-                mutationEffectSums.TryGetValue(strategy, out var effectDict); // may be null
+                mutationEffectSums.TryGetValue(strategy, out var effectDict);
 
                 foreach (var kv in mutations.OrderBy(kv => kv.Key))
                 {
@@ -133,11 +129,7 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine(new string('-', 130));
         }
 
-
-
-        private static string Truncate(string value, int maxLength)
-        {
-            return value.Length <= maxLength ? value : value[..maxLength];
-        }
+        private static string Truncate(string value, int maxLength) =>
+            value.Length <= maxLength ? value : value[..maxLength];
     }
 }

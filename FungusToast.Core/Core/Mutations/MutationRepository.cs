@@ -145,17 +145,20 @@ namespace FungusToast.Core.Mutations
             ), new MutationPrerequisite(MutationIds.HomeostaticHarmony, 10));
 
             MakeChild(new Mutation(
-                id: MutationIds.EncystedSpores,
-                name: "Encysted Spores",
-                description: $"Each level grants a {FormatPercent(GameBalance.EncystedSporesEffectPerLevel)} death pressure bonus against enemies surrounded on three or more sides.",
-                flavorText: "Encapsulation triggers lytic enzyme excretion in high-density microclimates.",
-                type: MutationType.EncystedSporeMultiplier,
-                effectPerLevel: GameBalance.EncystedSporesEffectPerLevel,
+                id: MutationIds.MycotoxinPotentiation,
+                name: "Mycotoxin Potentiation",
+                description: $"Each level extends the lifespan of new toxin tiles by {FormatFloat(GameBalance.MycotoxinPotentiationGrowthCycleExtensionPerLevel)} growth cycle(s), " +
+                             $"and grants a {FormatPercent(GameBalance.MycotoxinPotentiationKillChancePerLevel)} chance per level to kill an adjacent enemy fungal cell from each toxin tile during the Decay Phase.",
+                flavorText: "Toxins thicken with stabilizing glycoproteins, lingering longer and lashing out at encroaching invaders.",
+                type: MutationType.ToxinKillAura,
+                effectPerLevel: GameBalance.MycotoxinPotentiationKillChancePerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
-                maxLevel: GameBalance.EncystedSporesMaxLevel,
+                maxLevel: GameBalance.MycotoxinPotentiationMaxLevel,
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier2
-            ), new MutationPrerequisite(MutationIds.MycotoxinTracer, 10));
+            ),
+            new MutationPrerequisite(MutationIds.MycotoxinTracer, 10));
+
 
             AddTendril(MutationIds.TendrilNorthwest, "Northwest");
             AddTendril(MutationIds.TendrilNortheast, "Northeast");
@@ -200,7 +203,7 @@ namespace FungusToast.Core.Mutations
                 maxLevel: GameBalance.PutrefactiveMycotoxinMaxLevel,
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier3
-            ), new MutationPrerequisite(MutationIds.EncystedSpores, 5));
+            ), new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1));
 
             MakeChild(new Mutation(
                 id: MutationIds.AnabolicInversion,

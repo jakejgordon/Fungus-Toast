@@ -49,6 +49,7 @@ namespace FungusToast.Simulation.Models
                     ReclaimedCells = tracking.GetReclaimedCells(player.PlayerId),
                     CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId),
                     MycotoxinTracerSpores = tracking.GetMycotoxinSporeDropCount(player.PlayerId),
+                    ToxinAuraKills = tracking.GetToxinAuraKillCount(player.PlayerId),
                 };
 
                 playerResultMap[player.PlayerId] = pr;
@@ -78,5 +79,6 @@ namespace FungusToast.Simulation.Models
                 ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin)
             };
         }
+
     }
 }

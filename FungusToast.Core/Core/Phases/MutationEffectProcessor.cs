@@ -111,12 +111,6 @@ namespace FungusToast.Core.Phases
                 return (pmChance, DeathReason.PutrefactiveMycotoxin);
             }
 
-            if (CheckEncystedSpores(cell, board, allPlayers, out float esChance) &&
-                roll < esChance)
-            {
-                return (esChance, DeathReason.EncystedSpores);
-            }
-
             return (totalFallbackChance, null);
         }
 
@@ -163,26 +157,6 @@ namespace FungusToast.Core.Phases
                 if (enemy.PlayerId == target.OwnerPlayerId) continue;
 
                 chance += enemy.GetMutationEffect(MutationType.EnemyDecayChance);
-            }
-
-            return chance > 0f;
-        }
-
-        private static bool CheckEncystedSpores(FungalCell target,
-                                                GameBoard board,
-                                                List<Player> players,
-                                                out float chance)
-        {
-            chance = 0f;
-
-            if (!DeathEngine.IsCellSurrounded(target.TileId, board))
-                return false;
-
-            foreach (Player enemy in players)
-            {
-                if (enemy.PlayerId == target.OwnerPlayerId) continue;
-
-                chance += enemy.GetMutationEffect(MutationType.EncystedSporeMultiplier);
             }
 
             return chance > 0f;
@@ -366,7 +340,7 @@ namespace FungusToast.Core.Phases
                             neighbor.TileId,
                             expiration,
                             DeathReason.SporocidalBloom,
-                            player.PlayerId);
+                            player);
 
                         spores++;
                         observer?.ReportSporocidalSporeDrop(player.PlayerId, 1);
@@ -378,7 +352,7 @@ namespace FungusToast.Core.Phases
                             board,
                             neighbor.TileId,
                             expiration, 
-                            player.PlayerId);
+                            player);
 
                         spores++;
                         observer?.ReportSporocidalSporeDrop(player.PlayerId, 1);
@@ -489,7 +463,7 @@ namespace FungusToast.Core.Phases
                 candidateTiles.RemoveAt(index);
 
                 int expiration = board.CurrentGrowthCycle + GameBalance.MycotoxinTracerTileDuration;
-                ToxinHelper.ConvertToToxin(board, chosen.TileId, expiration, player.PlayerId);
+                ToxinHelper.ConvertToToxin(board, chosen.TileId, expiration, player);
                 placed++;
             }
 
@@ -501,7 +475,40 @@ namespace FungusToast.Core.Phases
             return placed;
         }
 
+        public static void ApplyToxinAuraDeaths(GameBoard board,
+                                         List<Player> players,
+                                         Random rng,
+                                         ISporeDropObserver? observer = null)
+        {
+            foreach (var tile in board.AllToxinTiles())
+            {
+                var toxinCell = tile.FungalCell!;
+                int? ownerId = toxinCell.OwnerPlayerId;
+                Player? owner = players.FirstOrDefault(p => p.PlayerId == ownerId);
+                if (owner == null)
+                    continue;
 
+                float killChance = owner.GetMutationEffect(MutationType.ToxinKillAura);
+                if (killChance <= 0f)
+                    continue;
+
+                int killCount = 0;
+
+                foreach (var neighborTile in board.GetAdjacentLivingTiles(tile.TileId, excludePlayerId: owner.PlayerId))
+                {
+                    if (rng.NextDouble() < killChance)
+                    {
+                        neighborTile.FungalCell!.Kill(DeathReason.MycotoxinPotentiation);
+                        killCount++;
+                    }
+                }
+
+                if (killCount > 0)
+                {
+                    observer?.ReportAuraKill(owner.PlayerId, killCount);
+                }
+            }
+        }
 
 
     }

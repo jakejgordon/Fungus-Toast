@@ -73,34 +73,11 @@ namespace FungusToast.Core.Players
                 GameBalance.BaseDeathChance + enemyPressure - GetEffectiveSelfDeathChance());
         }
 
-        /** appear to be unusedpublic float GetEffectiveDeathChanceFrom(Player attacker, FungalCell targetCell, GameBoard board)
-        {
-            float chance = GetEffectiveSelfDeathChance();
-            float decayBoost = attacker.GetMutationEffect(MutationType.EnemyDecayChance);
-
-            if (DeathEngine.IsCellSurrounded(targetCell.TileId, board))
-            {
-                float encystMult = 1f + attacker.GetMutationEffect(MutationType.EncystedSporeMultiplier);
-                decayBoost *= encystMult;
-            }
-
-            float toxinBoost = attacker.GetMutationEffect(MutationType.AdjacentFungicide);
-            chance += decayBoost + toxinBoost;
-
-            return System.Math.Max(0f, chance);
-        }
-        */
 
         // 🔄  Back-compat helper used by DeathEngine -------------------------
         public float GetOffensiveDecayModifierAgainst(FungalCell targetCell, GameBoard board)
         {
             float boost = GetMutationEffect(MutationType.EnemyDecayChance);
-
-            if (DeathEngine.IsCellSurrounded(targetCell.TileId, board))
-            {
-                float encysted = 1f + GetMutationEffect(MutationType.EncystedSporeMultiplier);
-                boost *= encysted;
-            }
 
             boost += GetMutationEffect(MutationType.AdjacentFungicide);
             return boost;

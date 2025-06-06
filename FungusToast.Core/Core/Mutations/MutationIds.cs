@@ -7,7 +7,7 @@
         public const int MycotoxinTracer = 2;
         public const int MutatorPhenotype = 3;
         public const int ChronoresilientCytoplasm = 4;
-        public const int EncystedSpores = 5;
+        public const int MycotoxinPotentiation = 5;
         public const int TendrilNorthwest = 6;
         public const int TendrilNortheast = 7;
         public const int TendrilSoutheast = 8;
@@ -21,7 +21,6 @@
         public const int CreepingMold = 16;
         public const int SporocidalBloom = 17;
         public const int NecrophyticBloom = 18;
-
         
     }
 }

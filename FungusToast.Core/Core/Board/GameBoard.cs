@@ -240,6 +240,23 @@ namespace FungusToast.Core.Board
                 .Cast<FungalCell>();
         }
 
+        public IEnumerable<BoardTile> GetAdjacentLivingTiles(int tileId, int? excludePlayerId = null)
+        {
+            foreach (int neighborId in GetAdjacentTileIds(tileId))
+            {
+                var tile = GetTileById(neighborId);
+                if (tile == null || !tile.IsAlive)
+                    continue;
+
+                var cell = tile.FungalCell!;
+                if (excludePlayerId.HasValue && cell.OwnerPlayerId == excludePlayerId.Value)
+                    continue;
+
+                yield return tile;
+            }
+        }
+
+
         public void ExpireToxinTiles(int currentGrowthCycle)
         {
             var allToxinTiles = AllToxinFungalCells().ToList(); // Snapshot to avoid collection issues

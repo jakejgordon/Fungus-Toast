@@ -29,5 +29,6 @@ namespace FungusToast.Simulation.Models
         public int NecrophyticReclaims { get; set; }
 
         public int MycotoxinTracerSpores { get; set; }
+        public int ToxinAuraKills { get; set; }
     }
 }

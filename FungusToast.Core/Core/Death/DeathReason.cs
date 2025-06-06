@@ -4,10 +4,10 @@
     {
         Age,
         Randomness,
-        EncystedSpores,
         PutrefactiveMycotoxin,
         SporocidalBloom,
-        Unknown
+        Unknown,
+        MycotoxinPotentiation
     }
 
 }

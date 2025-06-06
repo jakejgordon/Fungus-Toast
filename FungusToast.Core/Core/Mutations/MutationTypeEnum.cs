@@ -7,7 +7,6 @@ namespace FungusToast.Core
         DefenseSurvival,
         EnemyDecayChance,
         BonusMutationPointChance,
-        EncystedSporeMultiplier,
         GrowthDiagonal_NW,
         GrowthDiagonal_NE,
         GrowthDiagonal_SE,
@@ -23,5 +22,6 @@ namespace FungusToast.Core
         NecrophyticBloomSporeDrop,
         AgeAndRandomnessDecayResistance,
         FungicideToxinSpores,
+        ToxinKillAura,
     }
 }

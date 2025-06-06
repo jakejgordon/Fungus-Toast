@@ -1,11 +1,12 @@
 ﻿using FungusToast.Core.Board;
+using FungusToast.Core.Players;
 using System;
 
 namespace FungusToast.Core.Death
 {
     public static class ToxinHelper
     {
-        public static void ConvertToToxin(GameBoard board, int tileId, int expirationCycle, int? ownerPlayerId = null)
+        public static void ConvertToToxin(GameBoard board, int tileId, int expirationCycle, Player? owner = null)
         {
             var tile = board.GetTileById(tileId);
             var cell = tile?.FungalCell;
@@ -15,21 +16,17 @@ namespace FungusToast.Core.Death
                 if (cell.IsAlive)
                     throw new InvalidOperationException("Cannot convert a living cell to toxin. Kill it first.");
 
-                cell.ConvertToToxin(expirationCycle, ownerPlayerId);
-                board.PlaceFungalCell(cell); // Ensure updated state is saved
+                cell.ConvertToToxin(expirationCycle, owner);
+                board.PlaceFungalCell(cell);
             }
             else
             {
-                var toxin = new FungalCell(ownerPlayerId, tileId, expirationCycle); // uses new constructor
+                var toxin = new FungalCell(owner?.PlayerId, tileId, expirationCycle);
                 board.PlaceFungalCell(toxin);
             }
         }
 
-
-        /// <summary>
-        /// Cleanly kills and toxifies a living cell in one step.
-        /// </summary>
-        public static void KillAndToxify(GameBoard board, int tileId, int expirationCycle, DeathReason reason, int? ownerPlayerId = null)
+        public static void KillAndToxify(GameBoard board, int tileId, int expirationCycle, DeathReason reason, Player? owner = null)
         {
             var tile = board.GetTileById(tileId);
             var cell = tile?.FungalCell;
@@ -38,9 +35,10 @@ namespace FungusToast.Core.Death
                 return;
 
             cell.Kill(reason);
-            cell.ConvertToToxin(expirationCycle, ownerPlayerId);
+            cell.ConvertToToxin(expirationCycle, owner);
             board.RemoveControlFromPlayer(tileId);
-            board.PlaceFungalCell(cell); // Save updated toxin state
+            board.PlaceFungalCell(cell);
         }
+
     }
 }

@@ -74,6 +74,11 @@ namespace FungusToast.Core.Death
             }
 
             // -----------------------------------------------------------------
+            // 2b. Toxin Aura Deaths (Mycotoxin Potentiation)
+            // -----------------------------------------------------------------
+            MutationEffectProcessor.ApplyToxinAuraDeaths(board, players, Rng);
+
+            // -----------------------------------------------------------------
             // 3.  Evaluate death for every *living* cell
             // -----------------------------------------------------------------
             List<BoardTile> livingTiles = board.AllTiles()

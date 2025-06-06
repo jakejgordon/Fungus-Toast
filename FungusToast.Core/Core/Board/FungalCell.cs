@@ -1,4 +1,7 @@
-﻿using FungusToast.Core.Death;
+﻿using FungusToast.Core.Config;
+using FungusToast.Core.Death;
+using FungusToast.Core.Mutations;
+using FungusToast.Core.Players;
 using System;
 
 namespace FungusToast.Core.Board
@@ -105,30 +108,45 @@ namespace FungusToast.Core.Board
             GrowthCycleAge = age;
         }
 
-        public void MarkAsToxin(int expirationCycle)
+        public void MarkAsToxin(int expirationCycle, Player? owner = null, int? baseCycle = null)
         {
             if (IsAlive)
                 throw new InvalidOperationException("Cannot mark a living cell as toxin.");
             if (expirationCycle <= 0)
                 throw new ArgumentOutOfRangeException(nameof(expirationCycle), "Expiration must be greater than 0.");
 
-            ToxinExpirationCycle = expirationCycle;
+            ToxinExpirationCycle = CalculateAdjustedExpiration(expirationCycle, owner, baseCycle);
         }
 
-        public void ConvertToToxin(int expirationCycle, int? ownerPlayerId = null, DeathReason? reason = null)
+        public void ConvertToToxin(int expirationCycle,
+                                   Player? owner = null,
+                                   DeathReason? reason = null,
+                                   int? baseCycle = null)
         {
             if (IsAlive)
             {
                 Kill(reason ?? DeathReason.Unknown);
             }
 
-            if (ownerPlayerId.HasValue)
+            if (owner != null)
             {
-                OwnerPlayerId = ownerPlayerId;
+                OwnerPlayerId = owner.PlayerId;
             }
 
-            ToxinExpirationCycle = expirationCycle;
+            ToxinExpirationCycle = CalculateAdjustedExpiration(expirationCycle, owner, baseCycle);
         }
+
+        private int CalculateAdjustedExpiration(int expirationCycle, Player? owner, int? baseCycle)
+        {
+            if (owner == null || baseCycle == null)
+                return expirationCycle;
+
+            int bonus = owner.GetMutationLevel(MutationIds.MycotoxinPotentiation)
+                       * GameBalance.MycotoxinPotentiationGrowthCycleExtensionPerLevel;
+
+            return baseCycle.Value + (expirationCycle - baseCycle.Value) + bonus;
+        }
+
 
         public void ClearToxinState()
         {

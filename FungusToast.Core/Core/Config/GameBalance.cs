@@ -24,11 +24,12 @@ namespace FungusToast.Core.Config
         //public const float MycotoxinTracerEffectPerLevel = .01f;
         public const float MycotoxinTracerFailedGrowthWeightPerLevel = 0.005f;
         public const int MycotoxinTracerTileDuration = 20;
-        public const int MycotoxinTracerMaxToxinsDivisor = 50;
+        public const int MycotoxinTracerMaxToxinsDivisor = 40;
         public const float AdaptiveExpressionEffectPerLevel = 0.09f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 5f;
         public const float NecrosporulationEffectPerLevel = 0.04f;
-        public const float EncystedSporesEffectPerLevel = 0.001f;
+        public const int MycotoxinPotentiationGrowthCycleExtensionPerLevel = 1;
+        public const float MycotoxinPotentiationKillChancePerLevel = 0.04f; 
         public const float MutatorPhenotypeEffectPerLevel = 0.07f;
         public const float DiagonalGrowthEffectPerLevel = 0.01f;
         public const float MycotropicInductionEffectPerLevel = 0.45f;
@@ -50,7 +51,7 @@ namespace FungusToast.Core.Config
         public const int DiagonalGrowthMaxLevel = 10;
         public const int ChronoresilientCytoplasmMaxLevel = 10;
         public const int NecrosporulationMaxLevel = 5;
-        public const int EncystedSporesMaxLevel = 5;
+        public const int MycotoxinPotentiationMaxLevel = 10;
         public const int MutatorPhenotypeMaxLevel = 15;
         public const int AdaptiveExpressionMaxLevel = 10;
         public const int MycotropicInductionMaxLevel = 3;
