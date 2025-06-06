@@ -53,11 +53,11 @@ namespace FungusToast.Simulation.Analysis
             {
                 { nameof(PlayerResult.ReclaimedCells), (MutationIds.RegenerativeHyphae, "Reclaims") },
                 { nameof(PlayerResult.CreepingMoldMoves), (MutationIds.CreepingMold, "Mold Movements") },
-                { nameof(PlayerResult.NecroSpores), (MutationIds.Necrosporulation, "Necro Spores") },
+                { nameof(PlayerResult.NecrosporulationSpores), (MutationIds.Necrosporulation, "Necro Spores") },
                 { nameof(PlayerResult.SporocidalSpores), (MutationIds.SporocidalBloom, "Sporicidal Drops") },
                 { nameof(PlayerResult.NecrophyticSpores), (MutationIds.NecrophyticBloom, "Necrophytic Spores") },
                 { nameof(PlayerResult.NecrophyticReclaims), (MutationIds.NecrophyticBloom, "Necrophytic Reclaims") },
-                { nameof(PlayerResult.MycotoxinTracerSpores), (MutationIds.MycotoxinTracer, "Mycotoxin Tiles") },
+                { nameof(PlayerResult.MycotoxinTracerSpores), (MutationIds.MycotoxinTracer, "Mycotoxin Spores") },
                 { nameof(PlayerResult.ToxinAuraKills), (MutationIds.MycotoxinPotentiation, "Toxin Aura Kills") },
             };
 

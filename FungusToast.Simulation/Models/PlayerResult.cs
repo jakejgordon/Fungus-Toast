@@ -22,7 +22,7 @@ namespace FungusToast.Simulation.Models
 
         public int CreepingMoldMoves { get; set; }
 
-        public int NecroSpores { get; set; }
+        public int NecrosporulationSpores { get; set; }
         public int SporocidalSpores { get; set; }
 
         public int NecrophyticSpores { get; set; }

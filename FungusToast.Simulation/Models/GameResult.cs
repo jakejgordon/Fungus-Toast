@@ -15,6 +15,7 @@ namespace FungusToast.Simulation.Models
 
         public Dictionary<int, int> SporesFromSporocidalBloom { get; set; } = new();
         public Dictionary<int, int> SporesFromNecrosporulation { get; set; } = new();
+        public Dictionary<int, int> SporesFromMycotoxinTracer { get; set; } = new();
 
         public int ToxicTileCount { get; set; }
 
@@ -50,6 +51,7 @@ namespace FungusToast.Simulation.Models
                     CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId),
                     MycotoxinTracerSpores = tracking.GetMycotoxinSporeDropCount(player.PlayerId),
                     ToxinAuraKills = tracking.GetToxinAuraKillCount(player.PlayerId),
+                    SporocidalSpores = tracking.GetSporocidalSporeDropCount(player.PlayerId)
                 };
 
                 playerResultMap[player.PlayerId] = pr;
@@ -65,19 +67,17 @@ namespace FungusToast.Simulation.Models
                 }
             }
 
-            int toxicTiles = board.GetAllCells().Count(c => c.IsToxin);
-
-            var results = playerResultMap.Values.ToList();
-
             return new GameResult
             {
-                WinnerId = results.OrderByDescending(r => r.LivingCells).First().PlayerId,
+                WinnerId = playerResultMap.Values.OrderByDescending(r => r.LivingCells).First().PlayerId,
                 TurnsPlayed = turns,
-                PlayerResults = results,
+                PlayerResults = playerResultMap.Values.ToList(),
                 SporesFromSporocidalBloom = tracking.GetSporocidalSpores(),
                 SporesFromNecrosporulation = tracking.GetNecroSpores(),
-                ToxicTileCount = toxicTiles
+                SporesFromMycotoxinTracer = tracking.GetMycotoxinTracerSporeDrops(),
+                ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin)
             };
+
         }
 
     }

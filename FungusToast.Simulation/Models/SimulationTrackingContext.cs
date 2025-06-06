@@ -36,7 +36,7 @@ namespace FungusToast.Simulation.Models
         public int GetReclaimedCells(int playerId) =>
             reclaimedCells.TryGetValue(playerId, out var val) ? val : 0;
 
-        public int GetNecrophyticBloomSpores(int playerId) =>
+        public int GetNecrophyticBloomSporeDropCount(int playerId) =>
             necrophyticBloomSpores.TryGetValue(playerId, out var val) ? val : 0;
 
         public int GetNecrophyticBloomReclaims(int playerId) =>
@@ -109,9 +109,6 @@ namespace FungusToast.Simulation.Models
 
         public int GetNecrosporeDropCount(int playerId) =>
             necrosporulationSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
-
-        public int GetNecrophyticBloomSporeDropCount(int playerId) =>
-            necrophyticBloomSpores.TryGetValue(playerId, out var val) ? val : 0;
 
         public int GetNecrophyticBloomReclaimCount(int playerId) =>
             necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
