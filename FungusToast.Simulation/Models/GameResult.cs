@@ -51,7 +51,8 @@ namespace FungusToast.Simulation.Models
                     CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId),
                     MycotoxinTracerSpores = tracking.GetMycotoxinSporeDropCount(player.PlayerId),
                     ToxinAuraKills = tracking.GetToxinAuraKillCount(player.PlayerId),
-                    SporocidalSpores = tracking.GetSporocidalSporeDropCount(player.PlayerId)
+                    SporocidalSpores = tracking.GetSporocidalSporeDropCount(player.PlayerId),
+                    MycotoxinCatabolisms = tracking.GetToxinCatabolismCount(player.PlayerId)
                 };
 
                 playerResultMap[player.PlayerId] = pr;
@@ -77,8 +78,6 @@ namespace FungusToast.Simulation.Models
                 SporesFromMycotoxinTracer = tracking.GetMycotoxinTracerSporeDrops(),
                 ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin)
             };
-
         }
-
     }
 }

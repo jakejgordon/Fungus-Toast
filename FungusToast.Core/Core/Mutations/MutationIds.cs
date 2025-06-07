@@ -21,6 +21,6 @@
         public const int CreepingMold = 16;
         public const int SporocidalBloom = 17;
         public const int NecrophyticBloom = 18;
-        
+        public const int MycotoxinCatabolism = 19;
     }
 }

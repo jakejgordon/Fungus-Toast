@@ -50,16 +50,19 @@ namespace FungusToast.Simulation.Analysis
                               new string('-', 20) + "-|-" + new string('-', 13));
 
             var mutationEffectFields = new Dictionary<string, (int mutationId, string label)>
-            {
-                { nameof(PlayerResult.ReclaimedCells), (MutationIds.RegenerativeHyphae, "Reclaims") },
-                { nameof(PlayerResult.CreepingMoldMoves), (MutationIds.CreepingMold, "Mold Movements") },
-                { nameof(PlayerResult.NecrosporulationSpores), (MutationIds.Necrosporulation, "Necro Spores") },
-                { nameof(PlayerResult.SporocidalSpores), (MutationIds.SporocidalBloom, "Sporicidal Drops") },
-                { nameof(PlayerResult.NecrophyticSpores), (MutationIds.NecrophyticBloom, "Necrophytic Spores") },
-                { nameof(PlayerResult.NecrophyticReclaims), (MutationIds.NecrophyticBloom, "Necrophytic Reclaims") },
-                { nameof(PlayerResult.MycotoxinTracerSpores), (MutationIds.MycotoxinTracer, "Mycotoxin Spores") },
-                { nameof(PlayerResult.ToxinAuraKills), (MutationIds.MycotoxinPotentiation, "Toxin Aura Kills") },
+{
+            { nameof(PlayerResult.ReclaimedCells), (MutationIds.RegenerativeHyphae, "Reclaims") },
+            { nameof(PlayerResult.CreepingMoldMoves), (MutationIds.CreepingMold, "Mold Movements") },
+            { nameof(PlayerResult.NecrosporulationSpores), (MutationIds.Necrosporulation, "Necro Spores") },
+            { nameof(PlayerResult.SporocidalSpores), (MutationIds.SporocidalBloom, "Sporicidal Drops") },
+            { nameof(PlayerResult.NecrophyticSpores), (MutationIds.NecrophyticBloom, "Necrophytic Spores") },
+            { nameof(PlayerResult.NecrophyticReclaims), (MutationIds.NecrophyticBloom, "Necrophytic Reclaims") },
+            { nameof(PlayerResult.MycotoxinTracerSpores), (MutationIds.MycotoxinTracer, "Mycotoxin Spores") },
+            { nameof(PlayerResult.ToxinAuraKills), (MutationIds.MycotoxinPotentiation, "Toxin Aura Kills") },
+            // Add this line:
+            { nameof(PlayerResult.MycotoxinCatabolisms), (MutationIds.MycotoxinCatabolism, "Toxin Catabolisms") },
             };
+
 
             var mutationEffectSums = new Dictionary<string, Dictionary<int, (int count, string label)>>();
 

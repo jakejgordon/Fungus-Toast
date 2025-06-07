@@ -50,14 +50,22 @@ namespace FungusToast.Unity.UI
 
                     foreach (var cell in GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId))
                     {
-                        if (cell.IsAlive) alive++;
-                        else dead++;
+                        if (cell.IsAlive)
+                        {
+                            alive++;
+                        }
+                        else if (cell.IsDead) // Only count as dead if truly dead
+                        {
+                            dead++;
+                        }
+                        // else (e.g., toxin tiles) are ignored for dead count
                     }
 
                     row.SetCounts(alive.ToString(), dead.ToString());
                 }
             }
         }
+
 
         public void SetEndgameCountdownText(string message)
         {

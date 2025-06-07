@@ -140,6 +140,19 @@ namespace FungusToast.Core.Board
             return neighbors;
         }
 
+        public List<BoardTile> GetAdjacentTiles(int tileId)
+        {
+            List<BoardTile> result = new();
+            foreach (int neighborId in GetAdjacentTileIds(tileId))
+            {
+                var tile = GetTileById(neighborId);
+                if (tile != null)
+                    result.Add(tile);
+            }
+            return result;
+        }
+
+
         public (int x, int y) GetXYFromTileId(int tileId)
         {
             int x = tileId % Width;

@@ -14,6 +14,7 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> necrophyticBloomSpores = new();
         private readonly Dictionary<int, int> necrophyticBloomReclaims = new();
         private readonly Dictionary<int, int> toxinAuraKills = new();
+        private readonly Dictionary<int, int> toxinCatabolisms = new();
 
         public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
 
@@ -94,6 +95,14 @@ namespace FungusToast.Simulation.Models
             FailedGrowthsByPlayerId[playerId]++;
         }
 
+        public void RecordToxinCatabolism(int playerId, int count)
+        {
+            if (!toxinCatabolisms.ContainsKey(playerId))
+                toxinCatabolisms[playerId] = 0;
+            toxinCatabolisms[playerId] += count;
+        }
+
+
         public int GetFailedGrowthCount(int playerId) =>
             FailedGrowthsByPlayerId.TryGetValue(playerId, out var val) ? val : 0;
 
@@ -103,7 +112,10 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetNecrophyticBloomReclaims() => new(necrophyticBloomReclaims);
         public Dictionary<int, int> GetMycotoxinTracerSporeDrops() => new(mycotoxinTracerSporeDrops);
         public Dictionary<int, int> GetToxinAuraKills() => new(toxinAuraKills);
+        public Dictionary<int, int> GetToxinCatabolisms() => new(toxinCatabolisms);
 
+        public int GetToxinCatabolismCount(int playerId) =>
+    toxinCatabolisms.TryGetValue(playerId, out var val) ? val : 0;
         public int GetSporocidalSporeDropCount(int playerId) =>
             sporocidalSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
 

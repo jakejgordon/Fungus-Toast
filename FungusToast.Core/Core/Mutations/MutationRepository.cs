@@ -178,6 +178,22 @@ namespace FungusToast.Core.Mutations
                 tier: MutationTier.Tier2
             ), new MutationPrerequisite(MutationIds.MutatorPhenotype, 5));
 
+
+            MakeChild(new Mutation(
+                id: MutationIds.MycotoxinCatabolism,
+                name: "Mycotoxin Catabolism",
+                description: $"At the start of each growth phase, each level grants a {FormatPercent(GameBalance.MycotoxinCatabolismCleanupChancePerLevel)} chance to metabolize each adjacent toxin tile (per living fungal cell). " +
+                             $"Each toxin tile metabolized this way grants a {FormatPercent(GameBalance.MycotoxinCatabolismMutationPointChancePerCatabolism)} chance to gain a bonus mutation point (multiple points possible per turn).",
+                flavorText: "Evolved metabolic pathways enable the breakdown of toxic compounds, reclaiming nutrients from chemical hazards and occasionally triggering adaptive bursts of mutation.",
+                type: MutationType.ToxinCleanupAndMPBonus,
+                effectPerLevel: GameBalance.MycotoxinCatabolismCleanupChancePerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
+                maxLevel: GameBalance.MycotoxinCatabolismMaxLevel,
+                category: MutationCategory.GeneticDrift,
+                tier: MutationTier.Tier2
+            ), new MutationPrerequisite(MutationIds.MutatorPhenotype, 3));
+
+
             // Tier-3
             MakeChild(new Mutation(
                 id: MutationIds.Necrosporulation,

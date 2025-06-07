@@ -23,5 +23,6 @@ namespace FungusToast.Core
         AgeAndRandomnessDecayResistance,
         FungicideToxinSpores,
         ToxinKillAura,
+        ToxinCleanupAndMPBonus,
     }
 }

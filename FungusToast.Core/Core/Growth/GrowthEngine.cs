@@ -21,6 +21,11 @@ namespace FungusToast.Core.Growth
             // Expire toxins before growth begins
             board.ExpireToxinTiles(board.CurrentGrowthCycle);
 
+            foreach (var player in players)
+            {
+                MutationEffectProcessor.ApplyMycotoxinCatabolism(player, board, rng, observer);
+            }
+
             var failedGrowthsByPlayerId = players.ToDictionary(p => p.PlayerId, _ => 0);
             var activeFungalCells = board.AllLivingFungalCellsWithTiles().ToList();
 

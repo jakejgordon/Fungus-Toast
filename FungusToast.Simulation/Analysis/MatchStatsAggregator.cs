@@ -38,6 +38,7 @@ namespace FungusToast.Simulation.Analysis
                 int reclaimsFromNecrophytic,
                 int sporesFromMycotoxin,
                 int toxinAuraKills,
+                int mycotoxinCatabolisms, // NEW
                 int mutationPointsSpent,
                 float growthChance,
                 float selfDeathChance,
@@ -68,6 +69,7 @@ namespace FungusToast.Simulation.Analysis
                             reclaimsFromNecrophytic: 0,
                             sporesFromMycotoxin: 0,
                             toxinAuraKills: 0,
+                            mycotoxinCatabolisms: 0, // NEW
                             mutationPointsSpent: 0,
                             growthChance: 0f,
                             selfDeathChance: 0f,
@@ -89,6 +91,7 @@ namespace FungusToast.Simulation.Analysis
                     entry.reclaimsFromNecrophytic += pr.NecrophyticReclaims;
                     entry.sporesFromMycotoxin += pr.MycotoxinTracerSpores;
                     entry.toxinAuraKills += pr.ToxinAuraKills;
+                    entry.mycotoxinCatabolisms += pr.MycotoxinCatabolisms; // NEW
                     entry.mutationPointsSpent += pr.MutationLevels.Sum(kv =>
                         (MutationRegistry.GetById(kv.Key)?.PointsPerUpgrade ?? 0) * kv.Value);
                     entry.growthChance += pr.EffectiveGrowthChance;
@@ -143,16 +146,16 @@ namespace FungusToast.Simulation.Analysis
             IMutationSpendingStrategy strategyObj, int wins, int appearances,
             int living, int dead, int reclaims, int moldMoves,
             int sporesBloom, int sporesNecro, int sporesNecrophytic,
-            int reclaimsNecrophytic, int sporesMycotoxin, int toxinAuraKills, int mpSpent,
+            int reclaimsNecrophytic, int sporesMycotoxin, int toxinAuraKills, int mycotoxinCatabolisms, int mpSpent,
             float growthChance, float selfDeathChance, float decayMod)> playerStats)
         {
             Console.WriteLine("\n=== Per-Player Summary ===");
             Console.WriteLine(
                 $"{"Player",6} | {"Strategy",-40} | {"WinRate",7} | {"Avg Alive",10} | {"Avg Dead",9} | " +
-                $"{"Avg Reclaims",13} | {"Aura Kills",10} | {"Avg MP Spent",13} | " +
+                $"{"Avg Reclaims",13} | {"Aura Kills",10} | {"Catabolisms",11} | {"Avg MP Spent",13} | " +
                 $"{"Growth%",7} | {"SelfDeath%",11} | {"DecayMod",9}");
 
-            Console.WriteLine(new string('-', 140));
+            Console.WriteLine(new string('-', 152));
 
             foreach (var (id, entry) in playerStats.OrderByDescending(kvp => (float)kvp.Value.wins / kvp.Value.appearances))
             {
@@ -160,7 +163,7 @@ namespace FungusToast.Simulation.Analysis
                     strategyObj, wins, appearances, living, dead,
                     reclaims, moldMoves, sporesBloom, sporesNecro,
                     sporesNecrophytic, reclaimsNecrophytic, sporesMycotoxin,
-                    toxinAuraKills, mpSpent, growth, selfDeath, decayMod
+                    toxinAuraKills, mycotoxinCatabolisms, mpSpent, growth, selfDeath, decayMod
                 ) = entry;
 
                 float winRate = appearances > 0 ? (float)wins / appearances * 100f : 0f;
@@ -168,11 +171,11 @@ namespace FungusToast.Simulation.Analysis
                 Console.WriteLine(
                     $"{id,6} | {Truncate(strategyObj.StrategyName, 40),-40} | {winRate,6:F1}% | " +
                     $"{(float)living / appearances,10:F1} | {(float)dead / appearances,9:F1} | " +
-                    $"{(float)reclaims / appearances,13:F1} | {(float)toxinAuraKills / appearances,10:F1} | {(float)mpSpent / appearances,13:F1} | " +
+                    $"{(float)reclaims / appearances,13:F1} | {(float)toxinAuraKills / appearances,10:F1} | {(float)mycotoxinCatabolisms / appearances,11:F1} | {(float)mpSpent / appearances,13:F1} | " +
                     $"{growth / appearances * 100f,6:F2}% | {selfDeath / appearances * 100f,10:F2}% | {decayMod / appearances,8:F2}%");
             }
 
-            Console.WriteLine(new string('-', 140));
+            Console.WriteLine(new string('-', 152));
         }
 
         private void PrintDeathReasonSummary(Dictionary<DeathReason, int> deathReasonCounts)
