@@ -34,8 +34,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.SporocidalBloom,           new MutationLayoutMetadata(2, 3, MutationCategory.Fungicide) },
 
                 /* --------------- Genetic Drift (col 3) -------------- */
-                { MutationIds.AdaptiveExpression,     new MutationLayoutMetadata(3, 0, MutationCategory.GeneticDrift) },
-                { MutationIds.MutatorPhenotype,       new MutationLayoutMetadata(3, 1, MutationCategory.GeneticDrift) },
+                { MutationIds.MutatorPhenotype,       new MutationLayoutMetadata(3, 0, MutationCategory.GeneticDrift) },
+                { MutationIds.AdaptiveExpression,     new MutationLayoutMetadata(3, 1, MutationCategory.GeneticDrift) },
                 { MutationIds.MycotoxinCatabolism,    new MutationLayoutMetadata(3, 2, MutationCategory.GeneticDrift) }, 
                 { MutationIds.AnabolicInversion,      new MutationLayoutMetadata(3, 3, MutationCategory.GeneticDrift) },
                 { MutationIds.NecrophyticBloom,       new MutationLayoutMetadata(3, 4, MutationCategory.GeneticDrift) },

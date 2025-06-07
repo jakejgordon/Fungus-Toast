@@ -20,10 +20,10 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private RectTransform driftColumn;
 
         public List<MutationNodeUI> BuildTree(
-            IEnumerable<Mutation> mutations,
-            Dictionary<int, MutationLayoutMetadata> layout,
-            Player player,
-            UI_MutationManager uiManager)
+    IEnumerable<Mutation> mutations,
+    Dictionary<int, MutationLayoutMetadata> layout,
+    Player player,
+    UI_MutationManager uiManager)
         {
             if (growthColumn == null || resilienceColumn == null || fungicideColumn == null || driftColumn == null)
             {
@@ -36,67 +36,79 @@ namespace FungusToast.Unity.UI.MutationTree
             ClearColumn(fungicideColumn);
             ClearColumn(driftColumn);
 
-            HashSet<MutationCategory> createdHeaders = new HashSet<MutationCategory>();
+            // Instantiate headers at index 0 in each column
+            var headerGOs = new Dictionary<MutationCategory, GameObject>();
+            foreach (var (category, parentColumn) in new[] {
+        (MutationCategory.Growth, growthColumn),
+        (MutationCategory.CellularResilience, resilienceColumn),
+        (MutationCategory.Fungicide, fungicideColumn),
+        (MutationCategory.GeneticDrift, driftColumn)
+    })
+            {
+                GameObject headerGO = Instantiate(categoryHeaderPrefab, parentColumn);
+                headerGO.name = $"Header_{category}";
+                headerGO.transform.localScale = Vector3.one;
+
+                var text = headerGO.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+                if (text != null)
+                    text.text = SplitCamelCase(category.ToString());
+
+                headerGO.transform.SetSiblingIndex(0); // Ensure header is always first
+                headerGOs[category] = headerGO;
+            }
+
             List<MutationNodeUI> createdNodes = new List<MutationNodeUI>();
 
-            foreach (var mutation in mutations.OrderBy(m => m.Id))
+            // Group by column/category, then sort within each by row
+            var mutationsWithLayout = mutations
+                .Select(m => (mutation: m, meta: layout.TryGetValue(m.Id, out var meta) ? meta : null))
+                .Where(t => t.meta != null)
+                .GroupBy(t => t.meta.Category);
+
+            foreach (var group in mutationsWithLayout)
             {
-                if (!layout.TryGetValue(mutation.Id, out var metadata))
+                // Sort by row
+                foreach (var (mutation, meta) in group.OrderBy(t => t.meta.Row))
                 {
-                    Debug.LogWarning($"⚠️ No layout metadata for mutation ID {mutation.Id} ({mutation.Name})");
-                    continue;
-                }
+                    RectTransform parentColumn = GetColumnForCategory(meta.Category);
 
-                RectTransform parentColumn = GetColumnForCategory(metadata.Category);
+                    GameObject nodeGO = Instantiate(mutationNodePrefab, parentColumn);
+                    nodeGO.name = $"MutationNode_{mutation.Name}";
+                    nodeGO.transform.localScale = Vector3.one;
 
-                if (!createdHeaders.Contains(metadata.Category))
-                {
-                    createdHeaders.Add(metadata.Category);
-                    GameObject headerGO = Instantiate(categoryHeaderPrefab, parentColumn);
-                    headerGO.name = $"Header_{metadata.Category}";
-                    headerGO.transform.localScale = Vector3.one;
+                    // Set to row+1 to account for header at index 0
+                    nodeGO.transform.SetSiblingIndex(meta.Row + 1);
 
-                    var text = headerGO.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-                    if (text != null)
-                        text.text = SplitCamelCase(metadata.Category.ToString());
-                }
-
-                GameObject nodeGO = Instantiate(mutationNodePrefab, parentColumn);
-                nodeGO.name = $"MutationNode_{mutation.Name}";
-                nodeGO.transform.localScale = Vector3.one;
-
-                var mutationNodeLayout = nodeGO.GetComponent<LayoutElement>();
-                if (mutationNodeLayout != null)
-                {
-                    mutationNodeLayout.preferredWidth = 120;
-                    mutationNodeLayout.preferredHeight = 120;
-                }
-
-                MutationNodeUI nodeUI = nodeGO.GetComponent<MutationNodeUI>();
-                nodeUI.Initialize(mutation, player, uiManager);
-
-                // Debug layout info
-                RectTransform rt = nodeGO.GetComponent<RectTransform>();
-                Debug.Log($"📌 Built node for {mutation.Name} (ID {mutation.Id}) at col {metadata.Column}, row {metadata.Row}, parent = {parentColumn.name}, anchored pos = {rt?.anchoredPosition}");
-
-                // Bring lock overlay to front if it's present
-                var lockOverlay = nodeGO.transform.Find("UI_LockOverlay");
-                if (lockOverlay != null)
-                {
-                    lockOverlay.SetAsLastSibling();
-
-                    var image = lockOverlay.GetComponent<Image>();
-                    if (image != null && image.sprite == null)
+                    var mutationNodeLayout = nodeGO.GetComponent<LayoutElement>();
+                    if (mutationNodeLayout != null)
                     {
-                        Debug.LogWarning($"🔒 UI_LockOverlay exists on {mutation.Name} but has no sprite assigned.");
+                        mutationNodeLayout.preferredWidth = 120;
+                        mutationNodeLayout.preferredHeight = 120;
                     }
-                }
 
-                createdNodes.Add(nodeUI);
+                    MutationNodeUI nodeUI = nodeGO.GetComponent<MutationNodeUI>();
+                    nodeUI.Initialize(mutation, player, uiManager);
+
+                    // Lock overlay and debug info
+                    var lockOverlay = nodeGO.transform.Find("UI_LockOverlay");
+                    if (lockOverlay != null)
+                    {
+                        lockOverlay.SetAsLastSibling();
+                        var image = lockOverlay.GetComponent<Image>();
+                        if (image != null && image.sprite == null)
+                        {
+                            Debug.LogWarning($"🔒 UI_LockOverlay exists on {mutation.Name} but has no sprite assigned.");
+                        }
+                    }
+
+                    createdNodes.Add(nodeUI);
+                }
             }
 
             return createdNodes;
         }
+
+
 
 
 
