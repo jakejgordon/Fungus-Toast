@@ -152,10 +152,10 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine("\n=== Per-Player Summary ===");
             Console.WriteLine(
                 $"{"Player",6} | {"Strategy",-40} | {"WinRate",7} | {"Avg Alive",10} | {"Avg Dead",9} | " +
-                $"{"Avg Reclaims",13} | {"Aura Kills",10} | {"Catabolisms",11} | {"Avg MP Spent",13} | " +
+                $"{"Avg Reclaims",13} | {"Avg Aura Kills",15} | {"Avg Catabolisms",15} | {"Avg MP Spent",13} | " +
                 $"{"Growth%",7} | {"SelfDeath%",11} | {"DecayMod",9}");
 
-            Console.WriteLine(new string('-', 152));
+            Console.WriteLine(new string('-', 170));
 
             foreach (var (id, entry) in playerStats.OrderByDescending(kvp => (float)kvp.Value.wins / kvp.Value.appearances))
             {
@@ -171,12 +171,13 @@ namespace FungusToast.Simulation.Analysis
                 Console.WriteLine(
                     $"{id,6} | {Truncate(strategyObj.StrategyName, 40),-40} | {winRate,6:F1}% | " +
                     $"{(float)living / appearances,10:F1} | {(float)dead / appearances,9:F1} | " +
-                    $"{(float)reclaims / appearances,13:F1} | {(float)toxinAuraKills / appearances,10:F1} | {(float)mycotoxinCatabolisms / appearances,11:F1} | {(float)mpSpent / appearances,13:F1} | " +
+                    $"{(float)reclaims / appearances,13:F1} | {(float)toxinAuraKills / appearances,15:F2} | {(float)mycotoxinCatabolisms / appearances,15:F2} | {(float)mpSpent / appearances,13:F1} | " +
                     $"{growth / appearances * 100f,6:F2}% | {selfDeath / appearances * 100f,10:F2}% | {decayMod / appearances,8:F2}%");
             }
 
-            Console.WriteLine(new string('-', 152));
+            Console.WriteLine(new string('-', 170));
         }
+
 
         private void PrintDeathReasonSummary(Dictionary<DeathReason, int> deathReasonCounts)
         {

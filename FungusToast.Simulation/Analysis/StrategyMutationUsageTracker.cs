@@ -42,28 +42,32 @@ namespace FungusToast.Simulation.Analysis
         public void PrintReport(List<PlayerResult> allPlayerResults)
         {
             Console.WriteLine("\nStrategy-Mutation Usage Summary:");
-            Console.WriteLine("{0,-37} | {1,-32} | {2,10} | {3,10} | {4,-20} | {5,13}",
-                "Strategy", "Mutation Name", "Games Used", "Avg Level", "Mutation Effect", "Effect Count");
+            Console.WriteLine("{0,-37} | {1,-32} | {2,10} | {3,10} | {4,-20} | {5,16}",
+                "Strategy", "Mutation Name", "Games Used", "Avg Level", "Mutation Effect", "Avg Effect Count");
 
             Console.WriteLine(new string('-', 37) + "-|-" + new string('-', 32) + "-|-" +
                               new string('-', 10) + "-|-" + new string('-', 10) + "-|-" +
-                              new string('-', 20) + "-|-" + new string('-', 13));
+                              new string('-', 20) + "-|-" + new string('-', 16));
 
             var mutationEffectFields = new Dictionary<string, (int mutationId, string label)>
-{
-            { nameof(PlayerResult.ReclaimedCells), (MutationIds.RegenerativeHyphae, "Reclaims") },
-            { nameof(PlayerResult.CreepingMoldMoves), (MutationIds.CreepingMold, "Mold Movements") },
-            { nameof(PlayerResult.NecrosporulationSpores), (MutationIds.Necrosporulation, "Necro Spores") },
-            { nameof(PlayerResult.SporocidalSpores), (MutationIds.SporocidalBloom, "Sporicidal Drops") },
-            { nameof(PlayerResult.NecrophyticSpores), (MutationIds.NecrophyticBloom, "Necrophytic Spores") },
-            { nameof(PlayerResult.NecrophyticReclaims), (MutationIds.NecrophyticBloom, "Necrophytic Reclaims") },
-            { nameof(PlayerResult.MycotoxinTracerSpores), (MutationIds.MycotoxinTracer, "Mycotoxin Spores") },
-            { nameof(PlayerResult.ToxinAuraKills), (MutationIds.MycotoxinPotentiation, "Toxin Aura Kills") },
-            // Add this line:
-            { nameof(PlayerResult.MycotoxinCatabolisms), (MutationIds.MycotoxinCatabolism, "Toxin Catabolisms") },
-            };
+    {
+        { nameof(PlayerResult.ReclaimedCells), (MutationIds.RegenerativeHyphae, "Reclaims") },
+        { nameof(PlayerResult.CreepingMoldMoves), (MutationIds.CreepingMold, "Mold Movements") },
+        { nameof(PlayerResult.NecrosporulationSpores), (MutationIds.Necrosporulation, "Necro Spores") },
+        { nameof(PlayerResult.SporocidalSpores), (MutationIds.SporocidalBloom, "Sporicidal Drops") },
+        { nameof(PlayerResult.NecrophyticSpores), (MutationIds.NecrophyticBloom, "Necrophytic Spores") },
+        { nameof(PlayerResult.NecrophyticReclaims), (MutationIds.NecrophyticBloom, "Necrophytic Reclaims") },
+        { nameof(PlayerResult.MycotoxinTracerSpores), (MutationIds.MycotoxinTracer, "Mycotoxin Spores") },
+        { nameof(PlayerResult.ToxinAuraKills), (MutationIds.MycotoxinPotentiation, "Toxin Aura Kills") },
+        { nameof(PlayerResult.MycotoxinCatabolisms), (MutationIds.MycotoxinCatabolism, "Toxin Catabolisms") },
+    };
 
+            // For calculating total number of games played per strategy
+            var strategyGamesPlayed = allPlayerResults
+                .GroupBy(r => r.StrategyName)
+                .ToDictionary(g => g.Key, g => g.Count());
 
+            // Sum up effect counts per strategy/mutation
             var mutationEffectSums = new Dictionary<string, Dictionary<int, (int count, string label)>>();
 
             foreach (var result in allPlayerResults)
@@ -97,6 +101,9 @@ namespace FungusToast.Simulation.Analysis
                 var mutations = strategyMutationLevels[strategy];
                 mutationEffectSums.TryGetValue(strategy, out var effectDict);
 
+                // How many games for this strategy?
+                int gamesForStrategy = strategyGamesPlayed.TryGetValue(strategy, out var cnt) ? cnt : 0;
+
                 foreach (var kv in mutations.OrderBy(kv => kv.Key))
                 {
                     int mutationId = kv.Key;
@@ -111,21 +118,22 @@ namespace FungusToast.Simulation.Analysis
                     string name = mutation?.Name ?? $"[ID {mutationId}]";
 
                     string effectLabel = "";
-                    string effectCountStr = "";
+                    string effectAvgStr = "";
 
                     if (effectDict != null && effectDict.TryGetValue(mutationId, out var entry))
                     {
                         effectLabel = entry.label;
-                        effectCountStr = entry.count.ToString();
+                        float avgEffect = (gamesForStrategy > 0) ? (float)entry.count / gamesForStrategy : 0f;
+                        effectAvgStr = avgEffect.ToString("F2");
                     }
 
-                    Console.WriteLine("{0,-37} | {1,-32} | {2,10} | {3,10:F2} | {4,-20} | {5,13}",
+                    Console.WriteLine("{0,-37} | {1,-32} | {2,10} | {3,10:F2} | {4,-20} | {5,16}",
                         Truncate(strategy, 37),
                         Truncate(name, 32),
                         gamesUsed,
                         avgLevel,
                         Truncate(effectLabel, 20),
-                        effectCountStr);
+                        effectAvgStr);
                 }
             }
 
