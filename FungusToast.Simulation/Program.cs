@@ -107,7 +107,7 @@ class Program
         impactTracker.PrintReport();
 
         // Analyze per-strategy mutation usage
-        var usageTracker = new StrategyMutationUsageTracker();
+        var usageTracker = new PlayerMutationUsageTracker();
         foreach (var result in results)
         {
             usageTracker.TrackGameResult(result);

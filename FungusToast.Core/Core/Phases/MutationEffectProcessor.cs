@@ -327,12 +327,7 @@ namespace FungusToast.Core.Phases
          * 6 ▸  NECROPHYTIC BLOOM HELPERS
          * ────────────────────────────────────────────────────────────────*/
 
-        public static int GetBaseSporesForNecrophyticBloom(Player player)
-        {
-            int lvl = player.GetMutationLevel(MutationIds.NecrophyticBloom);
-            return lvl > 0 ? GameBalance.NecrophyticBloomBaseSpores + lvl : 0;
-        }
-
+        // Returns the damping factor based on occupied percent
         public static float GetNecrophyticBloomDamping(float occupiedPercent)
         {
             if (occupiedPercent <= 0.20f) return 1f;
@@ -340,21 +335,62 @@ namespace FungusToast.Core.Phases
             return Math.Clamp(raw, 0f, 1f);
         }
 
-        public static int GetEffectiveSporesForNecrophyticBloom(Player player,
-                                                                float occupiedPercent)
+        // Handles initial burst: call once when 20% occupancy is reached
+        public static void TriggerNecrophyticBloomInitialBurst(
+            Player player,
+            GameBoard board,
+            Random rng,
+            ISporeDropObserver? observer = null)
         {
-            int baseSpores = GetBaseSporesForNecrophyticBloom(player);
-            float damping = GetNecrophyticBloomDamping(occupiedPercent);
-            return (int)Math.Floor(baseSpores * damping);
+            int level = player.GetMutationLevel(MutationIds.NecrophyticBloom);
+            if (level <= 0) return;
+
+            // Get all dead, non-toxin, non-empty cells owned by this player
+            var deadCells = board.GetAllCellsOwnedBy(player.PlayerId)
+                                 .Where(cell => !cell.IsAlive && !cell.IsToxin)
+                                 .ToList();
+
+            float sporesPerDeadCell = level * GameBalance.NecrophyticBloomSporesPerDeathPerLevel;
+            float damping = 1f; // Initial burst: NO damping
+
+            int totalSpores = (int)Math.Floor(sporesPerDeadCell * deadCells.Count * damping);
+            if (totalSpores <= 0) return;
+
+            var allTiles = board.AllTiles().ToList();
+            int reclaims = 0;
+
+            for (int i = 0; i < totalSpores; i++)
+            {
+                BoardTile target = allTiles[rng.Next(allTiles.Count)];
+
+                if (target.FungalCell is { IsAlive: false, IsToxin: false })
+                {
+                    target.FungalCell.Reclaim(player.PlayerId);
+                    player.AddControlledTile(target.TileId);
+                    board.PlaceFungalCell(target.FungalCell);
+                    reclaims++;
+                }
+            }
+
+            observer?.ReportNecrophyticBloomSporeDrop(player.PlayerId, totalSpores, reclaims);
         }
 
-        public static void HandleNecrophyticBloomSporeDrop(Player player,
-                                                           GameBoard board,
-                                                           Random rng,
-                                                           float occupiedPercent,
-                                                           ISporeDropObserver? observer = null)
+        // Handles *per-death* spore drop AFTER activation
+        public static void TriggerNecrophyticBloomOnCellDeath(
+            Player owner,
+            GameBoard board,
+            Random rng,
+            float occupiedPercent,
+            ISporeDropObserver? observer = null)
         {
-            int spores = GetEffectiveSporesForNecrophyticBloom(player, occupiedPercent);
+            int level = owner.GetMutationLevel(MutationIds.NecrophyticBloom);
+            if (level <= 0) return;
+
+            float damping = GetNecrophyticBloomDamping(occupiedPercent);
+
+            int spores = (int)Math.Floor(
+                level * GameBalance.NecrophyticBloomSporesPerDeathPerLevel * damping);
+
             if (spores <= 0) return;
 
             var allTiles = board.AllTiles().ToList();
@@ -366,16 +402,16 @@ namespace FungusToast.Core.Phases
 
                 if (target.FungalCell is { IsAlive: false, IsToxin: false })
                 {
-                    target.FungalCell.Reclaim(player.PlayerId);
-                    player.AddControlledTile(target.TileId);
+                    target.FungalCell.Reclaim(owner.PlayerId);
+                    owner.AddControlledTile(target.TileId);
                     board.PlaceFungalCell(target.FungalCell);
                     reclaims++;
                 }
-
             }
 
-            observer?.ReportNecrophyticBloomSporeDrop(player.PlayerId, spores, reclaims);
+            observer?.ReportNecrophyticBloomSporeDrop(owner.PlayerId, spores, reclaims);
         }
+
 
         public static int ApplyMycotoxinTracer(
             Player player,
@@ -480,6 +516,7 @@ namespace FungusToast.Core.Phases
 
             float cleanupChance = level * GameBalance.MycotoxinCatabolismCleanupChancePerLevel;
             int toxinsMetabolized = 0;
+            int catabolizedMutationPoints = 0; // Track mutation points gained by catabolism
             var processedToxins = new HashSet<int>();
 
             foreach (var cell in board.GetAllCellsOwnedBy(player.PlayerId))
@@ -497,15 +534,19 @@ namespace FungusToast.Core.Phases
                         toxinsMetabolized++;
 
                         if (rng.NextDouble() < GameBalance.MycotoxinCatabolismMutationPointChancePerCatabolism)
+                        {
                             player.MutationPoints += 1;
+                            catabolizedMutationPoints++;
+                        }
                     }
                 }
             }
 
             if (toxinsMetabolized > 0)
-                observer?.RecordToxinCatabolism(player.PlayerId, toxinsMetabolized);
+                observer?.RecordToxinCatabolism(player.PlayerId, toxinsMetabolized, catabolizedMutationPoints);
 
             return toxinsMetabolized;
         }
+
     }
 }

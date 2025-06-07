@@ -306,11 +306,11 @@ namespace FungusToast.Core.Mutations
                 id: MutationIds.NecrophyticBloom,
                 name: "Necrophytic Bloom",
                 description: $"Once {FormatPercent(GameBalance.NecrophyticBloomActivationThreshold)} of the board is occupied, this mutation activates. " +
-                             $"Each level grants {FormatFloat(GameBalance.NecrophyticBloomSporesPerLevel)} spores per dead cell owned at activation. " +
+                             $"Each level grants {FormatFloat(GameBalance.NecrophyticBloomSporesPerDeathPerLevel)} spores per dead cell owned at activation. " +
                              $"After activation, each new death releases spores scaled by remaining board space — fewer spores drop as crowding increases.",
                 flavorText: "When overcrowding threatens expansion, the colony enters a necrophytic phase, reanimating its fallen cells with explosive spore dispersal.",
                 type: MutationType.NecrophyticBloomSporeDrop,
-                effectPerLevel: GameBalance.NecrophyticBloomSporesPerLevel,
+                effectPerLevel: GameBalance.NecrophyticBloomSporesPerDeathPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
                 maxLevel: GameBalance.NecrophyticBloomMaxLevel,
                 category: MutationCategory.GeneticDrift,

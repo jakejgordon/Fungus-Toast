@@ -18,7 +18,7 @@ namespace FungusToast.Core.Death
     {
         private static readonly Random Rng = new();
 
-        // Tracks whether the 20 %-occupied trigger for Necrophytic Bloom has fired.
+        // Tracks whether the 20%-occupied trigger for Necrophytic Bloom has fired.
         private static bool necrophyticActivated = false;
 
         public static void ExecuteDeathCycle(
@@ -56,6 +56,10 @@ namespace FungusToast.Core.Death
             }
         }
 
+        /// <summary>
+        /// Handles the 20% board occupancy trigger for Necrophytic Bloom. 
+        /// For each player with the mutation, fires an initial burst of spores for *each* dead cell they have.
+        /// </summary>
         private static void ApplyNecrophyticBloomTrigger(
             List<Player> players,
             GameBoard board,
@@ -71,13 +75,17 @@ namespace FungusToast.Core.Death
                 {
                     if (p.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
                     {
-                        MutationEffectProcessor.HandleNecrophyticBloomSporeDrop(
-                            p, board, Rng, occupiedPercent, observer);
+                        MutationEffectProcessor.TriggerNecrophyticBloomInitialBurst(
+                            p, board, Rng, observer);
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Handles all living cells, rolling for probabilistic deaths. After Necrophytic Bloom activates,
+        /// each cell death for a player with the mutation triggers per-death spores with damping.
+        /// </summary>
         private static void EvaluateProbabilisticDeaths(
             GameBoard board,
             List<Player> players,
@@ -111,11 +119,12 @@ namespace FungusToast.Core.Death
 
                     MutationEffectProcessor.TryTriggerSporeOnDeath(owner, board, Rng, observer);
 
+                    // --- PER-DEATH Necrophytic Bloom effect ---
                     if (necrophyticActivated &&
                         owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
                     {
                         float occupiedPercent = board.GetOccupiedTileRatio();
-                        MutationEffectProcessor.HandleNecrophyticBloomSporeDrop(
+                        MutationEffectProcessor.TriggerNecrophyticBloomOnCellDeath(
                             owner, board, Rng, occupiedPercent, observer);
                     }
                 }

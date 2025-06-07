@@ -21,7 +21,7 @@ namespace FungusToast.Core.Config
         // Mutation Effects
         public const float MycelialBloomEffectPerLevel = 0.0025f;
         public const float HomeostaticHarmonyEffectPerLevel = 0.003f;
-        public const float MycotoxinTracerFailedGrowthWeightPerLevel = 0.004f;
+        public const float MycotoxinTracerFailedGrowthWeightPerLevel = 0.003f;
         public const int MycotoxinTracerTileDuration = 20;
         public const int MycotoxinTracerMaxToxinsDivisor = 50;
         public const float MutatorPhenotypeEffectPerLevel = 0.07f;
@@ -43,7 +43,7 @@ namespace FungusToast.Core.Config
         public const float SporicialBloomEffectPerLevel = .2f;
         public const int SporocidalToxinTileDuration = 11;
         public const int NecrophyticBloomBaseSpores = 2;
-        public static float NecrophyticBloomSporesPerLevel = 100;
+        public static float NecrophyticBloomSporesPerDeathPerLevel = 100;
 
         // Max Levels
         public const int MycelialBloomMaxLevel = 100;
