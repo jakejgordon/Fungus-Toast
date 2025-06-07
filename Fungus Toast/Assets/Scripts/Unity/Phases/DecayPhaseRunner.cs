@@ -35,15 +35,6 @@ namespace FungusToast.Unity.Phases
             // Execute deaths
             DeathEngine.ExecuteDeathCycle(board, players, failedGrowthsByPlayerId);
 
-            // Remove expired toxins
-            foreach (var tile in board.AllTiles())
-            {
-                if (tile.FungalCell?.HasToxinExpired(board.CurrentGrowthCycle) == true)
-                {
-                    tile.FungalCell.ClearToxinState();
-                }
-            }
-
             yield return new WaitForSeconds(GameBalance.TimeBeforeDecayRender);
 
             gridVisualizer.RenderBoard(board);

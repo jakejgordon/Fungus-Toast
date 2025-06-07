@@ -14,7 +14,16 @@ namespace FungusToast.Core.Board
 
         public bool IsAlive { get; internal set; } = true;
         public int GrowthCycleAge { get; private set; } = 0;
-        public int ToxinExpirationCycle { get; private set; } = 0;
+        private int _toxinExpirationCycle = 0;
+        public int ToxinExpirationCycle
+        {
+            get => _toxinExpirationCycle;
+            private set
+            {
+                // Place a breakpoint here!
+                _toxinExpirationCycle = value;
+            }
+        }
 
         public bool IsToxin => ToxinExpirationCycle > 0;
         public bool IsDead => !IsAlive && !IsToxin;

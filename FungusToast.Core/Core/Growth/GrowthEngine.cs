@@ -18,9 +18,6 @@ namespace FungusToast.Core.Growth
             Random rng,
             IGrowthObserver? observer = null)
         {
-            // Expire toxins before growth begins
-            board.ExpireToxinTiles(board.CurrentGrowthCycle);
-
             foreach (var player in players)
             {
                 MutationEffectProcessor.ApplyMycotoxinCatabolism(player, board, rng, observer);

@@ -27,6 +27,8 @@ namespace FungusToast.Core.Death
             Dictionary<int, int> failedGrowthsByPlayerId,
             ISporeDropObserver? observer = null)
         {
+            // Expire toxins before growth begins
+            board.ExpireToxinTiles(board.CurrentGrowthCycle);
             List<Player> shuffledPlayers = players.OrderBy(_ => Rng.NextDouble()).ToList();
 
             var (allMutations, _) = MutationRepository.BuildFullMutationSet();
