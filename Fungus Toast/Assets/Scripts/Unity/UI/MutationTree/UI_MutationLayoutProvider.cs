@@ -26,6 +26,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.ChronoresilientCytoplasm, new MutationLayoutMetadata(1, 1, MutationCategory.CellularResilience) },
                 { MutationIds.Necrosporulation,         new MutationLayoutMetadata(1, 2, MutationCategory.CellularResilience) },
                 { MutationIds.RegenerativeHyphae,       new MutationLayoutMetadata(1, 3, MutationCategory.CellularResilience) },
+                { MutationIds.NecrohyphalInfiltration,  new MutationLayoutMetadata(1, 4, MutationCategory.CellularResilience) },
 
                 /* ---------------- Fungicide (col 2) ----------------- */
                 { MutationIds.MycotoxinTracer,           new MutationLayoutMetadata(2, 0, MutationCategory.Fungicide) },
@@ -39,8 +40,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.MycotoxinCatabolism,    new MutationLayoutMetadata(3, 2, MutationCategory.GeneticDrift) }, 
                 { MutationIds.AnabolicInversion,      new MutationLayoutMetadata(3, 3, MutationCategory.GeneticDrift) },
                 { MutationIds.NecrophyticBloom,       new MutationLayoutMetadata(3, 4, MutationCategory.GeneticDrift) },
-                { MutationIds.HyperadaptiveDrift,       new MutationLayoutMetadata(3, 5, MutationCategory.GeneticDrift) },
-
+                { MutationIds.HyperadaptiveDrift,     new MutationLayoutMetadata(3, 5, MutationCategory.GeneticDrift) },
             };
     }
 }

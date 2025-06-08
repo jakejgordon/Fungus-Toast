@@ -25,6 +25,10 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> mutatorPhenotypePointsEarned = new();
         private readonly Dictionary<int, int> hyperadaptiveDriftPointsEarned = new();
 
+        // NEW: Necrohyphal Infiltration tracking
+        private readonly Dictionary<int, int> necrohyphalInfiltrations = new();
+        private readonly Dictionary<int, int> necrohyphalCascades = new();
+
         public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
 
         // ────────────────────────────
@@ -101,6 +105,25 @@ namespace FungusToast.Simulation.Models
             catabolizedMutationPoints[playerId] += mutationPointsCatabolized;
         }
 
+        // ────────────────────────────
+        //  NEW: Necrohyphal Infiltration recorders
+        // ────────────────────────────
+
+        public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount)
+        {
+            if (!necrohyphalInfiltrations.ContainsKey(playerId))
+                necrohyphalInfiltrations[playerId] = 0;
+            necrohyphalInfiltrations[playerId] += necrohyphalInfiltrationCount;
+        }
+
+
+        public void RecordNecrohyphalInfiltrationCascade(int playerId, int cascadeCount)
+        {
+            if (!necrohyphalCascades.ContainsKey(playerId))
+                necrohyphalCascades[playerId] = 0;
+            necrohyphalCascades[playerId] += cascadeCount;
+        }
+
         // IMutationPointObserver implementations
         public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned)
         {
@@ -162,6 +185,13 @@ namespace FungusToast.Simulation.Models
         public int GetHyperadaptiveDriftPointsEarned(int playerId) =>
             hyperadaptiveDriftPointsEarned.TryGetValue(playerId, out var val) ? val : 0;
 
+        // NEW: Getters for Necrohyphal stats
+        public int GetNecrohyphalInfiltrationCount(int playerId) =>
+            necrohyphalInfiltrations.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetNecrohyphalCascadeCount(int playerId) =>
+            necrohyphalCascades.TryGetValue(playerId, out var val) ? val : 0;
+
         // Bulk accessors for summaries/statistics
         public Dictionary<int, int> GetSporocidalSpores() => new(sporocidalSporeDrops);
         public Dictionary<int, int> GetNecroSpores() => new(necrosporulationSporeDrops);
@@ -174,5 +204,8 @@ namespace FungusToast.Simulation.Models
 
         public Dictionary<int, int> GetAllMutatorPhenotypePointsEarned() => new(mutatorPhenotypePointsEarned);
         public Dictionary<int, int> GetAllHyperadaptiveDriftPointsEarned() => new(hyperadaptiveDriftPointsEarned);
+
+        public Dictionary<int, int> GetAllNecrohyphalInfiltrations() => new(necrohyphalInfiltrations);
+        public Dictionary<int, int> GetAllNecrohyphalCascades() => new(necrohyphalCascades);
     }
 }

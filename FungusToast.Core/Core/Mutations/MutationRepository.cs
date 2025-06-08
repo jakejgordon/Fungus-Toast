@@ -321,6 +321,24 @@ namespace FungusToast.Core.Mutations
 
             //Tier-5
             MakeChild(new Mutation(
+                id: MutationIds.NecrohyphalInfiltration,
+                name: "Necrohyphal Infiltration",
+                description:
+                    $"Each level grants a {FormatPercent(GameBalance.NecrohyphalInfiltrationChancePerLevel)} chance for your living cells to grow into an adjacent dead enemy cell. " +
+                    $"When successful, each level also grants a {FormatPercent(GameBalance.NecrohyphalInfiltrationCascadeChancePerLevel)} chance to immediately cascade into another adjacent dead cell, potentially chaining across the battlefield.",
+                flavorText: "Necrohyphae tunnel through decaying rivals, infiltrating their remains and reawakening them as loyal extensions of the colony. On rare occasions, this necrotic surge propagates, consuming entire graveyards in a wave of resurrection.",
+                type: MutationType.NecrohyphalInfiltration,
+                effectPerLevel: GameBalance.NecrohyphalInfiltrationChancePerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
+                maxLevel: GameBalance.NecrohyphalInfiltrationMaxLevel,
+                category: MutationCategory.CellularResilience,
+                tier: MutationTier.Tier5
+            ),
+            new MutationPrerequisite(MutationIds.RegenerativeHyphae, 1),
+            new MutationPrerequisite(MutationIds.CreepingMold, 1));
+
+
+            MakeChild(new Mutation(
                 id: MutationIds.HyperadaptiveDrift,
                 name: "Hyperadaptive Drift",
                 description:

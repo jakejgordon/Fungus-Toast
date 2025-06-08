@@ -49,7 +49,6 @@ namespace FungusToast.Simulation.Analysis
                               new string('-', 10) + "-|-" + new string('-', 10) + "-|-" +
                               new string('-', 32) + "-|-" + new string('-', 32));
 
-            // Report mutation effect fields, now splitting free points
             var mutationEffectFields = new List<(int mutationId, string propertyName, string label)>
             {
                 (MutationIds.RegenerativeHyphae, nameof(PlayerResult.ReclaimedCells), "Reclaims"),
@@ -62,45 +61,41 @@ namespace FungusToast.Simulation.Analysis
                 (MutationIds.MycotoxinPotentiation, nameof(PlayerResult.ToxinAuraKills), "Toxin Aura Kills"),
                 (MutationIds.MycotoxinCatabolism, nameof(PlayerResult.MycotoxinCatabolisms), "Toxin Catabolisms"),
                 (MutationIds.MycotoxinCatabolism, nameof(PlayerResult.CatabolizedMutationPoints), "Catabolized MP"),
-                // Free mutation points, split by source
                 (MutationIds.MutatorPhenotype, nameof(PlayerResult.MutatorPhenotypePointsEarned), "Mutator Free MP"),
                 (MutationIds.HyperadaptiveDrift, nameof(PlayerResult.HyperadaptiveDriftPointsEarned), "Hyperadaptive Free MP"),
+                // Necrohyphal: track both fields for single-row effect
+                (MutationIds.NecrohyphalInfiltration, nameof(PlayerResult.NecrohyphalInfiltrations), "Infiltrations"),
+                (MutationIds.NecrohyphalInfiltration, nameof(PlayerResult.NecrohyphalCascades), "Cascades"),
             };
 
-            // For calculating total number of games played per strategy
             var strategyGamesPlayed = allPlayerResults
                 .GroupBy(r => r.StrategyName)
                 .ToDictionary(g => g.Key, g => g.Count());
 
-            // Aggregate all effects per (strategy, mutationId)
-            // Dictionary: strategy -> mutationId -> List<(label, sum)>
-            var effectAgg = new Dictionary<string, Dictionary<int, List<(string label, int sum)>>>(); // label, total count
-
+            // Aggregate effects
+            var effectAgg = new Dictionary<string, Dictionary<int, Dictionary<string, int>>>(); // strategy -> mutationId -> (label -> sum)
             foreach (var result in allPlayerResults)
             {
                 string strategy = result.StrategyName ?? "None";
                 if (!effectAgg.TryGetValue(strategy, out var perMutation))
                 {
-                    perMutation = new Dictionary<int, List<(string, int)>>();
+                    perMutation = new Dictionary<int, Dictionary<string, int>>();
                     effectAgg[strategy] = perMutation;
                 }
 
                 foreach (var (mutationId, propertyName, label) in mutationEffectFields)
                 {
-                    // get property via reflection
                     var prop = typeof(PlayerResult).GetProperty(propertyName);
                     if (prop == null) continue;
                     int value = (int)(prop.GetValue(result) ?? 0);
                     if (value == 0) continue;
 
-                    var list = perMutation.GetValueOrDefault(mutationId) ?? new List<(string, int)>();
-                    // Add or increment for this label
-                    int idx = list.FindIndex(x => x.label == label);
-                    if (idx >= 0)
-                        list[idx] = (label, list[idx].sum + value);
-                    else
-                        list.Add((label, value));
-                    perMutation[mutationId] = list;
+                    if (!perMutation.TryGetValue(mutationId, out var labelDict))
+                    {
+                        labelDict = new Dictionary<string, int>();
+                        perMutation[mutationId] = labelDict;
+                    }
+                    labelDict[label] = labelDict.GetValueOrDefault(label, 0) + value;
                 }
             }
 
@@ -109,7 +104,6 @@ namespace FungusToast.Simulation.Analysis
                 var mutations = strategyMutationLevels[strategy];
                 effectAgg.TryGetValue(strategy, out var mutationEffects);
 
-                // How many games for this strategy?
                 int gamesForStrategy = strategyGamesPlayed.TryGetValue(strategy, out var cnt) ? cnt : 0;
 
                 foreach (var kv in mutations.OrderBy(kv => kv.Key))
@@ -125,17 +119,33 @@ namespace FungusToast.Simulation.Analysis
                     var mutation = MutationRegistry.GetById(mutationId);
                     string name = mutation?.Name ?? $"[ID {mutationId}]";
 
-                    // Multi-effect consolidation: collect all labels/values for this mutation
                     List<string> labels = new();
                     List<string> avgEffects = new();
 
-                    if (mutationEffects != null && mutationEffects.TryGetValue(mutationId, out var effectList) && effectList.Count > 0)
+                    // Special logic: For Necrohyphal, group both Infiltrations/Cascades into a single row
+                    if (mutationId == MutationIds.NecrohyphalInfiltration)
                     {
-                        foreach (var (label, total) in effectList)
+                        int infiltrations = 0, cascades = 0;
+                        if (mutationEffects != null && mutationEffects.TryGetValue(mutationId, out var effectDict))
                         {
-                            labels.Add(label);
-                            float avg = (gamesForStrategy > 0) ? (float)total / gamesForStrategy : 0f;
-                            avgEffects.Add(avg.ToString("F2"));
+                            infiltrations = effectDict.GetValueOrDefault("Infiltrations", 0);
+                            cascades = effectDict.GetValueOrDefault("Cascades", 0);
+                        }
+                        labels.Add("Infiltrations / Cascades");
+                        string avgInf = gamesForStrategy > 0 ? ((float)infiltrations / gamesForStrategy).ToString("F2") : "0.00";
+                        string avgCas = gamesForStrategy > 0 ? ((float)cascades / gamesForStrategy).ToString("F2") : "0.00";
+                        avgEffects.Add($"{avgInf} / {avgCas}");
+                    }
+                    else
+                    {
+                        if (mutationEffects != null && mutationEffects.TryGetValue(mutationId, out var effectDict) && effectDict.Count > 0)
+                        {
+                            foreach (var kvp in effectDict)
+                            {
+                                labels.Add(kvp.Key);
+                                float avg = (gamesForStrategy > 0) ? (float)kvp.Value / gamesForStrategy : 0f;
+                                avgEffects.Add(avg.ToString("F2"));
+                            }
                         }
                     }
 

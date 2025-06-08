@@ -74,6 +74,8 @@ namespace FungusToast.Simulation.Models
                     MycotoxinCatabolisms = tracking.GetToxinCatabolismCount(player.PlayerId),
                     ToxinAuraKills = tracking.GetToxinAuraKillCount(player.PlayerId),
                     CatabolizedMutationPoints = tracking.GetCatabolizedMutationPoints(player.PlayerId),
+                    NecrohyphalInfiltrations = tracking.GetNecrohyphalInfiltrationCount(player.PlayerId),     // NEW
+                    NecrohyphalCascades = tracking.GetNecrohyphalCascadeCount(player.PlayerId),              // NEW
 
                     // ──────────────
                     // Free Mutation Points (SPLIT BY SOURCE)

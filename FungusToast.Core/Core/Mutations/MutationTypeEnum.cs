@@ -25,5 +25,6 @@ namespace FungusToast.Core
         ToxinKillAura,
         ToxinCleanupAndMPBonus,
         EnhancedAutoUpgradeRandom,
+        NecrohyphalInfiltration,
     }
 }

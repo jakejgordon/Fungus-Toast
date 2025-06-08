@@ -313,6 +313,7 @@ namespace FungusToast.Core.Phases
          * 5 ▸  SPOROCIDAL BLOOM HELPERS
          * ────────────────────────────────────────────────────────────────*/
 
+        /** not used
         public static int GetSporocidalSporeDropCount(Player player,
                                                       int livingCellCount,
                                                       Mutation sporocidalBloom)
@@ -341,6 +342,8 @@ namespace FungusToast.Core.Phases
             float estimate = livingCellCount * rate;
             return Math.Max(1, (int)Math.Round(estimate));
         }
+
+        */
 
         public static int TryPlaceSporocidalSpores(Player player,
                                                    GameBoard board,
@@ -623,5 +626,135 @@ namespace FungusToast.Core.Phases
             return toxinsMetabolized;
         }
 
+        public static bool TryNecrohyphalInfiltration(
+    GameBoard board,
+    BoardTile sourceTile,
+    FungalCell sourceCell,
+    Player owner,
+    Random rng,
+    IGrowthObserver? observer = null)
+        {
+            int necroLevel = owner.GetMutationLevel(MutationIds.NecrohyphalInfiltration);
+            if (necroLevel <= 0)
+                return false;
+
+            double baseChance = GameBalance.NecrohyphalInfiltrationChancePerLevel * necroLevel;
+            double cascadeChance = GameBalance.NecrohyphalInfiltrationCascadeChancePerLevel * necroLevel;
+
+            // Find adjacent dead enemy cells
+            var deadEnemyNeighbors = board
+                .GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y)
+                .Where(tile =>
+                    tile.IsOccupied &&
+                    tile.FungalCell != null &&
+                    tile.FungalCell.IsDead &&
+                    tile.FungalCell.OwnerPlayerId.HasValue &&
+                    tile.FungalCell.OwnerPlayerId.Value != owner.PlayerId)
+                .ToList();
+
+            Shuffle(deadEnemyNeighbors, rng);
+
+            foreach (var deadTile in deadEnemyNeighbors)
+            {
+                if (rng.NextDouble() <= baseChance)
+                {
+                    // Initial infiltration
+                    ReclaimDeadCellAsLiving(deadTile, owner, board);
+
+                    // Track which tiles have already been reclaimed
+                    var alreadyReclaimed = new HashSet<int> { deadTile.TileId };
+
+                    // Cascade infiltrations
+                    int cascadeCount = CascadeNecrohyphalInfiltration(
+                        board, deadTile, owner, rng, cascadeChance, alreadyReclaimed);
+
+                    // Record: 1 infiltration for the initial, cascades for the rest
+                    observer?.RecordNecrohyphalInfiltration(owner.PlayerId, 1);
+                    if (cascadeCount > 0)
+                        observer?.RecordNecrohyphalInfiltrationCascade(owner.PlayerId, cascadeCount);
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+
+
+        private static int CascadeNecrohyphalInfiltration(
+            GameBoard board,
+            BoardTile sourceTile,
+            Player owner,
+            Random rng,
+            double cascadeChance,
+            HashSet<int> alreadyReclaimed,
+            IGrowthObserver? observer = null)
+        {
+            int cascadeCount = 0;
+            var toCheck = new Queue<BoardTile>();
+            toCheck.Enqueue(sourceTile);
+
+            while (toCheck.Count > 0)
+            {
+                var currentTile = toCheck.Dequeue();
+
+                var nextTargets = board
+                    .GetOrthogonalNeighbors(currentTile.X, currentTile.Y)
+                    .Where(tile =>
+                        tile.IsOccupied &&
+                        tile.FungalCell != null &&
+                        tile.FungalCell.IsDead &&
+                        tile.FungalCell.OwnerPlayerId.HasValue &&
+                        tile.FungalCell.OwnerPlayerId.Value != owner.PlayerId &&
+                        !alreadyReclaimed.Contains(tile.TileId))
+                    .ToList();
+
+                Shuffle(nextTargets, rng);
+
+                foreach (var deadTile in nextTargets)
+                {
+                    if (rng.NextDouble() <= cascadeChance)
+                    {
+                        ReclaimDeadCellAsLiving(deadTile, owner, board);
+                        alreadyReclaimed.Add(deadTile.TileId);
+
+                        cascadeCount++;
+                        toCheck.Enqueue(deadTile);
+                    }
+                }
+            }
+
+            return cascadeCount;
+        }
+
+
+
+        private static void ReclaimDeadCellAsLiving(
+            BoardTile tile,
+            Player newOwner,
+            GameBoard board)
+        {
+            // Remove old cell, create new one as living, assign ownership
+            var newCell = new FungalCell(newOwner.PlayerId, tile.TileId);
+            tile.PlaceFungalCell(newCell);
+            board.PlaceFungalCell(newCell);
+            newOwner.AddControlledTile(tile.TileId);
+        }
+
+        // Utility: Fisher-Yates shuffle (reuse existing or add to this class if needed)
+        private static void Shuffle<T>(IList<T> list, Random rng)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                int j = rng.Next(i, list.Count);
+                T temp = list[i];
+                list[i] = list[j];
+                list[j] = temp;
+            }
+        }
+
     }
+
+
 }

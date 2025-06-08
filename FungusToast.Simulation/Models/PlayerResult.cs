@@ -45,6 +45,8 @@ namespace FungusToast.Simulation.Models
         public int MycotoxinCatabolisms { get; set; }
         public int CatabolizedMutationPoints { get; set; }
         public int ToxinAuraKills { get; set; }
+        public int NecrohyphalInfiltrations { get; set; }         // NEW
+        public int NecrohyphalCascades { get; set; }              // NEW
 
         // ──────────────
         // FREE MUTATION POINTS (SPLIT BY SOURCE)

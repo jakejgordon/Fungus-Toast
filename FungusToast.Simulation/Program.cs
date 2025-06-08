@@ -41,14 +41,14 @@ class Program
 
 
         var regenerativeHyphaeFocus = new ParameterizedSpendingStrategy(
-            strategyName: "Regenerative Hyphae Focus",
+            strategyName: "Reg Hyphae and Necrohyphal",
             prioritizeHighTier: true,
-            targetMutationIds: new List<int> { MutationIds.RegenerativeHyphae });
+            targetMutationIds: new List<int> { MutationIds.AnabolicInversion, MutationIds.RegenerativeHyphae, MutationIds.NecrohyphalInfiltration });
 
         var powerMutations1 = new ParameterizedSpendingStrategy(
             strategyName: "Power Mutations 1",
             prioritizeHighTier: true,
-            targetMutationIds: new List<int> { MutationIds.AdaptiveExpression, MutationIds.Necrosporulation, MutationIds.RegenerativeHyphae });
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
 
         var strategies = new List<IMutationSpendingStrategy>
         {

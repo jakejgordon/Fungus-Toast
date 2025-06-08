@@ -34,7 +34,7 @@ namespace FungusToast.Core.Growth
                     continue;
 
                 var owner = players[cell.OwnerPlayerId.Value];
-                bool grewOrMoved = TryExpandFromTile(board, tile, cell, owner, rng, observer);
+                bool grewOrMoved = TryExpandFromTile(board, tile, owner, rng, observer);
 
                 if (!grewOrMoved)
                     failedGrowthsByPlayerId[owner.PlayerId]++;
@@ -50,11 +50,14 @@ namespace FungusToast.Core.Growth
         private static bool TryExpandFromTile(
             GameBoard board,
             BoardTile sourceTile,
-            FungalCell sourceCell,
             Player owner,
             Random rng,
             IGrowthObserver? observer)
         {
+            var sourceCell = sourceTile.FungalCell;
+            if (sourceCell == null)
+                return false; // No cell to expand from
+
             var allTargets = new List<(BoardTile tile, float chance)>();
 
             foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
@@ -107,8 +110,17 @@ namespace FungusToast.Core.Growth
                 }
             }
 
-            return false; // failed to grow or move
+            // Try Necrohyphal Infiltration as a fallback if enabled
+            if (MutationEffectProcessor.TryNecrohyphalInfiltration(
+                    board, sourceTile, sourceCell, owner, rng, observer))
+            {
+                return true; // successful necrohyphal infiltration
+            }
+
+            return false; // failed to grow, move, or infiltrate
         }
+
+
 
 
         private static void Shuffle<T>(List<T> list, Random rng)
