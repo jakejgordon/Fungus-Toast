@@ -14,6 +14,7 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> reclaimedCells = new();
         private readonly Dictionary<int, int> mycotoxinTracerSporeDrops = new();
         private readonly Dictionary<int, int> sporocidalSporeDrops = new();
+        private readonly Dictionary<int, int> sporocidalKills = new();
         private readonly Dictionary<int, int> necrosporulationSporeDrops = new();
         private readonly Dictionary<int, int> necrophyticBloomSpores = new();
         private readonly Dictionary<int, int> necrophyticBloomReclaims = new();
@@ -66,6 +67,13 @@ namespace FungusToast.Simulation.Models
             if (!sporocidalSporeDrops.ContainsKey(playerId))
                 sporocidalSporeDrops[playerId] = 0;
             sporocidalSporeDrops[playerId] += count;
+        }
+
+        public void ReportSporocidalKill(int playerId, int killCount)
+        {
+            if (!sporocidalKills.ContainsKey(playerId))
+                sporocidalKills[playerId] = 0;
+            sporocidalKills[playerId] += killCount;
         }
 
         public void ReportNecrosporeDrop(int playerId, int count)
@@ -163,6 +171,9 @@ namespace FungusToast.Simulation.Models
 
         public int GetSporocidalSporeDropCount(int playerId) =>
             sporocidalSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetSporocidalKillCount(int playerId) =>
+            sporocidalKills.TryGetValue(playerId, out var val) ? val : 0;
 
         public int GetNecrosporeDropCount(int playerId) =>
             necrosporulationSporeDrops.TryGetValue(playerId, out var val) ? val : 0;

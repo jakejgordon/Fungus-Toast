@@ -68,14 +68,15 @@ namespace FungusToast.Simulation.Models
                     CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId),
                     NecrosporulationSpores = tracking.GetNecrosporeDropCount(player.PlayerId),
                     SporocidalSpores = tracking.GetSporocidalSporeDropCount(player.PlayerId),
+                    SporocidalKills = tracking.GetSporocidalKillCount(player.PlayerId),
                     NecrophyticSpores = tracking.GetNecrophyticBloomSporeDropCount(player.PlayerId),
                     NecrophyticReclaims = tracking.GetNecrophyticBloomReclaimCount(player.PlayerId),
                     MycotoxinTracerSpores = tracking.GetMycotoxinSporeDropCount(player.PlayerId),
                     MycotoxinCatabolisms = tracking.GetToxinCatabolismCount(player.PlayerId),
                     ToxinAuraKills = tracking.GetToxinAuraKillCount(player.PlayerId),
                     CatabolizedMutationPoints = tracking.GetCatabolizedMutationPoints(player.PlayerId),
-                    NecrohyphalInfiltrations = tracking.GetNecrohyphalInfiltrationCount(player.PlayerId),     // NEW
-                    NecrohyphalCascades = tracking.GetNecrohyphalCascadeCount(player.PlayerId),              // NEW
+                    NecrohyphalInfiltrations = tracking.GetNecrohyphalInfiltrationCount(player.PlayerId),
+                    NecrohyphalCascades = tracking.GetNecrohyphalCascadeCount(player.PlayerId),
 
                     // ──────────────
                     // Free Mutation Points (SPLIT BY SOURCE)

@@ -41,13 +41,26 @@ namespace FungusToast.Simulation.Analysis
 
         public void PrintReport(List<PlayerResult> allPlayerResults)
         {
-            Console.WriteLine("\nPlayer-Mutation Usage Summary:");
-            Console.WriteLine("{0,-37} | {1,-32} | {2,10} | {3,10} | {4,-32} | {5,32}",
-                "Strategy", "Mutation Name", "Games Used", "Avg Level", "Mutation Effect(s)", "Avg Effect Count(s)");
+            // Compute average living cells by strategy
+            var strategyToAvgLivingCells = allPlayerResults
+                .GroupBy(r => r.StrategyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Average(r => r.LivingCells));
+
+            var orderedStrategies = strategyToAvgLivingCells
+                .OrderByDescending(kv => kv.Value)
+                .Select(kv => kv.Key)
+                .ToList();
+
+            Console.WriteLine("\nPlayer-Mutation Usage Summary (sorted by Avg Living Cells):");
+            Console.WriteLine("{0,-37} | {1,-32} | {2,10} | {3,10} | {4,-32} | {5,32} | {6,12}",
+                "Strategy", "Mutation Name", "Games Used", "Avg Level", "Mutation Effect(s)", "Avg Effect Count(s)", "Avg Alive");
 
             Console.WriteLine(new string('-', 37) + "-|-" + new string('-', 32) + "-|-" +
                               new string('-', 10) + "-|-" + new string('-', 10) + "-|-" +
-                              new string('-', 32) + "-|-" + new string('-', 32));
+                              new string('-', 32) + "-|-" + new string('-', 32) + "-|-" +
+                              new string('-', 12));
 
             var mutationEffectFields = new List<(int mutationId, string propertyName, string label)>
             {
@@ -55,6 +68,7 @@ namespace FungusToast.Simulation.Analysis
                 (MutationIds.CreepingMold, nameof(PlayerResult.CreepingMoldMoves), "Mold Movements"),
                 (MutationIds.Necrosporulation, nameof(PlayerResult.NecrosporulationSpores), "Necro Spores"),
                 (MutationIds.SporocidalBloom, nameof(PlayerResult.SporocidalSpores), "Sporicidal Drops"),
+                (MutationIds.SporocidalBloom, nameof(PlayerResult.SporocidalKills), "Sporocidal Kills"),
                 (MutationIds.NecrophyticBloom, nameof(PlayerResult.NecrophyticSpores), "Necrophytic Spores"),
                 (MutationIds.NecrophyticBloom, nameof(PlayerResult.NecrophyticReclaims), "Necrophytic Reclaims"),
                 (MutationIds.MycotoxinTracer, nameof(PlayerResult.MycotoxinTracerSpores), "Mycotoxin Spores"),
@@ -99,12 +113,16 @@ namespace FungusToast.Simulation.Analysis
                 }
             }
 
-            foreach (var strategy in strategyMutationLevels.Keys.OrderBy(k => k))
+            foreach (var strategy in orderedStrategies)
             {
-                var mutations = strategyMutationLevels[strategy];
+                var mutations = strategyMutationLevels.ContainsKey(strategy)
+                    ? strategyMutationLevels[strategy]
+                    : new Dictionary<int, List<int>>();
+
                 effectAgg.TryGetValue(strategy, out var mutationEffects);
 
                 int gamesForStrategy = strategyGamesPlayed.TryGetValue(strategy, out var cnt) ? cnt : 0;
+                double avgLivingCells = strategyToAvgLivingCells.TryGetValue(strategy, out var avgAlive) ? avgAlive : 0.0;
 
                 foreach (var kv in mutations.OrderBy(kv => kv.Key))
                 {
@@ -152,17 +170,18 @@ namespace FungusToast.Simulation.Analysis
                     string effectLabel = string.Join(" / ", labels);
                     string effectAvgStr = string.Join(" / ", avgEffects);
 
-                    Console.WriteLine("{0,-37} | {1,-32} | {2,10} | {3,10:F2} | {4,-32} | {5,32}",
+                    Console.WriteLine("{0,-37} | {1,-32} | {2,10} | {3,10:F2} | {4,-32} | {5,32} | {6,12:F2}",
                         Truncate(strategy, 37),
                         Truncate(name, 32),
                         gamesUsed,
                         avgLevel,
                         Truncate(effectLabel, 32),
-                        effectAvgStr);
+                        effectAvgStr,
+                        avgLivingCells);
                 }
             }
 
-            Console.WriteLine(new string('-', 170));
+            Console.WriteLine(new string('-', 202));
         }
 
         private static string Truncate(string value, int maxLength) =>

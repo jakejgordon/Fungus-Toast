@@ -287,11 +287,16 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.SporocidalBloom,
                 name: "Sporocidal Bloom",
-                description: $"Each round, releases toxic spores that settle randomly across the board. " +
-                             $"Each level releases spores at approximately {FormatPercent(0.07f)} per living fungal cell. " +
-                             $"For example, a colony with 40 living cells at level 3 will drop about 8 spores.",
-                flavorText: "Once mature, the colony begins to vent spores laced with cytotoxic compounds. " +
-                            "These drifting agents settle on competitors and degrade viable mycelial tissue.",
+                description:
+                    "At the end of each round, your colony vents toxic spores that disperse randomly across the board. " +
+                    "Each level of this mutation releases spores at approximately " + FormatPercent(0.07f) + " per living fungal cell, scaling with your colony's size and mutation level.\n" +
+                    "\n" +
+                    "Each spore lands on a random tile:\n" +
+                    "• If it lands on an enemy fungal cell, it kills that cell and leaves a toxin in its place.\n" +
+                    "• If it lands on or adjacent to one of your own living cells, nothing happens.\n" +
+                    "• If it lands on an empty tile that is not adjacent to your living cells, it becomes a toxin.",
+                flavorText:
+                    "Once mature, the colony begins venting spores laced with cytotoxic compounds, drifting indiscriminately to poison competitors and sterilize open ground.",
                 type: MutationType.FungicideSporeDrop,
                 effectPerLevel: GameBalance.SporicialBloomEffectPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
@@ -301,6 +306,7 @@ namespace FungusToast.Core.Mutations
             ),
             new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 1),
             new MutationPrerequisite(MutationIds.Necrosporulation, 1));
+
 
             MakeChild(new Mutation(
                 id: MutationIds.NecrophyticBloom,

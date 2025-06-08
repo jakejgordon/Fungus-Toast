@@ -345,61 +345,89 @@ namespace FungusToast.Core.Phases
 
         */
 
-        public static int TryPlaceSporocidalSpores(Player player,
-                                                   GameBoard board,
-                                                   Random rng,
-                                                   Mutation sporocidalBloom,
-                                                   ISporeDropObserver? observer = null)
+        public static int TryPlaceSporocidalSpores(
+    Player player,
+    GameBoard board,
+    Random rng,
+    Mutation sporocidalBloom,
+    ISporeDropObserver? observer = null)
         {
-            float dropChance = player.GetMutationEffect(MutationType.FungicideSporeDrop);
-            if (dropChance <= 0f) return 0;
+            int level = player.GetMutationLevel(MutationIds.SporocidalBloom);
+            if (level <= 0) return 0;
 
-            int spores = 0;
+            int livingCellCount = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive);
+            if (livingCellCount == 0) return 0;
 
-            var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
-                                   .Where(c => c.IsAlive)
-                                   .ToList();
+            // 1. Calculate spores to drop (matches prior game balance: linear scaling)
+            float sporesPerCell = level * sporocidalBloom.EffectPerLevel;
+            int sporesToDrop = (int)Math.Round(livingCellCount * sporesPerCell);
+            if (sporesToDrop <= 0) return 0;
 
             int expiration = board.CurrentGrowthCycle + GameBalance.SporocidalToxinTileDuration;
 
-            foreach (FungalCell cell in livingCells)
+            // Avoid double-hitting the same tile
+            var allTiles = board.AllTiles().ToList();
+            HashSet<int> alreadyTargeted = new HashSet<int>();
+            int totalToxinsPlaced = 0;
+            int totalKills = 0;
+
+            for (int i = 0; i < sporesToDrop && alreadyTargeted.Count < allTiles.Count; i++)
             {
-                if (rng.NextDouble() > dropChance) continue;
-
-                foreach (var neighbor in board.GetOrthogonalNeighbors(cell.TileId))
+                // Pick a random tile that hasn't been targeted yet
+                BoardTile tile;
+                do
                 {
-                    var targetCell = neighbor.FungalCell;
+                    tile = allTiles[rng.Next(allTiles.Count)];
+                } while (!alreadyTargeted.Add(tile.TileId));
 
-                    if (targetCell is { IsAlive: true } &&
-                        targetCell.OwnerPlayerId != player.PlayerId)
-                    {
-                        ToxinHelper.KillAndToxify(
-                            board,
-                            neighbor.TileId,
-                            expiration,
-                            DeathReason.SporocidalBloom,
-                            player);
+                // 1. If it's an enemy living cell, kill and toxify it
+                if (tile.IsOccupied && tile.FungalCell != null && tile.FungalCell.IsAlive && tile.FungalCell.OwnerPlayerId != player.PlayerId)
+                {
+                    ToxinHelper.KillAndToxify(
+                        board,
+                        tile.TileId,
+                        expiration,
+                        DeathReason.SporocidalBloom,
+                        player);
 
-                        spores++;
-                        observer?.ReportSporocidalSporeDrop(player.PlayerId, 1);
-                    }
-                    else if (!neighbor.IsOccupied ||
-                             (neighbor.FungalCell != null && !neighbor.FungalCell.IsAlive))
-                    {
-                        ToxinHelper.ConvertToToxin(
-                            board,
-                            neighbor.TileId,
-                            expiration, 
-                            player);
+                    totalKills++;
+                    totalToxinsPlaced++;
+                    continue;
+                }
 
-                        spores++;
-                        observer?.ReportSporocidalSporeDrop(player.PlayerId, 1);
-                    }
+                // 2. If it's a friendly cell (alive or dead) or adjacent to a friendly, do nothing
+                bool isFriendly = tile.IsOccupied && tile.FungalCell != null && tile.FungalCell.OwnerPlayerId == player.PlayerId;
+                if (isFriendly)
+                    continue;
+
+                bool adjacentToFriendly = board.GetOrthogonalNeighbors(tile.X, tile.Y)
+                    .Any(n => n.IsOccupied && n.FungalCell != null && n.FungalCell.OwnerPlayerId == player.PlayerId);
+                if (adjacentToFriendly)
+                    continue;
+
+                // 3. If it's empty or has a dead cell (not owned), and not next to a friendly, toxify it
+                if (!tile.IsOccupied || (tile.FungalCell != null && !tile.FungalCell.IsAlive))
+                {
+                    ToxinHelper.ConvertToToxin(
+                        board,
+                        tile.TileId,
+                        expiration,
+                        player);
+
+                    totalToxinsPlaced++;
                 }
             }
 
-            return spores;
+            // Reporting (matches your new requirements)
+            if (totalToxinsPlaced > 0)
+                observer?.ReportSporocidalSporeDrop(player.PlayerId, totalToxinsPlaced);
+
+            if (totalKills > 0)
+                observer?.ReportSporocidalKill(player.PlayerId, totalKills);
+
+            return totalToxinsPlaced;
         }
+
 
         /* ────────────────────────────────────────────────────────────────
          * 6 ▸  NECROPHYTIC BLOOM HELPERS

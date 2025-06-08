@@ -39,14 +39,15 @@ namespace FungusToast.Simulation.Models
         public int CreepingMoldMoves { get; set; }
         public int NecrosporulationSpores { get; set; }
         public int SporocidalSpores { get; set; }
+        public int SporocidalKills { get; set; }      
         public int NecrophyticSpores { get; set; }
         public int NecrophyticReclaims { get; set; }
         public int MycotoxinTracerSpores { get; set; }
         public int MycotoxinCatabolisms { get; set; }
         public int CatabolizedMutationPoints { get; set; }
         public int ToxinAuraKills { get; set; }
-        public int NecrohyphalInfiltrations { get; set; }         // NEW
-        public int NecrohyphalCascades { get; set; }              // NEW
+        public int NecrohyphalInfiltrations { get; set; } 
+        public int NecrohyphalCascades { get; set; }
 
         // ──────────────
         // FREE MUTATION POINTS (SPLIT BY SOURCE)

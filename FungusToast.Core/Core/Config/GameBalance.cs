@@ -21,10 +21,10 @@ namespace FungusToast.Core.Config
         // Mutation Effects
         public const float MycelialBloomEffectPerLevel = 0.0025f;
         public const float HomeostaticHarmonyEffectPerLevel = 0.003f;
-        public const float MycotoxinTracerFailedGrowthWeightPerLevel = 0.003f;
+        public const float MycotoxinTracerFailedGrowthWeightPerLevel = 0.0029f;
         public const int MycotoxinTracerTileDuration = 20;
         public const int MycotoxinTracerMaxToxinsDivisor = 50;
-        public const float MutatorPhenotypeEffectPerLevel = 0.07f;
+        public const float MutatorPhenotypeEffectPerLevel = 0.065f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 5f;
         public const float NecrosporulationEffectPerLevel = 0.04f;
         public const int MycotoxinPotentiationGrowthCycleExtensionPerLevel = 1;
@@ -40,10 +40,10 @@ namespace FungusToast.Core.Config
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
         public const float RegenerativeHyphaeReclaimChance = 0.008f;
         public const float CreepingMoldMoveChancePerLevel = .03f;
-        public const float SporicialBloomEffectPerLevel = .2f;
+        public const float SporicialBloomEffectPerLevel = .12f;
         public const int SporocidalToxinTileDuration = 11;
         public const int NecrophyticBloomBaseSpores = 2;
-        public const float NecrophyticBloomSporesPerDeathPerLevel = 100;
+        public const float NecrophyticBloomSporesPerDeathPerLevel = 50;
         public const float HyperadaptiveDriftHigherTierChancePerLevel = .15f;
         public const float HyperadaptiveDriftBonusTierOneMutationChancePerLevel = .2f;
         public const float NecrohyphalInfiltrationChancePerLevel = 0.003f;

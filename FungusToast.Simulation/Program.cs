@@ -4,7 +4,7 @@ using FungusToast.Simulation.Analysis;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 100;
+    private const int NumberOfSimulationGames = 1;
 
     static void Main()
     {
@@ -89,6 +89,7 @@ class Program
         }
         var allPlayerResults = results.SelectMany(r => r.PlayerResults).ToList();
         usageTracker.PrintReport(allPlayerResults);
+
 
         Console.WriteLine("\nSimulation complete. Press any key to exit.");
         Console.ReadKey();
