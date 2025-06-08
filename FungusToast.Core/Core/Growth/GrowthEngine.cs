@@ -5,7 +5,6 @@ using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace FungusToast.Core.Growth
@@ -45,64 +44,76 @@ namespace FungusToast.Core.Growth
             return failedGrowthsByPlayerId;
         }
 
-
-
+        /// <summary>
+        /// Attempts to grow or move from a single tile. Tracks orthogonal, diagonal (Tendril), Creeping Mold, and Necrohyphal Infiltration.
+        /// </summary>
         private static bool TryExpandFromTile(
             GameBoard board,
             BoardTile sourceTile,
             Player owner,
             Random rng,
-            IGrowthObserver? observer)
+            IGrowthObserver? observer = null)
         {
             var sourceCell = sourceTile.FungalCell;
             if (sourceCell == null)
                 return false; // No cell to expand from
 
-            var allTargets = new List<(BoardTile tile, float chance)>();
+            // 1. Collect all orthogonal and diagonal (with direction) targets
+            var allTargets = new List<GrowthTarget>();
 
+            // Orthogonal neighbors (normal growth)
             foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
             {
                 if (!tile.IsOccupied && tile.TileId != sourceTile.TileId)
-                    allTargets.Add((tile, owner.GetEffectiveGrowthChance()));
+                    allTargets.Add(new GrowthTarget(tile, owner.GetEffectiveGrowthChance(), null));
             }
 
-            float multiplier = MutationEffectProcessor.GetDiagonalGrowthMultiplier(owner);
-            var diagonals = new (int dx, int dy, float chance)[]
+            // Diagonal neighbors (Tendril growth)
+            float multiplier = MutationEffectProcessor.GetTendrilDiagonalGrowthMultiplier(owner);
+            var diagonalDirs = new (int dx, int dy, DiagonalDirection dir)[]
             {
-                (-1,  1, owner.GetDiagonalGrowthChance(DiagonalDirection.Northwest) * multiplier),
-                ( 1,  1, owner.GetDiagonalGrowthChance(DiagonalDirection.Northeast) * multiplier),
-                ( 1, -1, owner.GetDiagonalGrowthChance(DiagonalDirection.Southeast) * multiplier),
-                (-1, -1, owner.GetDiagonalGrowthChance(DiagonalDirection.Southwest) * multiplier),
+                (-1,  1, DiagonalDirection.Northwest),
+                ( 1,  1, DiagonalDirection.Northeast),
+                ( 1, -1, DiagonalDirection.Southeast),
+                (-1, -1, DiagonalDirection.Southwest),
             };
-
-            foreach (var (dx, dy, chance) in diagonals)
+            foreach (var (dx, dy, dir) in diagonalDirs)
             {
+                float chance = owner.GetDiagonalGrowthChance(dir) * multiplier;
                 if (chance <= 0) continue;
                 int nx = sourceTile.X + dx;
                 int ny = sourceTile.Y + dy;
                 var maybeTile = board.GetTile(nx, ny);
                 if (maybeTile is { IsOccupied: false, TileId: var id } && id != sourceTile.TileId)
-                    allTargets.Add((maybeTile, chance));
+                    allTargets.Add(new GrowthTarget(maybeTile, chance, dir));
             }
 
             Shuffle(allTargets, rng);
 
+            // 2. Attempt growth in each direction, reporting type for Tendril diagonals
             bool attemptedCreepingMold = false;
 
-            foreach ((BoardTile neighbor, float chance) in allTargets)
+            foreach (var target in allTargets)
             {
-                if (rng.NextDouble() <= chance)
+                if (rng.NextDouble() <= target.Chance)
                 {
-                    var newCell = new FungalCell(owner.PlayerId, neighbor.TileId);
-                    neighbor.PlaceFungalCell(newCell);
+                    var newCell = new FungalCell(owner.PlayerId, target.Tile.TileId);
+                    target.Tile.PlaceFungalCell(newCell);
                     board.PlaceFungalCell(newCell);
-                    owner.AddControlledTile(neighbor.TileId);
+                    owner.AddControlledTile(target.Tile.TileId);
+
+                    // Track Tendril mutation usage if this was a diagonal
+                    if (target.DiagonalDirection.HasValue)
+                    {
+                        observer?.RecordTendrilGrowth(owner.PlayerId, target.DiagonalDirection.Value);
+                    }
+
                     return true; // successful growth
                 }
                 else if (!attemptedCreepingMold)
                 {
                     attemptedCreepingMold = true;
-                    if (MutationEffectProcessor.TryCreepingMoldMove(owner, sourceCell, sourceTile, neighbor, rng, board))
+                    if (MutationEffectProcessor.TryCreepingMoldMove(owner, sourceCell, sourceTile, target.Tile, rng, board))
                     {
                         observer?.RecordCreepingMoldMove(owner.PlayerId);
                         return true; // successful creeping mold
@@ -110,7 +121,7 @@ namespace FungusToast.Core.Growth
                 }
             }
 
-            // Try Necrohyphal Infiltration as a fallback if enabled
+            // 3. Fallback: Try Necrohyphal Infiltration if enabled
             if (MutationEffectProcessor.TryNecrohyphalInfiltration(
                     board, sourceTile, sourceCell, owner, rng, observer))
             {
@@ -120,9 +131,9 @@ namespace FungusToast.Core.Growth
             return false; // failed to grow, move, or infiltrate
         }
 
-
-
-
+        /// <summary>
+        /// Helper for shuffling lists with a given RNG.
+        /// </summary>
         private static void Shuffle<T>(List<T> list, Random rng)
         {
             for (int i = 0; i < list.Count; i++)
@@ -134,9 +145,23 @@ namespace FungusToast.Core.Growth
             }
         }
 
+        /// <summary>
+        /// Encapsulates a potential growth target, including diagonal direction if applicable.
+        /// </summary>
+        private sealed class GrowthTarget
+        {
+            public BoardTile Tile { get; }
+            public float Chance { get; }
+            public DiagonalDirection? DiagonalDirection { get; }
+
+            public GrowthTarget(BoardTile tile, float chance, DiagonalDirection? dir)
+            {
+                Tile = tile;
+                Chance = chance;
+                DiagonalDirection = dir;
+            }
+        }
     }
-
-
 
     public enum DiagonalDirection
     {

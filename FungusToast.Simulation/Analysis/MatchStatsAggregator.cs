@@ -157,7 +157,9 @@ namespace FungusToast.Simulation.Analysis
 
             Console.WriteLine(new string('-', 170));
 
-            foreach (var (id, entry) in playerStats.OrderByDescending(kvp => (float)kvp.Value.wins / kvp.Value.appearances))
+            foreach (var (id, entry) in playerStats
+                .OrderByDescending(kvp => kvp.Value.appearances > 0 ? (float)kvp.Value.wins / kvp.Value.appearances : 0f)
+                .ThenByDescending(kvp => kvp.Value.appearances > 0 ? (float)kvp.Value.living / kvp.Value.appearances : 0f))
             {
                 var (
                     strategyObj, wins, appearances, living, dead,
@@ -177,6 +179,7 @@ namespace FungusToast.Simulation.Analysis
 
             Console.WriteLine(new string('-', 170));
         }
+
 
 
         private void PrintDeathReasonSummary(Dictionary<DeathReason, int> deathReasonCounts)

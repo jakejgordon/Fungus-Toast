@@ -39,15 +39,35 @@ namespace FungusToast.Simulation.Models
         public int CreepingMoldMoves { get; set; }
         public int NecrosporulationSpores { get; set; }
         public int SporocidalSpores { get; set; }
-        public int SporocidalKills { get; set; }      
+        public int SporocidalKills { get; set; }
         public int NecrophyticSpores { get; set; }
         public int NecrophyticReclaims { get; set; }
         public int MycotoxinTracerSpores { get; set; }
         public int MycotoxinCatabolisms { get; set; }
         public int CatabolizedMutationPoints { get; set; }
         public int ToxinAuraKills { get; set; }
-        public int NecrohyphalInfiltrations { get; set; } 
+        public int NecrohyphalInfiltrations { get; set; }
         public int NecrohyphalCascades { get; set; }
+
+        // ──────────────
+        // TENDRIL GROWN CELL COUNTERS
+        // ──────────────
+        /// <summary>
+        /// Number of cells grown via Tendril Northwest mutation.
+        /// </summary>
+        public int TendrilNorthwestGrownCells { get; set; }
+        /// <summary>
+        /// Number of cells grown via Tendril Northeast mutation.
+        /// </summary>
+        public int TendrilNortheastGrownCells { get; set; }
+        /// <summary>
+        /// Number of cells grown via Tendril Southeast mutation.
+        /// </summary>
+        public int TendrilSoutheastGrownCells { get; set; }
+        /// <summary>
+        /// Number of cells grown via Tendril Southwest mutation.
+        /// </summary>
+        public int TendrilSouthwestGrownCells { get; set; }
 
         // ──────────────
         // FREE MUTATION POINTS (SPLIT BY SOURCE)

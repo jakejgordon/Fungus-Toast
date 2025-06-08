@@ -267,7 +267,7 @@ namespace FungusToast.Core.Phases
          * 4 ▸  MOVEMENT & GROWTH HELPERS
          * ────────────────────────────────────────────────────────────────*/
 
-        public static float GetDiagonalGrowthMultiplier(Player player)
+        public static float GetTendrilDiagonalGrowthMultiplier(Player player)
         {
             return 1f + player.GetMutationEffect(MutationType.TendrilDirectionalMultiplier);
         }

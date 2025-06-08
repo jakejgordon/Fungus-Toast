@@ -8,7 +8,7 @@ namespace FungusToast.Core.Config
         public const int MaxNumberOfRoundsBeforeGameEndTrigger = 100;
         public const float BaseGrowthChance = 0.015f;
         public const float BaseDeathChance = 0.015f;
-        public const float AgeDeathFactorPerGrowthCycle = 0.007f;
+        public const float AgeDeathFactorPerGrowthCycle = 0.008f;
         public const int StartingMutationPoints = 5;
         public const float GameEndTileOccupancyThreshold = 0.95f;
         public const int TurnsAfterEndGameTileOccupancyThresholdMet = 3;
@@ -32,8 +32,8 @@ namespace FungusToast.Core.Config
         public const float AdaptiveExpressionEffectPerLevel = 0.09f;
         public const float MycotoxinCatabolismCleanupChancePerLevel = 0.02f;
         public const float MycotoxinCatabolismMutationPointChancePerCatabolism = 0.1f;
-        public const float DiagonalGrowthEffectPerLevel = 0.01f;
-        public const float MycotropicInductionEffectPerLevel = 0.45f;
+        public const float TendrilDiagonalGrowthEffectPerLevel = 0.01f;
+        public const float MycotropicInductionEffectPerLevel = 0.25f;
         public const float PutrefactiveMycotoxinEffectPerLevel = 0.11f;
         public const int AgeResetReductionPerLevel = 5;
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
@@ -60,7 +60,7 @@ namespace FungusToast.Core.Config
         public const int MycotoxinPotentiationMaxLevel = 10;
         public const int AdaptiveExpressionMaxLevel = 10;
         public const int MycotoxinCatabolismMaxLevel = 10;
-        public const int MycotropicInductionMaxLevel = 3;
+        public const int MycotropicInductionMaxLevel = 5;
         public const int PutrefactiveMycotoxinMaxLevel = 5;
         public const int AnabolicInversionMaxLevel = 3;
         public const int RegenerativeHyphaeMaxLevel = 5;

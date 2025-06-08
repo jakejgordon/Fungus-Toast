@@ -78,9 +78,13 @@ namespace FungusToast.Simulation.Models
                     NecrohyphalInfiltrations = tracking.GetNecrohyphalInfiltrationCount(player.PlayerId),
                     NecrohyphalCascades = tracking.GetNecrohyphalCascadeCount(player.PlayerId),
 
-                    // ──────────────
+                    // Tendril mutation effect counters
+                    TendrilNorthwestGrownCells = tracking.GetTendrilNorthwestGrownCells(player.PlayerId),
+                    TendrilNortheastGrownCells = tracking.GetTendrilNortheastGrownCells(player.PlayerId),
+                    TendrilSoutheastGrownCells = tracking.GetTendrilSoutheastGrownCells(player.PlayerId),
+                    TendrilSouthwestGrownCells = tracking.GetTendrilSouthwestGrownCells(player.PlayerId),
+
                     // Free Mutation Points (SPLIT BY SOURCE)
-                    // ──────────────
                     MutatorPhenotypePointsEarned = tracking.GetMutatorPhenotypePointsEarned(player.PlayerId),
                     HyperadaptiveDriftPointsEarned = tracking.GetHyperadaptiveDriftPointsEarned(player.PlayerId)
                 };

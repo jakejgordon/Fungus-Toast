@@ -54,7 +54,7 @@ namespace FungusToast.Core.Mutations
                 MakeChild(new Mutation(
                     id: id,
                     name: $"Tendril {dir}",
-                    description: $"Each level grants a {FormatPercent(GameBalance.DiagonalGrowthEffectPerLevel)} chance to grow in the {dir.ToLower()} direction.",
+                    description: $"Each level grants a {FormatPercent(GameBalance.TendrilDiagonalGrowthEffectPerLevel)} chance to grow in the {dir.ToLower()} direction.",
                     flavorText: $"Polarity vectors align hyphal tip extension toward {dir.ToLower()} moisture gradients.",
                     type: dir switch
                     {
@@ -64,7 +64,7 @@ namespace FungusToast.Core.Mutations
                         "Southwest" => MutationType.GrowthDiagonal_SW,
                         _ => throw new System.Exception("Invalid direction")
                     },
-                    effectPerLevel: GameBalance.DiagonalGrowthEffectPerLevel,
+                    effectPerLevel: GameBalance.TendrilDiagonalGrowthEffectPerLevel,
                     pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
                     maxLevel: GameBalance.DiagonalGrowthMaxLevel,
                     category: MutationCategory.Growth,

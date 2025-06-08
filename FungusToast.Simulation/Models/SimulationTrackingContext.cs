@@ -30,6 +30,12 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> necrohyphalInfiltrations = new();
         private readonly Dictionary<int, int> necrohyphalCascades = new();
 
+        // ────── NEW: Tendril Growth Stats ──────
+        private readonly Dictionary<int, int> tendrilNorthwestGrownCells = new();
+        private readonly Dictionary<int, int> tendrilNortheastGrownCells = new();
+        private readonly Dictionary<int, int> tendrilSoutheastGrownCells = new();
+        private readonly Dictionary<int, int> tendrilSouthwestGrownCells = new();
+
         public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
 
         // ────────────────────────────
@@ -124,7 +130,6 @@ namespace FungusToast.Simulation.Models
             necrohyphalInfiltrations[playerId] += necrohyphalInfiltrationCount;
         }
 
-
         public void RecordNecrohyphalInfiltrationCascade(int playerId, int cascadeCount)
         {
             if (!necrohyphalCascades.ContainsKey(playerId))
@@ -148,8 +153,51 @@ namespace FungusToast.Simulation.Models
         }
 
         // ────────────────────────────
+        //  NEW: Tendril Growth recorders
+        // ────────────────────────────
+
+        public void RecordTendrilGrowth(int playerId, Core.Growth.DiagonalDirection direction)
+        {
+            switch (direction)
+            {
+                case Core.Growth.DiagonalDirection.Northwest:
+                    if (!tendrilNorthwestGrownCells.ContainsKey(playerId))
+                        tendrilNorthwestGrownCells[playerId] = 0;
+                    tendrilNorthwestGrownCells[playerId]++;
+                    break;
+                case Core.Growth.DiagonalDirection.Northeast:
+                    if (!tendrilNortheastGrownCells.ContainsKey(playerId))
+                        tendrilNortheastGrownCells[playerId] = 0;
+                    tendrilNortheastGrownCells[playerId]++;
+                    break;
+                case Core.Growth.DiagonalDirection.Southeast:
+                    if (!tendrilSoutheastGrownCells.ContainsKey(playerId))
+                        tendrilSoutheastGrownCells[playerId] = 0;
+                    tendrilSoutheastGrownCells[playerId]++;
+                    break;
+                case Core.Growth.DiagonalDirection.Southwest:
+                    if (!tendrilSouthwestGrownCells.ContainsKey(playerId))
+                        tendrilSouthwestGrownCells[playerId] = 0;
+                    tendrilSouthwestGrownCells[playerId]++;
+                    break;
+            }
+        }
+
+        // ────────────────────────────
         //  GETTERS / ACCESSORS
         // ────────────────────────────
+
+        public int GetTendrilNorthwestGrownCells(int playerId) =>
+            tendrilNorthwestGrownCells.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetTendrilNortheastGrownCells(int playerId) =>
+            tendrilNortheastGrownCells.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetTendrilSoutheastGrownCells(int playerId) =>
+            tendrilSoutheastGrownCells.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetTendrilSouthwestGrownCells(int playerId) =>
+            tendrilSouthwestGrownCells.TryGetValue(playerId, out var val) ? val : 0;
 
         public int GetCreepingMoldMoves(int playerId) =>
             creepingMoldMoves.TryGetValue(playerId, out var val) ? val : 0;
@@ -218,5 +266,11 @@ namespace FungusToast.Simulation.Models
 
         public Dictionary<int, int> GetAllNecrohyphalInfiltrations() => new(necrohyphalInfiltrations);
         public Dictionary<int, int> GetAllNecrohyphalCascades() => new(necrohyphalCascades);
+
+        // Bulk accessors for all Tendril stats
+        public Dictionary<int, int> GetAllTendrilNorthwestGrownCells() => new(tendrilNorthwestGrownCells);
+        public Dictionary<int, int> GetAllTendrilNortheastGrownCells() => new(tendrilNortheastGrownCells);
+        public Dictionary<int, int> GetAllTendrilSoutheastGrownCells() => new(tendrilSoutheastGrownCells);
+        public Dictionary<int, int> GetAllTendrilSouthwestGrownCells() => new(tendrilSouthwestGrownCells);
     }
 }
