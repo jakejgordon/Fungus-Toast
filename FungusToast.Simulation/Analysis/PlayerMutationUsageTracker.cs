@@ -49,7 +49,7 @@ namespace FungusToast.Simulation.Analysis
                               new string('-', 10) + "-|-" + new string('-', 10) + "-|-" +
                               new string('-', 32) + "-|-" + new string('-', 32));
 
-            // Add new effect here (Catabolized Mutation Points), and consolidate Necrophytic Bloom
+            // Report mutation effect fields, now splitting free points
             var mutationEffectFields = new List<(int mutationId, string propertyName, string label)>
             {
                 (MutationIds.RegenerativeHyphae, nameof(PlayerResult.ReclaimedCells), "Reclaims"),
@@ -61,7 +61,10 @@ namespace FungusToast.Simulation.Analysis
                 (MutationIds.MycotoxinTracer, nameof(PlayerResult.MycotoxinTracerSpores), "Mycotoxin Spores"),
                 (MutationIds.MycotoxinPotentiation, nameof(PlayerResult.ToxinAuraKills), "Toxin Aura Kills"),
                 (MutationIds.MycotoxinCatabolism, nameof(PlayerResult.MycotoxinCatabolisms), "Toxin Catabolisms"),
-                (MutationIds.MycotoxinCatabolism, nameof(PlayerResult.CatabolizedMutationPoints), "Catabolized MP"), // NEW
+                (MutationIds.MycotoxinCatabolism, nameof(PlayerResult.CatabolizedMutationPoints), "Catabolized MP"),
+                // Free mutation points, split by source
+                (MutationIds.MutatorPhenotype, nameof(PlayerResult.MutatorPhenotypePointsEarned), "Mutator Free MP"),
+                (MutationIds.HyperadaptiveDrift, nameof(PlayerResult.HyperadaptiveDriftPointsEarned), "Hyperadaptive Free MP"),
             };
 
             // For calculating total number of games played per strategy

@@ -4,7 +4,7 @@ using FungusToast.Core.Metrics;
 
 namespace FungusToast.Simulation.Models
 {
-    public class SimulationTrackingContext : IGrowthObserver, ISporeDropObserver
+    public class SimulationTrackingContext : IGrowthObserver, ISporeDropObserver, IMutationPointObserver
     {
         // ────────────────────────────
         //  FIELDS / DATA TRACKERS
@@ -20,6 +20,10 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> toxinAuraKills = new();
         private readonly Dictionary<int, int> toxinCatabolisms = new();
         private readonly Dictionary<int, int> catabolizedMutationPoints = new();
+
+        // NEW: Separate tracking for mutation point sources
+        private readonly Dictionary<int, int> mutatorPhenotypePointsEarned = new();
+        private readonly Dictionary<int, int> hyperadaptiveDriftPointsEarned = new();
 
         public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
 
@@ -97,6 +101,21 @@ namespace FungusToast.Simulation.Models
             catabolizedMutationPoints[playerId] += mutationPointsCatabolized;
         }
 
+        // IMutationPointObserver implementations
+        public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned)
+        {
+            if (!mutatorPhenotypePointsEarned.ContainsKey(playerId))
+                mutatorPhenotypePointsEarned[playerId] = 0;
+            mutatorPhenotypePointsEarned[playerId] += freePointsEarned;
+        }
+
+        public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned)
+        {
+            if (!hyperadaptiveDriftPointsEarned.ContainsKey(playerId))
+                hyperadaptiveDriftPointsEarned[playerId] = 0;
+            hyperadaptiveDriftPointsEarned[playerId] += freePointsEarned;
+        }
+
         // ────────────────────────────
         //  GETTERS / ACCESSORS
         // ────────────────────────────
@@ -137,6 +156,12 @@ namespace FungusToast.Simulation.Models
         public int GetCatabolizedMutationPoints(int playerId) =>
             catabolizedMutationPoints.TryGetValue(playerId, out var val) ? val : 0;
 
+        public int GetMutatorPhenotypePointsEarned(int playerId) =>
+            mutatorPhenotypePointsEarned.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetHyperadaptiveDriftPointsEarned(int playerId) =>
+            hyperadaptiveDriftPointsEarned.TryGetValue(playerId, out var val) ? val : 0;
+
         // Bulk accessors for summaries/statistics
         public Dictionary<int, int> GetSporocidalSpores() => new(sporocidalSporeDrops);
         public Dictionary<int, int> GetNecroSpores() => new(necrosporulationSporeDrops);
@@ -146,5 +171,8 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetToxinAuraKills() => new(toxinAuraKills);
         public Dictionary<int, int> GetToxinCatabolisms() => new(toxinCatabolisms);
         public Dictionary<int, int> GetCatabolizedMutationPoints() => new(catabolizedMutationPoints);
+
+        public Dictionary<int, int> GetAllMutatorPhenotypePointsEarned() => new(mutatorPhenotypePointsEarned);
+        public Dictionary<int, int> GetAllHyperadaptiveDriftPointsEarned() => new(hyperadaptiveDriftPointsEarned);
     }
 }

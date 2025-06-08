@@ -39,11 +39,13 @@ namespace FungusToast.Core.Config
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
         public const float RegenerativeHyphaeReclaimChance = 0.007f;
-        public const float CreepingMoldMoveChancePerLevel = .025f;
+        public const float CreepingMoldMoveChancePerLevel = .03f;
         public const float SporicialBloomEffectPerLevel = .2f;
         public const int SporocidalToxinTileDuration = 11;
         public const int NecrophyticBloomBaseSpores = 2;
-        public static float NecrophyticBloomSporesPerDeathPerLevel = 100;
+        public const float NecrophyticBloomSporesPerDeathPerLevel = 100;
+        public const float HyperadaptiveDriftHigherTierChancePerLevel = .15f;
+        public const float HyperadaptiveDriftBonusTierOneMutationChancePerLevel = .2f;
 
         // Max Levels
         public const int MycelialBloomMaxLevel = 100;
@@ -60,10 +62,11 @@ namespace FungusToast.Core.Config
         public const int PutrefactiveMycotoxinMaxLevel = 5;
         public const int AnabolicInversionMaxLevel = 3;
         public const int RegenerativeHyphaeMaxLevel = 5;
-        public const int CreepingMoldMaxLevel = 3;
+        public const int CreepingMoldMaxLevel = 4;
         public const int SporocidalBloomMaxLevel = 5;
         public const int NecrophyticBloomMaxLevel = 5;
-        
+        public const int HyperadaptiveDriftMaxLevel = 5;
+
 
         // Phase Timing
         public const int TotalGrowthCycles = 5;

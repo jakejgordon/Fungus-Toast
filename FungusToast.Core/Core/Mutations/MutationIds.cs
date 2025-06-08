@@ -22,5 +22,6 @@
         public const int SporocidalBloom = 17;
         public const int NecrophyticBloom = 18;
         public const int MycotoxinCatabolism = 19;
+        public const int HyperadaptiveDrift = 20;
     }
 }

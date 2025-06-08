@@ -39,7 +39,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.MycotoxinCatabolism,    new MutationLayoutMetadata(3, 2, MutationCategory.GeneticDrift) }, 
                 { MutationIds.AnabolicInversion,      new MutationLayoutMetadata(3, 3, MutationCategory.GeneticDrift) },
                 { MutationIds.NecrophyticBloom,       new MutationLayoutMetadata(3, 4, MutationCategory.GeneticDrift) },
-
+                { MutationIds.HyperadaptiveDrift,       new MutationLayoutMetadata(3, 5, MutationCategory.GeneticDrift) },
 
             };
     }

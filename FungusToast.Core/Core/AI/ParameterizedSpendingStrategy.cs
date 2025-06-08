@@ -54,12 +54,13 @@ namespace FungusToast.Core.AI
             {
                 if (!MutationRepository.All.TryGetValue(targetId, out var target))
                 {
-                    //Console.WriteLine($"[WARNING] Target mutation ID {targetId} not found.");
                     continue;
                 }
 
-                Visit(target, requiredLevel: 1);
+                // Use max level for targets, not just 1!
+                Visit(target, requiredLevel: target.MaxLevel);
             }
+
 
             void Visit(Mutation mutation, int requiredLevel)
             {
@@ -143,7 +144,32 @@ namespace FungusToast.Core.AI
                      || TrySpendRandomly(player, allMutations);
             }
             while (spent && player.MutationPoints > 0);
+
+            // If points remain, forcibly spend them on anything upgradable
+            while (player.MutationPoints > 0)
+            {
+                var anyUpgradable = allMutations.Where(m => player.CanUpgrade(m)).ToList();
+                if (anyUpgradable.Count == 0)
+                    break;
+                player.TryUpgradeMutation(anyUpgradable[0]);
+            }
+
+            // LOG if mutation points remain (should never happen unless truly nothing is upgradable)
+            if (player.MutationPoints > 0)
+            {
+                var upgradable = allMutations.Where(m => player.CanUpgrade(m)).ToList();
+                Console.WriteLine(
+                    $"[WARN][{player.PlayerId}][{player.MutationStrategy?.StrategyName ?? "Unknown"}] " +
+                    $"Mutation points left unspent at turn end: {player.MutationPoints}. " +
+                    $"Upgradable mutations: {upgradable.Count}");
+                if (upgradable.Count > 0)
+                {
+                    Console.WriteLine("IDs of upgradable mutations: " + string.Join(", ", upgradable.Select(m => m.Id)));
+                }
+            }
         }
+
+
 
         private bool TrySpendByCategory(Player player, List<Mutation> allMutations, GameBoard board)
         {

@@ -43,7 +43,21 @@ namespace FungusToast.Simulation.Models
         public int NecrophyticReclaims { get; set; }
         public int MycotoxinTracerSpores { get; set; }
         public int MycotoxinCatabolisms { get; set; }
-        public int CatabolizedMutationPoints { get; set; }  // NEW
+        public int CatabolizedMutationPoints { get; set; }
         public int ToxinAuraKills { get; set; }
+
+        // ──────────────
+        // FREE MUTATION POINTS (SPLIT BY SOURCE)
+        // ──────────────
+
+        /// <summary>
+        /// Free mutation points earned from Mutator Phenotype.
+        /// </summary>
+        public int MutatorPhenotypePointsEarned { get; set; }
+
+        /// <summary>
+        /// Free mutation points earned from Hyperadaptive Drift.
+        /// </summary>
+        public int HyperadaptiveDriftPointsEarned { get; set; }
     }
 }

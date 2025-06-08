@@ -24,5 +24,6 @@ namespace FungusToast.Core
         FungicideToxinSpores,
         ToxinKillAura,
         ToxinCleanupAndMPBonus,
+        EnhancedAutoUpgradeRandom,
     }
 }

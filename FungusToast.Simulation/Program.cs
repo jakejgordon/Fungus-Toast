@@ -4,7 +4,7 @@ using FungusToast.Simulation.Analysis;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 500;
+    private const int NumberOfSimulationGames = 100;
 
     static void Main()
     {
@@ -12,7 +12,7 @@ class Program
         var mutatorGrowth = new ParameterizedSpendingStrategy(
             strategyName: "Mutator Growth",
             prioritizeHighTier: true,
-            targetMutationIds: new List<int> { MutationIds.AnabolicInversion, MutationIds.CreepingMold });
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.CreepingMold });
 
         var toxinBadGuy = new ParameterizedSpendingStrategy(
             strategyName: "Toxin Bad Guy",
@@ -34,32 +34,7 @@ class Program
                 MutationCategory.CellularResilience
             });
 
-        /*
-        var growthAndResilienceHighTier = new ParameterizedSpendingStrategy(
-            strategyName: "GrowthResilience_HighTier",
-            prioritizeHighTier: true,
-            priorityMutationCategories: new List<MutationCategory>
-            {
-                        MutationCategory.Growth,
-                        MutationCategory.CellularResilience
-            });
-        */
-        /**last place in 10000 game simulation
-        var growthResilienceGeneticDriftHighTier = new ParameterizedSpendingStrategy(
-            strategyName: "GrowthResilienceGeneticDrift_HighTier",
-            prioritizeHighTier: true,
-            priorityMutationCategories: new List<MutationCategory>
-            {
-                                MutationCategory.Growth,
-                                MutationCategory.CellularResilience,
-                                MutationCategory.GeneticDrift
-            });
         
-        
-        var max2 = new ParameterizedSpendingStrategy(
-            strategyName: "Max2",
-            prioritizeHighTier: true);
-        **/
         var min = new ParameterizedSpendingStrategy(
             strategyName: "Min 1",
             prioritizeHighTier: false);

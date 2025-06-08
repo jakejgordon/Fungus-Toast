@@ -8,6 +8,7 @@ using FungusToast.Core.AI;
 using FungusToast.Core.Death;
 using System;
 using FungusToast.Core.Phases;
+using FungusToast.Core.Metrics;
 
 namespace FungusToast.Core.Players
 {
@@ -211,7 +212,8 @@ namespace FungusToast.Core.Players
 
         public int AssignMutationPoints(List<Player> allPlayers,
                                         System.Random rng,
-                                        IEnumerable<Mutation>? allMutations = null)
+                                        IEnumerable<Mutation>? allMutations = null,
+                                        IMutationPointObserver? mutationPointsObserver = null)
         {
             int baseIncome = GetMutationPointIncome();
             int bonus = GetBonusMutationPoints();
@@ -220,7 +222,7 @@ namespace FungusToast.Core.Players
             MutationPoints = baseIncome + bonus + undergrowth;
 
             if (allMutations != null)
-                MutationEffectProcessor.TryApplyMutatorPhenotype(this, allMutations.ToList(), rng);
+                MutationEffectProcessor.TryApplyMutatorPhenotype(this, allMutations.ToList(), rng, mutationPointsObserver);
 
             return MutationPoints;
         }

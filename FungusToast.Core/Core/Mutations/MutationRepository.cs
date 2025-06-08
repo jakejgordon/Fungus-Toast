@@ -319,6 +319,29 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.SporocidalBloom, 1),
             new MutationPrerequisite(MutationIds.Necrosporulation, 1));
 
+            //Tier-5
+            MakeChild(new Mutation(
+                id: MutationIds.HyperadaptiveDrift,
+                name: "Hyperadaptive Drift",
+                description:
+                    $"Each level grants a {FormatPercent(GameBalance.HyperadaptiveDriftHigherTierChancePerLevel)} increased chance for Mutator Phenotype to upgrade a random Tier 2 or Tier 3 mutation each round.\n" +
+                    $"If a Tier 1 mutation is selected, each level grants a {FormatPercent(GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel)} chance to upgrade an additional level in that mutation instead.",
+                flavorText:
+                    "Genome-wide instability unlocks adaptive leaps: mutator elements jump boundaries, splicing entire gene complexes with chaotic vigor. High-level traits now accelerate and cascade, birthing wild new forms.",
+                type: MutationType.EnhancedAutoUpgradeRandom,
+                effectPerLevel: GameBalance.HyperadaptiveDriftHigherTierChancePerLevel, // Main effect per level for reporting
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
+                maxLevel: GameBalance.HyperadaptiveDriftMaxLevel,
+                category: MutationCategory.GeneticDrift,
+                tier: MutationTier.Tier5
+            ),
+            new MutationPrerequisite(MutationIds.MycelialBloom, 2),
+            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 2),
+            new MutationPrerequisite(MutationIds.MycotoxinTracer, 2),
+            new MutationPrerequisite(MutationIds.NecrophyticBloom, 1)
+            );
+
+
             return (allMutations, rootMutations);
         }
 

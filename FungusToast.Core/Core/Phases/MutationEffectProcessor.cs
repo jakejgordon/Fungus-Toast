@@ -124,44 +124,119 @@ namespace FungusToast.Core.Phases
                 cell.IncrementGrowthAge();
         }
 
-        public static void TryApplyMutatorPhenotype(Player player,
-                                                    List<Mutation> allMutations,
-                                                    Random rng)
+        public static void TryApplyMutatorPhenotype(
+            Player player,
+            List<Mutation> allMutations,
+            Random rng,
+            IMutationPointObserver? observer = null
+        )
         {
             float chance = player.GetMutationEffect(MutationType.AutoUpgradeRandom);
             if (chance <= 0f || rng.NextDouble() >= chance) return;
 
-            var upgradable = allMutations
-                .Where(m => m.Tier == MutationTier.Tier1)
-                .Where(player.CanUpgrade)
-                .ToList();
+            // Check Hyperadaptive Drift levels and associated per-level effects
+            int hyperadaptiveLevel = player.GetMutationLevel(MutationIds.HyperadaptiveDrift);
+            bool hasHyperadaptive = hyperadaptiveLevel > 0;
 
-            if (upgradable.Count == 0) return;
+            float higherTierChance = hasHyperadaptive
+                ? GameBalance.HyperadaptiveDriftHigherTierChancePerLevel * hyperadaptiveLevel
+                : 0f;
 
-            var pick = upgradable[rng.Next(upgradable.Count)];
-            player.TryAutoUpgrade(pick);
+            float bonusTierOneChance = hasHyperadaptive
+                ? GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel * hyperadaptiveLevel
+                : 0f;
+
+            // Gather upgradable mutations by tier
+            var tier1 = allMutations.Where(m => m.Tier == MutationTier.Tier1 && player.CanUpgrade(m)).ToList();
+            var tier2 = allMutations.Where(m => m.Tier == MutationTier.Tier2 && player.CanUpgrade(m)).ToList();
+            var tier3 = allMutations.Where(m => m.Tier == MutationTier.Tier3 && player.CanUpgrade(m)).ToList();
+
+            List<Mutation> pool;
+            MutationTier targetTier;
+
+            // Hyperadaptive Drift: roll to see if we try for tier 2 or 3 instead of 1
+            if (hasHyperadaptive && rng.NextDouble() < higherTierChance)
+            {
+                // Try tier 2 or 3 randomly
+                var higherTiers = tier2.Concat(tier3).ToList();
+                if (higherTiers.Count > 0)
+                {
+                    pool = higherTiers;
+                    targetTier = rng.Next(2) == 0 ? MutationTier.Tier2 : MutationTier.Tier3;
+                }
+                else if (tier1.Count > 0)
+                {
+                    pool = tier1;
+                    targetTier = MutationTier.Tier1;
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else if (tier1.Count > 0)
+            {
+                pool = tier1;
+                targetTier = MutationTier.Tier1;
+            }
+            else
+            {
+                return;
+            }
+
+            // Pick a mutation to auto-upgrade
+            var pick = pool[rng.Next(pool.Count)];
+            int upgrades = 1;
+
+            // Hyperadaptive Drift: Tier 1 can double-upgrade
+            if (hasHyperadaptive && targetTier == MutationTier.Tier1 && rng.NextDouble() < bonusTierOneChance)
+            {
+                upgrades = 2;
+            }
+
+            // Actually perform the upgrades, attributing each point appropriately
+            int mutatorPoints = 0;
+            int hyperadaptivePoints = 0;
+
+            for (int i = 0; i < upgrades; i++)
+            {
+                bool upgraded = player.TryAutoUpgrade(pick);
+                if (!upgraded) break;
+
+                // Attribution logic:
+                if (targetTier == MutationTier.Tier1)
+                {
+                    if (i == 0)
+                    {
+                        mutatorPoints += pick.PointsPerUpgrade;
+                    }
+                    else
+                    {
+                        hyperadaptivePoints += pick.PointsPerUpgrade;
+                    }
+                }
+                else // Tier 2 or 3
+                {
+                    hyperadaptivePoints += pick.PointsPerUpgrade;
+                }
+            }
+
+            // Notify observer
+            if (observer != null)
+            {
+                if (mutatorPoints > 0)
+                    observer.RecordMutatorPhenotypeMutationPointsEarned(player.PlayerId, mutatorPoints);
+
+                if (hyperadaptivePoints > 0)
+                    observer.RecordHyperadaptiveDriftMutationPointsEarned(player.PlayerId, hyperadaptivePoints);
+            }
         }
+
+
 
         /* ────────────────────────────────────────────────────────────────
          * 3 ▸  ENEMY-PRESSURE & MUTATION-SPECIFIC CHECKS
          * ────────────────────────────────────────────────────────────────*/
-
-        private static bool CheckSilentBlight(FungalCell target,
-                                              GameBoard board,
-                                              List<Player> players,
-                                              out float chance)
-        {
-            chance = 0f;
-
-            foreach (Player enemy in players)
-            {
-                if (enemy.PlayerId == target.OwnerPlayerId) continue;
-
-                chance += enemy.GetMutationEffect(MutationType.EnemyDecayChance);
-            }
-
-            return chance > 0f;
-        }
 
         private static bool CheckPutrefactiveMycotoxin(FungalCell target,
                                                        GameBoard board,

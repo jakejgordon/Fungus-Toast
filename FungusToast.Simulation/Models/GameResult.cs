@@ -73,7 +73,13 @@ namespace FungusToast.Simulation.Models
                     MycotoxinTracerSpores = tracking.GetMycotoxinSporeDropCount(player.PlayerId),
                     MycotoxinCatabolisms = tracking.GetToxinCatabolismCount(player.PlayerId),
                     ToxinAuraKills = tracking.GetToxinAuraKillCount(player.PlayerId),
-                    CatabolizedMutationPoints = tracking.GetCatabolizedMutationPoints(player.PlayerId)
+                    CatabolizedMutationPoints = tracking.GetCatabolizedMutationPoints(player.PlayerId),
+
+                    // ──────────────
+                    // Free Mutation Points (SPLIT BY SOURCE)
+                    // ──────────────
+                    MutatorPhenotypePointsEarned = tracking.GetMutatorPhenotypePointsEarned(player.PlayerId),
+                    HyperadaptiveDriftPointsEarned = tracking.GetHyperadaptiveDriftPointsEarned(player.PlayerId)
                 };
 
                 playerResultMap[player.PlayerId] = pr;
