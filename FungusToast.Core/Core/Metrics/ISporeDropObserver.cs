@@ -6,7 +6,5 @@
         void ReportNecrosporeDrop(int playerId, int count);
         void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims);
         void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped);
-        void ReportAuraKill(int playerId, int killCount);
-        void ReportSporocidalKill(int playerId, int totalKills);
     }
 }

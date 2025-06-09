@@ -35,9 +35,15 @@ namespace FungusToast.Simulation.Models
         {
             var playerResultMap = new Dictionary<int, PlayerResult>();
 
+            // Get the complete death tracking dictionary from the context
+            var deathsByPlayerAndReason = tracking.GetAllCellDeathsByPlayerAndReason();
+
             foreach (var player in players)
             {
                 var cells = board.GetAllCellsOwnedBy(player.PlayerId);
+
+                // Get this player's deaths by reason (may be missing if no deaths)
+                Dictionary<DeathReason, int> playerDeaths = deathsByPlayerAndReason.TryGetValue(player.PlayerId, out var d) ? d : new();
 
                 var pr = new PlayerResult
                 {
@@ -49,11 +55,13 @@ namespace FungusToast.Simulation.Models
                     // Cell stats
                     LivingCells = cells.Count(c => c.IsAlive),
                     DeadCells = cells.Count(c => !c.IsAlive),
-                    DeadCellDeathReasons = new List<DeathReason>(),
+                    DeadCellDeathReasons = new List<DeathReason>(), // (optional legacy)
                     ReclaimedCells = tracking.GetReclaimedCells(player.PlayerId),
 
                     // Mutations
-                    MutationLevels = player.PlayerMutations.ToDictionary(kv => kv.Key, kv => kv.Value.CurrentLevel),
+                    MutationLevels = player.PlayerMutations.ToDictionary(
+                        kv => kv.Key,
+                        kv => kv.Value.CurrentLevel),
 
                     // Effective stats
                     EffectiveGrowthChance = player.GetEffectiveGrowthChance(),
@@ -79,7 +87,7 @@ namespace FungusToast.Simulation.Models
                     NecrohyphalInfiltrations = tracking.GetNecrohyphalInfiltrationCount(player.PlayerId),
                     NecrohyphalCascades = tracking.GetNecrohyphalCascadeCount(player.PlayerId),
 
-                    // ---- NEW: Necrotoxic Conversion effect ----
+                    // Necrotoxic Conversion effect
                     NecrotoxicConversionReclaims = tracking.GetNecrotoxicConversionReclaims(player.PlayerId),
 
                     // Tendril mutation effect counters
@@ -91,13 +99,16 @@ namespace FungusToast.Simulation.Models
                     // Free Mutation Points (SPLIT BY SOURCE)
                     AdaptiveExpressionPointsEarned = tracking.GetAdaptiveExpressionPointsEarned(player.PlayerId),
                     MutatorPhenotypePointsEarned = tracking.GetMutatorPhenotypePointsEarned(player.PlayerId),
-                    HyperadaptiveDriftPointsEarned = tracking.GetHyperadaptiveDriftPointsEarned(player.PlayerId)
+                    HyperadaptiveDriftPointsEarned = tracking.GetHyperadaptiveDriftPointsEarned(player.PlayerId),
+
+                    // NEW: Death summary by reason
+                    DeathsByReason = playerDeaths
                 };
 
                 playerResultMap[player.PlayerId] = pr;
             }
 
-            // Attach death reasons to appropriate player result
+            // (OPTIONAL) Attach cell death reasons to legacy DeadCellDeathReasons, if you still need per-cell data
             foreach (var cell in board.GetAllCells())
             {
                 if (!cell.IsAlive && cell.CauseOfDeath.HasValue &&
@@ -119,5 +130,6 @@ namespace FungusToast.Simulation.Models
                 ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin)
             };
         }
+
     }
 }

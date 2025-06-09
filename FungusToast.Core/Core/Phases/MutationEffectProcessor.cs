@@ -102,7 +102,8 @@ namespace FungusToast.Core.Phases
 
             if (roll < totalFallbackChance)
             {
-                if (roll < thresholdRandom) return (totalFallbackChance, DeathReason.Randomness);
+                if (roll < thresholdRandom) 
+                    return (totalFallbackChance, DeathReason.Randomness);
                 return (totalFallbackChance, DeathReason.Age);
             }
 
@@ -346,11 +347,12 @@ namespace FungusToast.Core.Phases
         */
 
         public static int TryPlaceSporocidalSpores(
-    Player player,
-    GameBoard board,
-    Random rng,
-    Mutation sporocidalBloom,
-    ISporeDropObserver? observer = null)
+            Player player,
+            GameBoard board,
+            Random rng,
+            Mutation sporocidalBloom,
+            ISporeDropObserver? observer = null,
+            IGrowthAndDecayObserver? growthAndDecayObserver = null)
         {
             int level = player.GetMutationLevel(MutationIds.SporocidalBloom);
             if (level <= 0) return 0;
@@ -423,7 +425,7 @@ namespace FungusToast.Core.Phases
                 observer?.ReportSporocidalSporeDrop(player.PlayerId, totalToxinsPlaced);
 
             if (totalKills > 0)
-                observer?.ReportSporocidalKill(player.PlayerId, totalKills);
+                growthAndDecayObserver?.RecordCellDeath(player.PlayerId, DeathReason.SporocidalBloom, totalKills);
 
             return totalToxinsPlaced;
         }
@@ -579,7 +581,8 @@ namespace FungusToast.Core.Phases
         public static void ApplyToxinAuraDeaths(GameBoard board,
                                          List<Player> players,
                                          Random rng,
-                                         ISporeDropObserver? observer = null)
+                                         ISporeDropObserver? observer = null,
+                                         IGrowthAndDecayObserver? growthAndDecayObserver = null)
         {
             foreach (var tile in board.AllToxinTiles())
             {
@@ -606,7 +609,7 @@ namespace FungusToast.Core.Phases
 
                 if (killCount > 0)
                 {
-                    observer?.ReportAuraKill(owner.PlayerId, killCount);
+                    growthAndDecayObserver?.RecordCellDeath(owner.PlayerId, DeathReason.MycotoxinPotentiation, killCount);
                 }
             }
         }

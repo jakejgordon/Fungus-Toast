@@ -36,9 +36,9 @@ namespace FungusToast.Core.Death
             var (allMutations, _) = MutationRepository.BuildFullMutationSet();
             Mutation sporocidalBloom = allMutations[MutationIds.SporocidalBloom];
 
-            ApplyPerTurnSporeEffects(shuffledPlayers, board, sporocidalBloom, failedGrowthsByPlayerId, sporeDropObserver);
+            ApplyPerTurnSporeEffects(shuffledPlayers, board, sporocidalBloom, failedGrowthsByPlayerId, sporeDropObserver, growthAndDecayObserver);
             ApplyNecrophyticBloomTrigger(shuffledPlayers, board, sporeDropObserver);
-            MutationEffectProcessor.ApplyToxinAuraDeaths(board, players, Rng, sporeDropObserver);
+            MutationEffectProcessor.ApplyToxinAuraDeaths(board, players, Rng, sporeDropObserver, growthAndDecayObserver);
             EvaluateProbabilisticDeaths(board, shuffledPlayers, sporeDropObserver, growthAndDecayObserver);
         }
 
@@ -47,11 +47,12 @@ namespace FungusToast.Core.Death
             GameBoard board,
             Mutation sporocidalBloom,
             Dictionary<int, int> failedGrowthsByPlayerId,
-            ISporeDropObserver? observer)
+            ISporeDropObserver? observer,
+            IGrowthAndDecayObserver? growthAndDecayObserver)
         {
             foreach (var p in players)
             {
-                MutationEffectProcessor.TryPlaceSporocidalSpores(p, board, Rng, sporocidalBloom, observer);
+                MutationEffectProcessor.TryPlaceSporocidalSpores(p, board, Rng, sporocidalBloom, observer, growthAndDecayObserver);
 
                 int failedGrowths = failedGrowthsByPlayerId.TryGetValue(p.PlayerId, out var v) ? v : 0;
                 MutationEffectProcessor.ApplyMycotoxinTracer(p, board, failedGrowths, Rng, observer);
@@ -167,7 +168,7 @@ namespace FungusToast.Core.Death
 
                 if (enemyPlayer.GetMutationEffect(MutationType.AdjacentFungicide) > 0f)
                 {
-                    observer.RecordPutrefactiveMycotoxinKill(neighborOwnerId, 1);
+                    observer.RecordCellDeath(neighborOwnerId, DeathReason.PutrefactiveMycotoxin, 1);
                 }
             }
         }

@@ -1,17 +1,28 @@
-﻿using FungusToast.Core.AI;
-using FungusToast.Core.Config;
-using FungusToast.Core.Death;
-using FungusToast.Core.Mutations;
-using FungusToast.Simulation.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core;
+using FungusToast.Core.Players;
+using FungusToast.Core.Death;
+using FungusToast.Core.Board;
+using FungusToast.Core.AI;
+using FungusToast.Core.Config;
+using FungusToast.Core.Mutations;
+using FungusToast.Simulation.Models;
 
 namespace FungusToast.Simulation.Analysis
 {
     public class MatchupStatsAggregator
     {
-        public void PrintSummary(List<GameResult> results)
+        /// <summary>
+        /// Prints the simulation summary, including both end-state and cumulative death reason summaries.
+        /// </summary>
+        /// <param name="results">List of GameResult objects.</param>
+        /// <param name="cumulativeDeathReasons">
+        /// A cumulative count of deaths by reason for the full set of games,
+        /// e.g. from SimulationTrackingContext.GetAllCumulativeDeathReasonCounts().
+        /// </param>
+        public void PrintSummary(List<GameResult> results, Dictionary<DeathReason, int> cumulativeDeathReasons)
         {
             int boardWidth = GameBalance.BoardWidth;
             int boardHeight = GameBalance.BoardHeight;
@@ -38,13 +49,14 @@ namespace FungusToast.Simulation.Analysis
                 int reclaimsFromNecrophytic,
                 int sporesFromMycotoxin,
                 int toxinAuraKills,
-                int mycotoxinCatabolisms, // NEW
+                int mycotoxinCatabolisms,
                 int mutationPointsSpent,
                 float growthChance,
                 float selfDeathChance,
                 float decayMod)>();
 
-            var deathReasonCounts = new Dictionary<DeathReason, int>();
+            // For the (legacy) end-state summary, as before.
+            var endStateDeathReasonCounts = new Dictionary<DeathReason, int>();
 
             foreach (var result in results)
             {
@@ -69,7 +81,7 @@ namespace FungusToast.Simulation.Analysis
                             reclaimsFromNecrophytic: 0,
                             sporesFromMycotoxin: 0,
                             toxinAuraKills: 0,
-                            mycotoxinCatabolisms: 0, // NEW
+                            mycotoxinCatabolisms: 0,
                             mutationPointsSpent: 0,
                             growthChance: 0f,
                             selfDeathChance: 0f,
@@ -91,7 +103,7 @@ namespace FungusToast.Simulation.Analysis
                     entry.reclaimsFromNecrophytic += pr.NecrophyticReclaims;
                     entry.sporesFromMycotoxin += pr.MycotoxinTracerSpores;
                     entry.toxinAuraKills += pr.ToxinAuraKills;
-                    entry.mycotoxinCatabolisms += pr.MycotoxinCatabolisms; // NEW
+                    entry.mycotoxinCatabolisms += pr.MycotoxinCatabolisms;
                     entry.mutationPointsSpent += pr.MutationLevels.Sum(kv =>
                         (MutationRegistry.GetById(kv.Key)?.PointsPerUpgrade ?? 0) * kv.Value);
                     entry.growthChance += pr.EffectiveGrowthChance;
@@ -99,24 +111,35 @@ namespace FungusToast.Simulation.Analysis
                     entry.decayMod += pr.OffensiveDecayModifier;
                     playerStats[id] = entry;
 
+                    // (Legacy) End-state death reason tracking
                     if (pr.DeadCellDeathReasons != null)
                     {
                         foreach (DeathReason reason in pr.DeadCellDeathReasons)
                         {
-                            if (!deathReasonCounts.ContainsKey(reason))
-                                deathReasonCounts[reason] = 0;
-                            deathReasonCounts[reason]++;
+                            if (!endStateDeathReasonCounts.ContainsKey(reason))
+                                endStateDeathReasonCounts[reason] = 0;
+                            endStateDeathReasonCounts[reason]++;
                         }
                     }
                 }
             }
 
             foreach (DeathReason reason in Enum.GetValues(typeof(DeathReason)))
-                if (!deathReasonCounts.ContainsKey(reason))
-                    deathReasonCounts[reason] = 0;
+            {
+                if (!endStateDeathReasonCounts.ContainsKey(reason))
+                    endStateDeathReasonCounts[reason] = 0;
+                if (!cumulativeDeathReasons.ContainsKey(reason))
+                    cumulativeDeathReasons[reason] = 0;
+            }
 
             PrintGameLevelStats(results, totalCells);
-            PrintDeathReasonSummary(deathReasonCounts);
+
+            // Print the cumulative (observer/true) summary
+            PrintDeathReasonSummary(cumulativeDeathReasons, "Cumulative Death Reason Summary");
+
+            // Print the end-state (legacy) summary for comparison.
+            PrintDeathReasonSummary(endStateDeathReasonCounts, "End-State Death Reason Summary (At Game End)");
+
             PrintPlayerSummaryTable(playerStats);
         }
 
@@ -180,13 +203,11 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine(new string('-', 170));
         }
 
-
-
-        private void PrintDeathReasonSummary(Dictionary<DeathReason, int> deathReasonCounts)
+        private void PrintDeathReasonSummary(Dictionary<DeathReason, int> deathReasonCounts, string label)
         {
             int totalDeaths = deathReasonCounts.Values.Sum();
 
-            Console.WriteLine("\n=== Death Reason Summary ===");
+            Console.WriteLine($"\n=== {label} ===");
             Console.WriteLine($"Total Cells that Died: {totalDeaths}");
             Console.WriteLine($"{"Cause",-30} | {"Count",5} | {"Percent",7}");
             Console.WriteLine(new string('-', 45));

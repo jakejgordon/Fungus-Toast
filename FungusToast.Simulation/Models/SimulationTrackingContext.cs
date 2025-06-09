@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using FungusToast.Core.Core.Metrics;
+using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
 
 namespace FungusToast.Simulation.Models
@@ -9,32 +10,33 @@ namespace FungusToast.Simulation.Models
         // ────────────────────────────
         //  FIELDS / DATA TRACKERS
         // ────────────────────────────
+
+        // Centralized death reason tracking: [playerId][DeathReason] => count
+        private readonly Dictionary<int, Dictionary<DeathReason, int>> deathsByPlayerAndReason = new();
+
         private readonly Dictionary<int, int> creepingMoldMoves = new();
         private readonly Dictionary<int, int> reclaimedCells = new();
         private readonly Dictionary<int, int> mycotoxinTracerSporeDrops = new();
-        private readonly Dictionary<int, int> putrefactiveMycotoxinKills = new();
         private readonly Dictionary<int, int> sporocidalSporeDrops = new();
-        private readonly Dictionary<int, int> sporocidalKills = new();
         private readonly Dictionary<int, int> necrosporulationSporeDrops = new();
         private readonly Dictionary<int, int> necrophyticBloomSpores = new();
         private readonly Dictionary<int, int> necrophyticBloomReclaims = new();
-        private readonly Dictionary<int, int> toxinAuraKills = new();
         private readonly Dictionary<int, int> toxinCatabolisms = new();
         private readonly Dictionary<int, int> catabolizedMutationPoints = new();
 
-        // NEW: Necrotoxic Conversion
+        // Necrotoxic Conversion
         private readonly Dictionary<int, int> necrotoxicConversionReclaims = new();
 
-        // NEW: Separate tracking for mutation point sources
+        // Separate tracking for mutation point sources
         private readonly Dictionary<int, int> adaptiveExpressionPointsEarned = new();
         private readonly Dictionary<int, int> mutatorPhenotypePointsEarned = new();
         private readonly Dictionary<int, int> hyperadaptiveDriftPointsEarned = new();
 
-        // NEW: Necrohyphal Infiltration tracking
+        // Necrohyphal Infiltration tracking
         private readonly Dictionary<int, int> necrohyphalInfiltrations = new();
         private readonly Dictionary<int, int> necrohyphalCascades = new();
 
-        // ────── NEW: Tendril Growth Stats ──────
+        // Tendril Growth Stats
         private readonly Dictionary<int, int> tendrilNorthwestGrownCells = new();
         private readonly Dictionary<int, int> tendrilNortheastGrownCells = new();
         private readonly Dictionary<int, int> tendrilSoutheastGrownCells = new();
@@ -45,6 +47,19 @@ namespace FungusToast.Simulation.Models
         // ────────────────────────────
         //  MUTATORS / TRACKING METHODS
         // ────────────────────────────
+
+        // NEW: Unified cell death tracker
+        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
+        {
+            if (!deathsByPlayerAndReason.TryGetValue(playerId, out var reasonDict))
+            {
+                reasonDict = new Dictionary<DeathReason, int>();
+                deathsByPlayerAndReason[playerId] = reasonDict;
+            }
+            if (!reasonDict.ContainsKey(reason))
+                reasonDict[reason] = 0;
+            reasonDict[reason] += deathCount;
+        }
 
         public void RecordCreepingMoldMove(int playerId)
         {
@@ -82,25 +97,11 @@ namespace FungusToast.Simulation.Models
             mycotoxinTracerSporeDrops[playerId] += sporesDropped;
         }
 
-        public void RecordPutrefactiveMycotoxinKill(int playerId, int cellsKilled)
-        {
-            if (!putrefactiveMycotoxinKills.ContainsKey(playerId))
-                putrefactiveMycotoxinKills[playerId] = 0;
-            putrefactiveMycotoxinKills[playerId] += cellsKilled;
-        }
-
         public void ReportSporocidalSporeDrop(int playerId, int count)
         {
             if (!sporocidalSporeDrops.ContainsKey(playerId))
                 sporocidalSporeDrops[playerId] = 0;
             sporocidalSporeDrops[playerId] += count;
-        }
-
-        public void ReportSporocidalKill(int playerId, int killCount)
-        {
-            if (!sporocidalKills.ContainsKey(playerId))
-                sporocidalKills[playerId] = 0;
-            sporocidalKills[playerId] += killCount;
         }
 
         public void ReportNecrosporeDrop(int playerId, int count)
@@ -120,29 +121,18 @@ namespace FungusToast.Simulation.Models
             necrophyticBloomReclaims[playerId] += successfulReclaims;
         }
 
-        public void ReportAuraKill(int playerId, int killCount)
-        {
-            if (!toxinAuraKills.ContainsKey(playerId))
-                toxinAuraKills[playerId] = 0;
-            toxinAuraKills[playerId] += killCount;
-        }
-
         public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int mutationPointsCatabolized)
         {
-            // Track number of toxins catabolized
             if (!toxinCatabolisms.ContainsKey(playerId))
                 toxinCatabolisms[playerId] = 0;
             toxinCatabolisms[playerId] += toxinsCatabolized;
 
-            // Track number of mutation points earned via catabolism
             if (!catabolizedMutationPoints.ContainsKey(playerId))
                 catabolizedMutationPoints[playerId] = 0;
             catabolizedMutationPoints[playerId] += mutationPointsCatabolized;
         }
 
-        // ─────────────────────────────
-        // NEW: Necrotoxic Conversion
-        // ─────────────────────────────
+        // Necrotoxic Conversion
         public void RecordNecrotoxicConversionReclaim(int playerId, int count)
         {
             if (!necrotoxicConversionReclaims.ContainsKey(playerId))
@@ -150,10 +140,7 @@ namespace FungusToast.Simulation.Models
             necrotoxicConversionReclaims[playerId] += count;
         }
 
-        // ────────────────────────────
-        //  NEW: Necrohyphal Infiltration recorders
-        // ────────────────────────────
-
+        // Necrohyphal Infiltration recorders
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount)
         {
             if (!necrohyphalInfiltrations.ContainsKey(playerId))
@@ -183,10 +170,7 @@ namespace FungusToast.Simulation.Models
             hyperadaptiveDriftPointsEarned[playerId] += freePointsEarned;
         }
 
-        // ────────────────────────────
-        //  NEW: Tendril Growth recorders
-        // ────────────────────────────
-
+        // Tendril Growth recorders
         public void RecordTendrilGrowth(int playerId, Core.Growth.DiagonalDirection direction)
         {
             switch (direction)
@@ -218,73 +202,75 @@ namespace FungusToast.Simulation.Models
         //  GETTERS / ACCESSORS
         // ────────────────────────────
 
+        // New unified accessor for all deaths (for stats, summaries, etc.)
+
+        public int GetCellDeathCount(int playerId, DeathReason reason)
+        {
+            if (deathsByPlayerAndReason.TryGetValue(playerId, out var reasonDict))
+                if (reasonDict.TryGetValue(reason, out var val))
+                    return val;
+            return 0;
+        }
+        public Dictionary<int, Dictionary<DeathReason, int>> GetAllCellDeathsByPlayerAndReason()
+            => deathsByPlayerAndReason.ToDictionary(
+                kvp => kvp.Key,
+                kvp => new Dictionary<DeathReason, int>(kvp.Value)
+            );
+
+        // Example: get all deaths by reason (all players)
+        public Dictionary<DeathReason, int> GetTotalDeathsByReason()
+        {
+            var result = new Dictionary<DeathReason, int>();
+            foreach (var playerDict in deathsByPlayerAndReason.Values)
+            {
+                foreach (var kvp in playerDict)
+                {
+                    if (!result.ContainsKey(kvp.Key))
+                        result[kvp.Key] = 0;
+                    result[kvp.Key] += kvp.Value;
+                }
+            }
+            return result;
+        }
+
         public int GetTendrilNorthwestGrownCells(int playerId) =>
             tendrilNorthwestGrownCells.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetTendrilNortheastGrownCells(int playerId) =>
             tendrilNortheastGrownCells.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetTendrilSoutheastGrownCells(int playerId) =>
             tendrilSoutheastGrownCells.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetTendrilSouthwestGrownCells(int playerId) =>
             tendrilSouthwestGrownCells.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetCreepingMoldMoves(int playerId) =>
             creepingMoldMoves.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetReclaimedCells(int playerId) =>
             reclaimedCells.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetNecrophyticBloomSporeDropCount(int playerId) =>
             necrophyticBloomSpores.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetNecrophyticBloomReclaims(int playerId) =>
             necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetFailedGrowthCount(int playerId) =>
             FailedGrowthsByPlayerId.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetToxinCatabolismCount(int playerId) =>
             toxinCatabolisms.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetSporocidalSporeDropCount(int playerId) =>
             sporocidalSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
-
-        public int GetSporocidalKillCount(int playerId) =>
-            sporocidalKills.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetNecrosporeDropCount(int playerId) =>
             necrosporulationSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetNecrophyticBloomReclaimCount(int playerId) =>
             necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
-
-        public int GetPutrefactiveMycotoxinKills(int playerId) =>
-            putrefactiveMycotoxinKills.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetNecrotoxicConversionReclaims(int playerId) =>
             necrotoxicConversionReclaims.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetMycotoxinSporeDropCount(int playerId) =>
             mycotoxinTracerSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
-
-        public int GetToxinAuraKillCount(int playerId) =>
-            toxinAuraKills.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetCatabolizedMutationPoints(int playerId) =>
             catabolizedMutationPoints.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetMutatorPhenotypePointsEarned(int playerId) =>
             mutatorPhenotypePointsEarned.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetHyperadaptiveDriftPointsEarned(int playerId) =>
             hyperadaptiveDriftPointsEarned.TryGetValue(playerId, out var val) ? val : 0;
-
-        // NEW: Getters for Necrohyphal stats
         public int GetNecrohyphalInfiltrationCount(int playerId) =>
             necrohyphalInfiltrations.TryGetValue(playerId, out var val) ? val : 0;
-
         public int GetNecrohyphalCascadeCount(int playerId) =>
             necrohyphalCascades.TryGetValue(playerId, out var val) ? val : 0;
 
@@ -294,19 +280,14 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetNecrophyticBloomSpores() => new(necrophyticBloomSpores);
         public Dictionary<int, int> GetNecrophyticBloomReclaims() => new(necrophyticBloomReclaims);
         public Dictionary<int, int> GetMycotoxinTracerSporeDrops() => new(mycotoxinTracerSporeDrops);
-        public Dictionary<int, int> GetAllPutrefactiveMycotoxinKills() => new(putrefactiveMycotoxinKills);
         public Dictionary<int, int> GetAllNecrotoxicConversionReclaims() => new(necrotoxicConversionReclaims);
-        public Dictionary<int, int> GetToxinAuraKills() => new(toxinAuraKills);
         public Dictionary<int, int> GetToxinCatabolisms() => new(toxinCatabolisms);
         public Dictionary<int, int> GetCatabolizedMutationPoints() => new(catabolizedMutationPoints);
 
         public Dictionary<int, int> GetAllMutatorPhenotypePointsEarned() => new(mutatorPhenotypePointsEarned);
         public Dictionary<int, int> GetAllHyperadaptiveDriftPointsEarned() => new(hyperadaptiveDriftPointsEarned);
-
         public Dictionary<int, int> GetAllNecrohyphalInfiltrations() => new(necrohyphalInfiltrations);
         public Dictionary<int, int> GetAllNecrohyphalCascades() => new(necrohyphalCascades);
-
-        // Bulk accessors for all Tendril stats
         public Dictionary<int, int> GetAllTendrilNorthwestGrownCells() => new(tendrilNorthwestGrownCells);
         public Dictionary<int, int> GetAllTendrilNortheastGrownCells() => new(tendrilNortheastGrownCells);
         public Dictionary<int, int> GetAllTendrilSoutheastGrownCells() => new(tendrilSoutheastGrownCells);

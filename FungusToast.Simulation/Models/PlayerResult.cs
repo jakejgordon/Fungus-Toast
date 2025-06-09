@@ -20,6 +20,17 @@ namespace FungusToast.Simulation.Models
         public int DeadCells { get; set; }
         public int ReclaimedCells { get; set; }
         public List<DeathReason> DeadCellDeathReasons { get; set; } = new();
+        public Dictionary<DeathReason, int> DeathsByReason { get; set; } = new();
+
+        /// <summary>
+        /// Number of cells this player lost due to random (baseline) death.
+        /// </summary>
+        public int DeathsFromRandomness { get; set; }
+
+        /// <summary>
+        /// Number of cells this player lost due to death by age.
+        /// </summary>
+        public int DeathsFromAge { get; set; }
 
         // ──────────────
         // MUTATIONS
