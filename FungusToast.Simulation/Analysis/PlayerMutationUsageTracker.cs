@@ -75,10 +75,12 @@ namespace FungusToast.Simulation.Analysis
                 (MutationIds.MycotoxinPotentiation, nameof(PlayerResult.ToxinAuraKills), "Toxin Aura Kills"),
                 (MutationIds.MycotoxinCatabolism, nameof(PlayerResult.MycotoxinCatabolisms), "Toxin Catabolisms"),
                 (MutationIds.MycotoxinCatabolism, nameof(PlayerResult.CatabolizedMutationPoints), "Catabolized MP"),
+                (MutationIds.AdaptiveExpression, nameof(PlayerResult.AdaptiveExpressionPointsEarned), "Bonus MP"),
                 (MutationIds.MutatorPhenotype, nameof(PlayerResult.MutatorPhenotypePointsEarned), "Mutator Free MP"),
                 (MutationIds.HyperadaptiveDrift, nameof(PlayerResult.HyperadaptiveDriftPointsEarned), "Hyperadaptive Free MP"),
                 (MutationIds.NecrohyphalInfiltration, nameof(PlayerResult.NecrohyphalInfiltrations), "Infiltrations"),
                 (MutationIds.NecrohyphalInfiltration, nameof(PlayerResult.NecrohyphalCascades), "Cascades"),
+                (MutationIds.PutrefactiveMycotoxin, nameof(PlayerResult.PutrefactiveMycotoxinKills), "PM Kills"),
 
                 // Tendril mutations (one per direction)
                 (MutationIds.TendrilNorthwest, nameof(PlayerResult.TendrilNorthwestGrownCells), "Grown Cells"),

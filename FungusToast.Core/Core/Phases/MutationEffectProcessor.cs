@@ -615,7 +615,7 @@ namespace FungusToast.Core.Phases
             Player player,
             GameBoard board,
             Random rng,
-            IGrowthObserver? observer = null)
+            IGrowthAndDecayObserver? observer = null)
         {
             int level = player.GetMutationLevel(MutationIds.MycotoxinCatabolism);
             if (level <= 0) return 0;
@@ -660,7 +660,7 @@ namespace FungusToast.Core.Phases
     FungalCell sourceCell,
     Player owner,
     Random rng,
-    IGrowthObserver? observer = null)
+    IGrowthAndDecayObserver? observer = null)
         {
             int necroLevel = owner.GetMutationLevel(MutationIds.NecrohyphalInfiltration);
             if (necroLevel <= 0)
@@ -717,7 +717,7 @@ namespace FungusToast.Core.Phases
             Random rng,
             double cascadeChance,
             HashSet<int> alreadyReclaimed,
-            IGrowthObserver? observer = null)
+            IGrowthAndDecayObserver? observer = null)
         {
             int cascadeCount = 0;
             var toCheck = new Queue<BoardTile>();

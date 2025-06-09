@@ -12,9 +12,9 @@ namespace FungusToast.Core.Phases
         private readonly GameBoard board;
         private readonly List<Player> players;
         private readonly Random rng;
-        private readonly IGrowthObserver? observer;
+        private readonly IGrowthAndDecayObserver? observer;
 
-        public GrowthPhaseProcessor(GameBoard board, List<Player> players, Random rng, IGrowthObserver? observer = null)
+        public GrowthPhaseProcessor(GameBoard board, List<Player> players, Random rng, IGrowthAndDecayObserver? observer = null)
         {
             this.board = board;
             this.players = players;

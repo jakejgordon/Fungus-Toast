@@ -15,7 +15,7 @@ namespace FungusToast.Core.Growth
             GameBoard board,
             List<Player> players,
             Random rng,
-            IGrowthObserver? observer = null)
+            IGrowthAndDecayObserver? observer = null)
         {
             foreach (var player in players)
             {
@@ -52,7 +52,7 @@ namespace FungusToast.Core.Growth
             BoardTile sourceTile,
             Player owner,
             Random rng,
-            IGrowthObserver? observer = null)
+            IGrowthAndDecayObserver? observer = null)
         {
             var sourceCell = sourceTile.FungalCell;
             if (sourceCell == null)

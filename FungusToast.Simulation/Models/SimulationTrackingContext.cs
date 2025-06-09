@@ -4,15 +4,15 @@ using FungusToast.Core.Metrics;
 
 namespace FungusToast.Simulation.Models
 {
-    public class SimulationTrackingContext : IGrowthObserver, ISporeDropObserver, IMutationPointObserver
+    public class SimulationTrackingContext : IGrowthAndDecayObserver, ISporeDropObserver, IMutationPointObserver
     {
         // ────────────────────────────
         //  FIELDS / DATA TRACKERS
         // ────────────────────────────
-
         private readonly Dictionary<int, int> creepingMoldMoves = new();
         private readonly Dictionary<int, int> reclaimedCells = new();
         private readonly Dictionary<int, int> mycotoxinTracerSporeDrops = new();
+        private readonly Dictionary<int, int> putrefactiveMycotoxinKills = new();
         private readonly Dictionary<int, int> sporocidalSporeDrops = new();
         private readonly Dictionary<int, int> sporocidalKills = new();
         private readonly Dictionary<int, int> necrosporulationSporeDrops = new();
@@ -23,6 +23,7 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> catabolizedMutationPoints = new();
 
         // NEW: Separate tracking for mutation point sources
+        private readonly Dictionary<int, int> adaptiveExpressionPointsEarned = new();
         private readonly Dictionary<int, int> mutatorPhenotypePointsEarned = new();
         private readonly Dictionary<int, int> hyperadaptiveDriftPointsEarned = new();
 
@@ -54,6 +55,17 @@ namespace FungusToast.Simulation.Models
             reclaimedCells[playerId] = count;
         }
 
+        public void RecordAdaptiveExpressionBonus(int playerId, int bonusPoints)
+        {
+            if (!adaptiveExpressionPointsEarned.ContainsKey(playerId))
+                adaptiveExpressionPointsEarned[playerId] = 0;
+            adaptiveExpressionPointsEarned[playerId] += bonusPoints;
+        }
+        public int GetAdaptiveExpressionPointsEarned(int playerId) =>
+            adaptiveExpressionPointsEarned.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllAdaptiveExpressionPointsEarned() => new(adaptiveExpressionPointsEarned);
+
+
         public void RecordFailedGrowth(int playerId)
         {
             if (!FailedGrowthsByPlayerId.ContainsKey(playerId))
@@ -66,6 +78,13 @@ namespace FungusToast.Simulation.Models
             if (!mycotoxinTracerSporeDrops.ContainsKey(playerId))
                 mycotoxinTracerSporeDrops[playerId] = 0;
             mycotoxinTracerSporeDrops[playerId] += sporesDropped;
+        }
+
+        public void RecordPutrefactiveMycotoxinKill(int playerId, int cellsKilled)
+        {
+            if (!putrefactiveMycotoxinKills.ContainsKey(playerId))
+                putrefactiveMycotoxinKills[playerId] = 0;
+            putrefactiveMycotoxinKills[playerId] += cellsKilled;
         }
 
         public void ReportSporocidalSporeDrop(int playerId, int count)
@@ -229,6 +248,9 @@ namespace FungusToast.Simulation.Models
         public int GetNecrophyticBloomReclaimCount(int playerId) =>
             necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
 
+        public int GetPutrefactiveMycotoxinKills(int playerId) =>
+            putrefactiveMycotoxinKills.TryGetValue(playerId, out var val) ? val : 0;
+
         public int GetMycotoxinSporeDropCount(int playerId) =>
             mycotoxinTracerSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
 
@@ -257,6 +279,7 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetNecrophyticBloomSpores() => new(necrophyticBloomSpores);
         public Dictionary<int, int> GetNecrophyticBloomReclaims() => new(necrophyticBloomReclaims);
         public Dictionary<int, int> GetMycotoxinTracerSporeDrops() => new(mycotoxinTracerSporeDrops);
+        public Dictionary<int, int> GetAllPutrefactiveMycotoxinKills() => new(putrefactiveMycotoxinKills);
         public Dictionary<int, int> GetToxinAuraKills() => new(toxinAuraKills);
         public Dictionary<int, int> GetToxinCatabolisms() => new(toxinCatabolisms);
         public Dictionary<int, int> GetCatabolizedMutationPoints() => new(catabolizedMutationPoints);

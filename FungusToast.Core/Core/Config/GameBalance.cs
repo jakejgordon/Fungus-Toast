@@ -30,24 +30,24 @@ namespace FungusToast.Core.Config
         public const int MycotoxinPotentiationGrowthCycleExtensionPerLevel = 1;
         public const float MycotoxinPotentiationKillChancePerLevel = 0.012f;
         public const float AdaptiveExpressionEffectPerLevel = 0.09f;
-        public const float MycotoxinCatabolismCleanupChancePerLevel = 0.02f;
-        public const float MycotoxinCatabolismMutationPointChancePerCatabolism = 0.1f;
+        public const float MycotoxinCatabolismCleanupChancePerLevel = 0.025f;
+        public const float MycotoxinCatabolismMutationPointChancePerCatabolism = 0.13f;
         public const float TendrilDiagonalGrowthEffectPerLevel = 0.01f;
         public const float MycotropicInductionEffectPerLevel = 0.25f;
-        public const float PutrefactiveMycotoxinEffectPerLevel = 0.11f;
+        public const float PutrefactiveMycotoxinEffectPerLevel = 0.09f;
         public const int AgeResetReductionPerLevel = 5;
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
         public const float RegenerativeHyphaeReclaimChance = 0.008f;
-        public const float CreepingMoldMoveChancePerLevel = .03f;
-        public const float SporicialBloomEffectPerLevel = .09f;
+        public const float CreepingMoldMoveChancePerLevel = .035f;
+        public const float SporicialBloomEffectPerLevel = .08f;
         public const int SporocidalToxinTileDuration = 11;
         public const int NecrophyticBloomBaseSpores = 2;
         public const float NecrophyticBloomSporesPerDeathPerLevel = 40;
         public const float HyperadaptiveDriftHigherTierChancePerLevel = .15f;
         public const float HyperadaptiveDriftBonusTierOneMutationChancePerLevel = .2f;
-        public const float NecrohyphalInfiltrationChancePerLevel = 0.003f;
-        public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.015f;
+        public const float NecrohyphalInfiltrationChancePerLevel = 0.004f;
+        public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.019f;
 
         // Max Levels
         public const int MycelialBloomMaxLevel = 100;

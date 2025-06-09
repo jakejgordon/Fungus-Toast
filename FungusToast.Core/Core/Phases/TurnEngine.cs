@@ -28,7 +28,7 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// Executes a full multi-cycle growth phase, including mutation-based pre-growth effects.
         /// </summary>
-        public static void RunGrowthPhase(GameBoard board, List<Player> players, Random rng, IGrowthObserver? observer = null)
+        public static void RunGrowthPhase(GameBoard board, List<Player> players, Random rng, IGrowthAndDecayObserver? observer = null)
         {
             var processor = new GrowthPhaseProcessor(board, players, rng, observer);
 
@@ -43,9 +43,9 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// Executes the decay phase for all living fungal cells.
         /// </summary>
-        public static void RunDecayPhase(GameBoard board, List<Player> players, Dictionary<int, int> failedGrowthsByPlayerId, ISporeDropObserver? observer = null)
+        public static void RunDecayPhase(GameBoard board, List<Player> players, Dictionary<int, int> failedGrowthsByPlayerId, ISporeDropObserver? sporeDropObserver = null, IGrowthAndDecayObserver? growthAndDecayObserver = null)
         {
-            DeathEngine.ExecuteDeathCycle(board, players, failedGrowthsByPlayerId, observer);
+            DeathEngine.ExecuteDeathCycle(board, players, failedGrowthsByPlayerId, sporeDropObserver, growthAndDecayObserver);
         }
 
     }

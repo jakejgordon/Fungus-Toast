@@ -65,6 +65,7 @@ namespace FungusToast.Simulation.Models
                         .Average(),
 
                     // Mutation effect counters
+                    PutrefactiveMycotoxinKills = tracking.GetPutrefactiveMycotoxinKills(player.PlayerId),
                     CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId),
                     NecrosporulationSpores = tracking.GetNecrosporeDropCount(player.PlayerId),
                     SporocidalSpores = tracking.GetSporocidalSporeDropCount(player.PlayerId),
@@ -85,6 +86,7 @@ namespace FungusToast.Simulation.Models
                     TendrilSouthwestGrownCells = tracking.GetTendrilSouthwestGrownCells(player.PlayerId),
 
                     // Free Mutation Points (SPLIT BY SOURCE)
+                    AdaptiveExpressionPointsEarned = tracking.GetAdaptiveExpressionPointsEarned(player.PlayerId),
                     MutatorPhenotypePointsEarned = tracking.GetMutatorPhenotypePointsEarned(player.PlayerId),
                     HyperadaptiveDriftPointsEarned = tracking.GetHyperadaptiveDriftPointsEarned(player.PlayerId)
                 };

@@ -8,5 +8,6 @@ namespace FungusToast.Core.Metrics
     {
         void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned);
         void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned);
+        void RecordAdaptiveExpressionBonus(int playerId, int bonus);
     }
 }

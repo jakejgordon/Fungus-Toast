@@ -48,6 +48,8 @@ namespace FungusToast.Simulation.Models
         public int ToxinAuraKills { get; set; }
         public int NecrohyphalInfiltrations { get; set; }
         public int NecrohyphalCascades { get; set; }
+        public int PutrefactiveMycotoxinKills { get; set; } // <--- NEW FIELD
+
 
         // ──────────────
         // TENDRIL GROWN CELL COUNTERS
@@ -72,7 +74,10 @@ namespace FungusToast.Simulation.Models
         // ──────────────
         // FREE MUTATION POINTS (SPLIT BY SOURCE)
         // ──────────────
-
+        /// <summary>
+        /// Free mutation points earned from Adaptive Expression.
+        /// </summary>
+        public int AdaptiveExpressionPointsEarned { get; set; }
         /// <summary>
         /// Free mutation points earned from Mutator Phenotype.
         /// </summary>

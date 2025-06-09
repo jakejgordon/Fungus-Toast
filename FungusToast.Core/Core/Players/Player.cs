@@ -221,10 +221,17 @@ namespace FungusToast.Core.Players
 
             MutationPoints = baseIncome + bonus + undergrowth;
 
+            // Record Adaptive Expression bonus, if present and observer is hooked up
+            if (mutationPointsObserver != null && bonus > 0)
+            {
+                mutationPointsObserver.RecordAdaptiveExpressionBonus(PlayerId, bonus);
+            }
+
             if (allMutations != null)
                 MutationEffectProcessor.TryApplyMutatorPhenotype(this, allMutations.ToList(), rng, mutationPointsObserver);
 
             return MutationPoints;
         }
+
     }
 }
