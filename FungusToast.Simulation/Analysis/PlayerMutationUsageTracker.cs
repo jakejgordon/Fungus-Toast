@@ -81,6 +81,8 @@ namespace FungusToast.Simulation.Analysis
                 (MutationIds.NecrohyphalInfiltration, nameof(PlayerResult.NecrohyphalInfiltrations), "Infiltrations"),
                 (MutationIds.NecrohyphalInfiltration, nameof(PlayerResult.NecrohyphalCascades), "Cascades"),
                 (MutationIds.PutrefactiveMycotoxin, nameof(PlayerResult.PutrefactiveMycotoxinKills), "PM Kills"),
+                (MutationIds.NecrotoxicConversion, nameof(PlayerResult.NecrotoxicConversionReclaims), "Necrotoxic Reclaims"),
+
 
                 // Tendril mutations (one per direction)
                 (MutationIds.TendrilNorthwest, nameof(PlayerResult.TendrilNorthwestGrownCells), "Grown Cells"),

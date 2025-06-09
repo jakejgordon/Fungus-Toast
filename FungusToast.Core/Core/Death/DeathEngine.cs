@@ -120,6 +120,10 @@ namespace FungusToast.Core.Death
                     owner.RemoveControlledTile(cell.TileId);
                     livingCellCounts[owner.PlayerId]--;
 
+                    // Try Necrotoxic Conversion for toxin-based kills
+                    MutationEffectProcessor.TryNecrotoxicConversion(
+                        cell, board, players, Rng, growthAndDecayObserver);
+
                     if (reason.Value == DeathReason.PutrefactiveMycotoxin && growthAndDecayObserver != null)
                     {
                         AttributePutrefactiveMycotoxinKill(cell, board, players, growthAndDecayObserver);
@@ -167,6 +171,7 @@ namespace FungusToast.Core.Death
                 }
             }
         }
+
 
 
     }

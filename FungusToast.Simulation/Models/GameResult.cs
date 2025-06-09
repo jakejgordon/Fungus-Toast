@@ -79,6 +79,9 @@ namespace FungusToast.Simulation.Models
                     NecrohyphalInfiltrations = tracking.GetNecrohyphalInfiltrationCount(player.PlayerId),
                     NecrohyphalCascades = tracking.GetNecrohyphalCascadeCount(player.PlayerId),
 
+                    // ---- NEW: Necrotoxic Conversion effect ----
+                    NecrotoxicConversionReclaims = tracking.GetNecrotoxicConversionReclaims(player.PlayerId),
+
                     // Tendril mutation effect counters
                     TendrilNorthwestGrownCells = tracking.GetTendrilNorthwestGrownCells(player.PlayerId),
                     TendrilNortheastGrownCells = tracking.GetTendrilNortheastGrownCells(player.PlayerId),

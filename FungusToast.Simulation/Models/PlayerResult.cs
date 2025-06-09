@@ -48,8 +48,12 @@ namespace FungusToast.Simulation.Models
         public int ToxinAuraKills { get; set; }
         public int NecrohyphalInfiltrations { get; set; }
         public int NecrohyphalCascades { get; set; }
-        public int PutrefactiveMycotoxinKills { get; set; } // <--- NEW FIELD
+        public int PutrefactiveMycotoxinKills { get; set; }
 
+        /// <summary>
+        /// Number of cells reclaimed using Necrotoxic Conversion (Tier 5 Fungicide).
+        /// </summary>
+        public int NecrotoxicConversionReclaims { get; set; } // <--- NEW FIELD
 
         // ──────────────
         // TENDRIL GROWN CELL COUNTERS

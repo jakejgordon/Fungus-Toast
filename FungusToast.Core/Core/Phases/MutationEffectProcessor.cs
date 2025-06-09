@@ -756,6 +756,48 @@ namespace FungusToast.Core.Phases
             return cascadeCount;
         }
 
+        public static void TryNecrotoxicConversion(
+            FungalCell deadCell,
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            IGrowthAndDecayObserver? growthAndDecayObserver = null)
+        {
+            // Only applies to toxin-based deaths
+            if (deadCell.CauseOfDeath != DeathReason.PutrefactiveMycotoxin &&
+                deadCell.CauseOfDeath != DeathReason.SporocidalBloom &&
+                deadCell.CauseOfDeath != DeathReason.MycotoxinPotentiation)
+                return;
+
+            foreach (var neighbor in board.GetAdjacentTiles(deadCell.TileId))
+            {
+                var neighborCell = neighbor.FungalCell;
+                if (neighborCell == null || !neighborCell.IsAlive) continue;
+                int neighborOwnerId = neighborCell.OwnerPlayerId ?? -1;
+                if (neighborOwnerId == deadCell.OwnerPlayerId) continue;
+
+                var enemyPlayer = players.FirstOrDefault(p => p.PlayerId == neighborOwnerId);
+                if (enemyPlayer == null) continue;
+
+                int ntcLevel = enemyPlayer.GetMutationLevel(MutationIds.NecrotoxicConversion);
+                if (ntcLevel <= 0) continue;
+
+                float chance = ntcLevel * GameBalance.NecrotoxicConversionReclaimChancePerLevel;
+                if (rng.NextDouble() < chance)
+                {
+                    deadCell.Reclaim(enemyPlayer.PlayerId);
+                    board.PlaceFungalCell(deadCell);
+                    enemyPlayer.AddControlledTile(deadCell.TileId);
+
+                    // Log the reclaim if tracking
+                    growthAndDecayObserver?.RecordNecrotoxicConversionReclaim(enemyPlayer.PlayerId, 1);
+                    break; // Only one player can claim it
+                }
+            }
+        }
+
+
+
 
 
         private static void ReclaimDeadCellAsLiving(

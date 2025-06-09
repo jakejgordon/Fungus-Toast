@@ -22,6 +22,9 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> toxinCatabolisms = new();
         private readonly Dictionary<int, int> catabolizedMutationPoints = new();
 
+        // NEW: Necrotoxic Conversion
+        private readonly Dictionary<int, int> necrotoxicConversionReclaims = new();
+
         // NEW: Separate tracking for mutation point sources
         private readonly Dictionary<int, int> adaptiveExpressionPointsEarned = new();
         private readonly Dictionary<int, int> mutatorPhenotypePointsEarned = new();
@@ -64,7 +67,6 @@ namespace FungusToast.Simulation.Models
         public int GetAdaptiveExpressionPointsEarned(int playerId) =>
             adaptiveExpressionPointsEarned.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllAdaptiveExpressionPointsEarned() => new(adaptiveExpressionPointsEarned);
-
 
         public void RecordFailedGrowth(int playerId)
         {
@@ -136,6 +138,16 @@ namespace FungusToast.Simulation.Models
             if (!catabolizedMutationPoints.ContainsKey(playerId))
                 catabolizedMutationPoints[playerId] = 0;
             catabolizedMutationPoints[playerId] += mutationPointsCatabolized;
+        }
+
+        // ─────────────────────────────
+        // NEW: Necrotoxic Conversion
+        // ─────────────────────────────
+        public void RecordNecrotoxicConversionReclaim(int playerId, int count)
+        {
+            if (!necrotoxicConversionReclaims.ContainsKey(playerId))
+                necrotoxicConversionReclaims[playerId] = 0;
+            necrotoxicConversionReclaims[playerId] += count;
         }
 
         // ────────────────────────────
@@ -251,6 +263,9 @@ namespace FungusToast.Simulation.Models
         public int GetPutrefactiveMycotoxinKills(int playerId) =>
             putrefactiveMycotoxinKills.TryGetValue(playerId, out var val) ? val : 0;
 
+        public int GetNecrotoxicConversionReclaims(int playerId) =>
+            necrotoxicConversionReclaims.TryGetValue(playerId, out var val) ? val : 0;
+
         public int GetMycotoxinSporeDropCount(int playerId) =>
             mycotoxinTracerSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
 
@@ -280,6 +295,7 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetNecrophyticBloomReclaims() => new(necrophyticBloomReclaims);
         public Dictionary<int, int> GetMycotoxinTracerSporeDrops() => new(mycotoxinTracerSporeDrops);
         public Dictionary<int, int> GetAllPutrefactiveMycotoxinKills() => new(putrefactiveMycotoxinKills);
+        public Dictionary<int, int> GetAllNecrotoxicConversionReclaims() => new(necrotoxicConversionReclaims);
         public Dictionary<int, int> GetToxinAuraKills() => new(toxinAuraKills);
         public Dictionary<int, int> GetToxinCatabolisms() => new(toxinCatabolisms);
         public Dictionary<int, int> GetCatabolizedMutationPoints() => new(catabolizedMutationPoints);

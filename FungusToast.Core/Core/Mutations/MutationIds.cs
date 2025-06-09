@@ -24,5 +24,6 @@
         public const int MycotoxinCatabolism = 19;
         public const int HyperadaptiveDrift = 20;
         public const int NecrohyphalInfiltration = 21;
+        public const int NecrotoxicConversion = 22;
     }
 }

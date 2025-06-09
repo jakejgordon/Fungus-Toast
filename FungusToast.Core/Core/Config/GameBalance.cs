@@ -48,6 +48,7 @@ namespace FungusToast.Core.Config
         public const float HyperadaptiveDriftBonusTierOneMutationChancePerLevel = .2f;
         public const float NecrohyphalInfiltrationChancePerLevel = 0.004f;
         public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.019f;
+        public const float NecrotoxicConversionReclaimChancePerLevel = .02f;
 
         // Max Levels
         public const int MycelialBloomMaxLevel = 100;
@@ -69,6 +70,7 @@ namespace FungusToast.Core.Config
         public const int NecrophyticBloomMaxLevel = 5;
         public const int HyperadaptiveDriftMaxLevel = 5;
         public const int NecrohyphalInfiltrationMaxLevel = 5;
+        public const int NecrotoxicConversionMaxLevel = 5;
 
 
         // Phase Timing

@@ -26,5 +26,6 @@ namespace FungusToast.Core
         ToxinCleanupAndMPBonus,
         EnhancedAutoUpgradeRandom,
         NecrohyphalInfiltration,
+        NecrotoxicConversion,
     }
 }
