@@ -8,7 +8,7 @@ namespace FungusToast.Core.Config
         public const int MaxNumberOfRoundsBeforeGameEndTrigger = 100;
         public const float BaseGrowthChance = 0.015f;
         public const float BaseDeathChance = 0.015f;
-        public const float AgeDeathFactorPerGrowthCycle = 0.008f;
+        public const float AgeDeathFactorPerGrowthCycle = 0.009f;
         public const int StartingMutationPoints = 5;
         public const float GameEndTileOccupancyThreshold = 0.95f;
         public const int TurnsAfterEndGameTileOccupancyThresholdMet = 3;
@@ -34,7 +34,7 @@ namespace FungusToast.Core.Config
         public const float MycotoxinCatabolismMutationPointChancePerCatabolism = 0.13f;
         public const float TendrilDiagonalGrowthEffectPerLevel = 0.01f;
         public const float MycotropicInductionEffectPerLevel = 0.25f;
-        public const float PutrefactiveMycotoxinEffectPerLevel = 0.09f;
+        public const float PutrefactiveMycotoxinEffectPerLevel = 0.05f;
         public const int AgeResetReductionPerLevel = 5;
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
