@@ -69,8 +69,21 @@ namespace FungusToast.Simulation.Analysis
             var results = new List<GameResult>();
             var startTime = DateTime.UtcNow;
 
+            Console.WriteLine("Press 'Q' at any time to stop the simulation and see results.");
+
             for (int i = 0; i < gamesToPlay; i++)
             {
+                // Check for user interrupt every loop
+                if (Console.KeyAvailable)
+                {
+                    var key = Console.ReadKey(intercept: true);
+                    if (key.Key == ConsoleKey.Q || key.Key == ConsoleKey.Escape)
+                    {
+                        Console.WriteLine("\nSimulation interrupted by user! Generating results so far...");
+                        break;
+                    }
+                }
+
                 var shuffled = strategies.OrderBy(_ => Guid.NewGuid()).ToList();
                 var context = new SimulationTrackingContext();
 
@@ -89,6 +102,7 @@ namespace FungusToast.Simulation.Analysis
 
             return results;
         }
+
 
         private void ApplyTrackingContext(GameResult result, SimulationTrackingContext context)
         {
