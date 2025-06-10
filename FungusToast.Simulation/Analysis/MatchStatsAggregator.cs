@@ -22,7 +22,10 @@ namespace FungusToast.Simulation.Analysis
         /// A cumulative count of deaths by reason for the full set of games,
         /// e.g. from SimulationTrackingContext.GetAllCumulativeDeathReasonCounts().
         /// </param>
-        public void PrintSummary(List<GameResult> results, Dictionary<DeathReason, int> cumulativeDeathReasons)
+        public void PrintSummary(
+            List<GameResult> results,
+            Dictionary<DeathReason, int> cumulativeDeathReasons,
+            SimulationTrackingContext tracking)
         {
             int boardWidth = GameBalance.BoardWidth;
             int boardHeight = GameBalance.BoardHeight;
@@ -139,7 +142,7 @@ namespace FungusToast.Simulation.Analysis
             PrintDeathReasonSummary(endStateDeathReasonCounts, "End-State Death Reason Summary (At Game End)", numGames);
 
 
-            PrintPlayerSummaryTable(playerStats);
+            PrintPlayerSummaryTable(playerStats, tracking);
         }
 
         private void PrintGameLevelStats(List<GameResult> results, int totalCells)
@@ -164,19 +167,22 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine($"Avg Lingering Toxic Tiles: {avgToxicTiles:F1}");
         }
 
-        private void PrintPlayerSummaryTable(Dictionary<int, (
-            IMutationSpendingStrategy strategyObj, int wins, int appearances,
-            int living, int dead, int reclaims, int moldMoves,
-            int sporesBloom, int sporesNecro, int sporesNecrophytic,
-            int reclaimsNecrophytic, int sporesMycotoxin, int toxinAuraKills, int mycotoxinCatabolisms, int mpSpent,
-            float growthChance, float selfDeathChance, float decayMod)> playerStats)
+        private void PrintPlayerSummaryTable(
+            Dictionary<int, (
+                IMutationSpendingStrategy strategyObj, int wins, int appearances,
+                int living, int dead, int reclaims, int moldMoves,
+                int sporesBloom, int sporesNecro, int sporesNecrophytic,
+                int reclaimsNecrophytic, int sporesMycotoxin, int toxinAuraKills, int mycotoxinCatabolisms, int mpSpent,
+                float growthChance, float selfDeathChance, float decayMod)> playerStats,
+            SimulationTrackingContext tracking)
         {
             Console.WriteLine("\n=== Per-Player Summary ===");
             Console.WriteLine(
                 $"{"Player",6} | {"Strategy",-40} | {"WinRate",7} | {"Avg Alive",11} | {"Avg Dead",11} | " +
-                $"{"Avg Reclaims",14} | {"Avg Aura Kills",16} | {"Avg Catabolisms",16} | {"Avg MP Spent",14} | " +
+                $"{"Avg Reclaims",14} | {"Avg Aura Kills",16} | {"Avg Catabolisms",16} | " +
+                $"{"Avg MP Spent",14} | {"Avg MP Earned",14} | " + // new column!
                 $"{"Growth%",9} | {"SelfDeath%",13} | {"DecayMod",10}");
-            Console.WriteLine(new string('-', 197));
+            Console.WriteLine(new string('-', 215));
 
             foreach (var (id, entry) in playerStats
                 .OrderByDescending(kvp => kvp.Value.appearances > 0 ? (float)kvp.Value.wins / kvp.Value.appearances : 0f)
@@ -191,15 +197,27 @@ namespace FungusToast.Simulation.Analysis
 
                 float winRate = appearances > 0 ? (float)wins / appearances * 100f : 0f;
 
+                // Get mutation points spent and earned from the tracking context
+                int totalMpSpent = 0;
+                if (tracking.GetAllMutationPointsSpentByTier().TryGetValue(id, out var byTier))
+                    totalMpSpent = byTier.Values.Sum();
+
+                int totalMpEarned = tracking.GetMutationPointIncome(id);
+
+                float avgMpSpent = appearances > 0 ? (float)totalMpSpent / appearances : 0f;
+                float avgMpEarned = appearances > 0 ? (float)totalMpEarned / appearances : 0f;
+
                 Console.WriteLine(
                     $"{id,6} | {Truncate(strategyObj.StrategyName, 40),-40} | {winRate,6:F1}% | " +
                     $"{(float)living / appearances,11:F1} | {(float)dead / appearances,11:F1} | " +
-                    $"{(float)reclaims / appearances,14:F1} | {(float)toxinAuraKills / appearances,16:F2} | {(float)mycotoxinCatabolisms / appearances,16:F2} | {(float)mpSpent / appearances,14:F1} | " +
+                    $"{(float)reclaims / appearances,14:F1} | {(float)toxinAuraKills / appearances,16:F2} | {(float)mycotoxinCatabolisms / appearances,16:F2} | " +
+                    $"{avgMpSpent,14:F1} | {avgMpEarned,14:F1} | " +
                     $"{growth / appearances * 100f,8:F2}% | {selfDeath / appearances * 100f,12:F2}% | {decayMod / appearances,9:F2}%");
             }
 
-            Console.WriteLine(new string('-', 197));
+            Console.WriteLine(new string('-', 215));
         }
+
 
         private void PrintDeathReasonSummary(
             Dictionary<DeathReason, int> deathReasonCounts,

@@ -107,7 +107,7 @@ namespace FungusToast.Core.Players
 
         /* ---------------- Upgrade API ------------------------- */
 
-        public bool TryUpgradeMutation(Mutation mutation)
+        public bool TryUpgradeMutation(Mutation mutation, ISimulationObserver? simulationObserver = null)
         {
             if (mutation == null) return false;
 
@@ -120,6 +120,7 @@ namespace FungusToast.Core.Players
             {
                 MutationPoints -= mutation.PointsPerUpgrade;
                 pm.Upgrade();
+                simulationObserver?.RecordMutationPointsSpent(PlayerId, mutation.Tier, mutation.PointsPerUpgrade);
                 return true;
             }
             return false;
@@ -213,22 +214,28 @@ namespace FungusToast.Core.Players
         public int AssignMutationPoints(List<Player> allPlayers,
                                         System.Random rng,
                                         IEnumerable<Mutation>? allMutations = null,
-                                        IMutationPointObserver? mutationPointsObserver = null)
+                                        ISimulationObserver? simulationObserver = null)
         {
             int baseIncome = GetMutationPointIncome();
             int bonus = GetBonusMutationPoints();
             int undergrowth = RollAnabolicInversionBonus(allPlayers, rng);
 
-            MutationPoints = baseIncome + bonus + undergrowth;
+            int newMutationPoints = baseIncome + bonus + undergrowth;
+            if(simulationObserver != null)
+            {
+                simulationObserver.RecordMutationPointIncome(PlayerId,newMutationPoints);
+            }
+
+            MutationPoints = newMutationPoints;
 
             // Record Adaptive Expression bonus, if present and observer is hooked up
-            if (mutationPointsObserver != null && bonus > 0)
+            if (simulationObserver != null && bonus > 0)
             {
-                mutationPointsObserver.RecordAdaptiveExpressionBonus(PlayerId, bonus);
+                simulationObserver.RecordAdaptiveExpressionBonus(PlayerId, bonus);
             }
 
             if (allMutations != null)
-                MutationEffectProcessor.TryApplyMutatorPhenotype(this, allMutations.ToList(), rng, mutationPointsObserver);
+                MutationEffectProcessor.TryApplyMutatorPhenotype(this, allMutations.ToList(), rng, simulationObserver);
 
             return MutationPoints;
         }

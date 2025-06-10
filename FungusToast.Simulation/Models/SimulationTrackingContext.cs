@@ -1,15 +1,19 @@
-﻿using System.Collections.Generic;
-using FungusToast.Core.Core.Metrics;
-using FungusToast.Core.Death;
+﻿using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
+using FungusToast.Core.Mutations;
 
 namespace FungusToast.Simulation.Models
 {
-    public class SimulationTrackingContext : IGrowthAndDecayObserver, ISporeDropObserver, IMutationPointObserver
+    public class SimulationTrackingContext : ISimulationObserver
     {
         // ────────────────────────────
         //  FIELDS / DATA TRACKERS
         // ────────────────────────────
+
+        // mutation point spending and income
+        private readonly Dictionary<int, Dictionary<MutationTier, int>> mutationPointsSpentByTier = new();
+        private readonly Dictionary<int, int> mutationPointIncomeByPlayer = new();
+
 
         // Centralized death reason tracking: [playerId][DeathReason] => count
         private readonly Dictionary<int, Dictionary<DeathReason, int>> deathsByPlayerAndReason = new();
@@ -48,7 +52,30 @@ namespace FungusToast.Simulation.Models
         //  MUTATORS / TRACKING METHODS
         // ────────────────────────────
 
-        // NEW: Unified cell death tracker
+        public void RecordMutationPointsSpent(int playerId, MutationTier tier, int mutationPointsSpent)
+        {
+            if (!mutationPointsSpentByTier.TryGetValue(playerId, out var tierDict))
+            {
+                tierDict = new Dictionary<MutationTier, int>();
+                mutationPointsSpentByTier[playerId] = tierDict;
+            }
+            if (!tierDict.ContainsKey(tier))
+                tierDict[tier] = 0;
+
+            tierDict[tier] += mutationPointsSpent;
+        }
+
+        public void RecordMutationPointIncome(int playerId, int newMutationPoints)
+        {
+            if (!mutationPointIncomeByPlayer.ContainsKey(playerId))
+                mutationPointIncomeByPlayer[playerId] = 0;
+
+            mutationPointIncomeByPlayer[playerId] += newMutationPoints;
+        }
+
+
+
+        // Unified cell death tracker
         public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
         {
             if (!deathsByPlayerAndReason.TryGetValue(playerId, out var reasonDict))
@@ -203,6 +230,38 @@ namespace FungusToast.Simulation.Models
         // ────────────────────────────
 
         // New unified accessor for all deaths (for stats, summaries, etc.)
+        public int GetMutationPointsSpent(int playerId, MutationTier tier)
+            => mutationPointsSpentByTier.TryGetValue(playerId, out var tierDict) && tierDict.TryGetValue(tier, out var val) ? val : 0;
+
+        public Dictionary<MutationTier, int> GetMutationPointsSpentByTier(int playerId)
+        {
+            // Return a new dictionary (defensive copy)
+            if (mutationPointsSpentByTier.TryGetValue(playerId, out var dict))
+                return new Dictionary<MutationTier, int>(dict);
+            return new Dictionary<MutationTier, int>();
+        }
+
+        public int GetTotalMutationPointsSpent(int playerId)
+        {
+            if (mutationPointsSpentByTier.TryGetValue(playerId, out var dict))
+                return dict.Values.Sum();
+            return 0;
+        }
+
+        public int GetMutationPointIncome(int playerId)
+        {
+            return mutationPointIncomeByPlayer.TryGetValue(playerId, out var val) ? val : 0;
+        }
+
+
+        // Optionally: Get all per-player tier breakdowns
+        public Dictionary<int, Dictionary<MutationTier, int>> GetAllMutationPointsSpentByTier()
+            => mutationPointsSpentByTier.ToDictionary(kvp => kvp.Key, kvp => new Dictionary<MutationTier, int>(kvp.Value));
+
+        public IReadOnlyDictionary<int, int> GetAllMutationPointIncome()
+        {
+            return mutationPointIncomeByPlayer;
+        }
 
         public int GetCellDeathCount(int playerId, DeathReason reason)
         {

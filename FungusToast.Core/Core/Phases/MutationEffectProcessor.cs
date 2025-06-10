@@ -4,9 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
-using FungusToast.Core.Core.Metrics;
-using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
+using FungusToast.Core.Death;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 
@@ -64,7 +63,7 @@ namespace FungusToast.Core.Phases
         public static void TryTriggerSporeOnDeath(Player player,
                                                   GameBoard board,
                                                   Random rng,
-                                                  ISporeDropObserver? observer = null)
+                                                  ISimulationObserver? observer = null)
         {
             float chance = player.GetMutationEffect(MutationType.SporeOnDeathChance);
             if (chance <= 0f || rng.NextDouble() > chance) return;
@@ -129,7 +128,7 @@ namespace FungusToast.Core.Phases
             Player player,
             List<Mutation> allMutations,
             Random rng,
-            IMutationPointObserver? observer = null
+            ISimulationObserver? observer = null
         )
         {
             float chance = player.GetMutationEffect(MutationType.AutoUpgradeRandom);
@@ -351,8 +350,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             Random rng,
             Mutation sporocidalBloom,
-            ISporeDropObserver? observer = null,
-            IGrowthAndDecayObserver? growthAndDecayObserver = null)
+            ISimulationObserver? simulationObserver = null)
         {
             int level = player.GetMutationLevel(MutationIds.SporocidalBloom);
             if (level <= 0) return 0;
@@ -422,10 +420,10 @@ namespace FungusToast.Core.Phases
 
             // Reporting (matches your new requirements)
             if (totalToxinsPlaced > 0)
-                observer?.ReportSporocidalSporeDrop(player.PlayerId, totalToxinsPlaced);
+                simulationObserver?.ReportSporocidalSporeDrop(player.PlayerId, totalToxinsPlaced);
 
             if (totalKills > 0)
-                growthAndDecayObserver?.RecordCellDeath(player.PlayerId, DeathReason.SporocidalBloom, totalKills);
+                simulationObserver?.RecordCellDeath(player.PlayerId, DeathReason.SporocidalBloom, totalKills);
 
             return totalToxinsPlaced;
         }
@@ -448,7 +446,7 @@ namespace FungusToast.Core.Phases
             Player player,
             GameBoard board,
             Random rng,
-            ISporeDropObserver? observer = null)
+            ISimulationObserver? observer = null)
         {
             int level = player.GetMutationLevel(MutationIds.NecrophyticBloom);
             if (level <= 0) return;
@@ -489,7 +487,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             Random rng,
             float occupiedPercent,
-            ISporeDropObserver? observer = null)
+            ISimulationObserver? observer = null)
         {
             int level = owner.GetMutationLevel(MutationIds.NecrophyticBloom);
             if (level <= 0) return;
@@ -526,7 +524,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             int failedGrowthsThisRound,
             Random rng,
-            ISporeDropObserver? observer = null)
+            ISimulationObserver? observer = null)
         {
             int level = player.GetMutationLevel(MutationIds.MycotoxinTracer);
             if (level == 0) return 0;
@@ -581,8 +579,7 @@ namespace FungusToast.Core.Phases
         public static void ApplyToxinAuraDeaths(GameBoard board,
                                          List<Player> players,
                                          Random rng,
-                                         ISporeDropObserver? observer = null,
-                                         IGrowthAndDecayObserver? growthAndDecayObserver = null)
+                                         ISimulationObserver? simulationObserver = null)
         {
             foreach (var tile in board.AllToxinTiles())
             {
@@ -609,7 +606,7 @@ namespace FungusToast.Core.Phases
 
                 if (killCount > 0)
                 {
-                    growthAndDecayObserver?.RecordCellDeath(owner.PlayerId, DeathReason.MycotoxinPotentiation, killCount);
+                    simulationObserver?.RecordCellDeath(owner.PlayerId, DeathReason.MycotoxinPotentiation, killCount);
                 }
             }
         }
@@ -618,7 +615,7 @@ namespace FungusToast.Core.Phases
             Player player,
             GameBoard board,
             Random rng,
-            IGrowthAndDecayObserver? observer = null)
+            ISimulationObserver? observer = null)
         {
             int level = player.GetMutationLevel(MutationIds.MycotoxinCatabolism);
             if (level <= 0) return 0;
@@ -652,8 +649,10 @@ namespace FungusToast.Core.Phases
             }
 
             if (toxinsMetabolized > 0)
+            {
                 observer?.RecordToxinCatabolism(player.PlayerId, toxinsMetabolized, catabolizedMutationPoints);
-
+            }
+  
             return toxinsMetabolized;
         }
 
@@ -663,7 +662,7 @@ namespace FungusToast.Core.Phases
     FungalCell sourceCell,
     Player owner,
     Random rng,
-    IGrowthAndDecayObserver? observer = null)
+    ISimulationObserver? observer = null)
         {
             int necroLevel = owner.GetMutationLevel(MutationIds.NecrohyphalInfiltration);
             if (necroLevel <= 0)
@@ -720,7 +719,7 @@ namespace FungusToast.Core.Phases
             Random rng,
             double cascadeChance,
             HashSet<int> alreadyReclaimed,
-            IGrowthAndDecayObserver? observer = null)
+            ISimulationObserver? observer = null)
         {
             int cascadeCount = 0;
             var toCheck = new Queue<BoardTile>();
@@ -764,7 +763,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            IGrowthAndDecayObserver? growthAndDecayObserver = null)
+            ISimulationObserver? growthAndDecayObserver = null)
         {
             // Only applies to toxin-based deaths
             if (deadCell.CauseOfDeath != DeathReason.PutrefactiveMycotoxin &&

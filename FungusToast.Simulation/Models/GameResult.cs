@@ -4,6 +4,7 @@ using FungusToast.Core;
 using FungusToast.Core.Players;
 using FungusToast.Core.Death;
 using FungusToast.Core.Board;
+using FungusToast.Core.Mutations;
 
 namespace FungusToast.Simulation.Models
 {
@@ -63,10 +64,10 @@ namespace FungusToast.Simulation.Models
                         kv => kv.Key,
                         kv => kv.Value.CurrentLevel),
 
-                                    // Effective stats
-                                    EffectiveGrowthChance = player.GetEffectiveGrowthChance(),
-                                    EffectiveSelfDeathChance = player.GetEffectiveSelfDeathChance(),
-                                    OffensiveDecayModifier = board.GetAllCells()
+                    // Effective stats
+                    EffectiveGrowthChance = player.GetEffectiveGrowthChance(),
+                    EffectiveSelfDeathChance = player.GetEffectiveSelfDeathChance(),
+                    OffensiveDecayModifier = board.GetAllCells()
                         .Where(c => c.IsAlive && c.OwnerPlayerId != player.PlayerId)
                         .Select(c => player.GetOffensiveDecayModifierAgainst(c, board))
                         .DefaultIfEmpty(0f)
@@ -103,10 +104,14 @@ namespace FungusToast.Simulation.Models
                     MutatorPhenotypePointsEarned = tracking.GetMutatorPhenotypePointsEarned(player.PlayerId),
                     HyperadaptiveDriftPointsEarned = tracking.GetHyperadaptiveDriftPointsEarned(player.PlayerId),
 
-                    // NEW: Death summary by reason
-                    DeathsByReason = playerDeaths
-                };
+                    // Death summary by reason
+                    DeathsByReason = playerDeaths,
 
+                    // New: Mutation point income and spending by tier
+                    MutationPointIncome = tracking.GetMutationPointIncome(player.PlayerId),
+                    MutationPointsSpentByTier = tracking.GetMutationPointsSpentByTier(player.PlayerId),
+                    TotalMutationPointsSpent = tracking.GetTotalMutationPointsSpent(player.PlayerId)
+                };
 
                 playerResultMap[player.PlayerId] = pr;
             }
@@ -133,6 +138,5 @@ namespace FungusToast.Simulation.Models
                 ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin)
             };
         }
-
     }
 }

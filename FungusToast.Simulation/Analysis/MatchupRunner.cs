@@ -73,6 +73,9 @@ namespace FungusToast.Simulation.Analysis
 
             Console.WriteLine("Press 'Q' at any time to stop the simulation and see results.");
 
+            // ---- Use a SINGLE SimulationTrackingContext for all games ----
+            var context = new SimulationTrackingContext();
+
             for (int i = 0; i < gamesToPlay; i++)
             {
                 // Check for user interrupt every loop
@@ -87,8 +90,8 @@ namespace FungusToast.Simulation.Analysis
                 }
 
                 var shuffled = strategies.OrderBy(_ => Guid.NewGuid()).ToList();
-                var context = new SimulationTrackingContext();
 
+                // Pass the SAME context each game
                 var result = simulator.RunSimulation(
                     shuffled,
                     seed: i,
@@ -120,7 +123,8 @@ namespace FungusToast.Simulation.Analysis
             return new SimulationBatchResult
             {
                 GameResults = results,
-                CumulativeDeathReasons = cumulativeDeathReasons
+                CumulativeDeathReasons = cumulativeDeathReasons,
+                TrackingContext = context
             };
         }
 

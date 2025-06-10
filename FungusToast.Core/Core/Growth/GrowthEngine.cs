@@ -1,5 +1,5 @@
 ﻿using FungusToast.Core.Board;
-using FungusToast.Core.Core.Metrics;
+using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
@@ -15,7 +15,7 @@ namespace FungusToast.Core.Growth
             GameBoard board,
             List<Player> players,
             Random rng,
-            IGrowthAndDecayObserver? observer = null)
+            ISimulationObserver? observer = null)
         {
             foreach (var player in players)
             {
@@ -52,7 +52,7 @@ namespace FungusToast.Core.Growth
             BoardTile sourceTile,
             Player owner,
             Random rng,
-            IGrowthAndDecayObserver? observer = null)
+            ISimulationObserver? observer = null)
         {
             var sourceCell = sourceTile.FungalCell;
             if (sourceCell == null)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 
@@ -10,7 +11,7 @@ namespace FungusToast.Core.AI
     {
         private static readonly Random rng = new();
 
-        public static bool TrySpendRandomly(Player player, List<Mutation> allMutations)
+        public static bool TrySpendRandomly(Player player, List<Mutation> allMutations, ISimulationObserver? simulationObserver = null)
         {
             var eligible = allMutations
                 .Where(m => player.CanUpgrade(m))
@@ -21,7 +22,12 @@ namespace FungusToast.Core.AI
                 return false;
 
             var selected = eligible[0];
-            return player.TryUpgradeMutation(selected);
+            var success = player.TryUpgradeMutation(selected);
+            if (success)
+            {
+                simulationObserver?.RecordMutationPointsSpent(player.PlayerId, selected.Tier, selected.PointsPerUpgrade);
+            }
+            return success;
         }
     }
 }

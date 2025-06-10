@@ -1,6 +1,7 @@
-﻿using FungusToast.Core.Mutations;
+﻿using FungusToast.Core.Board;
+using FungusToast.Core.Metrics;
+using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
-using FungusToast.Core.Board;
 
 namespace FungusToast.Core.AI
 {
@@ -48,28 +49,21 @@ namespace FungusToast.Core.AI
             targetPrerequisiteChain.Clear();
             requiredLevels.Clear();
 
-            //Console.WriteLine($"\n[{StrategyName}] Building full prerequisite chain for targets: {string.Join(", ", targetMutationIds)}");
-
             foreach (int targetId in targetMutationIds)
             {
                 if (!MutationRepository.All.TryGetValue(targetId, out var target))
                 {
                     continue;
                 }
-
-                // Use max level for targets, not just 1!
                 Visit(target, requiredLevel: target.MaxLevel);
             }
 
-
             void Visit(Mutation mutation, int requiredLevel)
             {
-                // Always track the highest required level seen for this mutation
                 if (requiredLevels.TryGetValue(mutation.Id, out var existingLevel))
                 {
                     if (requiredLevel > existingLevel)
                     {
-                        //Console.WriteLine($" - Updating required level for {mutation.Name} (ID {mutation.Id}) from {existingLevel} to {requiredLevel}");
                         requiredLevels[mutation.Id] = requiredLevel;
                     }
                 }
@@ -81,35 +75,38 @@ namespace FungusToast.Core.AI
                 if (!visited.Add(mutation.Id))
                     return; // already processed
 
-                // Recurse to prerequisites first
                 foreach (var prereq in mutation.Prerequisites)
                 {
                     if (MutationRepository.All.TryGetValue(prereq.MutationId, out var prereqMutation))
                     {
                         Visit(prereqMutation, prereq.RequiredLevel);
                     }
-                    else
-                    {
-                        //Console.WriteLine($"[WARNING] Prerequisite ID {prereq.MutationId} not found in repository.");
-                    }
                 }
-
-                // Then add to chain so prerequisites come first
-                //Console.WriteLine($" - Added {mutation.Name} (ID {mutation.Id}), required level = {requiredLevels[mutation.Id]}");
                 targetPrerequisiteChain.Add(mutation);
             }
         }
 
-        public override void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board)
+        // NEW: This is the "plug-in" override for the base class.
+        protected override void PerformSpendingLogic(
+            Player player,
+            List<Mutation> allMutations,
+            GameBoard board,
+            ISimulationObserver? simulationObserver = null)
         {
-            if (player == null || allMutations == null || allMutations.Count == 0)
-                return;
-
-            SpendOnTargetChain(player, allMutations, board);
-            SpendFallbackPoints(player, allMutations, board);
+            SpendOnTargetChain(player, allMutations, board, simulationObserver);
+            SpendFallbackPoints(player, allMutations, board, simulationObserver);
         }
 
-        private void SpendOnTargetChain(Player player, List<Mutation> allMutations, GameBoard board)
+        // The base class (MutationSpendingStrategyBase) should now call PerformSpendingLogic
+        // and wrap the logic for recording mutation points.
+
+        // Don't override SpendMutationPoints here (let the base handle it!)
+
+        private void SpendOnTargetChain(
+            Player player,
+            List<Mutation> allMutations,
+            GameBoard board,
+            ISimulationObserver? simulationObserver = null)
         {
             bool upgraded;
             do
@@ -123,7 +120,7 @@ namespace FungusToast.Core.AI
 
                     if (currentLevel < requiredLevel && player.CanUpgrade(mutation))
                     {
-                        if (TryUpgradeWithTendrilAwareness(player, mutation, allMutations, board))
+                        if (TryUpgradeWithTendrilAwareness(player, mutation, allMutations, board, simulationObserver))
                         {
                             upgraded = true;
                             break;
@@ -134,27 +131,30 @@ namespace FungusToast.Core.AI
             } while (upgraded && player.MutationPoints > 0);
         }
 
-        private void SpendFallbackPoints(Player player, List<Mutation> allMutations, GameBoard board)
+        private void SpendFallbackPoints(
+            Player player,
+            List<Mutation> allMutations,
+            GameBoard board,
+            ISimulationObserver? simulationObserver = null)
         {
             bool spent;
             do
             {
-                spent = TrySpendByCategory(player, allMutations, board)
-                     || TrySpendFallback(player, allMutations, board)
-                     || TrySpendRandomly(player, allMutations);
+                spent = TrySpendByCategory(player, allMutations, board, simulationObserver)
+                     || TrySpendFallback(player, allMutations, board, simulationObserver)
+                     || TrySpendRandomly(player, allMutations, simulationObserver);
             }
             while (spent && player.MutationPoints > 0);
 
-            // If points remain, forcibly spend them on anything upgradable
             while (player.MutationPoints > 0)
             {
                 var anyUpgradable = allMutations.Where(m => player.CanUpgrade(m)).ToList();
                 if (anyUpgradable.Count == 0)
                     break;
                 player.TryUpgradeMutation(anyUpgradable[0]);
+                // (Optional) You can call observer here if you want to track "last ditch" upgrades
             }
 
-            // LOG if mutation points remain (should never happen unless truly nothing is upgradable)
             if (player.MutationPoints > 0)
             {
                 var upgradable = allMutations.Where(m => player.CanUpgrade(m)).ToList();
@@ -169,9 +169,12 @@ namespace FungusToast.Core.AI
             }
         }
 
-
-
-        private bool TrySpendByCategory(Player player, List<Mutation> allMutations, GameBoard board)
+        // These are now observer-aware
+        private bool TrySpendByCategory(
+            Player player,
+            List<Mutation> allMutations,
+            GameBoard board,
+            ISimulationObserver? simulationObserver)
         {
             foreach (var category in GetShuffledCategories())
             {
@@ -181,34 +184,45 @@ namespace FungusToast.Core.AI
                                 && player.CanUpgrade(m))
                     .ToList();
 
-                if (TrySpendWithinCategory(player, board, candidates))
+                if (TrySpendWithinCategory(player, board, candidates, simulationObserver))
                     return true;
             }
 
             return false;
         }
 
-        private bool TrySpendFallback(Player player, List<Mutation> allMutations, GameBoard board)
+        private bool TrySpendFallback(
+            Player player,
+            List<Mutation> allMutations,
+            GameBoard board,
+            ISimulationObserver? simulationObserver)
         {
             var fallbackCandidates = allMutations
                 .Where(m => (int)m.Tier <= (int)maxTier && player.CanUpgrade(m))
                 .ToList();
 
-            return TrySpendWithinCategory(player, board, fallbackCandidates);
+            return TrySpendWithinCategory(player, board, fallbackCandidates, simulationObserver);
         }
 
-        private bool TrySpendRandomly(Player player, List<Mutation> allMutations)
+        private bool TrySpendRandomly(
+            Player player,
+            List<Mutation> allMutations,
+            ISimulationObserver? simulationObserver)
         {
-            return MutationSpendingHelper.TrySpendRandomly(player, allMutations);
+            // If you want to track points spent here, you'll need to update TrySpendRandomly to support observer
+            return MutationSpendingHelper.TrySpendRandomly(player, allMutations, simulationObserver);
         }
-
 
         private List<MutationCategory> GetCategories()
         {
             return priorityMutationCategories ?? Enum.GetValues(typeof(MutationCategory)).Cast<MutationCategory>().ToList();
         }
 
-        private bool TrySpendWithinCategory(Player player, GameBoard board, List<Mutation> candidates)
+        private bool TrySpendWithinCategory(
+            Player player,
+            GameBoard board,
+            List<Mutation> candidates,
+            ISimulationObserver? simulationObserver)
         {
             if (prioritizeHighTier)
             {
@@ -216,31 +230,37 @@ namespace FungusToast.Core.AI
                     .Where(m => m.Prerequisites.Any())
                     .OrderByDescending(m => m.Tier))
                 {
-                    if (TryUpgradeWithTendrilAwareness(player, m, candidates, board))
+                    if (TryUpgradeWithTendrilAwareness(player, m, candidates, board, simulationObserver))
                         return true;
                 }
             }
 
             foreach (var m in candidates)
             {
-                if (TryUpgradeWithTendrilAwareness(player, m, candidates, board))
+                if (TryUpgradeWithTendrilAwareness(player, m, candidates, board, simulationObserver))
                     return true;
             }
 
             return false;
         }
 
-        private bool TryUpgradeWithTendrilAwareness(Player player, Mutation candidate, List<Mutation> allCandidates, GameBoard board)
+        // Observer-aware version
+        private bool TryUpgradeWithTendrilAwareness(
+            Player player,
+            Mutation candidate,
+            List<Mutation> allCandidates,
+            GameBoard board,
+            ISimulationObserver? simulationObserver)
         {
             if (IsTendril(candidate))
             {
                 var bestTendril = PickBestTendrilMutation(player, allCandidates.Where(IsTendril).ToList(), board);
                 if (bestTendril != null)
-                    return player.TryUpgradeMutation(bestTendril);
+                    return player.TryUpgradeMutation(bestTendril); // Optionally pass observer to TryUpgradeMutation if you want more granular tracking
                 return false;
             }
 
-            return player.TryUpgradeMutation(candidate);
+            return player.TryUpgradeMutation(candidate); // Optionally pass observer here as well
         }
 
         private bool IsTendril(Mutation m)
@@ -257,6 +277,5 @@ namespace FungusToast.Core.AI
                 .OrderBy(_ => Guid.NewGuid())
                 .ToList();
         }
-
     }
 }

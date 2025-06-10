@@ -1,6 +1,7 @@
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using FungusToast.Core.Board;
+using FungusToast.Core.Metrics;
 
 namespace FungusToast.Core.AI
 {
@@ -22,11 +23,11 @@ namespace FungusToast.Core.AI
 
         public bool? UsesGeneticDrift => true;
 
-        public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board)
+        public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board, ISimulationObserver? observer = null)
         {
             while (player.MutationPoints > 0)
             {
-                if (!MutationSpendingHelper.TrySpendRandomly(player, allMutations))
+                if (!MutationSpendingHelper.TrySpendRandomly(player, allMutations, observer))
                     break;
             }
         }

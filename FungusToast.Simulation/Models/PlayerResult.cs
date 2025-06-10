@@ -1,5 +1,6 @@
 ﻿using FungusToast.Core.AI;
 using FungusToast.Core.Death;
+using FungusToast.Core.Mutations;
 using System.Collections.Generic;
 
 namespace FungusToast.Simulation.Models
@@ -69,38 +70,35 @@ namespace FungusToast.Simulation.Models
         // ──────────────
         // TENDRIL GROWN CELL COUNTERS
         // ──────────────
-        /// <summary>
-        /// Number of cells grown via Tendril Northwest mutation.
-        /// </summary>
         public int TendrilNorthwestGrownCells { get; set; }
-        /// <summary>
-        /// Number of cells grown via Tendril Northeast mutation.
-        /// </summary>
         public int TendrilNortheastGrownCells { get; set; }
-        /// <summary>
-        /// Number of cells grown via Tendril Southeast mutation.
-        /// </summary>
         public int TendrilSoutheastGrownCells { get; set; }
-        /// <summary>
-        /// Number of cells grown via Tendril Southwest mutation.
-        /// </summary>
         public int TendrilSouthwestGrownCells { get; set; }
 
         // ──────────────
         // FREE MUTATION POINTS (SPLIT BY SOURCE)
         // ──────────────
-        /// <summary>
-        /// Free mutation points earned from Adaptive Expression.
-        /// </summary>
         public int AdaptiveExpressionPointsEarned { get; set; }
-        /// <summary>
-        /// Free mutation points earned from Mutator Phenotype.
-        /// </summary>
         public int MutatorPhenotypePointsEarned { get; set; }
+        public int HyperadaptiveDriftPointsEarned { get; set; }
+
+        // ──────────────
+        // MUTATION POINT INCOME/SPENDING (NEW)
+        // ──────────────
 
         /// <summary>
-        /// Free mutation points earned from Hyperadaptive Drift.
+        /// Total mutation points awarded to this player (all sources, including bonuses).
         /// </summary>
-        public int HyperadaptiveDriftPointsEarned { get; set; }
+        public int MutationPointIncome { get; set; }
+
+        /// <summary>
+        /// Mutation points spent by tier (key: MutationTier, value: total points spent at that tier).
+        /// </summary>
+        public Dictionary<MutationTier, int> MutationPointsSpentByTier { get; set; } = new();
+
+        /// <summary>
+        /// Total mutation points spent (across all tiers).
+        /// </summary>
+        public int TotalMutationPointsSpent { get; set; }
     }
 }

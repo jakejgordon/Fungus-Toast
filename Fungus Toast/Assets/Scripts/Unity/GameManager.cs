@@ -118,16 +118,21 @@ namespace FungusToast.Unity
             var powerMutations1 = new ParameterizedSpendingStrategy(
                 strategyName: "Power Mutations 1",
                 prioritizeHighTier: true,
-                targetMutationIds: new List<int> { MutationIds.AdaptiveExpression, MutationIds.Necrosporulation, MutationIds.RegenerativeHyphae });
+                targetMutationIds: new List<int> { MutationIds.AdaptiveExpression, MutationIds.NecrohyphalInfiltration, MutationIds.RegenerativeHyphae });
+
+            var mutatorGrowth = new ParameterizedSpendingStrategy(
+                strategyName: "Mutator Growth",
+                prioritizeHighTier: true,
+                targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.CreepingMold });
 
             // Define and shuffle AI players
             var strategyPool = new IMutationSpendingStrategy[]
             {
                 new RandomMutationSpendingStrategy(),
-                new GrowthThenDefenseSpendingStrategy(),
                 growthAndResilienceMax3HighTier,
                 regenerativeHyphaeFocus,
-                powerMutations1
+                powerMutations1,
+                mutatorGrowth
             };
 
             var aiDefinitions = new List<IMutationSpendingStrategy>();

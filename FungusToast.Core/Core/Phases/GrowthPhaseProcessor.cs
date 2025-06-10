@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using FungusToast.Core.Board;
-using FungusToast.Core.Core.Metrics;
+using FungusToast.Core.Metrics;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Players;
 
@@ -12,9 +12,9 @@ namespace FungusToast.Core.Phases
         private readonly GameBoard board;
         private readonly List<Player> players;
         private readonly Random rng;
-        private readonly IGrowthAndDecayObserver? observer;
+        private readonly ISimulationObserver? observer;
 
-        public GrowthPhaseProcessor(GameBoard board, List<Player> players, Random rng, IGrowthAndDecayObserver? observer = null)
+        public GrowthPhaseProcessor(GameBoard board, List<Player> players, Random rng, ISimulationObserver? observer = null)
         {
             this.board = board;
             this.players = players;

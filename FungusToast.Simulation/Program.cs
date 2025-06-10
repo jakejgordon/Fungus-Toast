@@ -71,7 +71,7 @@ class Program
 
         // Print strategy summary
         var aggregator = new MatchupStatsAggregator();
-        aggregator.PrintSummary(results.GameResults, results.CumulativeDeathReasons);
+        aggregator.PrintSummary(results.GameResults, results.CumulativeDeathReasons, results.TrackingContext);
 
         // Analyze mutation impact
         var impactTracker = new MutationImpactTracker();
