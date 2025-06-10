@@ -1,9 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using FungusToast.Core.AI;
+﻿using FungusToast.Core.AI;
+using FungusToast.Core.Death;
 using FungusToast.Simulation.GameSimulation;
 using FungusToast.Simulation.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Simulation.Analysis
 {
@@ -64,10 +65,11 @@ namespace FungusToast.Simulation.Analysis
         /// Run games using a fixed list of strategies per match.
         /// Useful for 1–8 player simulation loops.
         /// </summary>
-        public List<GameResult> RunMatchups(List<IMutationSpendingStrategy> strategies, int gamesToPlay)
+        public SimulationBatchResult RunMatchups(List<IMutationSpendingStrategy> strategies, int gamesToPlay)
         {
             var results = new List<GameResult>();
             var startTime = DateTime.UtcNow;
+            var cumulativeDeathReasons = new Dictionary<DeathReason, int>();
 
             Console.WriteLine("Press 'Q' at any time to stop the simulation and see results.");
 
@@ -100,7 +102,26 @@ namespace FungusToast.Simulation.Analysis
                 results.Add(result);
             }
 
-            return results;
+            // Aggregate cumulative death reasons across all games
+            foreach (var result in results)
+            {
+                foreach (var pr in result.PlayerResults)
+                {
+                    if (pr.DeathsByReason == null) continue;
+                    foreach (var kvp in pr.DeathsByReason)
+                    {
+                        if (!cumulativeDeathReasons.ContainsKey(kvp.Key))
+                            cumulativeDeathReasons[kvp.Key] = 0;
+                        cumulativeDeathReasons[kvp.Key] += kvp.Value;
+                    }
+                }
+            }
+
+            return new SimulationBatchResult
+            {
+                GameResults = results,
+                CumulativeDeathReasons = cumulativeDeathReasons
+            };
         }
 
 

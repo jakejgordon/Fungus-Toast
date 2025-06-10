@@ -63,26 +63,28 @@ namespace FungusToast.Simulation.Models
                         kv => kv.Key,
                         kv => kv.Value.CurrentLevel),
 
-                    // Effective stats
-                    EffectiveGrowthChance = player.GetEffectiveGrowthChance(),
-                    EffectiveSelfDeathChance = player.GetEffectiveSelfDeathChance(),
-                    OffensiveDecayModifier = board.GetAllCells()
+                                    // Effective stats
+                                    EffectiveGrowthChance = player.GetEffectiveGrowthChance(),
+                                    EffectiveSelfDeathChance = player.GetEffectiveSelfDeathChance(),
+                                    OffensiveDecayModifier = board.GetAllCells()
                         .Where(c => c.IsAlive && c.OwnerPlayerId != player.PlayerId)
                         .Select(c => player.GetOffensiveDecayModifierAgainst(c, board))
                         .DefaultIfEmpty(0f)
                         .Average(),
 
-                    // Mutation effect counters
-                    PutrefactiveMycotoxinKills = tracking.GetPutrefactiveMycotoxinKills(player.PlayerId),
+                    // Mutation effect counters (from death reasons)
+                    PutrefactiveMycotoxinKills = playerDeaths.TryGetValue(DeathReason.PutrefactiveMycotoxin, out var pmKills) ? pmKills : 0,
+                    SporocidalKills = playerDeaths.TryGetValue(DeathReason.SporocidalBloom, out var spKills) ? spKills : 0,
+                    ToxinAuraKills = playerDeaths.TryGetValue(DeathReason.MycotoxinPotentiation, out var taKills) ? taKills : 0,
+
+                    // Everything else remains unchanged...
                     CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId),
                     NecrosporulationSpores = tracking.GetNecrosporeDropCount(player.PlayerId),
                     SporocidalSpores = tracking.GetSporocidalSporeDropCount(player.PlayerId),
-                    SporocidalKills = tracking.GetSporocidalKillCount(player.PlayerId),
                     NecrophyticSpores = tracking.GetNecrophyticBloomSporeDropCount(player.PlayerId),
                     NecrophyticReclaims = tracking.GetNecrophyticBloomReclaimCount(player.PlayerId),
                     MycotoxinTracerSpores = tracking.GetMycotoxinSporeDropCount(player.PlayerId),
                     MycotoxinCatabolisms = tracking.GetToxinCatabolismCount(player.PlayerId),
-                    ToxinAuraKills = tracking.GetToxinAuraKillCount(player.PlayerId),
                     CatabolizedMutationPoints = tracking.GetCatabolizedMutationPoints(player.PlayerId),
                     NecrohyphalInfiltrations = tracking.GetNecrohyphalInfiltrationCount(player.PlayerId),
                     NecrohyphalCascades = tracking.GetNecrohyphalCascadeCount(player.PlayerId),
@@ -104,6 +106,7 @@ namespace FungusToast.Simulation.Models
                     // NEW: Death summary by reason
                     DeathsByReason = playerDeaths
                 };
+
 
                 playerResultMap[player.PlayerId] = pr;
             }

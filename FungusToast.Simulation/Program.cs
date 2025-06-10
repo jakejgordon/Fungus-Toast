@@ -4,7 +4,7 @@ using FungusToast.Simulation.Analysis;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 10;
+    private const int NumberOfSimulationGames = 100;
 
     static void Main()
     {
@@ -71,11 +71,11 @@ class Program
 
         // Print strategy summary
         var aggregator = new MatchupStatsAggregator();
-        aggregator.PrintSummary(results);
+        aggregator.PrintSummary(results.GameResults, results.CumulativeDeathReasons);
 
         // Analyze mutation impact
         var impactTracker = new MutationImpactTracker();
-        foreach (var result in results)
+        foreach (var result in results.GameResults)
         {
             impactTracker.TrackGameResult(result);
         }
@@ -83,11 +83,11 @@ class Program
 
         // Analyze per-strategy mutation usage
         var usageTracker = new PlayerMutationUsageTracker();
-        foreach (var result in results)
+        foreach (var result in results.GameResults)
         {
             usageTracker.TrackGameResult(result);
         }
-        var allPlayerResults = results.SelectMany(r => r.PlayerResults).ToList();
+        var allPlayerResults = results.GameResults.SelectMany(r => r.PlayerResults).ToList();
         usageTracker.PrintReport(allPlayerResults);
 
 

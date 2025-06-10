@@ -90,10 +90,10 @@ namespace FungusToast.Core.Death
         /// each cell death for a player with the mutation triggers per-death spores with damping.
         /// </summary>
         private static void EvaluateProbabilisticDeaths(
-            GameBoard board,
-            List<Player> players,
-            ISporeDropObserver? sporeDropObserver = null,
-            IGrowthAndDecayObserver? growthAndDecayObserver = null)
+    GameBoard board,
+    List<Player> players,
+    ISporeDropObserver? sporeDropObserver = null,
+    IGrowthAndDecayObserver? growthAndDecayObserver = null)
         {
             var livingCellCounts = players.ToDictionary(
                 p => p.PlayerId,
@@ -121,6 +121,15 @@ namespace FungusToast.Core.Death
                     owner.RemoveControlledTile(cell.TileId);
                     livingCellCounts[owner.PlayerId]--;
 
+                    // --- NEW: Attribute Age/Randomness deaths to observer
+                    if (growthAndDecayObserver != null)
+                    {
+                        if (reason.Value == DeathReason.Age || reason.Value == DeathReason.Randomness)
+                        {
+                            growthAndDecayObserver.RecordCellDeath(owner.PlayerId, reason.Value, 1);
+                        }
+                    }
+
                     // Try Necrotoxic Conversion for toxin-based kills
                     MutationEffectProcessor.TryNecrotoxicConversion(
                         cell, board, players, Rng, growthAndDecayObserver);
@@ -147,6 +156,7 @@ namespace FungusToast.Core.Death
                 }
             }
         }
+
 
         private static void AttributePutrefactiveMycotoxinKill(
              FungalCell deadCell,
