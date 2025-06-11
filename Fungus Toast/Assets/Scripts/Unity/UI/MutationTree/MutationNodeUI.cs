@@ -139,5 +139,12 @@ namespace FungusToast.Unity.UI.MutationTree
 
             return sb.ToString();
         }
+
+        public void DisableUpgrade()
+        {
+            if (upgradeButton != null)
+                upgradeButton.interactable = false;
+        }
+
     }
 }

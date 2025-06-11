@@ -37,6 +37,7 @@ namespace FungusToast.Unity.UI.MutationTree
         [Header("UI Wiring")]
         [SerializeField] private UI_MoldProfilePanel moldProfilePanel;
         [SerializeField] private TextMeshProUGUI mutationPointsCounterText;
+        [SerializeField] private Button storePointsButton;
 
         [Header("Tree Sliding Settings")]
         public float slideDuration = 0.5f;
@@ -69,6 +70,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void Start()
         {
+            storePointsButton.onClick.AddListener(OnStoreMutationPointsClicked);
             RefreshSpendPointsButtonUI();
             originalButtonScale = spendPointsButton.transform.localScale;
             if (mutationPointsCounterText != null)
@@ -156,8 +158,6 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public bool TryUpgradeMutation(Mutation mutation)
         {
-            //Debug.Log($"TMutationUIManager.TryUpgradeMutation: Player {humanPlayer.PlayerId} has {humanPlayer.MutationPoints} points before upgrade.");
-
             if (humanPlayer.TryUpgradeMutation(mutation))
             {
                 RefreshSpendPointsButtonUI();
@@ -354,8 +354,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (!humanTurnEnded && humanPlayer != null && humanPlayer.MutationPoints <= 0)
             {
-                humanTurnEnded = true;
-                StartCoroutine(ClosePanelThenTriggerAI());
+                EndHumanMutationPhase();
             }
         }
 
@@ -379,5 +378,35 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             return mutationManager?.GetMutationById(id);
         }
+
+        private void OnStoreMutationPointsClicked()
+        {
+            if (humanPlayer != null)
+            {
+                humanPlayer.WantsToBankPointsThisTurn = true;
+                EndHumanMutationPhase();
+            }
+        }
+
+        private void EndHumanMutationPhase()
+        {
+            humanTurnEnded = true;
+            SetSpendPointsButtonInteractable(false);
+            StartCoroutine(ClosePanelThenTriggerAI());
+        }
+
+        public void DisableAllMutationButtons()
+        {
+            foreach (var btn in mutationButtons)
+                btn.DisableUpgrade();
+        }
+
+        public void SetSpendPointsButtonInteractable(bool interactable)
+        {
+            if (spendPointsButton != null)
+                spendPointsButton.interactable = interactable;
+        }
+
+
     }
 }

@@ -28,7 +28,10 @@ namespace FungusToast.Core.Players
         public bool IsActive { get; set; }
         public int Score { get; set; }
 
+        public bool WantsToBankPointsThisTurn { get; set; }
+
         private int baseMutationPoints = GameBalance.StartingMutationPoints;
+
 
         public IMutationSpendingStrategy? MutationStrategy { get; private set; }
 
@@ -226,7 +229,7 @@ namespace FungusToast.Core.Players
                 simulationObserver.RecordMutationPointIncome(PlayerId,newMutationPoints);
             }
 
-            MutationPoints = newMutationPoints;
+            MutationPoints += newMutationPoints;
 
             // Record Adaptive Expression bonus, if present and observer is hooked up
             if (simulationObserver != null && bonus > 0)

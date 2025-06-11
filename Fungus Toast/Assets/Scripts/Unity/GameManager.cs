@@ -70,6 +70,7 @@ namespace FungusToast.Unity
             roundsRemainingUntilGameEnd = 0;
 
             playerCount = numberOfPlayers;
+            gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
 
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
             InitializePlayersWithHumanFirst();
@@ -186,6 +187,9 @@ namespace FungusToast.Unity
 
         public void StartGrowthPhase()
         {
+            // Disable Spend Points before leaving mutation phase
+            gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
+
             if (growthPhaseRunner != null)
             {
                 growthPhaseRunner.Initialize(Board, players, gridVisualizer);
@@ -222,6 +226,8 @@ namespace FungusToast.Unity
             AssignMutationPoints();
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+            gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(true);
+
             gameUIManager.MoldProfilePanel?.Refresh();
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
 
@@ -269,6 +275,8 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
             gameEnded = true;
+
+            gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
 
             var ranked = players
                 .OrderByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
