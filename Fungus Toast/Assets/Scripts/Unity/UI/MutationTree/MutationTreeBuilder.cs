@@ -18,14 +18,15 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private RectTransform resilienceColumn;
         [SerializeField] private RectTransform fungicideColumn;
         [SerializeField] private RectTransform driftColumn;
+        [SerializeField] private RectTransform mycelialSurgesColumn;
 
         public List<MutationNodeUI> BuildTree(
-    IEnumerable<Mutation> mutations,
-    Dictionary<int, MutationLayoutMetadata> layout,
-    Player player,
-    UI_MutationManager uiManager)
+            IEnumerable<Mutation> mutations,
+            Dictionary<int, MutationLayoutMetadata> layout,
+            Player player,
+            UI_MutationManager uiManager)
         {
-            if (growthColumn == null || resilienceColumn == null || fungicideColumn == null || driftColumn == null)
+            if (growthColumn == null || resilienceColumn == null || fungicideColumn == null || driftColumn == null || mycelialSurgesColumn == null)
             {
                 Debug.LogError("❌ MutationTreeBuilder: One or more column containers are not assigned.");
                 return new List<MutationNodeUI>();
@@ -35,15 +36,17 @@ namespace FungusToast.Unity.UI.MutationTree
             ClearColumn(resilienceColumn);
             ClearColumn(fungicideColumn);
             ClearColumn(driftColumn);
+            ClearColumn(mycelialSurgesColumn);
 
             // Instantiate headers at index 0 in each column
             var headerGOs = new Dictionary<MutationCategory, GameObject>();
             foreach (var (category, parentColumn) in new[] {
-        (MutationCategory.Growth, growthColumn),
-        (MutationCategory.CellularResilience, resilienceColumn),
-        (MutationCategory.Fungicide, fungicideColumn),
-        (MutationCategory.GeneticDrift, driftColumn)
-    })
+                (MutationCategory.Growth, growthColumn),
+                (MutationCategory.CellularResilience, resilienceColumn),
+                (MutationCategory.Fungicide, fungicideColumn),
+                (MutationCategory.GeneticDrift, driftColumn),
+                (MutationCategory.MycelialSurges, mycelialSurgesColumn)
+            })
             {
                 GameObject headerGO = Instantiate(categoryHeaderPrefab, parentColumn);
                 headerGO.name = $"Header_{category}";
@@ -108,10 +111,6 @@ namespace FungusToast.Unity.UI.MutationTree
             return createdNodes;
         }
 
-
-
-
-
         private RectTransform GetColumnForCategory(MutationCategory category)
         {
             return category switch
@@ -120,21 +119,23 @@ namespace FungusToast.Unity.UI.MutationTree
                 MutationCategory.CellularResilience => resilienceColumn,
                 MutationCategory.Fungicide => fungicideColumn,
                 MutationCategory.GeneticDrift => driftColumn,
+                MutationCategory.MycelialSurges => mycelialSurgesColumn,
                 _ => throw new System.Exception($"❌ Unknown mutation category: {category}")
             };
         }
 
         public void AssignColumnParentsFromHierarchy()
         {
-            growthColumn = transform.Find("UI_MutationScrollViewContent/GrowthColumn")?.GetComponent<RectTransform>();
-            resilienceColumn = transform.Find("UI_MutationScrollViewContent/ResilienceColumn")?.GetComponent<RectTransform>();
-            fungicideColumn = transform.Find("UI_MutationScrollViewContent/FungicideColumn")?.GetComponent<RectTransform>();
-            driftColumn = transform.Find("UI_MutationScrollViewContent/DriftColumn")?.GetComponent<RectTransform>();
+            growthColumn = transform.Find("UI_MutationScrollViewContent/Column_Growth")?.GetComponent<RectTransform>();
+            resilienceColumn = transform.Find("UI_MutationScrollViewContent/Column_CellularResilience")?.GetComponent<RectTransform>();
+            fungicideColumn = transform.Find("UI_MutationScrollViewContent/Column_Fungicide")?.GetComponent<RectTransform>();
+            driftColumn = transform.Find("UI_MutationScrollViewContent/Column_GeneticDrift")?.GetComponent<RectTransform>();
+            mycelialSurgesColumn = transform.Find("UI_MutationScrollViewContent/Column_MycelialSurges")?.GetComponent<RectTransform>();
 
-            if (growthColumn == null || resilienceColumn == null || fungicideColumn == null || driftColumn == null)
+            if (growthColumn == null || resilienceColumn == null || fungicideColumn == null || driftColumn == null || mycelialSurgesColumn == null)
                 Debug.LogError("❌ One or more columns could not be found in AssignColumnParentsFromHierarchy().");
             //else
-                //Debug.Log("✅ Successfully assigned all column parents at runtime.");
+            //Debug.Log("✅ Successfully assigned all column parents at runtime.");
         }
 
         private void ClearColumn(RectTransform column)

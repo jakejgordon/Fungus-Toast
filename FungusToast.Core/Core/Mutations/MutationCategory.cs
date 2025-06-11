@@ -5,6 +5,7 @@ namespace FungusToast.Core.Mutations
         Growth,
         CellularResilience,
         Fungicide,
-        GeneticDrift
+        GeneticDrift,
+        MycelialSurges
     }
 }
