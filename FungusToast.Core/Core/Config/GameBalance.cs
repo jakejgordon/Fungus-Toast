@@ -51,7 +51,7 @@ namespace FungusToast.Core.Config
         public const float NecrotoxicConversionReclaimChancePerLevel = .02f;
 
         // Max Levels
-        public const int MycelialBloomMaxLevel = 100;
+        public const int MycelialBloomMaxLevel = 150;
         public const int HomeostaticHarmonyMaxLevel = 100;
         public const int MycotoxinTracerMaxLevel = 50;
         public const int MutatorPhenotypeMaxLevel = 15;

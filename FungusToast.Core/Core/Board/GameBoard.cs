@@ -19,7 +19,6 @@ namespace FungusToast.Core.Board
         public int CurrentGrowthCycle { get; private set; } = 0;
 
         public int TotalTiles => Width * Height;
-        
 
         public GameBoard(int width, int height, int playerCount)
         {
@@ -40,12 +39,8 @@ namespace FungusToast.Core.Board
         public IEnumerable<BoardTile> AllTiles()
         {
             for (int x = 0; x < Width; x++)
-            {
                 for (int y = 0; y < Height; y++)
-                {
                     yield return Grid[x, y];
-                }
-            }
         }
 
         public List<BoardTile> GetOrthogonalNeighbors(int x, int y)
@@ -60,9 +55,7 @@ namespace FungusToast.Core.Board
                 int ny = y + dy[d];
 
                 if (nx >= 0 && ny >= 0 && nx < Width && ny < Height)
-                {
                     neighbors.Add(Grid[nx, ny]);
-                }
             }
 
             return neighbors;
@@ -77,16 +70,13 @@ namespace FungusToast.Core.Board
         public BoardTile? GetTile(int x, int y)
         {
             if (x >= 0 && y >= 0 && x < Width && y < Height)
-            {
                 return Grid[x, y];
-            }
             return null;
         }
 
         public void PlaceInitialSpore(int playerId, int x, int y)
         {
             BoardTile tile = Grid[x, y];
-
             if (!tile.IsOccupied)
             {
                 int tileId = y * Width + x;
@@ -112,9 +102,7 @@ namespace FungusToast.Core.Board
         public void RemoveControlFromPlayer(int tileId)
         {
             foreach (var player in Players)
-            {
                 player.ControlledTileIds.Remove(tileId);
-            }
         }
 
         public List<int> GetAdjacentTileIds(int tileId)
@@ -154,7 +142,6 @@ namespace FungusToast.Core.Board
             return result;
         }
 
-
         public (int x, int y) GetXYFromTileId(int tileId)
         {
             int x = tileId % Width;
@@ -191,7 +178,7 @@ namespace FungusToast.Core.Board
         public int CountReclaimedCellsByPlayer(int playerId)
         {
             return tileIdToCell.Values.Count(c =>
-                c.IsAlive &&
+                c.CellType == FungalCellType.Alive &&
                 c.OwnerPlayerId == playerId &&
                 c.OriginalOwnerPlayerId == playerId &&
                 c.ReclaimCount > 0);
@@ -207,7 +194,7 @@ namespace FungusToast.Core.Board
 
         public List<BoardTile> GetDeadTiles()
         {
-            return AllTiles().Where(t => t.FungalCell != null && !t.FungalCell.IsAlive).ToList();
+            return AllTiles().Where(t => t.FungalCell != null && t.FungalCell.CellType == FungalCellType.Dead).ToList();
         }
 
         public float GetOccupiedTileRatio()
@@ -216,6 +203,7 @@ namespace FungusToast.Core.Board
             int occupied = AllTiles().Count(t => t.FungalCell != null);
             return (float)occupied / total;
         }
+
 
         public bool ShouldTriggerEndgame()
         {
@@ -230,28 +218,28 @@ namespace FungusToast.Core.Board
         public IEnumerable<FungalCell> AllLivingFungalCells()
         {
             return AllTiles()
-                .Where(t => t.IsAlive)
+                .Where(t => t.FungalCell != null && t.FungalCell.CellType == FungalCellType.Alive)
                 .Select(t => t.FungalCell!);
         }
+
 
         public IEnumerable<(BoardTile tile, FungalCell cell)> AllLivingFungalCellsWithTiles()
         {
             return AllTiles()
-                .Where(t => t.IsAlive)
+                .Where(t => t.FungalCell != null && t.FungalCell.CellType == FungalCellType.Alive)
                 .Select(t => (t, t.FungalCell!));
         }
 
-
         public IEnumerable<BoardTile> AllToxinTiles()
         {
-            return AllTiles().Where(t => t.FungalCell?.IsToxin == true);
+            return AllTiles().Where(t => t.FungalCell?.CellType == FungalCellType.Toxin);
         }
 
         public IEnumerable<FungalCell> AllToxinFungalCells()
         {
             return AllTiles()
                 .Select(t => t.FungalCell)
-                .Where(c => c?.IsToxin == true)
+                .Where(c => c != null && c.CellType == FungalCellType.Toxin)
                 .Cast<FungalCell>();
         }
 
@@ -260,17 +248,16 @@ namespace FungusToast.Core.Board
             foreach (int neighborId in GetAdjacentTileIds(tileId))
             {
                 var tile = GetTileById(neighborId);
-                if (tile == null || !tile.IsAlive)
+                if (tile == null || tile.FungalCell == null || tile.FungalCell.CellType != FungalCellType.Alive)
                     continue;
 
-                var cell = tile.FungalCell!;
+                var cell = tile.FungalCell;
                 if (excludePlayerId.HasValue && cell.OwnerPlayerId == excludePlayerId.Value)
                     continue;
 
                 yield return tile;
             }
         }
-
 
         public void ExpireToxinTiles(int currentGrowthCycle)
         {
@@ -289,6 +276,5 @@ namespace FungusToast.Core.Board
         {
             CurrentRound++;
         }
-
     }
 }

@@ -11,16 +11,16 @@ namespace FungusToast.Unity.Grid
     {
         [Header("Tilemaps")]
         public Tilemap toastTilemap;      // Base toast layer
-        public Tilemap moldTilemap;       // Player mold layer (new)
+        public Tilemap moldTilemap;       // Player mold layer
         public Tilemap overlayTilemap;    // Toxin overlays and highlights
-        public Tilemap HoverTileMap;    // Toxin overlays and highlights
+        public Tilemap HoverTileMap;      // Mouseover highlights
 
         [Header("Tiles")]
         public Tile baseTile;             // Toast base
         public Tile deadTile;             // Dead mold
         public Tile[] playerMoldTiles;    // Living mold, indexed by PlayerId
         public Tile toxinOverlayTile;     // Toxin icon overlay
-        [SerializeField] private Tile solidHighlightTile; // Highlighting
+        [SerializeField] private Tile solidHighlightTile;
 
         private GameBoard board;
         private List<Vector3Int> highlightedPositions = new List<Vector3Int>();
@@ -58,7 +58,7 @@ namespace FungusToast.Unity.Grid
 
             foreach (var tile in board.AllTiles())
             {
-                if (tile.FungalCell?.IsAlive == true &&
+                if (tile.FungalCell?.CellType == FungalCellType.Alive &&
                     tile.FungalCell.OwnerPlayerId == playerId)
                 {
                     Vector3Int pos = new Vector3Int(tile.X, tile.Y, 0);
@@ -82,36 +82,36 @@ namespace FungusToast.Unity.Grid
             Color moldColor = Color.white;
             Color overlayColor = Color.white;
 
-            if (tile.FungalCell?.IsToxin == true)
-            {
-                int? ownerId = tile.FungalCell.OwnerPlayerId;
-                if (ownerId is int id && id >= 0 && id < playerMoldTiles.Length)
-                {
-                    moldTile = playerMoldTiles[id];
-                    moldColor = new Color(1f, 1f, 1f, 0.4f); // 40% opacity
-                }
+            var cell = tile.FungalCell;
+            if (cell == null)
+                return;
 
-                overlayTile = toxinOverlayTile;
-                overlayColor = Color.white;
-            }
-            else if (tile.IsOccupied)
+            switch (cell.CellType)
             {
-                var cell = tile.FungalCell;
-
-                if (cell?.IsAlive == true)
-                {
-                    int? playerId = cell.OwnerPlayerId;
-                    if (playerId is int id && id >= 0 && id < playerMoldTiles.Length)
+                case FungalCellType.Alive:
+                    if (cell.OwnerPlayerId is int idA && idA >= 0 && idA < playerMoldTiles.Length)
                     {
-                        moldTile = playerMoldTiles[id];
+                        moldTile = playerMoldTiles[idA];
                         moldColor = Color.white;
                     }
-                }
-                else
-                {
+                    break;
+                case FungalCellType.Dead:
                     overlayTile = deadTile;
                     overlayColor = Color.white;
-                }
+                    break;
+                case FungalCellType.Toxin:
+                    if (cell.OwnerPlayerId is int idT && idT >= 0 && idT < playerMoldTiles.Length)
+                    {
+                        // Optionally show faint mold color under the toxin overlay
+                        moldTile = playerMoldTiles[idT];
+                        moldColor = new Color(1f, 1f, 1f, 0.4f); // 40% opacity
+                    }
+                    overlayTile = toxinOverlayTile;
+                    overlayColor = Color.white;
+                    break;
+                default:
+                    // Unoccupied or unknown: nothing to render
+                    return;
             }
 
             if (moldTile != null)
@@ -127,7 +127,6 @@ namespace FungusToast.Unity.Grid
                 SetOverlayTile(pos, overlayTile, overlayColor);
             }
         }
-
 
         private void SetOverlayTile(Vector3Int pos, TileBase tile, Color color)
         {

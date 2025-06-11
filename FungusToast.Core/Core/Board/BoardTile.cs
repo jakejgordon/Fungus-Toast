@@ -9,7 +9,6 @@ namespace FungusToast.Core.Board
         public int TileId { get; }
 
         public FungalCell? FungalCell { get; private set; }
-
         public bool IsOccupied => FungalCell != null;
 
         public BoardTile(int x, int y, int boardWidth)
@@ -29,8 +28,13 @@ namespace FungusToast.Core.Board
             FungalCell = null;
         }
 
-        // ✅ Proxy accessors to simplify logic
+        // Proxy accessors
         public bool IsAlive => FungalCell?.IsAlive == true;
+        public bool IsDead => FungalCell?.IsDead == true;
+        public bool IsToxin => FungalCell?.IsToxin == true;
+        public bool IsReclaimable => FungalCell?.IsReclaimable == true;
+        public FungalCellType? CellType => FungalCell?.CellType;
+
         public int OriginalOwnerPlayerId => FungalCell?.OriginalOwnerPlayerId ?? -1;
 
         public void ReclaimAsLiving(int newOwnerPlayerId)
