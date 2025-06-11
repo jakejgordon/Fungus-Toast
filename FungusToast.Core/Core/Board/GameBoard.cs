@@ -15,9 +15,11 @@ namespace FungusToast.Core.Board
 
         private readonly Dictionary<int, FungalCell> tileIdToCell = new();
 
+        public int CurrentRound { get; private set; } = 1;
         public int CurrentGrowthCycle { get; private set; } = 0;
 
         public int TotalTiles => Width * Height;
+        
 
         public GameBoard(int width, int height, int playerCount)
         {
@@ -281,6 +283,11 @@ namespace FungusToast.Core.Board
                     tile?.RemoveFungalCell(); // Clear the cell entirely from the board
                 }
             }
+        }
+
+        public void IncrementRound()
+        {
+            CurrentRound++;
         }
 
     }

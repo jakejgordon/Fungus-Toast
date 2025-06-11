@@ -217,6 +217,8 @@ namespace FungusToast.Unity
             if (gameEnded) return;
 
             OnGrowthPhaseComplete();
+
+            Board.IncrementRound();
         }
 
         public void OnGrowthPhaseComplete()

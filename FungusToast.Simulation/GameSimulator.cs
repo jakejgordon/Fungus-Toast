@@ -36,6 +36,8 @@ namespace FungusToast.Simulation.GameSimulation
 
             while (turn < GameBalance.MaxNumberOfRoundsBeforeGameEndTrigger && !gameEnded)
             {
+                board.IncrementRound();
+
                 if (!isCountdownActive && board.ShouldTriggerEndgame())
                 {
                     isCountdownActive = true;

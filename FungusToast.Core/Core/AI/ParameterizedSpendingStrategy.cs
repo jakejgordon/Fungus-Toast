@@ -155,19 +155,25 @@ namespace FungusToast.Core.AI
                 // (Optional) You can call observer here if you want to track "last ditch" upgrades
             }
 
-            if (player.MutationPoints > 0)
+            bool allMaxed = allMutations.All(m => player.GetMutationLevel(m.Id) >= m.MaxLevel);
+            if (allMaxed)
             {
-                var upgradable = allMutations.Where(m => player.CanUpgrade(m)).ToList();
+                int turnNumber = board.CurrentRound;
                 Console.WriteLine(
-                    $"[WARN][{player.PlayerId}][{player.MutationStrategy?.StrategyName ?? "Unknown"}] " +
-                    $"Mutation points left unspent at turn end: {player.MutationPoints}. " +
-                    $"Upgradable mutations: {upgradable.Count}");
-                if (upgradable.Count > 0)
+                    $"[INFO][Turn {turnNumber}][Player {player.PlayerId}][{player.MutationStrategy?.StrategyName ?? "Unknown"}] " +
+                    $"has maxed out all possible mutations!");
+
+                // Print a summary for each mutation
+                /*
+                foreach (var m in allMutations.OrderBy(m => m.Tier).ThenBy(m => m.Name))
                 {
-                    Console.WriteLine("IDs of upgradable mutations: " + string.Join(", ", upgradable.Select(m => m.Id)));
+                    int level = player.GetMutationLevel(m.Id);
+                    Console.WriteLine($"    - {m.Name} (ID {m.Id}, Tier {m.Tier}): Level {level}/{m.MaxLevel}");
                 }
+                */
             }
         }
+
 
         // These are now observer-aware
         private bool TrySpendByCategory(
