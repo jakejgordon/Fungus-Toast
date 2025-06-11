@@ -246,6 +246,13 @@ namespace FungusToast.Unity.UI.MutationTree
                 mutationDescriptionText.text = description;
             }
 
+            // Force Unity to recalculate layout so tooltip size is up to date
+            RectTransform descRect = mutationDescriptionBackground.GetComponent<RectTransform>();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(descRect);
+
+            // Position tooltip AFTER size is correct
+            tooltipPositioner.SetPosition(screenPosition);
+
             CanvasGroup cg = mutationDescriptionBackground.GetComponent<CanvasGroup>();
             if (cg != null)
             {
@@ -256,14 +263,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 cg.interactable = true;
                 cg.blocksRaycasts = true;
             }
-
-            tooltipPositioner.SetPosition(screenPosition);
-
-            RectTransform descRect = mutationDescriptionBackground.GetComponent<RectTransform>();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(descRect);
-
-            //Debug.Log($"🧪 ShowTooltip called: screenPos={screenPosition}, tooltipAnchored={descRect.anchoredPosition}");
         }
+
 
         public void ClearMutationDescription()
         {
