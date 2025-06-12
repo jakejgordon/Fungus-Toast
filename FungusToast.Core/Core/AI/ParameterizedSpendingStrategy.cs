@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.Board;
+using FungusToast.Core.Config;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
@@ -22,12 +23,16 @@ namespace FungusToast.Core.AI
         private readonly List<Mutation> targetPrerequisiteChain;
         private readonly Dictionary<int, int> requiredLevels;
 
+        // NEW: List of surge mutations for this strategy (can be empty)
+        private readonly List<int> surgePriorityIds;
+
         public ParameterizedSpendingStrategy(
             string strategyName,
             bool prioritizeHighTier,
             List<MutationCategory>? priorityMutationCategories = null,
             MutationTier maxTier = MutationTier.Tier10,
-            List<int>? targetMutationIds = null)
+            List<int>? targetMutationIds = null,
+            List<int>? surgePriorityIds = null)
         {
             StrategyName = strategyName;
             this.prioritizeHighTier = prioritizeHighTier;
@@ -36,6 +41,8 @@ namespace FungusToast.Core.AI
 
             targetPrerequisiteChain = new List<Mutation>();
             requiredLevels = new Dictionary<int, int>();
+
+            this.surgePriorityIds = surgePriorityIds ?? new();
 
             if (targetMutationIds != null)
             {
@@ -86,7 +93,6 @@ namespace FungusToast.Core.AI
             }
         }
 
-        // NEW: This is the "plug-in" override for the base class.
         protected override void PerformSpendingLogic(
             Player player,
             List<Mutation> allMutations,
@@ -94,13 +100,13 @@ namespace FungusToast.Core.AI
             ISimulationObserver? simulationObserver = null)
         {
             SpendOnTargetChain(player, allMutations, board, simulationObserver);
+
+            // Try to activate surges before fallback spending
+            if (TrySpendOnSurges(player, allMutations, board, simulationObserver))
+                return; // If a surge is triggered, stop spending for this turn
+
             SpendFallbackPoints(player, allMutations, board, simulationObserver);
         }
-
-        // The base class (MutationSpendingStrategyBase) should now call PerformSpendingLogic
-        // and wrap the logic for recording mutation points.
-
-        // Don't override SpendMutationPoints here (let the base handle it!)
 
         private void SpendOnTargetChain(
             Player player,
@@ -131,6 +137,74 @@ namespace FungusToast.Core.AI
             } while (upgraded && player.MutationPoints > 0);
         }
 
+        /// <summary>
+        /// Try to activate a surge mutation, following these rules:
+        /// 1. If it's the Nth round (from GameBalance.SurgeAIAttemptFrequency) and affordable, try surge(s).
+        /// 2. If all non-surge mutations are maxed out and any surge is available, try surge(s).
+        /// Returns true if a surge was activated.
+        /// </summary>
+        private bool TrySpendOnSurges(
+            Player player,
+            List<Mutation> allMutations,
+            GameBoard board,
+            ISimulationObserver? simulationObserver)
+        {
+            int currentRound = board.CurrentRound;
+            bool nthRound = GameBalance.SurgeAIAttemptTurnFrequency > 0 &&
+                            (currentRound > 0) &&
+                            (currentRound % GameBalance.SurgeAIAttemptTurnFrequency == 0);
+
+            // Filter surge mutations in priority order
+            var availableSurges = surgePriorityIds
+                .Select(id => allMutations.FirstOrDefault(m => m.Id == id && m.IsSurge))
+                .Where(m => m != null)
+                .ToList();
+
+            // 1. Nth round attempt
+            if (nthRound)
+            {
+                foreach (var surge in availableSurges)
+                {
+                    if (!player.IsSurgeActive(surge.Id))
+                    {
+                        int currentLevel = player.GetMutationLevel(surge.Id);
+                        int cost = surge.GetSurgeActivationCost(currentLevel);
+
+                        if (player.MutationPoints >= cost)
+                        {
+                            player.TryUpgradeMutation(surge, simulationObserver);
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            // 2. If all non-surge, non-maxed mutations are done, try surges
+            var upgradableNonSurge = allMutations
+                .Where(m => !m.IsSurge && player.CanUpgrade(m))
+                .ToList();
+
+            if (upgradableNonSurge.Count == 0)
+            {
+                foreach (var surge in availableSurges)
+                {
+                    if (!player.IsSurgeActive(surge.Id))
+                    {
+                        int currentLevel = player.GetMutationLevel(surge.Id);
+                        int cost = surge.GetSurgeActivationCost(currentLevel);
+
+                        if (player.MutationPoints >= cost)
+                        {
+                            player.TryUpgradeMutation(surge, simulationObserver);
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private void SpendFallbackPoints(
             Player player,
             List<Mutation> allMutations,
@@ -152,30 +226,9 @@ namespace FungusToast.Core.AI
                 if (anyUpgradable.Count == 0)
                     break;
                 player.TryUpgradeMutation(anyUpgradable[0]);
-                // (Optional) You can call observer here if you want to track "last ditch" upgrades
-            }
-
-            bool allMaxed = allMutations.All(m => player.GetMutationLevel(m.Id) >= m.MaxLevel);
-            if (allMaxed)
-            {
-                int turnNumber = board.CurrentRound;
-                Console.WriteLine(
-                    $"[INFO][Turn {turnNumber}][Player {player.PlayerId}][{player.MutationStrategy?.StrategyName ?? "Unknown"}] " +
-                    $"has maxed out all possible mutations!");
-
-                // Print a summary for each mutation
-                /*
-                foreach (var m in allMutations.OrderBy(m => m.Tier).ThenBy(m => m.Name))
-                {
-                    int level = player.GetMutationLevel(m.Id);
-                    Console.WriteLine($"    - {m.Name} (ID {m.Id}, Tier {m.Tier}): Level {level}/{m.MaxLevel}");
-                }
-                */
             }
         }
 
-
-        // These are now observer-aware
         private bool TrySpendByCategory(
             Player player,
             List<Mutation> allMutations,
@@ -215,7 +268,6 @@ namespace FungusToast.Core.AI
             List<Mutation> allMutations,
             ISimulationObserver? simulationObserver)
         {
-            // If you want to track points spent here, you'll need to update TrySpendRandomly to support observer
             return MutationSpendingHelper.TrySpendRandomly(player, allMutations, simulationObserver);
         }
 
@@ -250,7 +302,6 @@ namespace FungusToast.Core.AI
             return false;
         }
 
-        // Observer-aware version
         private bool TryUpgradeWithTendrilAwareness(
             Player player,
             Mutation candidate,
@@ -262,11 +313,11 @@ namespace FungusToast.Core.AI
             {
                 var bestTendril = PickBestTendrilMutation(player, allCandidates.Where(IsTendril).ToList(), board);
                 if (bestTendril != null)
-                    return player.TryUpgradeMutation(bestTendril); // Optionally pass observer to TryUpgradeMutation if you want more granular tracking
+                    return player.TryUpgradeMutation(bestTendril);
                 return false;
             }
 
-            return player.TryUpgradeMutation(candidate); // Optionally pass observer here as well
+            return player.TryUpgradeMutation(candidate);
         }
 
         private bool IsTendril(Mutation m)

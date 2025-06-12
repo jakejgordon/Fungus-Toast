@@ -83,6 +83,9 @@ namespace FungusToast.Core.Config
         // surge mutation increase per level costs
         public const int HyphalSurgePointIncreasePerLevel = 1;
 
+        // AI mechanics
+        public const int SurgeAIAttemptTurnFrequency = 5;
+
         // Phase Timing
         public const int TotalGrowthCycles = 5;
         public const float TimeBetweenGrowthCycles = 1f;

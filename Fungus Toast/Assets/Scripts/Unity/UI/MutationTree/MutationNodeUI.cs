@@ -21,8 +21,9 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private TextMeshProUGUI upgradeCostText;
 
         [Header("Surge UI")]
-        [SerializeField] private GameObject surgeActiveOverlay;
-        [SerializeField] private TextMeshProUGUI surgeActiveText;
+        [SerializeField] private GameObject surgeActiveOverlay;    // Should be top left, with icon+text child
+        [SerializeField] private Image surgeActiveIcon;            // The hourglass icon
+        [SerializeField] private TextMeshProUGUI surgeActiveText;  // The countdown number
 
         private Mutation mutation;
         private UI_MutationManager uiManager;
@@ -106,13 +107,16 @@ namespace FungusToast.Unity.UI.MutationTree
             if (surgeActiveOverlay != null)
             {
                 surgeActiveOverlay.SetActive(isSurgeActive);
-                if (isSurgeActive && surgeActiveText != null)
+                if (isSurgeActive)
                 {
-                    surgeActiveText.text = $"Active\n({surgeTurns} turn{(surgeTurns == 1 ? "" : "s")} left)";
+                    if (surgeActiveIcon != null)
+                        surgeActiveIcon.enabled = true;
+                    if (surgeActiveText != null)
+                        surgeActiveText.text = surgeTurns.ToString();
                 }
             }
 
-            // Show cost
+            // Show cost (top right)
             if (upgradeCostGroup != null && upgradeCostText != null)
             {
                 if (upgradeCost > 1)
