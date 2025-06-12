@@ -20,6 +20,10 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private GameObject upgradeCostGroup;
         [SerializeField] private TextMeshProUGUI upgradeCostText;
 
+        [Header("Surge UI")]
+        [SerializeField] private GameObject surgeActiveOverlay;
+        [SerializeField] private TextMeshProUGUI surgeActiveText;
+
         private Mutation mutation;
         private UI_MutationManager uiManager;
         private Player player;
@@ -61,6 +65,12 @@ namespace FungusToast.Unity.UI.MutationTree
             int currentLevel = player.GetMutationLevel(mutation.Id);
             levelText.text = $"Level {currentLevel}/{mutation.MaxLevel}";
 
+            // SURGE LOGIC
+            bool isSurge = mutation.IsSurge;
+            bool isSurgeActive = isSurge && player.IsSurgeActive(mutation.Id);
+            int surgeTurns = isSurgeActive ? player.GetSurgeTurnsRemaining(mutation.Id) : 0;
+
+            // PREREQS
             bool isLocked = false;
             foreach (var prereq in mutation.Prerequisites)
             {
@@ -70,36 +80,59 @@ namespace FungusToast.Unity.UI.MutationTree
                     break;
                 }
             }
-
-            bool canAfford = player.MutationPoints >= mutation.PointsPerUpgrade;
             bool isMaxed = currentLevel >= mutation.MaxLevel;
 
-            upgradeButton.interactable = !isLocked && canAfford && !isMaxed;
-            lockOverlay.SetActive(isLocked);
+            // COST CALC
+            int upgradeCost = isSurge
+                ? mutation.GetSurgeActivationCost(currentLevel)
+                : mutation.PointsPerUpgrade;
+
+            bool canAfford = player.MutationPoints >= upgradeCost;
+
+            // INTERACTABLE LOGIC
+            bool interactable = !isLocked && canAfford && !isMaxed;
+            if (isSurge && isSurgeActive)
+                interactable = false;
+
+            upgradeButton.interactable = interactable;
+
+            // LOCK/SURGE UI
+            lockOverlay.SetActive(isLocked && !isSurgeActive);
 
             if (canvasGroup != null)
+                canvasGroup.alpha = (isLocked || isSurgeActive) ? 0.5f : 1f;
+
+            // Surge overlay (shows when surge is active)
+            if (surgeActiveOverlay != null)
             {
-                canvasGroup.alpha = isLocked ? 0.5f : 1f;
+                surgeActiveOverlay.SetActive(isSurgeActive);
+                if (isSurgeActive && surgeActiveText != null)
+                {
+                    surgeActiveText.text = $"Active\n({surgeTurns} turn{(surgeTurns == 1 ? "" : "s")} left)";
+                }
             }
 
-            if (mutation.PointsPerUpgrade > 1)
+            // Show cost
+            if (upgradeCostGroup != null && upgradeCostText != null)
             {
-                upgradeCostGroup.SetActive(true);
-                upgradeCostText.text = $"x{mutation.PointsPerUpgrade}";
-            }
-            else
-            {
-                upgradeCostGroup.SetActive(false);
+                if (upgradeCost > 1)
+                {
+                    upgradeCostGroup.SetActive(true);
+                    upgradeCostText.text = $"x{upgradeCost}";
+                }
+                else
+                {
+                    upgradeCostGroup.SetActive(false);
+                }
             }
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
             var tooltipText = BuildTooltip();
-            Vector2 screenPosition = Input.mousePosition; // Use actual mouse position for consistent alignment
+            Vector2 screenPosition = Input.mousePosition;
             uiManager.ShowMutationDescription(tooltipText, screenPosition);
         }
-
 
         public void OnPointerExit(PointerEventData eventData)
         {
@@ -114,7 +147,21 @@ namespace FungusToast.Unity.UI.MutationTree
             sb.AppendLine($"<i>(Tier {mutation.TierNumber} • {mutation.Category})</i>");
             sb.AppendLine();
 
-            sb.AppendLine($"<b>Cost:</b> {mutation.PointsPerUpgrade}");
+            int currentLevel = player.GetMutationLevel(mutation.Id);
+
+            // Show surge state if relevant
+            if (mutation.IsSurge && player.IsSurgeActive(mutation.Id))
+            {
+                int turns = player.GetSurgeTurnsRemaining(mutation.Id);
+                sb.AppendLine($"<color=#90f>Currently Active ({turns} turn{(turns == 1 ? "" : "s")} left)</color>");
+                sb.AppendLine();
+            }
+
+            int cost = mutation.IsSurge
+                ? mutation.GetSurgeActivationCost(currentLevel)
+                : mutation.PointsPerUpgrade;
+
+            sb.AppendLine($"<b>Cost:</b> {cost} mutation point{(cost == 1 ? "" : "s")}");
             sb.AppendLine();
 
             if (mutation.Prerequisites.Count > 0)
@@ -145,6 +192,5 @@ namespace FungusToast.Unity.UI.MutationTree
             if (upgradeButton != null)
                 upgradeButton.interactable = false;
         }
-
     }
 }

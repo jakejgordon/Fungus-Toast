@@ -58,6 +58,10 @@ namespace FungusToast.Simulation.GameSimulation
                 TurnEngine.RunGrowthPhase(board, players, rng, simTracking);
                 TurnEngine.RunDecayPhase(board, players, simTracking.FailedGrowthsByPlayerId, simTracking, simTracking);
 
+                // 🔥 TICK DOWN ALL ACTIVE SURGES FOR ALL PLAYERS
+                foreach (var player in players)
+                    player.TickDownActiveSurges();
+
                 turn++;
             }
 

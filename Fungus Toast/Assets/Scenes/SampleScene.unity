@@ -103584,7 +103584,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tooltipRectTransform: {fileID: 565532746}
-  leftPadding: 900
+  leftPadding: 1100
   topPadding: 180
 --- !u!1 &575988127
 GameObject:

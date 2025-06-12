@@ -213,6 +213,9 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
+            foreach (var player in players)
+                player.TickDownActiveSurges();
+
             CheckForEndgameCondition();
             if (gameEnded) return;
 

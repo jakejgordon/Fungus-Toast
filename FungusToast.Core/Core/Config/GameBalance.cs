@@ -26,6 +26,7 @@ namespace FungusToast.Core.Config
         public const int MycotoxinTracerMaxToxinsDivisor = 50;
         public const float MutatorPhenotypeEffectPerLevel = 0.065f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 4f;
+        public const float HyphalSurgeEffectPerLevel = .1f;
         public const float NecrosporulationEffectPerLevel = 0.04f;
         public const int MycotoxinPotentiationGrowthCycleExtensionPerLevel = 1;
         public const float MycotoxinPotentiationKillChancePerLevel = 0.012f;
@@ -57,6 +58,7 @@ namespace FungusToast.Core.Config
         public const int MutatorPhenotypeMaxLevel = 15;
         public const int DiagonalGrowthMaxLevel = 10;
         public const int ChronoresilientCytoplasmMaxLevel = 15;
+        public const int HyphalSurgeMaxLevel = 10;
         public const int NecrosporulationMaxLevel = 5;
         public const int MycotoxinPotentiationMaxLevel = 10;
         public const int AdaptiveExpressionMaxLevel = 10;
@@ -72,6 +74,14 @@ namespace FungusToast.Core.Config
         public const int NecrohyphalInfiltrationMaxLevel = 5;
         public const int NecrotoxicConversionMaxLevel = 5;
 
+        // surge mutation points per activiation
+        public const int HyphalSurgePointsPerActivation = 7;
+
+        // surge mutation durations
+        public const int HyphalSurgeDurationRounds = 2;
+
+        // surge mutation increase per level costs
+        public const int HyphalSurgePointIncreasePerLevel = 1;
 
         // Phase Timing
         public const int TotalGrowthCycles = 5;
@@ -84,6 +94,7 @@ namespace FungusToast.Core.Config
 
         // time-based effects on Fungal Cells
         public const int ToxinTileDuration = 5;
+        
 
         public static class MutationCosts
         {

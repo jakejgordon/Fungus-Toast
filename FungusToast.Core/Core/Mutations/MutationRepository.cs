@@ -193,6 +193,25 @@ namespace FungusToast.Core.Mutations
                 tier: MutationTier.Tier2
             ), new MutationPrerequisite(MutationIds.MutatorPhenotype, 3));
 
+            MakeChild(new Mutation(
+                id: MutationIds.HyphalSurge,
+                name: "Hyphal Surge",
+                description: $"Increases your hyphal outgrowth chance by {FormatPercent(GameBalance.HyphalSurgeEffectPerLevel)} per level for {GameBalance.HyphalSurgeDurationRounds} rounds. Each activation costs {GameBalance.HyphalSurgePointsPerActivation} mutation points plus {GameBalance.HyphalSurgePointIncreasePerLevel} per level already gained.",
+                flavorText: "A fleeting burst of energy, driving a furious wave of mycelial expansion across new ground.",
+                type: MutationType.GrowthChance,
+                effectPerLevel: GameBalance.HyphalSurgeEffectPerLevel,
+                pointsPerUpgrade: GameBalance.HyphalSurgePointsPerActivation,
+                maxLevel: GameBalance.HyphalSurgeMaxLevel,
+                category: MutationCategory.MycelialSurges,
+                tier: MutationTier.Tier2,
+                isSurge: true,
+                surgeDuration: GameBalance.HyphalSurgeDurationRounds,
+                pointsPerActivation: GameBalance.HyphalSurgePointsPerActivation,
+                pointIncreasePerLevel: GameBalance.HyphalSurgePointIncreasePerLevel
+            ),
+            new MutationPrerequisite(MutationIds.MycelialBloom, 5)
+            );
+
 
             // Tier-3
             MakeChild(new Mutation(
