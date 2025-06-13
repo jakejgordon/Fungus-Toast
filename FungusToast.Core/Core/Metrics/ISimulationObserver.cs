@@ -24,5 +24,6 @@ namespace FungusToast.Core.Metrics
         void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped);
         void RecordMutationPointIncome(int playerId, int newMutationPoints);
         void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade);
+        void RecordHyphalSurgeGrowth(int playerId);
     }
 }

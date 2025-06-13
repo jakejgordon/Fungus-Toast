@@ -83,6 +83,8 @@ namespace FungusToast.Simulation.Analysis
                 (MutationIds.PutrefactiveMycotoxin, nameof(PlayerResult.PutrefactiveMycotoxinKills), "PM Kills"),
                 (MutationIds.NecrotoxicConversion, nameof(PlayerResult.NecrotoxicConversionReclaims), "Necrotoxic Reclaims"),
 
+                // Hyphal Surge Growth (new)
+                (MutationIds.HyphalSurge, nameof(PlayerResult.HyphalSurgeGrowths), "Hyphal Surge Growths"),
 
                 // Tendril mutations (one per direction)
                 (MutationIds.TendrilNorthwest, nameof(PlayerResult.TendrilNorthwestGrownCells), "Grown Cells"),

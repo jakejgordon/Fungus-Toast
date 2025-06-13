@@ -46,6 +46,9 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> tendrilSoutheastGrownCells = new();
         private readonly Dictionary<int, int> tendrilSouthwestGrownCells = new();
 
+        // Hyphal Surge Growth
+        private readonly Dictionary<int, int> hyphalSurgeGrowths = new();
+
         public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
 
         // ────────────────────────────
@@ -159,6 +162,13 @@ namespace FungusToast.Simulation.Models
             catabolizedMutationPoints[playerId] += mutationPointsCatabolized;
         }
 
+        public void RecordHyphalSurgeGrowth(int playerId)
+        {
+            if (!hyphalSurgeGrowths.ContainsKey(playerId))
+                hyphalSurgeGrowths[playerId] = 0;
+            hyphalSurgeGrowths[playerId]++;
+        }
+
         // Necrotoxic Conversion
         public void RecordNecrotoxicConversionReclaim(int playerId, int count)
         {
@@ -270,6 +280,10 @@ namespace FungusToast.Simulation.Models
                     return val;
             return 0;
         }
+
+        public int GetHyphalSurgeGrowthCount(int playerId) =>
+            hyphalSurgeGrowths.TryGetValue(playerId, out var val) ? val : 0;
+
         public Dictionary<int, Dictionary<DeathReason, int>> GetAllCellDeathsByPlayerAndReason()
             => deathsByPlayerAndReason.ToDictionary(
                 kvp => kvp.Key,
@@ -332,6 +346,8 @@ namespace FungusToast.Simulation.Models
             necrohyphalInfiltrations.TryGetValue(playerId, out var val) ? val : 0;
         public int GetNecrohyphalCascadeCount(int playerId) =>
             necrohyphalCascades.TryGetValue(playerId, out var val) ? val : 0;
+
+        public Dictionary<int, int> GetAllHyphalSurgeGrowthCounts() => new(hyphalSurgeGrowths);
 
         // Bulk accessors for summaries/statistics
         public Dictionary<int, int> GetSporocidalSpores() => new(sporocidalSporeDrops);

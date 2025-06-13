@@ -58,6 +58,9 @@ namespace FungusToast.Core.Growth
             if (sourceCell == null)
                 return false; // No cell to expand from
 
+            // Get base and surge growth chances
+            (float baseChance, float surgeBonus) = MutationEffectProcessor.GetGrowthChancesWithHyphalSurge(owner);
+
             // 1. Collect all orthogonal and diagonal (with direction) targets
             var allTargets = new List<GrowthTarget>();
 
@@ -65,7 +68,7 @@ namespace FungusToast.Core.Growth
             foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
             {
                 if (!tile.IsOccupied && tile.TileId != sourceTile.TileId)
-                    allTargets.Add(new GrowthTarget(tile, owner.GetEffectiveGrowthChance(), null));
+                    allTargets.Add(new GrowthTarget(tile, baseChance, null, surgeBonus));
             }
 
             // Diagonal neighbors (Tendril growth)
@@ -85,7 +88,7 @@ namespace FungusToast.Core.Growth
                 int ny = sourceTile.Y + dy;
                 var maybeTile = board.GetTile(nx, ny);
                 if (maybeTile is { IsOccupied: false, TileId: var id } && id != sourceTile.TileId)
-                    allTargets.Add(new GrowthTarget(maybeTile, chance, dir));
+                    allTargets.Add(new GrowthTarget(maybeTile, chance, dir, 0f)); // Tendrils not affected by Hyphal Surge unless you want to include it
             }
 
             Shuffle(allTargets, rng);
@@ -95,22 +98,44 @@ namespace FungusToast.Core.Growth
 
             foreach (var target in allTargets)
             {
-                if (rng.NextDouble() <= target.Chance)
+                double roll = rng.NextDouble();
+
+                // Only orthogonal targets get Hyphal Surge bonus
+                if (target.SurgeBonus > 0f && target.DiagonalDirection == null)
                 {
-                    var newCell = new FungalCell(owner.PlayerId, target.Tile.TileId);
-                    target.Tile.PlaceFungalCell(newCell);
-                    board.PlaceFungalCell(newCell);
-                    owner.AddControlledTile(target.Tile.TileId);
-
-                    // Track Tendril mutation usage if this was a diagonal
-                    if (target.DiagonalDirection.HasValue)
+                    if (roll < target.Chance)
                     {
-                        observer?.RecordTendrilGrowth(owner.PlayerId, target.DiagonalDirection.Value);
+                        // Normal growth
+                        PlaceCellAndTrack(target, owner, board, observer, false);
+                        return true;
                     }
-
-                    return true; // successful growth
+                    else if (roll < target.Chance + target.SurgeBonus)
+                    {
+                        // Hyphal Surge growth
+                        PlaceCellAndTrack(target, owner, board, observer, true);
+                        observer?.RecordHyphalSurgeGrowth(owner.PlayerId);
+                        return true;
+                    }
                 }
-                else if (!attemptedCreepingMold)
+                else
+                {
+                    // Tendril or other non-surge directions
+                    if (roll < target.Chance)
+                    {
+                        PlaceCellAndTrack(target, owner, board, observer, false);
+
+                        // Track Tendril mutation usage if this was a diagonal
+                        if (target.DiagonalDirection.HasValue)
+                        {
+                            observer?.RecordTendrilGrowth(owner.PlayerId, target.DiagonalDirection.Value);
+                        }
+
+                        return true;
+                    }
+                }
+
+                // If not successful, try Creeping Mold (once)
+                if (!attemptedCreepingMold)
                 {
                     attemptedCreepingMold = true;
                     if (MutationEffectProcessor.TryCreepingMoldMove(owner, sourceCell, sourceTile, target.Tile, rng, board))
@@ -129,6 +154,24 @@ namespace FungusToast.Core.Growth
             }
 
             return false; // failed to grow, move, or infiltrate
+        }
+
+        private static void PlaceCellAndTrack(
+            GrowthTarget target,
+            Player owner,
+            GameBoard board,
+            ISimulationObserver? observer,
+            bool isHyphalSurge)
+        {
+            var newCell = new FungalCell(owner.PlayerId, target.Tile.TileId);
+            target.Tile.PlaceFungalCell(newCell);
+            board.PlaceFungalCell(newCell);
+            owner.AddControlledTile(target.Tile.TileId);
+
+            if (isHyphalSurge)
+            {
+                observer?.RecordHyphalSurgeGrowth(owner.PlayerId);
+            }
         }
 
         /// <summary>
@@ -153,12 +196,14 @@ namespace FungusToast.Core.Growth
             public BoardTile Tile { get; }
             public float Chance { get; }
             public DiagonalDirection? DiagonalDirection { get; }
+            public float SurgeBonus { get; } // Only for orthogonal targets
 
-            public GrowthTarget(BoardTile tile, float chance, DiagonalDirection? dir)
+            public GrowthTarget(BoardTile tile, float chance, DiagonalDirection? dir, float surgeBonus)
             {
                 Tile = tile;
                 Chance = chance;
                 DiagonalDirection = dir;
+                SurgeBonus = surgeBonus;
             }
         }
     }

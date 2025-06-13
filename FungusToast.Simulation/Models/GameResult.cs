@@ -110,7 +110,10 @@ namespace FungusToast.Simulation.Models
                     // New: Mutation point income and spending by tier
                     MutationPointIncome = tracking.GetMutationPointIncome(player.PlayerId),
                     MutationPointsSpentByTier = tracking.GetMutationPointsSpentByTier(player.PlayerId),
-                    TotalMutationPointsSpent = tracking.GetTotalMutationPointsSpent(player.PlayerId)
+                    TotalMutationPointsSpent = tracking.GetTotalMutationPointsSpent(player.PlayerId),
+
+                    // ──────── New: Hyphal Surge Growths ────────
+                    HyphalSurgeGrowths = tracking.GetHyphalSurgeGrowthCount(player.PlayerId)
                 };
 
                 playerResultMap[player.PlayerId] = pr;

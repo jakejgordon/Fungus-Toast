@@ -799,7 +799,19 @@ namespace FungusToast.Core.Phases
         }
 
 
+        public static (float baseChance, float surgeBonus) GetGrowthChancesWithHyphalSurge(Player player)
+        {
+            float baseChance = GameBalance.BaseGrowthChance + player.GetMutationEffect(MutationType.GrowthChance);
 
+            int hyphalSurgeId = MutationIds.HyphalSurge;
+            float surgeBonus = 0f;
+            if (player.IsSurgeActive(hyphalSurgeId))
+            {
+                int surgeLevel = player.GetMutationLevel(hyphalSurgeId);
+                surgeBonus = surgeLevel * GameBalance.HyphalSurgeEffectPerLevel;
+            }
+            return (baseChance, surgeBonus);
+        }
 
 
         private static void ReclaimDeadCellAsLiving(
