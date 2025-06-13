@@ -84,7 +84,7 @@ namespace FungusToast.Core.Config
         public const int HyphalSurgePointIncreasePerLevel = 1;
 
         // AI mechanics
-        public const int SurgeAIAttemptTurnFrequency = 5;
+        public const int DefaultSurgeAIAttemptTurnFrequency = 5;
 
         // Phase Timing
         public const int TotalGrowthCycles = 5;

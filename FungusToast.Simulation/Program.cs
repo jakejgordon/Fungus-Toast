@@ -4,11 +4,11 @@ using FungusToast.Simulation.Analysis;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 10;
+    private const int NumberOfSimulationGames = 50;
 
     static void Main()
     {
-
+        /*
         var mutatorGrowth = new ParameterizedSpendingStrategy(
             strategyName: "Mutator Growth",
             prioritizeHighTier: true,
@@ -49,7 +49,69 @@ class Program
             strategyName: "Power Mutations 1",
             prioritizeHighTier: true,
             targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+        */
 
+        var powerMutations1 = new ParameterizedSpendingStrategy(
+            strategyName: "Power Skillz - 1 turn surge frequency",
+            prioritizeHighTier: true,
+            surgeAttemptTurnFrequency: 1,
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var powerMutations2 = new ParameterizedSpendingStrategy(
+            strategyName: "Power Skillz - 2 turn surge frequency",
+            prioritizeHighTier: true,
+            surgeAttemptTurnFrequency: 2,
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var powerMutations3 = new ParameterizedSpendingStrategy(
+    strategyName: "Power Skillz - 3 turn surge frequency",
+    prioritizeHighTier: true,
+    surgeAttemptTurnFrequency: 3,
+    targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var powerMutations4 = new ParameterizedSpendingStrategy(
+    strategyName: "Power Skillz - 4 turn surge frequency",
+    prioritizeHighTier: true,
+    surgeAttemptTurnFrequency: 4,
+    targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var powerMutations5 = new ParameterizedSpendingStrategy(
+    strategyName: "Power Skillz - 5 turn surge frequency",
+    prioritizeHighTier: true,
+    surgeAttemptTurnFrequency: 5,
+    targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var powerMutations6 = new ParameterizedSpendingStrategy(
+    strategyName: "Power Skillz - 10 turn surge frequency",
+    prioritizeHighTier: true,
+    surgeAttemptTurnFrequency: 10,
+    targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var powerMutations7 = new ParameterizedSpendingStrategy(
+    strategyName: "Power Skillz - 20 turn surge frequency",
+    prioritizeHighTier: true,
+    surgeAttemptTurnFrequency: 20,
+    targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var powerMutations8 = new ParameterizedSpendingStrategy(
+            strategyName: "Power Skillz - 50 turn surge frequency",
+            prioritizeHighTier: true,
+            surgeAttemptTurnFrequency: 50,
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var strategies = new List<IMutationSpendingStrategy>
+        {
+            powerMutations1,
+            powerMutations2,
+            powerMutations3,
+            powerMutations4,
+            powerMutations5,
+            powerMutations6,
+            powerMutations7,
+            powerMutations8
+        };
+
+        /*
         var strategies = new List<IMutationSpendingStrategy>
         {
             powerMutations1,
@@ -61,6 +123,8 @@ class Program
             toxinBadGuyExtreme,
             regenerativeHyphaeFocus
         };
+        */
+
 
         int playerCount = strategies.Count;
         Console.WriteLine($"Running simulation with {playerCount} players...\n");
