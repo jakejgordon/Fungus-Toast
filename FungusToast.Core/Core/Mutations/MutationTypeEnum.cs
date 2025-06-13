@@ -27,5 +27,6 @@ namespace FungusToast.Core
         EnhancedAutoUpgradeRandom,
         NecrohyphalInfiltration,
         NecrotoxicConversion,
+        HyphalVectoring,
     }
 }

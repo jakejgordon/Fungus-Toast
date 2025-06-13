@@ -65,12 +65,17 @@ namespace FungusToast.Simulation.Models
         /// <summary>
         /// Number of cells reclaimed using Necrotoxic Conversion (Tier 5 Fungicide).
         /// </summary>
-        public int NecrotoxicConversionReclaims { get; set; } // <--- Tier 5 Fungicide effect
+        public int NecrotoxicConversionReclaims { get; set; }
 
         /// <summary>
         /// Number of successful cell growths attributed to Hyphal Surge mutation.
         /// </summary>
-        public int HyphalSurgeGrowths { get; set; } // <--- NEW FIELD
+        public int HyphalSurgeGrowths { get; set; }
+
+        /// <summary>
+        /// Number of living fungal cells created by Hyphal Vectoring surge mutation.
+        /// </summary>
+        public int HyphalVectoringGrowths { get; set; } // <--- NEW FIELD
 
         // ──────────────
         // TENDRIL GROWN CELL COUNTERS

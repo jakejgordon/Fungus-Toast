@@ -270,6 +270,32 @@ namespace FungusToast.Core.Mutations
                 new MutationPrerequisite(MutationIds.TendrilSoutheast, 1),
                 new MutationPrerequisite(MutationIds.TendrilSouthwest, 1));
 
+            MakeChild(new Mutation(
+                id: MutationIds.HyphalVectoring,
+                name: "Hyphal Vectoring",
+                description:
+                    $"At the start of the next Growth Phase, this mutation projects a straight line of living fungal cells toward the center of the toast.\n" +
+                    $"It spawns {GameBalance.HyphalVectoringBaseTiles} cells at level 0, plus {FormatFloat(GameBalance.HyphalVectoringTilesPerLevel)} per level.\n\n" +
+                    $"Cells replace anything in their path (toxins, dead mold, enemy mold) but stop if a friendly living cell is encountered. Each activation costs " +
+                    $"{GameBalance.HyphalVectoringPointsPerActivation} mutation points, increasing by {GameBalance.HyphalVectoringSurgePointIncreasePerLevel} per level. " +
+                    $"This mutation can only activate once per {GameBalance.HyphalVectoringSurgeDuration} turns.",
+                flavorText:
+                    "Guided by centripetal nutrient gradients, apex hyphae launch invasive pulses straight into the heart of contested substrate.",
+                type: MutationType.HyphalVectoring,
+                effectPerLevel: GameBalance.HyphalVectoringTilesPerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
+                maxLevel: GameBalance.HyphalVectoringMaxLevel,
+                category: MutationCategory.MycelialSurges,
+                tier: MutationTier.Tier2,
+                isSurge: true,
+                surgeDuration: GameBalance.HyphalVectoringSurgeDuration,
+                pointsPerActivation: GameBalance.HyphalVectoringPointsPerActivation,
+                pointIncreasePerLevel: GameBalance.HyphalVectoringSurgePointIncreasePerLevel
+            ),
+            new MutationPrerequisite(MutationIds.TendrilNorthwest, 1),
+            new MutationPrerequisite(MutationIds.TendrilSoutheast, 1));
+
+
             // Tier-4
             MakeChild(new Mutation(
                 id: MutationIds.RegenerativeHyphae,

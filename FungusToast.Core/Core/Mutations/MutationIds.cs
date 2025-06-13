@@ -26,5 +26,6 @@
         public const int NecrohyphalInfiltration = 21;
         public const int NecrotoxicConversion = 22;
         public const int HyphalSurge = 23;
+        public const int HyphalVectoring = 24;
     }
 }

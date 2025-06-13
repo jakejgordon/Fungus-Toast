@@ -25,5 +25,6 @@ namespace FungusToast.Core.Metrics
         void RecordMutationPointIncome(int playerId, int newMutationPoints);
         void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade);
         void RecordHyphalSurgeGrowth(int playerId);
+        void RecordHyphalVectoringGrowth(int playerId, int cellsPlaced);
     }
 }

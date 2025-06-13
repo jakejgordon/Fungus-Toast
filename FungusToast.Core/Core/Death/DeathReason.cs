@@ -7,7 +7,8 @@
         PutrefactiveMycotoxin,
         SporocidalBloom,
         Unknown,
-        MycotoxinPotentiation
+        MycotoxinPotentiation,
+        HyphalVectoring
     }
 
 }

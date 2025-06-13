@@ -24,16 +24,21 @@ namespace FungusToast.Core.Config
         public const float MycotoxinTracerFailedGrowthWeightPerLevel = 0.0029f;
         public const int MycotoxinTracerTileDuration = 20;
         public const int MycotoxinTracerMaxToxinsDivisor = 50;
+
+        public const float TendrilDiagonalGrowthEffectPerLevel = 0.01f;
         public const float MutatorPhenotypeEffectPerLevel = 0.065f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 4f;
         public const float HyphalSurgeEffectPerLevel = .1f;
+
         public const float NecrosporulationEffectPerLevel = 0.04f;
         public const int MycotoxinPotentiationGrowthCycleExtensionPerLevel = 1;
         public const float MycotoxinPotentiationKillChancePerLevel = 0.012f;
         public const float AdaptiveExpressionEffectPerLevel = 0.09f;
         public const float MycotoxinCatabolismCleanupChancePerLevel = 0.025f;
         public const float MycotoxinCatabolismMutationPointChancePerCatabolism = 0.13f;
-        public const float TendrilDiagonalGrowthEffectPerLevel = 0.01f;
+        public const int HyphalVectoringBaseTiles = 2;
+        public const int HyphalVectoringTilesPerLevel = 1;
+
         public const float MycotropicInductionEffectPerLevel = 0.25f;
         public const float PutrefactiveMycotoxinEffectPerLevel = 0.013f;
         public const int AgeResetReductionPerLevel = 5;
@@ -57,6 +62,7 @@ namespace FungusToast.Core.Config
         public const int MycotoxinTracerMaxLevel = 50;
         public const int MutatorPhenotypeMaxLevel = 15;
         public const int DiagonalGrowthMaxLevel = 10;
+        public const int HyphalVectoringMaxLevel = 5;
         public const int ChronoresilientCytoplasmMaxLevel = 15;
         public const int HyphalSurgeMaxLevel = 10;
         public const int NecrosporulationMaxLevel = 5;
@@ -76,12 +82,15 @@ namespace FungusToast.Core.Config
 
         // surge mutation points per activiation
         public const int HyphalSurgePointsPerActivation = 7;
+        public const int HyphalVectoringPointsPerActivation = 9;
 
         // surge mutation durations
         public const int HyphalSurgeDurationRounds = 2;
+        public const int HyphalVectoringSurgeDuration = 5;
 
         // surge mutation increase per level costs
         public const int HyphalSurgePointIncreasePerLevel = 1;
+        public const int HyphalVectoringSurgePointIncreasePerLevel = 1;
 
         // AI mechanics
         public const int DefaultSurgeAIAttemptTurnFrequency = 5;

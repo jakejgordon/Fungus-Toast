@@ -33,8 +33,13 @@ namespace FungusToast.Core.Phases
                 processor.ExecuteSingleCycle();
             }
 
+            // Apply post-growth reclaim effects
             MutationEffectProcessor.ApplyRegenerativeHyphaeReclaims(board, players, rng);
+
+            // Apply post-growth surge mutation effect: Hyphal Vectoring
+            MutationEffectProcessor.ProcessHyphalVectoring(board, players, rng, observer);
         }
+
 
         /// <summary>
         /// Executes the decay phase for all living fungal cells.

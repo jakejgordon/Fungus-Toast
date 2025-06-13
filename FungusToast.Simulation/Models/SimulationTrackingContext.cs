@@ -49,6 +49,8 @@ namespace FungusToast.Simulation.Models
         // Hyphal Surge Growth
         private readonly Dictionary<int, int> hyphalSurgeGrowths = new();
 
+        private readonly Dictionary<int, int> hyphalVectoringGrowths = new();
+
         public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
 
         // ────────────────────────────
@@ -207,6 +209,13 @@ namespace FungusToast.Simulation.Models
             hyperadaptiveDriftPointsEarned[playerId] += freePointsEarned;
         }
 
+        public void RecordHyphalVectoringGrowth(int playerId, int cellCount)
+        {
+            if (!hyphalVectoringGrowths.ContainsKey(playerId))
+                hyphalVectoringGrowths[playerId] = 0;
+            hyphalVectoringGrowths[playerId] += cellCount;
+        }
+
         // Tendril Growth recorders
         public void RecordTendrilGrowth(int playerId, Core.Growth.DiagonalDirection direction)
         {
@@ -305,6 +314,12 @@ namespace FungusToast.Simulation.Models
             }
             return result;
         }
+
+        public int GetHyphalVectoringGrowthCount(int playerId) =>
+            hyphalVectoringGrowths.TryGetValue(playerId, out var val) ? val : 0;
+
+        public Dictionary<int, int> GetAllHyphalVectoringGrowthCounts() => new(hyphalVectoringGrowths);
+
 
         public int GetTendrilNorthwestGrownCells(int playerId) =>
             tendrilNorthwestGrownCells.TryGetValue(playerId, out var val) ? val : 0;
