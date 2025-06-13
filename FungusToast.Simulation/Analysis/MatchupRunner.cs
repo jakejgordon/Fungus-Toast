@@ -89,11 +89,12 @@ namespace FungusToast.Simulation.Analysis
                     }
                 }
 
-                var shuffled = strategies.OrderBy(_ => Guid.NewGuid()).ToList();
+                var assigned = strategies;
+
 
                 // Pass the SAME context each game
                 var result = simulator.RunSimulation(
-                    shuffled,
+                    assigned,
                     seed: i,
                     gameIndex: i + 1,
                     totalGames: gamesToPlay,
