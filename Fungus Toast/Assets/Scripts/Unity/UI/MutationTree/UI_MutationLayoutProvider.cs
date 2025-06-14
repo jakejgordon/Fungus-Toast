@@ -45,6 +45,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
                 /* ---------------Mycelial Surge (col 4) -------------- */
                 { MutationIds.HyphalSurge,     new MutationLayoutMetadata(4, 0, MutationCategory.MycelialSurges) },
+                { MutationIds.HyphalVectoring,     new MutationLayoutMetadata(4, 1, MutationCategory.MycelialSurges) },
             };
     }
 }

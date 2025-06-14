@@ -54,7 +54,6 @@ namespace FungusToast.Simulation.GameSimulation
                 }
 
                 TurnEngine.AssignMutationPoints(board, players, allMutations, rng, simTracking);
-                MutationEffectProcessor.ApplyStartOfTurnEffects(board, players, rng);
                 TurnEngine.RunGrowthPhase(board, players, rng, simTracking);
                 TurnEngine.RunDecayPhase(board, players, simTracking.FailedGrowthsByPlayerId, simTracking, simTracking);
 

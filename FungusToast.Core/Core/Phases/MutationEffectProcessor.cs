@@ -17,17 +17,6 @@ namespace FungusToast.Core.Phases
     /// </summary>
     public static class MutationEffectProcessor
     {
-        /* ────────────────────────────────────────────────────────────────
-         * 1 ▸  TURN-LEVEL HELPERS
-         * ────────────────────────────────────────────────────────────────*/
-
-        public static void ApplyStartOfTurnEffects(GameBoard board,
-                                                   List<Player> players,
-                                                   Random rng)
-        {
-            // Reserved for future start-of-turn effects
-        }
-
         public static void ApplyRegenerativeHyphaeReclaims(GameBoard board,
                                                    List<Player> players,
                                                    Random rng)

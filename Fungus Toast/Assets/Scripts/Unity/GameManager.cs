@@ -222,6 +222,7 @@ namespace FungusToast.Unity
             OnGrowthPhaseComplete();
 
             Board.IncrementRound();
+
         }
 
         public void OnGrowthPhaseComplete()

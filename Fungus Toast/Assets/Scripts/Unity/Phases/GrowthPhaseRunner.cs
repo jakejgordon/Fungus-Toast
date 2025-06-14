@@ -51,6 +51,11 @@ namespace FungusToast.Unity.Phases
             if (phaseCycle >= GameBalance.TotalGrowthCycles)
             {
                 Debug.Log("🌾 Growth complete. Preparing for decay phase...");
+
+                // === Post-Growth Mutation Effects ===
+                MutationEffectProcessor.ApplyRegenerativeHyphaeReclaims(board, players, rng);
+                MutationEffectProcessor.ProcessHyphalVectoring(board, players, rng, null);
+
                 isRunning = false;
                 GameManager.Instance.StartDecayPhase();
                 yield break;
@@ -63,7 +68,6 @@ namespace FungusToast.Unity.Phases
 
             var failedThisCycle = processor.ExecuteSingleCycle();
             MergeFailedGrowths(failedThisCycle);
-            MutationEffectProcessor.ApplyStartOfTurnEffects(board, players, rng);
             gridVisualizer.RenderBoard(board);
 
             GameManager.Instance.GameUI.PhaseProgressTracker?.AdvanceToNextGrowthCycle(phaseCycle);
