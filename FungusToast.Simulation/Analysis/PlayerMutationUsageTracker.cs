@@ -46,17 +46,113 @@ namespace FungusToast.Simulation.Analysis
                 .OrderBy(g => g.Key.Item1);
 
             Console.WriteLine("\nPlayer-Mutation Usage Summary (per Player, all games):");
-            Console.WriteLine("{0,8} | {1,-37} | {2,-32} | {3,10} | {4,10} | {5,-32} | {6,20} | {7,20} | {8,12}",
+            Console.WriteLine("{0,8} | {1,-37} | {2,-32} | {3,10} | {4,10} | {5,-32} | {6,24} | {7,24} | {8,12}",
                 "PlayerId", "Strategy", "Mutation Name", "Games", "AvgLvl",
-                "Mutation Effect(s)", "Avg Effect (All Games)", "Avg (w/ Upgrade Only)", "Avg Alive");
+                "Mutation Effect(s)", "Avg Effect (All Games)", "Total Effect (All Games)", "Avg Alive");
 
             Console.WriteLine(new string('-', 8) + "-|-" + new string('-', 37) + "-|-" + new string('-', 32) + "-|-" +
                               new string('-', 10) + "-|-" + new string('-', 10) + "-|-" +
-                              new string('-', 32) + "-|-" + new string('-', 20) + "-|-" +
-                              new string('-', 20) + "-|-" +
+                              new string('-', 32) + "-|-" + new string('-', 24) + "-|-" +
+                              new string('-', 24) + "-|-" +
                               new string('-', 12));
 
-            var mutationEffectFields = new List<(int mutationId, string propertyName, string label)>
+            var mutationEffectFields = GetMutationEffectFields();
+
+            foreach (var group in playerStrategyGroups)
+            {
+                int playerId = group.Key.Item1;
+                string strategy = group.Key.Item2;
+                var playerResults = group.ToList();
+                int games = playerResults.Count;
+                float avgAlive = games > 0 ? (float)playerResults.Average(r => r.LivingCells) : 0f;
+
+                var allMutationIds = playerResults
+                    .SelectMany(r => r.MutationLevels.Keys)
+                    .Distinct()
+                    .OrderBy(id => id);
+
+                foreach (var mutationId in allMutationIds)
+                {
+                    float avgLevel = (games > 0)
+                        ? (float)playerResults.Average(r => r.MutationLevels.TryGetValue(mutationId, out var lvl) ? lvl : 0)
+                        : 0f;
+
+                    var (effectLabel, avgEffects, totalEffects) = GetMutationEffectStats(mutationId, playerResults, mutationEffectFields, games);
+
+                    Console.WriteLine("{0,8} | {1,-37} | {2,-32} | {3,10} | {4,10:F2} | {5,-32} | {6,24} | {7,24} | {8,12:F2}",
+                        playerId,
+                        Truncate(strategy, 37),
+                        Truncate(MutationRegistry.GetById(mutationId)?.Name ?? $"[ID {mutationId}]", 32),
+                        games,
+                        avgLevel,
+                        Truncate(effectLabel, 32),
+                        avgEffects,
+                        totalEffects,
+                        avgAlive);
+                }
+            }
+
+            Console.WriteLine(new string('-', 245));
+        }
+
+        private static (string label, string avgEffect, string totalEffect) GetMutationEffectStats(
+            int mutationId,
+            List<PlayerResult> playerResults,
+            List<(int mutationId, string propertyName, string label)> mutationEffectFields,
+            int games)
+        {
+            List<string> labels = new();
+            List<string> avgEffects = new();
+            List<string> totalEffects = new();
+
+            // Special case for NecrohyphalInfiltration (compound effect)
+            if (mutationId == MutationIds.NecrohyphalInfiltration)
+            {
+                long totalInf = playerResults.Sum(r => (long)r.NecrohyphalInfiltrations);
+                long totalCas = playerResults.Sum(r => (long)r.NecrohyphalCascades);
+                float avgInf = games > 0 ? (float)totalInf / games : 0f;
+                float avgCas = games > 0 ? (float)totalCas / games : 0f;
+
+                labels.Add("Infiltrations / Cascades");
+                avgEffects.Add($"{avgInf:N2} / {avgCas:N2}");
+                totalEffects.Add($"{totalInf:N0} / {totalCas:N0}");
+            }
+            else
+            {
+                foreach (var (effectMutationId, propertyName, label) in mutationEffectFields.Where(x => x.mutationId == mutationId))
+                {
+                    var perGameEffects = playerResults
+                        .Select(pr =>
+                        {
+                            var val = typeof(PlayerResult).GetProperty(propertyName)?.GetValue(pr) ?? 0;
+                            // Always unbox to int first, then convert to long, for safety
+                            if (val is int i) return (long)i;
+                            if (val is long l) return l;
+                            if (val is float f) return (long)f;
+                            if (val is double d) return (long)d;
+                            return Convert.ToInt64(val);
+                        })
+                        .ToList();
+
+                    long totalEffect = perGameEffects.Sum();
+                    float avgEffectPerGame = games > 0 ? (float)totalEffect / games : 0f;
+
+                    labels.Add(label);
+                    avgEffects.Add(avgEffectPerGame.ToString("N2")); // thousands separator, 2 decimals
+                    totalEffects.Add(totalEffect.ToString("N0"));     // thousands separator, no decimals
+                }
+            }
+
+            string effectLabel = string.Join(" / ", labels);
+            string avgEffectStr = string.Join(" / ", avgEffects);
+            string totalEffectStr = string.Join(" / ", totalEffects);
+
+            return (effectLabel, avgEffectStr, totalEffectStr);
+        }
+
+        private static List<(int mutationId, string propertyName, string label)> GetMutationEffectFields()
+        {
+            return new List<(int, string, string)>
             {
                 (MutationIds.RegenerativeHyphae, nameof(PlayerResult.ReclaimedCells), "Reclaims"),
                 (MutationIds.CreepingMold, nameof(PlayerResult.CreepingMoldMoves), "Mold Movements"),
@@ -83,82 +179,6 @@ namespace FungusToast.Simulation.Analysis
                 (MutationIds.TendrilSoutheast, nameof(PlayerResult.TendrilSoutheastGrownCells), "Grown Cells"),
                 (MutationIds.TendrilSouthwest, nameof(PlayerResult.TendrilSouthwestGrownCells), "Grown Cells"),
             };
-
-            foreach (var group in playerStrategyGroups)
-            {
-                int playerId = group.Key.Item1;
-                string strategy = group.Key.Item2;
-                var playerResults = group.ToList();
-                int games = playerResults.Count;
-                float avgAlive = games > 0 ? (float)playerResults.Average(r => r.LivingCells) : 0f;
-
-                var allMutationIds = playerResults
-                    .SelectMany(r => r.MutationLevels.Keys)
-                    .Distinct()
-                    .OrderBy(id => id);
-
-                foreach (var mutationId in allMutationIds)
-                {
-                    float avgLevel = (games > 0)
-                        ? (float)playerResults.Average(r => r.MutationLevels.TryGetValue(mutationId, out var lvl) ? lvl : 0)
-                        : 0f;
-
-                    var gamesWithUpgrade = playerResults.Where(r => r.MutationLevels.TryGetValue(mutationId, out var lvl) && lvl > 0).ToList();
-                    int gamesWithUpgradeCount = gamesWithUpgrade.Count;
-
-                    List<string> labels = new();
-                    List<string> avgEffects = new();
-                    List<string> avgEffectsWithUpgrade = new();
-
-                    if (mutationId == MutationIds.NecrohyphalInfiltration)
-                    {
-                        int totalInf = playerResults.Sum(r => r.NecrohyphalInfiltrations);
-                        int totalCas = playerResults.Sum(r => r.NecrohyphalCascades);
-                        int infWithUpgrade = gamesWithUpgrade.Sum(r => r.NecrohyphalInfiltrations);
-                        int casWithUpgrade = gamesWithUpgrade.Sum(r => r.NecrohyphalCascades);
-
-                        labels.Add("Infiltrations / Cascades");
-                        string avgInf = games > 0 ? ((float)totalInf / games).ToString("F2") : "0.00";
-                        string avgCas = games > 0 ? ((float)totalCas / games).ToString("F2") : "0.00";
-                        string avgInfWithUpgrade = gamesWithUpgradeCount > 0 ? ((float)infWithUpgrade / gamesWithUpgradeCount).ToString("F2") : "0.00";
-                        string avgCasWithUpgrade = gamesWithUpgradeCount > 0 ? ((float)casWithUpgrade / gamesWithUpgradeCount).ToString("F2") : "0.00";
-
-                        avgEffects.Add($"{avgInf} / {avgCas}");
-                        avgEffectsWithUpgrade.Add($"{avgInfWithUpgrade} / {avgCasWithUpgrade}");
-                    }
-                    else
-                    {
-                        foreach (var (effectMutationId, propertyName, label) in mutationEffectFields.Where(x => x.mutationId == mutationId))
-                        {
-                            int totalEffect = playerResults.Sum(pr => (int)(typeof(PlayerResult).GetProperty(propertyName)?.GetValue(pr) ?? 0));
-                            int effectWithUpgrade = gamesWithUpgrade.Sum(pr => (int)(typeof(PlayerResult).GetProperty(propertyName)?.GetValue(pr) ?? 0));
-
-                            float avgEffectPerGame = games > 0 ? (float)totalEffect / games : 0f;
-                            float avgEffectPerUpgradeGame = gamesWithUpgradeCount > 0 ? (float)effectWithUpgrade / gamesWithUpgradeCount : 0f;
-                            labels.Add(label);
-                            avgEffects.Add(avgEffectPerGame.ToString("F2"));
-                            avgEffectsWithUpgrade.Add(avgEffectPerUpgradeGame.ToString("F2"));
-                        }
-                    }
-
-                    string effectLabel = string.Join(" / ", labels);
-                    string effectAvgStr = string.Join(" / ", avgEffects);
-                    string effectAvgWithUpgradeStr = string.Join(" / ", avgEffectsWithUpgrade);
-
-                    Console.WriteLine("{0,8} | {1,-37} | {2,-32} | {3,10} | {4,10:F2} | {5,-32} | {6,20} | {7,20} | {8,12:F2}",
-                        playerId,
-                        Truncate(strategy, 37),
-                        Truncate(MutationRegistry.GetById(mutationId)?.Name ?? $"[ID {mutationId}]", 32),
-                        games,
-                        avgLevel,
-                        Truncate(effectLabel, 32),
-                        effectAvgStr,
-                        effectAvgWithUpgradeStr,
-                        avgAlive);
-                }
-            }
-
-            Console.WriteLine(new string('-', 245));
         }
 
         private static string Truncate(string value, int maxLength) =>

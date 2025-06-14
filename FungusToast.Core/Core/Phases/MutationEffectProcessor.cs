@@ -851,7 +851,7 @@ namespace FungusToast.Core.Phases
                     continue;
                 }
 
-                Console.WriteLine($"[HyphalVectoring] Player {player.PlayerId} origin: {origin.Value.tile.TileId}");
+                //Console.WriteLine($"[HyphalVectoring] Player {player.PlayerId} origin: {origin.Value.tile.TileId}");
 
                 int placed = ApplyHyphalVectorLine(player, board, rng, origin.Value.tile.X, origin.Value.tile.Y, centerX, centerY, totalTiles, observer);
                 if (placed > 0)

@@ -80,7 +80,8 @@ namespace FungusToast.Simulation.GameSimulation
                     ? (DateTime.UtcNow - startTime.Value).ToString(@"hh\:mm\:ss")
                     : "??";
 
-                Console.WriteLine($"Game {gameIndex}/{totalGames} complete — {percent:0.00}% (Elapsed: {elapsed})");
+                // Output: Game X/Y - Turn Z - Pct% (Elapsed: hh:mm:ss)
+                Console.WriteLine($"Game {gameIndex}/{totalGames} - Turn {result.TurnsPlayed} - {percent:0.00}% (Elapsed: {elapsed})");
             }
             else
             {
