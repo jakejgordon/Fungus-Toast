@@ -19,9 +19,9 @@ namespace FungusToast.Unity.UI
         public void SetCounts(string living, string dead)
         {
             if (livingCellsText != null)
-                livingCellsText.text = $"Alive: {living}";
+                livingCellsText.text = living; // No label, just the number
             if (deadCellsText != null)
-                deadCellsText.text = $"Dead: {dead}";
+                deadCellsText.text = dead;     // No label, just the number
         }
     }
 }

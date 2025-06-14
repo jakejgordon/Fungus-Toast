@@ -17,7 +17,11 @@ namespace FungusToast.Unity.UI
         public void InitializePlayerSummaries(List<Player> players)
         {
             foreach (Transform child in playerSummaryContainer)
+            {
+                if (child.name == "UI_PlayerSummariesPanelHeaderRow")
+                    continue;
                 Destroy(child.gameObject);
+            }
 
             playerSummaryRows.Clear();
 
@@ -38,6 +42,7 @@ namespace FungusToast.Unity.UI
                 playerSummaryRows[player.PlayerId] = row;
             }
         }
+
 
         public void UpdatePlayerSummaries(List<Player> players)
         {
