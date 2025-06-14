@@ -614,6 +614,8 @@ namespace FungusToast.Core.Phases
             int catabolizedMutationPoints = 0; // Track mutation points gained by catabolism
             var processedToxins = new HashSet<int>();
 
+            int maxPointsPerTurn = GameBalance.MycotoxinCatabolismMaxMutationPointsPerRound;
+
             foreach (var cell in board.GetAllCellsOwnedBy(player.PlayerId))
             {
                 if (!cell.IsAlive) continue;
@@ -628,22 +630,29 @@ namespace FungusToast.Core.Phases
                         neighborTile.RemoveFungalCell();
                         toxinsMetabolized++;
 
-                        if (rng.NextDouble() < GameBalance.MycotoxinCatabolismMutationPointChancePerCatabolism)
+                        // Only grant bonus mutation points if under the cap
+                        if (catabolizedMutationPoints < maxPointsPerTurn &&
+                            rng.NextDouble() < GameBalance.MycotoxinCatabolismMutationPointChancePerCatabolism)
                         {
                             player.MutationPoints += 1;
                             catabolizedMutationPoints++;
                         }
                     }
                 }
+
+                // Early break if we've already hit the cap
+                if (catabolizedMutationPoints >= maxPointsPerTurn)
+                    break;
             }
 
             if (toxinsMetabolized > 0)
             {
                 observer?.RecordToxinCatabolism(player.PlayerId, toxinsMetabolized, catabolizedMutationPoints);
             }
-  
+
             return toxinsMetabolized;
         }
+
 
         public static bool TryNecrohyphalInfiltration(
     GameBoard board,
