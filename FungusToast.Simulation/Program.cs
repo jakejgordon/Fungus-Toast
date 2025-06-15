@@ -8,10 +8,10 @@ class Program
 
     static void Main()
     {
-        /*
         var mutatorGrowth = new ParameterizedSpendingStrategy(
             strategyName: "Mutator Growth",
             prioritizeHighTier: true,
+            surgeAttemptTurnFrequency: 10,
             targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.CreepingMold });
 
         var toxinBadGuy = new ParameterizedSpendingStrategy(
@@ -34,7 +34,6 @@ class Program
                 MutationCategory.CellularResilience
             });
 
-        
         var min = new ParameterizedSpendingStrategy(
             strategyName: "Min 1",
             prioritizeHighTier: false);
@@ -49,7 +48,7 @@ class Program
             strategyName: "Power Mutations 1",
             prioritizeHighTier: true,
             targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
-        */
+        
 
         var powerMutations1 = new ParameterizedSpendingStrategy(
             strategyName: "Power Skillz - 1 turn surge frequency",
