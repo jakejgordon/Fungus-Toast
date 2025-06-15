@@ -1,13 +1,14 @@
 ﻿// FungusToast.Core/Phases/MutationEffectProcessor.cs
+using FungusToast.Core.Board;
+using FungusToast.Core.Config;
+using FungusToast.Core.Phases;
+using FungusToast.Core.Death;
+using FungusToast.Core.Metrics;
+using FungusToast.Core.Mutations;
+using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FungusToast.Core.Board;
-using FungusToast.Core.Config;
-using FungusToast.Core.Metrics;
-using FungusToast.Core.Death;
-using FungusToast.Core.Mutations;
-using FungusToast.Core.Players;
 
 namespace FungusToast.Core.Phases
 {
@@ -604,6 +605,7 @@ namespace FungusToast.Core.Phases
             Player player,
             GameBoard board,
             Random rng,
+            RoundContext roundContext,
             ISimulationObserver? observer = null)
         {
             int level = player.GetMutationLevel(MutationIds.MycotoxinCatabolism);
@@ -611,10 +613,10 @@ namespace FungusToast.Core.Phases
 
             float cleanupChance = level * GameBalance.MycotoxinCatabolismCleanupChancePerLevel;
             int toxinsMetabolized = 0;
-            int catabolizedMutationPoints = 0; // Track mutation points gained by catabolism
             var processedToxins = new HashSet<int>();
 
-            int maxPointsPerTurn = GameBalance.MycotoxinCatabolismMaxMutationPointsPerRound;
+            int maxPointsPerRound = GameBalance.MycotoxinCatabolismMaxMutationPointsPerRound;
+            int pointsSoFar = roundContext.GetEffectCount(player.PlayerId, "CatabolizedMP");
 
             foreach (var cell in board.GetAllCellsOwnedBy(player.PlayerId))
             {
@@ -630,28 +632,31 @@ namespace FungusToast.Core.Phases
                         neighborTile.RemoveFungalCell();
                         toxinsMetabolized++;
 
-                        // Only grant bonus mutation points if under the cap
-                        if (catabolizedMutationPoints < maxPointsPerTurn &&
+                        if (pointsSoFar < maxPointsPerRound &&
                             rng.NextDouble() < GameBalance.MycotoxinCatabolismMutationPointChancePerCatabolism)
                         {
                             player.MutationPoints += 1;
-                            catabolizedMutationPoints++;
+                            roundContext.IncrementEffectCount(player.PlayerId, "CatabolizedMP");
+                            pointsSoFar++;
+
+                            if (pointsSoFar >= maxPointsPerRound)
+                                break;
                         }
                     }
                 }
-
-                // Early break if we've already hit the cap
-                if (catabolizedMutationPoints >= maxPointsPerTurn)
+                if (pointsSoFar >= maxPointsPerRound)
                     break;
             }
 
             if (toxinsMetabolized > 0)
             {
-                observer?.RecordToxinCatabolism(player.PlayerId, toxinsMetabolized, catabolizedMutationPoints);
+                observer?.RecordToxinCatabolism(player.PlayerId, toxinsMetabolized, pointsSoFar);
             }
 
             return toxinsMetabolized;
         }
+
+
 
 
         public static bool TryNecrohyphalInfiltration(

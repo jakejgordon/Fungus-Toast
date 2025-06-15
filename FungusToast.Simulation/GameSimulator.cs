@@ -52,9 +52,9 @@ namespace FungusToast.Simulation.GameSimulation
                         break;
                     }
                 }
-
+                RoundContext roundContext = new RoundContext();
                 TurnEngine.AssignMutationPoints(board, players, allMutations, rng, simTracking);
-                TurnEngine.RunGrowthPhase(board, players, rng, simTracking);
+                TurnEngine.RunGrowthPhase(board, players, rng, roundContext, simTracking);
                 TurnEngine.RunDecayPhase(board, players, simTracking.FailedGrowthsByPlayerId, simTracking, simTracking);
 
                 // 🔥 TICK DOWN ALL ACTIVE SURGES FOR ALL PLAYERS

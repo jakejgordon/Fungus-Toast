@@ -1,12 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using FungusToast.Core.Players;
-using FungusToast.Core.Phases;
-using FungusToast.Unity.Grid;
-using FungusToast.Core;
-using FungusToast.Core.Config;
+﻿using FungusToast.Core;
 using FungusToast.Core.Board;
+using FungusToast.Core.Config;
+using FungusToast.Core.Phases;
+using FungusToast.Core.Players;
+using FungusToast.Unity.Grid;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace FungusToast.Unity.Phases
 {
@@ -18,6 +19,7 @@ namespace FungusToast.Unity.Phases
         private GridVisualizer gridVisualizer;
         private bool isRunning = false;
         private System.Random rng = new();
+        private RoundContext roundContext;
         public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
 
         private int phaseCycle = 0; // 1–5 for UI display
@@ -43,6 +45,8 @@ namespace FungusToast.Unity.Phases
             GameManager.Instance.GameUI.PhaseProgressTracker?.AdvanceToNextGrowthCycle(1);
             GameManager.Instance.GameUI.PhaseBanner.Show("Growth Phase Begins!", 2f);
 
+            roundContext = new RoundContext();
+
             StartCoroutine(RunNextCycle());
         }
 
@@ -66,7 +70,7 @@ namespace FungusToast.Unity.Phases
 
             Debug.Log($"🌿 Growth Cycle {phaseCycle}/{GameBalance.TotalGrowthCycles}");
 
-            var failedThisCycle = processor.ExecuteSingleCycle();
+            var failedThisCycle = processor.ExecuteSingleCycle(roundContext);
             MergeFailedGrowths(failedThisCycle);
             gridVisualizer.RenderBoard(board);
 

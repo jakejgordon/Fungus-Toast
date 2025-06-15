@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.Board;
+using FungusToast.Core.Phases;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
@@ -15,13 +16,18 @@ namespace FungusToast.Core.Growth
             GameBoard board,
             List<Player> players,
             Random rng,
+            RoundContext roundContext,
             ISimulationObserver? observer = null)
         {
+            // Apply round-capped mutation effects first (e.g., Mycotoxin Catabolism)
             foreach (var player in players)
             {
-                MutationEffectProcessor.ApplyMycotoxinCatabolism(player, board, rng, observer);
+                MutationEffectProcessor.ApplyMycotoxinCatabolism(
+                    player, board, rng, roundContext, observer
+                );
             }
 
+            // Track failed growths for simulation analysis
             var failedGrowthsByPlayerId = players.ToDictionary(p => p.PlayerId, _ => 0);
             var activeFungalCells = board.AllLivingFungalCellsWithTiles().ToList();
 
@@ -43,6 +49,8 @@ namespace FungusToast.Core.Growth
 
             return failedGrowthsByPlayerId;
         }
+
+
 
         /// <summary>
         /// Attempts to grow or move from a single tile. Tracks orthogonal, diagonal (Tendril), Creeping Mold, and Necrohyphal Infiltration.

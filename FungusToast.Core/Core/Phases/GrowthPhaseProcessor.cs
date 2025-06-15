@@ -1,9 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using FungusToast.Core.Board;
-using FungusToast.Core.Metrics;
+﻿using FungusToast.Core.Board;
 using FungusToast.Core.Growth;
+using FungusToast.Core.Metrics;
+using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
+using System;
+using System.Collections.Generic;
 
 namespace FungusToast.Core.Phases
 {
@@ -14,7 +15,11 @@ namespace FungusToast.Core.Phases
         private readonly Random rng;
         private readonly ISimulationObserver? observer;
 
-        public GrowthPhaseProcessor(GameBoard board, List<Player> players, Random rng, ISimulationObserver? observer = null)
+        public GrowthPhaseProcessor(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
         {
             this.board = board;
             this.players = players;
@@ -22,9 +27,9 @@ namespace FungusToast.Core.Phases
             this.observer = observer;
         }
 
-        public Dictionary<int, int> ExecuteSingleCycle()
+        public Dictionary<int, int> ExecuteSingleCycle(RoundContext roundContext)
         {
-            return GrowthEngine.ExecuteGrowthCycle(board, players, rng, observer);
+            return GrowthEngine.ExecuteGrowthCycle(board, players, rng, roundContext, observer);
         }
     }
 }
