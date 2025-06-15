@@ -4,7 +4,7 @@ using FungusToast.Simulation.Analysis;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 2;
+    private const int NumberOfSimulationGames = 10;
 
     static void Main()
     {
@@ -135,7 +135,7 @@ class Program
 
         // Print strategy summary
         var aggregator = new MatchupStatsAggregator();
-        aggregator.PrintSummary(results.GameResults, results.CumulativeDeathReasons, results.TrackingContext);
+        aggregator.PrintSummary(results.GameResults, results.CumulativeDeathReasons);
 
         // Analyze mutation impact
         var impactTracker = new MutationImpactTracker();

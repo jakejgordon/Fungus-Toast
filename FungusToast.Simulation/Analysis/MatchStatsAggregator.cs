@@ -16,8 +16,8 @@ namespace FungusToast.Simulation.Analysis
     {
         public void PrintSummary(
             List<GameResult> results,
-            Dictionary<DeathReason, int> cumulativeDeathReasons,
-            SimulationTrackingContext tracking)
+            Dictionary<DeathReason, int> cumulativeDeathReasons // only for end-state legacy
+            )
         {
             int boardWidth = GameBalance.BoardWidth;
             int boardHeight = GameBalance.BoardHeight;
@@ -128,10 +128,59 @@ namespace FungusToast.Simulation.Analysis
             PrintGameLevelStats(results, totalCells);
 
             int numGames = results.Count;
-            PrintDeathReasonSummary(cumulativeDeathReasons, "Cumulative Death Reason Summary", numGames);
+
+            // -- NEW: Calculate cumulative death reasons as per-game averages --
+            var deathReasonTotalsByGame = new List<Dictionary<DeathReason, int>>();
+            foreach (var result in results)
+            {
+                var reasonTotals = new Dictionary<DeathReason, int>();
+                foreach (var pr in result.PlayerResults)
+                {
+                    if (pr.DeathsByReason == null) continue;
+                    foreach (var kvp in pr.DeathsByReason)
+                    {
+                        if (!reasonTotals.ContainsKey(kvp.Key))
+                            reasonTotals[kvp.Key] = 0;
+                        reasonTotals[kvp.Key] += kvp.Value;
+                    }
+                }
+                deathReasonTotalsByGame.Add(reasonTotals);
+            }
+            // Average across games
+            var avgDeathReasons = new Dictionary<DeathReason, float>();
+            foreach (DeathReason reason in Enum.GetValues(typeof(DeathReason)))
+            {
+                float total = deathReasonTotalsByGame.Sum(dict => dict.ContainsKey(reason) ? dict[reason] : 0);
+                avgDeathReasons[reason] = numGames > 0 ? total / numGames : 0f;
+            }
+
+            // Print the summary using our per-game averages
+            PrintDeathReasonSummaryFloat(avgDeathReasons, "Cumulative Death Reason Summary", 1); // gameCount=1 to avoid dividing again
             PrintDeathReasonSummary(endStateDeathReasonCounts, "End-State Death Reason Summary (At Game End)", numGames);
 
-            PrintPlayerSummaryTable(playerStats, tracking);
+            PrintPlayerSummaryTable(playerStats, results); // Changed to pass all results for MP stats
+        }
+
+        private void PrintDeathReasonSummaryFloat(
+            Dictionary<DeathReason, float> avgDeathReasons,
+            string label,
+            int gameCount)
+        {
+            float totalDeaths = avgDeathReasons.Values.Sum();
+            float avgTotalDeaths = gameCount > 0 ? totalDeaths / gameCount : 0f;
+
+            Console.WriteLine($"\n=== {label} ===");
+            Console.WriteLine($"Avg Cells that Died per Game: {avgTotalDeaths:N1}");
+            Console.WriteLine($"{"Cause",-30} | {"Avg Count",13} | {"Percent",9}");
+            Console.WriteLine(new string('-', 57));
+
+            foreach (var kv in avgDeathReasons.OrderByDescending(kv => kv.Value))
+            {
+                string cause = kv.Key.ToString();
+                float avgCount = kv.Value;
+                float percent = totalDeaths > 0 ? avgCount / totalDeaths * 100f : 0f;
+                Console.WriteLine($"{cause,-30} | {avgCount,13:N1} | {percent,8:N1}%");
+            }
         }
 
         private void PrintGameLevelStats(List<GameResult> results, int totalCells)
@@ -163,8 +212,34 @@ namespace FungusToast.Simulation.Analysis
                 int sporesBloom, int sporesNecro, int sporesNecrophytic,
                 int reclaimsNecrophytic, int sporesMycotoxin, int toxinAuraKills, int mycotoxinCatabolisms, int mpSpent,
                 float growthChance, float selfDeathChance, float decayMod)> playerStats,
-            SimulationTrackingContext tracking)
+            List<GameResult> gameResults) // <- changed
         {
+            // --- Aggregate MP stats across all games ---
+            var totalMpSpentByPlayer = new Dictionary<int, int>();
+            var totalMpEarnedByPlayer = new Dictionary<int, int>();
+
+            foreach (var game in gameResults)
+            {
+                var tracking = game.TrackingContext;
+                if (tracking == null) continue;
+
+                foreach (var kvp in tracking.GetAllMutationPointsSpentByTier())
+                {
+                    int playerId = kvp.Key;
+                    int sum = kvp.Value.Values.Sum();
+                    if (!totalMpSpentByPlayer.ContainsKey(playerId))
+                        totalMpSpentByPlayer[playerId] = 0;
+                    totalMpSpentByPlayer[playerId] += sum;
+                }
+                foreach (var kvp in tracking.GetAllMutationPointIncome())
+                {
+                    int playerId = kvp.Key;
+                    if (!totalMpEarnedByPlayer.ContainsKey(playerId))
+                        totalMpEarnedByPlayer[playerId] = 0;
+                    totalMpEarnedByPlayer[playerId] += kvp.Value;
+                }
+            }
+
             Console.WriteLine("\n=== Per-Player Summary ===");
             Console.WriteLine(
                 $"{"Player",6} | {"Strategy",-40} | {"WinRate",7} | {"Avg Alive",13} | {"Avg Dead",13} | " +
@@ -186,11 +261,8 @@ namespace FungusToast.Simulation.Analysis
 
                 float winRate = appearances > 0 ? (float)wins / appearances * 100f : 0f;
 
-                int totalMpSpent = 0;
-                if (tracking.GetAllMutationPointsSpentByTier().TryGetValue(id, out var byTier))
-                    totalMpSpent = byTier.Values.Sum();
-
-                int totalMpEarned = tracking.GetMutationPointIncome(id);
+                int totalMpSpent = totalMpSpentByPlayer.TryGetValue(id, out var v1) ? v1 : 0;
+                int totalMpEarned = totalMpEarnedByPlayer.TryGetValue(id, out var v2) ? v2 : 0;
 
                 float avgMpSpent = appearances > 0 ? (float)totalMpSpent / appearances : 0f;
                 float avgMpEarned = appearances > 0 ? (float)totalMpEarned / appearances : 0f;

@@ -54,7 +54,6 @@ namespace FungusToast.Simulation.Analysis
                     context: context
                 );
 
-                ApplyTrackingContext(result, context);
                 results.Add(result);
             }
 
@@ -73,9 +72,6 @@ namespace FungusToast.Simulation.Analysis
 
             Console.WriteLine("Press 'Q' at any time to stop the simulation and see results.");
 
-            // ---- Use a SINGLE SimulationTrackingContext for all games ----
-            var context = new SimulationTrackingContext();
-
             for (int i = 0; i < gamesToPlay; i++)
             {
                 // Check for user interrupt every loop
@@ -91,8 +87,8 @@ namespace FungusToast.Simulation.Analysis
 
                 var assigned = strategies;
 
+                var context = new SimulationTrackingContext();
 
-                // Pass the SAME context each game
                 var result = simulator.RunSimulation(
                     assigned,
                     seed: i,
@@ -102,7 +98,6 @@ namespace FungusToast.Simulation.Analysis
                     context: context
                 );
 
-                ApplyTrackingContext(result, context);
                 results.Add(result);
             }
 
@@ -121,15 +116,18 @@ namespace FungusToast.Simulation.Analysis
                 }
             }
 
+            // You may want to change this if you want a batch-level context, but
+            // for now just pick the context from the last game or set to null if results.Count == 0
             return new SimulationBatchResult
             {
                 GameResults = results,
-                CumulativeDeathReasons = cumulativeDeathReasons,
-                TrackingContext = context
+                CumulativeDeathReasons = cumulativeDeathReasons
             };
         }
 
 
+
+        /*
         private void ApplyTrackingContext(GameResult result, SimulationTrackingContext context)
         {
             foreach (var pr in result.PlayerResults)
@@ -143,6 +141,6 @@ namespace FungusToast.Simulation.Analysis
                 pr.MycotoxinTracerSpores = context.GetMycotoxinSporeDropCount(pr.PlayerId);
             }
         }
-
+        */
     }
 }

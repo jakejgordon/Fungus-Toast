@@ -17,6 +17,8 @@ namespace FungusToast.Simulation.Models
         public int TurnsPlayed { get; set; }
         public int ToxicTileCount { get; set; }
 
+        public SimulationTrackingContext TrackingContext { get; set; }
+
         // ──────────────
         // PLAYER RESULTS
         // ──────────────
@@ -120,7 +122,8 @@ namespace FungusToast.Simulation.Models
                 SporesFromSporocidalBloom = tracking.GetSporocidalSpores(),
                 SporesFromNecrosporulation = tracking.GetNecroSpores(),
                 SporesFromMycotoxinTracer = tracking.GetMycotoxinTracerSporeDrops(),
-                ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin)
+                ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin),
+                TrackingContext = tracking
             };
         }
     }

@@ -11,6 +11,5 @@ namespace FungusToast.Simulation.Models
     {
         public List<GameResult> GameResults { get; set; } = new List<GameResult>();
         public Dictionary<DeathReason, int> CumulativeDeathReasons { get; set; } = new Dictionary<DeathReason, int>();
-        public SimulationTrackingContext TrackingContext { get; set; } = new SimulationTrackingContext();
     }
 }
