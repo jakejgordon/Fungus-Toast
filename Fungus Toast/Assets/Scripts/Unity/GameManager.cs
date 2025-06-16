@@ -167,6 +167,9 @@ namespace FungusToast.Unity
 
             gameUIManager.MoldProfilePanel?.Initialize(humanPlayer, players);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
+
+            Board.Players.Clear();
+            Board.Players.AddRange(players);
         }
 
         private void PlaceStartingSpores()
