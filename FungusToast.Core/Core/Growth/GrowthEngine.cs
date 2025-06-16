@@ -1,12 +1,7 @@
 ﻿using FungusToast.Core.Board;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Metrics;
-using FungusToast.Core.Mutations;
-using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace FungusToast.Core.Growth
 {

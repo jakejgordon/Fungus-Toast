@@ -83,8 +83,11 @@ namespace FungusToast.Core.Board
                 var cell = new FungalCell(playerId, tileId);
                 tile.PlaceFungalCell(cell);
                 tileIdToCell[tileId] = cell;
+
+                Players[playerId].ControlledTileIds.Add(tileId); // 🔥 Required for growth + logic
             }
         }
+
 
         public FungalCell? GetCell(int tileId)
         {

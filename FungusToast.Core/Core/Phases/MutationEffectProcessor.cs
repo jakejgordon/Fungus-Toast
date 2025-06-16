@@ -9,6 +9,7 @@ using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core.Growth;
 
 namespace FungusToast.Core.Phases
 {
@@ -856,9 +857,10 @@ namespace FungusToast.Core.Phases
                 int centerX = board.Width / 2;
                 int centerY = board.Height / 2;
                 int totalTiles = GameBalance.HyphalVectoringBaseTiles +
-                                 (int)Math.Round(level * (double)GameBalance.HyphalVectoringTilesPerLevel);
+                                 level * GameBalance.HyphalVectoringTilesPerLevel;
 
-                var origin = TrySelectHyphalVectorOrigin(player, board, rng, centerX, centerY, totalTiles);
+                var origin = HyphalVectoringHelper.TrySelectHyphalVectorOrigin(player, board, rng, centerX, centerY, totalTiles);
+
                 if (origin == null)
                 {
                     Console.WriteLine($"[HyphalVectoring] Player {player.PlayerId}: no valid origin found.");
@@ -867,120 +869,11 @@ namespace FungusToast.Core.Phases
 
                 //Console.WriteLine($"[HyphalVectoring] Player {player.PlayerId} origin: {origin.Value.tile.TileId}");
 
-                int placed = ApplyHyphalVectorLine(player, board, rng, origin.Value.tile.X, origin.Value.tile.Y, centerX, centerY, totalTiles, observer);
+                int placed = HyphalVectoringHelper.ApplyHyphalVectorLine(player, board, rng, origin.Value.tile.X, origin.Value.tile.Y, centerX, centerY, totalTiles, observer);
                 if (placed > 0)
                     observer?.RecordHyphalVectoringGrowth(player.PlayerId, placed);
             }
         }
-
-        private static (FungalCell cell, BoardTile tile)? TrySelectHyphalVectorOrigin(
-            Player player,
-            GameBoard board,
-            Random rng,
-            int centerX,
-            int centerY,
-            int totalTiles)
-        {
-            var candidates = board.GetAllCellsOwnedBy(player.PlayerId)
-                .Where(c => c.IsAlive)
-                .Select(c =>
-                {
-                    var t = board.GetTileById(c.TileId)!;
-                    int dx = centerX - t.X;
-                    int dy = centerY - t.Y;
-                    double dist = Math.Sqrt(dx * dx + dy * dy);
-                    return new { cell = c, tile = t, dist };
-                })
-                .Where(entry =>
-                {
-                    if (entry.dist < totalTiles) return false;
-
-                    var path = GetLineToCenter(entry.tile.X, entry.tile.Y, centerX, centerY, totalTiles);
-                    foreach (var (x, y) in path)
-                    {
-                        var t = board.GetTile(x, y)!;
-                        if (t.IsOccupied && t.FungalCell is { IsAlive: true, OwnerPlayerId: var oid } && oid == player.PlayerId)
-                            return false;
-                    }
-                    return true;
-                })
-                .OrderBy(e => e.dist)
-                .ToList();
-
-            return candidates.Count == 0
-                ? null
-                : (candidates[rng.Next(candidates.Count)].cell, candidates[rng.Next(candidates.Count)].tile);
-        }
-
-        private static int ApplyHyphalVectorLine(
-            Player player,
-            GameBoard board,
-            Random rng,
-            int startX,
-            int startY,
-            int centerX,
-            int centerY,
-            int totalTiles,
-            ISimulationObserver? observer)
-        {
-            var path = GetLineToCenter(startX, startY, centerX, centerY, totalTiles);
-            int placed = 0;
-
-            foreach (var (x, y) in path)
-            {
-                var tile = board.GetTile(x, y)!;
-
-                if (tile.IsOccupied && tile.FungalCell is { IsAlive: true, OwnerPlayerId: var oid } && oid == player.PlayerId)
-                {
-                    throw new InvalidOperationException(
-                        $"Hyphal Vectoring path encountered unexpected friendly cell at {tile.TileId}");
-                }
-
-                if (tile.IsOccupied && tile.FungalCell is { IsAlive: true } fc)
-                {
-                    fc.Kill(DeathReason.HyphalVectoring);
-                    observer?.RecordCellDeath(player.PlayerId, DeathReason.HyphalVectoring, 1);
-                }
-
-                var newCell = new FungalCell(player.PlayerId, tile.TileId);
-                tile.PlaceFungalCell(newCell);
-                board.PlaceFungalCell(newCell);
-                player.AddControlledTile(tile.TileId);
-                placed++;
-            }
-
-            return placed;
-        }
-
-
-
-        private static List<(int x, int y)> GetLineToCenter(int fromX, int fromY, int toX, int toY, int maxLength)
-        {
-            var line = new List<(int x, int y)>();
-            int dx = toX - fromX;
-            int dy = toY - fromY;
-
-            float stepX = dx / (float)Math.Max(Math.Abs(dx), Math.Abs(dy));
-            float stepY = dy / (float)Math.Max(Math.Abs(dx), Math.Abs(dy));
-
-            float cx = fromX + 0.5f;
-            float cy = fromY + 0.5f;
-
-            for (int i = 0; i < maxLength; i++)
-            {
-                cx += stepX;
-                cy += stepY;
-
-                int ix = (int)Math.Floor(cx);
-                int iy = (int)Math.Floor(cy);
-
-                line.Add((ix, iy));
-            }
-
-            return line;
-        }
-
-
 
     }
 
