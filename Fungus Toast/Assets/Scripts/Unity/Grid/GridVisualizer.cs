@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using UnityEngine.Tilemaps;
-using FungusToast.Core;
+﻿using FungusToast.Core;
 using FungusToast.Core.Board;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace FungusToast.Unity.Grid
 {
@@ -11,8 +12,8 @@ namespace FungusToast.Unity.Grid
     {
         [Header("Tilemaps")]
         public Tilemap toastTilemap;      // Base toast layer
-        public Tilemap moldTilemap;       // Player mold layer
-        public Tilemap overlayTilemap;    // Toxin overlays and highlights
+        public Tilemap moldTilemap;       // Player mold layer (including faded icons)
+        public Tilemap overlayTilemap;    // Dead/toxin overlays
         public Tilemap HoverTileMap;      // Mouseover highlights
 
         [Header("Tiles")]
@@ -24,6 +25,8 @@ namespace FungusToast.Unity.Grid
 
         private GameBoard board;
         private List<Vector3Int> highlightedPositions = new List<Vector3Int>();
+        private Coroutine pulseHighlightCoroutine;
+
 
         public void Initialize(GameBoard board)
         {
@@ -55,6 +58,7 @@ namespace FungusToast.Unity.Grid
         public void HighlightPlayerTiles(int playerId)
         {
             HoverTileMap.ClearAllTiles();
+            highlightedPositions.Clear();
 
             foreach (var tile in board.AllTiles())
             {
@@ -65,15 +69,55 @@ namespace FungusToast.Unity.Grid
                     HoverTileMap.SetTile(pos, solidHighlightTile);
                     HoverTileMap.SetTileFlags(pos, TileFlags.None);
                     HoverTileMap.SetColor(pos, Color.white);
-                    HoverTileMap.RefreshTile(pos);
+                    highlightedPositions.Add(pos);
                 }
+            }
+
+            // Start pulsing if any positions
+            if (highlightedPositions.Count > 0)
+            {
+                if (pulseHighlightCoroutine != null)
+                    StopCoroutine(pulseHighlightCoroutine);
+
+                pulseHighlightCoroutine = StartCoroutine(PulseHighlightTiles());
             }
         }
 
         public void ClearHighlights()
         {
             HoverTileMap.ClearAllTiles();
+            highlightedPositions.Clear();
+            if (pulseHighlightCoroutine != null)
+            {
+                StopCoroutine(pulseHighlightCoroutine);
+                pulseHighlightCoroutine = null;
+            }
         }
+
+        private IEnumerator PulseHighlightTiles()
+        {
+            float duration = 0.75f; // Duration of one pulse cycle (seconds)
+            float baseAlpha = 0.25f; // Minimum alpha
+            float pulseAlpha = 0.85f; // Maximum alpha
+
+            while (true)
+            {
+                float t = Mathf.PingPong(Time.time * (2f / duration), 1f); // Loops between 0 and 1
+                float alpha = Mathf.Lerp(baseAlpha, pulseAlpha, t);
+
+                foreach (var pos in highlightedPositions)
+                {
+                    if (HoverTileMap.HasTile(pos))
+                    {
+                        HoverTileMap.SetColor(pos, new Color(1f, 1f, 0.3f, alpha)); // yellowish pulse
+                    }
+                }
+
+                yield return null;
+            }
+        }
+
+
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
         {
@@ -95,25 +139,41 @@ namespace FungusToast.Unity.Grid
                         moldColor = Color.white;
                     }
                     break;
+
                 case FungalCellType.Dead:
-                    overlayTile = deadTile;
-                    overlayColor = Color.white;
+                    // Fade the player mold, then overlay the deadTile
+                    if (cell.LastOwnerPlayerId is int ownerId && ownerId >= 0 && ownerId < playerMoldTiles.Length)
+                    {
+                        moldTilemap.SetTileFlags(pos, TileFlags.None); // << CRITICAL!
+                        moldTilemap.SetTile(pos, playerMoldTiles[ownerId]);
+                        moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.25f)); // 25% visible (very faded)
+                        moldTilemap.RefreshTile(pos);
+                    }
+                    // Overlay the dead tile on a separate tilemap
+                    overlayTilemap.SetTileFlags(pos, TileFlags.None);
+                    overlayTilemap.SetTile(pos, deadTile);
+                    overlayTilemap.SetColor(pos, Color.white);
+                    overlayTilemap.RefreshTile(pos);
                     break;
+
+
                 case FungalCellType.Toxin:
                     if (cell.OwnerPlayerId is int idT && idT >= 0 && idT < playerMoldTiles.Length)
                     {
                         // Optionally show faint mold color under the toxin overlay
                         moldTile = playerMoldTiles[idT];
-                        moldColor = new Color(1f, 1f, 1f, 0.4f); // 40% opacity
+                        moldColor = new Color(1f, 1f, 1f, 0.4f);
                     }
                     overlayTile = toxinOverlayTile;
                     overlayColor = Color.white;
                     break;
+
                 default:
                     // Unoccupied or unknown: nothing to render
                     return;
             }
 
+            // Set faded (or normal) mold tile
             if (moldTile != null)
             {
                 moldTilemap.SetTile(pos, moldTile);
@@ -122,11 +182,16 @@ namespace FungusToast.Unity.Grid
                 moldTilemap.RefreshTile(pos);
             }
 
+            // Set overlay tile (dead or toxin)
             if (overlayTile != null)
             {
-                SetOverlayTile(pos, overlayTile, overlayColor);
+                overlayTilemap.SetTile(pos, overlayTile);
+                overlayTilemap.SetTileFlags(pos, TileFlags.None);
+                overlayTilemap.SetColor(pos, overlayColor);
+                overlayTilemap.RefreshTile(pos);
             }
         }
+
 
         private void SetOverlayTile(Vector3Int pos, TileBase tile, Color color)
         {

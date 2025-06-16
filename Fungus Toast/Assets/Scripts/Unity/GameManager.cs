@@ -88,8 +88,12 @@ namespace FungusToast.Unity
             phaseProgressTracker?.HighlightMutationPhase();
 
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
+
+            // --- Set the GridVisualizer on the RightSidebar before initializing player summaries
+            gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
         }
+
 
         private void InitializePlayersWithHumanFirst()
         {

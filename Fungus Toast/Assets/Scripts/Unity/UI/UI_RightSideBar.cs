@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using FungusToast.Core.Players;
+using FungusToast.Unity.Grid; // Needed for GridVisualizer
 
 namespace FungusToast.Unity.UI
 {
@@ -12,7 +13,16 @@ namespace FungusToast.Unity.UI
         [SerializeField] private GameObject playerSummaryPrefab;
         [SerializeField] private TextMeshProUGUI endgameCountdownText;
 
+        // Add a GridVisualizer field and setter
+        private GridVisualizer gridVisualizer;
+
         private Dictionary<int, PlayerSummaryRow> playerSummaryRows = new();
+
+        // Add a way to provide GridVisualizer (call this in your GameManager or wherever you wire things up)
+        public void SetGridVisualizer(GridVisualizer visualizer)
+        {
+            gridVisualizer = visualizer;
+        }
 
         public void InitializePlayerSummaries(List<Player> players)
         {
@@ -40,9 +50,15 @@ namespace FungusToast.Unity.UI
                 row.SetIcon(GameManager.Instance.GameUI.PlayerUIBinder.GetPlayerIcon(player.PlayerId));
                 row.SetCounts("1", "0");
                 playerSummaryRows[player.PlayerId] = row;
+
+                // --- Wire up the hover handler on the icon ---
+                // (GridVisualizer must be set BEFORE calling this method)
+                if (gridVisualizer != null)
+                    row.SetHoverHighlight(player.PlayerId, gridVisualizer);
+                else
+                    Debug.LogWarning("GridVisualizer not set on UI_RightSidebar; hover highlights will not work!");
             }
         }
-
 
         public void UpdatePlayerSummaries(List<Player> players)
         {
@@ -70,7 +86,6 @@ namespace FungusToast.Unity.UI
                 }
             }
         }
-
 
         public void SetEndgameCountdownText(string message)
         {
