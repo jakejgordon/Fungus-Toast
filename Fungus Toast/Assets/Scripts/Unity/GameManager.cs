@@ -323,10 +323,12 @@ namespace FungusToast.Unity
 
         public void SpendAllMutationPointsForAIPlayers()
         {
+            var rng = new System.Random();
+
             foreach (var p in players)
             {
                 if (p.PlayerType == PlayerTypeEnum.AI)
-                    p.MutationStrategy?.SpendMutationPoints(p, mutationManager.GetAllMutations().ToList(), Board);
+                    p.MutationStrategy?.SpendMutationPoints(p, mutationManager.GetAllMutations().ToList(), Board, rng);
             }
 
             Debug.Log("All AI players have spent their mutation points.");

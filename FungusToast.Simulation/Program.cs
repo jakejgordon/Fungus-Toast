@@ -1,33 +1,33 @@
 ﻿using FungusToast.Core.AI;
 using FungusToast.Core.Mutations;
 using FungusToast.Simulation.Analysis;
+using FungusToast.Simulation.StrategySets;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 100;
+    private const int NumberOfSimulationGames = 50;
 
     static void Main()
     {
-        var strategies = CreatePredefinedStrategies();
+        //var strategies = CreatePredefinedStrategies();
 
-        //var strategies = CreateSurgeMutationTestingStrategies();
+        int playerCount = 7;
+        var rnd = new Random(); // Or any deterministic seed you want
 
-        /*
-        var strategies = new List<IMutationSpendingStrategy>
-        {
-            powerMutations1,
-            new RandomMutationSpendingStrategy(),
-            min,
-            toxinBadGuy,
-            mutatorGrowth,
-            growthAndResilienceMax3HighTier,
-            toxinBadGuyExtreme,
-            regenerativeHyphaeFocus
-        };
-        */
+        var strategies = EconomyBiasStrategyFactory.CreateEconomyBiasStrategies(
+            playerCount: playerCount,
+            rnd: rnd,
+            targetMutationIds: new List<int> { MutationIds.CreepingMold, MutationIds.NecrohyphalInfiltration },
+            surgeAttemptTurnFrequency: 10,
+            prioritizeHighTier: true
+        );
 
+        var killerToxin = new ParameterizedSpendingStrategy(
+            strategyName: "Toxins",
+            prioritizeHighTier: true,
+            targetMutationIds: new List<int> { MutationIds.NecrophyticBloom, MutationIds.NecrotoxicConversion, MutationIds.SporocidalBloom });
+        strategies.Add(killerToxin);
 
-        int playerCount = strategies.Count;
         Console.WriteLine($"Running simulation with {playerCount} players...\n");
 
         // Run simulation
