@@ -2,6 +2,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using FungusToast.Core.Players;
+using FungusToast.Core.Board;
 using FungusToast.Unity.Grid; // Needed for GridVisualizer
 
 namespace FungusToast.Unity.UI
@@ -49,7 +50,7 @@ namespace FungusToast.Unity.UI
                 }
 
                 row.SetIcon(GameManager.Instance.GameUI.PlayerUIBinder.GetPlayerIcon(player.PlayerId));
-                row.SetCounts("1", "0");
+                row.SetCounts("1", "0", "0");
                 playerSummaryRows[player.PlayerId] = row;
 
                 // --- Wire up the hover handler on the icon ---
@@ -69,6 +70,7 @@ namespace FungusToast.Unity.UI
                 {
                     int alive = 0;
                     int dead = 0;
+                    int toxins = 0;
 
                     foreach (var cell in GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId))
                     {
@@ -80,13 +82,17 @@ namespace FungusToast.Unity.UI
                         {
                             dead++;
                         }
-                        // else (e.g., toxin tiles) are ignored for dead count
+                        else if (cell.IsToxin)
+                        {
+                            toxins++;
+                        }
                     }
 
-                    row.SetCounts(alive.ToString(), dead.ToString());
+                    row.SetCounts(alive.ToString(), dead.ToString(), toxins.ToString());
                 }
             }
         }
+
 
         public void SetEndgameCountdownText(string message)
         {
