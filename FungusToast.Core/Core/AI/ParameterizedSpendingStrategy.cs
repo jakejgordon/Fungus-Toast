@@ -3,9 +3,21 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Core.AI
 {
+    public enum EconomyBias
+    {
+        Neutral,
+        IgnoreEconomy,
+        MinorEconomy,
+        ModerateEconomy,
+        MaxEconomy
+    }
+
     public class ParameterizedSpendingStrategy : MutationSpendingStrategyBase
     {
         public override string StrategyName { get; }
@@ -23,18 +35,20 @@ namespace FungusToast.Core.AI
         private readonly List<MutationCategory>? priorityMutationCategories;
         private readonly List<Mutation> targetPrerequisiteChain;
         private readonly Dictionary<int, int> requiredLevels;
-
-        // NEW: List of surge mutations for this strategy (can be empty)
         private readonly List<int> surgePriorityIds;
 
+        // New: Bias mode for economy investment
+        private readonly EconomyBias economyBias;
+
         public ParameterizedSpendingStrategy(
-        string strategyName,
-        bool prioritizeHighTier,
-        List<MutationCategory>? priorityMutationCategories = null,
-        MutationTier maxTier = MutationTier.Tier10,
-        List<int>? targetMutationIds = null,
-        List<int>? surgePriorityIds = null,
-        int surgeAttemptTurnFrequency = GameBalance.DefaultSurgeAIAttemptTurnFrequency)
+            string strategyName,
+            bool prioritizeHighTier,
+            List<MutationCategory>? priorityMutationCategories = null,
+            MutationTier maxTier = MutationTier.Tier10,
+            List<int>? targetMutationIds = null,
+            List<int>? surgePriorityIds = null,
+            int surgeAttemptTurnFrequency = GameBalance.DefaultSurgeAIAttemptTurnFrequency,
+            EconomyBias economyBias = EconomyBias.Neutral)
         {
             StrategyName = strategyName;
             this.prioritizeHighTier = prioritizeHighTier;
@@ -46,6 +60,7 @@ namespace FungusToast.Core.AI
 
             this.surgePriorityIds = surgePriorityIds ?? new();
             this.surgeAttemptTurnFrequency = surgeAttemptTurnFrequency;
+            this.economyBias = economyBias;
 
             if (targetMutationIds != null)
             {
@@ -100,6 +115,7 @@ namespace FungusToast.Core.AI
             Player player,
             List<Mutation> allMutations,
             GameBoard board,
+            Random rnd,
             ISimulationObserver? simulationObserver = null)
         {
             SpendOnTargetChain(player, allMutations, board, simulationObserver);
@@ -108,12 +124,11 @@ namespace FungusToast.Core.AI
             if (TrySpendOnSurges(player, allMutations, board, simulationObserver, onlyOnNthRound: true))
                 return; // If a surge is triggered, stop spending for this turn
 
-            SpendFallbackPoints(player, allMutations, board, simulationObserver);
+            SpendFallbackPoints(player, allMutations, board, rnd, simulationObserver);
 
             // After ALL other spending, always try to activate surges as last resort (any turn)
             TrySpendOnSurges(player, allMutations, board, simulationObserver, onlyOnNthRound: false);
         }
-
 
         private void SpendOnTargetChain(
             Player player,
@@ -144,14 +159,6 @@ namespace FungusToast.Core.AI
             } while (upgraded && player.MutationPoints > 0);
         }
 
-        /// <summary>
-        /// Attempts to activate a surge mutation for the player, following these rules:
-        /// - If onlyOnNthRound is true, will only attempt surges on rounds where (CurrentRound % surgeAttemptTurnFrequency == 0).
-        /// - If onlyOnNthRound is false, will always attempt to activate surges as a fallback **if there are no upgradable non-surge mutations** (i.e., as a true last resort, every turn).
-        /// 
-        /// Surges are always considered in priority order as defined in surgePriorityIds.
-        /// Returns true if a surge was activated.
-        /// </summary>
         private bool TrySpendOnSurges(
             Player player,
             List<Mutation> allMutations,
@@ -171,7 +178,6 @@ namespace FungusToast.Core.AI
 
             if (onlyOnNthRound)
             {
-                // Only allow surge attempts on Nth round
                 if (!nthRound)
                     return false;
 
@@ -192,7 +198,6 @@ namespace FungusToast.Core.AI
             }
             else
             {
-                // "True last resort": Only attempt surges if all non-surge mutations are maxed (no upgrades left)
                 var upgradableNonSurge = allMutations
                     .Where(m => !m.IsSurge && player.CanUpgrade(m))
                     .ToList();
@@ -219,11 +224,11 @@ namespace FungusToast.Core.AI
             return false;
         }
 
-
         private void SpendFallbackPoints(
             Player player,
             List<Mutation> allMutations,
             GameBoard board,
+            Random rnd,
             ISimulationObserver? simulationObserver = null)
         {
             bool spent;
@@ -231,10 +236,11 @@ namespace FungusToast.Core.AI
             {
                 spent = TrySpendByCategory(player, allMutations, board, simulationObserver)
                      || TrySpendFallback(player, allMutations, board, simulationObserver)
-                     || TrySpendRandomly(player, allMutations, simulationObserver);
+                     || TrySpendEconomyBiasedRandomly(player, allMutations, board, rnd, simulationObserver);
             }
             while (spent && player.MutationPoints > 0);
 
+            // Burn off leftovers if any upgradable mutations remain (should almost never be necessary)
             while (player.MutationPoints > 0)
             {
                 var anyUpgradable = allMutations.Where(m => player.CanUpgrade(m)).ToList();
@@ -278,17 +284,104 @@ namespace FungusToast.Core.AI
             return TrySpendWithinCategory(player, board, fallbackCandidates, simulationObserver);
         }
 
-        private bool TrySpendRandomly(
+        /// <summary>
+        /// Main fallback for random spending, but modulates probability of Genetic Drift mutations
+        /// based on economyBias and game round. Non-drift mutations are selected at normal rate.
+        /// </summary>
+        private bool TrySpendEconomyBiasedRandomly(
             Player player,
             List<Mutation> allMutations,
+            GameBoard board,
+            Random rnd,
             ISimulationObserver? simulationObserver)
         {
-            return MutationSpendingHelper.TrySpendRandomly(player, allMutations, simulationObserver);
+            var upgradable = allMutations
+                .Where(m => player.CanUpgrade(m) && (int)m.Tier <= (int)maxTier)
+                .ToList();
+
+            if (upgradable.Count == 0)
+                return false;
+
+            // Split drift/non-drift
+            var nonDrift = upgradable.Where(m => m.Category != MutationCategory.GeneticDrift).ToList();
+            var drift = upgradable.Where(m => m.Category == MutationCategory.GeneticDrift).ToList();
+
+            if (economyBias == EconomyBias.IgnoreEconomy)
+            {
+                // Only upgrade drift if in target chain
+                drift = drift.Where(m => IsInTargetChain(m.Id)).ToList();
+                if (nonDrift.Count == 0 && drift.Count > 0)
+                    return TryUpgradeWithTendrilAwareness(player, drift[0], upgradable, board, simulationObserver);
+                if (nonDrift.Count > 0)
+                    return TryUpgradeWithTendrilAwareness(player, nonDrift[0], upgradable, board, simulationObserver);
+                return false;
+            }
+
+            // NEW: NEUTRAL LOGIC — treat all equally
+            if (economyBias == EconomyBias.Neutral)
+            {
+                // Just pick randomly from all upgradable mutations
+                int idx = rnd.Next(upgradable.Count);
+                var chosen = upgradable[idx];
+                return TryUpgradeWithTendrilAwareness(player, chosen, upgradable, board, simulationObserver);
+            }
+
+            // Economy bias: filter or adjust drift mutations as needed
+            float driftWeight = GetDriftWeight(board.CurrentRound);
+
+            // Build a weighted pool for random selection
+            var weightedPool = new List<Mutation>();
+            int baseWeight = 100; // Arbitrary, relative
+
+            foreach (var m in nonDrift)
+            {
+                weightedPool.Add(m);
+            }
+            foreach (var m in drift)
+            {
+                int weight = (int)(baseWeight * driftWeight);
+                // At low weights, add 0 or 1 entries (so drift is rare/never selected)
+                for (int i = 0; i < weight; i++)
+                {
+                    weightedPool.Add(m);
+                }
+            }
+            if (weightedPool.Count == 0)
+                return false;
+
+            // Pick randomly from weighted pool
+            int idx2 = rnd.Next(weightedPool.Count);
+            var chosen2 = weightedPool[idx2];
+
+            return TryUpgradeWithTendrilAwareness(player, chosen2, upgradable, board, simulationObserver);
         }
 
-        private List<MutationCategory> GetCategories()
+
+        /// <summary>
+        /// Returns a scaling factor for drift upgrades, 0–1+
+        /// </summary>
+        private float GetDriftWeight(int currentRound)
         {
-            return priorityMutationCategories ?? Enum.GetValues(typeof(MutationCategory)).Cast<MutationCategory>().ToList();
+            switch (economyBias)
+            {
+                case EconomyBias.MinorEconomy:
+                    // Starts higher, drops rapidly over 10 rounds
+                    return Math.Max(0.01f, 0.25f - 0.022f * currentRound);
+                case EconomyBias.ModerateEconomy:
+                    // Starts at 0.5, drops to 0 over 15 rounds
+                    return Math.Max(0.01f, 0.5f - 0.033f * currentRound);
+                case EconomyBias.MaxEconomy:
+                    // Always strong, never drops below 0.8
+                    return 0.8f;
+                default:
+                    // IgnoreEconomy and others: should never be called, but just in case
+                    return 0.0f;
+            }
+        }
+
+        private bool IsInTargetChain(int mutationId)
+        {
+            return targetPrerequisiteChain.Any(m => m.Id == mutationId);
         }
 
         private bool TrySpendWithinCategory(
@@ -341,6 +434,11 @@ namespace FungusToast.Core.AI
                 || m.Id == MutationIds.TendrilNortheast
                 || m.Id == MutationIds.TendrilSouthwest
                 || m.Id == MutationIds.TendrilSoutheast;
+        }
+
+        private List<MutationCategory> GetCategories()
+        {
+            return priorityMutationCategories ?? Enum.GetValues(typeof(MutationCategory)).Cast<MutationCategory>().ToList();
         }
 
         private List<MutationCategory> GetShuffledCategories()

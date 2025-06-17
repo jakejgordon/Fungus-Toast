@@ -17,13 +17,14 @@ namespace FungusToast.Core.AI
         public virtual bool? UsesFungicide { get; }
         public virtual bool? UsesGeneticDrift { get; }
 
-        public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board, ISimulationObserver? simulationObserver = null)
+        public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board,
+            Random rnd, ISimulationObserver? simulationObserver = null)
         {
             // Compute MP before
             int[] mpBefore = GetPointsByTier(player);
 
             // Delegate actual spending logic to child
-            PerformSpendingLogic(player, allMutations, board, simulationObserver);
+            PerformSpendingLogic(player, allMutations, board, rnd, simulationObserver);
 
             // Compute MP after
             int[] mpAfter = GetPointsByTier(player);
@@ -63,7 +64,8 @@ namespace FungusToast.Core.AI
 
 
         // Each concrete strategy must implement this core logic:
-        protected abstract void PerformSpendingLogic(Player player, List<Mutation> allMutations, GameBoard board, ISimulationObserver? simulationObserver);
+        protected abstract void PerformSpendingLogic(Player player, List<Mutation> allMutations, GameBoard board,
+            Random rnd, ISimulationObserver? simulationObserver);
 
 
         protected Mutation? PickBestTendrilMutation(Player player, List<Mutation> options, GameBoard board)

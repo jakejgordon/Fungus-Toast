@@ -177,4 +177,67 @@ class Program
     };
     }
 
+    private static List<IMutationSpendingStrategy> CreateEconomyTestingStrategies()
+    {
+        var mut1 = new ParameterizedSpendingStrategy(
+            strategyName: "Power Skillz - 1 turn surge frequency",
+            prioritizeHighTier: true,
+            surgeAttemptTurnFrequency: 1,
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var mut2 = new ParameterizedSpendingStrategy(
+            strategyName: "Power Skillz - 2 turn surge frequency",
+            prioritizeHighTier: true,
+            surgeAttemptTurnFrequency: 2,
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var mut3 = new ParameterizedSpendingStrategy(
+            strategyName: "Power Skillz - 3 turn surge frequency",
+            prioritizeHighTier: true,
+            surgeAttemptTurnFrequency: 3,
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var mut4 = new ParameterizedSpendingStrategy(
+            strategyName: "Power Skillz - 4 turn surge frequency",
+            prioritizeHighTier: true,
+            surgeAttemptTurnFrequency: 4,
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var mut5 = new ParameterizedSpendingStrategy(
+            strategyName: "Power Skillz - 5 turn surge frequency",
+            prioritizeHighTier: true,
+            surgeAttemptTurnFrequency: 5,
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var mut6 = new ParameterizedSpendingStrategy(
+            strategyName: "Power Skillz - 10 turn surge frequency",
+            prioritizeHighTier: true,
+            surgeAttemptTurnFrequency: 10,
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var mut7 = new ParameterizedSpendingStrategy(
+            strategyName: "Power Skillz - 20 turn surge frequency",
+            prioritizeHighTier: true,
+            surgeAttemptTurnFrequency: 20,
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        var mut8 = new ParameterizedSpendingStrategy(
+            strategyName: "Power Skillz - 50 turn surge frequency",
+            prioritizeHighTier: true,
+            surgeAttemptTurnFrequency: 50,
+            targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.Necrosporulation, MutationIds.NecrohyphalInfiltration });
+
+        return new List<IMutationSpendingStrategy>
+    {
+        mut1,
+        mut2,
+        mut3,
+        mut4,
+        mut5,
+        mut6,
+        mut7,
+        mut8
+    };
+    }
+
 }
