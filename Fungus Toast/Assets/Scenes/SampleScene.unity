@@ -108973,8 +108973,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8561422ec0c84540a664714cfb666ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  zoomSpeed: 10
-  moveSpeed: 10
+  zoomSpeed: 15
+  moveSpeed: 2
   minZoom: 5
   maxZoom: 100
 --- !u!4 &1422559398
@@ -113140,7 +113140,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3011fb8344dc0c445a2add8fe38608c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameManager: {fileID: 0}
+  gameManager: {fileID: 548818017}
   sidebarWidthInUnits: 4
   padding: 2
   moveDuration: 1

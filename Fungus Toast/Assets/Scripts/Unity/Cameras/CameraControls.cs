@@ -4,8 +4,8 @@ namespace FungusToast.Unity.Cameras
 {
     public class CameraControls : MonoBehaviour
     {
-        public float zoomSpeed = 10f;
-        public float moveSpeed = 10f;
+        public float zoomSpeed = 25f;
+        public float moveSpeed = 15f;
         public float minZoom = 5f;
         public float maxZoom = 100f;
 
@@ -19,25 +19,29 @@ namespace FungusToast.Unity.Cameras
                 size -= scroll * zoomSpeed;
                 size = Mathf.Clamp(size, minZoom, maxZoom);
                 Camera.main.orthographicSize = size;
-            }
 
-            // Pan with arrow keys or WASD
-            Vector3 move = new Vector3(
-                Input.GetAxis("Horizontal"),
-                Input.GetAxis("Vertical"),
-                0
-            );
-            Camera.main.transform.position += move * moveSpeed * Time.deltaTime;
+                // --- Panning with WASD/Arrow Keys ---
+                Vector3 move = new Vector3(
+                    Input.GetAxis("Horizontal"),
+                    Input.GetAxis("Vertical"),
+                    0
+                );
+                // Scale movement by camera size for consistent feel
+                float scaledSpeed = moveSpeed * Camera.main.orthographicSize;
+                Camera.main.transform.position += move * scaledSpeed * Time.deltaTime;
 
-            // Optional: Right-click drag pan
-            if (Input.GetMouseButton(1)) // Right mouse button
-            {
-                float dragSpeed = moveSpeed * 0.5f;
-                float dx = -Input.GetAxis("Mouse X") * dragSpeed;
-                float dy = -Input.GetAxis("Mouse Y") * dragSpeed;
-                Camera.main.transform.Translate(new Vector3(dx, dy, 0));
+                // --- Right-click drag pan ---
+                if (Input.GetMouseButton(1)) // Right mouse button
+                {
+                    // Right-drag panning also scaled by camera size
+                    float dragSpeed = moveSpeed * Camera.main.orthographicSize;
+                    float dx = -Input.GetAxis("Mouse X") * dragSpeed * Time.deltaTime;
+                    float dy = -Input.GetAxis("Mouse Y") * dragSpeed * Time.deltaTime;
+                    Camera.main.transform.Translate(new Vector3(dx, dy, 0));
+                }
             }
         }
+
     }
 }
 
