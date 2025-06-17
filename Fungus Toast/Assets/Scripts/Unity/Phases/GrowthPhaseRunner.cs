@@ -74,6 +74,12 @@ namespace FungusToast.Unity.Phases
             MergeFailedGrowths(failedThisCycle);
             gridVisualizer.RenderBoard(board);
 
+            // Update Occupancy in sidebar after each growth cycle
+            int round = GameManager.Instance.Board.CurrentRound;
+            float occupancy = GameManager.Instance.Board.GetOccupiedTileRatio() * 100f;
+            GameManager.Instance.GameUI.RightSidebar.SetRoundAndOccupancy(round, occupancy);
+
+
             GameManager.Instance.GameUI.PhaseProgressTracker?.AdvanceToNextGrowthCycle(phaseCycle);
             GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(players);
 

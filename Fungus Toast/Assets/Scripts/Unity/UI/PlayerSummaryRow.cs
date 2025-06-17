@@ -10,6 +10,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image moldIconImage;
         [SerializeField] private TextMeshProUGUI livingCellsText;
         [SerializeField] private TextMeshProUGUI deadCellsText;
+        [SerializeField] private TextMeshProUGUI toxinCellsText;
 
         // Add this field to keep reference if needed
         private PlayerMoldIconHoverHandler hoverHandler;
@@ -23,16 +24,16 @@ namespace FungusToast.Unity.UI
                 moldIconImage.sprite = sprite;
         }
 
-        /// <summary>
-        /// Sets the living and dead cell counts.
-        /// </summary>
-        public void SetCounts(string living, string dead)
+        public void SetCounts(string living, string dead, string toxins)
         {
             if (livingCellsText != null)
                 livingCellsText.text = living; // No label, just the number
             if (deadCellsText != null)
                 deadCellsText.text = dead;     // No label, just the number
+            if (toxinCellsText != null)
+                toxinCellsText.text = toxins;
         }
+
 
         /// <summary>
         /// Call this after instantiating the row to wire up hover highlighting!

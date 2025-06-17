@@ -167,6 +167,9 @@ namespace FungusToast.Unity
 
             gameUIManager.MoldProfilePanel?.Initialize(humanPlayer, players);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
+
+            Board.Players.Clear();
+            Board.Players.AddRange(players);
         }
 
         private void PlaceStartingSpores()
@@ -186,6 +189,10 @@ namespace FungusToast.Unity
                 int py = Mathf.Clamp(Mathf.RoundToInt(center.y + radius * Mathf.Sin(angle)), 0, boardHeight - 1);
                 Board.PlaceInitialSpore(shuffledPlayerIndices[i], px, py);
             }
+
+            int round = Board.CurrentRound;
+            float occupancy = Board.GetOccupiedTileRatio() * 100f; // ratio to percent
+            gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy);
         }
 
 
@@ -227,6 +234,9 @@ namespace FungusToast.Unity
 
             Board.IncrementRound();
 
+            int round = Board.CurrentRound;
+            float occupancy = Board.GetOccupiedTileRatio() * 100f; // ratio to percent
+            gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy);
         }
 
         public void OnGrowthPhaseComplete()

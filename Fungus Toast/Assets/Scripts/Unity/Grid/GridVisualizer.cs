@@ -96,27 +96,29 @@ namespace FungusToast.Unity.Grid
 
         private IEnumerator PulseHighlightTiles()
         {
-            float duration = 0.75f; // Duration of one pulse cycle (seconds)
-            float baseAlpha = 0.25f; // Minimum alpha
-            float pulseAlpha = 0.85f; // Maximum alpha
+            float duration = 0.4f;         // Much faster pulse
+            float baseAlpha = 0.8f;        // Minimum alpha is high
+            float pulseAlpha = 1.0f;       // Maximum alpha
+            Color colorA = new Color(1f, 1f, 0.1f, 1f);    // Bright yellow
+            Color colorB = new Color(0.1f, 1f, 1f, 1f);    // Bright cyan
 
             while (true)
             {
                 float t = Mathf.PingPong(Time.time * (2f / duration), 1f); // Loops between 0 and 1
                 float alpha = Mathf.Lerp(baseAlpha, pulseAlpha, t);
+                Color pulseColor = Color.Lerp(colorA, colorB, t);
+                pulseColor.a = alpha;
 
                 foreach (var pos in highlightedPositions)
                 {
                     if (HoverTileMap.HasTile(pos))
                     {
-                        HoverTileMap.SetColor(pos, new Color(1f, 1f, 0.3f, alpha)); // yellowish pulse
+                        HoverTileMap.SetColor(pos, pulseColor);
                     }
                 }
-
                 yield return null;
             }
         }
-
 
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
