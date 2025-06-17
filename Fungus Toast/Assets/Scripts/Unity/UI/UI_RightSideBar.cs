@@ -12,6 +12,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Transform playerSummaryContainer;
         [SerializeField] private GameObject playerSummaryPrefab;
         [SerializeField] private TextMeshProUGUI endgameCountdownText;
+        [SerializeField] private TextMeshProUGUI roundAndOccupancyText;
 
         // Add a GridVisualizer field and setter
         private GridVisualizer gridVisualizer;
@@ -95,5 +96,12 @@ namespace FungusToast.Unity.UI
                 endgameCountdownText.gameObject.SetActive(!string.IsNullOrEmpty(message));
             }
         }
+
+        public void SetRoundAndOccupancy(int round, float occupancy)
+        {
+            // Show as: "Round: 7 | Occupancy: 32.7%"
+            roundAndOccupancyText.text = $"<b>Round:</b> {round}   <b>Occupancy:</b> {occupancy:F2}%";
+        }
+
     }
 }
