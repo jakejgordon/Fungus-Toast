@@ -141,19 +141,27 @@ namespace FungusToast.Core.Phases
             var tier1 = allMutations.Where(m => m.Tier == MutationTier.Tier1 && player.CanUpgrade(m)).ToList();
             var tier2 = allMutations.Where(m => m.Tier == MutationTier.Tier2 && player.CanUpgrade(m)).ToList();
             var tier3 = allMutations.Where(m => m.Tier == MutationTier.Tier3 && player.CanUpgrade(m)).ToList();
+            var tier4 = allMutations.Where(m => m.Tier == MutationTier.Tier4 && player.CanUpgrade(m)).ToList();
 
             List<Mutation> pool;
             MutationTier targetTier;
 
-            // Hyperadaptive Drift: roll to see if we try for tier 2 or 3 instead of 1
+            // Hyperadaptive Drift: roll to see if we try for tier 2, 3, or 4 instead of 1
             if (hasHyperadaptive && rng.NextDouble() < higherTierChance)
             {
-                // Try tier 2 or 3 randomly
-                var higherTiers = tier2.Concat(tier3).ToList();
-                if (higherTiers.Count > 0)
+                // Try tier 2, 3, or 4 randomly, but only among those with upgradable mutations
+                var availableHigherTiers = new List<(List<Mutation> mutations, MutationTier tier)>
+        {
+            (tier2, MutationTier.Tier2),
+            (tier3, MutationTier.Tier3),
+            (tier4, MutationTier.Tier4)
+        }.Where(t => t.mutations.Count > 0).ToList();
+
+                if (availableHigherTiers.Count > 0)
                 {
-                    pool = higherTiers;
-                    targetTier = rng.Next(2) == 0 ? MutationTier.Tier2 : MutationTier.Tier3;
+                    var selected = availableHigherTiers[rng.Next(availableHigherTiers.Count)];
+                    pool = selected.mutations;
+                    targetTier = selected.tier;
                 }
                 else if (tier1.Count > 0)
                 {
@@ -206,7 +214,7 @@ namespace FungusToast.Core.Phases
                         hyperadaptivePoints += pick.PointsPerUpgrade;
                     }
                 }
-                else // Tier 2 or 3
+                else // Tier 2, 3, or 4
                 {
                     hyperadaptivePoints += pick.PointsPerUpgrade;
                 }
@@ -222,6 +230,7 @@ namespace FungusToast.Core.Phases
                     observer.RecordHyperadaptiveDriftMutationPointsEarned(player.PlayerId, hyperadaptivePoints);
             }
         }
+
 
 
 

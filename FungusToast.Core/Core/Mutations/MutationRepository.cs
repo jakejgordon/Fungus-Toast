@@ -411,8 +411,8 @@ namespace FungusToast.Core.Mutations
                 id: MutationIds.HyperadaptiveDrift,
                 name: "Hyperadaptive Drift",
                 description:
-                    $"Each level grants a {FormatPercent(GameBalance.HyperadaptiveDriftHigherTierChancePerLevel)} increased chance for Mutator Phenotype to upgrade a random Tier 2 or Tier 3 mutation each round.\n" +
-                    $"If a Tier 1 mutation is selected, each level grants a {FormatPercent(GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel)} chance to upgrade an additional level in that mutation instead.",
+                    $"Each level grants a {FormatPercent(GameBalance.HyperadaptiveDriftHigherTierChancePerLevel)} chance for Mutator Phenotype to upgrade a random Tier 2, 3, or 4 mutation each round, instead of Tier 1.\n" +
+                    $"If a Tier 1 mutation is selected, each level also grants a {FormatPercent(GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel)} chance to upgrade an additional level in that mutation instead.",
                 flavorText:
                     "Genome-wide instability unlocks adaptive leaps: mutator elements jump boundaries, splicing entire gene complexes with chaotic vigor. High-level traits now accelerate and cascade, birthing wild new forms.",
                 type: MutationType.EnhancedAutoUpgradeRandom,
@@ -427,6 +427,7 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.MycotoxinTracer, 2),
             new MutationPrerequisite(MutationIds.NecrophyticBloom, 1)
             );
+
 
 
             return (allMutations, rootMutations);

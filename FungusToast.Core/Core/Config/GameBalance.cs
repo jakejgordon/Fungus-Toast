@@ -33,7 +33,7 @@ namespace FungusToast.Core.Config
         public const float NecrosporulationEffectPerLevel = 0.04f;
         public const int MycotoxinPotentiationGrowthCycleExtensionPerLevel = 1;
         public const float MycotoxinPotentiationKillChancePerLevel = 0.012f;
-        public const float AdaptiveExpressionEffectPerLevel = 0.09f;
+        public const float AdaptiveExpressionEffectPerLevel = 0.15f;
         public const float MycotoxinCatabolismCleanupChancePerLevel = 0.025f;
         public const float MycotoxinCatabolismMutationPointChancePerCatabolism = 0.075f;
         public const int MycotoxinCatabolismMaxMutationPointsPerRound = 3;
@@ -51,7 +51,7 @@ namespace FungusToast.Core.Config
         public const int SporocidalToxinTileDuration = 11;
         public const int NecrophyticBloomBaseSpores = 2;
         public const float NecrophyticBloomSporesPerDeathPerLevel = 40;
-        public const float HyperadaptiveDriftHigherTierChancePerLevel = .15f;
+        public const float HyperadaptiveDriftHigherTierChancePerLevel = .2f;
         public const float HyperadaptiveDriftBonusTierOneMutationChancePerLevel = .2f;
         public const float NecrohyphalInfiltrationChancePerLevel = 0.004f;
         public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.019f;
@@ -68,7 +68,7 @@ namespace FungusToast.Core.Config
         public const int HyphalSurgeMaxLevel = 10;
         public const int NecrosporulationMaxLevel = 5;
         public const int MycotoxinPotentiationMaxLevel = 10;
-        public const int AdaptiveExpressionMaxLevel = 10;
+        public const int AdaptiveExpressionMaxLevel = 6;
         public const int MycotoxinCatabolismMaxLevel = 10;
         public const int MycotropicInductionMaxLevel = 5;
         public const int PutrefactiveMycotoxinMaxLevel = 5;

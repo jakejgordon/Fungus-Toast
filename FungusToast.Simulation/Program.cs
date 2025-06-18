@@ -5,15 +5,16 @@ using FungusToast.Simulation.StrategySets;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 50;
+    private const int NumberOfSimulationGames = 500;
 
     static void Main()
     {
         //var strategies = CreatePredefinedStrategies();
 
-        int playerCount = 7;
+        //int playerCount = 7;
         var rnd = new Random(); // Or any deterministic seed you want
 
+        /*
         var strategies = EconomyBiasStrategyFactory.CreateEconomyBiasStrategies(
             playerCount: playerCount,
             rnd: rnd,
@@ -21,14 +22,20 @@ class Program
             surgeAttemptTurnFrequency: 10,
             prioritizeHighTier: true
         );
+        */
 
+        var strategies = MixedEconomySurgeStrategyFactory.CreateEightEconomySurgeStrategies(8);
+
+        /*
         var killerToxin = new ParameterizedSpendingStrategy(
             strategyName: "Toxins",
             prioritizeHighTier: true,
             targetMutationIds: new List<int> { MutationIds.NecrophyticBloom, MutationIds.NecrotoxicConversion, MutationIds.SporocidalBloom });
-        strategies.Add(killerToxin);
 
-        Console.WriteLine($"Running simulation with {playerCount} players...\n");
+        strategies.Add(killerToxin);
+        */
+
+        Console.WriteLine($"Running simulation with {strategies.Count} players...\n");
 
         // Run simulation
         var runner = new MatchupRunner();
