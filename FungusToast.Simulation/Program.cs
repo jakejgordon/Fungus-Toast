@@ -5,7 +5,7 @@ using FungusToast.Simulation.StrategySets;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 1000;
+    private const int NumberOfSimulationGames = 2;
 
     static void Main()
     {
@@ -62,8 +62,8 @@ class Program
             usageTracker.TrackGameResult(result);
         }
         var allPlayerResults = results.GameResults.SelectMany(r => r.PlayerResults).ToList();
-        usageTracker.PrintReport(allPlayerResults);
-
+        var rankedPlayers = MatchupStatsAggregator.GetRankedPlayerList(results.GameResults);
+        usageTracker.PrintReport(allPlayerResults, rankedPlayers);
 
         Console.WriteLine("\nSimulation complete. Press any key to exit.");
         Console.ReadKey();

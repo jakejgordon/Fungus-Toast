@@ -45,7 +45,7 @@ namespace FungusToast.Core.Config
         public const int AgeResetReductionPerLevel = 5;
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
-        public const float RegenerativeHyphaeReclaimChance = 0.008f;
+        public const float RegenerativeHyphaeReclaimChance = 0.01f;
         public const float CreepingMoldMoveChancePerLevel = .035f;
         public const float SporicialBloomEffectPerLevel = .065f;
         public const int SporocidalToxinTileDuration = 11;

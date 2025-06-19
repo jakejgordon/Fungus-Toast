@@ -17,7 +17,7 @@ namespace FungusToast.Simulation.Analysis
         public void PrintSummary(
             List<GameResult> results,
             Dictionary<DeathReason, int> cumulativeDeathReasons // only for end-state legacy
-            )
+        )
         {
             int boardWidth = GameBalance.BoardWidth;
             int boardHeight = GameBalance.BoardHeight;
@@ -158,8 +158,9 @@ namespace FungusToast.Simulation.Analysis
             PrintDeathReasonSummaryFloat(avgDeathReasons, "Cumulative Death Reason Summary", 1); // gameCount=1 to avoid dividing again
             PrintDeathReasonSummary(endStateDeathReasonCounts, "End-State Death Reason Summary (At Game End)", numGames);
 
-            PrintPlayerSummaryTable(playerStats, results); // Changed to pass all results for MP stats
+            PrintPlayerSummaryTable(playerStats, results); // pass all 3 args!
         }
+
 
         private void PrintDeathReasonSummaryFloat(
             Dictionary<DeathReason, float> avgDeathReasons,
@@ -210,10 +211,14 @@ namespace FungusToast.Simulation.Analysis
                 IMutationSpendingStrategy strategyObj, int wins, int appearances,
                 int living, int dead, int reclaims, int moldMoves,
                 int sporesBloom, int sporesNecro, int sporesNecrophytic,
-                int reclaimsNecrophytic, int sporesMycotoxin, int toxinAuraKills, int mycotoxinCatabolisms, int mpSpent,
+                int reclaimsNecrophytic, int sporesFromMycotoxin, int toxinAuraKills, int mycotoxinCatabolisms, int mpSpent,
                 float growthChance, float selfDeathChance, float decayMod)> playerStats,
-            List<GameResult> gameResults) // <- changed
+            List<GameResult> gameResults
+        )
         {
+            // --- Use ranked player list for sorting ---
+            var rankedPlayerList = GetRankedPlayerList(gameResults);
+
             // --- Aggregate MP stats across all games ---
             var totalMpSpentByPlayer = new Dictionary<int, int>();
             var totalMpEarnedByPlayer = new Dictionary<int, int>();
@@ -248,14 +253,16 @@ namespace FungusToast.Simulation.Analysis
                 $"{"Growth%",11} | {"SelfDeath%",13} | {"DecayMod",10}");
             Console.WriteLine(new string('-', 233));
 
-            foreach (var (id, entry) in playerStats
-                .OrderByDescending(kvp => kvp.Value.appearances > 0 ? (float)kvp.Value.wins / kvp.Value.appearances : 0f)
-                .ThenByDescending(kvp => kvp.Value.appearances > 0 ? (float)kvp.Value.living / kvp.Value.appearances : 0f))
+            // Order output using rankedPlayerList
+            foreach (var (id, strategyName) in rankedPlayerList)
             {
+                if (!playerStats.TryGetValue(id, out var entry))
+                    continue;
+
                 var (
                     strategyObj, wins, appearances, living, dead,
                     reclaims, moldMoves, sporesBloom, sporesNecro,
-                    sporesNecrophytic, reclaimsNecrophytic, sporesMycotoxin,
+                    sporesNecrophytic, reclaimsNecrophytic, sporesFromMycotoxin,
                     toxinAuraKills, mycotoxinCatabolisms, mpSpent, growth, selfDeath, decayMod
                 ) = entry;
 
@@ -277,6 +284,8 @@ namespace FungusToast.Simulation.Analysis
 
             Console.WriteLine(new string('-', 233));
         }
+
+
 
         private void PrintDeathReasonSummary(
             Dictionary<DeathReason, int> deathReasonCounts,
@@ -302,5 +311,40 @@ namespace FungusToast.Simulation.Analysis
 
         private string Truncate(string s, int max) =>
             s.Length > max ? s.Substring(0, max - 1) + "…" : s;
+
+        public static List<(int PlayerId, string StrategyName)> GetRankedPlayerList(List<GameResult> gameResults)
+        {
+            var playerGroups = gameResults
+                .SelectMany(r => r.PlayerResults.Select(pr => new
+                {
+                    pr.PlayerId,
+                    StrategyName = pr.StrategyName ?? "None",
+                    pr.LivingCells,
+                    WinnerId = r.WinnerId
+                }))
+                .GroupBy(x => (x.PlayerId, x.StrategyName))
+                .Select(g =>
+                {
+                    int wins = g.Count(x => x.PlayerId == x.WinnerId);
+                    double avgAlive = g.Average(x => x.LivingCells);
+                    return new
+                    {
+                        PlayerId = g.Key.PlayerId,
+                        StrategyName = g.Key.StrategyName,
+                        Wins = wins,
+                        AvgAlive = avgAlive
+                    };
+                })
+                .OrderByDescending(x => x.Wins)
+                .ThenByDescending(x => x.AvgAlive)
+                .Select(x => (x.PlayerId, x.StrategyName))
+                .ToList();
+
+            return playerGroups;
+        }
+
+
+
+
     }
 }

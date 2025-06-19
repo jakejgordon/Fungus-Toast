@@ -39,50 +39,76 @@ namespace FungusToast.Simulation.Analysis
             }
         }
 
-        public void PrintReport(List<PlayerResult> allPlayerResults)
+        public void PrintReport(
+            List<PlayerResult> allPlayerResults,
+            List<(int PlayerId, string StrategyName)> rankedPlayers
+        )
         {
-            var playerStrategyGroups = allPlayerResults
-                .GroupBy(r => (r.PlayerId, r.StrategyName ?? "None"))
-                .OrderBy(g => g.Key.Item1);
+            // 1. Prepare category sort order
+            var categorySortOrder = new Dictionary<MutationCategory, int>
+    {
+        { MutationCategory.Growth, 0 },
+        { MutationCategory.CellularResilience, 1 },
+        { MutationCategory.Fungicide, 2 },
+        { MutationCategory.GeneticDrift, 3 },
+        { MutationCategory.MycelialSurges, 4 }
+    };
 
             Console.WriteLine("\nPlayer-Mutation Usage Summary (per Player, all games):");
-            Console.WriteLine("{0,8} | {1,-37} | {2,-32} | {3,10} | {4,10} | {5,-32} | {6,24} | {7,24} | {8,12}",
-                "PlayerId", "Strategy", "Mutation Name", "Games", "AvgLvl",
+            Console.WriteLine("{0,8} | {1,-37} | {2,-6} | {3,-32} | {4,10} | {5,10} | {6,-32} | {7,24} | {8,24} | {9,12}",
+                "PlayerId", "Strategy", "Tier", "Mutation Name", "Games", "AvgLvl",
                 "Mutation Effect(s)", "Avg Effect (All Games)", "Total Effect (All Games)", "Avg Alive");
 
-            Console.WriteLine(new string('-', 8) + "-|-" + new string('-', 37) + "-|-" + new string('-', 32) + "-|-" +
-                              new string('-', 10) + "-|-" + new string('-', 10) + "-|-" +
+            Console.WriteLine(new string('-', 8) + "-|-" + new string('-', 37) + "-|-" + new string('-', 6) + "-|-" +
+                              new string('-', 32) + "-|-" + new string('-', 10) + "-|-" + new string('-', 10) + "-|-" +
                               new string('-', 32) + "-|-" + new string('-', 24) + "-|-" +
                               new string('-', 24) + "-|-" +
                               new string('-', 12));
 
             var mutationEffectFields = GetMutationEffectFields();
 
-            foreach (var group in playerStrategyGroups)
+            // Group player results by (PlayerId, StrategyName)
+            var playerStrategyGroups = allPlayerResults
+                .GroupBy(r => (r.PlayerId, r.StrategyName ?? "None"))
+                .ToDictionary(g => (g.Key.PlayerId, g.Key.Item2), g => g.ToList());
+
+            // Loop through ranked players in given order
+            foreach (var (playerId, strategyName) in rankedPlayers)
             {
-                int playerId = group.Key.Item1;
-                string strategy = group.Key.Item2;
-                var playerResults = group.ToList();
+                if (!playerStrategyGroups.TryGetValue((playerId, strategyName), out var playerResults))
+                    continue;
+
                 int games = playerResults.Count;
                 float avgAlive = games > 0 ? (float)playerResults.Average(r => r.LivingCells) : 0f;
 
+                // Sort mutation ids by Tier, then Category, then Name
                 var allMutationIds = playerResults
                     .SelectMany(r => r.MutationLevels.Keys)
                     .Distinct()
-                    .OrderBy(id => id);
+                    .Select(id => MutationRegistry.GetById(id))
+                    .Where(m => m != null)
+                    .OrderBy(m => m!.Tier)
+                    .ThenBy(m => categorySortOrder.TryGetValue(m!.Category, out var idx) ? idx : 99)
+                    .ThenBy(m => m!.Name)
+                    .ToList();
 
-                foreach (var mutationId in allMutationIds)
+                foreach (var mutation in allMutationIds)
                 {
+                    if (mutation == null)
+                        continue; // Defensive: skip nulls
+
+                    int mutationId = mutation.Id;
                     float avgLevel = (games > 0)
                         ? (float)playerResults.Average(r => r.MutationLevels.TryGetValue(mutationId, out var lvl) ? lvl : 0)
                         : 0f;
 
                     var (effectLabel, avgEffects, totalEffects) = GetMutationEffectStats(mutationId, playerResults, mutationEffectFields, games);
 
-                    Console.WriteLine("{0,8} | {1,-37} | {2,-32} | {3,10} | {4,10:F2} | {5,-32} | {6,24} | {7,24} | {8,12:F2}",
+                    Console.WriteLine("{0,8} | {1,-37} | {2,-6} | {3,-32} | {4,10} | {5,10:F2} | {6,-32} | {7,24} | {8,24} | {9,12:F2}",
                         playerId,
-                        Truncate(strategy, 37),
-                        Truncate(MutationRegistry.GetById(mutationId)?.Name ?? $"[ID {mutationId}]", 32),
+                        Truncate(strategyName, 37),
+                        mutation.Tier.ToString(),
+                        Truncate(mutation.Name, 32),
                         games,
                         avgLevel,
                         Truncate(effectLabel, 32),
@@ -90,10 +116,14 @@ namespace FungusToast.Simulation.Analysis
                         totalEffects,
                         avgAlive);
                 }
+
             }
 
-            Console.WriteLine(new string('-', 245));
+            Console.WriteLine(new string('-', 260));
         }
+
+
+
 
         private static (string label, string avgEffect, string totalEffect) GetMutationEffectStats(
             int mutationId,

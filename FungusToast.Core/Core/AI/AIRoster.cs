@@ -22,6 +22,18 @@ namespace FungusToast.Core.AI
                     MutationCategory.CellularResilience
                 }
             ),
+             // The following are "best of" mutations in their categories
+            new ParameterizedSpendingStrategy(
+                strategyName: "SurgeFreq_10",
+                targetMutationIds: new List<int>
+                {
+                    MutationIds.HyphalSurge,
+                    MutationIds.HyphalVectoring
+                },
+                surgeAttemptTurnFrequency: 10,
+                prioritizeHighTier: true,
+                maxTier: MutationTier.Tier4),
+
             new ParameterizedSpendingStrategy(
                 strategyName: "Power Mutations",
                 prioritizeHighTier: true,
@@ -36,18 +48,6 @@ namespace FungusToast.Core.AI
                 strategyName: "Minor Economy",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MinorEconomy
-            ),
-            // The following are "best of" mutations in their categories
-            new ParameterizedSpendingStrategy(
-                strategyName: "SurgeFreq_10",
-                targetMutationIds: new List<int>
-                {
-                    MutationIds.HyphalSurge,
-                    MutationIds.HyphalVectoring
-                },
-                surgeAttemptTurnFrequency: 10,
-                prioritizeHighTier: true,
-                maxTier: MutationTier.Tier4
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Best_MaxEcon_Surge5_HyphalSurge",
