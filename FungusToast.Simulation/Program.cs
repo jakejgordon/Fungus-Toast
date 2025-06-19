@@ -5,7 +5,7 @@ using FungusToast.Simulation.StrategySets;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 500;
+    private const int NumberOfSimulationGames = 1000;
 
     static void Main()
     {
@@ -24,7 +24,7 @@ class Program
         );
         */
 
-        var strategies = MixedEconomySurgeStrategyFactory.CreateEightEconomySurgeStrategies(8);
+        //var strategies = MixedEconomySurgeStrategyFactory.CreateEightEconomySurgeStrategies(8);
 
         /*
         var killerToxin = new ParameterizedSpendingStrategy(
@@ -34,6 +34,8 @@ class Program
 
         strategies.Add(killerToxin);
         */
+
+        var strategies = AIRoster.GetRandomProvenStrategies(8, rnd);
 
         Console.WriteLine($"Running simulation with {strategies.Count} players...\n");
 
