@@ -51,8 +51,8 @@ namespace FungusToast.Core.Config
         public const int SporocidalToxinTileDuration = 11;
         public const int NecrophyticBloomBaseSpores = 2;
         public const float NecrophyticBloomSporesPerDeathPerLevel = 40;
-        public const float HyperadaptiveDriftHigherTierChancePerLevel = .2f;
-        public const float HyperadaptiveDriftBonusTierOneMutationChancePerLevel = .2f;
+        public const float HyperadaptiveDriftHigherTierChancePerLevel = .25f;
+        public const float HyperadaptiveDriftBonusTierOneMutationChancePerLevel = .25f;
         public const float NecrohyphalInfiltrationChancePerLevel = 0.004f;
         public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.019f;
         public const float NecrotoxicConversionReclaimChancePerLevel = .02f;
@@ -77,7 +77,7 @@ namespace FungusToast.Core.Config
         public const int CreepingMoldMaxLevel = 4;
         public const int SporocidalBloomMaxLevel = 5;
         public const int NecrophyticBloomMaxLevel = 5;
-        public const int HyperadaptiveDriftMaxLevel = 5;
+        public const int HyperadaptiveDriftMaxLevel = 4;
         public const int NecrohyphalInfiltrationMaxLevel = 5;
         public const int NecrotoxicConversionMaxLevel = 5;
 
