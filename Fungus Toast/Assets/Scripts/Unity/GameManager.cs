@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.Cameras;
 using FungusToast.Unity.Phases;
@@ -85,7 +86,9 @@ namespace FungusToast.Unity
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
             gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
             phaseProgressTracker?.ResetTracker();
+            UpdatePhaseProgressTrackerLabel();
             phaseProgressTracker?.HighlightMutationPhase();
+
 
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
 
@@ -252,6 +255,8 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
 
             gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
+            UpdatePhaseProgressTrackerLabel();
+
             phaseProgressTracker?.HighlightMutationPhase();
         }
 
@@ -334,5 +339,18 @@ namespace FungusToast.Unity
             Debug.Log("All AI players have spent their mutation points.");
             StartGrowthPhase();
         }
+
+        private void UpdatePhaseProgressTrackerLabel()
+        {
+            if (Board.CurrentRound == MycovariantGameBalance.MycovariantSelectionTriggerRound)
+            {
+                phaseProgressTracker?.SetMutationPhaseLabel("DRAFT");
+            }
+            else
+            {
+                phaseProgressTracker?.SetMutationPhaseLabel("MUTATION");
+            }
+        }
+
     }
 }

@@ -1,14 +1,15 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
-using FungusToast.Core.Growth;
-using FungusToast.Core.Mutations;
-using FungusToast.Core.AI;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Death;
-using System;
-using FungusToast.Core.Phases;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
+using FungusToast.Core.Mutations;
+using FungusToast.Core.Phases;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Core.Players
 {
@@ -23,6 +24,9 @@ namespace FungusToast.Core.Players
         public int MutationPoints { get; set; }
 
         public Dictionary<int, PlayerMutation> PlayerMutations { get; } = new();
+
+        public List<PlayerMycovariant> Mycovariants { get; } = new();
+
         public List<int> ControlledTileIds { get; } = new();
 
         public bool IsActive { get; set; }
@@ -323,5 +327,11 @@ namespace FungusToast.Core.Players
 
             return MutationPoints;
         }
+
+        public bool HasMycovariant(int id) =>
+            Mycovariants.Any(m => m.MycovariantId == id);
+
+        public PlayerMycovariant? GetMycovariant(int id) =>
+            Mycovariants.FirstOrDefault(m => m.MycovariantId == id);
     }
 }

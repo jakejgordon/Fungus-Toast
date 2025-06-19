@@ -70,5 +70,15 @@ namespace FungusToast.Unity.UI
             label.fontStyle = FontStyles.Normal;
             label.ForceMeshUpdate(); // force Unity to apply style
         }
+
+        public void SetMutationPhaseLabel(string text)
+        {
+            if (mutationPhaseLabel != null)
+            {
+                mutationPhaseLabel.text = text;
+                mutationPhaseLabel.ForceMeshUpdate(); // ensure text updates immediately
+            }
+        }
+
     }
 }
