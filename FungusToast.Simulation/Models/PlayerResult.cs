@@ -15,39 +15,38 @@ namespace FungusToast.Simulation.Models
         public string StrategyName { get; set; } = string.Empty;
 
         // ──────────────
-        // CELL COUNTS
+        // FINAL CELL COUNTS (GAME END)
         // ──────────────
         public int LivingCells { get; set; }
         public int DeadCells { get; set; }
-        public int ReclaimedCells { get; set; }
+
+        // ──────────────
+        // DEATH REASONS (GAME END)
+        // ──────────────
         public List<DeathReason> DeadCellDeathReasons { get; set; } = new();
         public Dictionary<DeathReason, int> DeathsByReason { get; set; } = new();
 
-        /// <summary>
-        /// Number of cells this player lost due to random (baseline) death.
-        /// </summary>
         public int DeathsFromRandomness { get; set; }
-
-        /// <summary>
-        /// Number of cells this player lost due to death by age.
-        /// </summary>
         public int DeathsFromAge { get; set; }
 
         // ──────────────
-        // MUTATIONS
+        // MUTATION TREE STATE
         // ──────────────
         public Dictionary<int, int> MutationLevels { get; set; } = new();
 
         // ──────────────
-        // EFFECTIVE STATS
+        // EFFECTIVE STATS (AT GAME END)
         // ──────────────
         public float EffectiveGrowthChance { get; set; }
         public float EffectiveSelfDeathChance { get; set; }
         public float OffensiveDecayModifier { get; set; }
 
         // ──────────────
-        // MUTATION EFFECT COUNTERS
+        // MUTATION EFFECT COUNTERS (RUNNING TOTALS)
         // ──────────────
+
+        // Core mutation event metrics
+        public int RegenerativeHyphaeReclaims { get; set; }    // NEW: Regenerative Hyphae event-based
         public int CreepingMoldMoves { get; set; }
         public int NecrosporulationSpores { get; set; }
         public int SporocidalSpores { get; set; }
@@ -61,25 +60,9 @@ namespace FungusToast.Simulation.Models
         public int NecrohyphalInfiltrations { get; set; }
         public int NecrohyphalCascades { get; set; }
         public int PutrefactiveMycotoxinKills { get; set; }
-
-        /// <summary>
-        /// Number of cells reclaimed using Necrotoxic Conversion (Tier 5 Fungicide).
-        /// </summary>
         public int NecrotoxicConversionReclaims { get; set; }
-
-        /// <summary>
-        /// Number of successful cell growths attributed to Hyphal Surge mutation.
-        /// </summary>
         public int HyphalSurgeGrowths { get; set; }
-
-        /// <summary>
-        /// Number of living fungal cells created by Hyphal Vectoring surge mutation.
-        /// </summary>
-        public int HyphalVectoringGrowths { get; set; } // <--- NEW FIELD
-
-        // ──────────────
-        // TENDRIL GROWN CELL COUNTERS
-        // ──────────────
+        public int HyphalVectoringGrowths { get; set; }
         public int TendrilNorthwestGrownCells { get; set; }
         public int TendrilNortheastGrownCells { get; set; }
         public int TendrilSoutheastGrownCells { get; set; }
@@ -93,22 +76,10 @@ namespace FungusToast.Simulation.Models
         public int HyperadaptiveDriftPointsEarned { get; set; }
 
         // ──────────────
-        // MUTATION POINT INCOME/SPENDING (NEW)
+        // MUTATION POINT ECONOMY
         // ──────────────
-
-        /// <summary>
-        /// Total mutation points awarded to this player (all sources, including bonuses).
-        /// </summary>
         public int MutationPointIncome { get; set; }
-
-        /// <summary>
-        /// Mutation points spent by tier (key: MutationTier, value: total points spent at that tier).
-        /// </summary>
         public Dictionary<MutationTier, int> MutationPointsSpentByTier { get; set; } = new();
-
-        /// <summary>
-        /// Total mutation points spent (across all tiers).
-        /// </summary>
         public int TotalMutationPointsSpent { get; set; }
     }
 }

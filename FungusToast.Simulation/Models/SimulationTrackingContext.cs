@@ -27,6 +27,7 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> necrophyticBloomReclaims = new();
         private readonly Dictionary<int, int> toxinCatabolisms = new();
         private readonly Dictionary<int, int> catabolizedMutationPoints = new();
+        private readonly Dictionary<int, int> regenerativeHyphaeReclaims = new();
 
         // Necrotoxic Conversion
         private readonly Dictionary<int, int> necrotoxicConversionReclaims = new();
@@ -103,6 +104,13 @@ namespace FungusToast.Simulation.Models
         public void SetReclaims(int playerId, int count)
         {
             reclaimedCells[playerId] = count;
+        }
+
+        public void RecordRegenerativeHyphaeReclaim(int playerId)
+        {
+            if (!regenerativeHyphaeReclaims.ContainsKey(playerId))
+                regenerativeHyphaeReclaims[playerId] = 0;
+            regenerativeHyphaeReclaims[playerId]++;
         }
 
         public void RecordAdaptiveExpressionBonus(int playerId, int bonusPoints)
@@ -272,6 +280,8 @@ namespace FungusToast.Simulation.Models
             return mutationPointIncomeByPlayer.TryGetValue(playerId, out var val) ? val : 0;
         }
 
+        public int GetRegenerativeHyphaeReclaims(int playerId) =>
+            regenerativeHyphaeReclaims.TryGetValue(playerId, out var val) ? val : 0;
 
         // Optionally: Get all per-player tier breakdowns
         public Dictionary<int, Dictionary<MutationTier, int>> GetAllMutationPointsSpentByTier()
@@ -382,5 +392,7 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetAllTendrilNortheastGrownCells() => new(tendrilNortheastGrownCells);
         public Dictionary<int, int> GetAllTendrilSoutheastGrownCells() => new(tendrilSoutheastGrownCells);
         public Dictionary<int, int> GetAllTendrilSouthwestGrownCells() => new(tendrilSouthwestGrownCells);
+        public Dictionary<int, int> GetAllRegenerativeHyphaeReclaims() => new(regenerativeHyphaeReclaims);
+
     }
 }

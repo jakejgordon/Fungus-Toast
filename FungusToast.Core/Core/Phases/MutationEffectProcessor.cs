@@ -20,16 +20,15 @@ namespace FungusToast.Core.Phases
     public static class MutationEffectProcessor
     {
         public static void ApplyRegenerativeHyphaeReclaims(GameBoard board,
-                                                   List<Player> players,
-                                                   Random rng)
+                                                    List<Player> players,
+                                                    Random rng,
+                                                    ISimulationObserver? observer = null)
         {
             var attempted = new HashSet<int>();
-
             foreach (Player p in players)
             {
                 float reclaimChance = p.GetMutationEffect(MutationType.ReclaimOwnDeadCells);
                 if (reclaimChance <= 0f) continue;
-
                 foreach (FungalCell cell in board.GetAllCellsOwnedBy(p.PlayerId))
                 {
                     foreach (BoardTile n in board.GetOrthogonalNeighbors(cell.TileId))
@@ -38,17 +37,18 @@ namespace FungusToast.Core.Phases
                         if (dead is null || dead.IsAlive || dead.IsToxin) continue;
                         if (dead.OriginalOwnerPlayerId != p.PlayerId) continue;
                         if (!attempted.Add(dead.TileId)) continue;
-
                         if (rng.NextDouble() < reclaimChance)
                         {
                             dead.Reclaim(p.PlayerId);
                             board.PlaceFungalCell(dead);
                             p.AddControlledTile(dead.TileId);
+                            observer?.RecordRegenerativeHyphaeReclaim(p.PlayerId);
                         }
                     }
                 }
             }
         }
+
 
 
         public static void TryTriggerSporeOnDeath(Player player,

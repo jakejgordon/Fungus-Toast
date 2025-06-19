@@ -44,9 +44,9 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
-                strategyName: "Power Mutations",
+                strategyName: "Grow=>Kill=>Reclaim",
                 prioritizeHighTier: true,
-                targetMutationIds: new List<int> { MutationIds.AdaptiveExpression, MutationIds.NecrohyphalInfiltration, MutationIds.RegenerativeHyphae }
+                targetMutationIds: new List<int> { MutationIds.CreepingMold, MutationIds.Necrosporulation, MutationIds.PutrefactiveMycotoxin, MutationIds.NecrohyphalInfiltration }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Mutator Growth",

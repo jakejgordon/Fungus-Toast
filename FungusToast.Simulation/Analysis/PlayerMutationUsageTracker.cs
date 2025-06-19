@@ -178,7 +178,7 @@ namespace FungusToast.Simulation.Analysis
         {
             return new List<(int, string, string)>
             {
-                (MutationIds.RegenerativeHyphae, nameof(PlayerResult.ReclaimedCells), "Reclaims"),
+                (MutationIds.RegenerativeHyphae, nameof(PlayerResult.RegenerativeHyphaeReclaims), "Reclaims"),
                 (MutationIds.CreepingMold, nameof(PlayerResult.CreepingMoldMoves), "Mold Movements"),
                 (MutationIds.Necrosporulation, nameof(PlayerResult.NecrosporulationSpores), "Necro Spores"),
                 (MutationIds.SporocidalBloom, nameof(PlayerResult.SporocidalSpores), "Spore Drops"),

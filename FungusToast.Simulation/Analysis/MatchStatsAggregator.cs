@@ -14,7 +14,7 @@ namespace FungusToast.Simulation.Analysis
 {
     public class MatchupStatsAggregator
     {
-         private void PrintDeathReasonSummaryFloat(
+        private void PrintDeathReasonSummaryFloat(
             Dictionary<DeathReason, float> avgDeathReasons,
             string label,
             int gameCount)
@@ -81,7 +81,7 @@ namespace FungusToast.Simulation.Analysis
                 int appearances,
                 int totalLiving,
                 int totalDead,
-                int totalReclaims,
+                int totalRegenerativeHyphaeReclaims, // <-- Now explicit
                 int mutationPointsSpent,
                 float growthChance,
                 float selfDeathChance,
@@ -104,7 +104,7 @@ namespace FungusToast.Simulation.Analysis
                             appearances: 0,
                             totalLiving: 0,
                             totalDead: 0,
-                            totalReclaims: 0,
+                            totalRegenerativeHyphaeReclaims: 0,
                             mutationPointsSpent: 0,
                             growthChance: 0f,
                             selfDeathChance: 0f,
@@ -118,7 +118,7 @@ namespace FungusToast.Simulation.Analysis
 
                     entry.totalLiving += pr.LivingCells;
                     entry.totalDead += pr.DeadCells;
-                    entry.totalReclaims += pr.ReclaimedCells;
+                    entry.totalRegenerativeHyphaeReclaims += pr.RegenerativeHyphaeReclaims;
                     entry.mutationPointsSpent += pr.MutationLevels.Sum(kv =>
                         (MutationRegistry.GetById(kv.Key)?.PointsPerUpgrade ?? 0) * kv.Value);
                     entry.growthChance += pr.EffectiveGrowthChance;
@@ -185,7 +185,7 @@ namespace FungusToast.Simulation.Analysis
         private void PrintPlayerSummaryTable(
             Dictionary<int, (
                 IMutationSpendingStrategy strategyObj, int wins, int appearances,
-                int living, int dead, int reclaims, int mpSpent,
+                int living, int dead, int rhReclaims, int mpSpent,
                 float growthChance, float selfDeathChance, float decayMod)> playerStats,
             List<GameResult> gameResults
         )
@@ -220,9 +220,9 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine("\n=== Per-Player Summary ===");
             Console.WriteLine(
                 $"{"Player",6} | {"Strategy",-40} | {"WinRate",7} | {"Avg Alive",13} | {"Avg Dead",13} | " +
-                $"{"Avg Reclaims",16} | {"Avg MP Spent",16} | {"Avg MP Earned",16} | " +
+                $"{"Avg RegHyphae",14} | {"Avg MP Spent",16} | {"Avg MP Earned",16} | " +
                 $"{"Growth%",11} | {"SelfDeath%",13} | {"DecayMod",10}");
-            Console.WriteLine(new string('-', 177));
+            Console.WriteLine(new string('-', 191));
 
             foreach (var (id, strategyName) in rankedPlayerList)
             {
@@ -231,7 +231,7 @@ namespace FungusToast.Simulation.Analysis
 
                 var (
                     strategyObj, wins, appearances, living, dead,
-                    reclaims, mpSpent, growth, selfDeath, decayMod
+                    rhReclaims, mpSpent, growth, selfDeath, decayMod
                 ) = entry;
 
                 float winRate = appearances > 0 ? (float)wins / appearances * 100f : 0f;
@@ -245,16 +245,13 @@ namespace FungusToast.Simulation.Analysis
                 Console.WriteLine(
                     $"{id,6} | {Truncate(strategyObj.StrategyName, 40),-40} | {winRate,6:N1}% | " +
                     $"{(float)living / appearances,13:N1} | {(float)dead / appearances,13:N1} | " +
-                    $"{(float)reclaims / appearances,16:N1} | " +
+                    $"{(float)rhReclaims / appearances,14:N1} | " +
                     $"{avgMpSpent,16:N1} | {avgMpEarned,16:N1} | " +
                     $"{growth / appearances * 100f,10:N2}% | {selfDeath / appearances * 100f,12:N2}% | {decayMod / appearances,9:N2}%");
             }
 
-            Console.WriteLine(new string('-', 177));
+            Console.WriteLine(new string('-', 191));
         }
-
-
-
 
         private void PrintDeathReasonSummary(
             Dictionary<DeathReason, int> deathReasonCounts,
@@ -311,9 +308,5 @@ namespace FungusToast.Simulation.Analysis
 
             return playerGroups;
         }
-
-
-
-
     }
 }

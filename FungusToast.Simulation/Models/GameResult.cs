@@ -16,7 +16,6 @@ namespace FungusToast.Simulation.Models
         public int WinnerId { get; set; }
         public int TurnsPlayed { get; set; }
         public int ToxicTileCount { get; set; }
-
         public SimulationTrackingContext TrackingContext { get; set; }
 
         // ──────────────
@@ -25,7 +24,7 @@ namespace FungusToast.Simulation.Models
         public List<PlayerResult> PlayerResults { get; set; } = new();
 
         // ──────────────
-        // MUTATION EFFECT COUNTS (by playerId)
+        // GLOBAL MUTATION EFFECT COUNTS (AGGREGATES BY PLAYER)
         // ──────────────
         public Dictionary<int, int> SporesFromSporocidalBloom { get; set; } = new();
         public Dictionary<int, int> SporesFromNecrosporulation { get; set; } = new();
@@ -46,19 +45,27 @@ namespace FungusToast.Simulation.Models
 
                 var pr = new PlayerResult
                 {
+                    // --- Core identity ---
                     PlayerId = player.PlayerId,
                     StrategyName = player.MutationStrategy?.StrategyName ?? "None",
                     Strategy = player.MutationStrategy!,
 
+                    // --- End-state board stats ---
                     LivingCells = cells.Count(c => c.IsAlive),
                     DeadCells = cells.Count(c => !c.IsAlive),
-                    DeadCellDeathReasons = new List<DeathReason>(),
-                    ReclaimedCells = tracking.GetReclaimedCells(player.PlayerId),
 
+                    // --- Death reason statistics ---
+                    DeadCellDeathReasons = new List<DeathReason>(), // Populated below!
+                    DeathsByReason = playerDeaths,
+                    DeathsFromRandomness = playerDeaths.TryGetValue(DeathReason.Randomness, out var dfr) ? dfr : 0,
+                    DeathsFromAge = playerDeaths.TryGetValue(DeathReason.Age, out var dfa) ? dfa : 0,
+
+                    // --- Mutation tree ---
                     MutationLevels = player.PlayerMutations.ToDictionary(
                         kv => kv.Key,
                         kv => kv.Value.CurrentLevel),
 
+                    // --- Effective rates (final snapshot) ---
                     EffectiveGrowthChance = player.GetEffectiveGrowthChance(),
                     EffectiveSelfDeathChance = player.GetEffectiveSelfDeathChance(),
                     OffensiveDecayModifier = board.GetAllCells()
@@ -67,43 +74,44 @@ namespace FungusToast.Simulation.Models
                         .DefaultIfEmpty(0f)
                         .Average(),
 
-                    PutrefactiveMycotoxinKills = playerDeaths.TryGetValue(DeathReason.PutrefactiveMycotoxin, out var pmKills) ? pmKills : 0,
-                    SporocidalKills = playerDeaths.TryGetValue(DeathReason.SporocidalBloom, out var spKills) ? spKills : 0,
-                    ToxinAuraKills = playerDeaths.TryGetValue(DeathReason.MycotoxinPotentiation, out var taKills) ? taKills : 0,
-
+                    // --- Per-mutation event counters ---
+                    RegenerativeHyphaeReclaims = tracking.GetRegenerativeHyphaeReclaims(player.PlayerId),
                     CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId),
                     NecrosporulationSpores = tracking.GetNecrosporeDropCount(player.PlayerId),
                     SporocidalSpores = tracking.GetSporocidalSporeDropCount(player.PlayerId),
+                    SporocidalKills = playerDeaths.TryGetValue(DeathReason.SporocidalBloom, out var spKills) ? spKills : 0,
                     NecrophyticSpores = tracking.GetNecrophyticBloomSporeDropCount(player.PlayerId),
                     NecrophyticReclaims = tracking.GetNecrophyticBloomReclaimCount(player.PlayerId),
                     MycotoxinTracerSpores = tracking.GetMycotoxinSporeDropCount(player.PlayerId),
                     MycotoxinCatabolisms = tracking.GetToxinCatabolismCount(player.PlayerId),
                     CatabolizedMutationPoints = tracking.GetCatabolizedMutationPoints(player.PlayerId),
+                    ToxinAuraKills = playerDeaths.TryGetValue(DeathReason.MycotoxinPotentiation, out var taKills) ? taKills : 0,
                     NecrohyphalInfiltrations = tracking.GetNecrohyphalInfiltrationCount(player.PlayerId),
                     NecrohyphalCascades = tracking.GetNecrohyphalCascadeCount(player.PlayerId),
+                    PutrefactiveMycotoxinKills = playerDeaths.TryGetValue(DeathReason.PutrefactiveMycotoxin, out var pmKills) ? pmKills : 0,
                     NecrotoxicConversionReclaims = tracking.GetNecrotoxicConversionReclaims(player.PlayerId),
+                    HyphalSurgeGrowths = tracking.GetHyphalSurgeGrowthCount(player.PlayerId),
+                    HyphalVectoringGrowths = tracking.GetHyphalVectoringGrowthCount(player.PlayerId),
 
+                    // --- Tendril (directional growth) stats ---
                     TendrilNorthwestGrownCells = tracking.GetTendrilNorthwestGrownCells(player.PlayerId),
                     TendrilNortheastGrownCells = tracking.GetTendrilNortheastGrownCells(player.PlayerId),
                     TendrilSoutheastGrownCells = tracking.GetTendrilSoutheastGrownCells(player.PlayerId),
                     TendrilSouthwestGrownCells = tracking.GetTendrilSouthwestGrownCells(player.PlayerId),
 
+                    // --- Mutation point income and spending ---
                     AdaptiveExpressionPointsEarned = tracking.GetAdaptiveExpressionPointsEarned(player.PlayerId),
                     MutatorPhenotypePointsEarned = tracking.GetMutatorPhenotypePointsEarned(player.PlayerId),
                     HyperadaptiveDriftPointsEarned = tracking.GetHyperadaptiveDriftPointsEarned(player.PlayerId),
-
-                    DeathsByReason = playerDeaths,
                     MutationPointIncome = tracking.GetMutationPointIncome(player.PlayerId),
                     MutationPointsSpentByTier = tracking.GetMutationPointsSpentByTier(player.PlayerId),
                     TotalMutationPointsSpent = tracking.GetTotalMutationPointsSpent(player.PlayerId),
-
-                    HyphalSurgeGrowths = tracking.GetHyphalSurgeGrowthCount(player.PlayerId),
-                    HyphalVectoringGrowths = tracking.GetHyphalVectoringGrowthCount(player.PlayerId) // <-- NEW FIELD
                 };
 
                 playerResultMap[player.PlayerId] = pr;
             }
 
+            // --- Assign death reasons to the per-player list (for more granular reporting) ---
             foreach (var cell in board.GetAllCells())
             {
                 if (!cell.IsAlive && cell.CauseOfDeath.HasValue &&

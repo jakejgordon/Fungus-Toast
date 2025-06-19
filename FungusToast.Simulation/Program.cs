@@ -5,7 +5,7 @@ using FungusToast.Simulation.StrategySets;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 2;
+    private const int NumberOfSimulationGames = 100;
 
     static void Main()
     {

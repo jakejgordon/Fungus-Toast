@@ -17,6 +17,7 @@ namespace FungusToast.Core.Metrics
         void RecordTendrilGrowth(int playerId, DiagonalDirection value);
         void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints);
         void RecordNecrotoxicConversionReclaim(int playerId, int necrotoxicConversions);
+        void RecordRegenerativeHyphaeReclaim(int playerId);
 
         void ReportSporocidalSporeDrop(int playerId, int count);
         void ReportNecrosporeDrop(int playerId, int count);
