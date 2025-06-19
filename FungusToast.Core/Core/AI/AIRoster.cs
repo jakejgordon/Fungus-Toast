@@ -33,7 +33,16 @@ namespace FungusToast.Core.AI
                 surgeAttemptTurnFrequency: 10,
                 prioritizeHighTier: true,
                 maxTier: MutationTier.Tier4),
-
+            new ParameterizedSpendingStrategy(
+                strategyName: "Power Mutations v2",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationIds: new List<int>
+                {
+                    MutationIds.CreepingMold,
+                    MutationIds.RegenerativeHyphae
+                }
+            ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Power Mutations",
                 prioritizeHighTier: true,
@@ -42,7 +51,7 @@ namespace FungusToast.Core.AI
             new ParameterizedSpendingStrategy(
                 strategyName: "Mutator Growth",
                 prioritizeHighTier: true,
-                targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.CreepingMold }
+                targetMutationIds: new List<int> { MutationIds.MutatorPhenotype, MutationIds.CreepingMold, MutationIds.HyperadaptiveDrift }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Minor Economy",

@@ -55,15 +55,14 @@ namespace FungusToast.Simulation.Analysis
     };
 
             Console.WriteLine("\nPlayer-Mutation Usage Summary (per Player, all games):");
-            Console.WriteLine("{0,8} | {1,-37} | {2,-6} | {3,-32} | {4,10} | {5,10} | {6,-32} | {7,24} | {8,24} | {9,12}",
-                "PlayerId", "Strategy", "Tier", "Mutation Name", "Games", "AvgLvl",
+            Console.WriteLine("{0,8} | {1,-37} | {2,-6} | {3,-32} | {4,10} | {5,-32} | {6,24} | {7,24} | {8,12}",
+                "PlayerId", "Strategy", "Tier", "Mutation Name", "AvgLvl",
                 "Mutation Effect(s)", "Avg Effect (All Games)", "Total Effect (All Games)", "Avg Alive");
 
             Console.WriteLine(new string('-', 8) + "-|-" + new string('-', 37) + "-|-" + new string('-', 6) + "-|-" +
-                              new string('-', 32) + "-|-" + new string('-', 10) + "-|-" + new string('-', 10) + "-|-" +
+                              new string('-', 32) + "-|-" + new string('-', 10) + "-|-" +
                               new string('-', 32) + "-|-" + new string('-', 24) + "-|-" +
-                              new string('-', 24) + "-|-" +
-                              new string('-', 12));
+                              new string('-', 24) + "-|-" + new string('-', 12));
 
             var mutationEffectFields = GetMutationEffectFields();
 
@@ -104,26 +103,21 @@ namespace FungusToast.Simulation.Analysis
 
                     var (effectLabel, avgEffects, totalEffects) = GetMutationEffectStats(mutationId, playerResults, mutationEffectFields, games);
 
-                    Console.WriteLine("{0,8} | {1,-37} | {2,-6} | {3,-32} | {4,10} | {5,10:F2} | {6,-32} | {7,24} | {8,24} | {9,12:F2}",
+                    Console.WriteLine("{0,8} | {1,-37} | {2,-6} | {3,-32} | {4,10:F2} | {5,-32} | {6,24} | {7,24} | {8,12:F2}",
                         playerId,
                         Truncate(strategyName, 37),
                         mutation.Tier.ToString(),
                         Truncate(mutation.Name, 32),
-                        games,
                         avgLevel,
                         Truncate(effectLabel, 32),
                         avgEffects,
                         totalEffects,
                         avgAlive);
                 }
-
             }
 
-            Console.WriteLine(new string('-', 260));
+            Console.WriteLine(new string('-', 230));
         }
-
-
-
 
         private static (string label, string avgEffect, string totalEffect) GetMutationEffectStats(
             int mutationId,
