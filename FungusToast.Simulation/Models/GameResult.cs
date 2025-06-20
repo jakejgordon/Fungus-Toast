@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using FungusToast.Core;
-using FungusToast.Core.Players;
-using FungusToast.Core.Death;
+﻿using FungusToast.Core;
 using FungusToast.Core.Board;
+using FungusToast.Core.Config;
+using FungusToast.Core.Death;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Players;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Simulation.Models
 {
@@ -81,7 +82,7 @@ namespace FungusToast.Simulation.Models
                     SporocidalSpores = tracking.GetSporocidalSporeDropCount(player.PlayerId),
                     SporocidalKills = playerDeaths.TryGetValue(DeathReason.SporocidalBloom, out var spKills) ? spKills : 0,
                     NecrophyticSpores = tracking.GetNecrophyticBloomSporeDropCount(player.PlayerId),
-                    NecrophyticReclaims = tracking.GetNecrophyticBloomReclaimCount(player.PlayerId),
+                    NecrophyticReclaims = tracking.GetNecrophyticBloomReclaims(player.PlayerId),
                     MycotoxinTracerSpores = tracking.GetMycotoxinSporeDropCount(player.PlayerId),
                     MycotoxinCatabolisms = tracking.GetToxinCatabolismCount(player.PlayerId),
                     CatabolizedMutationPoints = tracking.GetCatabolizedMutationPoints(player.PlayerId),
@@ -106,6 +107,12 @@ namespace FungusToast.Simulation.Models
                     MutationPointIncome = tracking.GetMutationPointIncome(player.PlayerId),
                     MutationPointsSpentByTier = tracking.GetMutationPointsSpentByTier(player.PlayerId),
                     TotalMutationPointsSpent = tracking.GetTotalMutationPointsSpent(player.PlayerId),
+
+                    HyphalSurgeGrowths = tracking.GetHyphalSurgeGrowthCount(player.PlayerId),
+                    HyphalVectoringGrowths = tracking.GetHyphalVectoringGrowthCount(player.PlayerId),
+
+                    // Mycovariant summary
+                    Mycovariants = BuildMycovariantResults(player, tracking)
                 };
 
                 playerResultMap[player.PlayerId] = pr;
@@ -127,12 +134,72 @@ namespace FungusToast.Simulation.Models
                 WinnerId = playerResultMap.Values.OrderByDescending(r => r.LivingCells).First().PlayerId,
                 TurnsPlayed = turns,
                 PlayerResults = playerResultMap.Values.ToList(),
-                SporesFromSporocidalBloom = tracking.GetSporocidalSpores(),
-                SporesFromNecrosporulation = tracking.GetNecroSpores(),
-                SporesFromMycotoxinTracer = tracking.GetMycotoxinTracerSporeDrops(),
+                SporesFromSporocidalBloom = tracking.GetSporocidalSporeDropCounts(),
+                SporesFromNecrosporulation = tracking.GetNecrosporulationSporeDropCounts(),
+                SporesFromMycotoxinTracer = tracking.GetMycotoxinSporeDropCounts(),
                 ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin),
                 TrackingContext = tracking
             };
+
         }
+
+
+        private static List<MycovariantResult> BuildMycovariantResults(Player player, SimulationTrackingContext tracking)
+        {
+            var results = new List<MycovariantResult>();
+
+            foreach (var myco in player.Mycovariants)
+            {
+                string effect = "";
+
+                // Add effect logic per mycovariant
+                switch (myco.MycovariantId)
+                {
+                    case var id when id == MycovariantGameBalance.PlasmidBountyId:
+                        // Award is always a constant; show it
+                        effect = $"+{MycovariantGameBalance.PlasmidBountyMutationPointAward} MP";
+                        break;
+
+                    case var id when id == MycovariantGameBalance.JettingMyceliumNorthId ||
+                                     id == MycovariantGameBalance.JettingMyceliumEastId ||
+                                     id == MycovariantGameBalance.JettingMyceliumSouthId ||
+                                     id == MycovariantGameBalance.JettingMyceliumWestId:
+                        {
+                            // Get all tracked results for Jetting Mycelium for this player
+                            int parasitized = tracking.GetJettingMyceliumParasitized(player.PlayerId);
+                            int reclaimed = tracking.GetJettingMyceliumReclaimed(player.PlayerId);
+                            int catabolic = tracking.GetJettingMyceliumCatabolicGrowth(player.PlayerId);
+                            int alreadyOwned = tracking.GetJettingMyceliumAlreadyOwned(player.PlayerId);
+
+                            // Build effect summary string (only show nonzero effects)
+                            var parts = new List<string>();
+                            if (parasitized > 0) parts.Add($"{parasitized} parasitized");
+                            if (reclaimed > 0) parts.Add($"{reclaimed} reclaimed");
+                            if (catabolic > 0) parts.Add($"{catabolic} catabolic");
+                            if (alreadyOwned > 0) parts.Add($"{alreadyOwned} owned");
+                            effect = string.Join(", ", parts);
+                            break;
+                        }
+
+                    // Add more cases for other mycovariants as needed...
+
+                    default:
+                        effect = "";
+                        break;
+                }
+
+                results.Add(new MycovariantResult
+                {
+                    MycovariantId = myco.MycovariantId,
+                    MycovariantName = myco.Mycovariant.Name,
+                    MycovariantType = myco.Mycovariant.Type.ToString(),
+                    Triggered = myco.HasTriggered,
+                    EffectSummary = effect
+                });
+            }
+            return results;
+        }
+
+
     }
 }

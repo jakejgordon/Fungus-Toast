@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using FungusToast.Core;
+﻿using FungusToast.Core;
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Simulation.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Simulation.GameSimulation
 {
@@ -26,6 +27,10 @@ namespace FungusToast.Simulation.GameSimulation
             var rng = new Random(seed);
             var (players, board) = InitializeGame(strategies, rng);
             var allMutations = MutationRegistry.GetAll().ToList();
+            // Prepare the mycovariant system
+            var allMycovariants = MycovariantRepository.BuildAll();
+            var mycovariantPoolManager = new MycovariantPoolManager();
+
 
             var simTracking = context ?? new SimulationTrackingContext();
 
@@ -37,6 +42,13 @@ namespace FungusToast.Simulation.GameSimulation
             while (turn < GameBalance.MaxNumberOfRoundsBeforeGameEndTrigger && !gameEnded)
             {
                 board.IncrementRound();
+
+                // 🔥 Mycovariant Draft Phase (insert here!)
+                if (board.CurrentRound == MycovariantGameBalance.MycovariantSelectionTriggerRound)
+                {
+                    mycovariantPoolManager.InitializePool(allMycovariants, rng);
+                    MycovariantDraftManager.RunDraft(players, mycovariantPoolManager, board, rng, observer: context);
+                }
 
                 if (!isCountdownActive && board.ShouldTriggerEndgame())
                 {
@@ -63,6 +75,7 @@ namespace FungusToast.Simulation.GameSimulation
 
                 turn++;
             }
+
 
             // Track reclaimed cells per player
             foreach (var player in players)
@@ -117,6 +130,10 @@ namespace FungusToast.Simulation.GameSimulation
 
             var board = new GameBoard(GameBalance.BoardWidth, GameBalance.BoardHeight, playerCount);
 
+            // Add each player to the board's Players list
+            foreach (var player in players)
+                board.Players.Add(player);
+
             var allTileIds = board.AllTiles()
                                   .Where(t => !t.IsOccupied)
                                   .Select(t => t.TileId)
@@ -131,5 +148,6 @@ namespace FungusToast.Simulation.GameSimulation
 
             return (players, board);
         }
+
     }
 }

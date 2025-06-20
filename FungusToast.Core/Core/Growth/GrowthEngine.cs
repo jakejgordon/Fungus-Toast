@@ -210,12 +210,4 @@ namespace FungusToast.Core.Growth
             }
         }
     }
-
-    public enum DiagonalDirection
-    {
-        Northwest,
-        Northeast,
-        Southeast,
-        Southwest
-    }
 }

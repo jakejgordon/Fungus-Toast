@@ -8,13 +8,19 @@ namespace FungusToast.Core.Mycovariants
         {
             return new List<Mycovariant>
             {
+                /*
                 MycovariantFactory.NecrophoricAdaptation(),
                 MycovariantFactory.SaprobicRelay(),
                 MycovariantFactory.SporodochialGrowth(),
+                */
                 MycovariantFactory.JettingMyceliumNorth(),
                 MycovariantFactory.JettingMyceliumEast(),
                 MycovariantFactory.JettingMyceliumSouth(),
-                MycovariantFactory.JettingMyceliumWest()
+                MycovariantFactory.JettingMyceliumWest(),
+
+                // --- Universal/Fallback options ---
+                MycovariantFactory.PlasmidBounty()
+                // Add other universal Mycovariants here as you create them
             };
         }
     }

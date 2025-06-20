@@ -9,31 +9,7 @@ class Program
 
     static void Main()
     {
-        //var strategies = CreatePredefinedStrategies();
-
-        //int playerCount = 7;
         var rnd = new Random(); // Or any deterministic seed you want
-
-        /*
-        var strategies = EconomyBiasStrategyFactory.CreateEconomyBiasStrategies(
-            playerCount: playerCount,
-            rnd: rnd,
-            targetMutationIds: new List<int> { MutationIds.CreepingMold, MutationIds.NecrohyphalInfiltration },
-            surgeAttemptTurnFrequency: 10,
-            prioritizeHighTier: true
-        );
-        */
-
-        //var strategies = MixedEconomySurgeStrategyFactory.CreateEightEconomySurgeStrategies(8);
-
-        /*
-        var killerToxin = new ParameterizedSpendingStrategy(
-            strategyName: "Toxins",
-            prioritizeHighTier: true,
-            targetMutationIds: new List<int> { MutationIds.NecrophyticBloom, MutationIds.NecrotoxicConversion, MutationIds.SporocidalBloom });
-
-        strategies.Add(killerToxin);
-        */
 
         var strategies = AIRoster.GetRandomProvenStrategies(8, rnd);
 
@@ -65,9 +41,18 @@ class Program
         var rankedPlayers = MatchupStatsAggregator.GetRankedPlayerList(results.GameResults);
         usageTracker.PrintReport(allPlayerResults, rankedPlayers);
 
+        // ==== NEW: Per-player Mycovariant Usage Summary ====
+        var mycoTracker = new PlayerMycovariantUsageTracker();
+        foreach (var result in results.GameResults)
+        {
+            mycoTracker.TrackGameResult(result);
+        }
+        mycoTracker.PrintReport(rankedPlayers);
+
         Console.WriteLine("\nSimulation complete. Press any key to exit.");
         Console.ReadKey();
     }
+
 
     private static List<IMutationSpendingStrategy> CreatePredefinedStrategies()
     {

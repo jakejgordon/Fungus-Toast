@@ -255,6 +255,7 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
 
             gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
+
             UpdatePhaseProgressTrackerLabel();
 
             phaseProgressTracker?.HighlightMutationPhase();

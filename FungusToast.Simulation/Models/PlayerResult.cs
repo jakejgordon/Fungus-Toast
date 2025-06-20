@@ -35,7 +35,12 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> MutationLevels { get; set; } = new();
 
         // ──────────────
-        // EFFECTIVE STATS (AT GAME END)
+        // MYCOVARIANTS
+        // ──────────────
+        public List<MycovariantResult> Mycovariants { get; set; } = new();
+
+        // ──────────────
+        // EFFECTIVE STATS
         // ──────────────
         public float EffectiveGrowthChance { get; set; }
         public float EffectiveSelfDeathChance { get; set; }
@@ -60,6 +65,15 @@ namespace FungusToast.Simulation.Models
         public int NecrohyphalInfiltrations { get; set; }
         public int NecrohyphalCascades { get; set; }
         public int PutrefactiveMycotoxinKills { get; set; }
+
+        // ──────────────
+        // MYCOVARIANT EFFECT COUNTERS
+        // ──────────────
+        public int JettingMyceliumKills { get; set; }
+
+        /// <summary>
+        /// Number of cells reclaimed using Necrotoxic Conversion (Tier 5 Fungicide).
+        /// </summary>
         public int NecrotoxicConversionReclaims { get; set; }
         public int HyphalSurgeGrowths { get; set; }
         public int HyphalVectoringGrowths { get; set; }

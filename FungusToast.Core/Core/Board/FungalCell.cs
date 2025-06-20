@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.Config;
+using FungusToast.Core.Core.Board;
 using FungusToast.Core.Death;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
@@ -110,6 +111,49 @@ namespace FungusToast.Core.Board
             SetAlive();
             ReclaimCount++;
         }
+
+        /// <summary>
+        /// Attempts to take over this cell as the given player, regardless of prior state.
+        /// Returns the outcome for simulation/stat tracking.
+        /// </summary>
+        public FungalCellTakeoverResult Takeover(int newOwnerPlayerId, bool allowToxin = false)
+        {
+            // Already owned and alive (no action)
+            if (OwnerPlayerId == newOwnerPlayerId && IsAlive)
+                return FungalCellTakeoverResult.AlreadyOwned;
+
+            // Living enemy cell: kill, claim
+            if (IsAlive && OwnerPlayerId != newOwnerPlayerId)
+            {
+                Kill(DeathReason.Parasitism);
+                OwnerPlayerId = newOwnerPlayerId;
+                SetAlive();
+                return FungalCellTakeoverResult.Parasitized;
+            }
+
+            // Dead/reclaimable
+            if (IsReclaimable)
+            {
+                OwnerPlayerId = newOwnerPlayerId;
+                SetAlive();
+                ReclaimCount++;
+                return FungalCellTakeoverResult.Reclaimed;
+            }
+
+            // Toxin: Only allowed if flag set
+            if (IsToxin && allowToxin)
+            {
+                OwnerPlayerId = newOwnerPlayerId;
+                SetAlive();
+                // Optionally reset toxin-related fields/stats here
+                return FungalCellTakeoverResult.CatabolicGrowth;
+            }
+
+            return FungalCellTakeoverResult.Invalid;
+        }
+
+
+
 
         public void IncrementGrowthAge() => GrowthCycleAge++;
         public void ResetGrowthCycleAge() => GrowthCycleAge = 0;

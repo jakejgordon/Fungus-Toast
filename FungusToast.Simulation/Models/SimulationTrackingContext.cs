@@ -1,16 +1,17 @@
-﻿using FungusToast.Core.Death;
+﻿using FungusToast.Core.Board;
+using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Simulation.Models
 {
     public class SimulationTrackingContext : ISimulationObserver
     {
-        // ────────────────────────────
-        //  FIELDS / DATA TRACKERS
-        // ────────────────────────────
+        #region Mutation Point Tracking
 
-        // mutation point spending and income
         private readonly Dictionary<int, Dictionary<MutationTier, int>> mutationPointsSpentByTier = new();
         private readonly Dictionary<int, int> mutationPointIncomeByPlayer = new();
 
@@ -79,9 +80,42 @@ namespace FungusToast.Simulation.Models
             mutationPointIncomeByPlayer[playerId] += newMutationPoints;
         }
 
+        public int GetMutationPointsSpent(int playerId, MutationTier tier)
+            => mutationPointsSpentByTier.TryGetValue(playerId, out var tierDict) && tierDict.TryGetValue(tier, out var val) ? val : 0;
 
+        public Dictionary<MutationTier, int> GetMutationPointsSpentByTier(int playerId)
+        {
+            if (mutationPointsSpentByTier.TryGetValue(playerId, out var dict))
+                return new Dictionary<MutationTier, int>(dict);
+            return new Dictionary<MutationTier, int>();
+        }
 
-        // Unified cell death tracker
+        public int GetTotalMutationPointsSpent(int playerId)
+        {
+            if (mutationPointsSpentByTier.TryGetValue(playerId, out var dict))
+                return dict.Values.Sum();
+            return 0;
+        }
+
+        public int GetMutationPointIncome(int playerId)
+        {
+            return mutationPointIncomeByPlayer.TryGetValue(playerId, out var val) ? val : 0;
+        }
+
+        public Dictionary<int, Dictionary<MutationTier, int>> GetAllMutationPointsSpentByTier()
+            => mutationPointsSpentByTier.ToDictionary(kvp => kvp.Key, kvp => new Dictionary<MutationTier, int>(kvp.Value));
+
+        public IReadOnlyDictionary<int, int> GetAllMutationPointIncome()
+        {
+            return mutationPointIncomeByPlayer;
+        }
+
+        #endregion
+
+        #region Cell Death Tracking
+
+        private readonly Dictionary<int, Dictionary<DeathReason, int>> deathsByPlayerAndReason = new();
+
         public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
         {
             if (!deathsByPlayerAndReason.TryGetValue(playerId, out var reasonDict))
@@ -94,12 +128,59 @@ namespace FungusToast.Simulation.Models
             reasonDict[reason] += deathCount;
         }
 
+        public int GetCellDeathCount(int playerId, DeathReason reason)
+        {
+            if (deathsByPlayerAndReason.TryGetValue(playerId, out var reasonDict))
+                if (reasonDict.TryGetValue(reason, out var val))
+                    return val;
+            return 0;
+        }
+
+        public Dictionary<int, Dictionary<DeathReason, int>> GetAllCellDeathsByPlayerAndReason()
+            => deathsByPlayerAndReason.ToDictionary(
+                kvp => kvp.Key,
+                kvp => new Dictionary<DeathReason, int>(kvp.Value)
+            );
+
+        public Dictionary<DeathReason, int> GetTotalDeathsByReason()
+        {
+            var result = new Dictionary<DeathReason, int>();
+            foreach (var playerDict in deathsByPlayerAndReason.Values)
+            {
+                foreach (var kvp in playerDict)
+                {
+                    if (!result.ContainsKey(kvp.Key))
+                        result[kvp.Key] = 0;
+                    result[kvp.Key] += kvp.Value;
+                }
+            }
+            return result;
+        }
+
+        #endregion
+
+        #region General Stat & Outcome Trackers
+
+        private readonly Dictionary<int, int> creepingMoldMoves = new();
+        private readonly Dictionary<int, int> reclaimedCells = new();
+        private readonly Dictionary<int, int> mycotoxinTracerSporeDrops = new();
+        private readonly Dictionary<int, int> sporocidalSporeDrops = new();
+        private readonly Dictionary<int, int> necrosporulationSporeDrops = new();
+        private readonly Dictionary<int, int> necrophyticBloomSpores = new();
+        private readonly Dictionary<int, int> necrophyticBloomReclaims = new();
+        private readonly Dictionary<int, int> toxinCatabolisms = new();
+        private readonly Dictionary<int, int> catabolizedMutationPoints = new();
+        private readonly Dictionary<int, int> necrotoxicConversionReclaims = new();
+
         public void RecordCreepingMoldMove(int playerId)
         {
             if (!creepingMoldMoves.ContainsKey(playerId))
                 creepingMoldMoves[playerId] = 0;
             creepingMoldMoves[playerId]++;
         }
+
+        public int GetCreepingMoldMoves(int playerId) =>
+            creepingMoldMoves.TryGetValue(playerId, out var val) ? val : 0;
 
         public void SetReclaims(int playerId, int count)
         {
@@ -122,13 +203,8 @@ namespace FungusToast.Simulation.Models
         public int GetAdaptiveExpressionPointsEarned(int playerId) =>
             adaptiveExpressionPointsEarned.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllAdaptiveExpressionPointsEarned() => new(adaptiveExpressionPointsEarned);
-
-        public void RecordFailedGrowth(int playerId)
-        {
-            if (!FailedGrowthsByPlayerId.ContainsKey(playerId))
-                FailedGrowthsByPlayerId[playerId] = 0;
-            FailedGrowthsByPlayerId[playerId]++;
-        }
+        public int GetReclaimedCells(int playerId) =>
+            reclaimedCells.TryGetValue(playerId, out var val) ? val : 0;
 
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped)
         {
@@ -137,6 +213,9 @@ namespace FungusToast.Simulation.Models
             mycotoxinTracerSporeDrops[playerId] += sporesDropped;
         }
 
+        public int GetMycotoxinSporeDropCount(int playerId) =>
+            mycotoxinTracerSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
+
         public void ReportSporocidalSporeDrop(int playerId, int count)
         {
             if (!sporocidalSporeDrops.ContainsKey(playerId))
@@ -144,12 +223,19 @@ namespace FungusToast.Simulation.Models
             sporocidalSporeDrops[playerId] += count;
         }
 
+        public int GetSporocidalSporeDropCount(int playerId) =>
+            sporocidalSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
+
+
         public void ReportNecrosporeDrop(int playerId, int count)
         {
             if (!necrosporulationSporeDrops.ContainsKey(playerId))
                 necrosporulationSporeDrops[playerId] = 0;
             necrosporulationSporeDrops[playerId] += count;
         }
+
+        public int GetNecrosporeDropCount(int playerId) =>
+            necrosporulationSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
 
         public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims)
         {
@@ -160,6 +246,12 @@ namespace FungusToast.Simulation.Models
             necrophyticBloomSpores[playerId] += sporesDropped;
             necrophyticBloomReclaims[playerId] += successfulReclaims;
         }
+
+        public int GetNecrophyticBloomSporeDropCount(int playerId) =>
+            necrophyticBloomSpores.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetNecrophyticBloomReclaims(int playerId) =>
+            necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
 
         public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int mutationPointsCatabolized)
         {
@@ -172,14 +264,12 @@ namespace FungusToast.Simulation.Models
             catabolizedMutationPoints[playerId] += mutationPointsCatabolized;
         }
 
-        public void RecordHyphalSurgeGrowth(int playerId)
-        {
-            if (!hyphalSurgeGrowths.ContainsKey(playerId))
-                hyphalSurgeGrowths[playerId] = 0;
-            hyphalSurgeGrowths[playerId]++;
-        }
+        public int GetToxinCatabolismCount(int playerId) =>
+            toxinCatabolisms.TryGetValue(playerId, out var val) ? val : 0;
 
-        // Necrotoxic Conversion
+        public int GetCatabolizedMutationPoints(int playerId) =>
+            catabolizedMutationPoints.TryGetValue(playerId, out var val) ? val : 0;
+
         public void RecordNecrotoxicConversionReclaim(int playerId, int count)
         {
             if (!necrotoxicConversionReclaims.ContainsKey(playerId))
@@ -187,28 +277,40 @@ namespace FungusToast.Simulation.Models
             necrotoxicConversionReclaims[playerId] += count;
         }
 
-        // Necrohyphal Infiltration recorders
-        public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount)
+        public int GetNecrotoxicConversionReclaims(int playerId) =>
+            necrotoxicConversionReclaims.TryGetValue(playerId, out var val) ? val : 0;
+
+        #endregion
+
+        #region Mutation Point Source Tracking
+
+        private readonly Dictionary<int, int> adaptiveExpressionPointsEarned = new();
+        private readonly Dictionary<int, int> mutatorPhenotypePointsEarned = new();
+        private readonly Dictionary<int, int> hyperadaptiveDriftPointsEarned = new();
+
+        public void RecordAdaptiveExpressionBonus(int playerId, int bonusPoints)
         {
-            if (!necrohyphalInfiltrations.ContainsKey(playerId))
-                necrohyphalInfiltrations[playerId] = 0;
-            necrohyphalInfiltrations[playerId] += necrohyphalInfiltrationCount;
+            if (!adaptiveExpressionPointsEarned.ContainsKey(playerId))
+                adaptiveExpressionPointsEarned[playerId] = 0;
+            adaptiveExpressionPointsEarned[playerId] += bonusPoints;
         }
 
-        public void RecordNecrohyphalInfiltrationCascade(int playerId, int cascadeCount)
-        {
-            if (!necrohyphalCascades.ContainsKey(playerId))
-                necrohyphalCascades[playerId] = 0;
-            necrohyphalCascades[playerId] += cascadeCount;
-        }
+        public int GetAdaptiveExpressionPointsEarned(int playerId) =>
+            adaptiveExpressionPointsEarned.TryGetValue(playerId, out var val) ? val : 0;
 
-        // IMutationPointObserver implementations
+        public Dictionary<int, int> GetAllAdaptiveExpressionPointsEarned() => new(adaptiveExpressionPointsEarned);
+
         public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned)
         {
             if (!mutatorPhenotypePointsEarned.ContainsKey(playerId))
                 mutatorPhenotypePointsEarned[playerId] = 0;
             mutatorPhenotypePointsEarned[playerId] += freePointsEarned;
         }
+
+        public int GetMutatorPhenotypePointsEarned(int playerId) =>
+            mutatorPhenotypePointsEarned.TryGetValue(playerId, out var val) ? val : 0;
+
+        public Dictionary<int, int> GetAllMutatorPhenotypePointsEarned() => new(mutatorPhenotypePointsEarned);
 
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned)
         {
@@ -217,119 +319,71 @@ namespace FungusToast.Simulation.Models
             hyperadaptiveDriftPointsEarned[playerId] += freePointsEarned;
         }
 
-        public void RecordHyphalVectoringGrowth(int playerId, int cellCount)
+        public int GetHyperadaptiveDriftPointsEarned(int playerId) =>
+            hyperadaptiveDriftPointsEarned.TryGetValue(playerId, out var val) ? val : 0;
+
+        public Dictionary<int, int> GetAllHyperadaptiveDriftPointsEarned() => new(hyperadaptiveDriftPointsEarned);
+
+        #endregion
+
+        #region Growth and Special Mutation Stats
+
+        private readonly Dictionary<int, int> necrohyphalInfiltrations = new();
+        private readonly Dictionary<int, int> necrohyphalCascades = new();
+        private readonly Dictionary<int, int> tendrilNorthwestGrownCells = new();
+        private readonly Dictionary<int, int> tendrilNortheastGrownCells = new();
+        private readonly Dictionary<int, int> tendrilSoutheastGrownCells = new();
+        private readonly Dictionary<int, int> tendrilSouthwestGrownCells = new();
+
+        private readonly Dictionary<int, int> hyphalSurgeGrowths = new();
+        private readonly Dictionary<int, int> hyphalVectoringGrowths = new();
+
+        public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount)
         {
-            if (!hyphalVectoringGrowths.ContainsKey(playerId))
-                hyphalVectoringGrowths[playerId] = 0;
-            hyphalVectoringGrowths[playerId] += cellCount;
+            if (!necrohyphalInfiltrations.ContainsKey(playerId))
+                necrohyphalInfiltrations[playerId] = 0;
+            necrohyphalInfiltrations[playerId] += necrohyphalInfiltrationCount;
         }
 
-        // Tendril Growth recorders
-        public void RecordTendrilGrowth(int playerId, Core.Growth.DiagonalDirection direction)
+        public int GetNecrohyphalInfiltrationCount(int playerId) =>
+            necrohyphalInfiltrations.TryGetValue(playerId, out var val) ? val : 0;
+
+        public void RecordNecrohyphalInfiltrationCascade(int playerId, int cascadeCount)
+        {
+            if (!necrohyphalCascades.ContainsKey(playerId))
+                necrohyphalCascades[playerId] = 0;
+            necrohyphalCascades[playerId] += cascadeCount;
+        }
+
+        public int GetNecrohyphalCascadeCount(int playerId) =>
+            necrohyphalCascades.TryGetValue(playerId, out var val) ? val : 0;
+
+        public void RecordTendrilGrowth(int playerId, DiagonalDirection direction)
         {
             switch (direction)
             {
-                case Core.Growth.DiagonalDirection.Northwest:
+                case DiagonalDirection.Northwest:
                     if (!tendrilNorthwestGrownCells.ContainsKey(playerId))
                         tendrilNorthwestGrownCells[playerId] = 0;
                     tendrilNorthwestGrownCells[playerId]++;
                     break;
-                case Core.Growth.DiagonalDirection.Northeast:
+                case DiagonalDirection.Northeast:
                     if (!tendrilNortheastGrownCells.ContainsKey(playerId))
                         tendrilNortheastGrownCells[playerId] = 0;
                     tendrilNortheastGrownCells[playerId]++;
                     break;
-                case Core.Growth.DiagonalDirection.Southeast:
+                case DiagonalDirection.Southeast:
                     if (!tendrilSoutheastGrownCells.ContainsKey(playerId))
                         tendrilSoutheastGrownCells[playerId] = 0;
                     tendrilSoutheastGrownCells[playerId]++;
                     break;
-                case Core.Growth.DiagonalDirection.Southwest:
+                case DiagonalDirection.Southwest:
                     if (!tendrilSouthwestGrownCells.ContainsKey(playerId))
                         tendrilSouthwestGrownCells[playerId] = 0;
                     tendrilSouthwestGrownCells[playerId]++;
                     break;
             }
         }
-
-        // ────────────────────────────
-        //  GETTERS / ACCESSORS
-        // ────────────────────────────
-
-        // New unified accessor for all deaths (for stats, summaries, etc.)
-        public int GetMutationPointsSpent(int playerId, MutationTier tier)
-            => mutationPointsSpentByTier.TryGetValue(playerId, out var tierDict) && tierDict.TryGetValue(tier, out var val) ? val : 0;
-
-        public Dictionary<MutationTier, int> GetMutationPointsSpentByTier(int playerId)
-        {
-            // Return a new dictionary (defensive copy)
-            if (mutationPointsSpentByTier.TryGetValue(playerId, out var dict))
-                return new Dictionary<MutationTier, int>(dict);
-            return new Dictionary<MutationTier, int>();
-        }
-
-        public int GetTotalMutationPointsSpent(int playerId)
-        {
-            if (mutationPointsSpentByTier.TryGetValue(playerId, out var dict))
-                return dict.Values.Sum();
-            return 0;
-        }
-
-        public int GetMutationPointIncome(int playerId)
-        {
-            return mutationPointIncomeByPlayer.TryGetValue(playerId, out var val) ? val : 0;
-        }
-
-        public int GetRegenerativeHyphaeReclaims(int playerId) =>
-            regenerativeHyphaeReclaims.TryGetValue(playerId, out var val) ? val : 0;
-
-        // Optionally: Get all per-player tier breakdowns
-        public Dictionary<int, Dictionary<MutationTier, int>> GetAllMutationPointsSpentByTier()
-            => mutationPointsSpentByTier.ToDictionary(kvp => kvp.Key, kvp => new Dictionary<MutationTier, int>(kvp.Value));
-
-        public IReadOnlyDictionary<int, int> GetAllMutationPointIncome()
-        {
-            return mutationPointIncomeByPlayer;
-        }
-
-        public int GetCellDeathCount(int playerId, DeathReason reason)
-        {
-            if (deathsByPlayerAndReason.TryGetValue(playerId, out var reasonDict))
-                if (reasonDict.TryGetValue(reason, out var val))
-                    return val;
-            return 0;
-        }
-
-        public int GetHyphalSurgeGrowthCount(int playerId) =>
-            hyphalSurgeGrowths.TryGetValue(playerId, out var val) ? val : 0;
-
-        public Dictionary<int, Dictionary<DeathReason, int>> GetAllCellDeathsByPlayerAndReason()
-            => deathsByPlayerAndReason.ToDictionary(
-                kvp => kvp.Key,
-                kvp => new Dictionary<DeathReason, int>(kvp.Value)
-            );
-
-        // Example: get all deaths by reason (all players)
-        public Dictionary<DeathReason, int> GetTotalDeathsByReason()
-        {
-            var result = new Dictionary<DeathReason, int>();
-            foreach (var playerDict in deathsByPlayerAndReason.Values)
-            {
-                foreach (var kvp in playerDict)
-                {
-                    if (!result.ContainsKey(kvp.Key))
-                        result[kvp.Key] = 0;
-                    result[kvp.Key] += kvp.Value;
-                }
-            }
-            return result;
-        }
-
-        public int GetHyphalVectoringGrowthCount(int playerId) =>
-            hyphalVectoringGrowths.TryGetValue(playerId, out var val) ? val : 0;
-
-        public Dictionary<int, int> GetAllHyphalVectoringGrowthCounts() => new(hyphalVectoringGrowths);
-
 
         public int GetTendrilNorthwestGrownCells(int playerId) =>
             tendrilNorthwestGrownCells.TryGetValue(playerId, out var val) ? val : 0;
@@ -339,50 +393,120 @@ namespace FungusToast.Simulation.Models
             tendrilSoutheastGrownCells.TryGetValue(playerId, out var val) ? val : 0;
         public int GetTendrilSouthwestGrownCells(int playerId) =>
             tendrilSouthwestGrownCells.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetCreepingMoldMoves(int playerId) =>
-            creepingMoldMoves.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetReclaimedCells(int playerId) =>
-            reclaimedCells.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetNecrophyticBloomSporeDropCount(int playerId) =>
-            necrophyticBloomSpores.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetNecrophyticBloomReclaims(int playerId) =>
-            necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetFailedGrowthCount(int playerId) =>
-            FailedGrowthsByPlayerId.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetToxinCatabolismCount(int playerId) =>
-            toxinCatabolisms.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetSporocidalSporeDropCount(int playerId) =>
-            sporocidalSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetNecrosporeDropCount(int playerId) =>
-            necrosporulationSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetNecrophyticBloomReclaimCount(int playerId) =>
-            necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetNecrotoxicConversionReclaims(int playerId) =>
-            necrotoxicConversionReclaims.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetMycotoxinSporeDropCount(int playerId) =>
-            mycotoxinTracerSporeDrops.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetCatabolizedMutationPoints(int playerId) =>
-            catabolizedMutationPoints.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetMutatorPhenotypePointsEarned(int playerId) =>
-            mutatorPhenotypePointsEarned.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetHyperadaptiveDriftPointsEarned(int playerId) =>
-            hyperadaptiveDriftPointsEarned.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetNecrohyphalInfiltrationCount(int playerId) =>
-            necrohyphalInfiltrations.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetNecrohyphalCascadeCount(int playerId) =>
-            necrohyphalCascades.TryGetValue(playerId, out var val) ? val : 0;
+
+        public void RecordHyphalSurgeGrowth(int playerId)
+        {
+            if (!hyphalSurgeGrowths.ContainsKey(playerId))
+                hyphalSurgeGrowths[playerId] = 0;
+            hyphalSurgeGrowths[playerId]++;
+        }
+
+        public int GetHyphalSurgeGrowthCount(int playerId) =>
+            hyphalSurgeGrowths.TryGetValue(playerId, out var val) ? val : 0;
 
         public Dictionary<int, int> GetAllHyphalSurgeGrowthCounts() => new(hyphalSurgeGrowths);
 
-        // Bulk accessors for summaries/statistics
-        public Dictionary<int, int> GetSporocidalSpores() => new(sporocidalSporeDrops);
-        public Dictionary<int, int> GetNecroSpores() => new(necrosporulationSporeDrops);
-        public Dictionary<int, int> GetNecrophyticBloomSpores() => new(necrophyticBloomSpores);
-        public Dictionary<int, int> GetNecrophyticBloomReclaims() => new(necrophyticBloomReclaims);
-        public Dictionary<int, int> GetMycotoxinTracerSporeDrops() => new(mycotoxinTracerSporeDrops);
-        public Dictionary<int, int> GetAllNecrotoxicConversionReclaims() => new(necrotoxicConversionReclaims);
-        public Dictionary<int, int> GetToxinCatabolisms() => new(toxinCatabolisms);
-        public Dictionary<int, int> GetCatabolizedMutationPoints() => new(catabolizedMutationPoints);
+        public void RecordHyphalVectoringGrowth(int playerId, int cellCount)
+        {
+            if (!hyphalVectoringGrowths.ContainsKey(playerId))
+                hyphalVectoringGrowths[playerId] = 0;
+            hyphalVectoringGrowths[playerId] += cellCount;
+        }
+
+        public int GetHyphalVectoringGrowthCount(int playerId) =>
+            hyphalVectoringGrowths.TryGetValue(playerId, out var val) ? val : 0;
+
+        public Dictionary<int, int> GetAllHyphalVectoringGrowthCounts() => new(hyphalVectoringGrowths);
+
+        #endregion
+
+        #region Failed Growth Tracking
+
+        public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
+
+        public void RecordFailedGrowth(int playerId)
+        {
+            if (!FailedGrowthsByPlayerId.ContainsKey(playerId))
+                FailedGrowthsByPlayerId[playerId] = 0;
+            FailedGrowthsByPlayerId[playerId]++;
+        }
+
+        public int GetFailedGrowthCount(int playerId) =>
+            FailedGrowthsByPlayerId.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetRegenerativeHyphaeReclaims(int playerId) =>
+            regenerativeHyphaeReclaims.TryGetValue(playerId, out var val) ? val : 0;
+
+        #endregion
+
+        #region Jetting Mycelium Outcomes
+
+        private readonly Dictionary<int, int> jettingMyceliumParasitized = new();
+        private readonly Dictionary<int, int> jettingMyceliumReclaimed = new();
+        private readonly Dictionary<int, int> jettingMyceliumCatabolicGrowth = new();
+        private readonly Dictionary<int, int> jettingMyceliumAlreadyOwned = new();
+        private readonly Dictionary<int, int> jettingMyceliumInvalid = new();
+
+        public void ReportJettingMyceliumParasitized(int playerId, int count)
+        {
+            if (!jettingMyceliumParasitized.ContainsKey(playerId))
+                jettingMyceliumParasitized[playerId] = 0;
+            jettingMyceliumParasitized[playerId] += count;
+        }
+
+        public void ReportJettingMyceliumReclaimed(int playerId, int count)
+        {
+            if (!jettingMyceliumReclaimed.ContainsKey(playerId))
+                jettingMyceliumReclaimed[playerId] = 0;
+            jettingMyceliumReclaimed[playerId] += count;
+        }
+
+        public void ReportJettingMyceliumCatabolicGrowth(int playerId, int count)
+        {
+            if (!jettingMyceliumCatabolicGrowth.ContainsKey(playerId))
+                jettingMyceliumCatabolicGrowth[playerId] = 0;
+            jettingMyceliumCatabolicGrowth[playerId] += count;
+        }
+
+        public void ReportJettingMyceliumAlreadyOwned(int playerId, int count)
+        {
+            if (!jettingMyceliumAlreadyOwned.ContainsKey(playerId))
+                jettingMyceliumAlreadyOwned[playerId] = 0;
+            jettingMyceliumAlreadyOwned[playerId] += count;
+        }
+
+        public void ReportJettingMyceliumInvalid(int playerId, int count)
+        {
+            if (!jettingMyceliumInvalid.ContainsKey(playerId))
+                jettingMyceliumInvalid[playerId] = 0;
+            jettingMyceliumInvalid[playerId] += count;
+        }
+
+        public int GetJettingMyceliumParasitized(int playerId) =>
+            jettingMyceliumParasitized.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetJettingMyceliumReclaimed(int playerId) =>
+            jettingMyceliumReclaimed.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetJettingMyceliumCatabolicGrowth(int playerId) =>
+            jettingMyceliumCatabolicGrowth.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetJettingMyceliumAlreadyOwned(int playerId) =>
+            jettingMyceliumAlreadyOwned.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetJettingMyceliumInvalid(int playerId) =>
+            jettingMyceliumInvalid.TryGetValue(playerId, out var val) ? val : 0;
+
+        public Dictionary<int, int> GetAllJettingMyceliumParasitized() => new(jettingMyceliumParasitized);
+        public Dictionary<int, int> GetAllJettingMyceliumReclaimed() => new(jettingMyceliumReclaimed);
+        public Dictionary<int, int> GetAllJettingMyceliumCatabolicGrowth() => new(jettingMyceliumCatabolicGrowth);
+        public Dictionary<int, int> GetAllJettingMyceliumAlreadyOwned() => new(jettingMyceliumAlreadyOwned);
+        public Dictionary<int, int> GetAllJettingMyceliumInvalid() => new(jettingMyceliumInvalid);
+
+        // I'm too lazy to figure out where these should go!
+        public Dictionary<int, int> GetSporocidalSporeDropCounts() => new(sporocidalSporeDrops);
+        public Dictionary<int, int> GetNecrosporulationSporeDropCounts() => new(necrosporulationSporeDrops);
+        public Dictionary<int, int> GetMycotoxinSporeDropCounts() => new(mycotoxinTracerSporeDrops);
+
 
         public Dictionary<int, int> GetAllMutatorPhenotypePointsEarned() => new(mutatorPhenotypePointsEarned);
         public Dictionary<int, int> GetAllHyperadaptiveDriftPointsEarned() => new(hyperadaptiveDriftPointsEarned);
@@ -394,5 +518,6 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetAllTendrilSouthwestGrownCells() => new(tendrilSouthwestGrownCells);
         public Dictionary<int, int> GetAllRegenerativeHyphaeReclaims() => new(regenerativeHyphaeReclaims);
 
+        #endregion
     }
 }
