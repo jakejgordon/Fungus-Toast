@@ -1,4 +1,5 @@
-﻿using FungusToast.Core.Death;
+﻿using FungusToast.Core.Board;
+using FungusToast.Core.Death;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 
@@ -26,5 +27,10 @@ namespace FungusToast.Core.Metrics
         void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade);
         void RecordHyphalSurgeGrowth(int playerId);
         void RecordHyphalVectoringGrowth(int playerId, int cellsPlaced);
+        void ReportJettingMyceliumParasitized(int playerId, int parasitized);
+        void ReportJettingMyceliumReclaimed(int playerId, int reclaimed);
+        void ReportJettingMyceliumCatabolicGrowth(int playerId, int catabolicGrowth);
+        void ReportJettingMyceliumAlreadyOwned(int playerId, int alreadyOwned);
+        void ReportJettingMyceliumInvalid(int playerId, int invalid);
     }
 }

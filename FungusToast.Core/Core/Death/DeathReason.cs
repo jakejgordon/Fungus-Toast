@@ -8,7 +8,9 @@
         SporocidalBloom,
         Unknown,
         MycotoxinPotentiation,
-        HyphalVectoring
+        HyphalVectoring,
+        JettingMycelium,
+        Parasitism
     }
 
 }

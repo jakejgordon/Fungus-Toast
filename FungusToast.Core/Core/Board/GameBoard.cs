@@ -279,5 +279,51 @@ namespace FungusToast.Core.Board
         {
             CurrentRound++;
         }
+
+        public List<int> GetTileLine(int startTileId, CardinalDirection direction, int length, bool includeStartingTile = false)
+        {
+            var result = new List<int>();
+            int currentTileId = startTileId;
+
+            if (includeStartingTile)
+            {
+                result.Add(currentTileId);
+                if (result.Count >= length) return result;
+            }
+
+            for (int i = 0; i < length; i++)
+            {
+                int nextTileId = GetNeighborTileId(currentTileId, direction);
+                if (nextTileId == -1) break; // Edge of board or invalid
+                result.Add(nextTileId);
+                if (result.Count >= length) break;
+                currentTileId = nextTileId;
+            }
+            return result;
+        }
+
+
+        // You'll need a helper to get a neighbor tile ID in a given direction:
+        public int GetNeighborTileId(int tileId, CardinalDirection direction)
+        {
+            // Example assuming a 2D grid and tileId is mapped row-major: tileId = y * width + x
+            int x = tileId % Width;
+            int y = tileId / Width;
+
+            switch (direction)
+            {
+                case CardinalDirection.North: y -= 1; break;
+                case CardinalDirection.South: y += 1; break;
+                case CardinalDirection.East: x += 1; break;
+                case CardinalDirection.West: x -= 1; break;
+            }
+
+            // Check for board bounds
+            if (x < 0 || x >= Width || y < 0 || y >= Height)
+                return -1;
+
+            return y * Width + x;
+        }
+
     }
 }

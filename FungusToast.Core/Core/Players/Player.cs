@@ -314,7 +314,7 @@ namespace FungusToast.Core.Players
                 simulationObserver.RecordMutationPointIncome(PlayerId, newMutationPoints);
             }
 
-            MutationPoints += newMutationPoints;
+            AddMutationPoints(newMutationPoints);
 
             // Record Adaptive Expression bonus, if present and observer is hooked up
             if (simulationObserver != null && bonus > 0)
@@ -327,6 +327,12 @@ namespace FungusToast.Core.Players
 
             return MutationPoints;
         }
+
+        public void AddMutationPoints(int amount)
+        {
+            MutationPoints += amount;
+        }
+
 
         public bool HasMycovariant(int id) =>
             Mycovariants.Any(m => m.MycovariantId == id);

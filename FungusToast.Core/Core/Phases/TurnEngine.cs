@@ -1,10 +1,11 @@
 ﻿using FungusToast.Core.Board;
 using FungusToast.Core.Config;
-using FungusToast.Core.Metrics;
 using FungusToast.Core.Death;
+using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
-using FungusToast.Core.Players;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Phases;
+using FungusToast.Core.Players;
 
 namespace FungusToast.Core.Phases
 {
@@ -48,6 +49,21 @@ namespace FungusToast.Core.Phases
         public static void RunDecayPhase(GameBoard board, List<Player> players, Dictionary<int, int> failedGrowthsByPlayerId, ISimulationObserver? simulationObserver = null, ISimulationObserver? growthAndDecayObserver = null)
         {
             DeathEngine.ExecuteDeathCycle(board, players, failedGrowthsByPlayerId, simulationObserver);
+        }
+
+        public static void RunMycovariantDraftIfTriggered(
+            GameBoard board,
+            List<Player> players,
+            MycovariantPoolManager mycovariantPoolManager,
+            List<Mycovariant> allMycovariants,
+            Random rng,
+            int currentRound)
+        {
+            if (currentRound == MycovariantGameBalance.MycovariantSelectionTriggerRound)
+            {
+                mycovariantPoolManager.InitializePool(allMycovariants, rng);
+                MycovariantDraftManager.RunDraft(players, mycovariantPoolManager, board, rng);
+            }
         }
 
     }
