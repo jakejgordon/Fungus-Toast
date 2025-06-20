@@ -17,7 +17,7 @@ namespace FungusToast.Simulation.Models
         public int WinnerId { get; set; }
         public int TurnsPlayed { get; set; }
         public int ToxicTileCount { get; set; }
-        public SimulationTrackingContext TrackingContext { get; set; }
+        public SimulationTrackingContext TrackingContext { get; set; } = null!;
 
         // ──────────────
         // PLAYER RESULTS
@@ -147,14 +147,13 @@ namespace FungusToast.Simulation.Models
 
             foreach (var myco in player.Mycovariants)
             {
-                string effect = "";
+                var effectCounts = new Dictionary<string, int>();
 
-                // Add effect logic per mycovariant
                 switch (myco.MycovariantId)
                 {
                     case var id when id == MycovariantGameBalance.PlasmidBountyId:
-                        // Award is always a constant; show it
-                        effect = $"+{MycovariantGameBalance.PlasmidBountyMutationPointAward} MP";
+                        // Award is always a constant (assume always awarded once if present)
+                        effectCounts["MpBonus"] = MycovariantGameBalance.PlasmidBountyMutationPointAward;
                         break;
 
                     case var id when id == MycovariantGameBalance.JettingMyceliumNorthId ||
@@ -162,26 +161,22 @@ namespace FungusToast.Simulation.Models
                                      id == MycovariantGameBalance.JettingMyceliumSouthId ||
                                      id == MycovariantGameBalance.JettingMyceliumWestId:
                         {
-                            // Get all tracked results for Jetting Mycelium for this player
+                            // Get tracked results for Jetting Mycelium for this player
                             int parasitized = tracking.GetJettingMyceliumParasitized(player.PlayerId);
                             int reclaimed = tracking.GetJettingMyceliumReclaimed(player.PlayerId);
                             int catabolic = tracking.GetJettingMyceliumCatabolicGrowth(player.PlayerId);
                             int alreadyOwned = tracking.GetJettingMyceliumAlreadyOwned(player.PlayerId);
 
-                            // Build effect summary string (only show nonzero effects)
-                            var parts = new List<string>();
-                            if (parasitized > 0) parts.Add($"{parasitized} parasitized");
-                            if (reclaimed > 0) parts.Add($"{reclaimed} reclaimed");
-                            if (catabolic > 0) parts.Add($"{catabolic} catabolic");
-                            if (alreadyOwned > 0) parts.Add($"{alreadyOwned} owned");
-                            effect = string.Join(", ", parts);
+                            if (parasitized > 0) effectCounts["Parasitized"] = parasitized;
+                            if (reclaimed > 0) effectCounts["Reclaimed"] = reclaimed;
+                            if (catabolic > 0) effectCounts["Catabolic"] = catabolic;
+                            if (alreadyOwned > 0) effectCounts["Owned"] = alreadyOwned;
                             break;
                         }
 
                     // Add more cases for other mycovariants as needed...
-
                     default:
-                        effect = "";
+                        // Optionally, leave EffectCounts empty if no effect for this mycovariant
                         break;
                 }
 
@@ -191,11 +186,12 @@ namespace FungusToast.Simulation.Models
                     MycovariantName = myco.Mycovariant.Name,
                     MycovariantType = myco.Mycovariant.Type.ToString(),
                     Triggered = myco.HasTriggered,
-                    EffectSummary = effect
+                    EffectCounts = effectCounts
                 });
             }
             return results;
         }
+
 
 
     }

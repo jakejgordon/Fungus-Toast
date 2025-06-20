@@ -8,7 +8,8 @@ namespace FungusToast.Simulation.Analysis
 {
     public class PlayerMycovariantUsageTracker
     {
-        private readonly List<(int PlayerId, string Strategy, string MycovariantName, string Type, bool Triggered, string Effect)> _records = new();
+        // Each record now stores effect counts as a dictionary by effect type (string)
+        private readonly List<(int PlayerId, string Strategy, string MycovariantName, string Type, string EffectType, int EffectValue, bool Triggered)> _records = new();
 
         public void TrackGameResult(GameResult result)
         {
@@ -16,15 +17,35 @@ namespace FungusToast.Simulation.Analysis
             {
                 foreach (var myco in pr.Mycovariants)
                 {
-                    string effect = myco.EffectSummary ?? "-";
-                    _records.Add((
-                        pr.PlayerId,
-                        pr.StrategyName ?? "None",
-                        myco.MycovariantName,
-                        myco.MycovariantType,
-                        myco.Triggered,
-                        effect
-                    ));
+                    // Assume: myco.EffectCounts is a Dictionary<string, int>
+                    if (myco.EffectCounts != null && myco.EffectCounts.Count > 0)
+                    {
+                        foreach (var kvp in myco.EffectCounts)
+                        {
+                            _records.Add((
+                                pr.PlayerId,
+                                pr.StrategyName ?? "None",
+                                myco.MycovariantName,
+                                myco.MycovariantType,
+                                kvp.Key,
+                                kvp.Value,
+                                myco.Triggered
+                            ));
+                        }
+                    }
+                    else
+                    {
+                        // Still log the mycovariant with a "-" effect type if no effects
+                        _records.Add((
+                            pr.PlayerId,
+                            pr.StrategyName ?? "None",
+                            myco.MycovariantName,
+                            myco.MycovariantType,
+                            "-",
+                            0,
+                            myco.Triggered
+                        ));
+                    }
                 }
             }
         }
@@ -32,28 +53,32 @@ namespace FungusToast.Simulation.Analysis
         public void PrintReport(List<(int PlayerId, string StrategyName)> rankedPlayers)
         {
             Console.WriteLine("\nPlayer-Mycovariant Usage Summary (per Player, all games):");
-            Console.WriteLine("{0,8} | {1,-25} | {2,-28} | {3,-12} | {4,-10} | {5,-8} | {6,-60}",
-                "PlayerId", "Strategy", "Mycovariant Name", "Type", "Triggered", "Games", "Effect");
+            Console.WriteLine("{0,8} | {1,-25} | {2,-28} | {3,-12} | {4,-16} | {5,-8} | {6,-8} | {7,-10} | {8,-12}",
+                "PlayerId", "Strategy", "Mycovariant Name", "Type", "Effect", "Games", "Trig.", "Avg Effect", "Total Effect");
             Console.WriteLine(new string('-', 8) + "-|-" +
                                 new string('-', 25) + "-|-" +
                                 new string('-', 28) + "-|-" +
                                 new string('-', 12) + "-|-" +
-                                new string('-', 10) + "-|-" +
+                                new string('-', 16) + "-|-" +
                                 new string('-', 8) + "-|-" +
-                                new string('-', 60));
+                                new string('-', 8) + "-|-" +
+                                new string('-', 10) + "-|-" +
+                                new string('-', 12));
 
-            // Group by PlayerId + Strategy + Mycovariant for game count and aggregate effects
+            // Group by player/strategy/mycovariant/effect/type
             var grouped = _records
-                .GroupBy(r => (r.PlayerId, r.Strategy, r.MycovariantName, r.Type))
+                .GroupBy(r => (r.PlayerId, r.Strategy, r.MycovariantName, r.Type, r.EffectType))
                 .Select(g => new
                 {
                     g.Key.PlayerId,
                     g.Key.Strategy,
                     g.Key.MycovariantName,
                     g.Key.Type,
+                    g.Key.EffectType,
                     Games = g.Count(),
-                    Triggered = g.Count(x => x.Triggered), // Count times triggered
-                    Effect = AggregateEffectSummaries(g.Select(x => x.Effect).ToList())
+                    Triggered = g.Count(x => x.Triggered),
+                    TotalEffect = g.Sum(x => x.EffectValue),
+                    AvgEffect = g.Count() > 0 ? g.Average(x => x.EffectValue) : 0.0
                 })
                 .ToList();
 
@@ -63,34 +88,24 @@ namespace FungusToast.Simulation.Analysis
                     x.PlayerId == playerId &&
                     string.Equals(x.Strategy, strategyName, StringComparison.OrdinalIgnoreCase));
 
-                foreach (var r in playerRecords)
+                foreach (var r in playerRecords.OrderBy(x => x.MycovariantName).ThenBy(x => x.EffectType))
                 {
-                    Console.WriteLine("{0,8} | {1,-25} | {2,-28} | {3,-12} | {4,-10} | {5,-8} | {6,-60}",
+                    Console.WriteLine("{0,8} | {1,-25} | {2,-28} | {3,-12} | {4,-16} | {5,-8} | {6,-8} | {7,-10:N2} | {8,-12}",
                         r.PlayerId,
                         Truncate(r.Strategy, 25),
                         Truncate(r.MycovariantName, 28),
                         Truncate(r.Type, 12),
-                        r.Triggered,
+                        Truncate(r.EffectType, 16),
                         r.Games,
-                        Truncate(r.Effect, 60));
+                        r.Triggered,
+                        r.AvgEffect,
+                        r.TotalEffect);
                 }
             }
-            Console.WriteLine(new string('-', 159));
+            Console.WriteLine(new string('-', 135));
         }
 
         private static string Truncate(string value, int maxLength) =>
             value == null ? "" : (value.Length <= maxLength ? value : value[..maxLength]);
-
-        /// <summary>
-        /// Aggregates effect summaries from multiple games.
-        /// If all summaries are the same, shows one; otherwise, shows a comma-separated list.
-        /// </summary>
-        private static string AggregateEffectSummaries(List<string> effects)
-        {
-            var nonEmpty = effects.Where(e => !string.IsNullOrWhiteSpace(e) && e != "-").ToList();
-            if (nonEmpty.Count == 0) return "";
-            if (nonEmpty.All(e => e == nonEmpty[0])) return nonEmpty[0];
-            return string.Join(", ", nonEmpty.Distinct());
-        }
     }
 }

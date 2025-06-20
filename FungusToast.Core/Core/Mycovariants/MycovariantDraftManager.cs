@@ -59,9 +59,16 @@ namespace FungusToast.Core.Mycovariants
                     player.Mycovariants.Add(playerMyco);
 
                     // If effect is instant, resolve now
-                    picked.ApplyEffect?.Invoke(playerMyco, board, rng, observer);
+                    if (picked.ApplyEffect != null)
+                    {
+                        picked.ApplyEffect.Invoke(playerMyco, board, rng, observer);
+
+                        // Mark as triggered for instant/on-acquire effects
+                        playerMyco.MarkTriggered();
+                    }
                 }
             }
         }
+
     }
 }
