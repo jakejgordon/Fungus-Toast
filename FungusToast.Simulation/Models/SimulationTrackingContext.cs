@@ -15,10 +15,6 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, Dictionary<MutationTier, int>> mutationPointsSpentByTier = new();
         private readonly Dictionary<int, int> mutationPointIncomeByPlayer = new();
 
-
-        // Centralized death reason tracking: [playerId][DeathReason] => count
-        private readonly Dictionary<int, Dictionary<DeathReason, int>> deathsByPlayerAndReason = new();
-
         private readonly Dictionary<int, int> creepingMoldMoves = new();
         private readonly Dictionary<int, int> reclaimedCells = new();
         private readonly Dictionary<int, int> mycotoxinTracerSporeDrops = new();
@@ -161,17 +157,6 @@ namespace FungusToast.Simulation.Models
 
         #region General Stat & Outcome Trackers
 
-        private readonly Dictionary<int, int> creepingMoldMoves = new();
-        private readonly Dictionary<int, int> reclaimedCells = new();
-        private readonly Dictionary<int, int> mycotoxinTracerSporeDrops = new();
-        private readonly Dictionary<int, int> sporocidalSporeDrops = new();
-        private readonly Dictionary<int, int> necrosporulationSporeDrops = new();
-        private readonly Dictionary<int, int> necrophyticBloomSpores = new();
-        private readonly Dictionary<int, int> necrophyticBloomReclaims = new();
-        private readonly Dictionary<int, int> toxinCatabolisms = new();
-        private readonly Dictionary<int, int> catabolizedMutationPoints = new();
-        private readonly Dictionary<int, int> necrotoxicConversionReclaims = new();
-
         public void RecordCreepingMoldMove(int playerId)
         {
             if (!creepingMoldMoves.ContainsKey(playerId))
@@ -284,22 +269,6 @@ namespace FungusToast.Simulation.Models
 
         #region Mutation Point Source Tracking
 
-        private readonly Dictionary<int, int> adaptiveExpressionPointsEarned = new();
-        private readonly Dictionary<int, int> mutatorPhenotypePointsEarned = new();
-        private readonly Dictionary<int, int> hyperadaptiveDriftPointsEarned = new();
-
-        public void RecordAdaptiveExpressionBonus(int playerId, int bonusPoints)
-        {
-            if (!adaptiveExpressionPointsEarned.ContainsKey(playerId))
-                adaptiveExpressionPointsEarned[playerId] = 0;
-            adaptiveExpressionPointsEarned[playerId] += bonusPoints;
-        }
-
-        public int GetAdaptiveExpressionPointsEarned(int playerId) =>
-            adaptiveExpressionPointsEarned.TryGetValue(playerId, out var val) ? val : 0;
-
-        public Dictionary<int, int> GetAllAdaptiveExpressionPointsEarned() => new(adaptiveExpressionPointsEarned);
-
         public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned)
         {
             if (!mutatorPhenotypePointsEarned.ContainsKey(playerId))
@@ -327,16 +296,6 @@ namespace FungusToast.Simulation.Models
         #endregion
 
         #region Growth and Special Mutation Stats
-
-        private readonly Dictionary<int, int> necrohyphalInfiltrations = new();
-        private readonly Dictionary<int, int> necrohyphalCascades = new();
-        private readonly Dictionary<int, int> tendrilNorthwestGrownCells = new();
-        private readonly Dictionary<int, int> tendrilNortheastGrownCells = new();
-        private readonly Dictionary<int, int> tendrilSoutheastGrownCells = new();
-        private readonly Dictionary<int, int> tendrilSouthwestGrownCells = new();
-
-        private readonly Dictionary<int, int> hyphalSurgeGrowths = new();
-        private readonly Dictionary<int, int> hyphalVectoringGrowths = new();
 
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount)
         {
@@ -422,17 +381,6 @@ namespace FungusToast.Simulation.Models
 
         #region Failed Growth Tracking
 
-        public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
-
-        public void RecordFailedGrowth(int playerId)
-        {
-            if (!FailedGrowthsByPlayerId.ContainsKey(playerId))
-                FailedGrowthsByPlayerId[playerId] = 0;
-            FailedGrowthsByPlayerId[playerId]++;
-        }
-
-        public int GetFailedGrowthCount(int playerId) =>
-            FailedGrowthsByPlayerId.TryGetValue(playerId, out var val) ? val : 0;
         public int GetRegenerativeHyphaeReclaims(int playerId) =>
             regenerativeHyphaeReclaims.TryGetValue(playerId, out var val) ? val : 0;
 
@@ -507,9 +455,6 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetNecrosporulationSporeDropCounts() => new(necrosporulationSporeDrops);
         public Dictionary<int, int> GetMycotoxinSporeDropCounts() => new(mycotoxinTracerSporeDrops);
 
-
-        public Dictionary<int, int> GetAllMutatorPhenotypePointsEarned() => new(mutatorPhenotypePointsEarned);
-        public Dictionary<int, int> GetAllHyperadaptiveDriftPointsEarned() => new(hyperadaptiveDriftPointsEarned);
         public Dictionary<int, int> GetAllNecrohyphalInfiltrations() => new(necrohyphalInfiltrations);
         public Dictionary<int, int> GetAllNecrohyphalCascades() => new(necrohyphalCascades);
         public Dictionary<int, int> GetAllTendrilNorthwestGrownCells() => new(tendrilNorthwestGrownCells);

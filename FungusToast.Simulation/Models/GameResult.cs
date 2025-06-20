@@ -108,9 +108,6 @@ namespace FungusToast.Simulation.Models
                     MutationPointsSpentByTier = tracking.GetMutationPointsSpentByTier(player.PlayerId),
                     TotalMutationPointsSpent = tracking.GetTotalMutationPointsSpent(player.PlayerId),
 
-                    HyphalSurgeGrowths = tracking.GetHyphalSurgeGrowthCount(player.PlayerId),
-                    HyphalVectoringGrowths = tracking.GetHyphalVectoringGrowthCount(player.PlayerId),
-
                     // Mycovariant summary
                     Mycovariants = BuildMycovariantResults(player, tracking)
                 };
