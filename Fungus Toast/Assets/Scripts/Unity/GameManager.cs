@@ -18,6 +18,7 @@ using FungusToast.Core.Death;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Board;
 using FungusToast.Unity.UI.MycovariantDraft;
+using FungusToast.Unity.UI.GameStart;
 
 namespace FungusToast.Unity
 {
@@ -38,6 +39,7 @@ namespace FungusToast.Unity
         [SerializeField] private DecayPhaseRunner decayPhaseRunner;
         [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker;
         [SerializeField] private MycovariantDraftController mycovariantDraftController;
+        [SerializeField] private UI_StartGamePanel startGamePanel;
 
 
         private bool isCountdownActive = false;
@@ -68,7 +70,7 @@ namespace FungusToast.Unity
 
         private void Start()
         {
-            InitializeGame(playerCount);
+            ShowStartGamePanel();
         }
 
         public void InitializeGame(int numberOfPlayers)
@@ -89,20 +91,26 @@ namespace FungusToast.Unity
 
             mutationManager.ResetMutationPoints(players);
 
+            // === ACTIVATE ALL UI PANELS FIRST ===
+            gameUIManager.LeftSidebar?.gameObject.SetActive(true);
+            gameUIManager.RightSidebar?.gameObject.SetActive(true);
+            gameUIManager.MutationUIManager.gameObject.SetActive(true);
+            mycovariantDraftController?.gameObject.SetActive(false);
+
+            // === THEN initialize and show children/buttons ===
             gameUIManager.MutationUIManager.Initialize(humanPlayer);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+
             gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
             phaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
             phaseProgressTracker?.HighlightMutationPhase();
 
-
-            gameUIManager.MutationUIManager.gameObject.SetActive(true);
-
             // --- Set the GridVisualizer on the RightSidebar before initializing player summaries
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
         }
+
 
 
         private void InitializePlayersWithHumanFirst()
@@ -404,5 +412,19 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
         }
 
+        public void ShowStartGamePanel()
+        {
+            // Hide other major panels if desired (optional for clarity)
+            if (gameUIManager != null)
+            {
+                gameUIManager.LeftSidebar?.gameObject.SetActive(false);
+                gameUIManager.RightSidebar?.gameObject.SetActive(false);
+                gameUIManager.MutationUIManager?.gameObject.SetActive(false);
+                gameUIManager.EndGamePanel?.gameObject.SetActive(false);
+            }
+            // Show the start panel
+            if (startGamePanel != null)
+                startGamePanel.gameObject.SetActive(true);
+        }
     }
 }

@@ -28,7 +28,7 @@ namespace FungusToast.Simulation.GameSimulation
             var (players, board) = InitializeGame(strategies, rng);
             var allMutations = MutationRegistry.GetAll().ToList();
             // Prepare the mycovariant system
-            var allMycovariants = MycovariantRepository.BuildAll();
+            var allMycovariants = MycovariantRepository.All;
             var mycovariantPoolManager = new MycovariantPoolManager();
 
 

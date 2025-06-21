@@ -77,7 +77,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 originalCounterScale = mutationPointsCounterText.transform.localScale;
 
             spendPointsButton.onClick.AddListener(OnSpendPointsClicked);
-            SetSpendPointsButtonVisible(false);
         }
 
         private void Update()
