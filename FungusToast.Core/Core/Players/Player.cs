@@ -25,7 +25,7 @@ namespace FungusToast.Core.Players
 
         public Dictionary<int, PlayerMutation> PlayerMutations { get; } = new();
 
-        public List<PlayerMycovariant> Mycovariants { get; } = new();
+        public List<PlayerMycovariant> PlayerMycovariants { get; } = new();
 
         public List<int> ControlledTileIds { get; } = new();
 
@@ -335,9 +335,20 @@ namespace FungusToast.Core.Players
 
 
         public bool HasMycovariant(int id) =>
-            Mycovariants.Any(m => m.MycovariantId == id);
+            PlayerMycovariants.Any(m => m.MycovariantId == id);
 
         public PlayerMycovariant? GetMycovariant(int id) =>
-            Mycovariants.FirstOrDefault(m => m.MycovariantId == id);
+            PlayerMycovariants.FirstOrDefault(m => m.MycovariantId == id);
+
+        public void AddMycovariant(Mycovariant picked)
+        {
+            // Prevent duplicates
+            if (HasMycovariant(picked.Id))
+                return;
+
+            var playerMyco = new PlayerMycovariant(PlayerId, picked.Id, picked);
+            PlayerMycovariants.Add(playerMyco);
+        }
+
     }
 }

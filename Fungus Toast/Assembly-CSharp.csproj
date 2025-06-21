@@ -66,10 +66,12 @@
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_MutationManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_RightSideBar.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\SidebarResizer.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantIcon.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameStart\UI_PlayerCountButton.cs" />
     <Compile Include="Assets\Scripts\Unity\Phases\DecayPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationNodeUI.cs" />
     <Compile Include="Assets\Scripts\Unity\Cameras\CameraControls.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\MycovariantTooltipPanel.cs" />
     <Compile Include="Assets\Scripts\Unity\Phases\GrowthPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationLayoutMetadata.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PlayerBinder.cs" />
@@ -77,8 +79,12 @@
     <Compile Include="Assets\Scripts\Unity\Grid\GridFiller.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PhaseBanner.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantArtRepository.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\MycovariantTooltipTrigger.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantCard.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameUIManager.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\DraftOrderRow.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_EndGamePanel.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_TooltipPositioner.cs" />
     <Compile Include="Assets\Scripts\Unity\Cameras\CameraCenterer.cs" />
@@ -88,6 +94,7 @@
     <Compile Include="Assets\Scripts\Unity\Grid\TileHoverHighlighter.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_GameEndPlayerResultsRow.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\PlayerMoldIconHoverHandler.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantDraftController.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_MutationLayoutProvider.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\PlayerSummaryRow.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameStart\UI_StartGamePanel.cs" />

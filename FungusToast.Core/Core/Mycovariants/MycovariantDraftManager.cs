@@ -14,20 +14,23 @@ namespace FungusToast.Core.Mycovariants
         /// For AI, picks randomly. For human, calls the selectionCallback (if provided).
         /// </summary>
         /// <param name="players">All players in the game.</param>
-        /// <param name="pool">The Mycovariant pool manager (should be initialized for this draft).</param>
+        /// <param name="poolManager">The Mycovariant pool manager (should be initialized for this draft).</param>
         /// <param name="board">The game board.</param>
         /// <param name="rng">Random source.</param>
+        /// <param name="choicesCount">How many choices per player (usually 3).</param>
         /// <param name="humanSelectionCallback">
         /// Optional: callback invoked for human selection, signature:
         /// (Player player, List&lt;Mycovariant&gt; choices) => Mycovariant (should return a picked one)
         /// </param>
+        /// <param name="observer">Optional: Simulation observer for effect tracking/logging.</param>
         public static void RunDraft(
-            List<Player> players,
-            MycovariantPoolManager pool,
-            GameBoard board,
-            Random rng,
-            Func<Player, List<Mycovariant>, Mycovariant>? humanSelectionCallback = null,
-            ISimulationObserver? observer = null)
+           List<Player> players,
+           MycovariantPoolManager poolManager,
+           GameBoard board,
+           Random rng,
+           int choicesCount = 3,
+           Func<Player, List<Mycovariant>, Mycovariant>? humanSelectionCallback = null,
+           ISimulationObserver? observer = null)
         {
             // Sort by fewest living cells (tiebreaker: lowest playerId)
             var draftOrder = players
@@ -37,38 +40,86 @@ namespace FungusToast.Core.Mycovariants
 
             foreach (var player in draftOrder)
             {
-                var choices = pool.DrawChoices(3);
+                var choices = GetDraftChoices(player, poolManager, choicesCount, rng);
+                if (choices.Count == 0)
+                    continue;
 
-                Mycovariant? picked = null;
-
+                Mycovariant picked;
                 if (player.PlayerType == PlayerTypeEnum.Human && humanSelectionCallback != null)
                 {
-                    // Defer to UI/callback for human
                     picked = humanSelectionCallback(player, choices);
                 }
                 else
                 {
-                    // AI: pick randomly
                     picked = choices[rng.Next(choices.Count)];
                 }
 
-                if (picked != null)
+                if (picked == null)
+                    continue; // Defensive: can happen if callback returns null
+
+                // Use encapsulated add
+                player.AddMycovariant(picked);
+
+                // Remove unique from pool
+                poolManager.RemoveFromPool(picked);
+
+                // Resolve instant/on-acquire effect
+                var playerMyco = player.PlayerMycovariants.LastOrDefault(pm => pm.MycovariantId == picked.Id);
+                if (playerMyco != null && picked.ApplyEffect != null)
                 {
-                    // Attach the mycovariant to the player
-                    var playerMyco = new PlayerMycovariant(player.PlayerId, picked.Id, picked);
-                    player.Mycovariants.Add(playerMyco);
-
-                    // If effect is instant, resolve now
-                    if (picked.ApplyEffect != null)
-                    {
-                        picked.ApplyEffect.Invoke(playerMyco, board, rng, observer);
-
-                        // Mark as triggered for instant/on-acquire effects
-                        playerMyco.MarkTriggered();
-                    }
+                    picked.ApplyEffect.Invoke(playerMyco, board, rng, observer);
+                    playerMyco.MarkTriggered();
                 }
             }
         }
 
+
+        /// <summary>
+        /// Returns a random set of draft choices for a player, honoring pool eligibility and uniqueness.
+        /// </summary>
+        public static List<Mycovariant> GetDraftChoices(
+            Player player,
+            MycovariantPoolManager poolManager,
+            int choicesCount,
+            Random rng)
+        {
+            var eligible = poolManager.GetEligibleMycovariantsForPlayer(player);
+
+            var shuffled = eligible.OrderBy(x => rng.Next()).ToList();
+
+            // Take up to choicesCount
+            return shuffled.Take(choicesCount).ToList();
+        }
+
+        /// <summary>
+        /// Builds the set of draft-eligible mycovariants for the upcoming draft phase.
+        /// By default, returns all unlocked and available mycovariants that are not already owned by any player.
+        /// Customize here for round, rarity, or board-specific filtering.
+        /// </summary>
+        public static List<Mycovariant> BuildDraftPool(GameBoard board, List<Player> players)
+        {
+            // 1. Get all possible mycovariants (update repository accessor if needed)
+            var allMycovariants = MycovariantRepository.All.ToList();
+
+            // 2. Optionally, filter out mycovariants already drafted (if no duplicates allowed)
+            var draftedIds = players
+                .SelectMany(p => p.PlayerMycovariants)
+                .Select(pm => pm.MycovariantId)
+                .ToHashSet();
+
+            // 3. Exclude any banned or scenario-restricted mycovariants (add logic if needed)
+            // For now, assume no banned list, but this is where it would go.
+
+            // 4. Optionally, filter by round/board state/unlocks here (customize as needed)
+            // e.g. unlock special mycovariants after round 5, or based on board status
+            // For now, we include all.
+
+            // 5. Compose the eligible pool
+            var draftPool = allMycovariants
+                .Where(m => !draftedIds.Contains(m.Id))
+                .ToList();
+
+            return draftPool;
+        }
     }
 }

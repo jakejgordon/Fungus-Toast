@@ -1,7 +1,10 @@
+using FungusToast.Core.Players;
+using FungusToast.Unity.Grid; // Needed for GridVisualizer
+using FungusToast.Unity.UI.MycovariantDraft;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using FungusToast.Unity.Grid; // Needed for GridVisualizer
 
 namespace FungusToast.Unity.UI
 {
@@ -11,6 +14,8 @@ namespace FungusToast.Unity.UI
         [SerializeField] private TextMeshProUGUI livingCellsText;
         [SerializeField] private TextMeshProUGUI deadCellsText;
         [SerializeField] private TextMeshProUGUI toxinCellsText;
+        [SerializeField] private Transform mycovariantContainer;
+        [SerializeField] private MycovariantIcon mycovariantIconPrefab;
 
         // Add this field to keep reference if needed
         private PlayerMoldIconHoverHandler hoverHandler;
@@ -51,5 +56,20 @@ namespace FungusToast.Unity.UI
             hoverHandler.playerId = playerId;
             hoverHandler.gridVisualizer = gridVisualizer;
         }
+
+        public void UpdateMycovariants(IReadOnlyList<PlayerMycovariant> mycovariants)
+        {
+            // Clear old icons
+            foreach (Transform child in mycovariantContainer)
+                Destroy(child.gameObject);
+
+            // Add new icons
+            foreach (var myco in mycovariants)
+            {
+                var icon = Instantiate(mycovariantIconPrefab, mycovariantContainer);
+                icon.SetMycovariant(myco);
+            }
+        }
+
     }
 }

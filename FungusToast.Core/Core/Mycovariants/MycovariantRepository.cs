@@ -2,17 +2,29 @@
 
 namespace FungusToast.Core.Mycovariants
 {
+    /// <summary>
+    /// Provides access to all defined Mycovariant objects in the game.
+    /// </summary>
     public static class MycovariantRepository
     {
-        public static List<Mycovariant> BuildAll()
+        // Backing field for lazy-initialized, cached list
+        private static List<Mycovariant>? _all;
+
+        /// <summary>
+        /// Gets the canonical, immutable list of all mycovariants available in the game.
+        /// This list is constructed once and then cached.
+        /// </summary>
+        public static List<Mycovariant> All => _all ??= BuildAll();
+
+        /// <summary>
+        /// Internal factory for building the canonical mycovariant list.
+        /// Add all your mycovariant factories here.
+        /// </summary>
+        private static List<Mycovariant> BuildAll()
         {
             return new List<Mycovariant>
             {
-                /*
-                MycovariantFactory.NecrophoricAdaptation(),
-                MycovariantFactory.SaprobicRelay(),
-                MycovariantFactory.SporodochialGrowth(),
-                */
+                // Example mycovariants (replace/add as needed):
                 MycovariantFactory.JettingMyceliumNorth(),
                 MycovariantFactory.JettingMyceliumEast(),
                 MycovariantFactory.JettingMyceliumSouth(),
@@ -20,7 +32,7 @@ namespace FungusToast.Core.Mycovariants
 
                 // --- Universal/Fallback options ---
                 MycovariantFactory.PlasmidBounty()
-                // Add other universal Mycovariants here as you create them
+                // Add additional universal Mycovariants as created
             };
         }
     }

@@ -145,7 +145,7 @@ namespace FungusToast.Simulation.Models
         {
             var results = new List<MycovariantResult>();
 
-            foreach (var myco in player.Mycovariants)
+            foreach (var myco in player.PlayerMycovariants)
             {
                 var effectCounts = new Dictionary<string, int>();
 

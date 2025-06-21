@@ -10,7 +10,7 @@ public static class MycovariantEffectProcessor
 {
     public static void CheckAndTrigger(Player player, GameBoard board, ISimulationObserver? observer)
     {
-        foreach (var playerMyco in player.Mycovariants)
+        foreach (var playerMyco in player.PlayerMycovariants)
         {
             if (!playerMyco.HasTriggered &&
                 playerMyco.Mycovariant.IsTriggerConditionMet?.Invoke(playerMyco, board) == true)

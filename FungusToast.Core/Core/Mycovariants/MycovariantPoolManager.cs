@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FungusToast.Core.Players;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,6 +10,9 @@ namespace FungusToast.Core.Mycovariants
         private List<Mycovariant> _availablePool = new();
         private List<Mycovariant> _universalPool = new();
 
+        /// <summary>
+        /// Initializes the pools. Call at the start of the draft phase.
+        /// </summary>
         public void InitializePool(List<Mycovariant> all, Random rng)
         {
             _availablePool = all
@@ -18,22 +22,23 @@ namespace FungusToast.Core.Mycovariants
 
             _universalPool = all
                 .Where(m => m.IsUniversal)
-                .ToList(); // No shuffle—universal choices are always the same for all players
+                .ToList();
         }
 
-        public List<Mycovariant> DrawChoices(int count)
+        /// <summary>
+        /// Draws up to <paramref name="count"/> choices from the available pool, filling with universals if needed.
+        /// Choices are removed from the pool when drawn.
+        /// </summary>
+        public List<Mycovariant> DrawChoices(int count, Random rng)
         {
             var choices = _availablePool.Take(count).ToList();
-
-            // Remove selected unique ones from the pool (but not universals)
             _availablePool.RemoveAll(m => choices.Contains(m));
 
-            // Fill with universal if needed
             if (choices.Count < count)
             {
-                // You may want to randomize which universals are shown if there are several
+                // Shuffle universal pool using provided rng
                 var universals = _universalPool
-                    .OrderBy(_ => Guid.NewGuid()) // Shuffle
+                    .OrderBy(_ => rng.Next())
                     .Take(count - choices.Count)
                     .ToList();
                 choices.AddRange(universals);
@@ -42,6 +47,40 @@ namespace FungusToast.Core.Mycovariants
             return choices;
         }
 
+        /// <summary>
+        /// Returns all mycovariants currently available for drafting by the player.
+        /// By default, excludes any already owned by the player.
+        /// </summary>
+        public List<Mycovariant> GetEligibleMycovariantsForPlayer(Player player)
+        {
+            // Exclude mycovariants already owned by this player (prevent duplicate picks)
+            var ownedIds = new HashSet<int>(player.PlayerMycovariants.Select(pm => pm.MycovariantId));
+
+            // All available (unique, not drafted) + all universals (which can be drafted multiple times)
+            var eligible = new List<Mycovariant>();
+
+            eligible.AddRange(_availablePool.Where(m => !ownedIds.Contains(m.Id)));
+
+            // Universals: can be drafted by everyone, but still avoid duplicates on the same player
+            eligible.AddRange(_universalPool.Where(m => !ownedIds.Contains(m.Id)));
+
+            return eligible;
+        }
+
+        /// <summary>
+        /// Removes a drafted mycovariant from the available pool if it is not universal.
+        /// Universal mycovariants remain available to all players.
+        /// </summary>
+        public void RemoveFromPool(Mycovariant picked)
+        {
+            if (picked.IsUniversal)
+                return; // Don't remove universals, still available for others
+
+            _availablePool.RemoveAll(m => m.Id == picked.Id);
+            // If you have additional pools (e.g., by rarity/type), remove from them as needed
+        }
+
         public bool IsExhausted => !_availablePool.Any();
     }
+
 }

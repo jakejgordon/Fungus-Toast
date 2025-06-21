@@ -17,6 +17,7 @@ using FungusToast.Core.Growth;
 using FungusToast.Core.Death;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Board;
+using FungusToast.Unity.UI.MycovariantDraft;
 
 namespace FungusToast.Unity
 {
@@ -36,10 +37,14 @@ namespace FungusToast.Unity
         [SerializeField] private GameUIManager gameUIManager;
         [SerializeField] private DecayPhaseRunner decayPhaseRunner;
         [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker;
+        [SerializeField] private MycovariantDraftController mycovariantDraftController;
+
 
         private bool isCountdownActive = false;
         private int roundsRemainingUntilGameEnd = 0;
         private bool gameEnded = false;
+
+        private System.Random rng;
 
         public GameBoard Board { get; private set; }
         public GameUIManager GameUI => gameUIManager;
@@ -57,6 +62,8 @@ namespace FungusToast.Unity
             }
             Instance = this;
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
+
+            rng = new System.Random();
         }
 
         private void Start()
@@ -233,7 +240,15 @@ namespace FungusToast.Unity
             CheckForEndgameCondition();
             if (gameEnded) return;
 
-            OnGrowthPhaseComplete();
+            // === 1. Trigger draft phase if this is the right round ===
+            if (Board.CurrentRound == MycovariantGameBalance.MycovariantSelectionTriggerRound)
+            {
+                StartMycovariantDraftPhase();
+                return; // Prevent starting mutation phase until draft is complete!
+            }
+
+            // === 2. Otherwise, start the next mutation phase as usual ===
+            StartNextRound();
 
             Board.IncrementRound();
 
@@ -242,7 +257,7 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy);
         }
 
-        public void OnGrowthPhaseComplete()
+        public void StartNextRound()
         {
             if (gameEnded) return;
 
@@ -351,6 +366,42 @@ namespace FungusToast.Unity
             {
                 phaseProgressTracker?.SetMutationPhaseLabel("MUTATION");
             }
+        }
+
+        public void StartMycovariantDraftPhase()
+        {
+            // Build the pool here—however you want!
+            var draftPool = MycovariantDraftManager.BuildDraftPool(Board, players);
+
+            // Create and initialize the pool manager
+            var poolManager = new MycovariantPoolManager();
+            poolManager.InitializePool(draftPool, rng);
+
+            // Example: order by fewest living cells, or your draft order logic
+            var draftOrder = players
+                .OrderBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
+                .ToList();
+
+            mycovariantDraftController.StartDraft(
+                players, poolManager, draftOrder, rng, MycovariantGameBalance.MycovariantSelectionDraftSize);
+
+            gameUIManager.PhaseBanner.Show("Mycovariant Draft Phase", 2f);
+        }
+
+
+
+        public void OnMycovariantDraftComplete()
+        {
+            // Proceed to next round and phase
+            StartNextRound();
+        }
+
+        public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)
+        {
+            player.AddMycovariant(picked); // Or however you add it to the player
+                                           // If the mycovariant triggers an instant effect, resolve that here.
+                                           // Optionally update UI
+            gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
         }
 
     }
