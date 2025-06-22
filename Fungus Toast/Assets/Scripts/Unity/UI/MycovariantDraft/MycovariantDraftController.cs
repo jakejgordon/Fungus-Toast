@@ -163,15 +163,18 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             SetDraftState(DraftUIState.AnimatingPick);
 
-            // Backend: assign to player, resolve effects
             GameManager.Instance.ResolveMycovariantDraftPick(currentPlayer, picked);
 
-            // UI: Visual feedback (animation), then next drafter
+            // >>> THIS IS WHAT WAS MISSING <<<
+            if (!picked.IsUniversal)
+                poolManager.RemoveFromPool(picked);
+
             AnimatePickFeedback(picked, () => {
                 draftIndex++;
                 BeginNextDraft();
             });
         }
+
 
         private IEnumerator AnimateAIPickRoutine()
         {

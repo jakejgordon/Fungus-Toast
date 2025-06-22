@@ -60,8 +60,10 @@ namespace FungusToast.Core.Mycovariants
                 // Use encapsulated add
                 player.AddMycovariant(picked);
 
-                // Remove unique from pool
-                poolManager.RemoveFromPool(picked);
+                // Only remove from pool if not universal (i.e., not always available)
+                if (!picked.IsUniversal)
+                    poolManager.RemoveFromPool(picked);
+
 
                 // Resolve instant/on-acquire effect
                 var playerMyco = player.PlayerMycovariants.LastOrDefault(pm => pm.MycovariantId == picked.Id);
