@@ -61,13 +61,27 @@ public class DraftOrderRow : MonoBehaviour
             {
                 var arrowObj = new GameObject("ArrowText", typeof(RectTransform), typeof(TextMeshProUGUI));
                 arrowObj.transform.SetParent(transform, false);
+
                 var text = arrowObj.GetComponent<TextMeshProUGUI>();
                 text.text = arrowChar;
                 text.fontSize = arrowFontSize;
                 text.color = arrowColor;
-                text.alignment = TextAlignmentOptions.Center;
+                text.alignment = TextAlignmentOptions.Center; // Ensures horizontal and vertical center
+
+                var arrowRect = arrowObj.GetComponent<RectTransform>();
+                arrowRect.sizeDelta = new Vector2(32, 0); // 32px wide, height flexible
+                arrowRect.anchorMin = new Vector2(0.5f, 0.5f);
+                arrowRect.anchorMax = new Vector2(0.5f, 0.5f);
+                arrowRect.pivot = new Vector2(0.5f, 0.5f);
+                arrowRect.anchoredPosition = Vector2.zero; // Centered
+
+                var layout = arrowObj.AddComponent<UnityEngine.UI.LayoutElement>();
+                layout.preferredWidth = 32;
+
                 cells.Add(arrowObj);
             }
+
+
         }
     }
 
