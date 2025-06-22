@@ -112234,9 +112234,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   draftPanel: {fileID: 1723225966}
   draftBannerText: {fileID: 943250108}
-  draftOrderRow: {fileID: 0}
+  draftOrderRow: {fileID: 2042304946}
   choiceContainer: {fileID: 1610402562}
-  cardPrefab: {fileID: 0}
+  cardPrefab: {fileID: 8528227567745809826, guid: 7dede3b59e08fd54e953ba71f543bf16, type: 3}
 --- !u!1 &1723444988
 GameObject:
   m_ObjectHideFlags: 0

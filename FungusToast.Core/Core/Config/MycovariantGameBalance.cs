@@ -2,7 +2,7 @@
 {
     public static class MycovariantGameBalance
     {
-        public const int MycovariantSelectionTriggerRound = 2; //TESTING
+        public const int MycovariantSelectionTriggerRound = 1; //TESTING
         public const int MycovariantSelectionDraftSize = 3;
 
         public const int PlasmidBountyId = 1000;

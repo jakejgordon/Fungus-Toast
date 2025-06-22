@@ -1,22 +1,34 @@
-using UnityEngine;
+using Assets.Scripts.Unity.UI.MycovariantDraft;
+using FungusToast.Core.Config;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using Assets.Scripts.Unity.UI.MycovariantDraft;
-using System;
-using FungusToast.Core.Config;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI.MycovariantDraft
 {
+    public enum DraftUIState
+    {
+        Idle,
+        HumanTurn,
+        AITurn,
+        AnimatingPick,
+        Complete
+    }
+
     public class MycovariantDraftController : MonoBehaviour
     {
         [Header("UI References")]
-        public GameObject draftPanel; // Main draft panel root
-        public TextMeshProUGUI draftBannerText;
-        public DraftOrderRow draftOrderRow;
-        public Transform choiceContainer; // Parent for choice cards
-        public MycovariantCard cardPrefab; // Assign in inspector
+        [SerializeField] private GameObject draftPanel; // Main draft panel root
+        [SerializeField] private CanvasGroup interactionBlocker; // semi-transparent overlay, blocks raycasts
+        [SerializeField] private TextMeshProUGUI draftBannerText;
+        [SerializeField] private DraftOrderRow draftOrderRow; // progress bar, highlights current/next/done
+        [SerializeField] private Transform choiceContainer; // Parent for card prefabs
+        [SerializeField] private MycovariantCard cardPrefab; // Assign in inspector
 
         private List<Mycovariant> draftChoices;
         private Player currentPlayer;
@@ -26,6 +38,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private MycovariantPoolManager poolManager;
         private System.Random rng;
         private int draftChoicesCount;
+
+        private DraftUIState uiState = DraftUIState.Idle;
 
         // Public entry point: starts draft phase
         public void StartDraft(
@@ -44,43 +58,114 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             BeginNextDraft();
         }
 
-
         private void BeginNextDraft()
         {
             if (draftIndex >= draftOrder.Count)
             {
                 HideDraftUI();
+                uiState = DraftUIState.Complete;
                 GameManager.Instance.OnMycovariantDraftComplete();
                 return;
             }
             currentPlayer = draftOrder[draftIndex];
-            draftBannerText.text = $"Drafting: {currentPlayer.PlayerName}";
-            draftOrderRow.SetDraftOrder(draftOrder, draftIndex);
-            // Get N choices for this player from backend logic
+            UpdateDraftBanner();
+
+            // Progress bar: highlight current, gray-out done, normal for next
+            draftOrderRow?.SetDraftOrder(draftOrder, draftIndex);
+
             draftChoices = MycovariantDraftManager.GetDraftChoices(
                 currentPlayer, poolManager, draftChoicesCount, rng);
 
             PopulateChoices(draftChoices);
+
             if (currentPlayer.PlayerType == PlayerTypeEnum.AI)
             {
-                Invoke(nameof(AutoPickForAI), 1.0f);
+                SetDraftState(DraftUIState.AITurn);
+                // Animate a "thinking" moment, then pick
+                StartCoroutine(AnimateAIPickRoutine());
+            }
+            else
+            {
+                SetDraftState(DraftUIState.HumanTurn);
+            }
+        }
+
+        private void UpdateDraftBanner()
+        {
+            if (currentPlayer.PlayerType == PlayerTypeEnum.AI)
+                draftBannerText.text = $"AI Drafting: {currentPlayer.PlayerName}";
+            else
+                draftBannerText.text = $"Your turn to draft a Mycovariant!";
+        }
+
+        private void SetDraftState(DraftUIState state)
+        {
+            uiState = state;
+            switch (state)
+            {
+                case DraftUIState.HumanTurn:
+                    SetAllPickButtonsInteractable(true);
+                    interactionBlocker.blocksRaycasts = false;
+                    interactionBlocker.alpha = 0f;
+                    HighlightActiveCards(true);
+                    break;
+                case DraftUIState.AITurn:
+                    SetAllPickButtonsInteractable(false);
+                    interactionBlocker.blocksRaycasts = true;
+                    interactionBlocker.alpha = 0.35f;
+                    HighlightActiveCards(false);
+                    break;
+                case DraftUIState.AnimatingPick:
+                    SetAllPickButtonsInteractable(false);
+                    interactionBlocker.blocksRaycasts = true;
+                    interactionBlocker.alpha = 0.55f;
+                    HighlightActiveCards(false);
+                    break;
+                case DraftUIState.Idle:
+                case DraftUIState.Complete:
+                default:
+                    SetAllPickButtonsInteractable(false);
+                    interactionBlocker.blocksRaycasts = false;
+                    interactionBlocker.alpha = 0f;
+                    HighlightActiveCards(false);
+                    break;
+            }
+        }
+
+        private void HighlightActiveCards(bool highlight)
+        {
+            // Only highlight for human turn
+            foreach (Transform child in choiceContainer)
+            {
+                var card = child.GetComponent<MycovariantCard>();
+                if (card != null)
+                    card.SetActiveHighlight(highlight);
             }
         }
 
         private void PopulateChoices(List<Mycovariant> choices)
         {
-            foreach (Transform child in choiceContainer) Destroy(child.gameObject);
+            foreach (Transform child in choiceContainer)
+                Destroy(child.gameObject);
+
             foreach (var m in choices)
             {
                 var card = Instantiate(cardPrefab, choiceContainer);
                 card.SetMycovariant(m, OnChoicePicked);
+                card.SetActiveHighlight(false);
             }
         }
 
         private void OnChoicePicked(Mycovariant picked)
         {
+            if (uiState != DraftUIState.HumanTurn && uiState != DraftUIState.AITurn)
+                return; // ignore spurious/double clicks
+
+            SetDraftState(DraftUIState.AnimatingPick);
+
             // Backend: assign to player, resolve effects
             GameManager.Instance.ResolveMycovariantDraftPick(currentPlayer, picked);
+
             // UI: Visual feedback (animation), then next drafter
             AnimatePickFeedback(picked, () => {
                 draftIndex++;
@@ -88,20 +173,101 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             });
         }
 
-        private void AutoPickForAI()
+        private IEnumerator AnimateAIPickRoutine()
         {
-            var randomPick = draftChoices[rng.Next(draftChoices.Count)];
+            // Optional: show "AI thinking" with progress dots, brief delay
+            yield return new WaitForSeconds(UnityEngine.Random.Range(0.7f, 1.2f));
 
+            var randomPick = draftChoices[rng.Next(draftChoices.Count)];
             OnChoicePicked(randomPick);
         }
 
-        private void ShowDraftUI() => draftPanel.SetActive(true);
-        private void HideDraftUI() => draftPanel.SetActive(false);
+        private void SetAllPickButtonsInteractable(bool interactable)
+        {
+            foreach (Transform child in choiceContainer)
+            {
+                var card = child.GetComponent<MycovariantCard>();
+                if (card != null && card.pickButton != null)
+                    card.pickButton.interactable = interactable;
+            }
+        }
+
+        private void ShowDraftUI()
+        {
+            draftPanel.SetActive(true);
+            interactionBlocker.blocksRaycasts = true;
+            interactionBlocker.alpha = 0.8f;
+            uiState = DraftUIState.Idle;
+        }
+
+        private void HideDraftUI()
+        {
+            draftPanel.SetActive(false);
+            interactionBlocker.blocksRaycasts = false;
+            interactionBlocker.alpha = 0f;
+            uiState = DraftUIState.Idle;
+        }
+
+        // Animate AI or human pick: card pulse and color flash
         private void AnimatePickFeedback(Mycovariant picked, System.Action onComplete)
         {
-            // Optional: scale up, glow, play sound, etc.
+            // Find the card object for the picked Mycovariant
+            MycovariantCard pickedCard = null;
+            foreach (Transform child in choiceContainer)
+            {
+                var card = child.GetComponent<MycovariantCard>();
+                if (card != null && card.Mycovariant == picked)
+                {
+                    pickedCard = card;
+                    break;
+                }
+            }
+
+            if (pickedCard != null)
+            {
+                StartCoroutine(PlayPickAnimation(pickedCard, onComplete));
+            }
+            else
+            {
+                onComplete?.Invoke();
+            }
+        }
+
+        // Animation: scale pulse and color flash
+        private System.Collections.IEnumerator PlayPickAnimation(MycovariantCard card, System.Action onComplete)
+        {
+            var rt = card.GetComponent<RectTransform>();
+            var origScale = rt.localScale;
+            var highlightColor = new Color(1f, 0.93f, 0.45f, 1f); // warm yellow
+
+            float duration = 0.24f;
+            float elapsed = 0f;
+
+            var btnImage = card.pickButton.image;
+            Color origColor = btnImage.color;
+
+            // Highlight card visually (scale up, color pulse)
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / duration;
+                rt.localScale = Vector3.Lerp(origScale, origScale * 1.13f, t);
+                btnImage.color = Color.Lerp(origColor, highlightColor, t);
+                yield return null;
+            }
+
+            // Hold highlight briefly
+            yield return new WaitForSeconds(0.14f);
+
+            // Restore card visuals
+            rt.localScale = origScale;
+            btnImage.color = origColor;
+
+            // Optional: fade out the card, or show "chosen" badge here
+
+            yield return new WaitForSeconds(0.1f);
+
             onComplete?.Invoke();
         }
     }
-
 }
