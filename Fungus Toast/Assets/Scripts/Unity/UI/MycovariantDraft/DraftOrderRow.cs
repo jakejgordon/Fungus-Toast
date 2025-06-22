@@ -1,16 +1,74 @@
-﻿using FungusToast.Core.Players;
+﻿using Assets.Scripts.Unity.UI.MycovariantDraft;
+using FungusToast.Core.Players;
+using FungusToast.Unity.UI;
 using System.Collections.Generic;
+using TMPro; // For TextMeshProUGUI
 using UnityEngine;
-using UnityEngine.UI;
 
-namespace Assets.Scripts.Unity.UI.MycovariantDraft
+public class DraftOrderRow : MonoBehaviour
 {
-    public class DraftOrderRow : MonoBehaviour
+    [Header("Prefab")]
+    public GameObject playerIconCellPrefab;
+
+    public UI_PlayerBinder playerBinder;
+
+    [Header("Arrow")]
+    public string arrowChar = "→";
+    public float arrowFontSize = 28f; // Match your style
+
+    [Header("Colors")]
+    public Color activeHighlightColor = new Color(1f, 1f, 0.5f, 0.8f); // Yellow glow
+    public Color inactiveColor = Color.white;
+    public Color previousColor = new Color(1f, 1f, 1f, 0.3f); // Faded
+    public Color arrowColor = Color.white;
+
+    private readonly List<GameObject> cells = new();
+
+    public void SetDraftOrder(List<Player> draftOrder, int activeIndex)
     {
-        // Fill this out as needed. Could be a row of Image+Text for each player.
-        public void SetDraftOrder(List<Player> players, int currentDraftIndex)
+        // Clear old cells
+        foreach (var cell in cells)
+            Destroy(cell);
+        cells.Clear();
+
+        for (int i = 0; i < draftOrder.Count; i++)
         {
-            // TODO: update icons/highlights according to order and who's active.
+            var cellGO = Instantiate(playerIconCellPrefab, transform);
+            var cellUI = cellGO.GetComponent<PlayerIconCellUI>();
+            if (cellUI == null)
+            {
+                Debug.LogError("PlayerIconCell prefab is missing the PlayerIconCellUI component.");
+                continue;
+            }
+
+            // Set icon
+            var icon = cellUI.IconImage;
+            icon.sprite = playerBinder.GetIcon(draftOrder[i]);
+            icon.color = (i < activeIndex) ? previousColor : inactiveColor;
+
+            // Set highlight
+            var highlightBG = cellUI.HighlightBackground;
+            if (highlightBG != null)
+            {
+                highlightBG.enabled = (i == activeIndex);
+                highlightBG.color = (i == activeIndex) ? activeHighlightColor : Color.clear;
+            }
+
+            cells.Add(cellGO);
+
+            // Add arrow (TextMeshProUGUI) if not last
+            if (i < draftOrder.Count - 1)
+            {
+                var arrowObj = new GameObject("ArrowText", typeof(RectTransform), typeof(TextMeshProUGUI));
+                arrowObj.transform.SetParent(transform, false);
+                var text = arrowObj.GetComponent<TextMeshProUGUI>();
+                text.text = arrowChar;
+                text.fontSize = arrowFontSize;
+                text.color = arrowColor;
+                text.alignment = TextAlignmentOptions.Center;
+                cells.Add(arrowObj);
+            }
         }
     }
+
 }

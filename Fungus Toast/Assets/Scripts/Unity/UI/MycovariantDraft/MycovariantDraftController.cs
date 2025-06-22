@@ -71,7 +71,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             UpdateDraftBanner();
 
             // Progress bar: highlight current, gray-out done, normal for next
-            draftOrderRow?.SetDraftOrder(draftOrder, draftIndex);
+            draftOrderRow?.SetDraftOrder(draftOrder, draftIndex);   // <--- **RIGHT HERE**
 
             draftChoices = MycovariantDraftManager.GetDraftChoices(
                 currentPlayer, poolManager, draftChoicesCount, rng);
@@ -89,6 +89,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 SetDraftState(DraftUIState.HumanTurn);
             }
         }
+
 
         private void UpdateDraftBanner()
         {
