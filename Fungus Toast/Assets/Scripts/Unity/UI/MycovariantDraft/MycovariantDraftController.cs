@@ -4,6 +4,7 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Effects;
+using FungusToast.Unity.Grid;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -32,6 +33,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         [SerializeField] private DraftOrderRow draftOrderRow; // progress bar, highlights current/next/done
         [SerializeField] private Transform choiceContainer; // Parent for card prefabs
         [SerializeField] private MycovariantCard cardPrefab; // Assign in inspector
+        [SerializeField] private GridVisualizer gridVisualizer;
 
         private List<Mycovariant> draftChoices;
         private Player currentPlayer;
@@ -330,7 +332,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private IEnumerator HandleJettingMycelium(Player player, Mycovariant picked, Action onComplete)
         {
-            var direction = DirectionFromMycovariantId(picked.Id); // Use your direction helper!
+            var direction = DirectionFromMycovariantId(picked.Id);
 
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
@@ -360,8 +362,19 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
             else
             {
+                // Prompt the player to select a source cell
                 bool done = false;
                 FungalCell selectedCell = null;
+                var selectableCells = GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId)
+                    .Where(c => c.IsAlive)
+                    .ToList();
+                var selectableTileIds = selectableCells.Select(c => c.TileId).ToList();
+
+                gridVisualizer.HighlightTiles(
+                    selectableTileIds,
+                    new Color(1f, 0.2f, 0.8f, 1f),   // Pink pulse A
+                    new Color(1f, 0.7f, 1f, 1f)      // Pink pulse B
+                );
 
                 TileSelectionController.Instance.PromptSelectLivingCell(
                     player.PlayerId,
@@ -370,12 +383,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         done = true;
                     },
                     () => {
-                        // If canceled, just continue
                         done = true;
                     }
                 );
 
                 while (!done) yield return null;
+
+                gridVisualizer.ClearHighlights();
 
                 if (selectedCell != null)
                 {
@@ -393,6 +407,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 onComplete?.Invoke();
             }
         }
+
 
 
         private CardinalDirection DirectionFromMycovariantId(int id)

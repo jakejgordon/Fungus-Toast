@@ -112478,6 +112478,7 @@ MonoBehaviour:
   draftOrderRow: {fileID: 933624053}
   choiceContainer: {fileID: 1610402562}
   cardPrefab: {fileID: 8528227567745809826, guid: 7dede3b59e08fd54e953ba71f543bf16, type: 3}
+  gridVisualizer: {fileID: 989759029}
 --- !u!1 &1723444988
 GameObject:
   m_ObjectHideFlags: 0

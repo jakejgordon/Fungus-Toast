@@ -14,19 +14,22 @@ namespace FungusToast.Unity.Grid
         public Tilemap toastTilemap;      // Base toast layer
         public Tilemap moldTilemap;       // Player mold layer (including faded icons)
         public Tilemap overlayTilemap;    // Dead/toxin overlays
-        public Tilemap HoverTileMap;      // Mouseover highlights
+        public Tilemap HoverTileMap;      // Mouseover and highlight overlays
 
         [Header("Tiles")]
         public Tile baseTile;             // Toast base
         public Tile deadTile;             // Dead mold
         public Tile[] playerMoldTiles;    // Living mold, indexed by PlayerId
         public Tile toxinOverlayTile;     // Toxin icon overlay
-        [SerializeField] private Tile solidHighlightTile;
+        [SerializeField] private Tile solidHighlightTile; // For pulses/highlights
 
         private GameBoard board;
         private List<Vector3Int> highlightedPositions = new List<Vector3Int>();
         private Coroutine pulseHighlightCoroutine;
 
+        // Pulse color scheme, can be set by HighlightTiles
+        private Color pulseColorA = new Color(1f, 1f, 0.1f, 1f); // Default: yellow
+        private Color pulseColorB = new Color(0.1f, 1f, 1f, 1f); // Default: cyan
 
         public void Initialize(GameBoard board)
         {
@@ -55,25 +58,46 @@ namespace FungusToast.Unity.Grid
             }
         }
 
+        /// <summary>
+        /// Highlights all living tiles for a given player, with default (yellow/cyan) pulse.
+        /// </summary>
         public void HighlightPlayerTiles(int playerId)
+        {
+            HighlightTiles(
+                board.AllTiles()
+                    .Where(t => t.FungalCell?.CellType == FungalCellType.Alive &&
+                                t.FungalCell.OwnerPlayerId == playerId)
+                    .Select(t => t.TileId),
+                new Color(1f, 1f, 0.1f, 1f),  // Bright yellow
+                new Color(0.1f, 1f, 1f, 1f)   // Bright cyan
+            );
+        }
+
+        /// <summary>
+        /// Highlights any set of tiles with a pulsing color. Use for selection, special events, etc.
+        /// </summary>
+        /// <param name="tileIds">The tile IDs to highlight</param>
+        /// <param name="colorA">Pulse color A (optional, defaults to yellow)</param>
+        /// <param name="colorB">Pulse color B (optional, defaults to cyan)</param>
+        public void HighlightTiles(IEnumerable<int> tileIds, Color? colorA = null, Color? colorB = null)
         {
             HoverTileMap.ClearAllTiles();
             highlightedPositions.Clear();
 
-            foreach (var tile in board.AllTiles())
+            foreach (var tileId in tileIds)
             {
-                if (tile.FungalCell?.CellType == FungalCellType.Alive &&
-                    tile.FungalCell.OwnerPlayerId == playerId)
-                {
-                    Vector3Int pos = new Vector3Int(tile.X, tile.Y, 0);
-                    HoverTileMap.SetTile(pos, solidHighlightTile);
-                    HoverTileMap.SetTileFlags(pos, TileFlags.None);
-                    HoverTileMap.SetColor(pos, Color.white);
-                    highlightedPositions.Add(pos);
-                }
+                var (x, y) = board.GetXYFromTileId(tileId);
+                Vector3Int pos = new Vector3Int(x, y, 0);
+                HoverTileMap.SetTile(pos, solidHighlightTile);
+                HoverTileMap.SetTileFlags(pos, TileFlags.None);
+                HoverTileMap.SetColor(pos, Color.white);
+                highlightedPositions.Add(pos);
             }
 
-            // Start pulsing if any positions
+            // Set pulse colors if provided, else use defaults
+            pulseColorA = colorA ?? new Color(1f, 1f, 0.1f, 1f);
+            pulseColorB = colorB ?? new Color(0.1f, 1f, 1f, 1f);
+
             if (highlightedPositions.Count > 0)
             {
                 if (pulseHighlightCoroutine != null)
@@ -83,6 +107,9 @@ namespace FungusToast.Unity.Grid
             }
         }
 
+        /// <summary>
+        /// Clears all highlights and stops pulsing.
+        /// </summary>
         public void ClearHighlights()
         {
             HoverTileMap.ClearAllTiles();
@@ -96,17 +123,15 @@ namespace FungusToast.Unity.Grid
 
         private IEnumerator PulseHighlightTiles()
         {
-            float duration = 0.4f;         // Much faster pulse
-            float baseAlpha = 0.8f;        // Minimum alpha is high
+            float duration = 0.4f;         // Fast pulse
+            float baseAlpha = 0.8f;        // Minimum alpha
             float pulseAlpha = 1.0f;       // Maximum alpha
-            Color colorA = new Color(1f, 1f, 0.1f, 1f);    // Bright yellow
-            Color colorB = new Color(0.1f, 1f, 1f, 1f);    // Bright cyan
 
             while (true)
             {
                 float t = Mathf.PingPong(Time.time * (2f / duration), 1f); // Loops between 0 and 1
                 float alpha = Mathf.Lerp(baseAlpha, pulseAlpha, t);
-                Color pulseColor = Color.Lerp(colorA, colorB, t);
+                Color pulseColor = Color.Lerp(pulseColorA, pulseColorB, t);
                 pulseColor.a = alpha;
 
                 foreach (var pos in highlightedPositions)
@@ -119,7 +144,6 @@ namespace FungusToast.Unity.Grid
                 yield return null;
             }
         }
-
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
         {
@@ -158,7 +182,6 @@ namespace FungusToast.Unity.Grid
                     overlayTilemap.RefreshTile(pos);
                     break;
 
-
                 case FungalCellType.Toxin:
                     if (cell.OwnerPlayerId is int idT && idT >= 0 && idT < playerMoldTiles.Length)
                     {
@@ -193,7 +216,6 @@ namespace FungusToast.Unity.Grid
                 overlayTilemap.RefreshTile(pos);
             }
         }
-
 
         private void SetOverlayTile(Vector3Int pos, TileBase tile, Color color)
         {
