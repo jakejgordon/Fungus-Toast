@@ -1,10 +1,13 @@
 using Assets.Scripts.Unity.UI.MycovariantDraft;
+using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
+using FungusToast.Unity.Effects;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -160,16 +163,67 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private void OnChoicePicked(Mycovariant picked)
         {
             if (uiState != DraftUIState.HumanTurn && uiState != DraftUIState.AITurn)
-                return; // ignore spurious/double clicks
+                return;
 
             SetDraftState(DraftUIState.AnimatingPick);
 
             GameManager.Instance.ResolveMycovariantDraftPick(currentPlayer, picked);
 
-            // >>> THIS IS WHAT WAS MISSING <<<
             if (!picked.IsUniversal)
                 poolManager.RemoveFromPool(picked);
 
+            // Get the PlayerMycovariant for the just-picked mycovariant
+            var playerMyco = currentPlayer.PlayerMycovariants
+                .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+
+            if (playerMyco == null)
+            {
+                Debug.LogError($"[MycovariantDraftController] PlayerMycovariant is null for {picked.Name} (ID: {picked.Id}) and player {currentPlayer.PlayerId}. Aborting effect resolution.");
+                AnimatePickFeedback(picked, () => {
+                    draftIndex++;
+                    BeginNextDraft();
+                });
+                return;
+            }
+
+            StartCoroutine(MycovariantEffectResolver.Instance.ResolveEffect(
+                currentPlayer,
+                picked,
+                playerMyco,
+                () => {
+                    // After effect is done, restore panel and animate feedback
+                    draftPanel.SetActive(true);
+                    AnimatePickFeedback(picked, () => {
+                        draftIndex++;
+                        BeginNextDraft();
+                    });
+                }
+            ));
+        }
+
+
+        private IEnumerator ResolveDraftEffectAndAdvance(Mycovariant picked)
+        {
+            // Handle Jetting Mycelium (requires cell selection)
+            if (MycovariantEffectResolver.IsJettingMycelium(picked.Id))
+            {
+                bool effectResolved = false;
+                yield return StartCoroutine(HandleJettingMycelium(currentPlayer, picked, () => effectResolved = true));
+                while (!effectResolved) yield return null;
+            }
+            // Handle Plasmid Bounty (instant)
+            else if (picked.Id == MycovariantIds.PlasmidBountyId)
+            {
+                HandlePlasmidBounty(currentPlayer, picked);
+                yield return new WaitForSeconds(0.5f); // Small feedback delay
+            }
+            else
+            {
+                // Default: wait for pick animation only
+                yield return new WaitForSeconds(0.3f);
+            }
+
+            // Animate feedback (pulse, highlight, etc.), then advance
             AnimatePickFeedback(picked, () => {
                 draftIndex++;
                 BeginNextDraft();
@@ -273,5 +327,92 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             onComplete?.Invoke();
         }
+
+        private IEnumerator HandleJettingMycelium(Player player, Mycovariant picked, Action onComplete)
+        {
+            var direction = DirectionFromMycovariantId(picked.Id); // Use your direction helper!
+
+            if (player.PlayerType == PlayerTypeEnum.AI)
+            {
+                // AI selects a source cell automatically
+                var livingCells = GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId)
+                    .Where(c => c.IsAlive)
+                    .ToList();
+                FungalCell cell = livingCells.Count > 0
+                    ? livingCells[UnityEngine.Random.Range(0, livingCells.Count)]
+                    : null;
+
+                if (cell != null)
+                {
+                    var playerMyco = player.PlayerMycovariants
+                        .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+
+                    MycovariantEffectProcessor.ResolveJettingMycelium(
+                        playerMyco,
+                        player,
+                        GameManager.Instance.Board,
+                        cell.TileId,
+                        direction
+                    );
+                }
+                yield return new WaitForSeconds(0.6f);
+                onComplete?.Invoke();
+            }
+            else
+            {
+                bool done = false;
+                FungalCell selectedCell = null;
+
+                TileSelectionController.Instance.PromptSelectLivingCell(
+                    player.PlayerId,
+                    (cell) => {
+                        selectedCell = cell;
+                        done = true;
+                    },
+                    () => {
+                        // If canceled, just continue
+                        done = true;
+                    }
+                );
+
+                while (!done) yield return null;
+
+                if (selectedCell != null)
+                {
+                    var playerMyco = player.PlayerMycovariants
+                        .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+
+                    MycovariantEffectProcessor.ResolveJettingMycelium(
+                        playerMyco,
+                        player,
+                        GameManager.Instance.Board,
+                        selectedCell.TileId,
+                        direction
+                    );
+                }
+                onComplete?.Invoke();
+            }
+        }
+
+
+        private CardinalDirection DirectionFromMycovariantId(int id)
+        {
+            if (id == MycovariantIds.JettingMyceliumNorthId) return CardinalDirection.North;
+            if (id == MycovariantIds.JettingMyceliumEastId) return CardinalDirection.East;
+            if (id == MycovariantIds.JettingMyceliumSouthId) return CardinalDirection.South;
+            if (id == MycovariantIds.JettingMyceliumWestId) return CardinalDirection.West;
+            throw new ArgumentException("Invalid Jetting Mycelium ID");
+        }
+
+
+
+        private void HandlePlasmidBounty(Player player, Mycovariant picked)
+        {
+            player.AddMutationPoints(15);
+            //GameManager.Instance.LogEvent($"{player.PlayerName} gained 15 mutation points from Plasmid Bounty!");
+
+            GameManager.Instance.GameUI.MoldProfilePanel?.PulseMutationPoints();
+        }
+
     }
 }

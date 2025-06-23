@@ -3,6 +3,7 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
 using System.Collections.Generic;
 using System.Linq;
@@ -151,15 +152,15 @@ namespace FungusToast.Simulation.Models
 
                 switch (myco.MycovariantId)
                 {
-                    case var id when id == MycovariantGameBalance.PlasmidBountyId:
+                    case var id when id == MycovariantIds.PlasmidBountyId:
                         // Award is always a constant (assume always awarded once if present)
                         effectCounts["MpBonus"] = MycovariantGameBalance.PlasmidBountyMutationPointAward;
                         break;
 
-                    case var id when id == MycovariantGameBalance.JettingMyceliumNorthId ||
-                                     id == MycovariantGameBalance.JettingMyceliumEastId ||
-                                     id == MycovariantGameBalance.JettingMyceliumSouthId ||
-                                     id == MycovariantGameBalance.JettingMyceliumWestId:
+                    case var id when id == MycovariantIds.JettingMyceliumNorthId ||
+                                     id == MycovariantIds.JettingMyceliumEastId ||
+                                     id == MycovariantIds.JettingMyceliumSouthId ||
+                                     id == MycovariantIds.JettingMyceliumWestId:
                         {
                             // Get tracked results for Jetting Mycelium for this player
                             int parasitized = tracking.GetJettingMyceliumParasitized(player.PlayerId);

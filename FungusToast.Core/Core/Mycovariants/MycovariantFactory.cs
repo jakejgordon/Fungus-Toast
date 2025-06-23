@@ -11,25 +11,25 @@ namespace FungusToast.Core.Mycovariants
         public static Mycovariant JettingMyceliumNorth() =>
             CreateJettingMycelium(
                 "North",
-                MycovariantGameBalance.JettingMyceliumNorthId,
+                MycovariantIds.JettingMyceliumNorthId,
                 CardinalDirection.North);
 
         public static Mycovariant JettingMyceliumEast() =>
             CreateJettingMycelium(
                 "East",
-                MycovariantGameBalance.JettingMyceliumEastId,
+                MycovariantIds.JettingMyceliumEastId,
                 CardinalDirection.East);
 
         public static Mycovariant JettingMyceliumSouth() =>
             CreateJettingMycelium(
                 "South",
-                MycovariantGameBalance.JettingMyceliumSouthId,
+                MycovariantIds.JettingMyceliumSouthId,
                 CardinalDirection.South);
 
         public static Mycovariant JettingMyceliumWest() =>
             CreateJettingMycelium(
                 "West",
-                MycovariantGameBalance.JettingMyceliumWestId,
+                MycovariantIds.JettingMyceliumWestId,
                 CardinalDirection.West);
 
         private static Mycovariant CreateJettingMycelium(
@@ -85,7 +85,7 @@ namespace FungusToast.Core.Mycovariants
         public static Mycovariant PlasmidBounty() =>
             new Mycovariant
             {
-                Id = MycovariantGameBalance.PlasmidBountyId,
+                Id = MycovariantIds.PlasmidBountyId,
                 Name = "Plasmid Bounty",
                 Description = $"Instantly gain {MycovariantGameBalance.PlasmidBountyMutationPointAward} mutation points as foreign DNA infuses the colony.",
                 FlavorText = "An ancient plasmid cache is uncovered, its code empowering rapid mutation.",

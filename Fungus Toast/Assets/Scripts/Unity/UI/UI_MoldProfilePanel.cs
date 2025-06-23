@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using FungusToast.Core.Players;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace FungusToast.Unity.UI
@@ -14,6 +15,9 @@ namespace FungusToast.Unity.UI
 
         private Player trackedPlayer;
         private List<Player> allPlayers;
+
+        // Coroutine handle for safely stopping/restarting pulse
+        private Coroutine pulseCoroutine;
 
         public void Initialize(Player player, List<Player> players)
         {
@@ -41,6 +45,36 @@ namespace FungusToast.Unity.UI
         {
             UpdateDisplay();
         }
+
+        /// <summary>
+        /// Pulses the mutation point income text for visual feedback.
+        /// </summary>
+        public void PulseMutationPoints()
+        {
+            if (pulseCoroutine != null)
+                StopCoroutine(pulseCoroutine);
+            pulseCoroutine = StartCoroutine(PulseTextRoutine(mpIncomeText));
+        }
+
+        private IEnumerator PulseTextRoutine(TextMeshProUGUI text)
+        {
+            Color originalColor = text.color;
+            Color pulseColor = new Color(1f, 0.92f, 0.3f); // Bright yellowish
+            float originalFontSize = text.fontSize;
+            float targetFontSize = originalFontSize * 1.14f;
+            float duration = 0.32f;
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                float t = Mathf.Sin(Mathf.PI * (elapsed / duration)); // Ease in/out
+                text.color = Color.Lerp(originalColor, pulseColor, t);
+                text.fontSize = Mathf.Lerp(originalFontSize, targetFontSize, t);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            text.color = originalColor;
+            text.fontSize = originalFontSize;
+        }
     }
 }
-
