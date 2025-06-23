@@ -1,5 +1,6 @@
 ﻿using FungusToast.Core.Board;
 using FungusToast.Core.Players;
+using FungusToast.Unity.Grid;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,8 @@ namespace FungusToast.Unity.UI
     public class TileSelectionController : MonoBehaviour
     {
         public static TileSelectionController Instance { get; private set; }
+
+        [SerializeField] private GridVisualizer gridVisualizer;
 
         private Action<FungalCell> onCellSelected;
         private Action onCancelled;
@@ -23,6 +26,9 @@ namespace FungusToast.Unity.UI
                 Destroy(this.gameObject);
             else
                 Instance = this;
+
+            if (gridVisualizer == null)
+                throw new System.Exception($"{nameof(TileSelectionController)} requires a reference to GridVisualizer. Assign it in the Inspector.");
         }
 
         /// <summary>
@@ -46,17 +52,15 @@ namespace FungusToast.Unity.UI
 
             selectableTileIds = new HashSet<int>(validCells.Select(c => c.TileId));
 
-            // Highlight valid tiles
-            var highlighter = FindAnyObjectByType<FungusToast.Unity.Grid.TileHoverHighlighter>();
-            if (highlighter != null)
-                highlighter.SetSelectionTiles(selectableTileIds);
-
-            // (Optional) Block other UI as needed
+            // Highlight valid tiles using GridVisualizer (always set!)
+            gridVisualizer.HighlightTiles(
+                selectableTileIds,
+                new Color(1f, 0.2f, 0.8f, 1f),   // Pink pulse
+                new Color(1f, 0.7f, 1f, 1f)      // Pinkish white
+            );
         }
 
-        /// <summary>
-        /// Call this when a tile is clicked. Only acts if selection is active and tile is valid.
-        /// </summary>
+
         public void OnTileClicked(int tileId)
         {
             if (!selectionActive || !selectableTileIds.Contains(tileId)) return;
@@ -65,31 +69,19 @@ namespace FungusToast.Unity.UI
             if (cell != null && cell.IsAlive)
             {
                 selectionActive = false;
-                ClearHighlight();
-                if (onCellSelected != null)
-                    onCellSelected(cell);
+                gridVisualizer.ClearHighlights();
+                onCellSelected?.Invoke(cell);
                 Reset();
             }
         }
 
-        /// <summary>
-        /// Call this to cancel selection.
-        /// </summary>
         public void CancelSelection()
         {
             if (!selectionActive) return;
             selectionActive = false;
-            ClearHighlight();
-            if (onCancelled != null)
-                onCancelled();
+            gridVisualizer.ClearHighlights();
+            onCancelled?.Invoke();
             Reset();
-        }
-
-        private void ClearHighlight()
-        {
-            var highlighter = FindAnyObjectByType<FungusToast.Unity.Grid.TileHoverHighlighter>();
-            if (highlighter != null)
-                highlighter.ClearSelectionTiles();
         }
 
         private void Reset()

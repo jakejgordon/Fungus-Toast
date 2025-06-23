@@ -119,19 +119,25 @@ namespace FungusToast.Unity.Grid
                 StopCoroutine(pulseHighlightCoroutine);
                 pulseHighlightCoroutine = null;
             }
+            // Reset scale!
+            if (HoverTileMap != null)
+                HoverTileMap.transform.localScale = Vector3.one;
         }
+
 
         private IEnumerator PulseHighlightTiles()
         {
-            float duration = 0.4f;         // Fast pulse
-            float baseAlpha = 0.8f;        // Minimum alpha
-            float pulseAlpha = 1.0f;       // Maximum alpha
+            float duration = 0.8f;         // Slow, visible pulse (tweak as needed)
+            float minAlpha = 0f;           // Fully transparent at the low end
+            float maxAlpha = 1f;           // Fully opaque at the peak
+            Color colorA = new Color(1f, 0.15f, 0.8f, 1f);    // Bright magenta-pink
+            Color colorB = new Color(1f, 1f, 1f, 1f);         // White
 
             while (true)
             {
-                float t = Mathf.PingPong(Time.time * (2f / duration), 1f); // Loops between 0 and 1
-                float alpha = Mathf.Lerp(baseAlpha, pulseAlpha, t);
-                Color pulseColor = Color.Lerp(pulseColorA, pulseColorB, t);
+                float t = Mathf.PingPong(Time.time / duration, 1f); // Loops 0→1→0
+                float alpha = Mathf.Lerp(minAlpha, maxAlpha, t);    // Fades to 0, back to 1
+                Color pulseColor = Color.Lerp(colorA, colorB, t);
                 pulseColor.a = alpha;
 
                 foreach (var pos in highlightedPositions)
@@ -144,6 +150,9 @@ namespace FungusToast.Unity.Grid
                 yield return null;
             }
         }
+
+
+
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
         {
