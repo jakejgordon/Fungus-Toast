@@ -44,6 +44,13 @@ namespace FungusToast.Unity.UI
             HighlightLabel(decayPhaseLabel);
         }
 
+        public void HighlightDraftPhase()
+        {
+            ResetAllStyles();
+            HighlightLabel(mutationPhaseLabel); // Highlight the mutationPhaseLabel even though it now says "DRAFT"
+        }
+
+
         private void ResetAllStyles()
         {
             SetDim(mutationPhaseLabel);

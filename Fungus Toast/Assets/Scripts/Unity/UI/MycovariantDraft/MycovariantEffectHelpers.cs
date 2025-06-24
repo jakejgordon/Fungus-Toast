@@ -78,7 +78,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         gridVisualizer.ClearHighlights();
                         onComplete?.Invoke();
                         done = true;
-                    }
+                    },
+                    "Select one of your living fungal cells to project mycelium from."
                 );
 
                 while (!done) yield return null;

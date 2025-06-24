@@ -34,16 +34,32 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Prompts the player to select one of their living fungal cells.
         /// Highlights valid cells and waits for click.
+        /// Shows an instructional prompt if provided.
         /// </summary>
         public void PromptSelectLivingCell(
             int playerId,
             Action<FungalCell> onSelected,
-            Action onCancel = null)
+            Action onCancel = null,
+            string promptMessage = null)
         {
             selectingPlayerId = playerId;
-            onCellSelected = onSelected;
-            onCancelled = onCancel;
             selectionActive = true;
+
+            // Show the prompt if a message was provided
+            if (!string.IsNullOrEmpty(promptMessage))
+                GameManager.Instance.ShowSelectionPrompt(promptMessage);
+
+            // Wraps to clear the prompt on cell selection or cancel
+            onCellSelected = (cell) =>
+            {
+                GameManager.Instance.HideSelectionPrompt();
+                onSelected?.Invoke(cell);
+            };
+            onCancelled = () =>
+            {
+                GameManager.Instance.HideSelectionPrompt();
+                onCancel?.Invoke();
+            };
 
             // Find valid cells
             var validCells = GameManager.Instance.Board.GetAllCellsOwnedBy(playerId)
@@ -59,6 +75,7 @@ namespace FungusToast.Unity.UI
                 new Color(1f, 0.7f, 1f, 1f)      // Pinkish white
             );
         }
+
 
 
         public void OnTileClicked(int tileId)

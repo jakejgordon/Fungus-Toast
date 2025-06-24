@@ -40,6 +40,8 @@ namespace FungusToast.Unity
         [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker;
         [SerializeField] private MycovariantDraftController mycovariantDraftController;
         [SerializeField] private UI_StartGamePanel startGamePanel;
+        public GameObject SelectionPromptPanel;
+        public TextMeshProUGUI SelectionPromptText;
 
 
         private bool isCountdownActive = false;
@@ -54,6 +56,8 @@ namespace FungusToast.Unity
 
         private readonly List<Player> players = new();
         private Player humanPlayer;
+
+        private bool isInDraftPhase = false;
 
         private void Awake()
         {
@@ -366,7 +370,7 @@ namespace FungusToast.Unity
 
         private void UpdatePhaseProgressTrackerLabel()
         {
-            if (Board.CurrentRound == MycovariantGameBalance.MycovariantSelectionTriggerRound)
+            if (isInDraftPhase)
             {
                 phaseProgressTracker?.SetMutationPhaseLabel("DRAFT");
             }
@@ -376,33 +380,43 @@ namespace FungusToast.Unity
             }
         }
 
+
         public void StartMycovariantDraftPhase()
         {
-            // Build the pool here—however you want!
+            isInDraftPhase = true;
+
+            // Build the draft pool as appropriate for your game logic
             var draftPool = MycovariantDraftManager.BuildDraftPool(Board, players);
 
             // Create and initialize the pool manager
             var poolManager = new MycovariantPoolManager();
             poolManager.InitializePool(draftPool, rng);
 
-            // Example: order by fewest living cells, or your draft order logic
+            // Determine draft order (example: fewest living cells goes first)
             var draftOrder = players
                 .OrderBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
                 .ToList();
 
+            // Start the draft UI/controller
             mycovariantDraftController.StartDraft(
                 players, poolManager, draftOrder, rng, MycovariantGameBalance.MycovariantSelectionDraftSize);
 
+            // Show a phase banner (optional, for player feedback)
             gameUIManager.PhaseBanner.Show("Mycovariant Draft Phase", 2f);
-        }
 
+            // Update phase progress tracker for the DRAFT phase
+            phaseProgressTracker?.SetMutationPhaseLabel("DRAFT");
+            phaseProgressTracker?.HighlightDraftPhase();
+        }
 
 
         public void OnMycovariantDraftComplete()
         {
+            isInDraftPhase = false;
             // Proceed to next round and phase
             StartNextRound();
         }
+
 
         public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)
         {
@@ -426,5 +440,16 @@ namespace FungusToast.Unity
             if (startGamePanel != null)
                 startGamePanel.gameObject.SetActive(true);
         }
+
+        public void ShowSelectionPrompt(string message)
+        {
+            SelectionPromptPanel.SetActive(true);
+            SelectionPromptText.text = message;
+        }
+        public void HideSelectionPrompt()
+        {
+            SelectionPromptPanel.SetActive(false);
+        }
+
     }
 }
