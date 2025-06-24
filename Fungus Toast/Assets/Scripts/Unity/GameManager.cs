@@ -248,6 +248,8 @@ namespace FungusToast.Unity
             CheckForEndgameCondition();
             if (gameEnded) return;
 
+            Board.IncrementRound();
+
             // === 1. Trigger draft phase if this is the right round ===
             if (Board.CurrentRound == MycovariantGameBalance.MycovariantSelectionTriggerRound)
             {
@@ -257,8 +259,6 @@ namespace FungusToast.Unity
 
             // === 2. Otherwise, start the next mutation phase as usual ===
             StartNextRound();
-
-            Board.IncrementRound();
 
             int round = Board.CurrentRound;
             float occupancy = Board.GetOccupiedTileRatio() * 100f; // ratio to percent

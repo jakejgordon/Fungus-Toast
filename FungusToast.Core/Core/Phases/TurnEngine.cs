@@ -51,6 +51,7 @@ namespace FungusToast.Core.Phases
             DeathEngine.ExecuteDeathCycle(board, players, failedGrowthsByPlayerId, simulationObserver);
         }
 
+        /** this is called right in GameSimulator - should it call this instead?
         public static void RunMycovariantDraftIfTriggered(
             GameBoard board,
             List<Player> players,
@@ -65,6 +66,7 @@ namespace FungusToast.Core.Phases
                 MycovariantDraftManager.RunDraft(players, mycovariantPoolManager, board, rng);
             }
         }
+        */
 
     }
 }
