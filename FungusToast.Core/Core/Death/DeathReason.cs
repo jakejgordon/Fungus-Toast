@@ -10,7 +10,8 @@
         MycotoxinPotentiation,
         HyphalVectoring,
         JettingMycelium,
-        Parasitism
+        Infested,
+        Poisoned
     }
 
 }

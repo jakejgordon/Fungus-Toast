@@ -1,4 +1,6 @@
-﻿namespace FungusToast.Core.Config
+﻿using FungusToast.Core.Players;
+
+namespace FungusToast.Core.Config
 {
     public static class MycovariantGameBalance
     {

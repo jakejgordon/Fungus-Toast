@@ -28,10 +28,13 @@ namespace FungusToast.Core.Metrics
         void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade);
         void RecordHyphalSurgeGrowth(int playerId);
         void RecordHyphalVectoringGrowth(int playerId, int cellsPlaced);
-        void ReportJettingMyceliumParasitized(int playerId, int parasitized);
+        void ReportJettingMyceliumInfested(int playerId, int parasitized);
         void ReportJettingMyceliumReclaimed(int playerId, int reclaimed);
         void ReportJettingMyceliumCatabolicGrowth(int playerId, int catabolicGrowth);
         void ReportJettingMyceliumAlreadyOwned(int playerId, int alreadyOwned);
         void ReportJettingMyceliumInvalid(int playerId, int invalid);
+        void ReportJettingMyceliumColonized(int playerId, int colonized);
+        void ReportJettingMyceliumToxified(int playerId, int toxified);
+        void ReportJettingMyceliumPoisoned(int playerId, int poisoned);
     }
 }

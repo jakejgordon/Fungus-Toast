@@ -27,22 +27,17 @@ namespace FungusToast.Simulation.GameSimulation
             var rng = new Random(seed);
             var (players, board) = InitializeGame(strategies, rng);
             var allMutations = MutationRegistry.GetAll().ToList();
-            // Prepare the mycovariant system
             var allMycovariants = MycovariantRepository.All;
             var mycovariantPoolManager = new MycovariantPoolManager();
 
-
             var simTracking = context ?? new SimulationTrackingContext();
 
-            int turn = 0;
             bool gameEnded = false;
             bool isCountdownActive = false;
             int roundsRemainingUntilGameEnd = 0;
 
-            while (turn < GameBalance.MaxNumberOfRoundsBeforeGameEndTrigger && !gameEnded)
+            while (board.CurrentRound < GameBalance.MaxNumberOfRoundsBeforeGameEndTrigger && !gameEnded)
             {
-                board.IncrementRound();
-
                 // 🔥 Mycovariant Draft Phase (insert here!)
                 if (board.CurrentRound == MycovariantGameBalance.MycovariantSelectionTriggerRound)
                 {
@@ -64,6 +59,7 @@ namespace FungusToast.Simulation.GameSimulation
                         break;
                     }
                 }
+
                 RoundContext roundContext = new RoundContext();
                 TurnEngine.AssignMutationPoints(board, players, allMutations, rng, simTracking);
                 TurnEngine.RunGrowthPhase(board, players, rng, roundContext, simTracking);
@@ -73,9 +69,9 @@ namespace FungusToast.Simulation.GameSimulation
                 foreach (var player in players)
                     player.TickDownActiveSurges();
 
-                turn++;
+                // INCREMENT ROUND at end!
+                board.IncrementRound();
             }
-
 
             // Track reclaimed cells per player
             foreach (var player in players)
@@ -84,7 +80,7 @@ namespace FungusToast.Simulation.GameSimulation
                 simTracking.SetReclaims(player.PlayerId, reclaims);
             }
 
-            var result = GameResult.From(board, players, turn, simTracking);
+            var result = GameResult.From(board, players, board.CurrentRound, simTracking);
 
             if (gameIndex > 0 && totalGames > 0)
             {
@@ -109,6 +105,7 @@ namespace FungusToast.Simulation.GameSimulation
 
             return result;
         }
+
 
 
         private (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng)

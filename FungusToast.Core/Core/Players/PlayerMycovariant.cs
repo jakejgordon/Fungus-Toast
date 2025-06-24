@@ -1,9 +1,10 @@
 ﻿using FungusToast.Core.Mycovariants;
+using System.Collections.Generic;
 
 namespace FungusToast.Core.Players
 {
     /// <summary>
-    /// Represents a Mycovariant acquired by a player, including any trigger state.
+    /// Represents a Mycovariant acquired by a player, including any trigger state and effect usage tracking.
     /// </summary>
     public class PlayerMycovariant
     {
@@ -16,6 +17,11 @@ namespace FungusToast.Core.Players
         /// </summary>
         public bool HasTriggered { get; private set; } = false;
 
+        /// <summary>
+        /// Tracks effect counts by effect type.
+        /// </summary>
+        public Dictionary<MycovariantEffectType, int> EffectCounts { get; private set; } = new();
+
         public PlayerMycovariant(int playerId, int mycovariantId, Mycovariant mycovariant)
         {
             PlayerId = playerId;
@@ -26,6 +32,16 @@ namespace FungusToast.Core.Players
         public void MarkTriggered()
         {
             HasTriggered = true;
+        }
+
+        /// <summary>
+        /// Increments the effect count for a given effect type.
+        /// </summary>
+        public void IncrementEffectCount(MycovariantEffectType effectType, int count)
+        {
+            if (!EffectCounts.ContainsKey(effectType))
+                EffectCounts[effectType] = 0;
+            EffectCounts[effectType] += count;
         }
     }
 }

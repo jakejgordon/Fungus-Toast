@@ -148,13 +148,12 @@ namespace FungusToast.Simulation.Models
 
             foreach (var myco in player.PlayerMycovariants)
             {
-                var effectCounts = new Dictionary<string, int>();
+                var effectCounts = new Dictionary<MycovariantEffectType, int>();
 
                 switch (myco.MycovariantId)
                 {
                     case var id when id == MycovariantIds.PlasmidBountyId:
-                        // Award is always a constant (assume always awarded once if present)
-                        effectCounts["MpBonus"] = MycovariantGameBalance.PlasmidBountyMutationPointAward;
+                        effectCounts[MycovariantEffectType.MpBonus] = MycovariantGameBalance.PlasmidBountyMutationPointAward;
                         break;
 
                     case var id when id == MycovariantIds.JettingMyceliumNorthId ||
@@ -162,24 +161,27 @@ namespace FungusToast.Simulation.Models
                                      id == MycovariantIds.JettingMyceliumSouthId ||
                                      id == MycovariantIds.JettingMyceliumWestId:
                         {
-                            // Get tracked results for Jetting Mycelium for this player
-                            int parasitized = tracking.GetJettingMyceliumParasitized(player.PlayerId);
+                            int infested = tracking.GetJettingMyceliumInfested(player.PlayerId);
                             int reclaimed = tracking.GetJettingMyceliumReclaimed(player.PlayerId);
-                            int catabolic = tracking.GetJettingMyceliumCatabolicGrowth(player.PlayerId);
-                            int alreadyOwned = tracking.GetJettingMyceliumAlreadyOwned(player.PlayerId);
+                            int catabolicGrowth = tracking.GetJettingMyceliumCatabolicGrowth(player.PlayerId);
+                            int colonized = tracking.GetJettingMyceliumColonized(player.PlayerId);
+                            int poisoned = tracking.GetJettingMyceliumPoisoned(player.PlayerId);
 
-                            if (parasitized > 0) effectCounts["Parasitized"] = parasitized;
-                            if (reclaimed > 0) effectCounts["Reclaimed"] = reclaimed;
-                            if (catabolic > 0) effectCounts["Catabolic"] = catabolic;
-                            if (alreadyOwned > 0) effectCounts["Owned"] = alreadyOwned;
+                            if (infested > 0) effectCounts[MycovariantEffectType.Infested] = infested;
+                            if (reclaimed > 0) effectCounts[MycovariantEffectType.Reclaimed] = reclaimed;
+                            if (catabolicGrowth > 0) effectCounts[MycovariantEffectType.CatabolicGrowth] = catabolicGrowth;
+                            if (colonized > 0) effectCounts[MycovariantEffectType.Colonized] = colonized;
+                            if (poisoned > 0) effectCounts[MycovariantEffectType.Poisoned] = poisoned;
                             break;
                         }
-
-                    // Add more cases for other mycovariants as needed...
-                    default:
-                        // Optionally, leave EffectCounts empty if no effect for this mycovariant
-                        break;
+                        // ...more cases...
                 }
+
+                // Convert keys to string for MycovariantResult
+                var effectCountsAsString = effectCounts.ToDictionary(
+                    kvp => kvp.Key.ToString(),
+                    kvp => kvp.Value
+                );
 
                 results.Add(new MycovariantResult
                 {
@@ -187,12 +189,11 @@ namespace FungusToast.Simulation.Models
                     MycovariantName = myco.Mycovariant.Name,
                     MycovariantType = myco.Mycovariant.Type.ToString(),
                     Triggered = myco.HasTriggered,
-                    EffectCounts = effectCounts
+                    EffectCounts = effectCountsAsString // <--- Now the types match!
                 });
             }
             return results;
         }
-
 
 
     }
