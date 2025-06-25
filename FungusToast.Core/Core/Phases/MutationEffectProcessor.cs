@@ -409,40 +409,34 @@ namespace FungusToast.Core.Phases
 
 
 
-        // Handles *per-death* spore drop AFTER activation
         public static void TriggerNecrophyticBloomOnCellDeath(
-            Player owner,
-            GameBoard board,
-            Random rng,
-            float occupiedPercent,
-            ISimulationObserver? observer = null)
+           Player owner,
+           GameBoard board,
+           Random rng,
+           float occupiedPercent,
+           ISimulationObserver? observer = null)
         {
             int level = owner.GetMutationLevel(MutationIds.NecrophyticBloom);
             if (level <= 0) return;
 
             float damping = GetNecrophyticBloomDamping(occupiedPercent);
-
             int spores = (int)Math.Floor(
                 level * GameBalance.NecrophyticBloomSporesPerDeathPerLevel * damping);
 
             if (spores <= 0) return;
 
-            var allTiles = board.AllTiles().ToList();
+            var allTileIds = board.AllTiles().Select(t => t.TileId).ToList();
             int reclaims = 0;
 
             for (int i = 0; i < spores; i++)
             {
-                BoardTile target = allTiles[rng.Next(allTiles.Count)];
-                if (board.TryReclaimDeadCell(owner.PlayerId, target.TileId))
-                {
-                    reclaims++;
-                }
+                int randomTileId = allTileIds[rng.Next(allTileIds.Count)];
+                bool success = board.TryReclaimDeadCell(owner.PlayerId, randomTileId);
+                if (success) reclaims++;
             }
 
             observer?.ReportNecrophyticBloomSporeDrop(owner.PlayerId, spores, reclaims);
         }
-
-
 
         public static int ApplyMycotoxinTracer(
             Player player,

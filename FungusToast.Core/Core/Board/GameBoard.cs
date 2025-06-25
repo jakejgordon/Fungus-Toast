@@ -195,7 +195,7 @@ namespace FungusToast.Core.Board
                 tile.PlaceFungalCell(cell);
                 tileIdToCell[tileId] = cell;
 
-                Players[playerId].ControlledTileIds.Add(tileId); // 🔥 Required for growth + logic
+                Players[playerId].ControlledTileIds.Add(tileId);
             }
         }
 
@@ -205,8 +205,6 @@ namespace FungusToast.Core.Board
             tileIdToCell.TryGetValue(tileId, out var cell);
             return cell;
         }
-
- 
 
         public void RemoveControlFromPlayer(int tileId)
         {
@@ -664,7 +662,6 @@ namespace FungusToast.Core.Board
             }
         }
 
-
         /// <summary>
         /// Attempts to place a spore at the given tile for the specified player.
         /// Does nothing if the tile already contains a non-toxin fungal cell.
@@ -676,16 +673,21 @@ namespace FungusToast.Core.Board
         /// <returns>True if a spore was successfully placed</returns>
         public bool TryPlaceSpore(int tileId, int playerId, ISimulationObserver? observer = null)
         {
-            if (!tileIdToCell.TryGetValue(tileId, out var existingCell))
+            // Get the BoardTile
+            var tile = GetTileById(tileId);
+            if (tile == null)
                 return false;
 
-            if (existingCell != null && !existingCell.IsToxin)
+            // Only allow placement if the tile is empty or toxin
+            if (tile.FungalCell != null && !tile.FungalCell.IsToxin)
                 return false;
 
             var newCell = new FungalCell(playerId, tileId);
-            PlaceFungalCell(newCell);
+            PlaceFungalCell(newCell); // Event hooks and cell registry update
 
             Players[playerId].AddControlledTile(tileId);
+
+            // Notify observer for Sporocidal Bloom only (adjust as needed)
             observer?.ReportSporocidalSporeDrop(playerId, 1);
 
             return true;
