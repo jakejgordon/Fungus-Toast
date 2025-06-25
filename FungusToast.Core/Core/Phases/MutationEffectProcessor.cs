@@ -1,15 +1,16 @@
 ﻿// FungusToast.Core/Phases/MutationEffectProcessor.cs
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
-using FungusToast.Core.Phases;
 using FungusToast.Core.Death;
+using FungusToast.Core.Events;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FungusToast.Core.Growth;
 
 namespace FungusToast.Core.Phases
 {
@@ -20,9 +21,9 @@ namespace FungusToast.Core.Phases
     public static class MutationEffectProcessor
     {
         public static void ApplyRegenerativeHyphaeReclaims(GameBoard board,
-                                                    List<Player> players,
-                                                    Random rng,
-                                                    ISimulationObserver? observer = null)
+                                                           List<Player> players,
+                                                           Random rng,
+                                                           ISimulationObserver? observer = null)
         {
             var attempted = new HashSet<int>();
             foreach (Player p in players)
@@ -39,34 +40,23 @@ namespace FungusToast.Core.Phases
                         if (!attempted.Add(dead.TileId)) continue;
                         if (rng.NextDouble() < reclaimChance)
                         {
-                            dead.Reclaim(p.PlayerId);
-                            board.PlaceFungalCell(dead);
-                            p.AddControlledTile(dead.TileId);
-                            observer?.RecordRegenerativeHyphaeReclaim(p.PlayerId);
+                            // Try to reclaim the dead cell using board API
+                            bool success = board.TryGrowFungalCell(
+                                p.PlayerId,
+                                cell.TileId,   // Source tile: living cell
+                                dead.TileId,   // Target: dead cell tile
+                                out GrowthFailureReason reason, canReclaimDeadCell: true
+                            );
+                            if (success)
+                            {
+                                observer?.RecordRegenerativeHyphaeReclaim(p.PlayerId);
+                            }
                         }
                     }
                 }
             }
         }
 
-
-
-        public static void TryTriggerSporeOnDeath(Player player,
-                                                  GameBoard board,
-                                                  Random rng,
-                                                  ISimulationObserver? observer = null)
-        {
-            float chance = player.GetMutationEffect(MutationType.SporeOnDeathChance);
-            if (chance <= 0f || rng.NextDouble() > chance) return;
-
-            var empty = board.AllTiles().Where(t => !t.IsOccupied).ToList();
-            if (empty.Count == 0) return;
-
-            BoardTile spawn = empty[rng.Next(empty.Count)];
-            board.SpawnSporeForPlayer(player, spawn.TileId);
-
-            observer?.ReportNecrosporeDrop(player.PlayerId, 1);
-        }
 
         public static (float chance, DeathReason? reason) CalculateDeathChance(
             Player owner,
@@ -272,12 +262,27 @@ namespace FungusToast.Core.Phases
             return 1f + player.GetMutationEffect(MutationType.TendrilDirectionalMultiplier);
         }
 
-        public static bool TryCreepingMoldMove(Player player,
-                                               FungalCell sourceCell,
-                                               BoardTile sourceTile,
-                                               BoardTile targetTile,
-                                               Random rng,
-                                               GameBoard board)
+        /// <summary>
+        /// Attempts to move a living fungal cell (Creeping Mold mutation effect) from <paramref name="sourceTile"/>
+        /// to <paramref name="targetTile"/>. The source cell is removed and a new living cell is created in the target location,
+        /// overwriting any existing cell or empty tile.
+        /// Only succeeds if the player has Creeping Mold at level &gt; 0, and certain space/openness requirements are met.
+        /// Returns true if the move was performed; otherwise, false.
+        /// </summary>
+        /// <param name="player">The player attempting the move.</param>
+        /// <param name="sourceCell">The living fungal cell to move.</param>
+        /// <param name="sourceTile">The tile containing the source cell.</param>
+        /// <param name="targetTile">The target tile for movement.</param>
+        /// <param name="rng">Random number generator.</param>
+        /// <param name="board">The game board.</param>
+        /// <returns>True if the move succeeded; false otherwise.</returns>
+        public static bool TryCreepingMoldMove(
+            Player player,
+            FungalCell sourceCell,
+            BoardTile sourceTile,
+            BoardTile targetTile,
+            Random rng,
+            GameBoard board)
         {
             if (!player.PlayerMutations.TryGetValue(MutationIds.CreepingMold, out var cm) ||
                 cm.CurrentLevel == 0)
@@ -299,15 +304,19 @@ namespace FungusToast.Core.Phases
 
             if (targetOpen < sourceOpen || targetOpen < 2) return false;
 
+            // Create new cell in target location
             var newCell = new FungalCell(player.PlayerId, targetTile.TileId);
-            targetTile.PlaceFungalCell(newCell);
+            board.PlaceFungalCell(newCell); // Event hooks will fire as appropriate
             player.AddControlledTile(targetTile.TileId);
 
+            // Remove source cell
             sourceTile.RemoveFungalCell();
             player.RemoveControlledTile(sourceCell.TileId);
 
             return true;
         }
+
+
 
         /* ────────────────────────────────────────────────────────────────
          * 5 ▸  SPOROCIDAL BLOOM HELPERS
@@ -345,89 +354,6 @@ namespace FungusToast.Core.Phases
 
         */
 
-        public static int TryPlaceSporocidalSpores(
-            Player player,
-            GameBoard board,
-            Random rng,
-            Mutation sporocidalBloom,
-            ISimulationObserver? simulationObserver = null)
-        {
-            int level = player.GetMutationLevel(MutationIds.SporocidalBloom);
-            if (level <= 0) return 0;
-
-            int livingCellCount = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive);
-            if (livingCellCount == 0) return 0;
-
-            // 1. Calculate spores to drop (matches prior game balance: linear scaling)
-            float sporesPerCell = level * sporocidalBloom.EffectPerLevel;
-            int sporesToDrop = (int)Math.Round(livingCellCount * sporesPerCell);
-            if (sporesToDrop <= 0) return 0;
-
-            int expiration = board.CurrentGrowthCycle + GameBalance.SporocidalToxinTileDuration;
-
-            // Avoid double-hitting the same tile
-            var allTiles = board.AllTiles().ToList();
-            HashSet<int> alreadyTargeted = new HashSet<int>();
-            int totalToxinsPlaced = 0;
-            int totalKills = 0;
-
-            for (int i = 0; i < sporesToDrop && alreadyTargeted.Count < allTiles.Count; i++)
-            {
-                // Pick a random tile that hasn't been targeted yet
-                BoardTile tile;
-                do
-                {
-                    tile = allTiles[rng.Next(allTiles.Count)];
-                } while (!alreadyTargeted.Add(tile.TileId));
-
-                // 1. If it's an enemy living cell, kill and toxify it
-                if (tile.IsOccupied && tile.FungalCell != null && tile.FungalCell.IsAlive && tile.FungalCell.OwnerPlayerId != player.PlayerId)
-                {
-                    ToxinHelper.KillAndToxify(
-                        board,
-                        tile.TileId,
-                        expiration,
-                        DeathReason.SporocidalBloom,
-                        player);
-
-                    totalKills++;
-                    totalToxinsPlaced++;
-                    continue;
-                }
-
-                // 2. If it's a friendly cell (alive or dead) or adjacent to a friendly, do nothing
-                bool isFriendly = tile.IsOccupied && tile.FungalCell != null && tile.FungalCell.OwnerPlayerId == player.PlayerId;
-                if (isFriendly)
-                    continue;
-
-                bool adjacentToFriendly = board.GetOrthogonalNeighbors(tile.X, tile.Y)
-                    .Any(n => n.IsOccupied && n.FungalCell != null && n.FungalCell.OwnerPlayerId == player.PlayerId);
-                if (adjacentToFriendly)
-                    continue;
-
-                // 3. If it's empty or has a dead cell (not owned), and not next to a friendly, toxify it
-                if (!tile.IsOccupied || (tile.FungalCell != null && !tile.FungalCell.IsAlive))
-                {
-                    ToxinHelper.ConvertToToxin(
-                        board,
-                        tile.TileId,
-                        expiration,
-                        player);
-
-                    totalToxinsPlaced++;
-                }
-            }
-
-            // Reporting (matches your new requirements)
-            if (totalToxinsPlaced > 0)
-                simulationObserver?.ReportSporocidalSporeDrop(player.PlayerId, totalToxinsPlaced);
-
-            if (totalKills > 0)
-                simulationObserver?.RecordCellDeath(player.PlayerId, DeathReason.SporocidalBloom, totalKills);
-
-            return totalToxinsPlaced;
-        }
-
 
         /* ────────────────────────────────────────────────────────────────
          * 6 ▸  NECROPHYTIC BLOOM HELPERS
@@ -441,7 +367,10 @@ namespace FungusToast.Core.Phases
             return Math.Clamp(raw, 0f, 1f);
         }
 
-        // Handles initial burst: call once when 20% occupancy is reached
+        /// <summary>
+        /// Handles the initial spore burst from Necrophytic Bloom when it first activates.
+        /// Attempts to reclaim dead, non-toxin fungal cells on the board using event-safe logic.
+        /// </summary>
         public static void TriggerNecrophyticBloomInitialBurst(
             Player player,
             GameBoard board,
@@ -451,15 +380,13 @@ namespace FungusToast.Core.Phases
             int level = player.GetMutationLevel(MutationIds.NecrophyticBloom);
             if (level <= 0) return;
 
-            // Get all dead, non-toxin, non-empty cells owned by this player
             var deadCells = board.GetAllCellsOwnedBy(player.PlayerId)
-                                 .Where(cell => !cell.IsAlive && !cell.IsToxin)
+                                 .Where(cell => cell.IsDead && !cell.IsToxin)
                                  .ToList();
 
             float sporesPerDeadCell = level * GameBalance.NecrophyticBloomSporesPerDeathPerLevel;
-            float damping = 1f; // Initial burst: NO damping
+            int totalSpores = (int)Math.Floor(sporesPerDeadCell * deadCells.Count);
 
-            int totalSpores = (int)Math.Floor(sporesPerDeadCell * deadCells.Count * damping);
             if (totalSpores <= 0) return;
 
             var allTiles = board.AllTiles().ToList();
@@ -467,19 +394,20 @@ namespace FungusToast.Core.Phases
 
             for (int i = 0; i < totalSpores; i++)
             {
-                BoardTile target = allTiles[rng.Next(allTiles.Count)];
-
-                if (target.FungalCell is { IsAlive: false, IsToxin: false })
+                var targetTile = allTiles[rng.Next(allTiles.Count)];
+                if (board.TryReclaimDeadCell(player.PlayerId, targetTile.TileId))
                 {
-                    target.FungalCell.Reclaim(player.PlayerId);
-                    player.AddControlledTile(target.TileId);
-                    board.PlaceFungalCell(target.FungalCell);
                     reclaims++;
                 }
             }
 
-            observer?.ReportNecrophyticBloomSporeDrop(player.PlayerId, totalSpores, reclaims);
+            if (reclaims > 0)
+            {
+                observer?.ReportNecrophyticBloomSporeDrop(player.PlayerId, totalSpores, reclaims);
+            }
         }
+
+
 
         // Handles *per-death* spore drop AFTER activation
         public static void TriggerNecrophyticBloomOnCellDeath(
@@ -505,18 +433,15 @@ namespace FungusToast.Core.Phases
             for (int i = 0; i < spores; i++)
             {
                 BoardTile target = allTiles[rng.Next(allTiles.Count)];
-
-                if (target.FungalCell is { IsAlive: false, IsToxin: false })
+                if (board.TryReclaimDeadCell(owner.PlayerId, target.TileId))
                 {
-                    target.FungalCell.Reclaim(owner.PlayerId);
-                    owner.AddControlledTile(target.TileId);
-                    board.PlaceFungalCell(target.FungalCell);
                     reclaims++;
                 }
             }
 
             observer?.ReportNecrophyticBloomSporeDrop(owner.PlayerId, spores, reclaims);
         }
+
 
 
         public static int ApplyMycotoxinTracer(
@@ -670,12 +595,12 @@ namespace FungusToast.Core.Phases
 
 
         public static bool TryNecrohyphalInfiltration(
-    GameBoard board,
-    BoardTile sourceTile,
-    FungalCell sourceCell,
-    Player owner,
-    Random rng,
-    ISimulationObserver? observer = null)
+            GameBoard board,
+            BoardTile sourceTile,
+            FungalCell sourceCell,
+            Player owner,
+            Random rng,
+            ISimulationObserver? observer = null)
         {
             int necroLevel = owner.GetMutationLevel(MutationIds.NecrohyphalInfiltration);
             if (necroLevel <= 0)
@@ -701,8 +626,11 @@ namespace FungusToast.Core.Phases
             {
                 if (rng.NextDouble() <= baseChance)
                 {
-                    // Initial infiltration
-                    ReclaimDeadCellAsLiving(deadTile, owner, board);
+                    // Initial infiltration (reclaim as living)
+                    var reclaimedCell = deadTile.FungalCell!;
+                    reclaimedCell.Reclaim(owner.PlayerId);
+                    owner.AddControlledTile(deadTile.TileId);
+                    board.PlaceFungalCell(reclaimedCell); // Use board method for events!
 
                     // Track which tiles have already been reclaimed
                     var alreadyReclaimed = new HashSet<int> { deadTile.TileId };
@@ -724,15 +652,14 @@ namespace FungusToast.Core.Phases
         }
 
 
-
         private static int CascadeNecrohyphalInfiltration(
-            GameBoard board,
-            BoardTile sourceTile,
-            Player owner,
-            Random rng,
-            double cascadeChance,
-            HashSet<int> alreadyReclaimed,
-            ISimulationObserver? observer = null)
+           GameBoard board,
+           BoardTile sourceTile,
+           Player owner,
+           Random rng,
+           double cascadeChance,
+           HashSet<int> alreadyReclaimed,
+           ISimulationObserver? observer = null)
         {
             int cascadeCount = 0;
             var toCheck = new Queue<BoardTile>();
@@ -759,7 +686,10 @@ namespace FungusToast.Core.Phases
                 {
                     if (rng.NextDouble() <= cascadeChance)
                     {
-                        ReclaimDeadCellAsLiving(deadTile, owner, board);
+                        var reclaimedCell = deadTile.FungalCell!;
+                        reclaimedCell.Reclaim(owner.PlayerId);
+                        owner.AddControlledTile(deadTile.TileId);
+                        board.PlaceFungalCell(reclaimedCell); // Use board method for events!
                         alreadyReclaimed.Add(deadTile.TileId);
 
                         cascadeCount++;
@@ -771,12 +701,13 @@ namespace FungusToast.Core.Phases
             return cascadeCount;
         }
 
+
         public static void TryNecrotoxicConversion(
-            FungalCell deadCell,
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? growthAndDecayObserver = null)
+           FungalCell deadCell,
+           GameBoard board,
+           List<Player> players,
+           Random rng,
+           ISimulationObserver? growthAndDecayObserver = null)
         {
             // Only applies to toxin-based deaths
             if (deadCell.CauseOfDeath != DeathReason.PutrefactiveMycotoxin &&
@@ -801,7 +732,7 @@ namespace FungusToast.Core.Phases
                 if (rng.NextDouble() < chance)
                 {
                     deadCell.Reclaim(enemyPlayer.PlayerId);
-                    board.PlaceFungalCell(deadCell);
+                    board.PlaceFungalCell(deadCell); // Use board method for events!
                     enemyPlayer.AddControlledTile(deadCell.TileId);
 
                     // Log the reclaim if tracking
@@ -810,6 +741,7 @@ namespace FungusToast.Core.Phases
                 }
             }
         }
+
 
 
         public static (float baseChance, float surgeBonus) GetGrowthChancesWithHyphalSurge(Player player)
@@ -876,13 +808,36 @@ namespace FungusToast.Core.Phases
                     continue;
                 }
 
-                //Console.WriteLine($"[HyphalVectoring] Player {player.PlayerId} origin: {origin.Value.tile.TileId}");
+                // Replace the helper with one that uses TryGrowFungalCell for each growth:
+                int placed = 0;
+                int currentTileId = origin.Value.tile.TileId;
+                int dx = Math.Sign(centerX - origin.Value.tile.X);
+                int dy = Math.Sign(centerY - origin.Value.tile.Y);
 
-                int placed = HyphalVectoringHelper.ApplyHyphalVectorLine(player, board, rng, origin.Value.tile.X, origin.Value.tile.Y, centerX, centerY, totalTiles, observer);
+                for (int i = 0; i < totalTiles; i++)
+                {
+                    var (x, y) = board.GetXYFromTileId(currentTileId);
+                    // Step towards the center
+                    x += dx;
+                    y += dy;
+                    if (x < 0 || y < 0 || x >= board.Width || y >= board.Height)
+                        break;
+                    int targetTileId = y * board.Width + x;
+                    // Only grow if not already occupied (optional, based on rule)
+                    if (board.GetTileById(targetTileId)?.IsOccupied == true)
+                        break;
+
+                    if (board.TryGrowFungalCell(player.PlayerId, currentTileId, targetTileId, out GrowthFailureReason reason))
+                        placed++;
+
+                    currentTileId = targetTileId;
+                }
+
                 if (placed > 0)
                     observer?.RecordHyphalVectoringGrowth(player.PlayerId, placed);
             }
         }
+
 
     }
 

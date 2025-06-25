@@ -440,5 +440,25 @@ namespace FungusToast.Simulation.Models
         // ────────────────
 
         public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
+
+        private readonly Dictionary<int, int> standardGrowthsByPlayer = new();
+        /// <summary>
+        /// Records a standard growth event for the specified player.
+        /// </summary>
+        /// <param name="playerId">The ID of the player who grew a cell.</param>
+        public void RecordStandardGrowth(int playerId)
+        {
+            if (!standardGrowthsByPlayer.ContainsKey(playerId))
+                standardGrowthsByPlayer[playerId] = 0;
+            standardGrowthsByPlayer[playerId]++;
+        }
+
+        /// <summary>
+        /// Gets the total standard growths for the specified player.
+        /// </summary>
+        public int GetStandardGrowths(int playerId)
+        {
+            return standardGrowthsByPlayer.TryGetValue(playerId, out var count) ? count : 0;
+        }
     }
 }

@@ -49,7 +49,7 @@ namespace FungusToast.Core.Death
         {
             foreach (var p in players)
             {
-                MutationEffectProcessor.TryPlaceSporocidalSpores(p, board, Rng, sporocidalBloom, simulationObserver);
+                board.TryPlaceSporocidalSpores(p, Rng, sporocidalBloom, simulationObserver);
 
                 int failedGrowths = failedGrowthsByPlayerId.TryGetValue(p.PlayerId, out var v) ? v : 0;
                 MutationEffectProcessor.ApplyMycotoxinTracer(p, board, failedGrowths, Rng, simulationObserver);
@@ -113,8 +113,7 @@ namespace FungusToast.Core.Death
 
                 if (reason.HasValue)
                 {
-                    cell.Kill(reason.Value);
-                    owner.RemoveControlledTile(cell.TileId);
+                    board.KillFungalCell(cell, reason.Value);
                     livingCellCounts[owner.PlayerId]--;
 
                     // --- NEW: Attribute Age/Randomness deaths to observer
@@ -135,7 +134,7 @@ namespace FungusToast.Core.Death
                         AttributePutrefactiveMycotoxinKill(cell, board, players, simulationObserver);
                     }
 
-                    MutationEffectProcessor.TryTriggerSporeOnDeath(owner, board, Rng, simulationObserver);
+                    board.TryTriggerSporeOnDeath(owner, Rng, simulationObserver);
 
                     // --- PER-DEATH Necrophytic Bloom effect ---
                     if (necrophyticActivated &&

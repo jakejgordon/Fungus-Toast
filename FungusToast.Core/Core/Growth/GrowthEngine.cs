@@ -1,6 +1,7 @@
 ﻿using FungusToast.Core.Board;
-using FungusToast.Core.Phases;
+using FungusToast.Core.Events;
 using FungusToast.Core.Metrics;
+using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 
 namespace FungusToast.Core.Growth
@@ -59,123 +60,139 @@ namespace FungusToast.Core.Growth
         {
             var sourceCell = sourceTile.FungalCell;
             if (sourceCell == null)
-                return false; // No cell to expand from
+                return false;
 
-            // Get base and surge growth chances
             (float baseChance, float surgeBonus) = MutationEffectProcessor.GetGrowthChancesWithHyphalSurge(owner);
+            float diagonalMultiplier = MutationEffectProcessor.GetTendrilDiagonalGrowthMultiplier(owner);
 
-            // 1. Collect all orthogonal and diagonal (with direction) targets
-            var allTargets = new List<GrowthTarget>();
+            var allTargets = GetAllGrowthTargets(board, sourceTile, owner, baseChance, surgeBonus, diagonalMultiplier);
+            Shuffle(allTargets, rng);
 
-            // Orthogonal neighbors (normal growth)
+            foreach (var target in allTargets)
+            {
+                if (AttemptStandardOrSurgeGrowth(board, owner, sourceTile.TileId, target, rng, observer))
+                    return true;
+
+                if (target == allTargets[0] && AttemptCreepingMold(board, owner, sourceCell, sourceTile, target.Tile, rng, observer))
+                    return true;
+            }
+
+            return AttemptNecrohyphalInfiltration(board, sourceTile, sourceCell, owner, rng, observer);
+        }
+
+        private static List<GrowthTarget> GetAllGrowthTargets(
+            GameBoard board,
+            BoardTile sourceTile,
+            Player owner,
+            float baseChance,
+            float surgeBonus,
+            float diagonalMultiplier)
+        {
+            var targets = new List<GrowthTarget>();
+
             foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
             {
                 if (!tile.IsOccupied && tile.TileId != sourceTile.TileId)
-                    allTargets.Add(new GrowthTarget(tile, baseChance, null, surgeBonus));
+                    targets.Add(new GrowthTarget(tile, baseChance, null, surgeBonus));
             }
 
-            // Diagonal neighbors (Tendril growth)
-            float multiplier = MutationEffectProcessor.GetTendrilDiagonalGrowthMultiplier(owner);
             var diagonalDirs = new (int dx, int dy, DiagonalDirection dir)[]
             {
-                (-1,  1, DiagonalDirection.Northwest),
-                ( 1,  1, DiagonalDirection.Northeast),
-                ( 1, -1, DiagonalDirection.Southeast),
-                (-1, -1, DiagonalDirection.Southwest),
+        (-1,  1, DiagonalDirection.Northwest),
+        ( 1,  1, DiagonalDirection.Northeast),
+        ( 1, -1, DiagonalDirection.Southeast),
+        (-1, -1, DiagonalDirection.Southwest),
             };
+
             foreach (var (dx, dy, dir) in diagonalDirs)
             {
-                float chance = owner.GetDiagonalGrowthChance(dir) * multiplier;
+                float chance = owner.GetDiagonalGrowthChance(dir) * diagonalMultiplier;
                 if (chance <= 0) continue;
+
                 int nx = sourceTile.X + dx;
                 int ny = sourceTile.Y + dy;
                 var maybeTile = board.GetTile(nx, ny);
                 if (maybeTile is { IsOccupied: false, TileId: var id } && id != sourceTile.TileId)
-                    allTargets.Add(new GrowthTarget(maybeTile, chance, dir, 0f)); // Tendrils not affected by Hyphal Surge unless you want to include it
+                    targets.Add(new GrowthTarget(maybeTile, chance, dir, 0f));
             }
 
-            Shuffle(allTargets, rng);
+            return targets;
+        }
 
-            // 2. Attempt growth in each direction, reporting type for Tendril diagonals
-            bool attemptedCreepingMold = false;
+        private static bool AttemptStandardOrSurgeGrowth(
+            GameBoard board,
+            Player owner,
+            int sourceTileId,
+            GrowthTarget target,
+            Random rng,
+            ISimulationObserver? observer)
+        {
+            double roll = rng.NextDouble();
 
-            foreach (var target in allTargets)
+            if (target.SurgeBonus > 0f && target.DiagonalDirection == null)
             {
-                double roll = rng.NextDouble();
-
-                // Only orthogonal targets get Hyphal Surge bonus
-                if (target.SurgeBonus > 0f && target.DiagonalDirection == null)
+                if (roll < target.Chance)
                 {
-                    if (roll < target.Chance)
+                    if (board.TryGrowFungalCell(owner.PlayerId, sourceTileId, target.Tile.TileId, out var failReason))
                     {
-                        // Normal growth
-                        PlaceCellAndTrack(target, owner, board, observer, false);
+                        observer?.RecordStandardGrowth(owner.PlayerId);
                         return true;
                     }
-                    else if (roll < target.Chance + target.SurgeBonus)
+                }
+                else if (roll < target.Chance + target.SurgeBonus)
+                {
+                    if (board.TryGrowFungalCell(owner.PlayerId, sourceTileId, target.Tile.TileId, out var failReason))
                     {
-                        // Hyphal Surge growth
-                        PlaceCellAndTrack(target, owner, board, observer, true);
                         observer?.RecordHyphalSurgeGrowth(owner.PlayerId);
                         return true;
                     }
                 }
-                else
+            }
+            else
+            {
+                if (roll < target.Chance)
                 {
-                    // Tendril or other non-surge directions
-                    if (roll < target.Chance)
+                    if (board.TryGrowFungalCell(owner.PlayerId, sourceTileId, target.Tile.TileId, out var failReason))
                     {
-                        PlaceCellAndTrack(target, owner, board, observer, false);
-
-                        // Track Tendril mutation usage if this was a diagonal
                         if (target.DiagonalDirection.HasValue)
-                        {
                             observer?.RecordTendrilGrowth(owner.PlayerId, target.DiagonalDirection.Value);
-                        }
-
                         return true;
                     }
                 }
-
-                // If not successful, try Creeping Mold (once)
-                if (!attemptedCreepingMold)
-                {
-                    attemptedCreepingMold = true;
-                    if (MutationEffectProcessor.TryCreepingMoldMove(owner, sourceCell, sourceTile, target.Tile, rng, board))
-                    {
-                        observer?.RecordCreepingMoldMove(owner.PlayerId);
-                        return true; // successful creeping mold
-                    }
-                }
             }
 
-            // 3. Fallback: Try Necrohyphal Infiltration if enabled
-            if (MutationEffectProcessor.TryNecrohyphalInfiltration(
-                    board, sourceTile, sourceCell, owner, rng, observer))
-            {
-                return true; // successful necrohyphal infiltration
-            }
-
-            return false; // failed to grow, move, or infiltrate
+            return false;
         }
 
-        private static void PlaceCellAndTrack(
-            GrowthTarget target,
-            Player owner,
+        private static bool AttemptCreepingMold(
             GameBoard board,
-            ISimulationObserver? observer,
-            bool isHyphalSurge)
+            Player owner,
+            FungalCell sourceCell,
+            BoardTile sourceTile,
+            BoardTile targetTile,
+            Random rng,
+            ISimulationObserver? observer)
         {
-            var newCell = new FungalCell(owner.PlayerId, target.Tile.TileId);
-            target.Tile.PlaceFungalCell(newCell);
-            board.PlaceFungalCell(newCell);
-            owner.AddControlledTile(target.Tile.TileId);
-
-            if (isHyphalSurge)
+            if (MutationEffectProcessor.TryCreepingMoldMove(owner, sourceCell, sourceTile, targetTile, rng, board))
             {
-                observer?.RecordHyphalSurgeGrowth(owner.PlayerId);
+                observer?.RecordCreepingMoldMove(owner.PlayerId);
+                return true;
             }
+
+            return false;
         }
+
+        private static bool AttemptNecrohyphalInfiltration(
+            GameBoard board,
+            BoardTile sourceTile,
+            FungalCell sourceCell,
+            Player owner,
+            Random rng,
+            ISimulationObserver? observer)
+        {
+            return MutationEffectProcessor.TryNecrohyphalInfiltration(board, sourceTile, sourceCell, owner, rng, observer);
+        }
+
 
         /// <summary>
         /// Helper for shuffling lists with a given RNG.

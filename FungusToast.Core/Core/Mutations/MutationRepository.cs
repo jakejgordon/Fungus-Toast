@@ -277,8 +277,8 @@ namespace FungusToast.Core.Mutations
                 description:
                     $"At the start of the next Growth Phase, this mutation projects a straight line of living fungal cells toward the center of the toast.\n" +
                     $"It spawns {GameBalance.HyphalVectoringBaseTiles} cells at level 0, plus {FormatFloat(GameBalance.HyphalVectoringTilesPerLevel)} per level.\n\n" +
-                    $"Cells replace anything in their path (toxins, dead mold, enemy mold) but stop if a friendly living cell is encountered. Each activation costs " +
-                    $"{GameBalance.HyphalVectoringPointsPerActivation} mutation points, increasing by {GameBalance.HyphalVectoringSurgePointIncreasePerLevel} per level. " +
+                    $"Cells replace anything in their path (toxins, dead mold, enemy mold, empty space) and **skip over friendly living mold** without interruption. " +
+                    $"Each activation costs {GameBalance.HyphalVectoringPointsPerActivation} mutation points, increasing by {GameBalance.HyphalVectoringSurgePointIncreasePerLevel} per level. " +
                     $"This mutation can only activate once per {GameBalance.HyphalVectoringSurgeDuration} turns.",
                 flavorText:
                     "Guided by centripetal nutrient gradients, apex hyphae launch invasive pulses straight into the heart of contested substrate.",
@@ -357,10 +357,12 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.NecrophyticBloom,
                 name: "Necrophytic Bloom",
-                description: $"Once {FormatPercent(GameBalance.NecrophyticBloomActivationThreshold)} of the board is occupied, this mutation activates. " +
-                             $"Each level grants {FormatFloat(GameBalance.NecrophyticBloomSporesPerDeathPerLevel)} spores per dead cell owned at activation. " +
-                             $"After activation, each new death releases spores scaled by remaining board space — fewer spores drop as crowding increases.",
-                flavorText: "When overcrowding threatens expansion, the colony enters a necrophytic phase, reanimating its fallen cells with explosive spore dispersal.",
+                description:
+                    $"Activates once {FormatPercent(GameBalance.NecrophyticBloomActivationThreshold)} of the board is occupied. " +
+                    $"At that moment, all of your previously dead, non-toxin fungal cells may be reclaimed, releasing " +
+                    $"{FormatFloat(GameBalance.NecrophyticBloomSporesPerDeathPerLevel)} spores per dead cell per level. " +
+                    $"After activation, each additional death attempts to reclaim new territory, with effectiveness decreasing as the board becomes more crowded.",
+                flavorText: "When population pressure nears collapse, the mycelium initiates necrophytic recovery — resurrecting fallen cells and seeding the surface in desperate bloom.",
                 type: MutationType.NecrophyticBloomSporeDrop,
                 effectPerLevel: GameBalance.NecrophyticBloomSporesPerDeathPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
@@ -368,8 +370,8 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.GeneticDrift,
                 tier: MutationTier.Tier4
             ),
-            new MutationPrerequisite(MutationIds.SporocidalBloom, 1),
-            new MutationPrerequisite(MutationIds.Necrosporulation, 1));
+            new MutationPrerequisite(MutationIds.SporocidalBloom, 1));
+
 
             //Tier-5
             MakeChild(new Mutation(

@@ -1,4 +1,9 @@
 ﻿using FungusToast.Core.Config;
+using FungusToast.Core.Core.Events;
+using FungusToast.Core.Death;
+using FungusToast.Core.Events;
+using FungusToast.Core.Metrics;
+using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
@@ -19,6 +24,112 @@ namespace FungusToast.Core.Board
         public int CurrentGrowthCycle { get; private set; } = 0;
 
         public int TotalTiles => Width * Height;
+
+        public delegate void CellColonizedEventHandler(int playerId, int tileId);
+        public delegate void CellInfestedEventHandler(int playerId, int tileId, int oldOwnerId);
+        public delegate void CellReclaimedEventHandler(int playerId, int tileId);
+        public delegate void CellToxifiedEventHandler(int playerId, int tileId);
+        public delegate void CellPoisonedEventHandler(int playerId, int tileId, int oldOwnerId);
+        public delegate void CellCatabolizedEventHandler(int playerId, int tileId);
+        public delegate void CellDeathEventHandler(int playerId, int tileId, DeathReason reason);
+        public delegate void CellSurgeGrowthEventHandler(int playerId, int tileId);
+        public delegate void NecrotoxicConversionEventHandler(int playerId, int tileId, int oldOwnerId);
+        public delegate void SporeDropEventHandler(int playerId, int tileId, MutationType mutationType);
+        public delegate void MutationPointsEarnedEventHandler(int playerId, int amount);
+        public delegate void MutationPointsSpentEventHandler(int playerId, MutationTier tier, int amount);
+        public delegate void TendrilGrowthEventHandler(int playerId, int tileId, DiagonalDirection direction);
+        public delegate void CreepingMoldMoveEventHandler(int playerId, int fromTileId, int toTileId);
+        public delegate void JettingMyceliumCatabolicGrowthEventHandler(int playerId, int tileId);
+
+        // 2. Events (public, so other components can subscribe)
+        public event CellColonizedEventHandler? CellColonized;
+        public event CellInfestedEventHandler? CellInfested;
+        public event CellReclaimedEventHandler? CellReclaimed;
+        public event CellToxifiedEventHandler? CellToxified;
+        public event CellPoisonedEventHandler? CellPoisoned;
+        public event CellCatabolizedEventHandler? CellCatabolized;
+        public event CellDeathEventHandler? CellDeath;
+        public event CellSurgeGrowthEventHandler? CellSurgeGrowth;
+        public event NecrotoxicConversionEventHandler? NecrotoxicConversion;
+        public event SporeDropEventHandler? SporeDrop;
+        public event MutationPointsEarnedEventHandler? MutationPointsEarned;
+        public event MutationPointsSpentEventHandler? MutationPointsSpent;
+        public event TendrilGrowthEventHandler? TendrilGrowth;
+        public event CreepingMoldMoveEventHandler? CreepingMoldMove;
+        public event JettingMyceliumCatabolicGrowthEventHandler? JettingMyceliumCatabolicGrowth;
+
+        // 3. Helper methods to invoke (recommended: protected virtual, as in standard .NET pattern)
+        protected virtual void OnCellColonized(int playerId, int tileId) =>
+            CellColonized?.Invoke(playerId, tileId);
+
+        protected virtual void OnCellInfested(int playerId, int tileId, int oldOwnerId) =>
+            CellInfested?.Invoke(playerId, tileId, oldOwnerId);
+
+        protected virtual void OnCellReclaimed(int playerId, int tileId) =>
+            CellReclaimed?.Invoke(playerId, tileId);
+
+        protected virtual void OnCellToxified(int playerId, int tileId) =>
+            CellToxified?.Invoke(playerId, tileId);
+
+        protected virtual void OnCellPoisoned(int playerId, int tileId, int oldOwnerId) =>
+            CellPoisoned?.Invoke(playerId, tileId, oldOwnerId);
+
+        protected virtual void OnCellCatabolized(int playerId, int tileId) =>
+            CellCatabolized?.Invoke(playerId, tileId);
+
+        protected virtual void OnCellDeath(int playerId, int tileId, DeathReason reason) =>
+            CellDeath?.Invoke(playerId, tileId, reason);
+
+        protected virtual void OnCellSurgeGrowth(int playerId, int tileId) =>
+            CellSurgeGrowth?.Invoke(playerId, tileId);
+
+        protected virtual void OnNecrotoxicConversion(int playerId, int tileId, int oldOwnerId) =>
+            NecrotoxicConversion?.Invoke(playerId, tileId, oldOwnerId);
+
+        protected virtual void OnSporeDrop(int playerId, int tileId, MutationType mutationType) =>
+            SporeDrop?.Invoke(playerId, tileId, mutationType);
+
+        protected virtual void OnMutationPointsEarned(int playerId, int amount) =>
+            MutationPointsEarned?.Invoke(playerId, amount);
+
+        protected virtual void OnMutationPointsSpent(int playerId, MutationTier tier, int amount) =>
+            MutationPointsSpent?.Invoke(playerId, tier, amount);
+
+        protected virtual void OnTendrilGrowth(int playerId, int tileId, DiagonalDirection direction) =>
+            TendrilGrowth?.Invoke(playerId, tileId, direction);
+
+        protected virtual void OnCreepingMoldMove(int playerId, int fromTileId, int toTileId) =>
+            CreepingMoldMove?.Invoke(playerId, fromTileId, toTileId);
+
+        protected virtual void OnJettingMyceliumCatabolicGrowth(int playerId, int tileId) =>
+            JettingMyceliumCatabolicGrowth?.Invoke(playerId, tileId);
+
+        /// <summary>
+        /// Fired before a growth attempt. Listeners may cancel the growth.
+        /// </summary>
+        public event EventHandler<GrowthAttemptEventArgs>? BeforeGrowthAttempt;
+
+        /// <summary>
+        /// Fired after a growth attempt, regardless of success. FailureReason can be set for post-mortem analysis.
+        /// </summary>
+        public event EventHandler<GrowthAttemptEventArgs>? AfterGrowthAttempt;
+
+        /// <summary>
+        /// Fired after a successful reclaim of a dead cell
+        /// </summary>
+        public event Action<FungalCell, int>? OnDeadCellReclaim;
+
+        /// <summary>
+        /// Raises the BeforeGrowthAttempt event.
+        /// </summary>
+        protected virtual void OnBeforeGrowthAttempt(GrowthAttemptEventArgs e) =>
+            BeforeGrowthAttempt?.Invoke(this, e);
+
+        /// <summary>
+        /// Raises the AfterGrowthAttempt event.
+        /// </summary>
+        protected virtual void OnAfterGrowthAttempt(GrowthAttemptEventArgs e) =>
+            AfterGrowthAttempt?.Invoke(this, e);
 
         public GameBoard(int width, int height, int playerCount)
         {
@@ -95,12 +206,7 @@ namespace FungusToast.Core.Board
             return cell;
         }
 
-        public void PlaceFungalCell(FungalCell cell)
-        {
-            tileIdToCell[cell.TileId] = cell;
-            var (x, y) = GetXYFromTileId(cell.TileId);
-            Grid[x, y].PlaceFungalCell(cell);
-        }
+ 
 
         public void RemoveControlFromPlayer(int tileId)
         {
@@ -324,6 +430,267 @@ namespace FungusToast.Core.Board
 
             return y * Width + x;
         }
+
+
+        // NEW STUFF FROM REFACTORING
+
+        /// <summary>
+        /// Attempts to trigger a spore drop for the given player after a fungal cell dies.
+        /// The chance and behavior are mutation-driven. If a valid spore tile is found,
+        /// a new fungal cell is placed and relevant events are fired.
+        /// </summary>
+        /// <param name="player">The player who may receive a spore drop.</param>
+        /// <param name="rng">Random number generator.</param>
+        /// <param name="observer">Optional simulation observer to track spore events.</param>
+        public void TryTriggerSporeOnDeath(Player player, Random rng, ISimulationObserver? observer = null)
+        {
+            float dropChance = player.GetMutationEffect(MutationType.SporeOnDeathChance);
+            if (dropChance <= 0f || rng.NextDouble() > dropChance)
+                return;
+
+            var candidateTiles = AllTiles()
+                .Where(t => !t.IsOccupied)
+                .OrderBy(_ => rng.NextDouble())
+                .ToList();
+
+            foreach (var tile in candidateTiles)
+            {
+                bool spawned = SpawnSporeForPlayer(player, tile.TileId);
+                if (spawned)
+                {
+                    OnSporeDrop(player.PlayerId, tile.TileId, MutationType.SporeOnDeathChance);
+                    observer?.ReportNecrosporeDrop(player.PlayerId, 1);
+                    return;
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Attempts to grow a fungal cell from <paramref name="sourceTileId"/> into <paramref name="targetTileId"/>.
+        /// - Fires BeforeGrowthAttempt (cancelable) and AfterGrowthAttempt (result) for all attempts.
+        /// - If <paramref name="canReclaimDeadCell"/> is true, allows reclaiming the player's own dead cell as a special case (used for Regenerative Hyphae effects).
+        /// - Fires OnDeadCellReclaim after a successful reclaim of a dead cell.
+        /// Returns true if growth or reclaim succeeded, false if the attempt failed or was canceled.
+        /// </summary>
+        /// <param name="playerId">The player ID performing the growth.</param>
+        /// <param name="sourceTileId">The tile ID of the source fungal cell (may be -1 if not applicable).</param>
+        /// <param name="targetTileId">The tile ID where the cell will attempt to grow.</param>
+        /// <param name="failureReason">Outputs the failure reason if growth was not successful.</param>
+        /// <param name="canReclaimDeadCell">If true, allows the player to reclaim their own dead cell (for Regenerative Hyphae). Default is false.</param>
+        /// <returns>True if growth or reclaim succeeded, false otherwise.</returns>
+        public bool TryGrowFungalCell(
+           int playerId,
+           int sourceTileId,
+           int targetTileId,
+           out GrowthFailureReason failureReason,
+           bool canReclaimDeadCell = false
+       )
+        {
+            failureReason = GrowthFailureReason.None;
+
+            var targetTile = GetTileById(targetTileId);
+            if (targetTile == null)
+            {
+                failureReason = GrowthFailureReason.InvalidTarget;
+                return false;
+            }
+
+            // Standard: Only allow growth into empty tile
+            if (!targetTile.IsOccupied)
+            {
+                var newCell = new FungalCell(playerId, targetTileId);
+                targetTile.PlaceFungalCell(newCell);
+                PlaceFungalCell(newCell);
+                // Player.AddControlledTile(targetTileId); // Do this elsewhere as needed
+                return true;
+            }
+
+            // Special: allow reclaiming your own dead cell if allowed
+            if (canReclaimDeadCell && targetTile.IsOccupied)
+            {
+                var deadCell = targetTile.FungalCell;
+                // Only allow if it’s the player’s own dead cell
+                if (deadCell != null && deadCell.IsDead && deadCell.OriginalOwnerPlayerId == playerId)
+                {
+                    deadCell.Reclaim(playerId);
+                    PlaceFungalCell(deadCell);
+                    // Notify event listeners
+                    OnDeadCellReclaim?.Invoke(deadCell, playerId);
+                    failureReason = GrowthFailureReason.None;
+                    return true;
+                }
+                failureReason = GrowthFailureReason.TileOccupied;
+                return false;
+            }
+
+            // All other cases: can't grow here
+            failureReason = targetTile.IsOccupied ? GrowthFailureReason.TileOccupied : GrowthFailureReason.InvalidTarget;
+            return false;
+        }
+
+        internal void PlaceFungalCell(FungalCell cell)
+        {
+            var (x, y) = GetXYFromTileId(cell.TileId);
+            var tile = Grid[x, y];
+            var oldCell = tile.FungalCell;
+
+            tile.PlaceFungalCell(cell);
+            tileIdToCell[cell.TileId] = cell;
+
+            int ownerId = cell.OwnerPlayerId.GetValueOrDefault(-1);
+
+            if (oldCell == null)
+            {
+                // Colonization: tile was empty
+                OnCellColonized(ownerId, cell.TileId);
+            }
+            else if (oldCell.IsAlive)
+            {
+                int oldOwnerId = oldCell.OwnerPlayerId.GetValueOrDefault(-1);
+                // Infestation: replace enemy living cell
+                if (oldOwnerId != ownerId)
+                    OnCellInfested(ownerId, cell.TileId, oldOwnerId);
+                else
+                    OnCellColonized(ownerId, cell.TileId); // Unusual, but treat as colonization
+            }
+            else if (oldCell.IsToxin)
+            {
+                int oldOwnerId = oldCell.OwnerPlayerId.GetValueOrDefault(-1);
+                // Poisoning: replace toxin with living cell
+                OnCellPoisoned(ownerId, cell.TileId, oldOwnerId);
+            }
+            else if (oldCell.IsDead)
+            {
+                int originalOwnerId = oldCell.OriginalOwnerPlayerId;
+                // Reclaim: revive dead cell (could be own or enemy, but should check for ownership)
+                if (originalOwnerId == ownerId)
+                    OnCellReclaimed(ownerId, cell.TileId);
+                else
+                    OnCellInfested(ownerId, cell.TileId, originalOwnerId); // Parasitic reclaim
+            }
+        }
+
+        internal void InternalColonizeCell(int playerId, int tileId)
+        {
+            var cell = new FungalCell(playerId, tileId);
+            tileIdToCell[tileId] = cell;
+            var (x, y) = GetXYFromTileId(tileId);
+            Grid[x, y].PlaceFungalCell(cell);
+            OnCellColonized(playerId, tileId);
+        }
+
+        internal void InternalInfestCell(int playerId, int tileId, int oldOwnerId)
+        {
+            var cell = new FungalCell(playerId, tileId);
+            tileIdToCell[tileId] = cell;
+            var (x, y) = GetXYFromTileId(tileId);
+            Grid[x, y].PlaceFungalCell(cell);
+            OnCellInfested(playerId, tileId, oldOwnerId);
+        }
+
+        public void KillFungalCell(FungalCell cell, DeathReason reason)
+        {
+            int tileId = cell.TileId;
+            int playerId = cell.OwnerPlayerId ?? -1;
+
+            cell.Kill(reason);
+            RemoveControlFromPlayer(tileId);
+            OnCellDeath(playerId, tileId, reason);
+        }
+
+        /// <summary>
+        /// Attempts to reclaim a dead fungal cell at the given tile for the specified player.
+        /// If successful, updates control, fires events, and returns true.
+        /// </summary>
+        public bool TryReclaimDeadCell(int playerId, int tileId)
+        {
+            var tile = GetTileById(tileId);
+            if (tile?.FungalCell == null || !tile.FungalCell.IsDead)
+                return false;
+
+            var cell = tile.FungalCell;
+            if (cell.OriginalOwnerPlayerId != playerId)
+                return false;
+
+            cell.Reclaim(playerId);
+            PlaceFungalCell(cell); // Fires correct events
+            Players[playerId].AddControlledTile(tileId);
+            OnDeadCellReclaim?.Invoke(cell, playerId);
+            return true;
+        }
+
+        /// <summary>
+        /// Attempts to place spores generated by the Sporocidal Bloom mutation for a given player.
+        /// Uses event-based logic to notify observers and the UI of each spore drop.
+        /// </summary>
+        /// <param name="player">The player with Sporocidal Bloom active.</param>
+        /// <param name="rng">A random number generator.</param>
+        /// <param name="mutation">The Mutation definition for Sporocidal Bloom (must be passed in).</param>
+        /// <param name="observer">Optional simulation observer to track drops.</param>
+        public void TryPlaceSporocidalSpores(
+            Player player,
+            Random rng,
+            Mutation mutation,
+            ISimulationObserver? observer = null)
+        {
+            int level = player.GetMutationLevel(mutation.Id);
+            if (level <= 0) return;
+
+            int sporesToDrop = (int)Math.Floor(level * GameBalance.SporicialBloomEffectPerLevel);
+            if (sporesToDrop <= 0) return;
+
+            var validTiles = AllTiles()
+                .Where(t => t.FungalCell == null || t.FungalCell.IsToxin)
+                .ToList();
+
+            if (validTiles.Count == 0) return;
+
+            int successfulDrops = 0;
+
+            for (int i = 0; i < sporesToDrop; i++)
+            {
+                BoardTile target = validTiles[rng.Next(validTiles.Count)];
+
+                if (TryPlaceSpore(target.TileId, player.PlayerId, observer))
+                {
+                    successfulDrops++;
+                }
+            }
+
+            if (successfulDrops > 0)
+            {
+                observer?.ReportSporocidalSporeDrop(player.PlayerId, successfulDrops);
+            }
+        }
+
+
+        /// <summary>
+        /// Attempts to place a spore at the given tile for the specified player.
+        /// Does nothing if the tile already contains a non-toxin fungal cell.
+        /// Fires board events and updates control state if successful.
+        /// </summary>
+        /// <param name="tileId">Target tile ID</param>
+        /// <param name="playerId">Owning player ID</param>
+        /// <param name="observer">Optional simulation observer</param>
+        /// <returns>True if a spore was successfully placed</returns>
+        public bool TryPlaceSpore(int tileId, int playerId, ISimulationObserver? observer = null)
+        {
+            if (!tileIdToCell.TryGetValue(tileId, out var existingCell))
+                return false;
+
+            if (existingCell != null && !existingCell.IsToxin)
+                return false;
+
+            var newCell = new FungalCell(playerId, tileId);
+            PlaceFungalCell(newCell);
+
+            Players[playerId].AddControlledTile(tileId);
+            observer?.ReportSporocidalSporeDrop(playerId, 1);
+
+            return true;
+        }
+
 
     }
 }

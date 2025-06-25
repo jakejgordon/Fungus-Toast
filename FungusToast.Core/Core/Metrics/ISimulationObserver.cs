@@ -36,5 +36,6 @@ namespace FungusToast.Core.Metrics
         void ReportJettingMyceliumColonized(int playerId, int colonized);
         void ReportJettingMyceliumToxified(int playerId, int toxified);
         void ReportJettingMyceliumPoisoned(int playerId, int poisoned);
+        void RecordStandardGrowth(int playerId);
     }
 }

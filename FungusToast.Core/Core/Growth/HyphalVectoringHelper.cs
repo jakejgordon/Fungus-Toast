@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using FungusToast.Core.Board;
+﻿using FungusToast.Core.Board;
 using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Players;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 
 namespace FungusToast.Core.Growth
 {
@@ -161,6 +162,15 @@ namespace FungusToast.Core.Growth
             return line;
         }
 
+        /// <summary>
+        /// Projects a line of hyphal growth from the specified start coordinates toward the center,
+        /// overwriting all cells (dead, toxin, enemy living, empty) in its path with new living cells belonging to the player.
+        /// If a friendly living cell is encountered, it is left untouched and counted toward the total,
+        /// and the projection continues to the next tile. Always creates the requested number of cells,
+        /// skipping but not stopping for friendly living cells.
+        /// Observer is notified of any enemy living cell deaths.
+        /// Returns the number of tiles processed (i.e., the number of living cells created or skipped).
+        /// </summary>
         public static int ApplyHyphalVectorLine(
             Player player,
             GameBoard board,
@@ -173,7 +183,7 @@ namespace FungusToast.Core.Growth
             ISimulationObserver? observer)
         {
             var path = GetLineToCenter(startX, startY, centerX, centerY, totalTiles);
-            int placed = 0;
+            int processed = 0;
 
             foreach (var (x, y) in path)
             {
@@ -181,27 +191,33 @@ namespace FungusToast.Core.Growth
                 if (tile == null)
                     continue;
 
-                if (tile.IsOccupied && tile.FungalCell is { IsAlive: true, OwnerPlayerId: var oid } && oid == player.PlayerId)
+                var cell = tile.FungalCell;
+
+                // If the tile has a friendly living cell, skip overwriting, but still count it
+                if (cell is { IsAlive: true, OwnerPlayerId: var oid } && oid == player.PlayerId)
                 {
-                    // Defensive: should never happen, but don't crash
-                    // Console.WriteLine($"[HyphalVectoring] Path encountered friendly cell at {tile.TileId}");
-                    break;
+                    processed++;
+                    continue;
                 }
 
-                if (tile.IsOccupied && tile.FungalCell is { IsAlive: true } fc)
+                // Kill any living cell (enemy only)
+                if (cell is { IsAlive: true })
                 {
-                    fc.Kill(DeathReason.HyphalVectoring);
+                    cell.Kill(DeathReason.HyphalVectoring);
                     observer?.RecordCellDeath(player.PlayerId, DeathReason.HyphalVectoring, 1);
                 }
 
+                // Overwrite whatever was there with a new living cell
                 var newCell = new FungalCell(player.PlayerId, tile.TileId);
-                tile.PlaceFungalCell(newCell);
-                board.PlaceFungalCell(newCell);
+                board.PlaceFungalCell(newCell); // << fires all relevant events!
                 player.AddControlledTile(tile.TileId);
-                placed++;
+
+                processed++;
             }
 
-            return placed;
+            return processed;
         }
+
+
     }
 }
