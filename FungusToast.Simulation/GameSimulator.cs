@@ -2,6 +2,7 @@
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
+using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Phases;
@@ -18,14 +19,14 @@ namespace FungusToast.Simulation.GameSimulation
         public GameResult RunSimulation(
             List<IMutationSpendingStrategy> strategies,
             int seed,
+            SimulationTrackingContext context,
             int gameIndex = -1,
             int totalGames = -1,
-            DateTime? startTime = null,
-            SimulationTrackingContext? context = null
+            DateTime? startTime = null
         )
         {
             var rng = new Random(seed);
-            var (players, board) = InitializeGame(strategies, rng);
+            var (players, board) = InitializeGame(strategies, rng, context);
             var allMutations = MutationRegistry.GetAll().ToList();
             var allMycovariants = MycovariantRepository.All;
             var mycovariantPoolManager = new MycovariantPoolManager();
@@ -108,7 +109,7 @@ namespace FungusToast.Simulation.GameSimulation
 
 
 
-        private (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng)
+        private (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng, ISimulationObserver observer)
         {
             int playerCount = strategies.Count;
             var players = new List<Player>();
@@ -126,6 +127,9 @@ namespace FungusToast.Simulation.GameSimulation
             }
 
             var board = new GameBoard(GameBalance.BoardWidth, GameBalance.BoardHeight, playerCount);
+
+            EventSubscriptionHelper.RegisterSimulationEvents(board, observer);
+
 
             // Add each player to the board's Players list
             foreach (var player in players)

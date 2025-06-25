@@ -1,24 +1,28 @@
-﻿using System.Collections;
+﻿using FungusToast.Core;
+using FungusToast.Core.AI;
+using FungusToast.Core.Board;
+using FungusToast.Core.Config;
+using FungusToast.Core.Death;
+using FungusToast.Core.Events;
+using FungusToast.Core.Growth;
+using FungusToast.Core.Mutations;
+using FungusToast.Core.Mycovariants;
+using FungusToast.Core.Phases;
+using FungusToast.Core.Players;
+using FungusToast.Unity.Cameras;
+using FungusToast.Unity.Events;
+using FungusToast.Unity.Grid;
+using FungusToast.Unity.Phases;
+using FungusToast.Unity.UI;
+using FungusToast.Unity.UI.GameStart;
+using FungusToast.Unity.UI.MycovariantDraft;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using FungusToast.Core.Mutations;
-using FungusToast.Core.Mycovariants;
-using FungusToast.Unity.Grid;
-using FungusToast.Unity.Cameras;
-using FungusToast.Unity.Phases;
-using FungusToast.Unity.UI;
-using FungusToast.Core;
-using FungusToast.Core.Players;
-using FungusToast.Core.Config;
-using FungusToast.Core.AI;
-using FungusToast.Core.Growth;
-using FungusToast.Core.Death;
-using FungusToast.Core.Phases;
-using FungusToast.Core.Board;
-using FungusToast.Unity.UI.MycovariantDraft;
-using FungusToast.Unity.UI.GameStart;
+using Random = UnityEngine.Random;
 
 namespace FungusToast.Unity
 {
@@ -87,7 +91,11 @@ namespace FungusToast.Unity
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
 
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
-            RegisterEventListeners();
+
+            GameRulesEventSubscriber.Subscribe(Board);
+            GameUIEventSubscriber.Subscribe(Board, gameUIManager);
+            AnalyticsEventSubscriber.Subscribe(Board, null);
+
             InitializePlayersWithHumanFirst();
 
             gridVisualizer.Initialize(Board);
@@ -115,22 +123,6 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
         }
-
-        private void RegisterEventListeners()
-        {
-            Board.CellDeath += (sender, args) =>
-            {
-                MutationEffectProcessor.OnCellDeath_NecrotoxicConversion(args, Board, players, rng, null);
-                // Future: other event-driven mutation effects
-            };
-
-            // Example: subscribe to more events as you implement them
-            // Board.CellColonized += ...;
-            // Board.CellToxified += ...;
-        }
-
-
-
 
         private void InitializePlayersWithHumanFirst()
         {
