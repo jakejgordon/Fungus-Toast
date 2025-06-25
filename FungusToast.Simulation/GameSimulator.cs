@@ -63,7 +63,7 @@ namespace FungusToast.Simulation.GameSimulation
                 RoundContext roundContext = new RoundContext();
                 TurnEngine.AssignMutationPoints(board, players, allMutations, rng, simTracking);
                 TurnEngine.RunGrowthPhase(board, players, rng, roundContext, simTracking);
-                TurnEngine.RunDecayPhase(board, players, simTracking.FailedGrowthsByPlayerId, simTracking, simTracking);
+                TurnEngine.RunDecayPhase(board, players, simTracking.FailedGrowthsByPlayerId, rng, simTracking);
 
                 // 🔥 TICK DOWN ALL ACTIVE SURGES FOR ALL PLAYERS
                 foreach (var player in players)
