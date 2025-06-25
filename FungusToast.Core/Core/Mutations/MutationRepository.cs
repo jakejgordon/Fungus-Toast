@@ -359,9 +359,10 @@ namespace FungusToast.Core.Mutations
                 name: "Necrophytic Bloom",
                 description:
                     $"Activates once {FormatPercent(GameBalance.NecrophyticBloomActivationThreshold)} of the board is occupied. " +
-                    $"At that moment, all of your previously dead, non-toxin fungal cells may be reclaimed, releasing " +
-                    $"{FormatFloat(GameBalance.NecrophyticBloomSporesPerDeathPerLevel)} spores per dead cell per level. " +
-                    $"After activation, each additional death attempts to reclaim new territory, with effectiveness decreasing as the board becomes more crowded.",
+                    $"At that moment, all of your previously dead, non-toxin fungal cells release " +
+                    $"{FormatFloat(GameBalance.NecrophyticBloomSporesPerDeathPerLevel)} spores per cell per level. " +
+                    $"Released spores randomly drop on the board, reclaiming any dead cell they land upon. " +
+                    $"After activation, each new death releases additional spores with diminishing effectiveness as crowding increases.",
                 flavorText: "When population pressure nears collapse, the mycelium initiates necrophytic recovery — resurrecting fallen cells and seeding the surface in desperate bloom.",
                 type: MutationType.NecrophyticBloomSporeDrop,
                 effectPerLevel: GameBalance.NecrophyticBloomSporesPerDeathPerLevel,
