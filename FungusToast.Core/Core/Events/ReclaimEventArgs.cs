@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace FungusToast.Core.Core.Events
+namespace FungusToast.Core.Events
 {
     public class ReclaimEventArgs : EventArgs
     {

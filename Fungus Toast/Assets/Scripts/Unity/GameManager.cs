@@ -87,6 +87,7 @@ namespace FungusToast.Unity
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
 
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
+            RegisterEventListeners();
             InitializePlayersWithHumanFirst();
 
             gridVisualizer.Initialize(Board);
@@ -114,6 +115,20 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
         }
+
+        private void RegisterEventListeners()
+        {
+            Board.CellDeath += (sender, args) =>
+            {
+                MutationEffectProcessor.OnCellDeath_NecrotoxicConversion(args, Board, players, rng, null);
+                // Future: other event-driven mutation effects
+            };
+
+            // Example: subscribe to more events as you implement them
+            // Board.CellColonized += ...;
+            // Board.CellToxified += ...;
+        }
+
 
 
 

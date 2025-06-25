@@ -1,7 +1,6 @@
 ﻿using FungusToast.Core.Config;
-using FungusToast.Core.Core.Events;
-using FungusToast.Core.Death;
 using FungusToast.Core.Events;
+using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
@@ -53,7 +52,7 @@ namespace FungusToast.Core.Board
         public event CellToxifiedEventHandler? CellToxified;
         public event CellPoisonedEventHandler? CellPoisoned;
         public event CellCatabolizedEventHandler? CellCatabolized;
-        public event CellDeathEventHandler? CellDeath;
+        public event EventHandler<FungalCellDiedEventArgs>? CellDeath;
         public event CellSurgeGrowthEventHandler? CellSurgeGrowth;
         public event NecrotoxicConversionEventHandler? NecrotoxicConversion;
         public event SporeDropEventHandler? SporeDrop;
@@ -82,8 +81,12 @@ namespace FungusToast.Core.Board
         protected virtual void OnCellCatabolized(int playerId, int tileId) =>
             CellCatabolized?.Invoke(playerId, tileId);
 
-        protected virtual void OnCellDeath(int playerId, int tileId, DeathReason reason) =>
-            CellDeath?.Invoke(playerId, tileId, reason);
+        protected virtual void OnCellDeath(int playerId, int tileId, DeathReason reason, int? killerPlayerId = null, FungalCell? cell = null)
+        {
+            var args = new FungalCellDiedEventArgs(tileId, playerId, reason, killerPlayerId, cell!);
+            CellDeath?.Invoke(this, args);
+        }
+
 
         protected virtual void OnCellSurgeGrowth(int playerId, int tileId) =>
             CellSurgeGrowth?.Invoke(playerId, tileId);
@@ -617,15 +620,16 @@ namespace FungusToast.Core.Board
             OnCellInfested(playerId, tileId, oldOwnerId);
         }
 
-        public void KillFungalCell(FungalCell cell, DeathReason reason)
+        public void KillFungalCell(FungalCell cell, DeathReason reason, int? killerPlayerId = null)
         {
             int tileId = cell.TileId;
             int playerId = cell.OwnerPlayerId ?? -1;
 
             cell.Kill(reason);
             RemoveControlFromPlayer(tileId);
-            OnCellDeath(playerId, tileId, reason);
+            OnCellDeath(playerId, tileId, reason, killerPlayerId, cell);
         }
+
 
         /// <summary>
         /// Attempts to reclaim a dead fungal cell at the given tile for the specified player.

@@ -732,6 +732,66 @@ namespace FungusToast.Core.Phases
             }
         }
 
+        /// <summary>
+        /// Handles the Necrotoxic Conversion effect in response to a fungal cell death event.
+        /// If the cell died to a toxin effect and an adjacent enemy has the mutation,
+        /// the cell may be reclaimed for that enemy player.
+        /// </summary>
+        /// <param name="eventArgs">Cell death event arguments.</param>
+        /// <param name="board">Game board instance.</param>
+        /// <param name="players">List of all players.</param>
+        /// <param name="rng">RNG instance.</param>
+        /// <param name="observer">Optional simulation observer.</param>
+        public static void OnCellDeath_NecrotoxicConversion(
+            FungalCellDiedEventArgs eventArgs,
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            // Only applies to toxin-based deaths
+            if (eventArgs.Reason != DeathReason.PutrefactiveMycotoxin &&
+                eventArgs.Reason != DeathReason.SporocidalBloom &&
+                eventArgs.Reason != DeathReason.MycotoxinPotentiation)
+                return;
+
+            // Get the (now dead) cell
+            var deadCell = eventArgs.Cell;
+            if (deadCell == null)
+                return;
+
+            // Find adjacent living enemy cells
+            foreach (var neighbor in board.GetAdjacentTiles(deadCell.TileId))
+            {
+                var neighborCell = neighbor.FungalCell;
+                if (neighborCell == null || !neighborCell.IsAlive)
+                    continue;
+
+                int neighborOwnerId = neighborCell.OwnerPlayerId ?? -1;
+                // Only consider enemy players
+                if (neighborOwnerId == deadCell.OwnerPlayerId)
+                    continue;
+
+                var enemyPlayer = players.FirstOrDefault(p => p.PlayerId == neighborOwnerId);
+                if (enemyPlayer == null)
+                    continue;
+
+                int ntcLevel = enemyPlayer.GetMutationLevel(MutationIds.NecrotoxicConversion);
+                if (ntcLevel <= 0)
+                    continue;
+
+                float chance = ntcLevel * GameBalance.NecrotoxicConversionReclaimChancePerLevel;
+                if (rng.NextDouble() < chance)
+                {
+                    deadCell.Reclaim(enemyPlayer.PlayerId);
+                    board.PlaceFungalCell(deadCell); // This will fire appropriate board events
+
+                    observer?.RecordNecrotoxicConversionReclaim(enemyPlayer.PlayerId, 1);
+                    break; // Only one player can claim the cell
+                }
+            }
+        }
+
 
 
         public static (float baseChance, float surgeBonus) GetGrowthChancesWithHyphalSurge(Player player)
