@@ -1,3 +1,4 @@
+/*
 namespace FungusToast.Core
 {
     public class PlayerData
@@ -18,3 +19,4 @@ namespace FungusToast.Core
         }
     }
 }
+*/

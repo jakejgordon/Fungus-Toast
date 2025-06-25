@@ -209,8 +209,7 @@ namespace FungusToast.Core.Growth
 
                 // Overwrite whatever was there with a new living cell
                 var newCell = new FungalCell(player.PlayerId, tile.TileId);
-                board.PlaceFungalCell(newCell); // << fires all relevant events!
-                player.AddControlledTile(tile.TileId);
+                board.PlaceFungalCell(newCell);
 
                 processed++;
             }

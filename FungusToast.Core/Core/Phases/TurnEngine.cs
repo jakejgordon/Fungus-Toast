@@ -6,6 +6,8 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
+using System;
+using System.Collections.Generic;
 
 namespace FungusToast.Core.Phases
 {
@@ -42,31 +44,17 @@ namespace FungusToast.Core.Phases
             MutationEffectProcessor.ProcessHyphalVectoring(board, players, rng, observer);
         }
 
-
         /// <summary>
         /// Executes the decay phase for all living fungal cells.
         /// </summary>
-        public static void RunDecayPhase(GameBoard board, List<Player> players, Dictionary<int, int> failedGrowthsByPlayerId, ISimulationObserver? simulationObserver = null, ISimulationObserver? growthAndDecayObserver = null)
-        {
-            DeathEngine.ExecuteDeathCycle(board, players, failedGrowthsByPlayerId, simulationObserver);
-        }
-
-        /** this is called right in GameSimulator - should it call this instead?
-        public static void RunMycovariantDraftIfTriggered(
+        public static void RunDecayPhase(
             GameBoard board,
             List<Player> players,
-            MycovariantPoolManager mycovariantPoolManager,
-            List<Mycovariant> allMycovariants,
+            Dictionary<int, int> failedGrowthsByPlayerId,
             Random rng,
-            int currentRound)
+            ISimulationObserver? simulationObserver = null)
         {
-            if (currentRound == MycovariantGameBalance.MycovariantSelectionTriggerRound)
-            {
-                mycovariantPoolManager.InitializePool(allMycovariants, rng);
-                MycovariantDraftManager.RunDraft(players, mycovariantPoolManager, board, rng);
-            }
+            DeathEngine.ExecuteDeathCycle(board, players, failedGrowthsByPlayerId, rng, simulationObserver);
         }
-        */
-
     }
 }

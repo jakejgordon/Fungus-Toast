@@ -22,6 +22,9 @@ namespace FungusToast.Core.Players
         /// </summary>
         public Dictionary<MycovariantEffectType, int> EffectCounts { get; private set; } = new();
 
+        public Action<int, int>? ColonizeHandler;
+
+
         public PlayerMycovariant(int playerId, int mycovariantId, Mycovariant mycovariant)
         {
             PlayerId = playerId;

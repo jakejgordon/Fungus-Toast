@@ -14,8 +14,7 @@ namespace FungusToast.Core.Phases
         public void IncrementEffectCount(int playerId, string effect, int delta = 1)
         {
             var key = (playerId, effect);
-            if (!perPlayerEffectCounters.ContainsKey(key))
-                perPlayerEffectCounters[key] = 0;
+            perPlayerEffectCounters.TryAdd(key, 0);
             perPlayerEffectCounters[key] += delta;
         }
 
@@ -23,6 +22,14 @@ namespace FungusToast.Core.Phases
         {
             perPlayerEffectCounters.Clear();
         }
-    }
 
+        // Optional: easy debugging
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            foreach (var kvp in perPlayerEffectCounters)
+                sb.AppendLine($"Player {kvp.Key.playerId}, Effect {kvp.Key.effect}: {kvp.Value}");
+            return sb.ToString();
+        }
+    }
 }

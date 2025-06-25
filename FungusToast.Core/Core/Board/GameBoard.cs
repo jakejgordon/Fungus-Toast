@@ -23,6 +23,11 @@ namespace FungusToast.Core.Board
         public int CurrentRound { get; private set; } = 1;
         public int CurrentGrowthCycle { get; private set; } = 0;
 
+        /// <summary>
+        /// True once Necrophytic Bloom has activated in this game instance.
+        /// </summary>
+        public bool NecrophyticBloomActivated { get; set; } = false;
+
         public int TotalTiles => Width * Height;
 
         public delegate void CellColonizedEventHandler(int playerId, int tileId);
@@ -527,17 +532,41 @@ namespace FungusToast.Core.Board
             return false;
         }
 
+        /// <summary>
+        /// Places the given fungal cell on the board, replacing any existing cell at that tile.
+        /// - Removes control from any previous owner.
+        /// - Adds control to the new owner.
+        /// - Updates the board state and fires the appropriate events.
+        /// </summary>
+        /// <param name="cell">The fungal cell to place.</param>
         internal void PlaceFungalCell(FungalCell cell)
         {
             var (x, y) = GetXYFromTileId(cell.TileId);
             var tile = Grid[x, y];
             var oldCell = tile.FungalCell;
 
+            // Remove control from previous owner, if any
+            if (oldCell != null && oldCell.OwnerPlayerId.HasValue)
+            {
+                int prevOwnerId = oldCell.OwnerPlayerId.Value;
+                Players[prevOwnerId].ControlledTileIds.Remove(cell.TileId);
+            }
+
+            // Place the new cell on the tile and update mapping
             tile.PlaceFungalCell(cell);
             tileIdToCell[cell.TileId] = cell;
 
+            // Add control to new owner, if any
+            if (cell.OwnerPlayerId.HasValue)
+            {
+                int newOwnerId = cell.OwnerPlayerId.Value;
+                if (!Players[newOwnerId].ControlledTileIds.Contains(cell.TileId))
+                    Players[newOwnerId].ControlledTileIds.Add(cell.TileId);
+            }
+
             int ownerId = cell.OwnerPlayerId.GetValueOrDefault(-1);
 
+            // Event firing logic (unchanged)
             if (oldCell == null)
             {
                 // Colonization: tile was empty
@@ -568,6 +597,7 @@ namespace FungusToast.Core.Board
                     OnCellInfested(ownerId, cell.TileId, originalOwnerId); // Parasitic reclaim
             }
         }
+
 
         internal void InternalColonizeCell(int playerId, int tileId)
         {

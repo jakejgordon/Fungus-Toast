@@ -307,7 +307,6 @@ namespace FungusToast.Core.Phases
             // Create new cell in target location
             var newCell = new FungalCell(player.PlayerId, targetTile.TileId);
             board.PlaceFungalCell(newCell); // Event hooks will fire as appropriate
-            player.AddControlledTile(targetTile.TileId);
 
             // Remove source cell
             sourceTile.RemoveFungalCell();
@@ -623,7 +622,6 @@ namespace FungusToast.Core.Phases
                     // Initial infiltration (reclaim as living)
                     var reclaimedCell = deadTile.FungalCell!;
                     reclaimedCell.Reclaim(owner.PlayerId);
-                    owner.AddControlledTile(deadTile.TileId);
                     board.PlaceFungalCell(reclaimedCell); // Use board method for events!
 
                     // Track which tiles have already been reclaimed
@@ -682,7 +680,6 @@ namespace FungusToast.Core.Phases
                     {
                         var reclaimedCell = deadTile.FungalCell!;
                         reclaimedCell.Reclaim(owner.PlayerId);
-                        owner.AddControlledTile(deadTile.TileId);
                         board.PlaceFungalCell(reclaimedCell); // Use board method for events!
                         alreadyReclaimed.Add(deadTile.TileId);
 
@@ -726,8 +723,7 @@ namespace FungusToast.Core.Phases
                 if (rng.NextDouble() < chance)
                 {
                     deadCell.Reclaim(enemyPlayer.PlayerId);
-                    board.PlaceFungalCell(deadCell); // Use board method for events!
-                    enemyPlayer.AddControlledTile(deadCell.TileId);
+                    board.PlaceFungalCell(deadCell);
 
                     // Log the reclaim if tracking
                     growthAndDecayObserver?.RecordNecrotoxicConversionReclaim(enemyPlayer.PlayerId, 1);
@@ -750,19 +746,6 @@ namespace FungusToast.Core.Phases
                 surgeBonus = surgeLevel * GameBalance.HyphalSurgeEffectPerLevel;
             }
             return (baseChance, surgeBonus);
-        }
-
-
-        private static void ReclaimDeadCellAsLiving(
-            BoardTile tile,
-            Player newOwner,
-            GameBoard board)
-        {
-            // Remove old cell, create new one as living, assign ownership
-            var newCell = new FungalCell(newOwner.PlayerId, tile.TileId);
-            tile.PlaceFungalCell(newCell);
-            board.PlaceFungalCell(newCell);
-            newOwner.AddControlledTile(tile.TileId);
         }
 
         // Utility: Fisher-Yates shuffle (reuse existing or add to this class if needed)

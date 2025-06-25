@@ -27,5 +27,16 @@ namespace FungusToast.Core.Mycovariants
         /// Optional trigger condition for delayed-effect Mycovariants.
         /// </summary>
         public Func<PlayerMycovariant, GameBoard, bool>? IsTriggerConditionMet { get; set; }
+
+        /// <summary>
+        /// Called when the Mycovariant is equipped. Should subscribe to needed events.
+        /// </summary>
+        public Action<PlayerMycovariant, GameBoard>? RegisterEventHandlers { get; set; }
+
+        /// <summary>
+        /// Called when the Mycovariant is unequipped or game ends. Should unsubscribe handlers.
+        /// </summary>
+        public Action<PlayerMycovariant, GameBoard>? UnregisterEventHandlers { get; set; }
+
     }
 }

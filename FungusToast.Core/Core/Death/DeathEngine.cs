@@ -5,7 +5,7 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
-using FungusToast.Core.Phases; 
+using FungusToast.Core.Phases;
 using FungusToast.Core.Metrics;
 
 namespace FungusToast.Core.Death
@@ -13,31 +13,37 @@ namespace FungusToast.Core.Death
     /// <summary>
     /// Orchestrates the Decay Phase for the entire board.
     /// Performs no mutation mathematics—delegates that to MutationEffectProcessor.
+    /// All stateful triggers (such as Necrophytic Bloom activation) are tracked per-game via GameBoard.
     /// </summary>
     public static class DeathEngine
     {
-        private static readonly Random Rng = new();
-
-        // Tracks whether the 20%-occupied trigger for Necrophytic Bloom has fired.
-        private static bool necrophyticActivated = false;
-
+        /// <summary>
+        /// Executes the Decay Phase for the board.
+        /// All cell state changes are routed through GameBoard methods to trigger events and observers.
+        /// </summary>
+        /// <param name="board">Current game board.</param>
+        /// <param name="players">List of all players (in play order).</param>
+        /// <param name="failedGrowthsByPlayerId">Dictionary of failed growth attempts by player ID.</param>
+        /// <param name="rng">Random number generator (pass in for thread safety & testability).</param>
+        /// <param name="simulationObserver">Optional observer for analytics/UI updates.</param>
         public static void ExecuteDeathCycle(
             GameBoard board,
             List<Player> players,
             Dictionary<int, int> failedGrowthsByPlayerId,
+            Random rng,
             ISimulationObserver? simulationObserver = null)
         {
-            // Expire toxins before growth begins
+            // Expire toxins before decay begins
             board.ExpireToxinTiles(board.CurrentGrowthCycle);
-            List<Player> shuffledPlayers = players.OrderBy(_ => Rng.NextDouble()).ToList();
+            List<Player> shuffledPlayers = players.OrderBy(_ => rng.NextDouble()).ToList();
 
             var (allMutations, _) = MutationRepository.BuildFullMutationSet();
             Mutation sporocidalBloom = allMutations[MutationIds.SporocidalBloom];
 
-            ApplyPerTurnSporeEffects(shuffledPlayers, board, sporocidalBloom, failedGrowthsByPlayerId, simulationObserver);
-            ApplyNecrophyticBloomTrigger(shuffledPlayers, board, simulationObserver);
-            MutationEffectProcessor.ApplyToxinAuraDeaths(board, players, Rng, simulationObserver);
-            EvaluateProbabilisticDeaths(board, shuffledPlayers, simulationObserver);
+            ApplyPerTurnSporeEffects(shuffledPlayers, board, sporocidalBloom, failedGrowthsByPlayerId, rng, simulationObserver);
+            ApplyNecrophyticBloomTrigger(shuffledPlayers, board, rng, simulationObserver);
+            MutationEffectProcessor.ApplyToxinAuraDeaths(board, players, rng, simulationObserver);
+            EvaluateProbabilisticDeaths(board, shuffledPlayers, rng, simulationObserver);
         }
 
         private static void ApplyPerTurnSporeEffects(
@@ -45,38 +51,41 @@ namespace FungusToast.Core.Death
             GameBoard board,
             Mutation sporocidalBloom,
             Dictionary<int, int> failedGrowthsByPlayerId,
+            Random rng,
             ISimulationObserver? simulationObserver)
         {
             foreach (var p in players)
             {
-                board.TryPlaceSporocidalSpores(p, Rng, sporocidalBloom, simulationObserver);
+                board.TryPlaceSporocidalSpores(p, rng, sporocidalBloom, simulationObserver);
 
                 int failedGrowths = failedGrowthsByPlayerId.TryGetValue(p.PlayerId, out var v) ? v : 0;
-                MutationEffectProcessor.ApplyMycotoxinTracer(p, board, failedGrowths, Rng, simulationObserver);
+                MutationEffectProcessor.ApplyMycotoxinTracer(p, board, failedGrowths, rng, simulationObserver);
             }
         }
 
         /// <summary>
-        /// Handles the 20% board occupancy trigger for Necrophytic Bloom. 
+        /// Handles the board occupancy trigger for Necrophytic Bloom.
         /// For each player with the mutation, fires an initial burst of spores for *each* dead cell they have.
         /// </summary>
         private static void ApplyNecrophyticBloomTrigger(
             List<Player> players,
             GameBoard board,
+            Random rng,
             ISimulationObserver? simulationObserver = null)
         {
             float occupiedPercent = board.GetOccupiedTileRatio();
 
-            if (!necrophyticActivated && occupiedPercent >= 0.20f)
+            if (!board.NecrophyticBloomActivated &&
+                occupiedPercent >= GameBalance.NecrophyticBloomActivationThreshold)
             {
-                necrophyticActivated = true;
+                board.NecrophyticBloomActivated = true;
 
                 foreach (var p in players)
                 {
                     if (p.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
                     {
                         MutationEffectProcessor.TriggerNecrophyticBloomInitialBurst(
-                            p, board, Rng, simulationObserver);
+                            p, board, rng, simulationObserver);
                     }
                 }
             }
@@ -89,6 +98,7 @@ namespace FungusToast.Core.Death
         private static void EvaluateProbabilisticDeaths(
             GameBoard board,
             List<Player> players,
+            Random rng,
             ISimulationObserver? simulationObserver = null)
         {
             var livingCellCounts = players.ToDictionary(
@@ -107,7 +117,7 @@ namespace FungusToast.Core.Death
                 if (livingCellCounts[owner.PlayerId] <= 1)
                     continue;
 
-                double roll = Rng.NextDouble();
+                double roll = rng.NextDouble();
                 (float _, DeathReason? reason) =
                     MutationEffectProcessor.CalculateDeathChance(owner, cell, board, players, roll);
 
@@ -116,7 +126,7 @@ namespace FungusToast.Core.Death
                     board.KillFungalCell(cell, reason.Value);
                     livingCellCounts[owner.PlayerId]--;
 
-                    // --- NEW: Attribute Age/Randomness deaths to observer
+                    // Attribute Age/Randomness deaths to observer
                     if (simulationObserver != null)
                     {
                         if (reason.Value == DeathReason.Age || reason.Value == DeathReason.Randomness)
@@ -127,22 +137,22 @@ namespace FungusToast.Core.Death
 
                     // Try Necrotoxic Conversion for toxin-based kills
                     MutationEffectProcessor.TryNecrotoxicConversion(
-                        cell, board, players, Rng, simulationObserver);
+                        cell, board, players, rng, simulationObserver);
 
                     if (reason.Value == DeathReason.PutrefactiveMycotoxin && simulationObserver != null)
                     {
                         AttributePutrefactiveMycotoxinKill(cell, board, players, simulationObserver);
                     }
 
-                    board.TryTriggerSporeOnDeath(owner, Rng, simulationObserver);
+                    board.TryTriggerSporeOnDeath(owner, rng, simulationObserver);
 
-                    // --- PER-DEATH Necrophytic Bloom effect ---
-                    if (necrophyticActivated &&
+                    // Per-death Necrophytic Bloom effect
+                    if (board.NecrophyticBloomActivated &&
                         owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
                     {
                         float occupiedPercent = board.GetOccupiedTileRatio();
                         MutationEffectProcessor.TriggerNecrophyticBloomOnCellDeath(
-                            owner, board, Rng, occupiedPercent, simulationObserver);
+                            owner, board, rng, occupiedPercent, simulationObserver);
                     }
                 }
                 else
@@ -153,13 +163,16 @@ namespace FungusToast.Core.Death
         }
 
 
+        /// <summary>
+        /// Attributes toxin-related kills to the observer for analytics.
+        /// </summary>
         private static void AttributePutrefactiveMycotoxinKill(
              FungalCell deadCell,
              GameBoard board,
              List<Player> players,
              ISimulationObserver? observer = null)
         {
-            if (observer == null) return;  // Safely do nothing if not tracking
+            if (observer == null) return;
 
             foreach (var neighbor in board.GetAdjacentTiles(deadCell.TileId))
             {
@@ -177,8 +190,5 @@ namespace FungusToast.Core.Death
                 }
             }
         }
-
-
-
     }
 }
