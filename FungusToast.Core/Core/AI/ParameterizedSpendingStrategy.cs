@@ -18,6 +18,10 @@ namespace FungusToast.Core.AI
         MaxEconomy
     }
 
+    /// <summary>
+    /// Parameterized strategy supporting a sequential list of mutation goals (with optional level targets).
+    /// Will automatically build up prerequisites as needed. Falls back to category/priority/random logic when all goals are met.
+    /// </summary>
     public class ParameterizedSpendingStrategy : MutationSpendingStrategyBase
     {
         public override string StrategyName { get; }
@@ -33,11 +37,8 @@ namespace FungusToast.Core.AI
         private readonly bool prioritizeHighTier;
         private readonly int surgeAttemptTurnFrequency;
         private readonly List<MutationCategory>? priorityMutationCategories;
-        private readonly List<Mutation> targetPrerequisiteChain;
-        private readonly Dictionary<int, int> requiredLevels;
+        private readonly List<TargetMutationGoal> targetMutationGoals;
         private readonly List<int> surgePriorityIds;
-
-        // New: Bias mode for economy investment
         private readonly EconomyBias economyBias;
 
         public ParameterizedSpendingStrategy(
@@ -45,7 +46,7 @@ namespace FungusToast.Core.AI
             bool prioritizeHighTier,
             List<MutationCategory>? priorityMutationCategories = null,
             MutationTier maxTier = MutationTier.Tier10,
-            List<int>? targetMutationIds = null,
+            List<TargetMutationGoal>? targetMutationGoals = null,
             List<int>? surgePriorityIds = null,
             int surgeAttemptTurnFrequency = GameBalance.DefaultSurgeAIAttemptTurnFrequency,
             EconomyBias economyBias = EconomyBias.Neutral)
@@ -54,62 +55,61 @@ namespace FungusToast.Core.AI
             this.prioritizeHighTier = prioritizeHighTier;
             this.priorityMutationCategories = priorityMutationCategories;
             this.maxTier = maxTier;
-
-            targetPrerequisiteChain = new List<Mutation>();
-            requiredLevels = new Dictionary<int, int>();
-
+            this.targetMutationGoals = targetMutationGoals ?? new List<TargetMutationGoal>();
             this.surgePriorityIds = surgePriorityIds ?? new();
             this.surgeAttemptTurnFrequency = surgeAttemptTurnFrequency;
             this.economyBias = economyBias;
-
-            if (targetMutationIds != null)
-            {
-                BuildTargetPrerequisiteChain(targetMutationIds);
-            }
         }
 
-        private void BuildTargetPrerequisiteChain(List<int> targetMutationIds)
+        /// <summary>
+        /// For a given goal (mutationId, targetLevel), returns the full prerequisite chain (ordered, no duplicates),
+        /// with correct required levels for all prerequisites.
+        /// </summary>
+        private List<(Mutation mutation, int requiredLevel)> BuildPrerequisiteChainWithLevels(TargetMutationGoal goal)
         {
+            var chain = new List<(Mutation mutation, int requiredLevel)>();
             var visited = new HashSet<int>();
-            targetPrerequisiteChain.Clear();
-            requiredLevels.Clear();
 
-            foreach (int targetId in targetMutationIds)
+            void Visit(int mutationId, int requiredLevel)
             {
-                if (!MutationRepository.All.TryGetValue(targetId, out var target))
-                {
-                    continue;
-                }
-                Visit(target, requiredLevel: target.MaxLevel);
-            }
+                if (!MutationRepository.All.TryGetValue(mutationId, out var mutation))
+                    return;
 
-            void Visit(Mutation mutation, int requiredLevel)
-            {
-                if (requiredLevels.TryGetValue(mutation.Id, out var existingLevel))
+                // Required level can't be higher than actual max level
+                int cappedLevel = Math.Min(requiredLevel, mutation.MaxLevel);
+
+                // Only keep highest required level if seen more than once
+                var existing = chain.FirstOrDefault(x => x.mutation.Id == mutationId);
+                if (!Equals(existing, default((Mutation mutation, int requiredLevel))))
                 {
-                    if (requiredLevel > existingLevel)
+                    if (cappedLevel > existing.requiredLevel)
                     {
-                        requiredLevels[mutation.Id] = requiredLevel;
+                        // Replace with higher level requirement
+                        chain.Remove(existing);
+                        chain.Add((mutation, cappedLevel));
                     }
-                }
-                else
-                {
-                    requiredLevels[mutation.Id] = requiredLevel;
+                    // Else skip, already added at equal or higher level
+                    return;
                 }
 
-                if (!visited.Add(mutation.Id))
-                    return; // already processed
-
+                // Recurse on prerequisites
                 foreach (var prereq in mutation.Prerequisites)
-                {
-                    if (MutationRepository.All.TryGetValue(prereq.MutationId, out var prereqMutation))
-                    {
-                        Visit(prereqMutation, prereq.RequiredLevel);
-                    }
-                }
-                targetPrerequisiteChain.Add(mutation);
+                    Visit(prereq.MutationId, prereq.RequiredLevel);
+
+                chain.Add((mutation, cappedLevel));
             }
+
+            int targetLevel = goal.TargetLevel ?? (MutationRepository.All.TryGetValue(goal.MutationId, out var mut) ? mut.MaxLevel : 1);
+            Visit(goal.MutationId, targetLevel);
+
+            // Return in prerequisite-first order (so build prereqs before main mutation)
+            return chain
+                .Distinct()
+                .OrderBy(x => x.mutation.Tier)
+                .ThenBy(x => x.mutation.Id)
+                .ToList();
         }
+
 
         protected override void PerformSpendingLogic(
             Player player,
@@ -118,8 +118,50 @@ namespace FungusToast.Core.AI
             Random rnd,
             ISimulationObserver? simulationObserver = null)
         {
-            SpendOnTargetChain(player, allMutations, board, simulationObserver);
+            // Sequentially work through target goals (only one goal at a time)
+            foreach (var goal in targetMutationGoals)
+            {
+                if (!MutationRepository.All.TryGetValue(goal.MutationId, out var targetMutation))
+                    continue;
 
+                int goalTargetLevel = goal.TargetLevel ?? targetMutation.MaxLevel;
+                // Do not try to exceed mutation's max level
+                goalTargetLevel = Math.Min(goalTargetLevel, targetMutation.MaxLevel);
+                if (goalTargetLevel < 1)
+                    continue;
+
+                int currentLevel = player.GetMutationLevel(targetMutation.Id);
+                if (currentLevel >= goalTargetLevel)
+                    continue; // goal already satisfied
+
+                // Build and attempt to upgrade prereqs first, then the goal
+                var prereqChain = BuildPrerequisiteChainWithLevels(new TargetMutationGoal(goal.MutationId, goalTargetLevel));
+                bool upgraded = false;
+
+                foreach (var (mutation, reqLevel) in prereqChain)
+                {
+                    int curLvl = player.GetMutationLevel(mutation.Id);
+                    int needed = Math.Min(reqLevel, mutation.MaxLevel);
+
+                    while (curLvl < needed && player.MutationPoints > 0 && player.CanUpgrade(mutation))
+                    {
+                        if (TryUpgradeWithTendrilAwareness(player, mutation, allMutations, board, simulationObserver))
+                        {
+                            curLvl++;
+                            upgraded = true;
+                        }
+                        else
+                        {
+                            break; // couldn't upgrade further
+                        }
+                    }
+                }
+
+                // Only work on one target at a time, then fallback
+                if (upgraded) break;
+            }
+
+            // If spent points on a target, or all targets are complete, try surges then fallback
             // Try to activate surges on the Nth round before fallback spending
             if (TrySpendOnSurges(player, allMutations, board, simulationObserver, onlyOnNthRound: true))
                 return; // If a surge is triggered, stop spending for this turn
@@ -128,35 +170,6 @@ namespace FungusToast.Core.AI
 
             // After ALL other spending, always try to activate surges as last resort (any turn)
             TrySpendOnSurges(player, allMutations, board, simulationObserver, onlyOnNthRound: false);
-        }
-
-        private void SpendOnTargetChain(
-            Player player,
-            List<Mutation> allMutations,
-            GameBoard board,
-            ISimulationObserver? simulationObserver = null)
-        {
-            bool upgraded;
-            do
-            {
-                upgraded = false;
-
-                foreach (var mutation in targetPrerequisiteChain)
-                {
-                    int requiredLevel = requiredLevels.TryGetValue(mutation.Id, out var level) ? level : 1;
-                    int currentLevel = player.GetMutationLevel(mutation.Id);
-
-                    if (currentLevel < requiredLevel && player.CanUpgrade(mutation))
-                    {
-                        if (TryUpgradeWithTendrilAwareness(player, mutation, allMutations, board, simulationObserver))
-                        {
-                            upgraded = true;
-                            break;
-                        }
-                    }
-                }
-
-            } while (upgraded && player.MutationPoints > 0);
         }
 
         private bool TrySpendOnSurges(
@@ -308,8 +321,8 @@ namespace FungusToast.Core.AI
 
             if (economyBias == EconomyBias.IgnoreEconomy)
             {
-                // Only upgrade drift if in target chain
-                drift = drift.Where(m => IsInTargetChain(m.Id)).ToList();
+                // Only upgrade drift if in any target goals/prereqs
+                drift = drift.Where(m => targetMutationGoals.Any(g => g.MutationId == m.Id)).ToList();
                 if (nonDrift.Count == 0 && drift.Count > 0)
                     return TryUpgradeWithTendrilAwareness(player, drift[0], upgradable, board, simulationObserver);
                 if (nonDrift.Count > 0)
@@ -317,10 +330,9 @@ namespace FungusToast.Core.AI
                 return false;
             }
 
-            // NEW: NEUTRAL LOGIC — treat all equally
+            // NEUTRAL LOGIC — treat all equally
             if (economyBias == EconomyBias.Neutral)
             {
-                // Just pick randomly from all upgradable mutations
                 int idx = rnd.Next(upgradable.Count);
                 var chosen = upgradable[idx];
                 return TryUpgradeWithTendrilAwareness(player, chosen, upgradable, board, simulationObserver);
@@ -331,7 +343,7 @@ namespace FungusToast.Core.AI
 
             // Build a weighted pool for random selection
             var weightedPool = new List<Mutation>();
-            int baseWeight = 100; // Arbitrary, relative
+            int baseWeight = 100;
 
             foreach (var m in nonDrift)
             {
@@ -340,7 +352,6 @@ namespace FungusToast.Core.AI
             foreach (var m in drift)
             {
                 int weight = (int)(baseWeight * driftWeight);
-                // At low weights, add 0 or 1 entries (so drift is rare/never selected)
                 for (int i = 0; i < weight; i++)
                 {
                     weightedPool.Add(m);
@@ -349,41 +360,25 @@ namespace FungusToast.Core.AI
             if (weightedPool.Count == 0)
                 return false;
 
-            // Pick randomly from weighted pool
             int idx2 = rnd.Next(weightedPool.Count);
             var chosen2 = weightedPool[idx2];
 
             return TryUpgradeWithTendrilAwareness(player, chosen2, upgradable, board, simulationObserver);
         }
 
-
-        /// <summary>
-        /// Returns a scaling factor for drift upgrades, 0–1+
-        /// Stronger starting weights and slower declines for more balanced drift investment.
-        /// </summary>
         private float GetDriftWeight(int currentRound)
         {
             switch (economyBias)
             {
                 case EconomyBias.MinorEconomy:
-                    // Starts at 0.4, drops more slowly over 16 rounds
                     return Math.Max(0.05f, 0.4f - 0.022f * currentRound);
                 case EconomyBias.ModerateEconomy:
-                    // Starts at 0.7, drops to 0.07 at round 20 (so a little always remains)
                     return Math.Max(0.07f, 0.7f - 0.0315f * currentRound);
                 case EconomyBias.MaxEconomy:
-                    // Always strong, never drops below 0.8
                     return 0.8f;
                 default:
-                    // IgnoreEconomy and others: should never be called, but just in case
                     return 0.0f;
             }
-        }
-
-
-        private bool IsInTargetChain(int mutationId)
-        {
-            return targetPrerequisiteChain.Any(m => m.Id == mutationId);
         }
 
         private bool TrySpendWithinCategory(

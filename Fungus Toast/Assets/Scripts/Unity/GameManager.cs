@@ -134,56 +134,19 @@ namespace FungusToast.Unity
             humanPlayer.SetBaseMutationPoints(baseMP);
             players.Add(humanPlayer);
 
-            var growthAndResilienceMax3HighTier = new ParameterizedSpendingStrategy(
-                strategyName: "GrowthResilience_Max3_HighTier",
-                maxTier: MutationTier.Tier3,
-                prioritizeHighTier: true,
-                priorityMutationCategories: new List<MutationCategory>
-                {
-                    MutationCategory.Growth,
-                    MutationCategory.CellularResilience
-                });
+            // Get AI strategies from AIRoster
+            var aiStrategies = AIRoster.GetRandomProvenStrategies(playerCount - 1);
 
-            var regenerativeHyphaeFocus = new ParameterizedSpendingStrategy(
-                strategyName: "Regenerative Hyphae Focus",
-                prioritizeHighTier: true,
-                targetMutationIds: new List<int> { MutationIds.RegenerativeHyphae });
+            // Shuffle for variety (if AIRoster didn't already do so)
+            aiStrategies = aiStrategies.OrderBy(_ => UnityEngine.Random.value).ToList();
 
-            var powerMutations1 = new ParameterizedSpendingStrategy(
-                strategyName: "Power Mutations 1",
-                prioritizeHighTier: true,
-                targetMutationIds: new List<int> { MutationIds.AdaptiveExpression, MutationIds.NecrohyphalInfiltration, MutationIds.RegenerativeHyphae });
-
-            var mutatorGrowth = new ParameterizedSpendingStrategy(
-                strategyName: "Mutator Growth",
-                prioritizeHighTier: true,
-                targetMutationIds: new List<int> { MutationIds.HyperadaptiveDrift, MutationIds.CreepingMold });
-
-            // Define and shuffle AI players
-            var strategyPool = new IMutationSpendingStrategy[]
+            // Create AI players with shuffled order and assign strategy
+            for (int i = 0; i < aiStrategies.Count; i++)
             {
-                new RandomMutationSpendingStrategy(),
-                growthAndResilienceMax3HighTier,
-                regenerativeHyphaeFocus,
-                powerMutations1,
-                mutatorGrowth
-            };
-
-            var aiDefinitions = new List<IMutationSpendingStrategy>();
-            for (int i = 1; i < playerCount; i++)
-            {
-                aiDefinitions.Add(strategyPool[Random.Range(0, strategyPool.Length)]);
-            }
-
-            aiDefinitions = aiDefinitions.OrderBy(_ => Random.value).ToList();
-
-            // Create AI players with shuffled order
-            for (int i = 0; i < aiDefinitions.Count; i++)
-            {
-                int playerId = i + 1; // start AI player IDs at 1
+                int playerId = i + 1; // AI player IDs start at 1
                 var aiPlayer = new Player(playerId, $"AI Player {playerId}", PlayerTypeEnum.AI, AITypeEnum.Random);
                 aiPlayer.SetBaseMutationPoints(baseMP);
-                aiPlayer.SetMutationStrategy(aiDefinitions[i]);
+                aiPlayer.SetMutationStrategy(aiStrategies[i]);
                 players.Add(aiPlayer);
             }
 
@@ -200,6 +163,7 @@ namespace FungusToast.Unity
             Board.Players.Clear();
             Board.Players.AddRange(players);
         }
+
 
         private void PlaceStartingSpores()
         {

@@ -22,13 +22,13 @@ namespace FungusToast.Core.AI
                     MutationCategory.CellularResilience
                 }
             ),
-             // The following are "best of" mutations in their categories
+            // The following are "best of" mutations in their categories
             new ParameterizedSpendingStrategy(
                 strategyName: "SurgeFreq_10",
-                targetMutationIds: new List<int>
+                targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    MutationIds.HyphalSurge,
-                    MutationIds.HyphalVectoring,
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.HyphalVectoring)
                 },
                 surgeAttemptTurnFrequency: 10,
                 prioritizeHighTier: true),
@@ -36,39 +36,80 @@ namespace FungusToast.Core.AI
                 strategyName: "Power Mutations v2",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MinorEconomy,
-                targetMutationIds: new List<int>
+                targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    MutationIds.CreepingMold,
-                    MutationIds.RegenerativeHyphae
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae)
                 }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Grow=>Kill=>Reclaim",
                 prioritizeHighTier: true,
-                targetMutationIds: new List<int> { MutationIds.CreepingMold, MutationIds.Necrosporulation, MutationIds.PutrefactiveMycotoxin, MutationIds.NecrohyphalInfiltration }
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Necrotoxic Moderate Economy",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
-                targetMutationIds: new List<int> { MutationIds.NecrotoxicConversion, MutationIds.SporocidalBloom }
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                   new TargetMutationGoal(MutationIds.MycelialBloom),
+                    new TargetMutationGoal(MutationIds.NecrotoxicConversion),
+                    new TargetMutationGoal(MutationIds.SporocidalBloom)
+                }
             ),
+                        new ParameterizedSpendingStrategy(
+                strategyName: "Necrotoxic Moderate Economy 2",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 10),
+                    new TargetMutationGoal(MutationIds.NecrotoxicConversion),
+                    new TargetMutationGoal(MutationIds.SporocidalBloom)
+                }
+            ),
+                                    new ParameterizedSpendingStrategy(
+                strategyName: "Necrotoxic Moderate Economy 3",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 20),
+                    new TargetMutationGoal(MutationIds.NecrotoxicConversion),
+                    new TargetMutationGoal(MutationIds.SporocidalBloom)
+                }
+            ),
+            /*
             new ParameterizedSpendingStrategy(
                 strategyName: "Mutator Growth",
                 prioritizeHighTier: true,
-                targetMutationIds: new List<int> { MutationIds.MutatorPhenotype, MutationIds.CreepingMold, MutationIds.HyperadaptiveDrift }
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MutatorPhenotype),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift)
+                }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Minor Economy",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MinorEconomy
             ),
+            */
             new ParameterizedSpendingStrategy(
                 strategyName: "Best_MaxEcon_Surge5_HyphalSurge",
                 prioritizeHighTier: true,
-                targetMutationIds: new List<int> {
-                    MutationIds.HyphalSurge,
-                    MutationIds.HyperadaptiveDrift
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift)
                 },
                 surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
                 surgeAttemptTurnFrequency: 5,
