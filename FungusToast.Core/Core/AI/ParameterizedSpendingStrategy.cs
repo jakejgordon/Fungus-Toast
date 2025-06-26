@@ -359,17 +359,18 @@ namespace FungusToast.Core.AI
 
         /// <summary>
         /// Returns a scaling factor for drift upgrades, 0–1+
+        /// Stronger starting weights and slower declines for more balanced drift investment.
         /// </summary>
         private float GetDriftWeight(int currentRound)
         {
             switch (economyBias)
             {
                 case EconomyBias.MinorEconomy:
-                    // Starts higher, drops rapidly over 10 rounds
-                    return Math.Max(0.01f, 0.25f - 0.022f * currentRound);
+                    // Starts at 0.4, drops more slowly over 16 rounds
+                    return Math.Max(0.05f, 0.4f - 0.022f * currentRound);
                 case EconomyBias.ModerateEconomy:
-                    // Starts at 0.5, drops to 0 over 15 rounds
-                    return Math.Max(0.01f, 0.5f - 0.033f * currentRound);
+                    // Starts at 0.7, drops to 0.07 at round 20 (so a little always remains)
+                    return Math.Max(0.07f, 0.7f - 0.0315f * currentRound);
                 case EconomyBias.MaxEconomy:
                     // Always strong, never drops below 0.8
                     return 0.8f;
@@ -378,6 +379,7 @@ namespace FungusToast.Core.AI
                     return 0.0f;
             }
         }
+
 
         private bool IsInTargetChain(int mutationId)
         {

@@ -28,11 +28,10 @@ namespace FungusToast.Core.AI
                 targetMutationIds: new List<int>
                 {
                     MutationIds.HyphalSurge,
-                    MutationIds.HyphalVectoring
+                    MutationIds.HyphalVectoring,
                 },
                 surgeAttemptTurnFrequency: 10,
-                prioritizeHighTier: true,
-                maxTier: MutationTier.Tier4),
+                prioritizeHighTier: true),
             new ParameterizedSpendingStrategy(
                 strategyName: "Power Mutations v2",
                 prioritizeHighTier: true,
@@ -47,6 +46,12 @@ namespace FungusToast.Core.AI
                 strategyName: "Grow=>Kill=>Reclaim",
                 prioritizeHighTier: true,
                 targetMutationIds: new List<int> { MutationIds.CreepingMold, MutationIds.Necrosporulation, MutationIds.PutrefactiveMycotoxin, MutationIds.NecrohyphalInfiltration }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "Necrotoxic Moderate Economy",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationIds: new List<int> { MutationIds.NecrotoxicConversion, MutationIds.SporocidalBloom }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Mutator Growth",

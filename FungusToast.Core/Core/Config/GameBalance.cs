@@ -55,7 +55,7 @@ namespace FungusToast.Core.Config
         public const float HyperadaptiveDriftBonusTierOneMutationChancePerLevel = .25f;
         public const float NecrohyphalInfiltrationChancePerLevel = 0.004f;
         public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.019f;
-        public const float NecrotoxicConversionReclaimChancePerLevel = .02f;
+        public const float NecrotoxicConversionReclaimChancePerLevel = .035f;
 
         // Max Levels
         public const int MycelialBloomMaxLevel = 150;
@@ -106,7 +106,7 @@ namespace FungusToast.Core.Config
 
 
         // time-based effects on Fungal Cells
-        public const int ToxinTileDuration = 5;
+        public const int DefaultToxinDuration = 5;
         
 
         public static class MutationCosts

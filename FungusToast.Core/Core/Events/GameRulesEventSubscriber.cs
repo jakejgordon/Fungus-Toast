@@ -1,37 +1,45 @@
 ﻿using FungusToast.Core.Board;
+using FungusToast.Core.Config;
+using FungusToast.Core.Death;
+using FungusToast.Core.Events;
+using FungusToast.Core.Metrics;
+using FungusToast.Core.Mutations;
+using FungusToast.Core.Phases;
+using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace FungusToast.Core.Events
 {
     /// <summary>
-    /// Responsible for subscribing core game rule event handlers to the GameBoard.
-    /// These handlers implement core mutation logic and chained effects.
+    /// Subscribes to GameBoard events and applies core mutation rule effects.
+    /// Call <see cref="SubscribeAll"/> during setup (Unity or simulation).
     /// </summary>
     public static class GameRulesEventSubscriber
     {
         /// <summary>
-        /// Subscribes all core game rule event handlers to the given GameBoard.
-        /// Call once during setup.
+        /// Subscribes all mutation-related rule handlers to board events.
         /// </summary>
-        public static void Subscribe(GameBoard board)
+        /// <param name="board">The GameBoard instance.</param>
+        /// <param name="players">List of Player objects.</param>
+        /// <param name="rng">Random number generator.</param>
+        /// <param name="observer">
+        /// Optional simulation observer for analytics/reporting. Pass <c>null</c> in Unity.
+        /// </param>
+        public static void SubscribeAll(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
         {
-            // Example: board.CellDeath += OnCellDeath_NecrotoxicConversion;
-            // board.CellColonized += OnCellColonized_SomeMutation;
-        }
+            // Necrotoxic Conversion (toxin death triggers adjacent enemy mutation effect)
+            board.CellDeath += (sender, args) =>
+            {
+                MutationEffectProcessor.OnCellDeath_NecrotoxicConversion(args, board, players, rng, observer);
+            };
 
-        /// <summary>
-        /// Unsubscribes all core game rule event handlers from the given GameBoard.
-        /// Call during cleanup or scene unload if necessary.
-        /// </summary>
-        public static void Unsubscribe(GameBoard board)
-        {
-            // Example: board.CellDeath -= OnCellDeath_NecrotoxicConversion;
-            // board.CellColonized -= OnCellColonized_SomeMutation;
+            // TODO: Add additional event-driven rule subscriptions here.
+            // e.g., Necrosporulation, Sporocidal Bloom, Creeping Mold, etc.
         }
-
-        // Example handler stub
-        // private static void OnCellDeath_NecrotoxicConversion(object sender, FungalCellDiedEventArgs args) { /* ... */ }
     }
 }

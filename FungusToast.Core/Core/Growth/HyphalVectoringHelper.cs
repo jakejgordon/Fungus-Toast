@@ -168,7 +168,6 @@ namespace FungusToast.Core.Growth
         /// If a friendly living cell is encountered, it is left untouched and counted toward the total,
         /// and the projection continues to the next tile. Always creates the requested number of cells,
         /// skipping but not stopping for friendly living cells.
-        /// Observer is notified of any enemy living cell deaths.
         /// Returns the number of tiles processed (i.e., the number of living cells created or skipped).
         /// </summary>
         public static int ApplyHyphalVectorLine(
@@ -200,14 +199,14 @@ namespace FungusToast.Core.Growth
                     continue;
                 }
 
-                // Kill any living cell (enemy only)
+                // If it's an enemy living cell, kill it (this will fire board events and remove control)
                 if (cell is { IsAlive: true })
                 {
-                    cell.Kill(DeathReason.HyphalVectoring);
+                    board.KillFungalCell(cell, DeathReason.HyphalVectoring, player.PlayerId);
                     observer?.RecordCellDeath(player.PlayerId, DeathReason.HyphalVectoring, 1);
                 }
 
-                // Overwrite whatever was there with a new living cell
+                // Overwrite whatever was there with a new living cell (if it's not already your living cell)
                 var newCell = new FungalCell(player.PlayerId, tile.TileId);
                 board.PlaceFungalCell(newCell);
 
@@ -216,7 +215,6 @@ namespace FungusToast.Core.Growth
 
             return processed;
         }
-
 
     }
 }

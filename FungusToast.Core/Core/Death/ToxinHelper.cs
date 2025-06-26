@@ -42,10 +42,14 @@ namespace FungusToast.Core.Death
             if (cell == null || !cell.IsAlive)
                 return;
 
-            cell.Kill(reason);
+            // 1. Kill the cell via board, so OnCellDeath fires!
+            board.KillFungalCell(cell, reason, owner?.PlayerId);
+
+            // 2. Now convert the cell to toxin (state change)
             cell.ConvertToToxin(expirationCycle, owner);
-            board.RemoveControlFromPlayer(tileId);
-            board.PlaceFungalCell(cell); // fires events!
+
+            // 3. Place the toxin cell on the board
+            board.PlaceFungalCell(cell); // will fire toxin events as needed
         }
     }
 }

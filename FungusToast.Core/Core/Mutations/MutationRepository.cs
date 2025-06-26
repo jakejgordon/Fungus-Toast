@@ -351,7 +351,8 @@ namespace FungusToast.Core.Mutations
                 tier: MutationTier.Tier4
             ),
             new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 1),
-            new MutationPrerequisite(MutationIds.Necrosporulation, 1));
+            new MutationPrerequisite(MutationIds.Necrosporulation, 1)
+            );
 
 
             MakeChild(new Mutation(
@@ -395,7 +396,7 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.NecrotoxicConversion,
                 name: "Necrotoxic Conversion",
-                description: $"Whenever an enemy fungal cell is killed by a toxin effect, there is a {FormatPercent(GameBalance.NecrotoxicConversionReclaimChancePerLevel)} chance per level to immediately reclaim it as your own living cell. ",
+                description: $"Whenever an enemy fungal cell is killed by your toxin effect, there is a {FormatPercent(GameBalance.NecrotoxicConversionReclaimChancePerLevel)} chance per level to immediately reclaim it as your own living cell. ",
                 flavorText: "The most lethal toxins don't merely destroy—they break down resistance, rendering their victims vessels for the ever-hungry mycelium.",
                 type: MutationType.NecrotoxicConversion,
                 effectPerLevel: GameBalance.NecrotoxicConversionReclaimChancePerLevel,
@@ -405,7 +406,7 @@ namespace FungusToast.Core.Mutations
                 tier: MutationTier.Tier5
             ),
             new MutationPrerequisite(MutationIds.SporocidalBloom, 1),
-            new MutationPrerequisite(MutationIds.RegenerativeHyphae, 1)
+            new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 6)
             );
 
 

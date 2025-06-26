@@ -58,7 +58,7 @@ namespace FungusToast.Core.Phases
         }
 
 
-        public static (float chance, DeathReason? reason) CalculateDeathChance(
+        public static (float chance, DeathReason? reason, int? killerPlayerId) CalculateDeathChance(
             Player owner,
             FungalCell cell,
             GameBoard board,
@@ -82,19 +82,21 @@ namespace FungusToast.Core.Phases
 
             if (roll < totalFallbackChance)
             {
-                if (roll < thresholdRandom) 
-                    return (totalFallbackChance, DeathReason.Randomness);
-                return (totalFallbackChance, DeathReason.Age);
+                if (roll < thresholdRandom)
+                    return (totalFallbackChance, DeathReason.Randomness, null);
+                return (totalFallbackChance, DeathReason.Age, null);
             }
 
-            if (CheckPutrefactiveMycotoxin(cell, board, allPlayers, out float pmChance) &&
+            // PutrefactiveMycotoxin example — this needs to determine the killer
+            if (CheckPutrefactiveMycotoxin(cell, board, allPlayers, roll, out float pmChance, out int? killerPlayerId) &&
                 roll < pmChance)
             {
-                return (pmChance, DeathReason.PutrefactiveMycotoxin);
+                return (pmChance, DeathReason.PutrefactiveMycotoxin, killerPlayerId);
             }
 
-            return (totalFallbackChance, null);
+            return (totalFallbackChance, null, null);
         }
+
 
         public static void AdvanceOrResetCellAge(Player player, FungalCell cell)
         {
@@ -228,14 +230,31 @@ namespace FungusToast.Core.Phases
          * 3 ▸  ENEMY-PRESSURE & MUTATION-SPECIFIC CHECKS
          * ────────────────────────────────────────────────────────────────*/
 
-        private static bool CheckPutrefactiveMycotoxin(FungalCell target,
-                                                       GameBoard board,
-                                                       List<Player> players,
-                                                       out float chance)
+        /// <summary>
+        /// Checks if any adjacent enemy cell applies a Putrefactive Mycotoxin effect.
+        /// If so, accumulates their effects for total kill chance,
+        /// and assigns killerPlayerId fairly using proportional interval attribution.
+        /// </summary>
+        /// <param name="target">The cell potentially being killed.</param>
+        /// <param name="board">The current game board.</param>
+        /// <param name="players">All players.</param>
+        /// <param name="roll">The random roll for probabilistic death.</param>
+        /// <param name="chance">[out] The total death chance from all adjacent enemies.</param>
+        /// <param name="killerPlayerId">[out] The player responsible for the kill, if any.</param>
+        /// <returns>True if at least one adjacent enemy applies Putrefactive Mycotoxin; false otherwise.</returns>
+        private static bool CheckPutrefactiveMycotoxin(
+            FungalCell target,
+            GameBoard board,
+            List<Player> players,
+            double roll,
+            out float chance,
+            out int? killerPlayerId)
         {
             chance = 0f;
+            killerPlayerId = null;
 
-            var adjacentTiles = board.GetAdjacentTileIds(target.TileId);
+            // Build list of (playerId, effect) pairs for each adjacent enemy with effect > 0
+            var effects = new List<(int playerId, float effect)>();
 
             foreach (var neighborTile in board.GetAdjacentTiles(target.TileId))
             {
@@ -247,11 +266,37 @@ namespace FungusToast.Core.Phases
                 if (enemy == null) continue;
 
                 float effect = enemy.GetMutationEffect(MutationType.AdjacentFungicide);
-                chance += effect;
+                if (effect > 0f)
+                {
+                    effects.Add((enemy.PlayerId, effect));
+                    chance += effect;
+                }
             }
 
-            return chance > 0f;
+            if (chance <= 0f)
+                return false;
+
+            // Proportional interval assignment for fairness:
+            // Each player's effect contributes to a "slice" of the total chance.
+            float runningTotal = 0f;
+            foreach (var (playerId, effect) in effects)
+            {
+                float start = runningTotal;
+                float end = runningTotal + effect;
+
+                // The roll is in [0, chance). If it falls within this player's slice, they get the kill.
+                if (roll < end)
+                {
+                    killerPlayerId = playerId;
+                    break;
+                }
+                runningTotal = end;
+            }
+
+            return true;
         }
+
+
 
         /* ────────────────────────────────────────────────────────────────
          * 4 ▸  MOVEMENT & GROWTH HELPERS
@@ -692,56 +737,11 @@ namespace FungusToast.Core.Phases
             return cascadeCount;
         }
 
-
-        public static void TryNecrotoxicConversion(
-           FungalCell deadCell,
-           GameBoard board,
-           List<Player> players,
-           Random rng,
-           ISimulationObserver? growthAndDecayObserver = null)
-        {
-            // Only applies to toxin-based deaths
-            if (deadCell.CauseOfDeath != DeathReason.PutrefactiveMycotoxin &&
-                deadCell.CauseOfDeath != DeathReason.SporocidalBloom &&
-                deadCell.CauseOfDeath != DeathReason.MycotoxinPotentiation)
-                return;
-
-            foreach (var neighbor in board.GetAdjacentTiles(deadCell.TileId))
-            {
-                var neighborCell = neighbor.FungalCell;
-                if (neighborCell == null || !neighborCell.IsAlive) continue;
-                int neighborOwnerId = neighborCell.OwnerPlayerId ?? -1;
-                if (neighborOwnerId == deadCell.OwnerPlayerId) continue;
-
-                var enemyPlayer = players.FirstOrDefault(p => p.PlayerId == neighborOwnerId);
-                if (enemyPlayer == null) continue;
-
-                int ntcLevel = enemyPlayer.GetMutationLevel(MutationIds.NecrotoxicConversion);
-                if (ntcLevel <= 0) continue;
-
-                float chance = ntcLevel * GameBalance.NecrotoxicConversionReclaimChancePerLevel;
-                if (rng.NextDouble() < chance)
-                {
-                    deadCell.Reclaim(enemyPlayer.PlayerId);
-                    board.PlaceFungalCell(deadCell);
-
-                    // Log the reclaim if tracking
-                    growthAndDecayObserver?.RecordNecrotoxicConversionReclaim(enemyPlayer.PlayerId, 1);
-                    break; // Only one player can claim it
-                }
-            }
-        }
-
         /// <summary>
         /// Handles the Necrotoxic Conversion effect in response to a fungal cell death event.
-        /// If the cell died to a toxin effect and an adjacent enemy has the mutation,
-        /// the cell may be reclaimed for that enemy player.
+        /// If the cell died to a toxin effect *created by a player* and the killer has Necrotoxic Conversion,
+        /// the cell may be reclaimed by the killer.
         /// </summary>
-        /// <param name="eventArgs">Cell death event arguments.</param>
-        /// <param name="board">Game board instance.</param>
-        /// <param name="players">List of all players.</param>
-        /// <param name="rng">RNG instance.</param>
-        /// <param name="observer">Optional simulation observer.</param>
         public static void OnCellDeath_NecrotoxicConversion(
             FungalCellDiedEventArgs eventArgs,
             GameBoard board,
@@ -755,40 +755,31 @@ namespace FungusToast.Core.Phases
                 eventArgs.Reason != DeathReason.MycotoxinPotentiation)
                 return;
 
-            // Get the (now dead) cell
+            // Must know the killer (the player whose toxin killed this cell)
+            if (!eventArgs.KillerPlayerId.HasValue)
+                return;
+
+            int killerPlayerId = eventArgs.KillerPlayerId.Value;
+            var killerPlayer = players.FirstOrDefault(p => p.PlayerId == killerPlayerId);
+            if (killerPlayer == null)
+                return;
+
+            int ntcLevel = killerPlayer.GetMutationLevel(MutationIds.NecrotoxicConversion);
+            if (ntcLevel <= 0)
+                return;
+
             var deadCell = eventArgs.Cell;
             if (deadCell == null)
                 return;
 
-            // Find adjacent living enemy cells
-            foreach (var neighbor in board.GetAdjacentTiles(deadCell.TileId))
+            // No adjacency check needed. Killer just needs to have the mutation.
+            float chance = ntcLevel * GameBalance.NecrotoxicConversionReclaimChancePerLevel;
+            if (rng.NextDouble() < chance)
             {
-                var neighborCell = neighbor.FungalCell;
-                if (neighborCell == null || !neighborCell.IsAlive)
-                    continue;
+                deadCell.Reclaim(killerPlayerId);
+                board.PlaceFungalCell(deadCell);
 
-                int neighborOwnerId = neighborCell.OwnerPlayerId ?? -1;
-                // Only consider enemy players
-                if (neighborOwnerId == deadCell.OwnerPlayerId)
-                    continue;
-
-                var enemyPlayer = players.FirstOrDefault(p => p.PlayerId == neighborOwnerId);
-                if (enemyPlayer == null)
-                    continue;
-
-                int ntcLevel = enemyPlayer.GetMutationLevel(MutationIds.NecrotoxicConversion);
-                if (ntcLevel <= 0)
-                    continue;
-
-                float chance = ntcLevel * GameBalance.NecrotoxicConversionReclaimChancePerLevel;
-                if (rng.NextDouble() < chance)
-                {
-                    deadCell.Reclaim(enemyPlayer.PlayerId);
-                    board.PlaceFungalCell(deadCell); // This will fire appropriate board events
-
-                    observer?.RecordNecrotoxicConversionReclaim(enemyPlayer.PlayerId, 1);
-                    break; // Only one player can claim the cell
-                }
+                observer?.RecordNecrotoxicConversionReclaim(killerPlayerId, 1);
             }
         }
 

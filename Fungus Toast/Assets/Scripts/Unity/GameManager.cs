@@ -92,7 +92,7 @@ namespace FungusToast.Unity
 
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
 
-            GameRulesEventSubscriber.Subscribe(Board);
+            GameRulesEventSubscriber.SubscribeAll(Board, players, rng, null);
             GameUIEventSubscriber.Subscribe(Board, gameUIManager);
             AnalyticsEventSubscriber.Subscribe(Board, null);
 

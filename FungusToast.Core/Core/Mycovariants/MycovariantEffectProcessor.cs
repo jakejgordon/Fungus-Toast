@@ -108,9 +108,9 @@ public static class MycovariantEffectProcessor
             }
             else if (prevCell.IsAlive && prevCell.OwnerPlayerId != playerId)
             {
-                // Replace enemy living cell with toxin ("poisoned" = killed by toxin)
-                prevCell.ConvertToToxin(expirationCycle, player, DeathReason.JettingMycelium, board.CurrentGrowthCycle);
-                poisoned++; // poisoned = killed by toxin
+                // Properly kill and toxify using board-level logic
+                ToxinHelper.KillAndToxify(board, line[i], expirationCycle, DeathReason.JettingMycelium, player);
+                poisoned++;
             }
             // Do not overwrite your own living cell with toxin.
         }

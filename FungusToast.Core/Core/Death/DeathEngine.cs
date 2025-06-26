@@ -114,16 +114,18 @@ namespace FungusToast.Core.Death
                 FungalCell cell = tile.FungalCell!;
                 Player owner = players.First(p => p.PlayerId == cell.OwnerPlayerId);
 
+                // Prevent killing a player's last cell
                 if (livingCellCounts[owner.PlayerId] <= 1)
                     continue;
 
                 double roll = rng.NextDouble();
-                (float _, DeathReason? reason) =
+                (float _, DeathReason? reason, int? killerPlayerId) =
                     MutationEffectProcessor.CalculateDeathChance(owner, cell, board, players, roll);
 
                 if (reason.HasValue)
                 {
-                    board.KillFungalCell(cell, reason.Value);
+                    // Pass killerPlayerId to the board so the event can record it
+                    board.KillFungalCell(cell, reason.Value, killerPlayerId);
                     livingCellCounts[owner.PlayerId]--;
 
                     // Attribute Age/Randomness deaths to observer
@@ -135,15 +137,13 @@ namespace FungusToast.Core.Death
                         }
                     }
 
-                    // Try Necrotoxic Conversion for toxin-based kills
-                    MutationEffectProcessor.TryNecrotoxicConversion(
-                        cell, board, players, rng, simulationObserver);
-
+                    // Putrefactive Mycotoxin: attribute in observer if needed
                     if (reason.Value == DeathReason.PutrefactiveMycotoxin && simulationObserver != null)
                     {
                         AttributePutrefactiveMycotoxinKill(cell, board, players, simulationObserver);
                     }
 
+                    // Trigger spore on death, if relevant
                     board.TryTriggerSporeOnDeath(owner, rng, simulationObserver);
 
                     // Per-death Necrophytic Bloom effect
@@ -161,6 +161,7 @@ namespace FungusToast.Core.Death
                 }
             }
         }
+
 
 
         /// <summary>

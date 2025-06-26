@@ -2,6 +2,7 @@
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
+using FungusToast.Core.Events;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
@@ -89,9 +90,12 @@ namespace FungusToast.Simulation.GameSimulation
                 string elapsed = startTime.HasValue
                     ? (DateTime.UtcNow - startTime.Value).ToString(@"hh\:mm\:ss")
                     : "??";
+                var winner = result.PlayerResults.FirstOrDefault(p => p.PlayerId == result.WinnerId);
+                string winnerInfo = winner != null
+                    ? $"Winner: Player {winner.PlayerId} ({winner.StrategyName})"
+                    : "Winner: ?";
+                Console.WriteLine($"Game {gameIndex}/{totalGames} - Turn {result.TurnsPlayed} - {percent:0.00}% (Elapsed: {elapsed}) - {winnerInfo}");
 
-                // Output: Game X/Y - Turn Z - Pct% (Elapsed: hh:mm:ss)
-                Console.WriteLine($"Game {gameIndex}/{totalGames} - Turn {result.TurnsPlayed} - {percent:0.00}% (Elapsed: {elapsed})");
             }
             else
             {
@@ -128,7 +132,8 @@ namespace FungusToast.Simulation.GameSimulation
 
             var board = new GameBoard(GameBalance.BoardWidth, GameBalance.BoardHeight, playerCount);
 
-            EventSubscriptionHelper.RegisterSimulationEvents(board, observer);
+            GameRulesEventSubscriber.SubscribeAll(board, players, rng, observer);
+            AnalyticsEventSubscriber.Subscribe(board, observer);
 
 
             // Add each player to the board's Players list
