@@ -38,6 +38,12 @@ namespace FungusToast.Core.Events
                 MutationEffectProcessor.OnCellDeath_NecrotoxicConversion(args, board, players, rng, observer);
             };
 
+            // Regenerative Hyphae (post-growth phase reclaim effect)
+            board.PostGrowthPhase += () =>
+            {
+                MutationEffectProcessor.OnPostGrowthPhase_RegenerativeHyphae(board, players, rng, observer);
+            };
+
             // TODO: Add additional event-driven rule subscriptions here.
             // e.g., Necrosporulation, Sporocidal Bloom, Creeping Mold, etc.
         }

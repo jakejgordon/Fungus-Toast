@@ -44,6 +44,7 @@ namespace FungusToast.Core.Board
         public delegate void TendrilGrowthEventHandler(int playerId, int tileId, DiagonalDirection direction);
         public delegate void CreepingMoldMoveEventHandler(int playerId, int fromTileId, int toTileId);
         public delegate void JettingMyceliumCatabolicGrowthEventHandler(int playerId, int tileId);
+        public delegate void PostGrowthPhaseEventHandler();
 
         // 2. Events (public, so other components can subscribe)
         public event CellColonizedEventHandler? CellColonized;
@@ -61,6 +62,7 @@ namespace FungusToast.Core.Board
         public event TendrilGrowthEventHandler? TendrilGrowth;
         public event CreepingMoldMoveEventHandler? CreepingMoldMove;
         public event JettingMyceliumCatabolicGrowthEventHandler? JettingMyceliumCatabolicGrowth;
+        public event PostGrowthPhaseEventHandler? PostGrowthPhase;
 
         // 3. Helper methods to invoke (recommended: protected virtual, as in standard .NET pattern)
         protected virtual void OnCellColonized(int playerId, int tileId) =>
@@ -111,6 +113,9 @@ namespace FungusToast.Core.Board
 
         protected virtual void OnJettingMyceliumCatabolicGrowth(int playerId, int tileId) =>
             JettingMyceliumCatabolicGrowth?.Invoke(playerId, tileId);
+
+        public virtual void OnPostGrowthPhase() =>
+            PostGrowthPhase?.Invoke();
 
         /// <summary>
         /// Fired before a growth attempt. Listeners may cancel the growth.
@@ -516,7 +521,7 @@ namespace FungusToast.Core.Board
             if (canReclaimDeadCell && targetTile.IsOccupied)
             {
                 var deadCell = targetTile.FungalCell;
-                // Only allow if it’s the player’s own dead cell
+                // Only allow if it's the player's own dead cell
                 if (deadCell != null && deadCell.IsDead && deadCell.OriginalOwnerPlayerId == playerId)
                 {
                     deadCell.Reclaim(playerId);

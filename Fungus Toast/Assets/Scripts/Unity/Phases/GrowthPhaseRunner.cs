@@ -57,7 +57,7 @@ namespace FungusToast.Unity.Phases
                 Debug.Log("🌾 Growth complete. Preparing for decay phase...");
 
                 // === Post-Growth Mutation Effects ===
-                MutationEffectProcessor.ApplyRegenerativeHyphaeReclaims(board, players, rng);
+                board.OnPostGrowthPhase();
                 MutationEffectProcessor.ProcessHyphalVectoring(board, players, rng, null);
 
                 isRunning = false;

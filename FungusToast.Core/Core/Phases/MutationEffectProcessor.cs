@@ -20,44 +20,6 @@ namespace FungusToast.Core.Phases
     /// </summary>
     public static class MutationEffectProcessor
     {
-        public static void ApplyRegenerativeHyphaeReclaims(GameBoard board,
-                                                           List<Player> players,
-                                                           Random rng,
-                                                           ISimulationObserver? observer = null)
-        {
-            var attempted = new HashSet<int>();
-            foreach (Player p in players)
-            {
-                float reclaimChance = p.GetMutationEffect(MutationType.ReclaimOwnDeadCells);
-                if (reclaimChance <= 0f) continue;
-                foreach (FungalCell cell in board.GetAllCellsOwnedBy(p.PlayerId))
-                {
-                    foreach (BoardTile n in board.GetOrthogonalNeighbors(cell.TileId))
-                    {
-                        FungalCell? dead = n.FungalCell;
-                        if (dead is null || dead.IsAlive || dead.IsToxin) continue;
-                        if (dead.OriginalOwnerPlayerId != p.PlayerId) continue;
-                        if (!attempted.Add(dead.TileId)) continue;
-                        if (rng.NextDouble() < reclaimChance)
-                        {
-                            // Try to reclaim the dead cell using board API
-                            bool success = board.TryGrowFungalCell(
-                                p.PlayerId,
-                                cell.TileId,   // Source tile: living cell
-                                dead.TileId,   // Target: dead cell tile
-                                out GrowthFailureReason reason, canReclaimDeadCell: true
-                            );
-                            if (success)
-                            {
-                                observer?.RecordRegenerativeHyphaeReclaim(p.PlayerId);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-
         public static (float chance, DeathReason? reason, int? killerPlayerId) CalculateDeathChance(
             Player owner,
             FungalCell cell,
@@ -783,7 +745,47 @@ namespace FungusToast.Core.Phases
             }
         }
 
-
+        /// <summary>
+        /// Handles the Regenerative Hyphae effect in response to the post-growth phase event.
+        /// Players with this mutation have a chance to reclaim their own dead cells adjacent to living cells.
+        /// </summary>
+        public static void OnPostGrowthPhase_RegenerativeHyphae(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            var attempted = new HashSet<int>();
+            foreach (Player p in players)
+            {
+                float reclaimChance = p.GetMutationEffect(MutationType.ReclaimOwnDeadCells);
+                if (reclaimChance <= 0f) continue;
+                foreach (FungalCell cell in board.GetAllCellsOwnedBy(p.PlayerId))
+                {
+                    foreach (BoardTile n in board.GetOrthogonalNeighbors(cell.TileId))
+                    {
+                        FungalCell? dead = n.FungalCell;
+                        if (dead is null || dead.IsAlive || dead.IsToxin) continue;
+                        if (dead.OriginalOwnerPlayerId != p.PlayerId) continue;
+                        if (!attempted.Add(dead.TileId)) continue;
+                        if (rng.NextDouble() < reclaimChance)
+                        {
+                            // Try to reclaim the dead cell using board API
+                            bool success = board.TryGrowFungalCell(
+                                p.PlayerId,
+                                cell.TileId,   // Source tile: living cell
+                                dead.TileId,   // Target: dead cell tile
+                                out GrowthFailureReason reason, canReclaimDeadCell: true
+                            );
+                            if (success)
+                            {
+                                observer?.RecordRegenerativeHyphaeReclaim(p.PlayerId);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         public static (float baseChance, float surgeBonus) GetGrowthChancesWithHyphalSurge(Player player)
         {
