@@ -996,6 +996,19 @@ namespace FungusToast.Core.Phases
             }
         }
 
+        public static void OnPreGrowthCycle_MycotoxinCatabolism(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            RoundContext roundContext,
+            ISimulationObserver? observer = null)
+        {
+            foreach (var player in players)
+            {
+                ApplyMycotoxinCatabolism(player, board, rng, roundContext, observer);
+            }
+        }
+
     }
 
 

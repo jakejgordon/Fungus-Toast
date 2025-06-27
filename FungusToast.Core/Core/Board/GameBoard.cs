@@ -46,6 +46,7 @@ namespace FungusToast.Core.Board
         public delegate void JettingMyceliumCatabolicGrowthEventHandler(int playerId, int tileId);
         public delegate void PostGrowthPhaseEventHandler();
         public delegate void DecayPhaseEventHandler();
+        public delegate void PreGrowthCycleEventHandler();
 
         // 2. Events (public, so other components can subscribe)
         public event CellColonizedEventHandler? CellColonized;
@@ -65,6 +66,7 @@ namespace FungusToast.Core.Board
         public event JettingMyceliumCatabolicGrowthEventHandler? JettingMyceliumCatabolicGrowth;
         public event PostGrowthPhaseEventHandler? PostGrowthPhase;
         public event DecayPhaseEventHandler? DecayPhase;
+        public event PreGrowthCycleEventHandler? PreGrowthCycle;
 
         // 3. Helper methods to invoke (recommended: protected virtual, as in standard .NET pattern)
         protected virtual void OnCellColonized(int playerId, int tileId) =>
@@ -121,6 +123,9 @@ namespace FungusToast.Core.Board
 
         public virtual void OnDecayPhase() =>
             DecayPhase?.Invoke();
+
+        public virtual void OnPreGrowthCycle() =>
+            PreGrowthCycle?.Invoke();
 
         /// <summary>
         /// Fired before a growth attempt. Listeners may cancel the growth.

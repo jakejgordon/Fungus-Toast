@@ -56,6 +56,13 @@ namespace FungusToast.Core.Events
                 MutationEffectProcessor.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
             };
 
+            // Mycotoxin Catabolism (pre-growth cycle toxin processing)
+            board.PreGrowthCycle += () =>
+            {
+                var roundContext = new RoundContext();
+                MutationEffectProcessor.OnPreGrowthCycle_MycotoxinCatabolism(board, players, rng, roundContext, observer);
+            };
+
             // TODO: Add additional event-driven rule subscriptions here.
             // e.g., Necrosporulation, Sporocidal Bloom, Creeping Mold, etc.
         }

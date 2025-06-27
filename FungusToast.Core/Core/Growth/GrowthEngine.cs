@@ -15,13 +15,8 @@ namespace FungusToast.Core.Growth
             RoundContext roundContext,
             ISimulationObserver? observer = null)
         {
-            // Apply round-capped mutation effects first (e.g., Mycotoxin Catabolism)
-            foreach (var player in players)
-            {
-                MutationEffectProcessor.ApplyMycotoxinCatabolism(
-                    player, board, rng, roundContext, observer
-                );
-            }
+            // Fire PreGrowthCycle event for Mycotoxin Catabolism and other pre-growth effects
+            board.OnPreGrowthCycle();
 
             // Track failed growths for simulation analysis
             var failedGrowthsByPlayerId = players.ToDictionary(p => p.PlayerId, _ => 0);
