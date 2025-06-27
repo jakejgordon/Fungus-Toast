@@ -77,6 +77,12 @@ namespace FungusToast.Simulation.Models
         public int NecrotoxicConversionReclaims { get; set; }
         public int HyphalSurgeGrowths { get; set; }
         public int HyphalVectoringGrowths { get; set; }
+        public int HyphalVectoringInfested { get; set; }
+        public int HyphalVectoringReclaimed { get; set; }
+        public int HyphalVectoringCatabolicGrowth { get; set; }
+        public int HyphalVectoringAlreadyOwned { get; set; }
+        public int HyphalVectoringColonized { get; set; }
+        public int HyphalVectoringInvalid { get; set; }
         public int TendrilNorthwestGrownCells { get; set; }
         public int TendrilNortheastGrownCells { get; set; }
         public int TendrilSoutheastGrownCells { get; set; }

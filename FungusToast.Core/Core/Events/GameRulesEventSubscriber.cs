@@ -44,6 +44,12 @@ namespace FungusToast.Core.Events
                 MutationEffectProcessor.OnPostGrowthPhase_RegenerativeHyphae(board, players, rng, observer);
             };
 
+            // Hyphal Vectoring (post-growth phase surge effect)
+            board.PostGrowthPhase += () =>
+            {
+                MutationEffectProcessor.OnPostGrowthPhase_HyphalVectoring(board, players, rng, observer);
+            };
+
             // TODO: Add additional event-driven rule subscriptions here.
             // e.g., Necrosporulation, Sporocidal Bloom, Creeping Mold, etc.
         }

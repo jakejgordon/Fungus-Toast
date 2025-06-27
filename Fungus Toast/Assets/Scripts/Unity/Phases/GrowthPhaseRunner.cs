@@ -58,7 +58,6 @@ namespace FungusToast.Unity.Phases
 
                 // === Post-Growth Mutation Effects ===
                 board.OnPostGrowthPhase();
-                MutationEffectProcessor.ProcessHyphalVectoring(board, players, rng, null);
 
                 isRunning = false;
                 GameManager.Instance.StartDecayPhase();

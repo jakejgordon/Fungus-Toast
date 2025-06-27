@@ -40,8 +40,6 @@ namespace FungusToast.Core.Phases
             // Apply post-growth reclaim effects
             board.OnPostGrowthPhase();
 
-            // Apply post-growth surge mutation effect: Hyphal Vectoring
-            MutationEffectProcessor.ProcessHyphalVectoring(board, players, rng, observer);
         }
 
         /// <summary>

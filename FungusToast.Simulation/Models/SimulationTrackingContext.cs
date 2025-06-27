@@ -348,9 +348,67 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetAllHyphalVectoringGrowthCounts() => new(hyphalVectoringGrowths);
 
         // ────────────────
-        // Jetting Mycelium Outcomes (Grouped)
+        // Hyphal Vectoring Outcomes
         // ────────────────
+        private readonly Dictionary<int, int> hyphalVectoringInfested = new();
+        private readonly Dictionary<int, int> hyphalVectoringReclaimed = new();
+        private readonly Dictionary<int, int> hyphalVectoringCatabolicGrowth = new();
+        private readonly Dictionary<int, int> hyphalVectoringAlreadyOwned = new();
+        private readonly Dictionary<int, int> hyphalVectoringColonized = new();
+        private readonly Dictionary<int, int> hyphalVectoringInvalid = new();
 
+        public void ReportHyphalVectoringInfested(int playerId, int count)
+        {
+            if (!hyphalVectoringInfested.ContainsKey(playerId))
+                hyphalVectoringInfested[playerId] = 0;
+            hyphalVectoringInfested[playerId] += count;
+        }
+        public void ReportHyphalVectoringReclaimed(int playerId, int count)
+        {
+            if (!hyphalVectoringReclaimed.ContainsKey(playerId))
+                hyphalVectoringReclaimed[playerId] = 0;
+            hyphalVectoringReclaimed[playerId] += count;
+        }
+        public void ReportHyphalVectoringCatabolicGrowth(int playerId, int count)
+        {
+            if (!hyphalVectoringCatabolicGrowth.ContainsKey(playerId))
+                hyphalVectoringCatabolicGrowth[playerId] = 0;
+            hyphalVectoringCatabolicGrowth[playerId] += count;
+        }
+        public void ReportHyphalVectoringAlreadyOwned(int playerId, int count)
+        {
+            if (!hyphalVectoringAlreadyOwned.ContainsKey(playerId))
+                hyphalVectoringAlreadyOwned[playerId] = 0;
+            hyphalVectoringAlreadyOwned[playerId] += count;
+        }
+        public void ReportHyphalVectoringColonized(int playerId, int count)
+        {
+            if (!hyphalVectoringColonized.ContainsKey(playerId))
+                hyphalVectoringColonized[playerId] = 0;
+            hyphalVectoringColonized[playerId] += count;
+        }
+        public void ReportHyphalVectoringInvalid(int playerId, int count)
+        {
+            if (!hyphalVectoringInvalid.ContainsKey(playerId))
+                hyphalVectoringInvalid[playerId] = 0;
+            hyphalVectoringInvalid[playerId] += count;
+        }
+        public int GetHyphalVectoringInfested(int playerId) => hyphalVectoringInfested.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetHyphalVectoringReclaimed(int playerId) => hyphalVectoringReclaimed.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetHyphalVectoringCatabolicGrowth(int playerId) => hyphalVectoringCatabolicGrowth.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetHyphalVectoringAlreadyOwned(int playerId) => hyphalVectoringAlreadyOwned.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetHyphalVectoringColonized(int playerId) => hyphalVectoringColonized.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetHyphalVectoringInvalid(int playerId) => hyphalVectoringInvalid.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllHyphalVectoringInfested() => new(hyphalVectoringInfested);
+        public Dictionary<int, int> GetAllHyphalVectoringReclaimed() => new(hyphalVectoringReclaimed);
+        public Dictionary<int, int> GetAllHyphalVectoringCatabolicGrowth() => new(hyphalVectoringCatabolicGrowth);
+        public Dictionary<int, int> GetAllHyphalVectoringAlreadyOwned() => new(hyphalVectoringAlreadyOwned);
+        public Dictionary<int, int> GetAllHyphalVectoringColonized() => new(hyphalVectoringColonized);
+        public Dictionary<int, int> GetAllHyphalVectoringInvalid() => new(hyphalVectoringInvalid);
+
+        // ────────────────
+        // Jetting Mycelium Outcomes
+        // ────────────────
         private readonly Dictionary<int, int> jettingMyceliumInfested = new();
         private readonly Dictionary<int, int> jettingMyceliumReclaimed = new();
         private readonly Dictionary<int, int> jettingMyceliumCatabolicGrowth = new();
@@ -358,70 +416,50 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> jettingMyceliumColonized = new();
         private readonly Dictionary<int, int> jettingMyceliumToxified = new();
         private readonly Dictionary<int, int> jettingMyceliumInvalid = new();
+        private readonly Dictionary<int, int> jettingMyceliumPoisoned = new();
 
         public void ReportJettingMyceliumInfested(int playerId, int count)
         {
-            if (!jettingMyceliumInfested.ContainsKey(playerId)) jettingMyceliumInfested[playerId] = 0;
+            if (!jettingMyceliumInfested.ContainsKey(playerId))
+                jettingMyceliumInfested[playerId] = 0;
             jettingMyceliumInfested[playerId] += count;
         }
         public void ReportJettingMyceliumReclaimed(int playerId, int count)
         {
-            if (!jettingMyceliumReclaimed.ContainsKey(playerId)) jettingMyceliumReclaimed[playerId] = 0;
+            if (!jettingMyceliumReclaimed.ContainsKey(playerId))
+                jettingMyceliumReclaimed[playerId] = 0;
             jettingMyceliumReclaimed[playerId] += count;
         }
         public void ReportJettingMyceliumCatabolicGrowth(int playerId, int count)
         {
-            if (!jettingMyceliumCatabolicGrowth.ContainsKey(playerId)) jettingMyceliumCatabolicGrowth[playerId] = 0;
+            if (!jettingMyceliumCatabolicGrowth.ContainsKey(playerId))
+                jettingMyceliumCatabolicGrowth[playerId] = 0;
             jettingMyceliumCatabolicGrowth[playerId] += count;
         }
         public void ReportJettingMyceliumAlreadyOwned(int playerId, int count)
         {
-            if (!jettingMyceliumAlreadyOwned.ContainsKey(playerId)) jettingMyceliumAlreadyOwned[playerId] = 0;
+            if (!jettingMyceliumAlreadyOwned.ContainsKey(playerId))
+                jettingMyceliumAlreadyOwned[playerId] = 0;
             jettingMyceliumAlreadyOwned[playerId] += count;
         }
         public void ReportJettingMyceliumColonized(int playerId, int count)
         {
-            if (!jettingMyceliumColonized.ContainsKey(playerId)) jettingMyceliumColonized[playerId] = 0;
+            if (!jettingMyceliumColonized.ContainsKey(playerId))
+                jettingMyceliumColonized[playerId] = 0;
             jettingMyceliumColonized[playerId] += count;
         }
         public void ReportJettingMyceliumToxified(int playerId, int count)
         {
-            if (!jettingMyceliumToxified.ContainsKey(playerId)) jettingMyceliumToxified[playerId] = 0;
+            if (!jettingMyceliumToxified.ContainsKey(playerId))
+                jettingMyceliumToxified[playerId] = 0;
             jettingMyceliumToxified[playerId] += count;
         }
         public void ReportJettingMyceliumInvalid(int playerId, int count)
         {
-            if (!jettingMyceliumInvalid.ContainsKey(playerId)) jettingMyceliumInvalid[playerId] = 0;
+            if (!jettingMyceliumInvalid.ContainsKey(playerId))
+                jettingMyceliumInvalid[playerId] = 0;
             jettingMyceliumInvalid[playerId] += count;
         }
-        public int GetJettingMyceliumInfested(int playerId)
-            => jettingMyceliumInfested.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetJettingMyceliumReclaimed(int playerId)
-            => jettingMyceliumReclaimed.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetJettingMyceliumCatabolicGrowth(int playerId)
-            => jettingMyceliumCatabolicGrowth.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetJettingMyceliumAlreadyOwned(int playerId)
-            => jettingMyceliumAlreadyOwned.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetJettingMyceliumColonized(int playerId)
-            => jettingMyceliumColonized.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetJettingMyceliumToxified(int playerId)
-            => jettingMyceliumToxified.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetJettingMyceliumInvalid(int playerId)
-            => jettingMyceliumInvalid.TryGetValue(playerId, out var val) ? val : 0;
-        public Dictionary<int, int> GetAllJettingMyceliumInfested() => new(jettingMyceliumInfested);
-        public Dictionary<int, int> GetAllJettingMyceliumReclaimed() => new(jettingMyceliumReclaimed);
-        public Dictionary<int, int> GetAllJettingMyceliumCatabolicGrowth() => new(jettingMyceliumCatabolicGrowth);
-        public Dictionary<int, int> GetAllJettingMyceliumAlreadyOwned() => new(jettingMyceliumAlreadyOwned);
-        public Dictionary<int, int> GetAllJettingMyceliumColonized() => new(jettingMyceliumColonized);
-        public Dictionary<int, int> GetAllJettingMyceliumToxified() => new(jettingMyceliumToxified);
-        public Dictionary<int, int> GetAllJettingMyceliumInvalid() => new(jettingMyceliumInvalid);
-
-        // ────────────────
-        // Jetting Mycelium Poisoned Tracking
-        // ────────────────
-
-        private readonly Dictionary<int, int> jettingMyceliumPoisoned = new();
-
         public void ReportJettingMyceliumPoisoned(int playerId, int count)
         {
             if (!jettingMyceliumPoisoned.ContainsKey(playerId))
@@ -429,11 +467,13 @@ namespace FungusToast.Simulation.Models
             jettingMyceliumPoisoned[playerId] += count;
         }
 
-        public int GetJettingMyceliumPoisoned(int playerId)
-            => jettingMyceliumPoisoned.TryGetValue(playerId, out var val) ? val : 0;
-
-        public Dictionary<int, int> GetAllJettingMyceliumPoisoned() => new(jettingMyceliumPoisoned);
-
+        public int GetJettingMyceliumInfested(int playerId) => jettingMyceliumInfested.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetJettingMyceliumReclaimed(int playerId) => jettingMyceliumReclaimed.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetJettingMyceliumCatabolicGrowth(int playerId) => jettingMyceliumCatabolicGrowth.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetJettingMyceliumAlreadyOwned(int playerId) => jettingMyceliumAlreadyOwned.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetJettingMyceliumColonized(int playerId) => jettingMyceliumColonized.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetJettingMyceliumToxified(int playerId) => jettingMyceliumToxified.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetJettingMyceliumPoisoned(int playerId) => jettingMyceliumPoisoned.TryGetValue(playerId, out var val) ? val : 0;
 
         // ────────────────
         // Failed Growths

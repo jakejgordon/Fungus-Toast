@@ -1,5 +1,6 @@
 ﻿// FungusToast.Core/Phases/MutationEffectProcessor.cs
 using FungusToast.Core.Board;
+using FungusToast.Core.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Events;
@@ -838,7 +839,14 @@ namespace FungusToast.Core.Phases
                     continue;
                 }
 
-                // Replace the helper with one that uses TryGrowFungalCell for each growth:
+                // Outcome tallies
+                int infested = 0;
+                int reclaimed = 0;
+                int catabolicGrowth = 0;
+                int alreadyOwned = 0;
+                int colonized = 0;
+                int invalid = 0;
+
                 int placed = 0;
                 int currentTileId = origin.Value.tile.TileId;
                 int dx = Math.Sign(centerX - origin.Value.tile.X);
@@ -853,14 +861,52 @@ namespace FungusToast.Core.Phases
                     if (x < 0 || y < 0 || x >= board.Width || y >= board.Height)
                         break;
                     int targetTileId = y * board.Width + x;
-                    // Only grow if not already occupied (optional, based on rule)
-                    if (board.GetTileById(targetTileId)?.IsOccupied == true)
-                        break;
+                    var targetTile = board.GetTileById(targetTileId);
+                    if (targetTile == null) { invalid++; continue; }
 
-                    if (board.TryGrowFungalCell(player.PlayerId, currentTileId, targetTileId, out GrowthFailureReason reason))
-                        placed++;
+                    var prevCell = targetTile.FungalCell;
+                    if (prevCell != null && prevCell.IsAlive && prevCell.OwnerPlayerId == player.PlayerId)
+                    {
+                        // Skip over friendly living mold
+                        alreadyOwned++;
+                        currentTileId = targetTileId;
+                        continue;
+                    }
 
+                    FungalCellTakeoverResult takeoverResult;
+                    if (prevCell != null)
+                    {
+                        takeoverResult = prevCell.Takeover(player.PlayerId, allowToxin: true);
+                        switch (takeoverResult)
+                        {
+                            case FungalCellTakeoverResult.Infested: infested++; break;
+                            case FungalCellTakeoverResult.Reclaimed: reclaimed++; break;
+                            case FungalCellTakeoverResult.CatabolicGrowth: catabolicGrowth++; break;
+                            case FungalCellTakeoverResult.AlreadyOwned: alreadyOwned++; break;
+                            case FungalCellTakeoverResult.Invalid: invalid++; break;
+                        }
+                    }
+                    else
+                    {
+                        // Place a new living cell if empty
+                        var newCell = new FungalCell(player.PlayerId, targetTileId);
+                        targetTile.PlaceFungalCell(newCell);
+                        colonized++;
+                    }
+
+                    placed++;
                     currentTileId = targetTileId;
+                }
+
+                // Report results to simulation observer, if available
+                if (observer != null)
+                {
+                    if (infested > 0) observer.ReportHyphalVectoringInfested(player.PlayerId, infested);
+                    if (reclaimed > 0) observer.ReportHyphalVectoringReclaimed(player.PlayerId, reclaimed);
+                    if (catabolicGrowth > 0) observer.ReportHyphalVectoringCatabolicGrowth(player.PlayerId, catabolicGrowth);
+                    if (alreadyOwned > 0) observer.ReportHyphalVectoringAlreadyOwned(player.PlayerId, alreadyOwned);
+                    if (colonized > 0) observer.ReportHyphalVectoringColonized(player.PlayerId, colonized);
+                    if (invalid > 0) observer.ReportHyphalVectoringInvalid(player.PlayerId, invalid);
                 }
 
                 if (placed > 0)
@@ -868,6 +914,14 @@ namespace FungusToast.Core.Phases
             }
         }
 
+        public static void OnPostGrowthPhase_HyphalVectoring(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            ProcessHyphalVectoring(board, players, rng, observer);
+        }
 
     }
 

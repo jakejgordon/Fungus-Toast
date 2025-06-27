@@ -94,12 +94,12 @@ namespace FungusToast.Simulation.Models
                     NecrotoxicConversionReclaims = tracking.GetNecrotoxicConversionReclaims(player.PlayerId),
                     HyphalSurgeGrowths = tracking.GetHyphalSurgeGrowthCount(player.PlayerId),
                     HyphalVectoringGrowths = tracking.GetHyphalVectoringGrowthCount(player.PlayerId),
-
-                    // --- Tendril (directional growth) stats ---
-                    TendrilNorthwestGrownCells = tracking.GetTendrilNorthwestGrownCells(player.PlayerId),
-                    TendrilNortheastGrownCells = tracking.GetTendrilNortheastGrownCells(player.PlayerId),
-                    TendrilSoutheastGrownCells = tracking.GetTendrilSoutheastGrownCells(player.PlayerId),
-                    TendrilSouthwestGrownCells = tracking.GetTendrilSouthwestGrownCells(player.PlayerId),
+                    HyphalVectoringInfested = tracking.GetHyphalVectoringInfested(player.PlayerId),
+                    HyphalVectoringReclaimed = tracking.GetHyphalVectoringReclaimed(player.PlayerId),
+                    HyphalVectoringCatabolicGrowth = tracking.GetHyphalVectoringCatabolicGrowth(player.PlayerId),
+                    HyphalVectoringAlreadyOwned = tracking.GetHyphalVectoringAlreadyOwned(player.PlayerId),
+                    HyphalVectoringColonized = tracking.GetHyphalVectoringColonized(player.PlayerId),
+                    HyphalVectoringInvalid = tracking.GetHyphalVectoringInvalid(player.PlayerId),
 
                     // --- Mutation point income and spending ---
                     AdaptiveExpressionPointsEarned = tracking.GetAdaptiveExpressionPointsEarned(player.PlayerId),

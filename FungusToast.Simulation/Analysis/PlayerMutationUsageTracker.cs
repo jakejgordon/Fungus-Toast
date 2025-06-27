@@ -8,7 +8,8 @@ namespace FungusToast.Simulation.Analysis
 {
     public class PlayerMutationUsageTracker
     {
-        private readonly Dictionary<string, Dictionary<int, List<int>>> strategyMutationLevels = new();
+        // Each record stores one mutation effect for one player in one game
+        private readonly List<(int PlayerId, string Strategy, int MutationId, string MutationName, MutationTier Tier, MutationCategory Category, int Level, string EffectType, int EffectValue)> _records = new();
 
         public void TrackGameResult(GameResult result)
         {
@@ -16,196 +17,237 @@ namespace FungusToast.Simulation.Analysis
             {
                 string strategy = player.StrategyName ?? "None";
 
-                if (!strategyMutationLevels.TryGetValue(strategy, out var mutationDict))
-                {
-                    mutationDict = new Dictionary<int, List<int>>();
-                    strategyMutationLevels[strategy] = mutationDict;
-                }
-
-                var knownMutationIds = new HashSet<int>(mutationDict.Keys);
-                var allMutationIds = new HashSet<int>(knownMutationIds.Union(player.MutationLevels.Keys));
-
+                // Track all mutations the player has (even level 0)
+                var allMutationIds = player.MutationLevels.Keys.ToList();
+                
                 foreach (var mutationId in allMutationIds)
                 {
-                    if (!mutationDict.TryGetValue(mutationId, out var levelList))
-                    {
-                        levelList = new List<int>();
-                        mutationDict[mutationId] = levelList;
-                    }
+                    var mutation = MutationRegistry.GetById(mutationId);
+                    if (mutation == null) continue;
 
                     int level = player.MutationLevels.TryGetValue(mutationId, out var val) ? val : 0;
-                    levelList.Add(level);
+                    
+                    // Get all effects for this mutation
+                    var effects = GetMutationEffects(mutationId, player);
+                    
+                    if (effects.Count > 0)
+                    {
+                        foreach (var (effectType, effectValue) in effects)
+                        {
+                            _records.Add((
+                                player.PlayerId,
+                                strategy,
+                                mutationId,
+                                mutation.Name,
+                                mutation.Tier,
+                                mutation.Category,
+                                level,
+                                effectType,
+                                effectValue
+                            ));
+                        }
+                    }
+                    else
+                    {
+                        // Log mutation with "-" effect type if no effects
+                        _records.Add((
+                            player.PlayerId,
+                            strategy,
+                            mutationId,
+                            mutation.Name,
+                            mutation.Tier,
+                            mutation.Category,
+                            level,
+                            "-",
+                            0
+                        ));
+                    }
                 }
             }
         }
 
-        public void PrintReport(
-            List<PlayerResult> allPlayerResults,
-            List<(int PlayerId, string StrategyName)> rankedPlayers
-        )
+        private static Dictionary<string, int> GetMutationEffects(int mutationId, PlayerResult player)
         {
-            // 1. Prepare category sort order
+            var effects = new Dictionary<string, int>();
+
+            switch (mutationId)
+            {
+                case MutationIds.RegenerativeHyphae:
+                    if (player.RegenerativeHyphaeReclaims > 0)
+                        effects["Reclaims"] = player.RegenerativeHyphaeReclaims;
+                    break;
+
+                case MutationIds.CreepingMold:
+                    if (player.CreepingMoldMoves > 0)
+                        effects["Mold Movements"] = player.CreepingMoldMoves;
+                    break;
+
+                case MutationIds.Necrosporulation:
+                    if (player.NecrosporulationSpores > 0)
+                        effects["Necro Spores"] = player.NecrosporulationSpores;
+                    break;
+
+                case MutationIds.SporocidalBloom:
+                    if (player.SporocidalSpores > 0)
+                        effects["Spore Drops"] = player.SporocidalSpores;
+                    if (player.SporocidalKills > 0)
+                        effects["Spore Kills"] = player.SporocidalKills;
+                    break;
+
+                case MutationIds.NecrophyticBloom:
+                    if (player.NecrophyticSpores > 0)
+                        effects["Spore Drops"] = player.NecrophyticSpores;
+                    if (player.NecrophyticReclaims > 0)
+                        effects["Reclaims"] = player.NecrophyticReclaims;
+                    break;
+
+                case MutationIds.MycotoxinTracer:
+                    if (player.MycotoxinTracerSpores > 0)
+                        effects["Toxin Drops"] = player.MycotoxinTracerSpores;
+                    break;
+
+                case MutationIds.MycotoxinPotentiation:
+                    if (player.ToxinAuraKills > 0)
+                        effects["Toxin Aura Kills"] = player.ToxinAuraKills;
+                    break;
+
+                case MutationIds.MycotoxinCatabolism:
+                    if (player.MycotoxinCatabolisms > 0)
+                        effects["Toxin Catabolisms"] = player.MycotoxinCatabolisms;
+                    if (player.CatabolizedMutationPoints > 0)
+                        effects["Catabolized MP"] = player.CatabolizedMutationPoints;
+                    break;
+
+                case MutationIds.AdaptiveExpression:
+                    if (player.AdaptiveExpressionPointsEarned > 0)
+                        effects["Bonus MP"] = player.AdaptiveExpressionPointsEarned;
+                    break;
+
+                case MutationIds.MutatorPhenotype:
+                    if (player.MutatorPhenotypePointsEarned > 0)
+                        effects["Mutator Free MP"] = player.MutatorPhenotypePointsEarned;
+                    break;
+
+                case MutationIds.HyperadaptiveDrift:
+                    if (player.HyperadaptiveDriftPointsEarned > 0)
+                        effects["Hyperadaptive Free MP"] = player.HyperadaptiveDriftPointsEarned;
+                    break;
+
+                case MutationIds.NecrohyphalInfiltration:
+                    if (player.NecrohyphalInfiltrations > 0)
+                        effects["Infiltrations"] = player.NecrohyphalInfiltrations;
+                    if (player.NecrohyphalCascades > 0)
+                        effects["Cascades"] = player.NecrohyphalCascades;
+                    break;
+
+                case MutationIds.PutrefactiveMycotoxin:
+                    if (player.PutrefactiveMycotoxinKills > 0)
+                        effects["PM Kills"] = player.PutrefactiveMycotoxinKills;
+                    break;
+
+                case MutationIds.NecrotoxicConversion:
+                    if (player.NecrotoxicConversionReclaims > 0)
+                        effects["Necrotoxic Reclaims"] = player.NecrotoxicConversionReclaims;
+                    break;
+
+                case MutationIds.HyphalSurge:
+                    if (player.HyphalSurgeGrowths > 0)
+                        effects["Hyphal Surge Growths"] = player.HyphalSurgeGrowths;
+                    break;
+
+                case MutationIds.HyphalVectoring:
+                    if (player.HyphalVectoringGrowths > 0)
+                        effects["Growths"] = player.HyphalVectoringGrowths;
+                    if (player.HyphalVectoringInfested > 0)
+                        effects["Infested"] = player.HyphalVectoringInfested;
+                    if (player.HyphalVectoringReclaimed > 0)
+                        effects["Reclaimed"] = player.HyphalVectoringReclaimed;
+                    if (player.HyphalVectoringCatabolicGrowth > 0)
+                        effects["Catabolic Growth"] = player.HyphalVectoringCatabolicGrowth;
+                    if (player.HyphalVectoringAlreadyOwned > 0)
+                        effects["Already Owned"] = player.HyphalVectoringAlreadyOwned;
+                    if (player.HyphalVectoringColonized > 0)
+                        effects["Colonized"] = player.HyphalVectoringColonized;
+                    if (player.HyphalVectoringInvalid > 0)
+                        effects["Invalid"] = player.HyphalVectoringInvalid;
+                    break;
+            }
+
+            return effects;
+        }
+
+        public void PrintReport(List<(int PlayerId, string StrategyName)> rankedPlayers)
+        {
+            // Prepare category sort order
             var categorySortOrder = new Dictionary<MutationCategory, int>
-    {
-        { MutationCategory.Growth, 0 },
-        { MutationCategory.CellularResilience, 1 },
-        { MutationCategory.Fungicide, 2 },
-        { MutationCategory.GeneticDrift, 3 },
-        { MutationCategory.MycelialSurges, 4 }
-    };
+            {
+                { MutationCategory.Growth, 0 },
+                { MutationCategory.CellularResilience, 1 },
+                { MutationCategory.Fungicide, 2 },
+                { MutationCategory.GeneticDrift, 3 },
+                { MutationCategory.MycelialSurges, 4 }
+            };
 
             Console.WriteLine("\nPlayer-Mutation Usage Summary (per Player, all games):");
-            Console.WriteLine("{0,8} | {1,-37} | {2,-6} | {3,-32} | {4,10} | {5,-32} | {6,24} | {7,24} | {8,12}",
-                "PlayerId", "Strategy", "Tier", "Mutation Name", "AvgLvl",
-                "Mutation Effect(s)", "Avg Effect (All Games)", "Total Effect (All Games)", "Avg Alive");
+            Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-12} | {5,-8} | {6,-8} | {7,-10} | {8,-12}",
+                "PlayerId", "Strategy", "Tier", "Mutation Name", "Effect", "Games", "AvgLvl", "Avg Eff", "Tot Eff");
+            Console.WriteLine(new string('-', 8) + "-|-" +
+                                new string('-', 25) + "-|-" +
+                                new string('-', 6) + "-|-" +
+                                new string('-', 28) + "-|-" +
+                                new string('-', 12) + "-|-" +
+                                new string('-', 8) + "-|-" +
+                                new string('-', 8) + "-|-" +
+                                new string('-', 10) + "-|-" +
+                                new string('-', 12));
 
-            Console.WriteLine(new string('-', 8) + "-|-" + new string('-', 37) + "-|-" + new string('-', 6) + "-|-" +
-                              new string('-', 32) + "-|-" + new string('-', 10) + "-|-" +
-                              new string('-', 32) + "-|-" + new string('-', 24) + "-|-" +
-                              new string('-', 24) + "-|-" + new string('-', 12));
+            // Group by player/strategy/mutation/effect
+            var grouped = _records
+                .GroupBy(r => (r.PlayerId, r.Strategy, r.MutationId, r.MutationName, r.Tier, r.Category, r.EffectType))
+                .Select(g => new
+                {
+                    g.Key.PlayerId,
+                    g.Key.Strategy,
+                    g.Key.MutationId,
+                    g.Key.MutationName,
+                    g.Key.Tier,
+                    g.Key.Category,
+                    g.Key.EffectType,
+                    Games = g.Count(),
+                    AvgLevel = g.Average(x => x.Level),
+                    TotalEffect = g.Sum(x => x.EffectValue),
+                    AvgEffect = g.Count() > 0 ? g.Average(x => x.EffectValue) : 0.0
+                })
+                .ToList();
 
-            var mutationEffectFields = GetMutationEffectFields();
-
-            // Group player results by (PlayerId, StrategyName)
-            var playerStrategyGroups = allPlayerResults
-                .GroupBy(r => (r.PlayerId, r.StrategyName ?? "None"))
-                .ToDictionary(g => (g.Key.PlayerId, g.Key.Item2), g => g.ToList());
-
-            // Loop through ranked players in given order
             foreach (var (playerId, strategyName) in rankedPlayers)
             {
-                if (!playerStrategyGroups.TryGetValue((playerId, strategyName), out var playerResults))
-                    continue;
+                var playerRecords = grouped.Where(x =>
+                    x.PlayerId == playerId &&
+                    string.Equals(x.Strategy, strategyName, StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(x => x.Tier)
+                    .ThenBy(x => categorySortOrder.TryGetValue(x.Category, out var idx) ? idx : 99)
+                    .ThenBy(x => x.MutationName)
+                    .ThenBy(x => x.EffectType);
 
-                int games = playerResults.Count;
-                float avgAlive = games > 0 ? (float)playerResults.Average(r => r.LivingCells) : 0f;
-
-                // Sort mutation ids by Tier, then Category, then Name
-                var allMutationIds = playerResults
-                    .SelectMany(r => r.MutationLevels.Keys)
-                    .Distinct()
-                    .Select(id => MutationRegistry.GetById(id))
-                    .Where(m => m != null)
-                    .OrderBy(m => m!.Tier)
-                    .ThenBy(m => categorySortOrder.TryGetValue(m!.Category, out var idx) ? idx : 99)
-                    .ThenBy(m => m!.Name)
-                    .ToList();
-
-                foreach (var mutation in allMutationIds)
+                foreach (var r in playerRecords)
                 {
-                    if (mutation == null)
-                        continue; // Defensive: skip nulls
-
-                    int mutationId = mutation.Id;
-                    float avgLevel = (games > 0)
-                        ? (float)playerResults.Average(r => r.MutationLevels.TryGetValue(mutationId, out var lvl) ? lvl : 0)
-                        : 0f;
-
-                    var (effectLabel, avgEffects, totalEffects) = GetMutationEffectStats(mutationId, playerResults, mutationEffectFields, games);
-
-                    Console.WriteLine("{0,8} | {1,-37} | {2,-6} | {3,-32} | {4,10:F2} | {5,-32} | {6,24} | {7,24} | {8,12:F2}",
-                        playerId,
-                        Truncate(strategyName, 37),
-                        mutation.Tier.ToString(),
-                        Truncate(mutation.Name, 32),
-                        avgLevel,
-                        Truncate(effectLabel, 32),
-                        avgEffects,
-                        totalEffects,
-                        avgAlive);
+                    Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-12} | {5,-8} | {6,-8} | {7,-10:N2} | {8,-12}",
+                        r.PlayerId,
+                        Truncate(r.Strategy, 25),
+                        r.Tier.ToString(),
+                        Truncate(r.MutationName, 28),
+                        Truncate(r.EffectType, 12),
+                        r.Games,
+                        r.AvgLevel.ToString("F1"),
+                        r.AvgEffect,
+                        r.TotalEffect);
                 }
             }
-
-            Console.WriteLine(new string('-', 230));
-        }
-
-        private static (string label, string avgEffect, string totalEffect) GetMutationEffectStats(
-            int mutationId,
-            List<PlayerResult> playerResults,
-            List<(int mutationId, string propertyName, string label)> mutationEffectFields,
-            int games)
-        {
-            List<string> labels = new();
-            List<string> avgEffects = new();
-            List<string> totalEffects = new();
-
-            // Special case for NecrohyphalInfiltration (compound effect)
-            if (mutationId == MutationIds.NecrohyphalInfiltration)
-            {
-                long totalInf = playerResults.Sum(r => (long)r.NecrohyphalInfiltrations);
-                long totalCas = playerResults.Sum(r => (long)r.NecrohyphalCascades);
-                float avgInf = games > 0 ? (float)totalInf / games : 0f;
-                float avgCas = games > 0 ? (float)totalCas / games : 0f;
-
-                labels.Add("Infiltrations / Cascades");
-                avgEffects.Add($"{avgInf:N2} / {avgCas:N2}");
-                totalEffects.Add($"{totalInf:N0} / {totalCas:N0}");
-            }
-            else
-            {
-                foreach (var (effectMutationId, propertyName, label) in mutationEffectFields.Where(x => x.mutationId == mutationId))
-                {
-                    var perGameEffects = playerResults
-                        .Select(pr =>
-                        {
-                            var val = typeof(PlayerResult).GetProperty(propertyName)?.GetValue(pr) ?? 0;
-                            // Always unbox to int first, then convert to long, for safety
-                            if (val is int i) return (long)i;
-                            if (val is long l) return l;
-                            if (val is float f) return (long)f;
-                            if (val is double d) return (long)d;
-                            return Convert.ToInt64(val);
-                        })
-                        .ToList();
-
-                    long totalEffect = perGameEffects.Sum();
-                    float avgEffectPerGame = games > 0 ? (float)totalEffect / games : 0f;
-
-                    labels.Add(label);
-                    avgEffects.Add(avgEffectPerGame.ToString("N2")); // thousands separator, 2 decimals
-                    totalEffects.Add(totalEffect.ToString("N0"));     // thousands separator, no decimals
-                }
-            }
-
-            string effectLabel = string.Join(" / ", labels);
-            string avgEffectStr = string.Join(" / ", avgEffects);
-            string totalEffectStr = string.Join(" / ", totalEffects);
-
-            return (effectLabel, avgEffectStr, totalEffectStr);
-        }
-
-        private static List<(int mutationId, string propertyName, string label)> GetMutationEffectFields()
-        {
-            return new List<(int, string, string)>
-            {
-                (MutationIds.RegenerativeHyphae, nameof(PlayerResult.RegenerativeHyphaeReclaims), "Reclaims"),
-                (MutationIds.CreepingMold, nameof(PlayerResult.CreepingMoldMoves), "Mold Movements"),
-                (MutationIds.Necrosporulation, nameof(PlayerResult.NecrosporulationSpores), "Necro Spores"),
-                (MutationIds.SporocidalBloom, nameof(PlayerResult.SporocidalSpores), "Spore Drops"),
-                (MutationIds.SporocidalBloom, nameof(PlayerResult.SporocidalKills), "Spore Kills"),
-                (MutationIds.NecrophyticBloom, nameof(PlayerResult.NecrophyticSpores), "Spore Drops"),
-                (MutationIds.NecrophyticBloom, nameof(PlayerResult.NecrophyticReclaims), "Reclaims"),
-                (MutationIds.MycotoxinTracer, nameof(PlayerResult.MycotoxinTracerSpores), "Toxin Drops"),
-                (MutationIds.MycotoxinPotentiation, nameof(PlayerResult.ToxinAuraKills), "Toxin Aura Kills"),
-                (MutationIds.MycotoxinCatabolism, nameof(PlayerResult.MycotoxinCatabolisms), "Toxin Catabolisms"),
-                (MutationIds.MycotoxinCatabolism, nameof(PlayerResult.CatabolizedMutationPoints), "Catabolized MP"),
-                (MutationIds.AdaptiveExpression, nameof(PlayerResult.AdaptiveExpressionPointsEarned), "Bonus MP"),
-                (MutationIds.MutatorPhenotype, nameof(PlayerResult.MutatorPhenotypePointsEarned), "Mutator Free MP"),
-                (MutationIds.HyperadaptiveDrift, nameof(PlayerResult.HyperadaptiveDriftPointsEarned), "Hyperadaptive Free MP"),
-                (MutationIds.NecrohyphalInfiltration, nameof(PlayerResult.NecrohyphalInfiltrations), "Infiltrations"),
-                (MutationIds.NecrohyphalInfiltration, nameof(PlayerResult.NecrohyphalCascades), "Cascades"),
-                (MutationIds.PutrefactiveMycotoxin, nameof(PlayerResult.PutrefactiveMycotoxinKills), "PM Kills"),
-                (MutationIds.NecrotoxicConversion, nameof(PlayerResult.NecrotoxicConversionReclaims), "Necrotoxic Reclaims"),
-                (MutationIds.HyphalSurge, nameof(PlayerResult.HyphalSurgeGrowths), "Hyphal Surge Growths"),
-                (MutationIds.HyphalVectoring, nameof(PlayerResult.HyphalVectoringGrowths), "Hyphal Vectoring Growths"),
-                (MutationIds.TendrilNorthwest, nameof(PlayerResult.TendrilNorthwestGrownCells), "Grown Cells"),
-                (MutationIds.TendrilNortheast, nameof(PlayerResult.TendrilNortheastGrownCells), "Grown Cells"),
-                (MutationIds.TendrilSoutheast, nameof(PlayerResult.TendrilSoutheastGrownCells), "Grown Cells"),
-                (MutationIds.TendrilSouthwest, nameof(PlayerResult.TendrilSouthwestGrownCells), "Grown Cells"),
-            };
+            Console.WriteLine(new string('-', 125));
         }
 
         private static string Truncate(string value, int maxLength) =>
-            value.Length <= maxLength ? value : value[..maxLength];
+            value == null ? "" : (value.Length <= maxLength ? value : value[..maxLength]);
     }
 }
