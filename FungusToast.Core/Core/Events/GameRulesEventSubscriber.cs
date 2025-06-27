@@ -81,6 +81,13 @@ namespace FungusToast.Core.Events
                 MutationEffectProcessor.OnNecrophyticBloomActivated(board, players, rng, observer);
             };
 
+            // Mutator Phenotype (mutation phase start auto-upgrade effect)
+            board.MutationPhaseStart += () =>
+            {
+                var allMutations = MutationRepository.BuildFullMutationSet().Item1.Values.ToList();
+                MutationEffectProcessor.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, observer);
+            };
+
             // TODO: Add additional event-driven rule subscriptions here.
             // e.g., Necrosporulation, Sporocidal Bloom, Creeping Mold, etc.
         }

@@ -322,9 +322,6 @@ namespace FungusToast.Core.Players
                 simulationObserver.RecordAdaptiveExpressionBonus(PlayerId, bonus);
             }
 
-            if (allMutations != null)
-                MutationEffectProcessor.TryApplyMutatorPhenotype(this, allMutations.ToList(), rng, simulationObserver);
-
             return MutationPoints;
         }
 

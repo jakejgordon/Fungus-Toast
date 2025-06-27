@@ -1047,6 +1047,19 @@ namespace FungusToast.Core.Phases
             }
         }
 
+        public static void OnMutationPhaseStart_MutatorPhenotype(
+            GameBoard board,
+            List<Player> players,
+            List<Mutation> allMutations,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            foreach (var player in players)
+            {
+                TryApplyMutatorPhenotype(player, allMutations, rng, observer);
+            }
+        }
+
     }
 
 

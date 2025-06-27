@@ -18,6 +18,9 @@ namespace FungusToast.Core.Phases
         /// </summary>
         public static void AssignMutationPoints(GameBoard board, List<Player> players, List<Mutation> allMutations, Random rng, ISimulationObserver? simulationObserver = null)
         {
+            // Fire MutationPhaseStart event for Mutator Phenotype and other mutation phase effects
+            board.OnMutationPhaseStart();
+
             foreach (var player in players)
             {
                 player.AssignMutationPoints(players, rng, allMutations, simulationObserver);
