@@ -45,6 +45,7 @@ namespace FungusToast.Core.Board
         public delegate void CreepingMoldMoveEventHandler(int playerId, int fromTileId, int toTileId);
         public delegate void JettingMyceliumCatabolicGrowthEventHandler(int playerId, int tileId);
         public delegate void PostGrowthPhaseEventHandler();
+        public delegate void DecayPhaseEventHandler();
 
         // 2. Events (public, so other components can subscribe)
         public event CellColonizedEventHandler? CellColonized;
@@ -63,6 +64,7 @@ namespace FungusToast.Core.Board
         public event CreepingMoldMoveEventHandler? CreepingMoldMove;
         public event JettingMyceliumCatabolicGrowthEventHandler? JettingMyceliumCatabolicGrowth;
         public event PostGrowthPhaseEventHandler? PostGrowthPhase;
+        public event DecayPhaseEventHandler? DecayPhase;
 
         // 3. Helper methods to invoke (recommended: protected virtual, as in standard .NET pattern)
         protected virtual void OnCellColonized(int playerId, int tileId) =>
@@ -116,6 +118,9 @@ namespace FungusToast.Core.Board
 
         public virtual void OnPostGrowthPhase() =>
             PostGrowthPhase?.Invoke();
+
+        public virtual void OnDecayPhase() =>
+            DecayPhase?.Invoke();
 
         /// <summary>
         /// Fired before a growth attempt. Listeners may cancel the growth.
@@ -656,63 +661,6 @@ namespace FungusToast.Core.Board
             OnDeadCellReclaim?.Invoke(cell, playerId);
             return true;
         }
-
-        public void TryPlaceSporocidalSpores(
-           Player player,
-           Random rng,
-           Mutation mutation,
-           ISimulationObserver? observer = null)
-        {
-            int level = player.GetMutationLevel(mutation.Id);
-            if (level <= 0) return;
-
-            // Count living cells for this player
-            var yourLivingIds = AllTiles()
-                .Where(t => t.FungalCell is { IsAlive: true, OwnerPlayerId: var oid } && oid == player.PlayerId)
-                .Select(t => t.TileId)
-                .ToHashSet();
-
-            int livingCellCount = yourLivingIds.Count;
-            int sporesToDrop = (int)Math.Floor(livingCellCount * level * GameBalance.SporicialBloomEffectPerLevel);
-            if (sporesToDrop <= 0) return;
-
-            // Take a snapshot of all tiles for fair sampling
-            var allTiles = AllTiles().ToList();
-            if (allTiles.Count == 0) return;
-
-            int kills = 0, toxified = 0;
-            int toxinDuration = CurrentGrowthCycle + GameBalance.DefaultToxinDuration;
-
-            for (int i = 0; i < sporesToDrop; i++)
-            {
-                var target = allTiles[rng.Next(allTiles.Count)];
-                var cell = target.FungalCell;
-
-                // Is this tile protected? (your own living cell or adjacent to one)
-                bool isOwnLiving = (cell?.IsAlive ?? false) && cell.OwnerPlayerId == player.PlayerId;
-                bool adjacentToOwn = GetAdjacentTiles(target.TileId)
-                    .Any(adj => adj.FungalCell?.IsAlive == true && adj.FungalCell.OwnerPlayerId == player.PlayerId);
-
-                if (isOwnLiving || adjacentToOwn)
-                    continue; // Spore fizzles, nothing happens
-
-                if (cell != null && cell.IsAlive)
-                {
-                    // Enemy cell: kill and toxify (use helper)
-                    ToxinHelper.KillAndToxify(this, target.TileId, toxinDuration, DeathReason.SporocidalBloom, player);
-                    kills++;
-                }
-                else
-                {
-                    // Empty or already toxin: place toxin
-                    var toxinCell = new FungalCell(player.PlayerId, target.TileId, toxinDuration);
-                    PlaceFungalCell(toxinCell);
-                    toxified++;
-                }
-                observer?.ReportSporocidalSporeDrop(player.PlayerId, 1);
-            }
-        }
-
 
     }
 }

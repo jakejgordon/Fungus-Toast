@@ -37,10 +37,11 @@ namespace FungusToast.Core.Death
             board.ExpireToxinTiles(board.CurrentGrowthCycle);
             List<Player> shuffledPlayers = players.OrderBy(_ => rng.NextDouble()).ToList();
 
-            var (allMutations, _) = MutationRepository.BuildFullMutationSet();
-            Mutation sporocidalBloom = allMutations[MutationIds.SporocidalBloom];
-
-            ApplyPerTurnSporeEffects(shuffledPlayers, board, sporocidalBloom, failedGrowthsByPlayerId, rng, simulationObserver);
+            ApplyPerTurnSporeEffects(shuffledPlayers, board, failedGrowthsByPlayerId, rng, simulationObserver);
+            
+            // Fire DecayPhase event for Sporocidal Bloom and other decay-phase mutations
+            board.OnDecayPhase();
+            
             ApplyNecrophyticBloomTrigger(shuffledPlayers, board, rng, simulationObserver);
             MutationEffectProcessor.ApplyToxinAuraDeaths(board, players, rng, simulationObserver);
             EvaluateProbabilisticDeaths(board, shuffledPlayers, rng, simulationObserver);
@@ -49,14 +50,13 @@ namespace FungusToast.Core.Death
         private static void ApplyPerTurnSporeEffects(
             List<Player> players,
             GameBoard board,
-            Mutation sporocidalBloom,
             Dictionary<int, int> failedGrowthsByPlayerId,
             Random rng,
             ISimulationObserver? simulationObserver)
         {
             foreach (var p in players)
             {
-                board.TryPlaceSporocidalSpores(p, rng, sporocidalBloom, simulationObserver);
+                // Sporocidal Bloom is now handled via DecayPhase event
 
                 int failedGrowths = failedGrowthsByPlayerId.TryGetValue(p.PlayerId, out var v) ? v : 0;
                 MutationEffectProcessor.ApplyMycotoxinTracer(p, board, failedGrowths, rng, simulationObserver);
@@ -161,8 +161,6 @@ namespace FungusToast.Core.Death
                 }
             }
         }
-
-
 
         /// <summary>
         /// Attributes toxin-related kills to the observer for analytics.

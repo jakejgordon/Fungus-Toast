@@ -920,7 +920,80 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver? observer = null)
         {
-            ProcessHyphalVectoring(board, players, rng, observer);
+            foreach (var player in players)
+            {
+                if (player.GetMutationLevel(MutationIds.HyphalVectoring) > 0)
+                {
+                    ProcessHyphalVectoring(board, players, rng, observer);
+                }
+            }
+        }
+
+        public static void OnDecayPhase_SporocidalBloom(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            var (allMutations, _) = MutationRepository.BuildFullMutationSet();
+            Mutation sporocidalBloom = allMutations[MutationIds.SporocidalBloom];
+
+            foreach (var player in players)
+            {
+                int level = player.GetMutationLevel(MutationIds.SporocidalBloom);
+                if (level <= 0) continue;
+
+                // Count living cells for this player
+                var yourLivingIds = board.AllTiles()
+                    .Where(t => t.FungalCell is { IsAlive: true, OwnerPlayerId: var oid } && oid == player.PlayerId)
+                    .Select(t => t.TileId)
+                    .ToHashSet();
+
+                int livingCellCount = yourLivingIds.Count;
+                int sporesToDrop = (int)Math.Floor(livingCellCount * level * GameBalance.SporicialBloomEffectPerLevel);
+                if (sporesToDrop <= 0) continue;
+
+                // Take a snapshot of all tiles for fair sampling
+                var allTiles = board.AllTiles().ToList();
+                if (allTiles.Count == 0) continue;
+
+                int kills = 0, toxified = 0;
+                int toxinDuration = board.CurrentGrowthCycle + GameBalance.DefaultToxinDuration;
+
+                for (int i = 0; i < sporesToDrop; i++)
+                {
+                    var target = allTiles[rng.Next(allTiles.Count)];
+                    var cell = target.FungalCell;
+
+                    // Is this tile protected? (your own living cell or adjacent to one)
+                    bool isOwnLiving = (cell?.IsAlive ?? false) && cell.OwnerPlayerId == player.PlayerId;
+                    bool adjacentToOwn = board.GetAdjacentTiles(target.TileId)
+                        .Any(adj => adj.FungalCell?.IsAlive == true && adj.FungalCell.OwnerPlayerId == player.PlayerId);
+
+                    if (isOwnLiving || adjacentToOwn)
+                        continue; // Spore fizzles, nothing happens
+
+                    if (cell != null && cell.IsAlive)
+                    {
+                        // Enemy cell: kill and toxify (use helper)
+                        ToxinHelper.KillAndToxify(board, target.TileId, toxinDuration, DeathReason.SporocidalBloom, player);
+                        kills++;
+                    }
+                    else
+                    {
+                        // Empty or already toxin: place toxin
+                        var toxinCell = new FungalCell(player.PlayerId, target.TileId, toxinDuration);
+                        board.PlaceFungalCell(toxinCell);
+                        toxified++;
+                    }
+                }
+
+                // Report total spores dropped for this player (once per player per round)
+                if (sporesToDrop > 0)
+                {
+                    observer?.ReportSporocidalSporeDrop(player.PlayerId, sporesToDrop);
+                }
+            }
         }
 
     }

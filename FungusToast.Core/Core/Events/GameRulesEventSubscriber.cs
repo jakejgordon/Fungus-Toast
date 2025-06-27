@@ -50,6 +50,12 @@ namespace FungusToast.Core.Events
                 MutationEffectProcessor.OnPostGrowthPhase_HyphalVectoring(board, players, rng, observer);
             };
 
+            // Sporocidal Bloom (decay phase spore effects)
+            board.DecayPhase += () =>
+            {
+                MutationEffectProcessor.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
+            };
+
             // TODO: Add additional event-driven rule subscriptions here.
             // e.g., Necrosporulation, Sporocidal Bloom, Creeping Mold, etc.
         }
