@@ -41,6 +41,14 @@ namespace FungusToast.Core.AI
         private readonly List<int> surgePriorityIds;
         private readonly EconomyBias economyBias;
 
+        // ==== NEW: Dynamic Timing Awareness ====
+        private enum GamePhase
+        {
+            EarlyGame,    // Rounds 1-10
+            MidGame,      // Rounds 11-25  
+            LateGame      // Rounds 26+
+        }
+
         public ParameterizedSpendingStrategy(
             string strategyName,
             bool prioritizeHighTier,
@@ -59,6 +67,35 @@ namespace FungusToast.Core.AI
             this.surgePriorityIds = surgePriorityIds ?? new();
             this.surgeAttemptTurnFrequency = surgeAttemptTurnFrequency;
             this.economyBias = economyBias;
+        }
+
+        // ==== NEW: Game Phase Detection ====
+        private GamePhase GetCurrentPhase(int currentRound)
+        {
+            if (currentRound <= 10) return GamePhase.EarlyGame;
+            if (currentRound <= 25) return GamePhase.MidGame;
+            return GamePhase.LateGame;
+        }
+
+        // ==== NEW: Smart Early-Game Economy Mutation Prioritization ====
+        private bool ShouldPrioritizeEconomyMutation(Mutation mutation, GamePhase phase)
+        {
+            if (phase != GamePhase.EarlyGame) return false;
+            
+            // Prioritize these mutations in early game for maximum value
+            return mutation.Id == MutationIds.MutatorPhenotype ||
+                   mutation.Id == MutationIds.AdaptiveExpression ||
+                   mutation.Id == MutationIds.HyperadaptiveDrift;
+        }
+
+        // ==== NEW: Get Economy Mutations for Early Game ====
+        private List<Mutation> GetEarlyGameEconomyMutations(List<Mutation> allMutations, Player player, int currentRound)
+        {
+            return allMutations
+                .Where(m => ShouldPrioritizeEconomyMutation(m, GetCurrentPhase(currentRound)) &&
+                           player.CanUpgrade(m) &&
+                           (int)m.Tier <= (int)maxTier)
+                .ToList();
         }
 
         /// <summary>
@@ -118,6 +155,29 @@ namespace FungusToast.Core.AI
             Random rnd,
             ISimulationObserver? simulationObserver = null)
         {
+            var currentPhase = GetCurrentPhase(board.CurrentRound);
+            
+            // ==== NEW: Early Game Economy Priority ====
+            if (currentPhase == GamePhase.EarlyGame)
+            {
+                var economyMutations = GetEarlyGameEconomyMutations(allMutations, player, board.CurrentRound);
+                if (economyMutations.Count > 0)
+                {
+                    // Prioritize economy mutations in early game
+                    foreach (var economyMutation in economyMutations)
+                    {
+                        if (player.MutationPoints > 0 && player.CanUpgrade(economyMutation))
+                        {
+                            if (player.TryUpgradeMutation(economyMutation, simulationObserver, board.CurrentRound))
+                            {
+                                // Successfully upgraded an economy mutation, continue with normal logic
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
             // Sequentially work through target goals (only one goal at a time)
             foreach (var goal in targetMutationGoals)
             {

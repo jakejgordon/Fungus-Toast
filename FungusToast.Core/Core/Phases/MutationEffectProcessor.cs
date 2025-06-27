@@ -93,11 +93,11 @@ namespace FungusToast.Core.Phases
                 ? GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel * hyperadaptiveLevel
                 : 0f;
 
-            // Gather upgradable mutations by tier
-            var tier1 = allMutations.Where(m => m.Tier == MutationTier.Tier1 && player.CanUpgrade(m)).ToList();
-            var tier2 = allMutations.Where(m => m.Tier == MutationTier.Tier2 && player.CanUpgrade(m)).ToList();
-            var tier3 = allMutations.Where(m => m.Tier == MutationTier.Tier3 && player.CanUpgrade(m)).ToList();
-            var tier4 = allMutations.Where(m => m.Tier == MutationTier.Tier4 && player.CanUpgrade(m)).ToList();
+            // Gather upgradable mutations by tier - for auto-upgrades, we don't need mutation points
+            var tier1 = allMutations.Where(m => m.Tier == MutationTier.Tier1 && CanAutoUpgrade(player, m)).ToList();
+            var tier2 = allMutations.Where(m => m.Tier == MutationTier.Tier2 && CanAutoUpgrade(player, m)).ToList();
+            var tier3 = allMutations.Where(m => m.Tier == MutationTier.Tier3 && CanAutoUpgrade(player, m)).ToList();
+            var tier4 = allMutations.Where(m => m.Tier == MutationTier.Tier4 && CanAutoUpgrade(player, m)).ToList();
 
             List<Mutation> pool;
             MutationTier targetTier;
@@ -185,6 +185,28 @@ namespace FungusToast.Core.Phases
                 if (hyperadaptivePoints > 0)
                     observer.RecordHyperadaptiveDriftMutationPointsEarned(player.PlayerId, hyperadaptivePoints);
             }
+        }
+
+        /// <summary>
+        /// Checks if a mutation can be auto-upgraded (without requiring mutation points).
+        /// This is different from CanUpgrade which requires the player to have mutation points.
+        /// </summary>
+        private static bool CanAutoUpgrade(Player player, Mutation mutation)
+        {
+            if (mutation == null) return false;
+
+            // Surge: can't upgrade while active
+            if (mutation.IsSurge && player.IsSurgeActive(mutation.Id))
+                return false;
+
+            // Check prerequisites
+            foreach (var pre in mutation.Prerequisites)
+                if (player.GetMutationLevel(pre.MutationId) < pre.RequiredLevel)
+                    return false;
+
+            // Check if not at max level
+            int currentLevel = player.GetMutationLevel(mutation.Id);
+            return currentLevel < mutation.MaxLevel;
         }
 
 
