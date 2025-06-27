@@ -37,7 +37,8 @@ namespace FungusToast.Core.Death
             board.ExpireToxinTiles(board.CurrentGrowthCycle);
             List<Player> shuffledPlayers = players.OrderBy(_ => rng.NextDouble()).ToList();
 
-            ApplyPerTurnSporeEffects(shuffledPlayers, board, failedGrowthsByPlayerId, rng, simulationObserver);
+            // Fire DecayPhaseWithFailedGrowths event for Mycotoxin Tracer and other decay-phase mutations that need failed growth data
+            board.OnDecayPhaseWithFailedGrowths(failedGrowthsByPlayerId);
             
             // Fire DecayPhase event for Sporocidal Bloom and other decay-phase mutations
             board.OnDecayPhase();
@@ -54,13 +55,7 @@ namespace FungusToast.Core.Death
             Random rng,
             ISimulationObserver? simulationObserver)
         {
-            foreach (var p in players)
-            {
-                // Sporocidal Bloom is now handled via DecayPhase event
-
-                int failedGrowths = failedGrowthsByPlayerId.TryGetValue(p.PlayerId, out var v) ? v : 0;
-                MutationEffectProcessor.ApplyMycotoxinTracer(p, board, failedGrowths, rng, simulationObserver);
-            }
+            // Mycotoxin Tracer is now handled via DecayPhaseWithFailedGrowths event
         }
 
         /// <summary>

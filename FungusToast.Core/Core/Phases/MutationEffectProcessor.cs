@@ -1009,6 +1009,20 @@ namespace FungusToast.Core.Phases
             }
         }
 
+        public static void OnDecayPhase_MycotoxinTracer(
+            GameBoard board,
+            List<Player> players,
+            Dictionary<int, int> failedGrowthsByPlayerId,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            foreach (var player in players)
+            {
+                int failedGrowths = failedGrowthsByPlayerId.TryGetValue(player.PlayerId, out var v) ? v : 0;
+                ApplyMycotoxinTracer(player, board, failedGrowths, rng, observer);
+            }
+        }
+
     }
 
 

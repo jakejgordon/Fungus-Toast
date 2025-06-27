@@ -47,6 +47,7 @@ namespace FungusToast.Core.Board
         public delegate void PostGrowthPhaseEventHandler();
         public delegate void DecayPhaseEventHandler();
         public delegate void PreGrowthCycleEventHandler();
+        public delegate void DecayPhaseWithFailedGrowthsEventHandler(Dictionary<int, int> failedGrowthsByPlayerId);
 
         // 2. Events (public, so other components can subscribe)
         public event CellColonizedEventHandler? CellColonized;
@@ -67,6 +68,7 @@ namespace FungusToast.Core.Board
         public event PostGrowthPhaseEventHandler? PostGrowthPhase;
         public event DecayPhaseEventHandler? DecayPhase;
         public event PreGrowthCycleEventHandler? PreGrowthCycle;
+        public event DecayPhaseWithFailedGrowthsEventHandler? DecayPhaseWithFailedGrowths;
 
         // 3. Helper methods to invoke (recommended: protected virtual, as in standard .NET pattern)
         protected virtual void OnCellColonized(int playerId, int tileId) =>
@@ -126,6 +128,9 @@ namespace FungusToast.Core.Board
 
         public virtual void OnPreGrowthCycle() =>
             PreGrowthCycle?.Invoke();
+
+        public virtual void OnDecayPhaseWithFailedGrowths(Dictionary<int, int> failedGrowthsByPlayerId) =>
+            DecayPhaseWithFailedGrowths?.Invoke(failedGrowthsByPlayerId);
 
         /// <summary>
         /// Fired before a growth attempt. Listeners may cancel the growth.
