@@ -159,7 +159,7 @@ namespace FungusToast.Core.Players
 
         /* ---------------- Upgrade API ------------------------- */
 
-        public bool TryUpgradeMutation(Mutation mutation, ISimulationObserver? simulationObserver = null)
+        public bool TryUpgradeMutation(Mutation mutation, ISimulationObserver? simulationObserver, int currentRound)
         {
             if (mutation == null) return false;
 
@@ -181,7 +181,7 @@ namespace FungusToast.Core.Players
 
                 // Deduct points and upgrade
                 MutationPoints -= activationCost;
-                pm.Upgrade();
+                pm.Upgrade(currentRound);
                 int newLevel = pm.CurrentLevel;
                 int duration = mutation.SurgeDuration;
 
@@ -197,7 +197,7 @@ namespace FungusToast.Core.Players
                 if (MutationPoints >= mutation.PointsPerUpgrade && pm.CurrentLevel < mutation.MaxLevel)
                 {
                     MutationPoints -= mutation.PointsPerUpgrade;
-                    pm.Upgrade();
+                    pm.Upgrade(currentRound);
                     simulationObserver?.RecordMutationPointsSpent(PlayerId, mutation.Tier, mutation.PointsPerUpgrade);
                     return true;
                 }
@@ -241,7 +241,7 @@ namespace FungusToast.Core.Players
                 && (mutation.Category == MutationCategory.Growth || mutation.Category == MutationCategory.CellularResilience);
         }
 
-        public bool TryAutoUpgrade(Mutation mut)
+        public bool TryAutoUpgrade(Mutation mut, int currentRound)
         {
             if (mut == null) return false;
 
@@ -251,7 +251,7 @@ namespace FungusToast.Core.Players
             var pm = PlayerMutations[mut.Id];
             if (pm.CurrentLevel < mut.MaxLevel)
             {
-                pm.Upgrade();
+                pm.Upgrade(currentRound);
                 return true;
             }
             return false;

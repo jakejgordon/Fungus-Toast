@@ -176,7 +176,7 @@ namespace FungusToast.Simulation.Analysis
             return effects;
         }
 
-        public void PrintReport(List<(int PlayerId, string StrategyName)> rankedPlayers)
+        public void PrintReport(List<(int PlayerId, string StrategyName)> rankedPlayers, SimulationTrackingContext tracking)
         {
             // Prepare category sort order
             var categorySortOrder = new Dictionary<MutationCategory, int>
@@ -189,8 +189,8 @@ namespace FungusToast.Simulation.Analysis
             };
 
             Console.WriteLine("\nPlayer-Mutation Usage Summary (per Player, all games):");
-            Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-12} | {5,-8} | {6,-8} | {7,-10} | {8,-12}",
-                "PlayerId", "Strategy", "Tier", "Mutation Name", "Effect", "Games", "AvgLvl", "Avg Eff", "Tot Eff");
+            Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-12} | {5,-8} | {6,-8} | {7,-10} | {8,-12} | {9,12} | {10,6} | {11,6} | {12,4}",
+                "PlayerId", "Strategy", "Tier", "Mutation Name", "Effect", "Games", "AvgLvl", "Avg Eff", "Tot Eff", "AvgFirstRound", "Min", "Max", "N");
             Console.WriteLine(new string('-', 8) + "-|-" +
                                 new string('-', 25) + "-|-" +
                                 new string('-', 6) + "-|-" +
@@ -199,7 +199,11 @@ namespace FungusToast.Simulation.Analysis
                                 new string('-', 8) + "-|-" +
                                 new string('-', 8) + "-|-" +
                                 new string('-', 10) + "-|-" +
-                                new string('-', 12));
+                                new string('-', 12) + "-|-" +
+                                new string('-', 12) + "-|-" +
+                                new string('-', 6) + "-|-" +
+                                new string('-', 6) + "-|-" +
+                                new string('-', 4));
 
             // Group by player/strategy/mutation/effect
             var grouped = _records
@@ -232,7 +236,8 @@ namespace FungusToast.Simulation.Analysis
 
                 foreach (var r in playerRecords)
                 {
-                    Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-12} | {5,-8} | {6,-8} | {7,-10:N2} | {8,-12}",
+                    var (avgFirst, minFirst, maxFirst, nFirst) = tracking.GetFirstUpgradeStats(r.PlayerId, r.MutationId);
+                    Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-12} | {5,-8} | {6,-8} | {7,-10:N2} | {8,-12} | {9,12:N2} | {10,6} | {11,6} | {12,4}",
                         r.PlayerId,
                         Truncate(r.Strategy, 25),
                         r.Tier.ToString(),
@@ -241,10 +246,14 @@ namespace FungusToast.Simulation.Analysis
                         r.Games,
                         r.AvgLevel.ToString("F1"),
                         r.AvgEffect,
-                        r.TotalEffect);
+                        r.TotalEffect,
+                        avgFirst > 0 ? avgFirst : double.NaN,
+                        minFirst > 0 ? minFirst : 0,
+                        maxFirst > 0 ? maxFirst : 0,
+                        nFirst);
                 }
             }
-            Console.WriteLine(new string('-', 125));
+            Console.WriteLine(new string('-', 160));
         }
 
         private static string Truncate(string value, int maxLength) =>

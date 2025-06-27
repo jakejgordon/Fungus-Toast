@@ -157,7 +157,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public bool TryUpgradeMutation(Mutation mutation)
         {
-            if (humanPlayer.TryUpgradeMutation(mutation))
+            int currentRound = GameManager.Instance.Board.CurrentRound;
+            if (humanPlayer.TryUpgradeMutation(mutation, null, currentRound))
             {
                 RefreshSpendPointsButtonUI();
                 GameManager.Instance.GameUI.MoldProfilePanel.Refresh();

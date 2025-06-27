@@ -32,6 +32,10 @@ namespace FungusToast.Core.Players
         /// </summary>
         public bool IsMaxedOut => Mutation != null && CurrentLevel >= Mutation.MaxLevel;
 
+        /// <summary>
+        /// The round number when the mutation was first upgraded.
+        /// </summary>
+        public int? FirstUpgradeRound { get; private set; }
 
         public PlayerMutation(int playerId, int mutationId, Mutation mutation)
         {
@@ -44,10 +48,14 @@ namespace FungusToast.Core.Players
         /// <summary>
         /// Increases the current level by 1, up to the mutation's maximum level.
         /// </summary>
-        public void Upgrade()
+        public void Upgrade(int currentRound)
         {
             if (Mutation != null && CurrentLevel < Mutation.MaxLevel)
             {
+                if (CurrentLevel == 0 && FirstUpgradeRound == null)
+                {
+                    FirstUpgradeRound = currentRound;
+                }
                 CurrentLevel++;
             }
         }
@@ -64,6 +72,5 @@ namespace FungusToast.Core.Players
         {
             return Mutation != null && CurrentLevel < Mutation.MaxLevel;
         }
-
     }
 }

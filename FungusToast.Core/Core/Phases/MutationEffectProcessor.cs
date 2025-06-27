@@ -74,6 +74,7 @@ namespace FungusToast.Core.Phases
             Player player,
             List<Mutation> allMutations,
             Random rng,
+            int currentRound,
             ISimulationObserver? observer = null
         )
         {
@@ -154,7 +155,7 @@ namespace FungusToast.Core.Phases
 
             for (int i = 0; i < upgrades; i++)
             {
-                bool upgraded = player.TryAutoUpgrade(pick);
+                bool upgraded = player.TryAutoUpgrade(pick, currentRound);
                 if (!upgraded) break;
 
                 // Attribution logic:
@@ -1052,11 +1053,12 @@ namespace FungusToast.Core.Phases
             List<Player> players,
             List<Mutation> allMutations,
             Random rng,
+            int currentRound,
             ISimulationObserver? observer = null)
         {
             foreach (var player in players)
             {
-                TryApplyMutatorPhenotype(player, allMutations, rng, observer);
+                TryApplyMutatorPhenotype(player, allMutations, rng, currentRound, observer);
             }
         }
 

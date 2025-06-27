@@ -145,7 +145,7 @@ namespace FungusToast.Core.AI
 
                     while (curLvl < needed && player.MutationPoints > 0 && player.CanUpgrade(mutation))
                     {
-                        if (TryUpgradeWithTendrilAwareness(player, mutation, allMutations, board, simulationObserver))
+                        if (player.TryUpgradeMutation(mutation, simulationObserver, board.CurrentRound))
                         {
                             curLvl++;
                             upgraded = true;
@@ -203,7 +203,7 @@ namespace FungusToast.Core.AI
 
                         if (player.MutationPoints >= cost)
                         {
-                            player.TryUpgradeMutation(surge, simulationObserver);
+                            player.TryUpgradeMutation(surge, simulationObserver, board.CurrentRound);
                             return true;
                         }
                     }
@@ -226,7 +226,7 @@ namespace FungusToast.Core.AI
 
                             if (player.MutationPoints >= cost)
                             {
-                                player.TryUpgradeMutation(surge, simulationObserver);
+                                player.TryUpgradeMutation(surge, simulationObserver, board.CurrentRound);
                                 return true;
                             }
                         }
@@ -259,7 +259,7 @@ namespace FungusToast.Core.AI
                 var anyUpgradable = allMutations.Where(m => player.CanUpgrade(m)).ToList();
                 if (anyUpgradable.Count == 0)
                     break;
-                player.TryUpgradeMutation(anyUpgradable[0]);
+                player.TryUpgradeMutation(anyUpgradable[0], simulationObserver, board.CurrentRound);
             }
         }
 
@@ -418,11 +418,11 @@ namespace FungusToast.Core.AI
             {
                 var bestTendril = PickBestTendrilMutation(player, allCandidates.Where(IsTendril).ToList(), board);
                 if (bestTendril != null)
-                    return player.TryUpgradeMutation(bestTendril);
+                    return player.TryUpgradeMutation(bestTendril, simulationObserver, board.CurrentRound);
                 return false;
             }
 
-            return player.TryUpgradeMutation(candidate);
+            return player.TryUpgradeMutation(candidate, simulationObserver, board.CurrentRound);
         }
 
         private bool IsTendril(Mutation m)

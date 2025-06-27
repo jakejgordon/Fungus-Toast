@@ -85,7 +85,7 @@ namespace FungusToast.Core.Events
             board.MutationPhaseStart += () =>
             {
                 var allMutations = MutationRepository.BuildFullMutationSet().Item1.Values.ToList();
-                MutationEffectProcessor.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, observer);
+                MutationEffectProcessor.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, board.CurrentRound, observer);
             };
 
             // TODO: Add additional event-driven rule subscriptions here.

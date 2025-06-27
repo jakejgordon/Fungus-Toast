@@ -63,6 +63,8 @@ namespace FungusToast.Unity
 
         private bool isInDraftPhase = false;
 
+        private Dictionary<(int playerId, int mutationId), List<int>> FirstUpgradeRounds = new();
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -238,6 +240,20 @@ namespace FungusToast.Unity
             int round = Board.CurrentRound;
             float occupancy = Board.GetOccupiedTileRatio() * 100f; // ratio to percent
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy);
+
+            foreach (var player in players)
+            {
+                foreach (var pm in player.PlayerMutations.Values)
+                {
+                    if (pm.FirstUpgradeRound.HasValue)
+                    {
+                        var key = (player.PlayerId, pm.MutationId);
+                        if (!FirstUpgradeRounds.ContainsKey(key))
+                            FirstUpgradeRounds[key] = new List<int>();
+                        FirstUpgradeRounds[key].Add(pm.FirstUpgradeRound.Value);
+                    }
+                }
+            }
         }
 
         public void StartNextRound()
@@ -313,6 +329,14 @@ namespace FungusToast.Unity
 
             gameUIManager.EndGamePanel.gameObject.SetActive(true);
             gameUIManager.EndGamePanel.ShowResults(ranked, Board);
+
+            foreach (var ((playerId, mutationId), rounds) in FirstUpgradeRounds)
+            {
+                double avg = rounds.Average();
+                int min = rounds.Min();
+                int max = rounds.Max();
+                Console.WriteLine($"Player {playerId} | Mutation {mutationId} | Avg First Acquired: {avg:F1} | Min: {min} | Max: {max}");
+            }
         }
 
         private void AssignMutationPoints()

@@ -2,6 +2,7 @@
 using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -500,5 +501,35 @@ namespace FungusToast.Simulation.Models
         {
             return standardGrowthsByPlayer.TryGetValue(playerId, out var count) ? count : 0;
         }
+
+        // ────────────────
+        // First-Acquired Rounds
+        // ────────────────
+        private readonly Dictionary<(int playerId, int mutationId), List<int>> firstUpgradeRounds = new();
+        public void RecordFirstUpgradeRounds(List<Player> players)
+        {
+            foreach (var player in players)
+            {
+                foreach (var pm in player.PlayerMutations.Values)
+                {
+                    if (pm.FirstUpgradeRound.HasValue)
+                    {
+                        var key = (player.PlayerId, pm.MutationId);
+                        if (!firstUpgradeRounds.ContainsKey(key))
+                            firstUpgradeRounds[key] = new List<int>();
+                        firstUpgradeRounds[key].Add(pm.FirstUpgradeRound.Value);
+                    }
+                }
+            }
+        }
+        public (double avg, int min, int max, int count) GetFirstUpgradeStats(int playerId, int mutationId)
+        {
+            var key = (playerId, mutationId);
+            if (!firstUpgradeRounds.ContainsKey(key) || firstUpgradeRounds[key].Count == 0)
+                return (0, 0, 0, 0);
+            var list = firstUpgradeRounds[key];
+            return (list.Average(), list.Min(), list.Max(), list.Count);
+        }
+        public Dictionary<(int playerId, int mutationId), List<int>> GetAllFirstUpgradeRounds() => new(firstUpgradeRounds);
     }
 }

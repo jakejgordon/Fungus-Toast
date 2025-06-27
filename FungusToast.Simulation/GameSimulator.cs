@@ -82,6 +82,9 @@ namespace FungusToast.Simulation.GameSimulation
                 simTracking.SetReclaims(player.PlayerId, reclaims);
             }
 
+            // Record first-acquired rounds for each mutation per player
+            simTracking.RecordFirstUpgradeRounds(players);
+
             var result = GameResult.From(board, players, board.CurrentRound, simTracking);
 
             if (gameIndex > 0 && totalGames > 0)
