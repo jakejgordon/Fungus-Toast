@@ -40,11 +40,10 @@ namespace FungusToast.Core.Death
             // Fire DecayPhaseWithFailedGrowths event for Mycotoxin Tracer and other decay-phase mutations that need failed growth data
             board.OnDecayPhaseWithFailedGrowths(failedGrowthsByPlayerId);
             
-            // Fire DecayPhase event for Sporocidal Bloom and other decay-phase mutations
+            // Fire DecayPhase event for Sporocidal Bloom, Mycotoxin Potentiation, and other decay-phase mutations
             board.OnDecayPhase();
             
             ApplyNecrophyticBloomTrigger(shuffledPlayers, board, rng, simulationObserver);
-            MutationEffectProcessor.ApplyToxinAuraDeaths(board, players, rng, simulationObserver);
             EvaluateProbabilisticDeaths(board, shuffledPlayers, rng, simulationObserver);
         }
 

@@ -1023,6 +1023,15 @@ namespace FungusToast.Core.Phases
             }
         }
 
+        public static void OnDecayPhase_MycotoxinPotentiation(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            ApplyToxinAuraDeaths(board, players, rng, observer);
+        }
+
     }
 
 

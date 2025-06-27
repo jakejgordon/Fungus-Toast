@@ -56,6 +56,12 @@ namespace FungusToast.Core.Events
                 MutationEffectProcessor.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
             };
 
+            // Mycotoxin Potentiation (decay phase toxin aura deaths)
+            board.DecayPhase += () =>
+            {
+                MutationEffectProcessor.OnDecayPhase_MycotoxinPotentiation(board, players, rng, observer);
+            };
+
             // Mycotoxin Tracer (decay phase spore effects with failed growth data)
             board.DecayPhaseWithFailedGrowths += (failedGrowthsByPlayerId) =>
             {
