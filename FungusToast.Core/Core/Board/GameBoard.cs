@@ -48,6 +48,7 @@ namespace FungusToast.Core.Board
         public delegate void DecayPhaseEventHandler();
         public delegate void PreGrowthCycleEventHandler();
         public delegate void DecayPhaseWithFailedGrowthsEventHandler(Dictionary<int, int> failedGrowthsByPlayerId);
+        public delegate void NecrophyticBloomActivatedEventHandler();
 
         // 2. Events (public, so other components can subscribe)
         public event CellColonizedEventHandler? CellColonized;
@@ -69,6 +70,7 @@ namespace FungusToast.Core.Board
         public event DecayPhaseEventHandler? DecayPhase;
         public event PreGrowthCycleEventHandler? PreGrowthCycle;
         public event DecayPhaseWithFailedGrowthsEventHandler? DecayPhaseWithFailedGrowths;
+        public event NecrophyticBloomActivatedEventHandler? NecrophyticBloomActivatedEvent;
 
         // 3. Helper methods to invoke (recommended: protected virtual, as in standard .NET pattern)
         protected virtual void OnCellColonized(int playerId, int tileId) =>
@@ -671,6 +673,9 @@ namespace FungusToast.Core.Board
             OnDeadCellReclaim?.Invoke(cell, playerId);
             return true;
         }
+
+        public virtual void OnNecrophyticBloomActivatedEvent() =>
+            NecrophyticBloomActivatedEvent?.Invoke();
 
     }
 }

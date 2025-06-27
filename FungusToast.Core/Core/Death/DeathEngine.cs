@@ -73,15 +73,7 @@ namespace FungusToast.Core.Death
                 occupiedPercent >= GameBalance.NecrophyticBloomActivationThreshold)
             {
                 board.NecrophyticBloomActivated = true;
-
-                foreach (var p in players)
-                {
-                    if (p.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
-                    {
-                        MutationEffectProcessor.TriggerNecrophyticBloomInitialBurst(
-                            p, board, rng, simulationObserver);
-                    }
-                }
+                board.OnNecrophyticBloomActivatedEvent();
             }
         }
 

@@ -1032,6 +1032,21 @@ namespace FungusToast.Core.Phases
             ApplyToxinAuraDeaths(board, players, rng, observer);
         }
 
+        public static void OnNecrophyticBloomActivated(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            foreach (var p in players)
+            {
+                if (p.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
+                {
+                    TriggerNecrophyticBloomInitialBurst(p, board, rng, observer);
+                }
+            }
+        }
+
     }
 
 

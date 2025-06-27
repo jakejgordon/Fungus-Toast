@@ -75,6 +75,12 @@ namespace FungusToast.Core.Events
                 MutationEffectProcessor.OnPreGrowthCycle_MycotoxinCatabolism(board, players, rng, roundContext, observer);
             };
 
+            // Necrophytic Bloom (initial burst on activation)
+            board.NecrophyticBloomActivatedEvent += () =>
+            {
+                MutationEffectProcessor.OnNecrophyticBloomActivated(board, players, rng, observer);
+            };
+
             // TODO: Add additional event-driven rule subscriptions here.
             // e.g., Necrosporulation, Sporocidal Bloom, Creeping Mold, etc.
         }
