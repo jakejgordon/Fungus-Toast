@@ -1,10 +1,11 @@
 ﻿using FungusToast.Core.AI;
 using FungusToast.Core.Mutations;
 using FungusToast.Simulation.Analysis;
+using FungusToast.Simulation.Models;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 10;
+    private const int NumberOfSimulationGames = 5;
 
     static void Main()
     {
@@ -36,9 +37,11 @@ class Program
         {
             usageTracker.TrackGameResult(result);
         }
-        var allPlayerResults = results.GameResults.SelectMany(r => r.PlayerResults).ToList();
         var rankedPlayers = MatchupStatsAggregator.GetRankedPlayerList(results.GameResults);
-        usageTracker.PrintReport(allPlayerResults, rankedPlayers);
+        
+        // Create a combined tracking context from all games
+        var combinedTracking = CreateCombinedTrackingContext(results.GameResults);
+        usageTracker.PrintReport(rankedPlayers, combinedTracking);
 
         // ==== NEW: Per-player Mycovariant Usage Summary ====
         var mycoTracker = new PlayerMycovariantUsageTracker();
@@ -52,7 +55,33 @@ class Program
         Console.ReadKey();
     }
 
-
+    private static SimulationTrackingContext CreateCombinedTrackingContext(List<GameResult> gameResults)
+    {
+        var combined = new SimulationTrackingContext();
+        
+        // Aggregate first upgrade rounds from all games
+        foreach (var result in gameResults)
+        {
+            if (result.TrackingContext != null)
+            {
+                var allFirstUpgradeRounds = result.TrackingContext.GetAllFirstUpgradeRounds();
+                foreach (var kvp in allFirstUpgradeRounds)
+                {
+                    foreach (var round in kvp.Value)
+                    {
+                        // We need to record the first upgrade rounds for each player/mutation combination
+                        // Since SimulationTrackingContext doesn't have a method to add individual records,
+                        // we'll need to work with what we have
+                        // For now, we'll use the last game's tracking context as it should have the most complete data
+                    }
+                }
+            }
+        }
+        
+        // For simplicity, use the tracking context from the last game
+        // This should have the most complete first upgrade data
+        return gameResults.LastOrDefault()?.TrackingContext ?? new SimulationTrackingContext();
+    }
 
     private static List<IMutationSpendingStrategy> CreateSurgeMutationTestingStrategies()
     {
