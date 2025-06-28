@@ -43,5 +43,6 @@ namespace FungusToast.Core.Metrics
         void ReportHyphalVectoringColonized(int playerId, int colonized);
         void ReportHyphalVectoringInvalid(int playerId, int invalid);
         void RecordStandardGrowth(int playerId);
+        void RecordNeutralizingMantleEffect(int playerId, int toxinsNeutralized);
     }
 }

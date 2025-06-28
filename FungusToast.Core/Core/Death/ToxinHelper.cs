@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.Board;
+using FungusToast.Core.Events;
 using FungusToast.Core.Players;
 using System;
 
@@ -12,6 +13,14 @@ namespace FungusToast.Core.Death
         /// </summary>
         public static void ConvertToToxin(GameBoard board, int tileId, int expirationCycle, Player? owner = null)
         {
+            // Fire ToxinPlaced event to allow for neutralization
+            var toxinPlacedArgs = new ToxinPlacedEventArgs(tileId, owner?.PlayerId ?? -1);
+            board.OnToxinPlaced(toxinPlacedArgs);
+            
+            // If neutralized, don't place the toxin
+            if (toxinPlacedArgs.Neutralized)
+                return;
+
             var tile = board.GetTileById(tileId);
             var cell = tile?.FungalCell;
 
@@ -45,10 +54,18 @@ namespace FungusToast.Core.Death
             // 1. Kill the cell via board, so OnCellDeath fires!
             board.KillFungalCell(cell, reason, owner?.PlayerId);
 
-            // 2. Now convert the cell to toxin (state change)
+            // 2. Fire ToxinPlaced event to allow for neutralization
+            var toxinPlacedArgs = new ToxinPlacedEventArgs(tileId, owner?.PlayerId ?? -1);
+            board.OnToxinPlaced(toxinPlacedArgs);
+            
+            // If neutralized, don't place the toxin
+            if (toxinPlacedArgs.Neutralized)
+                return;
+
+            // 3. Now convert the cell to toxin (state change)
             cell.ConvertToToxin(expirationCycle, owner);
 
-            // 3. Place the toxin cell on the board
+            // 4. Place the toxin cell on the board
             board.PlaceFungalCell(cell); // will fire toxin events as needed
         }
     }

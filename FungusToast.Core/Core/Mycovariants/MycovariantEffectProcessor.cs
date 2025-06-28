@@ -2,11 +2,15 @@
 using FungusToast.Core.Config;
 using FungusToast.Core.Core.Board;
 using FungusToast.Core.Death;
+using FungusToast.Core.Events;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
 using System.Numerics;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 public static class MycovariantEffectProcessor
 {
@@ -102,8 +106,7 @@ public static class MycovariantEffectProcessor
             if (prevCell == null || prevCell.IsDead)
             {
                 // Toxify empty or dead cell (call it "toxified" = "placed toxin")
-                var toxinCell = new FungalCell(playerId, line[i], expirationCycle);
-                targetTile.PlaceFungalCell(toxinCell);
+                ToxinHelper.ConvertToToxin(board, line[i], expirationCycle, player);
                 poisoned++; // toxified → poisoned (for simulation output)
             }
             else if (prevCell.IsAlive && prevCell.OwnerPlayerId != playerId)
@@ -138,9 +141,58 @@ public static class MycovariantEffectProcessor
         playerMyco.MarkTriggered();
     }
 
+    /// <summary>
+    /// Handles the Neutralizing Mantle effect in response to a toxin being placed.
+    /// If the toxin is adjacent to a player's living cells and they have Neutralizing Mantle,
+    /// there's a chance to neutralize (remove) the toxin before it's placed.
+    /// </summary>
+    public static void OnToxinPlaced_NeutralizingMantle(
+        ToxinPlacedEventArgs eventArgs,
+        GameBoard board,
+        List<Player> players,
+        Random rng,
+        ISimulationObserver? observer = null)
+    {
+        int toxinTileId = eventArgs.TileId;
+        int placingPlayerId = eventArgs.PlacingPlayerId;
 
+        // Check all players for Neutralizing Mantle
+        foreach (var player in players)
+        {
+            // Skip the player who is placing the toxin
+            if (player.PlayerId == placingPlayerId)
+                continue;
 
+            // Check if this player has Neutralizing Mantle
+            var playerMyco = player.GetMycovariant(MycovariantIds.NeutralizingMantleId);
+            if (playerMyco == null)
+                continue;
 
+            // Check if the toxin tile is adjacent to any of this player's living cells
+            var adjacentTiles = board.GetAdjacentTiles(toxinTileId);
+            bool isAdjacentToLivingCell = adjacentTiles.Any(tile => 
+                tile.FungalCell?.IsAlive == true && 
+                tile.FungalCell.OwnerPlayerId == player.PlayerId);
 
+            if (!isAdjacentToLivingCell)
+                continue;
 
+            // Check neutralization chance
+            float neutralizeChance = MycovariantGameBalance.NeutralizingMantleNeutralizeChance;
+            if (rng.NextDouble() < neutralizeChance)
+            {
+                // Neutralize the toxin
+                eventArgs.Neutralized = true;
+                
+                // Record the effect
+                playerMyco.IncrementEffectCount(MycovariantEffectType.Neutralized, 1);
+                
+                // Report to observer
+                observer?.RecordNeutralizingMantleEffect(player.PlayerId, 1);
+                
+                // Only the first player to neutralize gets the effect
+                break;
+            }
+        }
+    }
 }

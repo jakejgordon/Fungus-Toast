@@ -9,6 +9,7 @@
         Poisoned,
         Toxified,
         MpBonus,
+        Neutralized,
         // Add others as needed
     }
 }

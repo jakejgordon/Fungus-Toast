@@ -31,7 +31,10 @@ namespace FungusToast.Core.Mycovariants
                 MycovariantFactory.JettingMyceliumWest(),
 
                 // --- Universal/Fallback options ---
-                MycovariantFactory.PlasmidBounty()
+                MycovariantFactory.PlasmidBounty(),
+                
+                // --- Passive/Defensive options ---
+                MycovariantFactory.NeutralizingMantle()
                 // Add additional universal Mycovariants as created
             };
         }

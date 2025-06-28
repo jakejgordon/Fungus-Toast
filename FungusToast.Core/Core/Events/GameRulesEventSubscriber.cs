@@ -4,6 +4,7 @@ using FungusToast.Core.Death;
 using FungusToast.Core.Events;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using System;
@@ -86,6 +87,12 @@ namespace FungusToast.Core.Events
             {
                 var allMutations = MutationRepository.BuildFullMutationSet().Item1.Values.ToList();
                 MutationEffectProcessor.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, board.CurrentRound, observer);
+            };
+
+            // Neutralizing Mantle (toxin placement neutralization)
+            board.ToxinPlaced += (sender, args) =>
+            {
+                MycovariantEffectProcessor.OnToxinPlaced_NeutralizingMantle(args, board, players, rng, observer);
             };
 
             // TODO: Add additional event-driven rule subscriptions here.

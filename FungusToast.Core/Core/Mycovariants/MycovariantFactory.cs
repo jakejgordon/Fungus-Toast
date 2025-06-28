@@ -102,14 +102,12 @@ namespace FungusToast.Core.Mycovariants
         public static Mycovariant NeutralizingMantle() =>
         new Mycovariant
         {
-            Id = MycovariantIds.NeutralizingMantleId,   // You’ll want to define this in MycovariantIds!
+            Id = MycovariantIds.NeutralizingMantleId,
             Name = "Neutralizing Mantle",
             Description = $"Whenever an enemy toxin is placed adjacent to your living cells, you have a {MycovariantGameBalance.NeutralizingMantleNeutralizeChance * 100f:0}% chance to neutralize (remove) it instantly.",
             FlavorText = "A protective sheath of hyphae, secreting enzymes to break down hostile compounds.",
             Type = MycovariantType.Passive,
             IsUniversal = false
-            // Passive effect — needs to be checked in your toxin placement logic!
-            // No ApplyEffect needed unless you want a one-off effect.
         };
 
 

@@ -1005,8 +1005,7 @@ namespace FungusToast.Core.Phases
                     else
                     {
                         // Empty or already toxin: place toxin
-                        var toxinCell = new FungalCell(player.PlayerId, target.TileId, toxinDuration);
-                        board.PlaceFungalCell(toxinCell);
+                        ToxinHelper.ConvertToToxin(board, target.TileId, toxinDuration, player);
                         toxified++;
                     }
                 }

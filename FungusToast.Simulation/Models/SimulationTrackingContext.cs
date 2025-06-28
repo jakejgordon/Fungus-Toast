@@ -531,5 +531,19 @@ namespace FungusToast.Simulation.Models
             return (list.Average(), list.Min(), list.Max(), list.Count);
         }
         public Dictionary<(int playerId, int mutationId), List<int>> GetAllFirstUpgradeRounds() => new(firstUpgradeRounds);
+
+        // ────────────────
+        // Neutralizing Mantle Effects
+        // ────────────────
+        private readonly Dictionary<int, int> neutralizingMantleEffects = new();
+        public void RecordNeutralizingMantleEffect(int playerId, int toxinsNeutralized)
+        {
+            if (!neutralizingMantleEffects.ContainsKey(playerId))
+                neutralizingMantleEffects[playerId] = 0;
+            neutralizingMantleEffects[playerId] += toxinsNeutralized;
+        }
+        public int GetNeutralizingMantleEffects(int playerId)
+            => neutralizingMantleEffects.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllNeutralizingMantleEffects() => new(neutralizingMantleEffects);
     }
 }
