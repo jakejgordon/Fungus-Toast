@@ -2,6 +2,7 @@
 using FungusToast.Core.Config;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,29 @@ namespace FungusToast.Core.AI
         MinorEconomy,
         ModerateEconomy,
         MaxEconomy
+    }
+
+    /// <summary>
+    /// Defines a preference for a specific mycovariant with optional priority level
+    /// </summary>
+    public class MycovariantPreference
+    {
+        public IReadOnlyCollection<int> MycovariantIds { get; }
+        public int Priority { get; } // Higher number = higher priority
+        public string Description { get; }
+
+        public MycovariantPreference(int mycovariantId, int priority = 1, string description = "")
+        {
+            MycovariantIds = new List<int> { mycovariantId };
+            Priority = priority;
+            Description = description;
+        }
+        public MycovariantPreference(IEnumerable<int> mycovariantIds, int priority = 1, string description = "")
+        {
+            MycovariantIds = mycovariantIds.ToList();
+            Priority = priority;
+            Description = description;
+        }
     }
 
     /// <summary>
@@ -40,6 +64,7 @@ namespace FungusToast.Core.AI
         private readonly List<TargetMutationGoal> targetMutationGoals;
         private readonly List<int> surgePriorityIds;
         private readonly EconomyBias economyBias;
+        private readonly List<MycovariantPreference> mycovariantPreferences;
 
         // ==== NEW: Dynamic Timing Awareness ====
         private enum GamePhase
@@ -57,7 +82,8 @@ namespace FungusToast.Core.AI
             List<TargetMutationGoal>? targetMutationGoals = null,
             List<int>? surgePriorityIds = null,
             int surgeAttemptTurnFrequency = GameBalance.DefaultSurgeAIAttemptTurnFrequency,
-            EconomyBias economyBias = EconomyBias.Neutral)
+            EconomyBias economyBias = EconomyBias.Neutral,
+            List<MycovariantPreference>? mycovariantPreferences = null)
         {
             StrategyName = strategyName;
             this.prioritizeHighTier = prioritizeHighTier;
@@ -67,6 +93,7 @@ namespace FungusToast.Core.AI
             this.surgePriorityIds = surgePriorityIds ?? new();
             this.surgeAttemptTurnFrequency = surgeAttemptTurnFrequency;
             this.economyBias = economyBias;
+            this.mycovariantPreferences = mycovariantPreferences ?? new();
         }
 
         // ==== NEW: Game Phase Detection ====
@@ -147,6 +174,34 @@ namespace FungusToast.Core.AI
                 .ToList();
         }
 
+        // ==== NEW: Mycovariant Preference Logic ====
+        /// <summary>
+        /// Returns a list of preferred mycovariants for this strategy, ordered by priority
+        /// </summary>
+        public List<MycovariantPreference> GetMycovariantPreferences()
+        {
+            return mycovariantPreferences
+                .OrderByDescending(p => p.Priority)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Gets the highest priority mycovariant preference that the player doesn't already have
+        /// </summary>
+        public MycovariantPreference? GetPreferredMycovariant(Player player)
+        {
+            var availableMycovariants = MycovariantRepository.All.ToList();
+            foreach (var preference in mycovariantPreferences.OrderByDescending(p => p.Priority))
+            {
+                // Check if player already has any of these mycovariants
+                if (player.PlayerMycovariants.Any(pm => preference.MycovariantIds.Contains(pm.Mycovariant.Id)))
+                    continue;
+                // Check if any of these mycovariants are available in the draft
+                if (availableMycovariants.Any(m => preference.MycovariantIds.Contains(m.Id)))
+                    return preference;
+            }
+            return null;
+        }
 
         protected override void PerformSpendingLogic(
             Player player,

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Mycovariants;
 
 namespace FungusToast.Core.AI
 {
@@ -118,9 +119,71 @@ namespace FungusToast.Core.AI
             )
         };
 
+        /// <summary>
+        /// Testing strategies for specific scenarios (not included in proven strategies)
+        /// </summary>
+        public static readonly List<IMutationSpendingStrategy> TestingStrategies = new List<IMutationSpendingStrategy>
+        {
+            new ParameterizedSpendingStrategy(
+                strategyName: "Toxin Spammer",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 30),  // Max level for lots of toxin drops
+                    new TargetMutationGoal(MutationIds.SporocidalBloom, 5),   // High level for spore drops
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 5), // High level for toxin kills
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 30),    // Max level for growth
+                    new TargetMutationGoal(MutationIds.HomeostaticHarmony, 30) // Max level for resilience
+                },
+                economyBias: EconomyBias.MaxEconomy
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "Neutralizing Defender",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 30),    // Max level for growth
+                    new TargetMutationGoal(MutationIds.HomeostaticHarmony, 30), // Max level for resilience
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 15), // High level for survival
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, 10) // High level for reclamation
+                },
+                economyBias: EconomyBias.MaxEconomy,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new MycovariantPreference(MycovariantIds.NeutralizingMantleId, 10, "Primary defense against toxins"),
+                    new MycovariantPreference(MycovariantIds.PlasmidBountyId, 5, "Economy boost")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "Jetting Aggressor",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 30),    // Max level for growth
+                    new TargetMutationGoal(MutationIds.CreepingMold, 10),     // High level for movement
+                    new TargetMutationGoal(MutationIds.HyphalVectoring, 5),   // High level for directional growth
+                    new TargetMutationGoal(MutationIds.Necrosporulation, 5)   // High level for spore production
+                },
+                economyBias: EconomyBias.MaxEconomy,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new MycovariantPreference(new [] {
+                        MycovariantIds.JettingMyceliumEastId,
+                        MycovariantIds.JettingMyceliumWestId,
+                        MycovariantIds.JettingMyceliumNorthId,
+                        MycovariantIds.JettingMyceliumSouthId
+                    }, 10, "Primary offensive tool (any Jetting Mycelium)"),
+                    new MycovariantPreference(MycovariantIds.PlasmidBountyId, 5, "Economy boost")
+                }
+            )
+        };
+
         // Optional: a dictionary by name for UI selection or reference
         public static readonly Dictionary<string, IMutationSpendingStrategy> ProvenStrategiesByName =
             ProvenStrategies.ToDictionary(s => s.StrategyName, s => s);
+
+        public static readonly Dictionary<string, IMutationSpendingStrategy> TestingStrategiesByName =
+            TestingStrategies.ToDictionary(s => s.StrategyName, s => s);
 
         /// <summary>
         /// Returns up to X unique random proven strategies. If count exceeds available strategies,

@@ -13,6 +13,9 @@ class Program
         // Parse command-line arguments
         int numberOfGames = DefaultNumberOfSimulationGames;
         int numberOfPlayers = DefaultNumberOfPlayers;
+        bool outputToFile = false;
+        string outputFileName = "";
+        bool runNeutralizingTest = false;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -34,6 +37,19 @@ class Program
                         i++; // Skip the next argument since we consumed it
                     }
                     break;
+                case "--output":
+                case "-o":
+                    outputToFile = true;
+                    if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
+                    {
+                        outputFileName = args[i + 1];
+                        i++; // Skip the next argument since we consumed it
+                    }
+                    break;
+                case "--test-neutralizing":
+                case "-t":
+                    runNeutralizingTest = true;
+                    break;
                 case "--help":
                 case "-h":
                     PrintUsage();
@@ -41,6 +57,124 @@ class Program
             }
         }
 
+        // Set up output redirection if requested
+        TextWriter? originalOut = null;
+        StreamWriter? fileWriter = null;
+        if (outputToFile)
+        {
+            SetupOutputRedirection(outputFileName, out originalOut, out fileWriter);
+        }
+
+        try
+        {
+            if (runNeutralizingTest)
+            {
+                RunNeutralizingTest(numberOfGames, outputToFile, outputFileName);
+            }
+            else
+            {
+                RunStandardSimulation(numberOfPlayers, numberOfGames, outputToFile, outputFileName);
+            }
+        }
+        finally
+        {
+            // Restore console output if we redirected it
+            if (outputToFile && originalOut != null)
+            {
+                try
+                {
+                    Console.SetOut(originalOut);
+                    fileWriter?.Flush();
+                    fileWriter?.Close();
+                    fileWriter?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    // If cleanup fails, write error to original console
+                    originalOut.WriteLine($"Warning: Failed to cleanup output redirection: {ex.Message}");
+                }
+            }
+        }
+        Environment.Exit(0);
+    }
+
+    private static void RunNeutralizingTest(int numberOfGames, bool outputToFile, string outputFileName)
+    {
+        // Use specific strategies for testing Neutralizing Mantle
+        var testRnd = new Random();
+        var testStrategies = new List<IMutationSpendingStrategy>
+        {
+            AIRoster.TestingStrategiesByName["Toxin Spammer"],
+            AIRoster.TestingStrategiesByName["Neutralizing Defender"]
+        };
+        
+        Console.WriteLine($"Running Neutralizing Mantle test with {testStrategies.Count} players for {numberOfGames} games each...\n");
+        Console.WriteLine("Strategy 0: Toxin Spammer (should place lots of toxins)");
+        Console.WriteLine("Strategy 1: Neutralizing Defender (should prefer Neutralizing Mantle)\n");
+
+        // Set up output redirection if requested
+        TextWriter? testOriginalOut = null;
+        StreamWriter? testFileWriter = null;
+        if (outputToFile)
+        {
+            SetupOutputRedirection(outputFileName, out testOriginalOut, out testFileWriter);
+        }
+
+        try
+        {
+            // Run simulation
+            var testRunner = new MatchupRunner();
+            var testResults = testRunner.RunMatchups(testStrategies, gamesToPlay: numberOfGames);
+
+            // Print strategy summary
+            var testAggregator = new MatchupStatsAggregator();
+            testAggregator.PrintSummary(testResults.GameResults, testResults.CumulativeDeathReasons);
+
+            // Analyze per-strategy mutation usage
+            var testUsageTracker = new PlayerMutationUsageTracker();
+            foreach (var result in testResults.GameResults)
+            {
+                testUsageTracker.TrackGameResult(result);
+            }
+            var testRankedPlayers = MatchupStatsAggregator.GetRankedPlayerList(testResults.GameResults);
+            
+            // Create a combined tracking context from all games
+            var testCombinedTracking = CreateCombinedTrackingContext(testResults.GameResults);
+            testUsageTracker.PrintReport(testRankedPlayers, testCombinedTracking);
+
+            // ==== NEW: Per-player Mycovariant Usage Summary ====
+            var testMycoTracker = new PlayerMycovariantUsageTracker();
+            foreach (var result in testResults.GameResults)
+            {
+                testMycoTracker.TrackGameResult(result);
+            }
+            testMycoTracker.PrintReport(testRankedPlayers);
+
+            Console.WriteLine("\nSimulation complete.");
+        }
+        finally
+        {
+            // Restore console output if we redirected it
+            if (outputToFile && testOriginalOut != null)
+            {
+                try
+                {
+                    Console.SetOut(testOriginalOut);
+                    testFileWriter?.Flush();
+                    testFileWriter?.Close();
+                    testFileWriter?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    // If cleanup fails, write error to original console
+                    testOriginalOut.WriteLine($"Warning: Failed to cleanup output redirection: {ex.Message}");
+                }
+            }
+        }
+    }
+
+    private static void RunStandardSimulation(int numberOfPlayers, int numberOfGames, bool outputToFile, string outputFileName)
+    {
         var rnd = new Random(); // Or any deterministic seed you want
 
         var strategies = AIRoster.GetRandomProvenStrategies(numberOfPlayers, rnd);
@@ -83,8 +217,7 @@ class Program
         }
         mycoTracker.PrintReport(rankedPlayers);
 
-        Console.WriteLine("\nSimulation complete. Press any key to exit.");
-        Console.ReadKey();
+        Console.WriteLine("\nSimulation complete.");
     }
 
     private static void PrintUsage()
@@ -96,6 +229,8 @@ class Program
         Console.WriteLine("Options:");
         Console.WriteLine("  -g, --games <number>     Number of games to play per matchup (default: 5)");
         Console.WriteLine("  -p, --players <number>   Number of players/strategies to use (default: 8)");
+        Console.WriteLine("  -o, --output <filename>  Redirect output to a file");
+        Console.WriteLine("  -t, --test-neutralizing  Run Neutralizing Mantle test");
         Console.WriteLine("  -h, --help              Show this help message");
         Console.WriteLine();
         Console.WriteLine("Examples:");
@@ -315,5 +450,50 @@ class Program
     };
     }
 
+    private static void SetupOutputRedirection(string outputFileName, out TextWriter originalOut, out StreamWriter fileWriter)
+    {
+        // Create SimulationOutput directory if it doesn't exist
+        string outputDir = "SimulationOutput";
+        if (!Directory.Exists(outputDir))
+        {
+            Directory.CreateDirectory(outputDir);
+        }
 
+        // Generate filename if not provided
+        if (string.IsNullOrEmpty(outputFileName))
+        {
+            outputFileName = $"simulation_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+        }
+
+        string fullPath = Path.Combine(outputDir, outputFileName);
+        
+        // Try to delete existing file if it exists and is locked
+        try
+        {
+            if (File.Exists(fullPath))
+            {
+                File.Delete(fullPath);
+            }
+        }
+        catch (IOException)
+        {
+            // If we can't delete, generate a unique filename
+            string baseName = Path.GetFileNameWithoutExtension(outputFileName);
+            string extension = Path.GetExtension(outputFileName);
+            int counter = 1;
+            do
+            {
+                outputFileName = $"{baseName}_{counter}{extension}";
+                fullPath = Path.Combine(outputDir, outputFileName);
+                counter++;
+            } while (File.Exists(fullPath));
+        }
+        
+        // Redirect console output to file
+        originalOut = Console.Out;
+        fileWriter = new StreamWriter(fullPath, false, System.Text.Encoding.UTF8);
+        Console.SetOut(fileWriter);
+        
+        Console.WriteLine($"Simulation output redirected to: {fullPath}");
+    }
 }

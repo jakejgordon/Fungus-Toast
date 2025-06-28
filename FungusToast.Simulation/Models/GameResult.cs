@@ -156,6 +156,13 @@ namespace FungusToast.Simulation.Models
                         effectCounts[MycovariantEffectType.MpBonus] = MycovariantGameBalance.PlasmidBountyMutationPointAward;
                         break;
 
+                    case var id when id == MycovariantIds.NeutralizingMantleId:
+                        {
+                            int neutralized = tracking.GetNeutralizingMantleEffects(player.PlayerId);
+                            if (neutralized > 0) effectCounts[MycovariantEffectType.Neutralized] = neutralized;
+                            break;
+                        }
+
                     case var id when id == MycovariantIds.JettingMyceliumNorthId ||
                                      id == MycovariantIds.JettingMyceliumEastId ||
                                      id == MycovariantIds.JettingMyceliumSouthId ||
