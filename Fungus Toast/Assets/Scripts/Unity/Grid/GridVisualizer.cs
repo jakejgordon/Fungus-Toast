@@ -179,9 +179,9 @@ namespace FungusToast.Unity.Grid
                     // Fade the player mold, then overlay the deadTile
                     if (cell.LastOwnerPlayerId is int ownerId && ownerId >= 0 && ownerId < playerMoldTiles.Length)
                     {
-                        moldTilemap.SetTileFlags(pos, TileFlags.None); // << CRITICAL!
+                        moldTilemap.SetTileFlags(pos, TileFlags.None);
                         moldTilemap.SetTile(pos, playerMoldTiles[ownerId]);
-                        moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.25f)); // 25% visible (very faded)
+                        moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.35f));
                         moldTilemap.RefreshTile(pos);
                     }
                     // Overlay the dead tile on a separate tilemap
@@ -194,9 +194,9 @@ namespace FungusToast.Unity.Grid
                 case FungalCellType.Toxin:
                     if (cell.OwnerPlayerId is int idT && idT >= 0 && idT < playerMoldTiles.Length)
                     {
-                        // Optionally show faint mold color under the toxin overlay
+                        // Show very faint, slightly gray mold color under the toxin overlay
                         moldTile = playerMoldTiles[idT];
-                        moldColor = new Color(1f, 1f, 1f, 0.4f);
+                        moldColor = new Color(0.8f, 0.8f, 0.8f, 0.35f); // More visible, still faded
                     }
                     overlayTile = toxinOverlayTile;
                     overlayColor = Color.white;
