@@ -5,19 +5,51 @@ using FungusToast.Simulation.Models;
 
 class Program
 {
-    private const int NumberOfSimulationGames = 5;
+    private const int DefaultNumberOfSimulationGames = 5;
+    private const int DefaultNumberOfPlayers = 8;
 
-    static void Main()
+    static void Main(string[] args)
     {
+        // Parse command-line arguments
+        int numberOfGames = DefaultNumberOfSimulationGames;
+        int numberOfPlayers = DefaultNumberOfPlayers;
+
+        for (int i = 0; i < args.Length; i++)
+        {
+            switch (args[i].ToLower())
+            {
+                case "--games":
+                case "-g":
+                    if (i + 1 < args.Length && int.TryParse(args[i + 1], out int games))
+                    {
+                        numberOfGames = games;
+                        i++; // Skip the next argument since we consumed it
+                    }
+                    break;
+                case "--players":
+                case "-p":
+                    if (i + 1 < args.Length && int.TryParse(args[i + 1], out int players))
+                    {
+                        numberOfPlayers = players;
+                        i++; // Skip the next argument since we consumed it
+                    }
+                    break;
+                case "--help":
+                case "-h":
+                    PrintUsage();
+                    return;
+            }
+        }
+
         var rnd = new Random(); // Or any deterministic seed you want
 
-        var strategies = AIRoster.GetRandomProvenStrategies(8, rnd);
+        var strategies = AIRoster.GetRandomProvenStrategies(numberOfPlayers, rnd);
 
-        Console.WriteLine($"Running simulation with {strategies.Count} players...\n");
+        Console.WriteLine($"Running simulation with {strategies.Count} players for {numberOfGames} games each...\n");
 
         // Run simulation
         var runner = new MatchupRunner();
-        var results = runner.RunMatchups(strategies, gamesToPlay: NumberOfSimulationGames);
+        var results = runner.RunMatchups(strategies, gamesToPlay: numberOfGames);
 
         // Print strategy summary
         var aggregator = new MatchupStatsAggregator();
@@ -53,6 +85,24 @@ class Program
 
         Console.WriteLine("\nSimulation complete. Press any key to exit.");
         Console.ReadKey();
+    }
+
+    private static void PrintUsage()
+    {
+        Console.WriteLine("FungusToast Simulation Runner");
+        Console.WriteLine();
+        Console.WriteLine("Usage: dotnet run [options]");
+        Console.WriteLine();
+        Console.WriteLine("Options:");
+        Console.WriteLine("  -g, --games <number>     Number of games to play per matchup (default: 5)");
+        Console.WriteLine("  -p, --players <number>   Number of players/strategies to use (default: 8)");
+        Console.WriteLine("  -h, --help              Show this help message");
+        Console.WriteLine();
+        Console.WriteLine("Examples:");
+        Console.WriteLine("  dotnet run                           # Run with defaults (8 players, 5 games each)");
+        Console.WriteLine("  dotnet run --games 10               # Run 10 games per matchup");
+        Console.WriteLine("  dotnet run --players 4 --games 20   # Run 4 players, 20 games each");
+        Console.WriteLine("  dotnet run -p 6 -g 15               # Run 6 players, 15 games each");
     }
 
     private static SimulationTrackingContext CreateCombinedTrackingContext(List<GameResult> gameResults)
