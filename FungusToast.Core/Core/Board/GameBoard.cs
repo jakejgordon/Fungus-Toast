@@ -226,6 +226,7 @@ namespace FungusToast.Core.Board
             {
                 int tileId = y * Width + x;
                 var cell = new FungalCell(playerId, tileId);
+                cell.MakeResistant(); // Make initial spores resistant
                 tile.PlaceFungalCell(cell);
                 tileIdToCell[tileId] = cell;
 
@@ -309,6 +310,7 @@ namespace FungusToast.Core.Board
                 return false;
 
             var cell = new FungalCell(player.PlayerId, tileId);
+            cell.MakeResistant(); // Make initial spores resistant
             tile.PlaceFungalCell(cell);
             tileIdToCell[tileId] = cell;
 
@@ -528,6 +530,13 @@ namespace FungusToast.Core.Board
                 return false;
             }
 
+            // Check if target tile has a resistant cell - cannot grow into resistant cells
+            if (targetTile.IsResistant)
+            {
+                failureReason = GrowthFailureReason.TileOccupied;
+                return false;
+            }
+
             // Standard: Only allow growth into empty tile
             if (!targetTile.IsOccupied)
             {
@@ -566,6 +575,7 @@ namespace FungusToast.Core.Board
         /// - Removes control from any previous owner.
         /// - Adds control to the new owner.
         /// - Updates the board state and fires the appropriate events.
+        /// - Resistant cells cannot be replaced.
         /// </summary>
         /// <param name="cell">The fungal cell to place.</param>
         internal void PlaceFungalCell(FungalCell cell)
@@ -573,6 +583,10 @@ namespace FungusToast.Core.Board
             var (x, y) = GetXYFromTileId(cell.TileId);
             var tile = Grid[x, y];
             var oldCell = tile.FungalCell;
+
+            // Check if the old cell is resistant - cannot replace resistant cells
+            if (oldCell != null && oldCell.IsResistant)
+                return;
 
             // Remove control from previous owner, if any
             if (oldCell != null && oldCell.OwnerPlayerId.HasValue)
@@ -648,6 +662,10 @@ namespace FungusToast.Core.Board
 
         public void KillFungalCell(FungalCell cell, DeathReason reason, int? killerPlayerId = null)
         {
+            // Resistant cells cannot be killed
+            if (cell.IsResistant)
+                return;
+
             int tileId = cell.TileId;
             int playerId = cell.OwnerPlayerId ?? -1;
 

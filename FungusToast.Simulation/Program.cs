@@ -16,6 +16,7 @@ class Program
         bool outputToFile = false;
         string outputFileName = "";
         bool runNeutralizingTest = false;
+        bool runResistantTest = false;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -50,6 +51,10 @@ class Program
                 case "-t":
                     runNeutralizingTest = true;
                     break;
+                case "--test-resistant":
+                case "-r":
+                    runResistantTest = true;
+                    break;
                 case "--help":
                 case "-h":
                     PrintUsage();
@@ -70,6 +75,10 @@ class Program
             if (runNeutralizingTest)
             {
                 RunNeutralizingTest(numberOfGames, outputToFile, outputFileName);
+            }
+            else if (runResistantTest)
+            {
+                ResistantCellTester.RunTest(numberOfGames, outputToFile, outputFileName);
             }
             else
             {
@@ -231,6 +240,7 @@ class Program
         Console.WriteLine("  -p, --players <number>   Number of players/strategies to use (default: 8)");
         Console.WriteLine("  -o, --output <filename>  Redirect output to a file");
         Console.WriteLine("  -t, --test-neutralizing  Run Neutralizing Mantle test");
+        Console.WriteLine("  -r, --test-resistant   Run Resistant cell system test");
         Console.WriteLine("  -h, --help              Show this help message");
         Console.WriteLine();
         Console.WriteLine("Examples:");

@@ -39,6 +39,11 @@ namespace FungusToast.Core.Board
         public int? LastOwnerPlayerId { get; private set; } = null;
         public int ReclaimCount { get; private set; } = 0;
 
+        /// <summary>
+        /// Whether this cell is resistant to all forms of death and cannot be killed or replaced.
+        /// </summary>
+        public bool IsResistant { get; private set; } = false;
+
         public FungalCell() { }
 
         public FungalCell(int? ownerPlayerId, int tileId)
@@ -92,10 +97,22 @@ namespace FungusToast.Core.Board
         }
 
         /// <summary>
+        /// Makes this cell resistant to all forms of death and replacement.
+        /// </summary>
+        public void MakeResistant()
+        {
+            IsResistant = true;
+        }
+
+        /// <summary>
         /// Kills this cell (living → dead), for any non-toxin death (Killed/Withered/Poisoned/etc).
+        /// Resistant cells cannot be killed.
         /// </summary>
         public void Kill(DeathReason reason)
         {
+            if (IsResistant)
+                return; // Resistant cells cannot be killed
+            
             if (IsAlive)
                 SetDead(reason);
             // No-op if not alive
@@ -117,9 +134,14 @@ namespace FungusToast.Core.Board
         /// <summary>
         /// Attempts to take over this cell as the given player, regardless of prior state.
         /// Returns the outcome for simulation/stat tracking.
+        /// Resistant cells cannot be taken over.
         /// </summary>
         public FungalCellTakeoverResult Takeover(int newOwnerPlayerId, bool allowToxin = false)
         {
+            // Resistant cells cannot be taken over
+            if (IsResistant)
+                return FungalCellTakeoverResult.InvalidBecauseResistant;
+
             // Already owned and alive: no action
             if (OwnerPlayerId == newOwnerPlayerId && IsAlive)
                 return FungalCellTakeoverResult.AlreadyOwned;
@@ -173,9 +195,14 @@ namespace FungusToast.Core.Board
 
         /// <summary>
         /// Converts a cell to toxin, killing if alive (Poisoned) or overwriting dead/empty (Toxified).
+        /// Resistant cells cannot be converted to toxins.
         /// </summary>
         public void ConvertToToxin(int expirationCycle, Player? owner = null, DeathReason? reason = null, int? baseCycle = null)
         {
+            // Resistant cells cannot be converted to toxins
+            if (IsResistant)
+                return;
+
             if (IsAlive)
                 Kill(reason ?? DeathReason.Poisoned); // Poisoned is now the default death by toxin
 

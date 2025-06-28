@@ -33,6 +33,7 @@ namespace FungusToast.Core.Board
         public bool IsDead => FungalCell?.IsDead == true;
         public bool IsToxin => FungalCell?.IsToxin == true;
         public bool IsReclaimable => FungalCell?.IsReclaimable == true;
+        public bool IsResistant => FungalCell?.IsResistant == true;
         public FungalCellType? CellType => FungalCell?.CellType;
 
         public int OriginalOwnerPlayerId => FungalCell?.OriginalOwnerPlayerId ?? -1;

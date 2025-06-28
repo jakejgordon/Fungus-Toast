@@ -82,6 +82,7 @@ public static class MycovariantEffectProcessor
                     case FungalCellTakeoverResult.Reclaimed: reclaimed++; break;
                     case FungalCellTakeoverResult.CatabolicGrowth: catabolicGrowth++; break;
                     case FungalCellTakeoverResult.AlreadyOwned: alreadyOwned++; break;
+                    case FungalCellTakeoverResult.InvalidBecauseResistant: invalid++; break;
                     case FungalCellTakeoverResult.Invalid: invalid++; break;
                 }
                 var updatedCell = targetTile.FungalCell;
