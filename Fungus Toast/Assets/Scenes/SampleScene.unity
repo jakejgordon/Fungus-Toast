@@ -107433,6 +107433,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 79dc2f3c008fbc6499c900917e11cb93, type: 2}
   toxinOverlayTile: {fileID: 11400000, guid: b03fa0ef3f880e944836bca2e3270b89, type: 2}
   solidHighlightTile: {fileID: 11400000, guid: 2948f1915b2f9f94faed40359df6b9d4, type: 2}
+  goldShieldOverlayTile: {fileID: 11400000, guid: c263d2624d4a84043852764dbdb51385, type: 2}
 --- !u!4 &989759030
 Transform:
   m_ObjectHideFlags: 0

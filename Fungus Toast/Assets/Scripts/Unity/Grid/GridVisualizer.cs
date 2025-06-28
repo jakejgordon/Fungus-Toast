@@ -22,6 +22,7 @@ namespace FungusToast.Unity.Grid
         public Tile[] playerMoldTiles;    // Living mold, indexed by PlayerId
         public Tile toxinOverlayTile;     // Toxin icon overlay
         [SerializeField] private Tile solidHighlightTile; // For pulses/highlights
+        public Tile goldShieldOverlayTile; // Gold shield for resistant cells
 
         private GameBoard board;
         private List<Vector3Int> highlightedPositions = new List<Vector3Int>();
@@ -173,10 +174,15 @@ namespace FungusToast.Unity.Grid
                         moldTile = playerMoldTiles[idA];
                         moldColor = Color.white;
                     }
+                    // If the cell is resistant, show the shield overlay
+                    if (cell.IsResistant && goldShieldOverlayTile != null)
+                    {
+                        overlayTile = goldShieldOverlayTile;
+                        overlayColor = Color.white;
+                    }
                     break;
 
                 case FungalCellType.Dead:
-                    // Fade the player mold, then overlay the deadTile
                     if (cell.LastOwnerPlayerId is int ownerId && ownerId >= 0 && ownerId < playerMoldTiles.Length)
                     {
                         moldTilemap.SetTileFlags(pos, TileFlags.None);
@@ -184,11 +190,8 @@ namespace FungusToast.Unity.Grid
                         moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.35f));
                         moldTilemap.RefreshTile(pos);
                     }
-                    // Overlay the dead tile on a separate tilemap
-                    overlayTilemap.SetTileFlags(pos, TileFlags.None);
-                    overlayTilemap.SetTile(pos, deadTile);
-                    overlayTilemap.SetColor(pos, Color.white);
-                    overlayTilemap.RefreshTile(pos);
+                    overlayTile = deadTile;
+                    overlayColor = Color.white;
                     break;
 
                 case FungalCellType.Toxin:
@@ -216,7 +219,7 @@ namespace FungusToast.Unity.Grid
                 moldTilemap.RefreshTile(pos);
             }
 
-            // Set overlay tile (dead or toxin)
+            // Set overlay tile (dead, toxin, or shield)
             if (overlayTile != null)
             {
                 overlayTilemap.SetTile(pos, overlayTile);
