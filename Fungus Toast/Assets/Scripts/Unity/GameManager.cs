@@ -113,7 +113,7 @@ namespace FungusToast.Unity
             mycovariantDraftController?.gameObject.SetActive(false);
 
             // === THEN initialize and show children/buttons ===
-            gameUIManager.MutationUIManager.Initialize(humanPlayer);
+            gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
 
             gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
@@ -159,11 +159,14 @@ namespace FungusToast.Unity
                 if (icon != null) gameUIManager.PlayerUIBinder.AssignIcon(p, icon);
             }
 
-            gameUIManager.MoldProfilePanel?.Initialize(humanPlayer, players);
+            gameUIManager.MoldProfilePanel?.Initialize(Board.Players[0], players);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
 
             Board.Players.Clear();
             Board.Players.AddRange(players);
+            
+            // Update humanPlayer to reference the canonical player object
+            humanPlayer = Board.Players[0];
         }
 
 
@@ -198,7 +201,7 @@ namespace FungusToast.Unity
 
             if (growthPhaseRunner != null)
             {
-                growthPhaseRunner.Initialize(Board, players, gridVisualizer);
+                growthPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
                 gameUIManager.PhaseBanner.Show("Growth Phase Begins!", 2f);
                 phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
                 growthPhaseRunner.StartGrowthPhase();
@@ -209,7 +212,7 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
-            decayPhaseRunner.Initialize(Board, players, gridVisualizer);
+            decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
             gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f);
             phaseProgressTracker?.HighlightDecayPhase();
             decayPhaseRunner.StartDecayPhase(growthPhaseRunner.FailedGrowthsByPlayerId, rng);
@@ -219,7 +222,7 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
-            foreach (var player in players)
+            foreach (var player in Board.Players)
                 player.TickDownActiveSurges();
 
             CheckForEndgameCondition();
@@ -241,7 +244,7 @@ namespace FungusToast.Unity
             float occupancy = Board.GetOccupiedTileRatio() * 100f; // ratio to percent
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy);
 
-            foreach (var player in players)
+            foreach (var player in Board.Players)
             {
                 foreach (var pm in player.PlayerMutations.Values)
                 {
@@ -261,12 +264,12 @@ namespace FungusToast.Unity
             if (gameEnded) return;
 
             AssignMutationPoints();
-            gameUIManager.MutationUIManager.Initialize(humanPlayer);
+            gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(true);
 
             gameUIManager.MoldProfilePanel?.Refresh();
-            gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
+            gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
 
             gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
 
@@ -318,7 +321,7 @@ namespace FungusToast.Unity
 
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
 
-            var ranked = players
+            var ranked = Board.Players
                 .OrderByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
                 .ThenByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => !c.IsAlive))
                 .ToList();
@@ -344,7 +347,7 @@ namespace FungusToast.Unity
             var allMutations = mutationManager.AllMutations.Values.ToList();
             var rng = new System.Random();
 
-            TurnEngine.AssignMutationPoints(Board, players, allMutations, rng);
+            TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rng);
 
             gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
         }
@@ -353,7 +356,7 @@ namespace FungusToast.Unity
         {
             var rng = new System.Random();
 
-            foreach (var p in players)
+            foreach (var p in Board.Players)
             {
                 if (p.PlayerType == PlayerTypeEnum.AI)
                     p.MutationStrategy?.SpendMutationPoints(p, mutationManager.GetAllMutations().ToList(), Board, rng);
@@ -381,27 +384,32 @@ namespace FungusToast.Unity
             isInDraftPhase = true;
 
             // Build the draft pool as appropriate for your game logic
-            var draftPool = MycovariantDraftManager.BuildDraftPool(Board, players);
+            var draftPool = MycovariantDraftManager.BuildDraftPool(Board, Board.Players);
 
             // Create and initialize the pool manager
             var poolManager = new MycovariantPoolManager();
             poolManager.InitializePool(draftPool, rng);
 
             // Determine draft order (example: fewest living cells goes first)
-            var draftOrder = players
+            var draftOrder = Board.Players
                 .OrderBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
                 .ToList();
 
             // Start the draft UI/controller
             mycovariantDraftController.StartDraft(
-                players, poolManager, draftOrder, rng, MycovariantGameBalance.MycovariantSelectionDraftSize);
+                Board.Players, poolManager, draftOrder, rng, MycovariantGameBalance.MycovariantSelectionDraftSize);
 
             // Show a phase banner (optional, for player feedback)
-            gameUIManager.PhaseBanner.Show("Mycovariant Draft Phase", 2f);
-
-            // Update phase progress tracker for the DRAFT phase
-            phaseProgressTracker?.SetMutationPhaseLabel("DRAFT");
+            gameUIManager.PhaseBanner.Show("Mycovariant Draft Phase!", 2f);
             phaseProgressTracker?.HighlightDraftPhase();
+
+            // Hide mutation UI during draft
+            gameUIManager.MutationUIManager.gameObject.SetActive(false);
+            gameUIManager.RightSidebar?.gameObject.SetActive(false);
+            gameUIManager.LeftSidebar?.gameObject.SetActive(false);
+
+            // Show draft UI
+            mycovariantDraftController.gameObject.SetActive(true);
         }
 
 
