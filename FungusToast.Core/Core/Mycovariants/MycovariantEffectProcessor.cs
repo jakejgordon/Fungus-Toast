@@ -196,4 +196,33 @@ public static class MycovariantEffectProcessor
             }
         }
     }
+
+    public static void ResolveMycelialBastion(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        Random rng,
+        ISimulationObserver? observer)
+    {
+        // AI/simulation logic: auto-select up to the allowed number of living cells
+        var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+        if (player == null) return;
+
+        var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
+            .Where(c => c.IsAlive && !c.IsResistant)
+            .ToList();
+
+        int maxCells = Math.Min(MycovariantGameBalance.MycelialBastionMaxResistantCells, livingCells.Count);
+        if (maxCells == 0) return;
+
+        // Randomly select up to maxCells
+        var selected = livingCells.OrderBy(_ => rng.Next()).Take(maxCells).ToList();
+        foreach (var cell in selected)
+        {
+            cell.MakeResistant();
+            playerMyco.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);
+            observer?.RecordBastionedCells(player.PlayerId, 1);
+        }
+
+        playerMyco.MarkTriggered();
+    }
 }

@@ -63,7 +63,16 @@ namespace FungusToast.Unity.Grid
                 if (selectionTiles.Count == 0 || IsSelectable(cellPos))
                 {
                     int tileId = TileIdFromCell(cellPos);
-                    TileSelectionController.Instance.OnTileClicked(tileId);
+                    
+                    // Try MultiCellSelectionController first, then fall back to TileSelectionController
+                    if (MultiCellSelectionController.Instance != null && MultiCellSelectionController.Instance.IsSelectable(tileId))
+                    {
+                        MultiCellSelectionController.Instance.OnTileClicked(tileId);
+                    }
+                    else if (TileSelectionController.Instance != null && TileSelectionController.Instance.IsSelectable(tileId))
+                    {
+                        TileSelectionController.Instance.OnTileClicked(tileId);
+                    }
                 }
                 TriggerPressedAnimation(cellPos);
             }
@@ -73,7 +82,15 @@ namespace FungusToast.Unity.Grid
             {
                 if (selectionTiles.Count > 0)
                 {
-                    TileSelectionController.Instance.CancelSelection();
+                    // Try MultiCellSelectionController first, then fall back to TileSelectionController
+                    if (MultiCellSelectionController.Instance != null)
+                    {
+                        MultiCellSelectionController.Instance.CancelSelection();
+                    }
+                    else if (TileSelectionController.Instance != null)
+                    {
+                        TileSelectionController.Instance.CancelSelection();
+                    }
                 }
             }
         }

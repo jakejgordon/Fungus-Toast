@@ -181,7 +181,15 @@ namespace FungusToast.Simulation.Models
                             if (poisoned > 0) effectCounts[MycovariantEffectType.Poisoned] = poisoned;
                             break;
                         }
-                        // ...more cases...
+
+                    case var id when id == MycovariantIds.MycelialBastionId:
+                        {
+                            int bastioned = tracking.GetBastionedCells(player.PlayerId);
+                            if (bastioned > 0) effectCounts[MycovariantEffectType.Bastioned] = bastioned;
+                            break;
+                        }
+
+                    // ...more cases...
                 }
 
                 // Convert keys to string for MycovariantResult

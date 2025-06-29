@@ -10,6 +10,7 @@
         Toxified,
         MpBonus,
         Neutralized,
+        Bastioned,
         // Add others as needed
     }
 }

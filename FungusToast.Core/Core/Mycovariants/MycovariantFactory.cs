@@ -110,6 +110,20 @@ namespace FungusToast.Core.Mycovariants
             IsUniversal = false
         };
 
+        public static Mycovariant MycelialBastion() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.MycelialBastionId,
+                Name = "Mycelial Bastion",
+                Description = $"Immediately select up to {MycovariantGameBalance.MycelialBastionMaxResistantCells} of your living cells to become Resistant (invincible). These cells cannot be killed, replaced, or converted for the rest of the game.",
+                FlavorText = "A fortified network of hyphae, woven to withstand any threat.",
+                Type = MycovariantType.Active,
+                IsUniversal = false,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    MycovariantEffectProcessor.ResolveMycelialBastion(playerMyco, board, rng, observer);
+                }
+            };
 
     }
 }

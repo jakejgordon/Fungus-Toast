@@ -4,7 +4,7 @@ namespace FungusToast.Core.Config
 {
     public static class MycovariantGameBalance
     {
-        public const int MycovariantSelectionTriggerRound = 15; //TESTING
+        public const int MycovariantSelectionTriggerRound = 2; //TESTING
         public const int MycovariantSelectionDraftSize = 3;
 
         // Shared balance parameters
@@ -17,6 +17,7 @@ namespace FungusToast.Core.Config
 
         public const float NeutralizingMantleNeutralizeChance = 0.15f;
 
+        public const int MycelialBastionMaxResistantCells = 5;
 
     }
 }

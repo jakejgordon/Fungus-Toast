@@ -545,5 +545,17 @@ namespace FungusToast.Simulation.Models
         public int GetNeutralizingMantleEffects(int playerId)
             => neutralizingMantleEffects.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllNeutralizingMantleEffects() => new(neutralizingMantleEffects);
+
+        // ────────────────
+        // Bastioned Cells (Mycelial Bastion)
+        // ────────────────
+        private readonly Dictionary<int, int> bastionedCells = new();
+        public void RecordBastionedCells(int playerId, int count)
+        {
+            if (!bastionedCells.ContainsKey(playerId))
+                bastionedCells[playerId] = 0;
+            bastionedCells[playerId] += count;
+        }
+        public int GetBastionedCells(int playerId) => bastionedCells.TryGetValue(playerId, out var val) ? val : 0;
     }
 }

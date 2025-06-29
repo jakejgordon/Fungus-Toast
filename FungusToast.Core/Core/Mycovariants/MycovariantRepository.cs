@@ -34,7 +34,8 @@ namespace FungusToast.Core.Mycovariants
                 MycovariantFactory.PlasmidBounty(),
                 
                 // --- Passive/Defensive options ---
-                MycovariantFactory.NeutralizingMantle()
+                MycovariantFactory.NeutralizingMantle(),
+                MycovariantFactory.MycelialBastion()
                 // Add additional universal Mycovariants as created
             };
         }

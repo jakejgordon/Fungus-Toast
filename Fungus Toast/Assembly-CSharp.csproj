@@ -91,6 +91,7 @@
     <Compile Include="Assets\Scripts\Unity\Cameras\CameraCenterer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\PlayerIconCellUI.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PhaseProgressTracker.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\MultiCellSelectionController.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationTreeBuilder.cs" />
     <Compile Include="Assets\Scripts\Unity\Effects\MycovariantEffectResolver.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\TileSelectionController.cs" />

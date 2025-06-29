@@ -58,6 +58,18 @@ namespace FungusToast.Unity.Effects
                 HandlePlasmidBounty(player);
                 onComplete?.Invoke();
             }
+            else if (mycovariant.Id == MycovariantIds.MycelialBastionId)
+            {
+                yield return StartCoroutine(
+                    MycovariantEffectHelpers.HandleMycelialBastion(
+                        player,
+                        mycovariant,
+                        onComplete,
+                        draftPanel,
+                        gridVisualizer
+                    )
+                );
+            }
             // Add more cases as needed
             else
             {
