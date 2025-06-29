@@ -15,6 +15,143 @@ The core codebase is split into a **Unity** front-end and a **headless simulatio
 
 ---
 
+## Game Flow and Phase Structure
+
+Fungus Toast operates on a **round-based system** with distinct phases that repeat until endgame conditions are met. Each round follows a predictable sequence designed to create strategic tension and meaningful choices.
+
+### **Round Structure**
+
+```
+Round Start
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    MUTATION PHASE                           │
+│  • Players spend mutation points on upgrades               │
+│  • AI players use strategy-based spending                  │
+│  • Auto-upgrades trigger (Mutator Phenotype, etc.)         │
+│  • Human player can bank points for later                  │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    GROWTH PHASE                             │
+│  • 5 distinct growth cycles per round                      │
+│  • Each cycle: all living cells attempt to expand          │
+│  • Pre-growth effects (Mycotoxin Catabolism, etc.)         │
+│  • Post-growth effects (Reclaim abilities, etc.)           │
+│  • Failed growth attempts tracked for decay phase          │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    DECAY PHASE                              │
+│  • All living cells evaluated for death                     │
+│  • Age-based, randomness, and mutation-based deaths        │
+│  • Toxin effects and spore drops                           │
+│  • Necrophytic Bloom activation (if threshold met)         │
+│  • Board state updated and rendered                        │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────────────────────────────┐
+│              OPTIONAL: MYCOVARIANT DRAFT PHASE             │
+│  • Triggers on specific round (configurable)               │
+│  • Players draft unique abilities                          │
+│  • Draft order based on living cell count                  │
+│  • Interrupts normal round flow                            │
+└─────────────────────────────────────────────────────────────┘
+    ↓
+Round End → Check Endgame Conditions → Next Round or Game End
+```
+
+### **Phase Details**
+
+#### **Mutation Phase**
+- **Purpose**: Strategic resource allocation and progression
+- **Duration**: Variable (human player controlled, AI instant)
+- **Key Mechanics**:
+  - Players spend earned mutation points on upgrades
+  - Prerequisites must be satisfied for each mutation
+  - Auto-upgrades trigger based on mutation levels
+  - Human player can bank points for future rounds
+  - AI players use predefined spending strategies
+
+#### **Growth Phase**
+- **Purpose**: Territory expansion and board control
+- **Duration**: 5 growth cycles per round
+- **Key Mechanics**:
+  - Each living cell attempts to expand to adjacent tiles
+  - Growth chance modified by mutations and board state
+  - Failed growth attempts tracked for decay phase effects
+  - Pre/post growth effects trigger mutation abilities
+  - Diagonal growth mutations provide additional directions
+
+#### **Decay Phase**
+- **Purpose**: Population control and death mechanics
+- **Duration**: Single evaluation per round
+- **Key Mechanics**:
+  - All living cells evaluated for death probability
+  - Death reasons: Age, Randomness, Mutation effects
+  - Toxin placement and spore effects
+  - Necrophytic Bloom activation at occupancy threshold
+  - Board state finalized for next round
+
+#### **Mycovariant Draft Phase**
+- **Purpose**: Strategic ability acquisition
+- **Duration**: Interrupts normal round flow
+- **Key Mechanics**:
+  - Triggers on specific round (MycovariantGameBalance.MycovariantSelectionTriggerRound)
+  - Draft order: fewest living cells first
+  - Players select from unique ability pool
+  - Abilities provide powerful, sometimes game-changing effects
+  - Draft size configurable (MycovariantGameBalance.MycovariantSelectionDraftSize)
+
+### **Implementation Guidelines**
+
+#### **Phase Runner Pattern**
+```csharp
+// Each phase should implement this pattern:
+public class PhaseRunner : MonoBehaviour
+{
+    public void Initialize(GameBoard board, List<Player> players, GridVisualizer gridVisualizer);
+    public void StartPhase();
+    private IEnumerator RunPhase();
+}
+```
+
+#### **Event-Driven Architecture**
+- **Pre-phase events**: Allow mutations to prepare
+- **Phase events**: Core phase logic execution  
+- **Post-phase events**: Cleanup and state updates
+- **Observer pattern**: UI updates and analytics
+
+#### **State Management**
+- **Board state**: Centralized in GameBoard class
+- **Player state**: Mutation levels, points, abilities
+- **Round context**: Current round, growth cycle, phase
+- **Event tracking**: Death reasons, effect counts, analytics
+
+#### **Timing and Balance**
+- **Growth cycles**: 5 per round (GameBalance.TotalGrowthCycles)
+- **Draft trigger**: Configurable round (MycovariantGameBalance.MycovariantSelectionTriggerRound)
+- **Endgame**: Based on board occupancy threshold
+- **Phase timing**: Configurable delays for UI feedback
+
+### **Code References**
+
+#### **Core Phase Classes**
+- `FungusToast.Unity.Phases.GrowthPhaseRunner`
+- `FungusToast.Unity.Phases.DecayPhaseRunner`
+- `FungusToast.Unity.UI.MycovariantDraftController`
+
+#### **Engine Classes**
+- `FungusToast.Core.Phases.TurnEngine`
+- `FungusToast.Core.Phases.GrowthPhaseProcessor`
+- `FungusToast.Core.Death.DeathEngine`
+
+#### **Configuration**
+- `FungusToast.Core.Config.GameBalance`
+- `FungusToast.Core.Config.MycovariantGameBalance`
+
+---
+
 ## Fungal Cell and Toxin Event Terminology
 
 Fungus Toast uses precise terminology for all game state changes to ensure code, analytics, simulation, and UI remain unambiguous. This section defines the canonical event and method names for all key cell and toxin transitions.
