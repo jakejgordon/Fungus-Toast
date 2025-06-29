@@ -42,7 +42,7 @@ namespace FungusToast.Core.Config
         public const int HyphalVectoringTilesPerLevel = 1;
 
         public const float MycotropicInductionEffectPerLevel = 0.25f;
-        public const float PutrefactiveMycotoxinEffectPerLevel = 0.013f;
+        public const float PutrefactiveMycotoxinEffectPerLevel = 0.015f;
         public const int AgeResetReductionPerLevel = 5;
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;

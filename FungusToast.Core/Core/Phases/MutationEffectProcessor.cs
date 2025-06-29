@@ -245,7 +245,7 @@ namespace FungusToast.Core.Phases
             foreach (var neighborTile in board.GetAdjacentTiles(target.TileId))
             {
                 var neighbor = neighborTile.FungalCell;
-                if (neighbor is null || !neighbor.IsAlive) continue;
+                if (neighbor is null || !neighbor.IsAlive) continue; // Only living cells can apply Putrefactive Mycotoxin
                 if (neighbor.OwnerPlayerId == target.OwnerPlayerId) continue;
 
                 Player? enemy = players.FirstOrDefault(p => p.PlayerId == neighbor.OwnerPlayerId);

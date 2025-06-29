@@ -103,7 +103,7 @@ namespace FungusToast.Core.Mutations
             MakeRoot(new Mutation(
                 id: MutationIds.MycotoxinTracer,
                 name: "Mycotoxin Tracer",
-                description: "During the decay phase, you release toxin spores based on this mutation’s level and your number of failed growth attempts. " +
+                description: "During the decay phase, you release toxin spores based on this mutation's level and your number of failed growth attempts. " +
                              "These spores settle on nearby unoccupied tiles adjacent to enemies, creating temporary toxin zones that prevent enemy reclamation or growth.",
                 flavorText: "Microscopic chemical trails seep outward, clouding enemy borders in dormant inhibition fields.",
                 type: MutationType.FungicideToxinSpores,
@@ -231,7 +231,7 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.PutrefactiveMycotoxin,
                 name: "Putrefactive Mycotoxin",
-                description: $"Each level adds a {FormatPercent(GameBalance.PutrefactiveMycotoxinEffectPerLevel)} death chance to enemy cells adjacent to tiles you control.",
+                description: $"Each level adds a {FormatPercent(GameBalance.PutrefactiveMycotoxinEffectPerLevel)} death chance to enemy cells adjacent to your living fungal cells.",
                 flavorText: "Secretes lipid-bound mycotoxins through adjacent cell walls, disrupting membrane integrity.",
                 type: MutationType.AdjacentFungicide,
                 effectPerLevel: GameBalance.PutrefactiveMycotoxinEffectPerLevel,
