@@ -133,6 +133,11 @@ namespace FungusToast.Simulation.Analysis
                         effects["Hyperadaptive Free MP"] = player.HyperadaptiveDriftPointsEarned;
                     break;
 
+                case MutationIds.AnabolicInversion:
+                    if (player.AnabolicInversionPointsEarned > 0)
+                        effects["Anabolic MP"] = player.AnabolicInversionPointsEarned;
+                    break;
+
                 case MutationIds.NecrohyphalInfiltration:
                     if (player.NecrohyphalInfiltrations > 0)
                         effects["Infiltrations"] = player.NecrohyphalInfiltrations;

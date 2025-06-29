@@ -10,6 +10,7 @@ namespace FungusToast.Core.Metrics
         void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned);
         void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned);
         void RecordAdaptiveExpressionBonus(int playerId, int bonus);
+        void RecordAnabolicInversionBonus(int playerId, int bonus);
 
         void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1);
         void RecordCreepingMoldMove(int playerId);

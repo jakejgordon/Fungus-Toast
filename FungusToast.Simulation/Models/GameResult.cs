@@ -105,6 +105,7 @@ namespace FungusToast.Simulation.Models
                     AdaptiveExpressionPointsEarned = tracking.GetAdaptiveExpressionPointsEarned(player.PlayerId),
                     MutatorPhenotypePointsEarned = tracking.GetMutatorPhenotypePointsEarned(player.PlayerId),
                     HyperadaptiveDriftPointsEarned = tracking.GetHyperadaptiveDriftPointsEarned(player.PlayerId),
+                    AnabolicInversionPointsEarned = tracking.GetAnabolicInversionPointsEarned(player.PlayerId),
                     MutationPointIncome = tracking.GetMutationPointIncome(player.PlayerId),
                     MutationPointsSpentByTier = tracking.GetMutationPointsSpentByTier(player.PlayerId),
                     TotalMutationPointsSpent = tracking.GetTotalMutationPointsSpent(player.PlayerId),

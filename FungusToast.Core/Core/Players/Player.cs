@@ -293,7 +293,8 @@ namespace FungusToast.Core.Players
 
             if (rng.NextDouble() < chance)
             {
-                return rng.Next(1, 2 * pm.CurrentLevel); // 1 to 5 at level 3
+                int bonus = rng.Next(1, 2 * pm.CurrentLevel); // 1 to 5 at level 3
+                return Math.Min(bonus, GameBalance.AnabolicInversionMaxMutationPointsPerRound); // Cap at maximum
             }
 
             return 0;
@@ -320,6 +321,12 @@ namespace FungusToast.Core.Players
             if (simulationObserver != null && bonus > 0)
             {
                 simulationObserver.RecordAdaptiveExpressionBonus(PlayerId, bonus);
+            }
+
+            // Record Anabolic Inversion bonus, if present and observer is hooked up
+            if (simulationObserver != null && undergrowth > 0)
+            {
+                simulationObserver.RecordAnabolicInversionBonus(PlayerId, undergrowth);
             }
 
             return MutationPoints;

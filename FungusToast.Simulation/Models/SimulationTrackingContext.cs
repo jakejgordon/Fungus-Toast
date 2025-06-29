@@ -130,6 +130,21 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetAllAdaptiveExpressionPointsEarned() => new(adaptiveExpressionPointsEarned);
 
         // ────────────────
+        // Anabolic Inversion Points
+        // ────────────────
+
+        private readonly Dictionary<int, int> anabolicInversionPointsEarned = new();
+        public void RecordAnabolicInversionBonus(int playerId, int bonusPoints)
+        {
+            if (!anabolicInversionPointsEarned.ContainsKey(playerId))
+                anabolicInversionPointsEarned[playerId] = 0;
+            anabolicInversionPointsEarned[playerId] += bonusPoints;
+        }
+        public int GetAnabolicInversionPointsEarned(int playerId)
+            => anabolicInversionPointsEarned.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllAnabolicInversionPointsEarned() => new(anabolicInversionPointsEarned);
+
+        // ────────────────
         // Mutator Phenotype Points
         // ────────────────
 

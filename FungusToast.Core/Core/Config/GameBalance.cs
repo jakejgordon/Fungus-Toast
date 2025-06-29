@@ -37,6 +37,7 @@ namespace FungusToast.Core.Config
         public const float MycotoxinCatabolismCleanupChancePerLevel = 0.025f;
         public const float MycotoxinCatabolismMutationPointChancePerCatabolism = 0.075f;
         public const int MycotoxinCatabolismMaxMutationPointsPerRound = 3;
+        public const int MaxEconomyMutationPointsPerRound = 3; // Cap on total economy mutation points per round
         public const int HyphalVectoringBaseTiles = 2;
         public const int HyphalVectoringTilesPerLevel = 1;
 
@@ -45,6 +46,7 @@ namespace FungusToast.Core.Config
         public const int AgeResetReductionPerLevel = 5;
         public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
         public const float AnabolicInversionGapBonusPerLevel = 0.10f;
+        public const int AnabolicInversionMaxMutationPointsPerRound = 3; // Cap on Anabolic Inversion points per round
         public const float RegenerativeHyphaeReclaimChance = 0.01f;
         public const float CreepingMoldMoveChancePerLevel = .035f;
         public const float SporicialBloomEffectPerLevel = .065f;

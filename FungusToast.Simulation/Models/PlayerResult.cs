@@ -94,6 +94,7 @@ namespace FungusToast.Simulation.Models
         public int AdaptiveExpressionPointsEarned { get; set; }
         public int MutatorPhenotypePointsEarned { get; set; }
         public int HyperadaptiveDriftPointsEarned { get; set; }
+        public int AnabolicInversionPointsEarned { get; set; }
 
         // ──────────────
         // MUTATION POINT ECONOMY
