@@ -95,7 +95,10 @@ namespace FungusToast.Core.Mycovariants
                 {
                     var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
                     if (player != null)
+                    {
                         player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyMutationPointAward);
+                        observer?.RecordMutationPointIncome(player.PlayerId, MycovariantGameBalance.PlasmidBountyMutationPointAward);
+                    }
                 }
             };
 

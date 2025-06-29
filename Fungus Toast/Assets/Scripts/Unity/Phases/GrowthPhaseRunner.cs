@@ -15,7 +15,6 @@ namespace FungusToast.Unity.Phases
     {
         private GrowthPhaseProcessor processor;
         private GameBoard board;
-        private List<Player> players;
         private GridVisualizer gridVisualizer;
         private bool isRunning = false;
         private System.Random rng = new();
@@ -29,7 +28,6 @@ namespace FungusToast.Unity.Phases
         public void Initialize(GameBoard board, List<Player> players, GridVisualizer gridVisualizer)
         {
             this.board = board;
-            this.players = players;
             this.gridVisualizer = gridVisualizer;
             this.processor = new GrowthPhaseProcessor(board, players, rng);
             isRunning = false;
@@ -80,7 +78,7 @@ namespace FungusToast.Unity.Phases
 
 
             GameManager.Instance.GameUI.PhaseProgressTracker?.AdvanceToNextGrowthCycle(phaseCycle);
-            GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(players);
+            GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(board.Players);
 
             yield return new WaitForSeconds(GameBalance.TimeBetweenGrowthCycles);
             StartCoroutine(RunNextCycle());

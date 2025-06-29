@@ -353,9 +353,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private void HandlePlasmidBounty(Player player, Mycovariant picked)
         {
-            player.AddMutationPoints(15);
-            //GameManager.Instance.LogEvent($"{player.PlayerName} gained 15 mutation points from Plasmid Bounty!");
-
+            // Core logic already handles the mutation point award via MycovariantFactory
+            // No need to duplicate it here
             GameManager.Instance.GameUI.MoldProfilePanel?.PulseMutationPoints();
         }
 

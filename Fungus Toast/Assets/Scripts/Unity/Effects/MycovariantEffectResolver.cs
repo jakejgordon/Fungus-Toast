@@ -79,7 +79,8 @@ namespace FungusToast.Unity.Effects
 
         private void HandlePlasmidBounty(Player player)
         {
-            player.AddMutationPoints(15);
+            // Core logic already handles the mutation point award via MycovariantFactory
+            // No need to duplicate it here
             GameManager.Instance.GameUI.MoldProfilePanel?.PulseMutationPoints();
             /*
             GameManager.Instance.GameUI.RightSidebar?.AddLogEntry(

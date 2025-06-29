@@ -116,8 +116,6 @@ namespace FungusToast.Simulation.Analysis
 
                     entry.totalLiving += pr.LivingCells;
                     entry.totalDead += pr.DeadCells;
-                    entry.mutationPointsSpent += pr.MutationLevels.Sum(kv =>
-                        (MutationRegistry.GetById(kv.Key)?.PointsPerUpgrade ?? 0) * kv.Value);
                     entry.growthChance += pr.EffectiveGrowthChance;
                     entry.selfDeathChance += pr.EffectiveSelfDeathChance;
                     entry.decayMod += pr.OffensiveDecayModifier;
@@ -191,6 +189,7 @@ namespace FungusToast.Simulation.Analysis
 
             var totalMpSpentByPlayer = new Dictionary<int, int>();
             var totalMpEarnedByPlayer = new Dictionary<int, int>();
+            var totalAutoupgradeMpByPlayer = new Dictionary<int, int>();
 
             foreach (var game in gameResults)
             {
@@ -212,14 +211,25 @@ namespace FungusToast.Simulation.Analysis
                         totalMpEarnedByPlayer[playerId] = 0;
                     totalMpEarnedByPlayer[playerId] += kvp.Value;
                 }
+                
+                // Calculate total autoupgrade mutation points
+                foreach (var player in game.PlayerResults)
+                {
+                    int playerId = player.PlayerId;
+                    int autoupgradeMp = player.MutatorPhenotypePointsEarned + player.HyperadaptiveDriftPointsEarned;
+                    
+                    if (!totalAutoupgradeMpByPlayer.ContainsKey(playerId))
+                        totalAutoupgradeMpByPlayer[playerId] = 0;
+                    totalAutoupgradeMpByPlayer[playerId] += autoupgradeMp;
+                }
             }
 
             Console.WriteLine("\n=== Per-Player Summary ===");
             Console.WriteLine(
                 $"{"Player",6} | {"Strategy",-40} | {"WinRate",7} | {"Avg Alive",13} | {"Avg Dead",13} | " +
-                $"{"Avg MP Spent",16} | {"Avg MP Earned",16} | " +
+                $"{"Avg MP Spent",16} | {"Avg MP Earned",16} | {"Avg Autoupgrade MP",20} | " +
                 $"{"Growth%",11} | {"SelfDeath%",13} | {"DecayMod",10}");
-            Console.WriteLine(new string('-', 191));
+            Console.WriteLine(new string('-', 211));
 
             foreach (var (id, strategyName) in rankedPlayerList)
             {
@@ -235,18 +245,20 @@ namespace FungusToast.Simulation.Analysis
 
                 int totalMpSpent = totalMpSpentByPlayer.TryGetValue(id, out var v1) ? v1 : 0;
                 int totalMpEarned = totalMpEarnedByPlayer.TryGetValue(id, out var v2) ? v2 : 0;
+                int totalAutoupgradeMp = totalAutoupgradeMpByPlayer.TryGetValue(id, out var v3) ? v3 : 0;
 
                 float avgMpSpent = appearances > 0 ? (float)totalMpSpent / appearances : 0f;
                 float avgMpEarned = appearances > 0 ? (float)totalMpEarned / appearances : 0f;
+                float avgAutoupgradeMp = appearances > 0 ? (float)totalAutoupgradeMp / appearances : 0f;
 
                 Console.WriteLine(
                     $"{id,6} | {Truncate(strategyObj.StrategyName, 40),-40} | {winRate,6:N1}% | " +
                     $"{(float)living / appearances,13:N1} | {(float)dead / appearances,13:N1} | " +
-                    $"{avgMpSpent,16:N1} | {avgMpEarned,16:N1} | " +
+                    $"{avgMpSpent,16:N1} | {avgMpEarned,16:N1} | {avgAutoupgradeMp,20:N1} | " +
                     $"{growth / appearances * 100f,10:N2}% | {selfDeath / appearances * 100f,12:N2}% | {decayMod / appearances,9:N2}%");
             }
 
-            Console.WriteLine(new string('-', 191));
+            Console.WriteLine(new string('-', 211));
         }
 
         private void PrintDeathReasonSummary(

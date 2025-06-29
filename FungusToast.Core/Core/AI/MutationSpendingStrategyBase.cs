@@ -20,53 +20,10 @@ namespace FungusToast.Core.AI
         public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board,
             Random rnd, ISimulationObserver? simulationObserver = null)
         {
-            // Compute MP before
-            int[] mpBefore = GetPointsByTier(player);
-
             // Delegate actual spending logic to child
+            // Individual TryUpgradeMutation calls will handle point tracking correctly
             PerformSpendingLogic(player, allMutations, board, rnd, simulationObserver);
-
-            // Compute MP after
-            int[] mpAfter = GetPointsByTier(player);
-
-            // Record delta per tier
-            if (simulationObserver != null)
-            {
-                for (int t = 0; t < mpBefore.Length; t++)
-                {
-                    int spent = mpAfter[t] - mpBefore[t];
-                    if (spent > 0)
-                    {
-                        simulationObserver.RecordMutationPointsSpent(
-                            player.PlayerId,
-                            (MutationTier)t,
-                            spent
-                        );
-                    }
-                }
-            }
         }
-
-        protected int[] GetPointsByTier(Player player)
-        {
-            int tierCount = Enum.GetValues(typeof(MutationTier)).Length;
-            int[] pointsByTier = new int[tierCount];
-            foreach (var kvp in player.PlayerMutations)
-            {
-                var mutation = MutationRegistry.GetById(kvp.Key);
-                if (mutation == null) continue;
-                int tierIdx = (int)mutation.Tier;
-                // Use TotalPointsSpent if you track it, else use CurrentLevel * PointsPerUpgrade
-                pointsByTier[tierIdx] += kvp.Value.CurrentLevel * mutation.PointsPerUpgrade;
-            }
-            return pointsByTier;
-        }
-
-
-        // Each concrete strategy must implement this core logic:
-        protected abstract void PerformSpendingLogic(Player player, List<Mutation> allMutations, GameBoard board,
-            Random rnd, ISimulationObserver? simulationObserver);
-
 
         protected Mutation? PickBestTendrilMutation(Player player, List<Mutation> options, GameBoard board)
         {
@@ -159,5 +116,8 @@ namespace FungusToast.Core.AI
                 .ToList();
         }
 
+        // Each concrete strategy must implement this core logic:
+        protected abstract void PerformSpendingLogic(Player player, List<Mutation> allMutations, GameBoard board,
+            Random rnd, ISimulationObserver? simulationObserver);
     }
 }

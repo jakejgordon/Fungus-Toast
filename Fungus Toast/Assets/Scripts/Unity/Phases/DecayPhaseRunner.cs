@@ -15,13 +15,11 @@ namespace FungusToast.Unity.Phases
     public class DecayPhaseRunner : MonoBehaviour
     {
         private GameBoard board;
-        private List<Player> players;
         private GridVisualizer gridVisualizer;
 
         public void Initialize(GameBoard board, List<Player> players, GridVisualizer gridVisualizer)
         {
             this.board = board ?? throw new ArgumentNullException(nameof(board));
-            this.players = players ?? throw new ArgumentNullException(nameof(players));
             this.gridVisualizer = gridVisualizer ?? throw new ArgumentNullException(nameof(gridVisualizer));
         }
 
@@ -45,13 +43,13 @@ namespace FungusToast.Unity.Phases
         {
             Debug.Log("💀 Decay Phase Starting...");
 
-            DeathEngine.ExecuteDeathCycle(board, players, failedGrowthsByPlayerId, rng, simulationObserver);
+            DeathEngine.ExecuteDeathCycle(board, failedGrowthsByPlayerId, rng, simulationObserver);
 
             yield return new WaitForSeconds(GameBalance.TimeBeforeDecayRender);
 
             gridVisualizer.RenderBoard(board);
 
-            GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(players);
+            GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(board.Players);
 
             yield return new WaitForSeconds(GameBalance.TimeAfterDecayRender);
 

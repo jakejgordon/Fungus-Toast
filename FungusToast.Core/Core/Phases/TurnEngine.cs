@@ -55,7 +55,7 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver? simulationObserver = null)
         {
-            DeathEngine.ExecuteDeathCycle(board, players, failedGrowthsByPlayerId, rng, simulationObserver);
+            DeathEngine.ExecuteDeathCycle(board, failedGrowthsByPlayerId, rng, simulationObserver);
         }
     }
 }
