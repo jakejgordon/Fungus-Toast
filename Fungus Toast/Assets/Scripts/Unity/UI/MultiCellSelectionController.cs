@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using TMPro;
 
 namespace FungusToast.Unity.UI
 {
@@ -22,6 +23,7 @@ namespace FungusToast.Unity.UI
         private HashSet<int> selectedTileIds = new HashSet<int>();
         private int maxSelections = 5;
         private bool selectionActive = false;
+        private int lastRemaining = -1;
 
         private void Awake()
         {
@@ -47,27 +49,27 @@ namespace FungusToast.Unity.UI
             string promptMessage = null)
         {
             this.selectingPlayerId = playerId;
-            this.maxSelections = maxSelections;
             selectionActive = true;
             selectedTileIds.Clear();
-
-            // Show the prompt if a message was provided
-            if (!string.IsNullOrEmpty(promptMessage))
-                GameManager.Instance.ShowSelectionPrompt(promptMessage);
 
             // Find valid cells (living, owned by player, not already resistant)
             var validCells = GameManager.Instance.Board.GetAllCellsOwnedBy(playerId)
                 .Where(c => c.IsAlive && !c.IsResistant)
                 .ToList();
 
+            this.maxSelections = Mathf.Min(maxSelections, validCells.Count);
+
             selectableTileIds = new HashSet<int>(validCells.Select(c => c.TileId));
 
-            // Highlight valid tiles using GridVisualizer
+            // Highlight valid tiles using GridVisualizer (use magenta-pink like Jetting Mycelium)
             gridVisualizer.HighlightTiles(
                 selectableTileIds,
-                new Color(0.2f, 1f, 0.2f, 1f),   // Green for selectable
-                new Color(0.8f, 1f, 0.8f, 1f)    // Light green
+                new Color(1f, 0.15f, 0.8f, 1f),   // Magenta-pink for selectable (matches Jetting Mycelium)
+                new Color(1f, 1f, 1f, 1f)          // White
             );
+
+            // Show the initial prompt
+            UpdateSelectionPrompt();
 
             // Set up callbacks
             onCellsSelected = (cells) =>
@@ -80,6 +82,59 @@ namespace FungusToast.Unity.UI
                 GameManager.Instance.HideSelectionPrompt();
                 onCancel?.Invoke();
             };
+        }
+
+        private void UpdateSelectionPrompt()
+        {
+            int remaining = maxSelections - selectedTileIds.Count;
+            string cellWord = remaining == 1 ? "cell" : "cells";
+            GameManager.Instance.ShowSelectionPrompt($"Select {remaining} {cellWord} to give Resistance.");
+
+            // Animate the prompt if the number changed
+            if (remaining != lastRemaining)
+            {
+                AnimatePromptPop();
+                lastRemaining = remaining;
+            }
+        }
+
+        private void AnimatePromptPop()
+        {
+            var promptText = GameManager.Instance.SelectionPromptText;
+            if (promptText == null) return;
+            promptText.transform.localScale = Vector3.one;
+            StopAllCoroutines();
+            StartCoroutine(PromptPopCoroutine(promptText));
+        }
+
+        private IEnumerator PromptPopCoroutine(TMP_Text promptText)
+        {
+            float popScale = 1.25f;
+            float duration = 0.15f;
+            float elapsed = 0f;
+            Vector3 startScale = Vector3.one;
+            Vector3 endScale = Vector3.one * popScale;
+
+            // Scale up
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                promptText.transform.localScale = Vector3.Lerp(startScale, endScale, t);
+                yield return null;
+            }
+            promptText.transform.localScale = endScale;
+
+            // Scale back down
+            elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                promptText.transform.localScale = Vector3.Lerp(endScale, startScale, t);
+                yield return null;
+            }
+            promptText.transform.localScale = startScale;
         }
 
         public void OnTileClicked(int tileId)
@@ -95,9 +150,10 @@ namespace FungusToast.Unity.UI
                     selectedTileIds.Remove(tileId);
                     gridVisualizer.HighlightTiles(
                         new[] { tileId },
-                        new Color(0.2f, 1f, 0.2f, 1f),   // Green for selectable
-                        new Color(0.8f, 1f, 0.8f, 1f)    // Light green
+                        new Color(1f, 0.15f, 0.8f, 1f),   // Magenta-pink for selectable
+                        new Color(1f, 1f, 1f, 1f)
                     );
+                    UpdateSelectionPrompt();
                 }
                 else if (selectedTileIds.Count < maxSelections)
                 {
@@ -106,30 +162,25 @@ namespace FungusToast.Unity.UI
                     gridVisualizer.HighlightTiles(
                         new[] { tileId },
                         new Color(1f, 0.8f, 0.2f, 1f),   // Orange for selected
-                        new Color(1f, 1f, 0.8f, 1f)      // Light orange
+                        new Color(1f, 1f, 0.8f, 1f)
                     );
+                    UpdateSelectionPrompt();
+
+                    // If we've selected the allowed number, finish immediately
+                    if (selectedTileIds.Count == maxSelections)
+                    {
+                        selectionActive = false;
+                        gridVisualizer.ClearHighlights();
+                        var selectedCells = selectedTileIds
+                            .Select(id => GameManager.Instance.Board.GetCell(id))
+                            .Where(c => c != null)
+                            .ToList();
+                        GameManager.Instance.HideSelectionPrompt();
+                        onCellsSelected?.Invoke(selectedCells);
+                        Reset();
+                    }
                 }
-
-                // Update the prompt to show selection count
-                GameManager.Instance.ShowSelectionPrompt(
-                    $"Selected {selectedTileIds.Count}/{maxSelections} cells. Click to select/deselect, or press Enter to confirm."
-                );
             }
-        }
-
-        public void ConfirmSelection()
-        {
-            if (!selectionActive) return;
-
-            var selectedCells = selectedTileIds
-                .Select(tileId => GameManager.Instance.Board.GetCell(tileId))
-                .Where(cell => cell != null)
-                .ToList();
-
-            selectionActive = false;
-            gridVisualizer.ClearHighlights();
-            onCellsSelected?.Invoke(selectedCells);
-            Reset();
         }
 
         public void CancelSelection()
@@ -169,12 +220,6 @@ namespace FungusToast.Unity.UI
 
         private void Update()
         {
-            // Handle Enter key to confirm selection
-            if (selectionActive && Input.GetKeyDown(KeyCode.Return))
-            {
-                ConfirmSelection();
-            }
-
             // Handle Escape key to cancel selection
             if (selectionActive && Input.GetKeyDown(KeyCode.Escape))
             {

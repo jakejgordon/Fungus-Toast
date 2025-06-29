@@ -104417,6 +104417,7 @@ GameObject:
   - component: {fileID: 548818018}
   - component: {fileID: 548818017}
   - component: {fileID: 548818019}
+  - component: {fileID: 548818020}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -104478,6 +104479,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   draftPanel: {fileID: 1723225966}
+  gridVisualizer: {fileID: 989759029}
+--- !u!114 &548818020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 548818016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e778b3e3375b72540aaeb78fd77685cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   gridVisualizer: {fileID: 989759029}
 --- !u!1 &565532745
 GameObject:
@@ -109055,7 +109069,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

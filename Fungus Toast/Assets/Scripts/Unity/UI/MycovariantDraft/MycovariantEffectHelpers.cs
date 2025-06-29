@@ -130,6 +130,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 // Hide draft panel if supplied
                 draftPanel?.SetActive(false);
 
+                // Show selection prompt banner
+                GameManager.Instance.ShowSelectionPrompt(
+                    $"Select up to {MycovariantGameBalance.MycelialBastionMaxResistantCells} of your living cells to become Resistant."
+                );
+
                 // Use a multi-selection controller for Mycelial Bastion
                 MultiCellSelectionController.Instance.PromptSelectMultipleLivingCells(
                     player.PlayerId,
@@ -146,12 +151,14 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             playerMyco?.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);
                         }
 
+                        GameManager.Instance.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
                         gridVisualizer.RenderBoard(GameManager.Instance.Board);
                         onComplete?.Invoke();
                     },
                     () =>
                     {
+                        GameManager.Instance.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
                         onComplete?.Invoke();
                     },
