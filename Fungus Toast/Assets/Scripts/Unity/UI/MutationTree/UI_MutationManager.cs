@@ -104,6 +104,13 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
+            // Don't proceed if GameObject is inactive
+            if (!gameObject.activeInHierarchy)
+            {
+                Debug.LogWarning("⚠️ UI_MutationManager is inactive, skipping initialization");
+                return;
+            }
+
             humanPlayer = player;
             humanTurnEnded = false;
             RefreshSpendPointsButtonUI();
@@ -121,12 +128,34 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             PopulateAllMutations();
-            StartCoroutine(SlideOutTree());
+            
+            // Final safety check before starting coroutine
+            if (gameObject.activeInHierarchy && enabled)
+            {
+                try
+                {
+                    StartCoroutine(SlideOutTree());
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"⚠️ Failed to start SlideOutTree coroutine: {e.Message}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ UI_MutationManager inactive, skipping SlideOutTree coroutine");
+            }
         }
 
         public void OnSpendPointsClicked()
         {
             if (isSliding) return;
+
+            // Initialize if not already done
+            if (humanPlayer == null && GameManager.Instance != null && GameManager.Instance.Board.Players.Count > 0)
+            {
+                Initialize(GameManager.Instance.Board.Players[0]);
+            }
 
             if (!isTreeOpen)
                 StartCoroutine(SlideInTree());
@@ -170,7 +199,7 @@ namespace FungusToast.Unity.UI.MutationTree
             return false;
         }
 
-        private void RefreshSpendPointsButtonUI()
+        public void RefreshSpendPointsButtonUI()
         {
             if (spendPointsButton == null || buttonOutline == null || humanPlayer == null)
                 return;

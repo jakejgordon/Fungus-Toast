@@ -159,14 +159,16 @@ namespace FungusToast.Unity
                 if (icon != null) gameUIManager.PlayerUIBinder.AssignIcon(p, icon);
             }
 
-            gameUIManager.MoldProfilePanel?.Initialize(Board.Players[0], players);
-            gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
-
+            // First populate Board.Players
             Board.Players.Clear();
             Board.Players.AddRange(players);
             
             // Update humanPlayer to reference the canonical player object
             humanPlayer = Board.Players[0];
+
+            // Now initialize UI panels with the correct references
+            gameUIManager.MoldProfilePanel?.Initialize(Board.Players[0], Board.Players);
+            gameUIManager.RightSidebar?.InitializePlayerSummaries(Board.Players);
         }
 
 
@@ -264,7 +266,8 @@ namespace FungusToast.Unity
             if (gameEnded) return;
 
             AssignMutationPoints();
-            gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
+            
+            // Don't initialize immediately - just set up the UI state
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(true);
 
@@ -416,10 +419,32 @@ namespace FungusToast.Unity
         public void OnMycovariantDraftComplete()
         {
             isInDraftPhase = false;
-            // Proceed to next round and phase
-            StartNextRound();
+            
+            // Re-enable UI elements that were hidden during draft
+            gameUIManager.MutationUIManager.gameObject.SetActive(true);
+            gameUIManager.RightSidebar?.gameObject.SetActive(true);
+            gameUIManager.LeftSidebar?.gameObject.SetActive(true);
+            
+            // Hide draft UI
+            mycovariantDraftController.gameObject.SetActive(false);
+            
+            // Start a coroutine to delay the next round start, ensuring UI is properly activated
+            StartCoroutine(DelayedStartNextRound());
         }
 
+        private IEnumerator DelayedStartNextRound()
+        {
+            // Wait for end of frame to ensure GameObject activation is processed
+            yield return new WaitForEndOfFrame();
+
+            // Assign mutation points first
+            AssignMutationPoints();
+
+            // Now that the UI is active, initialize the mutation UI for the human player
+            gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
+            gameUIManager.MutationUIManager.RefreshAllMutationButtons();
+            gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
+        }
 
         public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)
         {

@@ -81,7 +81,14 @@ namespace FungusToast.Unity.Effects
         {
             // Core logic already handles the mutation point award via MycovariantFactory
             // No need to duplicate it here
-            GameManager.Instance.GameUI.MoldProfilePanel?.PulseMutationPoints();
+            
+            // Only pulse if the panel is active and enabled
+            var panel = GameManager.Instance.GameUI.MoldProfilePanel;
+            if (panel != null && panel.gameObject.activeInHierarchy && panel.enabled)
+            {
+                panel.PulseMutationPoints();
+            }
+            
             /*
             GameManager.Instance.GameUI.RightSidebar?.AddLogEntry(
                 $"{player.PlayerName} gained 15 mutation points from Plasmid Bounty!"

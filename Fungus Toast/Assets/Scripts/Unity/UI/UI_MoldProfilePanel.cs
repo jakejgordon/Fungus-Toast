@@ -51,9 +51,18 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public void PulseMutationPoints()
         {
+            // Don't start coroutine if GameObject or component is inactive
+            if (!gameObject.activeInHierarchy || !enabled)
+                return;
+                
             if (pulseCoroutine != null)
                 StopCoroutine(pulseCoroutine);
-            pulseCoroutine = StartCoroutine(PulseTextRoutine(mpIncomeText));
+                
+            // Double-check before starting coroutine
+            if (gameObject.activeInHierarchy && enabled)
+            {
+                pulseCoroutine = StartCoroutine(PulseTextRoutine(mpIncomeText));
+            }
         }
 
         private IEnumerator PulseTextRoutine(TextMeshProUGUI text)
