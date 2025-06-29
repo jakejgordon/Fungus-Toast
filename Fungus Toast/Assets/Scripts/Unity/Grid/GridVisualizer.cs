@@ -187,7 +187,7 @@ namespace FungusToast.Unity.Grid
                     {
                         moldTilemap.SetTileFlags(pos, TileFlags.None);
                         moldTilemap.SetTile(pos, playerMoldTiles[ownerId]);
-                        moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.35f));
+                        moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.55f));
                         moldTilemap.RefreshTile(pos);
                     }
                     overlayTile = deadTile;
@@ -199,7 +199,7 @@ namespace FungusToast.Unity.Grid
                     {
                         // Show very faint, slightly gray mold color under the toxin overlay
                         moldTile = playerMoldTiles[idT];
-                        moldColor = new Color(0.8f, 0.8f, 0.8f, 0.35f); // More visible, still faded
+                        moldColor = new Color(0.8f, 0.8f, 0.8f, 0.55f); // More visible, still faded
                     }
                     overlayTile = toxinOverlayTile;
                     overlayColor = Color.white;
