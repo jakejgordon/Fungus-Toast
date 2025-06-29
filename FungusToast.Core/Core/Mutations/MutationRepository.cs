@@ -239,7 +239,7 @@ namespace FungusToast.Core.Mutations
                 maxLevel: GameBalance.PutrefactiveMycotoxinMaxLevel,
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier3
-            ), new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1));
+            ), new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 3));
 
             MakeChild(new Mutation(
                 id: MutationIds.AnabolicInversion,
@@ -311,8 +311,8 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.Growth,
                 tier: MutationTier.Tier4
             ),
-                new MutationPrerequisite(MutationIds.Necrosporulation, 1),
-                new MutationPrerequisite(MutationIds.MycotropicInduction, 1));
+                new MutationPrerequisite(MutationIds.Necrosporulation, 3),
+                new MutationPrerequisite(MutationIds.MycotropicInduction, 3));
 
 
             MakeChild(new Mutation(
@@ -327,7 +327,7 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.Growth,
                 tier: MutationTier.Tier4
             ),
-                new MutationPrerequisite(MutationIds.MycotropicInduction, 1));
+                new MutationPrerequisite(MutationIds.MycotropicInduction, 3));
 
 
             MakeChild(new Mutation(
@@ -350,8 +350,9 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier4
             ),
-            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 1),
-            new MutationPrerequisite(MutationIds.Necrosporulation, 1)
+            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 3),
+            new MutationPrerequisite(MutationIds.Necrosporulation, 2),
+            new MutationPrerequisite(MutationIds.MycelialBloom, 8)
             );
 
 
@@ -372,7 +373,8 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.GeneticDrift,
                 tier: MutationTier.Tier4
             ),
-            new MutationPrerequisite(MutationIds.SporocidalBloom, 1));
+            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 3),
+            new MutationPrerequisite(MutationIds.AdaptiveExpression, 4));
 
 
             //Tier-5
@@ -415,22 +417,24 @@ namespace FungusToast.Core.Mutations
                 id: MutationIds.HyperadaptiveDrift,
                 name: "Hyperadaptive Drift",
                 description:
-                    $"Each level grants a {FormatPercent(GameBalance.HyperadaptiveDriftHigherTierChancePerLevel)} chance for Mutator Phenotype to upgrade a random Tier 2, 3, or 4 mutation each round, instead of Tier 1.\n" +
-                    $"If a Tier 1 mutation is selected, each level also grants a {FormatPercent(GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel)} chance to upgrade an additional level in that mutation instead.",
-                flavorText:
-                    "Genome-wide instability unlocks adaptive leaps: mutator elements jump boundaries, splicing entire gene complexes with chaotic vigor. High-level traits now accelerate and cascade, birthing wild new forms.",
-                type: MutationType.EnhancedAutoUpgradeRandom,
-                effectPerLevel: GameBalance.HyperadaptiveDriftHigherTierChancePerLevel, // Main effect per level for reporting
+                    "Once per round, you may choose to activate this mutation. When activated, you gain the ability to upgrade any mutation by one level for free, regardless of prerequisites. " +
+                    "This bypasses all normal upgrade restrictions and costs.\n" +
+                    "\n" +
+                    "However, this comes at a cost: after using this ability, you must skip your next growth phase entirely. " +
+                    "This represents the metabolic cost of such rapid adaptation.",
+                flavorText: "The colony achieves a state of hyperplasticity, capable of instantaneous genomic restructuring at the cost of growth arrest.",
+                type: MutationType.FreeMutationUpgrade,
+                effectPerLevel: 1.0f,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
                 maxLevel: GameBalance.HyperadaptiveDriftMaxLevel,
                 category: MutationCategory.GeneticDrift,
                 tier: MutationTier.Tier5
             ),
-            new MutationPrerequisite(MutationIds.MycelialBloom, 2),
-            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 2),
-            new MutationPrerequisite(MutationIds.MycotoxinTracer, 2),
-            new MutationPrerequisite(MutationIds.NecrophyticBloom, 1)
-            );
+            new MutationPrerequisite(MutationIds.NecrophyticBloom, 2),
+            new MutationPrerequisite(MutationIds.MycotropicInduction, 2),
+            new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 2),
+            new MutationPrerequisite(MutationIds.AdaptiveExpression, 2),
+            new MutationPrerequisite(MutationIds.Necrosporulation, 2));
 
 
 

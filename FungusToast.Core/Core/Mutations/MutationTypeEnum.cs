@@ -28,5 +28,6 @@ namespace FungusToast.Core
         NecrohyphalInfiltration,
         NecrotoxicConversion,
         HyphalVectoring,
+        FreeMutationUpgrade,
     }
 }
