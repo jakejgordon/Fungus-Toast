@@ -190,6 +190,7 @@ namespace FungusToast.Simulation.Analysis
             var totalMpSpentByPlayer = new Dictionary<int, int>();
             var totalMpEarnedByPlayer = new Dictionary<int, int>();
             var totalAutoupgradeMpByPlayer = new Dictionary<int, int>();
+            var totalBankedPointsByPlayer = new Dictionary<int, int>();
 
             foreach (var game in gameResults)
             {
@@ -222,14 +223,23 @@ namespace FungusToast.Simulation.Analysis
                         totalAutoupgradeMpByPlayer[playerId] = 0;
                     totalAutoupgradeMpByPlayer[playerId] += autoupgradeMp;
                 }
+
+                // Calculate total banked points
+                foreach (var kvp in tracking.GetAllBankedPoints())
+                {
+                    int playerId = kvp.Key;
+                    if (!totalBankedPointsByPlayer.ContainsKey(playerId))
+                        totalBankedPointsByPlayer[playerId] = 0;
+                    totalBankedPointsByPlayer[playerId] += kvp.Value;
+                }
             }
 
             Console.WriteLine("\n=== Per-Player Summary ===");
             Console.WriteLine(
                 $"{"Player",6} | {"Strategy",-40} | {"WinRate",7} | {"Avg Alive",13} | {"Avg Dead",13} | " +
-                $"{"Avg MP Spent",16} | {"Avg MP Earned",16} | {"Avg Autoupgrade MP",20} | " +
+                $"{"Avg MP Spent",16} | {"Avg MP Earned",16} | {"Avg Autoupgrade MP",20} | {"Avg Banked",12} | " +
                 $"{"Growth%",11} | {"SelfDeath%",13} | {"DecayMod",10}");
-            Console.WriteLine(new string('-', 211));
+            Console.WriteLine(new string('-', 223));
 
             foreach (var (id, strategyName) in rankedPlayerList)
             {
@@ -246,19 +256,21 @@ namespace FungusToast.Simulation.Analysis
                 int totalMpSpent = totalMpSpentByPlayer.TryGetValue(id, out var v1) ? v1 : 0;
                 int totalMpEarned = totalMpEarnedByPlayer.TryGetValue(id, out var v2) ? v2 : 0;
                 int totalAutoupgradeMp = totalAutoupgradeMpByPlayer.TryGetValue(id, out var v3) ? v3 : 0;
+                int totalBankedPoints = totalBankedPointsByPlayer.TryGetValue(id, out var v4) ? v4 : 0;
 
                 float avgMpSpent = appearances > 0 ? (float)totalMpSpent / appearances : 0f;
                 float avgMpEarned = appearances > 0 ? (float)totalMpEarned / appearances : 0f;
                 float avgAutoupgradeMp = appearances > 0 ? (float)totalAutoupgradeMp / appearances : 0f;
+                float avgBankedPoints = appearances > 0 ? (float)totalBankedPoints / appearances : 0f;
 
                 Console.WriteLine(
                     $"{id,6} | {Truncate(strategyObj.StrategyName, 40),-40} | {winRate,6:N1}% | " +
                     $"{(float)living / appearances,13:N1} | {(float)dead / appearances,13:N1} | " +
-                    $"{avgMpSpent,16:N1} | {avgMpEarned,16:N1} | {avgAutoupgradeMp,20:N1} | " +
+                    $"{avgMpSpent,16:N1} | {avgMpEarned,16:N1} | {avgAutoupgradeMp,20:N1} | {avgBankedPoints,12:N1} | " +
                     $"{growth / appearances * 100f,10:N2}% | {selfDeath / appearances * 100f,12:N2}% | {decayMod / appearances,9:N2}%");
             }
 
-            Console.WriteLine(new string('-', 211));
+            Console.WriteLine(new string('-', 223));
         }
 
         private void PrintDeathReasonSummary(

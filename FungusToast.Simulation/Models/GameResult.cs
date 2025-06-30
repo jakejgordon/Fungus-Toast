@@ -110,6 +110,7 @@ namespace FungusToast.Simulation.Models
                     MutationPointIncome = tracking.GetMutationPointIncome(player.PlayerId),
                     MutationPointsSpentByTier = tracking.GetMutationPointsSpentByTier(player.PlayerId),
                     TotalMutationPointsSpent = tracking.GetTotalMutationPointsSpent(player.PlayerId),
+                    BankedPoints = tracking.GetBankedPoints(player.PlayerId),
 
                     // Mycovariant summary
                     Mycovariants = BuildMycovariantResults(player, tracking)

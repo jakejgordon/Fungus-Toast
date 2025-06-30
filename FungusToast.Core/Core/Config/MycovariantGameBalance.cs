@@ -15,7 +15,7 @@ namespace FungusToast.Core.Config
         public const int PlasmidBountyMutationPointAward = 15;
 
 
-        public const float NeutralizingMantleNeutralizeChance = 0.15f;
+        public const float NeutralizingMantleNeutralizeChance = 0.20f;
 
         public const int MycelialBastionMaxResistantCells = 5;
 

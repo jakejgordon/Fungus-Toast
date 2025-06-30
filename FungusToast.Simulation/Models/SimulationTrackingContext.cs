@@ -50,6 +50,22 @@ namespace FungusToast.Simulation.Models
             => mutationPointIncomeByPlayer;
 
         // ────────────────
+        // Banked Points
+        // ────────────────
+
+        private readonly Dictionary<int, int> bankedPointsByPlayer = new();
+        public void RecordBankedPoints(int playerId, int pointsBanked)
+        {
+            if (!bankedPointsByPlayer.ContainsKey(playerId))
+                bankedPointsByPlayer[playerId] = 0;
+            bankedPointsByPlayer[playerId] += pointsBanked;
+        }
+        public int GetBankedPoints(int playerId)
+            => bankedPointsByPlayer.TryGetValue(playerId, out var val) ? val : 0;
+        public IReadOnlyDictionary<int, int> GetAllBankedPoints()
+            => bankedPointsByPlayer;
+
+        // ────────────────
         // Cell Deaths by Reason
         // ────────────────
 

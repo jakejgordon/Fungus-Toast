@@ -293,6 +293,8 @@ namespace FungusToast.Core.AI
                 // If we need to bank for the next mutation, don't proceed to fallback spending
                 if (shouldBankForNextMutation)
                 {
+                    // Record that we're banking points for expensive mutations
+                    simulationObserver?.RecordBankedPoints(player.PlayerId, player.MutationPoints);
                     return; // Bank points for next turn
                 }
 
