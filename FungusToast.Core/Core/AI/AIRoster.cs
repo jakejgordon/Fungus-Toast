@@ -55,18 +55,16 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
-                strategyName: "Necrotoxic Moderate Economy",
+                strategyName: "Catabolic Rebirth",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                   new TargetMutationGoal(MutationIds.MycelialBloom),
-                    new TargetMutationGoal(MutationIds.NecrotoxicConversion),
-                    new TargetMutationGoal(MutationIds.SporocidalBloom)
+                   new TargetMutationGoal(MutationIds.CatabolicRebirth)
                 }
             ),
-                        new ParameterizedSpendingStrategy(
-                strategyName: "Necrotoxic Moderate Economy 2",
+            new ParameterizedSpendingStrategy(
+                strategyName: "Necrotoxic Moderate Economy",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -77,7 +75,7 @@ namespace FungusToast.Core.AI
                 }
             ),
                                     new ParameterizedSpendingStrategy(
-                strategyName: "Necrotoxic Moderate Economy 3",
+                strategyName: "Necrotoxic Moderate Economy 2",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
