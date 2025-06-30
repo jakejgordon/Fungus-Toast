@@ -66,8 +66,11 @@ namespace FungusToast.Unity.Grid
         {
             HighlightTiles(
                 board.AllTiles()
-                    .Where(t => t.FungalCell?.CellType == FungalCellType.Alive &&
-                                t.FungalCell.OwnerPlayerId == playerId)
+                    .Where(t =>
+                        t.FungalCell != null &&
+                        t.FungalCell.OwnerPlayerId == playerId &&
+                        (t.FungalCell.CellType == FungalCellType.Alive || t.FungalCell.CellType == FungalCellType.Toxin)
+                    )
                     .Select(t => t.TileId),
                 new Color(1f, 1f, 0.1f, 1f),  // Bright yellow
                 new Color(0.1f, 1f, 1f, 1f)   // Bright cyan
