@@ -58,6 +58,7 @@ namespace FungusToast.Core.Config
         public const float NecrohyphalInfiltrationChancePerLevel = 0.004f;
         public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.019f;
         public const float NecrotoxicConversionReclaimChancePerLevel = .035f;
+        public const float CatabolicRebirthResurrectionChancePerLevel = 0.025f;
 
         // Max Levels
         public const int MycelialBloomMaxLevel = 150;
@@ -82,6 +83,7 @@ namespace FungusToast.Core.Config
         public const int HyperadaptiveDriftMaxLevel = 4;
         public const int NecrohyphalInfiltrationMaxLevel = 5;
         public const int NecrotoxicConversionMaxLevel = 5;
+        public const int CatabolicRebirthMaxLevel = 3;
 
         // surge mutation points per activiation
         public const int HyphalSurgePointsPerActivation = 7;

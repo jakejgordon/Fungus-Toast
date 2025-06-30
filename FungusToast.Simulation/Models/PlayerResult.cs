@@ -75,6 +75,7 @@ namespace FungusToast.Simulation.Models
         /// Number of cells reclaimed using Necrotoxic Conversion (Tier 5 Fungicide).
         /// </summary>
         public int NecrotoxicConversionReclaims { get; set; }
+        public int CatabolicRebirthResurrections { get; set; }
         public int HyphalSurgeGrowths { get; set; }
         public int HyphalVectoringGrowths { get; set; }
         public int HyphalVectoringInfested { get; set; }

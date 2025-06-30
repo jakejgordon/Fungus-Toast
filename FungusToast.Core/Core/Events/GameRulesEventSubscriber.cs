@@ -95,6 +95,12 @@ namespace FungusToast.Core.Events
                 MycovariantEffectProcessor.OnToxinPlaced_NeutralizingMantle(args, board, players, rng, observer);
             };
 
+            // Catabolic Rebirth (toxin expiration resurrection effect)
+            board.ToxinExpired += (sender, args) =>
+            {
+                MutationEffectProcessor.OnToxinExpired_CatabolicRebirth(args, board, players, rng, observer);
+            };
+
             // TODO: Add additional event-driven rule subscriptions here.
             // e.g., Necrosporulation, Sporocidal Bloom, Creeping Mold, etc.
         }

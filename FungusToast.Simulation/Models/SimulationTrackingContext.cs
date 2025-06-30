@@ -215,6 +215,21 @@ namespace FungusToast.Simulation.Models
             => necrotoxicConversionReclaims.TryGetValue(playerId, out var val) ? val : 0;
 
         // ────────────────
+        // Catabolic Rebirth
+        // ────────────────
+
+        private readonly Dictionary<int, int> catabolicRebirthResurrections = new();
+        public void RecordCatabolicRebirthResurrection(int playerId, int count)
+        {
+            if (!catabolicRebirthResurrections.ContainsKey(playerId))
+                catabolicRebirthResurrections[playerId] = 0;
+            catabolicRebirthResurrections[playerId] += count;
+        }
+        public int GetCatabolicRebirthResurrections(int playerId)
+            => catabolicRebirthResurrections.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllCatabolicRebirthResurrections() => new(catabolicRebirthResurrections);
+
+        // ────────────────
         // Mycotoxin Tracer Spores
         // ────────────────
 

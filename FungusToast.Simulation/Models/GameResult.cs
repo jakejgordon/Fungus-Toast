@@ -92,6 +92,7 @@ namespace FungusToast.Simulation.Models
                     NecrohyphalCascades = tracking.GetNecrohyphalCascadeCount(player.PlayerId),
                     PutrefactiveMycotoxinKills = playerDeaths.TryGetValue(DeathReason.PutrefactiveMycotoxin, out var pmKills) ? pmKills : 0,
                     NecrotoxicConversionReclaims = tracking.GetNecrotoxicConversionReclaims(player.PlayerId),
+                    CatabolicRebirthResurrections = tracking.GetCatabolicRebirthResurrections(player.PlayerId),
                     HyphalSurgeGrowths = tracking.GetHyphalSurgeGrowthCount(player.PlayerId),
                     HyphalVectoringGrowths = tracking.GetHyphalVectoringGrowthCount(player.PlayerId),
                     HyphalVectoringInfested = tracking.GetHyphalVectoringInfested(player.PlayerId),

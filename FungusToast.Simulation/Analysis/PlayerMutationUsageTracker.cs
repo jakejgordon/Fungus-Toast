@@ -155,6 +155,11 @@ namespace FungusToast.Simulation.Analysis
                         effects["Necrotoxic Reclaims"] = player.NecrotoxicConversionReclaims;
                     break;
 
+                case MutationIds.CatabolicRebirth:
+                    if (player.CatabolicRebirthResurrections > 0)
+                        effects["Rebirths"] = player.CatabolicRebirthResurrections;
+                    break;
+
                 case MutationIds.HyphalSurge:
                     if (player.HyphalSurgeGrowths > 0)
                         effects["Hyphal Surge Growths"] = player.HyphalSurgeGrowths;

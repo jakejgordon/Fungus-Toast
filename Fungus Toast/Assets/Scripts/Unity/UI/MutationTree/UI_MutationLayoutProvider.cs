@@ -27,6 +27,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.Necrosporulation,         new MutationLayoutMetadata(1, 2, MutationCategory.CellularResilience) },
                 { MutationIds.RegenerativeHyphae,       new MutationLayoutMetadata(1, 3, MutationCategory.CellularResilience) },
                 { MutationIds.NecrohyphalInfiltration,  new MutationLayoutMetadata(1, 4, MutationCategory.CellularResilience) },
+                { MutationIds.CatabolicRebirth,         new MutationLayoutMetadata(1, 5, MutationCategory.CellularResilience) },
 
                 /* ---------------- Fungicide (col 2) ----------------- */
                 { MutationIds.MycotoxinTracer,           new MutationLayoutMetadata(2, 0, MutationCategory.Fungicide) },

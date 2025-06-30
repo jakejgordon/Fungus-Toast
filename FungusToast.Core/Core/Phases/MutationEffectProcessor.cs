@@ -790,7 +790,7 @@ namespace FungusToast.Core.Phases
                     {
                         FungalCell? dead = n.FungalCell;
                         if (dead is null || dead.IsAlive || dead.IsToxin) continue;
-                        if (dead.OriginalOwnerPlayerId != p.PlayerId) continue;
+                        if (dead.OwnerPlayerId != p.PlayerId) continue;
                         if (!attempted.Add(dead.TileId)) continue;
                         if (rng.NextDouble() < reclaimChance)
                         {
@@ -1080,6 +1080,62 @@ namespace FungusToast.Core.Phases
             foreach (var player in players)
             {
                 TryApplyMutatorPhenotype(player, allMutations, rng, currentRound, observer);
+            }
+        }
+
+        public static void OnToxinExpired_CatabolicRebirth(
+            ToxinExpiredEventArgs eventArgs,
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            // Check adjacent tiles for dead cells
+            var adjacentTiles = board.GetAdjacentTiles(eventArgs.TileId);
+            var resurrectionsByPlayer = new Dictionary<int, int>();
+
+            foreach (var adjacentTile in adjacentTiles)
+            {
+                if (adjacentTile.FungalCell == null || !adjacentTile.FungalCell.IsDead)
+                    continue;
+
+                // Find the owner of the dead cell
+                int? deadCellOwnerId = adjacentTile.FungalCell.OwnerPlayerId;
+                if (!deadCellOwnerId.HasValue)
+                    continue;
+
+                var deadCellOwner = players.FirstOrDefault(p => p.PlayerId == deadCellOwnerId.Value);
+                if (deadCellOwner == null)
+                    continue;
+
+                // Check if the dead cell's owner has Catabolic Rebirth
+                int level = deadCellOwner.GetMutationLevel(MutationIds.CatabolicRebirth);
+                if (level <= 0)
+                    continue;
+
+                float chance = level * GameBalance.CatabolicRebirthResurrectionChancePerLevel;
+                if (rng.NextDouble() < chance)
+                {
+                    // Resurrect the dead cell for its original owner
+                    adjacentTile.FungalCell.Reclaim(deadCellOwner.PlayerId);
+                    board.PlaceFungalCell(adjacentTile.FungalCell);
+                    
+                    // Track resurrections by player
+                    if (!resurrectionsByPlayer.ContainsKey(deadCellOwner.PlayerId))
+                        resurrectionsByPlayer[deadCellOwner.PlayerId] = 0;
+                    resurrectionsByPlayer[deadCellOwner.PlayerId]++;
+                }
+            }
+
+            // Report resurrections for each player
+            foreach (var (playerId, count) in resurrectionsByPlayer)
+            {
+                observer?.RecordCatabolicRebirthResurrection(playerId, count);
+                
+                // Fire the CatabolicRebirth event
+                var (x, y) = board.GetXYFromTileId(eventArgs.TileId);
+                var rebirthArgs = new CatabolicRebirthEventArgs(playerId, count, x, y);
+                board.OnCatabolicRebirth(rebirthArgs);
             }
         }
 

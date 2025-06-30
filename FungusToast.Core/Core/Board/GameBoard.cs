@@ -51,6 +51,8 @@ namespace FungusToast.Core.Board
         public delegate void NecrophyticBloomActivatedEventHandler();
         public delegate void MutationPhaseStartEventHandler();
         public delegate void ToxinPlacedEventHandler(object sender, ToxinPlacedEventArgs e);
+        public delegate void ToxinExpiredEventHandler(object sender, ToxinExpiredEventArgs e);
+        public delegate void CatabolicRebirthEventHandler(object sender, CatabolicRebirthEventArgs e);
 
         // 2. Events (public, so other components can subscribe)
         public event CellColonizedEventHandler? CellColonized;
@@ -75,6 +77,8 @@ namespace FungusToast.Core.Board
         public event NecrophyticBloomActivatedEventHandler? NecrophyticBloomActivatedEvent;
         public event MutationPhaseStartEventHandler? MutationPhaseStart;
         public event ToxinPlacedEventHandler? ToxinPlaced;
+        public event ToxinExpiredEventHandler? ToxinExpired;
+        public event CatabolicRebirthEventHandler? CatabolicRebirth;
 
         // 3. Helper methods to invoke (recommended: protected virtual, as in standard .NET pattern)
         protected virtual void OnCellColonized(int playerId, int tileId) =>
@@ -410,6 +414,11 @@ namespace FungusToast.Core.Board
                 if (cell.HasToxinExpired(currentGrowthCycle))
                 {
                     var tile = GetTileById(cell.TileId);
+                    int? toxinOwnerId = cell.OwnerPlayerId;
+                    
+                    // Fire the toxin expired event before removing the cell
+                    OnToxinExpired(new ToxinExpiredEventArgs(cell.TileId, toxinOwnerId));
+                    
                     tile?.RemoveFungalCell(); // Clear the cell entirely from the board
                 }
             }
@@ -552,7 +561,7 @@ namespace FungusToast.Core.Board
             {
                 var deadCell = targetTile.FungalCell;
                 // Only allow if it's the player's own dead cell
-                if (deadCell != null && deadCell.IsDead && deadCell.OriginalOwnerPlayerId == playerId)
+                if (deadCell != null && deadCell.IsDead && deadCell.OwnerPlayerId == playerId)
                 {
                     deadCell.Reclaim(playerId);
                     PlaceFungalCell(deadCell);
@@ -632,12 +641,12 @@ namespace FungusToast.Core.Board
             }
             else if (oldCell.IsDead)
             {
-                int originalOwnerId = oldCell.OriginalOwnerPlayerId;
+                int currentOwnerId = oldCell.OwnerPlayerId ?? -1;
                 // Reclaim: revive dead cell (could be own or enemy, but should check for ownership)
-                if (originalOwnerId == ownerId)
+                if (currentOwnerId == ownerId)
                     OnCellReclaimed(ownerId, cell.TileId);
                 else
-                    OnCellInfested(ownerId, cell.TileId, originalOwnerId); // Parasitic reclaim
+                    OnCellInfested(ownerId, cell.TileId, currentOwnerId); // Parasitic reclaim
             }
         }
 
@@ -686,7 +695,7 @@ namespace FungusToast.Core.Board
                 return false;
 
             var cell = tile.FungalCell;
-            if (cell.OriginalOwnerPlayerId != playerId)
+            if (cell.OwnerPlayerId != playerId)
                 return false;
 
             cell.Reclaim(playerId);
@@ -704,6 +713,12 @@ namespace FungusToast.Core.Board
 
         public virtual void OnToxinPlaced(ToxinPlacedEventArgs e) =>
             ToxinPlaced?.Invoke(this, e);
+
+        public virtual void OnToxinExpired(ToxinExpiredEventArgs e) =>
+            ToxinExpired?.Invoke(this, e);
+
+        public virtual void OnCatabolicRebirth(CatabolicRebirthEventArgs e) =>
+            CatabolicRebirth?.Invoke(this, e);
 
     }
 }

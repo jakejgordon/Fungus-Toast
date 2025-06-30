@@ -437,6 +437,24 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.Necrosporulation, 2));
 
 
+            // Tier-6
+            MakeChild(new Mutation(
+                id: MutationIds.CatabolicRebirth,
+                name: "Catabolic Rebirth",
+                description: $"When a toxin expires adjacent to one of your dead cells, there is a {FormatPercent(GameBalance.CatabolicRebirthResurrectionChancePerLevel)} chance per level to revive that dead cell as a living cell. " +
+                             $"This represents the energy released during toxin breakdown catalyzing cellular regeneration in your dormant cells.",
+                flavorText: "The breakdown of toxic compounds releases catalytic energy that triggers dormant cellular machinery, resurrecting fallen cells through the metabolic alchemy of catabolic processes.",
+                type: MutationType.ToxinExpirationResurrection,
+                effectPerLevel: GameBalance.CatabolicRebirthResurrectionChancePerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier6),
+                maxLevel: GameBalance.CatabolicRebirthMaxLevel,
+                category: MutationCategory.CellularResilience,
+                tier: MutationTier.Tier6
+            ),
+            new MutationPrerequisite(MutationIds.NecrohyphalInfiltration, 2),
+            new MutationPrerequisite(MutationIds.NecrotoxicConversion, 2));
+
+
 
             return (allMutations, rootMutations);
         }
