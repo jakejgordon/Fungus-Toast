@@ -267,9 +267,15 @@ namespace FungusToast.Unity
 
             AssignMutationPoints();
             
+            // At the true start of a new mutation phase, reset humanTurnEnded
+            gameUIManager.MutationUIManager.StartNewMutationPhase();
+            
             // Don't initialize immediately - just set up the UI state
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(true);
+
+            // Refresh the spend points button to show updated mutation points
+            gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
 
             gameUIManager.MoldProfilePanel?.Refresh();
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
@@ -437,13 +443,9 @@ namespace FungusToast.Unity
             // Wait for end of frame to ensure GameObject activation is processed
             yield return new WaitForEndOfFrame();
 
-            // Assign mutation points first
+            // Assign mutation points and start the next round
             AssignMutationPoints();
-
-            // Now that the UI is active, initialize the mutation UI for the human player
-            gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
-            gameUIManager.MutationUIManager.RefreshAllMutationButtons();
-            gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
+            StartNextRound();
         }
 
         public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)

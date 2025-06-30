@@ -104,15 +104,9 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            // Don't proceed if GameObject is inactive
-            if (!gameObject.activeInHierarchy)
-            {
-                Debug.LogWarning("⚠️ UI_MutationManager is inactive, skipping initialization");
-                return;
-            }
+            // Do NOT reset humanTurnEnded here; only do so at the true start of a new mutation phase
 
             humanPlayer = player;
-            humanTurnEnded = false;
             RefreshSpendPointsButtonUI();
 
             Tile tile = gridVisualizer.GetTileForPlayer(player.PlayerId);
@@ -145,6 +139,12 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 Debug.LogWarning("⚠️ UI_MutationManager inactive, skipping SlideOutTree coroutine");
             }
+        }
+
+        // Call this ONLY at the true start of a new mutation phase
+        public void StartNewMutationPhase()
+        {
+            humanTurnEnded = false;
         }
 
         public void OnSpendPointsClicked()
