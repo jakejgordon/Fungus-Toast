@@ -252,11 +252,29 @@ namespace FungusToast.Core.AI
                 // Build and attempt to upgrade prereqs first, then the goal
                 var prereqChain = BuildPrerequisiteChainWithLevels(new TargetMutationGoal(goal.MutationId, goalTargetLevel));
                 bool upgraded = false;
+                bool shouldBankForNextMutation = false;
 
                 foreach (var (mutation, reqLevel) in prereqChain)
                 {
                     int curLvl = player.GetMutationLevel(mutation.Id);
                     int needed = Math.Min(reqLevel, mutation.MaxLevel);
+
+                    // Check if we need to bank for the NEXT mutation in the chain
+                    if (curLvl < needed)
+                    {
+                        // Find the next mutation in the chain that we need to upgrade
+                        var nextMutation = prereqChain.SkipWhile(x => x.mutation.Id != mutation.Id).Skip(1).FirstOrDefault();
+                        if (nextMutation.mutation != null)
+                        {
+                            int nextCost = nextMutation.mutation.PointsPerUpgrade;
+                            if (nextCost > 5 && player.MutationPoints < nextCost)
+                            {
+                                // The next mutation costs more than 5 points and we don't have enough
+                                shouldBankForNextMutation = true;
+                                break;
+                            }
+                        }
+                    }
 
                     while (curLvl < needed && player.MutationPoints > 0 && player.CanUpgrade(mutation))
                     {
@@ -270,6 +288,12 @@ namespace FungusToast.Core.AI
                             break; // couldn't upgrade further
                         }
                     }
+                }
+
+                // If we need to bank for the next mutation, don't proceed to fallback spending
+                if (shouldBankForNextMutation)
+                {
+                    return; // Bank points for next turn
                 }
 
                 // Only work on one target at a time, then fallback
