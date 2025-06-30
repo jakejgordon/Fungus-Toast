@@ -299,3 +299,58 @@ new MutationPrerequisite(MutationIds.SporocidalBloom, 1)); // Requires Sporocida
 - **Unity/Assets/Scripts/Unity/** – UI and Unity-specific integrations.
 
 All state mutations are now event-driven to support analytics, replay, and flexible UI updates. 
+
+---
+
+## Running Simulations with Cursor
+
+Fungus Toast supports automated simulation runs for AI testing, balance, and analytics. To streamline this process, a PowerShell script (`run_simulation.ps1`) is provided in the repository root. This script ensures reliable, repeatable simulation runs and seamless integration with Cursor for automated result analysis.
+
+### Simulation Workflow
+
+1. **Builds First:**
+   - The script automatically builds both `FungusToast.Core` and `FungusToast.Simulation` before running any simulation, ensuring all code is up to date.
+
+2. **Unique Output Files:**
+   - Each simulation run generates a unique output filename using an ISO 8601 datetime stamp (e.g., `sim_output_2025-06-30T12-26-10.txt`).
+   - If you specify `--output <filename>`, that name is used instead.
+   - Output files are written to `FungusToast.Simulation/bin/Debug/net8.0/SimulationOutput/`.
+
+3. **Launching in a New Window:**
+   - The simulation is launched in a new PowerShell window, allowing you to monitor live console output independently of Cursor.
+
+4. **Automatic Waiting and Completion Detection:**
+   - The script blocks until the simulation process in the new window has fully exited.
+   - When the simulation is complete, the main console (and Cursor) will display:
+     ```
+     Simulation process has exited.
+     ```
+   - This message is a reliable signal for Cursor (or any automation) to begin reading and analyzing the output file.
+
+5. **How to Run a Simulation:**
+   - From the repository root, run:
+     ```powershell
+     .\run_simulation.ps1 --games 3 --players 8
+     ```
+   - You may pass any parameters accepted by `Program.cs` (e.g., `--games`, `--players`, `--output`).
+   - The script will print the output filename for reference.
+
+6. **How Cursor Interacts:**
+   - Cursor (and this AI assistant) will:
+     - Wait for the script to finish and for the "Simulation process has exited." message to appear in the console.
+     - Only then, read the output file (using the printed filename) and analyze the results.
+   - This ensures results are never read prematurely and always correspond to the most recent simulation run.
+
+### Example Usage
+
+```powershell
+.\run_simulation.ps1 --games 5 --players 4
+```
+- This will build, launch, and wait for a 5-game, 4-player simulation, writing results to a uniquely named output file.
+
+### Best Practices
+- Always use the script to ensure builds are current and output files are unique.
+- Let Cursor handle detection and analysis—no need to manually confirm completion.
+- For custom output filenames, use the `--output` parameter.
+
+--- 
