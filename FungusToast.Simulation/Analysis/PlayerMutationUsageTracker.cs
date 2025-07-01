@@ -30,8 +30,10 @@ namespace FungusToast.Simulation.Analysis
                     // Get all effects for this mutation
                     var effects = GetMutationEffects(mutationId, player);
                     
+                    // Always create exactly one record per mutation per game
                     if (effects.Count > 0)
                     {
+                        // If there are effects, create a record for each effect type
                         foreach (var (effectType, effectValue) in effects)
                         {
                             _records.Add((
@@ -49,7 +51,7 @@ namespace FungusToast.Simulation.Analysis
                     }
                     else
                     {
-                        // Log mutation with "-" effect type if no effects
+                        // If there are no effects, create a single record with "-" effect type
                         _records.Add((
                             player.PlayerId,
                             strategy,
@@ -215,7 +217,7 @@ namespace FungusToast.Simulation.Analysis
                                 new string('-', 6) + "-|-" +
                                 new string('-', 4));
 
-            // Group by player/strategy/mutation/effect
+            // Group by player/strategy/mutation/effect type
             var grouped = _records
                 .GroupBy(r => (r.PlayerId, r.Strategy, r.MutationId, r.MutationName, r.Tier, r.Category, r.EffectType))
                 .Select(g => new

@@ -396,23 +396,24 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.CreepingMold, 1));
 
             MakeChild(new Mutation(
-                id: MutationIds.NecrotoxicConversion,
-                name: "Necrotoxic Conversion",
-                description: $"Whenever an enemy fungal cell is killed by your toxin effect, there is a {FormatPercent(GameBalance.NecrotoxicConversionReclaimChancePerLevel)} chance per level to immediately reclaim it as your own living cell. ",
-                flavorText: "The most lethal toxins don't merely destroy—they break down resistance, rendering their victims vessels for the ever-hungry mycelium.",
-                type: MutationType.NecrotoxicConversion,
-                effectPerLevel: GameBalance.NecrotoxicConversionReclaimChancePerLevel,
-                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
-                maxLevel: GameBalance.NecrotoxicConversionMaxLevel,
-                category: MutationCategory.Fungicide,
-                tier: MutationTier.Tier5
+                id: MutationIds.CatabolicRebirth,
+                name: "Catabolic Rebirth",
+                description: $"When a toxin expires adjacent to one of your dead cells, there is a {FormatPercent(GameBalance.CatabolicRebirthResurrectionChancePerLevel)} chance per level to revive that dead cell as a living cell. " +
+                             $"This represents the energy released during toxin breakdown catalyzing cellular regeneration in your dormant cells.",
+                flavorText: "The breakdown of toxic compounds releases catalytic energy that triggers dormant cellular machinery, resurrecting fallen cells through the metabolic alchemy of catabolic processes.",
+                type: MutationType.ToxinExpirationResurrection,
+                effectPerLevel: GameBalance.CatabolicRebirthResurrectionChancePerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier6),
+                maxLevel: GameBalance.CatabolicRebirthMaxLevel,
+                category: MutationCategory.CellularResilience,
+                tier: MutationTier.Tier6
             ),
-            new MutationPrerequisite(MutationIds.SporocidalBloom, 1),
-            new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 6)
-            );
+            new MutationPrerequisite(MutationIds.NecrohyphalInfiltration, 1),
+            new MutationPrerequisite(MutationIds.MycotropicInduction, 2),
+            new MutationPrerequisite(MutationIds.AnabolicInversion, 2));
 
 
-
+            // Tier-6
             MakeChild(new Mutation(
                 id: MutationIds.HyperadaptiveDrift,
                 name: "Hyperadaptive Drift",
@@ -435,25 +436,6 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 2),
             new MutationPrerequisite(MutationIds.AdaptiveExpression, 2),
             new MutationPrerequisite(MutationIds.Necrosporulation, 2));
-
-
-            // Tier-6
-            MakeChild(new Mutation(
-                id: MutationIds.CatabolicRebirth,
-                name: "Catabolic Rebirth",
-                description: $"When a toxin expires adjacent to one of your dead cells, there is a {FormatPercent(GameBalance.CatabolicRebirthResurrectionChancePerLevel)} chance per level to revive that dead cell as a living cell. " +
-                             $"This represents the energy released during toxin breakdown catalyzing cellular regeneration in your dormant cells.",
-                flavorText: "The breakdown of toxic compounds releases catalytic energy that triggers dormant cellular machinery, resurrecting fallen cells through the metabolic alchemy of catabolic processes.",
-                type: MutationType.ToxinExpirationResurrection,
-                effectPerLevel: GameBalance.CatabolicRebirthResurrectionChancePerLevel,
-                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier6),
-                maxLevel: GameBalance.CatabolicRebirthMaxLevel,
-                category: MutationCategory.CellularResilience,
-                tier: MutationTier.Tier6
-            ),
-            new MutationPrerequisite(MutationIds.NecrohyphalInfiltration, 1),
-            new MutationPrerequisite(MutationIds.NecrotoxicConversion, 1));
-
 
 
             return (allMutations, rootMutations);
