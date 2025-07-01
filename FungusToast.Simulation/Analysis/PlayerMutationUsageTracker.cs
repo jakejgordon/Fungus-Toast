@@ -17,15 +17,15 @@ namespace FungusToast.Simulation.Analysis
             {
                 string strategy = player.StrategyName ?? "None";
 
-                // Track all mutations the player has (even level 0)
-                var allMutationIds = player.MutationLevels.Keys.ToList();
+                // Track only mutations the player actually acquired (level > 0)
+                var acquiredMutationIds = player.MutationLevels.Where(kv => kv.Value > 0).Select(kv => kv.Key).ToList();
                 
-                foreach (var mutationId in allMutationIds)
+                foreach (var mutationId in acquiredMutationIds)
                 {
                     var mutation = MutationRegistry.GetById(mutationId);
                     if (mutation == null) continue;
 
-                    int level = player.MutationLevels.TryGetValue(mutationId, out var val) ? val : 0;
+                    int level = player.MutationLevels[mutationId];
                     
                     // Get all effects for this mutation
                     var effects = GetMutationEffects(mutationId, player);
@@ -247,7 +247,7 @@ namespace FungusToast.Simulation.Analysis
                 foreach (var r in playerRecords)
                 {
                     var (avgFirst, minFirst, maxFirst, nFirst) = tracking.GetFirstUpgradeStats(r.PlayerId, r.MutationId);
-                    Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-12} | {5,-8} | {6,-8} | {7,-10:N2} | {8,-12} | {9,12:N2} | {10,6} | {11,6} | {12,4}",
+                    Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-12} | {5,-8} | {6,-8} | {7,-10:N2} | {8,-12} | {9,12} | {10,6} | {11,6} | {12,4}",
                         r.PlayerId,
                         Truncate(r.Strategy, 25),
                         r.Tier.ToString(),
@@ -257,9 +257,9 @@ namespace FungusToast.Simulation.Analysis
                         r.AvgLevel.ToString("F1"),
                         r.AvgEffect,
                         r.TotalEffect,
-                        avgFirst > 0 ? avgFirst : double.NaN,
-                        minFirst > 0 ? minFirst : 0,
-                        maxFirst > 0 ? maxFirst : 0,
+                        avgFirst.HasValue ? avgFirst.Value.ToString("F2") : "-",
+                        minFirst.HasValue ? minFirst.Value.ToString() : "-",
+                        maxFirst.HasValue ? maxFirst.Value.ToString() : "-",
                         nFirst);
                 }
             }

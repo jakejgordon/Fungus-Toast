@@ -451,8 +451,8 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.CellularResilience,
                 tier: MutationTier.Tier6
             ),
-            new MutationPrerequisite(MutationIds.NecrohyphalInfiltration, 2),
-            new MutationPrerequisite(MutationIds.NecrotoxicConversion, 2));
+            new MutationPrerequisite(MutationIds.NecrohyphalInfiltration, 1),
+            new MutationPrerequisite(MutationIds.NecrotoxicConversion, 1));
 
 
 

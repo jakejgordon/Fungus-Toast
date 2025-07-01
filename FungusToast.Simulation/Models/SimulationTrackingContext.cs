@@ -568,11 +568,11 @@ namespace FungusToast.Simulation.Models
                 }
             }
         }
-        public (double avg, int min, int max, int count) GetFirstUpgradeStats(int playerId, int mutationId)
+        public (double? avg, int? min, int? max, int count) GetFirstUpgradeStats(int playerId, int mutationId)
         {
             var key = (playerId, mutationId);
             if (!firstUpgradeRounds.ContainsKey(key) || firstUpgradeRounds[key].Count == 0)
-                return (0, 0, 0, 0);
+                return (null, null, null, 0);
             var list = firstUpgradeRounds[key];
             return (list.Average(), list.Min(), list.Max(), list.Count);
         }

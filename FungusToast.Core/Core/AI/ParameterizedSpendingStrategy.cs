@@ -254,8 +254,13 @@ namespace FungusToast.Core.AI
                 bool upgraded = false;
                 bool shouldBankForNextMutation = false;
 
+                // First, upgrade all prerequisites
                 foreach (var (mutation, reqLevel) in prereqChain)
                 {
+                    // Skip the final target mutation - we'll handle it separately
+                    if (mutation.Id == goal.MutationId)
+                        continue;
+
                     int curLvl = player.GetMutationLevel(mutation.Id);
                     int needed = Math.Min(reqLevel, mutation.MaxLevel);
 
@@ -267,13 +272,17 @@ namespace FungusToast.Core.AI
                         if (nextMutation.mutation != null)
                         {
                             int nextCost = nextMutation.mutation.PointsPerUpgrade;
-                            if (nextCost > 5 && player.MutationPoints < nextCost)
+                            // Only bank if the next mutation is expensive AND we don't have enough points
+                            // AND it's not the final target mutation (allow spending on final target)
+                            bool isFinalTarget = nextMutation.mutation.Id == goal.MutationId;
+                            if (nextCost > 5 && player.MutationPoints < nextCost && !isFinalTarget)
                             {
                                 // The next mutation costs more than 5 points and we don't have enough
                                 shouldBankForNextMutation = true;
                                 break;
                             }
                         }
+                        // If there's no next mutation, this is the final target, so don't bank
                     }
 
                     while (curLvl < needed && player.MutationPoints > 0 && player.CanUpgrade(mutation))
@@ -298,8 +307,38 @@ namespace FungusToast.Core.AI
                     return; // Bank points for next turn
                 }
 
+                // Now try to upgrade the actual target mutation
+                if (player.CanUpgrade(targetMutation))
+                {
+                    while (player.GetMutationLevel(targetMutation.Id) < goalTargetLevel && 
+                           player.MutationPoints > 0 && 
+                           player.CanUpgrade(targetMutation))
+                    {
+                        if (player.TryUpgradeMutation(targetMutation, simulationObserver, board.CurrentRound))
+                        {
+                            upgraded = true;
+                        }
+                        else
+                        {
+                            break; // couldn't upgrade further
+                        }
+                    }
+                }
+
                 // Only work on one target at a time, then fallback
-                if (upgraded) break;
+                // If we upgraded anything (prerequisites or target), we're done with this goal
+                // Don't break here - let the loop continue to try the target mutation
+                // Only break if we actually upgraded the target mutation itself
+                if (player.GetMutationLevel(targetMutation.Id) > currentLevel)
+                {
+                    break; // Successfully upgraded the target mutation, move to next goal
+                }
+                else if (upgraded)
+                {
+                    // We upgraded prerequisites but not the target yet, continue to next iteration
+                    // to try to upgrade the target mutation
+                    continue;
+                }
             }
 
             // If spent points on a target, or all targets are complete, try surges then fallback
@@ -307,7 +346,45 @@ namespace FungusToast.Core.AI
             if (TrySpendOnSurges(player, allMutations, board, simulationObserver, onlyOnNthRound: true))
                 return; // If a surge is triggered, stop spending for this turn
 
-            SpendFallbackPoints(player, allMutations, board, rnd, simulationObserver);
+            // Check if we're in the middle of working on a target goal but haven't completed it yet
+            bool hasIncompleteTarget = false;
+            foreach (var goal in targetMutationGoals)
+            {
+                if (!MutationRepository.All.TryGetValue(goal.MutationId, out var targetMutation))
+                    continue;
+
+                int goalTargetLevel = goal.TargetLevel ?? targetMutation.MaxLevel;
+                goalTargetLevel = Math.Min(goalTargetLevel, targetMutation.MaxLevel);
+                
+                int currentLevel = player.GetMutationLevel(targetMutation.Id);
+                if (currentLevel < goalTargetLevel)
+                {
+                    // Check if prerequisites are met
+                    var prereqChain = BuildPrerequisiteChainWithLevels(new TargetMutationGoal(goal.MutationId, goalTargetLevel));
+                    bool prereqsMet = true;
+                    foreach (var (mutation, reqLevel) in prereqChain)
+                    {
+                        if (mutation.Id == goal.MutationId) continue; // Skip the target itself
+                        if (player.GetMutationLevel(mutation.Id) < reqLevel)
+                        {
+                            prereqsMet = false;
+                            break;
+                        }
+                    }
+                    
+                    if (prereqsMet)
+                    {
+                        hasIncompleteTarget = true;
+                        break;
+                    }
+                }
+            }
+
+            // Only do fallback spending if we don't have an incomplete target with met prerequisites
+            if (!hasIncompleteTarget)
+            {
+                SpendFallbackPoints(player, allMutations, board, rnd, simulationObserver);
+            }
 
             // After ALL other spending, always try to activate surges as last resort (any turn)
             TrySpendOnSurges(player, allMutations, board, simulationObserver, onlyOnNthRound: false);
