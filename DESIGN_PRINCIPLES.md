@@ -1,5 +1,7 @@
 # Fungus Toast – Technical Overview
 
+> **📚 Related Documentation**: For practical simulation commands and debugging, see [SIMULATION_HELPER.md](SIMULATION_HELPER.md)
+
 ## Project Description
 
 **Fungus Toast** is a turn-based strategy game built in Unity where players control rival fungal colonies vying for dominance over the surface of a slice of bread. The game features:

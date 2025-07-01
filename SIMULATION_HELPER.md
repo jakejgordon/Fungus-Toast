@@ -1,12 +1,14 @@
 # Fungus Toast Simulation Helper
 
+> **📚 Related Documentation**: For technical architecture and design principles, see [DESIGN_PRINCIPLES.md](DESIGN_PRINCIPLES.md)
+
 This document contains the most effective commands for running different simulation scenarios and debugging the Fungus Toast game.
 
 ## Quick Commands
 
 ### Open New PowerShell Window for Simulation
 ```powershell
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Users\jakej\FungusToast\FungusToast.Simulation'; dotnet run -- --games 1 --turns 10 --players 2"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Users\jakej\FungusToast\FungusToast.Simulation'; dotnet run -- --games 1 --players 2"
 ```
 
 ### Build Projects
@@ -18,34 +20,46 @@ cd FungusToast.Simulation; dotnet build
 ### Run Basic Simulation
 ```powershell
 cd FungusToast.Simulation
-dotnet run -- --games 1 --turns 10 --players 2
+dotnet run -- --games 1 --players 2
 ```
 
 ## Simulation Scenarios
 
-### Quick Testing (1 game, few turns)
+### Quick Testing (1 game)
 ```powershell
-dotnet run -- --games 1 --turns 5 --players 2
+dotnet run -- --games 1 --players 2
 ```
 
 ### Mutation Testing (focus on specific mutations)
 ```powershell
-dotnet run -- --games 10 --turns 20 --players 2
+dotnet run -- --games 10 --players 2
 ```
 
 ### Balance Testing (longer games)
 ```powershell
-dotnet run -- --games 50 --turns 50 --players 4
+dotnet run -- --games 50 --players 4
 ```
 
 ### Stress Testing (many games)
 ```powershell
-dotnet run -- --games 100 --turns 30 --players 2
+dotnet run -- --games 100 --players 2
 ```
 
 ### AI Strategy Testing
 ```powershell
-dotnet run -- --games 20 --turns 40 --players 3
+dotnet run -- --games 20 --players 3
+```
+
+### Test Specific Features
+```powershell
+# Test Neutralizing Mantle
+dotnet run -- --test-neutralizing
+
+# Test Resistant cell system
+dotnet run -- --test-resistant
+
+# Test Mycelial Bastion
+dotnet run -- --test-bastion
 ```
 
 ## Debugging Commands
@@ -56,9 +70,9 @@ cd FungusToast.Core; dotnet build --verbosity normal
 cd FungusToast.Simulation; dotnet build --verbosity normal
 ```
 
-### Run with Detailed Output
+### Run with Output Redirection
 ```powershell
-dotnet run -- --games 1 --turns 5 --players 2 --verbose
+dotnet run -- --games 1 --players 2 --output test_results.txt
 ```
 
 ### Check Simulation Output Files
