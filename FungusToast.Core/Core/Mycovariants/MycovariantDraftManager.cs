@@ -72,6 +72,9 @@ namespace FungusToast.Core.Mycovariants
                     picked.ApplyEffect.Invoke(playerMyco, board, rng, observer);
                     playerMyco.MarkTriggered();
                 }
+                else if (playerMyco != null)
+                {
+                }
             }
         }
 

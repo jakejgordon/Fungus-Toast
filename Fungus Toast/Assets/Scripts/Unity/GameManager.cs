@@ -168,6 +168,7 @@ namespace FungusToast.Unity
 
             // Now initialize UI panels with the correct references
             gameUIManager.MoldProfilePanel?.Initialize(Board.Players[0], Board.Players);
+            gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(Board.Players);
         }
 
@@ -443,16 +444,22 @@ namespace FungusToast.Unity
             // Wait for end of frame to ensure GameObject activation is processed
             yield return new WaitForEndOfFrame();
 
-            // Assign mutation points and start the next round
-            AssignMutationPoints();
+            // AssignMutationPoints(); // Removed to prevent double-award
             StartNextRound();
         }
 
         public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)
         {
             player.AddMycovariant(picked); // Or however you add it to the player
-                                           // If the mycovariant triggers an instant effect, resolve that here.
-                                           // Optionally update UI
+            // If the mycovariant triggers an instant effect, resolve that here.
+            var playerMyco = player.PlayerMycovariants.LastOrDefault(pm => pm.MycovariantId == picked.Id);
+            if (playerMyco != null && picked.ApplyEffect != null)
+            {
+                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] Triggering ApplyEffect for {picked.Name} (Id={picked.Id}) for PlayerId={playerMyco.PlayerId}");
+                picked.ApplyEffect.Invoke(playerMyco, Board, rng, null);
+                playerMyco.MarkTriggered();
+            }
+            // Optionally update UI
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
         }
 
