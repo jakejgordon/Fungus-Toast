@@ -160,6 +160,8 @@ namespace FungusToast.Simulation.Analysis
                 case MutationIds.CatabolicRebirth:
                     if (player.CatabolicRebirthResurrections > 0)
                         effects["Rebirths"] = player.CatabolicRebirthResurrections;
+                    if (player.CatabolicRebirthAgedToxins > 0)
+                        effects["Aged Toxins"] = player.CatabolicRebirthAgedToxins;
                     break;
 
                 case MutationIds.HyphalSurge:

@@ -48,5 +48,6 @@ namespace FungusToast.Core.Metrics
         void RecordStandardGrowth(int playerId);
         void RecordNeutralizingMantleEffect(int playerId, int toxinsNeutralized);
         void RecordBastionedCells(int playerId, int count);
+        void RecordCatabolicRebirthAgedToxin(int playerId, int toxinsAged);
     }
 }

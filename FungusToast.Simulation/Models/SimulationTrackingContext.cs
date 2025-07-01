@@ -235,15 +235,25 @@ namespace FungusToast.Simulation.Models
         // ────────────────
 
         private readonly Dictionary<int, int> catabolicRebirthResurrections = new();
+        private readonly Dictionary<int, int> catabolicRebirthAgedToxins = new();
         public void RecordCatabolicRebirthResurrection(int playerId, int count)
         {
             if (!catabolicRebirthResurrections.ContainsKey(playerId))
                 catabolicRebirthResurrections[playerId] = 0;
             catabolicRebirthResurrections[playerId] += count;
         }
+        public void RecordCatabolicRebirthAgedToxin(int playerId, int toxinsAged)
+        {
+            if (!catabolicRebirthAgedToxins.ContainsKey(playerId))
+                catabolicRebirthAgedToxins[playerId] = 0;
+            catabolicRebirthAgedToxins[playerId] += toxinsAged;
+        }
         public int GetCatabolicRebirthResurrections(int playerId)
             => catabolicRebirthResurrections.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetCatabolicRebirthAgedToxins(int playerId)
+            => catabolicRebirthAgedToxins.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllCatabolicRebirthResurrections() => new(catabolicRebirthResurrections);
+        public Dictionary<int, int> GetAllCatabolicRebirthAgedToxins() => new(catabolicRebirthAgedToxins);
 
         // ────────────────
         // Mycotoxin Tracer Spores

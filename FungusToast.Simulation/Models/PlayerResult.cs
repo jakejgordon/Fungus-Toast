@@ -104,5 +104,7 @@ namespace FungusToast.Simulation.Models
         public Dictionary<MutationTier, int> MutationPointsSpentByTier { get; set; } = new();
         public int TotalMutationPointsSpent { get; set; }
         public int BankedPoints { get; set; }
+
+        public int CatabolicRebirthAgedToxins { get; set; }
     }
 }

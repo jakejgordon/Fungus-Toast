@@ -32,7 +32,7 @@ namespace FungusToast.Core.Board
         public int ToxinExpirationCycle
         {
             get => _toxinExpirationCycle;
-            private set { _toxinExpirationCycle = value; }
+            internal set { _toxinExpirationCycle = value; }
         }
 
         public DeathReason? CauseOfDeath { get; private set; }

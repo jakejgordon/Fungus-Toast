@@ -406,8 +406,30 @@ namespace FungusToast.Core.Board
             }
         }
 
-        public void ExpireToxinTiles(int currentGrowthCycle)
+        public void ExpireToxinTiles(int currentGrowthCycle, ISimulationObserver? observer = null)
         {
+            // Catabolic Rebirth max-level bonus: accelerate toxin aging
+            foreach (var toxinCell in AllToxinFungalCells())
+            {
+                var toxinTile = GetTileById(toxinCell.TileId);
+                var adjacentTiles = GetAdjacentTiles(toxinCell.TileId);
+                foreach (var adjTile in adjacentTiles)
+                {
+                    var adjCell = adjTile.FungalCell;
+                    if (adjCell != null && adjCell.IsDead && adjCell.OwnerPlayerId.HasValue)
+                    {
+                        var owner = Players.FirstOrDefault(p => p.PlayerId == adjCell.OwnerPlayerId.Value);
+                        var catabolicRebirth = MutationRegistry.GetById(MutationIds.CatabolicRebirth);
+                        if (owner != null && catabolicRebirth != null && owner.GetMutationLevel(MutationIds.CatabolicRebirth) == catabolicRebirth.MaxLevel)
+                        {
+                            // Reduce toxin expiration cycle by 1 (age twice as fast)
+                            toxinCell.ToxinExpirationCycle--;
+                            observer?.RecordCatabolicRebirthAgedToxin(owner.PlayerId, 1);
+                        }
+                    }
+                }
+            }
+
             var allToxinTiles = AllToxinFungalCells().ToList(); // Snapshot to avoid collection issues
             foreach (var cell in allToxinTiles)
             {

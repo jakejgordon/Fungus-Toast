@@ -26,6 +26,7 @@ namespace FungusToast.Core.Death
         /// <param name="failedGrowthsByPlayerId">Dictionary of failed growth attempts by player ID.</param>
         /// <param name="rng">Random number generator (pass in for thread safety & testability).</param>
         /// <param name="simulationObserver">Optional observer for analytics/UI updates.</param>
+        /// <param name="tracking">Optional tracking context for simulation.</param>
         public static void ExecuteDeathCycle(
             GameBoard board,
             Dictionary<int, int> failedGrowthsByPlayerId,
@@ -33,7 +34,7 @@ namespace FungusToast.Core.Death
             ISimulationObserver? simulationObserver = null)
         {
             // Expire toxins before decay begins
-            board.ExpireToxinTiles(board.CurrentGrowthCycle);
+            board.ExpireToxinTiles(board.CurrentGrowthCycle, simulationObserver);
             List<Player> shuffledPlayers = board.Players.OrderBy(_ => rng.NextDouble()).ToList();
 
             // Fire DecayPhaseWithFailedGrowths event for Mycotoxin Tracer and other decay-phase mutations that need failed growth data
