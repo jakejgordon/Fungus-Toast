@@ -128,5 +128,20 @@ namespace FungusToast.Core.Mycovariants
                 }
             };
 
+        public static Mycovariant SurgicalInoculation() =>
+            new Mycovariant
+            {
+                Id = 1011,
+                Name = "Surgical Inoculation",
+                Description = "Place a single Resistant (invincible) fungal cell anywhere on the board, except on top of another Resistant cell.",
+                FlavorText = "A single spore, delivered with surgical precision, takes root where none could before.",
+                Type = MycovariantType.Active,
+                IsUniversal = false,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    MycovariantEffectProcessor.ResolveSurgicalInoculation(playerMyco, board, rng, observer);
+                }
+            };
+
     }
 }

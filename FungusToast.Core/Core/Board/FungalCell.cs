@@ -1,5 +1,4 @@
 ﻿using FungusToast.Core.Config;
-using FungusToast.Core.Core.Board;
 using FungusToast.Core.Death;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;

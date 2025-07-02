@@ -11,6 +11,8 @@
         MpBonus,
         Neutralized,
         Bastioned,
+        ResistantCellPlaced,
+        Drops,
         // Add others as needed
     }
 }

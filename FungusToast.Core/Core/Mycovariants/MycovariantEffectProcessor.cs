@@ -1,6 +1,5 @@
 ﻿using FungusToast.Core.Board;
 using FungusToast.Core.Config;
-using FungusToast.Core.Core.Board;
 using FungusToast.Core.Death;
 using FungusToast.Core.Events;
 using FungusToast.Core.Metrics;
@@ -73,8 +72,8 @@ public static class MycovariantEffectProcessor
             }
             else
             {
-                // Takeover replaces with living cell for the player (allowToxin = true to overwrite toxins too)
-                var takeoverResult = prevCell.Takeover(playerId, allowToxin: true);
+                // Use board.TakeoverCell to handle both cell state and board updates.
+                var takeoverResult = board.TakeoverCell(line[i], playerId, allowToxin: true);
 
                 switch (takeoverResult)
                 {
@@ -223,6 +222,100 @@ public static class MycovariantEffectProcessor
             observer?.RecordBastionedCells(player.PlayerId, 1);
         }
 
+        playerMyco.MarkTriggered();
+    }
+
+    public static void ResolveSurgicalInoculation(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        Random rng,
+        ISimulationObserver? observer)
+    {
+        var player = board.Players.FirstOrDefault(
+            p => p.PlayerId == playerMyco.PlayerId);
+        if (player == null)
+            return;
+
+        // 1. Gather all enemy living cells
+        var enemyLivingCells = board.GetAllCells()
+            .Where(cell => cell != null
+                && cell.IsAlive
+                && cell.OwnerPlayerId != player.PlayerId
+                && !cell.IsResistant)
+            .ToList();
+
+        // 2. Score each by number of adjacent open spaces
+        int BestScore(FungalCell cell)
+        {
+            var adj = board.GetAdjacentTiles(cell.TileId);
+            return adj.Count(
+                t => t.FungalCell == null || t.FungalCell.IsDead);
+        }
+
+        var bestEnemyCell = enemyLivingCells
+            .Select(cell => new {
+                Cell = cell,
+                Score = BestScore(cell)
+            })
+            .OrderByDescending(x => x.Score)
+            .ThenBy(_ => rng.Next()) // randomize ties
+            .FirstOrDefault();
+
+        int? targetTileId = null;
+        if (bestEnemyCell != null)
+        {
+            targetTileId = bestEnemyCell.Cell.TileId;
+        }
+        else
+        {
+            // 3. If no enemy living cells, pick any open tile (not already Resistant)
+            var openTiles = board.AllTiles()
+                .Where(tile => (tile.FungalCell == null || tile.FungalCell.IsDead)
+                    && (tile.FungalCell == null || !tile.FungalCell.IsResistant))
+                .ToList();
+            if (openTiles.Count > 0)
+            {
+                targetTileId = openTiles[rng.Next(openTiles.Count)].TileId;
+            }
+        }
+
+        if (targetTileId.HasValue)
+        {
+            var targetTile = board.GetTileById(targetTileId.Value);
+            if (targetTile != null)
+            {
+                var prevCell = targetTile.FungalCell;
+                if (prevCell == null)
+                {
+                    // Place new Resistant cell using board method
+                    var newCell = new FungalCell(player.PlayerId, targetTileId.Value);
+                    newCell.MakeResistant();
+                    board.PlaceFungalCell(newCell);
+                    observer?.RecordSurgicalInoculationDrop(player.PlayerId, 1);
+                    playerMyco.IncrementEffectCount(
+                        MycovariantEffectType.Drops,
+                        1);
+                }
+                else if (!prevCell.IsResistant)
+                {
+                    // Take over (alive, dead, or toxin) and make Resistant
+                    prevCell.Takeover(player.PlayerId, allowToxin: true);
+                    prevCell.MakeResistant();
+                    board.PlaceFungalCell(prevCell);
+                    observer?.RecordSurgicalInoculationDrop(player.PlayerId, 1);
+                    playerMyco.IncrementEffectCount(
+                        MycovariantEffectType.Drops,
+                        1);
+                }
+                // observer?.RecordMycovariantEffect(
+                //     player.PlayerId,
+                //     MycovariantEffectType.ResistantCellPlaced,
+                //     1);
+                playerMyco.IncrementEffectCount(
+                    MycovariantEffectType.ResistantCellPlaced,
+                    1);
+            }
+        }
         playerMyco.MarkTriggered();
     }
 }

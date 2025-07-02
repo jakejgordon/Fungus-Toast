@@ -4,6 +4,7 @@ using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
+using FungusToast.Core.Board;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -746,6 +747,33 @@ namespace FungusToast.Core.Board
 
         public virtual void OnPreGrowthPhase() =>
             PreGrowthPhase?.Invoke();
+
+        /// <summary>
+        /// Attempts to take over a cell at the given tile for the specified player.
+        /// Handles all board state, player control, and event firing.
+        /// Use this instead of calling FungalCell.Takeover directly.
+        /// </summary>
+        /// <param name="tileId">The tile to take over.</param>
+        /// <param name="newOwnerPlayerId">The player taking over the cell.</param>
+        /// <param name="allowToxin">Whether to allow takeover of toxin cells.</param>
+        /// <returns>The result of the takeover attempt.</returns>
+        public FungalCellTakeoverResult TakeoverCell(
+            int tileId,
+            int newOwnerPlayerId,
+            bool allowToxin = false)
+        {
+            var cell = GetTileById(tileId)?.FungalCell;
+            if (cell == null)
+                return FungalCellTakeoverResult.Invalid;
+            var result = cell.Takeover(newOwnerPlayerId, allowToxin);
+            if (result == FungalCellTakeoverResult.Parasitized ||
+                result == FungalCellTakeoverResult.Reclaimed ||
+                result == FungalCellTakeoverResult.CatabolicGrowth)
+            {
+                PlaceFungalCell(cell);
+            }
+            return result;
+        }
 
     }
 }

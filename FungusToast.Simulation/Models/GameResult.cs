@@ -194,6 +194,13 @@ namespace FungusToast.Simulation.Models
                             break;
                         }
 
+                    case var id when id == MycovariantIds.SurgicalInoculationId:
+                        {
+                            int drops = tracking.GetSurgicalInoculationDrops(player.PlayerId);
+                            if (drops > 0) effectCounts[MycovariantEffectType.Drops] = drops;
+                            break;
+                        }
+
                     // ...more cases...
                 }
 

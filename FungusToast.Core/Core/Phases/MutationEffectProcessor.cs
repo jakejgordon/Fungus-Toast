@@ -1,6 +1,5 @@
 ﻿// FungusToast.Core/Phases/MutationEffectProcessor.cs
 using FungusToast.Core.Board;
-using FungusToast.Core.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Events;
@@ -939,7 +938,8 @@ namespace FungusToast.Core.Phases
                     FungalCellTakeoverResult takeoverResult;
                     if (prevCell != null)
                     {
-                        takeoverResult = prevCell.Takeover(player.PlayerId, allowToxin: true);
+                        // Use board.TakeoverCell to handle both cell state and board updates.
+                        takeoverResult = board.TakeoverCell(targetTileId, player.PlayerId, allowToxin: true);
                         switch (takeoverResult)
                         {
                             case FungalCellTakeoverResult.Infested: infested++; break;

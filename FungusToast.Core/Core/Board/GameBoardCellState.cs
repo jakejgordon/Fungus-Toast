@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace FungusToast.Core.Core.Board
+namespace FungusToast.Core.Board
 {
     enum GameBoardCellState
     {

@@ -94,7 +94,7 @@ namespace FungusToast.Simulation.Analysis
                         Truncate(r.Strategy, 25),
                         Truncate(r.MycovariantName, 28),
                         Truncate(r.Type, 12),
-                        Truncate(r.EffectType, 12),
+                        Truncate(MapEffectType(r.EffectType), 12),
                         r.Games,
                         r.Triggered,
                         r.AvgEffect,
@@ -106,5 +106,13 @@ namespace FungusToast.Simulation.Analysis
 
         private static string Truncate(string value, int maxLength) =>
             value == null ? "" : (value.Length <= maxLength ? value : value[..maxLength]);
+
+        private static string MapEffectType(string effectType)
+        {
+            if (string.Equals(effectType, "Drops", StringComparison.OrdinalIgnoreCase))
+                return "Spore drops";
+            // Add more mappings as needed
+            return effectType;
+        }
     }
 }

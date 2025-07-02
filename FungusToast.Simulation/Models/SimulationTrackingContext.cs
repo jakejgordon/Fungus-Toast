@@ -625,5 +625,16 @@ namespace FungusToast.Simulation.Models
         public int GetCreepingMoldToxinJumps(int playerId)
             => creepingMoldToxinJumps.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllCreepingMoldToxinJumps() => new(creepingMoldToxinJumps);
+
+        // Surgical Inoculation Drops
+        private readonly Dictionary<int, int> surgicalInoculationDrops = new();
+        public void RecordSurgicalInoculationDrop(int playerId, int count)
+        {
+            if (!surgicalInoculationDrops.ContainsKey(playerId))
+                surgicalInoculationDrops[playerId] = 0;
+            surgicalInoculationDrops[playerId] += count;
+        }
+        public int GetSurgicalInoculationDrops(int playerId)
+            => surgicalInoculationDrops.TryGetValue(playerId, out var val) ? val : 0;
     }
 }

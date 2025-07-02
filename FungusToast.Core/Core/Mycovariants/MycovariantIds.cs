@@ -13,5 +13,6 @@ namespace FungusToast.Core.Mycovariants
         public const int JettingMyceliumWestId = 1008;
         public const int NeutralizingMantleId = 1009;
         public const int MycelialBastionId = 1010;
+        public const int SurgicalInoculationId = 1011;
     }
 }
