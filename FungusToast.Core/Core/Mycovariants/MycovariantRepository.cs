@@ -24,11 +24,13 @@ namespace FungusToast.Core.Mycovariants
         {
             return new List<Mycovariant>
             {
+                /**TESTING
                 // Example mycovariants (replace/add as needed):
                 MycovariantFactory.JettingMyceliumNorth(),
                 MycovariantFactory.JettingMyceliumEast(),
                 MycovariantFactory.JettingMyceliumSouth(),
                 MycovariantFactory.JettingMyceliumWest(),
+                */
 
                 // --- Universal/Fallback options ---
                 MycovariantFactory.PlasmidBounty(),

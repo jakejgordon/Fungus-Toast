@@ -70,6 +70,18 @@ namespace FungusToast.Unity.Effects
                     )
                 );
             }
+            else if (mycovariant.Id == MycovariantIds.SurgicalInoculationId)
+            {
+                yield return StartCoroutine(
+                    MycovariantEffectHelpers.HandleSurgicalInoculation(
+                        player,
+                        mycovariant,
+                        onComplete,
+                        draftPanel,
+                        gridVisualizer
+                    )
+                );
+            }
             // Add more cases as needed
             else
             {

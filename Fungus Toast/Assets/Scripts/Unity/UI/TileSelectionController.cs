@@ -19,6 +19,7 @@ namespace FungusToast.Unity.UI
         private int selectingPlayerId = -1;
         private HashSet<int> selectableTileIds = new HashSet<int>();
         private bool selectionActive = false;
+        private Action<int> onTileSelected; // For generic board tile selection
 
         private void Awake()
         {
@@ -76,19 +77,76 @@ namespace FungusToast.Unity.UI
             );
         }
 
+        /// <summary>
+        /// Prompts the player to select any board tile matching a predicate.
+        /// Highlights valid tiles and waits for click.
+        /// </summary>
+        public void PromptSelectBoardTile(
+            Func<BoardTile, bool> isValidTile,
+            Action<BoardTile> onSelected,
+            Action onCancel = null,
+            string promptMessage = null)
+        {
+            selectionActive = true;
 
+            // Show the prompt if a message was provided
+            if (!string.IsNullOrEmpty(promptMessage))
+                GameManager.Instance.ShowSelectionPrompt(promptMessage);
+
+            // Wraps to clear the prompt on tile selection or cancel
+            Action<int> onTileSelected = (tileId) =>
+            {
+                GameManager.Instance.HideSelectionPrompt();
+                var tile = GameManager.Instance.Board.GetTileById(tileId);
+                onSelected?.Invoke(tile);
+            };
+            onCancelled = () =>
+            {
+                GameManager.Instance.HideSelectionPrompt();
+                onCancel?.Invoke();
+            };
+
+            // Find valid tiles
+            var validTiles = GameManager.Instance.Board.AllTiles()
+                .Where(isValidTile)
+                .ToList();
+            selectableTileIds = new HashSet<int>(validTiles.Select(t => t.TileId));
+
+            // Highlight valid tiles
+            gridVisualizer.HighlightTiles(
+                selectableTileIds,
+                new Color(0.2f, 0.8f, 1f, 1f),   // Cyan pulse
+                new Color(0.7f, 1f, 1f, 1f)      // Light cyan
+            );
+
+            // Override OnTileClicked for this selection
+            onCellSelected = null; // Not used for BoardTile
+            this.onTileSelected = onTileSelected;
+        }
 
         public void OnTileClicked(int tileId)
         {
-            if (!selectionActive || !selectableTileIds.Contains(tileId)) return;
+            if (!selectionActive || !selectableTileIds.Contains(tileId))
+            {
+                if (!selectionActive)
+                    Debug.LogWarning($"TileSelectionController.OnTileClicked called when selection is not active. TileId: {tileId}");
+                return;
+            }
+
+            selectionActive = false;
+            gridVisualizer.ClearHighlights();
+            Reset();
+
+            if (onTileSelected != null)
+            {
+                onTileSelected(tileId);
+                return;
+            }
 
             var cell = GameManager.Instance.Board.GetCell(tileId);
             if (cell != null && cell.IsAlive)
             {
-                selectionActive = false;
-                gridVisualizer.ClearHighlights();
                 onCellSelected?.Invoke(cell);
-                Reset();
             }
         }
 
@@ -97,14 +155,15 @@ namespace FungusToast.Unity.UI
             if (!selectionActive) return;
             selectionActive = false;
             gridVisualizer.ClearHighlights();
-            onCancelled?.Invoke();
             Reset();
+            onCancelled?.Invoke();
         }
 
         private void Reset()
         {
             selectingPlayerId = -1;
             onCellSelected = null;
+            onTileSelected = null;
             onCancelled = null;
             selectableTileIds.Clear();
         }

@@ -3,6 +3,7 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Grid;
+using FungusToast.Unity.UI;
 using System;
 using System.Collections;
 using System.Linq;
@@ -47,7 +48,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         direction
                     );
                 }
-                yield return new WaitForSeconds(0.6f);
+                yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumAIDelaySeconds);
                 onComplete?.Invoke();
             }
             else
@@ -122,7 +123,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     null
                 );
                 
-                yield return new WaitForSeconds(0.8f);
+                yield return new WaitForSeconds(UIEffectConstants.MycelialBastionAIDelaySeconds);
                 onComplete?.Invoke();
             }
             else
@@ -164,6 +165,81 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     },
                     $"Select up to {MycovariantGameBalance.MycelialBastionMaxResistantCells} of your living cells to make Resistant (invincible)."
                 );
+            }
+        }
+
+        /// <summary>
+        /// Handles UI/AI, input, and effect resolution for Surgical Inoculation.
+        /// </summary>
+        public static IEnumerator HandleSurgicalInoculation(
+            Player player,
+            Mycovariant picked,
+            Action onComplete,
+            GameObject draftPanel,
+            GridVisualizer gridVisualizer)
+        {
+            if (player.PlayerType == PlayerTypeEnum.AI)
+            {
+                // AI logic is handled in the effect processor
+                yield return new WaitForSeconds(UIEffectConstants.SurgicalInoculationAIDelaySeconds);
+                onComplete?.Invoke();
+            }
+            else
+            {
+                draftPanel?.SetActive(false);
+                GameManager.Instance.ShowSelectionPrompt(
+                    "Select any tile to place your invincible (Resistant) cell.");
+
+                bool done = false;
+
+                // Highlight all valid tiles (not already Resistant)
+                Func<BoardTile, bool> isValidTile = tile => tile.FungalCell == null || (!tile.FungalCell.IsResistant);
+                var validTileIds = GameManager.Instance.Board.AllTiles()
+                    .Where(isValidTile)
+                    .Select(tile => tile.TileId)
+                    .ToList();
+                gridVisualizer.HighlightTiles(validTileIds);
+
+                TileSelectionController.Instance.PromptSelectBoardTile(
+                    isValidTile,
+                    (tile) =>
+                    {
+                        if (done) return; // Defensive: prevent double-callback
+                        done = true;
+                        // Defensive: re-check tile validity
+                        if (!isValidTile(tile))
+                        {
+                            Debug.LogWarning("Selected tile is no longer valid for Surgical Inoculation.");
+                            GameManager.Instance.HideSelectionPrompt();
+                            gridVisualizer.ClearHighlights();
+                            onComplete?.Invoke();
+                            return;
+                        }
+                        var playerMyco = player.PlayerMycovariants
+                            .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+                        MycovariantEffectProcessor.ResolveSurgicalInoculation(
+                            playerMyco,
+                            GameManager.Instance.Board,
+                            new System.Random(),
+                            null
+                        );
+                        GameManager.Instance.HideSelectionPrompt();
+                        gridVisualizer.ClearHighlights();
+                        gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                        onComplete?.Invoke();
+                    },
+                    () =>
+                    {
+                        if (done) return; // Defensive: prevent double-callback
+                        done = true;
+                        GameManager.Instance.HideSelectionPrompt();
+                        gridVisualizer.ClearHighlights();
+                        onComplete?.Invoke();
+                    },
+                    "Select any valid tile to place your invincible (Resistant) cell."
+                );
+
+                while (!done) yield return null;
             }
         }
     }

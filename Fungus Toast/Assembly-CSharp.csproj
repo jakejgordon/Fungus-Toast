@@ -62,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Unity\GameManager.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\UIEffectConstants.cs" />
     <Compile Include="Assets\Scripts\Unity\ForceRecompile.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_MutationManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_RightSideBar.cs" />
