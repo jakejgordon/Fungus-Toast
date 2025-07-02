@@ -9,6 +9,7 @@ namespace FungusToast.Unity.Grid
     {
         public Tilemap groundTilemap;
         public Tilemap hoverTilemap;
+        [SerializeField] private GridVisualizer gridVisualizer;
         public Tile glowyTile;
         public Tile pressedTile;
 
@@ -38,26 +39,25 @@ namespace FungusToast.Unity.Grid
         void Update()
         {
             Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Vector3Int cellPos = groundTilemap.WorldToCell(mouseWorldPos);
+            Vector3Int cellPos = gridVisualizer.toastTilemap.WorldToCell(mouseWorldPos);
 
             // Only show hover if this cell is selectable (or, if selection not active, just for hover effect)
             bool isSelectable = selectionTiles.Count == 0 || IsSelectable(cellPos);
 
             if (lastHoveredCell != null && lastHoveredCell != cellPos)
             {
-                // Only clear hover if not part of the persistent selection highlight
-                if (!selectionTiles.Contains(TileIdFromCell(lastHoveredCell.Value)))
-                    hoverTilemap.SetTile(lastHoveredCell.Value, null);
+                // Only clear hover overlay, never persistent highlight
+                gridVisualizer.HoverOverlayTileMap.SetTile(lastHoveredCell.Value, null);
             }
 
-            if (groundTilemap.HasTile(cellPos) && isSelectable)
+            if (gridVisualizer.toastTilemap.HasTile(cellPos) && isSelectable)
             {
-                hoverTilemap.SetTile(cellPos, glowyTile);
+                gridVisualizer.HoverOverlayTileMap.SetTile(cellPos, glowyTile);
                 lastHoveredCell = cellPos;
             }
 
             // Handle click
-            if (Input.GetMouseButtonDown(0) && groundTilemap.HasTile(cellPos))
+            if (Input.GetMouseButtonDown(0) && gridVisualizer.toastTilemap.HasTile(cellPos))
             {
                 // Only proceed if this tile is currently selectable (or selection not active)
                 if (selectionTiles.Count == 0 || IsSelectable(cellPos))
@@ -111,7 +111,7 @@ namespace FungusToast.Unity.Grid
 
         void TriggerPressedAnimation(Vector3Int cell)
         {
-            hoverTilemap.SetTile(cell, pressedTile);
+            gridVisualizer.HoverOverlayTileMap.SetTile(cell, pressedTile);
 
             CancelInvoke(nameof(RestoreGlowyTile));
             Invoke(nameof(RestoreGlowyTile), 0.25f);
@@ -121,7 +121,7 @@ namespace FungusToast.Unity.Grid
         {
             if (lastHoveredCell != null)
             {
-                hoverTilemap.SetTile(lastHoveredCell.Value, glowyTile);
+                gridVisualizer.HoverOverlayTileMap.SetTile(lastHoveredCell.Value, glowyTile);
             }
         }
     }

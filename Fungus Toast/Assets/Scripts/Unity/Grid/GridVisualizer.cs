@@ -14,7 +14,8 @@ namespace FungusToast.Unity.Grid
         public Tilemap toastTilemap;      // Base toast layer
         public Tilemap moldTilemap;       // Player mold layer (including faded icons)
         public Tilemap overlayTilemap;    // Dead/toxin overlays
-        public Tilemap HoverTileMap;      // Mouseover and highlight overlays
+        public Tilemap SelectionHighlightTileMap;   // Persistent selection highlights (prompt mode, pulsing)
+        public Tilemap HoverOverlayTileMap;         // Temporary mouse hover overlays (single-tile, always on top)
 
         [Header("Tiles")]
         public Tile baseTile;             // Toast base
@@ -85,16 +86,16 @@ namespace FungusToast.Unity.Grid
         /// <param name="colorB">Pulse color B (optional, defaults to cyan)</param>
         public void HighlightTiles(IEnumerable<int> tileIds, Color? colorA = null, Color? colorB = null)
         {
-            HoverTileMap.ClearAllTiles();
+            HoverOverlayTileMap.ClearAllTiles();
             highlightedPositions.Clear();
 
             foreach (var tileId in tileIds)
             {
                 var (x, y) = board.GetXYFromTileId(tileId);
                 Vector3Int pos = new Vector3Int(x, y, 0);
-                HoverTileMap.SetTile(pos, solidHighlightTile);
-                HoverTileMap.SetTileFlags(pos, TileFlags.None);
-                HoverTileMap.SetColor(pos, Color.white);
+                HoverOverlayTileMap.SetTile(pos, solidHighlightTile);
+                HoverOverlayTileMap.SetTileFlags(pos, TileFlags.None);
+                HoverOverlayTileMap.SetColor(pos, Color.white);
                 highlightedPositions.Add(pos);
             }
 
@@ -116,7 +117,7 @@ namespace FungusToast.Unity.Grid
         /// </summary>
         public void ClearHighlights()
         {
-            HoverTileMap.ClearAllTiles();
+            HoverOverlayTileMap.ClearAllTiles();
             highlightedPositions.Clear();
             if (pulseHighlightCoroutine != null)
             {
@@ -124,8 +125,8 @@ namespace FungusToast.Unity.Grid
                 pulseHighlightCoroutine = null;
             }
             // Reset scale!
-            if (HoverTileMap != null)
-                HoverTileMap.transform.localScale = Vector3.one;
+            if (HoverOverlayTileMap != null)
+                HoverOverlayTileMap.transform.localScale = Vector3.one;
         }
 
 
@@ -146,9 +147,9 @@ namespace FungusToast.Unity.Grid
 
                 foreach (var pos in highlightedPositions)
                 {
-                    if (HoverTileMap.HasTile(pos))
+                    if (HoverOverlayTileMap.HasTile(pos))
                     {
-                        HoverTileMap.SetColor(pos, pulseColor);
+                        HoverOverlayTileMap.SetColor(pos, pulseColor);
                     }
                 }
                 yield return null;
