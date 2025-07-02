@@ -306,6 +306,7 @@ namespace FungusToast.Core.Phases
         /// <param name="targetTile">The target tile for movement.</param>
         /// <param name="rng">Random number generator.</param>
         /// <param name="board">The game board.</param>
+        /// <param name="observer">The simulation observer.</param>
         /// <returns>True if the move succeeded; false otherwise.</returns>
         public static bool TryCreepingMoldMove(
             Player player,
@@ -313,37 +314,74 @@ namespace FungusToast.Core.Phases
             BoardTile sourceTile,
             BoardTile targetTile,
             Random rng,
-            GameBoard board)
+            GameBoard board,
+            ISimulationObserver? observer = null)
         {
-            if (!player.PlayerMutations.TryGetValue(MutationIds.CreepingMold, out var cm) ||
-                cm.CurrentLevel == 0)
-                return false;
+            bool hasMaxCreepingMold = player.PlayerMutations.TryGetValue(MutationIds.CreepingMold, out var cm) &&
+                                      cm.CurrentLevel == GameBalance.CreepingMoldMaxLevel;
+            bool targetIsToxin = targetTile.FungalCell != null && targetTile.FungalCell.IsToxin;
+            bool specialToxinJumpCase = hasMaxCreepingMold && targetIsToxin;
 
-            if (player.ControlledTileIds.Count <= 1) return false;
-            if (targetTile.IsOccupied) return false;
+            // Only allow occupied tiles if it's the special toxin jump case
+            if (targetTile.IsOccupied && !specialToxinJumpCase) return false;
 
             float moveChance =
-                cm.CurrentLevel * GameBalance.CreepingMoldMoveChancePerLevel;
+                cm != null ? cm.CurrentLevel * GameBalance.CreepingMoldMoveChancePerLevel : 0f;
 
+            // Handle the special toxin jump case
+            if (specialToxinJumpCase) {
+                // Only allow for cardinal directions
+                int dx = targetTile.X - sourceTile.X;
+                int dy = targetTile.Y - sourceTile.Y;
+                bool isCardinal = (dx == 0 && Math.Abs(dy) == 1) || (dy == 0 && Math.Abs(dx) == 1);
+                if (!isCardinal) return false;
+
+                // Compute the tile beyond the toxin in the same direction
+                int jumpX = targetTile.X + dx;
+                int jumpY = targetTile.Y + dy;
+                var jumpTile = board.GetTile(jumpX, jumpY);
+                if (jumpTile != null && !jumpTile.IsOccupied && (jumpTile.FungalCell == null || !jumpTile.FungalCell.IsToxin)) {
+                    if (rng.NextDouble() <= moveChance) {
+                        int sourceOpen = board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y)
+                                                .Count(n => !n.IsOccupied);
+                        int targetOpen = board.GetOrthogonalNeighbors(jumpTile.X, jumpTile.Y)
+                                                .Count(n => !n.IsOccupied);
+                        if (targetOpen >= sourceOpen && targetOpen >= 2) {
+                            CreateCreepingMoldCell(player, sourceCell, sourceTile, jumpTile, board);
+                            observer?.RecordCreepingMoldToxinJump(player.PlayerId);
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            // Standard Creeping Mold move
             if (rng.NextDouble() > moveChance) return false;
 
-            int sourceOpen = board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y)
+            // Count open (unoccupied) orthogonal neighbors for source and target
+            int sourceOpenStandard = board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y)
+                                  .Count(n => !n.IsOccupied);
+            int targetOpenStandard = board.GetOrthogonalNeighbors(targetTile.X, targetTile.Y)
                                   .Count(n => !n.IsOccupied);
 
-            int targetOpen = board.GetOrthogonalNeighbors(targetTile.X, targetTile.Y)
-                                  .Count(n => !n.IsOccupied);
+            // Only allow the move if the target is at least as open as the source,
+            // and the target has at least 2 open sides. This prevents mold from
+            // sliding into dead ends or more enclosed spaces, encouraging spreading
+            // into open areas and keeping the mutation balanced and fun.
+            if (targetOpenStandard < sourceOpenStandard || targetOpenStandard < 2) return false;
 
-            if (targetOpen < sourceOpen || targetOpen < 2) return false;
+            CreateCreepingMoldCell(player, sourceCell, sourceTile, targetTile, board);
+            return true;
+        }
 
-            // Create new cell in target location
+        // Helper for creating and moving a Creeping Mold cell
+        private static void CreateCreepingMoldCell(Player player, FungalCell sourceCell, BoardTile sourceTile, BoardTile targetTile, GameBoard board)
+        {
             var newCell = new FungalCell(player.PlayerId, targetTile.TileId);
             board.PlaceFungalCell(newCell); // Event hooks will fire as appropriate
-
-            // Remove source cell
             sourceTile.RemoveFungalCell();
             player.RemoveControlledTile(sourceCell.TileId);
-
-            return true;
         }
 
 

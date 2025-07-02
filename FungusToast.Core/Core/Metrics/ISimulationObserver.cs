@@ -14,6 +14,7 @@ namespace FungusToast.Core.Metrics
 
         void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1);
         void RecordCreepingMoldMove(int playerId);
+        void RecordCreepingMoldToxinJump(int playerId);
         void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount);
         void RecordNecrohyphalInfiltrationCascade(int playerId, int cascadeCount);
         void RecordTendrilGrowth(int playerId, DiagonalDirection value);

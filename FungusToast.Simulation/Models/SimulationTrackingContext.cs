@@ -102,8 +102,8 @@ namespace FungusToast.Simulation.Models
                 creepingMoldMoves[playerId] = 0;
             creepingMoldMoves[playerId]++;
         }
-        public int GetCreepingMoldMoves(int playerId)
-            => creepingMoldMoves.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetCreepingMoldMoves(int playerId) => creepingMoldMoves.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllCreepingMoldMoves() => new(creepingMoldMoves);
 
         // ────────────────
         // Reclaimed Cells
@@ -613,5 +613,17 @@ namespace FungusToast.Simulation.Models
             bastionedCells[playerId] += count;
         }
         public int GetBastionedCells(int playerId) => bastionedCells.TryGetValue(playerId, out var val) ? val : 0;
+
+        // --- Creeping Mold toxin jumps ---
+        private readonly Dictionary<int, int> creepingMoldToxinJumps = new();
+        public void RecordCreepingMoldToxinJump(int playerId)
+        {
+            if (!creepingMoldToxinJumps.ContainsKey(playerId))
+                creepingMoldToxinJumps[playerId] = 0;
+            creepingMoldToxinJumps[playerId]++;
+        }
+        public int GetCreepingMoldToxinJumps(int playerId)
+            => creepingMoldToxinJumps.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllCreepingMoldToxinJumps() => new(creepingMoldToxinJumps);
     }
 }

@@ -317,7 +317,7 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.CreepingMold,
                 name: "Creeping Mold",
-                description: $"Each level grants a {FormatPercent(GameBalance.CreepingMoldMoveChancePerLevel)} chance to move into a target tile after a failed growth attempt (replaces the original cell).",
+                description: $"Each level grants a {FormatPercent(GameBalance.CreepingMoldMoveChancePerLevel)} chance to move into a target tile after a failed growth attempt (replaces the original cell). At max level, Creeping Mold can jump over a single toxin tile: if a failed growth is blocked by a toxin in a cardinal direction, and the roll succeeds, the mold will leap over the toxin and attempt to land on the next tile in the same direction.",
                 flavorText: "Hyphal strands abandon anchor points to invade fresh substrate through pseudopodial crawling.",
                 type: MutationType.CreepingMovementOnFailedGrowth,
                 effectPerLevel: GameBalance.CreepingMoldMoveChancePerLevel,

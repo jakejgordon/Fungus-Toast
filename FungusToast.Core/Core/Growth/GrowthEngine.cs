@@ -1,6 +1,8 @@
 ﻿using FungusToast.Core.Board;
+using FungusToast.Core.Config;
 using FungusToast.Core.Events;
 using FungusToast.Core.Metrics;
+using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 
@@ -85,10 +87,19 @@ namespace FungusToast.Core.Growth
         {
             var targets = new List<GrowthTarget>();
 
+            bool hasMaxCreepingMold = owner.GetMutationLevel(MutationIds.CreepingMold) == GameBalance.CreepingMoldMaxLevel;
+
             foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
             {
                 if (!tile.IsOccupied && tile.TileId != sourceTile.TileId)
+                {
                     targets.Add(new GrowthTarget(tile, baseChance, null, surgeBonus));
+                }
+                else if (hasMaxCreepingMold && tile.FungalCell != null && tile.FungalCell.IsToxin)
+                {
+                    // Allow toxin tiles as targets for max-level Creeping Mold
+                    targets.Add(new GrowthTarget(tile, baseChance, null, surgeBonus));
+                }
             }
 
             var diagonalDirs = new (int dx, int dy, DiagonalDirection dir)[]
@@ -122,6 +133,9 @@ namespace FungusToast.Core.Growth
             Random rng,
             ISimulationObserver? observer)
         {
+            // Prevent direct growth into any occupied tile (including toxins, dead cells, or living cells)
+            if (target.Tile.IsOccupied) return false;
+
             double roll = rng.NextDouble();
 
             if (target.SurgeBonus > 0f && target.DiagonalDirection == null)
@@ -168,7 +182,7 @@ namespace FungusToast.Core.Growth
             Random rng,
             ISimulationObserver? observer)
         {
-            if (MutationEffectProcessor.TryCreepingMoldMove(owner, sourceCell, sourceTile, targetTile, rng, board))
+            if (MutationEffectProcessor.TryCreepingMoldMove(owner, sourceCell, sourceTile, targetTile, rng, board, observer))
             {
                 observer?.RecordCreepingMoldMove(owner.PlayerId);
                 return true;

@@ -82,6 +82,8 @@ namespace FungusToast.Simulation.Analysis
                 case MutationIds.CreepingMold:
                     if (player.CreepingMoldMoves > 0)
                         effects["Mold Movements"] = player.CreepingMoldMoves;
+                    if (player.CreepingMoldToxinJumps > 0)
+                        effects["Toxin Jumps"] = player.CreepingMoldToxinJumps;
                     break;
 
                 case MutationIds.Necrosporulation:

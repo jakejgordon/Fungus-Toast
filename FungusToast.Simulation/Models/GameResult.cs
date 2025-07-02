@@ -79,6 +79,7 @@ namespace FungusToast.Simulation.Models
                     // --- Per-mutation event counters ---
                     RegenerativeHyphaeReclaims = tracking.GetRegenerativeHyphaeReclaims(player.PlayerId),
                     CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId),
+                    CreepingMoldToxinJumps = tracking.GetCreepingMoldToxinJumps(player.PlayerId),
                     NecrosporulationSpores = tracking.GetNecrosporeDropCount(player.PlayerId),
                     SporocidalSpores = tracking.GetSporocidalSporeDropCount(player.PlayerId),
                     SporocidalKills = playerDeaths.TryGetValue(DeathReason.SporocidalBloom, out var spKills) ? spKills : 0,

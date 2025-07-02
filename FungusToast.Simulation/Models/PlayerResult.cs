@@ -106,5 +106,8 @@ namespace FungusToast.Simulation.Models
         public int BankedPoints { get; set; }
 
         public int CatabolicRebirthAgedToxins { get; set; }
+
+        // --- Creeping Mold special effect counters ---
+        public int CreepingMoldToxinJumps { get; set; }
     }
 }
