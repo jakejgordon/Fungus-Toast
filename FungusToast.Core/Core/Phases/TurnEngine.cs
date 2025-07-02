@@ -33,6 +33,7 @@ namespace FungusToast.Core.Phases
         /// </summary>
         public static void RunGrowthPhase(GameBoard board, List<Player> players, Random rng, RoundContext roundContext, ISimulationObserver? observer = null)
         {
+            board.OnPreGrowthPhase();
             var processor = new GrowthPhaseProcessor(board, players, rng, observer);
 
             for (int cycle = 0; cycle < GameBalance.TotalGrowthCycles; cycle++)

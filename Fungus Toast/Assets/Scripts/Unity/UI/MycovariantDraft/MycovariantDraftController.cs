@@ -213,33 +213,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         }
 
 
-        private IEnumerator ResolveDraftEffectAndAdvance(Mycovariant picked)
-        {
-            // Handle Jetting Mycelium (requires cell selection)
-            if (MycovariantEffectResolver.IsJettingMycelium(picked.Id))
-            {
-                bool effectResolved = false;
-                yield return StartCoroutine(HandleJettingMycelium(currentPlayer, picked, () => effectResolved = true));
-                while (!effectResolved) yield return null;
-            }
-            // Handle Plasmid Bounty (instant)
-            else if (picked.Id == MycovariantIds.PlasmidBountyId)
-            {
-                HandlePlasmidBounty(currentPlayer, picked);
-                yield return new WaitForSeconds(0.5f); // Small feedback delay
-            }
-            else
-            {
-                // Default: wait for pick animation only
-                yield return new WaitForSeconds(0.3f);
-            }
-
-            // Animate feedback (pulse, highlight, etc.), then advance
-            AnimatePickFeedback(picked, () => {
-                draftIndex++;
-                BeginNextDraft();
-            });
-        }
+        // REMOVED: ResolveDraftEffectAndAdvance method - this was causing duplicate Jetting Mycelium effects
+        // The effect resolution is now handled in OnChoicePicked via MycovariantEffectResolver
 
 
         private IEnumerator AnimateAIPickRoutine()
@@ -339,17 +314,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             onComplete?.Invoke();
         }
 
-        private IEnumerator HandleJettingMycelium(Player player, Mycovariant picked, Action onComplete)
-        {
-            // Call the shared helper. Pass in your draft panel and grid visualizer!
-            yield return MycovariantEffectHelpers.HandleJettingMycelium(
-                player,
-                picked,
-                onComplete,
-                draftPanel,       // <-- Your reference, or null if not needed
-                gridVisualizer    // <-- Your reference
-            );
-        }
+        // REMOVED: HandleJettingMycelium method - no longer needed since effect resolution is handled in MycovariantEffectResolver
 
         private void HandlePlasmidBounty(Player player, Mycovariant picked)
         {

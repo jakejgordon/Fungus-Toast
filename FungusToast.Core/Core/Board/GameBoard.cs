@@ -53,6 +53,7 @@ namespace FungusToast.Core.Board
         public delegate void ToxinPlacedEventHandler(object sender, ToxinPlacedEventArgs e);
         public delegate void ToxinExpiredEventHandler(object sender, ToxinExpiredEventArgs e);
         public delegate void CatabolicRebirthEventHandler(object sender, CatabolicRebirthEventArgs e);
+        public delegate void PreGrowthPhaseEventHandler();
 
         // 2. Events (public, so other components can subscribe)
         public event CellColonizedEventHandler? CellColonized;
@@ -79,6 +80,7 @@ namespace FungusToast.Core.Board
         public event ToxinPlacedEventHandler? ToxinPlaced;
         public event ToxinExpiredEventHandler? ToxinExpired;
         public event CatabolicRebirthEventHandler? CatabolicRebirth;
+        public event PreGrowthPhaseEventHandler? PreGrowthPhase;
 
         // 3. Helper methods to invoke (recommended: protected virtual, as in standard .NET pattern)
         protected virtual void OnCellColonized(int playerId, int tileId) =>
@@ -741,6 +743,9 @@ namespace FungusToast.Core.Board
 
         public virtual void OnCatabolicRebirth(CatabolicRebirthEventArgs e) =>
             CatabolicRebirth?.Invoke(this, e);
+
+        public virtual void OnPreGrowthPhase() =>
+            PreGrowthPhase?.Invoke();
 
     }
 }

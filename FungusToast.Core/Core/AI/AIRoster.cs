@@ -127,7 +127,7 @@ namespace FungusToast.Core.AI
                 prioritizeHighTier: true,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 30),  // Max level for lots of toxin drops
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 15),  // Reduced from 30 due to nerfed scaling
                     new TargetMutationGoal(MutationIds.SporocidalBloom, 5),   // High level for spore drops
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 5), // High level for toxin kills
                     new TargetMutationGoal(MutationIds.MycelialBloom, 30),    // Max level for growth

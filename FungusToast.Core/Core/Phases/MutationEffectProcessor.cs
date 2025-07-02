@@ -483,11 +483,13 @@ namespace FungusToast.Core.Phases
 
             int livingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive);
 
-            // 1. Randomized base toxin count based on level
-            int toxinsFromLevel = rng.Next(0, (level + 1) / 2);
+            // 1. Base toxin count with diminishing returns (square root scaling)
+            int baseToxins = (int)Math.Floor(Math.Sqrt(level));
+            int toxinsFromLevel = rng.Next(0, baseToxins + 1);
 
-            // 2. Failed growth bonus scales with both fails and level
-            float weightedFailures = failedGrowthsThisRound * level * GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel;
+            // 2. Failed growth bonus with logarithmic scaling to prevent excessive scaling
+            float logLevel = (float)Math.Log(level + 1, 2); // Log base 2 of (level + 1)
+            float weightedFailures = failedGrowthsThisRound * logLevel * GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel;
             int toxinsFromFailures = rng.Next(0, (int)weightedFailures + 1);
 
             int totalToxins = toxinsFromLevel + toxinsFromFailures;
@@ -1018,7 +1020,7 @@ namespace FungusToast.Core.Phases
             }
         }
 
-        public static void OnPreGrowthCycle_MycotoxinCatabolism(
+        public static void OnPreGrowthPhase_MycotoxinCatabolism(
             GameBoard board,
             List<Player> players,
             Random rng,

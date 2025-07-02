@@ -69,11 +69,11 @@ namespace FungusToast.Core.Events
                 MutationEffectProcessor.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);
             };
 
-            // Mycotoxin Catabolism (pre-growth cycle toxin processing)
-            board.PreGrowthCycle += () =>
+            // Mycotoxin Catabolism (pre-growth phase toxin processing)
+            board.PreGrowthPhase += () =>
             {
                 var roundContext = new RoundContext();
-                MutationEffectProcessor.OnPreGrowthCycle_MycotoxinCatabolism(board, players, rng, roundContext, observer);
+                MutationEffectProcessor.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
             };
 
             // Necrophytic Bloom (initial burst on activation)
