@@ -133,13 +133,13 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            selectionActive = false;
             gridVisualizer.ClearHighlights();
-            Reset();
 
             if (onTileSelected != null)
             {
                 onTileSelected(tileId);
+                selectionActive = false;
+                Reset();
                 return;
             }
 
@@ -147,6 +147,8 @@ namespace FungusToast.Unity.UI
             if (cell != null && cell.IsAlive)
             {
                 onCellSelected?.Invoke(cell);
+                selectionActive = false;
+                Reset();
             }
         }
 

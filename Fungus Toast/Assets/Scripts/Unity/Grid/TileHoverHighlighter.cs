@@ -8,45 +8,26 @@ namespace FungusToast.Unity.Grid
     public class TileHoverHighlighter : MonoBehaviour
     {
         public Tilemap groundTilemap;
-        public Tilemap hoverTilemap;
         [SerializeField] private GridVisualizer gridVisualizer;
         public Tile glowyTile;
         public Tile pressedTile;
 
         private Vector3Int? lastHoveredCell = null;
-
         // New: Set of currently "selectable" tile IDs for interaction
         private HashSet<int> selectionTiles = new();
-
-        public void SetSelectionTiles(IEnumerable<int> tileIds)
-        {
-            selectionTiles = new HashSet<int>(tileIds);
-            // Optionally: visually highlight all selectable tiles (not just under mouse)
-            foreach (var tileId in selectionTiles)
-            {
-                var (x, y) = GameManager.Instance.Board.GetXYFromTileId(tileId);
-                var cellPos = new Vector3Int(x, y, 0);
-                hoverTilemap.SetTile(cellPos, glowyTile);
-            }
-        }
-
-        public void ClearSelectionTiles()
-        {
-            selectionTiles.Clear();
-            hoverTilemap.ClearAllTiles();
-        }
 
         void Update()
         {
             Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector3Int cellPos = gridVisualizer.toastTilemap.WorldToCell(mouseWorldPos);
 
-            // Only show hover if this cell is selectable (or, if selection not active, just for hover effect)
+            if (!IsCellOnBoard(cellPos))
+                return;
+
             bool isSelectable = selectionTiles.Count == 0 || IsSelectable(cellPos);
 
             if (lastHoveredCell != null && lastHoveredCell != cellPos)
             {
-                // Only clear hover overlay, never persistent highlight
                 gridVisualizer.HoverOverlayTileMap.SetTile(lastHoveredCell.Value, null);
             }
 
@@ -123,6 +104,11 @@ namespace FungusToast.Unity.Grid
             {
                 gridVisualizer.HoverOverlayTileMap.SetTile(lastHoveredCell.Value, glowyTile);
             }
+        }
+
+        bool IsCellOnBoard(Vector3Int cellPos)
+        {
+            return gridVisualizer.toastTilemap.cellBounds.Contains(cellPos);
         }
     }
 }

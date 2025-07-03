@@ -67,6 +67,7 @@ namespace FungusToast.Unity
 
         private void Awake()
         {
+            FungusToast.Core.Logging.CoreLogger.Log = Debug.Log;
             if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);

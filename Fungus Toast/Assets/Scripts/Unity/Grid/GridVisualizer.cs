@@ -86,16 +86,16 @@ namespace FungusToast.Unity.Grid
         /// <param name="colorB">Pulse color B (optional, defaults to cyan)</param>
         public void HighlightTiles(IEnumerable<int> tileIds, Color? colorA = null, Color? colorB = null)
         {
-            HoverOverlayTileMap.ClearAllTiles();
+            SelectionHighlightTileMap.ClearAllTiles();
             highlightedPositions.Clear();
 
             foreach (var tileId in tileIds)
             {
                 var (x, y) = board.GetXYFromTileId(tileId);
                 Vector3Int pos = new Vector3Int(x, y, 0);
-                HoverOverlayTileMap.SetTile(pos, solidHighlightTile);
-                HoverOverlayTileMap.SetTileFlags(pos, TileFlags.None);
-                HoverOverlayTileMap.SetColor(pos, Color.white);
+                SelectionHighlightTileMap.SetTile(pos, solidHighlightTile);
+                SelectionHighlightTileMap.SetTileFlags(pos, TileFlags.None);
+                SelectionHighlightTileMap.SetColor(pos, Color.white);
                 highlightedPositions.Add(pos);
             }
 
@@ -117,7 +117,7 @@ namespace FungusToast.Unity.Grid
         /// </summary>
         public void ClearHighlights()
         {
-            HoverOverlayTileMap.ClearAllTiles();
+            SelectionHighlightTileMap.ClearAllTiles();
             highlightedPositions.Clear();
             if (pulseHighlightCoroutine != null)
             {
@@ -125,10 +125,9 @@ namespace FungusToast.Unity.Grid
                 pulseHighlightCoroutine = null;
             }
             // Reset scale!
-            if (HoverOverlayTileMap != null)
-                HoverOverlayTileMap.transform.localScale = Vector3.one;
+            if (SelectionHighlightTileMap != null)
+                SelectionHighlightTileMap.transform.localScale = Vector3.one;
         }
-
 
         private IEnumerator PulseHighlightTiles()
         {
@@ -147,17 +146,14 @@ namespace FungusToast.Unity.Grid
 
                 foreach (var pos in highlightedPositions)
                 {
-                    if (HoverOverlayTileMap.HasTile(pos))
+                    if (SelectionHighlightTileMap.HasTile(pos))
                     {
-                        HoverOverlayTileMap.SetColor(pos, pulseColor);
+                        SelectionHighlightTileMap.SetColor(pos, pulseColor);
                     }
                 }
                 yield return null;
             }
         }
-
-
-
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
         {
