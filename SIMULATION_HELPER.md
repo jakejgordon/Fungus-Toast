@@ -6,6 +6,10 @@ This document contains the most effective commands for running different simulat
 
 ## Quick Commands
 
+> **IMPORTANT:** Always run `run_simulation.ps1` from the project root directory (where the script is located),
+> NOT from inside the `FungusToast.Simulation` folder. Running from the wrong directory will cause build errors
+> due to incorrect relative paths.
+
 ### Open New PowerShell Window for Simulation
 ```powershell
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Users\jakej\FungusToast\FungusToast.Simulation'; dotnet run -- --games 1 --players 2"
@@ -96,6 +100,16 @@ ls FungusToast.Simulation\SimulationOutput\
 - Check that mutation events are firing correctly
 - Verify tracking context is recording events
 - Ensure PlayerResult fields are populated from tracking context
+
+#### Simulation Script Path Errors
+- **Always run `run_simulation.ps1` from the project root directory.**
+- If you run it from inside `FungusToast.Simulation`, you may see errors like:
+  - `MSBUILD : error MSB1009: Project file does not exist.`
+  - `Build failed for FungusToast.Core. Exiting.`
+- To fix: Change to the root directory and run:
+  ```powershell
+  .\run_simulation.ps1 --games 1 --players 2
+  ```
 
 ## Key Files for Debugging
 
