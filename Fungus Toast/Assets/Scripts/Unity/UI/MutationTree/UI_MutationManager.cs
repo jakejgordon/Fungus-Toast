@@ -437,6 +437,29 @@ namespace FungusToast.Unity.UI.MutationTree
                 spendPointsButton.interactable = interactable;
         }
 
+        // Highlights unmet prerequisite nodes for a hovered mutation
+        public void HighlightUnmetPrerequisites(Mutation mutation, Player player)
+        {
+            // First, clear any previous highlights
+            ClearAllHighlights();
+            foreach (var prereq in mutation.Prerequisites)
+            {
+                int ownedLevel = player.GetMutationLevel(prereq.MutationId);
+                if (ownedLevel < prereq.RequiredLevel)
+                {
+                    var node = mutationButtons.FirstOrDefault(n => n.MutationId == prereq.MutationId);
+                    if (node != null)
+                        node.SetHighlight(true);
+                }
+            }
+        }
+
+        // Clears all node highlights
+        public void ClearAllHighlights()
+        {
+            foreach (var node in mutationButtons)
+                node.SetHighlight(false);
+        }
 
     }
 }

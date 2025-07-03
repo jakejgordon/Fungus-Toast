@@ -24,22 +24,19 @@ namespace FungusToast.Core.Mycovariants
         {
             return new List<Mycovariant>
             {
-                /**TESTING
                 // Example mycovariants (replace/add as needed):
                 MycovariantFactory.JettingMyceliumNorth(),
                 MycovariantFactory.JettingMyceliumEast(),
                 MycovariantFactory.JettingMyceliumSouth(),
                 MycovariantFactory.JettingMyceliumWest(),
-                */
 
                 // --- Universal/Fallback options ---
                 MycovariantFactory.PlasmidBounty(),
                 
                 // --- Passive/Defensive options ---
-                //MycovariantFactory.NeutralizingMantle(),
-                //MycovariantFactory.MycelialBastion(),
+                MycovariantFactory.NeutralizingMantle(),
+                MycovariantFactory.MycelialBastion(),
                 MycovariantFactory.SurgicalInoculation()
-                // Add additional universal Mycovariants as created
             };
         }
     }

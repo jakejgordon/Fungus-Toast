@@ -25,9 +25,14 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private Image surgeActiveIcon;            // The hourglass icon
         [SerializeField] private TextMeshProUGUI surgeActiveText;  // The countdown number
 
+        [Header("Highlight")]
+        [SerializeField] private Outline highlightOutline;
+
         private Mutation mutation;
         private UI_MutationManager uiManager;
         private Player player;
+
+        public int MutationId => mutation.Id;
 
         public void Initialize(Mutation mutation, Player player, UI_MutationManager uiManager)
         {
@@ -136,11 +141,13 @@ namespace FungusToast.Unity.UI.MutationTree
             var tooltipText = BuildTooltip();
             Vector2 screenPosition = Input.mousePosition;
             uiManager.ShowMutationDescription(tooltipText, screenPosition);
+            uiManager.HighlightUnmetPrerequisites(mutation, player);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             uiManager.ClearMutationDescription();
+            uiManager.ClearAllHighlights();
         }
 
         private string BuildTooltip()
@@ -175,7 +182,15 @@ namespace FungusToast.Unity.UI.MutationTree
                 {
                     int ownedLevel = player.GetMutationLevel(prereq.MutationId);
                     var prereqMutation = uiManager.GetMutationById(prereq.MutationId);
-                    sb.AppendLine($"- {prereqMutation?.Name ?? "Unknown"} (Level {ownedLevel}/{prereq.RequiredLevel})");
+                    string prereqText = $"- {prereqMutation?.Name ?? "Unknown"} (Level {ownedLevel}/{prereq.RequiredLevel})";
+                    if (ownedLevel < prereq.RequiredLevel)
+                    {
+                        sb.AppendLine($"<color=#CFFF04>{prereqText}</color>"); // Yellow-green for unmet
+                    }
+                    else
+                    {
+                        sb.AppendLine(prereqText);
+                    }
                 }
                 sb.AppendLine();
             }
@@ -195,6 +210,12 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (upgradeButton != null)
                 upgradeButton.interactable = false;
+        }
+
+        public void SetHighlight(bool on)
+        {
+            if (highlightOutline != null)
+                highlightOutline.enabled = on;
         }
     }
 }
