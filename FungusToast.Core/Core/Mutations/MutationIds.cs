@@ -28,5 +28,6 @@
         public const int HyphalSurge = 23;
         public const int HyphalVectoring = 24;
         public const int CatabolicRebirth = 25;
+        public const int PutrefactiveRejuvenation = 26;
     }
 }

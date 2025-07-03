@@ -55,12 +55,13 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
-                strategyName: "Cata. B. Rebirth",
+                strategyName: "Cata. B. => Putr. Rejuv",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                   new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                   new TargetMutationGoal(MutationIds.CatabolicRebirth),
+                   new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation)
                 }
             ),
             new ParameterizedSpendingStrategy(

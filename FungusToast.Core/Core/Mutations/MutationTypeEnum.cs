@@ -30,5 +30,6 @@ namespace FungusToast.Core
         HyphalVectoring,
         FreeMutationUpgrade,
         ToxinExpirationResurrection,
+        PutrefactiveRejuvenation,
     }
 }

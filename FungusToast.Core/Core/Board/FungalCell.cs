@@ -235,5 +235,12 @@ namespace FungusToast.Core.Board
         {
             return IsToxin && currentGrowthCycle >= ToxinExpirationCycle;
         }
+
+        public int ReduceGrowthCycleAge(int amount)
+        {
+            int oldAge = GrowthCycleAge;
+            GrowthCycleAge = Math.Max(0, GrowthCycleAge - amount);
+            return oldAge - GrowthCycleAge;
+        }
     }
 }

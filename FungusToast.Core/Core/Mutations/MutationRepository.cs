@@ -395,6 +395,23 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.CreepingMold, 1));
 
             MakeChild(new Mutation(
+                id: MutationIds.PutrefactiveRejuvenation,
+                name: "Putrefactive Rejuvenation",
+                description: $"Whenever your mold kills an adjacent living enemy cell (e.g., via Putrefactive Mycotoxin), it saps the nutrients and removes <b>{GameBalance.PutrefactiveRejuvenationAgeReductionPerLevel}</b> growth cycles per mutation level from the age of any friendly living cells within <b>{GameBalance.PutrefactiveRejuvenationEffectRadius}</b> tiles of the poisoned cell. At max level, the distance is doubled.\n" +
+                $"Additionally, each level increases the effectiveness of Putrefactive Mycotoxin by <b>{FormatPercent(GameBalance.PutrefactiveRejuvenationMycotoxinBonusPerLevel)}</b>.",
+                flavorText: "The colony's most advanced toxins not only destroy rivals, but catalyze a surge of rejuvenation—siphoning the essence of the fallen to extend its own life.",
+                type: MutationType.PutrefactiveRejuvenation,
+                effectPerLevel: GameBalance.PutrefactiveRejuvenationAgeReductionPerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
+                maxLevel: GameBalance.PutrefactiveRejuvenationMaxLevel,
+                category: MutationCategory.Fungicide,
+                tier: MutationTier.Tier5
+            ),
+            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 5),
+            new MutationPrerequisite(MutationIds.RegenerativeHyphae, 1)
+);
+
+            MakeChild(new Mutation(
                 id: MutationIds.CatabolicRebirth,
                 name: "Catabolic Rebirth",
                 description: $"When a toxin expires adjacent to one of your dead cells, there is a {FormatPercent(GameBalance.CatabolicRebirthResurrectionChancePerLevel)} chance per level to revive that dead cell as a living cell. " +
@@ -436,7 +453,6 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 2),
             new MutationPrerequisite(MutationIds.AdaptiveExpression, 2),
             new MutationPrerequisite(MutationIds.Necrosporulation, 2));
-
 
             return (allMutations, rootMutations);
         }

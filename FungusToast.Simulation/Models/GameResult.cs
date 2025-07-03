@@ -103,6 +103,7 @@ namespace FungusToast.Simulation.Models
                     HyphalVectoringAlreadyOwned = tracking.GetHyphalVectoringAlreadyOwned(player.PlayerId),
                     HyphalVectoringColonized = tracking.GetHyphalVectoringColonized(player.PlayerId),
                     HyphalVectoringInvalid = tracking.GetHyphalVectoringInvalid(player.PlayerId),
+                    PutrefactiveRejuvenationCyclesReduced = tracking.GetPutrefactiveRejuvenationGrowthCyclesReduced(player.PlayerId),
 
                     // --- Mutation point income and spending ---
                     AdaptiveExpressionPointsEarned = tracking.GetAdaptiveExpressionPointsEarned(player.PlayerId),

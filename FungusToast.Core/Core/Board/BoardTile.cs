@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.Players;
+using System;
 
 namespace FungusToast.Core.Board
 {
@@ -53,6 +54,11 @@ namespace FungusToast.Core.Board
                     FungalCell.SetGrowthCycleAge(value);
                 }
             }
+        }
+
+        public int DistanceTo(BoardTile other)
+        {
+            return Math.Abs(this.X - other.X) + Math.Abs(this.Y - other.Y);
         }
     }
 }

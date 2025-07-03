@@ -1179,6 +1179,56 @@ namespace FungusToast.Core.Phases
             }
         }
 
+        /// <summary>
+        /// Handles Putrefactive Rejuvenation: when a cell is killed by Putrefactive Mycotoxin, rejuvenate nearby friendly cells.
+        /// </summary>
+        public static void OnCellDeath_PutrefactiveRejuvenation(
+            FungalCellDiedEventArgs eventArgs,
+            GameBoard board,
+            List<Player> players,
+            ISimulationObserver? observer = null)
+        {
+            if (eventArgs.Reason != DeathReason.PutrefactiveMycotoxin || eventArgs.KillerPlayerId == null)
+                return;
+
+            var killerPlayer = players.FirstOrDefault(p => p.PlayerId == eventArgs.KillerPlayerId.Value);
+            if (killerPlayer == null)
+                return;
+
+            int level = killerPlayer.GetMutationLevel(MutationIds.PutrefactiveRejuvenation);
+            if (level <= 0)
+                return;
+
+            int baseRadius = GameBalance.PutrefactiveRejuvenationEffectRadius;
+            int radius = (level >= GameBalance.PutrefactiveRejuvenationMaxLevel)
+                ? baseRadius * GameBalance.PutrefactiveRejuvenationMaxLevelRangeRadiusMultiplier
+                : baseRadius;
+            int ageReduction = GameBalance.PutrefactiveRejuvenationAgeReductionPerLevel * level;
+
+            // Find all friendly living cells within radius of the poisoned cell
+            var centerTile = board.GetTileById(eventArgs.TileId);
+            if (centerTile == null)
+                return;
+
+            var affectedCells = board.GetAllCellsOwnedBy(killerPlayer.PlayerId)
+                .Where(cell => {
+                    if (!cell.IsAlive) return false;
+                    var tile = board.GetTileById(cell.TileId);
+                    return tile != null && tile.DistanceTo(centerTile) <= radius;
+                })
+                .ToList();
+
+            int totalCyclesReduced = 0;
+            foreach (var cell in affectedCells)
+            {
+                totalCyclesReduced += cell.ReduceGrowthCycleAge(ageReduction);
+            }
+            if (observer != null && totalCyclesReduced > 0)
+            {
+                observer.RecordPutrefactiveRejuvenationGrowthCyclesReduced(killerPlayer.PlayerId, totalCyclesReduced);
+            }
+        }
+
     }
 
 

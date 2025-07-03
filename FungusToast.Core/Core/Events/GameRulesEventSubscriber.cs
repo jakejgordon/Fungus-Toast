@@ -39,6 +39,12 @@ namespace FungusToast.Core.Events
                 MutationEffectProcessor.OnCellDeath_NecrotoxicConversion(args, board, players, rng, observer);
             };
 
+            // Putrefactive Rejuvenation (trigger on Putrefactive Mycotoxin kill)
+            board.CellDeath += (sender, args) =>
+            {
+                MutationEffectProcessor.OnCellDeath_PutrefactiveRejuvenation(args, board, players, observer);
+            };
+
             // Regenerative Hyphae (post-growth phase reclaim effect)
             board.PostGrowthPhase += () =>
             {

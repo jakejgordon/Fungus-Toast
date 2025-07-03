@@ -109,5 +109,7 @@ namespace FungusToast.Simulation.Models
 
         // --- Creeping Mold special effect counters ---
         public int CreepingMoldToxinJumps { get; set; }
+
+        public int PutrefactiveRejuvenationCyclesReduced { get; set; }
     }
 }

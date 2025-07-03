@@ -187,6 +187,11 @@ namespace FungusToast.Simulation.Analysis
                     if (player.HyphalVectoringInvalid > 0)
                         effects["Invalid"] = player.HyphalVectoringInvalid;
                     break;
+
+                case MutationIds.PutrefactiveRejuvenation:
+                    if (player.PutrefactiveRejuvenationCyclesReduced > 0)
+                        effects["Cycles Reduced"] = player.PutrefactiveRejuvenationCyclesReduced;
+                    break;
             }
 
             return effects;

@@ -135,5 +135,12 @@ namespace FungusToast.Core.Config
                 };
             }
         }
+
+        // Putrefactive Rejuvenation (Tier 5 Fungicide)
+        public const int PutrefactiveRejuvenationAgeReductionPerLevel = 3; // growth cycles
+        public const int PutrefactiveRejuvenationEffectRadius = 3; // tiles
+        public const float PutrefactiveRejuvenationMycotoxinBonusPerLevel = 0.004f; // 0.5%
+        public const int PutrefactiveRejuvenationMaxLevel = 5;
+        public const int PutrefactiveRejuvenationMaxLevelRangeRadiusMultiplier = 2;
     }
 }
