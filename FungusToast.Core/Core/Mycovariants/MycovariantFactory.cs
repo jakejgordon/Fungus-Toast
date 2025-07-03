@@ -139,7 +139,12 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    MycovariantEffectProcessor.ResolveSurgicalInoculation(playerMyco, board, rng, observer);
+                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+                    if (player != null && player.PlayerType == PlayerTypeEnum.AI)
+                    {
+                        MycovariantEffectProcessor.ResolveSurgicalInoculation(playerMyco, board, rng, observer);
+                    }
+                    // For human players, do nothing here; the UI handler will handle the effect.
                 }
             };
 

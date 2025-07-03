@@ -225,6 +225,7 @@ public static class MycovariantEffectProcessor
         playerMyco.MarkTriggered();
     }
 
+    // For AI: auto-selects a target as before
     public static void ResolveSurgicalInoculation(
         PlayerMycovariant playerMyco,
         GameBoard board,
@@ -281,41 +282,60 @@ public static class MycovariantEffectProcessor
 
         if (targetTileId.HasValue)
         {
-            var targetTile = board.GetTileById(targetTileId.Value);
-            if (targetTile != null)
-            {
-                var prevCell = targetTile.FungalCell;
-                if (prevCell == null)
-                {
-                    // Place new Resistant cell using board method
-                    var newCell = new FungalCell(player.PlayerId, targetTileId.Value);
-                    newCell.MakeResistant();
-                    board.PlaceFungalCell(newCell);
-                    observer?.RecordSurgicalInoculationDrop(player.PlayerId, 1);
-                    playerMyco.IncrementEffectCount(
-                        MycovariantEffectType.Drops,
-                        1);
-                }
-                else if (!prevCell.IsResistant)
-                {
-                    // Take over (alive, dead, or toxin) and make Resistant
-                    prevCell.Takeover(player.PlayerId, allowToxin: true);
-                    prevCell.MakeResistant();
-                    board.PlaceFungalCell(prevCell);
-                    observer?.RecordSurgicalInoculationDrop(player.PlayerId, 1);
-                    playerMyco.IncrementEffectCount(
-                        MycovariantEffectType.Drops,
-                        1);
-                }
-                // observer?.RecordMycovariantEffect(
-                //     player.PlayerId,
-                //     MycovariantEffectType.ResistantCellPlaced,
-                //     1);
-                playerMyco.IncrementEffectCount(
-                    MycovariantEffectType.ResistantCellPlaced,
-                    1);
-            }
+            ApplySurgicalInoculationToTile(playerMyco, board, player.PlayerId, targetTileId.Value, observer);
         }
         playerMyco.MarkTriggered();
+    }
+
+    // For human: apply to a specific tile
+    public static void ResolveSurgicalInoculation(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        int playerId,
+        int tileId,
+        ISimulationObserver? observer)
+    {
+        ApplySurgicalInoculationToTile(playerMyco, board, playerId, tileId, observer);
+        playerMyco.MarkTriggered();
+    }
+
+    // Shared logic for applying the effect to a tile
+    private static void ApplySurgicalInoculationToTile(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        int playerId,
+        int tileId,
+        ISimulationObserver? observer)
+    {
+        var targetTile = board.GetTileById(tileId);
+        if (targetTile != null)
+        {
+            var prevCell = targetTile.FungalCell;
+            if (prevCell == null)
+            {
+                // Place new Resistant cell using board method
+                var newCell = new FungalCell(playerId, tileId);
+                newCell.MakeResistant();
+                board.PlaceFungalCell(newCell);
+                observer?.RecordSurgicalInoculationDrop(playerId, 1);
+                playerMyco.IncrementEffectCount(
+                    MycovariantEffectType.Drops,
+                    1);
+            }
+            else if (!prevCell.IsResistant)
+            {
+                // Take over (alive, dead, or toxin) and make Resistant
+                prevCell.Takeover(playerId, allowToxin: true);
+                prevCell.MakeResistant();
+                board.PlaceFungalCell(prevCell);
+                observer?.RecordSurgicalInoculationDrop(playerId, 1);
+                playerMyco.IncrementEffectCount(
+                    MycovariantEffectType.Drops,
+                    1);
+            }
+            playerMyco.IncrementEffectCount(
+                MycovariantEffectType.ResistantCellPlaced,
+                1);
+        }
     }
 }

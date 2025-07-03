@@ -15,7 +15,6 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void Awake()
         {
-            Debug.Log($"{gameObject.name} Awake() fired!");
             Instance = this;
             startGameButton.interactable = false;
         }

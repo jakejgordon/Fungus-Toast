@@ -52,8 +52,6 @@ namespace FungusToast.Unity.Phases
         {
             if (phaseCycle >= GameBalance.TotalGrowthCycles)
             {
-                Debug.Log("🌾 Growth complete. Preparing for decay phase...");
-
                 // === Post-Growth Mutation Effects ===
                 board.OnPostGrowthPhase();
 
@@ -64,8 +62,6 @@ namespace FungusToast.Unity.Phases
 
             phaseCycle++;
             board.IncrementGrowthCycle(); // GLOBAL counter
-
-            Debug.Log($"🌿 Growth Cycle {phaseCycle}/{GameBalance.TotalGrowthCycles}");
 
             var failedThisCycle = processor.ExecuteSingleCycle(roundContext);
             MergeFailedGrowths(failedThisCycle);
