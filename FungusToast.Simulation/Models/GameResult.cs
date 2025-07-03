@@ -31,6 +31,7 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> SporesFromSporocidalBloom { get; set; } = new();
         public Dictionary<int, int> SporesFromNecrosporulation { get; set; } = new();
         public Dictionary<int, int> SporesFromMycotoxinTracer { get; set; } = new();
+        public Dictionary<int, int> PerimeterProliferatorGrowthsByPlayer { get; set; } = new();
 
         // ──────────────
         // FACTORY METHOD
@@ -142,11 +143,10 @@ namespace FungusToast.Simulation.Models
                 SporesFromNecrosporulation = tracking.GetNecrosporulationSporeDropCounts(),
                 SporesFromMycotoxinTracer = tracking.GetMycotoxinSporeDropCounts(),
                 ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin),
-                TrackingContext = tracking
+                TrackingContext = tracking,
+                PerimeterProliferatorGrowthsByPlayer = tracking.GetAllPerimeterProliferatorGrowths()
             };
-
         }
-
 
         private static List<MycovariantResult> BuildMycovariantResults(Player player, SimulationTrackingContext tracking)
         {
@@ -202,6 +202,13 @@ namespace FungusToast.Simulation.Models
                             break;
                         }
 
+                    case var id when id == MycovariantIds.PerimeterProliferatorId:
+                        {
+                            int perim = tracking.GetPerimeterProliferatorGrowths(player.PlayerId);
+                            if (perim > 0) effectCounts[MycovariantEffectType.PerimeterProliferation] = perim;
+                            break;
+                        }
+
                     // ...more cases...
                 }
 
@@ -222,7 +229,5 @@ namespace FungusToast.Simulation.Models
             }
             return results;
         }
-
-
     }
 }

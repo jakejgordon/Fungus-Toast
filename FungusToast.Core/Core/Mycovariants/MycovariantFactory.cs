@@ -148,5 +148,22 @@ namespace FungusToast.Core.Mycovariants
                 }
             };
 
+        public static Mycovariant PerimeterProliferator() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.PerimeterProliferatorId,
+                Name = "Perimeter Proliferator",
+                Description = $"Multiplies the growth rate of your mold by {MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier}x when it is adjacent to the crust (the outer edge of the board).",
+                FlavorText = "At the bread's edge, the colony finds untapped vigor, racing along the crust in a surge of expansion.",
+                Type = MycovariantType.Passive,
+                IsUniversal = false,
+                // This mycovariant's effect should be checked/applied in the growth phase logic:
+                // If a cell is adjacent to the board edge, double its growth rate for that cycle.
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    // Passive: No immediate effect. Growth logic must check for this mycovariant and apply the multiplier.
+                }
+            };
+
     }
 }

@@ -5,6 +5,7 @@ using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
+using FungusToast.Core.Mycovariants;
 
 namespace FungusToast.Core.Growth
 {
@@ -62,6 +63,8 @@ namespace FungusToast.Core.Growth
             (float baseChance, float surgeBonus) = MutationEffectProcessor.GetGrowthChancesWithHyphalSurge(owner);
             float diagonalMultiplier = MutationEffectProcessor.GetTendrilDiagonalGrowthMultiplier(owner);
 
+            float edgeMultiplier = GetEdgeGrowthMultiplier(owner, sourceTile, board);
+
             var allTargets = GetAllGrowthTargets(board, sourceTile, owner, baseChance, surgeBonus, diagonalMultiplier);
             Shuffle(allTargets, rng);
 
@@ -89,16 +92,17 @@ namespace FungusToast.Core.Growth
 
             bool hasMaxCreepingMold = owner.GetMutationLevel(MutationIds.CreepingMold) == GameBalance.CreepingMoldMaxLevel;
 
+            float edgeMultiplier = GetEdgeGrowthMultiplier(owner, sourceTile, board);
+
             foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
             {
                 if (!tile.IsOccupied && tile.TileId != sourceTile.TileId)
                 {
-                    targets.Add(new GrowthTarget(tile, baseChance, null, surgeBonus));
+                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier, null, surgeBonus));
                 }
                 else if (hasMaxCreepingMold && tile.FungalCell != null && tile.FungalCell.IsToxin)
                 {
-                    // Allow toxin tiles as targets for max-level Creeping Mold
-                    targets.Add(new GrowthTarget(tile, baseChance, null, surgeBonus));
+                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier, null, surgeBonus));
                 }
             }
 
@@ -112,7 +116,7 @@ namespace FungusToast.Core.Growth
 
             foreach (var (dx, dy, dir) in diagonalDirs)
             {
-                float chance = owner.GetDiagonalGrowthChance(dir) * diagonalMultiplier;
+                float chance = owner.GetDiagonalGrowthChance(dir) * diagonalMultiplier * edgeMultiplier;
                 if (chance <= 0) continue;
 
                 int nx = sourceTile.X + dx;
@@ -138,12 +142,15 @@ namespace FungusToast.Core.Growth
 
             double roll = rng.NextDouble();
 
+            var (edgeMultiplier, baseChance) = GetPerimeterProliferatorContext(board, owner, sourceTileId, target);
+
             if (target.SurgeBonus > 0f && target.DiagonalDirection == null)
             {
                 if (roll < target.Chance)
                 {
                     if (board.TryGrowFungalCell(owner.PlayerId, sourceTileId, target.Tile.TileId, out var failReason))
                     {
+                        MaybeRecordPerimeterProliferatorGrowth(observer, owner.PlayerId, edgeMultiplier, roll, baseChance, target.Chance);
                         observer?.RecordStandardGrowth(owner.PlayerId);
                         return true;
                     }
@@ -163,6 +170,7 @@ namespace FungusToast.Core.Growth
                 {
                     if (board.TryGrowFungalCell(owner.PlayerId, sourceTileId, target.Tile.TileId, out var failReason))
                     {
+                        MaybeRecordPerimeterProliferatorGrowth(observer, owner.PlayerId, edgeMultiplier, roll, baseChance, target.Chance);
                         if (target.DiagonalDirection.HasValue)
                             observer?.RecordTendrilGrowth(owner.PlayerId, target.DiagonalDirection.Value);
                         return true;
@@ -171,6 +179,47 @@ namespace FungusToast.Core.Growth
             }
 
             return false;
+        }
+
+        // Returns (edgeMultiplier, baseChance)
+        private static (float edgeMultiplier, float baseChance) GetPerimeterProliferatorContext(
+            GameBoard board,
+            Player owner,
+            int sourceTileId,
+            GrowthTarget target)
+        {
+            float edgeMultiplier = 1f;
+            float baseChance = target.Chance;
+            bool hasPerimeterProliferator = owner.PlayerMycovariants.Any(m => m.MycovariantId == MycovariantIds.PerimeterProliferatorId);
+            if (hasPerimeterProliferator)
+            {
+                var sourceTile = board.GetTileById(sourceTileId);
+                if (sourceTile != null)
+                {
+                    bool isEdgeCell = sourceTile.X == 0 || sourceTile.Y == 0 ||
+                                      sourceTile.X == board.Width - 1 || sourceTile.Y == board.Height - 1;
+                    edgeMultiplier = isEdgeCell ? MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier : 1f;
+                }
+            }
+            if (edgeMultiplier > 1f)
+            {
+                baseChance = target.Chance / edgeMultiplier;
+            }
+            return (edgeMultiplier, baseChance);
+        }
+
+        private static void MaybeRecordPerimeterProliferatorGrowth(
+            ISimulationObserver? observer,
+            int playerId,
+            float edgeMultiplier,
+            double roll,
+            float baseChance,
+            float targetChance)
+        {
+            if (edgeMultiplier > 1f && roll >= baseChance && roll < targetChance)
+            {
+                observer?.RecordPerimeterProliferatorGrowth(playerId);
+            }
         }
 
         private static bool AttemptCreepingMold(
@@ -234,6 +283,16 @@ namespace FungusToast.Core.Growth
                 DiagonalDirection = dir;
                 SurgeBonus = surgeBonus;
             }
+        }
+
+        private static float GetEdgeGrowthMultiplier(Player owner, BoardTile sourceTile, GameBoard board)
+        {
+            bool hasPerimeterProliferator = owner.PlayerMycovariants.Any(m => m.MycovariantId == MycovariantIds.PerimeterProliferatorId);
+            bool isEdgeCell = sourceTile.X == 0 || sourceTile.Y == 0 ||
+                              sourceTile.X == board.Width - 1 || sourceTile.Y == board.Height - 1;
+            return (hasPerimeterProliferator && isEdgeCell)
+                ? MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier
+                : 1f;
         }
     }
 }

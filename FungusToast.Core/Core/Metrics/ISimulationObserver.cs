@@ -52,5 +52,6 @@ namespace FungusToast.Core.Metrics
         void RecordCatabolicRebirthAgedToxin(int playerId, int toxinsAged);
         void RecordSurgicalInoculationDrop(int playerId, int count);
         void RecordPutrefactiveRejuvenationGrowthCyclesReduced(int playerId, int totalCyclesReduced);
+        void RecordPerimeterProliferatorGrowth(int playerId);
     }
 }

@@ -111,5 +111,7 @@ namespace FungusToast.Simulation.Models
         public int CreepingMoldToxinJumps { get; set; }
 
         public int PutrefactiveRejuvenationCyclesReduced { get; set; }
+
+        public int PerimeterProliferatorGrowths { get; set; }
     }
 }

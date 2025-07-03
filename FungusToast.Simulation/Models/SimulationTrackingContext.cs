@@ -650,5 +650,19 @@ namespace FungusToast.Simulation.Models
         public int GetPutrefactiveRejuvenationGrowthCyclesReduced(int playerId)
             => putrefactiveRejuvenationCyclesReduced.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllPutrefactiveRejuvenationGrowthCyclesReduced() => new(putrefactiveRejuvenationCyclesReduced);
+
+        // ────────────────
+        // Perimeter Proliferator Growths
+        // ────────────────
+        private readonly Dictionary<int, int> perimeterProliferatorGrowths = new();
+        public void RecordPerimeterProliferatorGrowth(int playerId)
+        {
+            if (!perimeterProliferatorGrowths.ContainsKey(playerId))
+                perimeterProliferatorGrowths[playerId] = 0;
+            perimeterProliferatorGrowths[playerId]++;
+        }
+        public int GetPerimeterProliferatorGrowths(int playerId)
+            => perimeterProliferatorGrowths.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllPerimeterProliferatorGrowths() => new(perimeterProliferatorGrowths);
     }
 }

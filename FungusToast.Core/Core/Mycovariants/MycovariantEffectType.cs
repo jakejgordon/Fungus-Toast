@@ -13,6 +13,7 @@
         Bastioned,
         ResistantCellPlaced,
         Drops,
+        PerimeterProliferation,
         // Add others as needed
     }
 }
