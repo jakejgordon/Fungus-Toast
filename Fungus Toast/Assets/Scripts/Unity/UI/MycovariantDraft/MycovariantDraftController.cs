@@ -225,8 +225,16 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             // Optional: show "AI thinking" with progress dots, brief delay
             yield return new WaitForSeconds(UnityEngine.Random.Range(0.7f, 1.2f));
 
-            var randomPick = draftChoices[rng.Next(draftChoices.Count)];
-            OnChoicePicked(randomPick);
+            Mycovariant pick;
+            if (GameManager.Instance.IsTestingModeEnabled && draftChoices.Any(m => m.Id == GameManager.Instance.TestingMycovariantId))
+            {
+                pick = draftChoices.First(m => m.Id == GameManager.Instance.TestingMycovariantId);
+            }
+            else
+            {
+                pick = draftChoices[rng.Next(draftChoices.Count)];
+            }
+            OnChoicePicked(pick);
         }
 
         private void SetAllPickButtonsInteractable(bool interactable)
