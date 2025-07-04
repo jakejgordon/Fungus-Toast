@@ -33,6 +33,11 @@ namespace FungusToast.Unity
         public int boardHeight = 20;
         public int playerCount = 2;
 
+        [Header("Testing Mode")]
+        public bool testingModeEnabled = false;
+        public int testingMycovariantId = -1;
+        public bool testingModeForceHumanFirst = true;
+
         [Header("References")]
         public GridVisualizer gridVisualizer;
         public CameraCenterer cameraCenterer;
@@ -117,7 +122,16 @@ namespace FungusToast.Unity
             gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
 
-            gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
+            if (testingModeEnabled)
+            {
+                gameUIManager.PhaseBanner.Show("Mycovariant Testing Mode", 2f);
+                // Start draft immediately in testing mode
+                StartCoroutine(DelayedStartDraft());
+            }
+            else
+            {
+                gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
+            }
             phaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
             phaseProgressTracker?.HighlightMutationPhase();
@@ -397,21 +411,53 @@ namespace FungusToast.Unity
             // Build the draft pool as appropriate for your game logic
             var draftPool = MycovariantDraftManager.BuildDraftPool(Board, Board.Players);
 
+            // In testing mode, ensure the testing mycovariant is in the pool
+            if (testingModeEnabled && testingMycovariantId != -1)
+            {
+                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
+                if (testingMycovariant != null && !draftPool.Contains(testingMycovariant))
+                {
+                    draftPool.Add(testingMycovariant);
+                }
+            }
+
             // Create and initialize the pool manager
             var poolManager = new MycovariantPoolManager();
             poolManager.InitializePool(draftPool, rng);
 
             // Determine draft order (example: fewest living cells goes first)
-            var draftOrder = Board.Players
-                .OrderBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
-                .ToList();
+            List<Player> draftOrder;
+            if (testingModeEnabled && testingModeForceHumanFirst)
+            {
+                // In testing mode, ensure human player goes first
+                draftOrder = Board.Players
+                    .OrderBy(p => p.PlayerType == PlayerTypeEnum.Human ? 0 : 1)
+                    .ThenBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
+                    .ToList();
+            }
+            else
+            {
+                // Normal draft order: fewest living cells goes first
+                draftOrder = Board.Players
+                    .OrderBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
+                    .ToList();
+            }
 
             // Start the draft UI/controller
             mycovariantDraftController.StartDraft(
                 Board.Players, poolManager, draftOrder, rng, MycovariantGameBalance.MycovariantSelectionDraftSize);
 
             // Show a phase banner (optional, for player feedback)
-            gameUIManager.PhaseBanner.Show("Mycovariant Draft Phase!", 2f);
+            if (testingModeEnabled)
+            {
+                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
+                var mycovariantName = testingMycovariant?.Name ?? "Unknown";
+                gameUIManager.PhaseBanner.Show($"Testing: {mycovariantName}", 2f);
+            }
+            else
+            {
+                gameUIManager.PhaseBanner.Show("Mycovariant Draft Phase!", 2f);
+            }
             phaseProgressTracker?.HighlightDraftPhase();
 
             // Hide mutation UI during draft
@@ -442,11 +488,14 @@ namespace FungusToast.Unity
 
         private IEnumerator DelayedStartNextRound()
         {
-            // Wait for end of frame to ensure GameObject activation is processed
-            yield return new WaitForEndOfFrame();
-
-            // AssignMutationPoints(); // Removed to prevent double-award
+            yield return new WaitForSeconds(1f);
             StartNextRound();
+        }
+
+        private IEnumerator DelayedStartDraft()
+        {
+            yield return new WaitForSeconds(2.5f); // Wait for banner to show
+            StartMycovariantDraftPhase();
         }
 
         public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)
@@ -489,5 +538,21 @@ namespace FungusToast.Unity
             SelectionPromptPanel.SetActive(false);
         }
 
+        // === TESTING MODE METHODS ===
+        public void EnableTestingMode(int mycovariantId)
+        {
+            testingModeEnabled = true;
+            testingMycovariantId = mycovariantId;
+            testingModeForceHumanFirst = true;
+        }
+
+        public void DisableTestingMode()
+        {
+            testingModeEnabled = false;
+            testingMycovariantId = -1;
+        }
+
+        public bool IsTestingModeEnabled => testingModeEnabled;
+        public int TestingMycovariantId => testingMycovariantId;
     }
 }
