@@ -52,6 +52,7 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine($"Avg Turns per Game: {avgTurns:N1}");
             Console.WriteLine($"Std Dev of Turns:   {stdDevTurns:N2}");
             Console.WriteLine($"Avg Living Cells:   {avgLivingCells:N1}");
+            Console.WriteLine($"Avg % Living:       {(avgLivingCells / totalCells * 100f):N1}%");
             Console.WriteLine($"Avg Dead Cells:     {avgDeadCells:N1}");
             Console.WriteLine($"Avg Empty Cells:    {avgEmptyCells:N1}");
             Console.WriteLine($"Avg Spores Dropped: {avgSporesDropped:N1}");
