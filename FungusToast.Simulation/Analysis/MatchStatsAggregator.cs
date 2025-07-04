@@ -234,12 +234,15 @@ namespace FungusToast.Simulation.Analysis
                 }
             }
 
+            // Calculate total living cells across all players for percentage calculation
+            float totalLivingCells = playerStats.Values.Sum(p => p.living);
+
             Console.WriteLine("\n=== Per-Player Summary ===");
             Console.WriteLine(
-                $"{"Player",6} | {"Strategy",-40} | {"WinRate",7} | {"Avg Alive",13} | {"Avg Dead",13} | " +
+                $"{"Player",6} | {"Strategy",-40} | {"WinRate",7} | {"Avg Alive",13} | {"Avg % of Total Living",20} | {"Avg Dead",13} | " +
                 $"{"Avg MP Spent",16} | {"Avg MP Earned",16} | {"Avg Autoupgrade MP",20} | {"Avg Banked",12} | " +
-                $"{"Growth%",11} | {"SelfDeath%",13} | {"DecayMod",10}");
-            Console.WriteLine(new string('-', 223));
+                $"{"Growth%",11} | {"SelfDeath%",13}");
+            Console.WriteLine(new string('-', 233));
 
             foreach (var (id, strategyName) in rankedPlayerList)
             {
@@ -263,14 +266,18 @@ namespace FungusToast.Simulation.Analysis
                 float avgAutoupgradeMp = appearances > 0 ? (float)totalAutoupgradeMp / appearances : 0f;
                 float avgBankedPoints = appearances > 0 ? (float)totalBankedPoints / appearances : 0f;
 
+                float avgLiving = (float)living / appearances;
+                float avgDead = (float)dead / appearances;
+                float livingPercentage = totalLivingCells > 0 ? (avgLiving / (totalLivingCells / appearances)) * 100f : 0f;
+
                 Console.WriteLine(
                     $"{id,6} | {Truncate(strategyObj.StrategyName, 40),-40} | {winRate,6:N1}% | " +
-                    $"{(float)living / appearances,13:N1} | {(float)dead / appearances,13:N1} | " +
+                    $"{avgLiving,13:N1} | {livingPercentage,19:N1}% | {avgDead,13:N1} | " +
                     $"{avgMpSpent,16:N1} | {avgMpEarned,16:N1} | {avgAutoupgradeMp,20:N1} | {avgBankedPoints,12:N1} | " +
-                    $"{growth / appearances * 100f,10:N2}% | {selfDeath / appearances * 100f,12:N2}% | {decayMod / appearances,9:N2}%");
+                    $"{growth / appearances * 100f,10:N2}% | {selfDeath / appearances * 100f,12:N2}%");
             }
 
-            Console.WriteLine(new string('-', 223));
+            Console.WriteLine(new string('-', 233));
         }
 
         private void PrintDeathReasonSummary(
