@@ -42,7 +42,11 @@ if ($Args.IndexOf('--output') -lt 0) {
 # Prepare argument string for dotnet run
 $argString = $Args -join ' '
 
-Write-Host "Output will be written to: $outputFile"
+# Calculate the full path that the simulation will use
+$simulationOutputDir = "FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput"
+$fullOutputPath = Join-Path $simulationOutputDir $outputFile
+
+Write-Host "Output will be written to: $fullOutputPath"
 
 # Launch simulation in a new PowerShell window
 Write-Host "Launching simulation in a new window..."

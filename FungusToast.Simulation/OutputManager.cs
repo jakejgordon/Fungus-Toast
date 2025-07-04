@@ -15,6 +15,9 @@ namespace FungusToast.Simulation
             {
                 _dualWriter = new DualWriter(_originalOut, _fileWriter);
                 Console.SetOut(_dualWriter);
+                
+                // Now write the path message to both console and file
+                Console.WriteLine($"Simulation output redirected to: {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SimulationOutput", outputFileName)}");
             }
         }
 
@@ -77,7 +80,6 @@ namespace FungusToast.Simulation
 
             originalOut = Console.Out;
             fileWriter = new StreamWriter(fullPath, false, System.Text.Encoding.UTF8);
-            Console.WriteLine($"Simulation output redirected to: {fullPath}");
         }
 
         public class DualWriter : TextWriter

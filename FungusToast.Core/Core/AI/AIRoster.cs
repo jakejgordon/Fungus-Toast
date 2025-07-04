@@ -31,8 +31,10 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.HyphalSurge),
                     new TargetMutationGoal(MutationIds.HyphalVectoring)
                 },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
                 surgeAttemptTurnFrequency: 10,
-                prioritizeHighTier: true),
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy),
             new ParameterizedSpendingStrategy(
                 strategyName: "Power Mutations v2",
                 prioritizeHighTier: true,

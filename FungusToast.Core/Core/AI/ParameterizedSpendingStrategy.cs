@@ -346,6 +346,13 @@ namespace FungusToast.Core.AI
             if (TrySpendOnSurges(player, allMutations, board, simulationObserver, onlyOnNthRound: true))
                 return; // If a surge is triggered, stop spending for this turn
 
+            // Check if we should bank for surges
+            if (ShouldBankForSurges(player, allMutations, board))
+            {
+                simulationObserver?.RecordBankedPoints(player.PlayerId, player.MutationPoints);
+                return; // Bank points for surge activation
+            }
+
             // Check if we're in the middle of working on a target goal but haven't completed it yet
             bool hasIncompleteTarget = false;
             foreach (var goal in targetMutationGoals)
@@ -390,6 +397,39 @@ namespace FungusToast.Core.AI
             TrySpendOnSurges(player, allMutations, board, simulationObserver, onlyOnNthRound: false);
         }
 
+        private bool ShouldBankForSurges(Player player, List<Mutation> allMutations, GameBoard board)
+        {
+            // Only bank for surges if we have surge priority IDs and it's close to surge turn
+            if (surgePriorityIds.Count == 0 || surgeAttemptTurnFrequency <= 0)
+                return false;
+
+            int currentRound = board.CurrentRound;
+            int nextSurgeRound = ((currentRound / surgeAttemptTurnFrequency) + 1) * surgeAttemptTurnFrequency;
+            int roundsUntilSurge = nextSurgeRound - currentRound;
+
+            // Bank if surge is coming soon (within 2 rounds) and we have a surge mutation
+            if (roundsUntilSurge <= 2)
+            {
+                foreach (var surgeId in surgePriorityIds)
+                {
+                    var surge = allMutations.FirstOrDefault(m => m.Id == surgeId && m.IsSurge);
+                    if (surge != null && player.GetMutationLevel(surge.Id) > 0)
+                    {
+                        int currentLevel = player.GetMutationLevel(surge.Id);
+                        int cost = surge.GetSurgeActivationCost(currentLevel);
+                        
+                        // Bank if we're close to affording the surge
+                        if (player.MutationPoints + roundsUntilSurge * player.GetMutationPointIncome() >= cost &&
+                            player.MutationPoints < cost)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
         private bool TrySpendOnSurges(
             Player player,
             List<Mutation> allMutations,
@@ -429,24 +469,18 @@ namespace FungusToast.Core.AI
             }
             else
             {
-                var upgradableNonSurge = allMutations
-                    .Where(m => !m.IsSurge && player.CanUpgrade(m))
-                    .ToList();
-
-                if (upgradableNonSurge.Count == 0)
+                // Always try to activate surges as last resort, regardless of other options
+                foreach (var surge in availableSurges)
                 {
-                    foreach (var surge in availableSurges)
+                    if (!player.IsSurgeActive(surge.Id))
                     {
-                        if (!player.IsSurgeActive(surge.Id))
-                        {
-                            int currentLevel = player.GetMutationLevel(surge.Id);
-                            int cost = surge.GetSurgeActivationCost(currentLevel);
+                        int currentLevel = player.GetMutationLevel(surge.Id);
+                        int cost = surge.GetSurgeActivationCost(currentLevel);
 
-                            if (player.MutationPoints >= cost)
-                            {
-                                player.TryUpgradeMutation(surge, simulationObserver, board.CurrentRound);
-                                return true;
-                            }
+                        if (player.MutationPoints >= cost)
+                        {
+                            player.TryUpgradeMutation(surge, simulationObserver, board.CurrentRound);
+                            return true;
                         }
                     }
                 }

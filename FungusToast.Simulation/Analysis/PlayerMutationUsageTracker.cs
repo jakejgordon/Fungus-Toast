@@ -257,7 +257,7 @@ namespace FungusToast.Simulation.Analysis
 
                 foreach (var r in playerRecords)
                 {
-                    var (avgFirst, minFirst, maxFirst, nFirst) = tracking.GetFirstUpgradeStats(r.PlayerId, r.MutationId);
+                    var (avgFirst, minFirst, maxFirst, nFirst) = tracking.GetFirstUpgradeStatsByStrategy(r.PlayerId, r.Strategy, r.MutationId);
                     Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-12} | {5,-8} | {6,-8} | {7,-10:N2} | {8,-12} | {9,12} | {10,6} | {11,6} | {12,4}",
                         r.PlayerId,
                         Truncate(r.Strategy, 25),

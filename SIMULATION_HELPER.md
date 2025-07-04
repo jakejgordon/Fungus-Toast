@@ -10,6 +10,15 @@ This document contains the most effective commands for running different simulat
 > NOT from inside the `FungusToast.Simulation` folder. Running from the wrong directory will cause build errors
 > due to incorrect relative paths.
 
+## Output File Location
+
+Simulation output files are automatically created in:
+```
+FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\
+```
+
+The full path is displayed in the console after each simulation run, making it easy for AI assistants to locate and read the results.
+
 ### Open New PowerShell Window for Simulation
 ```powershell
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Users\jakej\FungusToast\FungusToast.Simulation'; dotnet run -- --games 1 --players 2"
@@ -83,6 +92,29 @@ dotnet run -- --games 1 --players 2 --output test_results.txt
 ```powershell
 ls FungusToast.Simulation\SimulationOutput\
 ```
+
+### AI/Cursor File Access
+After each simulation, the output file path is displayed in **two places**:
+
+1. **PowerShell script output** (main console):
+   ```
+   Output will be written to: FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\sim_output_2025-07-04T13-07-22.txt
+   ```
+
+2. **Simulation output** (in the simulation window):
+   ```
+   Simulation output redirected to: C:\Users\jakej\FungusToast\FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\sim_output_2025-07-04T13-07-22.txt
+   ```
+
+**AI/Cursor can:**
+- **Use the PowerShell path** - Copy the relative path from the main console
+- **Use the simulation path** - Copy the absolute path from the simulation window  
+- **Find latest file** - If exact path isn't available:
+   ```powershell
+   Get-ChildItem "FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\*.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+   ```
+
+**Note**: The output files are always created in `FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\` with timestamps in the filename.
 
 ## Common Issues & Solutions
 
@@ -185,4 +217,7 @@ case MutationIds.NewMutation:
 - Check event tracking checklist when adding new effects
 - Use semicolons for PowerShell command chaining
 - Quote paths with spaces
-- Reference this file for command syntax 
+- Reference this file for command syntax
+- **Output files**: After simulation, read the full path displayed in console output
+- **File location**: All output files are in `FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\`
+- **Latest file**: Use `Get-ChildItem` with `Sort-Object LastWriteTime -Descending` to find most recent output 
