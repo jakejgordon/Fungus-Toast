@@ -43,6 +43,10 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationNameText.text = mutation.Name;
             UpdateDisplay();
 
+            // Ensure highlight is off by default
+            if (highlightOutline != null)
+                highlightOutline.enabled = false;
+
             upgradeButton.onClick.RemoveAllListeners();
             upgradeButton.onClick.AddListener(OnUpgradeClicked);
         }
