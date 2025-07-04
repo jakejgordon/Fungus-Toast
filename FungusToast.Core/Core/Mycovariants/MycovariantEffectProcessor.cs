@@ -226,7 +226,7 @@ public static class MycovariantEffectProcessor
     }
 
     // For AI: auto-selects a target as before
-    public static void ResolveSurgicalInoculation(
+    public static void ResolveSurgicalInoculationAI(
         PlayerMycovariant playerMyco,
         GameBoard board,
         Random rng,
@@ -288,7 +288,7 @@ public static class MycovariantEffectProcessor
     }
 
     // For human: apply to a specific tile
-    public static void ResolveSurgicalInoculation(
+    public static void ResolveSurgicalInoculationHuman(
         PlayerMycovariant playerMyco,
         GameBoard board,
         int playerId,

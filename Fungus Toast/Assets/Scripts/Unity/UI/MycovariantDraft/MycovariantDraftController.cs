@@ -78,8 +78,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             // Progress bar: highlight current, gray-out done, normal for next
             draftOrderRow?.SetDraftOrder(draftOrder, draftIndex);   // <--- **RIGHT HERE**
 
+            int? forcedMycovariantId = null;
+            if (GameManager.Instance.IsTestingModeEnabled && currentPlayer.PlayerType == PlayerTypeEnum.Human)
+                forcedMycovariantId = GameManager.Instance.TestingMycovariantId;
             draftChoices = MycovariantDraftManager.GetDraftChoices(
-                currentPlayer, poolManager, draftChoicesCount, rng);
+                currentPlayer, poolManager, draftChoicesCount, rng, forcedMycovariantId);
 
             PopulateChoices(draftChoices);
 

@@ -86,14 +86,28 @@ namespace FungusToast.Core.Mycovariants
             Player player,
             MycovariantPoolManager poolManager,
             int choicesCount,
-            Random rng)
+            Random rng,
+            int? forcedMycovariantId = null
+        )
         {
             var eligible = poolManager.GetEligibleMycovariantsForPlayer(player);
-
             var shuffled = eligible.OrderBy(x => rng.Next()).ToList();
+            var choices = shuffled.Take(choicesCount).ToList();
 
-            // Take up to choicesCount
-            return shuffled.Take(choicesCount).ToList();
+            // Only force for human player and if a forced ID is provided
+            if (forcedMycovariantId.HasValue && player.PlayerType == PlayerTypeEnum.Human)
+            {
+                var forced = MycovariantRepository.All.FirstOrDefault(m => m.Id == forcedMycovariantId.Value);
+                if (forced != null && !choices.Contains(forced))
+                {
+                    if (choices.Count < choicesCount)
+                        choices.Add(forced);
+                    else
+                        choices[0] = forced;
+                }
+            }
+
+            return choices;
         }
 
         /// <summary>

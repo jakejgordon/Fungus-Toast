@@ -217,10 +217,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         }
                         var playerMyco = player.PlayerMycovariants
                             .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
-                        MycovariantEffectProcessor.ResolveSurgicalInoculation(
+                        MycovariantEffectProcessor.ResolveSurgicalInoculationHuman(
                             playerMyco,
                             GameManager.Instance.Board,
-                            new System.Random(),
+                            player.PlayerId,
+                            tile.TileId,
                             null
                         );
                         GameManager.Instance.HideSelectionPrompt();

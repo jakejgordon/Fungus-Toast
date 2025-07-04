@@ -142,7 +142,7 @@ namespace FungusToast.Core.Mycovariants
                     var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
                     if (player != null && player.PlayerType == PlayerTypeEnum.AI)
                     {
-                        MycovariantEffectProcessor.ResolveSurgicalInoculation(playerMyco, board, rng, observer);
+                        MycovariantEffectProcessor.ResolveSurgicalInoculationAI(playerMyco, board, rng, observer);
                     }
                     // For human players, do nothing here; the UI handler will handle the effect.
                 }
