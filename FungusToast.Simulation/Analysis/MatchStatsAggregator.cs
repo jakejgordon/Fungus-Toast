@@ -234,24 +234,12 @@ namespace FungusToast.Simulation.Analysis
                 }
             }
 
-            // Gather Perimeter Proliferator Growths per player
-            var perimeterProliferatorGrowthsByPlayer = new Dictionary<int, int>();
-            foreach (var game in gameResults)
-            {
-                foreach (var pr in game.PlayerResults)
-                {
-                    if (!perimeterProliferatorGrowthsByPlayer.ContainsKey(pr.PlayerId))
-                        perimeterProliferatorGrowthsByPlayer[pr.PlayerId] = 0;
-                    perimeterProliferatorGrowthsByPlayer[pr.PlayerId] += pr.PerimeterProliferatorGrowths;
-                }
-            }
-
             Console.WriteLine("\n=== Per-Player Summary ===");
             Console.WriteLine(
                 $"{"Player",6} | {"Strategy",-40} | {"WinRate",7} | {"Avg Alive",13} | {"Avg Dead",13} | " +
                 $"{"Avg MP Spent",16} | {"Avg MP Earned",16} | {"Avg Autoupgrade MP",20} | {"Avg Banked",12} | " +
-                $"{"Growth%",11} | {"SelfDeath%",13} | {"DecayMod",10} | {"Avg PerimProlif",15}");
-            Console.WriteLine(new string('-', 245));
+                $"{"Growth%",11} | {"SelfDeath%",13} | {"DecayMod",10}");
+            Console.WriteLine(new string('-', 223));
 
             foreach (var (id, strategyName) in rankedPlayerList)
             {
@@ -274,16 +262,15 @@ namespace FungusToast.Simulation.Analysis
                 float avgMpEarned = appearances > 0 ? (float)totalMpEarned / appearances : 0f;
                 float avgAutoupgradeMp = appearances > 0 ? (float)totalAutoupgradeMp / appearances : 0f;
                 float avgBankedPoints = appearances > 0 ? (float)totalBankedPoints / appearances : 0f;
-                float avgPerimProlif = appearances > 0 && perimeterProliferatorGrowthsByPlayer.TryGetValue(id, out var perim) ? (float)perim / appearances : 0f;
 
                 Console.WriteLine(
                     $"{id,6} | {Truncate(strategyObj.StrategyName, 40),-40} | {winRate,6:N1}% | " +
                     $"{(float)living / appearances,13:N1} | {(float)dead / appearances,13:N1} | " +
                     $"{avgMpSpent,16:N1} | {avgMpEarned,16:N1} | {avgAutoupgradeMp,20:N1} | {avgBankedPoints,12:N1} | " +
-                    $"{growth / appearances * 100f,10:N2}% | {selfDeath / appearances * 100f,12:N2}% | {decayMod / appearances,9:N2}% | {avgPerimProlif,15:N2}");
+                    $"{growth / appearances * 100f,10:N2}% | {selfDeath / appearances * 100f,12:N2}% | {decayMod / appearances,9:N2}%");
             }
 
-            Console.WriteLine(new string('-', 245));
+            Console.WriteLine(new string('-', 223));
         }
 
         private void PrintDeathReasonSummary(
