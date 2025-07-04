@@ -111,7 +111,14 @@ namespace FungusToast.Core.Config
 
         // time-based effects on Fungal Cells
         public const int DefaultToxinDuration = 5;
-        
+
+        // Putrefactive Rejuvenation (Tier 5 Fungicide)
+        public const int PutrefactiveRejuvenationAgeReductionPerLevel = 3; // growth cycles
+        public const int PutrefactiveRejuvenationEffectRadius = 3;
+        public const float PutrefactiveRejuvenationMycotoxinBonusPerLevel = 0.0025f;
+        public const int PutrefactiveRejuvenationMaxLevel = 5;
+        public const int PutrefactiveRejuvenationMaxLevelRangeRadiusMultiplier = 2;
+
 
         public static class MutationCosts
         {
@@ -136,11 +143,6 @@ namespace FungusToast.Core.Config
             }
         }
 
-        // Putrefactive Rejuvenation (Tier 5 Fungicide)
-        public const int PutrefactiveRejuvenationAgeReductionPerLevel = 3; // growth cycles
-        public const int PutrefactiveRejuvenationEffectRadius = 3; // tiles
-        public const float PutrefactiveRejuvenationMycotoxinBonusPerLevel = 0.004f; // 0.5%
-        public const int PutrefactiveRejuvenationMaxLevel = 5;
-        public const int PutrefactiveRejuvenationMaxLevelRangeRadiusMultiplier = 2;
+
     }
 }
