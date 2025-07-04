@@ -16,9 +16,33 @@ namespace FungusToast.Unity.Cameras
             if (Camera.main != null)
             {
                 float size = Camera.main.orthographicSize;
-                size -= scroll * zoomSpeed;
-                size = Mathf.Clamp(size, minZoom, maxZoom);
-                Camera.main.orthographicSize = size;
+
+                // --- Zoom to mouse cursor logic ---
+                if (Mathf.Abs(scroll) > 0.0001f)
+                {
+                    Camera cam = Camera.main;
+                    // 1. Get world position under mouse before zoom
+                    Vector3 mouseScreenPos = Input.mousePosition;
+                    Vector3 worldBefore = cam.ScreenToWorldPoint(new Vector3(mouseScreenPos.x, mouseScreenPos.y, cam.nearClipPlane));
+
+                    // 2. Apply zoom
+                    size -= scroll * zoomSpeed;
+                    size = Mathf.Clamp(size, minZoom, maxZoom);
+                    cam.orthographicSize = size;
+
+                    // 3. Get world position under mouse after zoom
+                    Vector3 worldAfter = cam.ScreenToWorldPoint(new Vector3(mouseScreenPos.x, mouseScreenPos.y, cam.nearClipPlane));
+
+                    // 4. Offset camera position so the world point under the cursor stays fixed
+                    Vector3 delta = worldBefore - worldAfter;
+                    cam.transform.position += new Vector3(delta.x, delta.y, 0);
+                }
+                else
+                {
+                    // If no zoom, just clamp orthographic size
+                    size = Mathf.Clamp(size, minZoom, maxZoom);
+                    Camera.main.orthographicSize = size;
+                }
 
                 // --- Panning with WASD/Arrow Keys ---
                 Vector3 move = new Vector3(
