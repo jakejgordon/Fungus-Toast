@@ -44,6 +44,11 @@ namespace FungusToast.Core.Board
         /// </summary>
         public bool IsDying { get; private set; } = false;
 
+        /// <summary>
+        /// Whether this cell is currently receiving a toxin drop (for toxin drop animation effects)
+        /// </summary>
+        public bool IsReceivingToxinDrop { get; private set; } = false;
+
         public DeathReason? CauseOfDeath { get; private set; }
         public int? LastOwnerPlayerId { get; private set; } = null;
         public int ReclaimCount { get; private set; } = 0;
@@ -222,6 +227,22 @@ namespace FungusToast.Core.Board
         public void ClearDyingFlag()
         {
             IsDying = false;
+        }
+
+        /// <summary>
+        /// Marks this cell as receiving a toxin drop for toxin drop animation effects
+        /// </summary>
+        public void MarkAsReceivingToxinDrop()
+        {
+            IsReceivingToxinDrop = true;
+        }
+
+        /// <summary>
+        /// Clears the toxin drop flag (called after toxin drop animation completes)
+        /// </summary>
+        public void ClearToxinDropFlag()
+        {
+            IsReceivingToxinDrop = false;
         }
 
         /// <summary>

@@ -38,6 +38,10 @@ namespace FungusToast.Unity.Grid
         private HashSet<int> dyingTileIds = new HashSet<int>();
         private Dictionary<int, Coroutine> deathAnimationCoroutines = new Dictionary<int, Coroutine>();
 
+        // Toxin drop animation tracking
+        private HashSet<int> toxinDropTileIds = new HashSet<int>();
+        private Dictionary<int, Coroutine> toxinDropCoroutines = new Dictionary<int, Coroutine>();
+
         // Pulse color scheme, can be set by HighlightTiles
         private Color pulseColorA = new Color(1f, 1f, 0.1f, 1f); // Default: yellow
         private Color pulseColorB = new Color(0.1f, 1f, 1f, 1f); // Default: cyan
@@ -65,10 +69,20 @@ namespace FungusToast.Unity.Grid
             }
             deathAnimationCoroutines.Clear();
             
+            // Clear any existing toxin drop coroutines
+            foreach (var coroutine in toxinDropCoroutines.Values)
+            {
+                if (coroutine != null)
+                    StopCoroutine(coroutine);
+            }
+            toxinDropCoroutines.Clear();
+            
             // Track newly grown cells for fade-in effect
             newlyGrownTileIds.Clear();
             // Track dying cells for death animation effect
             dyingTileIds.Clear();
+            // Track toxin drop cells for toxin drop animation effect
+            toxinDropTileIds.Clear();
             
             for (int x = 0; x < board.Width; x++)
             {
@@ -82,6 +96,10 @@ namespace FungusToast.Unity.Grid
                     if (tile.FungalCell?.IsDying == true)
                     {
                         dyingTileIds.Add(tile.TileId);
+                    }
+                    if (tile.FungalCell?.IsReceivingToxinDrop == true)
+                    {
+                        toxinDropTileIds.Add(tile.TileId);
                     }
                 }
             }
@@ -110,6 +128,9 @@ namespace FungusToast.Unity.Grid
             
             // Start death animations for dying cells
             StartDeathAnimations();
+            
+            // Start toxin drop animations for toxin drop cells
+            StartToxinDropAnimations();
         }
 
         /// <summary>
@@ -262,10 +283,20 @@ namespace FungusToast.Unity.Grid
                     {
                         // Show very faint, slightly gray mold color under the toxin overlay
                         moldTile = playerMoldTiles[idT];
-                        moldColor = new Color(0.8f, 0.8f, 0.8f, 0.55f); // More visible, still faded
+                        
+                        // If the cell is receiving a toxin drop, show it as normal for the drop animation
+                        if (cell.IsReceivingToxinDrop)
+                        {
+                            moldColor = Color.white; // Normal appearance for drop animation
+                        }
+                        else
+                        {
+                            moldColor = new Color(0.8f, 0.8f, 0.8f, 0.55f); // More visible, still faded
+                        }
                     }
                     overlayTile = toxinOverlayTile;
-                    overlayColor = Color.white;
+                    // If the cell is receiving a toxin drop, start the overlay transparent for drop animation
+                    overlayColor = cell.IsReceivingToxinDrop ? new Color(1f, 1f, 1f, 0f) : Color.white;
                     break;
 
                 default:
@@ -474,6 +505,160 @@ namespace FungusToast.Unity.Grid
 
             // Clean up the coroutine reference
             deathAnimationCoroutines.Remove(tileId);
+        }
+
+        /// <summary>
+        /// Starts toxin drop animations for all toxin drop cells
+        /// </summary>
+        private void StartToxinDropAnimations()
+        {
+            foreach (int tileId in toxinDropTileIds)
+            {
+                if (toxinDropCoroutines.ContainsKey(tileId))
+                {
+                    StopCoroutine(toxinDropCoroutines[tileId]);
+                }
+                toxinDropCoroutines[tileId] = StartCoroutine(ToxinDropAnimation(tileId));
+            }
+        }
+
+        /// <summary>
+        /// Manually triggers a toxin drop animation for a specific tile (for testing)
+        /// </summary>
+        public void TriggerToxinDropAnimation(int tileId)
+        {
+            var tile = board.GetTileById(tileId);
+            if (tile?.FungalCell != null)
+            {
+                tile.FungalCell.MarkAsReceivingToxinDrop();
+                toxinDropTileIds.Add(tileId);
+                if (toxinDropCoroutines.ContainsKey(tileId))
+                {
+                    StopCoroutine(toxinDropCoroutines[tileId]);
+                }
+                toxinDropCoroutines[tileId] = StartCoroutine(ToxinDropAnimation(tileId));
+            }
+        }
+
+        /// <summary>
+        /// Coroutine that handles the toxin drop animation for a cell receiving a toxin
+        /// </summary>
+        private IEnumerator ToxinDropAnimation(int tileId)
+        {
+            var (x, y) = board.GetXYFromTileId(tileId);
+            Vector3Int pos = new Vector3Int(x, y, 0);
+            
+            float duration = UIEffectConstants.ToxinDropAnimationDurationSeconds;
+
+            // Get the current cell to determine the animation parameters
+            var tile = board.GetTileById(tileId);
+            var cell = tile?.FungalCell;
+            if (cell == null)
+            {
+                toxinDropCoroutines.Remove(tileId);
+                yield break;
+            }
+
+            // Store initial colors
+            Color initialMoldColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
+            Color initialOverlayColor = overlayTilemap.HasTile(pos) ? overlayTilemap.GetColor(pos) : Color.white;
+
+            // Phase 1: Drop appears (0-20% of duration)
+            float dropPhaseDuration = duration * 0.2f;
+            float dropPhaseElapsed = 0f;
+            
+            while (dropPhaseElapsed < dropPhaseDuration)
+            {
+                dropPhaseElapsed += Time.deltaTime;
+                float progress = dropPhaseElapsed / dropPhaseDuration;
+                
+                // Create a toxic green drop effect by tinting the tile
+                Color toxicTint = Color.Lerp(Color.white, new Color(0f, 1f, 0.25f, 0.3f), progress);
+                
+                if (moldTilemap.HasTile(pos))
+                {
+                    moldTilemap.SetColor(pos, toxicTint);
+                }
+                
+                yield return null;
+            }
+
+            // Phase 2: Drop spreads (20-70% of duration)
+            float spreadPhaseDuration = duration * 0.5f;
+            float spreadPhaseElapsed = 0f;
+            
+            while (spreadPhaseElapsed < spreadPhaseDuration)
+            {
+                spreadPhaseElapsed += Time.deltaTime;
+                float progress = spreadPhaseElapsed / spreadPhaseDuration;
+                
+                // Spread the toxic effect and intensify it
+                Color toxicSpread = Color.Lerp(
+                    new Color(0f, 1f, 0.25f, 0.3f), 
+                    new Color(0f, 1f, 0.25f, 0.8f), 
+                    progress
+                );
+                
+                if (moldTilemap.HasTile(pos))
+                {
+                    moldTilemap.SetColor(pos, toxicSpread);
+                }
+                
+                yield return null;
+            }
+
+            // Phase 3: Settle into final toxin state (70-100% of duration)
+            float settlePhaseDuration = duration * 0.3f;
+            float settlePhaseElapsed = 0f;
+            
+            while (settlePhaseElapsed < settlePhaseDuration)
+            {
+                settlePhaseElapsed += Time.deltaTime;
+                float progress = settlePhaseElapsed / settlePhaseDuration;
+                
+                // Transition to final toxin appearance
+                Color finalToxinColor = Color.Lerp(
+                    new Color(0f, 1f, 0.25f, 0.8f),
+                    new Color(0.8f, 0.8f, 0.8f, 0.55f), // Final toxin mold color
+                    progress
+                );
+                
+                Color finalOverlayColor = Color.Lerp(
+                    Color.clear,
+                    Color.white, // Final toxin overlay color
+                    progress
+                );
+                
+                if (moldTilemap.HasTile(pos))
+                {
+                    moldTilemap.SetColor(pos, finalToxinColor);
+                }
+                
+                if (overlayTilemap.HasTile(pos))
+                {
+                    overlayTilemap.SetColor(pos, finalOverlayColor);
+                }
+                
+                yield return null;
+            }
+
+            // Ensure final state matches the toxin appearance
+            if (moldTilemap.HasTile(pos))
+            {
+                Color finalMoldColor = new Color(0.8f, 0.8f, 0.8f, 0.55f); // Toxin mold color
+                moldTilemap.SetColor(pos, finalMoldColor);
+            }
+            
+            if (overlayTilemap.HasTile(pos))
+            {
+                overlayTilemap.SetColor(pos, Color.white); // Full toxin overlay opacity
+            }
+
+            // Clear the toxin drop flag on the cell
+            cell.ClearToxinDropFlag();
+
+            // Clean up the coroutine reference
+            toxinDropCoroutines.Remove(tileId);
         }
     }
 }

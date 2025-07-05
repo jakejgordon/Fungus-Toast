@@ -31,5 +31,10 @@ namespace FungusToast.Unity.UI
         /// Duration (in seconds) for cell growth fade-in animation.
         /// </summary>
         public const float CellGrowthFadeInDurationSeconds = 0.3f;
+
+        /// <summary>
+        /// Duration (in seconds) for toxin drop animation.
+        /// </summary>
+        public const float ToxinDropAnimationDurationSeconds = 0.8f;
     }
 } 

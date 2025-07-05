@@ -29,12 +29,18 @@ namespace FungusToast.Core.Death
                 if (cell.IsAlive)
                     throw new InvalidOperationException("Cannot convert a living cell to toxin. Kill it first.");
 
+                // Mark for toxin drop animation
+                cell.MarkAsReceivingToxinDrop();
+                
                 cell.ConvertToToxin(expirationCycle, owner);
                 board.PlaceFungalCell(cell); // fires events!
             }
             else
             {
                 var toxin = new FungalCell(owner?.PlayerId, tileId, expirationCycle);
+                // Mark for toxin drop animation
+                toxin.MarkAsReceivingToxinDrop();
+                
                 board.PlaceFungalCell(toxin); // fires events!
             }
         }
