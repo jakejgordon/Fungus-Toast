@@ -18,6 +18,11 @@ namespace FungusToast.Unity.UI.GameStart
         [SerializeField] private TMP_Dropdown mycovariantDropdown;
         [SerializeField] private GameObject testingModePanel;
 
+        // Magnifying glass UI reference
+        [SerializeField] private GameObject magnifyingGlassUI;
+        // Magnifier visuals (child of magnifyingGlassUI)
+        [SerializeField] private GameObject magnifierVisualRoot;
+
         private int? selectedPlayerCount = null;
 
         private void Awake()
@@ -25,6 +30,10 @@ namespace FungusToast.Unity.UI.GameStart
             Instance = this;
             startGameButton.interactable = false;
             InitializeTestingModeUI();
+
+            // Ensure magnifier visuals are disabled at startup
+            if (magnifierVisualRoot != null)
+                magnifierVisualRoot.SetActive(false);
         }
 
         private void InitializeTestingModeUI()
@@ -86,6 +95,15 @@ namespace FungusToast.Unity.UI.GameStart
                 GameManager.Instance.InitializeGame(selectedPlayerCount.Value);
                 GameManager.Instance.cameraCenterer.CenterCameraSmooth();
                 gameObject.SetActive(false);
+
+                // Enable the magnifying glass UI after the game starts
+                if (magnifyingGlassUI != null)
+                    magnifyingGlassUI.SetActive(true);
+                // Enable the magnifier visuals
+                if (magnifierVisualRoot != null)
+                    magnifierVisualRoot.SetActive(true);
+                // Set the flag so the magnifier can appear
+                MagnifyingGlassFollowMouse.gameStarted = true;
             }
         }
     }
