@@ -34,7 +34,7 @@ namespace FungusToast.Core.AI
                 surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
                 surgeAttemptTurnFrequency: 10,
                 prioritizeHighTier: true,
-                economyBias: EconomyBias.MinorEconomy),
+                economyBias: EconomyBias.ModerateEconomy),
             new ParameterizedSpendingStrategy(
                 strategyName: "Power Mutations v2",
                 prioritizeHighTier: true,
@@ -74,13 +74,14 @@ namespace FungusToast.Core.AI
                 {
                     new TargetMutationGoal(MutationIds.MycelialBloom, 10),
                     new TargetMutationGoal(MutationIds.NecrotoxicConversion),
-                    new TargetMutationGoal(MutationIds.SporocidalBloom)
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation)
                 }
             ),
                                     new ParameterizedSpendingStrategy(
-                strategyName: "Necrotoxic Moderate Economy 2",
+                strategyName: "Necrotoxic Minor Economy",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.MycelialBloom, 20),
@@ -106,7 +107,7 @@ namespace FungusToast.Core.AI
             ),
             */
             new ParameterizedSpendingStrategy(
-                strategyName: "Best_MaxEcon_Surge5_HyphalSurge",
+                strategyName: "Best_MaxEcon_Surge10_HyphalSurge",
                 prioritizeHighTier: true,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
@@ -114,7 +115,7 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift)
                 },
                 surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
-                surgeAttemptTurnFrequency: 5,
+                surgeAttemptTurnFrequency: 7,
                 economyBias: EconomyBias.MaxEconomy,
                 maxTier: MutationTier.Tier4
             )
