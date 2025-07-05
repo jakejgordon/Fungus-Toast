@@ -437,8 +437,10 @@ namespace FungusToast.Core.Mutations
                 description:
                     $"Enhances your Mutator Phenotype's auto-upgrade ability. Each level provides a {FormatPercent(GameBalance.HyperadaptiveDriftHigherTierChancePerLevel)} chance to target higher-tier mutations (Tier 2-4) instead of Tier 1, and a {FormatPercent(GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel)} chance to upgrade Tier 1 mutations twice instead of once.\n" +
                     "\n" +
+                    "At max level, automatically upgrades an additional Tier 1 mutation whenever this effect triggers.\n" +
+                    "\n" +
                     "This works passively with your existing Mutator Phenotype auto-upgrade system.",
-                flavorText: "The colony achieves a state of hyperplasticity, capable of instantaneous genomic restructuring at the cost of growth arrest.",
+                flavorText: "The colony achieves a state of hyperplasticity, capable of instantaneous genomic restructuring and parallel mutation cascades.",
                 type: MutationType.FreeMutationUpgrade,
                 effectPerLevel: 1.0f,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),

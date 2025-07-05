@@ -175,6 +175,17 @@ namespace FungusToast.Core.Phases
                 }
             }
 
+            // Hyperadaptive Drift Max Level Effect: Automatically upgrade an additional Tier 1 mutation
+            if (hasHyperadaptive && hyperadaptiveLevel >= GameBalance.HyperadaptiveDriftMaxLevel && tier1.Count > 0)
+            {
+                var additionalPick = tier1[rng.Next(tier1.Count)];
+                bool additionalUpgraded = player.TryAutoUpgrade(additionalPick, currentRound);
+                if (additionalUpgraded)
+                {
+                    hyperadaptivePoints += additionalPick.PointsPerUpgrade;
+                }
+            }
+
             // Notify observer
             if (observer != null)
             {
