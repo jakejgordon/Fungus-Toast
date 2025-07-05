@@ -12,9 +12,22 @@ namespace FungusToast.Unity.Grid
         public Tile glowyTile;
         public Tile pressedTile;
 
+        // Crosshair prefab to use for hover highlight
+        public GameObject crosshairPrefab;
+        private GameObject crosshairInstance;
+
         private Vector3Int? lastHoveredCell = null;
         // New: Set of currently "selectable" tile IDs for interaction
         private HashSet<int> selectionTiles = new();
+
+        void Start()
+        {
+            if (crosshairPrefab != null)
+            {
+                crosshairInstance = Instantiate(crosshairPrefab, this.transform); // Child of Grid
+                crosshairInstance.SetActive(false);
+            }
+        }
 
         void Update()
         {
@@ -22,30 +35,36 @@ namespace FungusToast.Unity.Grid
             Vector3Int cellPos = gridVisualizer.toastTilemap.WorldToCell(mouseWorldPos);
 
             if (!IsCellOnBoard(cellPos))
+            {
+                if (crosshairInstance != null)
+                    crosshairInstance.SetActive(false);
                 return;
+            }
 
             bool isSelectable = selectionTiles.Count == 0 || IsSelectable(cellPos);
 
-            if (lastHoveredCell != null && lastHoveredCell != cellPos)
+            if (isSelectable && gridVisualizer.toastTilemap.HasTile(cellPos))
             {
-                gridVisualizer.HoverOverlayTileMap.SetTile(lastHoveredCell.Value, null);
-            }
-
-            if (gridVisualizer.toastTilemap.HasTile(cellPos) && isSelectable)
-            {
-                gridVisualizer.HoverOverlayTileMap.SetTile(cellPos, glowyTile);
+                if (crosshairInstance != null)
+                {
+                    crosshairInstance.SetActive(true);
+                    Vector3 cellWorldPos = gridVisualizer.toastTilemap.GetCellCenterWorld(cellPos);
+                    crosshairInstance.transform.position = new Vector3(cellWorldPos.x, cellWorldPos.y, crosshairInstance.transform.position.z);
+                }
                 lastHoveredCell = cellPos;
+            }
+            else
+            {
+                if (crosshairInstance != null)
+                    crosshairInstance.SetActive(false);
             }
 
             // Handle click
             if (Input.GetMouseButtonDown(0) && gridVisualizer.toastTilemap.HasTile(cellPos))
             {
-                // Only proceed if this tile is currently selectable (or selection not active)
                 if (selectionTiles.Count == 0 || IsSelectable(cellPos))
                 {
                     int tileId = TileIdFromCell(cellPos);
-                    
-                    // Try MultiCellSelectionController first, then fall back to TileSelectionController
                     if (MultiCellSelectionController.Instance != null && MultiCellSelectionController.Instance.IsSelectable(tileId))
                     {
                         MultiCellSelectionController.Instance.OnTileClicked(tileId);
@@ -63,7 +82,6 @@ namespace FungusToast.Unity.Grid
             {
                 if (selectionTiles.Count > 0)
                 {
-                    // Try MultiCellSelectionController first, then fall back to TileSelectionController
                     if (MultiCellSelectionController.Instance != null)
                     {
                         MultiCellSelectionController.Instance.CancelSelection();
@@ -92,18 +110,13 @@ namespace FungusToast.Unity.Grid
 
         void TriggerPressedAnimation(Vector3Int cell)
         {
-            gridVisualizer.HoverOverlayTileMap.SetTile(cell, pressedTile);
-
-            CancelInvoke(nameof(RestoreGlowyTile));
-            Invoke(nameof(RestoreGlowyTile), 0.25f);
+            // Optionally, you can add a pressed effect to the crosshair here
+            // For now, just keep the crosshair visible
         }
 
         void RestoreGlowyTile()
         {
-            if (lastHoveredCell != null)
-            {
-                gridVisualizer.HoverOverlayTileMap.SetTile(lastHoveredCell.Value, glowyTile);
-            }
+            // No longer needed
         }
 
         bool IsCellOnBoard(Vector3Int cellPos)
