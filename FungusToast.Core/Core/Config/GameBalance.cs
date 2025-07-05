@@ -41,6 +41,9 @@ namespace FungusToast.Core.Config
         public const int HyphalVectoringBaseTiles = 2;
         public const int HyphalVectoringTilesPerLevel = 1;
 
+        // Number of candidate cells to check for Hyphal Vectoring origin selection
+        public const int HyphalVectoringCandidateCellsToCheck = 50;
+
         public const float MycotropicInductionEffectPerLevel = 0.25f;
         public const float PutrefactiveMycotoxinEffectPerLevel = 0.015f;
         public const int AgeResetReductionPerLevel = 5;

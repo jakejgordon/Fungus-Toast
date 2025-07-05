@@ -86,9 +86,9 @@ namespace FungusToast.Core.Mycovariants
             new Mycovariant
             {
                 Id = MycovariantIds.PlasmidBountyId,
-                Name = "Plasmid Bounty",
+                Name = "Plasmid Bounty I",
                 Description = $"Instantly gain {MycovariantGameBalance.PlasmidBountyMutationPointAward} mutation points as foreign DNA infuses the colony.",
-                FlavorText = "An ancient plasmid cache is uncovered, its code empowering rapid mutation.",
+                FlavorText = "Horizontal gene transfer introduces novel genetic material, accelerating the colony's evolutionary potential.",
                 Type = MycovariantType.Economy,
                 IsUniversal = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -98,6 +98,46 @@ namespace FungusToast.Core.Mycovariants
                     {
                         player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyMutationPointAward);
                         observer?.RecordMutationPointIncome(player.PlayerId, MycovariantGameBalance.PlasmidBountyMutationPointAward);
+                    }
+                }
+            };
+
+        public static Mycovariant PlasmidBountyII() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.PlasmidBountyIIId,
+                Name = "Plasmid Bounty II",
+                Description = $"Instantly gain {MycovariantGameBalance.PlasmidBountyIIMutationPointAward} mutation points as foreign DNA infuses the colony.",
+                FlavorText = "Multiple plasmid integrations trigger a cascade of genetic recombination events across the mycelial network.",
+                Type = MycovariantType.Economy,
+                IsUniversal = false,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+                    if (player != null)
+                    {
+                        player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyIIMutationPointAward);
+                        observer?.RecordMutationPointIncome(player.PlayerId, MycovariantGameBalance.PlasmidBountyIIMutationPointAward);
+                    }
+                }
+            };
+
+        public static Mycovariant PlasmidBountyIII() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.PlasmidBountyIIIId,
+                Name = "Plasmid Bounty III",
+                Description = $"Instantly gain {MycovariantGameBalance.PlasmidBountyIIIMutationPointAward} mutation points as foreign DNA infuses the colony.",
+                FlavorText = "Massive genetic influx overwhelms cellular repair mechanisms, creating unprecedented mutation rates throughout the colony.",
+                Type = MycovariantType.Economy,
+                IsUniversal = false,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+                    if (player != null)
+                    {
+                        player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyIIIMutationPointAward);
+                        observer?.RecordMutationPointIncome(player.PlayerId, MycovariantGameBalance.PlasmidBountyIIIMutationPointAward);
                     }
                 }
             };

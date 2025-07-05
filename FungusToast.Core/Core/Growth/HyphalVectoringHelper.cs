@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.Board;
+using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Players;
@@ -47,51 +48,48 @@ namespace FungusToast.Core.Growth
 
             if (candidates.Count == 0)
             {
-                int maxLength = livingCells
-                    .Select(c =>
+                // Fallback: check top N closest cells, select the one with the fewest friendly living cells in its path
+                int maxCandidateCells = GameBalance.HyphalVectoringCandidateCellsToCheck;
+                var topCells = livingCells
+                    .Select(c => (cell: c, tile: board.GetTileById(c.TileId)!, dist: GetDistance(board.GetTileById(c.TileId)!.X, board.GetTileById(c.TileId)!.Y, centerX, centerY)))
+                    .OrderBy(t => t.dist)
+                    .Take(maxCandidateCells)
+                    .ToList();
+
+                int minFriendly = int.MaxValue;
+                List<(FungalCell cell, BoardTile tile)> best = new();
+
+                foreach (var (cell, tile, dist) in topCells)
+                {
+                    var path = GetLineToCenter(tile.X, tile.Y, centerX, centerY, totalTiles);
+                    int friendlyCount = 0;
+                    foreach (var (x, y) in path)
                     {
-                        var t = board.GetTileById(c.TileId)!;
-                        var line = GetLineToCenter(t.X, t.Y, centerX, centerY, totalTiles);
-                        int count = 0;
-                        foreach (var (x, y) in line)
+                        var pathTile = board.GetTile(x, y);
+                        if (pathTile != null && pathTile.IsOccupied && pathTile.FungalCell is { IsAlive: true, OwnerPlayerId: var oid } && oid == player.PlayerId)
                         {
-                            var pathTile = board.GetTile(x, y);
-                            if (pathTile == null)
-                                continue;
-
-                            if (pathTile.IsOccupied &&
-                                pathTile.FungalCell is { IsAlive: true, OwnerPlayerId: var oid } &&
-                                oid == player.PlayerId)
-                                break;
-
-                            count++;
+                            friendlyCount++;
                         }
-                        return count;
-                    })
-                    .DefaultIfEmpty(0)
-                    .Max();
-
-                float occupancyPercent = board.GetOccupiedTileRatio() * 100f;
-
-                Console.WriteLine(
-                    $"[HyphalVectoring] Player {player.PlayerId} has {livingCells.Count} living cells: no valid origin found (Round {board.CurrentRound})\n" +
-                    $"  ? Wanted to place {totalTiles} tiles\n" +
-                    $"  ? Longest available straight-line path was {maxLength} tiles\n" +
-                    $"  ? Board occupancy: {occupancyPercent:F1}%\n" +
-                    $"  ? Debug detail:");
-
-                if (debugLines.Count == 0)
-                {
-                    Console.WriteLine("  ⤷ No living mold cells found for player.");
-                }
-                else
-                {
-                    for (int i = 0; i < Math.Min(debugLines.Count, maxDebugLines); i++)
-                        Console.WriteLine(debugLines[i]);
-                    if (debugLines.Count > maxDebugLines)
-                        Console.WriteLine($"  ⤷ ...and {debugLines.Count - maxDebugLines} more rejection reasons not shown.");
+                    }
+                    if (friendlyCount < minFriendly)
+                    {
+                        minFriendly = friendlyCount;
+                        best.Clear();
+                        best.Add((cell, tile));
+                    }
+                    else if (friendlyCount == minFriendly)
+                    {
+                        best.Add((cell, tile));
+                    }
                 }
 
+                if (best.Count > 0)
+                {
+                    var fallbackChosen = best[rng.Next(best.Count)];
+                    return (fallbackChosen.cell, fallbackChosen.tile);
+                }
+
+                // If still nothing, return null as before
                 return null;
             }
 

@@ -32,6 +32,8 @@ namespace FungusToast.Core.Mycovariants
 
                 // --- Universal/Fallback options ---
                 MycovariantFactory.PlasmidBounty(),
+                MycovariantFactory.PlasmidBountyII(),
+                MycovariantFactory.PlasmidBountyIII(),
                 
                 // --- Passive/Defensive options ---
                 MycovariantFactory.NeutralizingMantle(),
