@@ -4,7 +4,7 @@ namespace FungusToast.Core.Config
 {
     public static class MycovariantGameBalance
     {
-        public const int MycovariantSelectionTriggerRound = 2; 
+        public const int MycovariantSelectionTriggerRound = 15; 
         public const int MycovariantSelectionDraftSize = 3;
 
         // Shared balance parameters
@@ -12,8 +12,9 @@ namespace FungusToast.Core.Config
         public const int JettingMyceliumNumberOfToxinTiles = 10;
         public const int DefaultJettingMyceliumToxinGrowthCycleDuration = 16;
 
-        public const int PlasmidBountyMutationPointAward = 15;
-
+        public const int PlasmidBountyMutationPointAward = 7;
+        public const int PlasmidBountyIIMutationPointAward = 9;
+        public const int PlasmidBountyIIIMutationPointAward = 11;
 
         public const float NeutralizingMantleNeutralizeChance = 0.20f;
 
