@@ -1,5 +1,6 @@
 ﻿using FungusToast.Core;
 using FungusToast.Core.Board;
+using FungusToast.Unity.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,6 +34,10 @@ namespace FungusToast.Unity.Grid
         private HashSet<int> newlyGrownTileIds = new HashSet<int>();
         private Dictionary<int, Coroutine> fadeInCoroutines = new Dictionary<int, Coroutine>();
 
+        // Death animation tracking
+        private HashSet<int> dyingTileIds = new HashSet<int>();
+        private Dictionary<int, Coroutine> deathAnimationCoroutines = new Dictionary<int, Coroutine>();
+
         // Pulse color scheme, can be set by HighlightTiles
         private Color pulseColorA = new Color(1f, 1f, 0.1f, 1f); // Default: yellow
         private Color pulseColorB = new Color(0.1f, 1f, 1f, 1f); // Default: cyan
@@ -52,8 +57,19 @@ namespace FungusToast.Unity.Grid
             }
             fadeInCoroutines.Clear();
             
+            // Clear any existing death animation coroutines
+            foreach (var coroutine in deathAnimationCoroutines.Values)
+            {
+                if (coroutine != null)
+                    StopCoroutine(coroutine);
+            }
+            deathAnimationCoroutines.Clear();
+            
             // Track newly grown cells for fade-in effect
             newlyGrownTileIds.Clear();
+            // Track dying cells for death animation effect
+            dyingTileIds.Clear();
+            
             for (int x = 0; x < board.Width; x++)
             {
                 for (int y = 0; y < board.Height; y++)
@@ -62,6 +78,10 @@ namespace FungusToast.Unity.Grid
                     if (tile.FungalCell?.IsNewlyGrown == true)
                     {
                         newlyGrownTileIds.Add(tile.TileId);
+                    }
+                    if (tile.FungalCell?.IsDying == true)
+                    {
+                        dyingTileIds.Add(tile.TileId);
                     }
                 }
             }
@@ -87,6 +107,9 @@ namespace FungusToast.Unity.Grid
             
             // Start fade-in animations for newly grown cells
             StartFadeInAnimations();
+            
+            // Start death animations for dying cells
+            StartDeathAnimations();
         }
 
         /// <summary>
@@ -217,11 +240,21 @@ namespace FungusToast.Unity.Grid
                     {
                         moldTilemap.SetTileFlags(pos, TileFlags.None);
                         moldTilemap.SetTile(pos, playerMoldTiles[ownerId]);
-                        moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.55f));
-                        moldTilemap.RefreshTile(pos);
+                        
+                        // If the cell is dying, show it as living for the crossfade animation
+                        if (cell.IsDying)
+                        {
+                            moldColor = Color.white; // Full opacity for living appearance
+                        }
+                        else
+                        {
+                            moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.55f));
+                            moldTilemap.RefreshTile(pos);
+                        }
                     }
                     overlayTile = deadTile;
-                    overlayColor = Color.white;
+                    // If the cell is dying, start the overlay transparent for crossfade
+                    overlayColor = cell.IsDying ? new Color(1f, 1f, 1f, 0f) : Color.white;
                     break;
 
                 case FungalCellType.Toxin:
@@ -299,7 +332,7 @@ namespace FungusToast.Unity.Grid
             var (x, y) = board.GetXYFromTileId(tileId);
             Vector3Int pos = new Vector3Int(x, y, 0);
             
-            float duration = 0.3f; // Fast fade-in to not slow down the game
+            float duration = UIEffectConstants.CellGrowthFadeInDurationSeconds; // Fast fade-in to not slow down the game
             float startAlpha = 0.1f;
             float targetAlpha = 1f;
             float elapsed = 0f;
@@ -338,6 +371,109 @@ namespace FungusToast.Unity.Grid
 
             // Clean up the coroutine reference
             fadeInCoroutines.Remove(tileId);
+        }
+
+        /// <summary>
+        /// Starts death animations for all dying cells
+        /// </summary>
+        private void StartDeathAnimations()
+        {
+            foreach (int tileId in dyingTileIds)
+            {
+                if (deathAnimationCoroutines.ContainsKey(tileId))
+                {
+                    StopCoroutine(deathAnimationCoroutines[tileId]);
+                }
+                deathAnimationCoroutines[tileId] = StartCoroutine(DeathAnimation(tileId));
+            }
+        }
+
+        /// <summary>
+        /// Manually triggers a death animation for a specific tile (for testing)
+        /// </summary>
+        public void TriggerDeathAnimation(int tileId)
+        {
+            var tile = board.GetTileById(tileId);
+            if (tile?.FungalCell != null)
+            {
+                tile.FungalCell.MarkAsDying();
+                dyingTileIds.Add(tileId);
+                if (deathAnimationCoroutines.ContainsKey(tileId))
+                {
+                    StopCoroutine(deathAnimationCoroutines[tileId]);
+                }
+                deathAnimationCoroutines[tileId] = StartCoroutine(DeathAnimation(tileId));
+            }
+        }
+
+        /// <summary>
+        /// Coroutine that handles the death animation for a dying cell
+        /// </summary>
+        private IEnumerator DeathAnimation(int tileId)
+        {
+            var (x, y) = board.GetXYFromTileId(tileId);
+            Vector3Int pos = new Vector3Int(x, y, 0);
+            
+            float duration = UIEffectConstants.CellDeathAnimationDurationSeconds; // Crossfade duration
+            float elapsed = 0f;
+
+            // Get the current cell to determine the death animation parameters
+            var tile = board.GetTileById(tileId);
+            var cell = tile?.FungalCell;
+            if (cell == null)
+            {
+                deathAnimationCoroutines.Remove(tileId);
+                yield break;
+            }
+
+            // Store initial colors
+            Color initialLivingColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
+            Color initialOverlayColor = overlayTilemap.HasTile(pos) ? overlayTilemap.GetColor(pos) : Color.white;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float progress = elapsed / duration;
+                
+                // Fade out living cell (from full opacity to 0.55f for dead cell)
+                if (moldTilemap.HasTile(pos))
+                {
+                    Color livingColor = initialLivingColor;
+                    livingColor.a = Mathf.Lerp(1f, 0.55f, progress);
+                    moldTilemap.SetColor(pos, livingColor);
+                }
+                
+                // Fade in dead cell overlay (from 0 to full opacity)
+                if (overlayTilemap.HasTile(pos))
+                {
+                    Color overlayColor = initialOverlayColor;
+                    overlayColor.a = Mathf.Lerp(0f, 1f, progress);
+                    overlayTilemap.SetColor(pos, overlayColor);
+                }
+                
+                yield return null;
+            }
+
+            // Ensure final state matches the dead cell appearance
+            if (moldTilemap.HasTile(pos))
+            {
+                Color finalLivingColor = initialLivingColor;
+                finalLivingColor.a = 0.55f; // Dead cell faded appearance
+                moldTilemap.SetColor(pos, finalLivingColor);
+            }
+            
+            if (overlayTilemap.HasTile(pos))
+            {
+                Color finalOverlayColor = initialOverlayColor;
+                finalOverlayColor.a = 1f; // Full overlay opacity
+                overlayTilemap.SetColor(pos, finalOverlayColor);
+            }
+
+            // Clear the dying flag on the cell
+            cell.ClearDyingFlag();
+
+            // Clean up the coroutine reference
+            deathAnimationCoroutines.Remove(tileId);
         }
     }
 }

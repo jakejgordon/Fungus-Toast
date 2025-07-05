@@ -39,6 +39,11 @@ namespace FungusToast.Core.Board
         /// </summary>
         public bool IsNewlyGrown { get; private set; } = false;
 
+        /// <summary>
+        /// Whether this cell is currently dying (for death animation effects)
+        /// </summary>
+        public bool IsDying { get; private set; } = false;
+
         public DeathReason? CauseOfDeath { get; private set; }
         public int? LastOwnerPlayerId { get; private set; } = null;
         public int ReclaimCount { get; private set; } = 0;
@@ -201,6 +206,22 @@ namespace FungusToast.Core.Board
         public void ClearNewlyGrownFlag()
         {
             IsNewlyGrown = false;
+        }
+
+        /// <summary>
+        /// Marks this cell as dying for death animation effects
+        /// </summary>
+        public void MarkAsDying()
+        {
+            IsDying = true;
+        }
+
+        /// <summary>
+        /// Clears the dying flag (called after death animation completes)
+        /// </summary>
+        public void ClearDyingFlag()
+        {
+            IsDying = false;
         }
 
         /// <summary>

@@ -704,6 +704,9 @@ namespace FungusToast.Core.Board
             int tileId = cell.TileId;
             int playerId = cell.OwnerPlayerId ?? -1;
 
+            // Mark the cell as dying for death animation
+            cell.MarkAsDying();
+
             cell.Kill(reason);
             RemoveControlFromPlayer(tileId);
             OnCellDeath(playerId, tileId, reason, killerPlayerId, cell);

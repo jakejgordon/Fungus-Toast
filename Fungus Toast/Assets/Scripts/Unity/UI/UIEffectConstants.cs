@@ -21,5 +21,15 @@ namespace FungusToast.Unity.UI
         /// Delay (in seconds) after AI resolves Surgical Inoculation before continuing.
         /// </summary>
         public const float SurgicalInoculationAIDelaySeconds = 0.6f;
+
+        /// <summary>
+        /// Duration (in seconds) for cell death crossfade animation.
+        /// </summary>
+        public const float CellDeathAnimationDurationSeconds = 0.6f;
+
+        /// <summary>
+        /// Duration (in seconds) for cell growth fade-in animation.
+        /// </summary>
+        public const float CellGrowthFadeInDurationSeconds = 0.3f;
     }
 } 
