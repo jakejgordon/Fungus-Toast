@@ -28,6 +28,10 @@ namespace FungusToast.Unity.Grid
         private GameBoard board;
         private List<Vector3Int> highlightedPositions = new List<Vector3Int>();
         private Coroutine pulseHighlightCoroutine;
+        
+        // Fade-in effect tracking
+        private HashSet<int> newlyGrownTileIds = new HashSet<int>();
+        private Dictionary<int, Coroutine> fadeInCoroutines = new Dictionary<int, Coroutine>();
 
         // Pulse color scheme, can be set by HighlightTiles
         private Color pulseColorA = new Color(1f, 1f, 0.1f, 1f); // Default: yellow
@@ -40,6 +44,28 @@ namespace FungusToast.Unity.Grid
 
         public void RenderBoard(GameBoard board)
         {
+            // Clear any existing fade-in coroutines
+            foreach (var coroutine in fadeInCoroutines.Values)
+            {
+                if (coroutine != null)
+                    StopCoroutine(coroutine);
+            }
+            fadeInCoroutines.Clear();
+            
+            // Track newly grown cells for fade-in effect
+            newlyGrownTileIds.Clear();
+            for (int x = 0; x < board.Width; x++)
+            {
+                for (int y = 0; y < board.Height; y++)
+                {
+                    var tile = board.Grid[x, y];
+                    if (tile.FungalCell?.IsNewlyGrown == true)
+                    {
+                        newlyGrownTileIds.Add(tile.TileId);
+                    }
+                }
+            }
+
             toastTilemap.ClearAllTiles();
             moldTilemap.ClearAllTiles();
             overlayTilemap.ClearAllTiles();
@@ -58,6 +84,9 @@ namespace FungusToast.Unity.Grid
                     RenderFungalCellOverlay(tile, pos);
                 }
             }
+            
+            // Start fade-in animations for newly grown cells
+            StartFadeInAnimations();
         }
 
         /// <summary>
@@ -172,7 +201,8 @@ namespace FungusToast.Unity.Grid
                     if (cell.OwnerPlayerId is int idA && idA >= 0 && idA < playerMoldTiles.Length)
                     {
                         moldTile = playerMoldTiles[idA];
-                        moldColor = Color.white;
+                        // Start newly grown cells with low alpha for fade-in effect
+                        moldColor = cell.IsNewlyGrown ? new Color(1f, 1f, 1f, 0.1f) : Color.white;
                     }
                     // If the cell is resistant, show the shield overlay
                     if (cell.IsResistant && goldShieldOverlayTile != null)
@@ -244,6 +274,70 @@ namespace FungusToast.Unity.Grid
 
             Debug.LogWarning($"No tile found for Player ID {playerId}.");
             return null;
+        }
+
+        /// <summary>
+        /// Starts fade-in animations for all newly grown cells
+        /// </summary>
+        private void StartFadeInAnimations()
+        {
+            foreach (int tileId in newlyGrownTileIds)
+            {
+                if (fadeInCoroutines.ContainsKey(tileId))
+                {
+                    StopCoroutine(fadeInCoroutines[tileId]);
+                }
+                fadeInCoroutines[tileId] = StartCoroutine(FadeInCell(tileId));
+            }
+        }
+
+        /// <summary>
+        /// Coroutine that fades in a newly grown cell from low alpha to full opacity
+        /// </summary>
+        private IEnumerator FadeInCell(int tileId)
+        {
+            var (x, y) = board.GetXYFromTileId(tileId);
+            Vector3Int pos = new Vector3Int(x, y, 0);
+            
+            float duration = 0.3f; // Fast fade-in to not slow down the game
+            float startAlpha = 0.1f;
+            float targetAlpha = 1f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / duration;
+                float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, t);
+                
+                // Update the mold tile color
+                if (moldTilemap.HasTile(pos))
+                {
+                    Color currentColor = moldTilemap.GetColor(pos);
+                    currentColor.a = currentAlpha;
+                    moldTilemap.SetColor(pos, currentColor);
+                }
+                
+                yield return null;
+            }
+
+            // Ensure final alpha is exactly 1.0
+            if (moldTilemap.HasTile(pos))
+            {
+                Color finalColor = moldTilemap.GetColor(pos);
+                finalColor.a = 1f;
+                moldTilemap.SetColor(pos, finalColor);
+            }
+
+            // Clear the newly grown flag on the cell
+            var tile = board.GetTileById(tileId);
+            if (tile?.FungalCell != null)
+            {
+                tile.FungalCell.ClearNewlyGrownFlag();
+            }
+
+            // Clean up the coroutine reference
+            fadeInCoroutines.Remove(tileId);
         }
     }
 }

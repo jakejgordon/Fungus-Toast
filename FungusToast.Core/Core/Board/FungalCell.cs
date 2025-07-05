@@ -34,6 +34,11 @@ namespace FungusToast.Core.Board
             internal set { _toxinExpirationCycle = value; }
         }
 
+        /// <summary>
+        /// Whether this cell was created in the current growth cycle (for fade-in effects)
+        /// </summary>
+        public bool IsNewlyGrown { get; private set; } = false;
+
         public DeathReason? CauseOfDeath { get; private set; }
         public int? LastOwnerPlayerId { get; private set; } = null;
         public int ReclaimCount { get; private set; } = 0;
@@ -177,7 +182,26 @@ namespace FungusToast.Core.Board
 
         public void IncrementGrowthAge() => GrowthCycleAge++;
         public void ResetGrowthCycleAge() => GrowthCycleAge = 0;
-        public void SetGrowthCycleAge(int age) => GrowthCycleAge = age;
+        public void SetGrowthCycleAge(int age)
+        {
+            GrowthCycleAge = age;
+        }
+
+        /// <summary>
+        /// Marks this cell as newly grown for fade-in effects
+        /// </summary>
+        public void MarkAsNewlyGrown()
+        {
+            IsNewlyGrown = true;
+        }
+
+        /// <summary>
+        /// Clears the newly grown flag (called after fade-in animation completes)
+        /// </summary>
+        public void ClearNewlyGrownFlag()
+        {
+            IsNewlyGrown = false;
+        }
 
         /// <summary>
         /// Mark a dead cell as a toxin (Toxified). Used for dropping toxin on empty/dead cells.

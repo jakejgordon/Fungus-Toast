@@ -575,6 +575,7 @@ namespace FungusToast.Core.Board
             if (!targetTile.IsOccupied)
             {
                 var newCell = new FungalCell(playerId, targetTileId);
+                newCell.MarkAsNewlyGrown(); // Mark for fade-in effect
                 targetTile.PlaceFungalCell(newCell);
                 PlaceFungalCell(newCell);
                 // Player.AddControlledTile(targetTileId); // Do this elsewhere as needed
