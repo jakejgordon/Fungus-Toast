@@ -435,11 +435,9 @@ namespace FungusToast.Core.Mutations
                 id: MutationIds.HyperadaptiveDrift,
                 name: "Hyperadaptive Drift",
                 description:
-                    "Once per round, you may choose to activate this mutation. When activated, you gain the ability to upgrade any mutation by one level for free, regardless of prerequisites. " +
-                    "This bypasses all normal upgrade restrictions and costs.\n" +
+                    $"Enhances your Mutator Phenotype's auto-upgrade ability. Each level provides a {FormatPercent(GameBalance.HyperadaptiveDriftHigherTierChancePerLevel)} chance to target higher-tier mutations (Tier 2-4) instead of Tier 1, and a {FormatPercent(GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel)} chance to upgrade Tier 1 mutations twice instead of once.\n" +
                     "\n" +
-                    "However, this comes at a cost: after using this ability, you must skip your next growth phase entirely. " +
-                    "This represents the metabolic cost of such rapid adaptation.",
+                    "This works passively with your existing Mutator Phenotype auto-upgrade system.",
                 flavorText: "The colony achieves a state of hyperplasticity, capable of instantaneous genomic restructuring at the cost of growth arrest.",
                 type: MutationType.FreeMutationUpgrade,
                 effectPerLevel: 1.0f,
