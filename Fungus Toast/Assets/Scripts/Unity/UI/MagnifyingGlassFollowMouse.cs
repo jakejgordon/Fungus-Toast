@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Tilemaps;
+using UnityEngine.EventSystems;
 
 public class MagnifyingGlassFollowMouse : MonoBehaviour
 {
@@ -18,8 +19,8 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         // Always move the magnifying glass to the mouse position (screen space)
         transform.position = Input.mousePosition;
 
-        // Only show visuals if the game has started and mouse is over the bread
-        if (gameStarted && IsMouseOverBread())
+        // Only show visuals if the game has started, mouse is over the bread, and NOT over UI
+        if (gameStarted && IsMouseOverBread() && !EventSystem.current.IsPointerOverGameObject())
         {
             if (visualRoot != null && !visualRoot.activeSelf)
                 visualRoot.SetActive(true);
