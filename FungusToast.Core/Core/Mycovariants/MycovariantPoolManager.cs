@@ -9,6 +9,7 @@ namespace FungusToast.Core.Mycovariants
     {
         private List<Mycovariant> _availablePool = new();
         private List<Mycovariant> _universalPool = new();
+        private HashSet<int> _draftedNonUniversalIds = new(); // Track all non-universal mycovariants that have been drafted
 
         /// <summary>
         /// Initializes the pools. Call at the start of the draft phase.
@@ -49,7 +50,7 @@ namespace FungusToast.Core.Mycovariants
 
         /// <summary>
         /// Returns all mycovariants currently available for drafting by the player.
-        /// By default, excludes any already owned by the player.
+        /// By default, excludes any already owned by the player and any non-universal mycovariants already drafted by any player.
         /// </summary>
         public List<Mycovariant> GetEligibleMycovariantsForPlayer(Player player)
         {
@@ -59,7 +60,10 @@ namespace FungusToast.Core.Mycovariants
             // All available (unique, not drafted) + all universals (which can be drafted multiple times)
             var eligible = new List<Mycovariant>();
 
-            eligible.AddRange(_availablePool.Where(m => !ownedIds.Contains(m.Id)));
+            // Non-universal mycovariants: exclude those already owned by this player OR already drafted by any player
+            eligible.AddRange(_availablePool.Where(m => 
+                !ownedIds.Contains(m.Id) && 
+                !_draftedNonUniversalIds.Contains(m.Id)));
 
             // Universals: can be drafted by everyone, but still avoid duplicates on the same player
             eligible.AddRange(_universalPool.Where(m => !ownedIds.Contains(m.Id)));
@@ -77,6 +81,7 @@ namespace FungusToast.Core.Mycovariants
                 return; // Don't remove universals, still available for others
 
             _availablePool.RemoveAll(m => m.Id == picked.Id);
+            _draftedNonUniversalIds.Add(picked.Id); // Track that this non-universal has been drafted
             // If you have additional pools (e.g., by rarity/type), remove from them as needed
         }
 

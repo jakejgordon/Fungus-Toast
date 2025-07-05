@@ -98,6 +98,53 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
         }
 
+        /// <summary>
+        /// Begins the next draft turn but preserves the existing cards (only updates the current player).
+        /// </summary>
+        private void BeginNextDraftWithExistingCards()
+        {
+            if (draftIndex >= draftOrder.Count)
+            {
+                HideDraftUI();
+                uiState = DraftUIState.Complete;
+                GameManager.Instance.OnMycovariantDraftComplete();
+                return;
+            }
+            currentPlayer = draftOrder[draftIndex];
+            UpdateDraftBanner();
+
+            // Progress bar: highlight current, gray-out done, normal for next
+            draftOrderRow?.SetDraftOrder(draftOrder, draftIndex);
+
+            // Don't repopulate choices - keep the existing cards with the replacement
+            // Just update the draft choices list for the new player
+            int? forcedMycovariantId = null;
+            if (GameManager.Instance.IsTestingModeEnabled && currentPlayer.PlayerType == PlayerTypeEnum.Human)
+                forcedMycovariantId = GameManager.Instance.TestingMycovariantId;
+            
+            // Update the draft choices to reflect what's currently shown
+            draftChoices = new List<Mycovariant>();
+            foreach (Transform child in choiceContainer)
+            {
+                var card = child.GetComponent<MycovariantCard>();
+                if (card != null && card.gameObject.activeInHierarchy)
+                {
+                    draftChoices.Add(card.Mycovariant);
+                }
+            }
+
+            if (currentPlayer.PlayerType == PlayerTypeEnum.AI)
+            {
+                SetDraftState(DraftUIState.AITurn);
+                // Animate a "thinking" moment, then pick
+                StartCoroutine(AnimateAIPickRoutine());
+            }
+            else
+            {
+                SetDraftState(DraftUIState.HumanTurn);
+            }
+        }
+
 
         private void UpdateDraftBanner()
         {
@@ -208,17 +255,71 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     // After effect is done, restore panel and animate feedback
                     draftPanel.SetActive(true);
                     AnimatePickFeedback(picked, () => {
+                        // Replace the picked card with a new one instead of redrawing all
+                        ReplacePickedCard(picked);
                         draftIndex++;
-                        BeginNextDraft();
+                        // Start the next player's turn with the updated cards
+                        BeginNextDraftWithExistingCards();
                     });
                 }
             ));
         }
 
+        /// <summary>
+        /// Replaces the picked card with a new mycovariant from the pool.
+        /// </summary>
+        private void ReplacePickedCard(Mycovariant picked)
+        {
+            // Find the card that was picked
+            MycovariantCard pickedCard = null;
+            foreach (Transform child in choiceContainer)
+            {
+                var card = child.GetComponent<MycovariantCard>();
+                if (card != null && card.Mycovariant == picked)
+                {
+                    pickedCard = card;
+                    break;
+                }
+            }
 
-        // REMOVED: ResolveDraftEffectAndAdvance method - this was causing duplicate Jetting Mycelium effects
-        // The effect resolution is now handled in OnChoicePicked via MycovariantEffectResolver
+            if (pickedCard == null)
+            {
+                Debug.LogWarning("Could not find picked card to replace");
+                return;
+            }
 
+            // Get a replacement mycovariant
+            var replacement = GetReplacementMycovariant();
+            if (replacement != null)
+            {
+                // Update the existing card with the new mycovariant
+                // This preserves the card's position in the layout
+                pickedCard.SetMycovariant(replacement, OnChoicePicked);
+                pickedCard.SetActiveHighlight(false);
+                
+                // Ensure the card is properly positioned and visible
+                pickedCard.gameObject.SetActive(true);
+            }
+            else
+            {
+                // If no replacement available, hide the card instead of destroying it
+                // This preserves the layout structure
+                pickedCard.gameObject.SetActive(false);
+            }
+        }
+
+        /// <summary>
+        /// Gets a single replacement mycovariant from the pool.
+        /// </summary>
+        private Mycovariant GetReplacementMycovariant()
+        {
+            var eligible = poolManager.GetEligibleMycovariantsForPlayer(currentPlayer);
+            if (eligible.Count == 0)
+                return null;
+
+            // Pick a random replacement
+            return eligible[rng.Next(eligible.Count)];
+        }
 
         private IEnumerator AnimateAIPickRoutine()
         {
