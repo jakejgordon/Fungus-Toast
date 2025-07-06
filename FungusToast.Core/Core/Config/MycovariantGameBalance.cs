@@ -18,7 +18,9 @@ namespace FungusToast.Core.Config
 
         public const float NeutralizingMantleNeutralizeChance = 0.20f;
 
-        public const int MycelialBastionMaxResistantCells = 5;
+        public const int MycelialBastionIMaxResistantCells = 5;
+        public const int MycelialBastionIIMaxResistantCells = 8;
+        public const int MycelialBastionIIIMaxResistantCells = 12;
 
         public const float PerimeterProliferatorEdgeMultiplier = 2.0f;
     }

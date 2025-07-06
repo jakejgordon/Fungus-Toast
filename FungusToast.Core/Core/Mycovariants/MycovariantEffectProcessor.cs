@@ -210,7 +210,16 @@ public static class MycovariantEffectProcessor
             .Where(c => c.IsAlive && !c.IsResistant)
             .ToList();
 
-        int maxCells = Math.Min(MycovariantGameBalance.MycelialBastionMaxResistantCells, livingCells.Count);
+        // Determine max cells based on which Mycelial Bastion tier this is
+        int maxCellsAllowed = playerMyco.MycovariantId switch
+        {
+            MycovariantIds.MycelialBastionIId => MycovariantGameBalance.MycelialBastionIMaxResistantCells,
+            MycovariantIds.MycelialBastionIIId => MycovariantGameBalance.MycelialBastionIIMaxResistantCells,
+            MycovariantIds.MycelialBastionIIIId => MycovariantGameBalance.MycelialBastionIIIMaxResistantCells,
+            _ => MycovariantGameBalance.MycelialBastionIMaxResistantCells // fallback
+        };
+
+        int maxCells = Math.Min(maxCellsAllowed, livingCells.Count);
         if (maxCells == 0) return;
 
         // Randomly select up to maxCells

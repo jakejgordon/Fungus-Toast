@@ -18,14 +18,14 @@ namespace FungusToast.Simulation.Analysis
                     targetMutationGoals: new List<TargetMutationGoal>(),
                     mycovariantPreferences: new List<MycovariantPreference>
                     {
-                        new MycovariantPreference(MycovariantIds.MycelialBastionId, 10, "Test Mycelial Bastion")
+                        new MycovariantPreference(MycovariantIds.MycelialBastionIId, 10, "Test Mycelial Bastion I")
                     }
                 ),
                 AIRoster.TestingStrategiesByName["Toxin Spammer"]
             };
 
             Console.WriteLine($"Running Mycelial Bastion test with {testStrategies.Count} players for {numberOfGames} games each...\n");
-            Console.WriteLine("Strategy 0: Bastion Tester (should draft Mycelial Bastion)");
+            Console.WriteLine("Strategy 0: Bastion Tester (should draft Mycelial Bastion I)");
             Console.WriteLine("Strategy 1: Toxin Spammer (aggressive opponent)\n");
 
             try
@@ -57,10 +57,10 @@ namespace FungusToast.Simulation.Analysis
                 testMycoTracker.PrintReport(testRankedPlayers);
 
                 // Print Bastioned effect counts
-                Console.WriteLine("\n=== Mycelial Bastion Effect Counts ===");
+                Console.WriteLine("\n=== Mycelial Bastion I Effect Counts ===");
                 foreach (var player in testResults.GameResults.SelectMany(g => g.PlayerResults))
                 {
-                    var bastion = player.Mycovariants.FirstOrDefault(m => m.MycovariantName.Contains("Bastion"));
+                    var bastion = player.Mycovariants.FirstOrDefault(m => m.MycovariantName.Contains("Bastion I"));
                     if (bastion != null && bastion.EffectCounts.TryGetValue("Bastioned", out int count))
                     {
                         Console.WriteLine($"Player {player.PlayerId} ({player.StrategyName}): Bastioned {count} cells");

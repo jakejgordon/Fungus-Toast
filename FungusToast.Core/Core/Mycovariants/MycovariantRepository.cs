@@ -37,7 +37,9 @@ namespace FungusToast.Core.Mycovariants
                 
                 // --- Passive/Defensive options ---
                 MycovariantFactory.NeutralizingMantle(),
-                MycovariantFactory.MycelialBastion(),
+                MycovariantFactory.MycelialBastionI(),
+                MycovariantFactory.MycelialBastionII(),
+                MycovariantFactory.MycelialBastionIII(),
                 MycovariantFactory.SurgicalInoculation(),
 
                 // --- Growth/Edge options ---

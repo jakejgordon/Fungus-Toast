@@ -67,7 +67,9 @@ namespace FungusToast.Unity.Effects
                 HandlePlasmidBounty(player);
                 onComplete?.Invoke();
             }
-            else if (mycovariant.Id == MycovariantIds.MycelialBastionId)
+            else if (mycovariant.Id == MycovariantIds.MycelialBastionIId ||
+                     mycovariant.Id == MycovariantIds.MycelialBastionIIId ||
+                     mycovariant.Id == MycovariantIds.MycelialBastionIIIId)
             {
                 yield return StartCoroutine(
                     MycovariantEffectHelpers.HandleMycelialBastion(

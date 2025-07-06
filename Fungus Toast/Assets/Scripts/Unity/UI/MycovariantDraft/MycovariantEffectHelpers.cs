@@ -111,6 +111,15 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             GameObject draftPanel,
             GridVisualizer gridVisualizer)
         {
+            // Determine max cells based on which Mycelial Bastion tier this is
+            int maxCellsAllowed = picked.Id switch
+            {
+                MycovariantIds.MycelialBastionIId => MycovariantGameBalance.MycelialBastionIMaxResistantCells,
+                MycovariantIds.MycelialBastionIIId => MycovariantGameBalance.MycelialBastionIIMaxResistantCells,
+                MycovariantIds.MycelialBastionIIIId => MycovariantGameBalance.MycelialBastionIIIMaxResistantCells,
+                _ => MycovariantGameBalance.MycelialBastionIMaxResistantCells // fallback
+            };
+
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
                 // AI selects cells automatically
@@ -134,13 +143,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
                 // Show selection prompt banner
                 GameManager.Instance.ShowSelectionPrompt(
-                    $"Select up to {MycovariantGameBalance.MycelialBastionMaxResistantCells} of your living cells to become Resistant."
+                    $"Select up to {maxCellsAllowed} of your living cells to become Resistant."
                 );
 
                 // Use a multi-selection controller for Mycelial Bastion
                 MultiCellSelectionController.Instance.PromptSelectMultipleLivingCells(
                     player.PlayerId,
-                    MycovariantGameBalance.MycelialBastionMaxResistantCells,
+                    maxCellsAllowed,
                     (selectedCells) =>
                     {
                         var playerMyco = player.PlayerMycovariants
@@ -164,7 +173,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         gridVisualizer.ClearHighlights();
                         onComplete?.Invoke();
                     },
-                    $"Select up to {MycovariantGameBalance.MycelialBastionMaxResistantCells} of your living cells to make Resistant (invincible)."
+                    $"Select up to {maxCellsAllowed} of your living cells to make Resistant (invincible)."
                 );
             }
         }

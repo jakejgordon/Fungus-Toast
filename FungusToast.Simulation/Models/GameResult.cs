@@ -188,7 +188,9 @@ namespace FungusToast.Simulation.Models
                             break;
                         }
 
-                    case var id when id == MycovariantIds.MycelialBastionId:
+                    case var id when id == MycovariantIds.MycelialBastionIId ||
+                                    id == MycovariantIds.MycelialBastionIIId ||
+                                    id == MycovariantIds.MycelialBastionIIIId:
                         {
                             int bastioned = tracking.GetBastionedCells(player.PlayerId);
                             if (bastioned > 0) effectCounts[MycovariantEffectType.Bastioned] = bastioned;

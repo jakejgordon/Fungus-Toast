@@ -132,13 +132,45 @@ namespace FungusToast.Core.Mycovariants
             IsUniversal = false
         };
 
-        public static Mycovariant MycelialBastion() =>
+        public static Mycovariant MycelialBastionI() =>
             new Mycovariant
             {
-                Id = MycovariantIds.MycelialBastionId,
-                Name = "Mycelial Bastion",
-                Description = $"Immediately select up to {MycovariantGameBalance.MycelialBastionMaxResistantCells} of your living cells to become Resistant (invincible). These cells cannot be killed, replaced, or converted for the rest of the game.",
+                Id = MycovariantIds.MycelialBastionIId,
+                Name = "Mycelial Bastion I",
+                Description = $"Immediately select up to {MycovariantGameBalance.MycelialBastionIMaxResistantCells} of your living cells to become Resistant (invincible). These cells cannot be killed, replaced, or converted for the rest of the game.",
                 FlavorText = "A fortified network of hyphae, woven to withstand any threat.",
+                Type = MycovariantType.Active,
+                IsUniversal = false,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
+                    // to avoid duplicate effect application
+                }
+            };
+
+        public static Mycovariant MycelialBastionII() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.MycelialBastionIIId,
+                Name = "Mycelial Bastion II",
+                Description = $"Immediately select up to {MycovariantGameBalance.MycelialBastionIIMaxResistantCells} of your living cells to become Resistant (invincible). These cells cannot be killed, replaced, or converted for the rest of the game.",
+                FlavorText = "Advanced fortification techniques create an impenetrable mycelial bulwark.",
+                Type = MycovariantType.Active,
+                IsUniversal = false,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
+                    // to avoid duplicate effect application
+                }
+            };
+
+        public static Mycovariant MycelialBastionIII() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.MycelialBastionIIIId,
+                Name = "Mycelial Bastion III",
+                Description = $"Immediately select up to {MycovariantGameBalance.MycelialBastionIIIMaxResistantCells} of your living cells to become Resistant (invincible). These cells cannot be killed, replaced, or converted for the rest of the game.",
+                FlavorText = "Master-level mycelial engineering creates an unassailable fortress of living tissue.",
                 Type = MycovariantType.Active,
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
