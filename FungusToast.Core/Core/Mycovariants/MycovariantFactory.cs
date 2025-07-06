@@ -46,8 +46,27 @@ namespace FungusToast.Core.Mycovariants
                 Type = MycovariantType.Directional,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
-                    // to avoid duplicate effect application
+                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+                    
+                    bool shouldUseCoreLogic = player?.PlayerType == PlayerTypeEnum.AI || 
+                                             observer != null; // Simulation context
+                    
+                    if (shouldUseCoreLogic)
+                    {
+                        // AI or Simulation: Core handles everything (selection + effect application)
+                        var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
+                            .Where(c => c.IsAlive)
+                            .ToList();
+                        
+                        if (livingCells.Count > 0)
+                        {
+                            var sourceCell = livingCells[rng.Next(livingCells.Count)];
+                            MycovariantEffectProcessor.ResolveJettingMycelium(
+                                playerMyco, player, board, sourceCell.TileId, cardinalDirection, observer);
+                        }
+                    }
+                    // Human in Unity: UI layer handles selection + effect application
+                    // (ApplyEffect does nothing, avoiding double execution)
                 }
             };
         }
@@ -84,8 +103,12 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
-                    // to avoid duplicate effect application
+                    // Always apply the effect - works for both Unity and simulation
+                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+                    if (player != null)
+                    {
+                        player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyMutationPointAward);
+                    }
                 }
             };
 
@@ -100,8 +123,12 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
-                    // to avoid duplicate effect application
+                    // Always apply the effect - works for both Unity and simulation
+                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+                    if (player != null)
+                    {
+                        player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyIIMutationPointAward);
+                    }
                 }
             };
 
@@ -116,8 +143,12 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
-                    // to avoid duplicate effect application
+                    // Always apply the effect - works for both Unity and simulation
+                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+                    if (player != null)
+                    {
+                        player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyIIIMutationPointAward);
+                    }
                 }
             };
 
@@ -143,8 +174,15 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
-                    // to avoid duplicate effect application
+                    var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
+                    
+                    if (player.PlayerType == PlayerTypeEnum.AI)
+                    {
+                        // AI: Core handles everything (selection + effect application)
+                        MycovariantEffectProcessor.ResolveMycelialBastion(playerMyco, board, rng, observer);
+                    }
+                    // Human: UI layer handles selection + effect application
+                    // (ApplyEffect does nothing, avoiding double execution)
                 }
             };
 
@@ -159,8 +197,15 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
-                    // to avoid duplicate effect application
+                    var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
+                    
+                    if (player.PlayerType == PlayerTypeEnum.AI)
+                    {
+                        // AI: Core handles everything (selection + effect application)
+                        MycovariantEffectProcessor.ResolveMycelialBastion(playerMyco, board, rng, observer);
+                    }
+                    // Human: UI layer handles selection + effect application
+                    // (ApplyEffect does nothing, avoiding double execution)
                 }
             };
 
@@ -175,8 +220,15 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
-                    // to avoid duplicate effect application
+                    var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
+                    
+                    if (player.PlayerType == PlayerTypeEnum.AI)
+                    {
+                        // AI: Core handles everything (selection + effect application)
+                        MycovariantEffectProcessor.ResolveMycelialBastion(playerMyco, board, rng, observer);
+                    }
+                    // Human: UI layer handles selection + effect application
+                    // (ApplyEffect does nothing, avoiding double execution)
                 }
             };
 
@@ -191,8 +243,18 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
-                    // to avoid duplicate effect application
+                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+                    
+                    bool shouldUseCoreLogic = player?.PlayerType == PlayerTypeEnum.AI || 
+                                             observer != null; // Simulation context
+                    
+                    if (shouldUseCoreLogic)
+                    {
+                        // AI or Simulation: Core handles everything (selection + effect application)
+                        MycovariantEffectProcessor.ResolveSurgicalInoculationAI(playerMyco, board, rng, observer);
+                    }
+                    // Human in Unity: UI layer handles selection + effect application
+                    // (ApplyEffect does nothing, avoiding double execution)
                 }
             };
 

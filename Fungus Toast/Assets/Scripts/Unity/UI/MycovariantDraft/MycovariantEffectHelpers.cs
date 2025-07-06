@@ -27,28 +27,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                // AI selects a source cell automatically
-                var livingCells = GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId)
-                    .Where(c => c.IsAlive)
-                    .ToList();
-                FungalCell cell = livingCells.Count > 0
-                    ? livingCells[UnityEngine.Random.Range(0, livingCells.Count)]
-                    : null;
-
-                if (cell != null)
-                {
-                    var playerMyco = player.PlayerMycovariants
-                        .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
-
-                    MycovariantEffectProcessor.ResolveJettingMycelium(
-                        playerMyco,
-                        player,
-                        GameManager.Instance.Board,
-                        cell.TileId,
-                        direction,
-                        null
-                    );
-                }
+                // AI: Core ApplyEffect handles everything
+                // Just wait for the effect to complete
                 yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumAIDelaySeconds);
                 onComplete?.Invoke();
             }
@@ -122,17 +102,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                // AI selects cells automatically
-                var playerMyco = player.PlayerMycovariants
-                    .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
-
-                MycovariantEffectProcessor.ResolveMycelialBastion(
-                    playerMyco,
-                    GameManager.Instance.Board,
-                    new System.Random(),
-                    null
-                );
-                
+                // AI: Core ApplyEffect handles everything
+                // Just wait for the effect to complete
                 yield return new WaitForSeconds(UIEffectConstants.MycelialBastionAIDelaySeconds);
                 onComplete?.Invoke();
             }
@@ -190,17 +161,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                // AI selects target automatically
-                var playerMyco = player.PlayerMycovariants
-                    .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
-
-                MycovariantEffectProcessor.ResolveSurgicalInoculationAI(
-                    playerMyco,
-                    GameManager.Instance.Board,
-                    new System.Random(),
-                    null
-                );
-                
+                // AI: Core ApplyEffect handles everything
+                // Just wait for the effect to complete
                 yield return new WaitForSeconds(UIEffectConstants.SurgicalInoculationAIDelaySeconds);
                 onComplete?.Invoke();
             }

@@ -64,7 +64,9 @@ namespace FungusToast.Unity.Effects
                      mycovariant.Id == MycovariantIds.PlasmidBountyIIId ||
                      mycovariant.Id == MycovariantIds.PlasmidBountyIIIId)
             {
-                HandlePlasmidBounty(player);
+                // Plasmid Bounty effects are now handled by the core ApplyEffect
+                // Just handle the UI feedback
+                HandlePlasmidBountyUI(player);
                 onComplete?.Invoke();
             }
             else if (mycovariant.Id == MycovariantIds.MycelialBastionIId ||
@@ -100,30 +102,9 @@ namespace FungusToast.Unity.Effects
             }
         }
 
-        private void HandlePlasmidBounty(Player player)
+        private void HandlePlasmidBountyUI(Player player)
         {
-            // Apply the mutation point award based on which Plasmid Bounty was selected
-            var playerMyco = player.PlayerMycovariants
-                .FirstOrDefault(pm => pm.MycovariantId == MycovariantIds.PlasmidBountyId ||
-                                     pm.MycovariantId == MycovariantIds.PlasmidBountyIIId ||
-                                     pm.MycovariantId == MycovariantIds.PlasmidBountyIIIId);
-            
-            if (playerMyco != null)
-            {
-                int pointsToAdd = playerMyco.MycovariantId switch
-                {
-                    MycovariantIds.PlasmidBountyId => MycovariantGameBalance.PlasmidBountyMutationPointAward,
-                    MycovariantIds.PlasmidBountyIIId => MycovariantGameBalance.PlasmidBountyIIMutationPointAward,
-                    MycovariantIds.PlasmidBountyIIIId => MycovariantGameBalance.PlasmidBountyIIIMutationPointAward,
-                    _ => 0
-                };
-                
-                if (pointsToAdd > 0)
-                {
-                    player.AddMutationPoints(pointsToAdd);
-                }
-            }
-            
+            // Only handle UI feedback - the core effect is applied by ApplyEffect
             // Only pulse if the panel is active and enabled
             var panel = GameManager.Instance.GameUI.MoldProfilePanel;
             if (panel != null && panel.gameObject.activeInHierarchy && panel.enabled)

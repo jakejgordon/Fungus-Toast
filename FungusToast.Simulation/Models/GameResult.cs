@@ -162,10 +162,18 @@ namespace FungusToast.Simulation.Models
                         effectCounts[MycovariantEffectType.MpBonus] = MycovariantGameBalance.PlasmidBountyMutationPointAward;
                         break;
 
+                    case var id when id == MycovariantIds.PlasmidBountyIIId:
+                        effectCounts[MycovariantEffectType.MpBonus] = MycovariantGameBalance.PlasmidBountyIIMutationPointAward;
+                        break;
+
+                    case var id when id == MycovariantIds.PlasmidBountyIIIId:
+                        effectCounts[MycovariantEffectType.MpBonus] = MycovariantGameBalance.PlasmidBountyIIIMutationPointAward;
+                        break;
+
                     case var id when id == MycovariantIds.NeutralizingMantleId:
                         {
                             int neutralized = tracking.GetNeutralizingMantleEffects(player.PlayerId);
-                            if (neutralized > 0) effectCounts[MycovariantEffectType.Neutralized] = neutralized;
+                            if (neutralized > 0) effectCounts[MycovariantEffectType.Neutralizations] = neutralized;
                             break;
                         }
 
@@ -193,14 +201,14 @@ namespace FungusToast.Simulation.Models
                                     id == MycovariantIds.MycelialBastionIIIId:
                         {
                             int bastioned = tracking.GetBastionedCells(player.PlayerId);
-                            if (bastioned > 0) effectCounts[MycovariantEffectType.Bastioned] = bastioned;
+                            if (bastioned > 0) effectCounts[MycovariantEffectType.FortifiedCells] = bastioned;
                             break;
                         }
 
                     case var id when id == MycovariantIds.SurgicalInoculationId:
                         {
                             int drops = tracking.GetSurgicalInoculationDrops(player.PlayerId);
-                            if (drops > 0) effectCounts[MycovariantEffectType.Drops] = drops;
+                            if (drops > 0) effectCounts[MycovariantEffectType.ResistantDrops] = drops;
                             break;
                         }
 
