@@ -46,17 +46,8 @@ namespace FungusToast.Core.Mycovariants
                 Type = MycovariantType.Directional,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // --- For AI/simulation: Pick the first living cell as the launch point
-                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
-                    if (player == null) return;
-                    var launchTile = board.GetAllCellsOwnedBy(player.PlayerId)
-                        .FirstOrDefault(c => c.IsAlive);
-                    if (launchTile == null) return;
-
-                    // Call the effect processor
-                    MycovariantEffectProcessor.ResolveJettingMycelium(
-                        playerMyco, player, board, launchTile.TileId, cardinalDirection, observer
-                    );
+                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
+                    // to avoid duplicate effect application
                 }
             };
         }
@@ -93,12 +84,8 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
-                    if (player != null)
-                    {
-                        player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyMutationPointAward);
-                        observer?.RecordMutationPointIncome(player.PlayerId, MycovariantGameBalance.PlasmidBountyMutationPointAward);
-                    }
+                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
+                    // to avoid duplicate effect application
                 }
             };
 
@@ -113,12 +100,8 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
-                    if (player != null)
-                    {
-                        player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyIIMutationPointAward);
-                        observer?.RecordMutationPointIncome(player.PlayerId, MycovariantGameBalance.PlasmidBountyIIMutationPointAward);
-                    }
+                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
+                    // to avoid duplicate effect application
                 }
             };
 
@@ -133,12 +116,8 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
-                    if (player != null)
-                    {
-                        player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyIIIMutationPointAward);
-                        observer?.RecordMutationPointIncome(player.PlayerId, MycovariantGameBalance.PlasmidBountyIIIMutationPointAward);
-                    }
+                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
+                    // to avoid duplicate effect application
                 }
             };
 
@@ -164,7 +143,8 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    MycovariantEffectProcessor.ResolveMycelialBastion(playerMyco, board, rng, observer);
+                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
+                    // to avoid duplicate effect application
                 }
             };
 
@@ -179,12 +159,8 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
-                    if (player != null && player.PlayerType == PlayerTypeEnum.AI)
-                    {
-                        MycovariantEffectProcessor.ResolveSurgicalInoculationAI(playerMyco, board, rng, observer);
-                    }
-                    // For human players, do nothing here; the UI handler will handle the effect.
+                    // Effect resolution is handled by the UI layer (MycovariantEffectResolver)
+                    // to avoid duplicate effect application
                 }
             };
 

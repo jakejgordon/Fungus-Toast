@@ -45,7 +45,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         player,
                         GameManager.Instance.Board,
                         cell.TileId,
-                        direction
+                        direction,
+                        null
                     );
                 }
                 yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumAIDelaySeconds);
@@ -180,7 +181,17 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                // AI logic is handled in the effect processor
+                // AI selects target automatically
+                var playerMyco = player.PlayerMycovariants
+                    .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+
+                MycovariantEffectProcessor.ResolveSurgicalInoculationAI(
+                    playerMyco,
+                    GameManager.Instance.Board,
+                    new System.Random(),
+                    null
+                );
+                
                 yield return new WaitForSeconds(UIEffectConstants.SurgicalInoculationAIDelaySeconds);
                 onComplete?.Invoke();
             }

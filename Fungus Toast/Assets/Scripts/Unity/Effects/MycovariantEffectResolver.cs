@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.Board;
+using FungusToast.Core.Config;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Grid;
@@ -41,6 +42,12 @@ namespace FungusToast.Unity.Effects
             PlayerMycovariant playerMyco,
             Action onComplete)
         {
+            // Mark the mycovariant as triggered before resolving effects
+            if (playerMyco != null)
+            {
+                playerMyco.MarkTriggered();
+            }
+
             if (IsJettingMycelium(mycovariant.Id))
             {
                 yield return StartCoroutine(
@@ -53,7 +60,9 @@ namespace FungusToast.Unity.Effects
                     )
                 );
             }
-            else if (mycovariant.Id == MycovariantIds.PlasmidBountyId)
+            else if (mycovariant.Id == MycovariantIds.PlasmidBountyId ||
+                     mycovariant.Id == MycovariantIds.PlasmidBountyIIId ||
+                     mycovariant.Id == MycovariantIds.PlasmidBountyIIIId)
             {
                 HandlePlasmidBounty(player);
                 onComplete?.Invoke();
@@ -91,8 +100,27 @@ namespace FungusToast.Unity.Effects
 
         private void HandlePlasmidBounty(Player player)
         {
-            // Core logic already handles the mutation point award via MycovariantFactory
-            // No need to duplicate it here
+            // Apply the mutation point award based on which Plasmid Bounty was selected
+            var playerMyco = player.PlayerMycovariants
+                .FirstOrDefault(pm => pm.MycovariantId == MycovariantIds.PlasmidBountyId ||
+                                     pm.MycovariantId == MycovariantIds.PlasmidBountyIIId ||
+                                     pm.MycovariantId == MycovariantIds.PlasmidBountyIIIId);
+            
+            if (playerMyco != null)
+            {
+                int pointsToAdd = playerMyco.MycovariantId switch
+                {
+                    MycovariantIds.PlasmidBountyId => MycovariantGameBalance.PlasmidBountyMutationPointAward,
+                    MycovariantIds.PlasmidBountyIIId => MycovariantGameBalance.PlasmidBountyIIMutationPointAward,
+                    MycovariantIds.PlasmidBountyIIIId => MycovariantGameBalance.PlasmidBountyIIIMutationPointAward,
+                    _ => 0
+                };
+                
+                if (pointsToAdd > 0)
+                {
+                    player.AddMutationPoints(pointsToAdd);
+                }
+            }
             
             // Only pulse if the panel is active and enabled
             var panel = GameManager.Instance.GameUI.MoldProfilePanel;
@@ -100,12 +128,6 @@ namespace FungusToast.Unity.Effects
             {
                 panel.PulseMutationPoints();
             }
-            
-            /*
-            GameManager.Instance.GameUI.RightSidebar?.AddLogEntry(
-                $"{player.PlayerName} gained 15 mutation points from Plasmid Bounty!"
-            );
-            */
         }
 
         /// <summary>

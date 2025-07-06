@@ -501,13 +501,12 @@ namespace FungusToast.Unity
         public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)
         {
             player.AddMycovariant(picked); // Or however you add it to the player
-            // If the mycovariant triggers an instant effect, resolve that here.
+            // Note: Effect resolution is handled by MycovariantEffectResolver in the UI layer
+            // to avoid duplicate effect application (the core ApplyEffect is not called here)
             var playerMyco = player.PlayerMycovariants.LastOrDefault(pm => pm.MycovariantId == picked.Id);
-            if (playerMyco != null && picked.ApplyEffect != null)
+            if (playerMyco != null)
             {
-                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] Triggering ApplyEffect for {picked.Name} (Id={picked.Id}) for PlayerId={playerMyco.PlayerId}");
-                picked.ApplyEffect.Invoke(playerMyco, Board, rng, null);
-                playerMyco.MarkTriggered();
+                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] Added {picked.Name} (Id={picked.Id}) for PlayerId={playerMyco.PlayerId}");
             }
             // Optionally update UI
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
