@@ -5,9 +5,9 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Events;
 using FungusToast.Core.Growth;
+using FungusToast.Core.Phases;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
-using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Cameras;
 using FungusToast.Unity.Events;
@@ -37,6 +37,7 @@ namespace FungusToast.Unity
         public bool testingModeEnabled = false;
         public int testingMycovariantId = -1;
         public bool testingModeForceHumanFirst = true;
+        public int fastForwardRounds = 0;
 
         [Header("References")]
         public GridVisualizer gridVisualizer;
@@ -124,9 +125,17 @@ namespace FungusToast.Unity
 
             if (testingModeEnabled)
             {
-                gameUIManager.PhaseBanner.Show("Mycovariant Testing Mode", 2f);
-                // Start draft immediately in testing mode
-                StartCoroutine(DelayedStartDraft());
+                if (fastForwardRounds > 0)
+                {
+                    gameUIManager.PhaseBanner.Show($"Fast-Forwarding {fastForwardRounds} Rounds...", 2f);
+                    StartCoroutine(FastForwardRounds());
+                }
+                else
+                {
+                    gameUIManager.PhaseBanner.Show("Mycovariant Testing Mode", 2f);
+                    // Start draft immediately in testing mode
+                    StartCoroutine(DelayedStartDraft());
+                }
             }
             else
             {
@@ -538,20 +547,125 @@ namespace FungusToast.Unity
         }
 
         // === TESTING MODE METHODS ===
-        public void EnableTestingMode(int mycovariantId)
+        public void EnableTestingMode(int mycovariantId, int fastForwardRounds = 0)
         {
             testingModeEnabled = true;
             testingMycovariantId = mycovariantId;
             testingModeForceHumanFirst = true;
+            this.fastForwardRounds = fastForwardRounds;
         }
 
         public void DisableTestingMode()
         {
             testingModeEnabled = false;
             testingMycovariantId = -1;
+            fastForwardRounds = 0;
         }
 
         public bool IsTestingModeEnabled => testingModeEnabled;
         public int TestingMycovariantId => testingMycovariantId;
+
+        private IEnumerator FastForwardRounds()
+        {
+            yield return new WaitForSeconds(2.5f); // Wait for banner to show
+
+            for (int round = 1; round <= fastForwardRounds; round++)
+            {
+                // Silent growth phase
+                yield return StartCoroutine(RunSilentGrowthPhase());
+                
+                // Silent decay phase
+                yield return StartCoroutine(RunSilentDecayPhase());
+                
+                // Silent mutation phase (auto-spend for all players)
+                yield return StartCoroutine(RunSilentMutationPhase());
+
+                // Increment round
+                Board.IncrementRound();
+            }
+
+            // Update the board visualization after fast-forward
+            gridVisualizer.RenderBoard(Board);
+            
+            // Update UI elements to reflect the new board state
+            gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
+            int currentRound = Board.CurrentRound;
+            float occupancy = Board.GetOccupiedTileRatio() * 100f;
+            gameUIManager.RightSidebar?.SetRoundAndOccupancy(currentRound, occupancy);
+
+            // After fast-forward, start the draft
+            gameUIManager.PhaseBanner.Show("Fast-Forward Complete - Starting Draft", 2f);
+            yield return new WaitForSeconds(2f);
+            StartCoroutine(DelayedStartDraft());
+        }
+
+        private IEnumerator RunSilentGrowthPhase()
+        {
+            var processor = new GrowthPhaseProcessor(Board, Board.Players, rng);
+            var roundContext = new RoundContext();
+
+            for (int cycle = 1; cycle <= GameBalance.TotalGrowthCycles; cycle++)
+            {
+                Board.IncrementGrowthCycle();
+                processor.ExecuteSingleCycle(roundContext);
+            }
+
+            // Post-growth effects
+            Board.OnPostGrowthPhase();
+            
+            yield return null; // One frame delay
+        }
+
+        private IEnumerator RunSilentDecayPhase()
+        {
+            // Use empty failed growths since we're not tracking them in silent mode
+            var emptyFailedGrowths = new Dictionary<int, int>();
+            DeathEngine.ExecuteDeathCycle(Board, emptyFailedGrowths, rng, null);
+            yield return null; // One frame delay
+        }
+
+        private IEnumerator RunSilentMutationPhase()
+        {
+            // Assign mutation points to all players
+            var allMutations = mutationManager.AllMutations.Values.ToList();
+            TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rng);
+
+            // Auto-spend mutation points for ALL players (including human)
+            foreach (var player in Board.Players)
+            {
+                if (player.PlayerType == PlayerTypeEnum.AI)
+                {
+                    // AI uses their strategy
+                    player.MutationStrategy?.SpendMutationPoints(player, allMutations, Board, rng);
+                }
+                else
+                {
+                    // Human player gets random spending (or could use a simple strategy)
+                    AutoSpendForHumanPlayer(player, allMutations, rng);
+                }
+            }
+
+            yield return null; // One frame delay
+        }
+
+        private void AutoSpendForHumanPlayer(Player player, List<Mutation> allMutations, System.Random rng)
+        {
+            // Simple auto-spending strategy for human player during fast-forward
+            // Prioritize growth and resilience mutations
+            var availableMutations = allMutations.Where(m => player.CanUpgrade(m)).ToList();
+            
+            // Shuffle to add some randomness
+            availableMutations = availableMutations.OrderBy(_ => rng.Next()).ToList();
+            
+            // Try to spend all mutation points
+            while (player.MutationPoints > 0 && availableMutations.Count > 0)
+            {
+                var mutation = availableMutations.FirstOrDefault(m => player.CanUpgrade(m));
+                if (mutation == null) break;
+                
+                player.TryUpgradeMutation(mutation, null, Board.CurrentRound);
+                availableMutations.Remove(mutation);
+            }
+        }
     }
 }

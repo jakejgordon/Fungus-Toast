@@ -2,7 +2,9 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using FungusToast.Core.Mycovariants;
+using FungusToast.Core.Config;
 using TMPro;
+using FungusToast.Unity;
 
 namespace FungusToast.Unity.UI.GameStart
 {
@@ -17,6 +19,8 @@ namespace FungusToast.Unity.UI.GameStart
         [SerializeField] private Toggle testingModeToggle;
         [SerializeField] private TMP_Dropdown mycovariantDropdown;
         [SerializeField] private GameObject testingModePanel;
+        [SerializeField] private TMP_InputField fastForwardRoundsInput;
+        [SerializeField] private TextMeshProUGUI fastForwardLabel;
 
         // Magnifying glass UI reference
         [SerializeField] private GameObject magnifyingGlassUI;
@@ -54,12 +58,18 @@ namespace FungusToast.Unity.UI.GameStart
             // Set up testing mode toggle
             testingModeToggle.onValueChanged.AddListener(OnTestingModeToggled);
             testingModePanel.SetActive(false);
+            
+            // Initialize fast-forward input
+            fastForwardRoundsInput.text = MycovariantGameBalance.MycovariantSelectionTriggerRound.ToString(); // Default value
+            fastForwardRoundsInput.contentType = TMP_InputField.ContentType.IntegerNumber;
         }
 
         private void OnTestingModeToggled(bool isEnabled)
         {
             testingModePanel.SetActive(isEnabled);
             mycovariantDropdown.interactable = isEnabled;
+            fastForwardRoundsInput.interactable = isEnabled;
+            fastForwardLabel.gameObject.SetActive(isEnabled);
         }
 
         public void OnPlayerCountSelected(int count)
@@ -85,7 +95,12 @@ namespace FungusToast.Unity.UI.GameStart
                 if (testingModeToggle.isOn && mycovariantDropdown.value > 0)
                 {
                     var selectedMycovariant = MycovariantRepository.All[mycovariantDropdown.value - 1];
-                    GameManager.Instance.EnableTestingMode(selectedMycovariant.Id);
+                    int fastForwardRounds = 0;
+                    if (int.TryParse(fastForwardRoundsInput.text, out int parsedRounds))
+                    {
+                        fastForwardRounds = Mathf.Max(0, parsedRounds);
+                    }
+                    GameManager.Instance.EnableTestingMode(selectedMycovariant.Id, fastForwardRounds);
                 }
                 else
                 {
