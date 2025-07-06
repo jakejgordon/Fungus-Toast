@@ -23,7 +23,7 @@ namespace FungusToast.Core.Phases
 
             foreach (var player in players)
             {
-                player.AssignMutationPoints(players, rng, allMutations, simulationObserver);
+                player.AssignMutationPoints(players, rng, board, allMutations, simulationObserver);
                 player.MutationStrategy?.SpendMutationPoints(player, allMutations, board, rng, simulationObserver);
             }
         }

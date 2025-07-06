@@ -277,25 +277,51 @@ namespace FungusToast.Core.Players
         }
         public void RemoveControlledTile(int id) => ControlledTileIds.Remove(id);
 
-        public int RollAnabolicInversionBonus(List<Player> allPlayers, System.Random rng)
+        public int RollAnabolicInversionBonus(List<Player> allPlayers, System.Random rng, GameBoard board)
         {
             if (!PlayerMutations.TryGetValue(MutationIds.AnabolicInversion, out var pm) || pm.CurrentLevel <= 0)
                 return 0;
 
-            int myCells = ControlledTileIds.Count;
+            // Get living cells for this player
+            int myLivingCells = board.GetAllCellsOwnedBy(PlayerId).Count(c => c.IsAlive);
             var others = allPlayers.Where(p => p != this).ToList();
             if (others.Count == 0) return 0;
 
-            float avgOthers = (float)others.Average(p => p.ControlledTileIds.Count);
-            if (avgOthers <= 0f) avgOthers = 1f;
+            // Get living cells for other players
+            float avgOthersLivingCells = (float)others.Average(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive));
+            if (avgOthersLivingCells <= 0f) avgOthersLivingCells = 1f;
 
-            float ratio = Math.Max(0f, Math.Min(1f, myCells / avgOthers)); // clamp between 0 and 1
+            float ratio = Math.Max(0f, Math.Min(1f, myLivingCells / avgOthersLivingCells)); // clamp between 0 and 1
             float chance = (1f - ratio) + pm.CurrentLevel * GameBalance.AnabolicInversionGapBonusPerLevel;
 
             if (rng.NextDouble() < chance)
             {
-                int bonus = rng.Next(1, 2 * pm.CurrentLevel); // 1 to 5 at level 3
-                return Math.Min(bonus, GameBalance.AnabolicInversionMaxMutationPointsPerRound); // Cap at maximum
+                // Weighted random selection: the further behind you are, the higher chance of getting 5 MP
+                // ratio = 0 means you're way behind (get higher MP), ratio = 1 means you're ahead (get lower MP)
+                float weight = 1f - ratio; // 0 = ahead, 1 = behind
+                
+                // Create weighted distribution: higher weight = higher chance of 5 MP
+                float rand = (float)rng.NextDouble();
+                int bonus;
+                
+                if (rand < weight * 0.6f) // 60% of weight goes to 4-5 MP
+                {
+                    bonus = rng.NextDouble() < weight ? 5 : 4;
+                }
+                else if (rand < weight * 0.8f) // 20% of weight goes to 3 MP
+                {
+                    bonus = 3;
+                }
+                else if (rand < weight * 0.9f) // 10% of weight goes to 2 MP
+                {
+                    bonus = 2;
+                }
+                else // Remaining goes to 1 MP
+                {
+                    bonus = 1;
+                }
+                
+                return bonus;
             }
 
             return 0;
@@ -303,12 +329,13 @@ namespace FungusToast.Core.Players
 
         public int AssignMutationPoints(List<Player> allPlayers,
                                         System.Random rng,
+                                        GameBoard board,
                                         IEnumerable<Mutation>? allMutations = null,
                                         ISimulationObserver? simulationObserver = null)
         {
             int baseIncome = GetMutationPointIncome();
             int bonus = GetBonusMutationPoints();
-            int undergrowth = RollAnabolicInversionBonus(allPlayers, rng);
+            int undergrowth = RollAnabolicInversionBonus(allPlayers, rng, board);
 
             int newMutationPoints = baseIncome + bonus + undergrowth;
             if (simulationObserver != null)

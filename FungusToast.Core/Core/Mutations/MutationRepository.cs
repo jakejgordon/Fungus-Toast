@@ -268,7 +268,7 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.AnabolicInversion,
                 name: "Anabolic Inversion",
-                description: $"Each level adds a {FormatPercent(GameBalance.AnabolicInversionGapBonusPerLevel)} chance to earn 1-{2 * GameBalance.AnabolicInversionMaxLevel} bonus mutation points when you control fewer total tiles than other players. The chance increases the further behind you are, and bonus points are capped at {GameBalance.AnabolicInversionMaxMutationPointsPerRound} per round.",
+                description: $"Each level adds a {FormatPercent(GameBalance.AnabolicInversionGapBonusPerLevel)} chance to earn 1–5 bonus mutation points when you control fewer living cells than other players. The chance increases the further behind you are, and the bonus amount is weighted - the further behind you are, the higher chance of getting the maximum payout.",
                 flavorText: "Under metabolic duress, anabolism inverts into compensatory feedback loops, prioritizing genomic plasticity.",
                 type: MutationType.BonusMutationPointChance,
                 effectPerLevel: GameBalance.AnabolicInversionGapBonusPerLevel,
