@@ -219,6 +219,17 @@ namespace FungusToast.Simulation.Models
                             break;
                         }
 
+                    case var id when id == MycovariantIds.EnduringToxaphoresId:
+                        {
+                            int extended = tracking.GetEnduringToxaphoresExtendedCycles(player.PlayerId);
+                            if (extended > 0)
+                                effectCounts[MycovariantEffectType.ExtendedCycles] = extended;
+                            int existing = tracking.GetEnduringToxaphoresExistingExtensions(player.PlayerId);
+                            if (existing > 0)
+                                effectCounts[MycovariantEffectType.ExistingExtensions] = existing;
+                            break;
+                        }
+
                     // ...more cases...
                 }
 

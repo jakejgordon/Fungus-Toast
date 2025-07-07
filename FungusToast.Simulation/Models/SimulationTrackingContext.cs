@@ -697,5 +697,33 @@ namespace FungusToast.Simulation.Models
         public int GetHyphalResistanceTransfers(int playerId)
             => hyphalResistanceTransfers.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllHyphalResistanceTransfers() => new(hyphalResistanceTransfers);
+
+        // ────────────────
+        // Enduring Toxaphores Extended Cycles
+        // ────────────────
+        private readonly Dictionary<int, int> enduringToxaphoresExtendedCycles = new();
+        public void RecordEnduringToxaphoresExtendedCycles(int playerId, int cycles)
+        {
+            if (!enduringToxaphoresExtendedCycles.ContainsKey(playerId))
+                enduringToxaphoresExtendedCycles[playerId] = 0;
+            enduringToxaphoresExtendedCycles[playerId] += cycles;
+        }
+        public int GetEnduringToxaphoresExtendedCycles(int playerId)
+            => enduringToxaphoresExtendedCycles.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllEnduringToxaphoresExtendedCycles() => new(enduringToxaphoresExtendedCycles);
+
+        // ────────────────
+        // Enduring Toxaphores Existing Extensions
+        // ────────────────
+        private readonly Dictionary<int, int> enduringToxaphoresExistingExtensions = new();
+        public void RecordEnduringToxaphoresExistingExtensions(int playerId, int cycles)
+        {
+            if (!enduringToxaphoresExistingExtensions.ContainsKey(playerId))
+                enduringToxaphoresExistingExtensions[playerId] = 0;
+            enduringToxaphoresExistingExtensions[playerId] += cycles;
+        }
+        public int GetEnduringToxaphoresExistingExtensions(int playerId)
+            => enduringToxaphoresExistingExtensions.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllEnduringToxaphoresExistingExtensions() => new(enduringToxaphoresExistingExtensions);
     }
 }

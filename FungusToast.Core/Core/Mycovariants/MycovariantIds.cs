@@ -20,5 +20,6 @@ namespace FungusToast.Core.Mycovariants
         public const int SurgicalInoculationId = 1011;
         public const int PerimeterProliferatorId = 1012;
         public const int HyphalResistanceTransferId = 1015;
+        public const int EnduringToxaphoresId = 1016;
     }
 }

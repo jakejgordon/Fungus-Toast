@@ -99,6 +99,7 @@ namespace FungusToast.Core.Events
             board.ToxinPlaced += (sender, args) =>
             {
                 MycovariantEffectProcessor.OnToxinPlaced_NeutralizingMantle(args, board, players, rng, observer);
+                MycovariantEffectProcessor.OnToxinPlaced_EnduringToxaphores(args, board, players, observer);
             };
 
             // Catabolic Rebirth (toxin expiration resurrection effect)

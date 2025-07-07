@@ -18,6 +18,8 @@
         FortifiedCells,
         ResistantDrops,
         ResistantTransfers,
+        ExtendedCycles,
+        ExistingExtensions,
         // Add others as needed
     }
 }

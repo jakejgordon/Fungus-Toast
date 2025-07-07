@@ -47,6 +47,8 @@ namespace FungusToast.Core.Mycovariants
                 
                 // --- Resistance/Defense options ---
                 MycovariantFactory.HyphalResistanceTransfer(),
+
+                MycovariantFactory.EnduringToxaphores(),
             };
         }
     }

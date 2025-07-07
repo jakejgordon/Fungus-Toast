@@ -443,4 +443,29 @@ public static class MycovariantEffectProcessor
             }
         }
     }
+
+    public static void OnToxinPlaced_EnduringToxaphores(
+        ToxinPlacedEventArgs eventArgs,
+        GameBoard board,
+        List<Player> players,
+        ISimulationObserver? observer = null)
+    {
+        int playerId = eventArgs.PlacingPlayerId;
+        if (playerId < 0) return;
+        var player = players.First(p => p.PlayerId == playerId);
+        if (player == null) return;
+        var playerMyco = player.GetMycovariant(MycovariantIds.EnduringToxaphoresId);
+        if (playerMyco == null) return;
+
+        // Find the toxin cell just placed
+        var tile = board.GetTileById(eventArgs.TileId);
+        var cell = tile?.FungalCell;
+        if (cell == null || !cell.IsToxin) return;
+
+        int extension = MycovariantGameBalance.EnduringToxaphoresNewToxinExtension;
+        cell.ToxinExpirationCycle += extension;
+        playerMyco.IncrementEffectCount(MycovariantEffectType.ExtendedCycles, extension);
+        if (observer != null)
+            observer.RecordEnduringToxaphoresExtendedCycles(playerId, extension);
+    }
 }

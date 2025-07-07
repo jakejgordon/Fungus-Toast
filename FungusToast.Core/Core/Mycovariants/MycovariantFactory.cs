@@ -291,5 +291,37 @@ namespace FungusToast.Core.Mycovariants
                 }
             };
 
+        public static Mycovariant EnduringToxaphores() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.EnduringToxaphoresId,
+                Name = "Enduring Toxaphores",
+                Description = "Extends the lifespan of your newly placed toxins by X growth cycles, and your existing toxins by Y cycles upon acquisition.",
+                FlavorText = "Through secreted compounds, the colony's toxins linger long after their release, defying the march of time.",
+                Type = MycovariantType.Passive,
+                IsUniversal = false,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    // Extend all existing toxins by Y cycles at acquisition
+                    var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
+                    int extension = MycovariantGameBalance.EnduringToxaphoresExistingToxinExtension;
+                    int extendedCount = 0;
+                    foreach (var cell in board.GetAllCellsOwnedBy(player.PlayerId))
+                    {
+                        if (cell.IsToxin)
+                        {
+                            cell.ToxinExpirationCycle += extension;
+                            extendedCount += extension;
+                        }
+                    }
+                    if (extendedCount > 0)
+                    {
+                        playerMyco.IncrementEffectCount(MycovariantEffectType.ExistingExtensions, extendedCount);
+                        if (observer != null)
+                            observer.RecordEnduringToxaphoresExistingExtensions(player.PlayerId, extendedCount);
+                    }
+                }
+            };
+
     }
 }
