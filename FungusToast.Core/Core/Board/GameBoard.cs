@@ -233,7 +233,7 @@ namespace FungusToast.Core.Board
             {
                 int tileId = y * Width + x;
                 var cell = new FungalCell(playerId, tileId);
-                cell.MakeResistant(); // Make initial spores resistant
+                cell.MakeResistant(); // Initial spores MUST be resistant to prevent elimination
                 tile.PlaceFungalCell(cell);
                 tileIdToCell[tileId] = cell;
 
@@ -317,7 +317,8 @@ namespace FungusToast.Core.Board
                 return false;
 
             var cell = new FungalCell(player.PlayerId, tileId);
-            cell.MakeResistant(); // Make initial spores resistant
+            // Note: Spores are NOT resistant by default
+            // They only become resistant if adjacent to resistant cells via Hyphal Resistance Transfer
             tile.PlaceFungalCell(cell);
             tileIdToCell[tileId] = cell;
 
