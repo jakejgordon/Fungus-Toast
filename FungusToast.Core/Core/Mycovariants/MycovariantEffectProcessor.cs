@@ -157,8 +157,8 @@ public static class MycovariantEffectProcessor
             if (playerMyco == null)
                 continue;
 
-            // Check if the toxin tile is adjacent to any of this player's living cells
-            var adjacentTiles = board.GetAdjacentTiles(toxinTileId);
+            // Check if the toxin tile is orthogonally adjacent to any of this player's living cells
+            var adjacentTiles = board.GetOrthogonalNeighbors(toxinTileId);
             bool isAdjacentToLivingCell = adjacentTiles.Any(tile => 
                 tile.FungalCell?.IsAlive == true && 
                 tile.FungalCell.OwnerPlayerId == player.PlayerId);
@@ -246,10 +246,10 @@ public static class MycovariantEffectProcessor
                 && !cell.IsResistant)
             .ToList();
 
-        // 2. Score each by number of adjacent open spaces
+        // 2. Score each by number of orthogonally adjacent open spaces
         int BestScore(FungalCell cell)
         {
-            var adj = board.GetAdjacentTiles(cell.TileId);
+            var adj = board.GetOrthogonalNeighbors(cell.TileId);
             return adj.Count(
                 t => t.FungalCell == null || t.FungalCell.IsDead);
         }

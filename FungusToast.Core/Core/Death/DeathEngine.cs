@@ -159,7 +159,7 @@ namespace FungusToast.Core.Death
         {
             if (observer == null) return;
 
-            foreach (var neighbor in board.GetAdjacentTiles(deadCell.TileId))
+            foreach (var neighbor in board.GetOrthogonalNeighbors(deadCell.TileId))
             {
                 var neighborCell = neighbor.FungalCell;
                 if (neighborCell == null || !neighborCell.IsAlive) continue;

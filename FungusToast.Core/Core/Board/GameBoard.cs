@@ -415,7 +415,7 @@ namespace FungusToast.Core.Board
             foreach (var toxinCell in AllToxinFungalCells())
             {
                 var toxinTile = GetTileById(toxinCell.TileId);
-                var adjacentTiles = GetAdjacentTiles(toxinCell.TileId);
+                var adjacentTiles = GetOrthogonalNeighbors(toxinCell.TileId);
                 foreach (var adjTile in adjacentTiles)
                 {
                     var adjCell = adjTile.FungalCell;

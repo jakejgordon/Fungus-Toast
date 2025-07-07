@@ -249,10 +249,10 @@ namespace FungusToast.Core.Phases
             chance = 0f;
             killerPlayerId = null;
 
-            // Build list of (playerId, effect) pairs for each adjacent enemy with effect > 0
+            // Build list of (playerId, effect) pairs for each orthogonally adjacent enemy with effect > 0
             var effects = new List<(int playerId, float effect)>();
 
-            foreach (var neighborTile in board.GetAdjacentTiles(target.TileId))
+            foreach (var neighborTile in board.GetOrthogonalNeighbors(target.TileId))
             {
                 var neighbor = neighborTile.FungalCell;
                 if (neighbor is null || !neighbor.IsAlive) continue; // Only living cells can apply Putrefactive Mycotoxin
@@ -545,11 +545,11 @@ namespace FungusToast.Core.Phases
 
             if (totalToxins == 0) return 0;
 
-            // 3. Target tiles that are unoccupied, not toxic, and adjacent to enemy mold
+            // 3. Target tiles that are unoccupied, not toxic, and orthogonally adjacent to enemy mold
             List<BoardTile> candidateTiles = board.AllTiles()
                 .Where(t => !t.IsOccupied)
                 .Where(t =>
-                    board.GetAdjacentTiles(t.TileId)
+                    board.GetOrthogonalNeighbors(t.TileId)
                          .Any(n => n.FungalCell is { IsAlive: true } && n.FungalCell.OwnerPlayerId != player.PlayerId)
                 )
                 .ToList();
@@ -631,7 +631,7 @@ namespace FungusToast.Core.Phases
             {
                 if (!cell.IsAlive) continue;
 
-                foreach (var neighborTile in board.GetAdjacentTiles(cell.TileId))
+                foreach (var neighborTile in board.GetOrthogonalNeighbors(cell.TileId))
                 {
                     if (neighborTile.FungalCell is not { IsToxin: true }) continue;
                     if (!processedToxins.Add(neighborTile.TileId)) continue;
@@ -1041,7 +1041,7 @@ namespace FungusToast.Core.Phases
 
                     // Is this tile protected? (your own living cell or adjacent to one)
                     bool isOwnLiving = (cell?.IsAlive ?? false) && cell.OwnerPlayerId == player.PlayerId;
-                    bool adjacentToOwn = board.GetAdjacentTiles(target.TileId)
+                    bool adjacentToOwn = board.GetOrthogonalNeighbors(target.TileId)
                         .Any(adj => adj.FungalCell?.IsAlive == true && adj.FungalCell.OwnerPlayerId == player.PlayerId);
 
                     if (isOwnLiving || adjacentToOwn)
@@ -1142,7 +1142,7 @@ namespace FungusToast.Core.Phases
             ISimulationObserver? observer = null)
         {
             // Check adjacent tiles for dead cells
-            var adjacentTiles = board.GetAdjacentTiles(eventArgs.TileId);
+            var adjacentTiles = board.GetOrthogonalNeighbors(eventArgs.TileId);
             var resurrectionsByPlayer = new Dictionary<int, int>();
 
             foreach (var adjacentTile in adjacentTiles)

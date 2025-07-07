@@ -157,7 +157,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.NeutralizingMantleId,
             Name = "Neutralizing Mantle",
-            Description = $"Whenever an enemy toxin is placed adjacent to your living cells, you have a {MycovariantGameBalance.NeutralizingMantleNeutralizeChance * 100f:0}% chance to neutralize (remove) it instantly.",
+            Description = $"Whenever an enemy toxin is placed orthogonally adjacent to your living cells, you have a {MycovariantGameBalance.NeutralizingMantleNeutralizeChance * 100f:0}% chance to neutralize (remove) it instantly.",
             FlavorText = "A protective sheath of hyphae, secreting enzymes to break down hostile compounds.",
             Type = MycovariantType.Passive,
             IsUniversal = false
@@ -280,7 +280,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.HyphalResistanceTransferId,
                 Name = "Hyphal Resistance Transfer",
-                Description = $"After each growth phase, your living cells adjacent to Resistant cells have a {MycovariantGameBalance.HyphalResistanceTransferChance * 100f:0}% chance to become Resistant.",
+                Description = $"After each growth phase, your living cells adjacent to Resistant cells (including diagonally) have a {MycovariantGameBalance.HyphalResistanceTransferChance * 100f:0}% chance to become Resistant.",
                 FlavorText = "The protective genetic material flows through the mycelial network, sharing resilience with neighboring cells.",
                 Type = MycovariantType.Passive,
                 IsUniversal = false,
