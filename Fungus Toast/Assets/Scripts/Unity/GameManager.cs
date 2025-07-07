@@ -127,14 +127,12 @@ namespace FungusToast.Unity
             {
                 if (fastForwardRounds > 0)
                 {
-                    gameUIManager.PhaseBanner.Show($"Fast-Forwarding {fastForwardRounds} Rounds...", 2f);
                     StartCoroutine(FastForwardRounds());
                 }
                 else
                 {
-                    gameUIManager.PhaseBanner.Show("Mycovariant Testing Mode", 2f);
                     // Start draft immediately in testing mode
-                    StartCoroutine(DelayedStartDraft());
+                    StartMycovariantDraftPhase();
                 }
             }
             else
@@ -491,8 +489,16 @@ namespace FungusToast.Unity
             // Hide draft UI
             mycovariantDraftController.gameObject.SetActive(false);
             
-            // Start a coroutine to delay the next round start, ensuring UI is properly activated
-            StartCoroutine(DelayedStartNextRound());
+            // In testing mode, start the next round immediately
+            if (testingModeEnabled)
+            {
+                StartNextRound();
+            }
+            else
+            {
+                // Start a coroutine to delay the next round start, ensuring UI is properly activated
+                StartCoroutine(DelayedStartNextRound());
+            }
         }
 
         private IEnumerator DelayedStartNextRound()
@@ -567,8 +573,6 @@ namespace FungusToast.Unity
 
         private IEnumerator FastForwardRounds()
         {
-            yield return new WaitForSeconds(2.5f); // Wait for banner to show
-
             for (int round = 1; round <= fastForwardRounds; round++)
             {
                 // Silent growth phase
@@ -593,10 +597,8 @@ namespace FungusToast.Unity
             float occupancy = Board.GetOccupiedTileRatio() * 100f;
             gameUIManager.RightSidebar?.SetRoundAndOccupancy(currentRound, occupancy);
 
-            // After fast-forward, start the draft
-            gameUIManager.PhaseBanner.Show("Fast-Forward Complete - Starting Draft", 2f);
-            yield return new WaitForSeconds(2f);
-            StartCoroutine(DelayedStartDraft());
+            // After fast-forward, start the draft immediately
+            StartMycovariantDraftPhase();
         }
 
         private IEnumerator RunSilentGrowthPhase()
