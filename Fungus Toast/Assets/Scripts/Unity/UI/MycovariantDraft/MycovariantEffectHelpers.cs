@@ -130,6 +130,15 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         foreach (var cell in selectedCells)
                         {
                             cell.MakeResistant();
+                            
+                            // Check for Hyphal Resistance Transfer effect
+                            MycovariantEffectProcessor.OnResistantCellPlaced(
+                                GameManager.Instance.Board,
+                                player.PlayerId,
+                                cell.TileId,
+                                null
+                            );
+                            
                             playerMyco?.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);
                         }
 

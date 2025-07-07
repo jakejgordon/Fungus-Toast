@@ -44,6 +44,9 @@ namespace FungusToast.Core.Mycovariants
 
                 // --- Growth/Edge options ---
                 MycovariantFactory.PerimeterProliferator(),
+                
+                // --- Resistance/Defense options ---
+                MycovariantFactory.HyphalResistanceTransfer(),
             };
         }
     }

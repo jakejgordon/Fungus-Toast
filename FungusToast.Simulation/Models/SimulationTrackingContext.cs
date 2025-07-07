@@ -683,5 +683,19 @@ namespace FungusToast.Simulation.Models
         public int GetPerimeterProliferatorGrowths(int playerId)
             => perimeterProliferatorGrowths.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllPerimeterProliferatorGrowths() => new(perimeterProliferatorGrowths);
+
+        // ────────────────
+        // Hyphal Resistance Transfer
+        // ────────────────
+        private readonly Dictionary<int, int> hyphalResistanceTransfers = new();
+        public void RecordHyphalResistanceTransfer(int playerId, int count)
+        {
+            if (!hyphalResistanceTransfers.ContainsKey(playerId))
+                hyphalResistanceTransfers[playerId] = 0;
+            hyphalResistanceTransfers[playerId] += count;
+        }
+        public int GetHyphalResistanceTransfers(int playerId)
+            => hyphalResistanceTransfers.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllHyphalResistanceTransfers() => new(hyphalResistanceTransfers);
     }
 }

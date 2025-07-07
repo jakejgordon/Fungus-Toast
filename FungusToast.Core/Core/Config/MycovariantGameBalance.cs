@@ -22,6 +22,8 @@ namespace FungusToast.Core.Config
         public const int MycelialBastionIIMaxResistantCells = 8;
         public const int MycelialBastionIIIMaxResistantCells = 12;
 
+        public const float HyphalResistanceTransferChance = 0.10f;
+
         public const float PerimeterProliferatorEdgeMultiplier = 2.0f;
     }
 }

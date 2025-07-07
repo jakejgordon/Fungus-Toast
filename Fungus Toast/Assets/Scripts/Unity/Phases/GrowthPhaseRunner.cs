@@ -55,6 +55,9 @@ namespace FungusToast.Unity.Phases
                 // === Post-Growth Mutation Effects ===
                 board.OnPostGrowthPhase();
 
+                // Apply Hyphal Resistance Transfer effect after growth phase
+                MycovariantEffectProcessor.OnPostGrowthPhase_HyphalResistanceTransfer(board, board.Players, rng, null);
+
                 isRunning = false;
                 GameManager.Instance.StartDecayPhase();
                 yield break;

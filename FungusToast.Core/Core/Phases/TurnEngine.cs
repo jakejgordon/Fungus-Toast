@@ -44,6 +44,8 @@ namespace FungusToast.Core.Phases
             // Apply post-growth reclaim effects
             board.OnPostGrowthPhase();
 
+            // Apply Hyphal Resistance Transfer effect after growth phase
+            MycovariantEffectProcessor.OnPostGrowthPhase_HyphalResistanceTransfer(board, players, rng, observer);
         }
 
         /// <summary>

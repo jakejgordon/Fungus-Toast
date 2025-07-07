@@ -13,18 +13,7 @@ using System.Linq;
 
 public static class MycovariantEffectProcessor
 {
-    public static void CheckAndTrigger(Player player, GameBoard board, ISimulationObserver? observer)
-    {
-        foreach (var playerMyco in player.PlayerMycovariants)
-        {
-            if (!playerMyco.HasTriggered &&
-                playerMyco.Mycovariant.IsTriggerConditionMet?.Invoke(playerMyco, board) == true)
-            {
-                playerMyco.Mycovariant.ApplyEffect?.Invoke(playerMyco, board, new Random(), observer);
-                playerMyco.MarkTriggered();
-            }
-        }
-    }
+
 
     public static void ResolveJettingMycelium(
         PlayerMycovariant playerMyco,
@@ -227,6 +216,9 @@ public static class MycovariantEffectProcessor
         foreach (var cell in selected)
         {
             cell.MakeResistant();
+            
+            
+            
             playerMyco.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);
             observer?.RecordBastionedCells(player.PlayerId, 1);
         }
@@ -345,6 +337,110 @@ public static class MycovariantEffectProcessor
             playerMyco.IncrementEffectCount(
                 MycovariantEffectType.ResistantCellPlaced,
                 1);
+        }
+    }
+
+    /// <summary>
+    /// Handles the Hyphal Resistance Transfer effect when a Resistant cell is placed.
+    /// Checks if the player has this mycovariant and applies the chance-based transfer to adjacent cells.
+    /// </summary>
+    public static void OnResistantCellPlaced(
+        GameBoard board,
+        int playerId,
+        int tileId,
+        ISimulationObserver? observer = null)
+    {
+        var player = board.Players.FirstOrDefault(p => p.PlayerId == playerId);
+        if (player == null) return;
+
+        // Check if this player has Hyphal Resistance Transfer
+        var playerMyco = player.GetMycovariant(MycovariantIds.HyphalResistanceTransferId);
+        if (playerMyco == null) return;
+
+        var rng = new Random(); // Create a new RNG instance for this effect
+        var adjacentTiles = board.GetAdjacentTiles(tileId);
+        int transferredCount = 0;
+
+        foreach (var adjacentTile in adjacentTiles)
+        {
+            var adjacentCell = adjacentTile.FungalCell;
+            
+            // Check if adjacent cell is owned by the same player, is alive, and not already resistant
+            if (adjacentCell != null && 
+                adjacentCell.OwnerPlayerId == playerId && 
+                adjacentCell.IsAlive && 
+                !adjacentCell.IsResistant)
+            {
+                // Apply chance-based transfer
+                if (rng.NextDouble() < MycovariantGameBalance.HyphalResistanceTransferChance)
+                {
+                    adjacentCell.MakeResistant();
+                    transferredCount++;
+                }
+            }
+        }
+
+        // Record the effect if any transfers occurred
+        if (transferredCount > 0)
+        {
+            playerMyco.IncrementEffectCount(MycovariantEffectType.ResistantTransfers, transferredCount);
+            observer?.RecordHyphalResistanceTransfer(playerId, transferredCount);
+        }
+    }
+
+    /// <summary>
+    /// Applies Hyphal Resistance Transfer after the growth phase for all players with the mycovariant.
+    /// For each living, non-resistant cell adjacent to a resistant cell, applies the transfer chance.
+    /// </summary>
+    public static void OnPostGrowthPhase_HyphalResistanceTransfer(
+        GameBoard board,
+        List<Player> players,
+        Random rng,
+        ISimulationObserver? observer = null)
+    {
+        foreach (var player in players)
+        {
+            var playerMyco = player.GetMycovariant(MycovariantIds.HyphalResistanceTransferId);
+            if (playerMyco == null) continue;
+            // Get all of this player's living resistant cells (typically very few)
+            var resistantCells = board.GetAllCellsOwnedBy(player.PlayerId)
+                .Where(c => c.IsAlive && c.IsResistant)
+                .ToList();
+
+            if (resistantCells.Count == 0) continue; // No resistant cells to transfer from
+
+            int transferredCount = 0;
+            var processedCells = new HashSet<int>(); // Track cells we've already processed
+
+            // For each resistant cell, check its adjacent tiles for transfer candidates
+            foreach (var resistantCell in resistantCells)
+            {
+                var adjacentTiles = board.GetAdjacentTiles(resistantCell.TileId);
+                foreach (var adjacentTile in adjacentTiles)
+                {
+                    var adjacentCell = adjacentTile.FungalCell;
+                    if (adjacentCell == null || 
+                        adjacentCell.OwnerPlayerId != player.PlayerId ||
+                        !adjacentCell.IsAlive ||
+                        adjacentCell.IsResistant ||
+                        processedCells.Contains(adjacentCell.TileId))
+                        continue;
+
+                    // Mark as processed to avoid double-processing if multiple resistant cells are adjacent
+                    processedCells.Add(adjacentCell.TileId);
+
+                    if (rng.NextDouble() < MycovariantGameBalance.HyphalResistanceTransferChance)
+                    {
+                        adjacentCell.MakeResistant();
+                        transferredCount++;
+                    }
+                }
+            }
+            if (transferredCount > 0)
+            {
+                playerMyco.IncrementEffectCount(MycovariantEffectType.ResistantTransfers, transferredCount);
+                observer?.RecordHyphalResistanceTransfer(player.PlayerId, transferredCount);
+            }
         }
     }
 }

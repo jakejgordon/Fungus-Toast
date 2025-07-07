@@ -17,6 +17,7 @@
         PerimeterProliferation,
         FortifiedCells,
         ResistantDrops,
+        ResistantTransfers,
         // Add others as needed
     }
 }

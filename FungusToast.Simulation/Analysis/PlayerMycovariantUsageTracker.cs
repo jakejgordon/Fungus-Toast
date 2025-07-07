@@ -111,6 +111,8 @@ namespace FungusToast.Simulation.Analysis
         {
             if (string.Equals(effectType, "Drops", StringComparison.OrdinalIgnoreCase))
                 return "Spore drops";
+            if (string.Equals(effectType, "ResistantTransfers", StringComparison.OrdinalIgnoreCase))
+                return "Resistance Transfers";
             // Add more mappings as needed
             return effectType;
         }

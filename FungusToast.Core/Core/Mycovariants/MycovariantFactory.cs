@@ -275,5 +275,21 @@ namespace FungusToast.Core.Mycovariants
                 }
             };
 
+        public static Mycovariant HyphalResistanceTransfer() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.HyphalResistanceTransferId,
+                Name = "Hyphal Resistance Transfer",
+                Description = $"After each growth phase, your living cells adjacent to Resistant cells have a {MycovariantGameBalance.HyphalResistanceTransferChance * 100f:0}% chance to become Resistant.",
+                FlavorText = "The protective genetic material flows through the mycelial network, sharing resilience with neighboring cells.",
+                Type = MycovariantType.Passive,
+                IsUniversal = false,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    // Passive: No immediate effect. This effect is handled in the MycovariantEffectProcessor
+                    // after each growth phase, checking for this mycovariant and applying the transfer effect.
+                }
+            };
+
     }
 }
