@@ -67,6 +67,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             if (draftIndex >= draftOrder.Count)
             {
+                // Return undrafted unique mycovariants to the pool for future drafts
+                var allMycovariants = MycovariantRepository.All;
+                poolManager.ReturnUndraftedToPool(allMycovariants, rng);
+                
                 HideDraftUI();
                 uiState = DraftUIState.Complete;
                 GameManager.Instance.OnMycovariantDraftComplete();
@@ -288,8 +292,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 return;
             }
 
-            // Get a replacement mycovariant
-            var replacement = GetReplacementMycovariant();
+            // Get a replacement mycovariant, excluding the just-picked one to prevent duplicates
+            var replacement = GetReplacementMycovariant(picked);
             if (replacement != null)
             {
                 // Update the existing card with the new mycovariant
@@ -314,6 +318,35 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private Mycovariant GetReplacementMycovariant()
         {
             var eligible = poolManager.GetEligibleMycovariantsForPlayer(currentPlayer);
+            if (eligible.Count == 0)
+                return null;
+
+            // Pick a random replacement
+            return eligible[rng.Next(eligible.Count)];
+        }
+
+        /// <summary>
+        /// Gets a single replacement mycovariant from the pool, excluding the just-picked mycovariant.
+        /// </summary>
+        private Mycovariant GetReplacementMycovariant(Mycovariant excludeMycovariant)
+        {
+            var eligible = poolManager.GetEligibleMycovariantsForPlayer(currentPlayer);
+            
+            // Exclude the mycovariant that was just picked to prevent duplicates
+            eligible = eligible.Where(m => m.Id != excludeMycovariant.Id).ToList();
+            
+            // Also exclude any mycovariants currently being offered in the draft
+            var currentOfferedIds = new HashSet<int>();
+            foreach (Transform child in choiceContainer)
+            {
+                var card = child.GetComponent<MycovariantCard>();
+                if (card != null && card.gameObject.activeInHierarchy && card.Mycovariant != excludeMycovariant)
+                {
+                    currentOfferedIds.Add(card.Mycovariant.Id);
+                }
+            }
+            eligible = eligible.Where(m => !currentOfferedIds.Contains(m.Id)).ToList();
+            
             if (eligible.Count == 0)
                 return null;
 

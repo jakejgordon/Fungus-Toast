@@ -46,9 +46,9 @@ namespace FungusToast.Core.Mycovariants
                 Type = MycovariantType.Directional,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+                    var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
                     
-                    bool shouldUseCoreLogic = player?.PlayerType == PlayerTypeEnum.AI || 
+                    bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI || 
                                              observer != null; // Simulation context
                     
                     if (shouldUseCoreLogic)

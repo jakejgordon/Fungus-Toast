@@ -76,6 +76,10 @@ namespace FungusToast.Core.Mycovariants
                 {
                 }
             }
+
+            // Return undrafted unique mycovariants to the pool for future drafts
+            var allMycovariants = MycovariantRepository.All;
+            poolManager.ReturnUndraftedToPool(allMycovariants, rng);
         }
 
 
