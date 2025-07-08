@@ -357,7 +357,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private IEnumerator AnimateAIPickRoutine()
         {
             // Optional: show "AI thinking" with progress dots, brief delay
-            yield return new WaitForSeconds(UnityEngine.Random.Range(0.7f, 1.2f));
+            yield return new WaitForSeconds(FungusToast.Unity.UI.UIEffectConstants.AIDraftPickDelaySeconds);
 
             Mycovariant pick;
             if (GameManager.Instance.IsTestingModeEnabled && draftChoices.Any(m => m.Id == GameManager.Instance.TestingMycovariantId))
@@ -366,7 +366,24 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
             else
             {
-                pick = draftChoices[rng.Next(draftChoices.Count)];
+                // AI: Use AIScore if present, otherwise use default
+                float maxScore = float.MinValue;
+                List<Mycovariant> bestChoices = new List<Mycovariant>();
+                foreach (var m in draftChoices)
+                {
+                    float score = m.AIScore != null ? m.AIScore(currentPlayer, GameManager.Instance.Board) : MycovariantAIGameBalance.DefaultAIScore;
+                    if (score > maxScore)
+                    {
+                        maxScore = score;
+                        bestChoices.Clear();
+                        bestChoices.Add(m);
+                    }
+                    else if (score == maxScore)
+                    {
+                        bestChoices.Add(m);
+                    }
+                }
+                pick = bestChoices[UnityEngine.Random.Range(0, bestChoices.Count)];
             }
             OnChoicePicked(pick);
         }

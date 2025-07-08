@@ -2,10 +2,12 @@
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Players;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Core.Mycovariants
 {
-    public class Mycovariant
+    public class Mycovariant : MycovariantBase
     {
         public int Id { get; set; }
         public string Name { get; set; } = "";
@@ -38,5 +40,9 @@ namespace FungusToast.Core.Mycovariants
         /// </summary>
         public Action<PlayerMycovariant, GameBoard>? UnregisterEventHandlers { get; set; }
 
+        /// <summary>
+        /// Optional AI score for drafting: returns a score (1-10) for how good a fit this mycovariant is for the AI's current situation.
+        /// </summary>
+        public Func<Player, GameBoard, float>? AIScore { get; set; }
     }
 }

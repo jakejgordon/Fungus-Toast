@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Core.Mycovariants
 {
@@ -54,5 +55,7 @@ namespace FungusToast.Core.Mycovariants
                 MycovariantFactory.ReclamationRhizomorphs(),
             };
         }
+
+        public static Mycovariant GetById(int id) => All.First(m => m.Id == id);
     }
 }

@@ -30,5 +30,19 @@ namespace FungusToast.Core.Config
         public const int EnduringToxaphoresExistingToxinExtension = 3; // Y: cycles added to existing toxins at acquisition
 
         public const float ReclamationRhizomorphsSecondAttemptChance = 0.25f; // 25% chance for second reclamation attempt
+
+        // AI scoring for Mycovariants
+        public const float MycelialBastionIBaseAIScore = 4f;
+        public const float MycelialBastionIIBaseAIScore = 5f;
+        public const float MycelialBastionIIIBaseAIScore = 6f;
+        public const float MycelialBastionSynergyBonusAIScore = 6f;
+        public const float ReclamationRhizomorphsBaseAIScoreEarly = 6f;
+        public const float ReclamationRhizomorphsBaseAIScoreLate = 3f;
+        public const float ReclamationRhizomorphsBonusAIScore = 6f;
+
+        public const float AIDraftModeratePriority = 6f;
+        public const float HyphalResistanceTransferBaseAIScoreEarly = 5f;
+        public const float HyphalResistanceTransferBaseAIScoreLate = 3f;
+        public const float MycovariantSynergyBonus = 3f;
     }
 }

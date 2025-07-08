@@ -36,5 +36,10 @@ namespace FungusToast.Unity.UI
         /// Duration (in seconds) for toxin drop animation.
         /// </summary>
         public const float ToxinDropAnimationDurationSeconds = 0.8f;
+
+        /// <summary>
+        /// Delay (in seconds) for AI to "think" before picking a mycovariant during draft.
+        /// </summary>
+        public const float AIDraftPickDelaySeconds = 0.7f;
     }
 } 

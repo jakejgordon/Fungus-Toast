@@ -1,8 +1,10 @@
 ﻿using FungusToast.Core.Board;
 using FungusToast.Core.Config;
+using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace FungusToast.Core.Mycovariants
 {
@@ -109,7 +111,9 @@ namespace FungusToast.Core.Mycovariants
                     {
                         player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyMutationPointAward);
                     }
-                }
+                },
+                AIPrioritizeEarly = true,
+                GetBaseAIScore = (player, board) => board.CurrentRound < 20 ? 5f : 1f
             };
 
         public static Mycovariant PlasmidBountyII() =>
@@ -129,7 +133,9 @@ namespace FungusToast.Core.Mycovariants
                     {
                         player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyIIMutationPointAward);
                     }
-                }
+                },
+                AIPrioritizeEarly = true,
+                GetBaseAIScore = (player, board) => board.CurrentRound < 20 ? 7f : 2f
             };
 
         public static Mycovariant PlasmidBountyIII() =>
@@ -149,7 +155,9 @@ namespace FungusToast.Core.Mycovariants
                     {
                         player.AddMutationPoints(MycovariantGameBalance.PlasmidBountyIIIMutationPointAward);
                     }
-                }
+                },
+                AIPrioritizeEarly = true,
+                GetBaseAIScore = (player, board) => board.CurrentRound < 20 ? 10f : 3f
             };
 
         public static Mycovariant NeutralizingMantle() =>
@@ -160,7 +168,8 @@ namespace FungusToast.Core.Mycovariants
             Description = $"Whenever an enemy toxin is placed orthogonally adjacent to your living cells, you have a {MycovariantGameBalance.NeutralizingMantleNeutralizeChance * 100f:0}% chance to neutralize (remove) it instantly.",
             FlavorText = "A protective sheath of hyphae, secreting enzymes to break down hostile compounds.",
             Type = MycovariantType.Passive,
-            IsUniversal = false
+            IsUniversal = false,
+            GetBaseAIScore = (player, board) => MycovariantGameBalance.AIDraftModeratePriority
         };
 
         public static Mycovariant MycelialBastionI() =>
@@ -175,15 +184,13 @@ namespace FungusToast.Core.Mycovariants
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
                     var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
-                    
                     if (player.PlayerType == PlayerTypeEnum.AI)
                     {
-                        // AI: Core handles everything (selection + effect application)
                         MycovariantEffectProcessor.ResolveMycelialBastion(playerMyco, board, rng, observer);
                     }
-                    // Human: UI layer handles selection + effect application
-                    // (ApplyEffect does nothing, avoiding double execution)
-                }
+                },
+                SynergyWith = new List<int> { MycovariantIds.HyphalResistanceTransferId },
+                GetBaseAIScore = (player, board) => MycovariantGameBalance.MycelialBastionIBaseAIScore
             };
 
         public static Mycovariant MycelialBastionII() =>
@@ -198,15 +205,13 @@ namespace FungusToast.Core.Mycovariants
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
                     var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
-                    
                     if (player.PlayerType == PlayerTypeEnum.AI)
                     {
-                        // AI: Core handles everything (selection + effect application)
                         MycovariantEffectProcessor.ResolveMycelialBastion(playerMyco, board, rng, observer);
                     }
-                    // Human: UI layer handles selection + effect application
-                    // (ApplyEffect does nothing, avoiding double execution)
-                }
+                },
+                SynergyWith = new List<int> { MycovariantIds.HyphalResistanceTransferId },
+                GetBaseAIScore = (player, board) => MycovariantGameBalance.MycelialBastionIIBaseAIScore
             };
 
         public static Mycovariant MycelialBastionIII() =>
@@ -221,15 +226,13 @@ namespace FungusToast.Core.Mycovariants
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
                     var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
-                    
                     if (player.PlayerType == PlayerTypeEnum.AI)
                     {
-                        // AI: Core handles everything (selection + effect application)
                         MycovariantEffectProcessor.ResolveMycelialBastion(playerMyco, board, rng, observer);
                     }
-                    // Human: UI layer handles selection + effect application
-                    // (ApplyEffect does nothing, avoiding double execution)
-                }
+                },
+                SynergyWith = new List<int> { MycovariantIds.HyphalResistanceTransferId },
+                GetBaseAIScore = (player, board) => MycovariantGameBalance.MycelialBastionIIIBaseAIScore
             };
 
         public static Mycovariant SurgicalInoculation() =>
@@ -284,11 +287,12 @@ namespace FungusToast.Core.Mycovariants
                 FlavorText = "The protective genetic material flows through the mycelial network, sharing resilience with neighboring cells.",
                 Type = MycovariantType.Passive,
                 IsUniversal = false,
-                ApplyEffect = (playerMyco, board, rng, observer) =>
-                {
-                    // Passive: No immediate effect. This effect is handled in the MycovariantEffectProcessor
-                    // after each growth phase, checking for this mycovariant and applying the transfer effect.
-                }
+                SynergyWith = new List<int> {
+                    MycovariantIds.MycelialBastionIId,
+                    MycovariantIds.MycelialBastionIIId,
+                    MycovariantIds.MycelialBastionIIIId
+                },
+                GetBaseAIScore = (player, board) => board.CurrentRound < 20 ? MycovariantGameBalance.HyphalResistanceTransferBaseAIScoreEarly : MycovariantGameBalance.HyphalResistanceTransferBaseAIScoreLate
             };
 
         public static Mycovariant EnduringToxaphores() =>
@@ -320,6 +324,21 @@ namespace FungusToast.Core.Mycovariants
                         if (observer != null)
                             observer.RecordEnduringToxaphoresExistingExtensions(player.PlayerId, extendedCount);
                     }
+                },
+                // AI score: 1 if no toxins, scales up to 10 based on toxin count and toxin-placing mutations
+                AIScore = (player, board) =>
+                {
+                    int toxinCount = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsToxin);
+                    if (toxinCount == 0) return 1f;
+                    // Only count true toxin-dropping mutations
+                    int toxinMutations = 0;
+                    if (player.GetMutationLevel(MutationIds.MycotoxinTracer) > 0) toxinMutations++;
+                    if (player.GetMutationLevel(MutationIds.SporocidalBloom) > 0) toxinMutations++;
+                    // Score: base is log-scaled on toxin count, bonus for toxin mutations
+                    double baseScore = 1.0 + 3.0 * Math.Log10(1 + toxinCount);
+                    double mutationBonus = toxinMutations * 1.5;
+                    double total = baseScore + mutationBonus;
+                    return (float)Math.Min(10.0, Math.Max(1.0, total));
                 }
             };
 
@@ -331,9 +350,15 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"When your reclamation attempts fail, you have a {MycovariantGameBalance.ReclamationRhizomorphsSecondAttemptChance * 100f:0}% chance to immediately try again.",
                 FlavorText = "Specialized hyphal networks persist even after setbacks, allowing the colony to recover and try again with renewed vigor.",
                 Type = MycovariantType.Passive,
-                IsUniversal = false
-                // This is a passive effect that triggers on failed reclamation attempts
-                // The effect logic is handled in MycovariantEffectProcessor via event subscription
+                IsUniversal = false,
+                AIScore = (player, board) => {
+                    bool hasBastion = player.PlayerMycovariants.Any(pm =>
+                        pm.MycovariantId == MycovariantIds.MycelialBastionIId ||
+                        pm.MycovariantId == MycovariantIds.MycelialBastionIIId ||
+                        pm.MycovariantId == MycovariantIds.MycelialBastionIIIId);
+                    float baseScore = board.CurrentRound < 20 ? MycovariantGameBalance.ReclamationRhizomorphsBaseAIScoreEarly : MycovariantGameBalance.ReclamationRhizomorphsBaseAIScoreLate;
+                    return baseScore + (hasBastion ? MycovariantGameBalance.ReclamationRhizomorphsBonusAIScore : 0f);
+                }
             };
 
     }
