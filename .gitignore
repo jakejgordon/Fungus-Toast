@@ -93,3 +93,6 @@ Thumbs.db
 .plastic/
 FungusToast.Simulation/simulation_output.txt
 FungusToast.Simulation/SimulationOutput/
+Fungus Toast/Assets/Plugins/FungusToast.Core.dll
+Fungus Toast/Assets/Plugins/FungusToast.Core.pdb
+Fungus Toast/Assets/Scripts/Unity/ForceRecompile.cs
