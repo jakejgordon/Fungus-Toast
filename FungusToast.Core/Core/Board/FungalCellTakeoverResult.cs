@@ -11,7 +11,6 @@ namespace FungusToast.Core.Board
         Reclaimed,
         CatabolicGrowth,
         Invalid,
-        InvalidBecauseResistant,
-        Parasitized
+        InvalidBecauseResistant
     }
 }

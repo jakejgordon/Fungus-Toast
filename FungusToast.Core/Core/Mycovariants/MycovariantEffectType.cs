@@ -20,6 +20,7 @@
         ResistantTransfers,
         ExtendedCycles,
         ExistingExtensions,
+        SecondReclamationAttempts,
         // Add others as needed
     }
 }

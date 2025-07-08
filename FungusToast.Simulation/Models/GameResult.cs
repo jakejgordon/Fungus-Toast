@@ -230,6 +230,14 @@ namespace FungusToast.Simulation.Models
                             break;
                         }
 
+                    case var id when id == MycovariantIds.ReclamationRhizomorphsId:
+                        {
+                            int secondAttempts = tracking.GetReclamationRhizomorphsSecondAttempts(player.PlayerId);
+                            if (secondAttempts > 0)
+                                effectCounts[MycovariantEffectType.SecondReclamationAttempts] = secondAttempts;
+                            break;
+                        }
+
                     // ...more cases...
                 }
 

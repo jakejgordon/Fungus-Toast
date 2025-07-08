@@ -49,6 +49,9 @@ namespace FungusToast.Core.Mycovariants
                 MycovariantFactory.HyphalResistanceTransfer(),
 
                 MycovariantFactory.EnduringToxaphores(),
+                
+                // --- Reclamation/Recovery options ---
+                MycovariantFactory.ReclamationRhizomorphs(),
             };
         }
     }

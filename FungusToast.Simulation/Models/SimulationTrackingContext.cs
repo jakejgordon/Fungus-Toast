@@ -725,5 +725,19 @@ namespace FungusToast.Simulation.Models
         public int GetEnduringToxaphoresExistingExtensions(int playerId)
             => enduringToxaphoresExistingExtensions.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllEnduringToxaphoresExistingExtensions() => new(enduringToxaphoresExistingExtensions);
+
+        // ────────────────
+        // Reclamation Rhizomorphs
+        // ────────────────
+        private readonly Dictionary<int, int> reclamationRhizomorphsSecondAttempts = new();
+        public void RecordReclamationRhizomorphsSecondAttempt(int playerId, int count)
+        {
+            if (!reclamationRhizomorphsSecondAttempts.ContainsKey(playerId))
+                reclamationRhizomorphsSecondAttempts[playerId] = 0;
+            reclamationRhizomorphsSecondAttempts[playerId] += count;
+        }
+        public int GetReclamationRhizomorphsSecondAttempts(int playerId)
+            => reclamationRhizomorphsSecondAttempts.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllReclamationRhizomorphsSecondAttempts() => new(reclamationRhizomorphsSecondAttempts);
     }
 }

@@ -62,7 +62,7 @@ namespace FungusToast.Core.Mycovariants
                         {
                             var sourceCell = livingCells[rng.Next(livingCells.Count)];
                             MycovariantEffectProcessor.ResolveJettingMycelium(
-                                playerMyco, player, board, sourceCell.TileId, cardinalDirection, observer);
+                                playerMyco, player, board, sourceCell.TileId, cardinalDirection, rng, observer);
                         }
                     }
                     // Human in Unity: UI layer handles selection + effect application
@@ -321,6 +321,19 @@ namespace FungusToast.Core.Mycovariants
                             observer.RecordEnduringToxaphoresExistingExtensions(player.PlayerId, extendedCount);
                     }
                 }
+            };
+
+        public static Mycovariant ReclamationRhizomorphs() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.ReclamationRhizomorphsId,
+                Name = "Reclamation Rhizomorphs",
+                Description = $"When your reclamation attempts fail, you have a {MycovariantGameBalance.ReclamationRhizomorphsSecondAttemptChance * 100f:0}% chance to immediately try again.",
+                FlavorText = "Specialized hyphal networks persist even after setbacks, allowing the colony to recover and try again with renewed vigor.",
+                Type = MycovariantType.Passive,
+                IsUniversal = false
+                // This is a passive effect that triggers on failed reclamation attempts
+                // The effect logic is handled in MycovariantEffectProcessor via event subscription
             };
 
     }

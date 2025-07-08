@@ -21,6 +21,7 @@ public static class MycovariantEffectProcessor
         GameBoard board,
         int tileId,
         CardinalDirection direction,
+        Random rng,
         ISimulationObserver? observer = null)
     {
         int playerId = playerMyco.PlayerId;
@@ -62,11 +63,11 @@ public static class MycovariantEffectProcessor
             else
             {
                 // Use board.TakeoverCell to handle both cell state and board updates.
-                var takeoverResult = board.TakeoverCell(line[i], playerId, allowToxin: true);
+                var takeoverResult = board.TakeoverCell(line[i], playerId, allowToxin: true, players: board.Players, rng: rng, observer: observer);
 
                 switch (takeoverResult)
                 {
-                    case FungalCellTakeoverResult.Parasitized: infested++; break;
+                    case FungalCellTakeoverResult.Infested: infested++; break;
                     case FungalCellTakeoverResult.Reclaimed: reclaimed++; break;
                     case FungalCellTakeoverResult.CatabolicGrowth: catabolicGrowth++; break;
                     case FungalCellTakeoverResult.AlreadyOwned: alreadyOwned++; break;
@@ -464,8 +465,33 @@ public static class MycovariantEffectProcessor
 
         int extension = MycovariantGameBalance.EnduringToxaphoresNewToxinExtension;
         cell.ToxinExpirationCycle += extension;
-        playerMyco.IncrementEffectCount(MycovariantEffectType.ExtendedCycles, extension);
-        if (observer != null)
-            observer.RecordEnduringToxaphoresExtendedCycles(playerId, extension);
+        observer?.RecordEnduringToxaphoresExtendedCycles(playerId, extension);
+    }
+
+    public static void OnAcquisition_EnduringToxaphores(
+        Player player,
+        GameBoard board,
+        ISimulationObserver? observer = null)
+    {
+        var playerMyco = player.GetMycovariant(MycovariantIds.EnduringToxaphoresId);
+        if (playerMyco == null) return;
+
+        // Extend all existing toxins by Y cycles at acquisition
+        int extension = MycovariantGameBalance.EnduringToxaphoresExistingToxinExtension;
+        int totalExtended = 0;
+
+        foreach (var cell in board.AllToxinFungalCells())
+        {
+            if (cell.OwnerPlayerId == player.PlayerId)
+            {
+                cell.ToxinExpirationCycle += extension;
+                totalExtended += extension;
+            }
+        }
+
+        if (totalExtended > 0)
+        {
+            observer?.RecordEnduringToxaphoresExistingExtensions(player.PlayerId, totalExtended);
+        }
     }
 }

@@ -28,5 +28,7 @@ namespace FungusToast.Core.Config
 
         public const int EnduringToxaphoresNewToxinExtension = 7; // X: cycles added to new toxins
         public const int EnduringToxaphoresExistingToxinExtension = 3; // Y: cycles added to existing toxins at acquisition
+
+        public const float ReclamationRhizomorphsSecondAttemptChance = 0.25f; // 25% chance for second reclamation attempt
     }
 }

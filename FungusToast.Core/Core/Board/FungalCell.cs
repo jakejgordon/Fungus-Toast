@@ -119,7 +119,7 @@ namespace FungusToast.Core.Board
         }
 
         /// <summary>
-        /// Kills this cell (living → dead), for any non-toxin death (Killed/Withered/Poisoned/etc).
+        /// Kills this cell (living → dead), for any non-toxin death (Killed/Infested/Poisoned/etc).
         /// Resistant cells cannot be killed.
         /// </summary>
         public void Kill(DeathReason reason)

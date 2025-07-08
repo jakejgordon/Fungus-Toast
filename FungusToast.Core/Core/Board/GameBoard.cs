@@ -8,6 +8,7 @@ using FungusToast.Core.Board;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core.Mycovariants;
 
 namespace FungusToast.Core.Board
 {
@@ -722,11 +723,15 @@ namespace FungusToast.Core.Board
         {
             var tile = GetTileById(tileId);
             if (tile?.FungalCell == null || !tile.FungalCell.IsDead)
+            {
                 return false;
+            }
 
             var cell = tile.FungalCell;
             if (cell.OwnerPlayerId != playerId)
+            {
                 return false;
+            }
 
             cell.Reclaim(playerId);
             PlaceFungalCell(cell); // Fires correct events
@@ -761,23 +766,39 @@ namespace FungusToast.Core.Board
         /// <param name="tileId">The tile to take over.</param>
         /// <param name="newOwnerPlayerId">The player taking over the cell.</param>
         /// <param name="allowToxin">Whether to allow takeover of toxin cells.</param>
+        /// <param name="players">List of players (needed for Reclamation Rhizomorphs effect)</param>
+        /// <param name="rng">Random number generator (needed for Reclamation Rhizomorphs effect)</param>
+        /// <param name="observer">Simulation observer (needed for tracking)</param>
         /// <returns>The result of the takeover attempt.</returns>
         public FungalCellTakeoverResult TakeoverCell(
             int tileId,
             int newOwnerPlayerId,
-            bool allowToxin = false)
+            bool allowToxin,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
         {
             var cell = GetTileById(tileId)?.FungalCell;
             if (cell == null)
                 return FungalCellTakeoverResult.Invalid;
+            
             var result = cell.Takeover(newOwnerPlayerId, allowToxin);
-            if (result == FungalCellTakeoverResult.Parasitized ||
+            
+            if (result == FungalCellTakeoverResult.Infested ||
                 result == FungalCellTakeoverResult.Reclaimed ||
                 result == FungalCellTakeoverResult.CatabolicGrowth)
             {
                 PlaceFungalCell(cell);
             }
             return result;
+        }
+
+        /// <summary>
+        /// Public method to invoke the OnDeadCellReclaim event from outside this class.
+        /// </summary>
+        public void InvokeDeadCellReclaim(FungalCell cell, int playerId)
+        {
+            OnDeadCellReclaim?.Invoke(cell, playerId);
         }
 
     }

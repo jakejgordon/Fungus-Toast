@@ -698,27 +698,25 @@ namespace FungusToast.Core.Phases
 
             foreach (var deadTile in deadEnemyNeighbors)
             {
-                if (rng.NextDouble() <= baseChance)
-                {
-                    // Initial infiltration (reclaim as living)
-                    var reclaimedCell = deadTile.FungalCell!;
-                    reclaimedCell.Reclaim(owner.PlayerId);
-                    board.PlaceFungalCell(reclaimedCell); // Use board method for events!
+                            // Try to reclaim the dead cell using the helper (supports Reclamation Rhizomorphs retry)
+            bool success = ReclaimCellHelper.TryReclaimDeadCell(
+                board, owner, deadTile.TileId, (float)baseChance, rng, observer);
+            if (success)
+            {
+                // Track which tiles have already been reclaimed
+                var alreadyReclaimed = new HashSet<int> { deadTile.TileId };
 
-                    // Track which tiles have already been reclaimed
-                    var alreadyReclaimed = new HashSet<int> { deadTile.TileId };
+                // Cascade infiltrations
+                int cascadeCount = CascadeNecrohyphalInfiltration(
+                    board, deadTile, owner, rng, (float)cascadeChance, alreadyReclaimed);
 
-                    // Cascade infiltrations
-                    int cascadeCount = CascadeNecrohyphalInfiltration(
-                        board, deadTile, owner, rng, cascadeChance, alreadyReclaimed);
+                // Record: 1 infiltration for the initial, cascades for the rest
+                observer?.RecordNecrohyphalInfiltration(owner.PlayerId, 1);
+                if (cascadeCount > 0)
+                    observer?.RecordNecrohyphalInfiltrationCascade(owner.PlayerId, cascadeCount);
 
-                    // Record: 1 infiltration for the initial, cascades for the rest
-                    observer?.RecordNecrohyphalInfiltration(owner.PlayerId, 1);
-                    if (cascadeCount > 0)
-                        observer?.RecordNecrohyphalInfiltrationCascade(owner.PlayerId, cascadeCount);
-
-                    return true;
-                }
+                return true;
+            }
             }
 
             return false;
@@ -730,7 +728,7 @@ namespace FungusToast.Core.Phases
            BoardTile sourceTile,
            Player owner,
            Random rng,
-           double cascadeChance,
+           float cascadeChance,
            HashSet<int> alreadyReclaimed,
            ISimulationObserver? observer = null)
         {
@@ -757,11 +755,11 @@ namespace FungusToast.Core.Phases
 
                 foreach (var deadTile in nextTargets)
                 {
-                    if (rng.NextDouble() <= cascadeChance)
+                    // Try to reclaim the dead cell using the helper (supports Reclamation Rhizomorphs retry)
+                    bool success = ReclaimCellHelper.TryReclaimDeadCell(
+                        board, owner, deadTile.TileId, (float)cascadeChance, rng, observer);
+                    if (success)
                     {
-                        var reclaimedCell = deadTile.FungalCell!;
-                        reclaimedCell.Reclaim(owner.PlayerId);
-                        board.PlaceFungalCell(reclaimedCell); // Use board method for events!
                         alreadyReclaimed.Add(deadTile.TileId);
 
                         cascadeCount++;
@@ -842,19 +840,13 @@ namespace FungusToast.Core.Phases
                         if (dead is null || dead.IsAlive || dead.IsToxin) continue;
                         if (dead.OwnerPlayerId != p.PlayerId) continue;
                         if (!attempted.Add(dead.TileId)) continue;
-                        if (rng.NextDouble() < reclaimChance)
+                        
+                        // Try to reclaim the dead cell using the helper
+                        bool success = ReclaimCellHelper.TryReclaimDeadCell(
+                            board, p, dead.TileId, reclaimChance, rng, observer);
+                        if (success)
                         {
-                            // Try to reclaim the dead cell using board API
-                            bool success = board.TryGrowFungalCell(
-                                p.PlayerId,
-                                cell.TileId,   // Source tile: living cell
-                                dead.TileId,   // Target: dead cell tile
-                                out GrowthFailureReason reason, canReclaimDeadCell: true
-                            );
-                            if (success)
-                            {
-                                observer?.RecordRegenerativeHyphaeReclaim(p.PlayerId);
-                            }
+                            observer?.RecordRegenerativeHyphaeReclaim(p.PlayerId);
                         }
                     }
                 }
@@ -950,7 +942,7 @@ namespace FungusToast.Core.Phases
                     if (prevCell != null)
                     {
                         // Use board.TakeoverCell to handle both cell state and board updates.
-                        takeoverResult = board.TakeoverCell(targetTileId, player.PlayerId, allowToxin: true);
+                        takeoverResult = board.TakeoverCell(targetTileId, player.PlayerId, allowToxin: true, players: board.Players, rng: rng, observer: observer);
                         switch (takeoverResult)
                         {
                             case FungalCellTakeoverResult.Infested: infested++; break;
@@ -1165,12 +1157,12 @@ namespace FungusToast.Core.Phases
                     continue;
 
                 float chance = level * GameBalance.CatabolicRebirthResurrectionChancePerLevel;
-                if (rng.NextDouble() < chance)
+                
+                // Try to reclaim the dead cell using the helper (supports Reclamation Rhizomorphs retry)
+                bool success = ReclaimCellHelper.TryReclaimDeadCell(
+                    board, deadCellOwner, adjacentTile.TileId, (float)chance, rng, observer);
+                if (success)
                 {
-                    // Resurrect the dead cell for its original owner
-                    adjacentTile.FungalCell.Reclaim(deadCellOwner.PlayerId);
-                    board.PlaceFungalCell(adjacentTile.FungalCell);
-                    
                     // Track resurrections by player
                     if (!resurrectionsByPlayer.ContainsKey(deadCellOwner.PlayerId))
                         resurrectionsByPlayer[deadCellOwner.PlayerId] = 0;

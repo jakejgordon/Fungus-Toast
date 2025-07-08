@@ -50,7 +50,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             player,
                             GameManager.Instance.Board,
                             cell.TileId,
-                            direction
+                            direction,
+                            new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                            null
                         );
                         gridVisualizer.ClearHighlights();
                         onComplete?.Invoke();
