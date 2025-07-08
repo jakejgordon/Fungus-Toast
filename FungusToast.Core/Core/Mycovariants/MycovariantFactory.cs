@@ -113,7 +113,7 @@ namespace FungusToast.Core.Mycovariants
                     }
                 },
                 AIPrioritizeEarly = true,
-                GetBaseAIScore = (player, board) => board.CurrentRound < 20 ? 5f : 1f
+                AIScore = (player, board) => 5f
             };
 
         public static Mycovariant PlasmidBountyII() =>
@@ -135,7 +135,7 @@ namespace FungusToast.Core.Mycovariants
                     }
                 },
                 AIPrioritizeEarly = true,
-                GetBaseAIScore = (player, board) => board.CurrentRound < 20 ? 7f : 2f
+                AIScore = (player, board) => 7f
             };
 
         public static Mycovariant PlasmidBountyIII() =>
@@ -157,7 +157,7 @@ namespace FungusToast.Core.Mycovariants
                     }
                 },
                 AIPrioritizeEarly = true,
-                GetBaseAIScore = (player, board) => board.CurrentRound < 20 ? 10f : 3f
+                AIScore = (player, board) => 10f
             };
 
         public static Mycovariant NeutralizingMantle() =>
@@ -169,7 +169,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "A protective sheath of hyphae, secreting enzymes to break down hostile compounds.",
             Type = MycovariantType.Passive,
             IsUniversal = false,
-            GetBaseAIScore = (player, board) => MycovariantGameBalance.AIDraftModeratePriority
+                            AIScore = (player, board) => MycovariantGameBalance.AIDraftModeratePriority
         };
 
         public static Mycovariant MycelialBastionI() =>
@@ -189,8 +189,11 @@ namespace FungusToast.Core.Mycovariants
                         MycovariantEffectProcessor.ResolveMycelialBastion(playerMyco, board, rng, observer);
                     }
                 },
-                SynergyWith = new List<int> { MycovariantIds.HyphalResistanceTransferId },
-                GetBaseAIScore = (player, board) => MycovariantGameBalance.MycelialBastionIBaseAIScore
+                SynergyWith = new List<int> { 
+                    MycovariantIds.HyphalResistanceTransferId,
+                    MycovariantIds.SurgicalInoculationId
+                },
+                AIScore = (player, board) => MycovariantGameBalance.MycelialBastionIBaseAIScore
             };
 
         public static Mycovariant MycelialBastionII() =>
@@ -210,8 +213,11 @@ namespace FungusToast.Core.Mycovariants
                         MycovariantEffectProcessor.ResolveMycelialBastion(playerMyco, board, rng, observer);
                     }
                 },
-                SynergyWith = new List<int> { MycovariantIds.HyphalResistanceTransferId },
-                GetBaseAIScore = (player, board) => MycovariantGameBalance.MycelialBastionIIBaseAIScore
+                SynergyWith = new List<int> { 
+                    MycovariantIds.HyphalResistanceTransferId,
+                    MycovariantIds.SurgicalInoculationId
+                },
+                AIScore = (player, board) => MycovariantGameBalance.MycelialBastionIIBaseAIScore
             };
 
         public static Mycovariant MycelialBastionIII() =>
@@ -231,8 +237,11 @@ namespace FungusToast.Core.Mycovariants
                         MycovariantEffectProcessor.ResolveMycelialBastion(playerMyco, board, rng, observer);
                     }
                 },
-                SynergyWith = new List<int> { MycovariantIds.HyphalResistanceTransferId },
-                GetBaseAIScore = (player, board) => MycovariantGameBalance.MycelialBastionIIIBaseAIScore
+                SynergyWith = new List<int> { 
+                    MycovariantIds.HyphalResistanceTransferId,
+                    MycovariantIds.SurgicalInoculationId
+                },
+                AIScore = (player, board) => MycovariantGameBalance.MycelialBastionIIIBaseAIScore
             };
 
         public static Mycovariant SurgicalInoculation() =>
@@ -258,7 +267,14 @@ namespace FungusToast.Core.Mycovariants
                     }
                     // Human in Unity: UI layer handles selection + effect application
                     // (ApplyEffect does nothing, avoiding double execution)
-                }
+                },
+                SynergyWith = new List<int> { 
+                    MycovariantIds.MycelialBastionIId,
+                    MycovariantIds.MycelialBastionIIId,
+                    MycovariantIds.MycelialBastionIIIId,
+                    MycovariantIds.HyphalResistanceTransferId
+                },
+                AIScore = (player, board) => MycovariantGameBalance.AIDraftModeratePriority
             };
 
         public static Mycovariant PerimeterProliferator() =>
@@ -275,6 +291,24 @@ namespace FungusToast.Core.Mycovariants
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
                     // Passive: No immediate effect. Growth logic must check for this mycovariant and apply the multiplier.
+                },
+                AIScore = (player, board) =>
+                {
+                    // Count living cells on the border of the map
+                    int borderCells = 0;
+                    foreach (var tile in board.AllTiles())
+                    {
+                        if (tile.IsOnBorder(board.Width, board.Height) && 
+                            tile.FungalCell?.IsAlive == true && 
+                            tile.FungalCell.OwnerPlayerId == player.PlayerId)
+                        {
+                            borderCells++;
+                        }
+                    }
+                    
+                    // Scale from 1 to 10: 0 cells = 1, 100+ cells = 10
+                    float score = Math.Min(10f, Math.Max(1f, 1f + (borderCells * 9f / 100f)));
+                    return score;
                 }
             };
 
@@ -290,9 +324,10 @@ namespace FungusToast.Core.Mycovariants
                 SynergyWith = new List<int> {
                     MycovariantIds.MycelialBastionIId,
                     MycovariantIds.MycelialBastionIIId,
-                    MycovariantIds.MycelialBastionIIIId
+                    MycovariantIds.MycelialBastionIIIId,
+                    MycovariantIds.SurgicalInoculationId
                 },
-                GetBaseAIScore = (player, board) => board.CurrentRound < 20 ? MycovariantGameBalance.HyphalResistanceTransferBaseAIScoreEarly : MycovariantGameBalance.HyphalResistanceTransferBaseAIScoreLate
+                AIScore = (player, board) => MycovariantGameBalance.HyphalResistanceTransferBaseAIScoreEarly
             };
 
         public static Mycovariant EnduringToxaphores() =>

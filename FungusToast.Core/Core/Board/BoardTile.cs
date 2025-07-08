@@ -60,5 +60,13 @@ namespace FungusToast.Core.Board
         {
             return Math.Abs(this.X - other.X) + Math.Abs(this.Y - other.Y);
         }
+
+        /// <summary>
+        /// Returns true if this tile is on the border of the board.
+        /// </summary>
+        public bool IsOnBorder(int boardWidth, int boardHeight)
+        {
+            return X == 0 || X == boardWidth - 1 || Y == 0 || Y == boardHeight - 1;
+        }
     }
 }
