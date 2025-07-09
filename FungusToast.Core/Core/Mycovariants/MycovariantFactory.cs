@@ -2,6 +2,7 @@
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
+using FungusToast.Core.Mycovariants;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -69,6 +70,13 @@ namespace FungusToast.Core.Mycovariants
                     }
                     // Human in Unity: UI layer handles selection + effect application
                     // (ApplyEffect does nothing, avoiding double execution)
+                },
+                AIScore = (player, board) =>
+                {
+                    var bestPlacement = JettingMyceliumHelper.FindBestPlacement(player, board, cardinalDirection);
+                    if (bestPlacement == null) return 1f; // No valid placement possible
+                    
+                    return JettingMyceliumHelper.ScoreToAIScore(bestPlacement.Value.score);
                 }
             };
         }
