@@ -169,6 +169,14 @@ namespace FungusToast.Core.Players
                 PlayerMutations[mutation.Id] = new PlayerMutation(PlayerId, mutation.Id, mutation);
             var pm = PlayerMutations[mutation.Id];
 
+            // --- Prerequisite tracking logic ---
+            bool prereqsMet = true;
+            foreach (var pre in mutation.Prerequisites)
+                if (GetMutationLevel(pre.MutationId) < pre.RequiredLevel)
+                    prereqsMet = false;
+            if (prereqsMet && pm.PrereqMetRound == null)
+                pm.PrereqMetRound = currentRound;
+
             if (mutation.IsSurge)
             {
                 // Surge logic
@@ -178,6 +186,10 @@ namespace FungusToast.Core.Players
                 int activationCost = mutation.GetSurgeActivationCost(currentLevel);
 
                 if (MutationPoints < activationCost || currentLevel >= mutation.MaxLevel)
+                    return false;
+
+                // Enforce one-round delay after prereqs met
+                if (pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
                     return false;
 
                 // Deduct points and upgrade
@@ -197,6 +209,10 @@ namespace FungusToast.Core.Players
                 // Standard mutation upgrade
                 if (MutationPoints >= mutation.PointsPerUpgrade && pm.CurrentLevel < mutation.MaxLevel)
                 {
+                    // Enforce one-round delay after prereqs met
+                    if (pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
+                        return false;
+
                     MutationPoints -= mutation.PointsPerUpgrade;
                     pm.Upgrade(currentRound);
                     simulationObserver?.RecordMutationPointsSpent(PlayerId, mutation.Tier, mutation.PointsPerUpgrade);
@@ -206,8 +222,7 @@ namespace FungusToast.Core.Players
             }
         }
 
-
-        public bool CanUpgrade(Mutation mut)
+        public bool CanUpgrade(Mutation mut, int currentRound)
         {
             if (mut == null) return false;
 
@@ -224,9 +239,12 @@ namespace FungusToast.Core.Players
                 ? mut.GetSurgeActivationCost(currentLevel)
                 : mut.PointsPerUpgrade;
 
+            // Enforce one-round delay after prereqs met
+            if (PlayerMutations.TryGetValue(mut.Id, out var pm) && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
+                return false;
+
             return MutationPoints >= cost && currentLevel < mut.MaxLevel;
         }
-
 
         /* ---------------- Bonus MP & auto-upgrade ------------- */
 

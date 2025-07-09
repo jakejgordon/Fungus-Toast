@@ -37,6 +37,11 @@ namespace FungusToast.Core.Players
         /// </summary>
         public int? FirstUpgradeRound { get; private set; }
 
+        /// <summary>
+        /// The round number when all prerequisites were first met (null if never met).
+        /// </summary>
+        public int? PrereqMetRound { get; set; }
+
         public PlayerMutation(int playerId, int mutationId, Mutation mutation)
         {
             PlayerId = playerId;

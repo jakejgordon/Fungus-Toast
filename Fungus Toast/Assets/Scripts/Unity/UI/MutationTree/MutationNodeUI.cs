@@ -28,6 +28,10 @@ namespace FungusToast.Unity.UI.MutationTree
         [Header("Highlight")]
         [SerializeField] private Outline highlightOutline;
 
+        [Header("Unlock UI")]
+        [SerializeField] private GameObject pendingUnlockOverlay; // Hourglass overlay for pending unlock
+        [SerializeField] private TextMeshProUGUI pendingUnlockText;
+
         private Mutation mutation;
         private UI_MutationManager uiManager;
         private Player player;
@@ -106,11 +110,24 @@ namespace FungusToast.Unity.UI.MutationTree
 
             upgradeButton.interactable = interactable;
 
-            // LOCK/SURGE UI
-            lockOverlay.SetActive(isLocked && !isSurgeActive);
+            // LOCK/SURGE/PENDING UI
+            bool showPendingUnlock = false;
+            if (player.PlayerMutations.TryGetValue(mutation.Id, out var pm) && pm.PrereqMetRound.HasValue)
+            {
+                int currentRound = GameManager.Instance.Board.CurrentRound;
+                if (pm.PrereqMetRound.Value == currentRound && isLocked)
+                {
+                    showPendingUnlock = true;
+                }
+            }
+            lockOverlay.SetActive(isLocked && !isSurgeActive && !showPendingUnlock);
+            if (pendingUnlockOverlay != null)
+                pendingUnlockOverlay.SetActive(showPendingUnlock);
+            if (pendingUnlockText != null)
+                pendingUnlockText.text = "1";
 
             if (canvasGroup != null)
-                canvasGroup.alpha = (isLocked || isSurgeActive) ? 0.5f : 1f;
+                canvasGroup.alpha = (isLocked || isSurgeActive || showPendingUnlock) ? 0.5f : 1f;
 
             // Surge overlay (shows when surge is active)
             if (surgeActiveOverlay != null)
