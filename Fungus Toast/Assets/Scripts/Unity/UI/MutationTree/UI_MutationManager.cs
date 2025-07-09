@@ -191,6 +191,7 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 RefreshSpendPointsButtonUI();
                 GameManager.Instance.GameUI.MoldProfilePanel.Refresh();
+                UpdateAllMutationNodeInteractables();
                 TryEndHumanTurn();
                 return true;
             }
@@ -459,6 +460,14 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             foreach (var node in mutationButtons)
                 node.SetHighlight(false);
+        }
+
+        public void UpdateAllMutationNodeInteractables()
+        {
+            foreach (var node in mutationButtons)
+            {
+                node.UpdateInteractable();
+            }
         }
 
     }

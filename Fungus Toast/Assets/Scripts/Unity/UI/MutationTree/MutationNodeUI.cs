@@ -138,6 +138,8 @@ namespace FungusToast.Unity.UI.MutationTree
                     upgradeCostGroup.SetActive(false);
                 }
             }
+
+            UpdateInteractable();
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -220,6 +222,31 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (highlightOutline != null)
                 highlightOutline.enabled = on;
+        }
+
+        public void UpdateInteractable()
+        {
+            int currentLevel = player.GetMutationLevel(mutation.Id);
+            bool isSurge = mutation.IsSurge;
+            bool isSurgeActive = isSurge && player.IsSurgeActive(mutation.Id);
+            int upgradeCost = isSurge
+                ? mutation.GetSurgeActivationCost(currentLevel)
+                : mutation.PointsPerUpgrade;
+            bool canAfford = player.MutationPoints >= upgradeCost;
+            bool isLocked = false;
+            foreach (var prereq in mutation.Prerequisites)
+            {
+                if (player.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel)
+                {
+                    isLocked = true;
+                    break;
+                }
+            }
+            bool isMaxed = currentLevel >= mutation.MaxLevel;
+            bool interactable = !isLocked && canAfford && !isMaxed;
+            if (isSurge && isSurgeActive)
+                interactable = false;
+            upgradeButton.interactable = interactable;
         }
     }
 }
