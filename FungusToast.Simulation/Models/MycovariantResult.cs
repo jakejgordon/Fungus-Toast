@@ -13,5 +13,6 @@ namespace FungusToast.Simulation.Models
         public string MycovariantType { get; set; } = "";
         public bool Triggered { get; set; }
         public Dictionary<string, int> EffectCounts { get; set; } = new();
+        public float? AIScoreAtDraft { get; set; }
     }
 }

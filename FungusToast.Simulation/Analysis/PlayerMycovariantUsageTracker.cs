@@ -9,7 +9,7 @@ namespace FungusToast.Simulation.Analysis
     public class PlayerMycovariantUsageTracker
     {
         // Each record stores effect counts as a dictionary by effect type (e.g., "Colonized", "Infested", "Toxified", etc.)
-        private readonly List<(int PlayerId, string Strategy, string MycovariantName, string Type, string EffectType, int EffectValue, bool Triggered)> _records = new();
+        private readonly List<(int PlayerId, string Strategy, string MycovariantName, string Type, string EffectType, int EffectValue, bool Triggered, float? AIScoreAtDraft)> _records = new();
 
         public void TrackGameResult(GameResult result)
         {
@@ -28,7 +28,8 @@ namespace FungusToast.Simulation.Analysis
                                 myco.MycovariantType,
                                 kvp.Key,
                                 kvp.Value,
-                                myco.Triggered
+                                myco.Triggered,
+                                myco.AIScoreAtDraft
                             ));
                         }
                     }
@@ -42,7 +43,8 @@ namespace FungusToast.Simulation.Analysis
                             myco.MycovariantType,
                             "-",
                             0,
-                            myco.Triggered
+                            myco.Triggered,
+                            myco.AIScoreAtDraft
                         ));
                     }
                 }
@@ -52,8 +54,8 @@ namespace FungusToast.Simulation.Analysis
         public void PrintReport(List<(int PlayerId, string StrategyName)> rankedPlayers)
         {
             Console.WriteLine("\nPlayer-Mycovariant Usage Summary (per Player, all games):");
-            Console.WriteLine("{0,8} | {1,-25} | {2,-28} | {3,-12} | {4,-12} | {5,-8} | {6,-8} | {7,-10} | {8,-12}",
-                "PlayerId", "Strategy", "Mycovariant Name", "Type", "Effect", "Games", "Trig.", "Avg Eff", "Tot Eff");
+            Console.WriteLine("{0,8} | {1,-25} | {2,-28} | {3,-12} | {4,-12} | {5,-8} | {6,-8} | {7,-10} | {8,-12} | {9,-12}",
+                "PlayerId", "Strategy", "Mycovariant Name", "Type", "Effect", "Games", "Trig.", "Avg Eff", "Tot Eff", "Avg AI Draft");
             Console.WriteLine(new string('-', 8) + "-|-" +
                                 new string('-', 25) + "-|-" +
                                 new string('-', 28) + "-|-" +
@@ -62,6 +64,7 @@ namespace FungusToast.Simulation.Analysis
                                 new string('-', 8) + "-|-" +
                                 new string('-', 8) + "-|-" +
                                 new string('-', 10) + "-|-" +
+                                new string('-', 12) + "-|-" +
                                 new string('-', 12));
 
             // Group by player/strategy/mycovariant/effect/type
@@ -77,7 +80,8 @@ namespace FungusToast.Simulation.Analysis
                     Games = g.Count(),
                     Triggered = g.Count(x => x.Triggered),
                     TotalEffect = g.Sum(x => x.EffectValue),
-                    AvgEffect = g.Count() > 0 ? g.Average(x => x.EffectValue) : 0.0
+                    AvgEffect = g.Count() > 0 ? g.Average(x => x.EffectValue) : 0.0,
+                    AvgAIScoreAtDraft = g.Select(x => x.AIScoreAtDraft).Where(x => x.HasValue).DefaultIfEmpty().Average(x => x ?? 0)
                 })
                 .ToList();
 
@@ -89,7 +93,7 @@ namespace FungusToast.Simulation.Analysis
 
                 foreach (var r in playerRecords.OrderBy(x => x.MycovariantName).ThenBy(x => x.EffectType))
                 {
-                    Console.WriteLine("{0,8} | {1,-25} | {2,-28} | {3,-12} | {4,-12} | {5,-8} | {6,-8} | {7,-10:N2} | {8,-12}",
+                    Console.WriteLine("{0,8} | {1,-25} | {2,-28} | {3,-12} | {4,-12} | {5,-8} | {6,-8} | {7,-10:N2} | {8,-12} | {9,-12:N2}",
                         r.PlayerId,
                         Truncate(r.Strategy, 25),
                         Truncate(r.MycovariantName, 28),
@@ -98,10 +102,11 @@ namespace FungusToast.Simulation.Analysis
                         r.Games,
                         r.Triggered,
                         r.AvgEffect,
-                        r.TotalEffect);
+                        r.TotalEffect,
+                        r.AvgAIScoreAtDraft);
                 }
             }
-            Console.WriteLine(new string('-', 125));
+            Console.WriteLine(new string('-', 137));
         }
 
         private static string Truncate(string value, int maxLength) =>

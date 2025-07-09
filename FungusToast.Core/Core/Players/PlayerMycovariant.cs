@@ -22,6 +22,11 @@ namespace FungusToast.Core.Players
         /// </summary>
         public Dictionary<MycovariantEffectType, int> EffectCounts { get; private set; } = new();
 
+        /// <summary>
+        /// The AI score for this mycovariant at the time it was drafted (AI only).
+        /// </summary>
+        public float? AIScoreAtDraft { get; set; }
+
         public Action<int, int>? ColonizeHandler;
 
 

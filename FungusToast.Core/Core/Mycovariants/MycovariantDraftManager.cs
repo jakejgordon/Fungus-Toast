@@ -60,6 +60,17 @@ namespace FungusToast.Core.Mycovariants
                 // Use encapsulated add
                 player.AddMycovariant(picked);
 
+                // Set AIScoreAtDraft for AI picks
+                if (player.PlayerType == PlayerTypeEnum.AI)
+                {
+                    var aiPlayerMyco = player.PlayerMycovariants.LastOrDefault(pm => pm.MycovariantId == picked.Id);
+                    if (aiPlayerMyco != null)
+                    {
+                        float score = picked.GetAIScore(player, board);
+                        aiPlayerMyco.AIScoreAtDraft = score;
+                    }
+                }
+
                 // Only remove from pool if not universal (i.e., not always available)
                 if (!picked.IsUniversal)
                     poolManager.RemoveFromPool(picked);

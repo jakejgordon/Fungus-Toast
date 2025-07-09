@@ -44,5 +44,10 @@ namespace FungusToast.Core.Mycovariants
         /// Optional AI score for drafting: returns a score (1-10) for how good a fit this mycovariant is for the AI's current situation.
         /// </summary>
         public Func<Player, GameBoard, float>? AIScore { get; set; }
+
+        public override float GetBaseAIScore(Player player, GameBoard board)
+        {
+            return AIScore != null ? AIScore(player, board) : 0f;
+        }
     }
 }

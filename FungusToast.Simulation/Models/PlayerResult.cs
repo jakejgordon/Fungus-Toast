@@ -113,5 +113,10 @@ namespace FungusToast.Simulation.Models
         public int PutrefactiveRejuvenationCyclesReduced { get; set; }
 
         public int PerimeterProliferatorGrowths { get; set; }
+
+        /// <summary>
+        /// The average AI score at draft time for all mycovariants picked by this player (AI only).
+        /// </summary>
+        public float? AvgAIScoreAtDraft { get; set; }
     }
 }

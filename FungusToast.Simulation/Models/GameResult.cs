@@ -43,8 +43,10 @@ namespace FungusToast.Simulation.Models
 
             foreach (var player in players)
             {
-                var cells = board.GetAllCellsOwnedBy(player.PlayerId);
-                Dictionary<DeathReason, int> playerDeaths = deathsByPlayerAndReason.TryGetValue(player.PlayerId, out var d) ? d : new();
+                var aiScores = player.PlayerMycovariants
+                    .Select(pm => pm.AIScoreAtDraft)
+                    .OfType<float>()
+                    .ToList();
 
                 var pr = new PlayerResult
                 {
@@ -54,14 +56,16 @@ namespace FungusToast.Simulation.Models
                     Strategy = player.MutationStrategy!,
 
                     // --- End-state board stats ---
-                    LivingCells = cells.Count(c => c.IsAlive),
-                    DeadCells = cells.Count(c => !c.IsAlive),
+                    LivingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive),
+                    DeadCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => !c.IsAlive),
 
                     // --- Death reason statistics ---
                     DeadCellDeathReasons = new List<DeathReason>(), // Populated below!
-                    DeathsByReason = playerDeaths,
-                    DeathsFromRandomness = playerDeaths.TryGetValue(DeathReason.Randomness, out var dfr) ? dfr : 0,
-                    DeathsFromAge = playerDeaths.TryGetValue(DeathReason.Age, out var dfa) ? dfa : 0,
+                    DeathsByReason = tracking.GetAllCellDeathsByPlayerAndReason().ContainsKey(player.PlayerId)
+                        ? tracking.GetAllCellDeathsByPlayerAndReason()[player.PlayerId]
+                        : new Dictionary<DeathReason, int>(),
+                    DeathsFromRandomness = tracking.GetCellDeathCount(player.PlayerId, DeathReason.Randomness),
+                    DeathsFromAge = tracking.GetCellDeathCount(player.PlayerId, DeathReason.Age),
 
                     // --- Mutation tree ---
                     MutationLevels = player.PlayerMutations.ToDictionary(
@@ -83,16 +87,16 @@ namespace FungusToast.Simulation.Models
                     CreepingMoldToxinJumps = tracking.GetCreepingMoldToxinJumps(player.PlayerId),
                     NecrosporulationSpores = tracking.GetNecrosporeDropCount(player.PlayerId),
                     SporocidalSpores = tracking.GetSporocidalSporeDropCount(player.PlayerId),
-                    SporocidalKills = playerDeaths.TryGetValue(DeathReason.SporocidalBloom, out var spKills) ? spKills : 0,
+                    SporocidalKills = tracking.GetCellDeathCount(player.PlayerId, DeathReason.SporocidalBloom),
                     NecrophyticSpores = tracking.GetNecrophyticBloomSporeDropCount(player.PlayerId),
                     NecrophyticReclaims = tracking.GetNecrophyticBloomReclaims(player.PlayerId),
                     MycotoxinTracerSpores = tracking.GetMycotoxinSporeDropCount(player.PlayerId),
                     MycotoxinCatabolisms = tracking.GetToxinCatabolismCount(player.PlayerId),
                     CatabolizedMutationPoints = tracking.GetCatabolizedMutationPoints(player.PlayerId),
-                    ToxinAuraKills = playerDeaths.TryGetValue(DeathReason.MycotoxinPotentiation, out var taKills) ? taKills : 0,
+                    ToxinAuraKills = tracking.GetCellDeathCount(player.PlayerId, DeathReason.MycotoxinPotentiation),
                     NecrohyphalInfiltrations = tracking.GetNecrohyphalInfiltrationCount(player.PlayerId),
                     NecrohyphalCascades = tracking.GetNecrohyphalCascadeCount(player.PlayerId),
-                    PutrefactiveMycotoxinKills = playerDeaths.TryGetValue(DeathReason.PutrefactiveMycotoxin, out var pmKills) ? pmKills : 0,
+                    PutrefactiveMycotoxinKills = tracking.GetCellDeathCount(player.PlayerId, DeathReason.PutrefactiveMycotoxin),
                     NecrotoxicConversionReclaims = tracking.GetNecrotoxicConversionReclaims(player.PlayerId),
                     CatabolicRebirthResurrections = tracking.GetCatabolicRebirthResurrections(player.PlayerId),
                     CatabolicRebirthAgedToxins = tracking.GetCatabolicRebirthAgedToxins(player.PlayerId),
@@ -117,7 +121,10 @@ namespace FungusToast.Simulation.Models
                     BankedPoints = tracking.GetBankedPoints(player.PlayerId),
 
                     // Mycovariant summary
-                    Mycovariants = BuildMycovariantResults(player, tracking)
+                    Mycovariants = BuildMycovariantResults(player, tracking),
+
+                    // Compute average AIScoreAtDraft for AI players
+                    AvgAIScoreAtDraft = aiScores.Count > 0 ? aiScores.Average() : (float?)null
                 };
 
                 playerResultMap[player.PlayerId] = pr;
@@ -253,7 +260,8 @@ namespace FungusToast.Simulation.Models
                     MycovariantName = myco.Mycovariant.Name,
                     MycovariantType = myco.Mycovariant.Type.ToString(),
                     Triggered = myco.HasTriggered,
-                    EffectCounts = effectCountsAsString // <--- Now the types match!
+                    EffectCounts = effectCountsAsString,
+                    AIScoreAtDraft = myco.AIScoreAtDraft
                 });
             }
             return results;

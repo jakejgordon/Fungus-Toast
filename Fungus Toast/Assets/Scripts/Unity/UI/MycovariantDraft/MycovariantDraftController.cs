@@ -240,6 +240,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             var playerMyco = currentPlayer.PlayerMycovariants
                 .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
 
+            // --- Set AIScoreAtDraft for AI picks ---
+            if (currentPlayer.PlayerType == PlayerTypeEnum.AI && playerMyco != null)
+            {
+                float score = picked.AIScore != null ? picked.AIScore(currentPlayer, GameManager.Instance.Board) : MycovariantAIGameBalance.DefaultAIScore;
+                playerMyco.AIScoreAtDraft = score;
+            }
+
             if (playerMyco == null)
             {
                 Debug.LogError($"[MycovariantDraftController] PlayerMycovariant is null for {picked.Name} (ID: {picked.Id}) and player {currentPlayer.PlayerId}. Aborting effect resolution.");
