@@ -49,6 +49,7 @@ namespace FungusToast.Unity.UI
                     continue;
                 }
 
+                row.PlayerId = player.PlayerId; // <-- Set PlayerId
                 row.SetIcon(GameManager.Instance.GameUI.PlayerUIBinder.GetPlayerIcon(player.PlayerId));
                 row.SetCounts("1", "0", "0");
                 playerSummaryRows[player.PlayerId] = row;
@@ -90,6 +91,40 @@ namespace FungusToast.Unity.UI
 
                     row.SetCounts(alive.ToString(), dead.ToString(), toxins.ToString());
                 }
+            }
+            SortAndAnimatePlayerSummaryRows(players);
+        }
+
+        // Add this method to sort and animate the rows
+        private void SortAndAnimatePlayerSummaryRows(List<Player> players)
+        {
+            // Build a list of rows with their player data
+            var rowPlayerPairs = new List<(PlayerSummaryRow row, Player player, int alive, int dead)>();
+            foreach (var player in players)
+            {
+                if (playerSummaryRows.TryGetValue(player.PlayerId, out var row))
+                {
+                    int alive = 0;
+                    int dead = 0;
+                    foreach (var cell in GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId))
+                    {
+                        if (cell.IsAlive) alive++;
+                        else if (cell.IsDead) dead++;
+                    }
+                    rowPlayerPairs.Add((row, player, alive, dead));
+                }
+            }
+            // Sort by alive descending, then dead descending
+            rowPlayerPairs.Sort((a, b) => {
+                int cmp = b.alive.CompareTo(a.alive);
+                if (cmp != 0) return cmp;
+                return b.dead.CompareTo(a.dead);
+            });
+            // Set sibling index (header stays at index 0)
+            for (int i = 0; i < rowPlayerPairs.Count; i++)
+            {
+                var row = rowPlayerPairs[i].row;
+                row.transform.SetSiblingIndex(i + 1); // +1 to keep header at index 0
             }
         }
 

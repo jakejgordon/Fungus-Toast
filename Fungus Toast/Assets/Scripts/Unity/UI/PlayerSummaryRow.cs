@@ -20,6 +20,8 @@ namespace FungusToast.Unity.UI
         // Add this field to keep reference if needed
         private PlayerMoldIconHoverHandler hoverHandler;
 
+        public int PlayerId { get; set; } // <-- Add this property
+
         /// <summary>
         /// Sets the mold icon sprite.
         /// </summary>
