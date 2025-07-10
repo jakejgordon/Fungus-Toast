@@ -120,7 +120,7 @@ namespace FungusToast.Core.AI
         {
             return allMutations
                 .Where(m => ShouldPrioritizeEconomyMutation(m, GetCurrentPhase(currentRound)) &&
-                           player.CanUpgrade(m) &&
+                           player.CanUpgrade(m, currentRound) &&
                            (int)m.Tier <= (int)maxTier)
                 .ToList();
         }
@@ -221,7 +221,7 @@ namespace FungusToast.Core.AI
                     // Prioritize economy mutations in early game
                     foreach (var economyMutation in economyMutations)
                     {
-                        if (player.MutationPoints > 0 && player.CanUpgrade(economyMutation))
+                        if (player.MutationPoints > 0 && player.CanUpgrade(economyMutation, board.CurrentRound))
                         {
                             if (player.TryUpgradeMutation(economyMutation, simulationObserver, board.CurrentRound))
                             {
@@ -285,7 +285,7 @@ namespace FungusToast.Core.AI
                         // If there's no next mutation, this is the final target, so don't bank
                     }
 
-                    while (curLvl < needed && player.MutationPoints > 0 && player.CanUpgrade(mutation))
+                    while (curLvl < needed && player.MutationPoints > 0 && player.CanUpgrade(mutation, board.CurrentRound))
                     {
                         if (player.TryUpgradeMutation(mutation, simulationObserver, board.CurrentRound))
                         {
@@ -308,11 +308,11 @@ namespace FungusToast.Core.AI
                 }
 
                 // Now try to upgrade the actual target mutation
-                if (player.CanUpgrade(targetMutation))
+                if (player.CanUpgrade(targetMutation, board.CurrentRound))
                 {
                     while (player.GetMutationLevel(targetMutation.Id) < goalTargetLevel && 
                            player.MutationPoints > 0 && 
-                           player.CanUpgrade(targetMutation))
+                           player.CanUpgrade(targetMutation, board.CurrentRound))
                     {
                         if (player.TryUpgradeMutation(targetMutation, simulationObserver, board.CurrentRound))
                         {
@@ -508,7 +508,7 @@ namespace FungusToast.Core.AI
             // Burn off leftovers if any upgradable mutations remain (should almost never be necessary)
             while (player.MutationPoints > 0)
             {
-                var anyUpgradable = allMutations.Where(m => player.CanUpgrade(m)).ToList();
+                var anyUpgradable = allMutations.Where(m => player.CanUpgrade(m, board.CurrentRound)).ToList();
                 if (anyUpgradable.Count == 0)
                     break;
                 player.TryUpgradeMutation(anyUpgradable[0], simulationObserver, board.CurrentRound);
@@ -526,7 +526,7 @@ namespace FungusToast.Core.AI
                 var candidates = allMutations
                     .Where(m => m.Category == category
                                 && (int)m.Tier <= (int)maxTier
-                                && player.CanUpgrade(m))
+                                && player.CanUpgrade(m, board.CurrentRound))
                     .ToList();
 
                 if (TrySpendWithinCategory(player, board, candidates, simulationObserver))
@@ -543,7 +543,7 @@ namespace FungusToast.Core.AI
             ISimulationObserver? simulationObserver)
         {
             var fallbackCandidates = allMutations
-                .Where(m => (int)m.Tier <= (int)maxTier && player.CanUpgrade(m))
+                .Where(m => (int)m.Tier <= (int)maxTier && player.CanUpgrade(m, board.CurrentRound))
                 .ToList();
 
             return TrySpendWithinCategory(player, board, fallbackCandidates, simulationObserver);
@@ -561,7 +561,7 @@ namespace FungusToast.Core.AI
             ISimulationObserver? simulationObserver)
         {
             var upgradable = allMutations
-                .Where(m => player.CanUpgrade(m) && (int)m.Tier <= (int)maxTier)
+                .Where(m => player.CanUpgrade(m, board.CurrentRound) && (int)m.Tier <= (int)maxTier)
                 .ToList();
 
             if (upgradable.Count == 0)

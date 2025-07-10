@@ -14,7 +14,7 @@ namespace FungusToast.Core.AI
         public static bool TrySpendRandomly(Player player, List<Mutation> allMutations, ISimulationObserver? simulationObserver, int currentRound)
         {
             var eligible = allMutations
-                .Where(m => player.CanUpgrade(m))
+                .Where(m => player.CanUpgrade(m, currentRound))
                 .OrderBy(_ => rng.NextDouble())
                 .ToList();
 

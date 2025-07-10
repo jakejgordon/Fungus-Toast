@@ -654,7 +654,7 @@ namespace FungusToast.Unity
         {
             // Simple auto-spending strategy for human player during fast-forward
             // Prioritize growth and resilience mutations
-            var availableMutations = allMutations.Where(m => player.CanUpgrade(m)).ToList();
+            var availableMutations = allMutations.Where(m => player.CanUpgrade(m, Board.CurrentRound)).ToList();
             
             // Shuffle to add some randomness
             availableMutations = availableMutations.OrderBy(_ => rng.Next()).ToList();
@@ -662,7 +662,7 @@ namespace FungusToast.Unity
             // Try to spend all mutation points
             while (player.MutationPoints > 0 && availableMutations.Count > 0)
             {
-                var mutation = availableMutations.FirstOrDefault(m => player.CanUpgrade(m));
+                var mutation = availableMutations.FirstOrDefault(m => player.CanUpgrade(m, Board.CurrentRound));
                 if (mutation == null) break;
                 
                 player.TryUpgradeMutation(mutation, null, Board.CurrentRound);

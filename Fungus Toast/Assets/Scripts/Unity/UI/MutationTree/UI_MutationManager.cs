@@ -191,7 +191,7 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 RefreshSpendPointsButtonUI();
                 GameManager.Instance.GameUI.MoldProfilePanel.Refresh();
-                UpdateAllMutationNodeInteractables();
+                RefreshAllMutationButtons(); // <-- Ensures hourglass overlays update
                 TryEndHumanTurn();
                 return true;
             }

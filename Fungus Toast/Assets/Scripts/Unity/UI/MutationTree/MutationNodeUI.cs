@@ -5,6 +5,7 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using UnityEngine.EventSystems;
 using System.Text;
+using FungusToast.Unity;
 
 namespace FungusToast.Unity.UI.MutationTree
 {
@@ -54,10 +55,11 @@ namespace FungusToast.Unity.UI.MutationTree
             upgradeButton.onClick.RemoveAllListeners();
             upgradeButton.onClick.AddListener(OnUpgradeClicked);
         }
-
+  
         private void OnUpgradeClicked()
         {
-            if (!player.CanUpgrade(mutation))
+            int currentRound = GameManager.Instance.Board.CurrentRound;
+            if (!player.CanUpgrade(mutation, currentRound))
                 return;
 
             upgradeButton.interactable = false;
@@ -103,23 +105,11 @@ namespace FungusToast.Unity.UI.MutationTree
 
             bool canAfford = player.MutationPoints >= upgradeCost;
 
-            // INTERACTABLE LOGIC
-            bool interactable = !isLocked && canAfford && !isMaxed;
-            if (isSurge && isSurgeActive)
-                interactable = false;
-
-            upgradeButton.interactable = interactable;
-
             // LOCK/SURGE/PENDING UI
-            bool showPendingUnlock = false;
-            if (player.PlayerMutations.TryGetValue(mutation.Id, out var pm) && pm.PrereqMetRound.HasValue)
-            {
-                int currentRound = GameManager.Instance.Board.CurrentRound;
-                if (pm.PrereqMetRound.Value == currentRound && isLocked)
-                {
-                    showPendingUnlock = true;
-                }
-            }
+            bool showPendingUnlock = mutation.Prerequisites.Count > 0
+                && player.PlayerMutations.TryGetValue(mutation.Id, out var pm)
+                && pm.PrereqMetRound.HasValue
+                && pm.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
             lockOverlay.SetActive(isLocked && !isSurgeActive && !showPendingUnlock);
             if (pendingUnlockOverlay != null)
                 pendingUnlockOverlay.SetActive(showPendingUnlock);
@@ -259,8 +249,13 @@ namespace FungusToast.Unity.UI.MutationTree
                     break;
                 }
             }
+            // Check for pending unlock state (only for non-root mutations)
+            bool showPendingUnlock = mutation.Prerequisites.Count > 0
+                && player.PlayerMutations.TryGetValue(mutation.Id, out var pm)
+                && pm.PrereqMetRound.HasValue
+                && pm.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
             bool isMaxed = currentLevel >= mutation.MaxLevel;
-            bool interactable = !isLocked && canAfford && !isMaxed;
+            bool interactable = !isLocked && canAfford && !isMaxed && !showPendingUnlock;
             if (isSurge && isSurgeActive)
                 interactable = false;
             upgradeButton.interactable = interactable;

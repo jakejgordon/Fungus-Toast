@@ -174,7 +174,8 @@ namespace FungusToast.Core.Players
             foreach (var pre in mutation.Prerequisites)
                 if (GetMutationLevel(pre.MutationId) < pre.RequiredLevel)
                     prereqsMet = false;
-            if (prereqsMet && pm.PrereqMetRound == null)
+            // Only set PrereqMetRound the first time prerequisites are met
+            if (mutation.Prerequisites.Count > 0 && prereqsMet && pm.PrereqMetRound == null)
                 pm.PrereqMetRound = currentRound;
 
             if (mutation.IsSurge)
@@ -188,8 +189,8 @@ namespace FungusToast.Core.Players
                 if (MutationPoints < activationCost || currentLevel >= mutation.MaxLevel)
                     return false;
 
-                // Enforce one-round delay after prereqs met
-                if (pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
+                // Enforce one-round delay after prereqs met (only for non-root mutations)
+                if (mutation.Prerequisites.Count > 0 && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
                     return false;
 
                 // Deduct points and upgrade
@@ -201,6 +202,20 @@ namespace FungusToast.Core.Players
                 // Activate the surge
                 ActiveSurges[mutation.Id] = new ActiveSurgeInfo(mutation.Id, newLevel, duration);
 
+                // --- Set PrereqMetRound on dependents ---
+                foreach (var dependent in FungusToast.Core.Mutations.MutationRegistry.All.Values)
+                {
+                    if (dependent.Prerequisites.Any(p => p.MutationId == mutation.Id))
+                    {
+                        if (!PlayerMutations.ContainsKey(dependent.Id))
+                            PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
+                        var depPlayerMutation = PlayerMutations[dependent.Id];
+                        bool allMet = dependent.Prerequisites.All(p => GetMutationLevel(p.MutationId) >= p.RequiredLevel);
+                        if (dependent.Prerequisites.Count > 0 && allMet && depPlayerMutation.PrereqMetRound == null)
+                            depPlayerMutation.PrereqMetRound = currentRound;
+                    }
+                }
+
                 simulationObserver?.RecordMutationPointsSpent(PlayerId, mutation.Tier, activationCost);
                 return true;
             }
@@ -209,12 +224,27 @@ namespace FungusToast.Core.Players
                 // Standard mutation upgrade
                 if (MutationPoints >= mutation.PointsPerUpgrade && pm.CurrentLevel < mutation.MaxLevel)
                 {
-                    // Enforce one-round delay after prereqs met
-                    if (pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
+                    // Enforce one-round delay after prereqs met (only for non-root mutations)
+                    if (mutation.Prerequisites.Count > 0 && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
                         return false;
 
                     MutationPoints -= mutation.PointsPerUpgrade;
                     pm.Upgrade(currentRound);
+
+                    // --- Set PrereqMetRound on dependents ---
+                    foreach (var dependent in FungusToast.Core.Mutations.MutationRegistry.All.Values)
+                    {
+                        if (dependent.Prerequisites.Any(p => p.MutationId == mutation.Id))
+                        {
+                            if (!PlayerMutations.ContainsKey(dependent.Id))
+                                PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
+                            var depPlayerMutation = PlayerMutations[dependent.Id];
+                            bool allMet = dependent.Prerequisites.All(p => GetMutationLevel(p.MutationId) >= p.RequiredLevel);
+                            if (dependent.Prerequisites.Count > 0 && allMet && depPlayerMutation.PrereqMetRound == null)
+                                depPlayerMutation.PrereqMetRound = currentRound;
+                        }
+                    }
+
                     simulationObserver?.RecordMutationPointsSpent(PlayerId, mutation.Tier, mutation.PointsPerUpgrade);
                     return true;
                 }
@@ -239,8 +269,8 @@ namespace FungusToast.Core.Players
                 ? mut.GetSurgeActivationCost(currentLevel)
                 : mut.PointsPerUpgrade;
 
-            // Enforce one-round delay after prereqs met
-            if (PlayerMutations.TryGetValue(mut.Id, out var pm) && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
+            // Enforce one-round delay after prereqs met (only for non-root mutations)
+            if (mut.Prerequisites.Count > 0 && PlayerMutations.TryGetValue(mut.Id, out var pm) && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
                 return false;
 
             return MutationPoints >= cost && currentLevel < mut.MaxLevel;
