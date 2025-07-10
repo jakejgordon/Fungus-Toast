@@ -280,8 +280,22 @@ namespace FungusToast.Core.Players
 
         public int GetBonusMutationPoints()
         {
-            float chance = GetMutationEffect(MutationType.BonusMutationPointChance);
-            return rng.NextDouble() < chance ? 1 : 0;
+            if (!PlayerMutations.TryGetValue(MutationIds.AdaptiveExpression, out var pm) || pm.CurrentLevel <= 0)
+                return 0;
+
+            int level = pm.CurrentLevel;
+            float firstChance = level * GameBalance.AdaptiveExpressionEffectPerLevel;
+            int bonus = 0;
+            if (rng.NextDouble() < firstChance)
+            {
+                bonus = 1;
+                float secondChance = level * GameBalance.AdaptiveExpressionSecondPointChancePerLevel;
+                if (rng.NextDouble() < secondChance)
+                {
+                    bonus = 2;
+                }
+            }
+            return bonus;
         }
 
         private bool IsEligibleForAutoUpgrade(Mutation mutation)

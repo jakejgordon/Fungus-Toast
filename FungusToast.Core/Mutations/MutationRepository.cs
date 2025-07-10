@@ -167,7 +167,7 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.AdaptiveExpression,
                 name: "Adaptive Expression",
-                description: $"Each level grants a {FormatPercent(GameBalance.AdaptiveExpressionEffectPerLevel)} chance to gain an additional mutation point each round.",
+                description: $"Each level grants a {FormatPercent(GameBalance.AdaptiveExpressionEffectPerLevel)} chance to gain an additional mutation point each round. If the first point is awarded, each level also grants a {FormatPercent(GameBalance.AdaptiveExpressionSecondPointChancePerLevel)} chance to earn a second mutation point.",
                 flavorText: "Epigenetic drift activates opportunistic transcription bursts in volatile environments.",
                 type: MutationType.BonusMutationPointChance,
                 effectPerLevel: GameBalance.AdaptiveExpressionEffectPerLevel,
