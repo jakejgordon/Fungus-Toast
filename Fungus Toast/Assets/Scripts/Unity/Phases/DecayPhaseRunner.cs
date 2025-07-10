@@ -50,6 +50,7 @@ namespace FungusToast.Unity.Phases
             gridVisualizer.RenderBoard(board);
 
             GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(board.Players);
+            GameManager.Instance.GameUI.RightSidebar?.SortPlayerSummaryRows(board.Players);
 
             yield return new WaitForSeconds(GameBalance.TimeAfterDecayRender);
 

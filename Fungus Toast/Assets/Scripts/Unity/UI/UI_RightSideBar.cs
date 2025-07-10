@@ -92,6 +92,10 @@ namespace FungusToast.Unity.UI
                     row.SetCounts(alive.ToString(), dead.ToString(), toxins.ToString());
                 }
             }
+        }
+
+        public void SortPlayerSummaryRows(List<Player> players)
+        {
             SortAndAnimatePlayerSummaryRows(players);
         }
 

@@ -58,6 +58,9 @@ namespace FungusToast.Unity.Phases
                 // Apply Hyphal Resistance Transfer effect after growth phase
                 MycovariantEffectProcessor.OnPostGrowthPhase_HyphalResistanceTransfer(board, board.Players, rng, null);
 
+                // Sort player summary rows at the end of growth phase
+                GameManager.Instance.GameUI.RightSidebar?.SortPlayerSummaryRows(board.Players);
+
                 isRunning = false;
                 GameManager.Instance.StartDecayPhase();
                 yield break;
@@ -74,7 +77,6 @@ namespace FungusToast.Unity.Phases
             int round = GameManager.Instance.Board.CurrentRound;
             float occupancy = GameManager.Instance.Board.GetOccupiedTileRatio() * 100f;
             GameManager.Instance.GameUI.RightSidebar.SetRoundAndOccupancy(round, occupancy);
-
 
             GameManager.Instance.GameUI.PhaseProgressTracker?.AdvanceToNextGrowthCycle(phaseCycle);
             GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(board.Players);
