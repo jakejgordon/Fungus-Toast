@@ -343,7 +343,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.EnduringToxaphoresId,
                 Name = "Enduring Toxaphores",
-                Description = $"Extends the lifespan of your newly placed toxins by {MycovariantGameBalance.EnduringToxaphoresNewToxinExtension} growth cycles, and your existing toxins by {MycovariantGameBalance.EnduringToxaphoresExistingToxinExtension} cycles upon acquisition.",
+                Description = $"Immediately adds {MycovariantGameBalance.EnduringToxaphoresExistingToxinExtension} growth cycles to all your existing toxins. Additionally, all toxins you place after acquiring this will last {MycovariantGameBalance.EnduringToxaphoresNewToxinExtension} cycles longer than normal.",
                 FlavorText = "Through secreted compounds, the colony's toxins linger long after their release, defying the march of time.",
                 Type = MycovariantType.Passive,
                 IsUniversal = false,
