@@ -92,16 +92,6 @@ namespace FungusToast.Core.Mycovariants
                 Type = MycovariantType.Passive
             };
 
-        internal static Mycovariant SaprobicRelay()
-        {
-            throw new NotImplementedException();
-        }
-
-        internal static Mycovariant SporodochialGrowth()
-        {
-            throw new NotImplementedException();
-        }
-
         public static Mycovariant PlasmidBounty() =>
             new Mycovariant
             {
@@ -290,7 +280,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.PerimeterProliferatorId,
                 Name = "Perimeter Proliferator",
-                Description = $"Multiplies the growth rate of your mold by {MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier}x when it is adjacent to the crust (the outer edge of the board).",
+                Description = $"Multiplies the growth rate of your mold by {MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier}x when it is touching the outer edge of the board (the crust).",
                 FlavorText = "At the bread's edge, the colony finds untapped vigor, racing along the crust in a surge of expansion.",
                 Type = MycovariantType.Passive,
                 IsUniversal = false,
