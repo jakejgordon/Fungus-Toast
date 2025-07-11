@@ -40,8 +40,8 @@ namespace FungusToast.Simulation.GameSimulation
 
             while (board.CurrentRound < GameBalance.MaxNumberOfRoundsBeforeGameEndTrigger && !gameEnded)
             {
-                // 🔥 Mycovariant Draft Phase (insert here!)
-                if (board.CurrentRound == MycovariantGameBalance.MycovariantSelectionTriggerRound)
+                // Mycovariant Draft Phase
+                if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(board.CurrentRound))
                 {
                     mycovariantPoolManager.InitializePool(allMycovariants, rng);
                     MycovariantDraftManager.RunDraft(players, mycovariantPoolManager, board, rng, observer: context);
@@ -67,7 +67,7 @@ namespace FungusToast.Simulation.GameSimulation
                 TurnEngine.RunGrowthPhase(board, players, rng, roundContext, simTracking);
                 TurnEngine.RunDecayPhase(board, players, simTracking.FailedGrowthsByPlayerId, rng, simTracking);
 
-                // 🔥 TICK DOWN ALL ACTIVE SURGES FOR ALL PLAYERS
+                // TICK DOWN ALL ACTIVE SURGES FOR ALL PLAYERS
                 foreach (var player in players)
                     player.TickDownActiveSurges();
 

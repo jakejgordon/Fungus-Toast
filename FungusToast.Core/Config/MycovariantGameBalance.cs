@@ -4,7 +4,7 @@ namespace FungusToast.Core.Config
 {
     public static class MycovariantGameBalance
     {
-        public const int MycovariantSelectionTriggerRound = 15; 
+        public static readonly int[] MycovariantSelectionTriggerRounds = new[] { 15, 25 }; 
         public const int MycovariantSelectionDraftSize = 3;
 
         // Shared balance parameters

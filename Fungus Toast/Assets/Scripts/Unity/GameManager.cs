@@ -53,7 +53,6 @@ namespace FungusToast.Unity
         public GameObject SelectionPromptPanel;
         public TextMeshProUGUI SelectionPromptText;
 
-
         private bool isCountdownActive = false;
         private int roundsRemainingUntilGameEnd = 0;
         private bool gameEnded = false;
@@ -70,6 +69,9 @@ namespace FungusToast.Unity
         private bool isInDraftPhase = false;
 
         private Dictionary<(int playerId, int mutationId), List<int>> FirstUpgradeRounds = new();
+
+        public bool IsTestingModeEnabled => testingModeEnabled;
+        public int TestingMycovariantId => testingMycovariantId;
 
         private void Awake()
         {
@@ -194,7 +196,6 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.InitializePlayerSummaries(Board.Players);
         }
 
-
         private void PlaceStartingSpores()
         {
             float radius = Mathf.Min(boardWidth, boardHeight) * 0.35f;
@@ -217,7 +218,6 @@ namespace FungusToast.Unity
             float occupancy = Board.GetOccupiedTileRatio() * 100f; // ratio to percent
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy);
         }
-
 
         public void StartGrowthPhase()
         {
@@ -255,8 +255,8 @@ namespace FungusToast.Unity
 
             Board.IncrementRound();
 
-            // === 1. Trigger draft phase if this is the right round ===
-            if (Board.CurrentRound == MycovariantGameBalance.MycovariantSelectionTriggerRound)
+            // === 1. Trigger draft phase if this is a draft round ===
+            if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
             {
                 StartMycovariantDraftPhase();
                 return; // Prevent starting mutation phase until draft is complete!
@@ -410,7 +410,6 @@ namespace FungusToast.Unity
             }
         }
 
-
         public void StartMycovariantDraftPhase()
         {
             isInDraftPhase = true;
@@ -475,7 +474,6 @@ namespace FungusToast.Unity
             // Show draft UI
             mycovariantDraftController.gameObject.SetActive(true);
         }
-
 
         public void OnMycovariantDraftComplete()
         {
@@ -568,37 +566,112 @@ namespace FungusToast.Unity
             fastForwardRounds = 0;
         }
 
-        public bool IsTestingModeEnabled => testingModeEnabled;
-        public int TestingMycovariantId => testingMycovariantId;
-
         private IEnumerator FastForwardRounds()
         {
+            // Store original human player type and strategy
+            var originalHumanType = humanPlayer.PlayerType;
+            var originalHumanStrategy = humanPlayer.MutationStrategy;
+
             for (int round = 1; round <= fastForwardRounds; round++)
             {
                 // Silent growth phase
                 yield return StartCoroutine(RunSilentGrowthPhase());
-                
                 // Silent decay phase
                 yield return StartCoroutine(RunSilentDecayPhase());
-                
+
+                // --- Temporarily make human an AI for mutation spending ---
+                var tempType = humanPlayer.PlayerType;
+                var tempStrat = humanPlayer.MutationStrategy;
+                humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
+                var aiStrategy = AIRoster.GetRandomProvenStrategies(1).FirstOrDefault();
+                humanPlayer.SetMutationStrategy(aiStrategy);
+
                 // Silent mutation phase (auto-spend for all players)
                 yield return StartCoroutine(RunSilentMutationPhase());
 
+                // Restore human player type and strategy
+                humanPlayer.SetPlayerType(tempType);
+                humanPlayer.SetMutationStrategy(tempStrat);
+
                 // Increment round
                 Board.IncrementRound();
+
+                // If this is a draft round, run a silent draft for all players (including human as AI)
+                if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
+                {
+                    // Temporarily make human an AI for the draft
+                    var originalType = humanPlayer.PlayerType;
+                    var originalStrat = humanPlayer.MutationStrategy;
+                    humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
+                    var draftAIStrategy = AIRoster.GetRandomProvenStrategies(1).FirstOrDefault();
+                    humanPlayer.SetMutationStrategy(draftAIStrategy);
+
+                    RunSilentDraftForAllPlayers();
+
+                    // Restore human player type and strategy
+                    humanPlayer.SetPlayerType(originalType);
+                    humanPlayer.SetMutationStrategy(originalStrat);
+                }
             }
 
             // Update the board visualization after fast-forward
             gridVisualizer.RenderBoard(Board);
-            
             // Update UI elements to reflect the new board state
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
             int currentRound = Board.CurrentRound;
             float occupancy = Board.GetOccupiedTileRatio() * 100f;
             gameUIManager.RightSidebar?.SetRoundAndOccupancy(currentRound, occupancy);
 
-            // After fast-forward, start the draft immediately
+            // Always trigger a UI draft at the end of fast forward
             StartMycovariantDraftPhase();
+        }
+
+        private void RunSilentDraftForAllPlayers()
+        {
+            // Build the draft pool
+            var draftPool = MycovariantDraftManager.BuildDraftPool(Board, Board.Players);
+            var poolManager = new MycovariantPoolManager();
+            poolManager.InitializePool(draftPool, rng);
+            var draftOrder = Board.Players
+                .OrderBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
+                .ToList();
+            int draftSize = MycovariantGameBalance.MycovariantSelectionDraftSize;
+            foreach (var player in draftOrder)
+            {
+                var choices = poolManager.GetEligibleMycovariantsForPlayer(player)
+                    .OrderBy(_ => rng.Next())
+                    .Take(draftSize)
+                    .ToList();
+                if (choices.Count == 0) continue;
+                // AI pick: highest AI score
+                var picked = choices
+                    .OrderByDescending(m => m.GetBaseAIScore(player, Board))
+                    .ThenBy(_ => rng.Next())
+                    .First();
+                player.AddMycovariant(picked);
+                poolManager.RemoveFromPool(picked);
+            }
+        }
+
+        private void SpendMutationPointsForAllPlayers(List<Mutation> allMutations, GameBoard board, System.Random rng)
+        {
+            foreach (var player in board.Players)
+            {
+                var strategy = player.MutationStrategy;
+                if (strategy != null)
+                {
+                    strategy.SpendMutationPoints(player, allMutations, board, rng);
+                }
+            }
+        }
+
+        private IEnumerator RunSilentMutationPhase()
+        {
+            // Assign mutation points to all players
+            var allMutations = mutationManager.AllMutations.Values.ToList();
+            TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rng);
+            SpendMutationPointsForAllPlayers(allMutations, Board, rng);
+            yield return null; // One frame delay
         }
 
         private IEnumerator RunSilentGrowthPhase()
@@ -624,50 +697,6 @@ namespace FungusToast.Unity
             var emptyFailedGrowths = new Dictionary<int, int>();
             DeathEngine.ExecuteDeathCycle(Board, emptyFailedGrowths, rng, null);
             yield return null; // One frame delay
-        }
-
-        private IEnumerator RunSilentMutationPhase()
-        {
-            // Assign mutation points to all players
-            var allMutations = mutationManager.AllMutations.Values.ToList();
-            TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rng);
-
-            // Auto-spend mutation points for ALL players (including human)
-            foreach (var player in Board.Players)
-            {
-                if (player.PlayerType == PlayerTypeEnum.AI)
-                {
-                    // AI uses their strategy
-                    player.MutationStrategy?.SpendMutationPoints(player, allMutations, Board, rng);
-                }
-                else
-                {
-                    // Human player gets random spending (or could use a simple strategy)
-                    AutoSpendForHumanPlayer(player, allMutations, rng);
-                }
-            }
-
-            yield return null; // One frame delay
-        }
-
-        private void AutoSpendForHumanPlayer(Player player, List<Mutation> allMutations, System.Random rng)
-        {
-            // Simple auto-spending strategy for human player during fast-forward
-            // Prioritize growth and resilience mutations
-            var availableMutations = allMutations.Where(m => player.CanUpgrade(m, Board.CurrentRound)).ToList();
-            
-            // Shuffle to add some randomness
-            availableMutations = availableMutations.OrderBy(_ => rng.Next()).ToList();
-            
-            // Try to spend all mutation points
-            while (player.MutationPoints > 0 && availableMutations.Count > 0)
-            {
-                var mutation = availableMutations.FirstOrDefault(m => player.CanUpgrade(m, Board.CurrentRound));
-                if (mutation == null) break;
-                
-                player.TryUpgradeMutation(mutation, null, Board.CurrentRound);
-                availableMutations.Remove(mutation);
-            }
         }
     }
 }

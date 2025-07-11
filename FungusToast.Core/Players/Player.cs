@@ -20,7 +20,9 @@ namespace FungusToast.Core.Players
 
         public int PlayerId { get; }
         public string PlayerName { get; }
-        public PlayerTypeEnum PlayerType { get; }
+        private PlayerTypeEnum playerType;
+        public PlayerTypeEnum PlayerType { get => playerType; }
+        public void SetPlayerType(PlayerTypeEnum type) => playerType = type;
         public AITypeEnum AIType { get; }
         public int MutationPoints { get; set; }
 
@@ -96,7 +98,7 @@ namespace FungusToast.Core.Players
         {
             PlayerId = playerId;
             PlayerName = playerName;
-            PlayerType = playerType;
+            this.playerType = playerType;
             AIType = aiType;
         }
 
