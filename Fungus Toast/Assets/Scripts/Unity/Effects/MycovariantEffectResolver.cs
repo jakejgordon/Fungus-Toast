@@ -95,6 +95,20 @@ namespace FungusToast.Unity.Effects
                     )
                 );
             }
+            else if (mycovariant.Id == MycovariantIds.BallistosporeDischargeIId ||
+                     mycovariant.Id == MycovariantIds.BallistosporeDischargeIIId ||
+                     mycovariant.Id == MycovariantIds.BallistosporeDischargeIIIId)
+            {
+                yield return StartCoroutine(
+                    MycovariantEffectHelpers.HandleBallistosporeDischarge(
+                        player,
+                        mycovariant,
+                        onComplete,
+                        draftPanel,
+                        gridVisualizer
+                    )
+                );
+            }
             // Add more cases as needed
             else
             {

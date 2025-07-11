@@ -124,6 +124,65 @@ namespace FungusToast.Unity.UI
             this.onTileSelected = onTileSelected;
         }
 
+        /// <summary>
+        /// Prompts the player to select up to maxTiles board tiles matching a predicate.
+        /// Calls onTileSelected for each selection, and onComplete when done or cancelled.
+        /// </summary>
+        public void PromptSelectMultipleBoardTiles(
+            Func<BoardTile, bool> isValidTile,
+            Action<BoardTile> onTileSelected,
+            Action onComplete,
+            int maxTiles,
+            string promptMessage = null)
+        {
+            selectionActive = true;
+            if (!string.IsNullOrEmpty(promptMessage))
+                GameManager.Instance.ShowSelectionPrompt(promptMessage);
+
+            var validTiles = GameManager.Instance.Board.AllTiles()
+                .Where(isValidTile)
+                .ToList();
+            selectableTileIds = new HashSet<int>(validTiles.Select(t => t.TileId));
+            gridVisualizer.HighlightTiles(
+                selectableTileIds,
+                new Color(0.2f, 0.8f, 1f, 1f),   // Cyan pulse
+                new Color(0.7f, 1f, 1f, 1f)      // Light cyan
+            );
+
+            var selectedTileIds = new HashSet<int>();
+            int selectedCount = 0;
+
+            // Override OnTileClicked for this selection
+            onCellSelected = null;
+            this.onTileSelected = (tileId) =>
+            {
+                if (!selectableTileIds.Contains(tileId) || selectedTileIds.Contains(tileId))
+                    return;
+                var tile = GameManager.Instance.Board.GetTileById(tileId);
+                selectedTileIds.Add(tileId);
+                selectedCount++;
+                onTileSelected?.Invoke(tile);
+                // Only finish selection if maxTiles or all selectable tiles are picked
+                if (selectedCount >= maxTiles || selectedTileIds.Count >= selectableTileIds.Count)
+                {
+                    selectionActive = false;
+                    gridVisualizer.ClearHighlights();
+                    GameManager.Instance.HideSelectionPrompt();
+                    Reset();
+                    onComplete?.Invoke();
+                }
+                // Otherwise, keep selection active and highlights visible
+            };
+            onCancelled = () =>
+            {
+                selectionActive = false;
+                gridVisualizer.ClearHighlights();
+                GameManager.Instance.HideSelectionPrompt();
+                Reset();
+                onComplete?.Invoke();
+            };
+        }
+
         public void OnTileClicked(int tileId)
         {
             if (!selectionActive || !selectableTileIds.Contains(tileId))

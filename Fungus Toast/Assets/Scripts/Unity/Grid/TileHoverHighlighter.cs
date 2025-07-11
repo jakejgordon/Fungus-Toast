@@ -65,7 +65,11 @@ namespace FungusToast.Unity.Grid
                 if (selectionTiles.Count == 0 || IsSelectable(cellPos))
                 {
                     int tileId = TileIdFromCell(cellPos);
-                    if (MultiCellSelectionController.Instance != null && MultiCellSelectionController.Instance.IsSelectable(tileId))
+                    if (MultiTileSelectionController.Instance != null && MultiTileSelectionController.Instance.IsSelectable(tileId))
+                    {
+                        MultiTileSelectionController.Instance.OnTileClicked(tileId);
+                    }
+                    else if (MultiCellSelectionController.Instance != null && MultiCellSelectionController.Instance.IsSelectable(tileId))
                     {
                         MultiCellSelectionController.Instance.OnTileClicked(tileId);
                     }

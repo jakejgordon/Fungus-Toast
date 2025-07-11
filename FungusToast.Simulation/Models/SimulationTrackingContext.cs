@@ -739,5 +739,19 @@ namespace FungusToast.Simulation.Models
         public int GetReclamationRhizomorphsSecondAttempts(int playerId)
             => reclamationRhizomorphsSecondAttempts.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllReclamationRhizomorphsSecondAttempts() => new(reclamationRhizomorphsSecondAttempts);
+
+        // ────────────────
+        // Ballistospore Discharge
+        // ────────────────
+        private readonly Dictionary<int, int> ballistosporeDischargeDrops = new();
+        public void RecordBallistosporeDischarge(int playerId, int count)
+        {
+            if (!ballistosporeDischargeDrops.ContainsKey(playerId))
+                ballistosporeDischargeDrops[playerId] = 0;
+            ballistosporeDischargeDrops[playerId] += count;
+        }
+        public int GetBallistosporeDischargeDrops(int playerId)
+            => ballistosporeDischargeDrops.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllBallistosporeDischargeDrops() => new(ballistosporeDischargeDrops);
     }
 }

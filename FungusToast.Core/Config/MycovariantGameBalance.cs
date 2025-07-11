@@ -31,6 +31,13 @@ namespace FungusToast.Core.Config
 
         public const float ReclamationRhizomorphsSecondAttemptChance = 0.25f; // 25% chance for second reclamation attempt
 
+        public const int BallistosporeDischargeISpores = 8;
+        public const int BallistosporeDischargeIISpores = 12;
+        public const int BallistosporeDischargeIIISpores = 15;
+
+        // Ballistospore Discharge toxin duration (in growth cycles)
+        public const int BallistosporeDischargeToxinDuration = 16;
+
         // AI scoring for Mycovariants
         public const float MycelialBastionIBaseAIScore = 4f;
         public const float MycelialBastionIIBaseAIScore = 5f;
@@ -39,6 +46,10 @@ namespace FungusToast.Core.Config
         public const float ReclamationRhizomorphsBaseAIScoreEarly = 6f;
         public const float ReclamationRhizomorphsBaseAIScoreLate = 3f;
         public const float ReclamationRhizomorphsBonusAIScore = 6f;
+
+        public const float BallistosporeDischargeIAIScore = 3f;
+        public const float BallistosporeDischargeIIAIScore = 4f;
+        public const float BallistosporeDischargeIIIAIScore = 6f;
 
         public const float AIDraftModeratePriority = 6f;
         public const float HyphalResistanceTransferBaseAIScoreEarly = 5f;

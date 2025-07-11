@@ -18,9 +18,9 @@ namespace FungusToast.Unity.UI
         public const float MycelialBastionAIDelaySeconds = 0.6f;
 
         /// <summary>
-        /// Delay (in seconds) after AI resolves Surgical Inoculation before continuing.
+        /// Default delay (in seconds) for AI "thinking" after resolving any mycovariant effect.
         /// </summary>
-        public const float SurgicalInoculationAIDelaySeconds = 0.6f;
+        public const float DefaultAIThinkingDelay = 0.6f;
 
         /// <summary>
         /// Duration (in seconds) for cell death crossfade animation.

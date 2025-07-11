@@ -174,7 +174,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             {
                 // AI: Core ApplyEffect handles everything
                 // Just wait for the effect to complete
-                yield return new WaitForSeconds(UIEffectConstants.SurgicalInoculationAIDelaySeconds);
+                yield return new WaitForSeconds(UIEffectConstants.DefaultAIThinkingDelay);
                 onComplete?.Invoke();
             }
             else
@@ -231,6 +231,82 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         onComplete?.Invoke();
                     },
                     "Select any valid tile to place your invincible (Resistant) cell."
+                );
+
+                while (!done) yield return null;
+            }
+        }
+
+        /// <summary>
+        /// Handles UI/AI, input, and effect resolution for Ballistospore Discharge (human player).
+        /// </summary>
+        public static IEnumerator HandleBallistosporeDischarge(
+            Player player,
+            Mycovariant picked,
+            Action onComplete,
+            GameObject draftPanel,
+            GridVisualizer gridVisualizer)
+        {
+            if (player.PlayerType == PlayerTypeEnum.AI)
+            {
+                // AI: Core ApplyEffect handles everything
+                yield return new WaitForSeconds(UIEffectConstants.DefaultAIThinkingDelay); // Use new delay constant
+                onComplete?.Invoke();
+            }
+            else
+            {
+                draftPanel?.SetActive(false);
+                // Get all valid empty tiles
+                Func<BoardTile, bool> isValidTile = tile => tile.FungalCell == null;
+                var validTileIds = GameManager.Instance.Board.AllTiles()
+                    .Where(isValidTile)
+                    .Select(tile => tile.TileId)
+                    .ToList();
+                int emptyTileCount = validTileIds.Count;
+                int maxSporesAllowed = picked.Id switch
+                {
+                    MycovariantIds.BallistosporeDischargeIId => MycovariantGameBalance.BallistosporeDischargeISpores,
+                    MycovariantIds.BallistosporeDischargeIIId => MycovariantGameBalance.BallistosporeDischargeIISpores,
+                    MycovariantIds.BallistosporeDischargeIIIId => MycovariantGameBalance.BallistosporeDischargeIIISpores,
+                    _ => MycovariantGameBalance.BallistosporeDischargeISpores
+                };
+                int maxSpores = Math.Min(emptyTileCount, maxSporesAllowed);
+                GameManager.Instance.ShowSelectionPrompt(
+                    $"Select up to {maxSpores} empty tiles to drop toxin spores."
+                );
+
+                bool done = false;
+                var playerMyco = player.PlayerMycovariants.FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+
+                MultiTileSelectionController.Instance.PromptSelectMultipleTiles(
+                    isValidTile,
+                    maxSpores,
+                    (selectedTiles) =>
+                    {
+                        // Now place real toxins on all selected tiles
+                        foreach (var tile in selectedTiles)
+                        {
+                            BallistosporeDischargeHelper.ResolveBallistosporeDischargeHuman(
+                                playerMyco,
+                                GameManager.Instance.Board,
+                                tile.TileId,
+                                null
+                            );
+                        }
+                        gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                        GameManager.Instance.HideSelectionPrompt();
+                        gridVisualizer.ClearHighlights();
+                        onComplete?.Invoke();
+                        done = true;
+                    },
+                    () =>
+                    {
+                        GameManager.Instance.HideSelectionPrompt();
+                        gridVisualizer.ClearHighlights();
+                        onComplete?.Invoke();
+                        done = true;
+                    },
+                    $"Select up to {maxSpores} empty tiles to drop toxin spores."
                 );
 
                 while (!done) yield return null;

@@ -83,6 +83,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\UI_PhaseBanner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantArtRepository.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantTooltipTrigger.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\MultiTileSelectionController.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantCard.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameUIManager.cs" />

@@ -22,5 +22,8 @@ namespace FungusToast.Core.Mycovariants
         public const int HyphalResistanceTransferId = 1015;
         public const int EnduringToxaphoresId = 1016;
         public const int ReclamationRhizomorphsId = 1017;
+        public const int BallistosporeDischargeIId = 1018;
+        public const int BallistosporeDischargeIIId = 1019;
+        public const int BallistosporeDischargeIIIId = 1020;
     }
 }

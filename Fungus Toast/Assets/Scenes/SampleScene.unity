@@ -105186,7 +105186,6 @@ GameObject:
   - component: {fileID: 548818018}
   - component: {fileID: 548818017}
   - component: {fileID: 548818019}
-  - component: {fileID: 548818020}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -105252,19 +105251,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   draftPanel: {fileID: 1723225966}
-  gridVisualizer: {fileID: 989759029}
---- !u!114 &548818020
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 548818016}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e778b3e3375b72540aaeb78fd77685cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
   gridVisualizer: {fileID: 989759029}
 --- !u!1 &565532745
 GameObject:
@@ -112179,6 +112165,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1518468021}
   - component: {fileID: 1518468020}
+  - component: {fileID: 1518468023}
+  - component: {fileID: 1518468022}
   m_Layer: 0
   m_Name: TileSelectionController
   m_TagString: Untagged
@@ -112214,6 +112202,32 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1518468022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1518468019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e778b3e3375b72540aaeb78fd77685cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridVisualizer: {fileID: 989759029}
+--- !u!114 &1518468023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1518468019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e6cba28cbc3f8b4b99e862c56522d67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridVisualizer: {fileID: 989759029}
 --- !u!1 &1528383149
 GameObject:
   m_ObjectHideFlags: 0

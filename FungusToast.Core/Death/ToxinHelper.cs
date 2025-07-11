@@ -1,6 +1,7 @@
 ﻿using FungusToast.Core.Board;
 using FungusToast.Core.Events;
 using FungusToast.Core.Players;
+using FungusToast.Core.Config;
 using System;
 
 namespace FungusToast.Core.Death
@@ -43,6 +44,39 @@ namespace FungusToast.Core.Death
                 
                 board.PlaceFungalCell(toxin); // fires events!
             }
+        }
+
+        /// <summary>
+        /// Converts the cell at the specified tile to a toxin, or creates a new toxin cell if empty.
+        /// This overload calculates the expiration cycle automatically.
+        /// </summary>
+        public static void ConvertToToxin(GameBoard board, int tileId, Player? owner = null)
+        {
+            int expirationCycle = GetToxinExpirationCycle(owner, board);
+            ConvertToToxin(board, tileId, expirationCycle, owner);
+        }
+
+        /// <summary>
+        /// Calculates the toxin expiration cycle for a player, including all bonuses, given a custom base duration.
+        /// </summary>
+        public static int GetToxinExpirationCycle(Player? player, GameBoard board, int startingToxinDurationWithoutBonuses)
+        {
+            if (player == null)
+                return board.CurrentGrowthCycle + startingToxinDurationWithoutBonuses;
+            int baseDuration = startingToxinDurationWithoutBonuses;
+            int bonus = player.GetMutationLevel(Mutations.MutationIds.MycotoxinPotentiation) * GameBalance.MycotoxinPotentiationGrowthCycleExtensionPerLevel;
+            // Enduring Toxaphores synergy
+            var myco = player.GetMycovariant != null ? player.GetMycovariant(Mycovariants.MycovariantIds.EnduringToxaphoresId) : null;
+            int enduringBonus = myco != null ? MycovariantGameBalance.EnduringToxaphoresNewToxinExtension : 0;
+            return board.CurrentGrowthCycle + baseDuration + bonus + enduringBonus;
+        }
+
+        /// <summary>
+        /// Calculates the toxin expiration cycle for a player, including all bonuses. If player is null, uses default duration.
+        /// </summary>
+        public static int GetToxinExpirationCycle(Player? player, GameBoard board)
+        {
+            return GetToxinExpirationCycle(player, board, GameBalance.DefaultToxinDuration);
         }
 
         /// <summary>

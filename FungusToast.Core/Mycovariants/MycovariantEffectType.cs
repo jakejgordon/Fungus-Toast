@@ -21,6 +21,7 @@
         ExtendedCycles,
         ExistingExtensions,
         SecondReclamationAttempts,
+        BallistosporeDischarge,
         // Add others as needed
     }
 }

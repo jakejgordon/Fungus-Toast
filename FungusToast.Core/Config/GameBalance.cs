@@ -114,7 +114,7 @@ namespace FungusToast.Core.Config
 
 
         // time-based effects on Fungal Cells
-        public const int DefaultToxinDuration = 5;
+        public const int DefaultToxinDuration = 6;
 
         // Putrefactive Rejuvenation (Tier 5 Fungicide)
         public const int PutrefactiveRejuvenationAgeReductionPerLevel = 3; // growth cycles

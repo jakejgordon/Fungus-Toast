@@ -81,7 +81,7 @@ namespace FungusToast.Core.Mycovariants
             };
         }
 
-
+        //TODO implement
         public static Mycovariant NecrophoricAdaptation() =>
             new Mycovariant
             {
@@ -178,7 +178,7 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Immediately select up to {MycovariantGameBalance.MycelialBastionIMaxResistantCells} of your living cells to become Resistant (invincible). These cells cannot be killed, replaced, or converted for the rest of the game.",
                 FlavorText = "A fortified network of hyphae, woven to withstand any threat.",
                 Type = MycovariantType.Active,
-                IsUniversal = false,
+                IsUniversal = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
                     var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
@@ -394,5 +394,70 @@ namespace FungusToast.Core.Mycovariants
                 }
             };
 
+        public static Mycovariant BallistosporeDischargeI() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.BallistosporeDischargeIId,
+                Name = "Ballistospore Discharge I",
+                Description = $"Immediately drop up to {MycovariantGameBalance.BallistosporeDischargeISpores} toxin spores on any empty space (or less, if fewer than that are available).",
+                FlavorText = "The colony's fruiting bodies tense, launching a volley of toxin-laden spores across the substrate.",
+                Type = MycovariantType.Active,
+                IsUniversal = true,
+                SynergyWith = new List<int> { MycovariantIds.EnduringToxaphoresId },
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    BallistosporeDischargeHelper.ResolveBallistosporeDischarge(
+                        playerMyco,
+                        board,
+                        MycovariantGameBalance.BallistosporeDischargeISpores,
+                        rng,
+                        observer);
+                },
+                AIScore = (player, board) => MycovariantGameBalance.BallistosporeDischargeIAIScore
+            };
+
+        public static Mycovariant BallistosporeDischargeII() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.BallistosporeDischargeIIId,
+                Name = "Ballistospore Discharge II",
+                Description = $"Immediately drop up to {MycovariantGameBalance.BallistosporeDischargeIISpores} toxin spores on any empty space (or less, if fewer than that are available).",
+                FlavorText = "A thunderous burst of spores erupts, blanketing the battlefield in a toxic haze.",
+                Type = MycovariantType.Active,
+                IsUniversal = false,
+                SynergyWith = new List<int> { MycovariantIds.EnduringToxaphoresId },
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    BallistosporeDischargeHelper.ResolveBallistosporeDischarge(
+                        playerMyco,
+                        board,
+                        MycovariantGameBalance.BallistosporeDischargeIISpores,
+                        rng,
+                        observer);
+                },
+                AIScore = (player, board) => MycovariantGameBalance.BallistosporeDischargeIIAIScore
+            };
+
+        public static Mycovariant BallistosporeDischargeIII() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.BallistosporeDischargeIIIId,
+                Name = "Ballistospore Discharge III",
+                Description = $"Immediately drop up to {MycovariantGameBalance.BallistosporeDischargeIIISpores} toxin spores on any empty space (or less, if fewer than that are available).",
+                FlavorText = "The ultimate actinic volley: a storm of spores rains down, saturating the terrain with lethal intent.",
+                Type = MycovariantType.Active,
+                IsUniversal = false,
+                SynergyWith = new List<int> { MycovariantIds.EnduringToxaphoresId },
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    BallistosporeDischargeHelper.ResolveBallistosporeDischarge(
+                        playerMyco,
+                        board,
+                        MycovariantGameBalance.BallistosporeDischargeIIISpores,
+                        rng,
+                        observer);
+                },
+                AIScore = (player, board) => MycovariantGameBalance.BallistosporeDischargeIIIAIScore
+            };
     }
 }

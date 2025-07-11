@@ -186,6 +186,35 @@ namespace FungusToast.Unity.Grid
         }
 
         /// <summary>
+        /// Highlights tiles with per-tile color support. Each tileId maps to a (colorA, colorB) tuple.
+        /// </summary>
+        public void HighlightTiles(IDictionary<int, (Color colorA, Color colorB)> tileHighlights)
+        {
+            SelectionHighlightTileMap.ClearAllTiles();
+            highlightedPositions.Clear();
+
+            foreach (var kvp in tileHighlights)
+            {
+                int tileId = kvp.Key;
+                var (colorA, colorB) = kvp.Value;
+                var (x, y) = board.GetXYFromTileId(tileId);
+                Vector3Int pos = new Vector3Int(x, y, 0);
+                SelectionHighlightTileMap.SetTile(pos, solidHighlightTile);
+                SelectionHighlightTileMap.SetTileFlags(pos, TileFlags.None);
+                // Use colorA for now (could pulse between colorA/colorB if needed)
+                SelectionHighlightTileMap.SetColor(pos, colorA);
+                highlightedPositions.Add(pos);
+            }
+
+            // No pulsing for per-tile highlights (could be added if needed)
+            if (pulseHighlightCoroutine != null)
+            {
+                StopCoroutine(pulseHighlightCoroutine);
+                pulseHighlightCoroutine = null;
+            }
+        }
+
+        /// <summary>
         /// Clears all highlights and stops pulsing.
         /// </summary>
         public void ClearHighlights()

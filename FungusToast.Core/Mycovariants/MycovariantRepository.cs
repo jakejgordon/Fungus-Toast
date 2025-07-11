@@ -53,6 +53,11 @@ namespace FungusToast.Core.Mycovariants
                 
                 // --- Reclamation/Recovery options ---
                 MycovariantFactory.ReclamationRhizomorphs(),
+
+                // --- Offensive options ---
+                MycovariantFactory.BallistosporeDischargeI(),
+                MycovariantFactory.BallistosporeDischargeII(),
+                MycovariantFactory.BallistosporeDischargeIII(),
             };
         }
 
