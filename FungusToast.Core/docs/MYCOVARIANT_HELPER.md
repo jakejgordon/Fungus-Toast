@@ -29,7 +29,7 @@ This guide describes the step-by-step process for adding a new mycovariant to th
    - Implement effect logic in `@MycovariantEffectProcessor.cs` (and/or other relevant processors).
    - If the effect should be tracked in simulation output:
      - Add a new effect type in `@MycovariantEffectType.cs`.
-     - Add a case in `@GameResult.cs` to report the effect using the simulation tracking context.
+     - Add a case in `@GameResult.cs` to report the effect using the simulation tracking context. **For each new mycovariant, ensure you add a case for its ID(s) in the switch statement in `BuildMycovariantResults` so its effect count appears in simulation output.**
      - Add a method to `@ISimulationObserver.cs` and implement it in `@SimulationTrackingContext.cs` to record the effect.
      - If you (the human) do not specify what to record, Cursor should ask for clarification.
 

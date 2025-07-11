@@ -33,7 +33,7 @@ namespace FungusToast.Core.Mycovariants
                 var topPlayers = board.Players
                     .Where(p => p.PlayerId != player.PlayerId)
                     .OrderByDescending(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
-                    .Take(2)
+                    .Take(3)
                     .Select(p => p.PlayerId)
                     .ToHashSet();
 
