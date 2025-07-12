@@ -311,7 +311,7 @@ namespace FungusToast.Core.Mutations
                 tier: MutationTier.Tier4
             ),
                 new MutationPrerequisite(MutationIds.Necrosporulation, 3),
-                new MutationPrerequisite(MutationIds.MycotropicInduction, 3));
+                new MutationPrerequisite(MutationIds.MycotropicInduction, 1));
 
 
             MakeChild(new Mutation(
@@ -350,7 +350,6 @@ namespace FungusToast.Core.Mutations
                 tier: MutationTier.Tier4
             ),
             new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 3),
-            new MutationPrerequisite(MutationIds.Necrosporulation, 2),
             new MutationPrerequisite(MutationIds.MycelialBloom, 8)
             );
 
@@ -372,8 +371,8 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.GeneticDrift,
                 tier: MutationTier.Tier4
             ),
-            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 3),
-            new MutationPrerequisite(MutationIds.AdaptiveExpression, 4));
+            new MutationPrerequisite(MutationIds.AnabolicInversion, 1),
+            new MutationPrerequisite(MutationIds.Necrosporulation, 1));
 
 
             //Tier-5
@@ -392,7 +391,7 @@ namespace FungusToast.Core.Mutations
                 tier: MutationTier.Tier5
             ),
             new MutationPrerequisite(MutationIds.RegenerativeHyphae, 1),
-            new MutationPrerequisite(MutationIds.CreepingMold, 1));
+            new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1));
 
             MakeChild(new Mutation(
                 id: MutationIds.PutrefactiveRejuvenation,
@@ -426,7 +425,6 @@ namespace FungusToast.Core.Mutations
                 tier: MutationTier.Tier6
             ),
             new MutationPrerequisite(MutationIds.NecrohyphalInfiltration, 1),
-            new MutationPrerequisite(MutationIds.MycotropicInduction, 2),
             new MutationPrerequisite(MutationIds.AnabolicInversion, 2));
 
 
@@ -448,11 +446,11 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.GeneticDrift,
                 tier: MutationTier.Tier5
             ),
-            new MutationPrerequisite(MutationIds.NecrophyticBloom, 2),
-            new MutationPrerequisite(MutationIds.MycotropicInduction, 2),
-            new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 2),
-            new MutationPrerequisite(MutationIds.AdaptiveExpression, 2),
-            new MutationPrerequisite(MutationIds.Necrosporulation, 2));
+            new MutationPrerequisite(MutationIds.NecrophyticBloom, 1),
+            new MutationPrerequisite(MutationIds.MycotropicInduction, 1),
+            new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1),
+            new MutationPrerequisite(MutationIds.AdaptiveExpression, 1),
+            new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 2));
 
             return (allMutations, rootMutations);
         }
