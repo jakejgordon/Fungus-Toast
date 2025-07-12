@@ -20,7 +20,6 @@ namespace FungusToast.Unity.UI
         private HashSet<int> selectedTileIds = new HashSet<int>();
         private int maxSelections = 5;
         private bool selectionActive = false;
-        private int lastRemaining = -1;
 
         private void Awake()
         {
