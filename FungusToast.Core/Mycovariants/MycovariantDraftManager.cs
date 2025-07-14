@@ -118,20 +118,32 @@ namespace FungusToast.Core.Mycovariants
             var shuffled = uniqueEligible.OrderBy(x => rng.Next()).ToList();
             var choices = shuffled.Take(choicesCount).ToList();
 
-            FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Draft] Generated {choices.Count} choices for player {player.PlayerId}: [{string.Join(", ", choices.Select(c => c.Name))}]");
-
             // Only force for human player and if a forced ID is provided
             if (forcedMycovariantId.HasValue && player.PlayerType == PlayerTypeEnum.Human)
             {
-                var forced = MycovariantRepository.All.FirstOrDefault(m => m.Id == forcedMycovariantId.Value);
+                // First check if the forced mycovariant is actually eligible from the pool
+                var forced = uniqueEligible.FirstOrDefault(m => m.Id == forcedMycovariantId.Value);
+                
                 if (forced != null && !choices.Contains(forced))
                 {
+                    // The testing mycovariant is eligible and not already in choices, add it
                     if (choices.Count < choicesCount)
                         choices.Add(forced);
                     else
                         choices[0] = forced;
+                        
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Draft] Forced testing mycovariant '{forced.Name}' (ID: {forcedMycovariantId.Value}) into choices for human player");
+                }
+                else if (forced == null)
+                {
+                    // The testing mycovariant is not eligible (was drafted/removed), log this
+                    var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == forcedMycovariantId.Value);
+                    string mycovariantName = testingMycovariant?.Name ?? "Unknown";
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Draft] Testing mycovariant '{mycovariantName}' (ID: {forcedMycovariantId.Value}) is not eligible - was it already drafted by someone else?");
                 }
             }
+
+            FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Draft] Final choices for player {player.PlayerId}: [{string.Join(", ", choices.Select(c => c.Name))}]");
 
             return choices;
         }
