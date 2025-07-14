@@ -58,6 +58,7 @@ namespace FungusToast.Unity
         private bool gameEnded = false;
 
         private System.Random rng;
+        private MycovariantPoolManager persistentPoolManager;
 
         public GameBoard Board { get; private set; }
         public GameUIManager GameUI => gameUIManager;
@@ -108,6 +109,11 @@ namespace FungusToast.Unity
             AnalyticsEventSubscriber.Subscribe(Board, null);
 
             InitializePlayersWithHumanFirst();
+
+            // Initialize the persistent pool manager once per game
+            var allMycovariants = MycovariantRepository.All.ToList();
+            persistentPoolManager = new MycovariantPoolManager();
+            persistentPoolManager.InitializePool(allMycovariants, rng);
 
             gridVisualizer.Initialize(Board);
             PlaceStartingSpores();
@@ -414,22 +420,16 @@ namespace FungusToast.Unity
         {
             isInDraftPhase = true;
 
-            // Build the draft pool as appropriate for your game logic
-            var draftPool = MycovariantDraftManager.BuildDraftPool(Board, Board.Players);
-
-            // In testing mode, ensure the testing mycovariant is in the pool
+            // In testing mode, ensure the testing mycovariant is available
             if (testingModeEnabled && testingMycovariantId != -1)
             {
                 var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
-                if (testingMycovariant != null && !draftPool.Contains(testingMycovariant))
+                if (testingMycovariant != null)
                 {
-                    draftPool.Add(testingMycovariant);
+                    // The testing mycovariant should already be in the persistent pool manager
+                    // No need to modify the pool here
                 }
             }
-
-            // Create and initialize the pool manager
-            var poolManager = new MycovariantPoolManager();
-            poolManager.InitializePool(draftPool, rng);
 
             // Determine draft order (example: fewest living cells goes first)
             List<Player> draftOrder;
@@ -449,9 +449,9 @@ namespace FungusToast.Unity
                     .ToList();
             }
 
-            // Start the draft UI/controller
+            // Start the draft UI/controller using the persistent pool manager
             mycovariantDraftController.StartDraft(
-                Board.Players, poolManager, draftOrder, rng, MycovariantGameBalance.MycovariantSelectionDraftSize);
+                Board.Players, persistentPoolManager, draftOrder, rng, MycovariantGameBalance.MycovariantSelectionDraftSize);
 
             // Show a phase banner (optional, for player feedback)
             if (testingModeEnabled)
@@ -628,29 +628,49 @@ namespace FungusToast.Unity
 
         private void RunSilentDraftForAllPlayers()
         {
-            // Build the draft pool
-            var draftPool = MycovariantDraftManager.BuildDraftPool(Board, Board.Players);
-            var poolManager = new MycovariantPoolManager();
-            poolManager.InitializePool(draftPool, rng);
-            var draftOrder = Board.Players
-                .OrderBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
-                .ToList();
-            int draftSize = MycovariantGameBalance.MycovariantSelectionDraftSize;
-            foreach (var player in draftOrder)
+            // Create a custom draft function that excludes the testing mycovariant for AI players during silent drafts
+            Func<Player, List<Mycovariant>, Mycovariant>? customSelectionCallback = null;
+            
+            if (testingModeEnabled && testingMycovariantId != -1)
             {
-                var choices = poolManager.GetEligibleMycovariantsForPlayer(player)
-                    .OrderBy(_ => rng.Next())
-                    .Take(draftSize)
-                    .ToList();
-                if (choices.Count == 0) continue;
-                // AI pick: highest AI score
-                var picked = choices
-                    .OrderByDescending(m => m.GetBaseAIScore(player, Board))
-                    .ThenBy(_ => rng.Next())
-                    .First();
-                player.AddMycovariant(picked);
-                poolManager.RemoveFromPool(picked);
+                // Find the testing mycovariant to check if it's universal
+                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
+                
+                if (testingMycovariant != null && !testingMycovariant.IsUniversal)
+                {
+                    // If the testing mycovariant is non-universal, exclude it from AI selections during silent drafts
+                    customSelectionCallback = (player, choices) =>
+                    {
+                        // Filter out the testing mycovariant for AI players
+                        var availableChoices = choices.Where(m => m.Id != testingMycovariantId).ToList();
+                        
+                        if (availableChoices.Count == 0)
+                        {
+                            // Fallback: if no other choices available, pick randomly from all choices
+                            availableChoices = choices;
+                        }
+                        
+                        // AI pick: highest AI score from available choices
+                        return availableChoices
+                            .OrderByDescending(m => m.GetBaseAIScore(player, Board))
+                            .ThenBy(_ => rng.Next())
+                            .First();
+                    };
+                    
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[SilentDraft] Excluding non-universal testing mycovariant '{testingMycovariant.Name}' (ID: {testingMycovariantId}) from AI selections during silent draft");
+                }
             }
+            
+            // Use the persistent pool manager for silent drafts to maintain state consistency
+            MycovariantDraftManager.RunDraft(
+                Board.Players,
+                persistentPoolManager,
+                Board,
+                rng,
+                MycovariantGameBalance.MycovariantSelectionDraftSize,
+                customSelectionCallback, // Use custom callback to exclude testing mycovariant from AI
+                null  // No observer for silent draft
+            );
         }
 
         private void SpendMutationPointsForAllPlayers(List<Mutation> allMutations, GameBoard board, System.Random rng)

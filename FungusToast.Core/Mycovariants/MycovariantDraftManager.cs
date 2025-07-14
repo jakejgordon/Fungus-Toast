@@ -106,8 +106,19 @@ namespace FungusToast.Core.Mycovariants
         )
         {
             var eligible = poolManager.GetEligibleMycovariantsForPlayer(player);
-            var shuffled = eligible.OrderBy(x => rng.Next()).ToList();
+            
+            // Debug logging to help diagnose pool issues
+            FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Draft] Player {player.PlayerId} has {eligible.Count} eligible mycovariants. Pool summary: {poolManager.GetPoolSummary()}");
+            
+            // Ensure uniqueness by grouping by ID and taking only one of each
+            var uniqueEligible = eligible.GroupBy(m => m.Id).Select(g => g.First()).ToList();
+            
+            FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Draft] After uniqueness filter: {uniqueEligible.Count} unique eligible mycovariants");
+            
+            var shuffled = uniqueEligible.OrderBy(x => rng.Next()).ToList();
             var choices = shuffled.Take(choicesCount).ToList();
+
+            FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Draft] Generated {choices.Count} choices for player {player.PlayerId}: [{string.Join(", ", choices.Select(c => c.Name))}]");
 
             // Only force for human player and if a forced ID is provided
             if (forcedMycovariantId.HasValue && player.PlayerType == PlayerTypeEnum.Human)
