@@ -21,27 +21,27 @@ namespace FungusToast.Core.Config
         public const int JettingMyceliumConeWideWidth = 5;
 
         public const int PlasmidBountyMutationPointAward = 7;
-        public const int PlasmidBountyIIMutationPointAward = 9;
-        public const int PlasmidBountyIIIMutationPointAward = 11;
+        public const int PlasmidBountyIIMutationPointAward = 20; //9;
+        public const int PlasmidBountyIIIMutationPointAward = 30; //11;
 
         public const float NeutralizingMantleNeutralizeChance = 0.20f;
 
-        public const int MycelialBastionIMaxResistantCells = 5;
-        public const int MycelialBastionIIMaxResistantCells = 8;
-        public const int MycelialBastionIIIMaxResistantCells = 12;
+        public const int MycelialBastionIMaxResistantCells = 6;
+        public const int MycelialBastionIIMaxResistantCells = 9;
+        public const int MycelialBastionIIIMaxResistantCells = 15;
 
         public const float HyphalResistanceTransferChance = 0.10f;
 
-        public const float PerimeterProliferatorEdgeMultiplier = 2.0f;
+        public const float PerimeterProliferatorEdgeMultiplier = 2.5f;
 
-        public const int EnduringToxaphoresNewToxinExtension = 7; // X: cycles added to new toxins
-        public const int EnduringToxaphoresExistingToxinExtension = 3; // Y: cycles added to existing toxins at acquisition
+        public const int EnduringToxaphoresNewToxinExtension = 8; // X: cycles added to new toxins
+        public const int EnduringToxaphoresExistingToxinExtension = 4; // Y: cycles added to existing toxins at acquisition
 
         public const float ReclamationRhizomorphsSecondAttemptChance = 0.25f; // 25% chance for second reclamation attempt
 
-        public const int BallistosporeDischargeISpores = 8;
-        public const int BallistosporeDischargeIISpores = 12;
-        public const int BallistosporeDischargeIIISpores = 15;
+        public const int BallistosporeDischargeISpores = 10;
+        public const int BallistosporeDischargeIISpores = 15;
+        public const int BallistosporeDischargeIIISpores = 20;
 
         // Ballistospore Discharge toxin duration (in growth cycles)
         public const int BallistosporeDischargeToxinDuration = 16;

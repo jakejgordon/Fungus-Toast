@@ -134,7 +134,7 @@ namespace FungusToast.Simulation.Analysis
 
                 case MutationIds.HyperadaptiveDrift:
                     if (player.HyperadaptiveDriftPointsEarned > 0)
-                        effects["Hyperadaptive Free MP"] = player.HyperadaptiveDriftPointsEarned;
+                        effects["Free MP"] = player.HyperadaptiveDriftPointsEarned;
                     break;
 
                 case MutationIds.AnabolicInversion:
