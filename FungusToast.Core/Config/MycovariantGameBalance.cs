@@ -12,6 +12,14 @@ namespace FungusToast.Core.Config
         public const int JettingMyceliumNumberOfToxinTiles = 10;
         public const int DefaultJettingMyceliumToxinGrowthCycleDuration = 16;
 
+        // Jetting Mycelium cone effect parameters
+        public const int JettingMyceliumConeNarrowLength = 4;  // First 4 toxins: 1 tile wide
+        public const int JettingMyceliumConeMediumLength = 3;  // Next 3 toxins: 3 tiles wide
+        public const int JettingMyceliumConeWideLength = 3;    // Last 3 toxins: 5 tiles wide
+        public const int JettingMyceliumConeNarrowWidth = 1;
+        public const int JettingMyceliumConeMediumWidth = 3;
+        public const int JettingMyceliumConeWideWidth = 5;
+
         public const int PlasmidBountyMutationPointAward = 7;
         public const int PlasmidBountyIIMutationPointAward = 9;
         public const int PlasmidBountyIIIMutationPointAward = 11;

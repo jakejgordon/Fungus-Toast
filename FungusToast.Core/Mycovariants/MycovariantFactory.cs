@@ -44,8 +44,8 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = id,
                 Name = $"Jetting Mycelium ({directionLabel})",
-                Description = $"Immediately grow {MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles} mold tiles {directionLabel.ToLower()} from a chosen cell, followed by {MycovariantGameBalance.JettingMyceliumNumberOfToxinTiles} toxin tiles.",
-                FlavorText = $"The cap cracks. The colony launches {directionLabel.ToLower()}ward.",
+                Description = $"Immediately grow {MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles} mold tiles {directionLabel.ToLower()} from a chosen cell, followed by a spreading cone of toxins that starts {MycovariantGameBalance.JettingMyceliumConeNarrowWidth} tile wide and expands to {MycovariantGameBalance.JettingMyceliumConeWideWidth} tiles wide.",
+                FlavorText = $"The cap ruptures violently. The colony explodes {directionLabel.ToLower()}ward in a widening cloud of toxic spores.",
                 Type = MycovariantType.Directional,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {

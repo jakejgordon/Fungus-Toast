@@ -478,6 +478,102 @@ namespace FungusToast.Core.Board
             return result;
         }
 
+        /// <summary>
+        /// Generates a cone-shaped pattern of tiles emanating from the starting tile in the specified direction.
+        /// The cone expands in width as it progresses, creating a spreading toxin cloud effect.
+        /// </summary>
+        /// <param name="startTileId">The starting tile ID (source of the cone)</param>
+        /// <param name="direction">The direction the cone spreads</param>
+        /// <returns>A list of tile IDs forming the cone pattern, ordered by distance from source</returns>
+        public List<int> GetTileCone(int startTileId, CardinalDirection direction)
+        {
+            var result = new List<int>();
+            var (startX, startY) = GetXYFromTileId(startTileId);
+            
+            // Get direction vectors
+            var (dirX, dirY) = GetDirectionVector(direction);
+            var (perpX, perpY) = GetPerpendicularVector(direction);
+            
+            // Narrow section: 1 tile wide for 4 tiles
+            AddConeSection(result, startX, startY, dirX, dirY, perpX, perpY, 
+                MycovariantGameBalance.JettingMyceliumConeNarrowLength, 
+                MycovariantGameBalance.JettingMyceliumConeNarrowWidth, 0);
+            
+            // Medium section: 3 tiles wide for 3 tiles  
+            AddConeSection(result, startX, startY, dirX, dirY, perpX, perpY,
+                MycovariantGameBalance.JettingMyceliumConeMediumLength,
+                MycovariantGameBalance.JettingMyceliumConeMediumWidth,
+                MycovariantGameBalance.JettingMyceliumConeNarrowLength);
+            
+            // Wide section: 5 tiles wide for 3 tiles
+            AddConeSection(result, startX, startY, dirX, dirY, perpX, perpY,
+                MycovariantGameBalance.JettingMyceliumConeWideLength,
+                MycovariantGameBalance.JettingMyceliumConeWideWidth,
+                MycovariantGameBalance.JettingMyceliumConeNarrowLength + MycovariantGameBalance.JettingMyceliumConeMediumLength);
+            
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the direction vector (dx, dy) for a cardinal direction.
+        /// </summary>
+        private (int dx, int dy) GetDirectionVector(CardinalDirection direction)
+        {
+            return direction switch
+            {
+                CardinalDirection.North => (0, 1),
+                CardinalDirection.South => (0, -1),
+                CardinalDirection.East => (1, 0),
+                CardinalDirection.West => (-1, 0),
+                _ => (0, 0)
+            };
+        }
+
+        /// <summary>
+        /// Gets the perpendicular vector for a cardinal direction (used for cone width).
+        /// </summary>
+        private (int perpX, int perpY) GetPerpendicularVector(CardinalDirection direction)
+        {
+            return direction switch
+            {
+                CardinalDirection.North => (1, 0),  // Perpendicular to north is east/west
+                CardinalDirection.South => (1, 0),  // Perpendicular to south is east/west
+                CardinalDirection.East => (0, 1),   // Perpendicular to east is north/south
+                CardinalDirection.West => (0, 1),   // Perpendicular to west is north/south
+                _ => (0, 0)
+            };
+        }
+
+        /// <summary>
+        /// Adds a section of the cone with specified width and length to the result list.
+        /// </summary>
+        private void AddConeSection(List<int> result, int startX, int startY, int dirX, int dirY, 
+            int perpX, int perpY, int sectionLength, int sectionWidth, int distanceOffset)
+        {
+            for (int distance = 1; distance <= sectionLength; distance++)
+            {
+                int centerX = startX + (distance + distanceOffset) * dirX;
+                int centerY = startY + (distance + distanceOffset) * dirY;
+                
+                // Add tiles across the width of the cone at this distance
+                int halfWidth = sectionWidth / 2;
+                for (int offset = -halfWidth; offset <= halfWidth; offset++)
+                {
+                    int tileX = centerX + offset * perpX;
+                    int tileY = centerY + offset * perpY;
+                    
+                    // Check bounds and add valid tiles
+                    if (tileX >= 0 && tileX < Width && tileY >= 0 && tileY < Height)
+                    {
+                        int tileId = tileY * Width + tileX;
+                        if (!result.Contains(tileId)) // Avoid duplicates
+                        {
+                            result.Add(tileId);
+                        }
+                    }
+                }
+            }
+        }
 
         // You'll need a helper to get a neighbor tile ID in a given direction:
         public int GetNeighborTileId(int tileId, CardinalDirection direction)

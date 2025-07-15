@@ -13,8 +13,6 @@ using System.Linq;
 
 public static class MycovariantEffectProcessor
 {
-
-
     public static void ResolveJettingMycelium(
         PlayerMycovariant playerMyco,
         Player player,
@@ -27,21 +25,19 @@ public static class MycovariantEffectProcessor
         int playerId = playerMyco.PlayerId;
 
         int livingLength = MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles;
-        int toxinCount = MycovariantGameBalance.JettingMyceliumNumberOfToxinTiles;
-        int totalLength = livingLength + toxinCount;
 
         // Debug logging to help verify direction fix
         var (sourceX, sourceY) = board.GetXYFromTileId(tileId);
-        FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[JettingMycelium] Resolving {direction} from tile ({sourceX}, {sourceY}) for player {playerId}");
+        FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[JettingMycelium] Resolving {direction} cone from tile ({sourceX}, {sourceY}) for player {playerId}");
 
-        var line = board.GetTileLine(tileId, direction, totalLength, includeStartingTile: false);
+        // Get the straight line for living cells (first 4 tiles)
+        var livingLine = board.GetTileLine(tileId, direction, livingLength, includeStartingTile: false);
+        
+        // Get the cone pattern for toxins
+        var toxinCone = board.GetTileCone(tileId, direction);
 
-        // Debug logging to show the first few target tiles
-        if (line.Count > 0)
-        {
-            var firstTargetCoords = board.GetXYFromTileId(line[0]);
-            FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[JettingMycelium] First target tile: ({firstTargetCoords.x}, {firstTargetCoords.y})");
-        }
+        // Debug logging to show the effect pattern
+        FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[JettingMycelium] Living line: {livingLine.Count} tiles, Toxin cone: {toxinCone.Count} tiles");
 
         // Outcome tallies
         int infested = 0;
@@ -54,10 +50,10 @@ public static class MycovariantEffectProcessor
 
         List<FungalCell> affectedCells = new();
 
-        // 1. For each tile in the line, up to livingLength, create or replace with a living cell for the player
-        for (int i = 0; i < line.Count && i < livingLength; i++)
+        // 1. For each tile in the living line, create or replace with a living cell for the player
+        for (int i = 0; i < livingLine.Count && i < livingLength; i++)
         {
-            var targetTile = board.GetTileById(line[i]);
+            var targetTile = board.GetTileById(livingLine[i]);
             if (targetTile == null) { invalid++; continue; }
 
             var prevCell = targetTile.FungalCell;
@@ -65,16 +61,16 @@ public static class MycovariantEffectProcessor
             if (prevCell == null)
             {
                 // Place a new living cell
-                var newCell = new FungalCell(playerId, line[i]);
+                var newCell = new FungalCell(playerId, livingLine[i]);
                 targetTile.PlaceFungalCell(newCell);
-                board.Players[playerId].ControlledTileIds.Add(line[i]);
+                board.Players[playerId].ControlledTileIds.Add(livingLine[i]);
                 colonized++;
                 affectedCells.Add(newCell);
             }
             else
             {
                 // Use board.TakeoverCell to handle both cell state and board updates.
-                var takeoverResult = board.TakeoverCell(line[i], playerId, allowToxin: true, players: board.Players, rng: rng, observer: observer);
+                var takeoverResult = board.TakeoverCell(livingLine[i], playerId, allowToxin: true, players: board.Players, rng: rng, observer: observer);
 
                 switch (takeoverResult)
                 {
@@ -93,27 +89,29 @@ public static class MycovariantEffectProcessor
             }
         }
 
-        // 2. For the last N tiles (toxinCount), convert to toxin
-        for (int i = livingLength; i < line.Count && i < totalLength; i++)
+        // 2. For each tile in the toxin cone, convert to toxin
+        foreach (int coneTileId in toxinCone)
         {
-            var targetTile = board.GetTileById(line[i]);
+            var targetTile = board.GetTileById(coneTileId);
             if (targetTile == null) { invalid++; continue; }
 
-            int baseDuration = MycovariantGameBalance.DefaultJettingMyceliumToxinGrowthCycleDuration;
-            int bonus = player.GetMutationLevel(MutationIds.MycotoxinPotentiation) * GameBalance.MycotoxinPotentiationGrowthCycleExtensionPerLevel;
-            int expirationCycle = board.CurrentGrowthCycle + baseDuration + bonus;
+            // Use ToxinHelper to get proper expiration cycle with all bonuses
+            int expirationCycle = ToxinHelper.GetToxinExpirationCycle(
+                player, 
+                board, 
+                MycovariantGameBalance.DefaultJettingMyceliumToxinGrowthCycleDuration);
 
             var prevCell = targetTile.FungalCell;
             if (prevCell == null || prevCell.IsDead)
             {
                 // Toxify empty or dead cell (call it "toxified" = "placed toxin")
-                ToxinHelper.ConvertToToxin(board, line[i], expirationCycle, player);
+                ToxinHelper.ConvertToToxin(board, coneTileId, expirationCycle, player);
                 poisoned++; // toxified → poisoned (for simulation output)
             }
             else if (prevCell.IsAlive && prevCell.OwnerPlayerId != playerId)
             {
                 // Properly kill and toxify using board-level logic
-                ToxinHelper.KillAndToxify(board, line[i], expirationCycle, DeathReason.JettingMycelium, player);
+                ToxinHelper.KillAndToxify(board, coneTileId, expirationCycle, DeathReason.JettingMycelium, player);
                 poisoned++;
             }
             // Do not overwrite your own living cell with toxin.
@@ -228,8 +226,6 @@ public static class MycovariantEffectProcessor
         foreach (var cell in selected)
         {
             cell.MakeResistant();
-            
-            
             
             playerMyco.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);
             observer?.RecordBastionedCells(player.PlayerId, 1);

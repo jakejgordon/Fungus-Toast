@@ -10,25 +10,27 @@ namespace FungusToast.Core.Mycovariants
     {
         /// <summary>
         /// Evaluates the potential placement of Jetting Mycelium from a given source cell in a specific direction.
-        /// Returns a score based on the expected outcomes.
+        /// Returns a score based on the expected outcomes using the new cone pattern.
         /// </summary>
         public static float EvaluatePlacement(FungalCell sourceCell, CardinalDirection direction, GameBoard board, Player player)
         {
             int livingLength = MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles;
-            int toxinCount = MycovariantGameBalance.JettingMyceliumNumberOfToxinTiles;
-            int totalLength = livingLength + toxinCount;
 
-            var line = board.GetTileLine(sourceCell.TileId, direction, totalLength, includeStartingTile: false);
+            // Get the straight line for living cells
+            var livingLine = board.GetTileLine(sourceCell.TileId, direction, livingLength, includeStartingTile: false);
+            
+            // Get the cone pattern for toxins
+            var toxinCone = board.GetTileCone(sourceCell.TileId, direction);
 
             int infested = 0;
             int reclaimed = 0;
             int poisoned = 0;
             int wastedOnOwn = 0;
 
-            // Evaluate living cell section (first livingLength tiles)
-            for (int i = 0; i < line.Count && i < livingLength; i++)
+            // Evaluate living cell section (straight line)
+            for (int i = 0; i < livingLine.Count && i < livingLength; i++)
             {
-                var targetTile = board.GetTileById(line[i]);
+                var targetTile = board.GetTileById(livingLine[i]);
                 if (targetTile == null) continue;
 
                 var prevCell = targetTile.FungalCell;
@@ -57,10 +59,10 @@ namespace FungusToast.Core.Mycovariants
                 // Other cases (enemy dead cells, toxins) are neutral
             }
 
-            // Evaluate toxin section (remaining tiles)
-            for (int i = livingLength; i < line.Count && i < totalLength; i++)
+            // Evaluate toxin section (cone pattern)
+            foreach (int coneTileId in toxinCone)
             {
-                var targetTile = board.GetTileById(line[i]);
+                var targetTile = board.GetTileById(coneTileId);
                 if (targetTile == null) continue;
 
                 var prevCell = targetTile.FungalCell;
@@ -125,4 +127,4 @@ namespace FungusToast.Core.Mycovariants
             return bestCell != null ? (bestCell, bestScore) : null;
         }
     }
-} 
+}
