@@ -23,12 +23,48 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             GameObject draftPanel,
             GridVisualizer gridVisualizer)
         {
-            var direction = DirectionFromMycovariantId(picked.Id); // You may want to pass this in, or keep helper internal
+            var direction = DirectionFromMycovariantId(picked.Id);
 
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                // AI: Core ApplyEffect handles everything
-                // Just wait for the effect to complete
+                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] AI player {player.PlayerId} executing Jetting Mycelium {direction}");
+                
+                // AI: Execute the effect directly since Unity drafts don't call ApplyEffect
+                var livingCells = GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId)
+                    .Where(c => c.IsAlive)
+                    .ToList();
+                
+                if (livingCells.Count > 0)
+                {
+                    var sourceCell = livingCells[UnityEngine.Random.Range(0, livingCells.Count)];
+                    var playerMyco = player.PlayerMycovariants
+                        .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+                    
+                    if (playerMyco != null)
+                    {
+                        MycovariantEffectProcessor.ResolveJettingMycelium(
+                            playerMyco,
+                            player,
+                            GameManager.Instance.Board,
+                            sourceCell.TileId,
+                            direction,
+                            new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                            null
+                        );
+                        
+                        FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] AI Jetting Mycelium effect completed for player {player.PlayerId}");
+                    }
+                    else
+                    {
+                        FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] WARNING: PlayerMycovariant not found for AI player {player.PlayerId}");
+                    }
+                }
+                else
+                {
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] WARNING: No living cells found for AI player {player.PlayerId}");
+                }
+                
+                // Wait for the effect to visually complete
                 yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumAIDelaySeconds);
                 onComplete?.Invoke();
             }
@@ -104,8 +140,29 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                // AI: Core ApplyEffect handles everything
-                // Just wait for the effect to complete
+                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] AI player {player.PlayerId} executing Mycelial Bastion with max {maxCellsAllowed} cells");
+                
+                // AI: Execute the effect directly since Unity drafts don't call ApplyEffect
+                var playerMyco = player.PlayerMycovariants
+                    .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+                
+                if (playerMyco != null)
+                {
+                    MycovariantEffectProcessor.ResolveMycelialBastion(
+                        playerMyco,
+                        GameManager.Instance.Board,
+                        new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                        null
+                    );
+                    
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] AI Mycelial Bastion effect completed for player {player.PlayerId}");
+                }
+                else
+                {
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] WARNING: PlayerMycovariant not found for AI player {player.PlayerId}");
+                }
+                
+                // Wait for the effect to visually complete
                 yield return new WaitForSeconds(UIEffectConstants.MycelialBastionAIDelaySeconds);
                 onComplete?.Invoke();
             }
@@ -172,8 +229,21 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                // AI: Core ApplyEffect handles everything
-                // Just wait for the effect to complete
+                // AI: Execute the effect directly since Unity drafts don't call ApplyEffect
+                var playerMyco = player.PlayerMycovariants
+                    .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+                
+                if (playerMyco != null)
+                {
+                    MycovariantEffectProcessor.ResolveSurgicalInoculationAI(
+                        playerMyco,
+                        GameManager.Instance.Board,
+                        new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                        null
+                    );
+                }
+                
+                // Wait for the effect to visually complete
                 yield return new WaitForSeconds(UIEffectConstants.DefaultAIThinkingDelay);
                 onComplete?.Invoke();
             }
@@ -247,10 +317,33 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             GameObject draftPanel,
             GridVisualizer gridVisualizer)
         {
+            // Calculate max spores allowed for this mycovariant tier
+            int maxSporesAllowed = picked.Id switch
+            {
+                MycovariantIds.BallistosporeDischargeIId => MycovariantGameBalance.BallistosporeDischargeISpores,
+                MycovariantIds.BallistosporeDischargeIIId => MycovariantGameBalance.BallistosporeDischargeIISpores,
+                MycovariantIds.BallistosporeDischargeIIIId => MycovariantGameBalance.BallistosporeDischargeIIISpores,
+                _ => MycovariantGameBalance.BallistosporeDischargeISpores
+            };
+
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                // AI: Core ApplyEffect handles everything
-                yield return new WaitForSeconds(UIEffectConstants.DefaultAIThinkingDelay); // Use new delay constant
+                // AI: Execute the effect directly since Unity drafts don't call ApplyEffect
+                var playerMyco = player.PlayerMycovariants.FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+                
+                if (playerMyco != null)
+                {
+                    BallistosporeDischargeHelper.ResolveBallistosporeDischarge(
+                        playerMyco,
+                        GameManager.Instance.Board,
+                        maxSporesAllowed,
+                        new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                        null
+                    );
+                }
+                
+                // Wait for the effect to visually complete
+                yield return new WaitForSeconds(UIEffectConstants.DefaultAIThinkingDelay);
                 onComplete?.Invoke();
             }
             else
@@ -263,13 +356,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     .Select(tile => tile.TileId)
                     .ToList();
                 int emptyTileCount = validTileIds.Count;
-                int maxSporesAllowed = picked.Id switch
-                {
-                    MycovariantIds.BallistosporeDischargeIId => MycovariantGameBalance.BallistosporeDischargeISpores,
-                    MycovariantIds.BallistosporeDischargeIIId => MycovariantGameBalance.BallistosporeDischargeIISpores,
-                    MycovariantIds.BallistosporeDischargeIIIId => MycovariantGameBalance.BallistosporeDischargeIIISpores,
-                    _ => MycovariantGameBalance.BallistosporeDischargeISpores
-                };
                 int maxSpores = Math.Min(emptyTileCount, maxSporesAllowed);
                 GameManager.Instance.ShowSelectionPrompt(
                     $"Select up to {maxSpores} empty tiles to drop toxin spores."

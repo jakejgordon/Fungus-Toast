@@ -488,8 +488,8 @@ namespace FungusToast.Core.Board
 
             switch (direction)
             {
-                case CardinalDirection.North: y -= 1; break;
-                case CardinalDirection.South: y += 1; break;
+                case CardinalDirection.North: y += 1; break; // Fixed: North should increase Y (move up visually)
+                case CardinalDirection.South: y -= 1; break; // Fixed: South should decrease Y (move down visually)
                 case CardinalDirection.East: x += 1; break;
                 case CardinalDirection.West: x -= 1; break;
             }

@@ -30,7 +30,18 @@ public static class MycovariantEffectProcessor
         int toxinCount = MycovariantGameBalance.JettingMyceliumNumberOfToxinTiles;
         int totalLength = livingLength + toxinCount;
 
+        // Debug logging to help verify direction fix
+        var (sourceX, sourceY) = board.GetXYFromTileId(tileId);
+        FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[JettingMycelium] Resolving {direction} from tile ({sourceX}, {sourceY}) for player {playerId}");
+
         var line = board.GetTileLine(tileId, direction, totalLength, includeStartingTile: false);
+
+        // Debug logging to show the first few target tiles
+        if (line.Count > 0)
+        {
+            var firstTargetCoords = board.GetXYFromTileId(line[0]);
+            FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[JettingMycelium] First target tile: ({firstTargetCoords.x}, {firstTargetCoords.y})");
+        }
 
         // Outcome tallies
         int infested = 0;
