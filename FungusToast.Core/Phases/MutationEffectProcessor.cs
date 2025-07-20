@@ -598,7 +598,7 @@ namespace FungusToast.Core.Phases
                 {
                     if (rng.NextDouble() < killChance)
                     {
-                        neighborTile.FungalCell!.Kill(DeathReason.MycotoxinPotentiation);
+                        board.KillFungalCell(neighborTile.FungalCell!, DeathReason.MycotoxinPotentiation, owner.PlayerId);
                         killCount++;
                     }
                 }

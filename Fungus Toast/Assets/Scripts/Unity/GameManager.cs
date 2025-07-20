@@ -638,10 +638,15 @@ namespace FungusToast.Unity
                 
                 if (testingMycovariant != null && !testingMycovariant.IsUniversal)
                 {
-                    // If the testing mycovariant is non-universal, exclude it from AI selections during silent drafts
+                    // If the testing mycovariant is non-universal, temporarily remove it from the pool during silent drafts
+                    // This prevents AI players from receiving it in their draft choices
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[SilentDraft] Temporarily removing non-universal testing mycovariant '{testingMycovariant.Name}' (ID: {testingMycovariantId}) from pool during silent draft");
+                    persistentPoolManager.TemporarilyRemoveFromPool(testingMycovariantId);
+                    
+                    // Create custom selection callback for any edge cases where it might still appear
                     customSelectionCallback = (player, choices) =>
                     {
-                        // Filter out the testing mycovariant for AI players
+                        // Filter out the testing mycovariant for AI players as a safety net
                         var availableChoices = choices.Where(m => m.Id != testingMycovariantId).ToList();
                         
                         if (availableChoices.Count == 0)
@@ -656,8 +661,6 @@ namespace FungusToast.Unity
                             .ThenBy(_ => rng.Next())
                             .First();
                     };
-                    
-                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[SilentDraft] Excluding non-universal testing mycovariant '{testingMycovariant.Name}' (ID: {testingMycovariantId}) from AI selections during silent draft");
                 }
             }
             
@@ -671,6 +674,17 @@ namespace FungusToast.Unity
                 customSelectionCallback, // Use custom callback to exclude testing mycovariant from AI
                 null  // No observer for silent draft
             );
+            
+            // After silent draft is complete, restore the testing mycovariant to the pool
+            if (testingModeEnabled && testingMycovariantId != -1)
+            {
+                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
+                if (testingMycovariant != null && !testingMycovariant.IsUniversal)
+                {
+                    persistentPoolManager.RestoreToPool(testingMycovariantId);
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[SilentDraft] Restored testing mycovariant '{testingMycovariant.Name}' (ID: {testingMycovariantId}) to pool after silent draft");
+                }
+            }
         }
 
         private void SpendMutationPointsForAllPlayers(List<Mutation> allMutations, GameBoard board, System.Random rng)

@@ -10,6 +10,7 @@ namespace FungusToast.Core.Mycovariants
         private List<Mycovariant> _availablePool = new();
         private List<Mycovariant> _universalPool = new();
         private HashSet<int> _draftedNonUniversalIds = new(); // Track all non-universal mycovariants that have been drafted
+        private List<Mycovariant> _temporarilyRemovedMycovariants = new(); // Track temporarily removed mycovariants for testing
 
         /// <summary>
         /// Initializes the pools. Call at the start of the draft phase.
@@ -129,11 +130,48 @@ namespace FungusToast.Core.Mycovariants
         }
 
         /// <summary>
+        /// Temporarily removes a mycovariant from the available pool (for testing mode).
+        /// The mycovariant can be restored later with RestoreToPool.
+        /// </summary>
+        public void TemporarilyRemoveFromPool(int mycovariantId)
+        {
+            var toRemove = _availablePool.Where(m => m.Id == mycovariantId).ToList();
+            foreach (var mycovariant in toRemove)
+            {
+                _availablePool.Remove(mycovariant);
+                _temporarilyRemovedMycovariants.Add(mycovariant);
+                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Pool] Temporarily removed '{mycovariant.Name}' (ID: {mycovariantId}) from pool");
+            }
+        }
+
+        /// <summary>
+        /// Restores a temporarily removed mycovariant back to the available pool (for testing mode).
+        /// </summary>
+        public void RestoreToPool(int mycovariantId)
+        {
+            var toRestore = _temporarilyRemovedMycovariants.Where(m => m.Id == mycovariantId).ToList();
+            foreach (var mycovariant in toRestore)
+            {
+                _temporarilyRemovedMycovariants.Remove(mycovariant);
+                // Only restore if it hasn't been permanently drafted
+                if (!_draftedNonUniversalIds.Contains(mycovariantId))
+                {
+                    _availablePool.Add(mycovariant);
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Pool] Restored '{mycovariant.Name}' (ID: {mycovariantId}) to pool");
+                }
+                else
+                {
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Pool] Cannot restore '{mycovariant.Name}' (ID: {mycovariantId}) - it was permanently drafted");
+                }
+            }
+        }
+
+        /// <summary>
         /// Gets a summary of the current pool state for debugging/logging.
         /// </summary>
         public string GetPoolSummary()
         {
-            return $"Available: {_availablePool.Count}, Universal: {_universalPool.Count}, Drafted: {_draftedNonUniversalIds.Count}";
+            return $"Available: {_availablePool.Count}, Universal: {_universalPool.Count}, Drafted: {_draftedNonUniversalIds.Count}, TempRemoved: {_temporarilyRemovedMycovariants.Count}";
         }
     }
 
