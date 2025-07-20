@@ -22,7 +22,8 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.Necrosporulation),
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
                     new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
-                }
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Power Mutations",
@@ -213,6 +214,35 @@ namespace FungusToast.Core.AI
                     MycovariantIds.HyphalResistanceTransferId, // Fourth preference: Hyphal Resistance Transfer
                     MycovariantIds.ReclamationRhizomorphsId  // Fifth preference: Reclamation Rhizomorphs
                 }
+            ),
+
+            // Example using MycovariantCategoryHelper - Category-based preferences
+            new ParameterizedSpendingStrategy(
+                strategyName: "Economy First (Category-based)",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, 5),
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 20)
+                },
+                economyBias: EconomyBias.MaxEconomy,
+                // NEW: Using category helper to get all economy mycovariants
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+
+            new ParameterizedSpendingStrategy(
+                strategyName: "Defense and Resistance Focus (Multi-category)",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 30),
+                    new TargetMutationGoal(MutationIds.HomeostaticHarmony, 30)
+                },
+                economyBias: EconomyBias.ModerateEconomy,
+                // NEW: Using category helper to get mycovariants from multiple categories
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Defense, 
+                    MycovariantCategory.Resistance)
             )
         };
 
@@ -263,7 +293,7 @@ namespace FungusToast.Core.AI
             {
                 // 1. Pure Economic Focus - maximize mutation points for faster development
                 new ParameterizedSpendingStrategy(
-                    strategyName: "Grow=>Kill=>Reclaim (Economic)",
+                    strategyName: "Grow>Kill>Reclaim(Econ)",
                     prioritizeHighTier: true,
                     targetMutationGoals: new List<TargetMutationGoal>
                     {
@@ -272,17 +302,13 @@ namespace FungusToast.Core.AI
                         new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
                         new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
                     },
-                    preferredMycovariantIds: new List<int>
-                    {
-                        MycovariantIds.PlasmidBountyIIIId,   // 30 mutation points
-                        MycovariantIds.PlasmidBountyIIId,    // 20 mutation points  
-                        MycovariantIds.PlasmidBountyId      // 7 mutation points
-                    }
+                    preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
                 ),
 
-                // 2. Aggressive Assault - direct offensive capabilities
+
+                // 2. Toxin Specialist - enhanced toxin warfare
                 new ParameterizedSpendingStrategy(
-                    strategyName: "Grow=>Kill=>Reclaim (Jetting)",
+                    strategyName: "Grow>Kill>Reclaim(Toxin)",
                     prioritizeHighTier: true,
                     targetMutationGoals: new List<TargetMutationGoal>
                     {
@@ -291,18 +317,12 @@ namespace FungusToast.Core.AI
                         new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
                         new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
                     },
-                    preferredMycovariantIds: new List<int>
-                    {
-                        MycovariantIds.JettingMyceliumNorthId,    // Explosive directional growth + toxins
-                        MycovariantIds.JettingMyceliumEastId,     // Alternative direction
-                        MycovariantIds.JettingMyceliumSouthId,    // Alternative direction
-                        MycovariantIds.JettingMyceliumWestId 
-                    }
+                    preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Fungicide)
                 ),
 
-                // 3. Toxin Specialist - enhanced toxin warfare
+                // 3. Defensive Foundation - build strong base before attacking
                 new ParameterizedSpendingStrategy(
-                    strategyName: "Grow=>Kill=>Reclaim (Toxin)",
+                    strategyName: "Grow>Kill>Reclaim(Resistance)",
                     prioritizeHighTier: true,
                     targetMutationGoals: new List<TargetMutationGoal>
                     {
@@ -311,38 +331,12 @@ namespace FungusToast.Core.AI
                         new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
                         new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
                     },
-                    preferredMycovariantIds: new List<int>
-                    {
-                        MycovariantIds.EnduringToxaphoresId,      // Make toxins last longer
-                        MycovariantIds.BallistosporeDischargeIIIId, // 20 toxin spores
-                        MycovariantIds.BallistosporeDischargeIIId,  // 15 toxin spores
-                        MycovariantIds.BallistosporeDischargeIId    // 10 toxin spores
-                    }
+                    preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance)
                 ),
 
-                // 4. Defensive Foundation - build strong base before attacking
+                // 4. Hybrid Economic-Assault - balance between growth and offense
                 new ParameterizedSpendingStrategy(
-                    strategyName: "Grow=>Kill=>Reclaim (Resistance I)",
-                    prioritizeHighTier: true,
-                    targetMutationGoals: new List<TargetMutationGoal>
-                    {
-                        new TargetMutationGoal(MutationIds.CreepingMold),
-                        new TargetMutationGoal(MutationIds.Necrosporulation),
-                        new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
-                        new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
-                    },
-                    preferredMycovariantIds: new List<int>
-                    {
-                        MycovariantIds.MycelialBastionIIId,  
-                        MycovariantIds.MycelialBastionIIIId,      
-                        MycovariantIds.HyphalResistanceTransferId,
-                        MycovariantIds.SurgicalInoculationId  
-                    }
-                ),
-
-                // 5. Hybrid Economic-Assault - balance between growth and offense
-                new ParameterizedSpendingStrategy(
-                    strategyName: "Grow=>Kill=>Reclaim (Power I)",
+                    strategyName: "Grow>Kill>Reclaim(Power I)",
                     prioritizeHighTier: true,
                     targetMutationGoals: new List<TargetMutationGoal>
                     {
@@ -360,29 +354,9 @@ namespace FungusToast.Core.AI
                     }
                 ),
 
-                // 6. Fortress Assault - defensive foundation with toxin offense
+                // 5. Adaptive Specialist - mixed utility with reclamation focus
                 new ParameterizedSpendingStrategy(
-                    strategyName: "Grow=>Kill=>Reclaim (Resistance II)",
-                    prioritizeHighTier: true,
-                    targetMutationGoals: new List<TargetMutationGoal>
-                    {
-                        new TargetMutationGoal(MutationIds.CreepingMold),
-                        new TargetMutationGoal(MutationIds.Necrosporulation),
-                        new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
-                        new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
-                    },
-                    preferredMycovariantIds: new List<int>
-                    {
-                        MycovariantIds.HyphalResistanceTransferId, 
-                        MycovariantIds.SurgicalInoculationId,     
-                        MycovariantIds.MycelialBastionIIId,    
-                        MycovariantIds.MycelialBastionIId
-                    }
-                ),
-
-                // 7. Adaptive Specialist - mixed utility with reclamation focus
-                new ParameterizedSpendingStrategy(
-                    strategyName: "Grow=>Kill=>Reclaim (Power II)",
+                    strategyName: "Grow>Kill>Reclaim(Power II)",
                     prioritizeHighTier: true,
                     targetMutationGoals: new List<TargetMutationGoal>
                     {
@@ -401,9 +375,9 @@ namespace FungusToast.Core.AI
                     }
                 ),
 
-                // 8. Elite Assault - high-tier offensive mycovariants
+                // 6. Defensive Foundation - build strong base before attacking
                 new ParameterizedSpendingStrategy(
-                    strategyName: "Grow=>Kill=>Reclaim (Elite)",
+                    strategyName: "Grow>Kill>Reclaim(Reclaim)",
                     prioritizeHighTier: true,
                     targetMutationGoals: new List<TargetMutationGoal>
                     {
@@ -412,13 +386,36 @@ namespace FungusToast.Core.AI
                         new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
                         new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
                     },
-                    preferredMycovariantIds: new List<int>
+                    preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Reclamation)
+                ),
+                
+                // 7. Economy then reclaim
+                new ParameterizedSpendingStrategy(
+                    strategyName: "Grow>Kill>Reclaim(Econ/Reclaim)",
+                    prioritizeHighTier: true,
+                    targetMutationGoals: new List<TargetMutationGoal>
                     {
-                        MycovariantIds.MycelialBastionIIIId,      // Elite defense (15 resistant cells)
-                        MycovariantIds.BallistosporeDischargeIIIId, // Elite toxin assault (20 spores)
-                        MycovariantIds.PlasmidBountyIIIId,        // Elite economy (30 points)
-                    }
-                )
+                        new TargetMutationGoal(MutationIds.CreepingMold),
+                        new TargetMutationGoal(MutationIds.Necrosporulation),
+                        new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                        new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                    },
+                    preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Reclamation)
+                ),
+
+                // 8. Resist growth then resist
+                new ParameterizedSpendingStrategy(
+                    strategyName: "Grow>Kill>Reclaim(Grow/Resist)",
+                    prioritizeHighTier: true,
+                    targetMutationGoals: new List<TargetMutationGoal>
+                    {
+                        new TargetMutationGoal(MutationIds.CreepingMold),
+                        new TargetMutationGoal(MutationIds.Necrosporulation),
+                        new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                        new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                    },
+                    preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Resistance)
+                ),
             };
         }
     }

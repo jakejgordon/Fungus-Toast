@@ -6,6 +6,7 @@ namespace FungusToast.Core.Mycovariants
         Growth,
         Resistance,
         Fungicide,
-        Reclamation
+        Reclamation,
+        Defense
     }
 }
