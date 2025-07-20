@@ -28,7 +28,7 @@ namespace FungusToast.Core.Config
         public const float TendrilDiagonalGrowthEffectPerLevel = 0.01f;
         public const float MutatorPhenotypeEffectPerLevel = 0.065f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 4f;
-        public const float HyphalSurgeEffectPerLevel = .01f;
+        public const float HyphalSurgeEffectPerLevel = .009f;
 
         public const float NecrosporulationEffectPerLevel = 0.04f;
         public const int MycotoxinPotentiationGrowthCycleExtensionPerLevel = 1;

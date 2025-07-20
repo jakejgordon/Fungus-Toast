@@ -9,8 +9,7 @@ namespace FungusToast.Core.Config
 
         // Shared balance parameters
         public const int JettingMyceliumNumberOfLivingCellTiles = 4;
-        public const int JettingMyceliumNumberOfToxinTiles = 10;
-        public const int DefaultJettingMyceliumToxinGrowthCycleDuration = 16;
+        public const int DefaultJettingMyceliumToxinGrowthCycleDuration = 17;
 
         // Jetting Mycelium cone effect parameters
         public const int JettingMyceliumConeNarrowLength = 4;  // First 4 toxins: 1 tile wide
@@ -26,9 +25,9 @@ namespace FungusToast.Core.Config
 
         public const float NeutralizingMantleNeutralizeChance = 0.20f;
 
-        public const int MycelialBastionIMaxResistantCells = 7;
-        public const int MycelialBastionIIMaxResistantCells = 10;
-        public const int MycelialBastionIIIMaxResistantCells = 15;
+        public const int MycelialBastionIMaxResistantCells = 8;
+        public const int MycelialBastionIIMaxResistantCells = 11;
+        public const int MycelialBastionIIIMaxResistantCells = 16;
 
         public const float HyphalResistanceTransferChance = 0.12f;
 
@@ -39,12 +38,12 @@ namespace FungusToast.Core.Config
 
         public const float ReclamationRhizomorphsSecondAttemptChance = 0.30f;
 
-        public const int BallistosporeDischargeISpores = 10;
-        public const int BallistosporeDischargeIISpores = 15;
-        public const int BallistosporeDischargeIIISpores = 20;
+        public const int BallistosporeDischargeISpores = 12;
+        public const int BallistosporeDischargeIISpores = 17;
+        public const int BallistosporeDischargeIIISpores = 22;
 
         // Ballistospore Discharge toxin duration (in growth cycles)
-        public const int BallistosporeDischargeToxinDuration = 16;
+        public const int BallistosporeDischargeToxinDuration = 18;
 
         public const float NecrophoricAdaptationReclamationChance = .15f;
 
