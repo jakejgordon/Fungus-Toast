@@ -26,18 +26,18 @@ namespace FungusToast.Core.Config
 
         public const float NeutralizingMantleNeutralizeChance = 0.20f;
 
-        public const int MycelialBastionIMaxResistantCells = 6;
-        public const int MycelialBastionIIMaxResistantCells = 9;
+        public const int MycelialBastionIMaxResistantCells = 7;
+        public const int MycelialBastionIIMaxResistantCells = 10;
         public const int MycelialBastionIIIMaxResistantCells = 15;
 
-        public const float HyphalResistanceTransferChance = 0.10f;
+        public const float HyphalResistanceTransferChance = 0.12f;
 
         public const float PerimeterProliferatorEdgeMultiplier = 2.5f;
 
         public const int EnduringToxaphoresNewToxinExtension = 8; // X: cycles added to new toxins
         public const int EnduringToxaphoresExistingToxinExtension = 4; // Y: cycles added to existing toxins at acquisition
 
-        public const float ReclamationRhizomorphsSecondAttemptChance = 0.25f; // 25% chance for second reclamation attempt
+        public const float ReclamationRhizomorphsSecondAttemptChance = 0.30f;
 
         public const int BallistosporeDischargeISpores = 10;
         public const int BallistosporeDischargeIISpores = 15;

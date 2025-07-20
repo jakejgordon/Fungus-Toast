@@ -167,13 +167,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 card.SetActiveHighlight(false);
             }
 
-            // Force layout rebuild to fix squished layout
-            var rectTransform = choiceContainer as RectTransform;
-            if (rectTransform != null)
-            {
-                Canvas.ForceUpdateCanvases();
-                UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
-            }
+            // Layout rebuild is now handled in MycovariantCard.SetMycovariant()
+            // for both new cards and replaced cards
         }
 
         private void OnChoicePicked(Mycovariant picked)

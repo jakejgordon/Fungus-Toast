@@ -42,6 +42,15 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             pickButton.onClick.AddListener(() => this.onPicked?.Invoke(mycovariant));
 
             SetActiveHighlight(false);
+
+            // Force layout rebuild to fix text overlap issues
+            // This ensures proper text positioning whenever card content is updated
+            Canvas.ForceUpdateCanvases();
+            var rectTransform = GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+            }
         }
 
         /// <summary>
