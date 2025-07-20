@@ -154,4 +154,4 @@ if (player.PlayerType == PlayerTypeEnum.AI)
 - **Ask for Clarification:** If the effect is complex or has multiple components, Cursor should ask the human for clarification on what should be tracked and reported.
 - **Test Both Draft Types:** Always test your mycovariant in both silent drafts (via simulation/fast-forward) and Unity UI drafts to ensure both AI paths work correctly.
 - **Debug Logging:** Add logging to verify that your effects are being executed correctly in both contexts.
-- **Update this file if you add new systems or conventions!**
+- **Auto-Trigger Declaration:** Use `Auto

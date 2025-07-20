@@ -118,5 +118,11 @@ namespace FungusToast.Simulation.Models
         /// The average AI score at draft time for all mycovariants picked by this player (AI only).
         /// </summary>
         public float? AvgAIScoreAtDraft { get; set; }
+
+        /// <summary>
+        /// Tracks which preferred mycovariants this player actually received vs wanted.
+        /// Key: Preferred mycovariant ID, Value: Whether player got it (true/false).
+        /// </summary>
+        public Dictionary<int, bool> PreferredMycovariantResults { get; set; } = new();
     }
 }

@@ -21,8 +21,8 @@ namespace FungusToast.Core.Config
         public const int JettingMyceliumConeWideWidth = 5;
 
         public const int PlasmidBountyMutationPointAward = 7;
-        public const int PlasmidBountyIIMutationPointAward = 20; //9;
-        public const int PlasmidBountyIIIMutationPointAward = 30; //11;
+        public const int PlasmidBountyIIMutationPointAward = 11;
+        public const int PlasmidBountyIIIMutationPointAward = 15;
 
         public const float NeutralizingMantleNeutralizeChance = 0.20f;
 

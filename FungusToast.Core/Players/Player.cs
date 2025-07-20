@@ -443,6 +443,13 @@ namespace FungusToast.Core.Players
                 return;
 
             var playerMyco = new PlayerMycovariant(PlayerId, picked.Id, picked);
+            
+            // Automatically mark as triggered if specified
+            if (picked.AutoMarkTriggered)
+            {
+                playerMyco.MarkTriggered();
+            }
+            
             PlayerMycovariants.Add(playerMyco);
         }
 

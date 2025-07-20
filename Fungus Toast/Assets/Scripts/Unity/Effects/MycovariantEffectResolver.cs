@@ -42,8 +42,10 @@ namespace FungusToast.Unity.Effects
             PlayerMycovariant playerMyco,
             Action onComplete)
         {
-            // Mark the mycovariant as triggered before resolving effects
-            if (playerMyco != null)
+            // Note: AutoMarkTriggered mycovariants are automatically marked as triggered 
+            // when added to the player in Player.AddMycovariant()
+            // Manual marking is only needed for active mycovariants that require user interaction
+            if (playerMyco != null && !mycovariant.AutoMarkTriggered)
             {
                 playerMyco.MarkTriggered();
             }

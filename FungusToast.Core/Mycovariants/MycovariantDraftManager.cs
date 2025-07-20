@@ -1,6 +1,7 @@
 ﻿using FungusToast.Core.Board;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Players;
+using FungusToast.Core.AI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,7 +52,16 @@ namespace FungusToast.Core.Mycovariants
                 }
                 else
                 {
-                    picked = choices[rng.Next(choices.Count)];
+                    // AI selection - check if player has a mutation strategy with mycovariant preferences
+                    if (player.MutationStrategy is ParameterizedSpendingStrategy paramStrategy)
+                    {
+                        picked = paramStrategy.SelectMycovariantFromChoices(player, choices, board);
+                    }
+                    else
+                    {
+                        // Fallback to random selection for other AI strategies
+                        picked = choices[rng.Next(choices.Count)];
+                    }
                 }
 
                 if (picked == null)

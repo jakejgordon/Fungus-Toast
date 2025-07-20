@@ -83,7 +83,8 @@ namespace FungusToast.Core.AI
             List<int>? surgePriorityIds = null,
             int surgeAttemptTurnFrequency = GameBalance.DefaultSurgeAIAttemptTurnFrequency,
             EconomyBias economyBias = EconomyBias.Neutral,
-            List<MycovariantPreference>? mycovariantPreferences = null)
+            List<MycovariantPreference>? mycovariantPreferences = null,
+            List<int>? preferredMycovariantIds = null)
         {
             StrategyName = strategyName;
             this.prioritizeHighTier = prioritizeHighTier;
@@ -94,6 +95,27 @@ namespace FungusToast.Core.AI
             this.surgeAttemptTurnFrequency = surgeAttemptTurnFrequency;
             this.economyBias = economyBias;
             this.mycovariantPreferences = mycovariantPreferences ?? new();
+            
+            // Convert preferred mycovariant IDs to preferences if provided
+            if (preferredMycovariantIds != null)
+            {
+                var convertedPreferences = new List<MycovariantPreference>();
+                for (int i = 0; i < preferredMycovariantIds.Count; i++)
+                {
+                    // Priority decreases with position in list (first = highest priority)
+                    int priority = 1000 - i; // Start at 1000 to ensure these are higher than existing preferences
+                    convertedPreferences.Add(new MycovariantPreference(
+                        preferredMycovariantIds[i], 
+                        priority, 
+                        $"Preferred #{i + 1}"));
+                }
+                
+                // Merge with existing preferences, keeping the higher priorities
+                this.mycovariantPreferences = this.mycovariantPreferences
+                    .Concat(convertedPreferences)
+                    .OrderByDescending(p => p.Priority)
+                    .ToList();
+            }
         }
 
         // ==== NEW: Game Phase Detection ====
@@ -201,6 +223,37 @@ namespace FungusToast.Core.AI
                     return preference;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Selects the best mycovariant from the given choices, preferring mycovariants in the preferred list first.
+        /// If no preferred mycovariants are available, falls back to normal AI scoring.
+        /// </summary>
+        public Mycovariant SelectMycovariantFromChoices(Player player, List<Mycovariant> choices, GameBoard board)
+        {
+            // First, check if any preferred mycovariants are in the choices
+            foreach (var preference in mycovariantPreferences.OrderByDescending(p => p.Priority))
+            {
+                // Skip if player already has any of these mycovariants
+                if (player.PlayerMycovariants.Any(pm => preference.MycovariantIds.Contains(pm.MycovariantId)))
+                    continue;
+                    
+                // Look for any preferred mycovariant in the current choices
+                var preferredChoice = choices.FirstOrDefault(c => preference.MycovariantIds.Contains(c.Id));
+                if (preferredChoice != null)
+                {
+                    return preferredChoice;
+                }
+            }
+            
+            // No preferred mycovariants available, fall back to AI scoring
+            var scoredChoices = choices
+                .Select(m => new { Mycovariant = m, Score = m.GetBaseAIScore(player, board) })
+                .OrderByDescending(x => x.Score)
+                .ToList();
+                
+            // Return the highest scoring mycovariant, or first if all have the same score
+            return scoredChoices.First().Mycovariant;
         }
 
         protected override void PerformSpendingLogic(
@@ -683,6 +736,16 @@ namespace FungusToast.Core.AI
                 || m.Id == MutationIds.TendrilNortheast
                 || m.Id == MutationIds.TendrilSouthwest
                 || m.Id == MutationIds.TendrilSoutheast;
+        }
+
+        private Mutation? PickBestTendrilMutation(Player player, List<Mutation> tendrilCandidates, GameBoard board)
+        {
+            if (tendrilCandidates.Count == 0)
+                return null;
+
+            // Simple heuristic: pick the tendril with the best growth opportunities
+            // This is a placeholder - could be improved with actual board analysis
+            return tendrilCandidates.FirstOrDefault();
         }
 
         private List<MutationCategory> GetCategories()
