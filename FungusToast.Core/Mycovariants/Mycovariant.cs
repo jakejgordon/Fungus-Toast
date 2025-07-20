@@ -14,11 +14,22 @@ namespace FungusToast.Core.Mycovariants
         public string Description { get; set; } = "";
         public string FlavorText { get; set; } = "";
         public MycovariantType Type { get; set; }
+        
+        /// <summary>
+        /// Categorizes this mycovariant for AI preference and selection logic.
+        /// </summary>
+        public MycovariantCategory Category { get; set; } = MycovariantCategory.Growth;
 
         /// <summary>
         /// If true, this mycovariant is always available in the draft (not removed when selected).
         /// </summary>
         public bool IsUniversal { get; set; } = false;
+
+        /// <summary>
+        /// If true, this mycovariant will be automatically marked as triggered when acquired.
+        /// Use for passive mycovariants that are "triggered" by definition (e.g., always-active effects).
+        /// </summary>
+        public bool AutoMarkTriggered { get; set; } = false;
 
         /// <summary>
         /// Called immediately upon selection. Use for instant effects.
