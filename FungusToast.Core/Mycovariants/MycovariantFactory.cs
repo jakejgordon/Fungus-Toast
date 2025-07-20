@@ -47,7 +47,7 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Immediately grow {MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles} mold tiles {directionLabel.ToLower()} from a chosen cell, followed by a spreading cone of toxins that starts {MycovariantGameBalance.JettingMyceliumConeNarrowWidth} tile wide and expands to {MycovariantGameBalance.JettingMyceliumConeWideWidth} tiles wide.",
                 FlavorText = $"The cap ruptures violently. The colony explodes {directionLabel.ToLower()}ward in a widening cloud of toxic spores.",
                 Type = MycovariantType.Directional,
-                Category = MycovariantCategory.Growth, // Provides aggressive directional growth
+                Category = MycovariantCategory.Fungicide, // Provides aggressive directional growth + toxins
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
                     var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
@@ -82,16 +82,33 @@ namespace FungusToast.Core.Mycovariants
             };
         }
 
-        //TODO implement
         public static Mycovariant NecrophoricAdaptation() =>
             new Mycovariant
             {
-                Id = 1002,
+                Id = MycovariantIds.NecrophoricAdaptation,
                 Name = "Necrophoric Adaptation",
-                Description = "When a mold cell dies, there is a chance to reclaim a nearby dead tile.",
+                Description = $"When a mold cell dies, there is a {MycovariantGameBalance.NecrophoricAdaptationReclamationChance * 100f:0}% chance to reclaim an orthogonally adjacent dead tile.",
                 FlavorText = "Even in death, the colony endures.",
                 Type = MycovariantType.Passive,
-                Category = MycovariantCategory.Reclamation // Cell recovery from death
+                Category = MycovariantCategory.Reclamation, // Cell recovery from death
+                IsUniversal = false,
+                AutoMarkTriggered = true, // Passive effect, always considered triggered
+                SynergyWith = new List<int> {
+                    MycovariantIds.ReclamationRhizomorphsId // Works with Reclamation Rhizomorphs
+                },
+                AIScore = (player, board) => {
+                    // Score based on the number of living cells (more cells = more death potential)
+                    int livingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive);
+                    // Scale from 1 to 6: 0 cells = 1, 50+ cells = 6
+                    float baseScore = Math.Min(6f, Math.Max(1f, 1f + (livingCells * 5f / 50f)));
+                    
+                    // Bonus if player has Reclamation Rhizomorphs (synergy)
+                    bool hasRhizomorphs = player.PlayerMycovariants.Any(pm =>
+                        pm.MycovariantId == MycovariantIds.ReclamationRhizomorphsId);
+                    float synergyBonus = hasRhizomorphs ? MycovariantGameBalance.MycovariantSynergyBonus : 0f;
+                    
+                    return baseScore + synergyBonus;
+                }
             };
 
         public static Mycovariant PlasmidBounty() =>
@@ -174,7 +191,7 @@ namespace FungusToast.Core.Mycovariants
             Description = $"Whenever an enemy toxin is placed orthogonally adjacent to your living cells, you have a {MycovariantGameBalance.NeutralizingMantleNeutralizeChance * 100f:0}% chance to neutralize (remove) it instantly.",
             FlavorText = "A protective sheath of hyphae, secreting enzymes to break down hostile compounds.",
             Type = MycovariantType.Passive,
-            Category = MycovariantCategory.Fungicide, // Neutralizes enemy toxins
+            Category = MycovariantCategory.Defense,
             IsUniversal = false,
             AutoMarkTriggered = true, // Passive effect, always considered triggered
             AIScore = (player, board) => MycovariantGameBalance.AIDraftModeratePriority

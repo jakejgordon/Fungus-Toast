@@ -501,4 +501,89 @@ public static class MycovariantEffectProcessor
             observer?.RecordEnduringToxaphoresExistingExtensions(player.PlayerId, totalExtended);
         }
     }
+
+    /// <summary>
+    /// Handles the Necrophoric Adaptation effect when a cell dies.
+    /// If the player has Necrophoric Adaptation, there's a chance to reclaim an adjacent dead tile.
+    /// This method also considers ReclamationRhizomorphs for second attempts.
+    /// </summary>
+    public static void OnCellDeath_NecrophoricAdaptation(
+        GameBoard board,
+        int playerId,
+        int diedTileId,
+        List<Player> players,
+        Random rng,
+        ISimulationObserver? observer = null)
+    {
+        var player = players.FirstOrDefault(p => p.PlayerId == playerId);
+        if (player == null) return;
+
+        // Check if this player has Necrophoric Adaptation
+        var playerMyco = player.GetMycovariant(MycovariantIds.NecrophoricAdaptation);
+        if (playerMyco == null) return;
+
+        // Get orthogonally adjacent tiles that contain dead cells (not empty tiles)
+        var adjacentTiles = board.GetOrthogonalNeighbors(diedTileId);
+        var deadAdjacentTiles = adjacentTiles
+            .Where(tile => tile.FungalCell != null && tile.FungalCell.IsDead)
+            .ToList();
+
+        if (deadAdjacentTiles.Count == 0) return;
+
+        // Try the reclamation attempt
+        bool success = TryNecrophoricReclamation(board, playerId, deadAdjacentTiles, rng, playerMyco, observer);
+        
+        // If failed and player has Reclamation Rhizomorphs, try again
+        if (!success)
+        {
+            var rhizomorphsMyco = player.GetMycovariant(MycovariantIds.ReclamationRhizomorphsId);
+            if (rhizomorphsMyco != null && 
+                rng.NextDouble() < MycovariantGameBalance.ReclamationRhizomorphsSecondAttemptChance)
+            {
+                TryNecrophoricReclamation(board, playerId, deadAdjacentTiles, rng, playerMyco, observer);
+                
+                // Record the second attempt from Reclamation Rhizomorphs
+                rhizomorphsMyco.IncrementEffectCount(MycovariantEffectType.SecondReclamationAttempts, 1);
+                observer?.RecordReclamationRhizomorphsSecondAttempt(playerId, 1);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Attempts a single necrophoric reclamation attempt.
+    /// </summary>
+    private static bool TryNecrophoricReclamation(
+        GameBoard board,
+        int playerId,
+        List<BoardTile> deadAdjacentTiles,
+        Random rng,
+        PlayerMycovariant playerMyco,
+        ISimulationObserver? observer)
+    {
+        if (rng.NextDouble() < MycovariantGameBalance.NecrophoricAdaptationReclamationChance)
+        {
+            // Success! Pick a random dead adjacent tile to reclaim
+            var targetTile = deadAdjacentTiles[rng.Next(deadAdjacentTiles.Count)];
+            
+            // Use board.TakeoverCell instead of direct PlaceFungalCell to handle all board state properly
+            var result = board.TakeoverCell(
+                targetTile.TileId, 
+                playerId, 
+                allowToxin: false, // Only reclaim dead cells, not toxins
+                board.Players, 
+                rng, 
+                observer);
+            
+            // Check if the takeover was successful
+            if (result == FungalCellTakeoverResult.Reclaimed)
+            {
+                // Record the effect
+                playerMyco.IncrementEffectCount(MycovariantEffectType.NecrophoricAdaptationReclamations, 1);
+                observer?.RecordNecrophoricAdaptationReclamation(playerId, 1);
+                return true;
+            }
+        }
+        
+        return false;
+    }
 }

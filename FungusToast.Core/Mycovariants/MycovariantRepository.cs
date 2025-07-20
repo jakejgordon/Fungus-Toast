@@ -52,6 +52,7 @@ namespace FungusToast.Core.Mycovariants
                 MycovariantFactory.EnduringToxaphores(),
                 
                 // --- Reclamation/Recovery options ---
+                MycovariantFactory.NecrophoricAdaptation(),
                 MycovariantFactory.ReclamationRhizomorphs(),
 
                 // --- Offensive options ---

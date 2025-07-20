@@ -27,13 +27,7 @@ namespace FungusToast.Core.Events
             board.CellDeath += (sender, e) =>
             {
                 // call observer methods here
-                if (e.Reason == DeathReason.PutrefactiveMycotoxin ||
-                    e.Reason == DeathReason.SporocidalBloom ||
-                    e.Reason == DeathReason.MycotoxinPotentiation)
-                {
-                    observer.RecordCellDeath(e.OwnerPlayerId, e.Reason, 1);
-                }
-                // ... add more as needed
+                observer.RecordCellDeath(e.OwnerPlayerId, e.Reason, 1);
             };
 
             board.NecrotoxicConversion += (playerId, tileId, oldOwnerId) =>

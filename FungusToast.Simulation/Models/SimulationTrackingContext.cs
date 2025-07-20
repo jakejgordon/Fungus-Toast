@@ -320,6 +320,8 @@ namespace FungusToast.Simulation.Models
             => necrophyticBloomSpores.TryGetValue(playerId, out var val) ? val : 0;
         public int GetNecrophyticBloomReclaims(int playerId)
             => necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllNecrophyticBloomSpores() => new(necrophyticBloomSpores);
+        public Dictionary<int, int> GetAllNecrophyticBloomReclaims() => new(necrophyticBloomReclaims);
 
         // ────────────────
         // Toxin Catabolism
@@ -739,6 +741,20 @@ namespace FungusToast.Simulation.Models
         public int GetReclamationRhizomorphsSecondAttempts(int playerId)
             => reclamationRhizomorphsSecondAttempts.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllReclamationRhizomorphsSecondAttempts() => new(reclamationRhizomorphsSecondAttempts);
+
+        // ────────────────
+        // Necrophoric Adaptation Reclamations
+        // ────────────────
+        private readonly Dictionary<int, int> necrophoricAdaptationReclamations = new();
+        public void RecordNecrophoricAdaptationReclamation(int playerId, int count)
+        {
+            if (!necrophoricAdaptationReclamations.ContainsKey(playerId))
+                necrophoricAdaptationReclamations[playerId] = 0;
+            necrophoricAdaptationReclamations[playerId] += count;
+        }
+        public int GetNecrophoricAdaptationReclamations(int playerId)
+            => necrophoricAdaptationReclamations.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllNecrophoricAdaptationReclamations() => new(necrophoricAdaptationReclamations);
 
         // ────────────────
         // Ballistospore Discharge

@@ -45,6 +45,12 @@ namespace FungusToast.Core.Events
                 MutationEffectProcessor.OnCellDeath_PutrefactiveRejuvenation(args, board, players, observer);
             };
 
+            // Necrophoric Adaptation (mycovariant: chance to reclaim adjacent dead tile when a cell dies)
+            board.CellDeath += (sender, args) =>
+            {
+                MycovariantEffectProcessor.OnCellDeath_NecrophoricAdaptation(board, args.OwnerPlayerId, args.TileId, players, rng, observer);
+            };
+
             // Regenerative Hyphae (post-growth phase reclaim effect)
             board.PostGrowthPhase += () =>
             {

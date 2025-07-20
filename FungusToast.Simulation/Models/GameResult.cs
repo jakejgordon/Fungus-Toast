@@ -254,6 +254,14 @@ namespace FungusToast.Simulation.Models
                             break;
                         }
 
+                    case var id when id == MycovariantIds.NecrophoricAdaptation:
+                        {
+                            int reclamations = tracking.GetNecrophoricAdaptationReclamations(player.PlayerId);
+                            if (reclamations > 0)
+                                effectCounts[MycovariantEffectType.NecrophoricAdaptationReclamations] = reclamations;
+                            break;
+                        }
+
                     // ...more cases...
                 }
 

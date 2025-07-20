@@ -22,6 +22,7 @@
         ExistingExtensions,
         SecondReclamationAttempts,
         BallistosporeDischarge,
+        NecrophoricAdaptationReclamations, // Reclamations triggered by NecrophoricAdaptation
         // Add others as needed
     }
 }

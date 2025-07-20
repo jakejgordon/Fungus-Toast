@@ -4,7 +4,7 @@ namespace FungusToast.Core.Config
 {
     public static class MycovariantGameBalance
     {
-        public static readonly int[] MycovariantSelectionTriggerRounds = new[] { 15, 25 }; 
+        public static readonly int[] MycovariantSelectionTriggerRounds = new[] { 15, 25 };
         public const int MycovariantSelectionDraftSize = 3;
 
         // Shared balance parameters
@@ -45,6 +45,8 @@ namespace FungusToast.Core.Config
 
         // Ballistospore Discharge toxin duration (in growth cycles)
         public const int BallistosporeDischargeToxinDuration = 16;
+
+        public const float NecrophoricAdaptationReclamationChance = .15f;
 
         // AI scoring for Mycovariants
         public const float MycelialBastionIBaseAIScore = 4f;

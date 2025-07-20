@@ -8,7 +8,7 @@ namespace FungusToast.Simulation
 {
     class Program
     {
-        private const int DefaultNumberOfSimulationGames = 20;
+        private const int DefaultNumberOfSimulationGames = 10;
         private const int DefaultNumberOfPlayers = 8;
 
         static void Main(string[] args)
@@ -119,7 +119,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  -h, --help              Show this help message");
             Console.WriteLine();
             Console.WriteLine("Examples:");
-            Console.WriteLine("  dotnet run                           # Run with defaults (8 players, 5 games each)");
+            Console.WriteLine("  dotnet run                           # Run with defaults (8 players, 100 games each)");
             Console.WriteLine("  dotnet run --games 10               # Run 10 games per matchup");
             Console.WriteLine("  dotnet run --players 4 --games 20   # Run 4 players, 20 games each");
             Console.WriteLine("  dotnet run -p 6 -g 15               # Run 6 players, 15 games each");
