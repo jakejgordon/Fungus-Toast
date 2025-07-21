@@ -298,7 +298,7 @@ namespace FungusToast.Unity.Grid
                         }
                         else
                         {
-                            moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.55f));
+                            moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.8f)); // Increased from 0.55f to 0.8f for better visibility
                             moldTilemap.RefreshTile(pos);
                         }
                     }
@@ -310,7 +310,7 @@ namespace FungusToast.Unity.Grid
                 case FungalCellType.Toxin:
                     if (cell.OwnerPlayerId is int idT && idT >= 0 && idT < playerMoldTiles.Length)
                     {
-                        // Show very faint, slightly gray mold color under the toxin overlay
+                        // Show more visible, slightly gray mold color under the toxin overlay
                         moldTile = playerMoldTiles[idT];
                         
                         // If the cell is receiving a toxin drop, show it as normal for the drop animation
@@ -320,7 +320,7 @@ namespace FungusToast.Unity.Grid
                         }
                         else
                         {
-                            moldColor = new Color(0.8f, 0.8f, 0.8f, 0.55f); // More visible, still faded
+                            moldColor = new Color(0.8f, 0.8f, 0.8f, 0.8f); // Increased alpha from 0.55f to 0.8f for better visibility
                         }
                     }
                     overlayTile = toxinOverlayTile;
@@ -495,11 +495,11 @@ namespace FungusToast.Unity.Grid
                 elapsed += Time.deltaTime;
                 float progress = elapsed / duration;
                 
-                // Fade out living cell (from full opacity to 0.55f for dead cell)
+                // Fade out living cell (from full opacity to 0.8f for dead cell)
                 if (moldTilemap.HasTile(pos))
                 {
                     Color livingColor = initialLivingColor;
-                    livingColor.a = Mathf.Lerp(1f, 0.55f, progress);
+                    livingColor.a = Mathf.Lerp(1f, 0.8f, progress); // Changed from 0.55f to 0.8f to match new dead cell opacity
                     moldTilemap.SetColor(pos, livingColor);
                 }
                 
@@ -518,7 +518,7 @@ namespace FungusToast.Unity.Grid
             if (moldTilemap.HasTile(pos))
             {
                 Color finalLivingColor = initialLivingColor;
-                finalLivingColor.a = 0.55f; // Dead cell faded appearance
+                finalLivingColor.a = 0.8f; // Changed from 0.55f to 0.8f to match new dead cell opacity
                 moldTilemap.SetColor(pos, finalLivingColor);
             }
             
@@ -648,7 +648,7 @@ namespace FungusToast.Unity.Grid
                 // Transition to final toxin appearance
                 Color finalToxinColor = Color.Lerp(
                     new Color(0f, 1f, 0.25f, 0.8f),
-                    new Color(0.8f, 0.8f, 0.8f, 0.55f), // Final toxin mold color
+                    new Color(0.8f, 0.8f, 0.8f, 0.8f), // Changed alpha from 0.55f to 0.8f to match new toxin cell opacity
                     progress
                 );
                 
@@ -674,7 +674,7 @@ namespace FungusToast.Unity.Grid
             // Ensure final state matches the toxin appearance
             if (moldTilemap.HasTile(pos))
             {
-                Color finalMoldColor = new Color(0.8f, 0.8f, 0.8f, 0.55f); // Toxin mold color
+                Color finalMoldColor = new Color(0.8f, 0.8f, 0.8f, 0.8f); // Changed alpha from 0.55f to 0.8f to match new toxin cell opacity
                 moldTilemap.SetColor(pos, finalMoldColor);
             }
             
