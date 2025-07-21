@@ -106078,7 +106078,6 @@ RectTransform:
   - {fileID: 1566517910}
   - {fileID: 937396420}
   - {fileID: 1719347255}
-  - {fileID: 1279758130}
   m_Father: {fileID: 1655698862}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -107485,7 +107484,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 41c3955bb1e7a224da01587e334c770b, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 3ee70634ad93f844ebc711c2037b4059, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -108590,7 +108589,7 @@ MonoBehaviour:
   deadTile: {fileID: 11400000, guid: 7a0e438ea482fe64f80233325794f059, type: 2}
   playerMoldTiles:
   - {fileID: 11400000, guid: 6eea3f7d7e9748046b04e8317f733a56, type: 2}
-  - {fileID: 11400000, guid: fdcf0725e7a321c448973799570fdf2b, type: 2}
+  - {fileID: 11400000, guid: d35bee3440c8ffb4f861b8915889526b, type: 2}
   - {fileID: 11400000, guid: 33b8982cb0049f24fa864f3c655abbfa, type: 2}
   - {fileID: 11400000, guid: f62090905f093cf4cb29dbd269bc8122, type: 2}
   - {fileID: 11400000, guid: ab834b7dd21ec1f4e990c6aa50ba728a, type: 2}
@@ -110517,12 +110516,12 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1603437867}
-  m_Father: {fileID: 656464962}
+  m_Father: {fileID: 1655698862}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 960, y: -772}
+  m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1279758131
 MonoBehaviour:
@@ -113596,6 +113595,7 @@ RectTransform:
   - {fileID: 675576750}
   - {fileID: 456577070}
   - {fileID: 656464962}
+  - {fileID: 1279758130}
   - {fileID: 1493893196}
   - {fileID: 565532746}
   - {fileID: 193983060}
