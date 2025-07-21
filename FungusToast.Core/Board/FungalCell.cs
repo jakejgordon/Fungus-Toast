@@ -85,20 +85,40 @@ namespace FungusToast.Core.Board
             SetToxin(toxinExpirationCycle);
         }
 
+        /// <summary>
+        /// Changes the owner of this cell, preserving the previous owner in LastOwnerPlayerId.
+        /// Also preserves CauseOfDeath when ownership changes occur.
+        /// </summary>
+        private void ChangeOwnership(int? newOwnerPlayerId, DeathReason? causeOfDeath = null)
+        {
+            if (OwnerPlayerId != newOwnerPlayerId)
+            {
+                LastOwnerPlayerId = OwnerPlayerId;
+                OwnerPlayerId = newOwnerPlayerId;
+                
+                // Set cause of death if the ownership change represents a death/displacement
+                if (causeOfDeath.HasValue)
+                {
+                    CauseOfDeath = causeOfDeath;
+                }
+            }
+        }
+
         // State transitions
         private void SetAlive()
         {
             CellType = FungalCellType.Alive;
             GrowthCycleAge = 0;
             ToxinExpirationCycle = 0;
+            // Clear CauseOfDeath when becoming alive - keep LastOwnerPlayerId as historical data
             CauseOfDeath = null;
-            LastOwnerPlayerId = null;
         }
 
         private void SetDead(DeathReason reason)
         {
             CellType = FungalCellType.Dead;
             CauseOfDeath = reason;
+            // For natural deaths (same owner), set LastOwnerPlayerId to track who lost the cell
             LastOwnerPlayerId = OwnerPlayerId;
             ToxinExpirationCycle = 0;
         }
@@ -107,7 +127,7 @@ namespace FungusToast.Core.Board
         {
             CellType = FungalCellType.Toxin;
             ToxinExpirationCycle = expirationCycle;
-            // Optionally clear other states
+            // Don't modify ownership tracking here
         }
 
         /// <summary>
@@ -140,7 +160,7 @@ namespace FungusToast.Core.Board
             if (!IsReclaimable)
                 throw new InvalidOperationException("Cannot reclaim a non-reclaimable cell.");
 
-            OwnerPlayerId = newOwnerPlayerId;
+            ChangeOwnership(newOwnerPlayerId);
             SetAlive();
             ReclaimCount++;
         }
@@ -163,16 +183,16 @@ namespace FungusToast.Core.Board
             // Living enemy cell: Infest (replace enemy cell with yours)
             if (IsAlive && OwnerPlayerId != newOwnerPlayerId)
             {
-                Kill(DeathReason.Infested); // Cell killed by rival, so "Infested"
-                OwnerPlayerId = newOwnerPlayerId;
-                SetAlive();
+                // Record the displacement/death first, then revive as new owner's cell
+                ChangeOwnership(newOwnerPlayerId, DeathReason.Infested);
+                SetAlive(); // This will clear CauseOfDeath, but LastOwnerPlayerId is preserved from ChangeOwnership
                 return FungalCellTakeoverResult.Infested;
             }
 
             // Dead/reclaimable: Reclaim
             if (IsReclaimable)
             {
-                OwnerPlayerId = newOwnerPlayerId;
+                ChangeOwnership(newOwnerPlayerId);
                 SetAlive();
                 ReclaimCount++;
                 return FungalCellTakeoverResult.Reclaimed;
@@ -181,7 +201,7 @@ namespace FungusToast.Core.Board
             // Toxin: Only allowed if flag set
             if (IsToxin && allowToxin)
             {
-                OwnerPlayerId = newOwnerPlayerId;
+                ChangeOwnership(newOwnerPlayerId);
                 SetAlive();
                 // Optionally reset toxin-related fields/stats here
                 return FungalCellTakeoverResult.CatabolicGrowth;
@@ -255,6 +275,9 @@ namespace FungusToast.Core.Board
             if (expirationCycle <= 0)
                 throw new ArgumentOutOfRangeException(nameof(expirationCycle), "Expiration must be greater than 0.");
 
+            if (owner != null)
+                ChangeOwnership(owner.PlayerId);
+
             SetToxin(CalculateAdjustedExpiration(expirationCycle, owner, baseCycle));
         }
 
@@ -272,7 +295,7 @@ namespace FungusToast.Core.Board
                 Kill(reason ?? DeathReason.Poisoned); // Poisoned is now the default death by toxin
 
             if (owner != null)
-                OwnerPlayerId = owner.PlayerId;
+                ChangeOwnership(owner.PlayerId, reason ?? DeathReason.Poisoned);
 
             SetToxin(CalculateAdjustedExpiration(expirationCycle, owner, baseCycle));
         }

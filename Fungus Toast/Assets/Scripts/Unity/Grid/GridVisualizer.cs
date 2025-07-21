@@ -286,7 +286,7 @@ namespace FungusToast.Unity.Grid
                     break;
 
                 case FungalCellType.Dead:
-                    if (cell.LastOwnerPlayerId is int ownerId && ownerId >= 0 && ownerId < playerMoldTiles.Length)
+                    if (cell.OwnerPlayerId is int ownerId && ownerId >= 0 && ownerId < playerMoldTiles.Length)
                     {
                         moldTilemap.SetTileFlags(pos, TileFlags.None);
                         moldTilemap.SetTile(pos, playerMoldTiles[ownerId]);
