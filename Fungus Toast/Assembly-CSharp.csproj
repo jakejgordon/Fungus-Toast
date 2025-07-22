@@ -9,7 +9,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
     <ProjectGuid>{9AC2C66F-D853-B88E-C3DF-1D11548D70CF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -62,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Unity\GameManager.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\CellTooltipUI.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UIEffectConstants.cs" />
     <Compile Include="Assets\Scripts\Unity\ForceRecompile.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_MutationManager.cs" />
