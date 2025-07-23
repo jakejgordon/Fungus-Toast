@@ -15,17 +15,17 @@ function Get-OutputFilename {
     }
 }
 
-# Build FungusToast.Core
+# Build FungusToast.Core (navigate relative to FungusToast.Simulation)
 Write-Host "Building FungusToast.Core..."
-dotnet build "FungusToast.Core/FungusToast.Core.csproj"
+dotnet build "../FungusToast.Core/FungusToast.Core.csproj"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed for FungusToast.Core. Exiting."
     exit 1
 }
 
-# Build FungusToast.Simulation
+# Build FungusToast.Simulation (current directory)
 Write-Host "Building FungusToast.Simulation..."
-dotnet build "FungusToast.Simulation/FungusToast.Simulation.csproj"
+dotnet build "FungusToast.Simulation.csproj"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed for FungusToast.Simulation. Exiting."
     exit 1
@@ -43,14 +43,24 @@ if ($Args.IndexOf('--output') -lt 0) {
 $argString = $Args -join ' '
 
 # Calculate the full path that the simulation will use
-$simulationOutputDir = "FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput"
+$simulationOutputDir = "bin\Debug\net8.0\SimulationOutput"
 $fullOutputPath = Join-Path $simulationOutputDir $outputFile
 
 Write-Host "Output will be written to: $fullOutputPath"
 
-# Launch simulation in a new PowerShell window
-Write-Host "Launching simulation in a new window..."
-$simProcess = Start-Process powershell -ArgumentList '-NoExit', '-Command', "dotnet run --project FungusToast.Simulation -- $argString" -PassThru
-Write-Host "Simulation started in new window. Waiting for it to finish..."
-$simProcess.WaitForExit()
-Write-Host "Simulation process has exited." 
+# Check if we're running from GitHub Copilot tools
+$isAutomated = $env:COPILOT_AUTOMATED -eq "true" -or $args -contains "--automated"
+
+if ($isAutomated) {
+    # For automated execution: run directly in current console (no new window)
+    Write-Host "Running simulation in current console (automated mode)..."
+    dotnet run -- $argString
+    Write-Host "Simulation process has completed."
+} else {
+    # For manual execution: launch in new window as before
+    Write-Host "Launching simulation in a new window..."
+    $simProcess = Start-Process powershell -ArgumentList '-NoExit', '-Command', "Set-Location '$PWD'; dotnet run -- $argString" -PassThru
+    Write-Host "Simulation started in new window. Waiting for it to finish..."
+    $simProcess.WaitForExit()
+    Write-Host "Simulation process has exited."
+}
