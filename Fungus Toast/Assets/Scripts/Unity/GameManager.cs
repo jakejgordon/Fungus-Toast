@@ -35,7 +35,7 @@ namespace FungusToast.Unity
 
         [Header("Testing Mode")]
         public bool testingModeEnabled = false;
-        public int testingMycovariantId = -1;
+        public int? testingMycovariantId = null;
         public bool testingModeForceHumanFirst = true;
         public int fastForwardRounds = 0;
 
@@ -72,7 +72,7 @@ namespace FungusToast.Unity
         private Dictionary<(int playerId, int mutationId), List<int>> FirstUpgradeRounds = new();
 
         public bool IsTestingModeEnabled => testingModeEnabled;
-        public int TestingMycovariantId => testingMycovariantId;
+        public int? TestingMycovariantId => testingMycovariantId;
 
         private void Awake()
         {
@@ -137,10 +137,15 @@ namespace FungusToast.Unity
                 {
                     StartCoroutine(FastForwardRounds());
                 }
+                else if (testingMycovariantId.HasValue)
+                {
+                    // Start draft immediately in testing mode only if a specific mycovariant is selected
+                    StartMycovariantDraftPhase();
+                }
                 else
                 {
-                    // Start draft immediately in testing mode
-                    StartMycovariantDraftPhase();
+                    // Testing mode enabled but no mycovariant selected and no fast-forward - start normal game
+                    gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
                 }
             }
             else
@@ -421,9 +426,9 @@ namespace FungusToast.Unity
             isInDraftPhase = true;
 
             // In testing mode, ensure the testing mycovariant is available
-            if (testingModeEnabled && testingMycovariantId != -1)
+            if (testingModeEnabled && testingMycovariantId.HasValue)
             {
-                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
+                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId.Value);
                 if (testingMycovariant != null)
                 {
                     // The testing mycovariant should already be in the persistent pool manager
@@ -551,7 +556,7 @@ namespace FungusToast.Unity
         }
 
         // === TESTING MODE METHODS ===
-        public void EnableTestingMode(int mycovariantId, int fastForwardRounds = 0)
+        public void EnableTestingMode(int? mycovariantId, int fastForwardRounds = 0)
         {
             testingModeEnabled = true;
             testingMycovariantId = mycovariantId;
@@ -562,7 +567,7 @@ namespace FungusToast.Unity
         public void DisableTestingMode()
         {
             testingModeEnabled = false;
-            testingMycovariantId = -1;
+            testingMycovariantId = null;
             fastForwardRounds = 0;
         }
 
@@ -622,8 +627,17 @@ namespace FungusToast.Unity
             float occupancy = Board.GetOccupiedTileRatio() * 100f;
             gameUIManager.RightSidebar?.SetRoundAndOccupancy(currentRound, occupancy);
 
-            // Always trigger a UI draft at the end of fast forward
-            StartMycovariantDraftPhase();
+            // Only trigger a UI draft at the end of fast forward if a specific mycovariant is selected
+            if (testingMycovariantId.HasValue)
+            {
+                StartMycovariantDraftPhase();
+            }
+            else
+            {
+                // No specific mycovariant selected - start normal mutation phase
+                gameUIManager.PhaseBanner.Show($"Fast-forwarded {fastForwardRounds} rounds", 2f);
+                StartNextRound();
+            }
         }
 
         private void RunSilentDraftForAllPlayers()
@@ -631,23 +645,23 @@ namespace FungusToast.Unity
             // Create a custom draft function that excludes the testing mycovariant for AI players during silent drafts
             Func<Player, List<Mycovariant>, Mycovariant>? customSelectionCallback = null;
             
-            if (testingModeEnabled && testingMycovariantId != -1)
+            if (testingModeEnabled && testingMycovariantId.HasValue)
             {
                 // Find the testing mycovariant to check if it's universal
-                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
+                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId.Value);
                 
                 if (testingMycovariant != null && !testingMycovariant.IsUniversal)
                 {
                     // If the testing mycovariant is non-universal, temporarily remove it from the pool during silent drafts
                     // This prevents AI players from receiving it in their draft choices
-                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[SilentDraft] Temporarily removing non-universal testing mycovariant '{testingMycovariant.Name}' (ID: {testingMycovariantId}) from pool during silent draft");
-                    persistentPoolManager.TemporarilyRemoveFromPool(testingMycovariantId);
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[SilentDraft] Temporarily removing non-universal testing mycovariant '{testingMycovariant.Name}' (ID: {testingMycovariantId.Value}) from pool during silent draft");
+                    persistentPoolManager.TemporarilyRemoveFromPool(testingMycovariantId.Value);
                     
                     // Create custom selection callback for any edge cases where it might still appear
                     customSelectionCallback = (player, choices) =>
                     {
                         // Filter out the testing mycovariant for AI players as a safety net
-                        var availableChoices = choices.Where(m => m.Id != testingMycovariantId).ToList();
+                        var availableChoices = choices.Where(m => m.Id != testingMycovariantId.Value).ToList();
                         
                         if (availableChoices.Count == 0)
                         {
@@ -676,13 +690,13 @@ namespace FungusToast.Unity
             );
             
             // After silent draft is complete, restore the testing mycovariant to the pool
-            if (testingModeEnabled && testingMycovariantId != -1)
+            if (testingModeEnabled && testingMycovariantId.HasValue)
             {
-                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
+                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId.Value);
                 if (testingMycovariant != null && !testingMycovariant.IsUniversal)
                 {
-                    persistentPoolManager.RestoreToPool(testingMycovariantId);
-                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[SilentDraft] Restored testing mycovariant '{testingMycovariant.Name}' (ID: {testingMycovariantId}) to pool after silent draft");
+                    persistentPoolManager.RestoreToPool(testingMycovariantId.Value);
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[SilentDraft] Restored testing mycovariant '{testingMycovariant.Name}' (ID: {testingMycovariantId.Value}) to pool after silent draft");
                 }
             }
         }

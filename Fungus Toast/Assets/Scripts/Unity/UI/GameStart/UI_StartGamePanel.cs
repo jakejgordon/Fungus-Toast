@@ -92,15 +92,27 @@ namespace FungusToast.Unity.UI.GameStart
             if (selectedPlayerCount.HasValue)
             {
                 // Handle testing mode
-                if (testingModeToggle.isOn && mycovariantDropdown.value > 0)
+                if (testingModeToggle.isOn)
                 {
-                    var selectedMycovariant = MycovariantRepository.All[mycovariantDropdown.value - 1];
+                    // Get fast forward rounds regardless of mycovariant selection
                     int fastForwardRounds = 0;
                     if (int.TryParse(fastForwardRoundsInput.text, out int parsedRounds))
                     {
                         fastForwardRounds = Mathf.Max(0, parsedRounds);
                     }
-                    GameManager.Instance.EnableTestingMode(selectedMycovariant.Id, fastForwardRounds);
+                    
+                    // Enable testing mode with or without a mycovariant selected
+                    if (mycovariantDropdown.value > 0)
+                    {
+                        // Mycovariant selected - enable testing mode with specific mycovariant
+                        var selectedMycovariant = MycovariantRepository.All[mycovariantDropdown.value - 1];
+                        GameManager.Instance.EnableTestingMode(selectedMycovariant.Id, fastForwardRounds);
+                    }
+                    else
+                    {
+                        // No mycovariant selected - enable testing mode without specific mycovariant (will skip draft)
+                        GameManager.Instance.EnableTestingMode(null, fastForwardRounds);
+                    }
                 }
                 else
                 {

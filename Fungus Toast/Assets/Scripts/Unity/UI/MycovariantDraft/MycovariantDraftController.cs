@@ -360,9 +360,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             yield return new WaitForSeconds(FungusToast.Unity.UI.UIEffectConstants.AIDraftPickDelaySeconds);
 
             Mycovariant pick;
-            if (GameManager.Instance.IsTestingModeEnabled && draftChoices.Any(m => m.Id == GameManager.Instance.TestingMycovariantId))
+            if (GameManager.Instance.IsTestingModeEnabled && GameManager.Instance.TestingMycovariantId.HasValue && draftChoices.Any(m => m.Id == GameManager.Instance.TestingMycovariantId.Value))
             {
-                pick = draftChoices.First(m => m.Id == GameManager.Instance.TestingMycovariantId);
+                pick = draftChoices.First(m => m.Id == GameManager.Instance.TestingMycovariantId.Value);
             }
             else
             {
