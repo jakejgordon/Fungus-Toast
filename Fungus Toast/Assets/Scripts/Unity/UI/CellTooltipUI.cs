@@ -55,7 +55,7 @@ namespace FungusToast.Unity.UI
                 }
                 else if (cell.IsDead)
                 {
-                    statusText.text = "<color=#808080><b>Status: Dead</b></color>";
+                    statusText.text = "<color=#000000><b>Status: Dead</b></color>";
                 }
                 else if (cell.IsToxin)
                 {
