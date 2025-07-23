@@ -27,12 +27,12 @@ namespace FungusToast.Core.Board
         public bool IsReclaimable => IsDead && !IsToxin;
 
         public int GrowthCycleAge { get; private set; } = 0;
-        private int _toxinExpirationCycle = 0;
-        public int ToxinExpirationCycle
-        {
-            get => _toxinExpirationCycle;
-            internal set { _toxinExpirationCycle = value; }
-        }
+        
+        /// <summary>
+        /// The age in growth cycles when this toxin should expire.
+        /// Used for age-based toxin expiration mechanics.
+        /// </summary>
+        public int ToxinExpirationAge { get; internal set; } = 0;
 
         /// <summary>
         /// Whether this cell was created in the current growth cycle (for fade-in effects)
@@ -72,17 +72,20 @@ namespace FungusToast.Core.Board
         /// <summary>
         /// Create a toxin Fungal Cell.
         /// </summary>
-        public FungalCell(int? ownerPlayerId, int tileId, int toxinExpirationCycle)
+        public FungalCell(int? ownerPlayerId, int tileId, int toxinLifespan = -1)
         {
-            if (toxinExpirationCycle <= 0)
-                throw new ArgumentOutOfRangeException(nameof(toxinExpirationCycle), "Expiration must be greater than 0.");
+            // Use default lifespan if not specified
+            if (toxinLifespan <= 0)
+                toxinLifespan = GameBalance.DefaultToxinDuration;
 
             OwnerPlayerId = ownerPlayerId;
             if (ownerPlayerId.HasValue)
                 OriginalOwnerPlayerId = ownerPlayerId.Value;
 
             TileId = tileId;
-            SetToxin(toxinExpirationCycle);
+            CellType = FungalCellType.Toxin;
+            ToxinExpirationAge = toxinLifespan; // This is what determines expiration
+            GrowthCycleAge = 0;
         }
 
         /// <summary>
@@ -109,7 +112,6 @@ namespace FungusToast.Core.Board
         {
             CellType = FungalCellType.Alive;
             GrowthCycleAge = 0;
-            ToxinExpirationCycle = 0;
             // Clear CauseOfDeath when becoming alive - keep LastOwnerPlayerId as historical data
             CauseOfDeath = null;
         }
@@ -120,13 +122,13 @@ namespace FungusToast.Core.Board
             CauseOfDeath = reason;
             // For natural deaths (same owner), set LastOwnerPlayerId to track who lost the cell
             LastOwnerPlayerId = OwnerPlayerId;
-            ToxinExpirationCycle = 0;
         }
 
-        private void SetToxin(int expirationCycle)
+        private void SetToxin(int toxinLifespan)
         {
             CellType = FungalCellType.Toxin;
-            ToxinExpirationCycle = expirationCycle;
+            ToxinExpirationAge = toxinLifespan; // This is what determines expiration
+            GrowthCycleAge = 0; // Reset growth cycle age when becoming a toxin
             // Don't modify ownership tracking here
         }
 
@@ -268,24 +270,24 @@ namespace FungusToast.Core.Board
         /// <summary>
         /// Mark a dead cell as a toxin (Toxified). Used for dropping toxin on empty/dead cells.
         /// </summary>
-        public void MarkAsToxin(int expirationCycle, Player? owner = null, int? baseCycle = null)
+        public void MarkAsToxin(int toxinLifespan, Player? owner = null)
         {
             if (IsAlive)
                 throw new InvalidOperationException("Cannot mark a living cell as toxin.");
-            if (expirationCycle <= 0)
-                throw new ArgumentOutOfRangeException(nameof(expirationCycle), "Expiration must be greater than 0.");
+            if (toxinLifespan <= 0)
+                throw new ArgumentOutOfRangeException(nameof(toxinLifespan), "Toxin lifespan must be greater than 0.");
 
             if (owner != null)
                 ChangeOwnership(owner.PlayerId);
 
-            SetToxin(CalculateAdjustedExpiration(expirationCycle, owner, baseCycle));
+            SetToxin(toxinLifespan);
         }
 
         /// <summary>
         /// Converts a cell to toxin, killing if alive (Poisoned) or overwriting dead/empty (Toxified).
         /// Resistant cells cannot be converted to toxins.
         /// </summary>
-        public void ConvertToToxin(int expirationCycle, Player? owner = null, DeathReason? reason = null, int? baseCycle = null)
+        public void ConvertToToxin(int toxinLifespan, Player? owner = null, DeathReason? reason = null)
         {
             // Resistant cells cannot be converted to toxins
             if (IsResistant)
@@ -297,18 +299,7 @@ namespace FungusToast.Core.Board
             if (owner != null)
                 ChangeOwnership(owner.PlayerId, reason ?? DeathReason.Poisoned);
 
-            SetToxin(CalculateAdjustedExpiration(expirationCycle, owner, baseCycle));
-        }
-
-        private int CalculateAdjustedExpiration(int expirationCycle, Player? owner, int? baseCycle)
-        {
-            if (owner == null || baseCycle == null)
-                return expirationCycle;
-
-            int bonus = owner.GetMutationLevel(MutationIds.MycotoxinPotentiation)
-                       * GameBalance.MycotoxinPotentiationGrowthCycleExtensionPerLevel;
-
-            return baseCycle.Value + (expirationCycle - baseCycle.Value) + bonus;
+            SetToxin(toxinLifespan);
         }
 
         public void ClearToxinState()
@@ -316,13 +307,14 @@ namespace FungusToast.Core.Board
             if (IsToxin)
             {
                 CellType = FungalCellType.Dead;
-                ToxinExpirationCycle = 0;
+                ToxinExpirationAge = 0;
             }
         }
 
-        public bool HasToxinExpired(int currentGrowthCycle)
+        public bool HasToxinExpired()
         {
-            return IsToxin && currentGrowthCycle >= ToxinExpirationCycle;
+            // Age-based expiration: toxin expires when its age reaches its expiration age
+            return IsToxin && GrowthCycleAge >= ToxinExpirationAge;
         }
 
         public int ReduceGrowthCycleAge(int amount)

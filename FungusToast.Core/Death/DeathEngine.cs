@@ -33,9 +33,13 @@ namespace FungusToast.Core.Death
             Random rng,
             ISimulationObserver? simulationObserver = null)
         {
-            // Expire toxins before decay begins
-            board.ExpireToxinTiles(board.CurrentGrowthCycle, simulationObserver);
             List<Player> shuffledPlayers = board.Players.OrderBy(_ => rng.NextDouble()).ToList();
+
+            // Age all cells first (this should happen after growth phase, before deaths)
+            AgeCells(board, shuffledPlayers);
+
+            // Expire toxins after aging
+            board.ExpireToxinTiles(board.CurrentGrowthCycle, simulationObserver);
 
             // Fire DecayPhaseWithFailedGrowths event for Mycotoxin Tracer and other decay-phase mutations that need failed growth data
             board.OnDecayPhaseWithFailedGrowths(failedGrowthsByPlayerId);
@@ -141,10 +145,7 @@ namespace FungusToast.Core.Death
                             owner, board, rng, occupiedPercent, simulationObserver);
                     }
                 }
-                else
-                {
-                    MutationEffectProcessor.AdvanceOrResetCellAge(owner, cell);
-                }
+                // NOTE: Cell aging is now handled in AgeCells method, not here
             }
         }
 
@@ -173,6 +174,35 @@ namespace FungusToast.Core.Death
                 {
                     observer.RecordCellDeath(neighborOwnerId, DeathReason.PutrefactiveMycotoxin, 1);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Ages all living and toxin cells. This should happen after the growth phase is complete.
+        /// </summary>
+        private static void AgeCells(GameBoard board, List<Player> players)
+        {
+            // Age all living cells (with mutation-based age reset logic)
+            List<BoardTile> livingTiles = board.AllTiles()
+                .Where(t => t.FungalCell is { IsAlive: true })
+                .ToList();
+
+            foreach (BoardTile tile in livingTiles)
+            {
+                FungalCell cell = tile.FungalCell!;
+                Player owner = players.First(p => p.PlayerId == cell.OwnerPlayerId);
+                MutationEffectProcessor.AdvanceOrResetCellAge(owner, cell);
+            }
+
+            // Age all toxin cells (no mutation effects, just simple aging)
+            List<BoardTile> toxinTiles = board.AllTiles()
+                .Where(t => t.FungalCell is { IsToxin: true })
+                .ToList();
+
+            foreach (BoardTile tile in toxinTiles)
+            {
+                FungalCell toxinCell = tile.FungalCell!;
+                toxinCell.IncrementGrowthAge();
             }
         }
     }

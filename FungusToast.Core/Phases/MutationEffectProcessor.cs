@@ -561,8 +561,8 @@ namespace FungusToast.Core.Phases
                 BoardTile chosen = candidateTiles[index];
                 candidateTiles.RemoveAt(index);
 
-                int expiration = board.CurrentGrowthCycle + GameBalance.MycotoxinTracerTileDuration;
-                ToxinHelper.ConvertToToxin(board, chosen.TileId, expiration, player);
+                int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, GameBalance.MycotoxinTracerTileDuration);
+                ToxinHelper.ConvertToToxin(board, chosen.TileId, toxinLifespan, player);
                 placed++;
             }
 
@@ -1024,7 +1024,7 @@ namespace FungusToast.Core.Phases
                 if (allTiles.Count == 0) continue;
 
                 int kills = 0, toxified = 0;
-                int toxinDuration = board.CurrentGrowthCycle + GameBalance.DefaultToxinDuration;
+                int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, GameBalance.DefaultToxinDuration);
 
                 for (int i = 0; i < sporesToDrop; i++)
                 {
@@ -1042,13 +1042,13 @@ namespace FungusToast.Core.Phases
                     if (cell != null && cell.IsAlive)
                     {
                         // Enemy cell: kill and toxify (use helper)
-                        ToxinHelper.KillAndToxify(board, target.TileId, toxinDuration, DeathReason.SporocidalBloom, player);
+                        ToxinHelper.KillAndToxify(board, target.TileId, toxinLifespan, DeathReason.SporocidalBloom, player);
                         kills++;
                     }
                     else
                     {
                         // Empty or already toxin: place toxin
-                        ToxinHelper.ConvertToToxin(board, target.TileId, toxinDuration, player);
+                        ToxinHelper.ConvertToToxin(board, target.TileId, toxinLifespan, player);
                         toxified++;
                     }
                 }

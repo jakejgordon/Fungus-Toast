@@ -95,23 +95,22 @@ public static class MycovariantEffectProcessor
             var targetTile = board.GetTileById(coneTileId);
             if (targetTile == null) { invalid++; continue; }
 
-            // Use ToxinHelper to get proper expiration cycle with all bonuses
-            int expirationCycle = ToxinHelper.GetToxinExpirationCycle(
+            // Use ToxinHelper to get proper expiration age with all bonuses
+            int toxinLifespan = ToxinHelper.GetToxinExpirationAge(
                 player, 
-                board, 
                 MycovariantGameBalance.DefaultJettingMyceliumToxinGrowthCycleDuration);
 
             var prevCell = targetTile.FungalCell;
             if (prevCell == null || prevCell.IsDead)
             {
                 // Toxify empty or dead cell (call it "toxified" = "placed toxin")
-                ToxinHelper.ConvertToToxin(board, coneTileId, expirationCycle, player);
+                ToxinHelper.ConvertToToxin(board, coneTileId, toxinLifespan, player);
                 poisoned++; // toxified → poisoned (for simulation output)
             }
             else if (prevCell.IsAlive && prevCell.OwnerPlayerId != playerId)
             {
                 // Properly kill and toxify using board-level logic
-                ToxinHelper.KillAndToxify(board, coneTileId, expirationCycle, DeathReason.JettingMycelium, player);
+                ToxinHelper.KillAndToxify(board, coneTileId, toxinLifespan, DeathReason.JettingMycelium, player);
                 poisoned++;
             }
             // Do not overwrite your own living cell with toxin.
@@ -471,7 +470,7 @@ public static class MycovariantEffectProcessor
         if (cell == null || !cell.IsToxin) return;
 
         int extension = MycovariantGameBalance.EnduringToxaphoresNewToxinExtension;
-        cell.ToxinExpirationCycle += extension;
+        cell.ToxinExpirationAge += extension;
         observer?.RecordEnduringToxaphoresExtendedCycles(playerId, extension);
     }
 
@@ -491,7 +490,7 @@ public static class MycovariantEffectProcessor
         {
             if (cell.OwnerPlayerId == player.PlayerId)
             {
-                cell.ToxinExpirationCycle += extension;
+                cell.ToxinExpirationAge += extension;
                 totalExtended += extension;
             }
         }

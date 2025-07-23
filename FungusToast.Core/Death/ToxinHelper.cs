@@ -12,7 +12,7 @@ namespace FungusToast.Core.Death
         /// Converts the cell at the specified tile to a toxin, or creates a new toxin cell if empty.
         /// This method respects proper event firing via PlaceFungalCell.
         /// </summary>
-        public static void ConvertToToxin(GameBoard board, int tileId, int expirationCycle, Player? owner = null)
+        public static void ConvertToToxin(GameBoard board, int tileId, int toxinLifespan, Player? owner = null)
         {
             // Fire ToxinPlaced event to allow for neutralization
             var toxinPlacedArgs = new ToxinPlacedEventArgs(tileId, owner?.PlayerId ?? -1);
@@ -33,12 +33,12 @@ namespace FungusToast.Core.Death
                 // Mark for toxin drop animation
                 cell.MarkAsReceivingToxinDrop();
                 
-                cell.ConvertToToxin(expirationCycle, owner);
+                cell.ConvertToToxin(toxinLifespan, owner);
                 board.PlaceFungalCell(cell); // fires events!
             }
             else
             {
-                var toxin = new FungalCell(owner?.PlayerId, tileId, expirationCycle);
+                var toxin = new FungalCell(owner?.PlayerId, tileId, toxinLifespan);
                 // Mark for toxin drop animation
                 toxin.MarkAsReceivingToxinDrop();
                 
@@ -48,42 +48,43 @@ namespace FungusToast.Core.Death
 
         /// <summary>
         /// Converts the cell at the specified tile to a toxin, or creates a new toxin cell if empty.
-        /// This overload calculates the expiration cycle automatically.
+        /// This overload calculates the toxin lifespan automatically based on player mutations.
         /// </summary>
         public static void ConvertToToxin(GameBoard board, int tileId, Player? owner = null)
         {
-            int expirationCycle = GetToxinExpirationCycle(owner, board);
-            ConvertToToxin(board, tileId, expirationCycle, owner);
+            int toxinLifespan = GetToxinExpirationAge(owner);
+            ConvertToToxin(board, tileId, toxinLifespan, owner);
         }
 
         /// <summary>
-        /// Calculates the toxin expiration cycle for a player, including all bonuses, given a custom base duration.
+        /// Calculates the toxin expiration age for a player, including all bonuses, given a custom base duration.
         /// </summary>
-        public static int GetToxinExpirationCycle(Player? player, GameBoard board, int startingToxinDurationWithoutBonuses)
+        public static int GetToxinExpirationAge(Player? player, int baseToxinDuration)
         {
             if (player == null)
-                return board.CurrentGrowthCycle + startingToxinDurationWithoutBonuses;
-            int baseDuration = startingToxinDurationWithoutBonuses;
+                return baseToxinDuration;
+            
+            int baseDuration = baseToxinDuration;
             int bonus = player.GetMutationLevel(Mutations.MutationIds.MycotoxinPotentiation) * GameBalance.MycotoxinPotentiationGrowthCycleExtensionPerLevel;
             // Enduring Toxaphores synergy
             var myco = player.GetMycovariant != null ? player.GetMycovariant(Mycovariants.MycovariantIds.EnduringToxaphoresId) : null;
             int enduringBonus = myco != null ? MycovariantGameBalance.EnduringToxaphoresNewToxinExtension : 0;
-            return board.CurrentGrowthCycle + baseDuration + bonus + enduringBonus;
+            return baseDuration + bonus + enduringBonus;
         }
 
         /// <summary>
-        /// Calculates the toxin expiration cycle for a player, including all bonuses. If player is null, uses default duration.
+        /// Calculates the toxin expiration age for a player, including all bonuses. If player is null, uses default duration.
         /// </summary>
-        public static int GetToxinExpirationCycle(Player? player, GameBoard board)
+        public static int GetToxinExpirationAge(Player? player)
         {
-            return GetToxinExpirationCycle(player, board, GameBalance.DefaultToxinDuration);
+            return GetToxinExpirationAge(player, GameBalance.DefaultToxinDuration);
         }
 
         /// <summary>
         /// Kills a living cell (if present) and then converts it to toxin.
         /// This method respects proper event firing via PlaceFungalCell.
         /// </summary>
-        public static void KillAndToxify(GameBoard board, int tileId, int expirationCycle, DeathReason reason, Player? owner = null)
+        public static void KillAndToxify(GameBoard board, int tileId, int toxinLifespan, DeathReason reason, Player? owner = null)
         {
             var tile = board.GetTileById(tileId);
             var cell = tile?.FungalCell;
@@ -103,7 +104,7 @@ namespace FungusToast.Core.Death
                 return;
 
             // 3. Now convert the cell to toxin (state change)
-            cell.ConvertToToxin(expirationCycle, owner);
+            cell.ConvertToToxin(toxinLifespan, owner);
 
             // 4. Place the toxin cell on the board
             board.PlaceFungalCell(cell); // will fire toxin events as needed

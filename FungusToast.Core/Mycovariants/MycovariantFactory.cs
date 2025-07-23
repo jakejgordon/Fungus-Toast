@@ -378,7 +378,8 @@ namespace FungusToast.Core.Mycovariants
                     {
                         if (cell.IsToxin)
                         {
-                            cell.ToxinExpirationCycle += extension;
+                            // Use the new age-based system instead of the old cycle-based system
+                            cell.ToxinExpirationAge += extension;
                             extendedCount += extension;
                         }
                     }
@@ -470,7 +471,7 @@ namespace FungusToast.Core.Mycovariants
                         rng,
                         observer);
                 },
-                AIScore = (player, board) => MycovariantGameBalance.BallistosporeDischargeIIAIScore
+                AIScore = (player, board) => MycovariantGameBalance.BallistosporeDischargeIIIAIScore
             };
 
         public static Mycovariant BallistosporeDischargeIII() =>

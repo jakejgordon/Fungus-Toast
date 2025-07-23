@@ -137,7 +137,8 @@ namespace FungusToast.Unity.UI
             {
                 if (showExpiration)
                 {
-                    int cyclesRemaining = cell.ToxinExpirationCycle - board.CurrentGrowthCycle;
+                    // Use the new age-based expiration system instead of the old cycle-based system
+                    int cyclesRemaining = cell.ToxinExpirationAge - cell.GrowthCycleAge;
                     if (cyclesRemaining > 0)
                         expirationText.text = $"Cycles Until Expiration: {cyclesRemaining}";
                     else

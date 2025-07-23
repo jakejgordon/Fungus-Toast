@@ -413,11 +413,12 @@ namespace FungusToast.Core.Board
 
         public void ExpireToxinTiles(int currentGrowthCycle, ISimulationObserver? observer = null)
         {
-            // Catabolic Rebirth max-level bonus: accelerate toxin aging
+            // Apply Catabolic Rebirth max-level bonus: toxins age twice as fast when adjacent to dead cells
             foreach (var toxinCell in AllToxinFungalCells())
             {
-                var toxinTile = GetTileById(toxinCell.TileId);
                 var adjacentTiles = GetOrthogonalNeighbors(toxinCell.TileId);
+                bool shouldAgeDouble = false;
+                
                 foreach (var adjTile in adjacentTiles)
                 {
                     var adjCell = adjTile.FungalCell;
@@ -427,18 +428,24 @@ namespace FungusToast.Core.Board
                         var catabolicRebirth = MutationRegistry.GetById(MutationIds.CatabolicRebirth);
                         if (owner != null && catabolicRebirth != null && owner.GetMutationLevel(MutationIds.CatabolicRebirth) == catabolicRebirth.MaxLevel)
                         {
-                            // Reduce toxin expiration cycle by 1 (age twice as fast)
-                            toxinCell.ToxinExpirationCycle--;
+                            shouldAgeDouble = true;
                             observer?.RecordCatabolicRebirthAgedToxin(owner.PlayerId, 1);
+                            break; // Only need one adjacent dead cell with max Catabolic Rebirth
                         }
                     }
+                }
+                
+                // Age the toxin (this was already done in DeathEngine, but Catabolic Rebirth ages it again)
+                if (shouldAgeDouble)
+                {
+                    toxinCell.IncrementGrowthAge(); // Extra aging for Catabolic Rebirth effect
                 }
             }
 
             var allToxinTiles = AllToxinFungalCells().ToList(); // Snapshot to avoid collection issues
             foreach (var cell in allToxinTiles)
             {
-                if (cell.HasToxinExpired(currentGrowthCycle))
+                if (cell.HasToxinExpired())
                 {
                     var tile = GetTileById(cell.TileId);
                     int? toxinOwnerId = cell.OwnerPlayerId;
