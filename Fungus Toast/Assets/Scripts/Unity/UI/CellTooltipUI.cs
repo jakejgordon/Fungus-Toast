@@ -12,16 +12,17 @@ namespace FungusToast.Unity.UI
     /// 
     /// Expected Prefab Structure (in this exact order):
     /// CellTooltip (this component)
-    /// ??? StatusGroup (GameObject) - Contains status text and icon
-    /// ??? DeathReasonGroup (GameObject) - Contains death reason text
-    /// ??? OwnerGroup (GameObject) - Contains owner text and icon
-    /// ??? LastOwnerGroup (GameObject) - Contains last owner text and icon
-    /// ??? AgeGroup (GameObject) - Contains growth age text
-    /// ??? ExpirationGroup (GameObject) - Contains expiration text
-    /// ??? AdditionalInfoGroup (GameObject) - Contains additional status info
+    /// ? StatusGroup (GameObject) - Contains status text and icon
+    /// ? DeathReasonGroup (GameObject) - Contains death reason text
+    /// ? OwnerGroup (GameObject) - Contains owner text and icon
+    /// ? LastOwnerGroup (GameObject) - Contains last owner text and icon
+    /// ? AgeGroup (GameObject) - Contains growth age text
+    /// ? ExpirationGroup (GameObject) - Contains expiration text
+    /// ? ResistantGroup (GameObject) - Contains resistant status with shield icon and text
+    /// ? AdditionalInfoGroup (GameObject) - Contains additional status info (reclaim count, animation states)
     /// 
     /// All layout groups must be assigned in the Inspector - no fallback discovery.
-    /// Icons (StatusIcon, OwnerIcon, LastOwnerIcon, ToxinIcon) must also be assigned.
+    /// Icons (StatusIcon, OwnerIcon, LastOwnerIcon, ToxinIcon, ResistantIcon) must also be assigned.
     /// </summary>
     public class CellTooltipUI : MonoBehaviour
     {
@@ -32,6 +33,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private TextMeshProUGUI lastOwnerText;
         [SerializeField] private TextMeshProUGUI growthAgeText;
         [SerializeField] private TextMeshProUGUI expirationText;
+        [SerializeField] private TextMeshProUGUI resistantText;
         [SerializeField] private TextMeshProUGUI additionalInfoText;
 
         [Header("Icon Components")]
@@ -39,6 +41,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image ownerIcon;
         [SerializeField] private Image lastOwnerIcon;
         [SerializeField] private Image toxinIcon;
+        [SerializeField] private Image resistantIcon;
 
         [Header("Layout Groups (optional - for showing/hiding sections)")]
         [SerializeField] private GameObject statusGroup;
@@ -47,6 +50,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private GameObject lastOwnerGroup;
         [SerializeField] private GameObject ageGroup;
         [SerializeField] private GameObject expirationGroup;
+        [SerializeField] private GameObject resistantGroup;
         [SerializeField] private GameObject additionalInfoGroup;
 
         // Runtime dependency - injected via SetPlayerBinder()
@@ -70,6 +74,7 @@ namespace FungusToast.Unity.UI
             UpdateOwnershipInfo(cell);
             UpdateAgeAndExpiration(cell, board);
             UpdateIcons(cell, gridVisualizer);
+            UpdateResistantStatus(cell, gridVisualizer);
             UpdateAdditionalInfo(cell);
             
             // Force correct sibling order in case Unity's layout system is misbehaving
@@ -125,7 +130,8 @@ namespace FungusToast.Unity.UI
             if (lastOwnerGroup != null) lastOwnerGroup.transform.SetSiblingIndex(3);
             if (ageGroup != null) ageGroup.transform.SetSiblingIndex(4);
             if (expirationGroup != null) expirationGroup.transform.SetSiblingIndex(5);
-            if (additionalInfoGroup != null) additionalInfoGroup.transform.SetSiblingIndex(6);
+            if (resistantGroup != null) resistantGroup.transform.SetSiblingIndex(6);
+            if (additionalInfoGroup != null) additionalInfoGroup.transform.SetSiblingIndex(7);
         }
 
         /// <summary>
@@ -140,6 +146,7 @@ namespace FungusToast.Unity.UI
             ResetGroupPosition(lastOwnerGroup);
             ResetGroupPosition(ageGroup);
             ResetGroupPosition(expirationGroup);
+            ResetGroupPosition(resistantGroup);
             ResetGroupPosition(additionalInfoGroup);
         }
 
@@ -185,44 +192,8 @@ namespace FungusToast.Unity.UI
         }
 
         /// <summary>
-        /// Debug method to log the current state of all tooltip groups for troubleshooting.
+        /// Updates the status information display
         /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        private void DebugTooltipState(FungalCell cell)
-        {
-            UnityEngine.Debug.Log($"=== TOOLTIP DEBUG for {(cell.IsAlive ? "ALIVE" : cell.IsDead ? "DEAD" : "TOXIN")} cell ===");
-            
-            // Log visibility state (both active and layout participation)
-            UnityEngine.Debug.Log($"StatusGroup: Active={statusGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(statusGroup)} (should be: visible=true)");
-            UnityEngine.Debug.Log($"DeathReasonGroup: Active={deathReasonGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(deathReasonGroup)} (should be: visible={cell.IsDead && cell.CauseOfDeath.HasValue})");
-            UnityEngine.Debug.Log($"OwnerGroup: Active={ownerGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(ownerGroup)} (should be: visible={cell.OwnerPlayerId.HasValue})");
-            UnityEngine.Debug.Log($"LastOwnerGroup: Active={lastOwnerGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(lastOwnerGroup)} (should be: visible={cell.LastOwnerPlayerId.HasValue})");
-            UnityEngine.Debug.Log($"AgeGroup: Active={ageGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(ageGroup)} (should be: visible=true)");
-            UnityEngine.Debug.Log($"ExpirationGroup: Active={expirationGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(expirationGroup)} (should be: visible={cell.IsToxin})");
-            UnityEngine.Debug.Log($"AdditionalInfoGroup: Active={additionalInfoGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(additionalInfoGroup)} (should be: visible={cell.IsResistant || cell.ReclaimCount > 0 || cell.IsNewlyGrown || cell.IsDying || cell.IsReceivingToxinDrop})");
-            
-            // Log sibling indices
-            UnityEngine.Debug.Log($"StatusGroup sibling index: {(statusGroup?.transform.GetSiblingIndex() ?? -1)}");
-            UnityEngine.Debug.Log($"DeathReasonGroup sibling index: {(deathReasonGroup?.transform.GetSiblingIndex() ?? -1)}");
-            UnityEngine.Debug.Log($"OwnerGroup sibling index: {(ownerGroup?.transform.GetSiblingIndex() ?? -1)}");
-            UnityEngine.Debug.Log($"LastOwnerGroup sibling index: {(lastOwnerGroup?.transform.GetSiblingIndex() ?? -1)}");
-            UnityEngine.Debug.Log($"AgeGroup sibling index: {(ageGroup?.transform.GetSiblingIndex() ?? -1)}");
-            UnityEngine.Debug.Log($"ExpirationGroup sibling index: {(expirationGroup?.transform.GetSiblingIndex() ?? -1)}");
-            UnityEngine.Debug.Log($"AdditionalInfoGroup sibling index: {(additionalInfoGroup?.transform.GetSiblingIndex() ?? -1)}");
-            
-            UnityEngine.Debug.Log("=== END TOOLTIP DEBUG ===");
-        }
-
-        /// <summary>
-        /// Helper method to check if a group's layout is being ignored.
-        /// </summary>
-        private bool GetLayoutIgnored(GameObject group)
-        {
-            if (group == null) return true;
-            LayoutElement layoutElement = group.GetComponent<LayoutElement>();
-            return layoutElement?.ignoreLayout ?? false;
-        }
-
         private void UpdateStatusInfo(FungalCell cell)
         {
             bool hasStatus = true; // Status is always shown for any cell
@@ -246,6 +217,9 @@ namespace FungusToast.Unity.UI
             }
         }
 
+        /// <summary>
+        /// Updates the death reason information display
+        /// </summary>
         private void UpdateDeathReason(FungalCell cell)
         {
             bool showDeathReason = cell.IsDead && cell.CauseOfDeath.HasValue;
@@ -265,6 +239,9 @@ namespace FungusToast.Unity.UI
             }
         }
 
+        /// <summary>
+        /// Updates the ownership information display (current and last owner)
+        /// </summary>
         private void UpdateOwnershipInfo(FungalCell cell)
         {
             // Current Owner
@@ -302,6 +279,9 @@ namespace FungusToast.Unity.UI
             }
         }
 
+        /// <summary>
+        /// Updates the age and expiration information display
+        /// </summary>
         private void UpdateAgeAndExpiration(FungalCell cell, GameBoard board)
         {
             // Growth Cycle Age - always show for any cell
@@ -337,6 +317,9 @@ namespace FungusToast.Unity.UI
             }
         }
 
+        /// <summary>
+        /// Updates the icon displays for the cell (status, owner, toxin)
+        /// </summary>
         private void UpdateIcons(FungalCell cell, FungusToast.Unity.Grid.GridVisualizer gridVisualizer)
         {
             if (gridVisualizer == null) return;
@@ -441,16 +424,49 @@ namespace FungusToast.Unity.UI
             }
         }
 
+        /// <summary>
+        /// Updates the resistant status display with shield icon
+        /// </summary>
+        private void UpdateResistantStatus(FungalCell cell, FungusToast.Unity.Grid.GridVisualizer gridVisualizer)
+        {
+            bool isResistant = cell.IsResistant;
+            
+            SetGroupVisibility(resistantGroup, isResistant);
+            
+            if (resistantText != null)
+            {
+                if (isResistant)
+                {
+                    resistantText.text = "<color=#FFD700><b>Resistant</b></color>";
+                }
+                else
+                {
+                    resistantText.text = "";
+                }
+            }
+
+            // Set resistant shield icon
+            if (resistantIcon != null)
+            {
+                if (isResistant && gridVisualizer?.goldShieldOverlayTile != null)
+                {
+                    resistantIcon.sprite = gridVisualizer.goldShieldOverlayTile.sprite;
+                    resistantIcon.gameObject.SetActive(true);
+                }
+                else
+                {
+                    resistantIcon.gameObject.SetActive(false);
+                }
+            }
+        }
+
         private void UpdateAdditionalInfo(FungalCell cell)
         {
             if (additionalInfoText != null)
             {
                 var additionalInfo = new System.Text.StringBuilder();
 
-                // Special status indicators
-                if (cell.IsResistant)
-                    additionalInfo.AppendLine("<color=#FFD700><b>Resistant</b></color>");
-
+                // Reclaim count
                 if (cell.ReclaimCount > 0)
                     additionalInfo.AppendLine($"Reclaimed: {cell.ReclaimCount}x");
 
@@ -458,9 +474,9 @@ namespace FungusToast.Unity.UI
                 if (cell.IsNewlyGrown)
                     additionalInfo.AppendLine("<color=#FFFF00>? Newly Grown</color>");
                 if (cell.IsDying)
-                    additionalInfo.AppendLine("<color=#FF0000>?? Dying</color>");
+                    additionalInfo.AppendLine("<color=#FF0000>? Dying</color>");
                 if (cell.IsReceivingToxinDrop)
-                    additionalInfo.AppendLine("<color=#FF00FF>?? Receiving Toxin</color>");
+                    additionalInfo.AppendLine("<color=#FF00FF>? Receiving Toxin</color>");
 
                 string infoText = additionalInfo.ToString().Trim();
                 bool hasAdditionalInfo = !string.IsNullOrEmpty(infoText);
