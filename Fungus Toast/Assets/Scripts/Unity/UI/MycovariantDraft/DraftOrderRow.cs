@@ -1,5 +1,6 @@
 ﻿using Assets.Scripts.Unity.UI.MycovariantDraft;
 using FungusToast.Core.Players;
+using FungusToast.Unity;
 using FungusToast.Unity.UI;
 using System.Collections.Generic;
 using TMPro; // For TextMeshProUGUI
@@ -9,8 +10,6 @@ public class DraftOrderRow : MonoBehaviour
 {
     [Header("Prefab")]
     public GameObject playerIconCellPrefab;
-
-    public UI_PlayerBinder playerBinder;
 
     [Header("Arrow")]
     public string arrowChar = "→";
@@ -26,6 +25,14 @@ public class DraftOrderRow : MonoBehaviour
 
     public void SetDraftOrder(List<Player> draftOrder, int activeIndex)
     {
+        // Get PlayerBinder from GameManager
+        var playerBinder = GameManager.Instance?.GameUI?.PlayerUIBinder;
+        if (playerBinder == null)
+        {
+            Debug.LogError("[DraftOrderRow] UI_PlayerBinder not found! Cannot display player icons.");
+            return;
+        }
+
         // Clear old cells
         foreach (var cell in cells)
             Destroy(cell);
@@ -70,19 +77,9 @@ public class DraftOrderRow : MonoBehaviour
 
                 var arrowRect = arrowObj.GetComponent<RectTransform>();
                 arrowRect.sizeDelta = new Vector2(32, 0); // 32px wide, height flexible
-                arrowRect.anchorMin = new Vector2(0.5f, 0.5f);
-                arrowRect.anchorMax = new Vector2(0.5f, 0.5f);
-                arrowRect.pivot = new Vector2(0.5f, 0.5f);
-                arrowRect.anchoredPosition = Vector2.zero; // Centered
-
-                var layout = arrowObj.AddComponent<UnityEngine.UI.LayoutElement>();
-                layout.preferredWidth = 32;
 
                 cells.Add(arrowObj);
             }
-
-
         }
     }
-
 }

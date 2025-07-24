@@ -191,7 +191,10 @@ namespace FungusToast.Unity
             foreach (var p in players)
             {
                 var icon = gridVisualizer.GetTileForPlayer(p.PlayerId)?.sprite;
-                if (icon != null) gameUIManager.PlayerUIBinder.AssignIcon(p, icon);
+                if (icon != null) 
+                {
+                    gameUIManager.PlayerUIBinder.AssignIcon(p, icon);
+                }
             }
 
             // First populate Board.Players

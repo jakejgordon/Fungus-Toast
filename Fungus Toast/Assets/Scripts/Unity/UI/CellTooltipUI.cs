@@ -9,6 +9,19 @@ namespace FungusToast.Unity.UI
     /// <summary>
     /// Component for the Cell Tooltip prefab that handles displaying cell information
     /// with proper layout and icons.
+    /// 
+    /// Expected Prefab Structure (in this exact order):
+    /// CellTooltip (this component)
+    /// ??? StatusGroup (GameObject) - Contains status text and icon
+    /// ??? DeathReasonGroup (GameObject) - Contains death reason text
+    /// ??? OwnerGroup (GameObject) - Contains owner text and icon
+    /// ??? LastOwnerGroup (GameObject) - Contains last owner text and icon
+    /// ??? AgeGroup (GameObject) - Contains growth age text
+    /// ??? ExpirationGroup (GameObject) - Contains expiration text
+    /// ??? AdditionalInfoGroup (GameObject) - Contains additional status info
+    /// 
+    /// All layout groups must be assigned in the Inspector - no fallback discovery.
+    /// Icons (StatusIcon, OwnerIcon, LastOwnerIcon, ToxinIcon) must also be assigned.
     /// </summary>
     public class CellTooltipUI : MonoBehaviour
     {
@@ -28,9 +41,24 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image toxinIcon;
 
         [Header("Layout Groups (optional - for showing/hiding sections)")]
+        [SerializeField] private GameObject statusGroup;
+        [SerializeField] private GameObject ownerGroup;
         [SerializeField] private GameObject deathReasonGroup;
         [SerializeField] private GameObject lastOwnerGroup;
+        [SerializeField] private GameObject ageGroup;
         [SerializeField] private GameObject expirationGroup;
+        [SerializeField] private GameObject additionalInfoGroup;
+
+        // Runtime dependency - injected via SetPlayerBinder()
+        private UI_PlayerBinder playerBinder;
+
+        /// <summary>
+        /// Sets the UI_PlayerBinder dependency. Call this when creating tooltip instances dynamically.
+        /// </summary>
+        public void SetPlayerBinder(UI_PlayerBinder binder)
+        {
+            playerBinder = binder;
+        }
 
         /// <summary>
         /// Updates the tooltip with cell information and appropriate icons.
@@ -43,10 +71,164 @@ namespace FungusToast.Unity.UI
             UpdateAgeAndExpiration(cell, board);
             UpdateIcons(cell, gridVisualizer);
             UpdateAdditionalInfo(cell);
+            
+            // Force correct sibling order in case Unity's layout system is misbehaving
+            ForceCorrectOrder();
+            
+            // Since manual positioning has been fixed in Unity, we don't need to reset positions
+            // ResetAllGroupPositions(); // DISABLED - Unity prefab positioning is now correct
+            
+            // AGGRESSIVE FIX: Force Unity to properly recalculate layout multiple times
+            StartCoroutine(ForceLayoutRebuildCoroutine());
+        }
+
+        /// <summary>
+        /// Aggressively forces Unity's layout system to properly recalculate by doing multiple rebuilds.
+        /// This works around Unity's layout timing issues with LayoutElement.ignoreLayout.
+        /// </summary>
+        private System.Collections.IEnumerator ForceLayoutRebuildCoroutine()
+        {
+            var rectTransform = GetComponent<RectTransform>();
+            
+            // Force immediate rebuild
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+            
+            // Force canvas update
+            Canvas.ForceUpdateCanvases();
+            
+            // Wait one frame for Unity to process
+            yield return null;
+            
+            // Force another rebuild after Unity has processed
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+            
+            // Force canvas update again
+            Canvas.ForceUpdateCanvases();
+            
+            // Wait another frame
+            yield return null;
+            
+            // Final rebuild to ensure everything is properly laid out
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+        }
+
+        /// <summary>
+        /// Forces the tooltip sections to appear in the correct order by manually setting sibling indices.
+        /// Only call this if Unity's VerticalLayoutGroup is not respecting the prefab hierarchy order.
+        /// </summary>
+        private void ForceCorrectOrder()
+        {
+            // Set explicit sibling indices to force correct order
+            if (statusGroup != null) statusGroup.transform.SetSiblingIndex(0);
+            if (deathReasonGroup != null) deathReasonGroup.transform.SetSiblingIndex(1);
+            if (ownerGroup != null) ownerGroup.transform.SetSiblingIndex(2);
+            if (lastOwnerGroup != null) lastOwnerGroup.transform.SetSiblingIndex(3);
+            if (ageGroup != null) ageGroup.transform.SetSiblingIndex(4);
+            if (expirationGroup != null) expirationGroup.transform.SetSiblingIndex(5);
+            if (additionalInfoGroup != null) additionalInfoGroup.transform.SetSiblingIndex(6);
+        }
+
+        /// <summary>
+        /// Resets all group positions to let VerticalLayoutGroup handle positioning.
+        /// This fixes conflicts between manual positioning and automatic layout.
+        /// </summary>
+        private void ResetAllGroupPositions()
+        {
+            ResetGroupPosition(statusGroup);
+            ResetGroupPosition(deathReasonGroup);
+            ResetGroupPosition(ownerGroup);
+            ResetGroupPosition(lastOwnerGroup);
+            ResetGroupPosition(ageGroup);
+            ResetGroupPosition(expirationGroup);
+            ResetGroupPosition(additionalInfoGroup);
+        }
+
+        /// <summary>
+        /// Resets a single group's position to work properly with VerticalLayoutGroup.
+        /// </summary>
+        private void ResetGroupPosition(GameObject group)
+        {
+            if (group == null) return;
+
+            RectTransform rectTransform = group.GetComponent<RectTransform>();
+            if (rectTransform == null) return;
+
+            // Store original for debugging
+            Vector2 originalPos = rectTransform.anchoredPosition;
+
+            // For VerticalLayoutGroup children, we want to let the layout system control everything
+            // DON'T set anchors - let them stay as they are in the prefab
+            // DON'T force position to zero - let VerticalLayoutGroup position them
+            
+            // Only reset if there are problematic manual offsets
+            if (rectTransform.offsetMin != Vector2.zero || rectTransform.offsetMax != Vector2.zero)
+            {
+                rectTransform.offsetMin = Vector2.zero;
+                rectTransform.offsetMax = Vector2.zero;
+                
+                if (originalPos != Vector2.zero)
+                {
+                    UnityEngine.Debug.Log($"[Position Reset] {group.name}: Reset offsets, originalPos was {originalPos}");
+                }
+            }
+            
+            // Only reset anchored position if it's obviously wrong (large values that would conflict)
+            if (Mathf.Abs(rectTransform.anchoredPosition.x) > 50f || Mathf.Abs(rectTransform.anchoredPosition.y) > 50f)
+            {
+                rectTransform.anchoredPosition = Vector2.zero;
+                
+                if (originalPos != Vector2.zero)
+                {
+                    UnityEngine.Debug.Log($"[Position Reset] {group.name}: Reset large position {originalPos} ? {rectTransform.anchoredPosition}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Debug method to log the current state of all tooltip groups for troubleshooting.
+        /// </summary>
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        private void DebugTooltipState(FungalCell cell)
+        {
+            UnityEngine.Debug.Log($"=== TOOLTIP DEBUG for {(cell.IsAlive ? "ALIVE" : cell.IsDead ? "DEAD" : "TOXIN")} cell ===");
+            
+            // Log visibility state (both active and layout participation)
+            UnityEngine.Debug.Log($"StatusGroup: Active={statusGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(statusGroup)} (should be: visible=true)");
+            UnityEngine.Debug.Log($"DeathReasonGroup: Active={deathReasonGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(deathReasonGroup)} (should be: visible={cell.IsDead && cell.CauseOfDeath.HasValue})");
+            UnityEngine.Debug.Log($"OwnerGroup: Active={ownerGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(ownerGroup)} (should be: visible={cell.OwnerPlayerId.HasValue})");
+            UnityEngine.Debug.Log($"LastOwnerGroup: Active={lastOwnerGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(lastOwnerGroup)} (should be: visible={cell.LastOwnerPlayerId.HasValue})");
+            UnityEngine.Debug.Log($"AgeGroup: Active={ageGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(ageGroup)} (should be: visible=true)");
+            UnityEngine.Debug.Log($"ExpirationGroup: Active={expirationGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(expirationGroup)} (should be: visible={cell.IsToxin})");
+            UnityEngine.Debug.Log($"AdditionalInfoGroup: Active={additionalInfoGroup?.activeSelf ?? false}, LayoutIgnored={GetLayoutIgnored(additionalInfoGroup)} (should be: visible={cell.IsResistant || cell.ReclaimCount > 0 || cell.IsNewlyGrown || cell.IsDying || cell.IsReceivingToxinDrop})");
+            
+            // Log sibling indices
+            UnityEngine.Debug.Log($"StatusGroup sibling index: {(statusGroup?.transform.GetSiblingIndex() ?? -1)}");
+            UnityEngine.Debug.Log($"DeathReasonGroup sibling index: {(deathReasonGroup?.transform.GetSiblingIndex() ?? -1)}");
+            UnityEngine.Debug.Log($"OwnerGroup sibling index: {(ownerGroup?.transform.GetSiblingIndex() ?? -1)}");
+            UnityEngine.Debug.Log($"LastOwnerGroup sibling index: {(lastOwnerGroup?.transform.GetSiblingIndex() ?? -1)}");
+            UnityEngine.Debug.Log($"AgeGroup sibling index: {(ageGroup?.transform.GetSiblingIndex() ?? -1)}");
+            UnityEngine.Debug.Log($"ExpirationGroup sibling index: {(expirationGroup?.transform.GetSiblingIndex() ?? -1)}");
+            UnityEngine.Debug.Log($"AdditionalInfoGroup sibling index: {(additionalInfoGroup?.transform.GetSiblingIndex() ?? -1)}");
+            
+            UnityEngine.Debug.Log("=== END TOOLTIP DEBUG ===");
+        }
+
+        /// <summary>
+        /// Helper method to check if a group's layout is being ignored.
+        /// </summary>
+        private bool GetLayoutIgnored(GameObject group)
+        {
+            if (group == null) return true;
+            LayoutElement layoutElement = group.GetComponent<LayoutElement>();
+            return layoutElement?.ignoreLayout ?? false;
         }
 
         private void UpdateStatusInfo(FungalCell cell)
         {
+            bool hasStatus = true; // Status is always shown for any cell
+            
+            SetGroupVisibility(statusGroup, hasStatus);
+            
             if (statusText != null)
             {
                 if (cell.IsAlive)
@@ -55,7 +237,7 @@ namespace FungusToast.Unity.UI
                 }
                 else if (cell.IsDead)
                 {
-                    statusText.text = "<color=#000000><b>Status: Dead</b></color>";
+                    statusText.text = "<color=#fbe9e5><b>Status: Dead</b></color>";
                 }
                 else if (cell.IsToxin)
                 {
@@ -68,9 +250,7 @@ namespace FungusToast.Unity.UI
         {
             bool showDeathReason = cell.IsDead && cell.CauseOfDeath.HasValue;
             
-            // Show/hide death reason group
-            if (deathReasonGroup != null)
-                deathReasonGroup.SetActive(showDeathReason);
+            SetGroupVisibility(deathReasonGroup, showDeathReason);
             
             if (deathReasonText != null)
             {
@@ -88,9 +268,13 @@ namespace FungusToast.Unity.UI
         private void UpdateOwnershipInfo(FungalCell cell)
         {
             // Current Owner
+            bool hasOwner = cell.OwnerPlayerId.HasValue;
+            
+            SetGroupVisibility(ownerGroup, hasOwner);
+            
             if (ownerText != null)
             {
-                if (cell.OwnerPlayerId.HasValue)
+                if (hasOwner)
                 {
                     ownerText.text = $"Owner: Player {cell.OwnerPlayerId.Value + 1}";
                 }
@@ -103,8 +287,7 @@ namespace FungusToast.Unity.UI
             // Last Owner
             bool showLastOwner = cell.LastOwnerPlayerId.HasValue;
             
-            if (lastOwnerGroup != null)
-                lastOwnerGroup.SetActive(showLastOwner);
+            SetGroupVisibility(lastOwnerGroup, showLastOwner);
             
             if (lastOwnerText != null)
             {
@@ -121,17 +304,20 @@ namespace FungusToast.Unity.UI
 
         private void UpdateAgeAndExpiration(FungalCell cell, GameBoard board)
         {
-            // Growth Cycle Age
+            // Growth Cycle Age - always show for any cell
+            bool hasAge = true;
+            
+            SetGroupVisibility(ageGroup, hasAge);
+            
             if (growthAgeText != null)
             {
                 growthAgeText.text = $"Growth Cycle Age: {cell.GrowthCycleAge}";
             }
 
-            // Toxin Expiration
+            // Toxin Expiration - only show for toxins
             bool showExpiration = cell.IsToxin;
             
-            if (expirationGroup != null)
-                expirationGroup.SetActive(showExpiration);
+            SetGroupVisibility(expirationGroup, showExpiration);
             
             if (expirationText != null)
             {
@@ -174,20 +360,32 @@ namespace FungusToast.Unity.UI
                 }
             }
 
-            // Owner Icon
+            // Owner Icon - Use PlayerBinder for player mold icons
             if (ownerIcon != null)
             {
                 if (cell.OwnerPlayerId.HasValue)
                 {
-                    var tile = gridVisualizer.GetTileForPlayer(cell.OwnerPlayerId.Value);
-                    if (tile != null && tile.sprite != null)
+                    Sprite playerSprite = playerBinder?.GetPlayerIcon(cell.OwnerPlayerId.Value);
+                    
+                    if (playerSprite != null)
                     {
-                        ownerIcon.sprite = tile.sprite;
+                        ownerIcon.sprite = playerSprite;
                         ownerIcon.gameObject.SetActive(true);
                     }
                     else
                     {
-                        ownerIcon.gameObject.SetActive(false);
+                        // Fallback to GridVisualizer tile if PlayerBinder doesn't have the icon
+                        var tile = gridVisualizer.GetTileForPlayer(cell.OwnerPlayerId.Value);
+                        
+                        if (tile != null && tile.sprite != null)
+                        {
+                            ownerIcon.sprite = tile.sprite;
+                            ownerIcon.gameObject.SetActive(true);
+                        }
+                        else
+                        {
+                            ownerIcon.gameObject.SetActive(false);
+                        }
                     }
                 }
                 else
@@ -196,20 +394,30 @@ namespace FungusToast.Unity.UI
                 }
             }
 
-            // Last Owner Icon
+            // Last Owner Icon - Use PlayerBinder for player mold icons
             if (lastOwnerIcon != null)
             {
                 if (cell.LastOwnerPlayerId.HasValue)
                 {
-                    var tile = gridVisualizer.GetTileForPlayer(cell.LastOwnerPlayerId.Value);
-                    if (tile != null && tile.sprite != null)
+                    Sprite playerSprite = playerBinder?.GetPlayerIcon(cell.LastOwnerPlayerId.Value);
+                    if (playerSprite != null)
                     {
-                        lastOwnerIcon.sprite = tile.sprite;
+                        lastOwnerIcon.sprite = playerSprite;
                         lastOwnerIcon.gameObject.SetActive(true);
                     }
                     else
                     {
-                        lastOwnerIcon.gameObject.SetActive(false);
+                        // Fallback to GridVisualizer tile if PlayerBinder doesn't have the icon
+                        var tile = gridVisualizer.GetTileForPlayer(cell.LastOwnerPlayerId.Value);
+                        if (tile != null && tile.sprite != null)
+                        {
+                            lastOwnerIcon.sprite = tile.sprite;
+                            lastOwnerIcon.gameObject.SetActive(true);
+                        }
+                        else
+                        {
+                            lastOwnerIcon.gameObject.SetActive(false);
+                        }
                     }
                 }
                 else
@@ -254,7 +462,60 @@ namespace FungusToast.Unity.UI
                 if (cell.IsReceivingToxinDrop)
                     additionalInfo.AppendLine("<color=#FF00FF>?? Receiving Toxin</color>");
 
-                additionalInfoText.text = additionalInfo.ToString().Trim();
+                string infoText = additionalInfo.ToString().Trim();
+                bool hasAdditionalInfo = !string.IsNullOrEmpty(infoText);
+                
+                SetGroupVisibility(additionalInfoGroup, hasAdditionalInfo);
+                
+                additionalInfoText.text = infoText;
+            }
+            else
+            {
+                SetGroupVisibility(additionalInfoGroup, false);
+            }
+        }
+
+        /// <summary>
+        /// Properly hides/shows a group by using SetActive instead of LayoutElement.ignoreLayout.
+        /// This is the only way to prevent Unity's VerticalLayoutGroup from adding spacing between elements.
+        /// </summary>
+        private void SetGroupVisibility(GameObject group, bool visible)
+        {
+            if (group == null) return;
+
+            if (visible)
+            {
+                // Show the group
+                group.SetActive(true);
+                
+                // Get or add LayoutElement component
+                LayoutElement layoutElement = group.GetComponent<LayoutElement>();
+                if (layoutElement == null)
+                {
+                    layoutElement = group.AddComponent<LayoutElement>();
+                }
+                
+                // Participate in layout
+                layoutElement.ignoreLayout = false;
+                layoutElement.preferredHeight = -1f;
+                layoutElement.minHeight = -1f;
+                layoutElement.flexibleHeight = 1f;
+                
+                // Make visible
+                CanvasGroup canvasGroup = group.GetComponent<CanvasGroup>();
+                if (canvasGroup == null)
+                {
+                    canvasGroup = group.AddComponent<CanvasGroup>();
+                }
+                
+                canvasGroup.alpha = 1f;
+                canvasGroup.blocksRaycasts = true;
+                canvasGroup.interactable = true;
+            }
+            else
+            {
+                // Hide the group completely - SetActive(false) is the only way to prevent VerticalLayoutGroup spacing
+                group.SetActive(false);
             }
         }
 
@@ -274,6 +535,62 @@ namespace FungusToast.Unity.UI
                 DeathReason.Unknown => "Unknown",
                 _ => reason.ToString()
             };
+        }
+
+        /// <summary>
+        /// Logs the actual prefab structure to help diagnose layout issues.
+        /// </summary>
+        private void LogPrefabStructure()
+        {
+            UnityEngine.Debug.Log("=== TOOLTIP PREFAB STRUCTURE DIAGNOSTIC ===");
+            
+            // Log parent layout component
+            var parentLayoutGroup = GetComponent<VerticalLayoutGroup>();
+            if (parentLayoutGroup != null)
+            {
+                UnityEngine.Debug.Log($"Parent VerticalLayoutGroup: " +
+                    $"spacing={parentLayoutGroup.spacing}, " +
+                    $"padding=({parentLayoutGroup.padding.left},{parentLayoutGroup.padding.top},{parentLayoutGroup.padding.right},{parentLayoutGroup.padding.bottom}), " +
+                    $"childControlWidth={parentLayoutGroup.childControlWidth}, " +
+                    $"childControlHeight={parentLayoutGroup.childControlHeight}");
+            }
+            else
+            {
+                UnityEngine.Debug.Log("No VerticalLayoutGroup found on tooltip root!");
+            }
+            
+            // Log all child GameObjects and their components (with null checks)
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                var child = transform.GetChild(i);
+                var layoutElement = child.GetComponent<LayoutElement>();
+                var canvasGroup = child.GetComponent<CanvasGroup>();
+                var horizontalLayoutGroup = child.GetComponent<HorizontalLayoutGroup>();
+                
+                // Safe alpha access with null check
+                float alpha = canvasGroup != null ? canvasGroup.alpha : -1f;
+                
+                UnityEngine.Debug.Log($"Child[{i}]: {child.name} " +
+                    $"active={child.gameObject.activeSelf}, " +
+                    $"layoutIgnored={layoutElement?.ignoreLayout ?? false}, " +
+                    $"preferredHeight={layoutElement?.preferredHeight ?? -999}, " +
+                    $"alpha={alpha}, " +
+                    $"hasHorizontalLayout={horizontalLayoutGroup != null}");
+            }
+            
+            // Count visible vs hidden groups
+            int visibleCount = 0;
+            int hiddenCount = 0;
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                if (transform.GetChild(i).gameObject.activeSelf)
+                    visibleCount++;
+                else
+                    hiddenCount++;
+            }
+            
+            UnityEngine.Debug.Log($"SUMMARY: {visibleCount} visible groups, {hiddenCount} hidden groups. Expected spacing gaps: {Mathf.Max(0, visibleCount - 1)}");
+            UnityEngine.Debug.Log("=== END PREFAB STRUCTURE DIAGNOSTIC ===");
         }
     }
 }

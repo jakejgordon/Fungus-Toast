@@ -2634,7 +2634,6 @@ MonoBehaviour:
   tooltipPrefab: {fileID: 4338957270057087183, guid: 8f5ea29fe34d6cb459bbe4dcf1aa9cdb, type: 3}
   hoverDelaySeconds: 0.2
   tooltipOffset: {x: 150, y: 30}
-  tooltipGap: 5
   autoDetectRadius: 1
   manualRadius: 128
   enableDebugLogs: 1
@@ -2981,9 +2980,13 @@ MonoBehaviour:
   ownerIcon: {fileID: 0}
   lastOwnerIcon: {fileID: 0}
   toxinIcon: {fileID: 0}
+  statusGroup: {fileID: 0}
+  ownerGroup: {fileID: 0}
   deathReasonGroup: {fileID: 0}
   lastOwnerGroup: {fileID: 0}
+  ageGroup: {fileID: 0}
   expirationGroup: {fileID: 0}
+  additionalInfoGroup: {fileID: 0}
 --- !u!1 &356102964
 GameObject:
   m_ObjectHideFlags: 0
@@ -103860,7 +103863,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "14\u200B"
+  m_text: "23\u200B"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -105302,7 +105305,6 @@ MonoBehaviour:
   boardHeight: 100
   playerCount: 1
   testingModeEnabled: 0
-  testingMycovariantId: -1
   testingModeForceHumanFirst: 1
   fastForwardRounds: 0
   gridVisualizer: {fileID: 989759029}
@@ -108322,7 +108324,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerIconCellPrefab: {fileID: 9079075083767989443, guid: 68fb06a400e472d499ec0dce4758863f, type: 3}
-  playerBinder: {fileID: 1278183952}
   arrowChar: "\u2192"
   arrowFontSize: 28
   activeHighlightColor: {r: 1, g: 1, b: 0.5, a: 0.8}
@@ -113312,7 +113313,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: 14
+  m_Text: 23
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0

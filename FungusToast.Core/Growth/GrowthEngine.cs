@@ -6,6 +6,7 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Core.Mycovariants;
+using System.Linq;
 
 namespace FungusToast.Core.Growth
 {
@@ -41,7 +42,42 @@ namespace FungusToast.Core.Growth
 
             board.IncrementGrowthCycle();
 
+            // Age all cells at the end of each growth cycle (per design principles)
+            AgeCells(board, players);
+
+            // Expire toxins after aging
+            board.ExpireToxinTiles(board.CurrentGrowthCycle, observer);
+
             return failedGrowthsByPlayerId;
+        }
+
+        /// <summary>
+        /// Ages all living and toxin cells. This should happen at the end of each growth cycle.
+        /// </summary>
+        private static void AgeCells(GameBoard board, List<Player> players)
+        {
+            // Age all living cells (with mutation-based age reset logic)
+            List<BoardTile> livingTiles = board.AllTiles()
+                .Where(t => t.FungalCell is { IsAlive: true })
+                .ToList();
+
+            foreach (BoardTile tile in livingTiles)
+            {
+                FungalCell cell = tile.FungalCell!;
+                Player owner = players.First(p => p.PlayerId == cell.OwnerPlayerId);
+                MutationEffectProcessor.AdvanceOrResetCellAge(owner, cell);
+            }
+
+            // Age all toxin cells (no mutation effects, just simple aging)
+            List<BoardTile> toxinTiles = board.AllTiles()
+                .Where(t => t.FungalCell is { IsToxin: true })
+                .ToList();
+
+            foreach (BoardTile tile in toxinTiles)
+            {
+                FungalCell toxinCell = tile.FungalCell!;
+                toxinCell.IncrementGrowthAge();
+            }
         }
 
 

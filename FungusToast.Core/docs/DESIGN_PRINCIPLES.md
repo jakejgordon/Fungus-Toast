@@ -22,8 +22,6 @@ The core codebase is split into a **Unity** front-end and a **headless simulatio
 Fungus Toast operates on a **round-based system** with distinct phases that repeat until endgame conditions are met. Each round follows a predictable sequence designed to create strategic tension and meaningful choices.
 
 ### **Round Structure**
-
-```
 Round Start
     ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -61,8 +59,6 @@ Round Start
 └─────────────────────────────────────────────────────────────┘
     ↓
 Round End → Check Endgame Conditions → Next Round or Game End
-```
-
 ### **Phase Details**
 
 #### **Mutation Phase**
@@ -84,6 +80,8 @@ Round End → Check Endgame Conditions → Next Round or Game End
   - Failed growth attempts tracked for decay phase effects
   - Pre/post growth effects trigger mutation abilities
   - Diagonal growth mutations provide additional directions
+  - **All cells age at the end of each growth cycle**
+  - **Toxins expire when they reach their expiration age**
 
 #### **Decay Phase**
 - **Purpose**: Population control and death mechanics
@@ -107,17 +105,13 @@ Round End → Check Endgame Conditions → Next Round or Game End
 
 ### **Implementation Guidelines**
 
-#### **Phase Runner Pattern**
-```csharp
-// Each phase should implement this pattern:
+#### **Phase Runner Pattern**// Each phase should implement this pattern:
 public class PhaseRunner : MonoBehaviour
 {
     public void Initialize(GameBoard board, List<Player> players, GridVisualizer gridVisualizer);
     public void StartPhase();
     private IEnumerator RunPhase();
 }
-```
-
 #### **Event-Driven Architecture**
 - **Pre-phase events**: Allow mutations to prepare
 - **Phase events**: Core phase logic execution  
@@ -271,27 +265,19 @@ When adding new mutations to `MutationRepository.cs`:
 
 ### Code Examples
 
-#### Good Prerequisite Structure
-```csharp
-// Tier 4: Cross-category, thematic synergy
+#### Good Prerequisite Structure// Tier 4: Cross-category, thematic synergy
 MakeChild(new Mutation(
     id: MutationIds.RegenerativeHyphae,
     // ... mutation definition
 ),
 new MutationPrerequisite(MutationIds.Necrosporulation, 1),     // CellularResilience
 new MutationPrerequisite(MutationIds.MycotropicInduction, 1)); // Growth
-```
-
-#### Problematic Prerequisite Structure
-```csharp
-// Tier 4: All same category, deep chain
+#### Problematic Prerequisite Structure// Tier 4: All same category, deep chain
 MakeChild(new Mutation(
     id: MutationIds.NecrophyticBloom,
     // ... mutation definition
 ),
 new MutationPrerequisite(MutationIds.SporocidalBloom, 1)); // Requires Sporocidal Bloom → Necrosporulation chain
-```
-
 ---
 
 ## Code Structure (Brief Overview)
@@ -323,18 +309,14 @@ Fungus Toast supports automated simulation runs for AI testing, balance, and ana
 
 4. **Automatic Waiting and Completion Detection:**
    - The script blocks until the simulation process in the new window has fully exited.
-   - When the simulation is complete, the main console (and Cursor) will display:
-     ```
+   - When the simulation is complete, the main console (and Cursor) will display: ```
      Simulation process has exited.
-     ```
-   - This message is a reliable signal for Cursor (or any automation) to begin reading and analyzing the output file.
+ ```   - This message is a reliable signal for Cursor (or any automation) to begin reading and analyzing the output file.
 
 5. **How to Run a Simulation:**
-   - From the repository root, run:
-     ```powershell
-     .\run_simulation.ps1 --games 3 --players 8
-     ```
-   - You may pass any parameters accepted by `Program.cs` (e.g., `--games`, `--players`, `--output`).
+   - From the repository root, run: ```powershell
+ .\run_simulation.ps1 --games 3 --players 8
+ ```   - You may pass any parameters accepted by `Program.cs` (e.g., `--games`, `--players`, `--output`).
    - The script will print the output filename for reference.
 
 6. **How Cursor Interacts:**
@@ -344,15 +326,11 @@ Fungus Toast supports automated simulation runs for AI testing, balance, and ana
    - This ensures results are never read prematurely and always correspond to the most recent simulation run.
 
 ### Example Usage
-
-```powershell
-.\run_simulation.ps1 --games 5 --players 4
-```
-- This will build, launch, and wait for a 5-game, 4-player simulation, writing results to a uniquely named output file.
+.\run_simulation.ps1 --games 5 --players 4- This will build, launch, and wait for a 5-game, 4-player simulation, writing results to a uniquely named output file.
 
 ### Best Practices
 - Always use the script to ensure builds are current and output files are unique.
 - Let Cursor handle detection and analysis—no need to manually confirm completion.
 - For custom output filenames, use the `--output` parameter.
 
---- 
+---

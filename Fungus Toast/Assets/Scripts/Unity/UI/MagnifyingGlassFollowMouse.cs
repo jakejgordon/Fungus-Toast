@@ -337,6 +337,18 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         tooltipCanvasGroup = tooltipInstance.GetComponent<CanvasGroup>();
         tooltipUI = tooltipInstance.GetComponent<CellTooltipUI>();
 
+        // Inject PlayerBinder dependency into the tooltip
+        if (tooltipUI != null && FungusToast.Unity.GameManager.Instance?.GameUI?.PlayerUIBinder != null)
+        {
+            tooltipUI.SetPlayerBinder(FungusToast.Unity.GameManager.Instance.GameUI.PlayerUIBinder);
+            if (enableDebugLogs)
+                Debug.Log("[Tooltip] Injected PlayerBinder dependency into CellTooltipUI");
+        }
+        else if (tooltipUI != null)
+        {
+            Debug.LogWarning("[Tooltip] PlayerUIBinder not available for dependency injection");
+        }
+
         // CRITICAL: Configure RectTransform for proper positioning
         if (tooltipRectTransform != null)
         {
