@@ -243,6 +243,10 @@ namespace FungusToast.Unity
                 growthPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
                 gameUIManager.PhaseBanner.Show("Growth Phase Begins!", 2f);
                 phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
+                
+                // 🔧 CRITICAL FIX: Add the missing PreGrowthPhase event for Chitin Fortification and other pre-growth effects
+                Board.OnPreGrowthPhase();
+                
                 growthPhaseRunner.StartGrowthPhase();
             }
         }
