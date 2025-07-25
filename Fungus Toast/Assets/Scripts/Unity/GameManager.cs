@@ -525,14 +525,22 @@ namespace FungusToast.Unity
 
         public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)
         {
-            player.AddMycovariant(picked); // Or however you add it to the player
-            // Note: Effect resolution is handled by MycovariantEffectResolver in the UI layer
-            // to avoid duplicate effect application (the core ApplyEffect is not called here)
+            player.AddMycovariant(picked);
+            
+            // Apply the core effect for mycovariants with AutoMarkTriggered = true
+            // These are passive/instant effects that don't require UI selection
+            // Active mycovariants (AutoMarkTriggered = false) are handled by MycovariantEffectResolver
             var playerMyco = player.PlayerMycovariants.LastOrDefault(pm => pm.MycovariantId == picked.Id);
-            if (playerMyco != null)
+            if (playerMyco != null && picked.AutoMarkTriggered)
             {
-                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] Added {picked.Name} (Id={picked.Id}) for PlayerId={playerMyco.PlayerId}");
+                picked.ApplyEffect?.Invoke(playerMyco, Board, rng, null);
+                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] Applied core effect for AutoMarkTriggered mycovariant {picked.Name} (Id={picked.Id}) for PlayerId={playerMyco.PlayerId}");
             }
+            else if (playerMyco != null)
+            {
+                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] Skipping ApplyEffect for interactive mycovariant {picked.Name} (Id={picked.Id}) - will be handled by UI layer");
+            }
+            
             // Optionally update UI
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
         }
@@ -650,7 +658,7 @@ namespace FungusToast.Unity
         private void RunSilentDraftForAllPlayers()
         {
             // Create a custom draft function that excludes the testing mycovariant for AI players during silent drafts
-            Func<Player, List<Mycovariant>, Mycovariant>? customSelectionCallback = null;
+            Func<Player, List<Mycovariant>, Mycovariant> customSelectionCallback = null;
             
             if (testingModeEnabled && testingMycovariantId.HasValue)
             {
