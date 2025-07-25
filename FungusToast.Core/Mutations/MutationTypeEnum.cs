@@ -31,5 +31,6 @@ namespace FungusToast.Core
         FreeMutationUpgrade,
         ToxinExpirationResurrection,
         PutrefactiveRejuvenation,
+        ChitinFortification,
     }
 }

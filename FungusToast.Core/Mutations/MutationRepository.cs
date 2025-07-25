@@ -237,6 +237,28 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.TendrilNorthwest, 1),
             new MutationPrerequisite(MutationIds.TendrilSoutheast, 1));
 
+            MakeChild(new Mutation(
+                id: MutationIds.ChitinFortification,
+                name: "Chitin Fortification",
+                description: $"At the start of each Growth Phase (for {GameBalance.ChitinFortificationSurgeDuration} rounds after activation), " +
+                             $"{GameBalance.ChitinFortificationCellsPerLevel} random living fungal cells per level gain temporary resistance, " +
+                             $"making them immune to all death effects during the Decay Phase. " +
+                             $"Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points, " +
+                             $"increasing by {GameBalance.ChitinFortificationPointIncreasePerLevel} per level gained.",
+                flavorText: "Accelerated chitin synthesis reinforces cellular walls with crystalline matrices, forming impenetrable barriers against hostile incursions.",
+                type: MutationType.ChitinFortification,
+                effectPerLevel: GameBalance.ChitinFortificationCellsPerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
+                maxLevel: GameBalance.ChitinFortificationMaxLevel,
+                category: MutationCategory.MycelialSurges,
+                tier: MutationTier.Tier2,
+                isSurge: true,
+                surgeDuration: GameBalance.ChitinFortificationSurgeDuration,
+                pointsPerActivation: GameBalance.ChitinFortificationPointsPerActivation,
+                pointIncreasePerLevel: GameBalance.ChitinFortificationPointIncreasePerLevel
+            ),
+            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 5));
+
 
             // Tier-3
             MakeChild(new Mutation(

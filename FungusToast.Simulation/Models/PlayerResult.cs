@@ -124,5 +124,10 @@ namespace FungusToast.Simulation.Models
         /// Key: Preferred mycovariant ID, Value: Whether player got it (true/false).
         /// </summary>
         public Dictionary<int, bool> PreferredMycovariantResults { get; set; } = new();
+
+        // ──────────────
+        // SURGE MUTATION EFFECT COUNTERS
+        // ──────────────
+        public int ChitinFortificationCellsFortified { get; set; }
     }
 }

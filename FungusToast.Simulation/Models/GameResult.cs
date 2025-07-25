@@ -110,6 +110,9 @@ namespace FungusToast.Simulation.Models
                     HyphalVectoringInvalid = tracking.GetHyphalVectoringInvalid(player.PlayerId),
                     PutrefactiveRejuvenationCyclesReduced = tracking.GetPutrefactiveRejuvenationGrowthCyclesReduced(player.PlayerId),
 
+                    // --- Surge mutation effect counters ---
+                    ChitinFortificationCellsFortified = tracking.GetChitinFortificationCellsFortified(player.PlayerId),
+
                     // --- Mutation point income and spending ---
                     AdaptiveExpressionPointsEarned = tracking.GetAdaptiveExpressionPointsEarned(player.PlayerId),
                     MutatorPhenotypePointsEarned = tracking.GetMutatorPhenotypePointsEarned(player.PlayerId),

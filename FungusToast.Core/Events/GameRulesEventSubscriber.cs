@@ -88,6 +88,12 @@ namespace FungusToast.Core.Events
                 MutationEffectProcessor.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
             };
 
+            // Chitin Fortification (pre-growth phase surge effect)
+            board.PreGrowthPhase += () =>
+            {
+                MutationEffectProcessor.OnPreGrowthPhase_ChitinFortification(board, players, rng, observer);
+            };
+
             // Necrophytic Bloom (initial burst on activation)
             board.NecrophyticBloomActivatedEvent += () =>
             {

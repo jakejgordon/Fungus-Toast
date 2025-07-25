@@ -13,7 +13,8 @@ namespace FungusToast.Core.Events
         OutOfBounds,         // Target tile is off the board
         BlockedByMutation,   // Prevented by enemy mutation/mycovariant
         InvalidTarget,       // Some other game logic reason
-        Unknown
+        Unknown,
+        OccupiedByResistantCell
     }
 
 }

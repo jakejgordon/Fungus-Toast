@@ -17,6 +17,96 @@ The core codebase is split into a **Unity** front-end and a **headless simulatio
 
 ---
 
+## Mutation System Categories
+
+The mutation upgrade tree is organized into **five distinct categories**, each representing a different strategic approach to fungal dominance. Understanding these categories is crucial for strategic planning and balanced game design.
+
+### **Growth**
+- **Focus**: Territory expansion and colonization mechanics
+- **Core Mechanics**: 
+  - Increases base growth probability in cardinal directions (Mycelial Bloom)
+  - Enables diagonal growth through Tendril mutations (NW, NE, SE, SW)
+  - Provides growth multipliers and enhanced expansion capabilities
+  - Includes reclamation mechanics (Regenerative Hyphae)
+  - Features movement-based growth (Creeping Mold)
+- **Strategic Role**: Essential for board control and establishing territorial dominance
+- **Key Mutations**: Mycelial Bloom, Tendril variants, Mycotropic Induction, Regenerative Hyphae
+
+### **Cellular Resilience**
+- **Focus**: Survival, death resistance, and recovery from setbacks
+- **Core Mechanics**:
+  - Reduces death probability through various resistance mechanics
+  - Extends cellular lifespan and age thresholds
+  - Provides spore-on-death mechanics for posthumous expansion
+  - Enables reclamation of dead cells and resurrection abilities
+  - Includes infiltration of enemy dead cells
+- **Strategic Role**: Defensive foundation that ensures long-term colony stability
+- **Key Mutations**: Homeostatic Harmony, Chronoresilient Cytoplasm, Necrosporulation, Necrohyphal Infiltration
+
+### **Fungicide**
+- **Focus**: Toxin production, enemy elimination, and chemical warfare
+- **Core Mechanics**:
+  - Places toxin tiles that block enemy growth and movement
+  - Provides direct damage to adjacent enemy cells
+  - Creates area-of-effect death mechanics
+  - Extends toxin lifespan and enhances toxin effectiveness
+  - Includes spore-based toxin distribution across the board
+- **Strategic Role**: Aggressive approach focused on weakening and eliminating opponents
+- **Key Mutations**: Mycotoxin Tracer, Mycotoxin Potentiation, Putrefactive Mycotoxin, Sporocidal Bloom
+
+### **Genetic Drift**
+- **Focus**: Economy, randomization, and adaptive evolution
+- **Core Mechanics**:
+  - Provides bonus mutation points through various triggers
+  - Enables automatic random upgrades
+  - Includes catch-up mechanics for players falling behind
+  - Features toxin cleanup with economic benefits
+  - Contains powerful late-game population recovery mechanics
+- **Strategic Role**: Economic engine that accelerates progression and provides comeback potential
+- **Key Mutations**: Mutator Phenotype, Adaptive Expression, Anabolic Inversion, Necrophytic Bloom
+
+### **Mycelial Surges**
+- **Focus**: Temporary activated abilities with escalating costs
+- **Core Mechanics**:
+  - **Activation-Based**: Unlike other mutations, surges are manually activated for temporary effects
+  - **Duration Limited**: Each surge lasts for a specific number of rounds (typically 2-3)
+  - **Escalating Cost**: Each activation costs mutation points, with cost increasing per level gained
+  - **Cooldown Period**: Surges cannot be activated while already active
+  - **Powerful Effects**: Provide significant temporary advantages during critical moments
+- **Strategic Role**: Tactical abilities that can turn the tide of battle when timed correctly
+- **Key Mutations**: 
+  - **Hyphal Surge**: Temporary growth chance boost
+  - **Hyphal Vectoring**: Projects a line of cells toward the board center
+- **Unique Mechanics**:
+  - Base activation cost + (level × cost increase factor)
+  - Cannot upgrade while surge is active
+  - Provides burst potential for strategic timing
+
+### **Category Design Philosophy**
+
+#### **Balanced Investment**
+- High-tier mutations encourage **cross-category prerequisites** to prevent over-specialization
+- Players must invest in multiple categories to access the most powerful abilities
+- Each category provides both early-game foundation and late-game specialization options
+
+#### **Synergistic Interactions**
+- Categories are designed to complement each other rather than compete
+- Example: Growth + Fungicide = territorial expansion with defensive toxin barriers
+- Example: Cellular Resilience + Genetic Drift = survival with accelerated evolution
+
+#### **Tier Progression**
+- **Tier 1**: Single-category root mutations establish basic capabilities
+- **Tier 2-3**: Begin to require investment across categories
+- **Tier 4-5**: Heavily emphasize cross-category synergy and strategic depth
+
+### **Implementation References**
+- **Category Definitions**: `FungusToast.Core.Mutations.MutationCategory`
+- **Mutation Repository**: `FungusToast.Core.Mutations.MutationRepository`
+- **Surge Mechanics**: Defined through `isSurge`, `surgeDuration`, and activation cost properties
+- **Balance Configuration**: `FungusToast.Core.Config.GameBalance`
+
+---
+
 ## Game Flow and Phase Structure
 
 Fungus Toast operates on a **round-based system** with distinct phases that repeat until endgame conditions are met. Each round follows a predictable sequence designed to create strategic tension and meaningful choices.

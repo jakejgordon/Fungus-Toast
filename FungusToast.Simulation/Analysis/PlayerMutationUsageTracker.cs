@@ -192,6 +192,11 @@ namespace FungusToast.Simulation.Analysis
                     if (player.PutrefactiveRejuvenationCyclesReduced > 0)
                         effects["Cycles Reduced"] = player.PutrefactiveRejuvenationCyclesReduced;
                     break;
+
+                case MutationIds.ChitinFortification:
+                    if (player.ChitinFortificationCellsFortified > 0)
+                        effects["Cells Fortified"] = player.ChitinFortificationCellsFortified;
+                    break;
             }
 
             return effects;

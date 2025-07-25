@@ -64,6 +64,10 @@ namespace FungusToast.Core.Config
         public const float NecrotoxicConversionReclaimChancePerLevel = .035f;
         public const float CatabolicRebirthResurrectionChancePerLevel = 0.12f;
 
+        // Chitin Fortification (Tier 2 MycelialSurges)
+        public const int ChitinFortificationCellsPerLevel = 1; // X: cells fortified per level
+        public const int ChitinFortificationDurationRounds = 3; // Y: rounds of protection
+
         // Max Levels
         public const int MycelialBloomMaxLevel = 150;
         public const int HomeostaticHarmonyMaxLevel = 100;
@@ -88,18 +92,22 @@ namespace FungusToast.Core.Config
         public const int NecrohyphalInfiltrationMaxLevel = 5;
         public const int NecrotoxicConversionMaxLevel = 5;
         public const int CatabolicRebirthMaxLevel = 3;
+        public const int ChitinFortificationMaxLevel = 10;
 
         // surge mutation points per activiation
         public const int HyphalSurgePointsPerActivation = 7;
         public const int HyphalVectoringPointsPerActivation = 9;
+        public const int ChitinFortificationPointsPerActivation = 2;
 
         // surge mutation durations
         public const int HyphalSurgeDurationRounds = 2;
         public const int HyphalVectoringSurgeDuration = 5;
+        public const int ChitinFortificationSurgeDuration = 3;
 
         // surge mutation increase per level costs
         public const int HyphalSurgePointIncreasePerLevel = 1;
         public const int HyphalVectoringSurgePointIncreasePerLevel = 1;
+        public const int ChitinFortificationPointIncreasePerLevel = 1;
 
         // AI mechanics
         public const int DefaultSurgeAIAttemptTurnFrequency = 5;

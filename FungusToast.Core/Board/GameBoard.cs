@@ -672,7 +672,7 @@ namespace FungusToast.Core.Board
             // Check if target tile has a resistant cell - cannot grow into resistant cells
             if (targetTile.IsResistant)
             {
-                failureReason = GrowthFailureReason.TileOccupied;
+                failureReason = GrowthFailureReason.OccupiedByResistantCell;
                 return false;
             }
 

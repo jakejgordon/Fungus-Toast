@@ -29,5 +29,6 @@
         public const int HyphalVectoring = 24;
         public const int CatabolicRebirth = 25;
         public const int PutrefactiveRejuvenation = 26;
+        public const int ChitinFortification = 27;
     }
 }

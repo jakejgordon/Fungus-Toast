@@ -1232,6 +1232,57 @@ namespace FungusToast.Core.Phases
             }
         }
 
+        /// <summary>
+        /// Handles Chitin Fortification: At the start of each Growth Phase while the surge is active,
+        /// randomly select X living cells per level to make resistant for the duration of the surge.
+        /// </summary>
+        public static void OnPreGrowthPhase_ChitinFortification(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            foreach (var player in players)
+            {
+                int level = player.GetMutationLevel(MutationIds.ChitinFortification);
+                if (level <= 0 || !player.IsSurgeActive(MutationIds.ChitinFortification))
+                    continue;
+
+                // Get all living cells owned by this player
+                var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
+                    .Where(cell => cell.IsAlive && !cell.IsResistant) // Don't double-fortify already resistant cells
+                    .ToList();
+
+                if (livingCells.Count == 0)
+                    continue;
+
+                // Calculate how many cells to fortify based on level
+                int cellsToFortify = level * GameBalance.ChitinFortificationCellsPerLevel;
+                cellsToFortify = Math.Min(cellsToFortify, livingCells.Count); // Don't exceed available cells
+
+                // Randomly select cells to make resistant
+                var cellsToFortifyList = new List<FungalCell>();
+                for (int i = 0; i < cellsToFortify; i++)
+                {
+                    int randomIndex = rng.Next(livingCells.Count);
+                    cellsToFortifyList.Add(livingCells[randomIndex]);
+                    livingCells.RemoveAt(randomIndex); // Ensure no duplicates
+                }
+
+                // Make selected cells resistant
+                foreach (var cell in cellsToFortifyList)
+                {
+                    cell.MakeResistant();
+                }
+
+                // Track the effect for simulation
+                if (cellsToFortify > 0)
+                {
+                    observer?.RecordChitinFortificationCellsFortified(player.PlayerId, cellsToFortify);
+                }
+            }
+        }
+
     }
 
 

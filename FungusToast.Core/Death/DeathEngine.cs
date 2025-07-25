@@ -89,11 +89,11 @@ namespace FungusToast.Core.Death
                 p => p.PlayerId,
                 p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive));
 
-            List<BoardTile> livingTiles = board.AllTiles()
-                .Where(t => t.FungalCell is { IsAlive: true })
+            List<BoardTile> livingNonResistantTiles = board.AllTiles()
+                .Where(t => t.FungalCell is { IsAlive: true, IsResistant: false })
                 .ToList();
 
-            foreach (BoardTile tile in livingTiles)
+            foreach (BoardTile tile in livingNonResistantTiles)
             {
                 FungalCell cell = tile.FungalCell!;
                 Player owner = players.First(p => p.PlayerId == cell.OwnerPlayerId);
