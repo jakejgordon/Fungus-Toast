@@ -60,7 +60,6 @@ namespace FungusToast.Unity.UI.GameStart
             testingModePanel.SetActive(false);
             
             // Initialize fast-forward input
-            fastForwardRoundsInput.text = MycovariantGameBalance.MycovariantSelectionTriggerRounds[0].ToString(); // Default to first draft round
             fastForwardRoundsInput.contentType = TMP_InputField.ContentType.IntegerNumber;
         }
 
