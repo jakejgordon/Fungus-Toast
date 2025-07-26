@@ -241,8 +241,8 @@ namespace FungusToast.Core.Mutations
                 id: MutationIds.ChitinFortification,
                 name: "Chitin Fortification",
                 description: $"At the start of each Growth Phase (for {GameBalance.ChitinFortificationSurgeDuration} rounds after activation), " +
-                             $"{GameBalance.ChitinFortificationCellsPerLevel} random living fungal cells per level gain temporary resistance, " +
-                             $"making them immune to all death effects during the Decay Phase. " +
+                             $"{GameBalance.ChitinFortificationCellsPerLevel} random living fungal cells per level gain permanent resistance, " +
+                             $"making them immune to all death effects. " +
                              $"Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points, " +
                              $"increasing by {GameBalance.ChitinFortificationPointIncreasePerLevel} per level gained.",
                 flavorText: "Accelerated chitin synthesis reinforces cellular walls with crystalline matrices, forming impenetrable barriers against hostile incursions.",
