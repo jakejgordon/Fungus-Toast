@@ -32,5 +32,6 @@ namespace FungusToast.Core
         ToxinExpirationResurrection,
         PutrefactiveRejuvenation,
         ChitinFortification,
+        PutrefactiveCascade,
     }
 }

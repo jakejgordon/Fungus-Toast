@@ -285,7 +285,7 @@ namespace FungusToast.Core.Mutations
                 maxLevel: GameBalance.PutrefactiveMycotoxinMaxLevel,
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier3
-            ), new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 3));
+            ), new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1));
 
             MakeChild(new Mutation(
                 id: MutationIds.AnabolicInversion,
@@ -371,8 +371,8 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier4
             ),
-            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 3),
-            new MutationPrerequisite(MutationIds.MycelialBloom, 8)
+            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 2),
+            new MutationPrerequisite(MutationIds.MycelialBloom, 7)
             );
 
 
@@ -428,8 +428,8 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier5
             ),
-            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 5),
-            new MutationPrerequisite(MutationIds.RegenerativeHyphae, 1)
+            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 3),
+            new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 3)
 );
 
             MakeChild(new Mutation(
@@ -451,6 +451,24 @@ namespace FungusToast.Core.Mutations
 
 
             // Tier-6
+            MakeChild(new Mutation(
+                id: MutationIds.PutrefactiveCascade,
+                name: "Putrefactive Cascade",
+                description: $"Each level increases the effectiveness of Putrefactive Mycotoxin by {FormatPercent(GameBalance.PutrefactiveCascadeEffectivenessBonus)} " +
+                             $"and grants a {FormatPercent(GameBalance.PutrefactiveCascadeCascadeChance)} chance for each putrefactive kill to cascade " +
+                             $"to the next enemy living cell in the same orthogonal direction. Cascades can chain indefinitely until they fail or run out of targets.\n\n" +
+                             $"<b>Max Level Bonus:</b> Cascaded kills leave toxin tiles instead of dead cells, creating a trail of contamination.",
+                flavorText: "Advanced mycotoxin synthesis enables directional propagation through cellular membranes, creating cascading waves of putrefaction that surge through enemy ranks like dominoes of death.",
+                type: MutationType.PutrefactiveCascade,
+                effectPerLevel: GameBalance.PutrefactiveCascadeCascadeChance,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier6),
+                maxLevel: GameBalance.PutrefactiveCascadeMaxLevel,
+                category: MutationCategory.Fungicide,
+                tier: MutationTier.Tier6
+            ),
+            new MutationPrerequisite(MutationIds.PutrefactiveRejuvenation, 1),
+            new MutationPrerequisite(MutationIds.HyphalVectoring, 1));
+
             MakeChild(new Mutation(
                 id: MutationIds.HyperadaptiveDrift,
                 name: "Hyperadaptive Drift",

@@ -380,7 +380,7 @@ All state mutations are now event-driven to support analytics, replay, and flexi
 
 ---
 
-## Running Simulations with Cursor
+## Running Simulations
 
 Fungus Toast supports automated simulation runs for AI testing, balance, and analytics. To streamline this process, a PowerShell script (`run_simulation.ps1`) is provided in the repository root. This script ensures reliable, repeatable simulation runs and seamless integration with Cursor for automated result analysis.
 
@@ -404,7 +404,7 @@ Fungus Toast supports automated simulation runs for AI testing, balance, and ana
  ```   - This message is a reliable signal for Cursor (or any automation) to begin reading and analyzing the output file.
 
 5. **How to Run a Simulation:**
-   - From the repository root, run: ```powershell
+   - From the FungusToast.Simulation root, run: ```powershell
  .\run_simulation.ps1 --games 3 --players 8
  ```   - You may pass any parameters accepted by `Program.cs` (e.g., `--games`, `--players`, `--output`).
    - The script will print the output filename for reference.
@@ -416,7 +416,8 @@ Fungus Toast supports automated simulation runs for AI testing, balance, and ana
    - This ensures results are never read prematurely and always correspond to the most recent simulation run.
 
 ### Example Usage
-.\run_simulation.ps1 --games 5 --players 4- This will build, launch, and wait for a 5-game, 4-player simulation, writing results to a uniquely named output file.
+.\run_simulation.ps1 --games 5 --players 4 
+- This will build, launch, and wait for a 5-game, 4-player simulation, writing results to a uniquely named output file.
 
 ### Best Practices
 - Always use the script to ensure builds are current and output files are unique.

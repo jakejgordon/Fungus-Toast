@@ -23,11 +23,13 @@ namespace FungusToast.Simulation.GameSimulation
             SimulationTrackingContext context,
             int gameIndex = -1,
             int totalGames = -1,
-            DateTime? startTime = null
+            DateTime? startTime = null,
+            int boardWidth = GameBalance.BoardWidth,
+            int boardHeight = GameBalance.BoardHeight
         )
         {
             var rng = new Random(seed);
-            var (players, board) = InitializeGame(strategies, rng, context);
+            var (players, board) = InitializeGame(strategies, rng, context, boardWidth, boardHeight);
             var allMutations = MutationRegistry.GetAll().ToList();
             var allMycovariants = MycovariantRepository.All;
             var mycovariantPoolManager = new MycovariantPoolManager();
@@ -116,7 +118,7 @@ namespace FungusToast.Simulation.GameSimulation
 
 
 
-        private (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng, ISimulationObserver observer)
+        private (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng, ISimulationObserver observer, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight)
         {
             int playerCount = strategies.Count;
             var players = new List<Player>();
@@ -133,7 +135,7 @@ namespace FungusToast.Simulation.GameSimulation
                 players.Add(player);
             }
 
-            var board = new GameBoard(GameBalance.BoardWidth, GameBalance.BoardHeight, playerCount);
+            var board = new GameBoard(boardWidth, boardHeight, playerCount);
 
             GameRulesEventSubscriber.SubscribeAll(board, players, rng, observer);
             AnalyticsEventSubscriber.Subscribe(board, observer);

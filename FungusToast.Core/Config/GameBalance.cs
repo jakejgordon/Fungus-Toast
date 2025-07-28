@@ -8,7 +8,7 @@ namespace FungusToast.Core.Config
         public const int MaxNumberOfRoundsBeforeGameEndTrigger = 75;
         public const float BaseGrowthChance = 0.015f;
         public const float BaseDeathChance = .032f; 
-        public const float AgeDeathFactorPerGrowthCycle = 0.01f;
+        public const float AgeDeathFactorPerGrowthCycle = 0.008f;
         public const int StartingMutationPoints = 5;
         public const float GameEndTileOccupancyThreshold = 0.90f;
         public const int TurnsAfterEndGameTileOccupancyThresholdMet = 3;
@@ -32,7 +32,7 @@ namespace FungusToast.Core.Config
 
         public const float NecrosporulationEffectPerLevel = 0.04f;
         public const int MycotoxinPotentiationGrowthCycleExtensionPerLevel = 1;
-        public const float MycotoxinPotentiationKillChancePerLevel = 0.012f;
+        public const float MycotoxinPotentiationKillChancePerLevel = 0.014f;
         public const float AdaptiveExpressionEffectPerLevel = 0.15f;
         public const float AdaptiveExpressionSecondPointChancePerLevel = 0.10f; // Chance per level for second point if first is awarded
         public const float MycotoxinCatabolismCleanupChancePerLevel = 0.025f;
@@ -64,6 +64,10 @@ namespace FungusToast.Core.Config
         public const float NecrotoxicConversionReclaimChancePerLevel = .035f;
         public const float CatabolicRebirthResurrectionChancePerLevel = 0.12f;
 
+        // Putrefactive Cascade (Tier 6 Fungicide)
+        public const float PutrefactiveCascadeEffectivenessBonus = 0.003f; // X% per level boost to Putrefactive Mycotoxin
+        public const float PutrefactiveCascadeCascadeChance = 0.15f; // Y% per level chance for cascade
+
         // Chitin Fortification (Tier 2 MycelialSurges)
         public const int ChitinFortificationCellsPerLevel = 1; // X: cells fortified per level
         public const int ChitinFortificationDurationRounds = 3; // Y: rounds of protection
@@ -93,6 +97,7 @@ namespace FungusToast.Core.Config
         public const int NecrotoxicConversionMaxLevel = 5;
         public const int CatabolicRebirthMaxLevel = 3;
         public const int ChitinFortificationMaxLevel = 10;
+        public const int PutrefactiveCascadeMaxLevel = 5;
 
         // surge mutation points per activiation
         public const int HyphalSurgePointsPerActivation = 7;
@@ -117,8 +122,8 @@ namespace FungusToast.Core.Config
         public const float TimeBetweenGrowthCycles = 1f;
 
         // Board dimensions
-        public const int BoardWidth = 100;
-        public const int BoardHeight = 100;
+        public const int BoardWidth = 160;
+        public const int BoardHeight = 160;
 
 
         // time-based effects on Fungal Cells

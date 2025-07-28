@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.AI;
+using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Simulation.GameSimulation;
 using FungusToast.Simulation.Models;
@@ -20,7 +21,9 @@ namespace FungusToast.Simulation.Analysis
             IMutationSpendingStrategy strategyA,
             IMutationSpendingStrategy strategyB,
             int gamesToPlay,
-            int playersPerGame = 4)
+            int playersPerGame = 4,
+            int boardWidth = GameBalance.BoardWidth,
+            int boardHeight = GameBalance.BoardHeight)
         {
             if (playersPerGame % 2 != 0)
                 throw new ArgumentException("playersPerGame must be even for fair A vs B matchup");
@@ -51,7 +54,9 @@ namespace FungusToast.Simulation.Analysis
                     gameIndex: i + 1,
                     totalGames: gamesToPlay,
                     startTime: startTime,
-                    context: context
+                    context: context,
+                    boardWidth: boardWidth,
+                    boardHeight: boardHeight
                 );
 
                 results.Add(result);
@@ -64,7 +69,7 @@ namespace FungusToast.Simulation.Analysis
         /// Run games using a fixed list of strategies per match.
         /// Useful for 1–8 player simulation loops.
         /// </summary>
-        public SimulationBatchResult RunMatchups(List<IMutationSpendingStrategy> strategies, int gamesToPlay)
+        public SimulationBatchResult RunMatchups(List<IMutationSpendingStrategy> strategies, int gamesToPlay, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight)
         {
             var results = new List<GameResult>();
             var startTime = DateTime.UtcNow;
@@ -95,7 +100,9 @@ namespace FungusToast.Simulation.Analysis
                     gameIndex: i + 1,
                     totalGames: gamesToPlay,
                     startTime: startTime,
-                    context: context
+                    context: context,
+                    boardWidth: boardWidth,
+                    boardHeight: boardHeight
                 );
 
                 results.Add(result);

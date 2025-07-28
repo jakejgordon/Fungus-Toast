@@ -20,12 +20,14 @@ namespace FungusToast.Core.Phases
     /// </summary>
     public static class MutationEffectProcessor
     {
-        public static (float chance, DeathReason? reason, int? killerPlayerId) CalculateDeathChance(
+        public static DeathCalculationResult CalculateDeathChance(
             Player owner,
             FungalCell cell,
             GameBoard board,
             List<Player> allPlayers,
-            double roll)
+            double roll,
+            Random rng,
+            ISimulationObserver? observer = null)
         {
             float harmonyReduction = owner.GetMutationEffect(MutationType.DefenseSurvival);
             float ageDelay = owner.GetMutationEffect(MutationType.SelfAgeResetThreshold);
@@ -45,18 +47,21 @@ namespace FungusToast.Core.Phases
             if (roll < totalFallbackChance)
             {
                 if (roll < thresholdRandom)
-                    return (totalFallbackChance, DeathReason.Randomness, null);
-                return (totalFallbackChance, DeathReason.Age, null);
+                {
+                    return DeathCalculationResult.Death(totalFallbackChance, DeathReason.Randomness);
+
+                }
+
+                return DeathCalculationResult.Death(totalFallbackChance, DeathReason.Age);
             }
 
             // PutrefactiveMycotoxin example — this needs to determine the killer
-            if (CheckPutrefactiveMycotoxin(cell, board, allPlayers, roll, out float pmChance, out int? killerPlayerId) &&
-                roll < pmChance)
+            if (CheckPutrefactiveMycotoxin(cell, board, allPlayers, roll, out float pmChance, out int? killerPlayerId, out int? attackerTileId, rng, observer))
             {
-                return (pmChance, DeathReason.PutrefactiveMycotoxin, killerPlayerId);
+                return DeathCalculationResult.Death(pmChance, DeathReason.PutrefactiveMycotoxin, killerPlayerId, attackerTileId);
             }
 
-            return (totalFallbackChance, null, null);
+            return DeathCalculationResult.NoDeath(totalFallbackChance);
         }
 
 
@@ -237,6 +242,9 @@ namespace FungusToast.Core.Phases
         /// <param name="roll">The random roll for probabilistic death.</param>
         /// <param name="chance">[out] The total death chance from all adjacent enemies.</param>
         /// <param name="killerPlayerId">[out] The player responsible for the kill, if any.</param>
+        /// <param name="attackerTileId">[out] The tile ID of the attacking cell, if any.</param>
+        /// <param name="rng">Random number generator for cascade logic.</param>
+        /// <param name="observer">Optional simulation observer for tracking cascade effects.</param>
         /// <returns>True if at least one adjacent enemy applies Putrefactive Mycotoxin; false otherwise.</returns>
         private static bool CheckPutrefactiveMycotoxin(
             FungalCell target,
@@ -244,13 +252,17 @@ namespace FungusToast.Core.Phases
             List<Player> players,
             double roll,
             out float chance,
-            out int? killerPlayerId)
+            out int? killerPlayerId,
+            out int? attackerTileId,
+            Random rng,
+            ISimulationObserver? observer = null)
         {
             chance = 0f;
             killerPlayerId = null;
+            attackerTileId = null;
 
-            // Build list of (playerId, effect) pairs for each orthogonally adjacent enemy with effect > 0
-            var effects = new List<(int playerId, float effect)>();
+            // Build list of (playerId, effect, tileId) tuples for each orthogonally adjacent enemy with effect > 0
+            var effects = new List<(int playerId, float effect, int tileId)>();
 
             foreach (var neighborTile in board.GetOrthogonalNeighbors(target.TileId))
             {
@@ -261,11 +273,17 @@ namespace FungusToast.Core.Phases
                 Player? enemy = players.FirstOrDefault(p => p.PlayerId == neighbor.OwnerPlayerId);
                 if (enemy == null) continue;
 
-                float effect = enemy.GetMutationEffect(MutationType.AdjacentFungicide);
-                if (effect > 0f)
+                float baseEffect = enemy.GetMutationEffect(MutationType.AdjacentFungicide);
+                
+                // Apply Putrefactive Cascade effectiveness bonus
+                int cascadeLevel = enemy.GetMutationLevel(MutationIds.PutrefactiveCascade);
+                float cascadeBonus = cascadeLevel * GameBalance.PutrefactiveCascadeEffectivenessBonus;
+                float totalEffect = baseEffect + cascadeBonus;
+
+                if (totalEffect > 0f)
                 {
-                    effects.Add((enemy.PlayerId, effect));
-                    chance += effect;
+                    effects.Add((enemy.PlayerId, totalEffect, neighborTile.TileId));
+                    chance += totalEffect;
                 }
             }
 
@@ -275,7 +293,7 @@ namespace FungusToast.Core.Phases
             // Proportional interval assignment for fairness:
             // Each player's effect contributes to a "slice" of the total chance.
             float runningTotal = 0f;
-            foreach (var (playerId, effect) in effects)
+            foreach (var (playerId, effect, tileId) in effects)
             {
                 float start = runningTotal;
                 float end = runningTotal + effect;
@@ -284,6 +302,7 @@ namespace FungusToast.Core.Phases
                 if (roll < end)
                 {
                     killerPlayerId = playerId;
+                    attackerTileId = tileId;
                     break;
                 }
                 runningTotal = end;
@@ -783,10 +802,12 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver? observer = null)
         {
-            // Only applies to toxin-based deaths
+            // Only applies to toxin-based deaths (including cascade deaths)
             if (eventArgs.Reason != DeathReason.PutrefactiveMycotoxin &&
                 eventArgs.Reason != DeathReason.SporocidalBloom &&
-                eventArgs.Reason != DeathReason.MycotoxinPotentiation)
+                eventArgs.Reason != DeathReason.MycotoxinPotentiation &&
+                eventArgs.Reason != DeathReason.PutrefactiveCascade &&
+                eventArgs.Reason != DeathReason.PutrefactiveCascadePoison)
                 return;
 
             // Must know the killer (the player whose toxin killed this cell)
@@ -1283,6 +1304,118 @@ namespace FungusToast.Core.Phases
             }
         }
 
+        /// <summary>
+        /// Handles Putrefactive Cascade: when a cell is killed by Putrefactive Mycotoxin, attempt to cascade in the same direction.
+        /// </summary>
+        public static void OnCellDeath_PutrefactiveCascade(
+            FungalCellDiedEventArgs eventArgs,
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            // Only applies to Putrefactive Mycotoxin deaths
+            if (eventArgs.Reason != DeathReason.PutrefactiveMycotoxin)
+                return;
+
+            // Must have a killer player
+            if (!eventArgs.KillerPlayerId.HasValue)
+                return;
+
+            var killer = players.FirstOrDefault(p => p.PlayerId == eventArgs.KillerPlayerId.Value);
+            if (killer == null)
+                return;
+
+            // Must have Putrefactive Cascade mutation
+            int cascadeLevel = killer.GetMutationLevel(MutationIds.PutrefactiveCascade);
+            if (cascadeLevel <= 0)
+                return;
+
+            // Must have attacker tile information for direction calculation
+            if (!eventArgs.AttackerTileId.HasValue)
+                return;
+
+            var attackerTile = board.GetTileById(eventArgs.AttackerTileId.Value);
+            if (attackerTile == null)
+                return;
+
+            // Now execute the cascade with the direct attacker tile info
+            TryPutrefactiveCascade(killer, eventArgs.Cell, attackerTile, board, players, rng, observer);
+        }
+
+        /// <summary>
+        /// Attempts to trigger a Putrefactive Cascade from the killed cell in the same direction as the attack.
+        /// </summary>
+        private static void TryPutrefactiveCascade(
+            Player killer,
+            FungalCell killedCell,
+            BoardTile attackerTile,
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            int cascadeLevel = killer.GetMutationLevel(MutationIds.PutrefactiveCascade);
+            if (cascadeLevel <= 0) return;
+
+            float cascadeChance = cascadeLevel * GameBalance.PutrefactiveCascadeCascadeChance;
+            bool isMaxLevel = cascadeLevel >= GameBalance.PutrefactiveCascadeMaxLevel;
+
+            // Determine cascade direction (from attacker to killed cell)
+            var killedTile = board.GetTileById(killedCell.TileId);
+            if (killedTile == null) return;
+
+            int dx = killedTile.X - attackerTile.X;
+            int dy = killedTile.Y - attackerTile.Y;
+
+            // Start cascading from the killed cell position
+            int cascadeKills = 0;
+            int cascadeToxified = 0;
+            var currentTile = killedTile;
+
+            while (rng.NextDouble() < cascadeChance)
+            {
+                // Move to next tile in the same direction
+                int nextX = currentTile.X + dx;
+                int nextY = currentTile.Y + dy;
+                var nextTile = board.GetTile(nextX, nextY);
+                
+                if (nextTile == null) break; // Hit board edge
+
+                var nextCell = nextTile.FungalCell;
+                if (nextCell == null) break; // Empty tile, cascade stops
+                if (!nextCell.IsAlive) break; // Dead or toxin cell, cascade stops
+                if (nextCell.OwnerPlayerId == killer.PlayerId) break; // Own cell, cascade stops
+
+                // Kill the next cell in the cascade
+                if (isMaxLevel)
+                {
+                    // At max level: convert to toxin (poison effect)
+                    int toxinLifespan = ToxinHelper.GetToxinExpirationAge(killer, GameBalance.DefaultToxinDuration);
+                    ToxinHelper.KillAndToxify(board, nextTile.TileId, toxinLifespan, DeathReason.PutrefactiveCascadePoison, killer);
+                    cascadeToxified++;
+                }
+                else
+                {
+                    // Below max level: just kill
+                    board.KillFungalCell(nextCell, DeathReason.PutrefactiveCascade, killer.PlayerId);
+                }
+                
+                cascadeKills++;
+                currentTile = nextTile;
+            }
+
+            // Record cascade effects
+            if (observer != null)
+            {
+                if (cascadeKills > 0)
+                    // NOTE: AI hint - Player objects have PlayerId property directly - use player.PlayerId, never player.Player.Id
+                    observer.RecordPutrefactiveCascadeKills(killer.PlayerId, cascadeKills);
+                if (cascadeToxified > 0)
+                    // NOTE: AI hint - Player objects have PlayerId property directly - use player.PlayerId, never player.Player.Id
+                    observer.RecordPutrefactiveCascadeToxified(killer.PlayerId, cascadeToxified);
+            }
+        }
     }
 
 

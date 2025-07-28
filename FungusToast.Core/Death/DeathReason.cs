@@ -11,7 +11,9 @@
         HyphalVectoring,
         JettingMycelium,
         Infested,
-        Poisoned
+        Poisoned,
+        PutrefactiveCascade,
+        PutrefactiveCascadePoison
     }
 
 }

@@ -2975,17 +2975,20 @@ MonoBehaviour:
   lastOwnerText: {fileID: 0}
   growthAgeText: {fileID: 0}
   expirationText: {fileID: 0}
+  resistantText: {fileID: 0}
   additionalInfoText: {fileID: 0}
   statusIcon: {fileID: 0}
   ownerIcon: {fileID: 0}
   lastOwnerIcon: {fileID: 0}
   toxinIcon: {fileID: 0}
+  resistantIcon: {fileID: 0}
   statusGroup: {fileID: 0}
   ownerGroup: {fileID: 0}
   deathReasonGroup: {fileID: 0}
   lastOwnerGroup: {fileID: 0}
   ageGroup: {fileID: 0}
   expirationGroup: {fileID: 0}
+  resistantGroup: {fileID: 0}
   additionalInfoGroup: {fileID: 0}
 --- !u!1 &356102964
 GameObject:
@@ -105301,8 +105304,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43aedea2ff546334abfa4d7043c2e355, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boardWidth: 100
-  boardHeight: 100
+  boardWidth: 120
+  boardHeight: 120
   playerCount: 1
   testingModeEnabled: 0
   testingModeForceHumanFirst: 1

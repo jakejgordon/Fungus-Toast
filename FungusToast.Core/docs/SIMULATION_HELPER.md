@@ -11,19 +11,31 @@ This document contains the most effective commands for running different simulat
 
 ## Output File Location
 
-Simulation output files are automatically created in:FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\The full path is displayed in the console after each simulation run, making it easy for AI assistants to locate and read the results.
+Simulation output files are automatically created in:
+```
+FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\
+```
+The full path is displayed in the console after each simulation run, making it easy for AI assistants to locate and read the results.
 
 ## Running Simulations
 
 ### Using the PowerShell Script (Recommended)
-The PowerShell script automatically builds projects and launches simulations in new windows:# From FungusToast.Simulation directory:
+The PowerShell script automatically builds projects and launches simulations in new windows:
+```powershell
+# From FungusToast.Simulation directory:
 cd FungusToast.Simulation
 .\run_simulation.ps1 --games 100 --players 8
 
 # Or from any directory using full path:
 .\FungusToast.Simulation\run_simulation.ps1 --games 100 --players 8
-### Direct dotnet run (Alternative)cd FungusToast.Simulation
+```
+
+### Direct dotnet run (Alternative)
+```powershell
+cd FungusToast.Simulation
 dotnet run -- --games 100 --players 8
+```
+
 ## Manual Execution (When Automated Tools Fail)
 
 > **When to Use:** If automated execution via GitHub Copilot tools is hanging or failing, use this manual approach.
@@ -34,18 +46,30 @@ dotnet run -- --games 100 --players 8
    - Go to `View → Terminal` or press `Ctrl+`` (backtick)
    - Ensure you're using PowerShell (not Command Prompt)
 
-2. **Navigate to Simulation Directory:**cd FungusToast.Simulation
-3. **Run Using Simple Script:**.\run_simulation_simple.ps1 -Games 1 -Players 8   
+2. **Navigate to Simulation Directory:**
+   ```powershell
+   cd FungusToast.Simulation
+   ```
+
+3. **Run Using Simple Script:**
+   ```powershell
+   .\run_simulation_simple.ps1 -Games 1 -Players 8
+   ```
+   
    **Alternative scripts available:**
    - `.\run_simulation_simple.ps1` - User-friendly with clear feedback
    - `.\run_simulation.ps1` - Original script (manual mode)
 
-4. **Direct dotnet run (if scripts fail):**# Build projects first
-dotnet build "../FungusToast.Core/FungusToast.Core.csproj"
-dotnet build "FungusToast.Simulation.csproj"
+4. **Direct dotnet run (if scripts fail):**
+   ```powershell
+   # Build projects first
+   dotnet build "../FungusToast.Core/FungusToast.Core.csproj"
+   dotnet build "FungusToast.Simulation.csproj"
 
-# Run simulation
-dotnet run -- --games 1 --players 8
+   # Run simulation
+   dotnet run -- --games 1 --players 8
+   ```
+
 ### For AI Assistants:
 
 When automated terminal execution fails:
@@ -57,40 +81,129 @@ When automated terminal execution fails:
 
 ### Common Manual Execution Issues:
 
-- **PowerShell Execution Policy:** If scripts won't run, try:Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser- **Build Errors:** Ensure both Core and Simulation projects build successfully before running
+- **PowerShell Execution Policy:** If scripts won't run, try:
+  ```powershell
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+  ```
+- **Build Errors:** Ensure both Core and Simulation projects build successfully before running
 - **Path Issues:** Always run from the `FungusToast.Simulation` directory
 
 ## Simulation Scenarios
 
-### Quick Testing (1 game).\run_simulation.ps1 --games 1 --players 2
-### Mutation Testing (focus on specific mutations).\run_simulation.ps1 --games 10 --players 2
-### Balance Testing (longer games).\run_simulation.ps1 --games 50 --players 4
-### Stress Testing (many games).\run_simulation.ps1 --games 100 --players 2
-### AI Strategy Testing.\run_simulation.ps1 --games 20 --players 3
-### Test Specific Features# Test Neutralizing Mantle
-.\run_simulation.ps1 --test-neutralizing
+### Quick Testing (1 game)
+```powershell
+.\run_simulation.ps1 --games 1 --players 2
+```
 
-# Test Resistant cell system
-.\run_simulation.ps1 --test-resistant
+### Mutation Testing (focus on specific mutations)
+```powershell
+.\run_simulation.ps1 --games 10 --players 2
+```
 
-# Test Mycelial Bastion
-.\run_simulation.ps1 --test-bastion
+### Balance Testing (longer games)
+```powershell
+.\run_simulation.ps1 --games 50 --players 4
+```
+
+### Stress Testing (many games)
+```powershell
+.\run_simulation.ps1 --games 100 --players 2
+```
+
+### AI Strategy Testing
+```powershell
+.\run_simulation.ps1 --games 20 --players 3
+```
+
+### Board Size Testing
+```powershell
+# Test with smaller board
+.\run_simulation.ps1 --games 10 --players 4 --width 50 --height 50
+
+# Test with larger board
+.\run_simulation.ps1 --games 10 --players 8 --width 150 --height 120
+
+# Test with rectangular board
+.\run_simulation.ps1 --games 5 --players 6 --width 200 --height 75
+```
+
 ## Debugging Commands
 
-### Check for Build Errorscd FungusToast.Core; dotnet build --verbosity normal
+### Check for Build Errors
+```powershell
+cd FungusToast.Core; dotnet build --verbosity normal
 cd FungusToast.Simulation; dotnet build --verbosity normal
-### Run with Output Redirection.\run_simulation.ps1 --games 1 --players 2 --output test_results.txt
-### Check Simulation Output Filesls bin\Debug\net8.0\SimulationOutput\
+```
+
+### Run with Output Redirection
+```powershell
+.\run_simulation.ps1 --games 1 --players 2 --output test_results.txt
+```
+
+### Check Simulation Output Files
+```powershell
+ls bin\Debug\net8.0\SimulationOutput\
+```
+
 ### AI/Cursor File Access
 After each simulation, the output file path is displayed in **two places**:
 
-1. **PowerShell script output** (main console):Output will be written to: bin\Debug\net8.0\SimulationOutput\sim_output_2025-07-04T13-07-22.txt
-2. **Simulation output** (in the simulation window):Simulation output redirected to: C:\Users\cogord\GitHub Repos\Fungus-Toast\FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\sim_output_2025-07-04T13-07-22.txt
+1. **PowerShell script output** (main console):
+   ```
+   Output will be written to: bin\Debug\net8.0\SimulationOutput\sim_output_2025-07-04T13-07-22.txt
+   ```
+
+2. **Simulation output** (in the simulation window):
+   ```
+   Simulation output redirected to: C:\Users\cogord\GitHub Repos\Fungus-Toast\FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\sim_output_2025-07-04T13-07-22.txt
+   ```
+
 **AI/Cursor can:**
 - **Use the PowerShell path** - Copy the relative path from the main console
 - **Use the simulation path** - Copy the absolute path from the simulation window  
-- **Find latest file** - If exact path isn't available:Get-ChildItem "bin\Debug\net8.0\SimulationOutput\*.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+- **Find latest file** - If exact path isn't available:
+  ```powershell
+  Get-ChildItem "bin\Debug\net8.0\SimulationOutput\*.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+  ```
+
 **Note**: The output files are always created in `bin\Debug\net8.0\SimulationOutput\` with timestamps in the filename.
+
+## Command Line Options
+
+The simulation supports the following command-line parameters:
+
+| Parameter | Short | Description | Default |
+|-----------|-------|-------------|---------|
+| `--games` | `-g` | Number of games to play per matchup | 100 |
+| `--players` | `-p` | Number of players/strategies to use | 8 |
+| `--width` | `-w` | Board width (number of tiles) | 100 |
+| `--height` | | Board height (number of tiles) | 100 |
+| `--output` | `-o` | Redirect output to a file | (console) |
+| `--help` | | Show help message | |
+
+### Examples:
+```powershell
+# Run with defaults (8 players, 100 games each, 100x100 board)
+dotnet run
+
+# Run 10 games per matchup
+dotnet run --games 10
+
+# Run 4 players, 20 games each
+dotnet run --players 4 --games 20
+
+# Run 6 players, 15 games each (short form)
+dotnet run -p 6 -g 15
+
+# Run with custom board dimensions
+dotnet run --width 50 --height 75
+
+# Run 4 players on 200x100 board
+dotnet run -w 200 -p 4
+
+# Combine multiple options
+dotnet run --width 150 --height 120 --players 6 --games 25 --output large_board_test.txt
+```
 
 ## Common Issues & Solutions
 
@@ -146,7 +259,9 @@ When adding new mutation effects:
 
 ## Useful Patterns
 
-### Adding New Mutation Effect// 1. Event args
+### Adding New Mutation Effect
+```csharp
+// 1. Event args
 public class NewEffectEventArgs : EventArgs
 {
     public int PlayerId { get; }
@@ -177,6 +292,8 @@ case MutationIds.NewMutation:
     if (player.NewEffectCount > 0)
         effects["Effect Name"] = player.NewEffectCount;
     break;
+```
+
 ## Notes for AI Assistant
 
 - **Script Location**: The `run_simulation.ps1` script is in `FungusToast.Simulation` directory
@@ -186,4 +303,5 @@ case MutationIds.NewMutation:
 - **Manual Fallback**: When automated execution fails, guide users to manual execution steps
 - **Output files**: After simulation, read the full path displayed in console output
 - **File location**: All output files are in `bin\Debug\net8.0\SimulationOutput\`
-- **Latest file**: Use `Get-ChildItem` with `Sort-Object LastWriteTime -Descending` to find most recent output- **Latest file**: Use `Get-ChildItem` with `Sort-Object LastWriteTime -Descending` to find most recent output
+- **Latest file**: Use `Get-ChildItem` with `Sort-Object LastWriteTime -Descending` to find most recent output
+- **Board dimensions**: Support for custom `--width` and `--height` parameters for testing different board sizes

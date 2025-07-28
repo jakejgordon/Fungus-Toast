@@ -783,5 +783,29 @@ namespace FungusToast.Simulation.Models
         public int GetChitinFortificationCellsFortified(int playerId)
             => chitinFortificationCellsFortified.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllChitinFortificationCellsFortified() => new(chitinFortificationCellsFortified);
+
+        // ────────────────
+        // Putrefactive Cascade Effects
+        // ────────────────
+        private readonly Dictionary<int, int> putrefactiveCascadeKills = new();
+        private readonly Dictionary<int, int> putrefactiveCascadeToxified = new();
+        public void RecordPutrefactiveCascadeKills(int playerId, int cascadeKills)
+        {
+            if (!putrefactiveCascadeKills.ContainsKey(playerId))
+                putrefactiveCascadeKills[playerId] = 0;
+            putrefactiveCascadeKills[playerId] += cascadeKills;
+        }
+        public void RecordPutrefactiveCascadeToxified(int playerId, int toxified)
+        {
+            if (!putrefactiveCascadeToxified.ContainsKey(playerId))
+                putrefactiveCascadeToxified[playerId] = 0;
+            putrefactiveCascadeToxified[playerId] += toxified;
+        }
+        public int GetPutrefactiveCascadeKills(int playerId)
+            => putrefactiveCascadeKills.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetPutrefactiveCascadeToxified(int playerId)
+            => putrefactiveCascadeToxified.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllPutrefactiveCascadeKills() => new(putrefactiveCascadeKills);
+        public Dictionary<int, int> GetAllPutrefactiveCascadeToxified() => new(putrefactiveCascadeToxified);
     }
 }

@@ -103,9 +103,9 @@ namespace FungusToast.Core.Board
         protected virtual void OnCellCatabolized(int playerId, int tileId) =>
             CellCatabolized?.Invoke(playerId, tileId);
 
-        protected virtual void OnCellDeath(int playerId, int tileId, DeathReason reason, int? killerPlayerId = null, FungalCell? cell = null)
+        protected virtual void OnCellDeath(int playerId, int tileId, DeathReason reason, int? killerPlayerId = null, FungalCell? cell = null, int? attackerTileId = null)
         {
-            var args = new FungalCellDiedEventArgs(tileId, playerId, reason, killerPlayerId, cell!);
+            var args = new FungalCellDiedEventArgs(tileId, playerId, reason, killerPlayerId, cell!, attackerTileId);
             CellDeath?.Invoke(this, args);
         }
 
@@ -800,7 +800,7 @@ namespace FungusToast.Core.Board
             OnCellInfested(playerId, tileId, oldOwnerId);
         }
 
-        public void KillFungalCell(FungalCell cell, DeathReason reason, int? killerPlayerId = null)
+        public void KillFungalCell(FungalCell cell, DeathReason reason, int? killerPlayerId = null, int? attackerTileId = null)
         {
             // Resistant cells cannot be killed
             if (cell.IsResistant)
@@ -814,7 +814,7 @@ namespace FungusToast.Core.Board
 
             cell.Kill(reason);
             RemoveControlFromPlayer(tileId);
-            OnCellDeath(playerId, tileId, reason, killerPlayerId, cell);
+            OnCellDeath(playerId, tileId, reason, killerPlayerId, cell, attackerTileId);
         }
 
 

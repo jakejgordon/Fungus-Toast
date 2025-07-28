@@ -60,5 +60,7 @@ namespace FungusToast.Core.Metrics
         void RecordNecrophoricAdaptationReclamation(int playerId, int count);
         void RecordBallistosporeDischarge(int playerId, int count);
         void RecordChitinFortificationCellsFortified(int playerId, int count);
+        void RecordPutrefactiveCascadeKills(int playerId, int cascadeKills);
+        void RecordPutrefactiveCascadeToxified(int playerId, int toxified);
     }
 }

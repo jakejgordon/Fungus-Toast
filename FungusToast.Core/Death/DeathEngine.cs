@@ -103,26 +103,25 @@ namespace FungusToast.Core.Death
                     continue;
 
                 double roll = rng.NextDouble();
-                (float _, DeathReason? reason, int? killerPlayerId) =
-                    MutationEffectProcessor.CalculateDeathChance(owner, cell, board, players, roll);
+                var deathResult = MutationEffectProcessor.CalculateDeathChance(owner, cell, board, players, roll, rng, simulationObserver);
 
-                if (reason.HasValue)
+                if (deathResult.ShouldDie)
                 {
-                    // Pass killerPlayerId to the board so the event can record it
-                    board.KillFungalCell(cell, reason.Value, killerPlayerId);
+                    // Pass both killerPlayerId and attackerTileId to the board so the event can record them
+                    board.KillFungalCell(cell, deathResult.Reason!.Value, deathResult.KillerPlayerId, deathResult.AttackerTileId);
                     livingCellCounts[owner.PlayerId]--;
 
                     // Attribute Age/Randomness deaths to observer
                     if (simulationObserver != null)
                     {
-                        if (reason.Value == DeathReason.Age || reason.Value == DeathReason.Randomness)
+                        if (deathResult.Reason == DeathReason.Age || deathResult.Reason == DeathReason.Randomness)
                         {
-                            simulationObserver.RecordCellDeath(owner.PlayerId, reason.Value, 1);
+                            simulationObserver.RecordCellDeath(owner.PlayerId, deathResult.Reason.Value, 1);
                         }
                     }
 
                     // Putrefactive Mycotoxin: attribute in observer if needed
-                    if (reason.Value == DeathReason.PutrefactiveMycotoxin && simulationObserver != null)
+                    if (deathResult.Reason == DeathReason.PutrefactiveMycotoxin && simulationObserver != null)
                     {
                         AttributePutrefactiveMycotoxinKill(cell, board, players, simulationObserver);
                     }

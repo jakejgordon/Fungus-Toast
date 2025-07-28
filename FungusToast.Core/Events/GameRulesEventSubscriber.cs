@@ -45,6 +45,12 @@ namespace FungusToast.Core.Events
                 MutationEffectProcessor.OnCellDeath_PutrefactiveRejuvenation(args, board, players, observer);
             };
 
+            // Putrefactive Cascade (trigger on Putrefactive Mycotoxin kill)
+            board.CellDeath += (sender, args) =>
+            {
+                MutationEffectProcessor.OnCellDeath_PutrefactiveCascade(args, board, players, rng, observer);
+            };
+
             // Necrophoric Adaptation (mycovariant: chance to reclaim adjacent dead tile when a cell dies)
             board.CellDeath += (sender, args) =>
             {
