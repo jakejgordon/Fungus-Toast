@@ -122,14 +122,6 @@ namespace FungusToast.Core.Phases
             ISimulationObserver? observer = null) =>
             MutationEffectCoordinator.ProcessHyphalVectoring(board, players, rng, observer);
 
-        public static void OnPreGrowthPhase_MycotoxinCatabolism(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            RoundContext roundContext,
-            ISimulationObserver? observer = null) =>
-            MutationEffectCoordinator.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
-
         public static void OnNecrophyticBloomActivated(
             GameBoard board,
             List<Player> players,
@@ -161,13 +153,6 @@ namespace FungusToast.Core.Phases
             ISimulationObserver? observer = null) =>
             MutationEffectCoordinator.OnCellDeath_PutrefactiveRejuvenation(eventArgs, board, players, observer);
 
-        public static void OnPreGrowthPhase_ChitinFortification(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null) =>
-            MutationEffectCoordinator.OnPreGrowthPhase_ChitinFortification(board, players, rng, observer);
-
         public static void OnCellDeath_PutrefactiveCascade(
             FungalCellDiedEventArgs eventArgs,
             GameBoard board,
@@ -193,6 +178,14 @@ namespace FungusToast.Core.Phases
             ISimulationObserver? observer = null) =>
             MutationEffectCoordinator.OnCellDeath(eventArgs, board, players, rng, observer);
 
+        public static void OnPreGrowthPhase(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            RoundContext roundContext,
+            ISimulationObserver? observer = null) =>
+            MutationEffectCoordinator.OnPreGrowthPhase(board, players, rng, roundContext, observer);
+
         public static void OnPostGrowthPhase(
             GameBoard board,
             List<Player> players,
@@ -206,6 +199,22 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver? observer = null) =>
             MutationEffectCoordinator.OnDecayPhase(board, players, rng, observer);
+
+        // Individual pre-growth phase methods (for backward compatibility)
+        public static void OnPreGrowthPhase_MycotoxinCatabolism(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            RoundContext roundContext,
+            ISimulationObserver? observer = null) =>
+            MutationEffectCoordinator.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
+
+        public static void OnPreGrowthPhase_ChitinFortification(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null) =>
+            MutationEffectCoordinator.OnPreGrowthPhase_ChitinFortification(board, players, rng, observer);
 
         // Individual post-growth phase methods (for backward compatibility)
         public static void OnPostGrowthPhase_RegenerativeHyphae(
