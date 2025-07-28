@@ -12,7 +12,7 @@ namespace FungusToast.Core.Death
 {
     /// <summary>
     /// Orchestrates the Decay Phase for the entire board.
-    /// Performs no mutation mathematics—delegates that to MutationEffectProcessor.
+    /// Performs no mutation mathematics—delegates that to MutationEffectCoordinator.
     /// All stateful triggers (such as Necrophytic Bloom activation) are tracked per-game via GameBoard.
     /// </summary>
     public static class DeathEngine
@@ -103,7 +103,7 @@ namespace FungusToast.Core.Death
                     continue;
 
                 double roll = rng.NextDouble();
-                var deathResult = MutationEffectProcessor.CalculateDeathChance(owner, cell, board, players, roll, rng, simulationObserver);
+                var deathResult = MutationEffectCoordinator.CalculateDeathChance(owner, cell, board, players, roll, rng, simulationObserver);
 
                 if (deathResult.ShouldDie)
                 {
@@ -134,7 +134,7 @@ namespace FungusToast.Core.Death
                         owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
                     {
                         float occupiedPercent = board.GetOccupiedTileRatio();
-                        MutationEffectProcessor.TriggerNecrophyticBloomOnCellDeath(
+                        MutationEffectCoordinator.TriggerNecrophyticBloomOnCellDeath(
                             owner, board, rng, occupiedPercent, simulationObserver);
                     }
                 }

@@ -33,25 +33,13 @@ namespace FungusToast.Core.Events
             Random rng,
             ISimulationObserver? observer = null)
         {
-            // Necrotoxic Conversion (toxin death triggers adjacent enemy mutation effect)
+            // All mutation-based cell death effects (consolidated)
             board.CellDeath += (sender, args) =>
             {
-                MutationEffectProcessor.OnCellDeath_NecrotoxicConversion(args, board, players, rng, observer);
+                MutationEffectCoordinator.OnCellDeath(args, board, players, rng, observer);
             };
 
-            // Putrefactive Rejuvenation (trigger on Putrefactive Mycotoxin kill)
-            board.CellDeath += (sender, args) =>
-            {
-                MutationEffectProcessor.OnCellDeath_PutrefactiveRejuvenation(args, board, players, observer);
-            };
-
-            // Putrefactive Cascade (trigger on Putrefactive Mycotoxin kill)
-            board.CellDeath += (sender, args) =>
-            {
-                MutationEffectProcessor.OnCellDeath_PutrefactiveCascade(args, board, players, rng, observer);
-            };
-
-            // Necrophoric Adaptation (mycovariant: chance to reclaim adjacent dead tile when a cell dies)
+            // Mycovariant-based cell death effects (separate since they're not mutations)
             board.CellDeath += (sender, args) =>
             {
                 MycovariantEffectProcessor.OnCellDeath_NecrophoricAdaptation(board, args.OwnerPlayerId, args.TileId, players, rng, observer);
@@ -60,57 +48,57 @@ namespace FungusToast.Core.Events
             // Regenerative Hyphae (post-growth phase reclaim effect)
             board.PostGrowthPhase += () =>
             {
-                MutationEffectProcessor.OnPostGrowthPhase_RegenerativeHyphae(board, players, rng, observer);
+                MutationEffectCoordinator.OnPostGrowthPhase_RegenerativeHyphae(board, players, rng, observer);
             };
 
             // Hyphal Vectoring (post-growth phase surge effect)
             board.PostGrowthPhase += () =>
             {
-                MutationEffectProcessor.OnPostGrowthPhase_HyphalVectoring(board, players, rng, observer);
+                MutationEffectCoordinator.OnPostGrowthPhase_HyphalVectoring(board, players, rng, observer);
             };
 
             // Sporocidal Bloom (decay phase spore effects)
             board.DecayPhase += () =>
             {
-                MutationEffectProcessor.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
+                MutationEffectCoordinator.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
             };
 
             // Mycotoxin Potentiation (decay phase toxin aura deaths)
             board.DecayPhase += () =>
             {
-                MutationEffectProcessor.OnDecayPhase_MycotoxinPotentiation(board, players, rng, observer);
+                MutationEffectCoordinator.OnDecayPhase_MycotoxinPotentiation(board, players, rng, observer);
             };
 
             // Mycotoxin Tracer (decay phase spore effects with failed growth data)
             board.DecayPhaseWithFailedGrowths += (failedGrowthsByPlayerId) =>
             {
-                MutationEffectProcessor.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);
+                MutationEffectCoordinator.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);
             };
 
             // Mycotoxin Catabolism (pre-growth phase toxin processing)
             board.PreGrowthPhase += () =>
             {
                 var roundContext = new RoundContext();
-                MutationEffectProcessor.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
+                MutationEffectCoordinator.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
             };
 
             // Chitin Fortification (pre-growth phase surge effect)
             board.PreGrowthPhase += () =>
             {
-                MutationEffectProcessor.OnPreGrowthPhase_ChitinFortification(board, players, rng, observer);
+                MutationEffectCoordinator.OnPreGrowthPhase_ChitinFortification(board, players, rng, observer);
             };
 
             // Necrophytic Bloom (initial burst on activation)
             board.NecrophyticBloomActivatedEvent += () =>
             {
-                MutationEffectProcessor.OnNecrophyticBloomActivated(board, players, rng, observer);
+                MutationEffectCoordinator.OnNecrophyticBloomActivated(board, players, rng, observer);
             };
 
             // Mutator Phenotype (mutation phase start auto-upgrade effect)
             board.MutationPhaseStart += () =>
             {
                 var allMutations = MutationRepository.BuildFullMutationSet().Item1.Values.ToList();
-                MutationEffectProcessor.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, board.CurrentRound, observer);
+                MutationEffectCoordinator.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, board.CurrentRound, observer);
             };
 
             // Neutralizing Mantle (toxin placement neutralization)
@@ -123,7 +111,7 @@ namespace FungusToast.Core.Events
             // Catabolic Rebirth (toxin expiration resurrection effect)
             board.ToxinExpired += (sender, args) =>
             {
-                MutationEffectProcessor.OnToxinExpired_CatabolicRebirth(args, board, players, rng, observer);
+                MutationEffectCoordinator.OnToxinExpired_CatabolicRebirth(args, board, players, rng, observer);
             };
 
             // TODO: Add additional event-driven rule subscriptions here.
