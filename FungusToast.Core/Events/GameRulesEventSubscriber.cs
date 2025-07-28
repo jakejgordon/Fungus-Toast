@@ -58,15 +58,9 @@ namespace FungusToast.Core.Events
             };
 
             // All mutation-based decay phase effects (consolidated)
-            board.DecayPhase += () =>
+            board.DecayPhase += (failedGrowthsByPlayerId) =>
             {
-                MutationEffectCoordinator.OnDecayPhase(board, players, rng, observer);
-            };
-
-            // Mycotoxin Tracer (decay phase spore effects with failed growth data - separate due to different event signature)
-            board.DecayPhaseWithFailedGrowths += (failedGrowthsByPlayerId) =>
-            {
-                MutationEffectCoordinator.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);
+                MutationEffectCoordinator.OnDecayPhase(board, players, failedGrowthsByPlayerId, rng, observer);
             };
 
             // Necrophytic Bloom (initial burst on activation)

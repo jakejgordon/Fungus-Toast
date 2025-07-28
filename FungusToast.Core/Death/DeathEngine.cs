@@ -35,11 +35,8 @@ namespace FungusToast.Core.Death
         {
             List<Player> shuffledPlayers = board.Players.OrderBy(_ => rng.NextDouble()).ToList();
 
-            // Fire DecayPhaseWithFailedGrowths event for Mycotoxin Tracer and other decay-phase mutations that need failed growth data
-            board.OnDecayPhaseWithFailedGrowths(failedGrowthsByPlayerId);
-            
-            // Fire DecayPhase event for Sporocidal Bloom, Mycotoxin Potentiation, and other decay-phase mutations
-            board.OnDecayPhase();
+            // Fire consolidated DecayPhase event for all decay-phase mutations (including Mycotoxin Tracer)
+            board.OnDecayPhase(failedGrowthsByPlayerId);
             
             ApplyNecrophyticBloomTrigger(shuffledPlayers, board, rng, simulationObserver);
             EvaluateProbabilisticDeaths(board, shuffledPlayers, rng, simulationObserver);
@@ -134,8 +131,8 @@ namespace FungusToast.Core.Death
                         owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
                     {
                         float occupiedPercent = board.GetOccupiedTileRatio();
-                        MutationEffectCoordinator.TriggerNecrophyticBloomOnCellDeath(
-                            owner, board, rng, occupiedPercent, simulationObserver);
+                        // Apply Necrophytic Bloom on each cell death
+                        GeneticDriftMutationProcessor.TriggerNecrophyticBloomOnCellDeath(owner, board, rng, occupiedPercent, simulationObserver);
                     }
                 }
                 // NOTE: Cell aging is now handled in AgeCells method, not here

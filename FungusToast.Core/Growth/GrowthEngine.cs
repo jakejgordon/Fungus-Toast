@@ -65,7 +65,7 @@ namespace FungusToast.Core.Growth
             {
                 FungalCell cell = tile.FungalCell!;
                 Player owner = players.First(p => p.PlayerId == cell.OwnerPlayerId);
-                MutationEffectCoordinator.AdvanceOrResetCellAge(owner, cell);
+                CellularResilienceMutationProcessor.AdvanceOrResetCellAge(owner, cell);
             }
 
             // Age all toxin cells (no mutation effects, just simple aging)
@@ -96,8 +96,8 @@ namespace FungusToast.Core.Growth
             if (sourceCell == null)
                 return false;
 
-            (float baseChance, float surgeBonus) = MutationEffectCoordinator.GetGrowthChancesWithHyphalSurge(owner);
-            float diagonalMultiplier = MutationEffectCoordinator.GetTendrilDiagonalGrowthMultiplier(owner);
+            (float baseChance, float surgeBonus) = GrowthMutationProcessor.GetGrowthChancesWithHyphalSurge(owner);
+            float diagonalMultiplier = GrowthMutationProcessor.GetTendrilDiagonalGrowthMultiplier(owner);
 
             float edgeMultiplier = GetEdgeGrowthMultiplier(owner, sourceTile, board);
 
@@ -267,7 +267,7 @@ namespace FungusToast.Core.Growth
             Random rng,
             ISimulationObserver? observer)
         {
-            if (MutationEffectCoordinator.TryCreepingMoldMove(owner, sourceCell, sourceTile, targetTile, rng, board, observer))
+            if (GrowthMutationProcessor.TryCreepingMoldMove(owner, sourceCell, sourceTile, targetTile, rng, board, observer))
             {
                 observer?.RecordCreepingMoldMove(owner.PlayerId);
                 return true;
@@ -284,7 +284,7 @@ namespace FungusToast.Core.Growth
             Random rng,
             ISimulationObserver? observer)
         {
-            return MutationEffectCoordinator.TryNecrohyphalInfiltration(board, sourceTile, sourceCell, owner, rng, observer);
+            return CellularResilienceMutationProcessor.TryNecrohyphalInfiltration(board, sourceTile, sourceCell, owner, rng, observer);
         }
 
 
