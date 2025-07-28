@@ -539,6 +539,7 @@ namespace FungusToast.Core.Phases
             Player player,
             GameBoard board,
             int failedGrowthsThisRound,
+            List<Player> allPlayers,
             Random rng,
             ISimulationObserver? observer = null)
         {
@@ -559,12 +560,29 @@ namespace FungusToast.Core.Phases
             float weightedFailures = failedGrowthsThisRound * logLevel * GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel;
             int toxinsFromFailures = rng.Next(0, (int)weightedFailures + 1);
 
-            int totalToxins = toxinsFromLevel + toxinsFromFailures;
+            // 3. NEW: Percentage-based bonus for early game (when living cells are low)
+            int toxinsFromPercentageBonus = 0;
+            if (livingCells > 0 && failedGrowthsThisRound > 0)
+            {
+                float failureRate = (float)failedGrowthsThisRound / livingCells;
+                // Clamp failure rate to [0, 1] to handle edge cases
+                failureRate = Math.Clamp(failureRate, 0f, 1f);
+                
+                // Calculate the cap: MIN(opponents, failed growths)
+                int opponentCount = allPlayers.Count - 1; // Subtract 1 for this player
+                int percentageCap = Math.Min(opponentCount, failedGrowthsThisRound);
+                
+                // Linear scaling: 0% failure = 0 toxins, 100% failure = percentageCap toxins
+                float scaledBonus = failureRate * percentageCap * level * GameBalance.MycotoxinTracerFailureRateWeightPerLevel;
+                toxinsFromPercentageBonus = (int)Math.Round(scaledBonus);
+            }
+
+            int totalToxins = toxinsFromLevel + toxinsFromFailures + toxinsFromPercentageBonus;
             totalToxins = Math.Min(totalToxins, maxToxinsThisRound);
 
             if (totalToxins == 0) return 0;
 
-            // 3. Target tiles that are unoccupied, not toxic, and orthogonally adjacent to enemy mold
+            // Target tiles that are unoccupied, not toxic, and orthogonally adjacent to enemy mold
             List<BoardTile> candidateTiles = board.AllTiles()
                 .Where(t => !t.IsOccupied)
                 .Where(t =>
@@ -661,7 +679,7 @@ namespace FungusToast.Core.Phases
                         toxinsMetabolized++;
 
                         if (pointsSoFar < maxPointsPerRound &&
-                            rng.NextDouble() < GameBalance.MycotoxinCatabolismMutationPointChancePerCatabolism)
+                            rng.NextDouble() < GameBalance.MycotoxinCatabolismMutationPointChancePerLevel)
                         {
                             player.MutationPoints += 1;
                             roundContext.IncrementEffectCount(player.PlayerId, "CatabolizedMP");
@@ -1105,7 +1123,7 @@ namespace FungusToast.Core.Phases
             foreach (var player in players)
             {
                 int failedGrowths = failedGrowthsByPlayerId.TryGetValue(player.PlayerId, out var v) ? v : 0;
-                ApplyMycotoxinTracer(player, board, failedGrowths, rng, observer);
+                ApplyMycotoxinTracer(player, board, failedGrowths, players, rng, observer);
             }
         }
 

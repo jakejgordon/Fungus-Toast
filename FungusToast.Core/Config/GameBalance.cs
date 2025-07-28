@@ -22,6 +22,7 @@ namespace FungusToast.Core.Config
         public const float MycelialBloomEffectPerLevel = 0.0025f;
         public const float HomeostaticHarmonyEffectPerLevel = 0.003f;
         public const float MycotoxinTracerFailedGrowthWeightPerLevel = 0.0028f;
+        public const float MycotoxinTracerFailureRateWeightPerLevel = 0.8f; // Percentage-based bonus for early game
         public const int MycotoxinTracerTileDuration = 21;
         public const int MycotoxinTracerMaxToxinsDivisor = 60;
 
@@ -36,10 +37,10 @@ namespace FungusToast.Core.Config
         public const float AdaptiveExpressionEffectPerLevel = 0.15f;
         public const float AdaptiveExpressionSecondPointChancePerLevel = 0.10f; // Chance per level for second point if first is awarded
         public const float MycotoxinCatabolismCleanupChancePerLevel = 0.025f;
-        public const float MycotoxinCatabolismMutationPointChancePerCatabolism = 0.075f;
+        public const float MycotoxinCatabolismMutationPointChancePerLevel = 0.075f;
         public const int MycotoxinCatabolismMaxMutationPointsPerRound = 3;
         public const int MaxEconomyMutationPointsPerRound = 3; // Cap on total economy mutation points per round
-        public const int HyphalVectoringBaseTiles = 2;
+        public const int HyphalVectoringBaseTiles = 3;
         public const int HyphalVectoringTilesPerLevel = 1;
 
         // Number of candidate cells to check for Hyphal Vectoring origin selection
@@ -53,8 +54,8 @@ namespace FungusToast.Core.Config
         public const int AnabolicInversionMaxMutationPointsPerRound = 4; // Cap on Anabolic Inversion points per round
         public const float RegenerativeHyphaeReclaimChance = 0.021f;
         public const float CreepingMoldMoveChancePerLevel = .035f;
-        public const float SporicialBloomEffectPerLevel = .065f;
-        public const int SporocidalToxinTileDuration = 11;
+        public const float SporicialBloomEffectPerLevel = .07f;
+        public const int SporocidalToxinTileDuration = 12;
         public const int NecrophyticBloomBaseSpores = 2;
         public const float NecrophyticBloomSporesPerDeathPerLevel = 40;
         public const float HyperadaptiveDriftHigherTierChancePerLevel = .25f;
@@ -130,11 +131,11 @@ namespace FungusToast.Core.Config
         public const int DefaultToxinDuration = 6;
 
         // Putrefactive Rejuvenation (Tier 5 Fungicide)
-        public const int PutrefactiveRejuvenationAgeReductionPerLevel = 3; // growth cycles
+        public const int PutrefactiveRejuvenationAgeReductionPerLevel = 4; // growth cycles
         public const int PutrefactiveRejuvenationEffectRadius = 3;
-        public const float PutrefactiveRejuvenationMycotoxinBonusPerLevel = 0.0025f;
-        public const int PutrefactiveRejuvenationMaxLevel = 5;
-        public const int PutrefactiveRejuvenationMaxLevelRangeRadiusMultiplier = 2;
+        public const float PutrefactiveRejuvenationMycotoxinBonusPerLevel = 0.003f;
+        public const int PutrefactiveRejuvenationMaxLevel = 4;
+        public const int PutrefactiveRejuvenationMaxLevelRangeRadiusMultiplier = 3;
 
 
         public static class MutationCosts
