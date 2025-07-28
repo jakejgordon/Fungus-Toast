@@ -574,7 +574,7 @@ namespace FungusToast.Core.Phases
                 
                 // Linear scaling: 0% failure = 0 toxins, 100% failure = percentageCap toxins
                 float scaledBonus = failureRate * percentageCap * level * GameBalance.MycotoxinTracerFailureRateWeightPerLevel;
-                toxinsFromPercentageBonus = (int)Math.Round(scaledBonus);
+                toxinsFromPercentageBonus = (int)Math.Round(scaledBonus) / 2; // divide by 2 as the bonus was too high
             }
 
             int totalToxins = toxinsFromLevel + toxinsFromFailures + toxinsFromPercentageBonus;
