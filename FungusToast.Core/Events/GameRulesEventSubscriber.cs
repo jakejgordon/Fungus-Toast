@@ -48,8 +48,7 @@ namespace FungusToast.Core.Events
             // All mutation-based pre-growth phase effects (consolidated)
             board.PreGrowthPhase += () =>
             {
-                var roundContext = new RoundContext();
-                MutationEffectCoordinator.OnPreGrowthPhase(board, players, rng, roundContext, observer);
+                MutationEffectCoordinator.OnPreGrowthPhase(board, players, rng, observer);
             };
 
             // All mutation-based post-growth phase effects (consolidated)

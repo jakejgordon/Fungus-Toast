@@ -179,7 +179,7 @@ namespace FungusToast.Core.Phases
                         neighborTile.RemoveFungalCell();
                         toxinsMetabolized++;
 
-                        if (pointsSoFar < maxPointsPerRound &&
+                        if (pointsSoFar < GameBalance.MycotoxinCatabolismMaxMutationPointsPerRound &&
                             rng.NextDouble() < GameBalance.MycotoxinCatabolismMutationPointChancePerLevel)
                         {
                             player.MutationPoints += 1;

@@ -31,14 +31,14 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// Executes a full multi-cycle growth phase, including mutation-based pre-growth effects.
         /// </summary>
-        public static void RunGrowthPhase(GameBoard board, List<Player> players, Random rng, RoundContext roundContext, ISimulationObserver? observer = null)
+        public static void RunGrowthPhase(GameBoard board, List<Player> players, Random rng, ISimulationObserver? observer = null)
         {
             board.OnPreGrowthPhase();
             var processor = new GrowthPhaseProcessor(board, players, rng, observer);
 
             for (int cycle = 0; cycle < GameBalance.TotalGrowthCycles; cycle++)
             {
-                processor.ExecuteSingleCycle(roundContext);
+                processor.ExecuteSingleCycle(board.CurrentRoundContext);
             }
 
             // Apply post-growth reclaim effects

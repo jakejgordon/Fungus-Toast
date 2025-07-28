@@ -98,13 +98,12 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            RoundContext roundContext,
             ISimulationObserver? observer = null)
         {
             // Order matters here - some effects may interact with others
             
             // 1. Mycotoxin Catabolism (toxin processing - should happen first to clear toxins before surge effects)
-            GeneticDriftMutationProcessor.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
+            GeneticDriftMutationProcessor.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, board.CurrentRoundContext, observer);
             
             // 2. Chitin Fortification (surge effect - should happen after toxin processing to maximize benefit)
             MycelialSurgeMutationProcessor.OnPreGrowthPhase_ChitinFortification(board, players, rng, observer);
@@ -217,55 +216,7 @@ namespace FungusToast.Core.Phases
             FungicideMutationProcessor.OnCellDeath_PutrefactiveCascade(eventArgs, board, players, rng, observer);
         }
 
-        // Individual Pre-Growth Phase Methods
-        public static void OnPreGrowthPhase_MycotoxinCatabolism(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            RoundContext roundContext,
-            ISimulationObserver? observer = null)
-        {
-            GeneticDriftMutationProcessor.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
-        }
-
-        public static void OnPreGrowthPhase_ChitinFortification(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null)
-        {
-            MycelialSurgeMutationProcessor.OnPreGrowthPhase_ChitinFortification(board, players, rng, observer);
-        }
-
-        // Individual Post-Growth Phase Methods
-        public static void OnPostGrowthPhase_RegenerativeHyphae(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null)
-        {
-            CellularResilienceMutationProcessor.OnPostGrowthPhase_RegenerativeHyphae(board, players, rng, observer);
-        }
-
-        public static void OnPostGrowthPhase_HyphalVectoring(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null)
-        {
-            MycelialSurgeMutationProcessor.OnPostGrowthPhase_HyphalVectoring(board, players, rng, observer);
-        }
-
-        // Individual Decay Phase Methods
-        public static void OnDecayPhase_SporocidalBloom(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null)
-        {
-            FungicideMutationProcessor.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
-        }
-
+        //TODO MOVE THIS UP TOP IN OnDecayPhase
         public static void OnDecayPhase_MycotoxinTracer(
             GameBoard board,
             List<Player> players,
@@ -276,14 +227,6 @@ namespace FungusToast.Core.Phases
             FungicideMutationProcessor.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);
         }
 
-        public static void OnDecayPhase_MycotoxinPotentiation(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null)
-        {
-            FungicideMutationProcessor.OnDecayPhase_MycotoxinPotentiation(board, players, rng, observer);
-        }
 
         #endregion
 
@@ -332,9 +275,8 @@ namespace FungusToast.Core.Phases
             Player player,
             GameBoard board,
             Random rng,
-            RoundContext roundContext,
             ISimulationObserver? observer = null) =>
-            GeneticDriftMutationProcessor.ApplyMycotoxinCatabolism(player, board, rng, roundContext, observer);
+            GeneticDriftMutationProcessor.ApplyMycotoxinCatabolism(player, board, rng, board.CurrentRoundContext, observer);
 
         public static float GetNecrophyticBloomDamping(float occupiedPercent) =>
             GeneticDriftMutationProcessor.GetNecrophyticBloomDamping(occupiedPercent);

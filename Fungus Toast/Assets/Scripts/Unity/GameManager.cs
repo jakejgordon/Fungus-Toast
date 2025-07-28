@@ -740,12 +740,11 @@ namespace FungusToast.Unity
         private IEnumerator RunSilentGrowthPhase()
         {
             var processor = new GrowthPhaseProcessor(Board, Board.Players, rng);
-            var roundContext = new RoundContext();
 
             for (int cycle = 1; cycle <= GameBalance.TotalGrowthCycles; cycle++)
             {
                 Board.IncrementGrowthCycle();
-                processor.ExecuteSingleCycle(roundContext);
+                processor.ExecuteSingleCycle(Board.CurrentRoundContext);
             }
 
             // Post-growth effects

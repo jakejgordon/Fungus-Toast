@@ -5,6 +5,7 @@ using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using FungusToast.Core.Board;
+using FungusToast.Core.Phases;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +24,12 @@ namespace FungusToast.Core.Board
 
         public int CurrentRound { get; private set; } = 1;
         public int CurrentGrowthCycle { get; private set; } = 0;
+
+        /// <summary>
+        /// Round-scoped context for tracking per-player, per-effect counters during the current round.
+        /// Reset at the start of each round.
+        /// </summary>
+        public RoundContext CurrentRoundContext { get; private set; } = new();
 
         /// <summary>
         /// True once Necrophytic Bloom has activated in this game instance.
@@ -461,6 +468,8 @@ namespace FungusToast.Core.Board
         public void IncrementRound()
         {
             CurrentRound++;
+            // Reset round context at the start of each new round
+            CurrentRoundContext.Reset();
         }
 
         public List<int> GetTileLine(int startTileId, CardinalDirection direction, int length, bool includeStartingTile = false)
