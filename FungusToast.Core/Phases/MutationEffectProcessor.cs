@@ -112,13 +112,6 @@ namespace FungusToast.Core.Phases
             ISimulationObserver? observer = null) =>
             MutationEffectCoordinator.TryNecrohyphalInfiltration(board, sourceTile, sourceCell, owner, rng, observer);
 
-        public static void OnPostGrowthPhase_RegenerativeHyphae(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null) =>
-            MutationEffectCoordinator.OnPostGrowthPhase_RegenerativeHyphae(board, players, rng, observer);
-
         public static (float baseChance, float surgeBonus) GetGrowthChancesWithHyphalSurge(Player player) =>
             MutationEffectCoordinator.GetGrowthChancesWithHyphalSurge(player);
 
@@ -129,20 +122,6 @@ namespace FungusToast.Core.Phases
             ISimulationObserver? observer = null) =>
             MutationEffectCoordinator.ProcessHyphalVectoring(board, players, rng, observer);
 
-        public static void OnPostGrowthPhase_HyphalVectoring(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null) =>
-            MutationEffectCoordinator.OnPostGrowthPhase_HyphalVectoring(board, players, rng, observer);
-
-        public static void OnDecayPhase_SporocidalBloom(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null) =>
-            MutationEffectCoordinator.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
-
         public static void OnPreGrowthPhase_MycotoxinCatabolism(
             GameBoard board,
             List<Player> players,
@@ -150,21 +129,6 @@ namespace FungusToast.Core.Phases
             RoundContext roundContext,
             ISimulationObserver? observer = null) =>
             MutationEffectCoordinator.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
-
-        public static void OnDecayPhase_MycotoxinTracer(
-            GameBoard board,
-            List<Player> players,
-            Dictionary<int, int> failedGrowthsByPlayerId,
-            Random rng,
-            ISimulationObserver? observer = null) =>
-            MutationEffectCoordinator.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);
-
-        public static void OnDecayPhase_MycotoxinPotentiation(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null) =>
-            MutationEffectCoordinator.OnDecayPhase_MycotoxinPotentiation(board, players, rng, observer);
 
         public static void OnNecrophyticBloomActivated(
             GameBoard board,
@@ -220,7 +184,7 @@ namespace FungusToast.Core.Phases
             ISimulationObserver? observer = null) =>
             MutationEffectCoordinator.OnCellDeath_NecrotoxicConversion(eventArgs, board, players, rng, observer);
 
-        // NEW: Consolidated cell death handler
+        // Consolidated event handlers
         public static void OnCellDeath(
             FungalCellDiedEventArgs eventArgs,
             GameBoard board,
@@ -228,5 +192,57 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver? observer = null) =>
             MutationEffectCoordinator.OnCellDeath(eventArgs, board, players, rng, observer);
+
+        public static void OnPostGrowthPhase(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null) =>
+            MutationEffectCoordinator.OnPostGrowthPhase(board, players, rng, observer);
+
+        public static void OnDecayPhase(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null) =>
+            MutationEffectCoordinator.OnDecayPhase(board, players, rng, observer);
+
+        // Individual post-growth phase methods (for backward compatibility)
+        public static void OnPostGrowthPhase_RegenerativeHyphae(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null) =>
+            MutationEffectCoordinator.OnPostGrowthPhase_RegenerativeHyphae(board, players, rng, observer);
+
+        public static void OnPostGrowthPhase_HyphalVectoring(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null) =>
+            MutationEffectCoordinator.OnPostGrowthPhase_HyphalVectoring(board, players, rng, observer);
+
+        // Individual decay phase methods (for backward compatibility)
+        public static void OnDecayPhase_SporocidalBloom(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null) =>
+            MutationEffectCoordinator.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
+
+        public static void OnDecayPhase_MycotoxinTracer(
+            GameBoard board,
+            List<Player> players,
+            Dictionary<int, int> failedGrowthsByPlayerId,
+            Random rng,
+            ISimulationObserver? observer = null) =>
+            MutationEffectCoordinator.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);
+
+        public static void OnDecayPhase_MycotoxinPotentiation(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null) =>
+            MutationEffectCoordinator.OnDecayPhase_MycotoxinPotentiation(board, players, rng, observer);
     }
 }

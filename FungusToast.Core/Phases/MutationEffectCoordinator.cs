@@ -89,6 +89,68 @@ namespace FungusToast.Core.Phases
             FungicideMutationProcessor.OnCellDeath_PutrefactiveCascade(eventArgs, board, players, rng, observer);
         }
 
+        // Pre-Growth Phase Events
+        /// <summary>
+        /// Handles all mutation effects that trigger before the growth phase.
+        /// Calls each mutation-specific handler in the appropriate order.
+        /// </summary>
+        public static void OnPreGrowthPhase(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            RoundContext roundContext,
+            ISimulationObserver? observer = null)
+        {
+            // Order matters here - some effects may interact with others
+            
+            // 1. Mycotoxin Catabolism (toxin processing - should happen first to clear toxins before surge effects)
+            GeneticDriftMutationProcessor.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
+            
+            // 2. Chitin Fortification (surge effect - should happen after toxin processing to maximize benefit)
+            MycelialSurgeMutationProcessor.OnPreGrowthPhase_ChitinFortification(board, players, rng, observer);
+        }
+
+        // Post-Growth Phase Events
+        /// <summary>
+        /// Handles all mutation effects that trigger after the growth phase.
+        /// Calls each mutation-specific handler in the appropriate order.
+        /// </summary>
+        public static void OnPostGrowthPhase(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            // Order matters here - some effects may depend on the results of others
+            
+            // 1. Regenerative Hyphae (reclaim own dead cells - should happen first to expand territory)
+            CellularResilienceMutationProcessor.OnPostGrowthPhase_RegenerativeHyphae(board, players, rng, observer);
+            
+            // 2. Hyphal Vectoring (surge effect - should happen after reclamation to maximize impact)
+            MycelialSurgeMutationProcessor.OnPostGrowthPhase_HyphalVectoring(board, players, rng, observer);
+        }
+
+        // Decay Phase Events
+        /// <summary>
+        /// Handles all mutation effects that trigger during the decay phase.
+        /// Calls each mutation-specific handler in the appropriate order.
+        /// Note: This does not include effects that require failed growth data (use OnDecayPhase_MycotoxinTracer separately).
+        /// </summary>
+        public static void OnDecayPhase(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            // Order matters here - some effects may interact with others
+            
+            // 1. Sporocidal Bloom (spore effects - should happen first to place spores before other effects)
+            FungicideMutationProcessor.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
+            
+            // 2. Mycotoxin Potentiation (toxin aura deaths - should happen after spore placement)
+            FungicideMutationProcessor.OnDecayPhase_MycotoxinPotentiation(board, players, rng, observer);
+        }
+
         // Mutation Phase Events
         public static void OnMutationPhaseStart_MutatorPhenotype(
             GameBoard board,
@@ -99,74 +161,6 @@ namespace FungusToast.Core.Phases
             ISimulationObserver? observer = null)
         {
             GeneticDriftMutationProcessor.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, currentRound, observer);
-        }
-
-        // Pre-Growth Phase Events
-        public static void OnPreGrowthPhase_MycotoxinCatabolism(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            RoundContext roundContext,
-            ISimulationObserver? observer = null)
-        {
-            GeneticDriftMutationProcessor.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
-        }
-
-        public static void OnPreGrowthPhase_ChitinFortification(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null)
-        {
-            MycelialSurgeMutationProcessor.OnPreGrowthPhase_ChitinFortification(board, players, rng, observer);
-        }
-
-        // Post-Growth Phase Events  
-        public static void OnPostGrowthPhase_RegenerativeHyphae(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null)
-        {
-            CellularResilienceMutationProcessor.OnPostGrowthPhase_RegenerativeHyphae(board, players, rng, observer);
-        }
-
-        public static void OnPostGrowthPhase_HyphalVectoring(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null)
-        {
-            MycelialSurgeMutationProcessor.OnPostGrowthPhase_HyphalVectoring(board, players, rng, observer);
-        }
-
-        // Decay Phase Events
-        public static void OnDecayPhase_SporocidalBloom(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null)
-        {
-            FungicideMutationProcessor.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
-        }
-
-        public static void OnDecayPhase_MycotoxinTracer(
-            GameBoard board,
-            List<Player> players,
-            Dictionary<int, int> failedGrowthsByPlayerId,
-            Random rng,
-            ISimulationObserver? observer = null)
-        {
-            FungicideMutationProcessor.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);
-        }
-
-        public static void OnDecayPhase_MycotoxinPotentiation(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver? observer = null)
-        {
-            FungicideMutationProcessor.OnDecayPhase_MycotoxinPotentiation(board, players, rng, observer);
         }
 
         // Special Events
@@ -191,8 +185,9 @@ namespace FungusToast.Core.Phases
 
         #endregion
 
-        #region Individual Cell Death Methods (for backward compatibility)
+        #region Individual Event Methods (for backward compatibility)
 
+        // Individual Cell Death Methods
         public static void OnCellDeath_NecrotoxicConversion(
             FungalCellDiedEventArgs eventArgs,
             GameBoard board,
@@ -220,6 +215,74 @@ namespace FungusToast.Core.Phases
             ISimulationObserver? observer = null)
         {
             FungicideMutationProcessor.OnCellDeath_PutrefactiveCascade(eventArgs, board, players, rng, observer);
+        }
+
+        // Individual Pre-Growth Phase Methods
+        public static void OnPreGrowthPhase_MycotoxinCatabolism(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            RoundContext roundContext,
+            ISimulationObserver? observer = null)
+        {
+            GeneticDriftMutationProcessor.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
+        }
+
+        public static void OnPreGrowthPhase_ChitinFortification(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            MycelialSurgeMutationProcessor.OnPreGrowthPhase_ChitinFortification(board, players, rng, observer);
+        }
+
+        // Individual Post-Growth Phase Methods
+        public static void OnPostGrowthPhase_RegenerativeHyphae(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            CellularResilienceMutationProcessor.OnPostGrowthPhase_RegenerativeHyphae(board, players, rng, observer);
+        }
+
+        public static void OnPostGrowthPhase_HyphalVectoring(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            MycelialSurgeMutationProcessor.OnPostGrowthPhase_HyphalVectoring(board, players, rng, observer);
+        }
+
+        // Individual Decay Phase Methods
+        public static void OnDecayPhase_SporocidalBloom(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            FungicideMutationProcessor.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
+        }
+
+        public static void OnDecayPhase_MycotoxinTracer(
+            GameBoard board,
+            List<Player> players,
+            Dictionary<int, int> failedGrowthsByPlayerId,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            FungicideMutationProcessor.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);
+        }
+
+        public static void OnDecayPhase_MycotoxinPotentiation(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            FungicideMutationProcessor.OnDecayPhase_MycotoxinPotentiation(board, players, rng, observer);
         }
 
         #endregion

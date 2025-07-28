@@ -45,47 +45,29 @@ namespace FungusToast.Core.Events
                 MycovariantEffectProcessor.OnCellDeath_NecrophoricAdaptation(board, args.OwnerPlayerId, args.TileId, players, rng, observer);
             };
 
-            // Regenerative Hyphae (post-growth phase reclaim effect)
-            board.PostGrowthPhase += () =>
-            {
-                MutationEffectCoordinator.OnPostGrowthPhase_RegenerativeHyphae(board, players, rng, observer);
-            };
-
-            // Hyphal Vectoring (post-growth phase surge effect)
-            board.PostGrowthPhase += () =>
-            {
-                MutationEffectCoordinator.OnPostGrowthPhase_HyphalVectoring(board, players, rng, observer);
-            };
-
-            // Sporocidal Bloom (decay phase spore effects)
-            board.DecayPhase += () =>
-            {
-                MutationEffectCoordinator.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
-            };
-
-            // Mycotoxin Potentiation (decay phase toxin aura deaths)
-            board.DecayPhase += () =>
-            {
-                MutationEffectCoordinator.OnDecayPhase_MycotoxinPotentiation(board, players, rng, observer);
-            };
-
-            // Mycotoxin Tracer (decay phase spore effects with failed growth data)
-            board.DecayPhaseWithFailedGrowths += (failedGrowthsByPlayerId) =>
-            {
-                MutationEffectCoordinator.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);
-            };
-
-            // Mycotoxin Catabolism (pre-growth phase toxin processing)
+            // All mutation-based pre-growth phase effects (consolidated)
             board.PreGrowthPhase += () =>
             {
                 var roundContext = new RoundContext();
-                MutationEffectCoordinator.OnPreGrowthPhase_MycotoxinCatabolism(board, players, rng, roundContext, observer);
+                MutationEffectCoordinator.OnPreGrowthPhase(board, players, rng, roundContext, observer);
             };
 
-            // Chitin Fortification (pre-growth phase surge effect)
-            board.PreGrowthPhase += () =>
+            // All mutation-based post-growth phase effects (consolidated)
+            board.PostGrowthPhase += () =>
             {
-                MutationEffectCoordinator.OnPreGrowthPhase_ChitinFortification(board, players, rng, observer);
+                MutationEffectCoordinator.OnPostGrowthPhase(board, players, rng, observer);
+            };
+
+            // All mutation-based decay phase effects (consolidated)
+            board.DecayPhase += () =>
+            {
+                MutationEffectCoordinator.OnDecayPhase(board, players, rng, observer);
+            };
+
+            // Mycotoxin Tracer (decay phase spore effects with failed growth data - separate due to different event signature)
+            board.DecayPhaseWithFailedGrowths += (failedGrowthsByPlayerId) =>
+            {
+                MutationEffectCoordinator.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);
             };
 
             // Necrophytic Bloom (initial burst on activation)
