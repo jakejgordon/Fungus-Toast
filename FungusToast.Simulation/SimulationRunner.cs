@@ -1,4 +1,6 @@
 using FungusToast.Core.AI;
+using FungusToast.Core.Config;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Simulation.Analysis;
 using FungusToast.Simulation.Models;
 
@@ -6,17 +8,17 @@ namespace FungusToast.Simulation
 {
     public static class SimulationRunner
     {
-        public static void RunStandardSimulation(int numberOfPlayers, int numberOfGames)
+        public static void RunStandardSimulation(int numberOfPlayers, int numberOfGames, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight)
         {
             var rnd = new Random(); // Or any deterministic seed you want
 
-            var strategies = AIRoster.GetRandomProvenStrategies(numberOfPlayers, rnd);
+            var strategies =   AIRoster.GetRandomProvenStrategies(numberOfPlayers, rnd); /* AIRoster.TestingStrategies;*/ //AIRoster.MycovariantPermutations();
 
             Console.WriteLine($"Running simulation with {strategies.Count} players for {numberOfGames} games each...\n");
 
             // Run simulation
             var runner = new MatchupRunner();
-            var results = runner.RunMatchups(strategies, gamesToPlay: numberOfGames);
+            var results = runner.RunMatchups(strategies, gamesToPlay: numberOfGames, boardWidth: boardWidth, boardHeight: boardHeight);
 
             // Print strategy summary
             var aggregator = new MatchupStatsAggregator();
@@ -29,6 +31,8 @@ namespace FungusToast.Simulation
                 impactTracker.TrackGameResult(result);
             }
             impactTracker.PrintReport();
+
+
 
             // Analyze per-strategy mutation usage
             var usageTracker = new PlayerMutationUsageTracker();
@@ -81,4 +85,4 @@ namespace FungusToast.Simulation
             return gameResults.LastOrDefault()?.TrackingContext ?? new SimulationTrackingContext();
         }
     }
-} 
+}
