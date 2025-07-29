@@ -11,11 +11,11 @@ This document contains the most effective commands for running different simulat
 
 ## Output File Location
 
-Simulation output files are automatically created in:
+**All simulations now automatically create output files** in:
 ```
 FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\
 ```
-The full path is displayed in the console after each simulation run, making it easy for AI assistants to locate and read the results.
+Output files are generated with timestamped filenames even when no `--output` parameter is specified. The full path is displayed in the console after each simulation run, making it easy for AI assistants to locate and read the results.
 
 ## Running Simulations
 
@@ -77,7 +77,7 @@ When automated terminal execution fails:
 1. **Inform the user** to run the simulation manually using the steps above
 2. **Ask for the output file path** once the simulation completes
 3. **Use `get_file` tool** to read and analyze the simulation results
-4. **Expected output path format:** `FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\sim_output_YYYY-MM-DDTHH-mm-ss.txt`
+4. **Expected output path format:** `FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\Simulation_output_YYYY-MM-DDTHH-mm-ss.txt`
 
 ### Common Manual Execution Issues:
 
@@ -135,7 +135,7 @@ cd FungusToast.Core; dotnet build --verbosity normal
 cd FungusToast.Simulation; dotnet build --verbosity normal
 ```
 
-### Run with Output Redirection
+### Run with Custom Output Filename
 ```powershell
 .\run_simulation.ps1 --games 1 --players 2 --output test_results.txt
 ```
@@ -150,23 +150,28 @@ After each simulation, the output file path is displayed in **two places**:
 
 1. **PowerShell script output** (main console):
    ```
-   Output will be written to: bin\Debug\net8.0\SimulationOutput\sim_output_2025-07-04T13-07-22.txt
+   No --output specified. Simulation will auto-generate a timestamped filename.
+   ```
+   OR
+   ```
+   Output will be written to: bin\Debug\net8.0\SimulationOutput\custom_filename.txt
    ```
 
 2. **Simulation output** (in the simulation window):
    ```
-   Simulation output redirected to: C:\Users\cogord\GitHub Repos\Fungus-Toast\FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\sim_output_2025-07-04T13-07-22.txt
+   Simulation output redirected to: C:\Users\cogord\GitHub Repos\Fungus-Toast\FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\Simulation_output_2025-01-15T14-30-22.txt
    ```
 
 **AI/Cursor can:**
-- **Use the PowerShell path** - Copy the relative path from the main console
-- **Use the simulation path** - Copy the absolute path from the simulation window  
+- **Use the simulation path** - Copy the absolute path from the simulation window output
 - **Find latest file** - If exact path isn't available:
   ```powershell
   Get-ChildItem "bin\Debug\net8.0\SimulationOutput\*.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
   ```
 
-**Note**: The output files are always created in `bin\Debug\net8.0\SimulationOutput\` with timestamps in the filename.
+**Note**: Output files are **always created automatically** in `bin\Debug\net8.0\SimulationOutput\` with either:
+- Auto-generated timestamped filenames: `Simulation_output_YYYY-MM-DDTHH-mm-ss.txt`
+- Custom filenames when using `--output filename.txt`
 
 ## Command Line Options
 
@@ -174,34 +179,34 @@ The simulation supports the following command-line parameters:
 
 | Parameter | Short | Description | Default |
 |-----------|-------|-------------|---------|
-| `--games` | `-g` | Number of games to play per matchup | 100 |
+| `--games` | `-g` | Number of games to play per matchup | 500 |
 | `--players` | `-p` | Number of players/strategies to use | 8 |
 | `--width` | `-w` | Board width (number of tiles) | 100 |
 | `--height` | | Board height (number of tiles) | 100 |
-| `--output` | `-o` | Redirect output to a file | (console) |
+| `--output` | `-o` | Specify output filename (optional) | Auto-generated timestamp |
 | `--help` | | Show help message | |
 
 ### Examples:
 ```powershell
-# Run with defaults (8 players, 100 games each, 100x100 board)
+# Run with defaults - creates auto-generated output file
 dotnet run
 
-# Run 10 games per matchup
+# Run 10 games per matchup - creates auto-generated output file
 dotnet run --games 10
 
-# Run 4 players, 20 games each
+# Run 4 players, 20 games each - creates auto-generated output file
 dotnet run --players 4 --games 20
 
-# Run 6 players, 15 games each (short form)
+# Run 6 players, 15 games each (short form) - creates auto-generated output file
 dotnet run -p 6 -g 15
 
-# Run with custom board dimensions
+# Run with custom board dimensions - creates auto-generated output file
 dotnet run --width 50 --height 75
 
-# Run 4 players on 200x100 board
+# Run 4 players on 200x100 board - creates auto-generated output file
 dotnet run -w 200 -p 4
 
-# Combine multiple options
+# Combine multiple options with custom output filename
 dotnet run --width 150 --height 120 --players 6 --games 25 --output large_board_test.txt
 ```
 
@@ -301,7 +306,8 @@ case MutationIds.NewMutation:
 - **Auto-builds**: Script automatically builds both Core and Simulation projects
 - **New Window**: Simulation runs in separate PowerShell window for monitoring
 - **Manual Fallback**: When automated execution fails, guide users to manual execution steps
-- **Output files**: After simulation, read the full path displayed in console output
+- **Output files**: **Always generated automatically** - check simulation window output for exact filename
 - **File location**: All output files are in `bin\Debug\net8.0\SimulationOutput\`
+- **Filename format**: `Simulation_output_YYYY-MM-DDTHH-mm-ss.txt` (auto-generated) or custom name with `--output`
 - **Latest file**: Use `Get-ChildItem` with `Sort-Object LastWriteTime -Descending` to find most recent output
 - **Board dimensions**: Support for custom `--width` and `--height` parameters for testing different board sizes

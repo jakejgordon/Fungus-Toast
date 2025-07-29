@@ -51,10 +51,10 @@ namespace FungusToast.Simulation
                 Directory.CreateDirectory(outputDir);
             }
 
-            // Generate filename if not provided
+            // Generate filename if not provided - use the requested format
             if (string.IsNullOrEmpty(outputFileName))
             {
-                outputFileName = $"simulation_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                outputFileName = $"Simulation_output_{DateTime.Now:yyyy-MM-ddTHH-mm-ss}.txt";
             }
 
             string fullPath = Path.Combine(outputDir, outputFileName);
@@ -114,4 +114,4 @@ namespace FungusToast.Simulation
             }
         }
     }
-} 
+}

@@ -9,7 +9,7 @@ namespace FungusToast.Simulation
 {
     class Program
     {
-        private const int DefaultNumberOfSimulationGames = 20;
+        private const int DefaultNumberOfSimulationGames = 2;
         private const int DefaultNumberOfPlayers = 8;
 
         static void Main(string[] args)
@@ -19,8 +19,7 @@ namespace FungusToast.Simulation
             int numberOfPlayers = DefaultNumberOfPlayers;
             int boardWidth = GameBalance.BoardWidth;
             int boardHeight = GameBalance.BoardHeight;
-            bool outputToFile = false;
-            string outputFileName = "";
+            string outputFileName = ""; // Default to empty string for auto-generated filename
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -60,7 +59,6 @@ namespace FungusToast.Simulation
                         break;
                     case "--output":
                     case "-o":
-                        outputToFile = true;
                         if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
                         {
                             outputFileName = args[i + 1];
@@ -73,12 +71,9 @@ namespace FungusToast.Simulation
                 }
             }
 
-            // Set up output redirection if requested
+            // Always set up output redirection - if no filename specified, OutputManager will generate one
             OutputManager? outputManager = null;
-            if (outputToFile)
-            {
-                outputManager = new OutputManager(outputFileName);
-            }
+            outputManager = new OutputManager(outputFileName);
 
             try
             {
@@ -98,20 +93,24 @@ namespace FungusToast.Simulation
             Console.WriteLine("Usage: dotnet run [options]");
             Console.WriteLine();
             Console.WriteLine("Options:");
-            Console.WriteLine("  -g, --games <number>     Number of games to play per matchup (default: 100)");
+            Console.WriteLine("  -g, --games <number>     Number of games to play per matchup (default: 500)");
             Console.WriteLine("  -p, --players <number>   Number of players/strategies to use (default: 8)");
             Console.WriteLine("  -w, --width <number>     Board width (default: 100)");
             Console.WriteLine("  --height <number>        Board height (default: 100)");
-            Console.WriteLine("  -o, --output <filename>  Redirect output to a file");
+            Console.WriteLine("  -o, --output <filename>  Specify output filename (default: auto-generated with timestamp)");
             Console.WriteLine("  --help                   Show this help message");
             Console.WriteLine();
+            Console.WriteLine("Note: All simulation output is automatically saved to the SimulationOutput folder.");
+            Console.WriteLine("If no output filename is specified, a timestamped filename will be generated.");
+            Console.WriteLine();
             Console.WriteLine("Examples:");
-            Console.WriteLine("  dotnet run                           # Run with defaults (8 players, 100 games each, 100x100 board)");
+            Console.WriteLine("  dotnet run                           # Run with defaults, auto-generated output file");
             Console.WriteLine("  dotnet run --games 10               # Run 10 games per matchup");
             Console.WriteLine("  dotnet run --players 4 --games 20   # Run 4 players, 20 games each");
             Console.WriteLine("  dotnet run -p 6 -g 15               # Run 6 players, 15 games each");
             Console.WriteLine("  dotnet run --width 50 --height 75   # Run with 50x75 board");
             Console.WriteLine("  dotnet run -w 200 -p 4              # Run 4 players on 200x100 board");
+            Console.WriteLine("  dotnet run -o my_test.txt           # Run with custom output filename");
         }
     }
 }

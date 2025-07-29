@@ -10,8 +10,10 @@ function Get-OutputFilename {
     if ($outputIndex -ge 0 -and $outputIndex + 1 -lt $args.Length) {
         return $args[$outputIndex + 1]
     } else {
+        # The simulation now automatically generates a timestamped filename
+        # when no --output is specified, so we'll use the same format here for consistency
         $timestamp = (Get-Date -Format 'yyyy-MM-ddTHH-mm-ss')
-        return "sim_output_$timestamp.txt"
+        return "Simulation_output_$timestamp.txt"
     }
 }
 
@@ -31,13 +33,8 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Determine output filename
+# Determine expected output filename
 $outputFile = Get-OutputFilename $Args
-
-# If --output not in args, add it
-if ($Args.IndexOf('--output') -lt 0) {
-    $Args += @('--output', $outputFile)
-}
 
 # Prepare argument string for dotnet run
 $argString = $Args -join ' '
@@ -46,7 +43,12 @@ $argString = $Args -join ' '
 $simulationOutputDir = "bin\Debug\net8.0\SimulationOutput"
 $fullOutputPath = Join-Path $simulationOutputDir $outputFile
 
-Write-Host "Output will be written to: $fullOutputPath"
+# Note: The simulation will now always create an output file, even without --output parameter
+if ($Args.IndexOf('--output') -lt 0) {
+    Write-Host "No --output specified. Simulation will auto-generate a timestamped filename."
+} else {
+    Write-Host "Output will be written to: $fullOutputPath"
+}
 
 # Check if we're running from GitHub Copilot tools
 $isAutomated = $env:COPILOT_AUTOMATED -eq "true" -or $args -contains "--automated"
