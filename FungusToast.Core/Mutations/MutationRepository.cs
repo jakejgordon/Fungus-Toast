@@ -141,7 +141,7 @@ namespace FungusToast.Core.Mutations
                 maxLevel: GameBalance.ChronoresilientCytoplasmMaxLevel,
                 category: MutationCategory.CellularResilience,
                 tier: MutationTier.Tier2
-            ), new MutationPrerequisite(MutationIds.HomeostaticHarmony, 10));
+            ), new MutationPrerequisite(MutationIds.HomeostaticHarmony, 5));
 
             MakeChild(new Mutation(
                 id: MutationIds.MycotoxinPotentiation,
@@ -156,7 +156,7 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier2
             ),
-            new MutationPrerequisite(MutationIds.MycotoxinTracer, 10));
+            new MutationPrerequisite(MutationIds.MycotoxinTracer, 5));
 
 
             AddTendril(MutationIds.TendrilNorthwest, "Northwest");
@@ -190,7 +190,7 @@ namespace FungusToast.Core.Mutations
                 maxLevel: GameBalance.MycotoxinCatabolismMaxLevel,
                 category: MutationCategory.GeneticDrift,
                 tier: MutationTier.Tier2
-            ), new MutationPrerequisite(MutationIds.MutatorPhenotype, 3));
+            ), new MutationPrerequisite(MutationIds.MutatorPhenotype, 2));
 
 
             MakeChild(new Mutation(
@@ -332,7 +332,7 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.Growth,
                 tier: MutationTier.Tier4
             ),
-                new MutationPrerequisite(MutationIds.Necrosporulation, 3),
+                new MutationPrerequisite(MutationIds.Necrosporulation, 2),
                 new MutationPrerequisite(MutationIds.MycotropicInduction, 1));
 
 
@@ -367,11 +367,11 @@ namespace FungusToast.Core.Mutations
                 type: MutationType.FungicideSporeDrop,
                 effectPerLevel: GameBalance.SporicialBloomEffectPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
-                maxLevel: GameBalance.SporocidalBloomMaxLevel,
+                maxLevel: GameBalance.SporicidalBloomMaxLevel,
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier4
             ),
-            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 2),
+            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 1),
             new MutationPrerequisite(MutationIds.MycelialBloom, 7)
             );
 
@@ -444,9 +444,8 @@ namespace FungusToast.Core.Mutations
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier5
             ),
-            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 3),
-            new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 3)
-);
+            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 2),
+            new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 1));
 
             MakeChild(new Mutation(
                 id: MutationIds.CatabolicRebirth,
@@ -463,7 +462,7 @@ namespace FungusToast.Core.Mutations
                 tier: MutationTier.Tier6
             ),
             new MutationPrerequisite(MutationIds.NecrohyphalInfiltration, 1),
-            new MutationPrerequisite(MutationIds.AnabolicInversion, 2));
+            new MutationPrerequisite(MutationIds.AnabolicInversion, 1));
 
             // Tier-6
             MakeChild(new Mutation(
@@ -505,7 +504,7 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.MycotropicInduction, 1),
             new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1),
             new MutationPrerequisite(MutationIds.AdaptiveExpression, 1),
-            new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 2));
+            new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 1));
 
             return (allMutations, rootMutations);
         }

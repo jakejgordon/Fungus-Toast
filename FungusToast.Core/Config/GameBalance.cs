@@ -34,10 +34,10 @@ namespace FungusToast.Core.Config
         public const float NecrosporulationEffectPerLevel = 0.04f;
         public const int MycotoxinPotentiationGrowthCycleExtensionPerLevel = 1;
         public const float MycotoxinPotentiationKillChancePerLevel = 0.014f;
-        public const float AdaptiveExpressionEffectPerLevel = 0.15f;
-        public const float AdaptiveExpressionSecondPointChancePerLevel = 0.10f; // Chance per level for second point if first is awarded
+        public const float AdaptiveExpressionEffectPerLevel = 0.19f;
+        public const float AdaptiveExpressionSecondPointChancePerLevel = 0.14f; // Chance per level for second point if first is awarded
         public const float MycotoxinCatabolismCleanupChancePerLevel = 0.025f;
-        public const float MycotoxinCatabolismMutationPointChancePerLevel = 0.075f;
+        public const float MycotoxinCatabolismMutationPointChancePerLevel = 0.08f;
         public const int MycotoxinCatabolismMaxMutationPointsPerRound = 3;
         public const int MaxEconomyMutationPointsPerRound = 3; // Cap on total economy mutation points per round
         public const int HyphalVectoringBaseTiles = 3;
@@ -54,20 +54,20 @@ namespace FungusToast.Core.Config
         public const int AnabolicInversionMaxMutationPointsPerRound = 4; // Cap on Anabolic Inversion points per round
         public const float RegenerativeHyphaeReclaimChance = 0.021f;
         public const float CreepingMoldMoveChancePerLevel = .035f;
-        public const float SporicialBloomEffectPerLevel = .07f;
+        public const float SporicialBloomEffectPerLevel = .08f;
         public const int SporocidalToxinTileDuration = 12;
         public const int NecrophyticBloomBaseSpores = 2;
         public const float NecrophyticBloomSporesPerDeathPerLevel = 40;
-        public const float HyperadaptiveDriftHigherTierChancePerLevel = .25f;
-        public const float HyperadaptiveDriftBonusTierOneMutationChancePerLevel = .25f;
+        public const float HyperadaptiveDriftHigherTierChancePerLevel = .28f;
+        public const float HyperadaptiveDriftBonusTierOneMutationChancePerLevel = .3f;
         public const float NecrohyphalInfiltrationChancePerLevel = 0.004f;
         public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.019f;
-        public const float NecrotoxicConversionReclaimChancePerLevel = .035f;
+        public const float NecrotoxicConversionReclaimChancePerLevel = .04f;
         public const float CatabolicRebirthResurrectionChancePerLevel = 0.12f;
 
         // Putrefactive Cascade (Tier 6 Fungicide)
         public const float PutrefactiveCascadeEffectivenessBonus = 0.003f; // X% per level boost to Putrefactive Mycotoxin
-        public const float PutrefactiveCascadeCascadeChance = 0.15f; // Y% per level chance for cascade
+        public const float PutrefactiveCascadeCascadeChance = 0.19f; // Y% per level chance for cascade
 
         // Chitin Fortification (Tier 2 MycelialSurges)
         public const int ChitinFortificationCellsPerLevel = 1; // X: cells fortified per level
@@ -84,21 +84,21 @@ namespace FungusToast.Core.Config
         public const int HyphalSurgeMaxLevel = 10;
         public const int NecrosporulationMaxLevel = 5;
         public const int MycotoxinPotentiationMaxLevel = 10;
-        public const int AdaptiveExpressionMaxLevel = 6;
+        public const int AdaptiveExpressionMaxLevel = 5;
         public const int MycotoxinCatabolismMaxLevel = 10;
         public const int MycotropicInductionMaxLevel = 5;
         public const int PutrefactiveMycotoxinMaxLevel = 5;
         public const int AnabolicInversionMaxLevel = 3;
         public const int RegenerativeHyphaeMaxLevel = 5;
         public const int CreepingMoldMaxLevel = 4;
-        public const int SporocidalBloomMaxLevel = 5;
+        public const int SporicidalBloomMaxLevel = 5;
         public const int NecrophyticBloomMaxLevel = 5;
         public const int HyperadaptiveDriftMaxLevel = 4;
         public const int NecrohyphalInfiltrationMaxLevel = 5;
         public const int NecrotoxicConversionMaxLevel = 5;
         public const int CatabolicRebirthMaxLevel = 3;
         public const int ChitinFortificationMaxLevel = 10;
-        public const int PutrefactiveCascadeMaxLevel = 5;
+        public const int PutrefactiveCascadeMaxLevel = 3;
 
         // surge mutation points per activiation
         public const int HyphalSurgePointsPerActivation = 7;
