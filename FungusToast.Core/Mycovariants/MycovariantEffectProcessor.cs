@@ -10,6 +10,7 @@ using System.Numerics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core.Growth;
 
 public static class MycovariantEffectProcessor
 {
@@ -61,7 +62,7 @@ public static class MycovariantEffectProcessor
             if (prevCell == null)
             {
                 // Place a new living cell
-                var newCell = new FungalCell(playerId, livingLine[i]);
+                var newCell = new FungalCell(playerId, livingLine[i], FungusToast.Core.Growth.GrowthSource.JettingMycelium);
                 targetTile.PlaceFungalCell(newCell);
                 board.Players[playerId].ControlledTileIds.Add(livingLine[i]);
                 colonized++;
@@ -104,7 +105,7 @@ public static class MycovariantEffectProcessor
             if (prevCell == null || prevCell.IsDead)
             {
                 // Toxify empty or dead cell (call it "toxified" = "placed toxin")
-                ToxinHelper.ConvertToToxin(board, coneTileId, toxinLifespan, player);
+                ToxinHelper.ConvertToToxin(board, coneTileId, toxinLifespan, GrowthSource.JettingMycelium, player);
                 poisoned++; // toxified → poisoned (for simulation output)
             }
             else if (prevCell.IsAlive && prevCell.OwnerPlayerId != playerId)
@@ -322,7 +323,7 @@ public static class MycovariantEffectProcessor
             if (prevCell == null)
             {
                 // Place new Resistant cell using board method
-                var newCell = new FungalCell(playerId, tileId);
+                var newCell = new FungalCell(playerId, tileId, GrowthSource.SurgicalInoculation);
                 newCell.MakeResistant();
                 board.PlaceFungalCell(newCell);
                 observer?.RecordSurgicalInoculationDrop(playerId, 1);

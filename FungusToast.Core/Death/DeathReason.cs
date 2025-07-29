@@ -1,4 +1,6 @@
-﻿namespace FungusToast.Core.Death
+﻿using System;
+
+namespace FungusToast.Core.Death
 {
     public enum DeathReason
     {
@@ -15,5 +17,4 @@
         PutrefactiveCascade,
         PutrefactiveCascadePoison
     }
-
 }

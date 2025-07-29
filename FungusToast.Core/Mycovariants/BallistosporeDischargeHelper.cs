@@ -7,6 +7,7 @@ using FungusToast.Core.Metrics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core.Growth;
 
 namespace FungusToast.Core.Mycovariants
 {
@@ -57,7 +58,7 @@ namespace FungusToast.Core.Mycovariants
                 foreach (var tile in targetTiles)
                 {
                     int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, MycovariantGameBalance.BallistosporeDischargeToxinDuration);
-                    ToxinHelper.ConvertToToxin(board, tile.TileId, toxinLifespan, player);
+                    ToxinHelper.ConvertToToxin(board, tile.TileId, toxinLifespan, GrowthSource.Ballistospore, player);
                 }
                 playerMyco.IncrementEffectCount(MycovariantEffectType.Drops, targetTiles.Count);
                 observer?.RecordBallistosporeDischarge(player.PlayerId, targetTiles.Count);
@@ -78,7 +79,7 @@ namespace FungusToast.Core.Mycovariants
             if (player == null) return;
             // Use custom duration for Ballistospore Discharge, with all bonuses
             int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, MycovariantGameBalance.BallistosporeDischargeToxinDuration);
-            ToxinHelper.ConvertToToxin(board, tileId, toxinLifespan, player);
+            ToxinHelper.ConvertToToxin(board, tileId, toxinLifespan, GrowthSource.Ballistospore, player);
             playerMyco.IncrementEffectCount(MycovariantEffectType.Drops, 1);
             observer?.RecordBallistosporeDischarge(player.PlayerId, 1);
         }

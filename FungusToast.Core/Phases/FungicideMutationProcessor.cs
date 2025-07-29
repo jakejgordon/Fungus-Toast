@@ -2,6 +2,7 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Events;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
@@ -178,7 +179,7 @@ namespace FungusToast.Core.Phases
                     else
                     {
                         // Empty or already toxin: place toxin
-                        ToxinHelper.ConvertToToxin(board, target.TileId, toxinLifespan, player);
+                        ToxinHelper.ConvertToToxin(board, target.TileId, toxinLifespan, GrowthSource.SporicidalBloom, player);
                         toxified++;
                     }
                 }
@@ -406,7 +407,7 @@ namespace FungusToast.Core.Phases
                 candidateTiles.RemoveAt(index);
 
                 int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, GameBalance.MycotoxinTracerTileDuration);
-                ToxinHelper.ConvertToToxin(board, chosen.TileId, toxinLifespan, player);
+                ToxinHelper.ConvertToToxin(board, chosen.TileId, toxinLifespan, GrowthSource.MycotoxinTracer, player);
                 placed++;
             }
 

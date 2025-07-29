@@ -1,8 +1,9 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Core.Board;
 using FungusToast.Core.Death;
+using FungusToast.Core.Growth;
 
 namespace FungusToast.Unity.UI
 {
@@ -34,6 +35,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private TextMeshProUGUI growthAgeText;
         [SerializeField] private TextMeshProUGUI expirationText;
         [SerializeField] private TextMeshProUGUI resistantText;
+        [SerializeField] private TextMeshProUGUI growthSourceText;
         [SerializeField] private TextMeshProUGUI additionalInfoText;
 
         [Header("Icon Components")]
@@ -51,6 +53,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private GameObject ageGroup;
         [SerializeField] private GameObject expirationGroup;
         [SerializeField] private GameObject resistantGroup;
+        [SerializeField] private GameObject growthSourceGroup;
         [SerializeField] private GameObject additionalInfoGroup;
 
         // Runtime dependency - injected via SetPlayerBinder()
@@ -73,6 +76,7 @@ namespace FungusToast.Unity.UI
             UpdateDeathReason(cell);
             UpdateOwnershipInfo(cell);
             UpdateAgeAndExpiration(cell, board);
+            UpdateGrowthSource(cell);
             UpdateIcons(cell, gridVisualizer);
             UpdateResistantStatus(cell, gridVisualizer);
             UpdateAdditionalInfo(cell);
@@ -125,13 +129,14 @@ namespace FungusToast.Unity.UI
         {
             // Set explicit sibling indices to force correct order
             if (statusGroup != null) statusGroup.transform.SetSiblingIndex(0);
-            if (deathReasonGroup != null) deathReasonGroup.transform.SetSiblingIndex(1);
-            if (ownerGroup != null) ownerGroup.transform.SetSiblingIndex(2);
-            if (lastOwnerGroup != null) lastOwnerGroup.transform.SetSiblingIndex(3);
-            if (ageGroup != null) ageGroup.transform.SetSiblingIndex(4);
-            if (expirationGroup != null) expirationGroup.transform.SetSiblingIndex(5);
-            if (resistantGroup != null) resistantGroup.transform.SetSiblingIndex(6);
-            if (additionalInfoGroup != null) additionalInfoGroup.transform.SetSiblingIndex(7);
+            if (growthSourceGroup != null) growthSourceGroup.transform.SetSiblingIndex(1);
+            if (deathReasonGroup != null) deathReasonGroup.transform.SetSiblingIndex(2);
+            if (ownerGroup != null) ownerGroup.transform.SetSiblingIndex(3);
+            if (lastOwnerGroup != null) lastOwnerGroup.transform.SetSiblingIndex(4);
+            if (ageGroup != null) ageGroup.transform.SetSiblingIndex(5);
+            if (expirationGroup != null) expirationGroup.transform.SetSiblingIndex(6);
+            if (resistantGroup != null) resistantGroup.transform.SetSiblingIndex(7);
+            if (additionalInfoGroup != null) additionalInfoGroup.transform.SetSiblingIndex(8);
         }
 
         /// <summary>
@@ -147,6 +152,7 @@ namespace FungusToast.Unity.UI
             ResetGroupPosition(ageGroup);
             ResetGroupPosition(expirationGroup);
             ResetGroupPosition(resistantGroup);
+            ResetGroupPosition(growthSourceGroup);
             ResetGroupPosition(additionalInfoGroup);
         }
 
@@ -425,6 +431,28 @@ namespace FungusToast.Unity.UI
         }
 
         /// <summary>
+        /// Updates the growth source information display
+        /// </summary>
+        private void UpdateGrowthSource(FungalCell cell)
+        {
+            bool showGrowthSource = cell.SourceOfGrowth.HasValue;
+            
+            SetGroupVisibility(growthSourceGroup, showGrowthSource);
+            
+            if (growthSourceText != null)
+            {
+                if (showGrowthSource)
+                {
+                    growthSourceText.text = $"<color=#90EE90>Source: {GetGrowthSourceDisplayName(cell.SourceOfGrowth.Value)}</color>";
+                }
+                else
+                {
+                    growthSourceText.text = "";
+                }
+            }
+        }
+
+        /// <summary>
         /// Updates the resistant status display with shield icon
         /// </summary>
         private void UpdateResistantStatus(FungalCell cell, FungusToast.Unity.Grid.GridVisualizer gridVisualizer)
@@ -472,11 +500,11 @@ namespace FungusToast.Unity.UI
 
                 // Animation states (for visual feedback)
                 if (cell.IsNewlyGrown)
-                    additionalInfo.AppendLine("<color=#FFFF00>? Newly Grown</color>");
+                    additionalInfo.AppendLine("<color=#FFFF00>● Newly Grown</color>");
                 if (cell.IsDying)
-                    additionalInfo.AppendLine("<color=#FF0000>? Dying</color>");
+                    additionalInfo.AppendLine("<color=#FF0000>● Dying</color>");
                 if (cell.IsReceivingToxinDrop)
-                    additionalInfo.AppendLine("<color=#FF00FF>? Receiving Toxin</color>");
+                    additionalInfo.AppendLine("<color=#FF00FF>● Receiving Toxin</color>");
 
                 string infoText = additionalInfo.ToString().Trim();
                 bool hasAdditionalInfo = !string.IsNullOrEmpty(infoText);
@@ -548,8 +576,38 @@ namespace FungusToast.Unity.UI
                 DeathReason.JettingMycelium => "Jetting Mycelium",
                 DeathReason.Infested => "Infested",
                 DeathReason.Poisoned => "Poisoned",
+                DeathReason.PutrefactiveCascade => "Putrefactive Cascade",
+                DeathReason.PutrefactiveCascadePoison => "Putrefactive Cascade Poison",
                 DeathReason.Unknown => "Unknown",
                 _ => reason.ToString()
+            };
+        }
+
+        private string GetGrowthSourceDisplayName(GrowthSource source)
+        {
+            return source switch
+            {
+                GrowthSource.InitialSpore => "Initial Spore",
+                GrowthSource.HyphalOutgrowth => "Hyphal Outgrowth",
+                GrowthSource.TendrilOutgrowth => "Tendril Outgrowth",
+                GrowthSource.RegenerativeHyphae => "Regenerative Hyphae",
+                GrowthSource.NecrotoxicConversion => "Necrotoxic Conversion",
+                GrowthSource.HyphalSurge => "Hyphal Surge",
+                GrowthSource.JettingMycelium => "Jetting Mycelium",
+                GrowthSource.HyphalVectoring => "Hyphal Vectoring",
+                GrowthSource.SurgicalInoculation => "Surgical Inoculation",
+                GrowthSource.Necrosporulation => "Necrosporulation",
+                GrowthSource.NecrophyticBloom => "Necrophytic Bloom",
+                GrowthSource.NecrohyphalInfiltration => "Necrohyphal Infiltration",
+                GrowthSource.Reclaim => "Reclaim",
+                GrowthSource.CreepingMold => "Creeping Mold",
+                GrowthSource.CatabolicRebirth => "Catabolic Rebirth",
+                GrowthSource.Ballistospore => "Ballistospore",
+                GrowthSource.MycotoxinTracer => "Mycotoxin Tracers",
+                GrowthSource.SporicidalBloom => "Sporicidal Bloom",
+                GrowthSource.Manual => "Manual",
+                GrowthSource.Unknown => "Unknown",
+                _ => source.ToString()
             };
         }
 

@@ -3,6 +3,7 @@ using FungusToast.Core.Events;
 using FungusToast.Core.Players;
 using FungusToast.Core.Config;
 using System;
+using FungusToast.Core.Growth;
 
 namespace FungusToast.Core.Death
 {
@@ -12,7 +13,7 @@ namespace FungusToast.Core.Death
         /// Converts the cell at the specified tile to a toxin, or creates a new toxin cell if empty.
         /// This method respects proper event firing via PlaceFungalCell.
         /// </summary>
-        public static void ConvertToToxin(GameBoard board, int tileId, int toxinLifespan, Player? owner = null)
+        public static void ConvertToToxin(GameBoard board, int tileId, int toxinLifespan, GrowthSource growthSource = GrowthSource.Unknown, Player? owner = null)
         {
             // Fire ToxinPlaced event to allow for neutralization
             var toxinPlacedArgs = new ToxinPlacedEventArgs(tileId, owner?.PlayerId ?? -1);
@@ -38,7 +39,7 @@ namespace FungusToast.Core.Death
             }
             else
             {
-                var toxin = new FungalCell(owner?.PlayerId, tileId, toxinLifespan);
+                var toxin = new FungalCell(owner?.PlayerId, tileId, growthSource, toxinLifespan);
                 // Mark for toxin drop animation
                 toxin.MarkAsReceivingToxinDrop();
                 
@@ -50,10 +51,10 @@ namespace FungusToast.Core.Death
         /// Converts the cell at the specified tile to a toxin, or creates a new toxin cell if empty.
         /// This overload calculates the toxin lifespan automatically based on player mutations.
         /// </summary>
-        public static void ConvertToToxin(GameBoard board, int tileId, Player? owner = null)
+        public static void ConvertToToxin(GameBoard board, int tileId, GrowthSource source, Player? owner = null)
         {
             int toxinLifespan = GetToxinExpirationAge(owner);
-            ConvertToToxin(board, tileId, toxinLifespan, owner);
+            ConvertToToxin(board, tileId, toxinLifespan, source, owner);
         }
 
         /// <summary>

@@ -6,6 +6,7 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using FungusToast.Core.Board;
 using FungusToast.Core.Phases;
+using FungusToast.Core.Growth;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -240,7 +241,7 @@ namespace FungusToast.Core.Board
             if (!tile.IsOccupied)
             {
                 int tileId = y * Width + x;
-                var cell = new FungalCell(playerId, tileId);
+                var cell = new FungalCell(playerId, tileId, GrowthSource.InitialSpore);
                 cell.MakeResistant(); // Initial spores MUST be resistant to prevent elimination
                 tile.PlaceFungalCell(cell);
                 tileIdToCell[tileId] = cell;
@@ -316,7 +317,15 @@ namespace FungusToast.Core.Board
             return tileIdToCell.Values.Where(c => c.OwnerPlayerId == playerId).ToList();
         }
 
-        public bool SpawnSporeForPlayer(Player player, int tileId)
+        /// <summary>
+        /// Spawns a spore for the given player at the specified tile.
+        /// Updated to accept a GrowthSource parameter to properly track spore origins.
+        /// </summary>
+        /// <param name="player">The player who owns the spore</param>
+        /// <param name="tileId">The tile where the spore should be placed</param>
+        /// <param name="source">The source/reason for this spore creation</param>
+        /// <returns>True if the spore was successfully placed, false otherwise</returns>
+        public bool SpawnSporeForPlayer(Player player, int tileId, GrowthSource source = GrowthSource.Necrosporulation)
         {
             var (x, y) = GetXYFromTileId(tileId);
             var tile = GetTile(x, y);
@@ -324,7 +333,7 @@ namespace FungusToast.Core.Board
             if (tile == null || tile.IsOccupied)
                 return false;
 
-            var cell = new FungalCell(player.PlayerId, tileId);
+            var cell = new FungalCell(player.PlayerId, tileId, source);
             // Note: Spores are NOT resistant by default
             // They only become resistant if adjacent to resistant cells via Hyphal Resistance Transfer
             tile.PlaceFungalCell(cell);
@@ -688,7 +697,7 @@ namespace FungusToast.Core.Board
             // Standard: Only allow growth into empty tile
             if (!targetTile.IsOccupied)
             {
-                var newCell = new FungalCell(playerId, targetTileId);
+                var newCell = new FungalCell(playerId, targetTileId, GrowthSource.HyphalOutgrowth);
                 newCell.MarkAsNewlyGrown(); // Mark for fade-in effect
                 targetTile.PlaceFungalCell(newCell);
                 PlaceFungalCell(newCell);
@@ -793,7 +802,7 @@ namespace FungusToast.Core.Board
 
         internal void InternalColonizeCell(int playerId, int tileId)
         {
-            var cell = new FungalCell(playerId, tileId);
+            var cell = new FungalCell(playerId, tileId, GrowthSource.Manual);
             tileIdToCell[tileId] = cell;
             var (x, y) = GetXYFromTileId(tileId);
             Grid[x, y].PlaceFungalCell(cell);
@@ -802,7 +811,7 @@ namespace FungusToast.Core.Board
 
         internal void InternalInfestCell(int playerId, int tileId, int oldOwnerId)
         {
-            var cell = new FungalCell(playerId, tileId);
+            var cell = new FungalCell(playerId, tileId, GrowthSource.Manual);
             tileIdToCell[tileId] = cell;
             var (x, y) = GetXYFromTileId(tileId);
             Grid[x, y].PlaceFungalCell(cell);
@@ -894,7 +903,7 @@ namespace FungusToast.Core.Board
             if (cell == null)
                 return FungalCellTakeoverResult.Invalid;
             
-            var result = cell.Takeover(newOwnerPlayerId, allowToxin);
+            var result = cell.Takeover(newOwnerPlayerId, GrowthSource.Unknown, allowToxin);
             
             if (result == FungalCellTakeoverResult.Infested ||
                 result == FungalCellTakeoverResult.Reclaimed ||

@@ -1,6 +1,6 @@
 ﻿using FungusToast.Core.Config;
 using FungusToast.Core.Death;
-using FungusToast.Core.Mutations;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Players;
 using System;
 
@@ -50,6 +50,13 @@ namespace FungusToast.Core.Board
         public bool IsReceivingToxinDrop { get; private set; } = false;
 
         public DeathReason? CauseOfDeath { get; private set; }
+        
+        /// <summary>
+        /// The source/reason why this cell was created or became alive.
+        /// Tracks how the cell came into existence (initial spore, growth, reclaim, etc.)
+        /// </summary>
+        public GrowthSource? SourceOfGrowth { get; private set; }
+        
         public int? LastOwnerPlayerId { get; private set; } = null;
         public int ReclaimCount { get; private set; } = 0;
 
@@ -60,32 +67,32 @@ namespace FungusToast.Core.Board
 
         public FungalCell() { }
 
-        public FungalCell(int? ownerPlayerId, int tileId)
+        public FungalCell(int? ownerPlayerId, int tileId, GrowthSource source = GrowthSource.Unknown)
         {
             OwnerPlayerId = ownerPlayerId;
             if (ownerPlayerId.HasValue)
                 OriginalOwnerPlayerId = ownerPlayerId.Value;
             TileId = tileId;
-            SetAlive();
+            GrowthCycleAge = 0;
+            SourceOfGrowth = source;
+            SetAlive(source);
         }
 
         /// <summary>
-        /// Create a toxin Fungal Cell.
+        /// Create a toxin Fungal Cell with specified lifespan.
         /// </summary>
-        public FungalCell(int? ownerPlayerId, int tileId, int toxinLifespan = -1)
+        public FungalCell(int? ownerPlayerId, int tileId, GrowthSource source = GrowthSource.Unknown, int toxinExpirationAge = GameBalance.DefaultToxinDuration)
         {
-            // Use default lifespan if not specified
-            if (toxinLifespan <= 0)
-                toxinLifespan = GameBalance.DefaultToxinDuration;
-
             OwnerPlayerId = ownerPlayerId;
             if (ownerPlayerId.HasValue)
                 OriginalOwnerPlayerId = ownerPlayerId.Value;
-
             TileId = tileId;
-            CellType = FungalCellType.Toxin;
-            ToxinExpirationAge = toxinLifespan; // This is what determines expiration
             GrowthCycleAge = 0;
+            SourceOfGrowth = source;
+
+            // set toxin stuff
+            ToxinExpirationAge = toxinExpirationAge;
+            CellType = FungalCellType.Toxin;
         }
 
         /// <summary>
@@ -108,12 +115,13 @@ namespace FungusToast.Core.Board
         }
 
         // State transitions
-        private void SetAlive()
+        private void SetAlive(GrowthSource source = GrowthSource.Unknown)
         {
             CellType = FungalCellType.Alive;
             GrowthCycleAge = 0;
             // Clear CauseOfDeath when becoming alive - keep LastOwnerPlayerId as historical data
             CauseOfDeath = null;
+            SourceOfGrowth = source;
         }
 
         private void SetDead(DeathReason reason)
@@ -122,6 +130,7 @@ namespace FungusToast.Core.Board
             CauseOfDeath = reason;
             // For natural deaths (same owner), set LastOwnerPlayerId to track who lost the cell
             LastOwnerPlayerId = OwnerPlayerId;
+            // Keep SourceOfGrowth for historical reference
         }
 
         private void SetToxin(int toxinLifespan)
@@ -129,6 +138,7 @@ namespace FungusToast.Core.Board
             CellType = FungalCellType.Toxin;
             ToxinExpirationAge = toxinLifespan; // This is what determines expiration
             GrowthCycleAge = 0; // Reset growth cycle age when becoming a toxin
+            SourceOfGrowth = null; // Toxins don't have a growth source
             // Don't modify ownership tracking here
         }
 
@@ -138,6 +148,14 @@ namespace FungusToast.Core.Board
         public void MakeResistant()
         {
             IsResistant = true;
+        }
+
+        /// <summary>
+        /// Clears the toxin drop flag (called after toxin drop animation completes)
+        /// </summary>
+        public void ClearToxinDropFlag()
+        {
+            IsReceivingToxinDrop = false;
         }
 
         /// <summary>
@@ -157,13 +175,13 @@ namespace FungusToast.Core.Board
         /// <summary>
         /// Reclaims a dead cell (of any prior owner) as a new living cell for this player.
         /// </summary>
-        public void Reclaim(int newOwnerPlayerId)
+        public void Reclaim(int newOwnerPlayerId, GrowthSource source = GrowthSource.Reclaim)
         {
             if (!IsReclaimable)
                 throw new InvalidOperationException("Cannot reclaim a non-reclaimable cell.");
 
             ChangeOwnership(newOwnerPlayerId);
-            SetAlive();
+            SetAlive(source);
             ReclaimCount++;
         }
 
@@ -172,7 +190,7 @@ namespace FungusToast.Core.Board
         /// Returns the outcome for simulation/stat tracking.
         /// Resistant cells cannot be taken over.
         /// </summary>
-        public FungalCellTakeoverResult Takeover(int newOwnerPlayerId, bool allowToxin = false)
+        public FungalCellTakeoverResult Takeover(int newOwnerPlayerId, GrowthSource source = GrowthSource.Unknown, bool allowToxin = false)
         {
             // Resistant cells cannot be taken over
             if (IsResistant)
@@ -187,7 +205,7 @@ namespace FungusToast.Core.Board
             {
                 // Record the displacement/death first, then revive as new owner's cell
                 ChangeOwnership(newOwnerPlayerId, DeathReason.Infested);
-                SetAlive(); // This will clear CauseOfDeath, but LastOwnerPlayerId is preserved from ChangeOwnership
+                SetAlive(source); // This will clear CauseOfDeath, but LastOwnerPlayerId is preserved from ChangeOwnership
                 return FungalCellTakeoverResult.Infested;
             }
 
@@ -195,7 +213,7 @@ namespace FungusToast.Core.Board
             if (IsReclaimable)
             {
                 ChangeOwnership(newOwnerPlayerId);
-                SetAlive();
+                SetAlive(source);
                 ReclaimCount++;
                 return FungalCellTakeoverResult.Reclaimed;
             }
@@ -204,7 +222,7 @@ namespace FungusToast.Core.Board
             if (IsToxin && allowToxin)
             {
                 ChangeOwnership(newOwnerPlayerId);
-                SetAlive();
+                SetAlive(source);
                 // Optionally reset toxin-related fields/stats here
                 return FungalCellTakeoverResult.CatabolicGrowth;
             }
@@ -259,29 +277,6 @@ namespace FungusToast.Core.Board
             IsReceivingToxinDrop = true;
         }
 
-        /// <summary>
-        /// Clears the toxin drop flag (called after toxin drop animation completes)
-        /// </summary>
-        public void ClearToxinDropFlag()
-        {
-            IsReceivingToxinDrop = false;
-        }
-
-        /// <summary>
-        /// Mark a dead cell as a toxin (Toxified). Used for dropping toxin on empty/dead cells.
-        /// </summary>
-        public void MarkAsToxin(int toxinLifespan, Player? owner = null)
-        {
-            if (IsAlive)
-                throw new InvalidOperationException("Cannot mark a living cell as toxin.");
-            if (toxinLifespan <= 0)
-                throw new ArgumentOutOfRangeException(nameof(toxinLifespan), "Toxin lifespan must be greater than 0.");
-
-            if (owner != null)
-                ChangeOwnership(owner.PlayerId);
-
-            SetToxin(toxinLifespan);
-        }
 
         /// <summary>
         /// Converts a cell to toxin, killing if alive (Poisoned) or overwriting dead/empty (Toxified).
@@ -300,15 +295,6 @@ namespace FungusToast.Core.Board
                 ChangeOwnership(owner.PlayerId, reason ?? DeathReason.Poisoned);
 
             SetToxin(toxinLifespan);
-        }
-
-        public void ClearToxinState()
-        {
-            if (IsToxin)
-            {
-                CellType = FungalCellType.Dead;
-                ToxinExpirationAge = 0;
-            }
         }
 
         public bool HasToxinExpired()
