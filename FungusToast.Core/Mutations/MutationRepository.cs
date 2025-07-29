@@ -377,6 +377,23 @@ namespace FungusToast.Core.Mutations
 
 
             MakeChild(new Mutation(
+                id: MutationIds.NecrotoxicConversion,
+                name: "Necrotoxic Conversion",
+                description: $"Each level grants a {FormatPercent(GameBalance.NecrotoxicConversionReclaimChancePerLevel)} chance to immediately reclaim any cell that dies to your toxin effects. " +
+                             $"This applies to deaths from Putrefactive Mycotoxin, Mycotoxin Potentiation, Sporocidal Bloom, and Putrefactive Cascade effects. " +
+                             $"When triggered, the dead cell is instantly converted to a living cell under your control, creating aggressive territorial expansion through chemical warfare.",
+                flavorText: "Advanced necrotoxin synthesis converts cellular death into immediate colonization, hijacking enemy metabolism to fuel instantaneous territorial conversion through toxic alchemy.",
+                type: MutationType.NecrotoxicConversion,
+                effectPerLevel: GameBalance.NecrotoxicConversionReclaimChancePerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
+                maxLevel: GameBalance.NecrotoxicConversionMaxLevel,
+                category: MutationCategory.Fungicide,
+                tier: MutationTier.Tier5
+            ),
+            new MutationPrerequisite(MutationIds.SporocidalBloom, 1),
+            new MutationPrerequisite(MutationIds.MutatorPhenotype, 5));
+
+            MakeChild(new Mutation(
                 id: MutationIds.NecrophyticBloom,
                 name: "Necrophytic Bloom",
                 description:
@@ -395,7 +412,6 @@ namespace FungusToast.Core.Mutations
             ),
             new MutationPrerequisite(MutationIds.AnabolicInversion, 1),
             new MutationPrerequisite(MutationIds.Necrosporulation, 1));
-
 
             //Tier-5
             MakeChild(new Mutation(
@@ -448,7 +464,6 @@ namespace FungusToast.Core.Mutations
             ),
             new MutationPrerequisite(MutationIds.NecrohyphalInfiltration, 1),
             new MutationPrerequisite(MutationIds.AnabolicInversion, 2));
-
 
             // Tier-6
             MakeChild(new Mutation(
@@ -519,8 +534,6 @@ namespace FungusToast.Core.Mutations
             Visit(mutation);
             return chain;
         }
-
-
     }
 }
 

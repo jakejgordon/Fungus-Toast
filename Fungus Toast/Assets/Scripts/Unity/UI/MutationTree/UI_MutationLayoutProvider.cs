@@ -34,8 +34,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.MycotoxinPotentiation,     new MutationLayoutMetadata(2, 1, MutationCategory.Fungicide) },
                 { MutationIds.PutrefactiveMycotoxin,     new MutationLayoutMetadata(2, 2, MutationCategory.Fungicide) },
                 { MutationIds.SporocidalBloom,           new MutationLayoutMetadata(2, 3, MutationCategory.Fungicide) },
-                { MutationIds.NecrotoxicConversion,      new MutationLayoutMetadata(2, 4, MutationCategory.Fungicide) },
-                { MutationIds.PutrefactiveRejuvenation,  new MutationLayoutMetadata(2, 5, MutationCategory.Fungicide) },
+                { MutationIds.PutrefactiveRejuvenation,  new MutationLayoutMetadata(2, 4, MutationCategory.Fungicide) },
+                { MutationIds.NecrotoxicConversion,      new MutationLayoutMetadata(2, 5, MutationCategory.Fungicide) },
                 { MutationIds.PutrefactiveCascade,       new MutationLayoutMetadata(2, 6, MutationCategory.Fungicide) },
 
                 /* --------------- Genetic Drift (col 3) -------------- */
