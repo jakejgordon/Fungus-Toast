@@ -105304,8 +105304,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43aedea2ff546334abfa4d7043c2e355, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boardWidth: 120
-  boardHeight: 120
+  boardWidth: 160
+  boardHeight: 160
   playerCount: 1
   testingModeEnabled: 0
   testingModeForceHumanFirst: 1
