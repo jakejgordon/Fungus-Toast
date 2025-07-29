@@ -340,6 +340,11 @@ namespace FungusToast.Core.Phases
             int level = player.GetMutationLevel(MutationIds.MycotoxinTracer);
             if (level == 0) return 0;
 
+            // Convert accumulated failed growths to average per growth cycle
+            // failedGrowthsThisRound represents total across all growth cycles (typically 5)
+            float averageFailedGrowthsPerCycle = (float)failedGrowthsThisRound / GameBalance.TotalGrowthCycles;
+            int failedGrowthsThisRoundAdjusted = (int)Math.Round(averageFailedGrowthsPerCycle);
+
             int totalTiles = board.TotalTiles;
             int maxToxinsThisRound = totalTiles / GameBalance.MycotoxinTracerMaxToxinsDivisor;
 
@@ -351,24 +356,32 @@ namespace FungusToast.Core.Phases
 
             // 2. Failed growth bonus with logarithmic scaling to prevent excessive scaling
             float logLevel = (float)Math.Log(level + 1, 2); // Log base 2 of (level + 1)
-            float weightedFailures = failedGrowthsThisRound * logLevel * GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel;
+            float weightedFailures = failedGrowthsThisRoundAdjusted * logLevel * GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel;
             int toxinsFromFailures = rng.Next(0, (int)weightedFailures + 1);
 
-            // 3. NEW: Percentage-based bonus for early game (when living cells are low)
+            // 3. Percentage-based bonus for early game (when living cells are low)
             int toxinsFromPercentageBonus = 0;
-            if (livingCells > 0 && failedGrowthsThisRound > 0)
+            if (livingCells > 0 && failedGrowthsThisRoundAdjusted > 0)
             {
-                float failureRate = (float)failedGrowthsThisRound / livingCells;
-                // Clamp failure rate to [0, 1] to handle edge cases
+                // Calculate failure rate as percentage of living cells that failed to grow
+                float failureRate = (float)failedGrowthsThisRoundAdjusted / livingCells;
+                // Clamp failure rate to [0, 1] to handle edge cases where failures exceed living cells
                 failureRate = Math.Clamp(failureRate, 0f, 1f);
                 
-                // Calculate the cap: MIN(opponents, failed growths)
+                // Establish maximum possible bonus toxins: MIN(opponents, failed growths)
                 int opponentCount = allPlayers.Count - 1; // Subtract 1 for this player
-                int percentageCap = Math.Min(opponentCount, failedGrowthsThisRound);
+                int maxBonusToxins = Math.Min(opponentCount, failedGrowthsThisRoundAdjusted);
                 
-                // Linear scaling: 0% failure = 0 toxins, 100% failure = percentageCap toxins
-                float scaledBonus = failureRate * percentageCap * level * GameBalance.MycotoxinTracerFailureRateWeightPerLevel;
-                toxinsFromPercentageBonus = (int)Math.Round(scaledBonus) / 2; // divide by 2 as the bonus was too high
+                // Calculate level multiplier: 10% per level, capped at 100% (level 10+)
+                float levelMultiplier = Math.Min(level * 0.1f, 1.0f);
+                
+                // Apply percentage bonus scaling:
+                // Level 1: 10% of (failureRate * maxBonusToxins)  
+                // Level 5: 50% of (failureRate * maxBonusToxins)
+                // Level 10+: 100% of (failureRate * maxBonusToxins)
+                float baseBonusToxins = failureRate * maxBonusToxins;
+                float scaledBonus = baseBonusToxins * levelMultiplier;
+                toxinsFromPercentageBonus = (int)Math.Round(scaledBonus);
             }
 
             int totalToxins = toxinsFromLevel + toxinsFromFailures + toxinsFromPercentageBonus;
