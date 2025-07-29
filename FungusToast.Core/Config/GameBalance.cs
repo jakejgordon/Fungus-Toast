@@ -27,7 +27,7 @@ namespace FungusToast.Core.Config
         public const int MycotoxinTracerMaxToxinsDivisor = 60;
 
         public const float TendrilDiagonalGrowthEffectPerLevel = 0.01f;
-        public const float MutatorPhenotypeEffectPerLevel = 0.065f;
+        public const float MutatorPhenotypeEffectPerLevel = 0.1f;
         public const float ChronoresilientCytoplasmEffectPerLevel = 4f;
         public const float HyphalSurgeEffectPerLevel = .009f;
 
@@ -77,7 +77,7 @@ namespace FungusToast.Core.Config
         public const int MycelialBloomMaxLevel = 150;
         public const int HomeostaticHarmonyMaxLevel = 100;
         public const int MycotoxinTracerMaxLevel = 50;
-        public const int MutatorPhenotypeMaxLevel = 15;
+        public const int MutatorPhenotypeMaxLevel = 10;
         public const int DiagonalGrowthMaxLevel = 10;
         public const int HyphalVectoringMaxLevel = 5;
         public const int ChronoresilientCytoplasmMaxLevel = 15;
