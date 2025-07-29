@@ -322,7 +322,7 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.RegenerativeHyphae,
                 name: "Regenerative Hyphae",
-                description: $"After growth and before decay, each living cell has a {FormatPercent(GameBalance.RegenerativeHyphaeReclaimChance)} chance to reclaim one orthogonally adjacent dead cell it previously owned. " +
+                description: $"After growth and before decay, each living cell has a {FormatPercent(GameBalance.RegenerativeHyphaeReclaimChance)} chance per level to reclaim one orthogonally adjacent dead cell it previously owned. " +
                              $"Only one attempt can be made on each dead cell per round.",
                 flavorText: "Regrowth cascades from necrotic margins, guided by residual cytoplasmic signaling.",
                 type: MutationType.ReclaimOwnDeadCells,

@@ -33,7 +33,7 @@ namespace FungusToast.Core.Config
 
         public const float NecrosporulationEffectPerLevel = 0.04f;
         public const int MycotoxinPotentiationGrowthCycleExtensionPerLevel = 1;
-        public const float MycotoxinPotentiationKillChancePerLevel = 0.014f;
+        public const float MycotoxinPotentiationKillChancePerLevel = 0.016f;
         public const float AdaptiveExpressionEffectPerLevel = 0.19f;
         public const float AdaptiveExpressionSecondPointChancePerLevel = 0.14f; // Chance per level for second point if first is awarded
         public const float MycotoxinCatabolismCleanupChancePerLevel = 0.025f;
