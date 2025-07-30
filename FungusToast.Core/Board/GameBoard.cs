@@ -317,6 +317,7 @@ namespace FungusToast.Core.Board
             return tileIdToCell.Values.Where(c => c.OwnerPlayerId == playerId).ToList();
         }
 
+        //TODO is this the right place for this?
         /// <summary>
         /// Spawns a spore for the given player at the specified tile.
         /// Updated to accept a GrowthSource parameter to properly track spore origins.
@@ -799,24 +800,6 @@ namespace FungusToast.Core.Board
             }
         }
 
-
-        internal void InternalColonizeCell(int playerId, int tileId)
-        {
-            var cell = new FungalCell(playerId, tileId, GrowthSource.Manual);
-            tileIdToCell[tileId] = cell;
-            var (x, y) = GetXYFromTileId(tileId);
-            Grid[x, y].PlaceFungalCell(cell);
-            OnCellColonized(playerId, tileId);
-        }
-
-        internal void InternalInfestCell(int playerId, int tileId, int oldOwnerId)
-        {
-            var cell = new FungalCell(playerId, tileId, GrowthSource.Manual);
-            tileIdToCell[tileId] = cell;
-            var (x, y) = GetXYFromTileId(tileId);
-            Grid[x, y].PlaceFungalCell(cell);
-            OnCellInfested(playerId, tileId, oldOwnerId);
-        }
 
         public void KillFungalCell(FungalCell cell, DeathReason reason, int? killerPlayerId = null, int? attackerTileId = null)
         {
