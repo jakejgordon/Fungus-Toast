@@ -238,7 +238,7 @@ namespace FungusToast.Core.Growth
 
                 // Overwrite whatever was there with a new living cell (if it's not already your living cell)
                 var newCell = new FungalCell(player.PlayerId, tile.TileId, GrowthSource.HyphalVectoring);
-                board.PlaceFungalCell(newCell);
+                board.PlaceFungalCell(newCell); // Use board.PlaceFungalCell for proper tracking
 
                 processed++;
             }

@@ -96,7 +96,7 @@ namespace FungusToast.Core.Phases
                     {
                         // Place a new living cell if empty
                         var newCell = new FungalCell(player.PlayerId, targetTileId, GrowthSource.HyphalVectoring);
-                        targetTile.PlaceFungalCell(newCell);
+                        board.PlaceFungalCell(newCell); // Use board.PlaceFungalCell instead of targetTile.PlaceFungalCell for proper tracking
                         colonized++;
                     }
 
