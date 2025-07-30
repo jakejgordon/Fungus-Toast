@@ -13,7 +13,7 @@ namespace FungusToast.Core.Death
         /// Converts the cell at the specified tile to a toxin, or creates a new toxin cell if empty.
         /// This method respects proper event firing via PlaceFungalCell.
         /// </summary>
-        public static void ConvertToToxin(GameBoard board, int tileId, int toxinLifespan, GrowthSource growthSource = GrowthSource.Unknown, Player? owner = null)
+        public static void ConvertToToxin(GameBoard board, int tileId, int toxinLifespan, GrowthSource growthSource, Player? owner = null)
         {
             // Fire ToxinPlaced event to allow for neutralization
             var toxinPlacedArgs = new ToxinPlacedEventArgs(tileId, owner?.PlayerId ?? -1);

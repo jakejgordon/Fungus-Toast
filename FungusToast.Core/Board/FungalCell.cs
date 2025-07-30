@@ -67,7 +67,7 @@ namespace FungusToast.Core.Board
 
         public FungalCell() { }
 
-        public FungalCell(int? ownerPlayerId, int tileId, GrowthSource source = GrowthSource.Unknown)
+        public FungalCell(int? ownerPlayerId, int tileId, GrowthSource source)
         {
             OwnerPlayerId = ownerPlayerId;
             if (ownerPlayerId.HasValue)
@@ -81,7 +81,7 @@ namespace FungusToast.Core.Board
         /// <summary>
         /// Create a toxin Fungal Cell with specified lifespan.
         /// </summary>
-        public FungalCell(int? ownerPlayerId, int tileId, GrowthSource source = GrowthSource.Unknown, int toxinExpirationAge = GameBalance.DefaultToxinDuration)
+        public FungalCell(int? ownerPlayerId, int tileId, GrowthSource source, int toxinExpirationAge = GameBalance.DefaultToxinDuration)
         {
             OwnerPlayerId = ownerPlayerId;
             if (ownerPlayerId.HasValue)
