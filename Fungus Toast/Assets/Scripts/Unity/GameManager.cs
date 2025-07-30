@@ -443,11 +443,11 @@ namespace FungusToast.Unity
                 }
             }
 
-            // Determine draft order (example: fewest living cells goes first)
+            // Determine draft order
             List<Player> draftOrder;
             if (testingModeEnabled && testingModeForceHumanFirst)
             {
-                // In testing mode, ensure human player goes first
+                // In testing mode with human first, ensure human player goes first
                 draftOrder = Board.Players
                     .OrderBy(p => p.PlayerType == PlayerTypeEnum.Human ? 0 : 1)
                     .ThenBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
@@ -575,7 +575,7 @@ namespace FungusToast.Unity
         {
             testingModeEnabled = true;
             testingMycovariantId = mycovariantId;
-            testingModeForceHumanFirst = true;
+            testingModeForceHumanFirst = mycovariantId.HasValue; // Only force human first when testing a specific mycovariant
             this.fastForwardRounds = fastForwardRounds;
         }
 
@@ -583,6 +583,7 @@ namespace FungusToast.Unity
         {
             testingModeEnabled = false;
             testingMycovariantId = null;
+            testingModeForceHumanFirst = false; // Reset the flag when disabling testing mode
             fastForwardRounds = 0;
         }
 
