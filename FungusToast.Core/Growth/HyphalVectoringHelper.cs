@@ -12,9 +12,10 @@ namespace FungusToast.Core.Growth
 {
     public static class HyphalVectoringHelper
     {
+        //TODO make it select the ile closest to the center that is not blocked by friendly mold AND has the longest available straight path toward (and possibly through) the center.
         /// <summary>
         /// Attempts to select a valid Hyphal Vector origin cell and tile for the given player and board.
-        /// The origin is valid if its projected vector toward the center is not blocked by friendly mold.
+        /// Prioritizes selection based on: 1) Fewest friendly living cells in path, 2) Most enemy cells to infest, 3) Closest to center.
         /// Outputs debug info as appropriate.
         /// </summary>
         public static (FungalCell cell, BoardTile tile)? TrySelectHyphalVectorOrigin(
@@ -27,76 +28,107 @@ namespace FungusToast.Core.Growth
             int maxDebugLines = 5)
         {
             var livingCells = board.GetAllCellsOwnedBy(player.PlayerId).Where(c => c.IsAlive).ToList();
-            var candidates = new List<(FungalCell cell, BoardTile tile, double dist)>();
+            if (livingCells.Count == 0)
+                return null;
+
+            var evaluatedCells = new List<(FungalCell cell, BoardTile tile, CellEvaluation eval)>();
             var debugLines = new List<string>();
 
+            // Evaluate all living cells
             foreach (var cell in livingCells)
             {
                 var tile = board.GetTileById(cell.TileId)!;
-                double dist = GetDistance(tile.X, tile.Y, centerX, centerY);
-
-                var path = GetLineToCenter(tile.X, tile.Y, centerX, centerY, totalTiles);
-
-                if (PathBlockedByFriendly(path, board, player.PlayerId, out int unblockedTiles))
-                {
-                    debugLines.Add($"  ⤷ Rejected: blocked by friendly mold after {unblockedTiles} tiles (origin dist = {dist:F1})");
-                    continue;
-                }
-
-                candidates.Add((cell, tile, dist));
+                var evaluation = EvaluateCellForHyphalVectoring(tile, board, player.PlayerId, centerX, centerY, totalTiles);
+                evaluatedCells.Add((cell, tile, evaluation));
             }
 
-            if (candidates.Count == 0)
+            // Sort by our prioritization criteria:
+            // 1. Fewest friendly living cells in path (ascending)
+            // 2. Most enemy cells to infest (descending) 
+            // 3. Closest to center (ascending distance)
+            var sortedCells = evaluatedCells
+                .OrderBy(x => x.eval.FriendlyLivingInPath)     // Priority 1: Fewest friendly
+                .ThenByDescending(x => x.eval.EnemyLivingInPath) // Priority 2: Most enemies
+                .ThenBy(x => x.eval.DistanceToCenter)          // Priority 3: Closest to center
+                .ToList();
+
+            // First, try to find cells with completely unblocked paths (original behavior for optimal cases)
+            var unblockedCells = sortedCells.Where(x => x.eval.FriendlyLivingInPath == 0).ToList();
+            
+            if (unblockedCells.Count > 0)
             {
-                // Fallback: check top N closest cells, select the one with the fewest friendly living cells in its path
-                int maxCandidateCells = GameBalance.HyphalVectoringCandidateCellsToCheck;
-                var topCells = livingCells
-                    .Select(c => (cell: c, tile: board.GetTileById(c.TileId)!, dist: GetDistance(board.GetTileById(c.TileId)!.X, board.GetTileById(c.TileId)!.Y, centerX, centerY)))
-                    .OrderBy(t => t.dist)
-                    .Take(maxCandidateCells)
+                var chosen = unblockedCells[0]; // Take the best one based on our sorting
+                debugLines.Add($"  ✓ Selected unblocked origin at distance {chosen.eval.DistanceToCenter:F1} with {chosen.eval.EnemyLivingInPath} enemy targets");
+                return (chosen.cell, chosen.tile);
+            }
+
+            // Fallback: Allow paths with friendly cells, but prefer the best options
+            int maxCandidateCells = Math.Min(GameBalance.HyphalVectoringCandidateCellsToCheck, sortedCells.Count);
+            var bestCandidates = sortedCells.Take(maxCandidateCells).ToList();
+
+            if (bestCandidates.Count > 0)
+            {
+                // Among the top candidates, select randomly from those tied for the best score
+                var bestEval = bestCandidates[0].eval;
+                var tiedForBest = bestCandidates
+                    .Where(x => x.eval.FriendlyLivingInPath == bestEval.FriendlyLivingInPath &&
+                               x.eval.EnemyLivingInPath == bestEval.EnemyLivingInPath)
                     .ToList();
 
-                int minFriendly = int.MaxValue;
-                List<(FungalCell cell, BoardTile tile)> best = new();
-
-                foreach (var (cell, tile, dist) in topCells)
-                {
-                    var path = GetLineToCenter(tile.X, tile.Y, centerX, centerY, totalTiles);
-                    int friendlyCount = 0;
-                    foreach (var (x, y) in path)
-                    {
-                        var pathTile = board.GetTile(x, y);
-                        if (pathTile != null && pathTile.IsOccupied && pathTile.FungalCell is { IsAlive: true, OwnerPlayerId: var oid } && oid == player.PlayerId)
-                        {
-                            friendlyCount++;
-                        }
-                    }
-                    if (friendlyCount < minFriendly)
-                    {
-                        minFriendly = friendlyCount;
-                        best.Clear();
-                        best.Add((cell, tile));
-                    }
-                    else if (friendlyCount == minFriendly)
-                    {
-                        best.Add((cell, tile));
-                    }
-                }
-
-                if (best.Count > 0)
-                {
-                    var fallbackChosen = best[rng.Next(best.Count)];
-                    return (fallbackChosen.cell, fallbackChosen.tile);
-                }
-
-                // If still nothing, return null as before
-                return null;
+                var chosen = tiedForBest[rng.Next(tiedForBest.Count)];
+                debugLines.Add($"  ✓ Selected fallback origin at distance {chosen.eval.DistanceToCenter:F1} with {chosen.eval.FriendlyLivingInPath} friendly and {chosen.eval.EnemyLivingInPath} enemy in path");
+                return (chosen.cell, chosen.tile);
             }
 
-            var chosen = candidates[rng.Next(candidates.Count)];
-            return (chosen.cell, chosen.tile);
+            return null;
         }
 
+        /// <summary>
+        /// Evaluates a cell's suitability for Hyphal Vectoring origin selection.
+        /// </summary>
+        private static CellEvaluation EvaluateCellForHyphalVectoring(
+            BoardTile tile, 
+            GameBoard board, 
+            int playerId, 
+            int centerX, 
+            int centerY, 
+            int totalTiles)
+        {
+            double distance = GetDistance(tile.X, tile.Y, centerX, centerY);
+            var path = GetLineToCenter(tile.X, tile.Y, centerX, centerY, totalTiles);
+            
+            int friendlyLiving = 0;
+            int enemyLiving = 0;
+            
+            foreach (var (x, y) in path)
+            {
+                var pathTile = board.GetTile(x, y);
+                if (pathTile?.FungalCell is { IsAlive: true } cell)
+                {
+                    if (cell.OwnerPlayerId == playerId)
+                        friendlyLiving++;
+                    else
+                        enemyLiving++;
+                }
+            }
+            
+            return new CellEvaluation
+            {
+                DistanceToCenter = distance,
+                FriendlyLivingInPath = friendlyLiving,
+                EnemyLivingInPath = enemyLiving
+            };
+        }
+
+        /// <summary>
+        /// Represents the evaluation metrics for a cell being considered as Hyphal Vectoring origin.
+        /// </summary>
+        private struct CellEvaluation
+        {
+            public double DistanceToCenter;
+            public int FriendlyLivingInPath;
+            public int EnemyLivingInPath;
+        }
 
         // --- Helper Methods ---
 
