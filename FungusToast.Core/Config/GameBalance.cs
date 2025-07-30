@@ -66,8 +66,9 @@ namespace FungusToast.Core.Config
         public const float CatabolicRebirthResurrectionChancePerLevel = 0.12f;
 
         // Putrefactive Cascade (Tier 6 Fungicide)
-        public const float PutrefactiveCascadeEffectivenessBonus = 0.003f; // X% per level boost to Putrefactive Mycotoxin
-        public const float PutrefactiveCascadeCascadeChance = 0.19f; // Y% per level chance for cascade
+        public const float PutrefactiveCascadeEffectivenessBonus = 0.004f; // X% per level boost to Putrefactive Mycotoxin
+        public const float PutrefactiveCascadeCascadeChance = 0.22f; // Y% per level chance for cascade
+        public const int PutrefactiveCascadeMaxCascadeDepth = 10; // Maximum cascade depth to prevent infinite recursion
 
         // Chitin Fortification (Tier 2 MycelialSurges)
         public const int ChitinFortificationCellsPerLevel = 1; // X: cells fortified per level

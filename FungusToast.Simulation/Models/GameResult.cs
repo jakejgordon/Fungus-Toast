@@ -112,6 +112,10 @@ namespace FungusToast.Simulation.Models
 
                     // --- Surge mutation effect counters ---
                     ChitinFortificationCellsFortified = tracking.GetChitinFortificationCellsFortified(player.PlayerId),
+                    
+                    // --- Putrefactive Cascade effect counters ---
+                    PutrefactiveCascadeKills = tracking.GetPutrefactiveCascadeKills(player.PlayerId),
+                    PutrefactiveCascadeToxified = tracking.GetPutrefactiveCascadeToxified(player.PlayerId),
 
                     // --- Mutation point income and spending ---
                     AdaptiveExpressionPointsEarned = tracking.GetAdaptiveExpressionPointsEarned(player.PlayerId),

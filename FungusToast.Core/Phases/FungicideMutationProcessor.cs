@@ -298,8 +298,10 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver? observer = null)
         {
-            // Only applies to Putrefactive Mycotoxin deaths
-            if (eventArgs.Reason != DeathReason.PutrefactiveMycotoxin)
+            // Only applies to Putrefactive Mycotoxin deaths and cascade deaths for true recursion
+            if (eventArgs.Reason != DeathReason.PutrefactiveMycotoxin &&
+                eventArgs.Reason != DeathReason.PutrefactiveCascade &&
+                eventArgs.Reason != DeathReason.PutrefactiveCascadePoison)
                 return;
 
             // Must have a killer player
@@ -429,10 +431,14 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver? observer = null,
+            int recursionDepth = 0)
         {
             int cascadeLevel = killer.GetMutationLevel(MutationIds.PutrefactiveCascade);
             if (cascadeLevel <= 0) return;
+
+            // Prevent infinite recursion - limit cascade depth
+            if (recursionDepth >= GameBalance.PutrefactiveCascadeMaxCascadeDepth) return;
 
             float cascadeChance = cascadeLevel * GameBalance.PutrefactiveCascadeCascadeChance;
             bool isMaxLevel = cascadeLevel >= GameBalance.PutrefactiveCascadeMaxLevel;
@@ -466,15 +472,15 @@ namespace FungusToast.Core.Phases
                 // Kill the next cell in the cascade
                 if (isMaxLevel)
                 {
-                    // At max level: convert to toxin (poison effect)
+                    // At max level: convert to toxin (poison effect) with attacker tile info for potential cascade recursion
                     int toxinLifespan = ToxinHelper.GetToxinExpirationAge(killer, GameBalance.DefaultToxinDuration);
-                    ToxinHelper.KillAndToxify(board, nextTile.TileId, toxinLifespan, DeathReason.PutrefactiveCascadePoison, killer);
+                    ToxinHelper.KillAndToxify(board, nextTile.TileId, toxinLifespan, DeathReason.PutrefactiveCascadePoison, killer, currentTile.TileId);
                     cascadeToxified++;
                 }
                 else
                 {
-                    // Below max level: just kill
-                    board.KillFungalCell(nextCell, DeathReason.PutrefactiveCascade, killer.PlayerId);
+                    // Below max level: just kill with attacker tile info for potential cascade recursion
+                    board.KillFungalCell(nextCell, DeathReason.PutrefactiveCascade, killer.PlayerId, currentTile.TileId);
                 }
                 
                 cascadeKills++;

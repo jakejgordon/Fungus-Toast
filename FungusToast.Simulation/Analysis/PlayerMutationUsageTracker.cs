@@ -197,6 +197,13 @@ namespace FungusToast.Simulation.Analysis
                     if (player.ChitinFortificationCellsFortified > 0)
                         effects["Cells Fortified"] = player.ChitinFortificationCellsFortified;
                     break;
+                    
+                case MutationIds.PutrefactiveCascade:
+                    if (player.PutrefactiveCascadeKills > 0)
+                        effects["Cascade Kills"] = player.PutrefactiveCascadeKills;
+                    if (player.PutrefactiveCascadeToxified > 0)
+                        effects["Toxified"] = player.PutrefactiveCascadeToxified;
+                    break;
             }
 
             return effects;

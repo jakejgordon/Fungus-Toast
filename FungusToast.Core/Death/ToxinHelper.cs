@@ -85,7 +85,7 @@ namespace FungusToast.Core.Death
         /// Kills a living cell (if present) and then converts it to toxin.
         /// This method respects proper event firing via PlaceFungalCell.
         /// </summary>
-        public static void KillAndToxify(GameBoard board, int tileId, int toxinLifespan, DeathReason reason, Player? owner = null)
+        public static void KillAndToxify(GameBoard board, int tileId, int toxinLifespan, DeathReason reason, Player? owner = null, int? attackerTileId = null)
         {
             var tile = board.GetTileById(tileId);
             var cell = tile?.FungalCell;
@@ -94,7 +94,7 @@ namespace FungusToast.Core.Death
                 return;
 
             // 1. Kill the cell via board, so OnCellDeath fires!
-            board.KillFungalCell(cell, reason, owner?.PlayerId);
+            board.KillFungalCell(cell, reason, owner?.PlayerId, attackerTileId);
 
             // 2. Fire ToxinPlaced event to allow for neutralization
             var toxinPlacedArgs = new ToxinPlacedEventArgs(tileId, owner?.PlayerId ?? -1);
