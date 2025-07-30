@@ -218,6 +218,7 @@ namespace FungusToast.Core.Mutations
                 description:
                     $"At the end of the Growth Phase (for {GameBalance.HyphalVectoringSurgeDuration} turns after activation), this mutation projects a straight line of living fungal cells toward the center of the toast. " +
                     $"It spawns {GameBalance.HyphalVectoringBaseTiles} cells at level 0, plus {FormatFloat(GameBalance.HyphalVectoringTilesPerLevel)} per level.\n\n" +
+                    $"The origin is intelligently selected to prioritize: paths with fewest friendly cells, maximum enemy cells to infest, and proximity to center. " +
                     $"Cells replace anything in their path (toxins, dead mold, enemy mold, empty space) and **skip over friendly living mold** without interruption. " +
                     $"Each activation costs {GameBalance.HyphalVectoringPointsPerActivation} mutation points, increasing by {GameBalance.HyphalVectoringSurgePointIncreasePerLevel} per level. " +
                     $"This mutation can only activate once per {GameBalance.HyphalVectoringSurgeDuration} turns.",
