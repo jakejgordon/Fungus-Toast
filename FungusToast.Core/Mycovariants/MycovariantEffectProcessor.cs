@@ -71,7 +71,7 @@ public static class MycovariantEffectProcessor
             else
             {
                 // Use board.TakeoverCell to handle both cell state and board updates.
-                var takeoverResult = board.TakeoverCell(livingLine[i], playerId, allowToxin: true, players: board.Players, rng: rng, observer: observer);
+                var takeoverResult = board.TakeoverCell(livingLine[i], playerId, allowToxin: true, GrowthSource.JettingMycelium, players: board.Players, rng: rng, observer: observer);
 
                 switch (takeoverResult)
                 {
@@ -570,6 +570,7 @@ public static class MycovariantEffectProcessor
                 targetTile.TileId, 
                 playerId, 
                 allowToxin: false, // Only reclaim dead cells, not toxins
+                GrowthSource.NecrohyphalInfiltration, // Use appropriate growth source for necrophoric reclamation
                 board.Players, 
                 rng, 
                 observer);

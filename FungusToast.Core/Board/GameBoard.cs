@@ -870,6 +870,7 @@ namespace FungusToast.Core.Board
         /// <param name="tileId">The tile to take over.</param>
         /// <param name="newOwnerPlayerId">The player taking over the cell.</param>
         /// <param name="allowToxin">Whether to allow takeover of toxin cells.</param>
+        /// <param name="growthSource">The source/reason for this takeover (e.g., HyphalVectoring, MimeticResilience)</param>
         /// <param name="players">List of players (needed for Reclamation Rhizomorphs effect)</param>
         /// <param name="rng">Random number generator (needed for Reclamation Rhizomorphs effect)</param>
         /// <param name="observer">Simulation observer (needed for tracking)</param>
@@ -878,6 +879,7 @@ namespace FungusToast.Core.Board
             int tileId,
             int newOwnerPlayerId,
             bool allowToxin,
+            GrowthSource growthSource,
             List<Player> players,
             Random rng,
             ISimulationObserver? observer = null)
@@ -886,7 +888,7 @@ namespace FungusToast.Core.Board
             if (cell == null)
                 return FungalCellTakeoverResult.Invalid;
             
-            var result = cell.Takeover(newOwnerPlayerId, GrowthSource.Unknown, allowToxin);
+            var result = cell.Takeover(newOwnerPlayerId, growthSource, allowToxin);
             
             if (result == FungalCellTakeoverResult.Infested ||
                 result == FungalCellTakeoverResult.Reclaimed ||

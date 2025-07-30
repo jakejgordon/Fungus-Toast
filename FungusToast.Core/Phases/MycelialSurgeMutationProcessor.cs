@@ -82,7 +82,7 @@ namespace FungusToast.Core.Phases
                     if (prevCell != null)
                     {
                         // Use board.TakeoverCell to handle both cell state and board updates.
-                        takeoverResult = board.TakeoverCell(targetTileId, player.PlayerId, allowToxin: true, players: board.Players, rng: rng, observer: observer);
+                        takeoverResult = board.TakeoverCell(targetTileId, player.PlayerId, allowToxin: true, GrowthSource.HyphalVectoring, players: board.Players, rng: rng, observer: observer);
                         switch (takeoverResult)
                         {
                             case FungalCellTakeoverResult.Infested: infested++; break;
@@ -237,11 +237,15 @@ namespace FungusToast.Core.Phases
                                      !tile.FungalCell.IsResistant)
                         .ToList();
                     
-                    // Priority 2: Empty tiles or dead cells
-                    var dropTargets = adjacentTiles
-                        .Where(tile => tile.FungalCell == null || 
-                                     !tile.FungalCell.IsAlive ||
-                                     tile.FungalCell.OwnerPlayerId == player.PlayerId)
+                    // Priority 2: Empty tiles for colonization
+                    var colonizationTargets = adjacentTiles
+                        .Where(tile => tile.FungalCell == null)
+                        .ToList();
+                    
+                    // Priority 3: Dead cells for reclamation (including own dead cells)
+                    var reclamationTargets = adjacentTiles
+                        .Where(tile => tile.FungalCell != null && 
+                                     !tile.FungalCell.IsAlive)
                         .ToList();
 
                     BoardTile? selectedTile = null;
@@ -253,30 +257,59 @@ namespace FungusToast.Core.Phases
                         selectedTile = infestationTargets[rng.Next(infestationTargets.Count)];
                         isInfestation = true;
                     }
-                    // Fall back to dropping on empty/dead tiles
-                    else if (dropTargets.Count > 0)
+                    // Fall back to empty tiles
+                    else if (colonizationTargets.Count > 0)
                     {
-                        selectedTile = dropTargets[rng.Next(dropTargets.Count)];
+                        selectedTile = colonizationTargets[rng.Next(colonizationTargets.Count)];
+                        isInfestation = false;
+                    }
+                    // Fall back to dead cells
+                    else if (reclamationTargets.Count > 0)
+                    {
+                        selectedTile = reclamationTargets[rng.Next(reclamationTargets.Count)];
                         isInfestation = false;
                     }
 
                     if (selectedTile == null)
                         continue; // No valid placement locations
 
-                    // Create and place the new resistant cell
-                    var newCell = new FungalCell(player.PlayerId, selectedTile.TileId, GrowthSource.MimeticResilience);
-                    newCell.MakeResistant(); // Apply resistance immediately
-
-                    // Place the cell on the board
-                    selectedTile.PlaceFungalCell(newCell);
-
-                    // Track the specific effect type
-                    if (isInfestation)
+                    // Handle the placement based on tile state
+                    if (selectedTile.FungalCell != null)
                     {
-                        totalInfestations++;
+                        // Use TakeoverCell for existing cells (both living and dead)
+                        var takeoverResult = board.TakeoverCell(
+                            selectedTile.TileId, 
+                            player.PlayerId, 
+                            allowToxin: false, // Mimetic Resilience doesn't take over toxins
+                            GrowthSource.MimeticResilience,
+                            players: players, 
+                            rng: rng, 
+                            observer: observer);
+
+                        // Make the cell resistant after successful takeover
+                        if (takeoverResult == FungalCellTakeoverResult.Infested ||
+                            takeoverResult == FungalCellTakeoverResult.Reclaimed ||
+                            takeoverResult == FungalCellTakeoverResult.CatabolicGrowth)
+                        {
+                            selectedTile.FungalCell?.MakeResistant();
+                            
+                            // Track the specific effect type
+                            if (takeoverResult == FungalCellTakeoverResult.Infested)
+                            {
+                                totalInfestations++;
+                            }
+                            else
+                            {
+                                totalDrops++;
+                            }
+                        }
                     }
                     else
                     {
+                        // Place a new resistant cell on empty tile
+                        var newCell = new FungalCell(player.PlayerId, selectedTile.TileId, GrowthSource.MimeticResilience);
+                        newCell.MakeResistant(); // Apply resistance immediately
+                        selectedTile.PlaceFungalCell(newCell);
                         totalDrops++;
                     }
                 }
