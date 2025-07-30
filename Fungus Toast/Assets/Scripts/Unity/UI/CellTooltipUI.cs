@@ -14,12 +14,13 @@ namespace FungusToast.Unity.UI
     /// Expected Prefab Structure (in this exact order):
     /// CellTooltip (this component)
     /// ? StatusGroup (GameObject) - Contains status text and icon
+    /// ? GrowthSourceGroup (GameObject) - Contains growth source text
     /// ? DeathReasonGroup (GameObject) - Contains death reason text
     /// ? OwnerGroup (GameObject) - Contains owner text and icon
-    /// ? LastOwnerGroup (GameObject) - Contains last owner text and icon
     /// ? AgeGroup (GameObject) - Contains growth age text
     /// ? ExpirationGroup (GameObject) - Contains expiration text
     /// ? ResistantGroup (GameObject) - Contains resistant status with shield icon and text
+    /// ? LastOwnerGroup (GameObject) - Contains last owner text and icon
     /// ? AdditionalInfoGroup (GameObject) - Contains additional status info (reclaim count, animation states)
     /// 
     /// All layout groups must be assigned in the Inspector - no fallback discovery.
@@ -132,11 +133,11 @@ namespace FungusToast.Unity.UI
             if (growthSourceGroup != null) growthSourceGroup.transform.SetSiblingIndex(1);
             if (deathReasonGroup != null) deathReasonGroup.transform.SetSiblingIndex(2);
             if (ownerGroup != null) ownerGroup.transform.SetSiblingIndex(3);
-            if (lastOwnerGroup != null) lastOwnerGroup.transform.SetSiblingIndex(4);
-            if (ageGroup != null) ageGroup.transform.SetSiblingIndex(5);
-            if (expirationGroup != null) expirationGroup.transform.SetSiblingIndex(6);
-            if (resistantGroup != null) resistantGroup.transform.SetSiblingIndex(7);
-            if (additionalInfoGroup != null) additionalInfoGroup.transform.SetSiblingIndex(8);
+            if (ageGroup != null) ageGroup.transform.SetSiblingIndex(4);
+            if (expirationGroup != null) expirationGroup.transform.SetSiblingIndex(5);
+            if (resistantGroup != null) resistantGroup.transform.SetSiblingIndex(6);
+            if (lastOwnerGroup != null) lastOwnerGroup.transform.SetSiblingIndex(7); // 2nd to last
+            if (additionalInfoGroup != null) additionalInfoGroup.transform.SetSiblingIndex(8); // Last
         }
 
         /// <summary>
