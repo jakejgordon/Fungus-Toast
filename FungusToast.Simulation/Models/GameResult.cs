@@ -112,7 +112,9 @@ namespace FungusToast.Simulation.Models
 
                     // --- Surge mutation effect counters ---
                     ChitinFortificationCellsFortified = tracking.GetChitinFortificationCellsFortified(player.PlayerId),
-                    
+                    MimeticResilienceInfestations = tracking.GetMimeticResilienceInfestations(player.PlayerId),
+                    MimeticResilienceDrops = tracking.GetMimeticResilienceDrops(player.PlayerId),
+
                     // --- Putrefactive Cascade effect counters ---
                     PutrefactiveCascadeKills = tracking.GetPutrefactiveCascadeKills(player.PlayerId),
                     PutrefactiveCascadeToxified = tracking.GetPutrefactiveCascadeToxified(player.PlayerId),
@@ -269,7 +271,7 @@ namespace FungusToast.Simulation.Models
                             break;
                         }
 
-                    // ...more cases...
+                        // ...more cases...
                 }
 
                 // Convert keys to string for MycovariantResult

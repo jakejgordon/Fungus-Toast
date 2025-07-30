@@ -7,6 +7,7 @@ using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static System.Console;
 
 namespace FungusToast.Core.Phases
 {
@@ -39,7 +40,7 @@ namespace FungusToast.Core.Phases
 
                 if (origin == null)
                 {
-                    Console.WriteLine($"[HyphalVectoring] Player {player.PlayerId}: no valid origin found.");
+                    WriteLine($"[HyphalVectoring] Player {player.PlayerId}: no valid origin found.");
                     continue;
                 }
 
@@ -184,5 +185,137 @@ namespace FungusToast.Core.Phases
                 }
             }
         }
-    }
-}
+
+        /// <summary>
+        /// Handles Mimetic Resilience effect at the end of Growth Phase.
+        /// Targets players with significant cell advantage and board control, placing resistant cells adjacent to their resistant cells.
+        /// Prioritizes infesting enemy cells over empty placements, and processes one cell per qualifying enemy player.
+        /// </summary>
+        public static void OnPostGrowthPhase_MimeticResilience(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver? observer = null)
+        {
+            foreach (var player in players)
+            {
+                int level = player.GetMutationLevel(MutationIds.MimeticResilience);
+                if (level <= 0 || !player.IsSurgeActive(MutationIds.MimeticResilience))
+                    continue;
+
+                // Find eligible target players (those with significant advantage)
+                var targetPlayers = FindMimeticResilienceTargets(player, players, board);
+                if (targetPlayers.Count == 0)
+                    continue;
+
+                int totalInfestations = 0;
+                int totalDrops = 0;
+
+                // Process each eligible target player separately
+                foreach (var targetPlayer in targetPlayers)
+                {
+                    // Find resistant cells belonging to the target player
+                    var targetResistantCells = board.GetAllCellsOwnedBy(targetPlayer.PlayerId)
+                        .Where(cell => cell.IsAlive && cell.IsResistant)
+                        .ToList();
+
+                    if (targetResistantCells.Count == 0)
+                        continue; // No resistant cells to copy from
+
+                    // Select a random resistant cell from the target
+                    var sourceResistantCell = targetResistantCells[rng.Next(targetResistantCells.Count)];
+                    var sourceTile = board.GetTileById(sourceResistantCell.TileId);
+
+                    // Find adjacent tiles and categorize them by priority
+                    var adjacentTiles = board.GetOrthogonalNeighbors(sourceTile.TileId);
+                    
+                    // Priority 1: Enemy cells (not resistant) that can be infested
+                    var infestationTargets = adjacentTiles
+                        .Where(tile => tile.FungalCell != null && 
+                                     tile.FungalCell.IsAlive && 
+                                     tile.FungalCell.OwnerPlayerId != player.PlayerId &&
+                                     !tile.FungalCell.IsResistant)
+                        .ToList();
+                    
+                    // Priority 2: Empty tiles or dead cells
+                    var dropTargets = adjacentTiles
+                        .Where(tile => tile.FungalCell == null || 
+                                     !tile.FungalCell.IsAlive ||
+                                     tile.FungalCell.OwnerPlayerId == player.PlayerId)
+                        .ToList();
+
+                    BoardTile? selectedTile = null;
+                    bool isInfestation = false;
+
+                    // Try to infest an enemy cell first (priority)
+                    if (infestationTargets.Count > 0)
+                    {
+                        selectedTile = infestationTargets[rng.Next(infestationTargets.Count)];
+                        isInfestation = true;
+                    }
+                    // Fall back to dropping on empty/dead tiles
+                    else if (dropTargets.Count > 0)
+                    {
+                        selectedTile = dropTargets[rng.Next(dropTargets.Count)];
+                        isInfestation = false;
+                    }
+
+                    if (selectedTile == null)
+                        continue; // No valid placement locations
+
+                    // Create and place the new resistant cell
+                    var newCell = new FungalCell(player.PlayerId, selectedTile.TileId, GrowthSource.MimeticResilience);
+                    newCell.MakeResistant(); // Apply resistance immediately
+
+                    // Place the cell on the board
+                    selectedTile.PlaceFungalCell(newCell);
+
+                    // Track the specific effect type
+                    if (isInfestation)
+                    {
+                        totalInfestations++;
+                    }
+                    else
+                    {
+                        totalDrops++;
+                    }
+                }
+
+                // Record the aggregated effects for this player
+                if (totalInfestations > 0)
+                    observer?.RecordMimeticResilienceInfestations(player.PlayerId, totalInfestations);
+                if (totalDrops > 0)
+                    observer?.RecordMimeticResilienceDrops(player.PlayerId, totalDrops);
+            }
+        }
+
+        /// <summary>
+        /// Finds players that meet the criteria for Mimetic Resilience targeting.
+        /// </summary>
+        private static List<Player> FindMimeticResilienceTargets(Player mimicPlayer, List<Player> allPlayers, GameBoard board)
+        {
+            var mimicLivingCount = board.GetAllCellsOwnedBy(mimicPlayer.PlayerId).Count(c => c.IsAlive);
+            var totalBoardTiles = board.Width * board.Height;
+            var targetPlayers = new List<Player>();
+
+            foreach (var candidate in allPlayers)
+            {
+                if (candidate.PlayerId == mimicPlayer.PlayerId)
+                    continue; // Can't target self
+
+                var candidateLivingCount = board.GetAllCellsOwnedBy(candidate.PlayerId).Count(c => c.IsAlive);
+                var candidateBoardControl = (float)candidateLivingCount / totalBoardTiles;
+
+                // Check if candidate meets both criteria
+                bool hasSignificantAdvantage = candidateLivingCount >= mimicLivingCount * (1.0f + GameBalance.MimeticResilienceMinimumCellAdvantageThreshold);
+                bool hasBoardControl = candidateBoardControl >= GameBalance.MimeticResilienceMinimumBoardControlThreshold;
+
+                if (hasSignificantAdvantage && hasBoardControl)
+                {
+                    targetPlayers.Add(candidate);
+                }
+            }
+
+            return targetPlayers;
+        }
+    }}

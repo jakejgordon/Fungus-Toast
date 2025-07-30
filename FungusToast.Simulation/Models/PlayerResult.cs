@@ -135,5 +135,11 @@ namespace FungusToast.Simulation.Models
         // ──────────────
         public int PutrefactiveCascadeKills { get; set; }
         public int PutrefactiveCascadeToxified { get; set; }
+        
+        // ──────────────
+        // MIMETIC RESILIENCE EFFECT COUNTERS
+        // ──────────────
+        public int MimeticResilienceInfestations { get; set; }
+        public int MimeticResilienceDrops { get; set; }
     }
 }

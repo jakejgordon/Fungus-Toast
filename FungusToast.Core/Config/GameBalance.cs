@@ -100,21 +100,25 @@ namespace FungusToast.Core.Config
         public const int CatabolicRebirthMaxLevel = 3;
         public const int ChitinFortificationMaxLevel = 10;
         public const int PutrefactiveCascadeMaxLevel = 3;
+        public const int MimeticResilienceMaxLevel = 3;
 
         // surge mutation points per activiation
         public const int HyphalSurgePointsPerActivation = 7;
         public const int HyphalVectoringPointsPerActivation = 9;
         public const int ChitinFortificationPointsPerActivation = 2;
+        public const int MimeticResiliencePointsPerActivation = 8;
 
         // surge mutation durations
         public const int HyphalSurgeDurationRounds = 2;
         public const int HyphalVectoringSurgeDuration = 5;
         public const int ChitinFortificationSurgeDuration = 3;
+        public const int MimeticResilienceSurgeDuration = 4;
 
         // surge mutation increase per level costs
         public const int HyphalSurgePointIncreasePerLevel = 1;
         public const int HyphalVectoringSurgePointIncreasePerLevel = 1;
         public const int ChitinFortificationPointIncreasePerLevel = 1;
+        public const int MimeticResiliencePointIncreasePerLevel = 2;
 
         // AI mechanics
         public const int DefaultSurgeAIAttemptTurnFrequency = 5;
@@ -138,6 +142,9 @@ namespace FungusToast.Core.Config
         public const int PutrefactiveRejuvenationMaxLevel = 4;
         public const int PutrefactiveRejuvenationMaxLevelRangeRadiusMultiplier = 3;
 
+        // Mimetic Resilience (Tier 3 MycelialSurges)
+        public const float MimeticResilienceMinimumBoardControlThreshold = 0.01f; // 1%
+        public const float MimeticResilienceMinimumCellAdvantageThreshold = 0.20f; // 20%
 
         public static class MutationCosts
         {

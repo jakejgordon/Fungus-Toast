@@ -151,7 +151,8 @@ namespace FungusToast.Core.AI
         /// </summary>
         public static readonly List<IMutationSpendingStrategy> TestingStrategies = new List<IMutationSpendingStrategy>
         {
-             new ParameterizedSpendingStrategy(
+             // Economic focus for mycovariants
+            new ParameterizedSpendingStrategy(
                 strategyName: "Grow>Kill>Reclaim(Econ)",
                 prioritizeHighTier: true,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -163,51 +164,47 @@ namespace FungusToast.Core.AI
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
             ),
+            // Economy and reclamation mycovariant focus
             new ParameterizedSpendingStrategy(
-                strategyName: "Grow=>Kill",
+                strategyName: "Grow>Kill>Reclaim(Econ/Reclaim)",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Reclamation)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "Anabolic>Grow>CatabR>PutreRegen",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
-                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                   new TargetMutationGoal(MutationIds.AnabolicInversion),
+                   new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                   new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                   new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Fungicide)
-            ),
-            new ParameterizedSpendingStrategy(
-                strategyName: "Power Mutations",
-                prioritizeHighTier: true,
-                economyBias: EconomyBias.MinorEconomy,
-                targetMutationGoals: new List<TargetMutationGoal>
-                {
-                    new TargetMutationGoal(MutationIds.CreepingMold),
-                    new TargetMutationGoal(MutationIds.RegenerativeHyphae)
-                }
-            ),
-            new ParameterizedSpendingStrategy(
-                strategyName: "Power Mutations v2",
-                prioritizeHighTier: true,
-                economyBias: EconomyBias.MinorEconomy,
-                targetMutationGoals: new List<TargetMutationGoal>
-                {
-                    new TargetMutationGoal(MutationIds.CreepingMold),
-                    new TargetMutationGoal(MutationIds.CatabolicRebirth),
-                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation)
-                }
-            ),
-            new ParameterizedSpendingStrategy(
-                strategyName: "Growth/Resilience",
-                prioritizeHighTier: true,
-                maxTier: MutationTier.Tier3,
-                priorityMutationCategories: new List<MutationCategory>
-                {
-                    MutationCategory.Growth,
-                    MutationCategory.CellularResilience
-                }
+                surgePriorityIds: new List<int> { MutationIds.MimeticResilience }
             ),
             // The following are "best of" mutations in their categories
             new ParameterizedSpendingStrategy(
-                strategyName: "SurgeFreq_10",
+                strategyName: "SurgeFreq_10_Mimetic",
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.HyphalVectoring)
+                },
+                surgePriorityIds: new List<int> { MutationIds.MimeticResilience },
+                surgeAttemptTurnFrequency: 10,
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy),
+            new ParameterizedSpendingStrategy(
+                strategyName: "SurgeFreq_10_Hyphal",
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
@@ -219,32 +216,34 @@ namespace FungusToast.Core.AI
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy),
             new ParameterizedSpendingStrategy(
-                strategyName: "Grow>Defend>Kill",
-                prioritizeHighTier: true,
-                economyBias: EconomyBias.ModerateEconomy,
-                targetMutationGoals: new List<TargetMutationGoal>
-                {
-                   new TargetMutationGoal(MutationIds.TendrilNortheast, 2),
-                   new TargetMutationGoal(MutationIds.TendrilNorthwest, 2),
-                   new TargetMutationGoal(MutationIds.TendrilSoutheast, 2),
-                   new TargetMutationGoal(MutationIds.TendrilSouthwest, 2),
-                   new TargetMutationGoal(MutationIds.AnabolicInversion, 2),
-                   new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
-                   new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel),
-                   new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
-                }
-            ),
-            new ParameterizedSpendingStrategy(
-                strategyName: "Hyphal Surge>Necrotoxic ",
+                strategyName: "Grow=>Kill(Max Econ)",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy,
-                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.HyphalSurge, 4),
-                    new TargetMutationGoal(MutationIds.NecrotoxicConversion),
-                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, 5)
-                }
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrotoxicConversion, GameBalance.NecrotoxicConversionMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Fungicide)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "Best_MaxEcon_Surge10_HyphalSurge",
+                prioritizeHighTier: true,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.MycelialSurges,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
+                surgeAttemptTurnFrequency: 7,
+                economyBias: EconomyBias.MaxEconomy,
+                maxTier: MutationTier.Tier4
             )
         };
 

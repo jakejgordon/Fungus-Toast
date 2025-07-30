@@ -204,6 +204,13 @@ namespace FungusToast.Simulation.Analysis
                     if (player.PutrefactiveCascadeToxified > 0)
                         effects["Toxified"] = player.PutrefactiveCascadeToxified;
                     break;
+                    
+                case MutationIds.MimeticResilience:
+                    if (player.MimeticResilienceInfestations > 0)
+                        effects["Mimetic Infestations"] = player.MimeticResilienceInfestations;
+                    if (player.MimeticResilienceDrops > 0)
+                        effects["Mimetic Drops"] = player.MimeticResilienceDrops;
+                    break;
             }
 
             return effects;

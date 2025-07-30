@@ -50,6 +50,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.HyphalSurge,            new MutationLayoutMetadata(4, 0, MutationCategory.MycelialSurges) },
                 { MutationIds.HyphalVectoring,        new MutationLayoutMetadata(4, 1, MutationCategory.MycelialSurges) },
                 { MutationIds.ChitinFortification,    new MutationLayoutMetadata(4, 2, MutationCategory.MycelialSurges) },
+                { MutationIds.MimeticResilience,      new MutationLayoutMetadata(4, 3, MutationCategory.MycelialSurges) },
             };
     }
 }

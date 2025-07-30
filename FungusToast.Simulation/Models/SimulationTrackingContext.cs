@@ -807,5 +807,33 @@ namespace FungusToast.Simulation.Models
             => putrefactiveCascadeToxified.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllPutrefactiveCascadeKills() => new(putrefactiveCascadeKills);
         public Dictionary<int, int> GetAllPutrefactiveCascadeToxified() => new(putrefactiveCascadeToxified);
+
+        // ────────────────
+        // Mimetic Resilience Cell Placements
+        // ────────────────
+        private readonly Dictionary<int, int> mimeticResilienceInfestations = new();
+        private readonly Dictionary<int, int> mimeticResilienceDrops = new();
+        
+        public void RecordMimeticResilienceInfestations(int playerId, int infestations)
+        {
+            if (!mimeticResilienceInfestations.ContainsKey(playerId))
+                mimeticResilienceInfestations[playerId] = 0;
+            mimeticResilienceInfestations[playerId] += infestations;
+        }
+        
+        public void RecordMimeticResilienceDrops(int playerId, int drops)
+        {
+            if (!mimeticResilienceDrops.TryGetValue(playerId, out _))
+                mimeticResilienceDrops[playerId] = 0;
+            mimeticResilienceDrops[playerId] += drops;
+        }
+        
+        public int GetMimeticResilienceInfestations(int playerId)
+            => mimeticResilienceInfestations.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetMimeticResilienceDrops(int playerId)
+            => mimeticResilienceDrops.TryGetValue(playerId, out var val) ? val : 0;
+            
+        public Dictionary<int, int> GetAllMimeticResilienceInfestations() => new(mimeticResilienceInfestations);
+        public Dictionary<int, int> GetAllMimeticResilienceDrops() => new(mimeticResilienceDrops);
     }
 }

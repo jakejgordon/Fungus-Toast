@@ -102,6 +102,11 @@ namespace FungusToast.Core.Growth
         /// Unknown or legacy source
         /// </summary>
         Unknown,
-        SporicidalBloom
+        SporicidalBloom,
+        
+        /// <summary>
+        /// Placed via Mimetic Resilience surge
+        /// </summary>
+        MimeticResilience
     }
 }

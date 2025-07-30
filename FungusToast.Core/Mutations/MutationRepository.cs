@@ -261,6 +261,30 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.HomeostaticHarmony, 5));
 
 
+            MakeChild(new Mutation(
+                id: MutationIds.MimeticResilience,
+                name: "Mimetic Resilience",
+                description: $"For {GameBalance.MimeticResilienceSurgeDuration} rounds after activation, " +
+                             $"at the end of each Growth Phase, attempts to place 1 resistant cell adjacent to " +
+                             $"resistant cells belonging to each player with at least {FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold)} more living cells and controlling " +
+                             $"at least {FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold)} of the board. Prioritizes infesting enemy cells over empty placements. Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} " +
+                             $"mutation points, increasing by {GameBalance.MimeticResiliencePointIncreasePerLevel} per level.",
+                flavorText: "Driven to the edge of extinction, the colony activates mimetic pathways, copying the defensive adaptations of thriving neighbors and spreading borrowed resistance through its own weakened cells.",
+                type: MutationType.MimeticResilience,
+                effectPerLevel: 1f, // One resistant cell per activation
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
+                maxLevel: GameBalance.MimeticResilienceMaxLevel,
+                category: MutationCategory.MycelialSurges,
+                tier: MutationTier.Tier3,
+                isSurge: true,
+                surgeDuration: GameBalance.MimeticResilienceSurgeDuration,
+                pointsPerActivation: GameBalance.MimeticResiliencePointsPerActivation,
+                pointIncreasePerLevel: GameBalance.MimeticResiliencePointIncreasePerLevel
+            ),
+            new MutationPrerequisite(MutationIds.ChitinFortification, 1), // MycelialSurges
+            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 3)); // CellularResilience
+
+
             // Tier-3
             MakeChild(new Mutation(
                 id: MutationIds.Necrosporulation,

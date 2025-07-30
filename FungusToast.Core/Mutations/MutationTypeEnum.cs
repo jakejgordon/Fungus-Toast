@@ -33,5 +33,6 @@ namespace FungusToast.Core
         PutrefactiveRejuvenation,
         ChitinFortification,
         PutrefactiveCascade,
+        MimeticResilience,
     }
 }

@@ -127,6 +127,9 @@ namespace FungusToast.Core.Phases
             
             // 2. Hyphal Vectoring (surge effect - should happen after reclamation to maximize impact)
             MycelialSurgeMutationProcessor.OnPostGrowthPhase_HyphalVectoring(board, players, rng, observer);
+            
+            // 3. Mimetic Resilience (surge effect - should happen after other effects to ensure accurate targeting)
+            MycelialSurgeMutationProcessor.OnPostGrowthPhase_MimeticResilience(board, players, rng, observer);
         }
 
         // Decay Phase Events

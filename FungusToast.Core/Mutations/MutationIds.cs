@@ -31,5 +31,6 @@
         public const int PutrefactiveRejuvenation = 26;
         public const int ChitinFortification = 27;
         public const int PutrefactiveCascade = 28;
+        public const int MimeticResilience = 29;
     }
 }
