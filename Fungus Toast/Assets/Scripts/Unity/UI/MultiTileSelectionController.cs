@@ -95,32 +95,36 @@ namespace FungusToast.Unity.UI
             {
                 if (selectedTileIds.Contains(tileId))
                 {
-                    // Deselect the tile (remove overlay only)
+                    // Deselect the tile
                     selectedTileIds.Remove(tileId);
                 }
                 else if (selectedTileIds.Count < maxSelections)
                 {
-                    // Select the tile (add overlay only)
+                    // Select the tile
                     selectedTileIds.Add(tileId);
                 }
 
-                // Build per-tile highlight dictionary with pinkish for unselected
-                var tileHighlights = new Dictionary<int, (Color, Color)>();
-                foreach (var id in selectableTileIds)
-                {
-                    if (selectedTileIds.Contains(id))
-                        tileHighlights[id] = (Color.black, Color.black);
-                    else
-                        tileHighlights[id] = (new Color(1f, 0.2f, 0.8f, 1f), new Color(1f, 0.7f, 1f, 1f));
-                }
-                gridVisualizer.HighlightTiles(tileHighlights);
+                // Show selected tiles as solid black (non-pulsing)
+                gridVisualizer.ShowSelectedTiles(
+                    selectedTileIds,
+                    Color.black  // Solid black for selected tiles
+                );
+
+                // Keep the pulsing highlights for all selectable tiles
+                // This maintains the dramatic black-to-pink pulse for all valid targets
+                gridVisualizer.HighlightTiles(
+                    selectableTileIds,
+                    new Color(1f, 0.2f, 0.8f, 1f),   // Pink pulse
+                    new Color(1f, 0.7f, 1f, 1f)      // Pinkish white
+                );
+
                 UpdateSelectionPrompt();
 
                 // If we've selected the allowed number, finish immediately
                 if (selectedTileIds.Count == maxSelections)
                 {
                     selectionActive = false;
-                    gridVisualizer.ClearHighlights();
+                    gridVisualizer.ClearAllHighlights(); // Clear both pulsing and selected highlights
                     var selectedTiles = selectedTileIds
                         .Select(id => GameManager.Instance.Board.GetTileById(id))
                         .Where(t => t != null)
@@ -136,7 +140,7 @@ namespace FungusToast.Unity.UI
         {
             if (!selectionActive) return;
             selectionActive = false;
-            gridVisualizer.ClearHighlights();
+            gridVisualizer.ClearAllHighlights(); // Clear both pulsing and selected highlights
             onCancelled?.Invoke();
             Reset();
         }

@@ -148,37 +148,36 @@ namespace FungusToast.Unity.UI
                 {
                     // Deselect the cell
                     selectedTileIds.Remove(tileId);
-                    gridVisualizer.HighlightTiles(
-                        new[] { tileId },
-                        new Color(1f, 0.15f, 0.8f, 1f),   // Magenta-pink for selectable
-                        new Color(1f, 1f, 1f, 1f)
-                    );
-                    UpdateSelectionPrompt();
                 }
                 else if (selectedTileIds.Count < maxSelections)
                 {
                     // Select the cell
                     selectedTileIds.Add(tileId);
-                    gridVisualizer.HighlightTiles(
-                        new[] { tileId },
-                        new Color(1f, 0.8f, 0.2f, 1f),   // Orange for selected
-                        new Color(1f, 1f, 0.8f, 1f)
-                    );
-                    UpdateSelectionPrompt();
+                }
 
-                    // If we've selected the allowed number, finish immediately
-                    if (selectedTileIds.Count == maxSelections)
-                    {
-                        selectionActive = false;
-                        gridVisualizer.ClearHighlights();
-                        var selectedCells = selectedTileIds
-                            .Select(id => GameManager.Instance.Board.GetCell(id))
-                            .Where(c => c != null)
-                            .ToList();
-                        GameManager.Instance.HideSelectionPrompt();
-                        onCellsSelected?.Invoke(selectedCells);
-                        Reset();
-                    }
+                // Update the selected tiles display (solid black highlighting)
+                gridVisualizer.ShowSelectedTiles(
+                    selectedTileIds,
+                    Color.black   // Solid black for selected tiles
+                );
+
+                // Keep the pulsing highlights for all selectable tiles
+                // (This keeps the dramatic black-to-pink pulse going for all valid targets)
+                
+                UpdateSelectionPrompt();
+
+                // If we've selected the allowed number, finish immediately
+                if (selectedTileIds.Count == maxSelections)
+                {
+                    selectionActive = false;
+                    gridVisualizer.ClearAllHighlights(); // Clear both pulsing and selected highlights
+                    var selectedCells = selectedTileIds
+                        .Select(id => GameManager.Instance.Board.GetCell(id))
+                        .Where(c => c != null)
+                        .ToList();
+                    GameManager.Instance.HideSelectionPrompt();
+                    onCellsSelected?.Invoke(selectedCells);
+                    Reset();
                 }
             }
         }
@@ -187,7 +186,7 @@ namespace FungusToast.Unity.UI
         {
             if (!selectionActive) return;
             selectionActive = false;
-            gridVisualizer.ClearHighlights();
+            gridVisualizer.ClearAllHighlights(); // Clear both pulsing and selected highlights
             onCancelled?.Invoke();
             Reset();
         }
@@ -227,4 +226,4 @@ namespace FungusToast.Unity.UI
             }
         }
     }
-} 
+}

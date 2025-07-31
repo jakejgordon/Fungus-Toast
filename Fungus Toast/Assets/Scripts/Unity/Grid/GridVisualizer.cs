@@ -16,6 +16,7 @@ namespace FungusToast.Unity.Grid
         public Tilemap moldTilemap;       // Player mold layer (including faded icons)
         public Tilemap overlayTilemap;    // Dead/toxin overlays
         public Tilemap SelectionHighlightTileMap;   // Persistent selection highlights (prompt mode, pulsing)
+        public Tilemap SelectedTileMap;             // Already selected tiles (solid highlighting)
         public Tilemap HoverOverlayTileMap;         // Temporary mouse hover overlays (single-tile, always on top)
 
         [Header("Tiles")]
@@ -215,6 +216,36 @@ namespace FungusToast.Unity.Grid
         }
 
         /// <summary>
+        /// Shows selected tiles with a solid color (no pulsing).
+        /// Used for multi-selection workflows like Mycelial Bastion.
+        /// </summary>
+        /// <param name="tileIds">The tile IDs to show as selected</param>
+        /// <param name="selectedColor">Color to show selected tiles (defaults to orange)</param>
+        public void ShowSelectedTiles(IEnumerable<int> tileIds, Color? selectedColor = null)
+        {
+            SelectedTileMap.ClearAllTiles();
+            
+            Color color = selectedColor ?? new Color(1f, 0.8f, 0.2f, 1f); // Default orange
+            
+            foreach (var tileId in tileIds)
+            {
+                var (x, y) = board.GetXYFromTileId(tileId);
+                Vector3Int pos = new Vector3Int(x, y, 0);
+                SelectedTileMap.SetTile(pos, solidHighlightTile);
+                SelectedTileMap.SetTileFlags(pos, TileFlags.None);
+                SelectedTileMap.SetColor(pos, color);
+            }
+        }
+
+        /// <summary>
+        /// Clears all selected tile highlights.
+        /// </summary>
+        public void ClearSelectedTiles()
+        {
+            SelectedTileMap.ClearAllTiles();
+        }
+
+        /// <summary>
         /// Clears all highlights and stops pulsing.
         /// </summary>
         public void ClearHighlights()
@@ -229,6 +260,15 @@ namespace FungusToast.Unity.Grid
             // Reset scale!
             if (SelectionHighlightTileMap != null)
                 SelectionHighlightTileMap.transform.localScale = Vector3.one;
+        }
+
+        /// <summary>
+        /// Clears both selection highlights and selected tiles.
+        /// </summary>
+        public void ClearAllHighlights()
+        {
+            ClearHighlights();
+            ClearSelectedTiles();
         }
 
         private IEnumerator PulseHighlightTiles()
