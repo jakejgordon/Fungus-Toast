@@ -2976,6 +2976,7 @@ MonoBehaviour:
   growthAgeText: {fileID: 0}
   expirationText: {fileID: 0}
   resistantText: {fileID: 0}
+  growthSourceText: {fileID: 0}
   additionalInfoText: {fileID: 0}
   statusIcon: {fileID: 0}
   ownerIcon: {fileID: 0}
@@ -2989,6 +2990,7 @@ MonoBehaviour:
   ageGroup: {fileID: 0}
   expirationGroup: {fileID: 0}
   resistantGroup: {fileID: 0}
+  growthSourceGroup: {fileID: 0}
   additionalInfoGroup: {fileID: 0}
 --- !u!1 &356102964
 GameObject:
@@ -3027,7 +3029,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 910, y: -590}
-  m_SizeDelta: {x: 250, y: 125}
+  m_SizeDelta: {x: 300, y: 125}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &356102966
 CanvasRenderer:
