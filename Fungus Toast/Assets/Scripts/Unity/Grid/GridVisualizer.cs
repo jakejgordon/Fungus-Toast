@@ -233,19 +233,40 @@ namespace FungusToast.Unity.Grid
 
         private IEnumerator PulseHighlightTiles()
         {
-            float duration = 0.8f;         // Slow, visible pulse (tweak as needed)
-            float minAlpha = 0f;           // Fully transparent at the low end
-            float maxAlpha = 1f;           // Fully opaque at the peak
-            Color colorA = new Color(1f, 0.15f, 0.8f, 1f);    // Bright magenta-pink
-            Color colorB = new Color(1f, 1f, 1f, 1f);         // White
+            float pulseDuration = 0.4f;    // Even faster pulse for maximum urgency
+            float scaleDuration = 0.5f;    // Slightly faster scale for more dramatic effect
+            
+            // Extreme contrast: pure black to intense bright pink
+            Color darkColor = Color.black;
+            Color brightColor = new Color(1f, 0f, 0.9f, 1f);  // Even more intense magenta-pink
+            
+            // Scale values for the "pop" effect
+            float baseScale = 1f;
+            float maxScale = 1.2f;  // 20% larger at peak for more dramatic effect
 
             while (true)
             {
-                float t = Mathf.PingPong(Time.time / duration, 1f); // Loops 0→1→0
-                float alpha = Mathf.Lerp(minAlpha, maxAlpha, t);    // Fades to 0, back to 1
-                Color pulseColor = Color.Lerp(colorA, colorB, t);
-                pulseColor.a = alpha;
+                // Color pulse: black to bright pink and back with double easing for more snap
+                float colorT = Mathf.PingPong(Time.time / pulseDuration, 1f);
+                
+                // Double easing: ease-out then ease-in for dramatic snap effect
+                float easedColorT = colorT < 0.5f 
+                    ? 2f * colorT * colorT  // Ease-in for first half (snap to bright)
+                    : 1f - 2f * (1f - colorT) * (1f - colorT);  // Ease-out for second half (smooth return to black)
+                
+                Color pulseColor = Color.Lerp(darkColor, brightColor, easedColorT);
+                
+                // Scale pulse: slightly out of phase with bounce effect
+                float scaleT = Mathf.PingPong((Time.time + 0.15f) / scaleDuration, 1f);
+                // Add a subtle bounce by using a sine wave with higher frequency
+                float bounceEffect = 1f + 0.05f * Mathf.Sin(Time.time * 8f);
+                float easedScaleT = Mathf.Sin(scaleT * Mathf.PI * 0.5f);
+                float currentScale = Mathf.Lerp(baseScale, maxScale, easedScaleT) * bounceEffect;
 
+                // Apply the scale to the entire tilemap for dramatic effect
+                SelectionHighlightTileMap.transform.localScale = Vector3.one * currentScale;
+
+                // Apply colors to all highlighted positions
                 foreach (var pos in highlightedPositions)
                 {
                     if (SelectionHighlightTileMap.HasTile(pos))
@@ -253,6 +274,7 @@ namespace FungusToast.Unity.Grid
                         SelectionHighlightTileMap.SetColor(pos, pulseColor);
                     }
                 }
+                
                 yield return null;
             }
         }
@@ -314,14 +336,8 @@ namespace FungusToast.Unity.Grid
                         moldTile = playerMoldTiles[idT];
                         
                         // If the cell is receiving a toxin drop, show it as normal for the drop animation
-                        if (cell.IsReceivingToxinDrop)
-                        {
-                            moldColor = Color.white; // Normal appearance for drop animation
-                        }
-                        else
-                        {
-                            moldColor = new Color(0.8f, 0.8f, 0.8f, 0.8f); // Increased alpha from 0.55f to 0.8f for better visibility
-                        }
+                        moldColor = Color.white; // Normal appearance for drop animation
+                        //moldColor = new Color(0.8f, 0.8f, 0.8f, 0.8f); // Increased alpha from 0.55f to 0.8f for better visibility
                     }
                     overlayTile = toxinOverlayTile;
                     // If the cell is receiving a toxin drop, start the overlay transparent for drop animation
