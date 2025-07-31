@@ -111,7 +111,7 @@ public static class MycovariantEffectProcessor
             else if (prevCell.IsAlive && prevCell.OwnerPlayerId != playerId)
             {
                 // Properly kill and toxify using board-level logic
-                ToxinHelper.KillAndToxify(board, coneTileId, toxinLifespan, DeathReason.JettingMycelium, player);
+                ToxinHelper.KillAndToxify(board, coneTileId, toxinLifespan, DeathReason.JettingMycelium, GrowthSource.JettingMycelium, player);
                 poisoned++;
             }
             // Do not overwrite your own living cell with toxin.
@@ -229,6 +229,83 @@ public static class MycovariantEffectProcessor
             
             playerMyco.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);
             observer?.RecordBastionedCells(player.PlayerId, 1);
+        }
+
+        playerMyco.MarkTriggered();
+    }
+
+    public static void ResolveCytolyticBurst(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        int sourceToxinTileId,
+        Random rng,
+        ISimulationObserver? observer = null)
+    {
+        var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+        if (player == null) return;
+
+        var sourceTile = board.GetTileById(sourceToxinTileId);
+        if (sourceTile?.FungalCell == null || !sourceTile.FungalCell.IsToxin)
+            return; // Not a valid toxin tile
+
+        var (centerX, centerY) = board.GetXYFromTileId(sourceToxinTileId);
+        int radius = MycovariantGameBalance.CytolyticBurstRadius;
+        float toxinChance = MycovariantGameBalance.CytolyticBurstToxinChance;
+        int toxinDuration = MycovariantGameBalance.CytolyticBurstToxinDuration;
+
+        int toxinsCreated = 0;
+        int cellsKilled = 0;
+
+        // Get all tiles within radius using Manhattan distance
+        for (int x = Math.Max(0, centerX - radius); x <= Math.Min(board.Width - 1, centerX + radius); x++)
+        {
+            for (int y = Math.Max(0, centerY - radius); y <= Math.Min(board.Height - 1, centerY + radius); y++)
+            {
+                // Calculate Manhattan distance
+                int distance = Math.Abs(x - centerX) + Math.Abs(y - centerY);
+                if (distance > radius) continue;
+
+                int targetTileId = y * board.Width + x;
+                var targetTile = board.GetTileById(targetTileId);
+                if (targetTile == null) continue;
+
+                // Roll for toxin placement
+                if (rng.NextDouble() < toxinChance)
+                {
+                    var existingCell = targetTile.FungalCell;
+                    
+                    // Calculate toxin lifespan (considering Enduring Toxaphores if player has it)
+                    int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, toxinDuration);
+                    
+                    if (existingCell != null && existingCell.IsAlive && !existingCell.IsResistant)
+                    {
+                        // Kill and toxify living cells (excluding resistant ones)
+                        ToxinHelper.KillAndToxify(board, targetTileId, toxinLifespan, DeathReason.CytolyticBurst, GrowthSource.CytolyticBurst, player, sourceToxinTileId);
+                        cellsKilled++;
+                        toxinsCreated++;
+                    }
+                    else if (existingCell == null || existingCell.IsDead)
+                    {
+                        // Convert empty or dead tiles to toxin
+                        ToxinHelper.ConvertToToxin(board, targetTileId, toxinLifespan, GrowthSource.CytolyticBurst, player);
+                        toxinsCreated++;
+                    }
+                    // Skip resistant cells and existing toxins
+                }
+            }
+        }
+
+        // Record effects for tracking
+        if (toxinsCreated > 0)
+        {
+            playerMyco.IncrementEffectCount(MycovariantEffectType.CytolyticBurstToxins, toxinsCreated);
+            observer?.RecordCytolyticBurstToxins(player.PlayerId, toxinsCreated);
+        }
+
+        if (cellsKilled > 0)
+        {
+            playerMyco.IncrementEffectCount(MycovariantEffectType.CytolyticBurstKills, cellsKilled);
+            observer?.RecordCytolyticBurstKills(player.PlayerId, cellsKilled);
         }
 
         playerMyco.MarkTriggered();

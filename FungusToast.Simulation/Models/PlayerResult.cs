@@ -141,5 +141,11 @@ namespace FungusToast.Simulation.Models
         // ──────────────
         public int MimeticResilienceInfestations { get; set; }
         public int MimeticResilienceDrops { get; set; }
+        
+        // ──────────────
+        // CYTOLYTIC BURST EFFECT COUNTERS
+        // ──────────────
+        public int CytolyticBurstToxins { get; set; }
+        public int CytolyticBurstKills { get; set; }
     }
 }

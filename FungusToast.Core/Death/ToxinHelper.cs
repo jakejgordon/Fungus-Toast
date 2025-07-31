@@ -34,7 +34,7 @@ namespace FungusToast.Core.Death
                 // Mark for toxin drop animation
                 cell.MarkAsReceivingToxinDrop();
                 
-                cell.ConvertToToxin(toxinLifespan, owner);
+                cell.ConvertToToxin(toxinLifespan, growthSource, owner);
                 board.PlaceFungalCell(cell); // fires events!
             }
             else
@@ -85,7 +85,7 @@ namespace FungusToast.Core.Death
         /// Kills a living cell (if present) and then converts it to toxin.
         /// This method respects proper event firing via PlaceFungalCell.
         /// </summary>
-        public static void KillAndToxify(GameBoard board, int tileId, int toxinLifespan, DeathReason reason, Player? owner = null, int? attackerTileId = null)
+        public static void KillAndToxify(GameBoard board, int tileId, int toxinLifespan, DeathReason reason, GrowthSource growthSource, Player? owner = null, int? attackerTileId = null)
         {
             var tile = board.GetTileById(tileId);
             var cell = tile?.FungalCell;
@@ -104,8 +104,8 @@ namespace FungusToast.Core.Death
             if (toxinPlacedArgs.Neutralized)
                 return;
 
-            // 3. Now convert the cell to toxin (state change)
-            cell.ConvertToToxin(toxinLifespan, owner);
+            // 3. Now convert the cell to toxin with the specified growth source
+            cell.ConvertToToxin(toxinLifespan, growthSource, owner);
 
             // 4. Place the toxin cell on the board
             board.PlaceFungalCell(cell); // will fire toxin events as needed

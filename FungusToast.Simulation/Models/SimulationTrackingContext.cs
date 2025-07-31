@@ -835,5 +835,33 @@ namespace FungusToast.Simulation.Models
             
         public Dictionary<int, int> GetAllMimeticResilienceInfestations() => new(mimeticResilienceInfestations);
         public Dictionary<int, int> GetAllMimeticResilienceDrops() => new(mimeticResilienceDrops);
+
+        // ────────────────
+        // Cytolytic Burst Effects
+        // ────────────────
+        private readonly Dictionary<int, int> cytolyticBurstToxins = new();
+        private readonly Dictionary<int, int> cytolyticBurstKills = new();
+        
+        public void RecordCytolyticBurstToxins(int playerId, int toxinsCreated)
+        {
+            if (!cytolyticBurstToxins.ContainsKey(playerId))
+                cytolyticBurstToxins[playerId] = 0;
+            cytolyticBurstToxins[playerId] += toxinsCreated;
+        }
+        
+        public void RecordCytolyticBurstKills(int playerId, int cellsKilled)
+        {
+            if (!cytolyticBurstKills.ContainsKey(playerId))
+                cytolyticBurstKills[playerId] = 0;
+            cytolyticBurstKills[playerId] += cellsKilled;
+        }
+        
+        public int GetCytolyticBurstToxins(int playerId)
+            => cytolyticBurstToxins.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetCytolyticBurstKills(int playerId)
+            => cytolyticBurstKills.TryGetValue(playerId, out var val) ? val : 0;
+            
+        public Dictionary<int, int> GetAllCytolyticBurstToxins() => new(cytolyticBurstToxins);
+        public Dictionary<int, int> GetAllCytolyticBurstKills() => new(cytolyticBurstKills);
     }
 }

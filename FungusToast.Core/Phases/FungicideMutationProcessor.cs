@@ -173,7 +173,7 @@ namespace FungusToast.Core.Phases
                     if (cell != null && cell.IsAlive)
                     {
                         // Enemy cell: kill and toxify (use helper)
-                        ToxinHelper.KillAndToxify(board, target.TileId, toxinLifespan, DeathReason.SporocidalBloom, player);
+                        ToxinHelper.KillAndToxify(board, target.TileId, toxinLifespan, DeathReason.SporocidalBloom, GrowthSource.SporicidalBloom, player);
                         kills++;
                     }
                     else
@@ -474,7 +474,7 @@ namespace FungusToast.Core.Phases
                 {
                     // At max level: convert to toxin (poison effect) with attacker tile info for potential cascade recursion
                     int toxinLifespan = ToxinHelper.GetToxinExpirationAge(killer, GameBalance.DefaultToxinDuration);
-                    ToxinHelper.KillAndToxify(board, nextTile.TileId, toxinLifespan, DeathReason.PutrefactiveCascadePoison, killer, currentTile.TileId);
+                    ToxinHelper.KillAndToxify(board, nextTile.TileId, toxinLifespan, DeathReason.PutrefactiveCascadePoison, GrowthSource.PutrefactiveCascade, killer, currentTile.TileId);
                     cascadeToxified++;
                 }
                 else

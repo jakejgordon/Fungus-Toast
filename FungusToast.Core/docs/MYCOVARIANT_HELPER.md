@@ -13,7 +13,7 @@ This guide describes the step-by-step process for adding a new mycovariant to th
 2. **Name Selection**
    - The human selects a name and confirms the effect details (including any numbers or balance parameters).
 
-3. **Implementation Steps (Cursor):**
+3. **Implementation Steps:**
 
    **3.1) Core Definition**
    - Add a new constant in `@MycovariantIds.cs` for the mycovariant's unique ID.
@@ -49,8 +49,7 @@ This guide describes the step-by-step process for adding a new mycovariant to th
 {
     var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
     
-    bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI || 
-                             observer != null; // Simulation context
+    bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI;
     
     if (shouldUseCoreLogic)
     {

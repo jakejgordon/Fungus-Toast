@@ -111,6 +111,18 @@ namespace FungusToast.Unity.Effects
                     )
                 );
             }
+            else if (mycovariant.Id == MycovariantIds.CytolyticBurstId)
+            {
+                yield return StartCoroutine(
+                    MycovariantEffectHelpers.HandleCytolyticBurst(
+                        player,
+                        mycovariant,
+                        onComplete,
+                        draftPanel,
+                        gridVisualizer
+                    )
+                );
+            }
             // Add more cases as needed
             else
             {

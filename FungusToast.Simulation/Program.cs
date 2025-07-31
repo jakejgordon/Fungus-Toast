@@ -9,7 +9,7 @@ namespace FungusToast.Simulation
 {
     class Program
     {
-        private const int DefaultNumberOfSimulationGames = 100;
+        private const int DefaultNumberOfSimulationGames = 200;
         private const int DefaultNumberOfPlayers = 8;
 
         static void Main(string[] args)

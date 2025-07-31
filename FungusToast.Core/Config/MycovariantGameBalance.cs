@@ -45,6 +45,11 @@ namespace FungusToast.Core.Config
         // Ballistospore Discharge toxin duration (in growth cycles)
         public const int BallistosporeDischargeToxinDuration = 18;
 
+        // Cytolytic Burst parameters
+        public const int CytolyticBurstRadius = 4; // 4-tile radius explosion
+        public const float CytolyticBurstToxinChance = 0.65f; // 65% chance to drop toxin per tile
+        public const int CytolyticBurstToxinDuration = 15; // Duration of newly created toxins
+
         public const float NecrophoricAdaptationReclamationChance = .15f;
 
         // AI scoring for Mycovariants
@@ -59,6 +64,8 @@ namespace FungusToast.Core.Config
         public const float BallistosporeDischargeIAIScore = 3f;
         public const float BallistosporeDischargeIIAIScore = 4f;
         public const float BallistosporeDischargeIIIAIScore = 6f;
+
+        public const float CytolyticBurstBaseAIScore = 5f;
 
         public const float AIDraftModeratePriority = 6f;
         public const float HyphalResistanceTransferBaseAIScoreEarly = 5f;

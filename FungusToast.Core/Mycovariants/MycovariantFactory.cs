@@ -496,5 +496,66 @@ namespace FungusToast.Core.Mycovariants
                 },
                 AIScore = (player, board) => MycovariantGameBalance.BallistosporeDischargeIIIAIScore
             };
+            
+        public static Mycovariant CytolyticBurst() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.CytolyticBurstId,
+                Name = "Cytolytic Burst",
+                Description = $"Select one of your toxins to explode in a {MycovariantGameBalance.CytolyticBurstRadius}-tile radius. Each tile in the area has a {MycovariantGameBalance.CytolyticBurstToxinChance * 100f:0}% chance to receive a toxin, killing anything in its path.",
+                FlavorText = "The toxin's cellular membrane ruptures catastrophically, releasing cytolytic enzymes in a violent cascade that spreads destruction through the surrounding substrate.",
+                Type = MycovariantType.Active,
+                Category = MycovariantCategory.Fungicide, // Area-of-effect toxin creation
+                IsUniversal = false,
+                SynergyWith = new List<int> { MycovariantIds.EnduringToxaphoresId },
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
+                    
+                    bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI || 
+                                             observer != null; // Simulation context
+                    
+                    if (shouldUseCoreLogic)
+                    {
+                        // AI or Simulation: Use helper to find best toxin to explode
+                        var bestToxin = CytolyticBurstHelper.FindBestToxinToExplode(player, board);
+                        
+                        if (bestToxin.HasValue)
+                        {
+                            MycovariantEffectProcessor.ResolveCytolyticBurst(
+                                playerMyco, board, bestToxin.Value.tileId, rng, observer);
+                        }
+                    }
+                    // Human in Unity: UI layer handles selection + effect application
+                    // (ApplyEffect does nothing, avoiding double execution)
+                },
+                AIScore = (player, board) =>
+                {
+                    // Use helper to find the best possible explosion and score accordingly
+                    var bestToxin = CytolyticBurstHelper.FindBestToxinToExplode(player, board);
+                    
+                    if (!bestToxin.HasValue)
+                        return 1f; // No toxins available
+                    
+                    int explosionScore = bestToxin.Value.score;
+                    float baseScore = MycovariantGameBalance.CytolyticBurstBaseAIScore;
+                    
+                    if (explosionScore <= 0)
+                    {
+                        // Subtract 3 points if explosion would hurt more friendlies than enemies
+                        return Math.Max(1f, baseScore - 3f);
+                    }
+                    else if (explosionScore < 20)
+                    {
+                        // Add 1 point for positive but modest benefit
+                        return Math.Min(10f, baseScore + 1f);
+                    }
+                    else
+                    {
+                        // Add 2 points for high-value explosions
+                        return Math.Min(10f, baseScore + 2f);
+                    }
+                }
+            };
     }
 }

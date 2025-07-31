@@ -23,6 +23,8 @@
         SecondReclamationAttempts,
         BallistosporeDischarge,
         NecrophoricAdaptationReclamations, // Reclamations triggered by NecrophoricAdaptation
+        CytolyticBurstToxins, // Toxins created by Cytolytic Burst
+        CytolyticBurstKills, // Cells killed by Cytolytic Burst toxins
         // Add others as needed
     }
 }

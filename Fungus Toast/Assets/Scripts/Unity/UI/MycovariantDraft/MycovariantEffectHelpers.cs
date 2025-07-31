@@ -398,5 +398,117 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 while (!done) yield return null;
             }
         }
+
+        /// <summary>
+        /// Handles UI/AI, input, and effect resolution for Cytolytic Burst.
+        /// </summary>
+        public static IEnumerator HandleCytolyticBurst(
+            Player player,
+            Mycovariant picked,
+            Action onComplete,
+            GameObject draftPanel,
+            GridVisualizer gridVisualizer)
+        {
+            if (player.PlayerType == PlayerTypeEnum.AI)
+            {
+                // AI: Execute the effect directly since Unity drafts don't call ApplyEffect
+                var playerMyco = player.PlayerMycovariants
+                    .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+                
+                if (playerMyco != null)
+                {
+                    // Use helper to find best toxin to explode
+                    var bestToxin = CytolyticBurstHelper.FindBestToxinToExplode(player, GameManager.Instance.Board);
+                    
+                    if (bestToxin.HasValue)
+                    {
+                        MycovariantEffectProcessor.ResolveCytolyticBurst(
+                            playerMyco,
+                            GameManager.Instance.Board,
+                            bestToxin.Value.tileId,
+                            new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                            null
+                        );
+                    }
+                }
+                
+                // Wait for the effect to visually complete
+                yield return new WaitForSeconds(UIEffectConstants.DefaultAIThinkingDelay);
+                onComplete?.Invoke();
+            }
+            else
+            {
+                draftPanel?.SetActive(false);
+                
+                // Get all player's toxin tiles
+                var playerToxins = GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId)
+                    .Where(c => c.IsToxin)
+                    .ToList();
+                
+                if (playerToxins.Count == 0)
+                {
+                    GameManager.Instance.ShowSelectionPrompt("No toxins available to explode!");
+                    yield return new WaitForSeconds(2f);
+                    GameManager.Instance.HideSelectionPrompt();
+                    onComplete?.Invoke();
+                    yield break;
+                }
+
+                GameManager.Instance.ShowSelectionPrompt(
+                    $"Select one of your toxins to explode in a {MycovariantGameBalance.CytolyticBurstRadius}-tile radius."
+                );
+
+                bool done = false;
+
+                // Highlight all player's toxin tiles
+                var toxinTileIds = playerToxins.Select(c => c.TileId).ToList();
+                gridVisualizer.HighlightTiles(toxinTileIds);
+
+                // Function to check if tile is a valid toxin for this player
+                Func<BoardTile, bool> isValidToxin = tile => 
+                    tile.FungalCell != null && 
+                    tile.FungalCell.IsToxin && 
+                    tile.FungalCell.OwnerPlayerId == player.PlayerId;
+
+                TileSelectionController.Instance.PromptSelectBoardTile(
+                    isValidToxin,
+                    (tile) =>
+                    {
+                        if (done) return; // Defensive: prevent double-callback
+                        done = true;
+                        
+                        var playerMyco = player.PlayerMycovariants
+                            .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+
+                        if (playerMyco != null)
+                        {
+                            MycovariantEffectProcessor.ResolveCytolyticBurst(
+                                playerMyco,
+                                GameManager.Instance.Board,
+                                tile.TileId,
+                                new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                                null
+                            );
+                        }
+
+                        GameManager.Instance.HideSelectionPrompt();
+                        gridVisualizer.ClearHighlights();
+                        gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                        onComplete?.Invoke();
+                    },
+                    () =>
+                    {
+                        if (done) return; // Defensive: prevent double-callback
+                        done = true;
+                        GameManager.Instance.HideSelectionPrompt();
+                        gridVisualizer.ClearHighlights();
+                        onComplete?.Invoke();
+                    },
+                    "Select one of your toxins to explode."
+                );
+
+                while (!done) yield return null;
+            }
+        }
     }
 }

@@ -15,6 +15,7 @@ namespace FungusToast.Core.Death
         Infested,
         Poisoned,
         PutrefactiveCascade,
-        PutrefactiveCascadePoison
+        PutrefactiveCascadePoison,
+        CytolyticBurst
     }
 }

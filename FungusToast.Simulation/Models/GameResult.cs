@@ -115,6 +115,10 @@ namespace FungusToast.Simulation.Models
                     MimeticResilienceInfestations = tracking.GetMimeticResilienceInfestations(player.PlayerId),
                     MimeticResilienceDrops = tracking.GetMimeticResilienceDrops(player.PlayerId),
 
+                    // --- Cytolytic Burst effect counters ---
+                    CytolyticBurstToxins = tracking.GetCytolyticBurstToxins(player.PlayerId),
+                    CytolyticBurstKills = tracking.GetCytolyticBurstKills(player.PlayerId),
+
                     // --- Putrefactive Cascade effect counters ---
                     PutrefactiveCascadeKills = tracking.GetPutrefactiveCascadeKills(player.PlayerId),
                     PutrefactiveCascadeToxified = tracking.GetPutrefactiveCascadeToxified(player.PlayerId),
@@ -268,6 +272,15 @@ namespace FungusToast.Simulation.Models
                             int reclamations = tracking.GetNecrophoricAdaptationReclamations(player.PlayerId);
                             if (reclamations > 0)
                                 effectCounts[MycovariantEffectType.NecrophoricAdaptationReclamations] = reclamations;
+                            break;
+                        }
+
+                    case var id when id == MycovariantIds.CytolyticBurstId:
+                        {
+                            int toxins = tracking.GetCytolyticBurstToxins(player.PlayerId);
+                            int kills = tracking.GetCytolyticBurstKills(player.PlayerId);
+                            if (toxins > 0) effectCounts[MycovariantEffectType.CytolyticBurstToxins] = toxins;
+                            if (kills > 0) effectCounts[MycovariantEffectType.CytolyticBurstKills] = kills;
                             break;
                         }
 

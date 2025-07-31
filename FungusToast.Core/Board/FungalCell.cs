@@ -133,12 +133,12 @@ namespace FungusToast.Core.Board
             // Keep SourceOfGrowth for historical reference
         }
 
-        private void SetToxin(int toxinLifespan)
+        private void SetToxin(int toxinLifespan, GrowthSource? growthSource = null)
         {
             CellType = FungalCellType.Toxin;
             ToxinExpirationAge = toxinLifespan; // This is what determines expiration
             GrowthCycleAge = 0; // Reset growth cycle age when becoming a toxin
-            SourceOfGrowth = null; // Toxins don't have a growth source
+            SourceOfGrowth = growthSource; // Set the provided growth source or null
             // Don't modify ownership tracking here
         }
 
@@ -282,7 +282,7 @@ namespace FungusToast.Core.Board
         /// Converts a cell to toxin, killing if alive (Poisoned) or overwriting dead/empty (Toxified).
         /// Resistant cells cannot be converted to toxins.
         /// </summary>
-        public void ConvertToToxin(int toxinLifespan, Player? owner = null, DeathReason? reason = null)
+        public void ConvertToToxin(int toxinLifespan, GrowthSource growthSource, Player? owner = null, DeathReason? reason = null)
         {
             // Resistant cells cannot be converted to toxins
             if (IsResistant)
@@ -294,7 +294,7 @@ namespace FungusToast.Core.Board
             if (owner != null)
                 ChangeOwnership(owner.PlayerId, reason ?? DeathReason.Poisoned);
 
-            SetToxin(toxinLifespan);
+            SetToxin(toxinLifespan, growthSource);
         }
 
         public bool HasToxinExpired()

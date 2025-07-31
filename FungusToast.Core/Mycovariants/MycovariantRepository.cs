@@ -59,6 +59,9 @@ namespace FungusToast.Core.Mycovariants
                 MycovariantFactory.BallistosporeDischargeI(),
                 MycovariantFactory.BallistosporeDischargeII(),
                 MycovariantFactory.BallistosporeDischargeIII(),
+                
+                // --- Area Effect options ---
+                MycovariantFactory.CytolyticBurst(),
             };
         }
 

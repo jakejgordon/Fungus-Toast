@@ -26,5 +26,6 @@ namespace FungusToast.Core.Mycovariants
         public const int BallistosporeDischargeIIId = 1019;
         public const int BallistosporeDischargeIIIId = 1020;
         public const int NecrophoricAdaptation = 1021;
+        public const int CytolyticBurstId = 1022;
     }
 }

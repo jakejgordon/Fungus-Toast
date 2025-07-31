@@ -107,6 +107,16 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Placed via Mimetic Resilience surge
         /// </summary>
-        MimeticResilience
+        MimeticResilience,
+        
+        /// <summary>
+        /// Toxin created from Cytolytic Burst mycovariant
+        /// </summary>
+        CytolyticBurst,
+        
+        /// <summary>
+        /// Toxin created from Putrefactive Cascade mutation
+        /// </summary>
+        PutrefactiveCascade
     }
 }

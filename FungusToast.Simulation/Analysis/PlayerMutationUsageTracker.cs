@@ -211,6 +211,9 @@ namespace FungusToast.Simulation.Analysis
                     if (player.MimeticResilienceDrops > 0)
                         effects["Mimetic Drops"] = player.MimeticResilienceDrops;
                     break;
+                    
+                // Note: Mycovariant effects are not mutations, so they're not tracked here
+                // They are tracked separately in MycovariantResult
             }
 
             return effects;
