@@ -276,7 +276,9 @@ namespace FungusToast.Unity
             // === 1. Trigger draft phase if this is a draft round ===
             if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
             {
-                StartMycovariantDraftPhase();
+                // IMPORTANT: Wait for any ongoing fade-in animations to complete before starting draft
+                // This ensures newly grown cells are fully visible when highlighted for selection
+                StartCoroutine(DelayedStartDraft());
                 return; // Prevent starting mutation phase until draft is complete!
             }
 
@@ -461,7 +463,7 @@ namespace FungusToast.Unity
                     .ToList();
             }
 
-            // Start the draft UI/controller using the persistent pool manager
+            // Start the draft UI/controllers using the persistent pool manager
             mycovariantDraftController.StartDraft(
                 Board.Players, persistentPoolManager, draftOrder, rng, MycovariantGameBalance.MycovariantSelectionDraftSize);
 
@@ -520,6 +522,10 @@ namespace FungusToast.Unity
         private IEnumerator DelayedStartDraft()
         {
             yield return new WaitForSeconds(2.5f); // Wait for banner to show
+            
+            // CRITICAL FIX: Ensure fade-in animations complete before draft highlighting
+            yield return StartCoroutine(WaitForFadeInAnimationsToComplete());
+            
             StartMycovariantDraftPhase();
         }
 
@@ -637,6 +643,11 @@ namespace FungusToast.Unity
 
             // Update the board visualization after fast-forward
             gridVisualizer.RenderBoard(Board);
+            
+            // CRITICAL FIX: Wait for fade-in animations to complete before starting draft
+            // This ensures newly grown cells are fully visible when highlighted
+            yield return StartCoroutine(WaitForFadeInAnimationsToComplete());
+            
             // Update UI elements to reflect the new board state
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
             int currentRound = Board.CurrentRound;
@@ -760,6 +771,34 @@ namespace FungusToast.Unity
             var emptyFailedGrowths = new Dictionary<int, int>();
             DeathEngine.ExecuteDeathCycle(Board, emptyFailedGrowths, rng, null);
             yield return null; // One frame delay
+        }
+
+        /// <summary>
+        /// Waits for all fade-in animations to complete to ensure newly grown cells are fully visible.
+        /// This is crucial when transitioning from fast-forward to interactive phases like drafts.
+        /// </summary>
+        private IEnumerator WaitForFadeInAnimationsToComplete()
+        {
+            // Check if the GridVisualizer has any active fade-in animations
+            if (gridVisualizer == null) yield break;
+            
+            // Wait for the duration of fade-in animations plus a small buffer
+            float fadeInDuration = UIEffectConstants.CellGrowthFadeInDurationSeconds;
+            float bufferTime = 0.1f; // Small buffer to ensure completion
+            
+            yield return new WaitForSeconds(fadeInDuration + bufferTime);
+            
+            // Additional safety: Clear all IsNewlyGrown flags to prevent any lingering transparency issues
+            foreach (var tile in Board.AllTiles())
+            {
+                if (tile.FungalCell?.IsNewlyGrown == true)
+                {
+                    tile.FungalCell.ClearNewlyGrownFlag();
+                }
+            }
+            
+            // Force a final render to ensure all cells are at full opacity
+            gridVisualizer.RenderBoard(Board);
         }
     }
 }

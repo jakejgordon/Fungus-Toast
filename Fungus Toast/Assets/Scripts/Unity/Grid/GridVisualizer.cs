@@ -233,16 +233,11 @@ namespace FungusToast.Unity.Grid
 
         private IEnumerator PulseHighlightTiles()
         {
-            float pulseDuration = 0.4f;    // Even faster pulse for maximum urgency
-            float scaleDuration = 0.5f;    // Slightly faster scale for more dramatic effect
+            float pulseDuration = 0.4f;    // Fast pulse for urgency
             
             // Extreme contrast: pure black to intense bright pink
             Color darkColor = Color.black;
-            Color brightColor = new Color(1f, 0f, 0.9f, 1f);  // Even more intense magenta-pink
-            
-            // Scale values for the "pop" effect
-            float baseScale = 1f;
-            float maxScale = 1.2f;  // 20% larger at peak for more dramatic effect
+            Color brightColor = new Color(1f, 0f, 0.9f, 1f);  // Intense magenta-pink
 
             while (true)
             {
@@ -255,18 +250,8 @@ namespace FungusToast.Unity.Grid
                     : 1f - 2f * (1f - colorT) * (1f - colorT);  // Ease-out for second half (smooth return to black)
                 
                 Color pulseColor = Color.Lerp(darkColor, brightColor, easedColorT);
-                
-                // Scale pulse: slightly out of phase with bounce effect
-                float scaleT = Mathf.PingPong((Time.time + 0.15f) / scaleDuration, 1f);
-                // Add a subtle bounce by using a sine wave with higher frequency
-                float bounceEffect = 1f + 0.05f * Mathf.Sin(Time.time * 8f);
-                float easedScaleT = Mathf.Sin(scaleT * Mathf.PI * 0.5f);
-                float currentScale = Mathf.Lerp(baseScale, maxScale, easedScaleT) * bounceEffect;
 
-                // Apply the scale to the entire tilemap for dramatic effect
-                SelectionHighlightTileMap.transform.localScale = Vector3.one * currentScale;
-
-                // Apply colors to all highlighted positions
+                // Apply colors to all highlighted positions (NO scaling - just color pulse)
                 foreach (var pos in highlightedPositions)
                 {
                     if (SelectionHighlightTileMap.HasTile(pos))
