@@ -7,6 +7,27 @@ using FungusToast.Core.Mycovariants;
 
 namespace FungusToast.Core.AI
 {
+    /// <summary>
+    /// Enum representing different sets of AI strategies available.
+    /// </summary>
+    public enum StrategySetEnum
+    {
+        /// <summary>
+        /// Proven strategies that have been tested and validated.
+        /// </summary>
+        Proven,
+        
+        /// <summary>
+        /// Testing strategies for experimental scenarios.
+        /// </summary>
+        Testing,
+        
+        /// <summary>
+        /// Mycovariant permutation strategies focusing on different mycovariant themes.
+        /// </summary>
+        Mycovariants
+    }
+
     public static class AIRoster
     {
         /// <summary>
@@ -41,6 +62,18 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Reclamation)
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "Mutate>Grow>Kill(Max Econ)",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "Creeping>Necrosporulation",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MinorEconomy,
@@ -73,9 +106,8 @@ namespace FungusToast.Core.AI
                     MutationCategory.CellularResilience
                 }
             ),
-            // The following are "best of" mutations in their categories
             new ParameterizedSpendingStrategy(
-                strategyName: "SurgeFreq_10",
+                strategyName: "SurgeFreq_10_Hyphal",
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
@@ -115,16 +147,16 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
-                strategyName: "Grow=>Kill(Max Econ)",
+                strategyName: "Grow>Mutate>Kill(Max Econ)",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
-                    new TargetMutationGoal(MutationIds.NecrotoxicConversion, GameBalance.NecrotoxicConversionMaxLevel),
-                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Fungicide)
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Best_MaxEcon_Surge10_HyphalSurge",
@@ -178,32 +210,6 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Reclamation)
             ),
             new ParameterizedSpendingStrategy(
-                strategyName: "Anabolic>Grow>CatabR>PutreRegen",
-                prioritizeHighTier: true,
-                economyBias: EconomyBias.ModerateEconomy,
-                targetMutationGoals: new List<TargetMutationGoal>
-                {
-                   new TargetMutationGoal(MutationIds.AnabolicInversion),
-                   new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
-                   new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
-                   new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
-                },
-                surgePriorityIds: new List<int> { MutationIds.MimeticResilience }
-            ),
-            // The following are "best of" mutations in their categories
-            new ParameterizedSpendingStrategy(
-                strategyName: "SurgeFreq_10_Mimetic",
-                targetMutationGoals: new List<TargetMutationGoal>
-                {
-                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
-                    new TargetMutationGoal(MutationIds.HyphalSurge),
-                    new TargetMutationGoal(MutationIds.HyphalVectoring)
-                },
-                surgePriorityIds: new List<int> { MutationIds.MimeticResilience },
-                surgeAttemptTurnFrequency: 10,
-                prioritizeHighTier: true,
-                economyBias: EconomyBias.MaxEconomy),
-            new ParameterizedSpendingStrategy(
                 strategyName: "SurgeFreq_10_Hyphal",
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
@@ -215,18 +221,6 @@ namespace FungusToast.Core.AI
                 surgeAttemptTurnFrequency: 10,
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy),
-            new ParameterizedSpendingStrategy(
-                strategyName: "Grow=>Kill(Max Econ)",
-                prioritizeHighTier: true,
-                economyBias: EconomyBias.MaxEconomy,
-                targetMutationGoals: new List<TargetMutationGoal>
-                {
-                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
-                    new TargetMutationGoal(MutationIds.NecrotoxicConversion, GameBalance.NecrotoxicConversionMaxLevel),
-                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
-                },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Fungicide)
-            ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Best_MaxEcon_Surge10_HyphalSurge",
                 prioritizeHighTier: true,
@@ -244,7 +238,43 @@ namespace FungusToast.Core.AI
                 surgeAttemptTurnFrequency: 7,
                 economyBias: EconomyBias.MaxEconomy,
                 maxTier: MutationTier.Tier4
-            )
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "Grow>Kill(Max Econ)",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrotoxicConversion, GameBalance.NecrotoxicConversionMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "Grow>Mutate>Kill(Max Econ)",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "Mutate>Grow>Kill(Max Econ)",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
         };
 
         // Optional: a dictionary by name for UI selection or reference
@@ -255,27 +285,41 @@ namespace FungusToast.Core.AI
             TestingStrategies.ToDictionary(s => s.StrategyName, s => s);
 
         /// <summary>
-        /// Returns up to X unique random proven strategies. If count exceeds available strategies,
-        /// fills the remainder with uniquely-named RandomMutationSpendingStrategy instances.
+        /// Returns the specified number of random strategies from the chosen strategy set.
+        /// If the requested count exceeds available strategies, fills the remainder with 
+        /// uniquely-named RandomMutationSpendingStrategy instances.
         /// </summary>
-        public static List<IMutationSpendingStrategy> GetRandomProvenStrategies(int count, Random? rng = null)
+        /// <param name="numberOfPlayers">Number of strategies to return</param>
+        /// <param name="strategySet">The strategy set to select from (Proven, Testing, or Mycovariants)</param>
+        /// <param name="rng">Optional random number generator for reproducible results</param>
+        /// <returns>List of mutation spending strategies</returns>
+        public static List<IMutationSpendingStrategy> GetStrategies(int numberOfPlayers, StrategySetEnum strategySet, Random? rng = null)
         {
             var result = new List<IMutationSpendingStrategy>();
-            if (count <= 0)
+            if (numberOfPlayers <= 0)
                 return result;
 
             rng ??= new Random();
 
-            // Create a randomized, unique set from ProvenStrategies
-            var shuffled = ProvenStrategies
+            // Select the appropriate strategy list based on the enum
+            var sourceStrategies = strategySet switch
+            {
+                StrategySetEnum.Proven => ProvenStrategies,
+                StrategySetEnum.Testing => TestingStrategies,
+                StrategySetEnum.Mycovariants => MycovariantPermutations(),
+                _ => throw new ArgumentException($"Unknown strategy set: {strategySet}", nameof(strategySet))
+            };
+
+            // Create a randomized, unique set from the source strategies
+            var shuffled = sourceStrategies
                 .OrderBy(_ => rng.Next())
-                .Take(Math.Min(count, ProvenStrategies.Count))
+                .Take(Math.Min(numberOfPlayers, sourceStrategies.Count))
                 .ToList();
 
             result.AddRange(shuffled);
 
             // Fill remainder with unique-named RandomMutationSpendingStrategy
-            int remaining = count - result.Count;
+            int remaining = numberOfPlayers - result.Count;
             for (int i = 1; i <= remaining; i++)
             {
                 result.Add(new RandomMutationSpendingStrategy($"LegacyRandom #{i}"));

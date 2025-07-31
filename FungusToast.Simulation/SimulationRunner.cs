@@ -8,11 +8,12 @@ namespace FungusToast.Simulation
 {
     public static class SimulationRunner
     {
-        public static void RunStandardSimulation(int numberOfPlayers, int numberOfGames, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight)
+        public static void RunStandardSimulation(int numberOfPlayers, int numberOfGames, List<IMutationSpendingStrategy>? strategies = null, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight)
         {
             var rnd = new Random(); // Or any deterministic seed you want
 
-            var strategies =   AIRoster.GetRandomProvenStrategies(numberOfPlayers, rnd); /* AIRoster.TestingStrategies;*/ //AIRoster.MycovariantPermutations();
+            // Use TestingStrategies as default if none provided
+            strategies ??= AIRoster.TestingStrategies;
 
             Console.WriteLine($"Running simulation with {strategies.Count} players for {numberOfGames} games each...\n");
 

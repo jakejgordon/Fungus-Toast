@@ -9,17 +9,43 @@ namespace FungusToast.Simulation
 {
     class Program
     {
-        private const int DefaultNumberOfSimulationGames = 2;
+        private const int DefaultNumberOfSimulationGames = 100;
         private const int DefaultNumberOfPlayers = 8;
 
         static void Main(string[] args)
         {
             // Parse command-line arguments
-            int numberOfGames = DefaultNumberOfSimulationGames;
-            int numberOfPlayers = DefaultNumberOfPlayers;
-            int boardWidth = GameBalance.BoardWidth;
-            int boardHeight = GameBalance.BoardHeight;
-            string outputFileName = ""; // Default to empty string for auto-generated filename
+            var config = ParseCommandLineArguments(args);
+            if (config == null) return; // Help was displayed, exit early
+
+            var strategies = AIRoster.GetStrategies(config.NumberOfPlayers, StrategySetEnum.Proven);
+            //var strategies = AIRoster.GetStrategies(config.NumberOfPlayers, StrategySetEnum.Testing);
+
+            // Always set up output redirection - if no filename specified, OutputManager will generate one
+            OutputManager? outputManager = null;
+            outputManager = new OutputManager(config.OutputFileName);
+
+            try
+            {
+                SimulationRunner.RunStandardSimulation(config.NumberOfPlayers, config.NumberOfGames, strategies, config.BoardWidth, config.BoardHeight);
+            }
+            finally
+            {
+                outputManager?.Dispose();
+            }
+            Environment.Exit(0);
+        }
+
+        private static SimulationConfig? ParseCommandLineArguments(string[] args)
+        {
+            var config = new SimulationConfig
+            {
+                NumberOfGames = DefaultNumberOfSimulationGames,
+                NumberOfPlayers = DefaultNumberOfPlayers,
+                BoardWidth = GameBalance.BoardWidth,
+                BoardHeight = GameBalance.BoardHeight,
+                OutputFileName = "" // Default to empty string for auto-generated filename
+            };
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -29,7 +55,7 @@ namespace FungusToast.Simulation
                     case "-g":
                         if (i + 1 < args.Length && int.TryParse(args[i + 1], out int games))
                         {
-                            numberOfGames = games;
+                            config.NumberOfGames = games;
                             i++; // Skip the next argument since we consumed it
                         }
                         break;
@@ -37,7 +63,7 @@ namespace FungusToast.Simulation
                     case "-p":
                         if (i + 1 < args.Length && int.TryParse(args[i + 1], out int players))
                         {
-                            numberOfPlayers = players;
+                            config.NumberOfPlayers = players;
                             i++; // Skip the next argument since we consumed it
                         }
                         break;
@@ -45,7 +71,7 @@ namespace FungusToast.Simulation
                     case "-w":
                         if (i + 1 < args.Length && int.TryParse(args[i + 1], out int width))
                         {
-                            boardWidth = width;
+                            config.BoardWidth = width;
                             i++; // Skip the next argument since we consumed it
                         }
                         break;
@@ -53,7 +79,7 @@ namespace FungusToast.Simulation
                     case "-h":
                         if (i + 1 < args.Length && int.TryParse(args[i + 1], out int height))
                         {
-                            boardHeight = height;
+                            config.BoardHeight = height;
                             i++; // Skip the next argument since we consumed it
                         }
                         break;
@@ -61,29 +87,17 @@ namespace FungusToast.Simulation
                     case "-o":
                         if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
                         {
-                            outputFileName = args[i + 1];
+                            config.OutputFileName = args[i + 1];
                             i++; // Skip the next argument since we consumed it
                         }
                         break;
                     case "--help":
                         PrintUsage();
-                        return;
+                        return null; // Return null to indicate help was displayed
                 }
             }
 
-            // Always set up output redirection - if no filename specified, OutputManager will generate one
-            OutputManager? outputManager = null;
-            outputManager = new OutputManager(outputFileName);
-
-            try
-            {
-                SimulationRunner.RunStandardSimulation(numberOfPlayers, numberOfGames, boardWidth, boardHeight);
-            }
-            finally
-            {
-                outputManager?.Dispose();
-            }
-            Environment.Exit(0);
+            return config;
         }
 
         private static void PrintUsage()
@@ -111,6 +125,15 @@ namespace FungusToast.Simulation
             Console.WriteLine("  dotnet run --width 50 --height 75   # Run with 50x75 board");
             Console.WriteLine("  dotnet run -w 200 -p 4              # Run 4 players on 200x100 board");
             Console.WriteLine("  dotnet run -o my_test.txt           # Run with custom output filename");
+        }
+
+        private class SimulationConfig
+        {
+            public int NumberOfGames { get; set; }
+            public int NumberOfPlayers { get; set; }
+            public int BoardWidth { get; set; }
+            public int BoardHeight { get; set; }
+            public string OutputFileName { get; set; } = "";
         }
     }
 }

@@ -172,7 +172,7 @@ namespace FungusToast.Unity
             players.Add(humanPlayer);
 
             // Get AI strategies from AIRoster
-            var aiStrategies = AIRoster.GetRandomProvenStrategies(playerCount - 1);
+            var aiStrategies = AIRoster.GetStrategies(playerCount - 1, StrategySetEnum.Proven);
 
             // Shuffle for variety (if AIRoster didn't already do so)
             aiStrategies = aiStrategies.OrderBy(_ => UnityEngine.Random.value).ToList();
@@ -604,7 +604,7 @@ namespace FungusToast.Unity
                 var tempType = humanPlayer.PlayerType;
                 var tempStrat = humanPlayer.MutationStrategy;
                 humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
-                var aiStrategy = AIRoster.GetRandomProvenStrategies(1).FirstOrDefault();
+                var aiStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
                 humanPlayer.SetMutationStrategy(aiStrategy);
 
                 // Silent mutation phase (auto-spend for all players)
@@ -624,7 +624,7 @@ namespace FungusToast.Unity
                     var originalType = humanPlayer.PlayerType;
                     var originalStrat = humanPlayer.MutationStrategy;
                     humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
-                    var draftAIStrategy = AIRoster.GetRandomProvenStrategies(1).FirstOrDefault();
+                    var draftAIStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
                     humanPlayer.SetMutationStrategy(draftAIStrategy);
 
                     RunSilentDraftForAllPlayers();
