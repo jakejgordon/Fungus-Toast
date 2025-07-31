@@ -110,7 +110,7 @@ namespace FungusToast.Core.Config
 
         // surge mutation durations
         public const int HyphalSurgeDurationRounds = 2;
-        public const int HyphalVectoringSurgeDuration = 5;
+        public const int HyphalVectoringSurgeDuration = 4;
         public const int ChitinFortificationSurgeDuration = 3;
         public const int MimeticResilienceSurgeDuration = 4;
 
