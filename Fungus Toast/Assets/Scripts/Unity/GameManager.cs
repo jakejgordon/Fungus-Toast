@@ -90,7 +90,11 @@ namespace FungusToast.Unity
 
         private void Start()
         {
-            ShowStartGamePanel();
+            // Only show StartGamePanel when the game is actually running (not in edit mode)
+            if (Application.isPlaying)
+            {
+                ShowStartGamePanel();
+            }
         }
 
         public void InitializeGame(int numberOfPlayers)
@@ -126,6 +130,13 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
             mycovariantDraftController?.gameObject.SetActive(false);
+
+            // === Initialize Game Log ===
+            if (gameUIManager.GameLogManager != null && gameUIManager.GameLogPanel != null)
+            {
+                gameUIManager.GameLogManager.Initialize(Board);
+                gameUIManager.GameLogPanel.Initialize(gameUIManager.GameLogManager);
+            }
 
             // === THEN initialize and show children/buttons ===
             gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
@@ -238,6 +249,9 @@ namespace FungusToast.Unity
             // Disable Spend Points before leaving mutation phase
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
 
+            // Notify game log of phase start
+            gameUIManager.GameLogManager?.OnPhaseStart("Growth");
+
             if (growthPhaseRunner != null)
             {
                 growthPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
@@ -255,6 +269,9 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
+            // Notify game log of phase start
+            gameUIManager.GameLogManager?.OnPhaseStart("Decay");
+
             decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
             gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f);
             phaseProgressTracker?.HighlightDecayPhase();
@@ -264,6 +281,9 @@ namespace FungusToast.Unity
         public void OnRoundComplete()
         {
             if (gameEnded) return;
+
+            // Notify game log of round completion
+            gameUIManager.GameLogManager?.OnRoundComplete(Board.CurrentRound);
 
             foreach (var player in Board.Players)
                 player.TickDownActiveSurges();
@@ -308,6 +328,9 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
+            // Notify game log of round start
+            gameUIManager.GameLogManager?.OnRoundStart(Board.CurrentRound);
+
             AssignMutationPoints();
             
             // At the true start of a new mutation phase, reset humanTurnEnded
@@ -322,6 +345,9 @@ namespace FungusToast.Unity
 
             gameUIManager.MoldProfilePanel?.Refresh();
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
+
+            // Notify game log of phase start
+            gameUIManager.GameLogManager?.OnPhaseStart("Mutation");
 
             gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
 

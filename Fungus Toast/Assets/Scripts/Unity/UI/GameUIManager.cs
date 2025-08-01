@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using FungusToast.Unity.UI.MutationTree;
+using FungusToast.Unity.UI.GameLog;
 
 namespace FungusToast.Unity.UI
 {
@@ -13,6 +14,10 @@ namespace FungusToast.Unity.UI
         [Header("Sidebars")]
         [SerializeField] private GameObject leftSidebar;
         [SerializeField] private UI_RightSidebar rightSidebar;
+        
+        [Header("Game Log")]
+        [SerializeField] private UI_GameLogPanel gameLogPanel;
+        [SerializeField] private GameLogManager gameLogManager;
 
         [Header("End-game")]
         [SerializeField] private UI_EndGamePanel endGamePanel;
@@ -32,5 +37,7 @@ namespace FungusToast.Unity.UI
         public UI_RightSidebar RightSidebar => rightSidebar;
         public UI_EndGamePanel EndGamePanel => endGamePanel;
         public UI_PhaseBanner PhaseBanner => phaseBanner;
+        public UI_GameLogPanel GameLogPanel => gameLogPanel;
+        public GameLogManager GameLogManager => gameLogManager;
     }
 }

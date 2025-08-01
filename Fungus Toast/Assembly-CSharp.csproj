@@ -68,6 +68,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\UI_RightSideBar.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\SidebarResizer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantIcon.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\GameLog\UI_GameLogPanel.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameStart\UI_PlayerCountButton.cs" />
     <Compile Include="Assets\Scripts\Unity\Phases\DecayPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationNodeUI.cs" />
@@ -94,10 +95,13 @@
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_TooltipPositioner.cs" />
     <Compile Include="Assets\Scripts\Unity\Cameras\CameraCenterer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\PlayerIconCellUI.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\GameLog\GameLogEntry.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PhaseProgressTracker.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MultiCellSelectionController.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\GameLog\GameLogManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationTreeBuilder.cs" />
     <Compile Include="Assets\Scripts\Unity\Effects\MycovariantEffectResolver.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\GameLog\UI_GameLogEntry.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\TileSelectionController.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_RemainingPointsPanel.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\TileHoverHighlighter.cs" />
