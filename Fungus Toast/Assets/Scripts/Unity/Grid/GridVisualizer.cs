@@ -515,7 +515,7 @@ namespace FungusToast.Unity.Grid
             var (x, y) = board.GetXYFromTileId(tileId);
             Vector3Int pos = new Vector3Int(x, y, 0);
             
-            float duration = UIEffectConstants.CellDeathAnimationDurationSeconds; // Crossfade duration
+            float duration = UIEffectConstants.CellDeathAnimationDurationSeconds;
             float elapsed = 0f;
 
             // Get the current cell to determine the death animation parameters
@@ -527,28 +527,67 @@ namespace FungusToast.Unity.Grid
                 yield break;
             }
 
-            // Store initial colors
+            // Store initial colors and transform
             Color initialLivingColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
             Color initialOverlayColor = overlayTilemap.HasTile(pos) ? overlayTilemap.GetColor(pos) : Color.white;
+            Matrix4x4 initialTransform = moldTilemap.GetTransformMatrix(pos);
 
-            while (elapsed < duration)
+            // Add dramatic red flash at the start
+            Color deathFlashColor = new Color(1f, 0.2f, 0.2f, 1f); // Bright red
+            
+            // Flash phase (first 15% of animation)
+            float flashDuration = duration * 0.15f;
+            float flashElapsed = 0f;
+            
+            while (flashElapsed < flashDuration)
             {
-                elapsed += Time.deltaTime;
-                float progress = elapsed / duration;
+                flashElapsed += Time.deltaTime;
+                float flashProgress = flashElapsed / flashDuration;
                 
-                // Fade out living cell (from full opacity to 0.8f for dead cell)
+                // Intense red flash that fades quickly
+                Color flashColor = Color.Lerp(deathFlashColor, initialLivingColor, flashProgress);
+                
                 if (moldTilemap.HasTile(pos))
                 {
-                    Color livingColor = initialLivingColor;
-                    livingColor.a = Mathf.Lerp(1f, 0.8f, progress); // Changed from 0.55f to 0.8f to match new dead cell opacity
-                    moldTilemap.SetColor(pos, livingColor);
+                    moldTilemap.SetColor(pos, flashColor);
+                }
+                
+                yield return null;
+            }
+
+            // Main animation phase (remaining 85%)
+            float mainDuration = duration - flashDuration;
+            float mainElapsed = 0f;
+
+            while (mainElapsed < mainDuration)
+            {
+                mainElapsed += Time.deltaTime;
+                float progress = mainElapsed / mainDuration;
+                
+                // Ease-in curve for more dramatic start
+                float easedProgress = 1f - Mathf.Pow(1f - progress, 2f);
+                
+                // Scale effect: slight shrink during death
+                float scaleAmount = Mathf.Lerp(1f, 0.85f, easedProgress);
+                Matrix4x4 scaleMatrix = Matrix4x4.Scale(new Vector3(scaleAmount, scaleAmount, 1f));
+                
+                // Color desaturation effect
+                Color currentLivingColor = Color.Lerp(initialLivingColor, 
+                    new Color(initialLivingColor.r * 0.7f, initialLivingColor.g * 0.7f, initialLivingColor.b * 0.7f, 
+                    Mathf.Lerp(1f, 0.8f, easedProgress)), easedProgress);
+                
+                // Apply visual changes
+                if (moldTilemap.HasTile(pos))
+                {
+                    moldTilemap.SetColor(pos, currentLivingColor);
+                    moldTilemap.SetTransformMatrix(pos, scaleMatrix);
                 }
                 
                 // Fade in dead cell overlay (from 0 to full opacity)
                 if (overlayTilemap.HasTile(pos))
                 {
                     Color overlayColor = initialOverlayColor;
-                    overlayColor.a = Mathf.Lerp(0f, 1f, progress);
+                    overlayColor.a = Mathf.Lerp(0f, 1f, easedProgress);
                     overlayTilemap.SetColor(pos, overlayColor);
                 }
                 
@@ -559,14 +598,15 @@ namespace FungusToast.Unity.Grid
             if (moldTilemap.HasTile(pos))
             {
                 Color finalLivingColor = initialLivingColor;
-                finalLivingColor.a = 0.8f; // Changed from 0.55f to 0.8f to match new dead cell opacity
+                finalLivingColor.a = 0.8f;
                 moldTilemap.SetColor(pos, finalLivingColor);
+                moldTilemap.SetTransformMatrix(pos, Matrix4x4.Scale(new Vector3(0.85f, 0.85f, 1f))); // Keep slight shrink
             }
             
             if (overlayTilemap.HasTile(pos))
             {
                 Color finalOverlayColor = initialOverlayColor;
-                finalOverlayColor.a = 1f; // Full overlay opacity
+                finalOverlayColor.a = 1f;
                 overlayTilemap.SetColor(pos, finalOverlayColor);
             }
 

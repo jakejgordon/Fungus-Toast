@@ -25,7 +25,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Duration (in seconds) for cell death crossfade animation.
         /// </summary>
-        public const float CellDeathAnimationDurationSeconds = 0.6f;
+        public const float CellDeathAnimationDurationSeconds = 0.9f;
 
         /// <summary>
         /// Duration (in seconds) for cell growth fade-in animation.
