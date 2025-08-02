@@ -15,26 +15,48 @@ namespace FungusToast.Unity.UI.GameLog
         private Queue<GameLogEntry> logEntries = new Queue<GameLogEntry>();
         private const int MAX_ENTRIES = 50;
         
-        // Round summary tracking for the human player (PlayerId 0)
-        private Dictionary<int, int> currentRoundColonized = new Dictionary<int, int>();
-        private Dictionary<int, int> currentRoundToxins = new Dictionary<int, int>();
-        private Dictionary<int, int> currentRoundDeaths = new Dictionary<int, int>();
-        private Dictionary<int, int> currentRoundReclaimed = new Dictionary<int, int>();
+        // Round summary tracking for the human player using snapshots (like GlobalGameLogManager)
+        private PlayerSnapshot roundStartSnapshot;
         
         public event Action<GameLogEntry> OnNewLogEntry;
         
         private GameBoard board;
         private int humanPlayerId = 0; // Assuming human is always player 0
         
+        private struct PlayerSnapshot
+        {
+            public int LivingCells;
+            public int DeadCells;
+            public int ToxinCells;
+        }
+        
+        private PlayerSnapshot TakePlayerSnapshot(GameBoard gameBoard, int playerId)
+        {
+            var playerCells = gameBoard.GetAllCellsOwnedBy(playerId);
+            var livingCount = playerCells.Count(c => c.IsAlive);
+            var deadCount = playerCells.Count(c => c.IsDead);
+            var toxinCount = playerCells.Count(c => c.IsToxin);
+            
+            return new PlayerSnapshot
+            {
+                LivingCells = livingCount,
+                DeadCells = deadCount,
+                ToxinCells = toxinCount
+            };
+        }
+        
         public void Initialize(GameBoard gameBoard)
         {
             board = gameBoard;
             
-            // Subscribe to relevant board events
-            board.CellColonized += OnCellColonized;
-            board.CellToxified += OnCellToxified;
+            // Take initial snapshot BEFORE any spores are placed (for accurate Round 1 tracking)
+            if (board != null)
+            {
+                roundStartSnapshot = TakePlayerSnapshot(board, humanPlayerId);
+            }
+            
+            // Subscribe to relevant board events for immediate feedback
             board.CellPoisoned += OnCellPoisoned;
-            board.CellReclaimed += OnCellReclaimed;
             
             // Don't add initial game start message here - that's for the global log
         }
@@ -43,51 +65,48 @@ namespace FungusToast.Unity.UI.GameLog
         {
             if (board != null)
             {
-                board.CellColonized -= OnCellColonized;
-                board.CellToxified -= OnCellToxified;
                 board.CellPoisoned -= OnCellPoisoned;
-                board.CellReclaimed -= OnCellReclaimed;
             }
         }
         
         public void OnRoundStart(int roundNumber)
         {
-            // Reset round tracking
-            currentRoundColonized.Clear();
-            currentRoundToxins.Clear();
-            currentRoundDeaths.Clear();
-            currentRoundReclaimed.Clear();
+            // For Round 1, we already took the snapshot in Initialize() before spores were placed
+            // For subsequent rounds, take a fresh snapshot at the start
+            if (roundNumber > 1 && board != null)
+            {
+                roundStartSnapshot = TakePlayerSnapshot(board, humanPlayerId);
+            }
             
             // Don't add round start messages here - that's for the global log
         }
         
         public void OnRoundComplete(int roundNumber)
         {
-            // Add round summary for human player
-            var summaryParts = new List<string>();
+            // Take snapshot at end of round and calculate deltas for the human player
+            var roundEndSnapshot = TakePlayerSnapshot(board, humanPlayerId);
             
-            if (currentRoundColonized.TryGetValue(humanPlayerId, out int colonized) && colonized > 0)
-                summaryParts.Add($"Grew {colonized} new cells");
-            if (currentRoundToxins.TryGetValue(humanPlayerId, out int toxins) && toxins > 0)
-                summaryParts.Add($"Dropped {toxins} toxins");
-            if (currentRoundReclaimed.TryGetValue(humanPlayerId, out int reclaimed) && reclaimed > 0)
-                summaryParts.Add($"Reclaimed {reclaimed} cells");
-            if (currentRoundDeaths.TryGetValue(humanPlayerId, out int deaths) && deaths > 0)
-                summaryParts.Add($"{deaths} cells died");
+            int cellsGrown = roundEndSnapshot.LivingCells - roundStartSnapshot.LivingCells;
+            int cellsDied = roundStartSnapshot.LivingCells - roundEndSnapshot.LivingCells + cellsGrown; // Account for growth and death
+            int toxinChange = roundEndSnapshot.ToxinCells - roundStartSnapshot.ToxinCells;
+            int deadCellChange = roundEndSnapshot.DeadCells - roundStartSnapshot.DeadCells;
             
-            // Add dead cell count to summary
-            if (board != null)
+            // Only show summary if there were changes or the player has dead cells
+            if (cellsGrown != 0 || cellsDied > 0 || toxinChange != 0 || deadCellChange != 0)
             {
-                var humanDeadCells = board.GetAllCellsOwnedBy(humanPlayerId).Count(c => c.IsDead);
-                if (humanDeadCells > 0)
-                {
-                    summaryParts.Add($"{humanDeadCells} dead cells total");
-                }
-            }
-            
-            if (summaryParts.Any())
-            {
-                string summary = $"Round {roundNumber} summary:\n{string.Join("\n", summaryParts)}";
+                // Use shared formatter for consistent messaging
+                string summary = RoundSummaryFormatter.FormatRoundSummary(
+                    roundNumber,
+                    cellsGrown,
+                    cellsDied,
+                    toxinChange,
+                    deadCellChange, // Pass the change in dead cells, not the total
+                    roundEndSnapshot.LivingCells,
+                    roundEndSnapshot.DeadCells,
+                    roundEndSnapshot.ToxinCells,
+                    0f, // occupancy not needed for player-specific format
+                    isPlayerSpecific: true);
+                
                 AddEntry(new GameLogEntry(summary, GameLogCategory.Normal, null, humanPlayerId));
             }
         }
@@ -98,49 +117,16 @@ namespace FungusToast.Unity.UI.GameLog
             // Only add player-specific phase messages if needed
         }
         
-        private void OnCellColonized(int playerId, int tileId)
-        {
-            if (playerId == humanPlayerId)
-            {
-                IncrementRoundCount(currentRoundColonized, playerId);
-                // Don't add individual colonization messages to avoid spam
-            }
-        }
-        
-        private void OnCellToxified(int playerId, int tileId)
-        {
-            if (playerId == humanPlayerId)
-            {
-                IncrementRoundCount(currentRoundToxins, playerId);
-            }
-        }
-        
         private void OnCellPoisoned(int playerId, int tileId, int oldOwnerId)
         {
             if (playerId == humanPlayerId)
             {
-                IncrementRoundCount(currentRoundToxins, playerId);
                 AddEntry(new GameLogEntry($"Poisoned enemy cell", GameLogCategory.Lucky, null, playerId));
             }
             else if (oldOwnerId == humanPlayerId)
             {
                 AddEntry(new GameLogEntry($"Your cell was poisoned!", GameLogCategory.Unlucky, null, humanPlayerId));
             }
-        }
-        
-        private void OnCellReclaimed(int playerId, int tileId)
-        {
-            if (playerId == humanPlayerId)
-            {
-                IncrementRoundCount(currentRoundReclaimed, playerId);
-            }
-        }
-        
-        private void IncrementRoundCount(Dictionary<int, int> counter, int playerId)
-        {
-            if (!counter.ContainsKey(playerId))
-                counter[playerId] = 0;
-            counter[playerId]++;
         }
         
         private void AddEntry(GameLogEntry entry)
@@ -237,10 +223,8 @@ namespace FungusToast.Unity.UI.GameLog
         
         public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
         {
-            if (playerId == humanPlayerId)
-            {
-                IncrementRoundCount(currentRoundDeaths, playerId);
-            }
+            // Death tracking is now handled by snapshots in OnRoundComplete
+            // This method is kept for ISimulationObserver interface compatibility
         }
         
         // Stub implementations for other ISimulationObserver methods that we don't need detailed logging for

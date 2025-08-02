@@ -76,11 +76,11 @@ gameUIManager.GlobalEventsLogManager?.OnRoundStart(roundNumber);       // Global
 
 ## Message Content Guidelines
 
-### Player Message Log (Left Sidebar - "Activity Log")
+### **Player Message Log (Left Sidebar - "Activity Log")**
 
 #### **Should Include:**
 1. **Personal Performance Summaries**
-   - End-of-round summaries: "Grew 5 cells", "3 cells died", "Dropped 2 toxins", "X dead cells total"
+   - End-of-round summaries: "Round X summary: Grew Y new cells, Z cells died, dropped W toxins, A dead cells total"
    - Individual mutation point earnings
    - Direct player actions and their immediate results
 
@@ -99,7 +99,7 @@ gameUIManager.GlobalEventsLogManager?.OnRoundStart(roundNumber);       // Global
 - Other players' activities unless directly affecting the human player
 - System messages or administrative events
 
-### Global Message Log (Right Sidebar - "Game Events")
+### **Global Message Log (Right Sidebar - "Game Events")**
 
 #### **Should Include:**
 1. **Game State Changes**
@@ -124,28 +124,36 @@ gameUIManager.GlobalEventsLogManager?.OnRoundStart(roundNumber);       // Global
 
 ## Implementation Patterns
 
-### Adding New Log Events
+### **Shared Round Summary Formatting**
 
-#### **For Player Events:**
+Both log managers now use a shared `RoundSummaryFormatter` utility class for consistent messaging and proper Round 1 tracking:
+
 ```csharp
-// In GameLogManager.cs
-public void RecordPlayerSpecificEvent(int playerId, string details)
-{
-    if (playerId == humanPlayerId) // Only track human player
-    {
-        AddLuckyEntry($"Special event: {details}", playerId);
-    }
-}
+// Usage example for global log
+string summary = RoundSummaryFormatter.FormatRoundSummary(
+    roundNumber, cellsGrown, cellsDied, toxinChange,
+    livingCells, deadCells, toxinCells, occupancyPercent,
+    isPlayerSpecific: false);
+
+// Usage example for player log  
+string summary = RoundSummaryFormatter.FormatRoundSummary(
+    roundNumber, cellsGrown, cellsDied, toxinChange,
+    livingCells, deadCells, toxinCells, 0f,
+    isPlayerSpecific: true);
 ```
 
-#### **For Global Events:**
-```csharp
-// In GlobalGameLogManager.cs  
-public void OnGameStateChange(string eventDescription)
-{
-    AddNormalEntry(eventDescription);
-}
-```
+#### **Round 1 Tracking Fix & Dead Cell Change Fix**
+Both log managers take their initial snapshot during `Initialize()` before any spores are placed, and now properly track changes in dead cell counts:
+
+**Round 1 Fix:**
+- **Before Fix**: Round 1 with 1?2 cells showed "Grew 2 cells" 
+- **After Fix**: Round 1 with 1?2 cells correctly shows "Grew 1 cell"
+
+**Dead Cell Change Fix:**
+- **Before Fix**: Showed total dead cells: "5 dead cells total"
+- **After Fix**: Shows changes during round + total: "2 cells died, 5 dead cells total"
+
+This ensures consistent language and formatting between both logs while providing accurate change tracking and current totals.
 
 ### Message Categories
 - **Normal**: Informational messages (white text)

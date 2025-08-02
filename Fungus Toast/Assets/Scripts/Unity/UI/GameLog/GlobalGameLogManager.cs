@@ -51,13 +51,20 @@ namespace FungusToast.Unity.UI.GameLog
         {
             board = gameBoard;
             
+            // Take initial snapshot BEFORE any spores are placed (for accurate Round 1 tracking)
+            if (board != null)
+            {
+                roundStartSnapshot = TakeSnapshot(board);
+            }
+            
             // Don't add initial game start message - Round 1 begins will be shown instead
         }
         
         public void OnRoundStart(int roundNumber)
         {
-            // Take snapshot at start of round
-            if (board != null)
+            // For Round 1, we already took the snapshot in Initialize() before spores were placed
+            // For subsequent rounds, take a fresh snapshot at the start
+            if (roundNumber > 1 && board != null)
             {
                 roundStartSnapshot = TakeSnapshot(board);
             }
@@ -76,23 +83,18 @@ namespace FungusToast.Unity.UI.GameLog
             int toxinChange = roundEndSnapshot.ToxinCells - roundStartSnapshot.ToxinCells;
             int deadCellChange = roundEndSnapshot.DeadCells - roundStartSnapshot.DeadCells;
             
-            // Create global round summary with net changes
-            var summaryParts = new List<string>();
-            
-            if (cellsGrown != 0)
-                summaryParts.Add($"{Math.Abs(cellsGrown)} cells {(cellsGrown > 0 ? "grown" : "lost")}");
-            
-            if (cellsDied > 0)
-                summaryParts.Add($"{cellsDied} cell{(cellsDied == 1 ? "" : "s")} died");
-                
-            if (toxinChange != 0)
-                summaryParts.Add($"{Math.Abs(toxinChange)} toxins {(toxinChange > 0 ? "added" : "removed")}");
-                
-            string changes = summaryParts.Any() ? string.Join(", ", summaryParts) : "no net changes";
-            
-            string summary = $"Round {roundNumber} summary: {changes}, " +
-                           $"board now {roundEndSnapshot.Occupancy:F1}% occupied " +
-                           $"({roundEndSnapshot.LivingCells} living, {roundEndSnapshot.DeadCells} dead, {roundEndSnapshot.ToxinCells} toxins)";
+            // Use shared formatter for consistent messaging
+            string summary = RoundSummaryFormatter.FormatRoundSummary(
+                roundNumber,
+                cellsGrown,
+                cellsDied,
+                toxinChange,
+                deadCellChange,
+                roundEndSnapshot.LivingCells,
+                roundEndSnapshot.DeadCells,
+                roundEndSnapshot.ToxinCells,
+                roundEndSnapshot.Occupancy,
+                isPlayerSpecific: false);
             
             AddEntry(new GameLogEntry(summary, GameLogCategory.Normal));
         }
