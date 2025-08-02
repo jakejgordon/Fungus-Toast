@@ -5,6 +5,10 @@ using TMPro;
 
 namespace FungusToast.Unity.UI.GameLog
 {
+    /// <summary>
+    /// Generic, reusable UI panel for displaying game log entries.
+    /// Can be used with any log manager that implements IGameLogManager interface.
+    /// </summary>
     public class UI_GameLogPanel : MonoBehaviour
     {
         [Header("UI References")]
@@ -17,20 +21,24 @@ namespace FungusToast.Unity.UI.GameLog
         [Header("Settings")]
         [SerializeField] private int maxVisibleEntries = 30;
         [SerializeField] private bool autoScrollToBottom = true;
+        [SerializeField] private string defaultHeaderText = "Game Log";
         
         private List<UI_GameLogEntry> entryUIs = new List<UI_GameLogEntry>();
-        private GameLogManager logManager;
+        private IGameLogManager logManager;
         
         private void Awake()
         {
             if (clearButton != null)
                 clearButton.onClick.AddListener(ClearLog);
                 
-            if (headerText != null)
-                headerText.text = "Activity Log";
+            if (headerText != null && string.IsNullOrEmpty(headerText.text))
+                headerText.text = defaultHeaderText;
         }
         
-        public void Initialize(GameLogManager gameLogManager)
+        /// <summary>
+        /// Initialize with any log manager that implements IGameLogManager
+        /// </summary>
+        public void Initialize(IGameLogManager gameLogManager)
         {
             logManager = gameLogManager;
             
@@ -44,6 +52,15 @@ namespace FungusToast.Unity.UI.GameLog
                     AddLogEntry(entry);
                 }
             }
+        }
+        
+        /// <summary>
+        /// Set the header text for this log panel
+        /// </summary>
+        public void SetHeaderText(string text)
+        {
+            if (headerText != null)
+                headerText.text = text;
         }
         
         private void OnDestroy()

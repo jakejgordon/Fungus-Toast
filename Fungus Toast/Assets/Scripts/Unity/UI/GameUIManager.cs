@@ -15,9 +15,13 @@ namespace FungusToast.Unity.UI
         [SerializeField] private GameObject leftSidebar;
         [SerializeField] private UI_RightSidebar rightSidebar;
         
-        [Header("Game Log")]
-        [SerializeField] private UI_GameLogPanel gameLogPanel;
-        [SerializeField] private GameLogManager gameLogManager;
+        [Header("Player Activity Log (Left Sidebar)")]
+        [SerializeField] private UI_GameLogPanel playerActivityLogPanel;
+        [SerializeField] private GameLogManager playerActivityLogManager;
+        
+        [Header("Global Events Log (Right Sidebar)")]
+        [SerializeField] private UI_GameLogPanel globalEventsLogPanel;
+        [SerializeField] private GlobalGameLogManager globalEventsLogManager;
 
         [Header("End-game")]
         [SerializeField] private UI_EndGamePanel endGamePanel;
@@ -37,7 +41,19 @@ namespace FungusToast.Unity.UI
         public UI_RightSidebar RightSidebar => rightSidebar;
         public UI_EndGamePanel EndGamePanel => endGamePanel;
         public UI_PhaseBanner PhaseBanner => phaseBanner;
-        public UI_GameLogPanel GameLogPanel => gameLogPanel;
-        public GameLogManager GameLogManager => gameLogManager;
+        
+        // Player Activity Log (Left Sidebar)
+        public UI_GameLogPanel PlayerActivityLogPanel => playerActivityLogPanel;
+        public GameLogManager PlayerActivityLogManager => playerActivityLogManager;
+        
+        // Global Events Log (Right Sidebar)  
+        public UI_GameLogPanel GlobalEventsLogPanel => globalEventsLogPanel;
+        public GlobalGameLogManager GlobalEventsLogManager => globalEventsLogManager;
+
+        // Legacy properties for backwards compatibility
+        public UI_GameLogPanel GameLogPanel => playerActivityLogPanel;
+        public GameLogManager GameLogManager => playerActivityLogManager;
+        public UI_GameLogPanel GlobalGameLogPanel => globalEventsLogPanel;
+        public GlobalGameLogManager GlobalGameLogManager => globalEventsLogManager;
     }
 }

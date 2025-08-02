@@ -137,6 +137,13 @@ namespace FungusToast.Unity
                 gameUIManager.GameLogManager.Initialize(Board);
                 gameUIManager.GameLogPanel.Initialize(gameUIManager.GameLogManager);
             }
+            
+            // === Initialize Global Game Log ===
+            if (gameUIManager.GlobalGameLogManager != null && gameUIManager.GlobalGameLogPanel != null)
+            {
+                gameUIManager.GlobalGameLogManager.Initialize(Board);
+                gameUIManager.GlobalGameLogPanel.Initialize(gameUIManager.GlobalGameLogManager);
+            }
 
             // === THEN initialize and show children/buttons ===
             gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
@@ -249,8 +256,8 @@ namespace FungusToast.Unity
             // Disable Spend Points before leaving mutation phase
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
 
-            // Notify game log of phase start
-            gameUIManager.GameLogManager?.OnPhaseStart("Growth");
+            // Notify logs of phase start
+            gameUIManager.GlobalGameLogManager?.OnPhaseStart("Growth");
 
             if (growthPhaseRunner != null)
             {
@@ -269,8 +276,8 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
-            // Notify game log of phase start
-            gameUIManager.GameLogManager?.OnPhaseStart("Decay");
+            // Notify logs of phase start
+            gameUIManager.GlobalGameLogManager?.OnPhaseStart("Decay");
 
             decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
             gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f);
@@ -282,7 +289,7 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
-            // Notify game log of round completion
+            // Notify both logs of round completion
             gameUIManager.GameLogManager?.OnRoundComplete(Board.CurrentRound);
 
             foreach (var player in Board.Players)
@@ -328,8 +335,9 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
-            // Notify game log of round start
+            // Notify logs of round start
             gameUIManager.GameLogManager?.OnRoundStart(Board.CurrentRound);
+            gameUIManager.GlobalGameLogManager?.OnRoundStart(Board.CurrentRound);
 
             AssignMutationPoints();
             
@@ -346,8 +354,8 @@ namespace FungusToast.Unity
             gameUIManager.MoldProfilePanel?.Refresh();
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
 
-            // Notify game log of phase start
-            gameUIManager.GameLogManager?.OnPhaseStart("Mutation");
+            // Notify logs of phase start
+            gameUIManager.GlobalGameLogManager?.OnPhaseStart("Mutation");
 
             gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
 
@@ -499,10 +507,12 @@ namespace FungusToast.Unity
                 var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
                 var mycovariantName = testingMycovariant?.Name ?? "Unknown";
                 gameUIManager.PhaseBanner.Show($"Testing: {mycovariantName}", 2f);
+                gameUIManager.GlobalGameLogManager?.OnDraftPhaseStart(mycovariantName);
             }
             else
             {
                 gameUIManager.PhaseBanner.Show("Mycovariant Draft Phase!", 2f);
+                gameUIManager.GlobalGameLogManager?.OnDraftPhaseStart();
             }
             phaseProgressTracker?.HighlightDraftPhase();
 

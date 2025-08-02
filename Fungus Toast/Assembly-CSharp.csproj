@@ -92,6 +92,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\DraftOrderRow.cs" />
     <Compile Include="Assets\Scripts\Unity\Events\GameUIEventSubscriber.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_EndGamePanel.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\GameLog\GlobalGameLogManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_TooltipPositioner.cs" />
     <Compile Include="Assets\Scripts\Unity\Cameras\CameraCenterer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\PlayerIconCellUI.cs" />
@@ -106,6 +107,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_RemainingPointsPanel.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\TileHoverHighlighter.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantEffectHelpers.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\GameLog\IGameLogManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_GameEndPlayerResultsRow.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\PlayerMoldIconHoverHandler.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantDraftController.cs" />

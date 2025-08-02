@@ -10,7 +10,7 @@ using FungusToast.Core.Mutations;
 
 namespace FungusToast.Unity.UI.GameLog
 {
-    public class GameLogManager : MonoBehaviour, ISimulationObserver
+    public class GameLogManager : MonoBehaviour, ISimulationObserver, IGameLogManager
     {
         private Queue<GameLogEntry> logEntries = new Queue<GameLogEntry>();
         private const int MAX_ENTRIES = 50;
@@ -59,10 +59,7 @@ namespace FungusToast.Unity.UI.GameLog
             currentRoundDeaths.Clear();
             currentRoundReclaimed.Clear();
             
-            if (roundNumber > 1) // Don't show for the first round
-            {
-                AddEntry(new GameLogEntry($"Round {roundNumber} begins", GameLogCategory.Normal));
-            }
+            // Don't add round start messages here - that's for the global log
         }
         
         public void OnRoundComplete(int roundNumber)
@@ -81,14 +78,15 @@ namespace FungusToast.Unity.UI.GameLog
             
             if (summaryParts.Any())
             {
-                string summary = $"Round {roundNumber} complete:\n{string.Join("\n", summaryParts)}";
+                string summary = $"Round {roundNumber} summary:\n{string.Join("\n", summaryParts)}";
                 AddEntry(new GameLogEntry(summary, GameLogCategory.Normal, null, humanPlayerId));
             }
         }
         
         public void OnPhaseStart(string phaseName)
         {
-            AddEntry(new GameLogEntry($"{phaseName} phase begins", GameLogCategory.Normal));
+            // Don't add phase start messages here - that's for the global log
+            // Only add player-specific phase messages if needed
         }
         
         private void OnCellColonized(int playerId, int tileId)
