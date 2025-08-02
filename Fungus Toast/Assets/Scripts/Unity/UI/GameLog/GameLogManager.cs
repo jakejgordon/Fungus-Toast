@@ -36,8 +36,7 @@ namespace FungusToast.Unity.UI.GameLog
             board.CellPoisoned += OnCellPoisoned;
             board.CellReclaimed += OnCellReclaimed;
             
-            // Add initial game start message
-            AddEntry(new GameLogEntry("Game started!", GameLogCategory.Normal));
+            // Don't add initial game start message here - that's for the global log
         }
         
         private void OnDestroy()
@@ -75,6 +74,16 @@ namespace FungusToast.Unity.UI.GameLog
                 summaryParts.Add($"Reclaimed {reclaimed} cells");
             if (currentRoundDeaths.TryGetValue(humanPlayerId, out int deaths) && deaths > 0)
                 summaryParts.Add($"{deaths} cells died");
+            
+            // Add dead cell count to summary
+            if (board != null)
+            {
+                var humanDeadCells = board.GetAllCellsOwnedBy(humanPlayerId).Count(c => c.IsDead);
+                if (humanDeadCells > 0)
+                {
+                    summaryParts.Add($"{humanDeadCells} dead cells total");
+                }
+            }
             
             if (summaryParts.Any())
             {

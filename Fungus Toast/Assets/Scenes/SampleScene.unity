@@ -992,6 +992,22 @@ PrefabInstance:
       propertyPath: m_Value
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 774017014995237771, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
+      propertyPath: m_Spacing
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 774017014995237771, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
+      propertyPath: m_Padding.m_Top
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 774017014995237771, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
+      propertyPath: m_Padding.m_Bottom
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 774017014995237771, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
+      propertyPath: m_ChildControlHeight
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 812557178620822010, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
       propertyPath: m_Name
       value: UI_GlobalEventsLogPanel
@@ -1010,6 +1026,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4190307805997451328, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
       propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5635937202958184059, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
+      propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6241392945169200828, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}

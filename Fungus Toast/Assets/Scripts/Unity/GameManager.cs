@@ -291,6 +291,7 @@ namespace FungusToast.Unity
 
             // Notify both logs of round completion
             gameUIManager.GameLogManager?.OnRoundComplete(Board.CurrentRound);
+            gameUIManager.GlobalGameLogManager?.OnRoundComplete(Board.CurrentRound, Board);
 
             foreach (var player in Board.Players)
                 player.TickDownActiveSurges();
@@ -395,9 +396,15 @@ namespace FungusToast.Unity
             }
 
             if (roundsRemainingUntilGameEnd == 1)
+            {
                 gameUIManager.RightSidebar?.SetEndgameCountdownText("<b><color=#FF0000>Final Round!</color></b>");
+                gameUIManager.GlobalGameLogManager?.OnEndgameTriggered(1);
+            }
             else
+            {
                 gameUIManager.RightSidebar?.SetEndgameCountdownText($"<b><color=#FFA500>Endgame in {roundsRemainingUntilGameEnd} rounds</color></b>");
+                gameUIManager.GlobalGameLogManager?.OnEndgameTriggered(roundsRemainingUntilGameEnd);
+            }
         }
 
         private void EndGame()
@@ -411,6 +418,13 @@ namespace FungusToast.Unity
                 .OrderByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
                 .ThenByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => !c.IsAlive))
                 .ToList();
+
+            // Notify global log of game end
+            var winner = ranked.FirstOrDefault();
+            if (winner != null)
+            {
+                gameUIManager.GlobalGameLogManager?.OnGameEnd(winner.PlayerName);
+            }
 
             gameUIManager.MutationUIManager.gameObject.SetActive(false);
             gameUIManager.RightSidebar.gameObject.SetActive(false);
