@@ -69,11 +69,6 @@ namespace FungusToast.Core.Growth
         NecrohyphalInfiltration,
         
         /// <summary>
-        /// Reclaimed via general reclaim mechanics
-        /// </summary>
-        Reclaim,
-        
-        /// <summary>
         /// Moved via Creeping Mold mutation
         /// </summary>
         CreepingMold,

@@ -213,13 +213,8 @@ namespace FungusToast.Unity.UI.GameLog
                 // Player colonized a tile - track for offensive aggregation
                 string abilityKey = GetAbilityDisplayName(source);
                 
-                // Additional debug logging to identify the "reclaim colonized" issue
-                if (source == GrowthSource.Reclaim)
-                {
-                    UnityEngine.Debug.LogError($"[GameLogManager] BUG: OnCellColonized called with GrowthSource.Reclaim! This should be OnCellReclaimed. Tile: {tileId}, Ability: {abilityKey}");
-                }
+
                 
-                UnityEngine.Debug.Log($"[GameLogManager] OnCellColonized: {abilityKey} on tile {tileId}");
                 IncrementAbilityEffect(abilityKey, "colonized", GameLogCategory.Lucky);
             }
             // Note: There's no "enemy colonized our tiles" since colonization is only into empty tiles
@@ -231,7 +226,6 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 // Player infested enemy cells - track for offensive aggregation
                 string abilityKey = GetAbilityDisplayName(source);
-                UnityEngine.Debug.Log($"[GameLogManager] OnCellInfested: {abilityKey} on tile {tileId} (old owner: {oldOwnerId})");
                 IncrementAbilityEffect(abilityKey, "infested", GameLogCategory.Lucky);
             }
             else if (oldOwnerId == humanPlayerId)
@@ -248,7 +242,6 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 // Player reclaimed their own dead cells - track for offensive aggregation
                 string abilityKey = GetAbilityDisplayName(source);
-                UnityEngine.Debug.Log($"[GameLogManager] OnCellReclaimed: {abilityKey} on tile {tileId}");
                 IncrementAbilityEffect(abilityKey, "reclaimed", GameLogCategory.Lucky);
             }
             // Note: There's no "enemy reclaimed our dead cells" since reclamation is only for your own cells
@@ -409,11 +402,7 @@ namespace FungusToast.Unity.UI.GameLog
         {
             string eventKey = $"{abilityKey}_{effectType}";
             
-            // Debug logging to help track the source of malformed messages
-            if (effectType == "reclaimed" || effectType == "colonized")
-            {
-                UnityEngine.Debug.Log($"[GameLogManager] {abilityKey} -> {effectType} (event key: {eventKey})");
-            }
+
             
             if (!currentEventCounts.ContainsKey(eventKey))
                 currentEventCounts[eventKey] = 0;
@@ -450,7 +439,7 @@ namespace FungusToast.Unity.UI.GameLog
                 {
                     UnityEngine.Debug.LogError($"Malformed message detected for {abilityKey} with effect type '{effectType}' and count {count}. Generated message: '{message}'");
                     message = $"{abilityKey}: {effectType} {count} tiles/cells"; // Fallback message
-                }
+}
                 
                 AddEntry(new GameLogEntry(message, category, null, humanPlayerId));
                 

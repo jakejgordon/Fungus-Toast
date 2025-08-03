@@ -179,22 +179,12 @@ namespace FungusToast.Unity.UI
             {
                 rectTransform.offsetMin = Vector2.zero;
                 rectTransform.offsetMax = Vector2.zero;
-                
-                if (originalPos != Vector2.zero)
-                {
-                    UnityEngine.Debug.Log($"[Position Reset] {group.name}: Reset offsets, originalPos was {originalPos}");
-                }
             }
             
             // Only reset anchored position if it's obviously wrong (large values that would conflict)
             if (Mathf.Abs(rectTransform.anchoredPosition.x) > 50f || Mathf.Abs(rectTransform.anchoredPosition.y) > 50f)
             {
                 rectTransform.anchoredPosition = Vector2.zero;
-                
-                if (originalPos != Vector2.zero)
-                {
-                    UnityEngine.Debug.Log($"[Position Reset] {group.name}: Reset large position {originalPos} ? {rectTransform.anchoredPosition}");
-                }
             }
         }
 
@@ -600,7 +590,6 @@ namespace FungusToast.Unity.UI
                 GrowthSource.Necrosporulation => "Necrosporulation",
                 GrowthSource.NecrophyticBloom => "Necrophytic Bloom",
                 GrowthSource.NecrohyphalInfiltration => "Necrohyphal Infiltration",
-                GrowthSource.Reclaim => "Reclaim",
                 GrowthSource.CreepingMold => "Creeping Mold",
                 GrowthSource.CatabolicRebirth => "Catabolic Rebirth",
                 GrowthSource.Ballistospore => "Ballistospore",
