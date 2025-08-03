@@ -140,25 +140,14 @@ namespace FungusToast.Simulation.GameSimulation
             GameRulesEventSubscriber.SubscribeAll(board, players, rng, observer);
             AnalyticsEventSubscriber.Subscribe(board, observer);
 
-
             // Add each player to the board's Players list
             foreach (var player in players)
                 board.Players.Add(player);
 
-            var allTileIds = board.AllTiles()
-                                  .Where(t => !t.IsOccupied)
-                                  .Select(t => t.TileId)
-                                  .OrderBy(_ => rng.Next())
-                                  .ToList();
-
-            for (int i = 0; i < playerCount && i < allTileIds.Count; i++)
-            {
-                int tileId = allTileIds[i];
-                board.SpawnSporeForPlayer(players[i], tileId);
-            }
+            // Use the shared starting spore placement utility
+            StartingSporeUtility.PlaceStartingSpores(board, players, rng);
 
             return (players, board);
         }
-
     }
 }

@@ -13,7 +13,7 @@ namespace FungusToast.Core
         GrowthDiagonal_SW,
         SelfAgeResetThreshold,
         AutoUpgradeRandom,
-        SporeOnDeathChance,
+        Necrosporulation,
         TendrilDirectionalMultiplier,
         AdjacentFungicide,
         ReclaimOwnDeadCells,

@@ -230,21 +230,8 @@ namespace FungusToast.Unity
 
         private void PlaceStartingSpores()
         {
-            float radius = Mathf.Min(boardWidth, boardHeight) * 0.35f;
-            Vector2 center = new Vector2(boardWidth / 2f, boardHeight / 2f);
-
-            // Create a list of shuffled player indices
-            List<int> shuffledPlayerIndices = Enumerable.Range(0, players.Count)
-                .OrderBy(_ => UnityEngine.Random.value)
-                .ToList();
-
-            for (int i = 0; i < players.Count; i++)
-            {
-                float angle = i * Mathf.PI * 2f / players.Count;
-                int px = Mathf.Clamp(Mathf.RoundToInt(center.x + radius * Mathf.Cos(angle)), 0, boardWidth - 1);
-                int py = Mathf.Clamp(Mathf.RoundToInt(center.y + radius * Mathf.Sin(angle)), 0, boardHeight - 1);
-                Board.PlaceInitialSpore(shuffledPlayerIndices[i], px, py);
-            }
+            // Use the shared starting spore placement utility from FungusToast.Core
+            StartingSporeUtility.PlaceStartingSpores(Board, players, rng);
 
             int round = Board.CurrentRound;
             float occupancy = Board.GetOccupiedTileRatio() * 100f; // ratio to percent

@@ -291,7 +291,7 @@ namespace FungusToast.Core.Mutations
                 name: "Necrosporulation",
                 description: $"Each level grants a {FormatPercent(GameBalance.NecrosporulationEffectPerLevel)} chance to spawn a new cell at a random spot on the toast when a fungal cell dies.",
                 flavorText: "Cytoplasmic apoptosis releases sporogenic factors for opportunistic rebirth.",
-                type: MutationType.SporeOnDeathChance,
+                type: MutationType.Necrosporulation,
                 effectPerLevel: GameBalance.NecrosporulationEffectPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
                 maxLevel: GameBalance.NecrosporulationMaxLevel,

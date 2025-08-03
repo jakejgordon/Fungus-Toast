@@ -326,7 +326,7 @@ namespace FungusToast.Core.Board
         /// <param name="tileId">The tile where the spore should be placed</param>
         /// <param name="source">The source/reason for this spore creation</param>
         /// <returns>True if the spore was successfully placed, false otherwise</returns>
-        public bool SpawnSporeForPlayer(Player player, int tileId, GrowthSource source = GrowthSource.Necrosporulation)
+        public bool SpawnSporeForPlayer(Player player, int tileId, GrowthSource source)
         {
             var (x, y) = GetXYFromTileId(tileId);
             var tile = GetTile(x, y);
@@ -636,7 +636,7 @@ namespace FungusToast.Core.Board
         /// <param name="observer">Optional simulation observer to track spore events.</param>
         public void TryTriggerSporeOnDeath(Player player, Random rng, ISimulationObserver? observer = null)
         {
-            float dropChance = player.GetMutationEffect(MutationType.SporeOnDeathChance);
+            float dropChance = player.GetMutationEffect(MutationType.Necrosporulation);
             if (dropChance <= 0f || rng.NextDouble() > dropChance)
                 return;
 
@@ -647,10 +647,10 @@ namespace FungusToast.Core.Board
 
             foreach (var tile in candidateTiles)
             {
-                bool spawned = SpawnSporeForPlayer(player, tile.TileId);
+                bool spawned = SpawnSporeForPlayer(player, tile.TileId, GrowthSource.Necrosporulation);
                 if (spawned)
                 {
-                    OnSporeDrop(player.PlayerId, tile.TileId, MutationType.SporeOnDeathChance);
+                    OnSporeDrop(player.PlayerId, tile.TileId, MutationType.Necrosporulation);
                     observer?.ReportNecrosporeDrop(player.PlayerId, 1);
                     return;
                 }
@@ -675,8 +675,7 @@ namespace FungusToast.Core.Board
            int playerId,
            int sourceTileId,
            int targetTileId,
-           out GrowthFailureReason failureReason,
-           bool canReclaimDeadCell = false
+           out GrowthFailureReason failureReason
        )
         {
             failureReason = GrowthFailureReason.None;
@@ -706,6 +705,7 @@ namespace FungusToast.Core.Board
                 return true;
             }
 
+            /* I don't think this code is needed anymore, since we handle reclaiming in a different way now
             // Special: allow reclaiming your own dead cell if allowed
             if (canReclaimDeadCell && targetTile.IsOccupied)
             {
@@ -713,7 +713,8 @@ namespace FungusToast.Core.Board
                 // Only allow if it's the player's own dead cell
                 if (deadCell != null && deadCell.IsDead && deadCell.OwnerPlayerId == playerId)
                 {
-                    deadCell.Reclaim(playerId);
+                    var growthSource = reclaimGrowthSource ?? GrowthSource.Reclaim;
+                    deadCell.Reclaim(playerId, growthSource);
                     PlaceFungalCell(deadCell);
                     // Notify event listeners
                     OnDeadCellReclaim?.Invoke(deadCell, playerId);
@@ -723,6 +724,7 @@ namespace FungusToast.Core.Board
                 failureReason = GrowthFailureReason.TileOccupied;
                 return false;
             }
+            */
 
             // All other cases: can't grow here
             failureReason = targetTile.IsOccupied ? GrowthFailureReason.TileOccupied : GrowthFailureReason.InvalidTarget;
@@ -769,6 +771,14 @@ namespace FungusToast.Core.Board
             int ownerId = cell.OwnerPlayerId.GetValueOrDefault(-1);
             GrowthSource source = cell.SourceOfGrowth ?? GrowthSource.Unknown;
 
+            // Special case: If the cell was reclaimed (has reclaim count > 0), always fire OnCellReclaimed
+            // This handles cases where TryReclaimDeadCell creates a cell with GrowthSource.Reclaim
+            if (cell.ReclaimCount > 0 && source == GrowthSource.Reclaim)
+            {
+                OnCellReclaimed(ownerId, cell.TileId, source);
+                return;
+            }
+
             // Event firing logic with source information
             if (oldCell == null)
             {
@@ -797,7 +807,8 @@ namespace FungusToast.Core.Board
                 if (currentOwnerId == ownerId)
                     OnCellReclaimed(ownerId, cell.TileId, source);
                 else
-                    OnCellInfested(ownerId, cell.TileId, currentOwnerId, source); // Parasitic reclaim
+                    // taking over a dead cell is always a reclaim, regardless of who owned it
+                    OnCellReclaimed(ownerId, cell.TileId, source);
             }
         }
 
@@ -824,7 +835,7 @@ namespace FungusToast.Core.Board
         /// Attempts to reclaim a dead fungal cell at the given tile for the specified player.
         /// If successful, updates control, fires events, and returns true.
         /// </summary>
-        public bool TryReclaimDeadCell(int playerId, int tileId)
+        public bool TryReclaimDeadCell(int playerId, int tileId, GrowthSource reclaimGrowthSource)
         {
             var tile = GetTileById(tileId);
             if (tile?.FungalCell == null || !tile.FungalCell.IsDead)
@@ -838,7 +849,7 @@ namespace FungusToast.Core.Board
                 return false;
             }
 
-            cell.Reclaim(playerId);
+            cell.Reclaim(playerId, reclaimGrowthSource);
             PlaceFungalCell(cell); // Fires correct events
             Players[playerId].AddControlledTile(tileId);
             OnDeadCellReclaim?.Invoke(cell, playerId);
