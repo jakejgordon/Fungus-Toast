@@ -23,7 +23,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             foreach (var player in players)
             {
@@ -127,7 +127,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             foreach (var player in players)
             {
@@ -175,7 +175,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             foreach (var player in players)
             {
@@ -195,7 +195,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             foreach (var player in players)
             {

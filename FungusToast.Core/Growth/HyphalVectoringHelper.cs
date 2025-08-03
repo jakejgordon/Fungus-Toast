@@ -209,7 +209,7 @@ namespace FungusToast.Core.Growth
             int centerX,
             int centerY,
             int totalTiles,
-            ISimulationObserver? observer)
+            ISimulationObserver observer)
         {
             var path = GetLineToCenter(startX, startY, centerX, centerY, totalTiles);
             int processed = 0;
@@ -233,7 +233,7 @@ namespace FungusToast.Core.Growth
                 if (cell is { IsAlive: true })
                 {
                     board.KillFungalCell(cell, DeathReason.HyphalVectoring, player.PlayerId);
-                    observer?.RecordCellDeath(player.PlayerId, DeathReason.HyphalVectoring, 1);
+                    observer.RecordCellDeath(player.PlayerId, DeathReason.HyphalVectoring, 1);
                 }
 
                 // Overwrite whatever was there with a new living cell (if it's not already your living cell)

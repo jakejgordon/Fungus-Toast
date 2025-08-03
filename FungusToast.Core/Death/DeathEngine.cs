@@ -31,7 +31,7 @@ namespace FungusToast.Core.Death
             GameBoard board,
             Dictionary<int, int> failedGrowthsByPlayerId,
             Random rng,
-            ISimulationObserver? simulationObserver = null)
+            ISimulationObserver simulationObserver)
         {
             List<Player> shuffledPlayers = board.Players.OrderBy(_ => rng.NextDouble()).ToList();
 
@@ -42,15 +42,17 @@ namespace FungusToast.Core.Death
             EvaluateProbabilisticDeaths(board, shuffledPlayers, rng, simulationObserver);
         }
 
+        /*
         private static void ApplyPerTurnSporeEffects(
             List<Player> players,
             GameBoard board,
             Dictionary<int, int> failedGrowthsByPlayerId,
             Random rng,
-            ISimulationObserver? simulationObserver)
+            ISimulationObserver simulationObserver)
         {
             // Mycotoxin Tracer is now handled via DecayPhaseWithFailedGrowths event
         }
+        */
 
         /// <summary>
         /// Handles the board occupancy trigger for Necrophytic Bloom.
@@ -60,7 +62,7 @@ namespace FungusToast.Core.Death
             List<Player> players,
             GameBoard board,
             Random rng,
-            ISimulationObserver? simulationObserver = null)
+            ISimulationObserver simulationObserver)
         {
             float occupiedPercent = board.GetOccupiedTileRatio();
 
@@ -80,7 +82,7 @@ namespace FungusToast.Core.Death
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? simulationObserver = null)
+            ISimulationObserver simulationObserver)
         {
             var livingCellCounts = players.ToDictionary(
                 p => p.PlayerId,
@@ -109,12 +111,9 @@ namespace FungusToast.Core.Death
                     livingCellCounts[owner.PlayerId]--;
 
                     // Attribute Age/Randomness deaths to observer
-                    if (simulationObserver != null)
+                    if (deathResult.Reason == DeathReason.Age || deathResult.Reason == DeathReason.Randomness)
                     {
-                        if (deathResult.Reason == DeathReason.Age || deathResult.Reason == DeathReason.Randomness)
-                        {
-                            simulationObserver.RecordCellDeath(owner.PlayerId, deathResult.Reason.Value, 1);
-                        }
+                        simulationObserver.RecordCellDeath(owner.PlayerId, deathResult.Reason.Value, 1);
                     }
 
                     // Putrefactive Mycotoxin: attribute in observer if needed
@@ -146,7 +145,7 @@ namespace FungusToast.Core.Death
              FungalCell deadCell,
              GameBoard board,
              List<Player> players,
-             ISimulationObserver? observer = null)
+             ISimulationObserver observer)
         {
             if (observer == null) return;
 

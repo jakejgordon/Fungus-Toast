@@ -50,10 +50,25 @@ namespace FungusToast.Unity.UI
         public UI_GameLogPanel GlobalEventsLogPanel => globalEventsLogPanel;
         public GlobalGameLogManager GlobalEventsLogManager => globalEventsLogManager;
 
+        // Unified logging interface
+        public GameLogRouter GameLogRouter 
+        {
+            get
+            {
+                if (gameLogRouter == null)
+                {
+                    gameLogRouter = new GameLogRouter(playerActivityLogManager, globalEventsLogManager);
+                }
+                return gameLogRouter;
+            }
+        }
         // Legacy properties for backwards compatibility
         public UI_GameLogPanel GameLogPanel => playerActivityLogPanel;
         public GameLogManager GameLogManager => playerActivityLogManager;
         public UI_GameLogPanel GlobalGameLogPanel => globalEventsLogPanel;
         public GlobalGameLogManager GlobalGameLogManager => globalEventsLogManager;
+
+        // Routing observer for unified event handling
+        private GameLogRouter gameLogRouter;
     }
 }

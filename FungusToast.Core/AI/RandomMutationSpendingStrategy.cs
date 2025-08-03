@@ -30,7 +30,7 @@ namespace FungusToast.Core.AI
         }
 
         public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board,
-            Random rnd, ISimulationObserver? observer = null)
+            Random rnd, ISimulationObserver observer)
         {
             while (player.MutationPoints > 0)
             {

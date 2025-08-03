@@ -22,7 +22,7 @@ namespace FungusToast.Core.Phases
             List<Mutation> allMutations,
             Random rng,
             int currentRound,
-            ISimulationObserver? observer = null
+            ISimulationObserver observer
         )
         {
             float chance = player.GetMutationEffect(MutationType.AutoUpgradeRandom);
@@ -153,7 +153,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             Random rng,
             RoundContext roundContext,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             int level = player.GetMutationLevel(MutationIds.MycotoxinCatabolism);
             if (level <= 0) return 0;
@@ -220,7 +220,7 @@ namespace FungusToast.Core.Phases
             Player player,
             GameBoard board,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             int level = player.GetMutationLevel(MutationIds.NecrophyticBloom);
             if (level <= 0) return;
@@ -260,7 +260,7 @@ namespace FungusToast.Core.Phases
            GameBoard board,
            Random rng,
            float occupiedPercent,
-           ISimulationObserver? observer = null)
+           ISimulationObserver observer)
         {
             int level = owner.GetMutationLevel(MutationIds.NecrophyticBloom);
             if (level <= 0) return;
@@ -312,7 +312,7 @@ namespace FungusToast.Core.Phases
             List<Mutation> allMutations,
             Random rng,
             int currentRound,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             foreach (var player in players)
             {
@@ -325,7 +325,7 @@ namespace FungusToast.Core.Phases
             List<Player> players,
             Random rng,
             RoundContext roundContext,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             foreach (var player in players)
             {
@@ -337,7 +337,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             foreach (var p in players)
             {

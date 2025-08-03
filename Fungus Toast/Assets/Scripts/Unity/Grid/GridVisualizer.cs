@@ -516,7 +516,6 @@ namespace FungusToast.Unity.Grid
             Vector3Int pos = new Vector3Int(x, y, 0);
             
             float duration = UIEffectConstants.CellDeathAnimationDurationSeconds;
-            float elapsed = 0f;
 
             // Get the current cell to determine the death animation parameters
             var tile = board.GetTileById(tileId);

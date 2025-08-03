@@ -36,7 +36,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             var attempted = new HashSet<int>();
             foreach (Player p in players)
@@ -57,7 +57,7 @@ namespace FungusToast.Core.Phases
                             board, p, dead.TileId, reclaimChance, rng, GrowthSource.RegenerativeHyphae, observer);
                         if (success)
                         {
-                            observer?.RecordRegenerativeHyphaeReclaim(p.PlayerId);
+                            observer.RecordRegenerativeHyphaeReclaim(p.PlayerId);
                         }
                     }
                 }
@@ -73,7 +73,7 @@ namespace FungusToast.Core.Phases
             FungalCell sourceCell,
             Player owner,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             int necroLevel = owner.GetMutationLevel(MutationIds.NecrohyphalInfiltration);
             if (necroLevel <= 0)
@@ -107,12 +107,12 @@ namespace FungusToast.Core.Phases
 
                     // Cascade infiltrations
                     int cascadeCount = CascadeNecrohyphalInfiltration(
-                        board, deadTile, owner, rng, (float)cascadeChance, alreadyReclaimed);
+                        board, deadTile, owner, rng, (float)cascadeChance, alreadyReclaimed, observer);
 
                     // Record: 1 infiltration for the initial, cascades for the rest
-                    observer?.RecordNecrohyphalInfiltration(owner.PlayerId, 1);
+                    observer.RecordNecrohyphalInfiltration(owner.PlayerId, 1);
                     if (cascadeCount > 0)
-                        observer?.RecordNecrohyphalInfiltrationCascade(owner.PlayerId, cascadeCount);
+                        observer.RecordNecrohyphalInfiltrationCascade(owner.PlayerId, cascadeCount);
 
                     return true;
                 }
@@ -129,7 +129,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             // Check adjacent tiles for dead cells
             var adjacentTiles = board.GetOrthogonalNeighbors(eventArgs.TileId);
@@ -171,7 +171,7 @@ namespace FungusToast.Core.Phases
             // Report resurrections for each player
             foreach (var (playerId, count) in resurrectionsByPlayer)
             {
-                observer?.RecordCatabolicRebirthResurrection(playerId, count);
+                observer.RecordCatabolicRebirthResurrection(playerId, count);
                 
                 // Fire the CatabolicRebirth event
                 var (x, y) = board.GetXYFromTileId(eventArgs.TileId);
@@ -187,7 +187,7 @@ namespace FungusToast.Core.Phases
            Random rng,
            float cascadeChance,
            HashSet<int> alreadyReclaimed,
-           ISimulationObserver? observer = null)
+           ISimulationObserver observer)
         {
             int cascadeCount = 0;
             var toCheck = new Queue<BoardTile>();

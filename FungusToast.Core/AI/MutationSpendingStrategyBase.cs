@@ -18,7 +18,7 @@ namespace FungusToast.Core.AI
         public virtual bool? UsesGeneticDrift { get; }
 
         public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board,
-            Random rnd, ISimulationObserver? simulationObserver = null)
+            Random rnd, ISimulationObserver simulationObserver)
         {
             // Delegate actual spending logic to child
             // Individual TryUpgradeMutation calls will handle point tracking correctly
@@ -118,6 +118,6 @@ namespace FungusToast.Core.AI
 
         // Each concrete strategy must implement this core logic:
         protected abstract void PerformSpendingLogic(Player player, List<Mutation> allMutations, GameBoard board,
-            Random rnd, ISimulationObserver? simulationObserver);
+            Random rnd, ISimulationObserver simulationObserver);
     }
 }

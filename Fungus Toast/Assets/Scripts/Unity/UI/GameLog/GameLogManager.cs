@@ -254,13 +254,13 @@ namespace FungusToast.Unity.UI.GameLog
             // Note: There's no "enemy reclaimed our dead cells" since reclamation is only for your own cells
         }
         
-        private void OnCellToxified(int playerId, int tileId)
+        private void OnCellToxified(int playerId, int tileId, GrowthSource source)
         {
             if (playerId == humanPlayerId)
             {
                 // Player toxified empty/dead tiles - track for offensive aggregation
-                // Note: CellToxified doesn't have GrowthSource, so we'll use a generic message
-                IncrementAbilityEffect("Toxin abilities", "toxified", GameLogCategory.Lucky);
+                string abilityKey = GetAbilityDisplayName(source);
+                IncrementAbilityEffect(abilityKey, "toxified", GameLogCategory.Lucky);
             }
             // Note: There's no "enemy toxified our tiles" since toxification only affects empty/dead tiles
         }
@@ -440,7 +440,7 @@ namespace FungusToast.Unity.UI.GameLog
                     "poisoned" => count == 1 ? $"{abilityKey} poisoned 1 enemy cell" : $"{abilityKey} poisoned {count} enemy cells",
                     "colonized" => count == 1 ? $"{abilityKey} colonized 1 empty tile" : $"{abilityKey} colonized {count} empty tiles",
                     "infested" => count == 1 ? $"{abilityKey} killed 1 enemy cell" : $"{abilityKey} killed {count} enemy cells",
-                    "reclaimed" => count == 1 ? $"{abilityKey} revived 1 dead cell" : $"{abilityKey} revived {count} dead cells",
+                    "reclaimed" => count == 1 ? $"{abilityKey} reclaimed 1 dead cell" : $"{abilityKey} revived {count} dead cells",
                     "toxified" => count == 1 ? $"{abilityKey} toxified 1 empty tile" : $"{abilityKey} toxified {count} empty tiles",
                     _ => $"{abilityKey}: unknown effect {effectType} ({count})"
                 };
@@ -502,12 +502,20 @@ namespace FungusToast.Unity.UI.GameLog
         }
         
         // Implement ISimulationObserver methods we care about
-        public void RecordMutationPointIncome(int playerId, int newMutationPoints)
+        public void RecordMutationPointIncome(int playerId, int totalMutationPoints)
         {
-            if (playerId == humanPlayerId && newMutationPoints > 0)
-            {
-                AddNormalEntry($"Earned {newMutationPoints} mutation points", playerId);
-            }
+            // Note: This method receives the total points (base + bonuses) from Player.AssignMutationPoints
+            // Since bonuses are reported separately via RecordAdaptiveExpressionBonus, RecordAnabolicInversionBonus, etc.
+            // we don't show the total here to avoid confusion.
+            
+            // If we wanted to show base income only, we'd need a separate method since this gets total.
+            // For now, we rely on the bonus-specific messages and round summaries to show point changes.
+            
+            // Uncomment below if you want to show total mutation points earned each round:
+            // if (playerId == humanPlayerId && totalMutationPoints > 0)
+            // {
+            //     AddNormalEntry($"Earned {totalMutationPoints} mutation points", playerId);
+            // }
         }
         
         // Enhanced ISimulationObserver methods for interesting events
@@ -560,14 +568,44 @@ namespace FungusToast.Unity.UI.GameLog
         }
         
         // Stub implementations for other ISimulationObserver methods that we don't need detailed logging for
-        public void RecordAdaptiveExpressionBonus(int playerId, int bonus) { }
-        public void RecordAnabolicInversionBonus(int playerId, int bonus) { }
+        public void RecordAdaptiveExpressionBonus(int playerId, int bonus) 
+        {
+            if (playerId == humanPlayerId && bonus > 0)
+            {
+                string message = bonus == 1 
+                    ? "Earned 1 free mutation point from Adaptive Expression!" 
+                    : $"Earned {bonus} free mutation points from Adaptive Expression!";
+                AddLuckyEntry(message, playerId);
+            }
+        }
+        
+        public void RecordAnabolicInversionBonus(int playerId, int bonus) 
+        {
+            if (playerId == humanPlayerId && bonus > 0)
+            {
+                string message = bonus == 1 
+                    ? "Earned 1 free mutation point from Anabolic Inversion!" 
+                    : $"Earned {bonus} free mutation points from Anabolic Inversion!";
+                AddLuckyEntry(message, playerId);
+            }
+        }
+        
+        public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints) 
+        {
+            if (playerId == humanPlayerId && catabolizedMutationPoints > 0)
+            {
+                string message = catabolizedMutationPoints == 1 
+                    ? $"Earned 1 free mutation point from Mycotoxin Catabolism (catabolized {toxinsCatabolized} toxin{(toxinsCatabolized == 1 ? "" : "s")})!" 
+                    : $"Earned {catabolizedMutationPoints} free mutation points from Mycotoxin Catabolism (catabolized {toxinsCatabolized} toxin{(toxinsCatabolized == 1 ? "" : "s")})!";
+                AddLuckyEntry(message, playerId);
+            }
+        }
+        
         public void RecordCreepingMoldMove(int playerId) { }
         public void RecordCreepingMoldToxinJump(int playerId) { }
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }
         public void RecordNecrohyphalInfiltrationCascade(int playerId, int cascadeCount) { }
         public void RecordTendrilGrowth(int playerId, DiagonalDirection value) { }
-        public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints) { }
         public void RecordNecrotoxicConversionReclaim(int playerId, int necrotoxicConversions) { }
         public void RecordCatabolicRebirthResurrection(int playerId, int resurrectedCells) { }
         public void RecordRegenerativeHyphaeReclaim(int playerId) { }

@@ -16,6 +16,6 @@ namespace FungusToast.Core.AI
         bool? UsesGeneticDrift { get; }
 
         void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board,
-            Random rnd, ISimulationObserver? simulationObserver = null);
+            Random rnd, ISimulationObserver simulationObserver);
     }
 }

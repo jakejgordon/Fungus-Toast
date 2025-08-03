@@ -18,7 +18,7 @@ namespace FungusToast.Core.Mycovariants
             GameBoard board,
             int sporesToDrop,
             Random rng,
-            ISimulationObserver? observer)
+            ISimulationObserver observer)
         {
             var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
             if (player == null) return;
@@ -61,7 +61,7 @@ namespace FungusToast.Core.Mycovariants
                     ToxinHelper.ConvertToToxin(board, tile.TileId, toxinLifespan, GrowthSource.Ballistospore, player);
                 }
                 playerMyco.IncrementEffectCount(MycovariantEffectType.Drops, targetTiles.Count);
-                observer?.RecordBallistosporeDischarge(player.PlayerId, targetTiles.Count);
+                observer.RecordBallistosporeDischarge(player.PlayerId, targetTiles.Count);
             }
             // Human: UI will handle selection and call effect per tile
         }
@@ -73,7 +73,7 @@ namespace FungusToast.Core.Mycovariants
             PlayerMycovariant playerMyco,
             GameBoard board,
             int tileId,
-            ISimulationObserver? observer)
+            ISimulationObserver observer)
         {
             var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
             if (player == null) return;
@@ -81,7 +81,7 @@ namespace FungusToast.Core.Mycovariants
             int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, MycovariantGameBalance.BallistosporeDischargeToxinDuration);
             ToxinHelper.ConvertToToxin(board, tileId, toxinLifespan, GrowthSource.Ballistospore, player);
             playerMyco.IncrementEffectCount(MycovariantEffectType.Drops, 1);
-            observer?.RecordBallistosporeDischarge(player.PlayerId, 1);
+            observer.RecordBallistosporeDischarge(player.PlayerId, 1);
         }
     }
 }

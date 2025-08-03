@@ -17,7 +17,7 @@ namespace FungusToast.Core.Growth
             List<Player> players,
             Random rng,
             RoundContext roundContext,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             // Fire PreGrowthCycle event for Mycotoxin Catabolism and other pre-growth effects
             board.OnPreGrowthCycle();
@@ -90,7 +90,7 @@ namespace FungusToast.Core.Growth
             BoardTile sourceTile,
             Player owner,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             var sourceCell = sourceTile.FungalCell;
             if (sourceCell == null)
@@ -171,7 +171,7 @@ namespace FungusToast.Core.Growth
             int sourceTileId,
             GrowthTarget target,
             Random rng,
-            ISimulationObserver? observer)
+            ISimulationObserver observer)
         {
             // Prevent direct growth into any occupied tile (including toxins, dead cells, or living cells)
             if (target.Tile.IsOccupied) return false;
@@ -187,7 +187,7 @@ namespace FungusToast.Core.Growth
                     if (board.TryGrowFungalCell(owner.PlayerId, sourceTileId, target.Tile.TileId, out var failReason))
                     {
                         MaybeRecordPerimeterProliferatorGrowth(observer, owner.PlayerId, edgeMultiplier, roll, baseChance, target.Chance);
-                        observer?.RecordStandardGrowth(owner.PlayerId);
+                        observer.RecordStandardGrowth(owner.PlayerId);
                         return true;
                     }
                 }
@@ -195,7 +195,7 @@ namespace FungusToast.Core.Growth
                 {
                     if (board.TryGrowFungalCell(owner.PlayerId, sourceTileId, target.Tile.TileId, out var failReason))
                     {
-                        observer?.RecordHyphalSurgeGrowth(owner.PlayerId);
+                        observer.RecordHyphalSurgeGrowth(owner.PlayerId);
                         return true;
                     }
                 }
@@ -208,7 +208,7 @@ namespace FungusToast.Core.Growth
                     {
                         MaybeRecordPerimeterProliferatorGrowth(observer, owner.PlayerId, edgeMultiplier, roll, baseChance, target.Chance);
                         if (target.DiagonalDirection.HasValue)
-                            observer?.RecordTendrilGrowth(owner.PlayerId, target.DiagonalDirection.Value);
+                            observer.RecordTendrilGrowth(owner.PlayerId, target.DiagonalDirection.Value);
                         return true;
                     }
                 }
@@ -245,7 +245,7 @@ namespace FungusToast.Core.Growth
         }
 
         private static void MaybeRecordPerimeterProliferatorGrowth(
-            ISimulationObserver? observer,
+            ISimulationObserver observer,
             int playerId,
             float edgeMultiplier,
             double roll,
@@ -265,11 +265,11 @@ namespace FungusToast.Core.Growth
             BoardTile sourceTile,
             BoardTile targetTile,
             Random rng,
-            ISimulationObserver? observer)
+            ISimulationObserver observer)
         {
             if (GrowthMutationProcessor.TryCreepingMoldMove(owner, sourceCell, sourceTile, targetTile, rng, board, observer))
             {
-                observer?.RecordCreepingMoldMove(owner.PlayerId);
+                observer.RecordCreepingMoldMove(owner.PlayerId);
                 return true;
             }
 
@@ -282,7 +282,7 @@ namespace FungusToast.Core.Growth
             FungalCell sourceCell,
             Player owner,
             Random rng,
-            ISimulationObserver? observer)
+            ISimulationObserver observer)
         {
             return CellularResilienceMutationProcessor.TryNecrohyphalInfiltration(board, sourceTile, sourceCell, owner, rng, observer);
         }

@@ -261,7 +261,7 @@ namespace FungusToast.Core.AI
             List<Mutation> allMutations,
             GameBoard board,
             Random rnd,
-            ISimulationObserver? simulationObserver = null)
+            ISimulationObserver simulationObserver)
         {
             var currentPhase = GetCurrentPhase(board.CurrentRound);
             
@@ -356,7 +356,7 @@ namespace FungusToast.Core.AI
                 if (shouldBankForNextMutation)
                 {
                     // Record that we're banking points for expensive mutations
-                    simulationObserver?.RecordBankedPoints(player.PlayerId, player.MutationPoints);
+                    simulationObserver.RecordBankedPoints(player.PlayerId, player.MutationPoints);
                     return; // Bank points for next turn
                 }
 
@@ -402,7 +402,7 @@ namespace FungusToast.Core.AI
             // Check if we should bank for surges
             if (ShouldBankForSurges(player, allMutations, board))
             {
-                simulationObserver?.RecordBankedPoints(player.PlayerId, player.MutationPoints);
+                simulationObserver.RecordBankedPoints(player.PlayerId, player.MutationPoints);
                 return; // Bank points for surge activation
             }
 
@@ -487,7 +487,7 @@ namespace FungusToast.Core.AI
             Player player,
             List<Mutation> allMutations,
             GameBoard board,
-            ISimulationObserver? simulationObserver,
+            ISimulationObserver simulationObserver,
             bool onlyOnNthRound)
         {
             int currentRound = board.CurrentRound;
@@ -547,7 +547,7 @@ namespace FungusToast.Core.AI
             List<Mutation> allMutations,
             GameBoard board,
             Random rnd,
-            ISimulationObserver? simulationObserver = null)
+            ISimulationObserver simulationObserver)
         {
             bool spent;
             do
@@ -572,7 +572,7 @@ namespace FungusToast.Core.AI
             Player player,
             List<Mutation> allMutations,
             GameBoard board,
-            ISimulationObserver? simulationObserver)
+            ISimulationObserver simulationObserver)
         {
             foreach (var category in GetShuffledCategories())
             {
@@ -593,7 +593,7 @@ namespace FungusToast.Core.AI
             Player player,
             List<Mutation> allMutations,
             GameBoard board,
-            ISimulationObserver? simulationObserver)
+            ISimulationObserver simulationObserver)
         {
             var fallbackCandidates = allMutations
                 .Where(m => (int)m.Tier <= (int)maxTier && player.CanUpgrade(m, board.CurrentRound))
@@ -611,7 +611,7 @@ namespace FungusToast.Core.AI
             List<Mutation> allMutations,
             GameBoard board,
             Random rnd,
-            ISimulationObserver? simulationObserver)
+            ISimulationObserver simulationObserver)
         {
             var upgradable = allMutations
                 .Where(m => player.CanUpgrade(m, board.CurrentRound) && (int)m.Tier <= (int)maxTier)
@@ -690,7 +690,7 @@ namespace FungusToast.Core.AI
             Player player,
             GameBoard board,
             List<Mutation> candidates,
-            ISimulationObserver? simulationObserver)
+            ISimulationObserver simulationObserver)
         {
             if (prioritizeHighTier)
             {
@@ -717,7 +717,7 @@ namespace FungusToast.Core.AI
             Mutation candidate,
             List<Mutation> allCandidates,
             GameBoard board,
-            ISimulationObserver? simulationObserver)
+            ISimulationObserver simulationObserver)
         {
             if (IsTendril(candidate))
             {

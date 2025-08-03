@@ -21,7 +21,7 @@ public static class MycovariantEffectProcessor
         int tileId,
         CardinalDirection direction,
         Random rng,
-        ISimulationObserver? observer = null)
+        ISimulationObserver observer)
     {
         int playerId = playerMyco.PlayerId;
 
@@ -150,7 +150,7 @@ public static class MycovariantEffectProcessor
         GameBoard board,
         List<Player> players,
         Random rng,
-        ISimulationObserver? observer = null)
+        ISimulationObserver observer)
     {
         int toxinTileId = eventArgs.TileId;
         int placingPlayerId = eventArgs.PlacingPlayerId;
@@ -187,7 +187,7 @@ public static class MycovariantEffectProcessor
                 playerMyco.IncrementEffectCount(MycovariantEffectType.Neutralized, 1);
                 
                 // Report to observer
-                observer?.RecordNeutralizingMantleEffect(player.PlayerId, 1);
+                observer.RecordNeutralizingMantleEffect(player.PlayerId, 1);
                 
                 // Only the first player to neutralize gets the effect
                 break;
@@ -199,7 +199,7 @@ public static class MycovariantEffectProcessor
         PlayerMycovariant playerMyco,
         GameBoard board,
         Random rng,
-        ISimulationObserver? observer)
+        ISimulationObserver observer)
     {
         // AI/simulation logic: auto-select up to the allowed number of living cells
         var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
@@ -228,7 +228,7 @@ public static class MycovariantEffectProcessor
             cell.MakeResistant();
             
             playerMyco.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);
-            observer?.RecordBastionedCells(player.PlayerId, 1);
+            observer.RecordBastionedCells(player.PlayerId, 1);
         }
 
         playerMyco.MarkTriggered();
@@ -239,7 +239,7 @@ public static class MycovariantEffectProcessor
         GameBoard board,
         int sourceToxinTileId,
         Random rng,
-        ISimulationObserver? observer = null)
+        ISimulationObserver observer)
     {
         var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
         if (player == null) return;
@@ -299,13 +299,13 @@ public static class MycovariantEffectProcessor
         if (toxinsCreated > 0)
         {
             playerMyco.IncrementEffectCount(MycovariantEffectType.CytolyticBurstToxins, toxinsCreated);
-            observer?.RecordCytolyticBurstToxins(player.PlayerId, toxinsCreated);
+                observer.RecordCytolyticBurstToxins(player.PlayerId, toxinsCreated);
         }
 
         if (cellsKilled > 0)
         {
             playerMyco.IncrementEffectCount(MycovariantEffectType.CytolyticBurstKills, cellsKilled);
-            observer?.RecordCytolyticBurstKills(player.PlayerId, cellsKilled);
+            observer.RecordCytolyticBurstKills(player.PlayerId, cellsKilled);
         }
 
         playerMyco.MarkTriggered();
@@ -316,7 +316,7 @@ public static class MycovariantEffectProcessor
         PlayerMycovariant playerMyco,
         GameBoard board,
         Random rng,
-        ISimulationObserver? observer)
+        ISimulationObserver observer)
     {
         var player = board.Players.FirstOrDefault(
             p => p.PlayerId == playerMyco.PlayerId);
@@ -379,7 +379,7 @@ public static class MycovariantEffectProcessor
         GameBoard board,
         int playerId,
         int tileId,
-        ISimulationObserver? observer)
+        ISimulationObserver observer)
     {
         ApplySurgicalInoculationToTile(playerMyco, board, playerId, tileId, observer);
         playerMyco.MarkTriggered();
@@ -391,7 +391,7 @@ public static class MycovariantEffectProcessor
         GameBoard board,
         int playerId,
         int tileId,
-        ISimulationObserver? observer)
+        ISimulationObserver observer)
     {
         var targetTile = board.GetTileById(tileId);
         if (targetTile != null)
@@ -403,7 +403,7 @@ public static class MycovariantEffectProcessor
                 var newCell = new FungalCell(playerId, tileId, GrowthSource.SurgicalInoculation);
                 newCell.MakeResistant();
                 board.PlaceFungalCell(newCell);
-                observer?.RecordSurgicalInoculationDrop(playerId, 1);
+                observer.RecordSurgicalInoculationDrop(playerId, 1);
                 playerMyco.IncrementEffectCount(
                     MycovariantEffectType.Drops,
                     1);
@@ -414,7 +414,7 @@ public static class MycovariantEffectProcessor
                 prevCell.Takeover(playerId, allowToxin: true);
                 prevCell.MakeResistant();
                 board.PlaceFungalCell(prevCell);
-                observer?.RecordSurgicalInoculationDrop(playerId, 1);
+                observer.RecordSurgicalInoculationDrop(playerId, 1);
                 playerMyco.IncrementEffectCount(
                     MycovariantEffectType.Drops,
                     1);
@@ -433,7 +433,7 @@ public static class MycovariantEffectProcessor
         GameBoard board,
         int playerId,
         int tileId,
-        ISimulationObserver? observer = null)
+        ISimulationObserver observer)
     {
         var player = board.Players.FirstOrDefault(p => p.PlayerId == playerId);
         if (player == null) return;
@@ -469,7 +469,7 @@ public static class MycovariantEffectProcessor
         if (transferredCount > 0)
         {
             playerMyco.IncrementEffectCount(MycovariantEffectType.ResistantTransfers, transferredCount);
-            observer?.RecordHyphalResistanceTransfer(playerId, transferredCount);
+            observer.RecordHyphalResistanceTransfer(playerId, transferredCount);
         }
     }
 
@@ -481,7 +481,7 @@ public static class MycovariantEffectProcessor
         GameBoard board,
         List<Player> players,
         Random rng,
-        ISimulationObserver? observer = null)
+        ISimulationObserver observer)
     {
         foreach (var player in players)
         {
@@ -524,7 +524,7 @@ public static class MycovariantEffectProcessor
             if (transferredCount > 0)
             {
                 playerMyco.IncrementEffectCount(MycovariantEffectType.ResistantTransfers, transferredCount);
-                observer?.RecordHyphalResistanceTransfer(player.PlayerId, transferredCount);
+                observer.RecordHyphalResistanceTransfer(player.PlayerId, transferredCount);
             }
         }
     }
@@ -533,7 +533,7 @@ public static class MycovariantEffectProcessor
         ToxinPlacedEventArgs eventArgs,
         GameBoard board,
         List<Player> players,
-        ISimulationObserver? observer = null)
+        ISimulationObserver observer)
     {
         int playerId = eventArgs.PlacingPlayerId;
         if (playerId < 0) return;
@@ -549,13 +549,13 @@ public static class MycovariantEffectProcessor
 
         int extension = MycovariantGameBalance.EnduringToxaphoresNewToxinExtension;
         cell.ToxinExpirationAge += extension;
-        observer?.RecordEnduringToxaphoresExtendedCycles(playerId, extension);
+        observer.RecordEnduringToxaphoresExtendedCycles(playerId, extension);
     }
 
     public static void OnAcquisition_EnduringToxaphores(
         Player player,
         GameBoard board,
-        ISimulationObserver? observer = null)
+        ISimulationObserver observer)
     {
         var playerMyco = player.GetMycovariant(MycovariantIds.EnduringToxaphoresId);
         if (playerMyco == null) return;
@@ -575,7 +575,7 @@ public static class MycovariantEffectProcessor
 
         if (totalExtended > 0)
         {
-            observer?.RecordEnduringToxaphoresExistingExtensions(player.PlayerId, totalExtended);
+            observer.RecordEnduringToxaphoresExistingExtensions(player.PlayerId, totalExtended);
         }
     }
 
@@ -590,7 +590,7 @@ public static class MycovariantEffectProcessor
         int diedTileId,
         List<Player> players,
         Random rng,
-        ISimulationObserver? observer = null)
+        ISimulationObserver observer)
     {
         var player = players.FirstOrDefault(p => p.PlayerId == playerId);
         if (player == null) return;
@@ -621,7 +621,7 @@ public static class MycovariantEffectProcessor
                 
                 // Record the second attempt from Reclamation Rhizomorphs
                 rhizomorphsMyco.IncrementEffectCount(MycovariantEffectType.SecondReclamationAttempts, 1);
-                observer?.RecordReclamationRhizomorphsSecondAttempt(playerId, 1);
+                observer.RecordReclamationRhizomorphsSecondAttempt(playerId, 1);
             }
         }
     }
@@ -635,7 +635,7 @@ public static class MycovariantEffectProcessor
         List<BoardTile> deadAdjacentTiles,
         Random rng,
         PlayerMycovariant playerMyco,
-        ISimulationObserver? observer)
+        ISimulationObserver observer)
     {
         if (rng.NextDouble() < MycovariantGameBalance.NecrophoricAdaptationReclamationChance)
         {
@@ -657,7 +657,7 @@ public static class MycovariantEffectProcessor
             {
                 // Record the effect
                 playerMyco.IncrementEffectCount(MycovariantEffectType.NecrophoricAdaptationReclamations, 1);
-                observer?.RecordNecrophoricAdaptationReclamation(playerId, 1);
+                observer.RecordNecrophoricAdaptationReclamation(playerId, 1);
                 return true;
             }
         }

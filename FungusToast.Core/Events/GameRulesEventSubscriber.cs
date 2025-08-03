@@ -31,7 +31,7 @@ namespace FungusToast.Core.Events
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             // All mutation-based cell death effects (consolidated)
             board.CellDeath += (sender, args) =>

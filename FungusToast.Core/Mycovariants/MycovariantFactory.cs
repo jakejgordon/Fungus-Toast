@@ -52,8 +52,7 @@ namespace FungusToast.Core.Mycovariants
                 {
                     var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
                     
-                    bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI || 
-                                             observer != null; // Simulation context
+                    bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI;
                     
                     if (shouldUseCoreLogic)
                     {
@@ -286,8 +285,7 @@ namespace FungusToast.Core.Mycovariants
                 {
                     var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
                     
-                    bool shouldUseCoreLogic = player?.PlayerType == PlayerTypeEnum.AI || 
-                                             observer != null; // Simulation context
+                    bool shouldUseCoreLogic = player?.PlayerType == PlayerTypeEnum.AI;
                     
                     if (shouldUseCoreLogic)
                     {
@@ -512,8 +510,7 @@ namespace FungusToast.Core.Mycovariants
                 {
                     var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
                     
-                    bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI || 
-                                             observer != null; // Simulation context
+                    bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI;
                     
                     if (shouldUseCoreLogic)
                     {

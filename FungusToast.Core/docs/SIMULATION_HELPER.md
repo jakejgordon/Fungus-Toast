@@ -284,7 +284,7 @@ var args = new NewEffectEventArgs(playerId, count);
 board.OnNewEffect(args);
 
 // 4. Track in observer
-observer?.RecordNewEffect(playerId, count);
+observer.RecordNewEffect(playerId, count);
 
 // 5. Add to PlayerResult
 public int NewEffectCount { get; set; }

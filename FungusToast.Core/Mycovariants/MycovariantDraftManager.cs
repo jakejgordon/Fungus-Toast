@@ -29,9 +29,9 @@ namespace FungusToast.Core.Mycovariants
            MycovariantPoolManager poolManager,
            GameBoard board,
            Random rng,
+           ISimulationObserver observer,
            int choicesCount = 3,
-           Func<Player, List<Mycovariant>, Mycovariant>? humanSelectionCallback = null,
-           ISimulationObserver? observer = null)
+           Func<Player, List<Mycovariant>, Mycovariant>? humanSelectionCallback = null)
         {
             // Sort by fewest living cells (tiebreaker: lowest playerId)
             var draftOrder = players

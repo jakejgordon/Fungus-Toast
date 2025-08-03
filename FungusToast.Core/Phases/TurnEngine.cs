@@ -16,7 +16,7 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// Assigns base, bonus, and mutation-derived points and triggers auto-upgrades and strategy spending.
         /// </summary>
-        public static void AssignMutationPoints(GameBoard board, List<Player> players, List<Mutation> allMutations, Random rng, ISimulationObserver? simulationObserver = null)
+        public static void AssignMutationPoints(GameBoard board, List<Player> players, List<Mutation> allMutations, Random rng, ISimulationObserver simulationObserver)
         {
             // Fire MutationPhaseStart event for Mutator Phenotype and other mutation phase effects
             board.OnMutationPhaseStart();
@@ -31,7 +31,7 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// Executes a full multi-cycle growth phase, including mutation-based pre-growth effects.
         /// </summary>
-        public static void RunGrowthPhase(GameBoard board, List<Player> players, Random rng, ISimulationObserver? observer = null)
+        public static void RunGrowthPhase(GameBoard board, List<Player> players, Random rng, ISimulationObserver observer)
         {
             board.OnPreGrowthPhase();
             var processor = new GrowthPhaseProcessor(board, players, rng, observer);

@@ -92,7 +92,7 @@ public static void OnPostGrowthPhase_NewMutation(
     GameBoard board,
     List<Player> players,
     Random rng,
-    ISimulationObserver? observer = null)
+    ISimulationObserver observer)
 {
     foreach (var player in players)
     {
@@ -103,7 +103,7 @@ public static void OnPostGrowthPhase_NewMutation(
         // Implementation logic here...
         
         // Track effects
-        observer?.RecordNewMutationEffect(player.PlayerId, effectCount);
+        observer.RecordNewMutationEffect(player.PlayerId, effectCount);
     }
 }
 ```

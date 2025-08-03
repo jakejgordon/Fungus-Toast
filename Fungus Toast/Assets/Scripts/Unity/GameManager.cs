@@ -23,6 +23,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using FungusToast.Core.Metrics;
 
 namespace FungusToast.Unity
 {
@@ -108,9 +109,9 @@ namespace FungusToast.Unity
 
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
 
-            GameRulesEventSubscriber.SubscribeAll(Board, players, rng, null);
+            GameRulesEventSubscriber.SubscribeAll(Board, players, rng, gameUIManager.GameLogRouter);
             GameUIEventSubscriber.Subscribe(Board, gameUIManager);
-            AnalyticsEventSubscriber.Subscribe(Board, null);
+            AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
 
             InitializePlayersWithHumanFirst();
 
@@ -243,8 +244,8 @@ namespace FungusToast.Unity
             // Disable Spend Points before leaving mutation phase
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
 
-            // Notify logs of phase start
-            gameUIManager.GlobalGameLogManager?.OnPhaseStart("Growth");
+            // Notify logs of phase start using unified router
+            gameUIManager.GameLogRouter?.OnPhaseStart("Growth");
 
             if (growthPhaseRunner != null)
             {
@@ -263,8 +264,8 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
-            // Notify logs of phase start
-            gameUIManager.GlobalGameLogManager?.OnPhaseStart("Decay");
+            // Notify logs of phase start using unified router
+            gameUIManager.GameLogRouter?.OnPhaseStart("Decay");
 
             decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
             gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f);
@@ -276,9 +277,8 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
-            // Notify both logs of round completion
-            gameUIManager.GameLogManager?.OnRoundComplete(Board.CurrentRound);
-            gameUIManager.GlobalGameLogManager?.OnRoundComplete(Board.CurrentRound, Board);
+            // Notify both logs of round completion using unified router
+            gameUIManager.GameLogRouter?.OnRoundComplete(Board.CurrentRound, Board);
 
             foreach (var player in Board.Players)
                 player.TickDownActiveSurges();
@@ -323,9 +323,8 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
-            // Notify logs of round start
-            gameUIManager.GameLogManager?.OnRoundStart(Board.CurrentRound);
-            gameUIManager.GlobalGameLogManager?.OnRoundStart(Board.CurrentRound);
+            // Notify logs of round start using unified router
+            gameUIManager.GameLogRouter?.OnRoundStart(Board.CurrentRound);
 
             AssignMutationPoints();
             
@@ -342,8 +341,8 @@ namespace FungusToast.Unity
             gameUIManager.MoldProfilePanel?.Refresh();
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
 
-            // Notify logs of phase start
-            gameUIManager.GlobalGameLogManager?.OnPhaseStart("Mutation");
+            // Notify logs of phase start using unified router
+            gameUIManager.GameLogRouter?.OnPhaseStart("Mutation");
 
             gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
 
@@ -385,12 +384,12 @@ namespace FungusToast.Unity
             if (roundsRemainingUntilGameEnd == 1)
             {
                 gameUIManager.RightSidebar?.SetEndgameCountdownText("<b><color=#FF0000>Final Round!</color></b>");
-                gameUIManager.GlobalGameLogManager?.OnEndgameTriggered(1);
+                gameUIManager.GameLogRouter?.OnEndgameTriggered(1);
             }
             else
             {
                 gameUIManager.RightSidebar?.SetEndgameCountdownText($"<b><color=#FFA500>Endgame in {roundsRemainingUntilGameEnd} rounds</color></b>");
-                gameUIManager.GlobalGameLogManager?.OnEndgameTriggered(roundsRemainingUntilGameEnd);
+                gameUIManager.GameLogRouter?.OnEndgameTriggered(roundsRemainingUntilGameEnd);
             }
         }
 
@@ -406,11 +405,11 @@ namespace FungusToast.Unity
                 .ThenByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => !c.IsAlive))
                 .ToList();
 
-            // Notify global log of game end
+            // Notify global log of game end using unified router
             var winner = ranked.FirstOrDefault();
             if (winner != null)
             {
-                gameUIManager.GlobalGameLogManager?.OnGameEnd(winner.PlayerName);
+                gameUIManager.GameLogRouter?.OnGameEnd(winner.PlayerName);
             }
 
             gameUIManager.MutationUIManager.gameObject.SetActive(false);
@@ -434,19 +433,17 @@ namespace FungusToast.Unity
             var allMutations = mutationManager.AllMutations.Values.ToList();
             var rng = new System.Random();
 
-            TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rng);
+            TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rng, gameUIManager.GameLogRouter);
 
             gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
         }
 
         public void SpendAllMutationPointsForAIPlayers()
         {
-            var rng = new System.Random();
-
             foreach (var p in Board.Players)
             {
                 if (p.PlayerType == PlayerTypeEnum.AI)
-                    p.MutationStrategy?.SpendMutationPoints(p, mutationManager.GetAllMutations().ToList(), Board, rng);
+                    p.MutationStrategy?.SpendMutationPoints(p, mutationManager.GetAllMutations().ToList(), Board, rng, gameUIManager.GameLogRouter);
             }
 
             Debug.Log("All AI players have spent their mutation points.");
@@ -508,12 +505,12 @@ namespace FungusToast.Unity
                 var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
                 var mycovariantName = testingMycovariant?.Name ?? "Unknown";
                 gameUIManager.PhaseBanner.Show($"Testing: {mycovariantName}", 2f);
-                gameUIManager.GlobalGameLogManager?.OnDraftPhaseStart(mycovariantName);
+                gameUIManager.GameLogRouter?.OnDraftPhaseStart(mycovariantName);
             }
             else
             {
                 gameUIManager.PhaseBanner.Show("Mycovariant Draft Phase!", 2f);
-                gameUIManager.GlobalGameLogManager?.OnDraftPhaseStart();
+                gameUIManager.GameLogRouter?.OnDraftPhaseStart();
             }
             phaseProgressTracker?.HighlightDraftPhase();
 
@@ -576,7 +573,7 @@ namespace FungusToast.Unity
             var playerMyco = player.PlayerMycovariants.LastOrDefault(pm => pm.MycovariantId == picked.Id);
             if (playerMyco != null && picked.AutoMarkTriggered)
             {
-                picked.ApplyEffect?.Invoke(playerMyco, Board, rng, null);
+                picked.ApplyEffect?.Invoke(playerMyco, Board, rng, gameUIManager.GameLogRouter);
                 FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] Applied core effect for AutoMarkTriggered mycovariant {picked.Name} (Id={picked.Id}) for PlayerId={playerMyco.PlayerId}");
             }
             else if (playerMyco != null)
@@ -670,7 +667,7 @@ namespace FungusToast.Unity
                     var draftAIStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
                     humanPlayer.SetMutationStrategy(draftAIStrategy);
 
-                    RunSilentDraftForAllPlayers();
+                    RunSilentDraftForAllPlayers(gameUIManager.GameLogRouter);
 
                     // Restore human player type and strategy
                     humanPlayer.SetPlayerType(originalType);
@@ -704,7 +701,7 @@ namespace FungusToast.Unity
             }
         }
 
-        private void RunSilentDraftForAllPlayers()
+        private void RunSilentDraftForAllPlayers(ISimulationObserver observer)
         {
             // Create a custom draft function that excludes the testing mycovariant for AI players during silent drafts
             Func<Player, List<Mycovariant>, Mycovariant> customSelectionCallback = null;
@@ -748,9 +745,9 @@ namespace FungusToast.Unity
                 persistentPoolManager,
                 Board,
                 rng,
+                observer,
                 MycovariantGameBalance.MycovariantSelectionDraftSize,
-                customSelectionCallback, // Use custom callback to exclude testing mycovariant from AI
-                null  // No observer for silent draft
+                customSelectionCallback // Use custom callback to exclude testing mycovariant from AI
             );
             
             // After silent draft is complete, restore the testing mycovariant to the pool
@@ -772,7 +769,7 @@ namespace FungusToast.Unity
                 var strategy = player.MutationStrategy;
                 if (strategy != null)
                 {
-                    strategy.SpendMutationPoints(player, allMutations, board, rng);
+                    strategy.SpendMutationPoints(player, allMutations, board, rng, gameUIManager.GameLogRouter);
                 }
             }
         }
@@ -781,7 +778,7 @@ namespace FungusToast.Unity
         {
             // Assign mutation points to all players
             var allMutations = mutationManager.AllMutations.Values.ToList();
-            TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rng);
+            TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rng, gameUIManager.GameLogRouter);
             SpendMutationPointsForAllPlayers(allMutations, Board, rng);
             yield return null; // One frame delay
         }

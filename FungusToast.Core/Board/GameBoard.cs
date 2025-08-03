@@ -42,7 +42,7 @@ namespace FungusToast.Core.Board
         public delegate void CellColonizedEventHandler(int playerId, int tileId, GrowthSource source);
         public delegate void CellInfestedEventHandler(int playerId, int tileId, int oldOwnerId, GrowthSource source);
         public delegate void CellReclaimedEventHandler(int playerId, int tileId, GrowthSource source);
-        public delegate void CellToxifiedEventHandler(int playerId, int tileId);
+        public delegate void CellToxifiedEventHandler(int playerId, int tileId, GrowthSource source);
         public delegate void CellPoisonedEventHandler(int playerId, int tileId, int oldOwnerId, GrowthSource source);
         public delegate void CellCatabolizedEventHandler(int playerId, int tileId);
         public delegate void CellDeathEventHandler(int playerId, int tileId, DeathReason reason);
@@ -102,8 +102,8 @@ namespace FungusToast.Core.Board
         protected virtual void OnCellReclaimed(int playerId, int tileId, GrowthSource source) =>
             CellReclaimed?.Invoke(playerId, tileId, source);
 
-        protected virtual void OnCellToxified(int playerId, int tileId) =>
-            CellToxified?.Invoke(playerId, tileId);
+        protected virtual void OnCellToxified(int playerId, int tileId, GrowthSource source) =>
+            CellToxified?.Invoke(playerId, tileId, source);
 
         protected virtual void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource source) =>
             CellPoisoned?.Invoke(playerId, tileId, oldOwnerId, source);
@@ -428,7 +428,7 @@ namespace FungusToast.Core.Board
             }
         }
 
-        public void ExpireToxinTiles(int currentGrowthCycle, ISimulationObserver? observer = null)
+        public void ExpireToxinTiles(int currentGrowthCycle, ISimulationObserver observer)
         {
             // Apply Catabolic Rebirth max-level bonus: toxins age twice as fast when adjacent to dead cells
             foreach (var toxinCell in AllToxinFungalCells())
@@ -446,7 +446,7 @@ namespace FungusToast.Core.Board
                         if (owner != null && catabolicRebirth != null && owner.GetMutationLevel(MutationIds.CatabolicRebirth) == catabolicRebirth.MaxLevel)
                         {
                             shouldAgeDouble = true;
-                            observer?.RecordCatabolicRebirthAgedToxin(owner.PlayerId, 1);
+                            observer.RecordCatabolicRebirthAgedToxin(owner.PlayerId, 1);
                             break; // Only need one adjacent dead cell with max Catabolic Rebirth
                         }
                     }
@@ -633,8 +633,8 @@ namespace FungusToast.Core.Board
         /// </summary>
         /// <param name="player">The player who may receive a spore drop.</param>
         /// <param name="rng">Random number generator.</param>
-        /// <param name="observer">Optional simulation observer to track spore events.</param>
-        public void TryTriggerSporeOnDeath(Player player, Random rng, ISimulationObserver? observer = null)
+        /// <param name="observer">Simulation observer to track spore events.</param>
+        public void TryTriggerSporeOnDeath(Player player, Random rng, ISimulationObserver observer)
         {
             float dropChance = player.GetMutationEffect(MutationType.Necrosporulation);
             if (dropChance <= 0f || rng.NextDouble() > dropChance)
@@ -651,7 +651,7 @@ namespace FungusToast.Core.Board
                 if (spawned)
                 {
                     OnSporeDrop(player.PlayerId, tile.TileId, MutationType.Necrosporulation);
-                    observer?.ReportNecrosporeDrop(player.PlayerId, 1);
+                    observer.ReportNecrosporeDrop(player.PlayerId, 1);
                     return;
                 }
             }
@@ -786,8 +786,17 @@ namespace FungusToast.Core.Board
             // Normal event firing logic based on what was replaced
             if (oldCell == null)
             {
-                // Colonization: tile was empty
-                OnCellColonized(ownerId, cell.TileId, source);
+                // Check if the new cell is a toxin
+                if (cell.IsToxin)
+                {
+                    // Toxification: placing toxin in empty tile
+                    OnCellToxified(ownerId, cell.TileId, source);
+                }
+                else
+                {
+                    // Colonization: placing living cell in empty tile
+                    OnCellColonized(ownerId, cell.TileId, source);
+                }
             }
             else if (oldCell.IsAlive)
             {
@@ -807,13 +816,23 @@ namespace FungusToast.Core.Board
             else if (oldCell.IsDead)
             {
                 int currentOwnerId = oldCell.OwnerPlayerId ?? -1;
-                // Direct reclaim: placing a new cell over a dead cell
-                // (Note: This is different from FungalCell.Reclaim() which modifies the existing cell)
-                if (currentOwnerId == ownerId)
-                    OnCellReclaimed(ownerId, cell.TileId, source);
+                
+                // Check if the new cell is a toxin
+                if (cell.IsToxin)
+                {
+                    // Toxification: placing toxin over dead cell
+                    OnCellToxified(ownerId, cell.TileId, source);
+                }
                 else
-                    // Taking over a dead enemy cell is also considered reclamation
-                    OnCellReclaimed(ownerId, cell.TileId, source);
+                {
+                    // Direct reclaim: placing a new living cell over a dead cell
+                    // (Note: This is different from FungalCell.Reclaim() which modifies the existing cell)
+                    if (currentOwnerId == ownerId)
+                        OnCellReclaimed(ownerId, cell.TileId, source);
+                    else
+                        // Taking over a dead enemy cell is also considered reclamation
+                        OnCellReclaimed(ownerId, cell.TileId, source);
+                }
             }
         }
 
@@ -910,7 +929,7 @@ namespace FungusToast.Core.Board
             GrowthSource growthSource,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             var cell = GetTileById(tileId)?.FungalCell;
             if (cell == null)

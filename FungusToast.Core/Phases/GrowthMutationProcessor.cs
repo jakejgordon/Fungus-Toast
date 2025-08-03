@@ -33,7 +33,7 @@ namespace FungusToast.Core.Phases
             BoardTile targetTile,
             Random rng,
             GameBoard board,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             bool hasMaxCreepingMold = player.PlayerMutations.TryGetValue(MutationIds.CreepingMold, out var cm) &&
                                       cm.CurrentLevel == GameBalance.CreepingMoldMaxLevel;

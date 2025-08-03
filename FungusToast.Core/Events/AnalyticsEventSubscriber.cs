@@ -17,12 +17,12 @@ namespace FungusToast.Core.Events
         /// Subscribes all analytics event handlers to the GameBoard.
         /// Pass in a reporting observer or logger as needed (nullable for production).
         /// </summary>
-        public static void Subscribe(GameBoard board, ISimulationObserver? observer = null)
+        public static void Subscribe(GameBoard board, ISimulationObserver observer)
         {
             if(observer == null) return; // No observer, no events to subscribe
 
-            // Example: board.CellDeath += (sender, args) => observer?.RecordCellDeath(args.OwnerPlayerId, args.Reason, 1);
-            // board.CellColonized += (playerId, tileId) => observer?.RecordColonization(playerId, tileId);
+            // Example: board.CellDeath += (sender, args) => observer.RecordCellDeath(args.OwnerPlayerId, args.Reason, 1);
+            // board.CellColonized += (playerId, tileId) => observer.RecordColonization(playerId, tileId);
 
             board.CellDeath += (sender, e) =>
             {

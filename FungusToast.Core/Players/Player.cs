@@ -162,7 +162,7 @@ namespace FungusToast.Core.Players
 
         /* ---------------- Upgrade API ------------------------- */
 
-        public bool TryUpgradeMutation(Mutation mutation, ISimulationObserver? simulationObserver, int currentRound)
+        public bool TryUpgradeMutation(Mutation mutation, ISimulationObserver simulationObserver, int currentRound)
         {
             if (mutation == null) return false;
 
@@ -395,28 +395,25 @@ namespace FungusToast.Core.Players
                                         System.Random rng,
                                         GameBoard board,
                                         IEnumerable<Mutation>? allMutations = null,
-                                        ISimulationObserver? simulationObserver = null)
+                                        ISimulationObserver simulationObserver = null)
         {
             int baseIncome = GetMutationPointIncome();
             int bonus = GetBonusMutationPoints();
             int undergrowth = RollAnabolicInversionBonus(allPlayers, rng, board);
 
             int newMutationPoints = baseIncome + bonus + undergrowth;
-            if (simulationObserver != null)
-            {
-                simulationObserver.RecordMutationPointIncome(PlayerId, newMutationPoints);
-            }
+            simulationObserver.RecordMutationPointIncome(PlayerId, newMutationPoints);
 
             AddMutationPoints(newMutationPoints);
 
             // Record Adaptive Expression bonus, if present and observer is hooked up
-            if (simulationObserver != null && bonus > 0)
+            if (bonus > 0)
             {
                 simulationObserver.RecordAdaptiveExpressionBonus(PlayerId, bonus);
             }
 
             // Record Anabolic Inversion bonus, if present and observer is hooked up
-            if (simulationObserver != null && undergrowth > 0)
+            if (undergrowth > 0)
             {
                 simulationObserver.RecordAnabolicInversionBonus(PlayerId, undergrowth);
             }

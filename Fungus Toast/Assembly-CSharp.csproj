@@ -105,6 +105,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\UI_GameLogEntry.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\TileSelectionController.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_RemainingPointsPanel.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\GameLog\GameLogRouter.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\TileHoverHighlighter.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantEffectHelpers.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\IGameLogManager.cs" />

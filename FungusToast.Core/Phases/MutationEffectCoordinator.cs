@@ -26,7 +26,7 @@ namespace FungusToast.Core.Phases
             List<Player> allPlayers,
             double roll,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             float harmonyReduction = owner.GetMutationEffect(MutationType.DefenseSurvival);
             float ageDelay = owner.GetMutationEffect(MutationType.SelfAgeResetThreshold);
@@ -75,7 +75,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             // Order matters here - some effects may depend on the results of others
             
@@ -98,7 +98,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             // Order matters here - some effects may interact with others
             
@@ -118,7 +118,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             // Order matters here - some effects may depend on the results of others
             
@@ -142,7 +142,7 @@ namespace FungusToast.Core.Phases
             List<Player> players,
             Dictionary<int, int> failedGrowthsByPlayerId,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             // Order matters here - some effects may interact with others
             
@@ -163,7 +163,7 @@ namespace FungusToast.Core.Phases
             List<Mutation> allMutations,
             Random rng,
             int currentRound,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             GeneticDriftMutationProcessor.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, currentRound, observer);
         }
@@ -173,7 +173,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             GeneticDriftMutationProcessor.OnNecrophyticBloomActivated(board, players, rng, observer);
         }
@@ -183,7 +183,7 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             CellularResilienceMutationProcessor.OnToxinExpired_CatabolicRebirth(eventArgs, board, players, rng, observer);
         }

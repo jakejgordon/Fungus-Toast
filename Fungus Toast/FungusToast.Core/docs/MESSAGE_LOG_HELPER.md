@@ -1,4 +1,4 @@
-# Message Log System Architecture
+﻿# Message Log System Architecture
 
 This document explains the intent, design principles, and architecture of the Fungus Toast dual message log system, which provides player-specific and global game event tracking.
 
@@ -157,7 +157,7 @@ The player log now aggregates rapid events to prevent spam and provides ability-
 Jetting Mycelium poisoned 3 enemy cells
 Hyphal Outgrowth colonized 2 empty tiles
 Mimetic Resilience killed 1 enemy cell
-Regenerative Hyphae revived 2 dead cells
+Regenerative Hyphae reclaimed 2 dead cells
 ```
 
 **Defensive Reactions (Player Being Attacked):**
@@ -199,8 +199,8 @@ This ensures consistent language and formatting between both logs while providin
 
 ### Unity Scene Setup
 1. **Create UI hierarchy** with two GameLogPanel instances
-2. **Left Sidebar**: PlayerActivityLogPanel ? GameLogManager
-3. **Right Sidebar**: GlobalEventsLogPanel ? GlobalGameLogManager  
+2. **Left Sidebar**: PlayerActivityLogPanel → GameLogManager
+3. **Right Sidebar**: GlobalEventsLogPanel → GlobalGameLogManager  
 4. **Wire references** in GameUIManager Inspector
 5. **No prefab instantiation** required - scene-based UI approach
 

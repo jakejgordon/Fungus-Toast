@@ -30,7 +30,7 @@ namespace FungusToast.Core.Board
             float targetChance,
             Random rng,
             GrowthSource reclaimGrowthSource,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             var tile = board.GetTileById(tileId);
             if (tile?.FungalCell == null || !tile.FungalCell.IsDead)
@@ -59,7 +59,7 @@ namespace FungusToast.Core.Board
                         if (secondAttemptSucceeded)
                         {
                             // Track the second attempt
-                            observer?.RecordReclamationRhizomorphsSecondAttempt(player.PlayerId, 1);
+                            observer.RecordReclamationRhizomorphsSecondAttempt(player.PlayerId, 1);
                             return true;
                         }
                     }

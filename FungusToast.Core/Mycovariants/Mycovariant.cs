@@ -34,7 +34,7 @@ namespace FungusToast.Core.Mycovariants
         /// <summary>
         /// Called immediately upon selection. Use for instant effects.
         /// </summary>
-        public Action<PlayerMycovariant, GameBoard, Random, ISimulationObserver?>? ApplyEffect { get; set; }
+        public Action<PlayerMycovariant, GameBoard, Random, ISimulationObserver>? ApplyEffect { get; set; }
 
         /// <summary>
         /// Optional trigger condition for delayed-effect Mycovariants.
