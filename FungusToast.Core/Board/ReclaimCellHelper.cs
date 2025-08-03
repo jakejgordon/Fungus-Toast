@@ -80,13 +80,8 @@ namespace FungusToast.Core.Board
                 return false;
             }
 
-            // Perform the reclamation
-            cell.Reclaim(playerId, reclaimGrowthSource);
-            board.PlaceFungalCell(cell);
-            board.Players[playerId].AddControlledTile(tileId);
-            board.InvokeDeadCellReclaim(cell, playerId);
-            
-            return true;
+            // Use the board's TryReclaimDeadCell method which properly handles events
+            return board.TryReclaimDeadCell(playerId, tileId, reclaimGrowthSource);
         }
     }
-} 
+}

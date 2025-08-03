@@ -737,6 +737,9 @@ namespace FungusToast.Core.Board
         /// - Adds control to the new owner.
         /// - Updates the board state and fires the appropriate events.
         /// - Resistant cells cannot be replaced.
+        /// 
+        /// IMPORTANT: This method assumes the cell has NOT been reclaimed via FungalCell.Reclaim().
+        /// If the cell was reclaimed, use TryReclaimDeadCell() instead which handles the reclaim event properly.
         /// </summary>
         /// <param name="cell">The fungal cell to place.</param>
         internal void PlaceFungalCell(FungalCell cell)
@@ -771,15 +774,16 @@ namespace FungusToast.Core.Board
             int ownerId = cell.OwnerPlayerId.GetValueOrDefault(-1);
             GrowthSource source = cell.SourceOfGrowth ?? GrowthSource.Unknown;
 
-            // Special case: If the cell was reclaimed (has reclaim count > 0), always fire OnCellReclaimed
-            // This handles cases where TryReclaimDeadCell creates a cell with GrowthSource.Reclaim
-            if (cell.ReclaimCount > 0 && source == GrowthSource.Reclaim)
+            // LEGACY PATH: This handles cells that were reclaimed via FungalCell.Reclaim() 
+            // before being passed to PlaceFungalCell. This should only happen from legacy code paths.
+            // New code should use TryReclaimDeadCell() instead.
+            if (cell.ReclaimCount > 0)
             {
                 OnCellReclaimed(ownerId, cell.TileId, source);
                 return;
             }
 
-            // Event firing logic with source information
+            // Normal event firing logic based on what was replaced
             if (oldCell == null)
             {
                 // Colonization: tile was empty
@@ -803,11 +807,12 @@ namespace FungusToast.Core.Board
             else if (oldCell.IsDead)
             {
                 int currentOwnerId = oldCell.OwnerPlayerId ?? -1;
-                // Reclaim: revive dead cell (could be own or enemy, but should check for ownership)
+                // Direct reclaim: placing a new cell over a dead cell
+                // (Note: This is different from FungalCell.Reclaim() which modifies the existing cell)
                 if (currentOwnerId == ownerId)
                     OnCellReclaimed(ownerId, cell.TileId, source);
                 else
-                    // taking over a dead cell is always a reclaim, regardless of who owned it
+                    // Taking over a dead enemy cell is also considered reclamation
                     OnCellReclaimed(ownerId, cell.TileId, source);
             }
         }
@@ -849,10 +854,21 @@ namespace FungusToast.Core.Board
                 return false;
             }
 
+            // Store the old cell state before reclaiming
+            var oldOwnerPlayerId = cell.OwnerPlayerId ?? -1;
+            
+            // Perform the reclamation (this makes the cell alive and increments ReclaimCount)
             cell.Reclaim(playerId, reclaimGrowthSource);
-            PlaceFungalCell(cell); // Fires correct events
+            
+            // Update board state
+            tileIdToCell[cell.TileId] = cell; // Ensure mapping is updated
             Players[playerId].AddControlledTile(tileId);
+            
+            // Fire the reclaim event directly - don't go through PlaceFungalCell
+            // since the cell is already in place and we know this is a reclamation
+            OnCellReclaimed(playerId, cell.TileId, reclaimGrowthSource);
             OnDeadCellReclaim?.Invoke(cell, playerId);
+            
             return true;
         }
 
