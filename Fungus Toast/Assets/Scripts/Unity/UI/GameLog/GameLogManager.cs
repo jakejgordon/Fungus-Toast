@@ -212,6 +212,14 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 // Player colonized a tile - track for offensive aggregation
                 string abilityKey = GetAbilityDisplayName(source);
+                
+                // Additional debug logging to identify the "reclaim colonized" issue
+                if (source == GrowthSource.Reclaim)
+                {
+                    UnityEngine.Debug.LogError($"[GameLogManager] BUG: OnCellColonized called with GrowthSource.Reclaim! This should be OnCellReclaimed. Tile: {tileId}, Ability: {abilityKey}");
+                }
+                
+                UnityEngine.Debug.Log($"[GameLogManager] OnCellColonized: {abilityKey} on tile {tileId}");
                 IncrementAbilityEffect(abilityKey, "colonized", GameLogCategory.Lucky);
             }
             // Note: There's no "enemy colonized our tiles" since colonization is only into empty tiles
@@ -223,6 +231,7 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 // Player infested enemy cells - track for offensive aggregation
                 string abilityKey = GetAbilityDisplayName(source);
+                UnityEngine.Debug.Log($"[GameLogManager] OnCellInfested: {abilityKey} on tile {tileId} (old owner: {oldOwnerId})");
                 IncrementAbilityEffect(abilityKey, "infested", GameLogCategory.Lucky);
             }
             else if (oldOwnerId == humanPlayerId)
@@ -239,6 +248,7 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 // Player reclaimed their own dead cells - track for offensive aggregation
                 string abilityKey = GetAbilityDisplayName(source);
+                UnityEngine.Debug.Log($"[GameLogManager] OnCellReclaimed: {abilityKey} on tile {tileId}");
                 IncrementAbilityEffect(abilityKey, "reclaimed", GameLogCategory.Lucky);
             }
             // Note: There's no "enemy reclaimed our dead cells" since reclamation is only for your own cells
@@ -399,6 +409,12 @@ namespace FungusToast.Unity.UI.GameLog
         {
             string eventKey = $"{abilityKey}_{effectType}";
             
+            // Debug logging to help track the source of malformed messages
+            if (effectType == "reclaimed" || effectType == "colonized")
+            {
+                UnityEngine.Debug.Log($"[GameLogManager] {abilityKey} -> {effectType} (event key: {eventKey})");
+            }
+            
             if (!currentEventCounts.ContainsKey(eventKey))
                 currentEventCounts[eventKey] = 0;
             currentEventCounts[eventKey]++;
@@ -421,13 +437,20 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 string message = effectType switch
                 {
-                    "poisoned" => count == 1 ? $"{abilityKey} poisoned enemy cell" : $"{abilityKey} poisoned {count} enemy cells",
-                    "colonized" => count == 1 ? $"{abilityKey} colonized empty tile" : $"{abilityKey} colonized {count} empty tiles",
-                    "infested" => count == 1 ? $"{abilityKey} killed enemy cell" : $"{abilityKey} killed {count} enemy cells",
-                    "reclaimed" => count == 1 ? $"{abilityKey} revived dead cell" : $"{abilityKey} revived {count} dead cells",
-                    "toxified" => count == 1 ? $"{abilityKey} toxified empty tile" : $"{abilityKey} toxified {count} empty tiles",
-                    _ => $"{abilityKey}: {effectType} {count}"
+                    "poisoned" => count == 1 ? $"{abilityKey} poisoned 1 enemy cell" : $"{abilityKey} poisoned {count} enemy cells",
+                    "colonized" => count == 1 ? $"{abilityKey} colonized 1 empty tile" : $"{abilityKey} colonized {count} empty tiles",
+                    "infested" => count == 1 ? $"{abilityKey} killed 1 enemy cell" : $"{abilityKey} killed {count} enemy cells",
+                    "reclaimed" => count == 1 ? $"{abilityKey} revived 1 dead cell" : $"{abilityKey} revived {count} dead cells",
+                    "toxified" => count == 1 ? $"{abilityKey} toxified 1 empty tile" : $"{abilityKey} toxified {count} empty tiles",
+                    _ => $"{abilityKey}: unknown effect {effectType} ({count})"
                 };
+                
+                // Defensive validation to prevent malformed messages
+                if (string.IsNullOrEmpty(message) || message.Contains("colonized") && message.Contains("reclaim"))
+                {
+                    UnityEngine.Debug.LogError($"Malformed message detected for {abilityKey} with effect type '{effectType}' and count {count}. Generated message: '{message}'");
+                    message = $"{abilityKey}: {effectType} {count} tiles/cells"; // Fallback message
+                }
                 
                 AddEntry(new GameLogEntry(message, category, null, humanPlayerId));
                 

@@ -231,7 +231,7 @@ namespace FungusToast.Core.Phases
             float chance = ntcLevel * GameBalance.NecrotoxicConversionReclaimChancePerLevel;
             if (rng.NextDouble() < chance)
             {
-                deadCell.Reclaim(killerPlayerId);
+                deadCell.Reclaim(killerPlayerId, GrowthSource.NecrotoxicConversion);
                 board.PlaceFungalCell(deadCell);
 
                 observer?.RecordNecrotoxicConversionReclaim(killerPlayerId, 1);

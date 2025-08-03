@@ -5,6 +5,7 @@ using FungusToast.Core.Events;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
+using FungusToast.Core.Growth;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,7 +54,7 @@ namespace FungusToast.Core.Phases
                         
                         // Try to reclaim the dead cell using the helper
                         bool success = ReclaimCellHelper.TryReclaimDeadCell(
-                            board, p, dead.TileId, reclaimChance, rng, observer);
+                            board, p, dead.TileId, reclaimChance, rng, GrowthSource.RegenerativeHyphae, observer);
                         if (success)
                         {
                             observer?.RecordRegenerativeHyphaeReclaim(p.PlayerId);
@@ -98,7 +99,7 @@ namespace FungusToast.Core.Phases
             {
                 // Try to reclaim the dead cell using the helper (supports Reclamation Rhizomorphs retry)
                 bool success = ReclaimCellHelper.TryReclaimDeadCell(
-                    board, owner, deadTile.TileId, (float)baseChance, rng, observer);
+                    board, owner, deadTile.TileId, (float)baseChance, rng, GrowthSource.NecrohyphalInfiltration, observer);
                 if (success)
                 {
                     // Track which tiles have already been reclaimed
@@ -157,7 +158,7 @@ namespace FungusToast.Core.Phases
                 
                 // Try to reclaim the dead cell using the helper (supports Reclamation Rhizomorphs retry)
                 bool success = ReclaimCellHelper.TryReclaimDeadCell(
-                    board, deadCellOwner, adjacentTile.TileId, (float)chance, rng, observer);
+                    board, deadCellOwner, adjacentTile.TileId, (float)chance, rng, GrowthSource.CatabolicRebirth, observer);
                 if (success)
                 {
                     // Track resurrections by player
@@ -213,7 +214,7 @@ namespace FungusToast.Core.Phases
                 {
                     // Try to reclaim the dead cell using the helper (supports Reclamation Rhizomorphs retry)
                     bool success = ReclaimCellHelper.TryReclaimDeadCell(
-                        board, owner, deadTile.TileId, (float)cascadeChance, rng, observer);
+                        board, owner, deadTile.TileId, (float)cascadeChance, rng, GrowthSource.NecrohyphalInfiltration, observer);
                     if (success)
                     {
                         alreadyReclaimed.Add(deadTile.TileId);

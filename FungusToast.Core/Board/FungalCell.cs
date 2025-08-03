@@ -175,7 +175,7 @@ namespace FungusToast.Core.Board
         /// <summary>
         /// Reclaims a dead cell (of any prior owner) as a new living cell for this player.
         /// </summary>
-        public void Reclaim(int newOwnerPlayerId, GrowthSource source = GrowthSource.Reclaim)
+        public void Reclaim(int newOwnerPlayerId, GrowthSource source)
         {
             if (!IsReclaimable)
                 throw new InvalidOperationException("Cannot reclaim a non-reclaimable cell.");

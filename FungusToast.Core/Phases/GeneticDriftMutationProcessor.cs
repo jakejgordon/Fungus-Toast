@@ -240,7 +240,7 @@ namespace FungusToast.Core.Phases
             for (int i = 0; i < totalSpores; i++)
             {
                 var targetTile = allTiles[rng.Next(allTiles.Count)];
-                if (board.TryReclaimDeadCell(player.PlayerId, targetTile.TileId))
+                if (board.TryReclaimDeadCell(player.PlayerId, targetTile.TileId, Growth.GrowthSource.NecrophyticBloom))
                 {
                     reclaims++;
                 }
@@ -277,7 +277,7 @@ namespace FungusToast.Core.Phases
             for (int i = 0; i < spores; i++)
             {
                 int randomTileId = allTileIds[rng.Next(allTileIds.Count)];
-                bool success = board.TryReclaimDeadCell(owner.PlayerId, randomTileId);
+                bool success = board.TryReclaimDeadCell(owner.PlayerId, randomTileId, Growth.GrowthSource.NecrophyticBloom);
                 if (success) reclaims++;
             }
 

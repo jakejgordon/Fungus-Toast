@@ -39,11 +39,6 @@ namespace FungusToast.Core.Board
 
         public int OriginalOwnerPlayerId => FungalCell?.OriginalOwnerPlayerId ?? -1;
 
-        public void ReclaimAsLiving(int newOwnerPlayerId)
-        {
-            FungalCell?.Reclaim(newOwnerPlayerId);
-        }
-
         public int GrowthCycleAge
         {
             get => FungalCell?.GrowthCycleAge ?? 0;

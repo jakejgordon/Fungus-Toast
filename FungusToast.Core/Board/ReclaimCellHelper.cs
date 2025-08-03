@@ -2,6 +2,7 @@ using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Config;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Players;
+using FungusToast.Core.Growth;
 
 namespace FungusToast.Core.Board
 {
@@ -28,6 +29,7 @@ namespace FungusToast.Core.Board
             int tileId,
             float targetChance,
             Random rng,
+            GrowthSource reclaimGrowthSource,
             ISimulationObserver? observer = null)
         {
             var tile = board.GetTileById(tileId);
@@ -41,7 +43,7 @@ namespace FungusToast.Core.Board
             // First attempt: roll against target chance
             if (rng.NextDouble() < targetChance)
             {
-                return TryReclaimCellInternal(board, player.PlayerId, tileId, cell);
+                return TryReclaimCellInternal(board, player.PlayerId, tileId, cell, reclaimGrowthSource);
             }
 
             // First attempt failed - check for Reclamation Rhizomorphs
@@ -53,7 +55,7 @@ namespace FungusToast.Core.Board
                     // Second attempt: roll against the same target chance
                     if (rng.NextDouble() < targetChance)
                     {
-                        bool secondAttemptSucceeded = TryReclaimCellInternal(board, player.PlayerId, tileId, cell);
+                        bool secondAttemptSucceeded = TryReclaimCellInternal(board, player.PlayerId, tileId, cell, reclaimGrowthSource);
                         if (secondAttemptSucceeded)
                         {
                             // Track the second attempt
@@ -70,7 +72,7 @@ namespace FungusToast.Core.Board
         /// <summary>
         /// Internal method that performs the actual reclamation attempt.
         /// </summary>
-        private static bool TryReclaimCellInternal(GameBoard board, int playerId, int tileId, FungalCell cell)
+        private static bool TryReclaimCellInternal(GameBoard board, int playerId, int tileId, FungalCell cell, GrowthSource reclaimGrowthSource)
         {
             // Check if the cell is still reclaimable (might have been reclaimed by someone else)
             if (!cell.IsReclaimable)
@@ -79,7 +81,7 @@ namespace FungusToast.Core.Board
             }
 
             // Perform the reclamation
-            cell.Reclaim(playerId);
+            cell.Reclaim(playerId, reclaimGrowthSource);
             board.PlaceFungalCell(cell);
             board.Players[playerId].AddControlledTile(tileId);
             board.InvokeDeadCellReclaim(cell, playerId);
