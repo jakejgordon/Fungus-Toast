@@ -80,7 +80,7 @@ gameUIManager.GlobalEventsLogManager?.OnRoundStart(roundNumber);       // Global
 
 #### **Should Include:**
 1. **Personal Performance Summaries**
-   - End-of-round summaries: "Round X summary: Grew Y new cells, Z cells died, dropped W toxins, A dead cells total"
+   - End-of-round summaries: "Round X summary: Added Y living cells, added Z dead cells, added W toxins"
    - Individual mutation point earnings
    - Direct player actions and their immediate results
 
@@ -104,7 +104,7 @@ gameUIManager.GlobalEventsLogManager?.OnRoundStart(roundNumber);       // Global
 #### **Should Include:**
 1. **Game State Changes**
    - "Round X begins!" messages (including Round 1)
-   - Round summaries with net changes: "Round X summary: Y cells grown, Z cells died, W toxins added, board now A% occupied (B living, C dead, D toxins)"
+   - Round summaries with net changes: "Round X summary: Added Y living cells, added Z dead cells, added W toxins, board now A% occupied (B living, C dead, D toxins)"
    - Endgame triggers: "Final Round!", "Endgame in 3 rounds"
    - Game completion: "Game Over - Player 1 wins!"
 
@@ -126,21 +126,27 @@ gameUIManager.GlobalEventsLogManager?.OnRoundStart(roundNumber);       // Global
 
 ### **Shared Round Summary Formatting**
 
-Both log managers now use a shared `RoundSummaryFormatter` utility class for consistent messaging and proper Round 1 tracking:
+Both log managers now use a shared `RoundSummaryFormatter` utility class for consistent messaging with delta-based tracking:
 
 ```csharp
 // Usage example for global log
 string summary = RoundSummaryFormatter.FormatRoundSummary(
-    roundNumber, cellsGrown, cellsDied, toxinChange, deadCellChange,
+    roundNumber, livingCellChange, deadCellChange, toxinChange,
     livingCells, deadCells, toxinCells, occupancyPercent,
     isPlayerSpecific: false);
 
 // Usage example for player log  
 string summary = RoundSummaryFormatter.FormatRoundSummary(
-    roundNumber, cellsGrown, cellsDied, toxinChange, deadCellChange,
+    roundNumber, livingCellChange, deadCellChange, toxinChange,
     livingCells, deadCells, toxinCells, 0f,
     isPlayerSpecific: true);
 ```
+
+**New Delta-Based Format:**
+- **Player Log**: "Round 1 summary: Added 3 living cells, added 1 dead cell, added 2 toxins"
+- **Global Log**: "Round 1 summary: Added 8 living cells, added 3 dead cells, added 5 toxins, board now 35.2% occupied (8 living, 3 dead, 5 toxins)"
+
+The round summaries now focus exclusively on delta changes in cell counts, as detailed action tracking (colonized, killed, poisoned, toxified, reclaimed, infested) is handled separately during growth cycles.
 
 ### **Event Aggregation System**
 
@@ -149,35 +155,35 @@ The player log now aggregates rapid events to prevent spam and provides ability-
 **Offensive Actions (Player Attacking):**
 ```
 Jetting Mycelium poisoned 3 enemy cells
-Cytolytic Burst poisoned 2 enemy cells
+Hyphal Outgrowth colonized 2 empty tiles
+Mimetic Resilience killed 1 enemy cell
+Regenerative Hyphae revived 2 dead cells
 ```
 
 **Defensive Reactions (Player Being Attacked):**
 ```
 3 of your cells were poisoned: 2 by Jetting Mycelium, 1 by Cytolytic Burst
+2 of your cells were killed: 1 by Hyphal Vectoring, 1 by Jetting Mycelium
 1 of your cells was poisoned: 1 by Sporicidal Bloom
 ```
 
 Events are aggregated using a 0.5-second delay window, allowing multiple rapid events to be combined into meaningful messages that show both totals and detailed breakdowns by ability.
 
 #### **Consolidation Benefits:**
-- **Clear Impact**: Shows total damage in one glance  
-- **Strategic Insight**: Reveals which enemy abilities are most threatening
+- **Clear Impact**: Shows total damage/effects in one glance  
+- **Strategic Insight**: Reveals which abilities are most effective/threatening
 - **Reduced Spam**: Multiple individual messages become one informative summary
-- **Extensible Pattern**: Foundation for consolidating other event types (infestations, colonizations, etc.)
+- **Comprehensive Coverage**: Tracks poisoning, colonization, infestation, and reclamation
+- **Extensible Pattern**: Foundation for consolidating other event types (toxification, etc.)
 
-#### **Round 1 Tracking Fix & Dead Cell Change Fix**
-Both log managers take their initial snapshot during `Initialize()` before any spores are placed, and now properly track changes in dead cell counts:
+#### **Round 1 Tracking Fix & Delta-Based Round Summaries**
+Both log managers take their initial snapshot during `Initialize()` before any spores are placed, and now track only the net changes during each round:
 
-**Round 1 Fix:**
-- **Before Fix**: Round 1 with 1?2 cells showed "Grew 2 cells" 
-- **After Fix**: Round 1 with 1?2 cells correctly shows "Grew 1 cell"
+**Round Summary Focus:**
+- **Before**: Mixed detailed actions with round summaries: "Grew 2 cells, 1 cells died, dropped 3 toxins, 2 dead cells total"
+- **After**: Clean delta-only summaries: "Added 1 living cell, added 1 dead cell, added 3 toxins"
 
-**Dead Cell Change Fix:**
-- **Before Fix**: Showed total dead cells: "5 dead cells total"
-- **After Fix**: Shows changes during round + total: "2 cells died, 5 dead cells total"
-
-This ensures consistent language and formatting between both logs while providing accurate change tracking and current totals.
+This ensures consistent language and formatting between both logs while providing accurate change tracking without duplicating information already captured by individual action messages.
 
 ### Message Categories
 - **Normal**: Informational messages (white text)
@@ -231,6 +237,7 @@ gameUIManager.GlobalEventsLogManager?.OnRoundStart(roundNumber);
 | Common Interface | `Assets/Scripts/Unity/UI/GameLog/IGameLogManager.cs` |
 | Generic UI Panel | `Assets/Scripts/Unity/UI/GameLog/UI_GameLogPanel.cs` |
 | Log Entry Data | `Assets/Scripts/Unity/UI/GameLog/GameLogEntry.cs` |
+| Round Summary Formatter | `Assets/Scripts/Unity/UI/GameLog/RoundSummaryFormatter.cs` |
 | UI Integration | `Assets/Scripts/Unity/UI/GameUIManager.cs` |
 | Game Coordination | `Assets/Scripts/Unity/GameManager.cs` |
 

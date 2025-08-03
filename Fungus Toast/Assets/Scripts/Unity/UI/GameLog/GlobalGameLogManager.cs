@@ -78,18 +78,16 @@ namespace FungusToast.Unity.UI.GameLog
             // Take snapshot at end of round and calculate deltas
             var roundEndSnapshot = TakeSnapshot(gameBoard);
             
-            int cellsGrown = roundEndSnapshot.LivingCells - roundStartSnapshot.LivingCells;
-            int cellsDied = roundStartSnapshot.LivingCells - roundEndSnapshot.LivingCells + cellsGrown; // Account for growth and death
-            int toxinChange = roundEndSnapshot.ToxinCells - roundStartSnapshot.ToxinCells;
+            int livingCellChange = roundEndSnapshot.LivingCells - roundStartSnapshot.LivingCells;
             int deadCellChange = roundEndSnapshot.DeadCells - roundStartSnapshot.DeadCells;
+            int toxinChange = roundEndSnapshot.ToxinCells - roundStartSnapshot.ToxinCells;
             
             // Use shared formatter for consistent messaging
             string summary = RoundSummaryFormatter.FormatRoundSummary(
                 roundNumber,
-                cellsGrown,
-                cellsDied,
-                toxinChange,
+                livingCellChange,
                 deadCellChange,
+                toxinChange,
                 roundEndSnapshot.LivingCells,
                 roundEndSnapshot.DeadCells,
                 roundEndSnapshot.ToxinCells,

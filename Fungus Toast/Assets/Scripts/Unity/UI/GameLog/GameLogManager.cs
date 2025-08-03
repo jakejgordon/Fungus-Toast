@@ -27,6 +27,19 @@ namespace FungusToast.Unity.UI.GameLog
         private Dictionary<string, int> playerPoisonedCounts = new Dictionary<string, int>();
         private Coroutine playerPoisonedCoroutine;
         
+        // Track various attacks against the player by ability
+        private Dictionary<string, int> playerInfestedCounts = new Dictionary<string, int>();
+        private Coroutine playerInfestedCoroutine;
+        
+        private Dictionary<string, int> playerColonizedCounts = new Dictionary<string, int>();
+        private Coroutine playerColonizedCoroutine;
+        
+        private Dictionary<string, int> playerReclaimedCounts = new Dictionary<string, int>();
+        private Coroutine playerReclaimedCoroutine;
+        
+        private Dictionary<string, int> playerToxifiedCounts = new Dictionary<string, int>();
+        private Coroutine playerToxifiedCoroutine;
+        
         public event Action<GameLogEntry> OnNewLogEntry;
         
         private GameBoard board;
@@ -66,6 +79,10 @@ namespace FungusToast.Unity.UI.GameLog
             
             // Subscribe to relevant board events for immediate feedback
             board.CellPoisoned += OnCellPoisoned;
+            board.CellColonized += OnCellColonized;
+            board.CellInfested += OnCellInfested;
+            board.CellReclaimed += OnCellReclaimed;
+            board.CellToxified += OnCellToxified;
             
             // Don't add initial game start message here - that's for the global log
         }
@@ -75,6 +92,10 @@ namespace FungusToast.Unity.UI.GameLog
             if (board != null)
             {
                 board.CellPoisoned -= OnCellPoisoned;
+                board.CellColonized -= OnCellColonized;
+                board.CellInfested -= OnCellInfested;
+                board.CellReclaimed -= OnCellReclaimed;
+                board.CellToxified -= OnCellToxified;
             }
             
             // Clean up any running aggregation coroutines
@@ -88,6 +109,30 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 StopCoroutine(playerPoisonedCoroutine);
                 playerPoisonedCoroutine = null;
+            }
+            
+            if (playerInfestedCoroutine != null)
+            {
+                StopCoroutine(playerInfestedCoroutine);
+                playerInfestedCoroutine = null;
+            }
+            
+            if (playerColonizedCoroutine != null)
+            {
+                StopCoroutine(playerColonizedCoroutine);
+                playerColonizedCoroutine = null;
+            }
+            
+            if (playerReclaimedCoroutine != null)
+            {
+                StopCoroutine(playerReclaimedCoroutine);
+                playerReclaimedCoroutine = null;
+            }
+            
+            if (playerToxifiedCoroutine != null)
+            {
+                StopCoroutine(playerToxifiedCoroutine);
+                playerToxifiedCoroutine = null;
             }
         }
         
@@ -103,6 +148,10 @@ namespace FungusToast.Unity.UI.GameLog
             // Clear event aggregation counters for the new round
             currentEventCounts.Clear();
             playerPoisonedCounts.Clear();
+            playerInfestedCounts.Clear();
+            playerColonizedCounts.Clear();
+            playerReclaimedCounts.Clear();
+            playerToxifiedCounts.Clear();
             
             // Don't add round start messages here - that's for the global log
         }
@@ -112,21 +161,19 @@ namespace FungusToast.Unity.UI.GameLog
             // Take snapshot at end of round and calculate deltas for the human player
             var roundEndSnapshot = TakePlayerSnapshot(board, humanPlayerId);
             
-            int cellsGrown = roundEndSnapshot.LivingCells - roundStartSnapshot.LivingCells;
-            int cellsDied = roundStartSnapshot.LivingCells - roundEndSnapshot.LivingCells + cellsGrown; // Account for growth and death
-            int toxinChange = roundEndSnapshot.ToxinCells - roundStartSnapshot.ToxinCells;
+            int livingCellChange = roundEndSnapshot.LivingCells - roundStartSnapshot.LivingCells;
             int deadCellChange = roundEndSnapshot.DeadCells - roundStartSnapshot.DeadCells;
+            int toxinChange = roundEndSnapshot.ToxinCells - roundStartSnapshot.ToxinCells;
             
-            // Only show summary if there were changes or the player has dead cells
-            if (cellsGrown != 0 || cellsDied > 0 || toxinChange != 0 || deadCellChange != 0)
+            // Only show summary if there were changes
+            if (livingCellChange != 0 || deadCellChange != 0 || toxinChange != 0)
             {
                 // Use shared formatter for consistent messaging
                 string summary = RoundSummaryFormatter.FormatRoundSummary(
                     roundNumber,
-                    cellsGrown,
-                    cellsDied,
+                    livingCellChange,
+                    deadCellChange,
                     toxinChange,
-                    deadCellChange, // Pass the change in dead cells, not the total
                     roundEndSnapshot.LivingCells,
                     roundEndSnapshot.DeadCells,
                     roundEndSnapshot.ToxinCells,
@@ -157,6 +204,55 @@ namespace FungusToast.Unity.UI.GameLog
                 string abilityKey = GetAbilityDisplayName(source);
                 IncrementPlayerPoisonedEffect(abilityKey);
             }
+        }
+        
+        private void OnCellColonized(int playerId, int tileId, GrowthSource source)
+        {
+            if (playerId == humanPlayerId)
+            {
+                // Player colonized a tile - track for offensive aggregation
+                string abilityKey = GetAbilityDisplayName(source);
+                IncrementAbilityEffect(abilityKey, "colonized", GameLogCategory.Lucky);
+            }
+            // Note: There's no "enemy colonized our tiles" since colonization is only into empty tiles
+        }
+        
+        private void OnCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource source)
+        {
+            if (playerId == humanPlayerId)
+            {
+                // Player infested enemy cells - track for offensive aggregation
+                string abilityKey = GetAbilityDisplayName(source);
+                IncrementAbilityEffect(abilityKey, "infested", GameLogCategory.Lucky);
+            }
+            else if (oldOwnerId == humanPlayerId)
+            {
+                // Player's cell was infested - track by ability
+                string abilityKey = GetAbilityDisplayName(source);
+                IncrementPlayerInfestedEffect(abilityKey);
+            }
+        }
+        
+        private void OnCellReclaimed(int playerId, int tileId, GrowthSource source)
+        {
+            if (playerId == humanPlayerId)
+            {
+                // Player reclaimed their own dead cells - track for offensive aggregation
+                string abilityKey = GetAbilityDisplayName(source);
+                IncrementAbilityEffect(abilityKey, "reclaimed", GameLogCategory.Lucky);
+            }
+            // Note: There's no "enemy reclaimed our dead cells" since reclamation is only for your own cells
+        }
+        
+        private void OnCellToxified(int playerId, int tileId)
+        {
+            if (playerId == humanPlayerId)
+            {
+                // Player toxified empty/dead tiles - track for offensive aggregation
+                // Note: CellToxified doesn't have GrowthSource, so we'll use a generic message
+                IncrementAbilityEffect("Toxin abilities", "toxified", GameLogCategory.Lucky);
+            }
+            // Note: There's no "enemy toxified our tiles" since toxification only affects empty/dead tiles
         }
         
         private void IncrementPlayerPoisonedEffect(string abilityKey)
@@ -199,6 +295,86 @@ namespace FungusToast.Unity.UI.GameLog
             playerPoisonedCoroutine = null;
         }
         
+        private void IncrementPlayerInfestedEffect(string abilityKey)
+        {
+            if (!playerInfestedCounts.ContainsKey(abilityKey))
+                playerInfestedCounts[abilityKey] = 0;
+            playerInfestedCounts[abilityKey]++;
+            
+            // Stop any existing player infested coroutine and start a new one
+            if (playerInfestedCoroutine != null)
+                StopCoroutine(playerInfestedCoroutine);
+            playerInfestedCoroutine = StartCoroutine(ShowAggregatedPlayerInfestedAfterDelay());
+        }
+        
+        private System.Collections.IEnumerator ShowAggregatedPlayerInfestedAfterDelay()
+        {
+            // Wait a short time to allow multiple infestation events to aggregate
+            yield return new WaitForSeconds(0.5f);
+            
+            // Calculate total infested cells and build breakdown message
+            int totalInfested = playerInfestedCounts.Values.Sum();
+            if (totalInfested > 0)
+            {
+                var breakdownParts = playerInfestedCounts
+                    .Where(kvp => kvp.Value > 0)
+                    .Select(kvp => $"{kvp.Value} by {kvp.Key}")
+                    .ToList();
+                
+                string breakdown = string.Join(", ", breakdownParts);
+                string message = totalInfested == 1 
+                    ? $"1 of your cells was killed: {breakdown}"
+                    : $"{totalInfested} of your cells were killed: {breakdown}";
+                
+                AddEntry(new GameLogEntry(message, GameLogCategory.Unlucky, null, humanPlayerId));
+                
+                // Reset the counters
+                playerInfestedCounts.Clear();
+            }
+            
+            playerInfestedCoroutine = null;
+        }
+        
+        private void IncrementPlayerToxifiedEffect(string abilityKey)
+        {
+            if (!playerToxifiedCounts.ContainsKey(abilityKey))
+                playerToxifiedCounts[abilityKey] = 0;
+            playerToxifiedCounts[abilityKey]++;
+            
+            // Stop any existing player toxified coroutine and start a new one
+            if (playerToxifiedCoroutine != null)
+                StopCoroutine(playerToxifiedCoroutine);
+            playerToxifiedCoroutine = StartCoroutine(ShowAggregatedPlayerToxifiedAfterDelay());
+        }
+        
+        private System.Collections.IEnumerator ShowAggregatedPlayerToxifiedAfterDelay()
+        {
+            // Wait a short time to allow multiple toxification events to aggregate
+            yield return new WaitForSeconds(0.5f);
+            
+            // Calculate total toxified cells and build breakdown message
+            int totalToxified = playerToxifiedCounts.Values.Sum();
+            if (totalToxified > 0)
+            {
+                var breakdownParts = playerToxifiedCounts
+                    .Where(kvp => kvp.Value > 0)
+                    .Select(kvp => $"{kvp.Value} by {kvp.Key}")
+                    .ToList();
+                
+                string breakdown = string.Join(", ", breakdownParts);
+                string message = totalToxified == 1 
+                    ? $"1 of your cells was toxified: {breakdown}"
+                    : $"{totalToxified} of your cells were toxified: {breakdown}";
+                
+                AddEntry(new GameLogEntry(message, GameLogCategory.Unlucky, null, humanPlayerId));
+                
+                // Reset the counters
+                playerToxifiedCounts.Clear();
+            }
+            
+            playerToxifiedCoroutine = null;
+        }
+        
         private string GetAbilityDisplayName(GrowthSource source)
         {
             return source switch
@@ -206,7 +382,15 @@ namespace FungusToast.Unity.UI.GameLog
                 GrowthSource.JettingMycelium => "Jetting Mycelium",
                 GrowthSource.CytolyticBurst => "Cytolytic Burst",
                 GrowthSource.SporicidalBloom => "Sporicidal Bloom",
-                GrowthSource.Manual => "Manual toxin placement",
+                GrowthSource.MycotoxinTracer => "Mycotoxin Tracer",
+                GrowthSource.PutrefactiveCascade => "Putrefactive Cascade",
+                GrowthSource.HyphalVectoring => "Hyphal Vectoring",
+                GrowthSource.MimeticResilience => "Mimetic Resilience",
+                GrowthSource.SurgicalInoculation => "Surgical Inoculation",
+                GrowthSource.Ballistospore => "Ballistospore Discharge",
+                GrowthSource.HyphalOutgrowth => "Hyphal Outgrowth",
+                GrowthSource.TendrilOutgrowth => "Tendril Outgrowth",
+                GrowthSource.Manual => "Manual placement",
                 _ => source.ToString()
             };
         }
@@ -238,6 +422,10 @@ namespace FungusToast.Unity.UI.GameLog
                 string message = effectType switch
                 {
                     "poisoned" => count == 1 ? $"{abilityKey} poisoned enemy cell" : $"{abilityKey} poisoned {count} enemy cells",
+                    "colonized" => count == 1 ? $"{abilityKey} colonized empty tile" : $"{abilityKey} colonized {count} empty tiles",
+                    "infested" => count == 1 ? $"{abilityKey} killed enemy cell" : $"{abilityKey} killed {count} enemy cells",
+                    "reclaimed" => count == 1 ? $"{abilityKey} revived dead cell" : $"{abilityKey} revived {count} dead cells",
+                    "toxified" => count == 1 ? $"{abilityKey} toxified empty tile" : $"{abilityKey} toxified {count} empty tiles",
                     _ => $"{abilityKey}: {effectType} {count}"
                 };
                 

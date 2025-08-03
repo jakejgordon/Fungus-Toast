@@ -39,9 +39,9 @@ namespace FungusToast.Core.Board
 
         public int TotalTiles => Width * Height;
 
-        public delegate void CellColonizedEventHandler(int playerId, int tileId);
-        public delegate void CellInfestedEventHandler(int playerId, int tileId, int oldOwnerId);
-        public delegate void CellReclaimedEventHandler(int playerId, int tileId);
+        public delegate void CellColonizedEventHandler(int playerId, int tileId, GrowthSource source);
+        public delegate void CellInfestedEventHandler(int playerId, int tileId, int oldOwnerId, GrowthSource source);
+        public delegate void CellReclaimedEventHandler(int playerId, int tileId, GrowthSource source);
         public delegate void CellToxifiedEventHandler(int playerId, int tileId);
         public delegate void CellPoisonedEventHandler(int playerId, int tileId, int oldOwnerId, GrowthSource source);
         public delegate void CellCatabolizedEventHandler(int playerId, int tileId);
@@ -93,14 +93,14 @@ namespace FungusToast.Core.Board
         public event PreGrowthPhaseEventHandler? PreGrowthPhase;
 
         // 3. Helper methods to invoke (recommended: protected virtual, as in standard .NET pattern)
-        protected virtual void OnCellColonized(int playerId, int tileId) =>
-            CellColonized?.Invoke(playerId, tileId);
+        protected virtual void OnCellColonized(int playerId, int tileId, GrowthSource source) =>
+            CellColonized?.Invoke(playerId, tileId, source);
 
-        protected virtual void OnCellInfested(int playerId, int tileId, int oldOwnerId) =>
-            CellInfested?.Invoke(playerId, tileId, oldOwnerId);
+        protected virtual void OnCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource source) =>
+            CellInfested?.Invoke(playerId, tileId, oldOwnerId, source);
 
-        protected virtual void OnCellReclaimed(int playerId, int tileId) =>
-            CellReclaimed?.Invoke(playerId, tileId);
+        protected virtual void OnCellReclaimed(int playerId, int tileId, GrowthSource source) =>
+            CellReclaimed?.Invoke(playerId, tileId, source);
 
         protected virtual void OnCellToxified(int playerId, int tileId) =>
             CellToxified?.Invoke(playerId, tileId);
@@ -767,36 +767,37 @@ namespace FungusToast.Core.Board
             }
 
             int ownerId = cell.OwnerPlayerId.GetValueOrDefault(-1);
+            GrowthSource source = cell.SourceOfGrowth ?? GrowthSource.Unknown;
 
-            // Event firing logic (unchanged)
+            // Event firing logic with source information
             if (oldCell == null)
             {
                 // Colonization: tile was empty
-                OnCellColonized(ownerId, cell.TileId);
+                OnCellColonized(ownerId, cell.TileId, source);
             }
             else if (oldCell.IsAlive)
             {
                 int oldOwnerId = oldCell.OwnerPlayerId.GetValueOrDefault(-1);
                 // Infestation: replace enemy living cell
                 if (oldOwnerId != ownerId)
-                    OnCellInfested(ownerId, cell.TileId, oldOwnerId);
+                    OnCellInfested(ownerId, cell.TileId, oldOwnerId, source);
                 else
-                    OnCellColonized(ownerId, cell.TileId); // Unusual, but treat as colonization
+                    OnCellColonized(ownerId, cell.TileId, source); // Unusual, but treat as colonization
             }
             else if (oldCell.IsToxin)
             {
                 int oldOwnerId = oldCell.OwnerPlayerId.GetValueOrDefault(-1);
                 // Poisoning: replace toxin with living cell
-                OnCellPoisoned(ownerId, cell.TileId, oldOwnerId, GrowthSource.Manual);
+                OnCellPoisoned(ownerId, cell.TileId, oldOwnerId, source);
             }
             else if (oldCell.IsDead)
             {
                 int currentOwnerId = oldCell.OwnerPlayerId ?? -1;
                 // Reclaim: revive dead cell (could be own or enemy, but should check for ownership)
                 if (currentOwnerId == ownerId)
-                    OnCellReclaimed(ownerId, cell.TileId);
+                    OnCellReclaimed(ownerId, cell.TileId, source);
                 else
-                    OnCellInfested(ownerId, cell.TileId, currentOwnerId); // Parasitic reclaim
+                    OnCellInfested(ownerId, cell.TileId, currentOwnerId, source); // Parasitic reclaim
             }
         }
 
