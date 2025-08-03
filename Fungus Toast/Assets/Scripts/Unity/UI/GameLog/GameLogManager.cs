@@ -7,6 +7,7 @@ using FungusToast.Core.Players;
 using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Growth;
 
 namespace FungusToast.Unity.UI.GameLog
 {
@@ -17,6 +18,14 @@ namespace FungusToast.Unity.UI.GameLog
         
         // Round summary tracking for the human player using snapshots (like GlobalGameLogManager)
         private PlayerSnapshot roundStartSnapshot;
+        
+        // Real-time event aggregation tracking
+        private Dictionary<string, int> currentEventCounts = new Dictionary<string, int>();
+        private Coroutine aggregationCoroutine;
+        
+        // Track poisoning attacks against the player by ability
+        private Dictionary<string, int> playerPoisonedCounts = new Dictionary<string, int>();
+        private Coroutine playerPoisonedCoroutine;
         
         public event Action<GameLogEntry> OnNewLogEntry;
         
@@ -67,6 +76,19 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 board.CellPoisoned -= OnCellPoisoned;
             }
+            
+            // Clean up any running aggregation coroutines
+            if (aggregationCoroutine != null)
+            {
+                StopCoroutine(aggregationCoroutine);
+                aggregationCoroutine = null;
+            }
+            
+            if (playerPoisonedCoroutine != null)
+            {
+                StopCoroutine(playerPoisonedCoroutine);
+                playerPoisonedCoroutine = null;
+            }
         }
         
         public void OnRoundStart(int roundNumber)
@@ -77,6 +99,10 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 roundStartSnapshot = TakePlayerSnapshot(board, humanPlayerId);
             }
+            
+            // Clear event aggregation counters for the new round
+            currentEventCounts.Clear();
+            playerPoisonedCounts.Clear();
             
             // Don't add round start messages here - that's for the global log
         }
@@ -117,16 +143,111 @@ namespace FungusToast.Unity.UI.GameLog
             // Only add player-specific phase messages if needed
         }
         
-        private void OnCellPoisoned(int playerId, int tileId, int oldOwnerId)
+        private void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource source)
         {
             if (playerId == humanPlayerId)
             {
-                AddEntry(new GameLogEntry($"Poisoned enemy cell", GameLogCategory.Lucky, null, playerId));
+                // Create ability-specific key for aggregation
+                string abilityKey = GetAbilityDisplayName(source);
+                IncrementAbilityEffect(abilityKey, "poisoned", GameLogCategory.Lucky);
             }
             else if (oldOwnerId == humanPlayerId)
             {
-                AddEntry(new GameLogEntry($"Your cell was poisoned!", GameLogCategory.Unlucky, null, humanPlayerId));
+                // Player's cell was poisoned - track by ability
+                string abilityKey = GetAbilityDisplayName(source);
+                IncrementPlayerPoisonedEffect(abilityKey);
             }
+        }
+        
+        private void IncrementPlayerPoisonedEffect(string abilityKey)
+        {
+            if (!playerPoisonedCounts.ContainsKey(abilityKey))
+                playerPoisonedCounts[abilityKey] = 0;
+            playerPoisonedCounts[abilityKey]++;
+            
+            // Stop any existing player poisoned coroutine and start a new one
+            if (playerPoisonedCoroutine != null)
+                StopCoroutine(playerPoisonedCoroutine);
+            playerPoisonedCoroutine = StartCoroutine(ShowAggregatedPlayerPoisonedAfterDelay());
+        }
+        
+        private System.Collections.IEnumerator ShowAggregatedPlayerPoisonedAfterDelay()
+        {
+            // Wait a short time to allow multiple poisoning events to aggregate
+            yield return new WaitForSeconds(0.5f);
+            
+            // Calculate total poisoned cells and build breakdown message
+            int totalPoisoned = playerPoisonedCounts.Values.Sum();
+            if (totalPoisoned > 0)
+            {
+                var breakdownParts = playerPoisonedCounts
+                    .Where(kvp => kvp.Value > 0)
+                    .Select(kvp => $"{kvp.Value} by {kvp.Key}")
+                    .ToList();
+                
+                string breakdown = string.Join(", ", breakdownParts);
+                string message = totalPoisoned == 1 
+                    ? $"1 of your cells was poisoned: {breakdown}"
+                    : $"{totalPoisoned} of your cells were poisoned: {breakdown}";
+                
+                AddEntry(new GameLogEntry(message, GameLogCategory.Unlucky, null, humanPlayerId));
+                
+                // Reset the counters
+                playerPoisonedCounts.Clear();
+            }
+            
+            playerPoisonedCoroutine = null;
+        }
+        
+        private string GetAbilityDisplayName(GrowthSource source)
+        {
+            return source switch
+            {
+                GrowthSource.JettingMycelium => "Jetting Mycelium",
+                GrowthSource.CytolyticBurst => "Cytolytic Burst",
+                GrowthSource.SporicidalBloom => "Sporicidal Bloom",
+                GrowthSource.Manual => "Manual toxin placement",
+                _ => source.ToString()
+            };
+        }
+        
+        private void IncrementAbilityEffect(string abilityKey, string effectType, GameLogCategory category)
+        {
+            string eventKey = $"{abilityKey}_{effectType}";
+            
+            if (!currentEventCounts.ContainsKey(eventKey))
+                currentEventCounts[eventKey] = 0;
+            currentEventCounts[eventKey]++;
+            
+            // Stop any existing aggregation coroutine and start a new one
+            if (aggregationCoroutine != null)
+                StopCoroutine(aggregationCoroutine);
+            aggregationCoroutine = StartCoroutine(ShowAggregatedAbilityEffectAfterDelay(abilityKey, effectType, category));
+        }
+        
+        private System.Collections.IEnumerator ShowAggregatedAbilityEffectAfterDelay(string abilityKey, string effectType, GameLogCategory category)
+        {
+            // Wait a short time to allow multiple events to aggregate
+            yield return new WaitForSeconds(0.5f);
+            
+            string eventKey = $"{abilityKey}_{effectType}";
+            
+            // Show the aggregated message
+            if (currentEventCounts.TryGetValue(eventKey, out int count) && count > 0)
+            {
+                string message = effectType switch
+                {
+                    "poisoned" => count == 1 ? $"{abilityKey} poisoned enemy cell" : $"{abilityKey} poisoned {count} enemy cells",
+                    _ => $"{abilityKey}: {effectType} {count}"
+                };
+                
+                AddEntry(new GameLogEntry(message, category, null, humanPlayerId));
+                
+                // Reset the counter for this event
+                currentEventCounts[eventKey] = 0;
+            }
+            
+            aggregationCoroutine = null;
         }
         
         private void AddEntry(GameLogEntry entry)

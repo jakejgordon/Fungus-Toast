@@ -93,6 +93,8 @@ namespace FungusToast.Core.Death
             if (cell == null || !cell.IsAlive)
                 return;
 
+            int oldOwnerId = cell.OwnerPlayerId ?? -1;
+
             // 1. Kill the cell via board, so OnCellDeath fires!
             board.KillFungalCell(cell, reason, owner?.PlayerId, attackerTileId);
 
@@ -109,6 +111,12 @@ namespace FungusToast.Core.Death
 
             // 4. Place the toxin cell on the board
             board.PlaceFungalCell(cell); // will fire toxin events as needed
+            
+            // 5. Fire the CellPoisoned event with ability-specific information
+            if (owner != null)
+            {
+                board.FireCellPoisonedEvent(owner.PlayerId, tileId, oldOwnerId, growthSource);
+            }
         }
     }
 }

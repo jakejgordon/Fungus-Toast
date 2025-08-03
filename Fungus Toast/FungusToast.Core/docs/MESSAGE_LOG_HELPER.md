@@ -86,8 +86,8 @@ gameUIManager.GlobalEventsLogManager?.OnRoundStart(roundNumber);       // Global
 
 2. **High-Impact Personal Events**
    - Free mutation points from special abilities (Mutator Phenotype, Hyperadaptive Drift)
+   - Aggregated attack results: "Poisoned 3 enemy cells", "Jetting Mycelium killed 5 enemy cells"
    - Direct attacks on player cells: "Your cell was poisoned!"
-   - Successful player attacks: "Poisoned enemy cell", "Jetting Mycelium killed 3 enemy cells"
 
 3. **Non-Visual Important Events**
    - Events that significantly affect the player but aren't easily visible on the board
@@ -131,16 +131,40 @@ Both log managers now use a shared `RoundSummaryFormatter` utility class for con
 ```csharp
 // Usage example for global log
 string summary = RoundSummaryFormatter.FormatRoundSummary(
-    roundNumber, cellsGrown, cellsDied, toxinChange,
+    roundNumber, cellsGrown, cellsDied, toxinChange, deadCellChange,
     livingCells, deadCells, toxinCells, occupancyPercent,
     isPlayerSpecific: false);
 
 // Usage example for player log  
 string summary = RoundSummaryFormatter.FormatRoundSummary(
-    roundNumber, cellsGrown, cellsDied, toxinChange,
+    roundNumber, cellsGrown, cellsDied, toxinChange, deadCellChange,
     livingCells, deadCells, toxinCells, 0f,
     isPlayerSpecific: true);
 ```
+
+### **Event Aggregation System**
+
+The player log now aggregates rapid events to prevent spam and provides ability-specific tracking:
+
+**Offensive Actions (Player Attacking):**
+```
+Jetting Mycelium poisoned 3 enemy cells
+Cytolytic Burst poisoned 2 enemy cells
+```
+
+**Defensive Reactions (Player Being Attacked):**
+```
+3 of your cells were poisoned: 2 by Jetting Mycelium, 1 by Cytolytic Burst
+1 of your cells was poisoned: 1 by Sporicidal Bloom
+```
+
+Events are aggregated using a 0.5-second delay window, allowing multiple rapid events to be combined into meaningful messages that show both totals and detailed breakdowns by ability.
+
+#### **Consolidation Benefits:**
+- **Clear Impact**: Shows total damage in one glance  
+- **Strategic Insight**: Reveals which enemy abilities are most threatening
+- **Reduced Spam**: Multiple individual messages become one informative summary
+- **Extensible Pattern**: Foundation for consolidating other event types (infestations, colonizations, etc.)
 
 #### **Round 1 Tracking Fix & Dead Cell Change Fix**
 Both log managers take their initial snapshot during `Initialize()` before any spores are placed, and now properly track changes in dead cell counts:

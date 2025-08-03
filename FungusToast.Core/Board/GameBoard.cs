@@ -43,7 +43,7 @@ namespace FungusToast.Core.Board
         public delegate void CellInfestedEventHandler(int playerId, int tileId, int oldOwnerId);
         public delegate void CellReclaimedEventHandler(int playerId, int tileId);
         public delegate void CellToxifiedEventHandler(int playerId, int tileId);
-        public delegate void CellPoisonedEventHandler(int playerId, int tileId, int oldOwnerId);
+        public delegate void CellPoisonedEventHandler(int playerId, int tileId, int oldOwnerId, GrowthSource source);
         public delegate void CellCatabolizedEventHandler(int playerId, int tileId);
         public delegate void CellDeathEventHandler(int playerId, int tileId, DeathReason reason);
         public delegate void CellSurgeGrowthEventHandler(int playerId, int tileId);
@@ -105,8 +105,8 @@ namespace FungusToast.Core.Board
         protected virtual void OnCellToxified(int playerId, int tileId) =>
             CellToxified?.Invoke(playerId, tileId);
 
-        protected virtual void OnCellPoisoned(int playerId, int tileId, int oldOwnerId) =>
-            CellPoisoned?.Invoke(playerId, tileId, oldOwnerId);
+        protected virtual void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource source) =>
+            CellPoisoned?.Invoke(playerId, tileId, oldOwnerId, source);
 
         protected virtual void OnCellCatabolized(int playerId, int tileId) =>
             CellCatabolized?.Invoke(playerId, tileId);
@@ -787,7 +787,7 @@ namespace FungusToast.Core.Board
             {
                 int oldOwnerId = oldCell.OwnerPlayerId.GetValueOrDefault(-1);
                 // Poisoning: replace toxin with living cell
-                OnCellPoisoned(ownerId, cell.TileId, oldOwnerId);
+                OnCellPoisoned(ownerId, cell.TileId, oldOwnerId, GrowthSource.Manual);
             }
             else if (oldCell.IsDead)
             {
@@ -907,5 +907,12 @@ namespace FungusToast.Core.Board
             OnDeadCellReclaim?.Invoke(cell, playerId);
         }
 
+        /// <summary>
+        /// Public method to fire CellPoisoned event with ability source information.
+        /// </summary>
+        public void FireCellPoisonedEvent(int playerId, int tileId, int oldOwnerId, GrowthSource source = GrowthSource.Manual)
+        {
+            OnCellPoisoned(playerId, tileId, oldOwnerId, source);
+        }
     }
 }
