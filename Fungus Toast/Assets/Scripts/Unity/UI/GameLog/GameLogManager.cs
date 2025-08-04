@@ -895,7 +895,7 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordNecrotoxicConversionReclaim(int playerId, int necrotoxicConversions) { }
         public void RecordCatabolicRebirthResurrection(int playerId, int resurrectedCells) { }
         public void RecordRegenerativeHyphaeReclaim(int playerId) { }
-        public void ReportSporocidalSporeDrop(int playerId, int count) { }
+        public void ReportSporicidalSporeDrop(int playerId, int count) { }
         public void ReportNecrosporeDrop(int playerId, int count) { }
         public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims) { }
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }

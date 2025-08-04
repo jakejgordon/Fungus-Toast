@@ -187,7 +187,7 @@ namespace FungusToast.Core.Phases
                 // Report total spores dropped for this player (once per player per round)
                 if (sporesToDrop > 0)
                 {
-                    observer.ReportSporocidalSporeDrop(player.PlayerId, sporesToDrop);
+                    observer.ReportSporicidalSporeDrop(player.PlayerId, sporesToDrop);
                 }
             }
         }

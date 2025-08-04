@@ -132,10 +132,19 @@ namespace FungusToast.Unity.UI.GameLog
             globalEventsLogManager?.OnGameEnd(winnerName);
         }
         
+        // === KEY EVENT ROUTING ===
+        // Important simulation events that need to reach the appropriate log managers
+        
+        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
+        {
+            if (IsSilentMode) return;
+            // Route cell deaths to the player activity log for decay phase summary tracking
+            playerActivityLogManager?.RecordCellDeath(playerId, reason, deathCount);
+        }
+        
         // === STUB IMPLEMENTATIONS ===
         // All other ISimulationObserver methods that we don't need in Unity
         // Silent mode still applies to prevent any potential future implementations from logging
-        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1) { }
         public void RecordCreepingMoldMove(int playerId) { }
         public void RecordCreepingMoldToxinJump(int playerId) { }
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }
@@ -144,7 +153,7 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordNecrotoxicConversionReclaim(int playerId, int necrotoxicConversions) { }
         public void RecordCatabolicRebirthResurrection(int playerId, int resurrectedCells) { }
         public void RecordRegenerativeHyphaeReclaim(int playerId) { }
-        public void ReportSporocidalSporeDrop(int playerId, int count) { }
+        public void ReportSporicidalSporeDrop(int playerId, int count) { }
         public void ReportNecrosporeDrop(int playerId, int count) { }
         public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims) { }
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }

@@ -23,7 +23,7 @@ namespace FungusToast.Core.Metrics
         void RecordCatabolicRebirthResurrection(int playerId, int resurrectedCells);
         void RecordRegenerativeHyphaeReclaim(int playerId);
 
-        void ReportSporocidalSporeDrop(int playerId, int count);
+        void ReportSporicidalSporeDrop(int playerId, int count);
         void ReportNecrosporeDrop(int playerId, int count);
         void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims);
         void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped);

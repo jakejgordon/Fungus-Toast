@@ -275,7 +275,7 @@ namespace FungusToast.Simulation.Models
         // ────────────────
 
         private readonly Dictionary<int, int> sporocidalSporeDrops = new();
-        public void ReportSporocidalSporeDrop(int playerId, int count)
+        public void ReportSporicidalSporeDrop(int playerId, int count)
         {
             if (!sporocidalSporeDrops.ContainsKey(playerId))
                 sporocidalSporeDrops[playerId] = 0;
