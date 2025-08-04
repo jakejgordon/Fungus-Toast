@@ -104,19 +104,16 @@ namespace FungusToast.Core.Phases
                     currentTileId = targetTileId;
                 }
 
-                // Report results to simulation observer, if available
-                if (observer != null)
-                {
-                    if (infested > 0) observer.ReportHyphalVectoringInfested(player.PlayerId, infested);
-                    if (reclaimed > 0) observer.ReportHyphalVectoringReclaimed(player.PlayerId, reclaimed);
-                    if (catabolicGrowth > 0) observer.ReportHyphalVectoringCatabolicGrowth(player.PlayerId, catabolicGrowth);
-                    if (alreadyOwned > 0) observer.ReportHyphalVectoringAlreadyOwned(player.PlayerId, alreadyOwned);
-                    if (colonized > 0) observer.ReportHyphalVectoringColonized(player.PlayerId, colonized);
-                    if (invalid > 0) observer.ReportHyphalVectoringInvalid(player.PlayerId, invalid);
-                }
+                // Report results to simulation observer
+                if (infested > 0) observer.ReportHyphalVectoringInfested(player.PlayerId, infested);
+                if (reclaimed > 0) observer.ReportHyphalVectoringReclaimed(player.PlayerId, reclaimed);
+                if (catabolicGrowth > 0) observer.ReportHyphalVectoringCatabolicGrowth(player.PlayerId, catabolicGrowth);
+                if (alreadyOwned > 0) observer.ReportHyphalVectoringAlreadyOwned(player.PlayerId, alreadyOwned);
+                if (colonized > 0) observer.ReportHyphalVectoringColonized(player.PlayerId, colonized);
+                if (invalid > 0) observer.ReportHyphalVectoringInvalid(player.PlayerId, invalid);
 
                 if (placed > 0)
-                    observer?.RecordHyphalVectoringGrowth(player.PlayerId, placed);
+                    observer.RecordHyphalVectoringGrowth(player.PlayerId, placed);
             }
         }
 
@@ -165,7 +162,7 @@ namespace FungusToast.Core.Phases
                 // Track the effect for simulation
                 if (cellsToFortify > 0)
                 {
-                    observer?.RecordChitinFortificationCellsFortified(player.PlayerId, cellsToFortify);
+                    observer.RecordChitinFortificationCellsFortified(player.PlayerId, cellsToFortify);
                 }
             }
         }
@@ -226,6 +223,9 @@ namespace FungusToast.Core.Phases
                     var sourceResistantCell = targetResistantCells[rng.Next(targetResistantCells.Count)];
                     var sourceTile = board.GetTileById(sourceResistantCell.TileId);
 
+                    if(sourceTile == null)
+                        continue; // No valid tile for the source cell
+
                     // Find adjacent tiles and categorize them by priority
                     var adjacentTiles = board.GetOrthogonalNeighbors(sourceTile.TileId);
                     
@@ -249,25 +249,21 @@ namespace FungusToast.Core.Phases
                         .ToList();
 
                     BoardTile? selectedTile = null;
-                    bool isInfestation = false;
 
                     // Try to infest an enemy cell first (priority)
                     if (infestationTargets.Count > 0)
                     {
                         selectedTile = infestationTargets[rng.Next(infestationTargets.Count)];
-                        isInfestation = true;
                     }
                     // Fall back to empty tiles
                     else if (colonizationTargets.Count > 0)
                     {
                         selectedTile = colonizationTargets[rng.Next(colonizationTargets.Count)];
-                        isInfestation = false;
                     }
                     // Fall back to dead cells
                     else if (reclamationTargets.Count > 0)
                     {
                         selectedTile = reclamationTargets[rng.Next(reclamationTargets.Count)];
-                        isInfestation = false;
                     }
 
                     if (selectedTile == null)
@@ -316,9 +312,9 @@ namespace FungusToast.Core.Phases
 
                 // Record the aggregated effects for this player
                 if (totalInfestations > 0)
-                    observer?.RecordMimeticResilienceInfestations(player.PlayerId, totalInfestations);
+                    observer.RecordMimeticResilienceInfestations(player.PlayerId, totalInfestations);
                 if (totalDrops > 0)
-                    observer?.RecordMimeticResilienceDrops(player.PlayerId, totalDrops);
+                    observer.RecordMimeticResilienceDrops(player.PlayerId, totalDrops);
             }
         }
 

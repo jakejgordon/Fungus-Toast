@@ -25,7 +25,7 @@ namespace FungusToast.Core.Death
         /// <param name="players">List of all players (in play order).</param>
         /// <param name="failedGrowthsByPlayerId">Dictionary of failed growth attempts by player ID.</param>
         /// <param name="rng">Random number generator (pass in for thread safety & testability).</param>
-        /// <param name="simulationObserver">Optional observer for analytics/UI updates.</param>
+        /// <param name="simulationObserver">Observer for analytics/UI updates.</param>
         /// <param name="tracking">Optional tracking context for simulation.</param>
         public static void ExecuteDeathCycle(
             GameBoard board,
@@ -117,7 +117,7 @@ namespace FungusToast.Core.Death
                     }
 
                     // Putrefactive Mycotoxin: attribute in observer if needed
-                    if (deathResult.Reason == DeathReason.PutrefactiveMycotoxin && simulationObserver != null)
+                    if (deathResult.Reason == DeathReason.PutrefactiveMycotoxin)
                     {
                         AttributePutrefactiveMycotoxinKill(cell, board, players, simulationObserver);
                     }

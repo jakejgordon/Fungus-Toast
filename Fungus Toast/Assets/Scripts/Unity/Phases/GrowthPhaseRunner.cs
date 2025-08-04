@@ -29,7 +29,7 @@ namespace FungusToast.Unity.Phases
         {
             this.board = board;
             this.gridVisualizer = gridVisualizer;
-            this.processor = new GrowthPhaseProcessor(board, players, rng);
+            this.processor = new GrowthPhaseProcessor(board, players, rng, GameManager.Instance.GameUI.GameLogRouter);
             isRunning = false;
         }
 

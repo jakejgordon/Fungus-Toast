@@ -46,7 +46,7 @@ namespace FungusToast.Simulation.GameSimulation
                 if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(board.CurrentRound))
                 {
                     mycovariantPoolManager.InitializePool(allMycovariants, rng);
-                    MycovariantDraftManager.RunDraft(players, mycovariantPoolManager, board, rng, observer: context);
+                    MycovariantDraftManager.RunDraft(players, mycovariantPoolManager, board, rng, simTracking);
                 }
 
                 if (!isCountdownActive && board.ShouldTriggerEndgame())

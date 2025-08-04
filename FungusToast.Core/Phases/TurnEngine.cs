@@ -23,7 +23,7 @@ namespace FungusToast.Core.Phases
 
             foreach (var player in players)
             {
-                player.AssignMutationPoints(players, rng, board, allMutations, simulationObserver);
+                player.AssignMutationPoints(players, rng, board, simulationObserver, allMutations);
                 player.MutationStrategy?.SpendMutationPoints(player, allMutations, board, rng, simulationObserver);
             }
         }
@@ -56,7 +56,7 @@ namespace FungusToast.Core.Phases
             List<Player> players,
             Dictionary<int, int> failedGrowthsByPlayerId,
             Random rng,
-            ISimulationObserver? simulationObserver = null)
+            ISimulationObserver simulationObserver)
         {
             DeathEngine.ExecuteDeathCycle(board, failedGrowthsByPlayerId, rng, simulationObserver);
         }

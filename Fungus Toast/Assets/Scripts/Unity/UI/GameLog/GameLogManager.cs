@@ -23,6 +23,13 @@ namespace FungusToast.Unity.UI.GameLog
         private Dictionary<string, int> currentEventCounts = new Dictionary<string, int>();
         private Coroutine aggregationCoroutine;
         
+        // Growth cycle consolidation tracking
+        private Dictionary<string, int> growthCycleColonizationCounts = new Dictionary<string, int>();
+        private Dictionary<string, int> growthCycleInfestationCounts = new Dictionary<string, int>();
+        private Dictionary<string, int> growthCycleReclamationCounts = new Dictionary<string, int>();
+        private Dictionary<string, int> growthCycleToxificationCounts = new Dictionary<string, int>();
+        private bool isTrackingGrowthCycle = false;
+        
         // Track poisoning attacks against the player by ability
         private Dictionary<string, int> playerPoisonedCounts = new Dictionary<string, int>();
         private Coroutine playerPoisonedCoroutine;
@@ -84,7 +91,9 @@ namespace FungusToast.Unity.UI.GameLog
             board.CellReclaimed += OnCellReclaimed;
             board.CellToxified += OnCellToxified;
             
-            // Don't add initial game start message here - that's for the global log
+            // Subscribe to growth cycle events for consolidation
+            board.PreGrowthCycle += OnPreGrowthCycle;
+            board.PostGrowthPhase += OnPostGrowthPhase;
         }
         
         private void OnDestroy()
@@ -96,6 +105,8 @@ namespace FungusToast.Unity.UI.GameLog
                 board.CellInfested -= OnCellInfested;
                 board.CellReclaimed -= OnCellReclaimed;
                 board.CellToxified -= OnCellToxified;
+                board.PreGrowthCycle -= OnPreGrowthCycle;
+                board.PostGrowthPhase -= OnPostGrowthPhase;
             }
             
             // Clean up any running aggregation coroutines
@@ -152,6 +163,10 @@ namespace FungusToast.Unity.UI.GameLog
             playerColonizedCounts.Clear();
             playerReclaimedCounts.Clear();
             playerToxifiedCounts.Clear();
+            growthCycleColonizationCounts.Clear();
+            growthCycleInfestationCounts.Clear();
+            growthCycleReclamationCounts.Clear();
+            growthCycleToxificationCounts.Clear();
             
             // Don't add round start messages here - that's for the global log
         }
@@ -213,9 +228,18 @@ namespace FungusToast.Unity.UI.GameLog
                 // Player colonized a tile - track for offensive aggregation
                 string abilityKey = GetAbilityDisplayName(source);
                 
-
-                
-                IncrementAbilityEffect(abilityKey, "colonized", GameLogCategory.Lucky);
+                // During growth cycles, track for consolidation instead of immediate aggregation
+                if (isTrackingGrowthCycle)
+                {
+                    if (!growthCycleColonizationCounts.ContainsKey(abilityKey))
+                        growthCycleColonizationCounts[abilityKey] = 0;
+                    growthCycleColonizationCounts[abilityKey]++;
+                }
+                else
+                {
+                    // Outside of growth cycles, use normal aggregation
+                    IncrementAbilityEffect(abilityKey, "colonized", GameLogCategory.Lucky);
+                }
             }
             // Note: There's no "enemy colonized our tiles" since colonization is only into empty tiles
         }
@@ -226,7 +250,19 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 // Player infested enemy cells - track for offensive aggregation
                 string abilityKey = GetAbilityDisplayName(source);
-                IncrementAbilityEffect(abilityKey, "infested", GameLogCategory.Lucky);
+                
+                // During growth cycles, track for consolidation instead of immediate aggregation
+                if (isTrackingGrowthCycle)
+                {
+                    if (!growthCycleInfestationCounts.ContainsKey(abilityKey))
+                        growthCycleInfestationCounts[abilityKey] = 0;
+                    growthCycleInfestationCounts[abilityKey]++;
+                }
+                else
+                {
+                    // Outside of growth cycles, use normal aggregation
+                    IncrementAbilityEffect(abilityKey, "infested", GameLogCategory.Lucky);
+                }
             }
             else if (oldOwnerId == humanPlayerId)
             {
@@ -242,7 +278,19 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 // Player reclaimed their own dead cells - track for offensive aggregation
                 string abilityKey = GetAbilityDisplayName(source);
-                IncrementAbilityEffect(abilityKey, "reclaimed", GameLogCategory.Lucky);
+                
+                // During growth cycles, track for consolidation instead of immediate aggregation
+                if (isTrackingGrowthCycle)
+                {
+                    if (!growthCycleReclamationCounts.ContainsKey(abilityKey))
+                        growthCycleReclamationCounts[abilityKey] = 0;
+                    growthCycleReclamationCounts[abilityKey]++;
+                }
+                else
+                {
+                    // Outside of growth cycles, use normal aggregation
+                    IncrementAbilityEffect(abilityKey, "reclaimed", GameLogCategory.Lucky);
+                }
             }
             // Note: There's no "enemy reclaimed our dead cells" since reclamation is only for your own cells
         }
@@ -253,9 +301,113 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 // Player toxified empty/dead tiles - track for offensive aggregation
                 string abilityKey = GetAbilityDisplayName(source);
-                IncrementAbilityEffect(abilityKey, "toxified", GameLogCategory.Lucky);
+                
+                // During growth cycles, track for consolidation instead of immediate aggregation
+                if (isTrackingGrowthCycle)
+                {
+                    if (!growthCycleToxificationCounts.ContainsKey(abilityKey))
+                        growthCycleToxificationCounts[abilityKey] = 0;
+                    growthCycleToxificationCounts[abilityKey]++;
+                }
+                else
+                {
+                    // Outside of growth cycles, use normal aggregation
+                    IncrementAbilityEffect(abilityKey, "toxified", GameLogCategory.Lucky);
+                }
             }
             // Note: There's no "enemy toxified our tiles" since toxification only affects empty/dead tiles
+        }
+        
+        private void OnPreGrowthCycle()
+        {
+            // If we were already tracking, show the previous cycle's results
+            if (isTrackingGrowthCycle)
+            {
+                ShowConsolidatedGrowthCycleSummary();
+            }
+            
+            // Start tracking growth cycle events for this growth cycle
+            isTrackingGrowthCycle = true;
+            growthCycleColonizationCounts.Clear();
+            growthCycleInfestationCounts.Clear();
+            growthCycleReclamationCounts.Clear();
+            growthCycleToxificationCounts.Clear();
+        }
+        
+        private void OnPostGrowthPhase()
+        {
+            // Show final cycle's consolidated growth cycle summary after growth phase completes
+            if (isTrackingGrowthCycle)
+            {
+                ShowConsolidatedGrowthCycleSummary();
+                growthCycleColonizationCounts.Clear();
+                growthCycleInfestationCounts.Clear();
+                growthCycleReclamationCounts.Clear();
+                growthCycleToxificationCounts.Clear();
+            }
+            isTrackingGrowthCycle = false;
+        }
+        
+        private void ShowConsolidatedGrowthCycleSummary()
+        {
+            var allActivities = new List<(string action, Dictionary<string, int> counts)>
+            {
+                ("Colonized", growthCycleColonizationCounts),
+                ("Killed", growthCycleInfestationCounts),
+                ("Reclaimed", growthCycleReclamationCounts),
+                ("Toxified", growthCycleToxificationCounts)
+            };
+
+            var summaries = new List<string>();
+
+            foreach (var (action, counts) in allActivities)
+            {
+                var total = counts.Values.Sum();
+                if (total == 0) continue;
+
+                var breakdownParts = counts
+                    .Where(kvp => kvp.Value > 0)
+                    .OrderByDescending(kvp => kvp.Value)
+                    .Select(kvp => $"{kvp.Value} from {kvp.Key}")
+                    .ToList();
+
+                string breakdown = string.Join(", ", breakdownParts);
+                string activity = total == 1
+                    ? $"{action.ToLower()} 1 {GetTargetType(action)}: {breakdown}"
+                    : $"{action.ToLower()} {total} {GetTargetTypePlural(action)}: {breakdown}";
+
+                summaries.Add(activity);
+            }
+
+            if (summaries.Count > 0)
+            {
+                string message = $"Growth Cycle #{board.CurrentGrowthCycle} - {string.Join(", ", summaries)}";
+                AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
+            }
+        }
+
+        private string GetTargetType(string action)
+        {
+            return action switch
+            {
+                "Colonized" => "cell",
+                "Killed" => "enemy cell",
+                "Reclaimed" => "dead cell",
+                "Toxified" => "tile",
+                _ => "target"
+            };
+        }
+
+        private string GetTargetTypePlural(string action)
+        {
+            return action switch
+            {
+                "Colonized" => "cells",
+                "Killed" => "enemy cells",
+                "Reclaimed" => "dead cells",
+                "Toxified" => "tiles",
+                _ => "targets"
+            };
         }
         
         private void IncrementPlayerPoisonedEffect(string abilityKey)

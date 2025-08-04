@@ -49,7 +49,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             sourceCell.TileId,
                             direction,
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                            null
+                            GameManager.Instance.GameUI.GameLogRouter
                         );
                         
                         FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] AI Jetting Mycelium effect completed for player {player.PlayerId}");
@@ -88,7 +88,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             cell.TileId,
                             direction,
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                            null
+                            GameManager.Instance.GameUI.GameLogRouter
                         );
                         gridVisualizer.ClearHighlights();
                         onComplete?.Invoke();
@@ -152,7 +152,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         playerMyco,
                         GameManager.Instance.Board,
                         new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                        null
+                        GameManager.Instance.GameUI.GameLogRouter
                     );
                     
                     FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] AI Mycelial Bastion effect completed for player {player.PlayerId}");
@@ -195,7 +195,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                                 GameManager.Instance.Board,
                                 player.PlayerId,
                                 cell.TileId,
-                                null
+                                GameManager.Instance.GameUI.GameLogRouter
                             );
                             
                             playerMyco?.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);
@@ -239,7 +239,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         playerMyco,
                         GameManager.Instance.Board,
                         new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                        null
+                        GameManager.Instance.GameUI.GameLogRouter
                     );
                 }
                 
@@ -285,7 +285,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             GameManager.Instance.Board,
                             player.PlayerId,
                             tile.TileId,
-                            null
+                            GameManager.Instance.GameUI.GameLogRouter
                         );
                         GameManager.Instance.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
@@ -338,7 +338,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         GameManager.Instance.Board,
                         maxSporesAllowed,
                         new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                        null
+                        GameManager.Instance.GameUI.GameLogRouter
                     );
                 }
                 
@@ -376,7 +376,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                                 playerMyco,
                                 GameManager.Instance.Board,
                                 tile.TileId,
-                                null
+                                GameManager.Instance.GameUI.GameLogRouter
                             );
                         }
                         gridVisualizer.RenderBoard(GameManager.Instance.Board);
@@ -427,7 +427,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             GameManager.Instance.Board,
                             bestToxin.Value.tileId,
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                            null
+                            GameManager.Instance.GameUI.GameLogRouter
                         );
                     }
                 }
@@ -487,7 +487,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                                 GameManager.Instance.Board,
                                 tile.TileId,
                                 new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                                null
+                                GameManager.Instance.GameUI.GameLogRouter
                             );
                         }
 

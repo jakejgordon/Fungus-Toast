@@ -270,7 +270,7 @@ namespace FungusToast.Unity
             decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
             gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f);
             phaseProgressTracker?.HighlightDecayPhase();
-            decayPhaseRunner.StartDecayPhase(growthPhaseRunner.FailedGrowthsByPlayerId, rng);
+            decayPhaseRunner.StartDecayPhase(growthPhaseRunner.FailedGrowthsByPlayerId, rng, gameUIManager.GameLogRouter);
         }
 
         public void OnRoundComplete()
@@ -785,7 +785,7 @@ namespace FungusToast.Unity
 
         private IEnumerator RunSilentGrowthPhase()
         {
-            var processor = new GrowthPhaseProcessor(Board, Board.Players, rng);
+            var processor = new GrowthPhaseProcessor(Board, Board.Players, rng, gameUIManager.GameLogRouter);
 
             for (int cycle = 1; cycle <= GameBalance.TotalGrowthCycles; cycle++)
             {
@@ -803,7 +803,7 @@ namespace FungusToast.Unity
         {
             // Use empty failed growths since we're not tracking them in silent mode
             var emptyFailedGrowths = new Dictionary<int, int>();
-            DeathEngine.ExecuteDeathCycle(Board, emptyFailedGrowths, rng, null);
+            DeathEngine.ExecuteDeathCycle(Board, emptyFailedGrowths, rng, gameUIManager.GameLogRouter);
             yield return null; // One frame delay
         }
 

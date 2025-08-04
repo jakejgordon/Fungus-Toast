@@ -32,7 +32,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     [SerializeField] private float manualRadius = 128f; // Manual override if auto-detection fails
 
     [Header("Debug")]
-    public bool enableDebugLogs = true; // Enable debugging by default
+    public bool enableDebugLogs = false; // Disable debugging by default
 
     // Static flag to indicate if the game has started
     public static bool gameStarted = false;

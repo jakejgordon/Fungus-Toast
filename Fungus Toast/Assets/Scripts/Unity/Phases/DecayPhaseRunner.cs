@@ -26,7 +26,7 @@ namespace FungusToast.Unity.Phases
         public void StartDecayPhase(
             Dictionary<int, int> failedGrowthsByPlayerId,
             System.Random rng,
-            ISimulationObserver simulationObserver = null)
+            ISimulationObserver simulationObserver)
         {
             StartCoroutine(RunDecayPhase(
                 failedGrowthsByPlayerId,
@@ -39,7 +39,7 @@ namespace FungusToast.Unity.Phases
         private IEnumerator RunDecayPhase(
             Dictionary<int, int> failedGrowthsByPlayerId,
             System.Random rng,
-            ISimulationObserver simulationObserver = null)
+            ISimulationObserver simulationObserver)
         {
             Debug.Log("💀 Decay Phase Starting...");
 

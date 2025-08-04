@@ -9,6 +9,7 @@ using UnityEngine.Tilemaps;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI.MutationTree;
 using System.Linq;
+using FungusToast.Core.Metrics;
 
 namespace FungusToast.Unity.UI.MutationTree
 {
@@ -187,7 +188,11 @@ namespace FungusToast.Unity.UI.MutationTree
         public bool TryUpgradeMutation(Mutation mutation)
         {
             int currentRound = GameManager.Instance.Board.CurrentRound;
-            if (humanPlayer.TryUpgradeMutation(mutation, null, currentRound))
+            
+            // Get the observer through GameManager's GameUI.GameLogRouter
+            var observer = GameManager.Instance.GameUI.GameLogRouter;
+            
+            if (humanPlayer.TryUpgradeMutation(mutation, observer, currentRound))
             {
                 RefreshSpendPointsButtonUI();
                 GameManager.Instance.GameUI.MoldProfilePanel.Refresh();

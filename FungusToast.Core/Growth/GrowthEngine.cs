@@ -180,11 +180,16 @@ namespace FungusToast.Core.Growth
 
             var (edgeMultiplier, baseChance) = GetPerimeterProliferatorContext(board, owner, sourceTileId, target);
 
+            // Determine the correct growth source based on the target type
+            GrowthSource growthSource = target.DiagonalDirection.HasValue 
+                ? GrowthSource.TendrilOutgrowth 
+                : GrowthSource.HyphalOutgrowth;
+
             if (target.SurgeBonus > 0f && target.DiagonalDirection == null)
             {
                 if (roll < target.Chance)
                 {
-                    if (board.TryGrowFungalCell(owner.PlayerId, sourceTileId, target.Tile.TileId, out var failReason))
+                    if (TryGrowWithCorrectSource(board, owner.PlayerId, sourceTileId, target.Tile.TileId, growthSource))
                     {
                         MaybeRecordPerimeterProliferatorGrowth(observer, owner.PlayerId, edgeMultiplier, roll, baseChance, target.Chance);
                         observer.RecordStandardGrowth(owner.PlayerId);
@@ -193,7 +198,8 @@ namespace FungusToast.Core.Growth
                 }
                 else if (roll < target.Chance + target.SurgeBonus)
                 {
-                    if (board.TryGrowFungalCell(owner.PlayerId, sourceTileId, target.Tile.TileId, out var failReason))
+                    // Surge growth always uses HyphalSurge source
+                    if (TryGrowWithCorrectSource(board, owner.PlayerId, sourceTileId, target.Tile.TileId, GrowthSource.HyphalSurge))
                     {
                         observer.RecordHyphalSurgeGrowth(owner.PlayerId);
                         return true;
@@ -204,7 +210,7 @@ namespace FungusToast.Core.Growth
             {
                 if (roll < target.Chance)
                 {
-                    if (board.TryGrowFungalCell(owner.PlayerId, sourceTileId, target.Tile.TileId, out var failReason))
+                    if (TryGrowWithCorrectSource(board, owner.PlayerId, sourceTileId, target.Tile.TileId, growthSource))
                     {
                         MaybeRecordPerimeterProliferatorGrowth(observer, owner.PlayerId, edgeMultiplier, roll, baseChance, target.Chance);
                         if (target.DiagonalDirection.HasValue)
@@ -215,6 +221,40 @@ namespace FungusToast.Core.Growth
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Helper method to grow a cell with the correct GrowthSource, creating the cell manually
+        /// to ensure the source is set correctly before PlaceFungalCell is called.
+        /// </summary>
+        private static bool TryGrowWithCorrectSource(GameBoard board, int playerId, int sourceTileId, int targetTileId, GrowthSource growthSource)
+        {
+            var targetTile = board.GetTileById(targetTileId);
+            if (targetTile == null || targetTile.IsOccupied || targetTile.IsResistant)
+                return false;
+
+            // Create the cell with the correct growth source
+            var newCell = new FungalCell(playerId, targetTileId, growthSource);
+            
+            // Place the cell manually to ensure the source is preserved
+            targetTile.PlaceFungalCell(newCell);
+            board.PlaceFungalCell(newCell);
+            
+            return true;
+        }
+
+        private static void MaybeRecordPerimeterProliferatorGrowth(
+            ISimulationObserver observer,
+            int playerId,
+            float edgeMultiplier,
+            double roll,
+            float baseChance,
+            float targetChance)
+        {
+            if (edgeMultiplier > 1f && roll >= baseChance && roll < targetChance)
+            {
+                observer.RecordPerimeterProliferatorGrowth(playerId);
+            }
         }
 
         // Returns (edgeMultiplier, baseChance)
@@ -242,20 +282,6 @@ namespace FungusToast.Core.Growth
                 baseChance = target.Chance / edgeMultiplier;
             }
             return (edgeMultiplier, baseChance);
-        }
-
-        private static void MaybeRecordPerimeterProliferatorGrowth(
-            ISimulationObserver observer,
-            int playerId,
-            float edgeMultiplier,
-            double roll,
-            float baseChance,
-            float targetChance)
-        {
-            if (edgeMultiplier > 1f && roll >= baseChance && roll < targetChance)
-            {
-                observer?.RecordPerimeterProliferatorGrowth(playerId);
-            }
         }
 
         private static bool AttemptCreepingMold(

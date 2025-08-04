@@ -218,7 +218,7 @@ namespace FungusToast.Core.Players
                     }
                 }
 
-                simulationObserver?.RecordMutationPointsSpent(PlayerId, mutation.Tier, activationCost);
+                simulationObserver.RecordMutationPointsSpent(PlayerId, mutation.Tier, activationCost);
                 return true;
             }
             else
@@ -247,7 +247,7 @@ namespace FungusToast.Core.Players
                         }
                     }
 
-                    simulationObserver?.RecordMutationPointsSpent(PlayerId, mutation.Tier, mutation.PointsPerUpgrade);
+                    simulationObserver.RecordMutationPointsSpent(PlayerId, mutation.Tier, mutation.PointsPerUpgrade);
                     return true;
                 }
                 return false;
@@ -394,8 +394,8 @@ namespace FungusToast.Core.Players
         public int AssignMutationPoints(List<Player> allPlayers,
                                         System.Random rng,
                                         GameBoard board,
-                                        IEnumerable<Mutation>? allMutations = null,
-                                        ISimulationObserver simulationObserver = null)
+                                        ISimulationObserver simulationObserver,
+                                        IEnumerable<Mutation>? allMutations = null)
         {
             int baseIncome = GetMutationPointIncome();
             int bonus = GetBonusMutationPoints();

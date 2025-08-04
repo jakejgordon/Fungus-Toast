@@ -13,13 +13,13 @@ namespace FungusToast.Core.Phases
         private readonly GameBoard board;
         private readonly List<Player> players;
         private readonly Random rng;
-        private readonly ISimulationObserver? observer;
+        private readonly ISimulationObserver observer;
 
         public GrowthPhaseProcessor(
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver observer)
         {
             this.board = board;
             this.players = players;

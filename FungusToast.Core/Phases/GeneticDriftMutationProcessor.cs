@@ -197,7 +197,7 @@ namespace FungusToast.Core.Phases
 
             if (toxinsMetabolized > 0)
             {
-                observer?.RecordToxinCatabolism(player.PlayerId, toxinsMetabolized, pointsSoFar);
+                observer.RecordToxinCatabolism(player.PlayerId, toxinsMetabolized, pointsSoFar);
             }
 
             return toxinsMetabolized;
@@ -248,7 +248,7 @@ namespace FungusToast.Core.Phases
 
             if (reclaims > 0)
             {
-                observer?.ReportNecrophyticBloomSporeDrop(player.PlayerId, totalSpores, reclaims);
+                observer.ReportNecrophyticBloomSporeDrop(player.PlayerId, totalSpores, reclaims);
             }
         }
 
@@ -281,7 +281,7 @@ namespace FungusToast.Core.Phases
                 if (success) reclaims++;
             }
 
-            observer?.ReportNecrophyticBloomSporeDrop(owner.PlayerId, spores, reclaims);
+            observer.ReportNecrophyticBloomSporeDrop(owner.PlayerId, spores, reclaims);
         }
 
         /// <summary>

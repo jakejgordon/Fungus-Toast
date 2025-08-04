@@ -66,7 +66,7 @@ namespace FungusToast.Core.Phases
                                                 .Count(n => !n.IsOccupied);
                         if (targetOpen >= sourceOpen && targetOpen >= 2) {
                             CreateCreepingMoldCell(player, sourceCell, sourceTile, jumpTile, board);
-                            observer?.RecordCreepingMoldToxinJump(player.PlayerId);
+                            observer.RecordCreepingMoldToxinJump(player.PlayerId);
                             return true;
                         }
                     }
