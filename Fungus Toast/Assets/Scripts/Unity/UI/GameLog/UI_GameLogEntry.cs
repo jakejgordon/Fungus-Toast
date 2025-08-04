@@ -40,11 +40,20 @@ namespace FungusToast.Unity.UI.GameLog
         
         public void FadeIn()
         {
-            // Simple fade-in animation using Unity's built-in CanvasGroup
+            // Get or create canvas group once
             var canvasGroup = GetComponent<CanvasGroup>();
             if (canvasGroup == null)
                 canvasGroup = gameObject.AddComponent<CanvasGroup>();
-                
+            
+            // Don't try to start coroutines on inactive GameObjects
+            if (!gameObject.activeInHierarchy)
+            {
+                // If we're not active, just set alpha to 1 immediately for when we become active later
+                canvasGroup.alpha = 1f;
+                return;
+            }
+            
+            // Simple fade-in animation using Unity's built-in CanvasGroup
             canvasGroup.alpha = 0f;
             
             // Simple coroutine-based fade instead of LeanTween
