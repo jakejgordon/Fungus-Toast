@@ -712,6 +712,14 @@ namespace FungusToast.Core.AI
             return false;
         }
 
+        private bool IsTendril(Mutation m)
+        {
+            return m.Id == MutationIds.TendrilNorthwest
+                || m.Id == MutationIds.TendrilNortheast
+                || m.Id == MutationIds.TendrilSouthwest
+                || m.Id == MutationIds.TendrilSoutheast;
+        }
+
         private bool TryUpgradeWithTendrilAwareness(
             Player player,
             Mutation candidate,
@@ -728,24 +736,6 @@ namespace FungusToast.Core.AI
             }
 
             return player.TryUpgradeMutation(candidate, simulationObserver, board.CurrentRound);
-        }
-
-        private bool IsTendril(Mutation m)
-        {
-            return m.Id == MutationIds.TendrilNorthwest
-                || m.Id == MutationIds.TendrilNortheast
-                || m.Id == MutationIds.TendrilSouthwest
-                || m.Id == MutationIds.TendrilSoutheast;
-        }
-
-        private Mutation? PickBestTendrilMutation(Player player, List<Mutation> tendrilCandidates, GameBoard board)
-        {
-            if (tendrilCandidates.Count == 0)
-                return null;
-
-            // Simple heuristic: pick the tendril with the best growth opportunities
-            // This is a placeholder - could be improved with actual board analysis
-            return tendrilCandidates.FirstOrDefault();
         }
 
         private List<MutationCategory> GetCategories()
