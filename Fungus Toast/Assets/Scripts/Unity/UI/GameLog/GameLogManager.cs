@@ -47,6 +47,10 @@ namespace FungusToast.Unity.UI.GameLog
         private Dictionary<string, int> playerToxifiedCounts = new Dictionary<string, int>();
         private Coroutine playerToxifiedCoroutine;
         
+        // Track decay phase deaths by reason for summary
+        private Dictionary<DeathReason, int> decayPhaseDeaths = new Dictionary<DeathReason, int>();
+        private bool isTrackingDecayPhase = false;
+        
         public event Action<GameLogEntry> OnNewLogEntry;
         
         private GameBoard board;
@@ -185,11 +189,22 @@ namespace FungusToast.Unity.UI.GameLog
             growthCycleReclamationCounts.Clear();
             growthCycleToxificationCounts.Clear();
             
+            // Start tracking decay phase deaths for this round
+            decayPhaseDeaths.Clear();
+            isTrackingDecayPhase = true;
+            
             // Don't add round start messages here - that's for the global log
         }
         
         public void OnRoundComplete(int roundNumber)
         {
+            // Show decay phase summary if we were tracking deaths (do this first, before round summary)
+            if (isTrackingDecayPhase)
+            {
+                ShowDecayPhaseSummary();
+                isTrackingDecayPhase = false;
+            }
+            
             // Take snapshot at end of round and calculate deltas for the human player
             var roundEndSnapshot = TakePlayerSnapshot(board, humanPlayerId);
             
@@ -220,6 +235,56 @@ namespace FungusToast.Unity.UI.GameLog
         {
             // Don't add phase start messages here - that's for the global log
             // Only add player-specific phase messages if needed
+        }
+        
+        private void ShowDecayPhaseSummary()
+        {
+            if (IsSilentMode) return;
+            
+            // Only show summary if at least one cell died
+            int totalDeaths = decayPhaseDeaths.Values.Sum();
+            if (totalDeaths == 0) return;
+            
+            var deathReasonParts = new List<string>();
+            
+            // Sort death reasons by count (descending) for consistent ordering
+            var sortedDeaths = decayPhaseDeaths
+                .Where(kvp => kvp.Value > 0)
+                .OrderByDescending(kvp => kvp.Value)
+                .ThenBy(kvp => kvp.Key.ToString()); // Secondary sort by name for consistency
+            
+            foreach (var kvp in sortedDeaths)
+            {
+                string reasonName = GetDeathReasonDisplayName(kvp.Key);
+                string part = kvp.Value == 1 
+                    ? $"1 cell killed by {reasonName}"
+                    : $"{kvp.Value} cells killed by {reasonName}";
+                deathReasonParts.Add(part);
+            }
+            
+            string message = $"Decay Summary: {string.Join(", ", deathReasonParts)}";
+            AddEntry(new GameLogEntry(message, GameLogCategory.Unlucky, null, humanPlayerId));
+        }
+        
+        private string GetDeathReasonDisplayName(DeathReason reason)
+        {
+            return reason switch
+            {
+                DeathReason.Age => "Old Age",
+                DeathReason.Randomness => "Randomness",
+                DeathReason.PutrefactiveMycotoxin => "Putrefactive Mycotoxin",
+                DeathReason.SporicidalBloom => "Sporicidal Bloom",
+                DeathReason.MycotoxinPotentiation => "Mycotoxin Potentiation",
+                DeathReason.HyphalVectoring => "Hyphal Vectoring",
+                DeathReason.JettingMycelium => "Jetting Mycelium",
+                DeathReason.Infested => "Infestation",
+                DeathReason.Poisoned => "Poisoning",
+                DeathReason.PutrefactiveCascade => "Putrefactive Cascade",
+                DeathReason.PutrefactiveCascadePoison => "Putrefactive Cascade Poison",
+                DeathReason.CytolyticBurst => "Cytolytic Burst",
+                DeathReason.Unknown => "Unknown Cause",
+                _ => reason.ToString()
+            };
         }
         
         private void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource source)
@@ -779,8 +844,13 @@ namespace FungusToast.Unity.UI.GameLog
         
         public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
         {
-            // Death tracking is now handled by snapshots in OnRoundComplete
-            // This method is kept for ISimulationObserver interface compatibility
+            // Only track player deaths during decay phase for summary
+            if (isTrackingDecayPhase && playerId == humanPlayerId)
+            {
+                if (!decayPhaseDeaths.ContainsKey(reason))
+                    decayPhaseDeaths[reason] = 0;
+                decayPhaseDeaths[reason] += deathCount;
+            }
         }
         
         // Stub implementations for other ISimulationObserver methods that we don't need detailed logging for

@@ -173,7 +173,7 @@ namespace FungusToast.Core.Phases
                     if (cell != null && cell.IsAlive)
                     {
                         // Enemy cell: kill and toxify (use helper)
-                        ToxinHelper.KillAndToxify(board, target.TileId, toxinLifespan, DeathReason.SporocidalBloom, GrowthSource.SporicidalBloom, player);
+                        ToxinHelper.KillAndToxify(board, target.TileId, toxinLifespan, DeathReason.SporicidalBloom, GrowthSource.SporicidalBloom, player);
                         kills++;
                     }
                     else
@@ -204,7 +204,7 @@ namespace FungusToast.Core.Phases
         {
             // Only applies to toxin-based deaths (including cascade deaths)
             if (eventArgs.Reason != DeathReason.PutrefactiveMycotoxin &&
-                eventArgs.Reason != DeathReason.SporocidalBloom &&
+                eventArgs.Reason != DeathReason.SporicidalBloom &&
                 eventArgs.Reason != DeathReason.MycotoxinPotentiation &&
                 eventArgs.Reason != DeathReason.PutrefactiveCascade &&
                 eventArgs.Reason != DeathReason.PutrefactiveCascadePoison)

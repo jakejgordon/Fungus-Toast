@@ -7,7 +7,7 @@ namespace FungusToast.Core.Death
         Age,
         Randomness,
         PutrefactiveMycotoxin,
-        SporocidalBloom,
+        SporicidalBloom,
         Unknown,
         MycotoxinPotentiation,
         HyphalVectoring,

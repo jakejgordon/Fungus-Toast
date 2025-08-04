@@ -561,7 +561,7 @@ namespace FungusToast.Unity.UI
                 DeathReason.Age => "Old Age",
                 DeathReason.Randomness => "Random Death",
                 DeathReason.PutrefactiveMycotoxin => "Putrefactive Mycotoxin",
-                DeathReason.SporocidalBloom => "Sporicidal Bloom",
+                DeathReason.SporicidalBloom => "Sporicidal Bloom",
                 DeathReason.MycotoxinPotentiation => "Mycotoxin Potentiation",
                 DeathReason.HyphalVectoring => "Hyphal Vectoring",
                 DeathReason.JettingMycelium => "Jetting Mycelium",

@@ -87,7 +87,7 @@ namespace FungusToast.Simulation.Models
                     CreepingMoldToxinJumps = tracking.GetCreepingMoldToxinJumps(player.PlayerId),
                     NecrosporulationSpores = tracking.GetNecrosporeDropCount(player.PlayerId),
                     SporocidalSpores = tracking.GetSporocidalSporeDropCount(player.PlayerId),
-                    SporocidalKills = tracking.GetCellDeathCount(player.PlayerId, DeathReason.SporocidalBloom),
+                    SporocidalKills = tracking.GetCellDeathCount(player.PlayerId, DeathReason.SporicidalBloom),
                     NecrophyticSpores = tracking.GetNecrophyticBloomSporeDropCount(player.PlayerId),
                     NecrophyticReclaims = tracking.GetNecrophyticBloomReclaims(player.PlayerId),
                     MycotoxinTracerSpores = tracking.GetMycotoxinSporeDropCount(player.PlayerId),
