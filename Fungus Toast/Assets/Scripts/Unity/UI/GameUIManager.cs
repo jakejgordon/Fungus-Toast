@@ -58,6 +58,9 @@ namespace FungusToast.Unity.UI
                 if (gameLogRouter == null)
                 {
                     gameLogRouter = new GameLogRouter(playerActivityLogManager, globalEventsLogManager);
+                    
+                    // Set the router reference on the player activity log manager for silent mode awareness
+                    playerActivityLogManager?.SetGameLogRouter(gameLogRouter);
                 }
                 return gameLogRouter;
             }

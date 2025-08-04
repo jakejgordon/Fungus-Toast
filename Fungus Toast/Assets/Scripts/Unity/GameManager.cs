@@ -629,75 +629,86 @@ namespace FungusToast.Unity
 
         private IEnumerator FastForwardRounds()
         {
-            // Store original human player type and strategy
-            var originalHumanType = humanPlayer.PlayerType;
-            var originalHumanStrategy = humanPlayer.MutationStrategy;
-
-            for (int round = 1; round <= fastForwardRounds; round++)
+            // Enable silent mode to suppress logging during fast-forward
+            gameUIManager.GameLogRouter.EnableSilentMode();
+            
+            try
             {
-                // Silent growth phase
-                yield return StartCoroutine(RunSilentGrowthPhase());
-                // Silent decay phase
-                yield return StartCoroutine(RunSilentDecayPhase());
+                // Store original human player type and strategy
+                var originalHumanType = humanPlayer.PlayerType;
+                var originalHumanStrategy = humanPlayer.MutationStrategy;
 
-                // --- Temporarily make human an AI for mutation spending ---
-                var tempType = humanPlayer.PlayerType;
-                var tempStrat = humanPlayer.MutationStrategy;
-                humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
-                var aiStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
-                humanPlayer.SetMutationStrategy(aiStrategy);
-
-                // Silent mutation phase (auto-spend for all players)
-                yield return StartCoroutine(RunSilentMutationPhase());
-
-                // Restore human player type and strategy
-                humanPlayer.SetPlayerType(tempType);
-                humanPlayer.SetMutationStrategy(tempStrat);
-
-                // Increment round
-                Board.IncrementRound();
-
-                // If this is a draft round, run a silent draft for all players (including human as AI)
-                if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
+                for (int round = 1; round <= fastForwardRounds; round++)
                 {
-                    // Temporarily make human an AI for the draft
-                    var originalType = humanPlayer.PlayerType;
-                    var originalStrat = humanPlayer.MutationStrategy;
-                    humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
-                    var draftAIStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
-                    humanPlayer.SetMutationStrategy(draftAIStrategy);
+                    // Silent growth phase
+                    yield return StartCoroutine(RunSilentGrowthPhase());
+                    // Silent decay phase
+                    yield return StartCoroutine(RunSilentDecayPhase());
 
-                    RunSilentDraftForAllPlayers(gameUIManager.GameLogRouter);
+                    // --- Temporarily make human an AI for mutation spending ---
+                    var tempType = humanPlayer.PlayerType;
+                    var tempStrat = humanPlayer.MutationStrategy;
+                    humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
+                    var aiStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
+                    humanPlayer.SetMutationStrategy(aiStrategy);
+
+                    // Silent mutation phase (auto-spend for all players)
+                    yield return StartCoroutine(RunSilentMutationPhase());
 
                     // Restore human player type and strategy
-                    humanPlayer.SetPlayerType(originalType);
-                    humanPlayer.SetMutationStrategy(originalStrat);
+                    humanPlayer.SetPlayerType(tempType);
+                    humanPlayer.SetMutationStrategy(tempStrat);
+
+                    // Increment round
+                    Board.IncrementRound();
+
+                    // If this is a draft round, run a silent draft for all players (including human as AI)
+                    if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
+                    {
+                        // Temporarily make human an AI for the draft
+                        var originalType = humanPlayer.PlayerType;
+                        var originalStrat = humanPlayer.MutationStrategy;
+                        humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
+                        var draftAIStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
+                        humanPlayer.SetMutationStrategy(draftAIStrategy);
+
+                        RunSilentDraftForAllPlayers(gameUIManager.GameLogRouter);
+
+                        // Restore human player type and strategy
+                        humanPlayer.SetPlayerType(originalType);
+                        humanPlayer.SetMutationStrategy(originalStrat);
+                    }
+                }
+
+                // Update the board visualization after fast-forward
+                gridVisualizer.RenderBoard(Board);
+                
+                // CRITICAL FIX: Wait for fade-in animations to complete before starting draft
+                // This ensures newly grown cells are fully visible when highlighted
+                yield return StartCoroutine(WaitForFadeInAnimationsToComplete());
+                
+                // Update UI elements to reflect the new board state
+                gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
+                int currentRound = Board.CurrentRound;
+                float occupancy = Board.GetOccupiedTileRatio() * 100f;
+                gameUIManager.RightSidebar?.SetRoundAndOccupancy(currentRound, occupancy);
+
+                // Only trigger a UI draft at the end of fast forward if a specific mycovariant is selected
+                if (testingMycovariantId.HasValue)
+                {
+                    StartMycovariantDraftPhase();
+                }
+                else
+                {
+                    // No specific mycovariant selected - start normal mutation phase
+                    gameUIManager.PhaseBanner.Show($"Fast-forwarded {fastForwardRounds} rounds", 2f);
+                    StartNextRound();
                 }
             }
-
-            // Update the board visualization after fast-forward
-            gridVisualizer.RenderBoard(Board);
-            
-            // CRITICAL FIX: Wait for fade-in animations to complete before starting draft
-            // This ensures newly grown cells are fully visible when highlighted
-            yield return StartCoroutine(WaitForFadeInAnimationsToComplete());
-            
-            // Update UI elements to reflect the new board state
-            gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
-            int currentRound = Board.CurrentRound;
-            float occupancy = Board.GetOccupiedTileRatio() * 100f;
-            gameUIManager.RightSidebar?.SetRoundAndOccupancy(currentRound, occupancy);
-
-            // Only trigger a UI draft at the end of fast forward if a specific mycovariant is selected
-            if (testingMycovariantId.HasValue)
+            finally
             {
-                StartMycovariantDraftPhase();
-            }
-            else
-            {
-                // No specific mycovariant selected - start normal mutation phase
-                gameUIManager.PhaseBanner.Show($"Fast-forwarded {fastForwardRounds} rounds", 2f);
-                StartNextRound();
+                // Always disable silent mode to ensure normal logging resumes, even if an error occurred
+                gameUIManager.GameLogRouter.DisableSilentMode();
             }
         }
 

@@ -52,6 +52,9 @@ namespace FungusToast.Unity.UI.GameLog
         private GameBoard board;
         private int humanPlayerId = 0; // Assuming human is always player 0
         
+        // Reference to GameLogRouter to check silent mode
+        private GameLogRouter gameLogRouter;
+        
         private struct PlayerSnapshot
         {
             public int LivingCells;
@@ -95,6 +98,20 @@ namespace FungusToast.Unity.UI.GameLog
             board.PreGrowthCycle += OnPreGrowthCycle;
             board.PostGrowthPhase += OnPostGrowthPhase;
         }
+        
+        /// <summary>
+        /// Sets the GameLogRouter reference to check for silent mode.
+        /// Should be called after GameLogRouter is created.
+        /// </summary>
+        public void SetGameLogRouter(GameLogRouter router)
+        {
+            gameLogRouter = router;
+        }
+        
+        /// <summary>
+        /// Checks if logging should be suppressed due to silent mode.
+        /// </summary>
+        private bool IsSilentMode => gameLogRouter?.IsSilentMode ?? false;
         
         private void OnDestroy()
         {
@@ -207,6 +224,8 @@ namespace FungusToast.Unity.UI.GameLog
         
         private void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource source)
         {
+            if (IsSilentMode) return;
+            
             if (playerId == humanPlayerId)
             {
                 // Create ability-specific key for aggregation
@@ -223,6 +242,8 @@ namespace FungusToast.Unity.UI.GameLog
         
         private void OnCellColonized(int playerId, int tileId, GrowthSource source)
         {
+            if (IsSilentMode) return;
+            
             if (playerId == humanPlayerId)
             {
                 // Player colonized a tile - track for offensive aggregation
@@ -246,6 +267,8 @@ namespace FungusToast.Unity.UI.GameLog
         
         private void OnCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource source)
         {
+            if (IsSilentMode) return;
+            
             if (playerId == humanPlayerId)
             {
                 // Player infested enemy cells - track for offensive aggregation
@@ -274,6 +297,8 @@ namespace FungusToast.Unity.UI.GameLog
         
         private void OnCellReclaimed(int playerId, int tileId, GrowthSource source)
         {
+            if (IsSilentMode) return;
+            
             if (playerId == humanPlayerId)
             {
                 // Player reclaimed their own dead cells - track for offensive aggregation
@@ -297,6 +322,8 @@ namespace FungusToast.Unity.UI.GameLog
         
         private void OnCellToxified(int playerId, int tileId, GrowthSource source)
         {
+            if (IsSilentMode) return;
+            
             if (playerId == humanPlayerId)
             {
                 // Player toxified empty/dead tiles - track for offensive aggregation
@@ -320,6 +347,8 @@ namespace FungusToast.Unity.UI.GameLog
         
         private void OnPreGrowthCycle()
         {
+            if (IsSilentMode) return;
+            
             // If we were already tracking, show the previous cycle's results
             if (isTrackingGrowthCycle)
             {
@@ -336,6 +365,8 @@ namespace FungusToast.Unity.UI.GameLog
         
         private void OnPostGrowthPhase()
         {
+            if (IsSilentMode) return;
+            
             // Show final cycle's consolidated growth cycle summary after growth phase completes
             if (isTrackingGrowthCycle)
             {
@@ -350,6 +381,8 @@ namespace FungusToast.Unity.UI.GameLog
         
         private void ShowConsolidatedGrowthCycleSummary()
         {
+            if (IsSilentMode) return;
+            
             var allActivities = new List<(string action, Dictionary<string, int> counts)>
             {
                 ("Colonized", growthCycleColonizationCounts),
@@ -427,6 +460,15 @@ namespace FungusToast.Unity.UI.GameLog
             // Wait a short time to allow multiple poisoning events to aggregate
             yield return new WaitForSeconds(0.5f);
             
+            // Check silent mode before showing the message
+            if (IsSilentMode)
+            {
+                // Reset counters but don't show message
+                playerPoisonedCounts.Clear();
+                playerPoisonedCoroutine = null;
+                yield break;
+            }
+            
             // Calculate total poisoned cells and build breakdown message
             int totalPoisoned = playerPoisonedCounts.Values.Sum();
             if (totalPoisoned > 0)
@@ -467,6 +509,15 @@ namespace FungusToast.Unity.UI.GameLog
             // Wait a short time to allow multiple infestation events to aggregate
             yield return new WaitForSeconds(0.5f);
             
+            // Check silent mode before showing the message
+            if (IsSilentMode)
+            {
+                // Reset counters but don't show message
+                playerInfestedCounts.Clear();
+                playerInfestedCoroutine = null;
+                yield break;
+            }
+            
             // Calculate total infested cells and build breakdown message
             int totalInfested = playerInfestedCounts.Values.Sum();
             if (totalInfested > 0)
@@ -506,6 +557,15 @@ namespace FungusToast.Unity.UI.GameLog
         {
             // Wait a short time to allow multiple toxification events to aggregate
             yield return new WaitForSeconds(0.5f);
+            
+            // Check silent mode before showing the message
+            if (IsSilentMode)
+            {
+                // Reset counters but don't show message
+                playerToxifiedCounts.Clear();
+                playerToxifiedCoroutine = null;
+                yield break;
+            }
             
             // Calculate total toxified cells and build breakdown message
             int totalToxified = playerToxifiedCounts.Values.Sum();
@@ -573,6 +633,18 @@ namespace FungusToast.Unity.UI.GameLog
             
             string eventKey = $"{abilityKey}_{effectType}";
             
+            // Check silent mode before showing the message
+            if (IsSilentMode)
+            {
+                // Reset counters but don't show message
+                if (currentEventCounts.ContainsKey(eventKey))
+                {
+                    currentEventCounts[eventKey] = 0;
+                }
+                aggregationCoroutine = null;
+                yield break;
+            }
+            
             // Show the aggregated message
             if (currentEventCounts.TryGetValue(eventKey, out int count) && count > 0)
             {
@@ -591,7 +663,7 @@ namespace FungusToast.Unity.UI.GameLog
                 {
                     UnityEngine.Debug.LogError($"Malformed message detected for {abilityKey} with effect type '{effectType}' and count {count}. Generated message: '{message}'");
                     message = $"{abilityKey}: {effectType} {count} tiles/cells"; // Fallback message
-}
+                }
                 
                 AddEntry(new GameLogEntry(message, category, null, humanPlayerId));
                 
@@ -604,6 +676,9 @@ namespace FungusToast.Unity.UI.GameLog
         
         private void AddEntry(GameLogEntry entry)
         {
+            // Suppress logging if in silent mode
+            if (IsSilentMode) return;
+            
             logEntries.Enqueue(entry);
             
             // Remove old entries if over limit
