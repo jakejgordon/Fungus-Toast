@@ -51,6 +51,10 @@ namespace FungusToast.Unity.UI.GameLog
         private Dictionary<DeathReason, int> decayPhaseDeaths = new Dictionary<DeathReason, int>();
         private bool isTrackingDecayPhase = false;
         
+        // Track resistance applications during growth phase for summary
+        private int hypersystemicResistanceApplications = 0;
+        private bool isTrackingResistanceApplications = false;
+        
         public event Action<GameLogEntry> OnNewLogEntry;
         
         private GameBoard board;
@@ -193,6 +197,10 @@ namespace FungusToast.Unity.UI.GameLog
             decayPhaseDeaths.Clear();
             isTrackingDecayPhase = true;
             
+            // Start tracking resistance applications for this round
+            hypersystemicResistanceApplications = 0;
+            isTrackingResistanceApplications = true;
+            
             // Don't add round start messages here - that's for the global log
         }
         
@@ -264,6 +272,20 @@ namespace FungusToast.Unity.UI.GameLog
             
             string message = $"Decay Summary: {string.Join(", ", deathReasonParts)}";
             AddEntry(new GameLogEntry(message, GameLogCategory.Unlucky, null, humanPlayerId));
+        }
+        
+        private void ShowResistanceApplicationsSummary()
+        {
+            if (IsSilentMode) return;
+            
+            // Only show summary if at least one cell gained resistance
+            if (hypersystemicResistanceApplications == 0) return;
+            
+            string message = hypersystemicResistanceApplications == 1 
+                ? "1 cell gained resistance from Hypersystemic Regeneration!"
+                : $"{hypersystemicResistanceApplications} cells gained resistance from Hypersystemic Regeneration!";
+            
+            AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
         }
         
         private string GetDeathReasonDisplayName(DeathReason reason)
@@ -431,6 +453,14 @@ namespace FungusToast.Unity.UI.GameLog
         private void OnPostGrowthPhase()
         {
             if (IsSilentMode) return;
+            
+            // Show resistance applications summary if we were tracking applications
+            if (isTrackingResistanceApplications)
+            {
+                ShowResistanceApplicationsSummary();
+                hypersystemicResistanceApplications = 0;
+                isTrackingResistanceApplications = false;
+            }
             
             // Show final cycle's consolidated growth cycle summary after growth phase completes
             if (isTrackingGrowthCycle)
@@ -935,5 +965,14 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordMimeticResilienceDrops(int playerId, int drops) { }
         public void RecordCytolyticBurstToxins(int playerId, int toxinsCreated) { }
         public void RecordCytolyticBurstKills(int playerId, int cellsKilled) { }
+        public void RecordHypersystemicRegenerationResistance(int playerId) 
+        {
+            // Only track resistance applications during growth phase for batching summary
+            if (isTrackingResistanceApplications && playerId == humanPlayerId)
+            {
+                hypersystemicResistanceApplications++;
+            }
+        }
+        public void RecordHypersystemicDiagonalReclaim(int playerId) { }
     }
 }

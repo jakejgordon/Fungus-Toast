@@ -31,6 +31,7 @@ namespace FungusToast.Core.Phases
 
         /// <summary>
         /// Handles the Regenerative Hyphae effect - reclaims own dead cells adjacent to living cells.
+        /// Enhanced by Hypersystemic Regeneration.
         /// </summary>
         public static void OnPostGrowthPhase_RegenerativeHyphae(
             GameBoard board,
@@ -41,25 +42,88 @@ namespace FungusToast.Core.Phases
             var attempted = new HashSet<int>();
             foreach (Player p in players)
             {
-                float reclaimChance = p.GetMutationEffect(MutationType.ReclaimOwnDeadCells);
-                if (reclaimChance <= 0f) continue;
+                float baseReclaimChance = p.GetMutationEffect(MutationType.ReclaimOwnDeadCells);
+                if (baseReclaimChance <= 0f) continue;
+
+                // Apply Hypersystemic Regeneration effectiveness bonus
+                float effectivenessBonus = GetHypersystemicRegenerationEffectivenessBonus(p);
+                float enhancedReclaimChance = baseReclaimChance * (1f + effectivenessBonus);
+
+                // Check if Hypersystemic Regeneration allows diagonal reclaiming (max level)
+                bool allowDiagonal = p.GetMutationLevel(MutationIds.HypersystemicRegeneration) >= GameBalance.HypersystemicRegenerationMaxLevel;
+
                 foreach (FungalCell cell in board.GetAllCellsOwnedBy(p.PlayerId))
                 {
-                    foreach (BoardTile n in board.GetOrthogonalNeighbors(cell.TileId))
+                    // Get neighbors to check based on Hypersystemic Regeneration level
+                    var neighborsToCheck = new List<BoardTile>(board.GetOrthogonalNeighbors(cell.TileId));
+
+                    // Add diagonal neighbors if max level Hypersystemic Regeneration
+                    if (allowDiagonal)
+                    {
+                        neighborsToCheck.AddRange(board.GetDiagonalNeighbors(cell.TileId));
+                    }
+
+                    foreach (BoardTile n in neighborsToCheck)
                     {
                         FungalCell? dead = n.FungalCell;
                         if (dead is null || dead.IsAlive || dead.IsToxin) continue;
                         if (dead.OwnerPlayerId != p.PlayerId) continue;
                         if (!attempted.Add(dead.TileId)) continue;
+
+                        // Check if this is a diagonal reclaim for tracking purposes
+                        bool isDiagonal = allowDiagonal && board.GetDiagonalNeighbors(cell.TileId).Any(t => t.TileId == n.TileId);
                         
-                        // Try to reclaim the dead cell using the helper
+                        // Try to reclaim the dead cell using the enhanced chance
                         bool success = ReclaimCellHelper.TryReclaimDeadCell(
-                            board, p, dead.TileId, reclaimChance, rng, GrowthSource.RegenerativeHyphae, observer);
+                            board, p, dead.TileId, enhancedReclaimChance, rng, GrowthSource.RegenerativeHyphae, observer);
                         if (success)
                         {
                             observer.RecordRegenerativeHyphaeReclaim(p.PlayerId);
+
+                            // Apply Hypersystemic Regeneration resistance chance
+                            ApplyHypersystemicRegenerationResistance(board, p, dead.TileId, rng, observer);
+
+                            // Track diagonal reclaims separately
+                            if (isDiagonal)
+                            {
+                                observer.RecordHypersystemicDiagonalReclaim(p.PlayerId);
+                            }
                         }
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the effectiveness bonus from Hypersystemic Regeneration.
+        /// </summary>
+        private static float GetHypersystemicRegenerationEffectivenessBonus(Player player)
+        {
+            int level = player.GetMutationLevel(MutationIds.HypersystemicRegeneration);
+            return level * GameBalance.HypersystemicRegenerationEffectivenessBonus;
+        }
+
+        /// <summary>
+        /// Applies the resistance chance from Hypersystemic Regeneration to reclaimed cells.
+        /// </summary>
+        private static void ApplyHypersystemicRegenerationResistance(
+            GameBoard board, 
+            Player player, 
+            int tileId, 
+            Random rng, 
+            ISimulationObserver observer)
+        {
+            int level = player.GetMutationLevel(MutationIds.HypersystemicRegeneration);
+            if (level <= 0) return;
+
+            float resistanceChance = level * GameBalance.HypersystemicRegenerationResistanceChance;
+            if (rng.NextDouble() < resistanceChance)
+            {
+                var tile = board.GetTileById(tileId);
+                if (tile?.FungalCell != null)
+                {
+                    tile.FungalCell.MakeResistant();
+                    observer.RecordHypersystemicRegenerationResistance(player.PlayerId);
                 }
             }
         }

@@ -3,7 +3,7 @@ using System;
 namespace FungusToast.Unity.UI
 {
     /// <summary>
-    /// Central location for UI effect timing/delay constants used in mycovariant effect coroutines.
+    /// Central location for UI effect timing/delay constants used in mycovariant effect coroutines and game phase animations.
     /// </summary>
     public static class UIEffectConstants
     {
@@ -41,5 +41,22 @@ namespace FungusToast.Unity.UI
         /// Delay (in seconds) for AI to "think" before picking a mycovariant during draft.
         /// </summary>
         public const float AIDraftPickDelaySeconds = 0.7f;
+
+        // ==================== GAME PHASE TIMING CONSTANTS ====================
+        
+        /// <summary>
+        /// Delay (in seconds) before rendering the board after decay phase processing.
+        /// </summary>
+        public const float TimeBeforeDecayRender = 0.5f;
+
+        /// <summary>
+        /// Delay (in seconds) after rendering the board during decay phase before proceeding.
+        /// </summary>
+        public const float TimeAfterDecayRender = 0.5f;
+
+        /// <summary>
+        /// Duration (in seconds) between growth cycles during the growth phase.
+        /// </summary>
+        public const float TimeBetweenGrowthCycles = 1f;
     }
-} 
+}

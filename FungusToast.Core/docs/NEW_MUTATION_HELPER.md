@@ -238,6 +238,128 @@ NewMutationGrowth,
 | Result Data | `FungusToast.Simulation/Models/PlayerResult.cs` |
 | Result Population | `FungusToast.Simulation/Models/GameResult.cs` |
 | Usage Display | `FungusToast.Simulation/Analysis/PlayerMutationUsageTracker.cs` |
+| **Unity UI Logging** | `Assets/Scripts/Unity/UI/GameLog/GameLogManager.cs` |
+| **Unity UI Router** | `Assets/Scripts/Unity/UI/GameLog/GameLogRouter.cs` |
+
+---
+
+## Unity UI Logging Integration (Optional)
+
+Most mutations automatically display their effects through existing event systems. However, some mutations may benefit from custom UI messages for special effects.
+
+### **When UI Updates Are Needed**
+
+- **Standard Growth/Reclaim/Kill Effects**: Usually handled automatically via `GrowthSource` events
+  - Example: Regenerative Hyphae reclaims appear in growth cycle summaries automatically
+  - No additional UI code needed for basic cell placement/reclamation
+
+- **Special Effects**: May need custom observer methods and UI messages
+  - Example: Hypersystemic Regeneration's resistance application
+  - Example: Free mutation points from various sources
+
+### **Adding Custom UI Messages**
+
+If your mutation has special effects that need unique messaging:
+
+#### **A. Add GrowthSource (if placing cells)**
+```csharp
+// File: FungusToast.Core/Growth/GrowthSource.cs
+/// <summary>
+/// Description of your new growth source
+/// </summary>
+YourNewMutationGrowth,
+```
+
+#### **B. Add to GetAbilityDisplayName (if needed)**
+```csharp
+// File: Assets/Scripts/Unity/UI/GameLog/GameLogManager.cs
+// In GetAbilityDisplayName method:
+
+GrowthSource.YourNewMutationGrowth => "Your Mutation Name",
+```
+
+#### **C. Add Custom Observer Messages (for special effects)**
+
+For special effects, you have two main approaches:
+
+##### **Simple Individual Messages** (for immediate effects):
+```csharp
+// File: Assets/Scripts/Unity/UI/GameLog/GameLogManager.cs
+// Add to stub implementations section:
+
+public void RecordYourCustomEffect(int playerId, int count) 
+{
+    if (playerId == humanPlayerId && count > 0)
+    {
+        string message = count == 1 
+            ? "1 cell gained your special effect!" 
+            : $"{count} cells gained your special effect!";
+        AddLuckyEntry(message, playerId);
+    }
+}
+```
+
+##### **Batched Summary Messages** (for effects that occur multiple times):
+```csharp
+// File: Assets/Scripts/Unity/UI/GameLog/GameLogManager.cs
+
+// 1. Add tracking fields (with other tracking fields):
+private int yourCustomEffectApplications = 0;
+private bool isTrackingYourCustomEffect = false;
+
+// 2. Add to OnRoundStart (or appropriate phase start):
+yourCustomEffectApplications = 0;
+isTrackingYourCustomEffect = true;
+
+// 3. Add summary method:
+private void ShowYourCustomEffectSummary()
+{
+    if (IsSilentMode) return;
+    
+    if (yourCustomEffectApplications == 0) return;
+    
+    string message = yourCustomEffectApplications == 1 
+        ? "1 cell gained your special effect!"
+        : $"{yourCustomEffectApplications} cells gained your special effect!";
+    
+    AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
+}
+
+// 4. Add to appropriate phase end (e.g., OnPostGrowthPhase):
+if (isTrackingYourCustomEffect)
+{
+    ShowYourCustomEffectSummary();
+    yourCustomEffectApplications = 0;
+    isTrackingYourCustomEffect = false;
+}
+
+// 5. Update the record method to use batching:
+public void RecordYourCustomEffect(int playerId, int count) 
+{
+    if (isTrackingYourCustomEffect && playerId == humanPlayerId)
+    {
+        yourCustomEffectApplications += count;
+    }
+}
+```
+
+#### **D. Add Stub to GameLogRouter**
+```csharp
+// File: Assets/Scripts/Unity/UI/GameLog/GameLogRouter.cs
+// Add to stub implementations section:
+
+public void RecordYourCustomEffect(int playerId, int count) { }
+```
+
+### **Choosing Between Message Approaches**
+
+- **Individual Messages**: Use for effects that happen infrequently or need immediate feedback
+  - Example: Free mutation points from Adaptive Expression
+  - Pattern: Simple check and immediate `AddLuckyEntry()` call
+
+- **Batched Summary Messages**: Use for effects that can occur multiple times in rapid succession
+  - Example: Hypersystemic Regeneration resistance applications, Decay phase deaths
+  - Pattern: Track during phase ? Display summary at phase end ? Reset counters
 
 ---
 
@@ -246,6 +368,7 @@ NewMutationGrowth,
 - **Always follow this order**: ID ? Type ? Balance ? Definition ? UI ? Logic ? Tracking
 - **Cross-category prerequisites**: Essential for Tier 3+ balance
 - **Observer pattern**: Required for all trackable effects
+- **UI Integration**: Most mutations work automatically; only add custom UI for special effects
 - **Build frequently**: Use `run_build` after each major step
 - **Test simulations**: Verify tracking works with simulation runs
 - **Reference existing**: Look at similar mutations for patterns

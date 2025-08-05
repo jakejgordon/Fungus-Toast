@@ -66,7 +66,7 @@ namespace FungusToast.Core.Mutations
                     },
                     effectPerLevel: GameBalance.TendrilDiagonalGrowthEffectPerLevel,
                     pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
-                    maxLevel: GameBalance.DiagonalGrowthMaxLevel,
+                    maxLevel: GameBalance.TendrilDiagonalGrowthMaxLevel,
                     category: MutationCategory.Growth,
                     tier: MutationTier.Tier2
                 ),
@@ -530,6 +530,24 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1),
             new MutationPrerequisite(MutationIds.AdaptiveExpression, 1),
             new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 1));
+
+            // Tier-7
+            MakeChild(new Mutation(
+                id: MutationIds.HypersystemicRegeneration,
+                name: "Hypersystemic Regeneration",
+                description: $"Each level increases the effectiveness of Regenerative Hyphae by {FormatPercent(GameBalance.HypersystemicRegenerationEffectivenessBonus)} " +
+                             $"and grants a {FormatPercent(GameBalance.HypersystemicRegenerationResistanceChance)} chance per level for reclaimed cells to become resistant. " +
+                             $"At max level, Regenerative Hyphae can also reclaim cells diagonally adjacent, not just orthogonally adjacent.",
+                flavorText: "The mycelium achieves ultimate regenerative mastery, orchestrating systemic cellular resurrection with enhanced defensive capabilities and expanded reach across the substrate matrix.",
+                type: MutationType.HypersystemicRegeneration,
+                effectPerLevel: GameBalance.HypersystemicRegenerationEffectivenessBonus,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier7),
+                maxLevel: GameBalance.HypersystemicRegenerationMaxLevel,
+                category: MutationCategory.CellularResilience,
+                tier: MutationTier.Tier7
+            ),
+            new MutationPrerequisite(MutationIds.CatabolicRebirth, 1), // Tier 6 CellularResilience
+            new MutationPrerequisite(MutationIds.MycotropicInduction, 1)); // Tier 3 Growth
 
             return (allMutations, rootMutations);
         }

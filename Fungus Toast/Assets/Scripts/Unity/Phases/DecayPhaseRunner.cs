@@ -5,6 +5,7 @@ using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Grid;
+using FungusToast.Unity.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -45,14 +46,14 @@ namespace FungusToast.Unity.Phases
 
             DeathEngine.ExecuteDeathCycle(board, failedGrowthsByPlayerId, rng, simulationObserver);
 
-            yield return new WaitForSeconds(GameBalance.TimeBeforeDecayRender);
+            yield return new WaitForSeconds(UIEffectConstants.TimeBeforeDecayRender);
 
             gridVisualizer.RenderBoard(board);
 
             GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(board.Players);
             GameManager.Instance.GameUI.RightSidebar?.SortPlayerSummaryRows(board.Players);
 
-            yield return new WaitForSeconds(GameBalance.TimeAfterDecayRender);
+            yield return new WaitForSeconds(UIEffectConstants.TimeAfterDecayRender);
 
             GameManager.Instance.OnRoundComplete();
         }

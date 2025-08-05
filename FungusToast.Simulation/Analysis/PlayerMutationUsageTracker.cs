@@ -212,6 +212,13 @@ namespace FungusToast.Simulation.Analysis
                         effects["Mimetic Drops"] = player.MimeticResilienceDrops;
                     break;
                     
+                case MutationIds.HypersystemicRegeneration:
+                    if (player.HypersystemicRegenerationResistance > 0)
+                        effects["Resistance Applied"] = player.HypersystemicRegenerationResistance;
+                    if (player.HypersystemicDiagonalReclaims > 0)
+                        effects["Diagonal Reclaims"] = player.HypersystemicDiagonalReclaims;
+                    break;
+                    
                 // Note: Mycovariant effects are not mutations, so they're not tracked here
                 // They are tracked separately in MycovariantResult
             }

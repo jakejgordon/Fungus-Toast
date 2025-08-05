@@ -228,6 +228,33 @@ namespace FungusToast.Core.Board
             return GetOrthogonalNeighbors(x, y);
         }
 
+        public List<BoardTile> GetDiagonalNeighbors(int x, int y)
+        {
+            List<BoardTile> neighbors = new();
+            int[] dx = { -1, -1, -1, 0, 0, 1, 1, 1 };
+            int[] dy = { -1, 0, 1, -1, 1, -1, 0, 1 };
+
+            // Skip orthogonal neighbors (indices 1, 3, 4, 6) and only include diagonals (0, 2, 5, 7)
+            int[] diagonalIndices = { 0, 2, 5, 7 };
+
+            foreach (int d in diagonalIndices)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+
+                if (nx >= 0 && ny >= 0 && nx < Width && ny < Height)
+                    neighbors.Add(Grid[nx, ny]);
+            }
+
+            return neighbors;
+        }
+
+        public List<BoardTile> GetDiagonalNeighbors(int tileId)
+        {
+            var (x, y) = GetXYFromTileId(tileId);
+            return GetDiagonalNeighbors(x, y);
+        }
+
         public BoardTile? GetTile(int x, int y)
         {
             if (x >= 0 && y >= 0 && x < Width && y < Height)

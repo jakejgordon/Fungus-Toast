@@ -119,6 +119,10 @@ namespace FungusToast.Simulation.Models
                     CytolyticBurstToxins = tracking.GetCytolyticBurstToxins(player.PlayerId),
                     CytolyticBurstKills = tracking.GetCytolyticBurstKills(player.PlayerId),
 
+                    // --- Hypersystemic Regeneration effect counters ---
+                    HypersystemicRegenerationResistance = tracking.GetHypersystemicRegenerationResistance(player.PlayerId),
+                    HypersystemicDiagonalReclaims = tracking.GetHypersystemicDiagonalReclaims(player.PlayerId),
+
                     // --- Putrefactive Cascade effect counters ---
                     PutrefactiveCascadeKills = tracking.GetPutrefactiveCascadeKills(player.PlayerId),
                     PutrefactiveCascadeToxified = tracking.GetPutrefactiveCascadeToxified(player.PlayerId),

@@ -129,23 +129,29 @@ namespace FungusToast.Simulation.Models
         // SURGE MUTATION EFFECT COUNTERS
         // ──────────────
         public int ChitinFortificationCellsFortified { get; set; }
-        
+
         // ──────────────
         // PUTREFACTIVE CASCADE EFFECT COUNTERS
         // ──────────────
         public int PutrefactiveCascadeKills { get; set; }
         public int PutrefactiveCascadeToxified { get; set; }
-        
+
         // ──────────────
         // MIMETIC RESILIENCE EFFECT COUNTERS
         // ──────────────
         public int MimeticResilienceInfestations { get; set; }
         public int MimeticResilienceDrops { get; set; }
-        
+
         // ──────────────
         // CYTOLYTIC BURST EFFECT COUNTERS
         // ──────────────
         public int CytolyticBurstToxins { get; set; }
         public int CytolyticBurstKills { get; set; }
+
+        // ──────────────
+        // HYPERSYSTEMIC REGENERATION EFFECT COUNTERS
+        // ──────────────
+        public int HypersystemicRegenerationResistance { get; set; }
+        public int HypersystemicDiagonalReclaims { get; set; }
     }
 }

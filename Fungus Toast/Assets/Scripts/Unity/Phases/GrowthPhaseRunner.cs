@@ -5,6 +5,7 @@ using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Core.Metrics;
 using FungusToast.Unity.Grid;
+using FungusToast.Unity.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -84,7 +85,7 @@ namespace FungusToast.Unity.Phases
             GameManager.Instance.GameUI.PhaseProgressTracker?.AdvanceToNextGrowthCycle(phaseCycle);
             GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(board.Players);
 
-            yield return new WaitForSeconds(GameBalance.TimeBetweenGrowthCycles);
+            yield return new WaitForSeconds(UIEffectConstants.TimeBetweenGrowthCycles);
             StartCoroutine(RunNextCycle());
         }
 
