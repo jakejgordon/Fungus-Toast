@@ -227,14 +227,24 @@ namespace FungusToast.Core.Phases
             if (deadCell == null)
                 return;
 
+            // Guard: Check if the cell is still reclaimable before attempting to reclaim
+            // This prevents race conditions where the cell might have been converted to a toxin
+            // or otherwise modified by other mutation effects that run in the same event cycle
+            if (!deadCell.IsReclaimable)
+                return;
+
             // No adjacency check needed. Killer just needs to have the mutation.
             float chance = ntcLevel * GameBalance.NecrotoxicConversionReclaimChancePerLevel;
             if (rng.NextDouble() < chance)
             {
-                deadCell.Reclaim(killerPlayerId, GrowthSource.NecrotoxicConversion);
-                board.PlaceFungalCell(deadCell);
-
-                observer.RecordNecrotoxicConversionReclaim(killerPlayerId, 1);
+                // Use the board's safe TryReclaimDeadCell method instead of calling FungalCell.Reclaim directly
+                // This method handles all the validation, board state updates, and event firing properly
+                bool success = board.TryReclaimDeadCell(killerPlayerId, deadCell.TileId, GrowthSource.NecrotoxicConversion);
+                
+                if (success)
+                {
+                    observer.RecordNecrotoxicConversionReclaim(killerPlayerId, 1);
+                }
             }
         }
 
