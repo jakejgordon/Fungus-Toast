@@ -1,4 +1,4 @@
-using FungusToast.Core.Death;
+﻿using FungusToast.Core.Death;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
@@ -47,7 +47,7 @@ namespace FungusToast.Unity.UI.GameLog
         
         // === AUTOMATIC ROUTING METHODS ===
         
-        // Player-specific events (mutation points, abilities, etc.) ? Player Log
+        // Player-specific events (mutation points, abilities, etc.) → Player Log
         public void RecordMutationPointIncome(int playerId, int newMutationPoints)
         {
             if (IsSilentMode) return;
@@ -132,19 +132,10 @@ namespace FungusToast.Unity.UI.GameLog
             globalEventsLogManager?.OnGameEnd(winnerName);
         }
         
-        // === KEY EVENT ROUTING ===
-        // Important simulation events that need to reach the appropriate log managers
-        
-        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
-        {
-            if (IsSilentMode) return;
-            // Route cell deaths to the player activity log for decay phase summary tracking
-            playerActivityLogManager?.RecordCellDeath(playerId, reason, deathCount);
-        }
-        
         // === STUB IMPLEMENTATIONS ===
         // All other ISimulationObserver methods that we don't need in Unity
         // Silent mode still applies to prevent any potential future implementations from logging
+        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1) { }
         public void RecordCreepingMoldMove(int playerId) { }
         public void RecordCreepingMoldToxinJump(int playerId) { }
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }
@@ -195,5 +186,7 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordMimeticResilienceDrops(int playerId, int drops) { }
         public void RecordCytolyticBurstToxins(int playerId, int toxinsCreated) { }
         public void RecordCytolyticBurstKills(int playerId, int cellsKilled) { }
+        public void RecordHypersystemicRegenerationResistance(int playerId) { }
+        public void RecordHypersystemicDiagonalReclaim(int playerId) { }
     }
 }

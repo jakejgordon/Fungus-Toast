@@ -55,6 +55,11 @@ namespace FungusToast.Unity.UI.GameLog
         private int hypersystemicResistanceApplications = 0;
         private bool isTrackingResistanceApplications = false;
         
+        // Track growth phase effects for summary
+        private int regenerativeHyphaeReclaims = 0;
+        private int hypersystemicDiagonalReclaims = 0;
+        private bool isTrackingGrowthPhaseEffects = false;
+        
         public event Action<GameLogEntry> OnNewLogEntry;
         
         private GameBoard board;
@@ -201,6 +206,11 @@ namespace FungusToast.Unity.UI.GameLog
             hypersystemicResistanceApplications = 0;
             isTrackingResistanceApplications = true;
             
+            // Start tracking growth phase effects for this round
+            regenerativeHyphaeReclaims = 0;
+            hypersystemicDiagonalReclaims = 0;
+            isTrackingGrowthPhaseEffects = true;
+            
             // Don't add round start messages here - that's for the global log
         }
         
@@ -286,6 +296,47 @@ namespace FungusToast.Unity.UI.GameLog
                 : $"{hypersystemicResistanceApplications} cells gained resistance from Hypersystemic Regeneration!";
             
             AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
+        }
+        
+        private void ShowGrowthPhaseSummary()
+        {
+            if (IsSilentMode) return;
+            
+            var summaryParts = new List<string>();
+            
+            // Regenerative Hyphae reclamations
+            if (regenerativeHyphaeReclaims > 0)
+            {
+                string part = regenerativeHyphaeReclaims == 1 
+                    ? "Regenerative Hyphae reclaimed 1 dead cell"
+                    : $"Regenerative Hyphae reclaimed {regenerativeHyphaeReclaims} dead cells";
+                summaryParts.Add(part);
+            }
+            
+            // Hypersystemic Regeneration diagonal reclamations (subset of total reclamations)
+            if (hypersystemicDiagonalReclaims > 0)
+            {
+                string part = hypersystemicDiagonalReclaims == 1 
+                    ? "Hypersystemic Regeneration reclaimed 1 cell diagonally"
+                    : $"Hypersystemic Regeneration reclaimed {hypersystemicDiagonalReclaims} cells diagonally";
+                summaryParts.Add(part);
+            }
+            
+            // Hypersystemic Regeneration resistance applications
+            if (hypersystemicResistanceApplications > 0)
+            {
+                string part = hypersystemicResistanceApplications == 1 
+                    ? "Hypersystemic Regeneration granted resistance to 1 cell"
+                    : $"Hypersystemic Regeneration granted resistance to {hypersystemicResistanceApplications} cells";
+                summaryParts.Add(part);
+            }
+            
+            // Only show summary if there were any growth phase effects
+            if (summaryParts.Count > 0)
+            {
+                string message = $"Growth Phase Summary: {string.Join(", ", summaryParts)}";
+                AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
+            }
         }
         
         private string GetDeathReasonDisplayName(DeathReason reason)
@@ -388,8 +439,15 @@ namespace FungusToast.Unity.UI.GameLog
             
             if (playerId == humanPlayerId)
             {
-                // Player reclaimed their own dead cells - track for offensive aggregation
+                // Player reclaimed their own dead cells
                 string abilityKey = GetAbilityDisplayName(source);
+                
+                // RegenerativeHyphae goes to growth phase summary, not growth cycle summary
+                if (source == GrowthSource.RegenerativeHyphae)
+                {
+                    // Don't track in growth cycle - this is handled by the growth phase summary
+                    return;
+                }
                 
                 // During growth cycles, track for consolidation instead of immediate aggregation
                 if (isTrackingGrowthCycle)
@@ -454,10 +512,20 @@ namespace FungusToast.Unity.UI.GameLog
         {
             if (IsSilentMode) return;
             
-            // Show resistance applications summary if we were tracking applications
+            // Show growth phase summary with regenerative hyphae and hypersystemic regeneration effects
+            if (isTrackingGrowthPhaseEffects)
+            {
+                ShowGrowthPhaseSummary();
+                regenerativeHyphaeReclaims = 0;
+                hypersystemicDiagonalReclaims = 0;
+                isTrackingGrowthPhaseEffects = false;
+            }
+            
+            // Show resistance applications summary separately (kept for compatibility)
             if (isTrackingResistanceApplications)
             {
-                ShowResistanceApplicationsSummary();
+                // Note: resistance applications are now included in growth phase summary above
+                // but we keep this for backwards compatibility in case other systems use it
                 hypersystemicResistanceApplications = 0;
                 isTrackingResistanceApplications = false;
             }
@@ -700,6 +768,7 @@ namespace FungusToast.Unity.UI.GameLog
                 GrowthSource.Ballistospore => "Ballistospore Discharge",
                 GrowthSource.HyphalOutgrowth => "Hyphal Outgrowth",
                 GrowthSource.TendrilOutgrowth => "Tendril Outgrowth",
+                GrowthSource.RegenerativeHyphae => "Regenerative Hyphae",
                 GrowthSource.Manual => "Manual placement",
                 _ => source.ToString()
             };
@@ -708,7 +777,8 @@ namespace FungusToast.Unity.UI.GameLog
         private void IncrementAbilityEffect(string abilityKey, string effectType, GameLogCategory category)
         {
             string eventKey = $"{abilityKey}_{effectType}";
-            
+
+
 
             
             if (!currentEventCounts.ContainsKey(eventKey))
@@ -924,7 +994,14 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordTendrilGrowth(int playerId, DiagonalDirection value) { }
         public void RecordNecrotoxicConversionReclaim(int playerId, int necrotoxicConversions) { }
         public void RecordCatabolicRebirthResurrection(int playerId, int resurrectedCells) { }
-        public void RecordRegenerativeHyphaeReclaim(int playerId) { }
+        public void RecordRegenerativeHyphaeReclaim(int playerId) 
+        {
+            // Track regenerative hyphae reclamations during growth phase for batching summary
+            if (isTrackingGrowthPhaseEffects && playerId == humanPlayerId)
+            {
+                regenerativeHyphaeReclaims++;
+            }
+        }
         public void ReportSporicidalSporeDrop(int playerId, int count) { }
         public void ReportNecrosporeDrop(int playerId, int count) { }
         public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims) { }
@@ -973,6 +1050,13 @@ namespace FungusToast.Unity.UI.GameLog
                 hypersystemicResistanceApplications++;
             }
         }
-        public void RecordHypersystemicDiagonalReclaim(int playerId) { }
+        public void RecordHypersystemicDiagonalReclaim(int playerId) 
+        {
+            // Track diagonal reclamations during growth phase for batching summary
+            if (isTrackingGrowthPhaseEffects && playerId == humanPlayerId)
+            {
+                hypersystemicDiagonalReclaims++;
+            }
+        }
     }
 }
