@@ -9,8 +9,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <RootNamespace>
-    </RootNamespace>
+    <RootNamespace></RootNamespace>
     <ProjectGuid>{9AC2C66F-D853-B88E-C3DF-1D11548D70CF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -100,6 +99,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\GameLogEntry.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PhaseProgressTracker.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MultiCellSelectionController.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\GameLog\GameLogColorSchemes.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\GameLogManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationTreeBuilder.cs" />
     <Compile Include="Assets\Scripts\Unity\Effects\MycovariantEffectResolver.cs" />
@@ -143,7 +143,6 @@
     <None Include="Assets\TextMesh Pro\Fonts\LiberationSans - OFL.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Sprite.shader" />
-    <None Include="GROWTH_PHASE_SUMMARY_FIXES.md" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

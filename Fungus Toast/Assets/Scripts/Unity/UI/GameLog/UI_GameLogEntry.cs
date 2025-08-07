@@ -30,8 +30,9 @@ namespace FungusToast.Unity.UI.GameLog
                 Color bgColor = entry.Category switch
                 {
                     GameLogCategory.Normal => new Color(0.1f, 0.1f, 0.1f, 0.2f), // Subtle dark gray
-                    GameLogCategory.Lucky => new Color(0.1f, 0.3f, 0.1f, 0.25f), // Subtle green tint
-                    GameLogCategory.Unlucky => new Color(0.3f, 0.1f, 0.1f, 0.25f), // Subtle red tint
+                    // Enhanced background contrast for better readability
+                    GameLogCategory.Lucky => new Color(0.1f, 0.6f, 0.1f, 0.5f), // More visible green tint
+                    GameLogCategory.Unlucky => new Color(0.6f, 0.1f, 0.1f, 0.5f), // More visible red tint
                     _ => new Color(0.1f, 0.1f, 0.1f, 0.2f) // Default to normal
                 };
                 backgroundImage.color = bgColor;

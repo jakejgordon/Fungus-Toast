@@ -28,8 +28,9 @@ namespace FungusToast.Unity.UI.GameLog
                 TextColor = category switch
                 {
                     GameLogCategory.Normal => Color.white,
-                    GameLogCategory.Lucky => new Color(0.4f, 1f, 0.4f), // Light green
-                    GameLogCategory.Unlucky => new Color(1f, 0.4f, 0.4f), // Light red
+                    // Improved colors for better readability and accessibility
+                    GameLogCategory.Lucky => new Color(0.6f, 1f, 0.6f), // Brighter, more readable green
+                    GameLogCategory.Unlucky => new Color(1f, 0.6f, 0.6f), // Softer, more readable red
                     _ => Color.white
                 };
             }
@@ -42,7 +43,7 @@ namespace FungusToast.Unity.UI.GameLog
 
     public enum GameLogCategory
     {
-        Normal,   // Normal black text for informational messages
+        Normal,   // Normal white text for informational messages
         Lucky,    // Green text for positive/fortunate events
         Unlucky   // Red text for negative/unfortunate events
     }

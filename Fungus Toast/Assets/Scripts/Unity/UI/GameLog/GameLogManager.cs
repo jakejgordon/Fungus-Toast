@@ -439,19 +439,25 @@ namespace FungusToast.Unity.UI.GameLog
             
             if (playerId == humanPlayerId)
             {
-                // Player reclaimed their own dead cells
-                string abilityKey = GetAbilityDisplayName(source);
-                
-                // RegenerativeHyphae goes to growth phase summary, not growth cycle summary
+                // Handle growth phase effects tracking for RegenerativeHyphae
                 if (source == GrowthSource.RegenerativeHyphae)
                 {
-                    // Don't track in growth cycle - this is handled by the growth phase summary
+                    // Track regenerative hyphae reclamations for growth phase summary
+                    if (isTrackingGrowthPhaseEffects)
+                    {
+                        regenerativeHyphaeReclaims++;
+                    }
+                    
+                    // Skip growth cycle tracking - this belongs in growth phase summary
                     return;
                 }
                 
-                // During growth cycles, track for consolidation instead of immediate aggregation
+                // For all other reclaim sources, use normal growth cycle or immediate tracking
+                string abilityKey = GetAbilityDisplayName(source);
+                
                 if (isTrackingGrowthCycle)
                 {
+                    // During growth cycles, track for consolidation instead of immediate aggregation
                     if (!growthCycleReclamationCounts.ContainsKey(abilityKey))
                         growthCycleReclamationCounts[abilityKey] = 0;
                     growthCycleReclamationCounts[abilityKey]++;
@@ -818,7 +824,7 @@ namespace FungusToast.Unity.UI.GameLog
                     "poisoned" => count == 1 ? $"{abilityKey} poisoned 1 enemy cell" : $"{abilityKey} poisoned {count} enemy cells",
                     "colonized" => count == 1 ? $"{abilityKey} colonized 1 empty tile" : $"{abilityKey} colonized {count} empty tiles",
                     "infested" => count == 1 ? $"{abilityKey} killed 1 enemy cell" : $"{abilityKey} killed {count} enemy cells",
-                    "reclaimed" => count == 1 ? $"{abilityKey} reclaimed 1 dead cell" : $"{abilityKey} revived {count} dead cells",
+                    "reclaimed" => count == 1 ? $"{abilityKey} reclaimed 1 dead cell" : $"{abilityKey} reclaimed {count} dead cells",
                     "toxified" => count == 1 ? $"{abilityKey} toxified 1 empty tile" : $"{abilityKey} toxified {count} empty tiles",
                     _ => $"{abilityKey}: unknown effect {effectType} ({count})"
                 };
@@ -996,11 +1002,8 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordCatabolicRebirthResurrection(int playerId, int resurrectedCells) { }
         public void RecordRegenerativeHyphaeReclaim(int playerId) 
         {
-            // Track regenerative hyphae reclamations during growth phase for batching summary
-            if (isTrackingGrowthPhaseEffects && playerId == humanPlayerId)
-            {
-                regenerativeHyphaeReclaims++;
-            }
+            // Regenerative hyphae reclaims are now tracked via GameBoard.CellReclaimed event in OnCellReclaimed method
+            // This method is kept for compatibility with ISimulationObserver but no longer used
         }
         public void ReportSporicidalSporeDrop(int playerId, int count) { }
         public void ReportNecrosporeDrop(int playerId, int count) { }
