@@ -196,5 +196,15 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordCytolyticBurstKills(int playerId, int cellsKilled) { }
         public void RecordHypersystemicRegenerationResistance(int playerId) { }
         public void RecordHypersystemicDiagonalReclaim(int playerId) { }
+        public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordMutatorPhenotypeUpgrade(playerId, mutationName);
+        }
+        public void RecordSpecificMutationUpgrade(int playerId, string mutationName)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordSpecificMutationUpgrade(playerId, mutationName);
+        }
     }
 }

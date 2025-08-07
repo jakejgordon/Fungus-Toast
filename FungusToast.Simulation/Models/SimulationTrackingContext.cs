@@ -891,5 +891,20 @@ namespace FungusToast.Simulation.Models
             
         public Dictionary<int, int> GetAllHypersystemicRegenerationResistance() => new(hypersystemicRegenerationResistance);
         public Dictionary<int, int> GetAllHypersystemicDiagonalReclaims() => new(hypersystemicDiagonalReclaims);
+        
+        // ────────────────
+        // Mutator Phenotype Upgrades (for UI logging only - not tracked in simulations)
+        // ────────────────
+        public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName)
+        {
+            // Stub implementation - we don't track individual upgrades in simulations,
+            // only the mutation point values via RecordMutatorPhenotypeMutationPointsEarned
+        }
+
+        public void RecordSpecificMutationUpgrade(int playerId, string mutationName)
+        {
+            // Stub implementation - we don't track individual upgrades in simulations,
+            // only the mutation point values via RecordMutatorPhenotypeMutationPointsEarned
+        }
     }
 }

@@ -96,6 +96,9 @@ namespace FungusToast.Core.Phases
                 upgrades = 2;
             }
 
+            // Track upgraded mutations for logging
+            var upgradedMutations = new List<string>();
+
             // Actually perform the upgrades, attributing each point appropriately
             int mutatorPoints = 0;
             int hyperadaptivePoints = 0;
@@ -104,6 +107,9 @@ namespace FungusToast.Core.Phases
             {
                 bool upgraded = player.TryAutoUpgrade(pick, currentRound);
                 if (!upgraded) break;
+
+                // Track the upgrade for logging
+                upgradedMutations.Add(pick.Name);
 
                 // Attribution logic:
                 if (targetTier == MutationTier.Tier1)
@@ -131,6 +137,7 @@ namespace FungusToast.Core.Phases
                 if (additionalUpgraded)
                 {
                     hyperadaptivePoints += additionalPick.PointsPerUpgrade;
+                    upgradedMutations.Add(additionalPick.Name);
                 }
             }
 
@@ -142,6 +149,12 @@ namespace FungusToast.Core.Phases
 
                 if (hyperadaptivePoints > 0)
                     observer.RecordHyperadaptiveDriftMutationPointsEarned(player.PlayerId, hyperadaptivePoints);
+
+                // Report each upgraded mutation
+                foreach (var mutationName in upgradedMutations)
+                {
+                    observer.RecordMutatorPhenotypeUpgrade(player.PlayerId, mutationName);
+                }
             }
         }
 

@@ -1061,5 +1061,19 @@ namespace FungusToast.Unity.UI.GameLog
                 hypersystemicDiagonalReclaims++;
             }
         }
+        
+        public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName)
+        {
+            if (playerId == humanPlayerId && !string.IsNullOrEmpty(mutationName))
+            {
+                AddLuckyEntry($"Mutator Phenotype automatically upgraded {mutationName}!", playerId);
+            }
+        }
+        
+        public void RecordSpecificMutationUpgrade(int playerId, string mutationName)
+        {
+            // This is a more generic version - we'll route it to the same implementation
+            RecordMutatorPhenotypeUpgrade(playerId, mutationName);
+        }
     }
 }
