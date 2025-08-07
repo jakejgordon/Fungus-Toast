@@ -309,7 +309,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.PerimeterProliferatorId,
                 Name = "Perimeter Proliferator",
-                Description = $"Multiplies the growth rate of your mold by {MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier}x when it is touching the outer edge of the board (the crust).",
+                Description = $"Multiplies the growth rate of your mold by {MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier}x when it is within {MycovariantGameBalance.PerimeterProliferatorEdgeDistance} tiles of the edge of the board (the crust).",
                 FlavorText = "At the bread's edge, the colony finds untapped vigor, racing along the crust in a surge of expansion.",
                 Type = MycovariantType.Passive,
                 Category = MycovariantCategory.Growth, // Enhances growth at board edges
@@ -317,18 +317,17 @@ namespace FungusToast.Core.Mycovariants
                 AutoMarkTriggered = true, // Passive effect, always considered triggered
                 AIScore = (player, board) =>
                 {
-                    // Count living cells on the border of the map
+                    // Count living cells within PerimeterProliferatorEdgeDistance of the border
                     int borderCells = 0;
                     foreach (var tile in board.AllTiles())
                     {
-                        if (tile.IsOnBorder(board.Width, board.Height) && 
-                            tile.FungalCell?.IsAlive == true && 
+                        if (BoardUtilities.IsWithinEdgeDistance(tile, board.Width, board.Height, MycovariantGameBalance.PerimeterProliferatorEdgeDistance) &&
+                            tile.FungalCell?.IsAlive == true &&
                             tile.FungalCell.OwnerPlayerId == player.PlayerId)
                         {
                             borderCells++;
                         }
                     }
-                    
                     // Scale from 1 to 10: 0 cells = 1, 100+ cells = 10
                     float score = Math.Min(10f, Math.Max(1f, 1f + (borderCells * 9f / 100f)));
                     return score;

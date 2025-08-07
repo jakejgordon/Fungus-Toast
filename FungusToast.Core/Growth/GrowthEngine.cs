@@ -272,9 +272,9 @@ namespace FungusToast.Core.Growth
                 var sourceTile = board.GetTileById(sourceTileId);
                 if (sourceTile != null)
                 {
-                    bool isEdgeCell = sourceTile.X == 0 || sourceTile.Y == 0 ||
-                                      sourceTile.X == board.Width - 1 || sourceTile.Y == board.Height - 1;
-                    edgeMultiplier = isEdgeCell ? MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier : 1f;
+                    bool isWithinEdgeDistance = BoardUtilities.IsWithinEdgeDistance(
+                        sourceTile, board.Width, board.Height, MycovariantGameBalance.PerimeterProliferatorEdgeDistance);
+                    edgeMultiplier = isWithinEdgeDistance ? MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier : 1f;
                 }
             }
             if (edgeMultiplier > 1f)
@@ -350,9 +350,9 @@ namespace FungusToast.Core.Growth
         private static float GetEdgeGrowthMultiplier(Player owner, BoardTile sourceTile, GameBoard board)
         {
             bool hasPerimeterProliferator = owner.PlayerMycovariants.Any(m => m.MycovariantId == MycovariantIds.PerimeterProliferatorId);
-            bool isEdgeCell = sourceTile.X == 0 || sourceTile.Y == 0 ||
-                              sourceTile.X == board.Width - 1 || sourceTile.Y == board.Height - 1;
-            return (hasPerimeterProliferator && isEdgeCell)
+            bool isWithinEdgeDistance = BoardUtilities.IsWithinEdgeDistance(
+                sourceTile, board.Width, board.Height, MycovariantGameBalance.PerimeterProliferatorEdgeDistance);
+            return (hasPerimeterProliferator && isWithinEdgeDistance)
                 ? MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier
                 : 1f;
         }

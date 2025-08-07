@@ -32,6 +32,7 @@ namespace FungusToast.Core.Config
         public const float HyphalResistanceTransferChance = 0.12f;
 
         public const float PerimeterProliferatorEdgeMultiplier = 2.5f;
+        public const int PerimeterProliferatorEdgeDistance = 2; // Cells within this many tiles of the edge get the bonus
 
         public const int EnduringToxaphoresNewToxinExtension = 8; // X: cycles added to new toxins
         public const int EnduringToxaphoresExistingToxinExtension = 4; // Y: cycles added to existing toxins at acquisition
