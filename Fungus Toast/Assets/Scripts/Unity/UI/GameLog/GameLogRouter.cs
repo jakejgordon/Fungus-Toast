@@ -132,6 +132,13 @@ namespace FungusToast.Unity.UI.GameLog
             globalEventsLogManager?.OnGameEnd(winnerName);
         }
         
+        public void OnDraftPick(string playerName, string mycovariantName)
+        {
+            if (IsSilentMode) return;
+            // Only global log shows draft picks
+            globalEventsLogManager?.OnDraftPick(playerName, mycovariantName);
+        }
+        
         // === STUB IMPLEMENTATIONS ===
         // All other ISimulationObserver methods that we don't need in Unity
         // Silent mode still applies to prevent any potential future implementations from logging

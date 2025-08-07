@@ -178,6 +178,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             SetDraftState(DraftUIState.AnimatingPick);
 
+            // Log the draft pick to the global events log
+            GameManager.Instance.GameUI.GameLogRouter?.OnDraftPick(currentPlayer.PlayerName, picked.Name);
+
             GameManager.Instance.ResolveMycovariantDraftPick(currentPlayer, picked);
 
             if (!picked.IsUniversal)

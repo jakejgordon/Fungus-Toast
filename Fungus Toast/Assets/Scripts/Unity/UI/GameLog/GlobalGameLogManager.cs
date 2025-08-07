@@ -124,6 +124,11 @@ namespace FungusToast.Unity.UI.GameLog
             AddEntry(new GameLogEntry($"Game Over - {winnerName} wins!", GameLogCategory.Lucky));
         }
         
+        public void OnDraftPick(string playerName, string mycovariantName)
+        {
+            AddEntry(new GameLogEntry($"{playerName} drafted {mycovariantName}", GameLogCategory.Normal));
+        }
+        
         private void AddEntry(GameLogEntry entry)
         {
             logEntries.Enqueue(entry);
