@@ -21,7 +21,7 @@ namespace FungusToast.Unity.UI.GameLog
             if (timestampText != null)
             {
                 timestampText.text = $"R{entry.Round}";
-                timestampText.color = Color.gray;
+                timestampText.color = Color.black;
             }
             
             // Set background color based on category
