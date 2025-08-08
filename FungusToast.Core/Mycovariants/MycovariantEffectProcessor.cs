@@ -323,7 +323,7 @@ public static class MycovariantEffectProcessor
         if (player == null)
             return;
 
-        // 1. Gather all enemy living cells
+        // 1. Gathering all enemy living cells
         var enemyLivingCells = board.GetAllCells()
             .Where(cell => cell != null
                 && cell.IsAlive
@@ -663,5 +663,90 @@ public static class MycovariantEffectProcessor
         }
         
         return false;
+    }
+
+    /// <summary>
+    /// Handles the Chemotactic Mycotoxins effect at the end of each decay phase.
+    /// Relocates toxins that are no longer adjacent to living enemy cells.
+    /// </summary>
+    public static void OnDecayPhase_ChemotacticMycotoxins(
+        GameBoard board,
+        List<Player> players,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        foreach (var player in players)
+        {
+            var playerMyco = player.GetMycovariant(MycovariantIds.ChemotacticMycotoxinsId);
+            if (playerMyco == null) continue;
+
+            int mycotoxinTracerLevel = player.GetMutationLevel(MutationIds.MycotoxinTracer);
+            if (mycotoxinTracerLevel <= 0) continue; // No Mycotoxin Tracer = no relocation
+
+            // Calculate relocation chance: Y% * Mycotoxin Tracer level
+            float relocationChance = MycovariantGameBalance.ChemotacticMycotoxinsMycotoxinTracerMultiplier * mycotoxinTracerLevel / 100f;
+
+            // Find all player's toxin tiles that are NOT adjacent to living enemy cells
+            var isolatedToxins = board.GetAllCellsOwnedBy(player.PlayerId)
+                .Where(cell => cell.IsToxin && !IsAdjacentToLivingEnemyCells(board, cell, player.PlayerId))
+                .ToList();
+
+            if (isolatedToxins.Count == 0) continue; // No isolated toxins to relocate
+
+            // Use shared helper to find potential relocation targets (same rules as Mycotoxin Tracer)
+            var targetTiles = ToxinHelper.FindMycotoxinTargetTiles(board, player);
+
+            if (targetTiles.Count == 0) continue; // No valid relocation targets
+
+            int relocatedCount = 0;
+
+            foreach (var toxinCell in isolatedToxins)
+            {
+                if (rng.NextDouble() < relocationChance)
+                {
+                    // Select a random target tile
+                    var targetTile = targetTiles[rng.Next(targetTiles.Count)];
+                    
+                    // Store the toxin's properties before removing it
+                    int toxinLifespan = toxinCell.ToxinExpirationAge;
+                    var growthSource = toxinCell.SourceOfGrowth;
+                    
+                    // Remove the old toxin
+                    var oldTile = board.GetTileById(toxinCell.TileId);
+                    if (oldTile != null)
+                    {
+                        oldTile.RemoveFungalCell();
+                        player.ControlledTileIds.Remove(toxinCell.TileId);
+                    }
+                    
+                    // Place the toxin at the new location
+                    ToxinHelper.ConvertToToxin(board, targetTile.TileId, toxinLifespan, growthSource ?? GrowthSource.Unknown, player);
+                    
+                    relocatedCount++;
+                    
+                    // Remove the target tile from available targets to prevent double-targeting
+                    targetTiles.Remove(targetTile);
+                    
+                    if (targetTiles.Count == 0) break; // No more targets available
+                }
+            }
+
+            // Record the relocations
+            if (relocatedCount > 0)
+            {
+                playerMyco.IncrementEffectCount(MycovariantEffectType.Relocations, relocatedCount);
+                observer.RecordChemotacticMycotoxinsRelocations(player.PlayerId, relocatedCount);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Helper method to check if a toxin cell is orthogonally adjacent to any living enemy cells.
+    /// </summary>
+    private static bool IsAdjacentToLivingEnemyCells(GameBoard board, FungalCell toxinCell, int playerId)
+    {
+        return board.GetOrthogonalNeighbors(toxinCell.TileId)
+            .Any(tile => tile.FungalCell?.IsAlive == true && 
+                        tile.FungalCell.OwnerPlayerId != playerId);
     }
 }

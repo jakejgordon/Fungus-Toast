@@ -553,5 +553,45 @@ namespace FungusToast.Core.Mycovariants
                     }
                 }
             };
+
+        public static Mycovariant ChemotacticMycotoxins() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.ChemotacticMycotoxinsId,
+                Name = "Chemotactic Mycotoxins",
+                Description = $"At the end of each decay phase, your toxins that are no longer next to living enemy cells have an X% chance to relocate to a living enemy cell, where X is {MycovariantGameBalance.ChemotacticMycotoxinsMycotoxinTracerMultiplier} times your Mycotoxin Tracer level. Toxins relocate following the same rules as Mycotoxin Tracer.",
+                FlavorText = "Sensing the absence of targets, the colony's toxic spores drift through microscopic gradients, seeking new hosts to poison.",
+                Type = MycovariantType.Passive,
+                Category = MycovariantCategory.Fungicide, // Enhances toxin effectiveness
+                IsUniversal = false,
+                AutoMarkTriggered = true, // Passive effect, always considered triggered
+                SynergyWith = new List<int> { 
+                    MycovariantIds.EnduringToxaphoresId // Works well with longer-lasting toxins
+                },
+                AIScore = (player, board) =>
+                {
+                    int toxinCount = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsToxin);
+                    int mycotoxinTracerLevel = player.GetMutationLevel(MutationIds.MycotoxinTracer);
+                    
+                    if (toxinCount == 0 || mycotoxinTracerLevel == 0) 
+                        return 1f; // No benefit without toxins or Mycotoxin Tracer
+                    
+                    // Base score is 3
+                    float score = 3f;
+                    
+                    // Bonus: +1 point if player has at least 10 toxins on the board
+                    if (toxinCount >= 10)
+                    {
+                        score += 1f;
+                    }
+                    
+                    // Bonus: +1 point per 5 levels of Mycotoxin Tracer
+                    float tracerBonus = (mycotoxinTracerLevel / 5) * 1f;
+                    score += tracerBonus;
+                    
+                    // Cap at maximum of 10
+                    return Math.Min(10f, score);
+                }
+            };
     }
 }

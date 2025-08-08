@@ -402,14 +402,8 @@ namespace FungusToast.Core.Phases
 
             if (totalToxins == 0) return 0;
 
-            // Target tiles that are unoccupied, not toxic, and orthogonally adjacent to enemy mold
-            List<BoardTile> candidateTiles = board.AllTiles()
-                .Where(t => !t.IsOccupied)
-                .Where(t =>
-                    board.GetOrthogonalNeighbors(t.TileId)
-                         .Any(n => n.FungalCell is { IsAlive: true } && n.FungalCell.OwnerPlayerId != player.PlayerId)
-                )
-                .ToList();
+            // Use shared helper to find target tiles adjacent to enemy living cells
+            List<BoardTile> candidateTiles = ToxinHelper.FindMycotoxinTargetTiles(board, player);
 
             int placed = 0;
             for (int i = 0; i < totalToxins && candidateTiles.Count > 0; i++)

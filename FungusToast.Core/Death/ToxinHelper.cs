@@ -2,8 +2,10 @@
 using FungusToast.Core.Events;
 using FungusToast.Core.Players;
 using FungusToast.Core.Config;
-using System;
 using FungusToast.Core.Growth;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Core.Death
 {
@@ -117,6 +119,23 @@ namespace FungusToast.Core.Death
             {
                 board.FireCellPoisonedEvent(owner.PlayerId, tileId, oldOwnerId, growthSource);
             }
+        }
+
+        /// <summary>
+        /// Finds all empty tiles that are orthogonally adjacent to living enemy cells.
+        /// This is the common targeting logic used by Mycotoxin Tracer and Chemotactic Mycotoxins.
+        /// </summary>
+        /// <param name="board">The game board</param>
+        /// <param name="player">The player placing toxins (enemies are all other players)</param>
+        /// <returns>List of valid target tiles for toxin placement</returns>
+        public static List<BoardTile> FindMycotoxinTargetTiles(GameBoard board, Player player)
+        {
+            return board.AllTiles()
+                .Where(tile => !tile.IsOccupied && // Empty tiles only
+                    board.GetOrthogonalNeighbors(tile.TileId)
+                        .Any(neighbor => neighbor.FungalCell?.IsAlive == true && 
+                                       neighbor.FungalCell.OwnerPlayerId != player.PlayerId)) // Adjacent to enemy living cells
+                .ToList();
         }
     }
 }

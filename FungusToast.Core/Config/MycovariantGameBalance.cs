@@ -53,6 +53,9 @@ namespace FungusToast.Core.Config
 
         public const float NecrophoricAdaptationReclamationChance = .15f;
 
+        // Chemotactic Mycotoxins parameters
+        public const float ChemotacticMycotoxinsMycotoxinTracerMultiplier = 3.0f; // Y value: 3.0% per Mycotoxin Tracer level
+
         // AI scoring for Mycovariants
         public const float MycelialBastionIBaseAIScore = 4f;
         public const float MycelialBastionIIBaseAIScore = 5f;

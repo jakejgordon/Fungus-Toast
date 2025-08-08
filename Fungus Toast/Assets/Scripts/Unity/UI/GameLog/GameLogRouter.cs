@@ -213,5 +213,11 @@ namespace FungusToast.Unity.UI.GameLog
             if (IsSilentMode) return;
             playerActivityLogManager?.RecordSpecificMutationUpgrade(playerId, mutationName);
         }
+        
+        public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordChemotacticMycotoxinsRelocations(playerId, relocations);
+        }
     }
 }

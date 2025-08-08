@@ -288,6 +288,13 @@ namespace FungusToast.Simulation.Models
                             break;
                         }
 
+                    case var id when id == MycovariantIds.ChemotacticMycotoxinsId:
+                        {
+                            int relocations = tracking.GetChemotacticMycotoxinsRelocations(player.PlayerId);
+                            if (relocations > 0) effectCounts[MycovariantEffectType.Relocations] = relocations;
+                            break;
+                        }
+
                         // ...more cases...
                 }
 

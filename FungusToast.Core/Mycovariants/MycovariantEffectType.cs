@@ -25,6 +25,7 @@
         NecrophoricAdaptationReclamations, // Reclamations triggered by NecrophoricAdaptation
         CytolyticBurstToxins, // Toxins created by Cytolytic Burst
         CytolyticBurstKills, // Cells killed by Cytolytic Burst toxins
+        Relocations, // Toxins relocated by Chemotactic Mycotoxins
         // Add others as needed
     }
 }

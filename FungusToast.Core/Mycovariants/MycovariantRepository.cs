@@ -62,6 +62,9 @@ namespace FungusToast.Core.Mycovariants
                 
                 // --- Area Effect options ---
                 MycovariantFactory.CytolyticBurst(),
+                
+                // --- Toxin Enhancement options ---
+                MycovariantFactory.ChemotacticMycotoxins(),
             };
         }
 

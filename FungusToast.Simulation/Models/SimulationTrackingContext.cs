@@ -865,6 +865,23 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetAllCytolyticBurstKills() => new(cytolyticBurstKills);
 
         // ────────────────
+        // Chemotactic Mycotoxins Relocations
+        // ────────────────
+        private readonly Dictionary<int, int> chemotacticMycotoxinsRelocations = new();
+        
+        public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations)
+        {
+            if (!chemotacticMycotoxinsRelocations.ContainsKey(playerId))
+                chemotacticMycotoxinsRelocations[playerId] = 0;
+            chemotacticMycotoxinsRelocations[playerId] += relocations;
+        }
+        
+        public int GetChemotacticMycotoxinsRelocations(int playerId)
+            => chemotacticMycotoxinsRelocations.TryGetValue(playerId, out var val) ? val : 0;
+            
+        public Dictionary<int, int> GetAllChemotacticMycotoxinsRelocations() => new(chemotacticMycotoxinsRelocations);
+
+        // ────────────────
         // Hypersystemic Regeneration Effects
         // ────────────────
         private readonly Dictionary<int, int> hypersystemicRegenerationResistance = new();

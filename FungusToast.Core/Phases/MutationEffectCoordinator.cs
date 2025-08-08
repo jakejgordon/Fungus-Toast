@@ -154,6 +154,9 @@ namespace FungusToast.Core.Phases
             
             // 3. Mycotoxin Potentiation (toxin aura deaths - should happen after spore placement)
             FungicideMutationProcessor.OnDecayPhase_MycotoxinPotentiation(board, players, rng, observer);
+            
+            // 4. Chemotactic Mycotoxins (relocate isolated toxins - should happen at the end after all toxin placement)
+            MycovariantEffectProcessor.OnDecayPhase_ChemotacticMycotoxins(board, players, rng, observer);
         }
 
         // Mutation Phase Events

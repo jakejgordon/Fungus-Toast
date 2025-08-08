@@ -51,6 +51,9 @@ namespace FungusToast.Unity.UI.GameLog
         private Dictionary<DeathReason, int> decayPhaseDeaths = new Dictionary<DeathReason, int>();
         private bool isTrackingDecayPhase = false;
         
+        // Track Chemotactic Mycotoxins relocations during decay phase for summary
+        private int chemotacticMycotoxinsRelocations = 0;
+        
         // Track resistance applications during growth phase for summary
         private int hypersystemicResistanceApplications = 0;
         private bool isTrackingResistanceApplications = false;
@@ -211,6 +214,9 @@ namespace FungusToast.Unity.UI.GameLog
             hypersystemicDiagonalReclaims = 0;
             isTrackingGrowthPhaseEffects = true;
             
+            // Start tracking Chemotactic Mycotoxins relocations for this round
+            chemotacticMycotoxinsRelocations = 0;
+            
             // Don't add round start messages here - that's for the global log
         }
         
@@ -220,6 +226,7 @@ namespace FungusToast.Unity.UI.GameLog
             if (isTrackingDecayPhase)
             {
                 ShowDecayPhaseSummary();
+                ShowPostDecayPhaseSummary();
                 isTrackingDecayPhase = false;
             }
             
@@ -282,6 +289,29 @@ namespace FungusToast.Unity.UI.GameLog
             
             string message = $"Decay Summary: {string.Join(", ", deathReasonParts)}";
             AddEntry(new GameLogEntry(message, GameLogCategory.Unlucky, null, humanPlayerId));
+        }
+        
+        private void ShowPostDecayPhaseSummary()
+        {
+            if (IsSilentMode) return;
+            
+            var summaryParts = new List<string>();
+            
+            // Chemotactic Mycotoxins relocations
+            if (chemotacticMycotoxinsRelocations > 0)
+            {
+                string part = chemotacticMycotoxinsRelocations == 1
+                    ? "Chemotactic Mycotoxins relocated 1 toxin"
+                    : $"Chemotactic Mycotoxins relocated {chemotacticMycotoxinsRelocations} toxins";
+                summaryParts.Add(part);
+            }
+            
+            // Only show summary if there are any positive effects to report
+            if (summaryParts.Count > 0)
+            {
+                string message = $"Post-Decay Phase Summary: {string.Join(", ", summaryParts)}";
+                AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
+            }
         }
         
         private void ShowResistanceApplicationsSummary()
@@ -1074,6 +1104,14 @@ namespace FungusToast.Unity.UI.GameLog
         {
             // This is a more generic version - we'll route it to the same implementation
             RecordMutatorPhenotypeUpgrade(playerId, mutationName);
+        }
+        
+        public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations)
+        {
+            if (playerId == humanPlayerId && relocations > 0)
+            {
+                chemotacticMycotoxinsRelocations += relocations;
+            }
         }
     }
 }

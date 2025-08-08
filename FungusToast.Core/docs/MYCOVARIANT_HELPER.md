@@ -153,4 +153,7 @@ if (player.PlayerType == PlayerTypeEnum.AI)
 - **Ask for Clarification:** If the effect is complex or has multiple components, Cursor should ask the human for clarification on what should be tracked and reported.
 - **Test Both Draft Types:** Always test your mycovariant in both silent drafts (via simulation/fast-forward) and Unity UI drafts to ensure both AI paths work correctly.
 - **Debug Logging:** Add logging to verify that your effects are being executed correctly in both contexts.
-- **Auto-Trigger Declaration:** Use `Auto
+- **Auto-Trigger Declaration:** Use `AutoMarkTriggered = true` for passive mycovariants that don't require player input.
+- **Unity Log Manager Stubs:** For any new `ISimulationObserver` methods you add, you must also add stub implementations to both `@GameLogRouter.cs` and `@GameLogManager.cs` in the Unity project. These should follow the pattern of checking `IsSilentMode` in the router and implementing the actual logging logic in the manager. By default, most methods should be stubbed as empty implementations unless they need specific player activity logging.
+
+---
