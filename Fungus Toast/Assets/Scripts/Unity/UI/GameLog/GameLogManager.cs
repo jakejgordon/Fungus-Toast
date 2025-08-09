@@ -1113,5 +1113,14 @@ namespace FungusToast.Unity.UI.GameLog
                 chemotacticMycotoxinsRelocations += relocations;
             }
         }
+
+        public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained)
+        {
+            if (playerId == humanPlayerId && sourceLevelsLost > 0 && targetLevelsGained > 0)
+            {
+                string message = $"Ontogenic Regression: {sourceMutationName} lost {sourceLevelsLost} level{(sourceLevelsLost > 1 ? "s" : "")}, {targetMutationName} gained {targetLevelsGained} level{(targetLevelsGained > 1 ? "s" : "")}";
+                AddLuckyEntry(message, playerId);
+            }
+        }
     }
 }

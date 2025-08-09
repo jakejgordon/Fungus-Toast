@@ -46,6 +46,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.AnabolicInversion,      new MutationLayoutMetadata(3, 3, MutationCategory.GeneticDrift) },
                 { MutationIds.NecrophyticBloom,       new MutationLayoutMetadata(3, 4, MutationCategory.GeneticDrift) },
                 { MutationIds.HyperadaptiveDrift,     new MutationLayoutMetadata(3, 5, MutationCategory.GeneticDrift) },
+                { MutationIds.OntogenicRegression,    new MutationLayoutMetadata(3, 6, MutationCategory.GeneticDrift) },
 
                 /* ---------------Mycelial Surge (col 4) -------------- */
                 { MutationIds.HyphalSurge,            new MutationLayoutMetadata(4, 0, MutationCategory.MycelialSurges) },

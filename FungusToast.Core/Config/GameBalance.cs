@@ -165,6 +165,11 @@ namespace FungusToast.Core.Config
         public const int PutrefactiveCascadeMaxCascadeDepth = 10; // Maximum cascade depth to prevent infinite recursion
         public const int PutrefactiveCascadeMaxLevel = 3;
 
+        // Ontogenic Regression (Tier 6 GeneticDrift)
+        public const float OntogenicRegressionChancePerLevel = 0.30f; // 15% chance per level
+        public const int OntogenicRegressionTier1LevelsToConsume = 5; // Levels consumed from tier 1 mutations
+        public const int OntogenicRegressionMaxLevel = 3;
+
         // Hypersystemic Regeneration (Tier 7 CellularResilience)
         public const float HypersystemicRegenerationEffectivenessBonus = 0.01f; // X% per level boost to Regenerative Hyphae
         public const float HypersystemicRegenerationResistanceChance = 0.15f; // Y% per level chance for resistant cells
@@ -198,5 +203,7 @@ namespace FungusToast.Core.Config
                 };
             }
         }
+
+
     }
 }

@@ -35,5 +35,6 @@ namespace FungusToast.Core
         PutrefactiveCascade,
         MimeticResilience,
         HypersystemicRegeneration,
+        OntogenicRegression,
     }
 }

@@ -171,6 +171,17 @@ namespace FungusToast.Core.Phases
             GeneticDriftMutationProcessor.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, currentRound, observer);
         }
 
+        public static void OnMutationPhaseStart_OntogenicRegression(
+            GameBoard board,
+            List<Player> players,
+            List<Mutation> allMutations,
+            Random rng,
+            int currentRound,
+            ISimulationObserver observer)
+        {
+            GeneticDriftMutationProcessor.OnMutationPhaseStart_OntogenicRegression(board, players, allMutations, rng, currentRound, observer);
+        }
+
         // Special Events
         public static void OnNecrophyticBloomActivated(
             GameBoard board,

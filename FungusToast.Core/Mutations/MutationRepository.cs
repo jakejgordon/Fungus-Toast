@@ -549,6 +549,25 @@ namespace FungusToast.Core.Mutations
             new MutationPrerequisite(MutationIds.CatabolicRebirth, 1), // Tier 6 CellularResilience
             new MutationPrerequisite(MutationIds.MycotropicInduction, 1)); // Tier 3 Growth
 
+            MakeChild(new Mutation(
+                id: MutationIds.OntogenicRegression,
+                name: "Ontogenic Regression",
+                description: $"Each level grants a {FormatPercent(GameBalance.OntogenicRegressionChancePerLevel)} chance of devolving {GameBalance.OntogenicRegressionTier1LevelsToConsume} levels from a tier 1 mutation into a random tier 5 or 6 mutation at the start of the Mutation Phase, even if prerequisites are not met. At max level, the ability triggers twice.",
+                flavorText: "Ultimate genomic instability unlocks forbidden evolutionary pathways, sacrificing foundational adaptations to achieve impossible transcendence through ontogenic reversal.",
+                type: MutationType.OntogenicRegression,
+                effectPerLevel: GameBalance.OntogenicRegressionChancePerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier6),
+                maxLevel: GameBalance.OntogenicRegressionMaxLevel,
+                category: MutationCategory.GeneticDrift,
+                tier: MutationTier.Tier6
+            ),
+            new MutationPrerequisite(MutationIds.HyperadaptiveDrift, 2),
+            new MutationPrerequisite(MutationIds.MycelialBloom, 10),
+            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 10),
+            new MutationPrerequisite(MutationIds.MycotoxinTracer, 10),
+            new MutationPrerequisite(MutationIds.MutatorPhenotype, 10));
+
+
             return (allMutations, rootMutations);
         }
 

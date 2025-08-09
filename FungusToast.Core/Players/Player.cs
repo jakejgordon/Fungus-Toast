@@ -450,5 +450,25 @@ namespace FungusToast.Core.Players
             PlayerMycovariants.Add(playerMyco);
         }
 
+        internal void SetMutationLevel(int id, int newLevel)
+        {
+            // Get the mutation definition from the registry
+            if (!FungusToast.Core.Mutations.MutationRegistry.All.TryGetValue(id, out var mutation))
+                return; // Invalid mutation ID
+
+            // Clamp the new level to valid range
+            newLevel = System.Math.Max(0, System.Math.Min(newLevel, mutation.MaxLevel));
+
+            // Get or create the PlayerMutation object
+            if (!PlayerMutations.ContainsKey(id))
+                PlayerMutations[id] = new PlayerMutation(PlayerId, id, mutation);
+
+            // Set the level directly
+            PlayerMutations[id].CurrentLevel = newLevel;
+
+            // If setting to 0, we could remove the entry entirely, but keeping it for consistency
+            if (newLevel == 0)
+                PlayerMutations.Remove(id);
+        }
     }
 }

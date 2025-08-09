@@ -33,5 +33,6 @@
         public const int PutrefactiveCascade = 28;
         public const int MimeticResilience = 29;
         public const int HypersystemicRegeneration = 30;
+        public const int OntogenicRegression = 31;
     }
 }

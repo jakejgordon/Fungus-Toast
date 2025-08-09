@@ -153,5 +153,12 @@ namespace FungusToast.Simulation.Models
         // ──────────────
         public int HypersystemicRegenerationResistance { get; set; }
         public int HypersystemicDiagonalReclaims { get; set; }
+
+        // ──────────────
+        // ONTOGENIC REGRESSION EFFECT COUNTERS
+        // ──────────────
+        public int OntogenicRegressionActivations { get; set; }
+        public int OntogenicRegressionDevolvedLevels { get; set; }
+        public int OntogenicRegressionTier5PlusLevels { get; set; }
     }
 }

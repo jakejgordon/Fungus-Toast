@@ -360,5 +360,75 @@ namespace FungusToast.Core.Phases
                 }
             }
         }
+
+        public static void OnMutationPhaseStart_OntogenicRegression(
+            GameBoard board,
+            List<Player> players,
+            List<Mutation> allMutations,
+            Random rng,
+            int currentRound,
+            ISimulationObserver observer)
+        {
+            foreach (var player in players)
+            {
+                TryApplyOntogenicRegression(player, allMutations, rng, observer);
+            }
+        }
+
+        /// <summary>
+        /// Tries to apply Ontogenic Regression - devolves tier 1 mutations into tier 5/6 mutations.
+        /// </summary>
+        public static void TryApplyOntogenicRegression(
+            Player player,
+            List<Mutation> allMutations,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            int regressionLevel = player.GetMutationLevel(MutationIds.OntogenicRegression);
+            if (regressionLevel <= 0) return;
+
+            float baseChance = GameBalance.OntogenicRegressionChancePerLevel * regressionLevel;
+            int maxAttempts = regressionLevel >= GameBalance.OntogenicRegressionMaxLevel ? 2 : 1;
+
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                if (rng.NextDouble() >= baseChance) continue;
+
+                // Find tier 1 mutations that can be devolved (have enough levels)
+                var tier1Mutations = allMutations
+                    .Where(m => m.Tier == MutationTier.Tier1)
+                    .Where(m => player.GetMutationLevel(m.Id) >= GameBalance.OntogenicRegressionTier1LevelsToConsume)
+                    .ToList();
+
+                if (!tier1Mutations.Any()) continue;
+
+                // Find tier 5 and 6 mutations that can be gained (ignoring prerequisites)
+                var targetMutations = allMutations
+                    .Where(m => m.Tier == MutationTier.Tier5 || m.Tier == MutationTier.Tier6)
+                    .Where(m => player.GetMutationLevel(m.Id) < m.MaxLevel)
+                    .ToList();
+
+                if (!targetMutations.Any()) continue;
+
+                // Select random source and target mutations
+                var sourceMutation = tier1Mutations[rng.Next(tier1Mutations.Count)];
+                var targetMutation = targetMutations[rng.Next(targetMutations.Count)];
+
+                // Perform the devolution
+                int sourceLevelsToRemove = GameBalance.OntogenicRegressionTier1LevelsToConsume;
+                int currentSourceLevel = player.GetMutationLevel(sourceMutation.Id);
+                int newSourceLevel = Math.Max(0, currentSourceLevel - sourceLevelsToRemove);
+                
+                // Remove levels from source mutation
+                player.SetMutationLevel(sourceMutation.Id, newSourceLevel);
+                
+                // Add 1 level to target mutation (ignoring prerequisites)
+                int currentTargetLevel = player.GetMutationLevel(targetMutation.Id);
+                player.SetMutationLevel(targetMutation.Id, currentTargetLevel + 1);
+
+                // Record the effect for tracking
+                observer.RecordOntogenicRegressionEffect(player.PlayerId, sourceMutation.Name, GameBalance.OntogenicRegressionTier1LevelsToConsume, targetMutation.Name, 1);
+            }
+        }
     }
 }

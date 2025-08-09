@@ -20,7 +20,7 @@ namespace FungusToast.Core.Players
         /// <summary>
         /// The current level of the mutation for this player.
         /// </summary>
-        public int CurrentLevel { get; private set; }
+        public int CurrentLevel { get; set; }
 
         /// <summary>
         /// The shared static mutation definition.

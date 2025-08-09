@@ -923,5 +923,42 @@ namespace FungusToast.Simulation.Models
             // Stub implementation - we don't track individual upgrades in simulations,
             // only the mutation point values via RecordMutatorPhenotypeMutationPointsEarned
         }
+
+        // ────────────────
+        // Ontogenic Regression Effects
+        // ────────────────
+        private readonly Dictionary<int, int> ontogenicRegressionActivations = new();
+        private readonly Dictionary<int, int> ontogenicRegressionDevolvedLevels = new();
+        private readonly Dictionary<int, int> ontogenicRegressionTier5PlusLevels = new();
+
+        public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained)
+        {
+            if (!ontogenicRegressionActivations.ContainsKey(playerId))
+                ontogenicRegressionActivations[playerId] = 0;
+            ontogenicRegressionActivations[playerId]++;
+            
+            // Track devolved levels (levels lost from tier 1 mutations)
+            if (!ontogenicRegressionDevolvedLevels.ContainsKey(playerId))
+                ontogenicRegressionDevolvedLevels[playerId] = 0;
+            ontogenicRegressionDevolvedLevels[playerId] += sourceLevelsLost;
+            
+            // Track tier 5+ levels gained
+            if (!ontogenicRegressionTier5PlusLevels.ContainsKey(playerId))
+                ontogenicRegressionTier5PlusLevels[playerId] = 0;
+            ontogenicRegressionTier5PlusLevels[playerId] += targetLevelsGained;
+        }
+
+        public int GetOntogenicRegressionActivations(int playerId)
+            => ontogenicRegressionActivations.TryGetValue(playerId, out var val) ? val : 0;
+            
+        public int GetOntogenicRegressionDevolvedLevels(int playerId)
+            => ontogenicRegressionDevolvedLevels.TryGetValue(playerId, out var val) ? val : 0;
+            
+        public int GetOntogenicRegressionTier5PlusLevels(int playerId)
+            => ontogenicRegressionTier5PlusLevels.TryGetValue(playerId, out var val) ? val : 0;
+            
+        public Dictionary<int, int> GetAllOntogenicRegressionActivations() => new(ontogenicRegressionActivations);
+        public Dictionary<int, int> GetAllOntogenicRegressionDevolvedLevels() => new(ontogenicRegressionDevolvedLevels);
+        public Dictionary<int, int> GetAllOntogenicRegressionTier5PlusLevels() => new(ontogenicRegressionTier5PlusLevels);
     }
 }
