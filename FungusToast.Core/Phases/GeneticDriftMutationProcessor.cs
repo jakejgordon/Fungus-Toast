@@ -392,7 +392,13 @@ namespace FungusToast.Core.Phases
 
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
-                if (rng.NextDouble() >= baseChance) continue;
+                if (rng.NextDouble() >= baseChance)
+                {
+                    // Failed to trigger - award 2 mutation points as consolation
+                    player.MutationPoints += GameBalance.OntogenicRegressionFailureConsolationPoints;
+                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, GameBalance.OntogenicRegressionFailureConsolationPoints);
+                    continue;
+                }
 
                 // Find tier 1 mutations that can be devolved (have enough levels)
                 var tier1Mutations = allMutations
@@ -400,7 +406,13 @@ namespace FungusToast.Core.Phases
                     .Where(m => player.GetMutationLevel(m.Id) >= GameBalance.OntogenicRegressionTier1LevelsToConsume)
                     .ToList();
 
-                if (!tier1Mutations.Any()) continue;
+                if (!tier1Mutations.Any())
+                {
+                    // Can't find mutations to devolve - award 2 mutation points as consolation
+                    player.MutationPoints += GameBalance.OntogenicRegressionFailureConsolationPoints;
+                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, GameBalance.OntogenicRegressionFailureConsolationPoints);
+                    continue;
+                }
 
                 // Find tier 5 and 6 mutations that can be gained (ignoring prerequisites)
                 var targetMutations = allMutations
@@ -408,7 +420,13 @@ namespace FungusToast.Core.Phases
                     .Where(m => player.GetMutationLevel(m.Id) < m.MaxLevel)
                     .ToList();
 
-                if (!targetMutations.Any()) continue;
+                if (!targetMutations.Any())
+                {
+                    // Can't find target mutations to upgrade - award 2 mutation points as consolation
+                    player.MutationPoints += GameBalance.OntogenicRegressionFailureConsolationPoints;
+                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, GameBalance.OntogenicRegressionFailureConsolationPoints);
+                    continue;
+                }
 
                 // Select random source and target mutations
                 var sourceMutation = tier1Mutations[rng.Next(tier1Mutations.Count)];
@@ -428,6 +446,76 @@ namespace FungusToast.Core.Phases
 
                 // Record the effect for tracking
                 observer.RecordOntogenicRegressionEffect(player.PlayerId, sourceMutation.Name, GameBalance.OntogenicRegressionTier1LevelsToConsume, targetMutation.Name, 1);
+            }
+        }
+
+        public static void TryApplyAdaptiveExpression(
+            Player player,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            int level = player.GetMutationLevel(MutationIds.AdaptiveExpression);
+            if (level <= 0) return;
+
+            float chance = level * GameBalance.AdaptiveExpressionEffectPerLevel;
+            if (rng.NextDouble() >= chance) return;
+
+            // First bonus point
+            int bonusPoints = 1;
+            player.MutationPoints += 1;
+
+            // Check for second bonus point
+            float secondChance = level * GameBalance.AdaptiveExpressionSecondPointChancePerLevel;
+            if (rng.NextDouble() < secondChance)
+            {
+                bonusPoints++;
+                player.MutationPoints += 1;
+            }
+
+            observer.RecordAdaptiveExpressionBonus(player.PlayerId, bonusPoints);
+        }
+
+        public static void TryApplyAnabolicInversion(
+            Player player,
+            List<Player> allPlayers,
+            GameBoard board,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            int level = player.GetMutationLevel(MutationIds.AnabolicInversion);
+            if (level <= 0) return;
+
+            // Use the existing RollAnabolicInversionBonus logic
+            int bonusPoints = player.RollAnabolicInversionBonus(allPlayers, rng, board);
+            if (bonusPoints > 0)
+            {
+                player.MutationPoints += bonusPoints;
+                observer.RecordAnabolicInversionBonus(player.PlayerId, bonusPoints);
+            }
+        }
+
+        // Add new phase event handlers:
+        public static void OnMutationPhaseStart_AdaptiveExpression(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            foreach (var player in players)
+            {
+                TryApplyAdaptiveExpression(player, rng, observer);
+            }
+        }
+
+        public static void OnMutationPhaseStart_AnabolicInversion(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            foreach (var player in players)
+            {
+                TryApplyAnabolicInversion(player, players, board, rng, observer);
             }
         }
     }

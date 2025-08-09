@@ -245,7 +245,7 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.MaxEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
                 },
@@ -258,6 +258,7 @@ namespace FungusToast.Core.AI
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
                 },
@@ -269,6 +270,7 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.MaxEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),

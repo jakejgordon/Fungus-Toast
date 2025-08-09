@@ -166,9 +166,10 @@ namespace FungusToast.Core.Config
         public const int PutrefactiveCascadeMaxLevel = 3;
 
         // Ontogenic Regression (Tier 6 GeneticDrift)
-        public const float OntogenicRegressionChancePerLevel = 0.30f; // 15% chance per level
-        public const int OntogenicRegressionTier1LevelsToConsume = 5; // Levels consumed from tier 1 mutations
+        public const float OntogenicRegressionChancePerLevel = 0.30f;
+        public const int OntogenicRegressionTier1LevelsToConsume = 3;
         public const int OntogenicRegressionMaxLevel = 3;
+        public const int OntogenicRegressionFailureConsolationPoints = 2; // Points awarded when regression fails
 
         // Hypersystemic Regeneration (Tier 7 CellularResilience)
         public const float HypersystemicRegenerationEffectivenessBonus = 0.01f; // X% per level boost to Regenerative Hyphae

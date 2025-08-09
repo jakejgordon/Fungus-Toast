@@ -930,6 +930,7 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> ontogenicRegressionActivations = new();
         private readonly Dictionary<int, int> ontogenicRegressionDevolvedLevels = new();
         private readonly Dictionary<int, int> ontogenicRegressionTier5PlusLevels = new();
+        private readonly Dictionary<int, int> ontogenicRegressionFailureBonuses = new();
 
         public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained)
         {
@@ -948,6 +949,13 @@ namespace FungusToast.Simulation.Models
             ontogenicRegressionTier5PlusLevels[playerId] += targetLevelsGained;
         }
 
+        public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints)
+        {
+            if (!ontogenicRegressionFailureBonuses.ContainsKey(playerId))
+                ontogenicRegressionFailureBonuses[playerId] = 0;
+            ontogenicRegressionFailureBonuses[playerId] += bonusPoints;
+        }
+
         public int GetOntogenicRegressionActivations(int playerId)
             => ontogenicRegressionActivations.TryGetValue(playerId, out var val) ? val : 0;
             
@@ -957,8 +965,12 @@ namespace FungusToast.Simulation.Models
         public int GetOntogenicRegressionTier5PlusLevels(int playerId)
             => ontogenicRegressionTier5PlusLevels.TryGetValue(playerId, out var val) ? val : 0;
             
+        public int GetOntogenicRegressionFailureBonuses(int playerId)
+            => ontogenicRegressionFailureBonuses.TryGetValue(playerId, out var val) ? val : 0;
+            
         public Dictionary<int, int> GetAllOntogenicRegressionActivations() => new(ontogenicRegressionActivations);
         public Dictionary<int, int> GetAllOntogenicRegressionDevolvedLevels() => new(ontogenicRegressionDevolvedLevels);
         public Dictionary<int, int> GetAllOntogenicRegressionTier5PlusLevels() => new(ontogenicRegressionTier5PlusLevels);
+        public Dictionary<int, int> GetAllOntogenicRegressionFailureBonuses() => new(ontogenicRegressionFailureBonuses);
     }
 }

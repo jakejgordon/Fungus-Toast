@@ -127,6 +127,13 @@ namespace FungusToast.Simulation.Models
                     PutrefactiveCascadeKills = tracking.GetPutrefactiveCascadeKills(player.PlayerId),
                     PutrefactiveCascadeToxified = tracking.GetPutrefactiveCascadeToxified(player.PlayerId),
 
+                    // --- Ontogenic Regression effect counters ---
+                    OntogenicRegressionActivations = tracking.GetOntogenicRegressionActivations(player.PlayerId),
+                    OntogenicRegressionDevolvedLevels = tracking.GetOntogenicRegressionDevolvedLevels(player.PlayerId),
+                    OntogenicRegressionTier5PlusLevels = tracking.GetOntogenicRegressionTier5PlusLevels(player.PlayerId),
+
+                    OntogenicRegressionFailureBonuses = tracking.GetOntogenicRegressionFailureBonuses(player.PlayerId),
+
                     // --- Mutation point income and spending ---
                     AdaptiveExpressionPointsEarned = tracking.GetAdaptiveExpressionPointsEarned(player.PlayerId),
                     MutatorPhenotypePointsEarned = tracking.GetMutatorPhenotypePointsEarned(player.PlayerId),

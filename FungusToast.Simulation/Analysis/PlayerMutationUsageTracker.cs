@@ -224,6 +224,8 @@ namespace FungusToast.Simulation.Analysis
                         effects["Devolved Levels"] = player.OntogenicRegressionDevolvedLevels;
                     if (player.OntogenicRegressionTier5PlusLevels > 0)
                         effects["Tier 5+ Levels"] = player.OntogenicRegressionTier5PlusLevels;
+                    if (player.OntogenicRegressionFailureBonuses > 0)
+                        effects["Failure Bonuses"] = player.OntogenicRegressionFailureBonuses;
                     break;
                 
                 // Note: Mycovariant effects are not mutations, so they're not tracked here

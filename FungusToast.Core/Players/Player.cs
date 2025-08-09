@@ -398,25 +398,10 @@ namespace FungusToast.Core.Players
                                         IEnumerable<Mutation>? allMutations = null)
         {
             int baseIncome = GetMutationPointIncome();
-            int bonus = GetBonusMutationPoints();
-            int undergrowth = RollAnabolicInversionBonus(allPlayers, rng, board);
-
-            int newMutationPoints = baseIncome + bonus + undergrowth;
+            int newMutationPoints = baseIncome;
             simulationObserver.RecordMutationPointIncome(PlayerId, newMutationPoints);
 
             AddMutationPoints(newMutationPoints);
-
-            // Record Adaptive Expression bonus, if present and observer is hooked up
-            if (bonus > 0)
-            {
-                simulationObserver.RecordAdaptiveExpressionBonus(PlayerId, bonus);
-            }
-
-            // Record Anabolic Inversion bonus, if present and observer is hooked up
-            if (undergrowth > 0)
-            {
-                simulationObserver.RecordAnabolicInversionBonus(PlayerId, undergrowth);
-            }
 
             return MutationPoints;
         }

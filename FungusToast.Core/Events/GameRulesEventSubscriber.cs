@@ -75,6 +75,8 @@ namespace FungusToast.Core.Events
                 var allMutations = MutationRepository.BuildFullMutationSet().Item1.Values.ToList();
                 MutationEffectCoordinator.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, board.CurrentRound, observer);
                 MutationEffectCoordinator.OnMutationPhaseStart_OntogenicRegression(board, players, allMutations, rng, board.CurrentRound, observer);
+                MutationEffectCoordinator.OnMutationPhaseStart_AdaptiveExpression(board, players, rng, observer);
+                MutationEffectCoordinator.OnMutationPhaseStart_AnabolicInversion(board, players, rng, observer);
             };
 
             // Neutralizing Mantle (toxin placement neutralization)

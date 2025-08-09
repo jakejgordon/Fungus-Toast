@@ -225,5 +225,11 @@ namespace FungusToast.Unity.UI.GameLog
             if (IsSilentMode) return;
             playerActivityLogManager?.RecordOntogenicRegressionEffect(playerId, sourceMutationName, sourceLevelsLost, targetMutationName, targetLevelsGained);
         }
+
+        public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordOntogenicRegressionFailureBonus(playerId, bonusPoints);
+        }
     }
 }

@@ -63,6 +63,14 @@ namespace FungusToast.Unity.UI.GameLog
         private int hypersystemicDiagonalReclaims = 0;
         private bool isTrackingGrowthPhaseEffects = false;
         
+        // Track pre-mutation phase effects for summary
+        private int preMutationPhaseMutatorPhenotypePoints = 0;
+        private int preMutationPhaseHyperadaptiveDriftPoints = 0;
+        private int preMutationPhaseAdaptiveExpressionPoints = 0;
+        private int preMutationPhaseAnabolicInversionPoints = 0;
+        private int preMutationPhaseOntogenicRegressionFailureBonuses = 0;
+        private bool isTrackingPreMutationPhase = false;
+        
         public event Action<GameLogEntry> OnNewLogEntry;
         
         private GameBoard board;
@@ -216,7 +224,16 @@ namespace FungusToast.Unity.UI.GameLog
             
             // Start tracking Chemotactic Mycotoxins relocations for this round
             chemotacticMycotoxinsRelocations = 0;
-            
+
+            // Start tracking pre-mutation phase effects for this round
+            preMutationPhaseMutatorPhenotypePoints = 0;
+            preMutationPhaseHyperadaptiveDriftPoints = 0;
+            preMutationPhaseAdaptiveExpressionPoints = 0;
+            preMutationPhaseAnabolicInversionPoints = 0;
+            preMutationPhaseOntogenicRegressionFailureBonuses = 0;
+            isTrackingPreMutationPhase = true;
+
+
             // Don't add round start messages here - that's for the global log
         }
         
@@ -258,8 +275,12 @@ namespace FungusToast.Unity.UI.GameLog
         
         public void OnPhaseStart(string phaseName)
         {
-            // Don't add phase start messages here - that's for the global log
-            // Only add player-specific phase messages if needed
+            // Show pre-mutation phase summary when mutation phase starts
+            if (phaseName == "Mutation Phase" && isTrackingPreMutationPhase)
+            {
+                ShowPreMutationPhaseSummary();
+                isTrackingPreMutationPhase = false;
+            }
         }
         
         private void ShowDecayPhaseSummary()
@@ -365,6 +386,48 @@ namespace FungusToast.Unity.UI.GameLog
             if (summaryParts.Count > 0)
             {
                 string message = $"Growth Phase Summary: {string.Join(", ", summaryParts)}";
+                AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
+            }
+        }
+        
+        private void ShowPreMutationPhaseSummary()
+        {
+            if (IsSilentMode) return;
+            
+            var summaryParts = new List<string>();
+            
+            if (preMutationPhaseMutatorPhenotypePoints > 0)
+            {
+                summaryParts.Add($"Mutator Phenotype: {preMutationPhaseMutatorPhenotypePoints} points");
+            }
+            
+            if (preMutationPhaseHyperadaptiveDriftPoints > 0)
+            {
+                summaryParts.Add($"Hyperadaptive Drift: {preMutationPhaseHyperadaptiveDriftPoints} points");
+            }
+            
+            if (preMutationPhaseAdaptiveExpressionPoints > 0)
+            {
+                summaryParts.Add($"Adaptive Expression: {preMutationPhaseAdaptiveExpressionPoints} points");
+            }
+            
+            if (preMutationPhaseAnabolicInversionPoints > 0)
+            {
+                summaryParts.Add($"Anabolic Inversion: {preMutationPhaseAnabolicInversionPoints} points");
+            }
+            
+            if (preMutationPhaseOntogenicRegressionFailureBonuses > 0)
+            {
+                summaryParts.Add($"Ontogenic Regression: {preMutationPhaseOntogenicRegressionFailureBonuses} points");
+            }
+            
+            if (summaryParts.Count > 0)
+            {
+                int totalPoints = preMutationPhaseMutatorPhenotypePoints + preMutationPhaseHyperadaptiveDriftPoints + 
+                                 preMutationPhaseAdaptiveExpressionPoints + preMutationPhaseAnabolicInversionPoints + 
+                                 preMutationPhaseOntogenicRegressionFailureBonuses;
+                
+                string message = $"Pre-Mutation Phase: Earned {totalPoints} mutation points ({string.Join(", ", summaryParts)})";
                 AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
             }
         }
@@ -938,91 +1001,45 @@ namespace FungusToast.Unity.UI.GameLog
         // Enhanced ISimulationObserver methods for interesting events
         public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned) 
         {
-            if (playerId == humanPlayerId && freePointsEarned > 0)
+            if (isTrackingPreMutationPhase && playerId == humanPlayerId)
             {
-                AddLuckyEntry($"Mutator Phenotype earned {freePointsEarned} free mutation points!", playerId);
+                preMutationPhaseMutatorPhenotypePoints += freePointsEarned;
             }
         }
         
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned) 
         {
-            if (playerId == humanPlayerId && freePointsEarned > 0)
+            if (isTrackingPreMutationPhase && playerId == humanPlayerId)
             {
-                AddLuckyEntry($"Hyperadaptive Drift earned {freePointsEarned} free mutation points!", playerId);
+                preMutationPhaseHyperadaptiveDriftPoints += freePointsEarned;
             }
         }
         
-        public void ReportJettingMyceliumInfested(int playerId, int infested) 
-        {
-            if (playerId != humanPlayerId && infested > 0)
-            {
-                // Enemy player used Jetting Mycelium against us
-                AddUnluckyEntry($"Player {playerId + 1} killed {infested} of your cells with Jetting Mycelium", humanPlayerId);
-            }
-            else if (playerId == humanPlayerId && infested > 0)
-            {
-                // We used Jetting Mycelium successfully
-                AddLuckyEntry($"Jetting Mycelium killed {infested} enemy cells", playerId);
-            }
-        }
-        
-        public void ReportHyphalVectoringInfested(int playerId, int infested) 
-        {
-            if (playerId != humanPlayerId && infested > 0)
-            {
-                AddUnluckyEntry($"Player {playerId + 1} killed {infested} of your cells with Hyphal Vectoring", humanPlayerId);
-            }
-            else if (playerId == humanPlayerId && infested > 0)
-            {
-                AddLuckyEntry($"Hyphal Vectoring killed {infested} enemy cells", playerId);
-            }
-        }
-        
-        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
-        {
-            // Only track player deaths during decay phase for summary
-            if (isTrackingDecayPhase && playerId == humanPlayerId)
-            {
-                if (!decayPhaseDeaths.ContainsKey(reason))
-                    decayPhaseDeaths[reason] = 0;
-                decayPhaseDeaths[reason] += deathCount;
-            }
-        }
-        
-        // Stub implementations for other ISimulationObserver methods that we don't need detailed logging for
         public void RecordAdaptiveExpressionBonus(int playerId, int bonus) 
         {
-            if (playerId == humanPlayerId && bonus > 0)
+            if (isTrackingPreMutationPhase && playerId == humanPlayerId)
             {
-                string message = bonus == 1 
-                    ? "Earned 1 free mutation point from Adaptive Expression!" 
-                    : $"Earned {bonus} free mutation points from Adaptive Expression!";
-                AddLuckyEntry(message, playerId);
+                preMutationPhaseAdaptiveExpressionPoints += bonus;
             }
         }
         
         public void RecordAnabolicInversionBonus(int playerId, int bonus) 
         {
-            if (playerId == humanPlayerId && bonus > 0)
+            if (isTrackingPreMutationPhase && playerId == humanPlayerId)
             {
-                string message = bonus == 1 
-                    ? "Earned 1 free mutation point from Anabolic Inversion!" 
-                    : $"Earned {bonus} free mutation points from Anabolic Inversion!";
-                AddLuckyEntry(message, playerId);
+                preMutationPhaseAnabolicInversionPoints += bonus;
             }
         }
         
-        public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints) 
+        public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints)
         {
-            if (playerId == humanPlayerId && catabolizedMutationPoints > 0)
+            if (isTrackingPreMutationPhase && playerId == humanPlayerId)
             {
-                string message = catabolizedMutationPoints == 1 
-                    ? $"Earned 1 free mutation point from Mycotoxin Catabolism (catabolized {toxinsCatabolized} toxin{(toxinsCatabolized == 1 ? "" : "s")})!" 
-                    : $"Earned {catabolizedMutationPoints} free mutation points from Mycotoxin Catabolism (catabolized {toxinsCatabolized} toxin{(toxinsCatabolized == 1 ? "" : "s")})!";
-                AddLuckyEntry(message, playerId);
+                preMutationPhaseOntogenicRegressionFailureBonuses += bonusPoints;
             }
         }
         
+        // Stub implementations for other ISimulationObserver methods that we don't need detailed logging for
         public void RecordCreepingMoldMove(int playerId) { }
         public void RecordCreepingMoldToxinJump(int playerId) { }
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }
@@ -1075,6 +1092,29 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordMimeticResilienceDrops(int playerId, int drops) { }
         public void RecordCytolyticBurstToxins(int playerId, int toxinsCreated) { }
         public void RecordCytolyticBurstKills(int playerId, int cellsKilled) { }
+
+        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
+        {
+            // Only track player deaths during decay phase for summary
+            if (isTrackingDecayPhase && playerId == humanPlayerId)
+            {
+                if (!decayPhaseDeaths.ContainsKey(reason))
+                    decayPhaseDeaths[reason] = 0;
+                decayPhaseDeaths[reason] += deathCount;
+            }
+        }
+
+        public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints)
+        {
+            if (playerId == humanPlayerId && catabolizedMutationPoints > 0)
+            {
+                string message = catabolizedMutationPoints == 1
+                    ? $"Earned 1 free mutation point from Mycotoxin Catabolism (catabolized {toxinsCatabolized} toxin{(toxinsCatabolized == 1 ? "" : "s")})!"
+                    : $"Earned {catabolizedMutationPoints} free mutation points from Mycotoxin Catabolism (catabolized {toxinsCatabolized} toxin{(toxinsCatabolized == 1 ? "" : "s")})!";
+                AddLuckyEntry(message, playerId);
+            }
+        }
+
         public void RecordHypersystemicRegenerationResistance(int playerId) 
         {
             // Only track resistance applications during growth phase for batching summary
@@ -1121,6 +1161,16 @@ namespace FungusToast.Unity.UI.GameLog
                 string message = $"Ontogenic Regression: {sourceMutationName} lost {sourceLevelsLost} level{(sourceLevelsLost > 1 ? "s" : "")}, {targetMutationName} gained {targetLevelsGained} level{(targetLevelsGained > 1 ? "s" : "")}";
                 AddLuckyEntry(message, playerId);
             }
+        }
+
+        public void ReportJettingMyceliumInfested(int playerId, int infested)
+        {
+
+        }
+
+        public void ReportHyphalVectoringInfested(int playerId, int infested)
+        {
+
         }
     }
 }

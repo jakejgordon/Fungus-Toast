@@ -182,6 +182,24 @@ namespace FungusToast.Core.Phases
             GeneticDriftMutationProcessor.OnMutationPhaseStart_OntogenicRegression(board, players, allMutations, rng, currentRound, observer);
         }
 
+        public static void OnMutationPhaseStart_AdaptiveExpression(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            GeneticDriftMutationProcessor.OnMutationPhaseStart_AdaptiveExpression(board, players, rng, observer);
+        }
+
+        public static void OnMutationPhaseStart_AnabolicInversion(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            GeneticDriftMutationProcessor.OnMutationPhaseStart_AnabolicInversion(board, players, rng, observer);
+        }
+
         // Special Events
         public static void OnNecrophyticBloomActivated(
             GameBoard board,
