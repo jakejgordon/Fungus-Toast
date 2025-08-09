@@ -36,8 +36,14 @@ namespace FungusToast.Unity.Grid
 
             if (!IsCellOnBoard(cellPos))
             {
+                // Clear hover effect when mouse leaves the board
+                if (gridVisualizer != null)
+                    gridVisualizer.ClearHoverEffect();
+                
                 if (crosshairInstance != null)
                     crosshairInstance.SetActive(false);
+                    
+                lastHoveredCell = null;
                 return;
             }
 
@@ -45,6 +51,13 @@ namespace FungusToast.Unity.Grid
 
             if (isSelectable && gridVisualizer.toastTilemap.HasTile(cellPos))
             {
+                // Show hover effect if this is a new cell or if we're just entering a valid cell
+                if (lastHoveredCell != cellPos)
+                {
+                    if (gridVisualizer != null)
+                        gridVisualizer.ShowHoverEffect(cellPos);
+                }
+
                 if (crosshairInstance != null)
                 {
                     crosshairInstance.SetActive(true);
@@ -55,8 +68,14 @@ namespace FungusToast.Unity.Grid
             }
             else
             {
+                // Clear hover effect when over non-selectable tiles
+                if (gridVisualizer != null)
+                    gridVisualizer.ClearHoverEffect();
+                    
                 if (crosshairInstance != null)
                     crosshairInstance.SetActive(false);
+                    
+                lastHoveredCell = null;
             }
 
             // Handle click
@@ -126,6 +145,22 @@ namespace FungusToast.Unity.Grid
         bool IsCellOnBoard(Vector3Int cellPos)
         {
             return gridVisualizer.toastTilemap.cellBounds.Contains(cellPos);
+        }
+
+        /// <summary>
+        /// Sets the tiles that are selectable for interaction. If empty, all tiles are selectable.
+        /// </summary>
+        public void SetSelectableTiles(HashSet<int> selectableTileIds)
+        {
+            selectionTiles = selectableTileIds;
+        }
+
+        /// <summary>
+        /// Clears the selectable tiles, making all tiles selectable.
+        /// </summary>
+        public void ClearSelectableTiles()
+        {
+            selectionTiles.Clear();
         }
     }
 }

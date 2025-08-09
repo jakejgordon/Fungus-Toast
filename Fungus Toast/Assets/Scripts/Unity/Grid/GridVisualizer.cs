@@ -26,10 +26,15 @@ namespace FungusToast.Unity.Grid
         public Tile toxinOverlayTile;     // Toxin icon overlay
         [SerializeField] private Tile solidHighlightTile; // For pulses/highlights
         public Tile goldShieldOverlayTile; // Gold shield for resistant cells
+        [SerializeField] private Tile hoverOutlineTile; // For hover outline effect
 
         private GameBoard board;
         private List<Vector3Int> highlightedPositions = new List<Vector3Int>();
         private Coroutine pulseHighlightCoroutine;
+        
+        // Hover effect tracking
+        private Vector3Int? currentHoveredPosition = null;
+        private Coroutine hoverGlowCoroutine;
         
         // Fade-in effect tracking
         private HashSet<int> newlyGrownTileIds = new HashSet<int>();
@@ -50,6 +55,79 @@ namespace FungusToast.Unity.Grid
         public void Initialize(GameBoard board)
         {
             this.board = board;
+        }
+
+        /// <summary>
+        /// Shows a glowing outline effect on the specified tile.
+        /// </summary>
+        /// <param name="cellPos">The cell position to show the hover outline on</param>
+        public void ShowHoverEffect(Vector3Int cellPos)
+        {
+            // Clear any existing hover effect
+            ClearHoverEffect();
+            
+            // Set the new hovered position
+            currentHoveredPosition = cellPos;
+            
+            // Use the solidHighlightTile if hoverOutlineTile is not assigned
+            Tile tileToUse = hoverOutlineTile != null ? hoverOutlineTile : solidHighlightTile;
+            
+            if (tileToUse != null)
+            {
+                // Place the outline tile directly on the hovered position
+                HoverOverlayTileMap.SetTile(cellPos, tileToUse);
+                HoverOverlayTileMap.SetTileFlags(cellPos, TileFlags.None);
+                
+                // Start the glow animation
+                if (hoverGlowCoroutine != null)
+                    StopCoroutine(hoverGlowCoroutine);
+                hoverGlowCoroutine = StartCoroutine(HoverOutlineGlowAnimation(cellPos));
+            }
+        }
+
+        /// <summary>
+        /// Clears the hover outline effect from all tiles.
+        /// </summary>
+        public void ClearHoverEffect()
+        {
+            if (currentHoveredPosition.HasValue)
+            {
+                // Clear the hover tile
+                HoverOverlayTileMap.SetTile(currentHoveredPosition.Value, null);
+                currentHoveredPosition = null;
+                
+                if (hoverGlowCoroutine != null)
+                {
+                    StopCoroutine(hoverGlowCoroutine);
+                    hoverGlowCoroutine = null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Coroutine that creates a subtle pulsing outline effect for the hovered tile.
+        /// </summary>
+        private IEnumerator HoverOutlineGlowAnimation(Vector3Int cellPos)
+        {
+            float pulseDuration = 1.5f; // Slower, more subtle pulse
+            
+            // Outline-style colors - more transparent with emphasis on edges
+            Color dimColor = new Color(0.2f, 0.6f, 1f, 0.2f);     // Soft blue, very low alpha
+            Color brightColor = new Color(0.4f, 0.8f, 1f, 0.6f);  // Brighter blue, medium alpha
+            
+            while (currentHoveredPosition == cellPos && HoverOverlayTileMap.HasTile(cellPos))
+            {
+                float time = Time.time / pulseDuration;
+                float t = (Mathf.Sin(time * 2f * Mathf.PI) + 1f) * 0.5f; // Smooth sine wave from 0 to 1
+                
+                // Apply easing for more organic feel
+                float easedT = Mathf.SmoothStep(0f, 1f, t);
+                
+                Color currentColor = Color.Lerp(dimColor, brightColor, easedT);
+                HoverOverlayTileMap.SetColor(cellPos, currentColor);
+                
+                yield return null;
+            }
         }
 
         public void RenderBoard(GameBoard board)
