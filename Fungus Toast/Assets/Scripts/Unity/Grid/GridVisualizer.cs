@@ -241,7 +241,8 @@ namespace FungusToast.Unity.Grid
             SelectionHighlightTileMap.ClearAllTiles();
             highlightedPositions.Clear();
 
-            foreach (var tileId in tileIds)
+            foreach (var tileId in tileIds
+)
             {
                 var (x, y) = board.GetXYFromTileId(tileId);
                 Vector3Int pos = new Vector3Int(x, y, 0);
@@ -353,21 +354,21 @@ namespace FungusToast.Unity.Grid
         {
             float pulseDuration = 0.4f;    // Fast pulse for urgency
             
-            // Extreme contrast: pure black to intense bright pink
-            Color darkColor = Color.black;
-            Color brightColor = new Color(1f, 0f, 0.9f, 1f);  // Intense magenta-pink
+            // Changed from black-to-magenta to transparent-to-magenta for better visibility
+            Color transparentColor = new Color(1f, 0f, 0.9f, 0f);  // Transparent magenta
+            Color brightColor = new Color(1f, 0f, 0.9f, 1f);       // Full opacity magenta
 
             while (true)
             {
-                // Color pulse: black to bright pink and back with double easing for more snap
+                // Color pulse: transparent to bright magenta and back with double easing for more snap
                 float colorT = Mathf.PingPong(Time.time / pulseDuration, 1f);
                 
                 // Double easing: ease-out then ease-in for dramatic snap effect
                 float easedColorT = colorT < 0.5f 
                     ? 2f * colorT * colorT  // Ease-in for first half (snap to bright)
-                    : 1f - 2f * (1f - colorT) * (1f - colorT);  // Ease-out for second half (smooth return to black)
+                    : 1f - 2f * (1f - colorT) * (1f - colorT);  // Ease-out for second half (smooth return to transparent)
                 
-                Color pulseColor = Color.Lerp(darkColor, brightColor, easedColorT);
+                Color pulseColor = Color.Lerp(transparentColor, brightColor, easedColorT);
 
                 // Apply colors to all highlighted positions (NO scaling - just color pulse)
                 foreach (var pos in highlightedPositions)
