@@ -446,7 +446,6 @@ namespace FungusToast.Unity
                     p.MutationStrategy?.SpendMutationPoints(p, mutationManager.GetAllMutations().ToList(), Board, rng, gameUIManager.GameLogRouter);
             }
 
-            Debug.Log("All AI players have spent their mutation points.");
             StartGrowthPhase();
         }
 

@@ -59,7 +59,6 @@ namespace FungusToast.Unity.Grid
             UnityEditor.EditorUtility.SetDirty(tilemap); // Mark tilemap as modified so Unity saves it
 #endif
 
-            Debug.Log($"GridFiller: Filled {gridSize.x}x{gridSize.y} with {tileToUse.name}");
         }
     }
 

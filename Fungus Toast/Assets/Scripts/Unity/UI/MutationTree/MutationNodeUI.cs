@@ -28,6 +28,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         [Header("Highlight")]
         [SerializeField] private Outline highlightOutline;
+        [SerializeField] private GameObject prerequisiteHighlightOverlay; // New field for prerequisite highlighting
 
         [Header("Unlock UI")]
         [SerializeField] private GameObject pendingUnlockOverlay; // Hourglass overlay for pending unlock
@@ -48,9 +49,11 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationNameText.text = mutation.Name;
             UpdateDisplay();
 
-            // Ensure highlight is off by default
+            // Ensure highlights are off by default
             if (highlightOutline != null)
                 highlightOutline.enabled = false;
+            if (prerequisiteHighlightOverlay != null)
+                prerequisiteHighlightOverlay.SetActive(false);
 
             upgradeButton.onClick.RemoveAllListeners();
             upgradeButton.onClick.AddListener(OnUpgradeClicked);
@@ -227,8 +230,42 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void SetHighlight(bool on)
         {
-            if (highlightOutline != null)
-                highlightOutline.enabled = on;
+            // Use the new prerequisite highlight overlay for full square highlighting
+            if (prerequisiteHighlightOverlay != null)
+            {
+                prerequisiteHighlightOverlay.SetActive(on);
+                
+                if (on)
+                {
+                    var rectTransform = prerequisiteHighlightOverlay.GetComponent<RectTransform>();
+                    if (rectTransform != null)
+                    {
+                        // Fix the size issue by copying the size from the button
+                        var buttonRect = upgradeButton.GetComponent<RectTransform>();
+                        if (buttonRect != null)
+                        {
+                            // If the size is zero, copy from the button
+                            if (rectTransform.sizeDelta == Vector2.zero)
+                            {
+                                rectTransform.sizeDelta = buttonRect.sizeDelta;
+                            }
+                            
+                            // Ensure it matches the button's anchored position
+                            rectTransform.anchoredPosition = buttonRect.anchoredPosition;
+                        }
+                    }
+                    
+                    // Force a layout rebuild and canvas update
+                    Canvas.ForceUpdateCanvases();
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+                }
+            }
+            else
+            {
+                // Fallback to outline if no prerequisite highlight overlay is configured
+                if (highlightOutline != null)
+                    highlightOutline.enabled = on;
+            }
         }
 
         public void UpdateInteractable()

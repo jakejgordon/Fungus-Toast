@@ -42,7 +42,6 @@ namespace FungusToast.Unity.Phases
             System.Random rng,
             ISimulationObserver simulationObserver)
         {
-            Debug.Log("💀 Decay Phase Starting...");
 
             DeathEngine.ExecuteDeathCycle(board, failedGrowthsByPlayerId, rng, simulationObserver);
 
