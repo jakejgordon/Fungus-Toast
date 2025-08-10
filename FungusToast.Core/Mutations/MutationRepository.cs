@@ -118,7 +118,7 @@ namespace FungusToast.Core.Mutations
             MakeRoot(new Mutation(
                 id: MutationIds.MutatorPhenotype,
                 name: "Mutator Phenotype",
-                description: $"Each level grants a {FormatPercent(GameBalance.MutatorPhenotypeEffectPerLevel)} chance to automatically upgrade a random mutation each round.",
+                description: $"Each level grants a {FormatPercent(GameBalance.MutatorPhenotypeEffectPerLevel)} chance to automatically upgrade a random mutation at the start of each Mutation Phase.",
                 flavorText: "Transposons disrupt regulatory silencing, igniting stochastic trait amplification.",
                 type: MutationType.AutoUpgradeRandom,
                 effectPerLevel: GameBalance.MutatorPhenotypeEffectPerLevel,
@@ -167,7 +167,7 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.AdaptiveExpression,
                 name: "Adaptive Expression",
-                description: $"Each level grants a {FormatPercent(GameBalance.AdaptiveExpressionEffectPerLevel)} chance to gain an additional mutation point each round. If the first point is awarded, each level also grants a {FormatPercent(GameBalance.AdaptiveExpressionSecondPointChancePerLevel)} chance to earn a second mutation point.",
+                description: $"Each level grants a {FormatPercent(GameBalance.AdaptiveExpressionEffectPerLevel)} chance to gain an additional mutation point at the start of each Mutation Phase. If the first point is awarded, each level also grants a {FormatPercent(GameBalance.AdaptiveExpressionSecondPointChancePerLevel)} chance to earn a second mutation point.",
                 flavorText: "Epigenetic drift activates opportunistic transcription bursts in volatile environments.",
                 type: MutationType.BonusMutationPointChance,
                 effectPerLevel: GameBalance.AdaptiveExpressionEffectPerLevel,
@@ -315,7 +315,7 @@ namespace FungusToast.Core.Mutations
             MakeChild(new Mutation(
                 id: MutationIds.AnabolicInversion,
                 name: "Anabolic Inversion",
-                description: $"Each level adds a {FormatPercent(GameBalance.AnabolicInversionGapBonusPerLevel)} chance to earn 1–5 bonus mutation points when you control fewer living cells than other players. The chance increases the further behind you are, and the bonus amount is weighted - the further behind you are, the higher chance of getting the maximum payout.",
+                description: $"Each level adds a {FormatPercent(GameBalance.AnabolicInversionGapBonusPerLevel)} chance to earn 1–5 bonus mutation points at the start of each Mutation Phase when you control fewer living cells than other players. The chance increases the further behind you are, and the bonus amount is weighted - the further behind you are, the higher chance of getting the maximum payout.",
                 flavorText: "Under metabolic duress, anabolism inverts into compensatory feedback loops, prioritizing genomic plasticity.",
                 type: MutationType.BonusMutationPointChance,
                 effectPerLevel: GameBalance.AnabolicInversionGapBonusPerLevel,
@@ -526,7 +526,7 @@ namespace FungusToast.Core.Mutations
                 tier: MutationTier.Tier5
             ),
             new MutationPrerequisite(MutationIds.NecrophyticBloom, 1),
-            new MutationPrerequisite(MutationIds.MycotropicInduction, 1),
+            new MutationPrerequisite(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel - 2),
             new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1),
             new MutationPrerequisite(MutationIds.AdaptiveExpression, 1),
             new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 1));
