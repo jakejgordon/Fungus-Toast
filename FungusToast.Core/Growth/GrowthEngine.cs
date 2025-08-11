@@ -24,20 +24,29 @@ namespace FungusToast.Core.Growth
 
             // Track failed growths for simulation analysis
             var failedGrowthsByPlayerId = players.ToDictionary(p => p.PlayerId, _ => 0);
-            var activeFungalCells = board.AllLivingFungalCellsWithTiles().ToList();
 
-            Shuffle(activeFungalCells, rng);
+            // Count living cells for each player at the start of the growth cycle
+            var playerLivingCellCounts = players.ToDictionary(p => p.PlayerId, p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive));
+            
+            // Order players by living cell count (fewest first, most last)
+            var playersOrderedByLivingCells = players.OrderBy(p => playerLivingCellCounts[p.PlayerId]).ToList();
 
-            foreach (var (tile, cell) in activeFungalCells)
+            // Process each player's living cells in order (fewest living cells first)
+            foreach (var player in playersOrderedByLivingCells)
             {
-                if (!cell.OwnerPlayerId.HasValue)
-                    continue;
+                var playerCells = board.AllLivingFungalCellsWithTiles()
+                    .Where(x => x.cell.OwnerPlayerId == player.PlayerId)
+                    .ToList();
 
-                var owner = players[cell.OwnerPlayerId.Value];
-                bool grewOrMoved = TryExpandFromTile(board, tile, owner, rng, observer);
+                Shuffle(playerCells, rng);
 
-                if (!grewOrMoved)
-                    failedGrowthsByPlayerId[owner.PlayerId]++;
+                foreach (var (tile, cell) in playerCells)
+                {
+                    bool grewOrMoved = TryExpandFromTile(board, tile, player, rng, observer);
+
+                    if (!grewOrMoved)
+                        failedGrowthsByPlayerId[player.PlayerId]++;
+                }
             }
 
             board.IncrementGrowthCycle();

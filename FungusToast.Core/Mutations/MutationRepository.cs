@@ -380,15 +380,17 @@ namespace FungusToast.Core.Mutations
                 id: MutationIds.SporocidalBloom,
                 name: "Sporocidal Bloom",
                 description:
-                    "At the end of each round, your colony vents toxic spores that disperse randomly across the board. " +
+                    "At the end of each round, your colony vents toxic spores that disperse across the board, avoiding your own territory. " +
                     "Each level of this mutation releases spores at approximately " + FormatPercent(0.07f) + " per living fungal cell, scaling with your colony's size and mutation level.\n" +
                     "\n" +
-                    "Each spore lands on a random tile:\n" +
+                    "Each spore targets tiles that do not contain your living or dead cells:\n" +
                     "• If it lands on an enemy fungal cell, it kills that cell and leaves a toxin in its place.\n" +
-                    "• If it lands on or orthogonally adjacent to one of your own living cells, nothing happens.\n" +
-                    "• If it lands on an empty tile that is not orthogonally adjacent to your living cells, it becomes a toxin.",
+                    "• If it lands on an empty tile or existing toxin, it becomes a toxin (or refreshes the existing one).\n" +
+                    "• Spores cannot target tiles containing your own living or dead cells.\n" +
+                    "\n" +
+                    "<b>Max Level Bonus:</b> Removes 25% of empty tiles from the target pool, greatly increasing the likelihood of hitting enemy cells.",
                 flavorText:
-                    "Once mature, the colony begins venting spores laced with cytotoxic compounds, drifting indiscriminately to poison competitors and sterilize open ground.",
+                    "Once mature, the colony begins venting spores laced with cytotoxic compounds, intelligently avoiding friendly territory while poisoning competitors and sterilizing contested ground. At peak evolution, the spores develop enhanced targeting, seeking out living enemies with lethal precision.",
                 type: MutationType.FungicideSporeDrop,
                 effectPerLevel: GameBalance.SporicialBloomEffectPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),

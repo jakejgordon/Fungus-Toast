@@ -150,25 +150,44 @@ namespace FungusToast.Core.Phases
                 int sporesToDrop = (int)Math.Floor(livingCellCount * level * GameBalance.SporicialBloomEffectPerLevel);
                 if (sporesToDrop <= 0) continue;
 
-                // Take a snapshot of all tiles for fair sampling
-                var allTiles = board.AllTiles().ToList();
-                if (allTiles.Count == 0) continue;
+                // Filter out tiles that contain the player's living or dead cells
+                var availableTiles = board.AllTiles()
+                    .Where(t => {
+                        var cell = t.FungalCell;
+                        // Exclude tiles with player's own living or dead cells
+                        return !(cell != null && cell.OwnerPlayerId == player.PlayerId);
+                    })
+                    .ToList();
+
+                if (availableTiles.Count == 0) continue;
+
+                // Max level bonus: Remove 25% of empty tiles to increase enemy targeting
+                bool isMaxLevel = level >= GameBalance.SporicidalBloomMaxLevel;
+                if (isMaxLevel)
+                {
+                    // Separate empty tiles from enemy tiles
+                    var emptyTiles = availableTiles.Where(t => t.FungalCell == null).ToList();
+                    var nonEmptyTiles = availableTiles.Where(t => t.FungalCell != null).ToList();
+
+                    // Remove 25% of empty tiles randomly
+                    int emptyTilesToRemove = (int)Math.Floor(emptyTiles.Count * 0.25f);
+                    for (int i = 0; i < emptyTilesToRemove && emptyTiles.Count > 0; i++)
+                    {
+                        int removeIndex = rng.Next(emptyTiles.Count);
+                        emptyTiles.RemoveAt(removeIndex);
+                    }
+
+                    // Recombine the lists
+                    availableTiles = nonEmptyTiles.Concat(emptyTiles).ToList();
+                }
 
                 int kills = 0, toxified = 0;
                 int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, GameBalance.DefaultToxinDuration);
 
                 for (int i = 0; i < sporesToDrop; i++)
                 {
-                    var target = allTiles[rng.Next(allTiles.Count)];
+                    var target = availableTiles[rng.Next(availableTiles.Count)];
                     var cell = target.FungalCell;
-
-                    // Is this tile protected? (your own living cell or adjacent to one)
-                    bool isOwnLiving = (cell?.IsAlive ?? false) && cell.OwnerPlayerId == player.PlayerId;
-                    bool adjacentToOwn = board.GetOrthogonalNeighbors(target.TileId)
-                        .Any(adj => adj.FungalCell?.IsAlive == true && adj.FungalCell.OwnerPlayerId == player.PlayerId);
-
-                    if (isOwnLiving || adjacentToOwn)
-                        continue; // Spore fizzles, nothing happens
 
                     if (cell != null && cell.IsAlive)
                     {
@@ -178,7 +197,7 @@ namespace FungusToast.Core.Phases
                     }
                     else
                     {
-                        // Empty or already toxin: place toxin
+                        // Empty tile or existing toxin: place/refresh toxin
                         ToxinHelper.ConvertToToxin(board, target.TileId, toxinLifespan, GrowthSource.SporicidalBloom, player);
                         toxified++;
                     }
@@ -509,7 +528,13 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver observer)
         {
-            foreach (var player in players)
+            // Count living cells for each player
+            var playerLivingCellCounts = players.ToDictionary(p => p.PlayerId, p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive));
+            
+            // Order players by living cell count (fewest first, most last)
+            var playersOrderedByLivingCells = players.OrderBy(p => playerLivingCellCounts[p.PlayerId]).ToList();
+
+            foreach (var player in playersOrderedByLivingCells)
             {
                 int failedGrowths = failedGrowthsByPlayerId.TryGetValue(player.PlayerId, out var v) ? v : 0;
                 ApplyMycotoxinTracer(player, board, failedGrowths, players, rng, observer);
