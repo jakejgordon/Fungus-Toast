@@ -1,6 +1,6 @@
-# NEW_MUTATION_HELPER.md
+﻿# NEW_MUTATION_HELPER.md
 
-> **?? AI Assistant Guide**: Step-by-step implementation pattern for adding new mutations to Fungus Toast
+> **🤖 AI Assistant Guide**: Step-by-step implementation pattern for adding new mutations to Fungus Toast
 
 ## Overview
 
@@ -219,6 +219,12 @@ NewMutationGrowth,
 - Enables simulation tracking and UI updates
 - Maintains separation between core logic and tracking
 
+### **Factory Pattern Guidelines**
+- Each mutation belongs to exactly one category factory
+- Use `helper.MakeRoot()` for Tier 1 mutations (no prerequisites)
+- Use `helper.MakeChild()` for all other mutations (with prerequisites)
+- Leverage `helper.FormatPercent()` and `helper.FormatFloat()` for consistent formatting
+
 ---
 
 ## File Location Quick Reference
@@ -228,7 +234,13 @@ NewMutationGrowth,
 | Mutation IDs | `FungusToast.Core/Mutations/MutationIds.cs` |
 | Mutation Types | `FungusToast.Core/Mutations/MutationTypeEnum.cs` |
 | Balance Constants | `FungusToast.Core/Config/GameBalance.cs` |
-| Mutation Definitions | `FungusToast.Core/Mutations/MutationRepository.cs` |
+| **Growth Mutations** | `FungusToast.Core/Mutations/Factories/GrowthMutationFactory.cs` |
+| **CellularResilience Mutations** | `FungusToast.Core/Mutations/Factories/CellularResilienceMutationFactory.cs` |
+| **Fungicide Mutations** | `FungusToast.Core/Mutations/Factories/FungicideMutationFactory.cs` |
+| **GeneticDrift Mutations** | `FungusToast.Core/Mutations/Factories/GeneticDriftMutationFactory.cs` |
+| **MycelialSurges Mutations** | `FungusToast.Core/Mutations/Factories/MycelialSurgesMutationFactory.cs` |
+| **Mutation Builder Helper** | `FungusToast.Core/Mutations/Factories/MutationBuilderHelper.cs` |
+| Main Repository (Coordinator) | `FungusToast.Core/Mutations/MutationRepository.cs` |
 | UI Layout | `Assets/Scripts/Unity/UI/MutationTree/UI_MutationLayoutProvider.cs` |
 | Effect Processing | `FungusToast.Core/Phases/[Category]MutationProcessor.cs` |
 | Effect Coordination | `FungusToast.Core/Phases/MutationEffectCoordinator.cs` |
@@ -359,18 +371,20 @@ public void RecordYourCustomEffect(int playerId, int count) { }
 
 - **Batched Summary Messages**: Use for effects that can occur multiple times in rapid succession
   - Example: Hypersystemic Regeneration resistance applications, Decay phase deaths
-  - Pattern: Track during phase ? Display summary at phase end ? Reset counters
+  - Pattern: Track during phase → Display summary at phase end → Reset counters
 
 ---
 
 ## Tips for AI Assistants
 
-- **Always follow this order**: ID ? Type ? Balance ? Definition ? UI ? Logic ? Tracking
+- **Always follow this order**: ID → Type → Balance → Definition → UI → Logic → Tracking
+- **Choose correct factory**: Select the appropriate category-specific factory file
+- **Use MutationBuilderHelper**: Leverage formatting and building utilities for consistency
 - **Cross-category prerequisites**: Essential for Tier 3+ balance
 - **Observer pattern**: Required for all trackable effects
 - **UI Integration**: Most mutations work automatically; only add custom UI for special effects
 - **Build frequently**: Use `run_build` after each major step
 - **Test simulations**: Verify tracking works with simulation runs
-- **Reference existing**: Look at similar mutations for patterns
+- **Reference existing**: Look at similar mutations in the same category factory for patterns
 
-This systematic approach ensures complete integration across all game systems.
+This systematic approach ensures complete integration across all game systems while leveraging the new factory-based architecture.
