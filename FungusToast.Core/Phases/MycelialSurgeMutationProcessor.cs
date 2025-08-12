@@ -347,4 +347,44 @@ namespace FungusToast.Core.Phases
 
             return targetPlayers;
         }
-    }}
+
+        /// <summary>
+        /// Gets the list of players that should be prioritized for targeting based on colony size.
+        /// Returns players ordered by living cell count (descending), excluding the requesting player.
+        /// </summary>
+        public static List<Player> GetCompetitiveAntagonismTargets(Player requestingPlayer, List<Player> allPlayers, GameBoard board)
+        {
+            var playerCellCounts = allPlayers.ToDictionary(
+                p => p.PlayerId,
+                p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive)
+            );
+
+            int requestingPlayerCells = playerCellCounts[requestingPlayer.PlayerId];
+
+            // Return players with more cells than the requesting player, ordered by cell count (descending)
+            return allPlayers
+                .Where(p => p.PlayerId != requestingPlayer.PlayerId && playerCellCounts[p.PlayerId] > requestingPlayerCells)
+                .OrderByDescending(p => playerCellCounts[p.PlayerId])
+                .ToList();
+        }
+
+        /// <summary>
+        /// Checks if a player has Competitive Antagonism active.
+        /// </summary>
+        public static bool IsCompetitiveAntagonismActive(Player player)
+        {
+            return player.GetMutationLevel(MutationIds.CompetitiveAntagonism) > 0 &&
+                   player.IsSurgeActive(MutationIds.CompetitiveAntagonism);
+        }
+
+        /// <summary>
+        /// Gets the Competitive Antagonism level for a player if the surge is active.
+        /// </summary>
+        public static int GetCompetitiveAntagonismLevel(Player player)
+        {
+            if (!IsCompetitiveAntagonismActive(player))
+                return 0;
+            return player.GetMutationLevel(MutationIds.CompetitiveAntagonism);
+        }
+    }
+}

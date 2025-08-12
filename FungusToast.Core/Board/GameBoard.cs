@@ -37,6 +37,12 @@ namespace FungusToast.Core.Board
         /// </summary>
         public bool NecrophyticBloomActivated { get; set; } = false;
 
+        /// <summary>
+        /// Cached occupied tile ratio calculated at the start of the decay phase.
+        /// Used to avoid expensive recalculation during individual cell death events.
+        /// </summary>
+        public float CachedOccupiedTileRatio { get; private set; } = 0f;
+
         public int TotalTiles => Width * Height;
 
         public delegate void CellColonizedEventHandler(int playerId, int tileId, GrowthSource source);
@@ -914,6 +920,14 @@ namespace FungusToast.Core.Board
         public void FireCellPoisonedEvent(int playerId, int tileId, int oldOwnerId, GrowthSource source = GrowthSource.Manual)
         {
             OnCellPoisoned(playerId, tileId, oldOwnerId, source);
+        }
+
+        /// <summary>
+        /// Updates the cached occupied tile ratio. Should be called at the start of the decay phase.
+        /// </summary>
+        public void UpdateCachedOccupiedTileRatio()
+        {
+            CachedOccupiedTileRatio = GetOccupiedTileRatio();
         }
     }
 }

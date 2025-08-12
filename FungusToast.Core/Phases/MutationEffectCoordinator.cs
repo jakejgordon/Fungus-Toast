@@ -78,15 +78,26 @@ namespace FungusToast.Core.Phases
             ISimulationObserver observer)
         {
             // Order matters here - some effects may depend on the results of others
-            
+
             // 1. Necrotoxic Conversion (toxin death reclamation - should happen first to potentially reclaim cells)
             FungicideMutationProcessor.OnCellDeath_NecrotoxicConversion(eventArgs, board, players, rng, observer);
-            
+
             // 2. Putrefactive Rejuvenation (age reduction from kills - should happen before cascades)
             FungicideMutationProcessor.OnCellDeath_PutrefactiveRejuvenation(eventArgs, board, players, observer);
-            
+
             // 3. Putrefactive Cascade (directional kill chains - should happen last to avoid affecting other mutations)
             FungicideMutationProcessor.OnCellDeath_PutrefactiveCascade(eventArgs, board, players, rng, observer);
+
+            // 4. Necrophytic Bloom per-death trigger (if activated) - use cached ratio for performance
+            if (board.NecrophyticBloomActivated)
+            {
+                var owner = players.FirstOrDefault(p => p.PlayerId == eventArgs.OwnerPlayerId);
+                if (owner != null && owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
+                {
+                    // Use cached occupied percent instead of expensive recalculation
+                    GeneticDriftMutationProcessor.TriggerNecrophyticBloomOnCellDeath(owner, board, rng, board.CachedOccupiedTileRatio, observer);
+                }
+            }
         }
 
         // Pre-Growth Phase Events

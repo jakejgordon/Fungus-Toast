@@ -91,7 +91,7 @@ namespace FungusToast.Simulation.Analysis
                         effects["Necro Spores"] = player.NecrosporulationSpores;
                     break;
 
-                case MutationIds.SporocidalBloom:
+                case MutationIds.SporicidalBloom:
                     if (player.SporocidalSpores > 0)
                         effects["Spore Drops"] = player.SporocidalSpores;
                     if (player.SporocidalKills > 0)

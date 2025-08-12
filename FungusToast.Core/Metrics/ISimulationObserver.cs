@@ -73,5 +73,6 @@ namespace FungusToast.Core.Metrics
         void RecordSpecificMutationUpgrade(int playerId, string mutationName);
         void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained);
         void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints);
+        void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected);
     }
 }

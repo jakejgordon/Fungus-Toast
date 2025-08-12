@@ -59,7 +59,7 @@ namespace FungusToast.Core.Mutations.Factories
 
             // Tier-4
             helper.MakeChild(new Mutation(
-                id: MutationIds.SporocidalBloom,
+                id: MutationIds.SporicidalBloom,
                 name: "Sporocidal Bloom",
                 description:
                     "At the end of each round, your colony vents toxic spores that disperse across the board, avoiding your own territory. " +
@@ -99,7 +99,7 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier5
             ),
-            new MutationPrerequisite(MutationIds.SporocidalBloom, 1),
+            new MutationPrerequisite(MutationIds.SporicidalBloom, 1),
             new MutationPrerequisite(MutationIds.MutatorPhenotype, 5));
 
             helper.MakeChild(new Mutation(

@@ -226,6 +226,12 @@ namespace FungusToast.Unity.UI.GameLog
             playerActivityLogManager?.RecordOntogenicRegressionEffect(playerId, sourceMutationName, sourceLevelsLost, targetMutationName, targetLevelsGained);
         }
 
+        public void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected)
+        {
+            // Stub implementation - Competitive Antagonism targeting effects are not shown in Unity UI
+            // This is tracked in simulations but not displayed to avoid log spam
+        }
+
         public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints)
         {
             if (IsSilentMode) return;

@@ -1,5 +1,3 @@
-﻿namespace FungusToast.Core.Mutations
-{
     public static class MutationIds
     {
         public const int MycelialBloom = 0;
@@ -36,4 +34,3 @@
         public const int OntogenicRegression = 31;
         public const int CompetitiveAntagonism = 32;
     }
-}

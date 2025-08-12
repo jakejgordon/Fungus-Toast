@@ -133,11 +133,11 @@ namespace FungusToast.Core.Phases
             ISimulationObserver observer)
         {
             var (allMutations, _) = MutationRepository.BuildFullMutationSet();
-            Mutation sporocidalBloom = allMutations[MutationIds.SporocidalBloom];
+            Mutation sporocidalBloom = allMutations[MutationIds.SporicidalBloom];
 
             foreach (var player in players)
             {
-                int level = player.GetMutationLevel(MutationIds.SporocidalBloom);
+                int level = player.GetMutationLevel(MutationIds.SporicidalBloom);
                 if (level <= 0) continue;
 
                 // Count living cells for this player
@@ -372,57 +372,32 @@ namespace FungusToast.Core.Phases
             int level = player.GetMutationLevel(MutationIds.MycotoxinTracer);
             if (level == 0) return 0;
 
-            // Convert accumulated failed growths to average per growth cycle
-            // failedGrowthsThisRound represents total across all growth cycles (typically 5)
-            float averageFailedGrowthsPerCycle = (float)failedGrowthsThisRound / GameBalance.TotalGrowthCycles;
-            int failedGrowthsThisRoundAdjusted = (int)Math.Round(averageFailedGrowthsPerCycle);
-
-            int totalTiles = board.TotalTiles;
-            int maxToxinsThisRound = totalTiles / GameBalance.MycotoxinTracerMaxToxinsDivisor;
-
-            int livingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive);
-
-            // 1. Base toxin count with diminishing returns (square root scaling)
-            int baseToxins = (int)Math.Floor(Math.Sqrt(level));
-            int toxinsFromLevel = rng.Next(0, baseToxins + 1);
-
-            // 2. Failed growth bonus with logarithmic scaling to prevent excessive scaling
-            float logLevel = (float)Math.Log(level + 1, 2); // Log base 2 of (level + 1)
-            float weightedFailures = failedGrowthsThisRoundAdjusted * logLevel * GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel;
-            int toxinsFromFailures = rng.Next(0, (int)weightedFailures + 1);
-
-            // 3. Percentage-based bonus for early game (when living cells are low)
-            int toxinsFromPercentageBonus = 0;
-            if (livingCells > 0 && failedGrowthsThisRoundAdjusted > 0)
-            {
-                // Calculate failure rate as percentage of living cells that failed to grow
-                float failureRate = (float)failedGrowthsThisRoundAdjusted / livingCells;
-                // Clamp failure rate to [0, 1] to handle edge cases where failures exceed living cells
-                failureRate = Math.Clamp(failureRate, 0f, 1f);
-                
-                // Establish maximum possible bonus toxins: MIN(opponents, failed growths)
-                int opponentCount = allPlayers.Count - 1; // Subtract 1 for this player
-                int maxBonusToxins = Math.Min(opponentCount, failedGrowthsThisRoundAdjusted);
-                
-                // Calculate level multiplier: 10% per level, capped at 100% (level 10+)
-                float levelMultiplier = Math.Min(level * 0.1f, 1.0f);
-                
-                // Apply percentage bonus scaling:
-                // Level 1: 10% of (failureRate * maxBonusToxins)  
-                // Level 5: 50% of (failureRate * maxBonusToxins)
-                // Level 10+: 100% of (failureRate * maxBonusToxins)
-                float baseBonusToxins = failureRate * maxBonusToxins;
-                float scaledBonus = baseBonusToxins * levelMultiplier;
-                toxinsFromPercentageBonus = (int)Math.Round(scaledBonus);
-            }
-
-            int totalToxins = toxinsFromLevel + toxinsFromFailures + toxinsFromPercentageBonus;
-            totalToxins = Math.Min(totalToxins, maxToxinsThisRound);
+            // Calculate total toxins this player can drop
+            int totalToxins = CalculateMycotoxinTracerToxinCount(
+                player, board, level, failedGrowthsThisRound, allPlayers, rng);
 
             if (totalToxins == 0) return 0;
 
-            // Use shared helper to find target tiles adjacent to enemy living cells
-            List<BoardTile> candidateTiles = ToxinHelper.FindMycotoxinTargetTiles(board, player);
+            // Check if Competitive Antagonism surge is active for enhanced targeting
+            bool hasCompetitiveAntagonism = player.IsSurgeActive(MutationIds.CompetitiveAntagonism);
+            List<BoardTile> candidateTiles;
+
+            if (hasCompetitiveAntagonism)
+            {
+                candidateTiles = FindCompetitiveAntagonismMycotoxinTargets(board, player, allPlayers);
+
+                // Record the competitive targeting effect
+                int targetsAffected = Math.Min(totalToxins, candidateTiles.Count);
+                if (targetsAffected > 0)
+                {
+                    observer.RecordCompetitiveAntagonismTargeting(player.PlayerId, targetsAffected);
+                }
+            }
+            else
+            {
+                // Use normal targeting logic
+                candidateTiles = ToxinHelper.FindMycotoxinTargetTiles(board, player);
+            }
 
             int placed = 0;
             for (int i = 0; i < totalToxins && candidateTiles.Count > 0; i++)
@@ -442,6 +417,136 @@ namespace FungusToast.Core.Phases
             }
 
             return placed;
+        }
+
+        /// <summary>
+        /// Calculates the total number of toxins a player can drop with Mycotoxin Tracer.
+        /// Combines base toxins, failed growth bonus, and percentage-based early game bonus.
+        /// </summary>
+        private static int CalculateMycotoxinTracerToxinCount(
+            Player player,
+            GameBoard board,
+            int level,
+            int failedGrowthsThisRound,
+            List<Player> allPlayers,
+            Random rng)
+        {
+            // Convert accumulated failed growths to average per growth cycle
+            // failedGrowthsThisRound represents total across all growth cycles (typically 5)
+            float averageFailedGrowthsPerCycle = (float)failedGrowthsThisRound / GameBalance.TotalGrowthCycles;
+            int failedGrowthsThisRoundAdjusted = (int)Math.Round(averageFailedGrowthsPerCycle);
+
+            int totalTiles = board.TotalTiles;
+            int maxToxinsThisRound = totalTiles / GameBalance.MycotoxinTracerMaxToxinsDivisor;
+            int livingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive);
+
+            // 1. Base toxin count with diminishing returns (square root scaling)
+            int baseToxins = (int)Math.Floor(Math.Sqrt(level));
+            int toxinsFromLevel = rng.Next(0, baseToxins + 1);
+
+            // 2. Failed growth bonus with logarithmic scaling to prevent excessive scaling
+            float logLevel = (float)Math.Log(level + 1, 2); // Log base 2 of (level + 1)
+            float weightedFailures = failedGrowthsThisRoundAdjusted * logLevel * GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel;
+            int toxinsFromFailures = rng.Next(0, (int)weightedFailures + 1);
+
+            // 3. Percentage-based bonus for early game (when living cells are low)
+            int toxinsFromPercentageBonus = 0;
+            if (livingCells > 0 && failedGrowthsThisRoundAdjusted > 0)
+            {
+                // Calculate failure rate as percentage of living cells that failed to grow
+                float failureRate = (float)failedGrowthsThisRoundAdjusted / livingCells;
+                // Clamp failure rate to [0, 1] to handle edge cases where failures exceed living cells
+                failureRate = Math.Clamp(failureRate, 0f, 1f);
+
+                // Establish maximum possible bonus toxins: MIN(opponents, failed growths)
+                int opponentCount = allPlayers.Count - 1; // Subtract 1 for this player
+                int maxBonusToxins = Math.Min(opponentCount, failedGrowthsThisRoundAdjusted);
+
+                // Calculate level multiplier: 10% per level, capped at 100% (level 10+)
+                float levelMultiplier = Math.Min(level * 0.1f, 1.0f);
+
+                // Apply percentage bonus scaling:
+                // Level 1: 10% of (failureRate * maxBonusToxins)  
+                // Level 5: 50% of (failureRate * maxBonusToxins)
+                // Level 10+: 100% of (failureRate * maxBonusToxins)
+                float baseBonusToxins = failureRate * maxBonusToxins;
+                float scaledBonus = baseBonusToxins * levelMultiplier;
+                toxinsFromPercentageBonus = (int)Math.Round(scaledBonus);
+            }
+
+            // Combine all sources and apply maximum cap
+            int totalToxins = toxinsFromLevel + toxinsFromFailures + toxinsFromPercentageBonus;
+            return Math.Min(totalToxins, maxToxinsThisRound);
+        }
+
+        /// <summary>
+        /// Finds candidate tiles for Mycotoxin Tracer when Competitive Antagonism surge is active.
+        /// Prioritizes tiles adjacent to players with larger colonies, falling back to smaller colonies if needed.
+        /// </summary>
+        private static List<BoardTile> FindCompetitiveAntagonismMycotoxinTargets(GameBoard board, Player player, List<Player> allPlayers)
+        {
+            // Get living cell count for the current player
+            int playerLivingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive);
+
+            // Group other players by colony size relative to current player
+            var otherPlayers = allPlayers.Where(p => p.PlayerId != player.PlayerId).ToList();
+            var playersWithLargerColonies = new List<Player>();
+            var playersWithSmallerColonies = new List<Player>();
+
+            foreach (var otherPlayer in otherPlayers)
+            {
+                int otherPlayerLivingCells = board.GetAllCellsOwnedBy(otherPlayer.PlayerId).Count(c => c.IsAlive);
+                if (otherPlayerLivingCells > playerLivingCells)
+                {
+                    playersWithLargerColonies.Add(otherPlayer);
+                }
+                else
+                {
+                    playersWithSmallerColonies.Add(otherPlayer);
+                }
+            }
+
+            // Sort players with larger colonies by descending colony size (target largest first)
+            playersWithLargerColonies = playersWithLargerColonies
+                .OrderByDescending(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
+                .ToList();
+
+            // Sort players with smaller colonies by ascending colony size (target weakest last)
+            playersWithSmallerColonies = playersWithSmallerColonies
+                .OrderBy(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
+                .ToList();
+
+            // Build prioritized target list: larger colonies first, then smaller colonies
+            var prioritizedTargetPlayers = playersWithLargerColonies.Concat(playersWithSmallerColonies).ToList();
+
+            // Find candidate tiles adjacent to living cells of each player in priority order
+            var candidateTiles = new List<BoardTile>();
+
+            foreach (var targetPlayer in prioritizedTargetPlayers)
+            {
+                var tilesAdjacentToPlayer = board.AllTiles()
+                    .Where(tile => !tile.IsOccupied && // Empty tiles only
+                        board.GetOrthogonalNeighbors(tile.TileId)
+                            .Any(neighbor => neighbor.FungalCell?.IsAlive == true &&
+                                           neighbor.FungalCell.OwnerPlayerId == targetPlayer.PlayerId))
+                    .ToList();
+
+                candidateTiles.AddRange(tilesAdjacentToPlayer);
+            }
+
+            // Remove duplicates while preserving priority order
+            var uniqueCandidates = new List<BoardTile>();
+            var seenTileIds = new HashSet<int>();
+
+            foreach (var candidate in candidateTiles)
+            {
+                if (seenTileIds.Add(candidate.TileId))
+                {
+                    uniqueCandidates.Add(candidate);
+                }
+            }
+
+            return uniqueCandidates;
         }
 
         /// <summary>

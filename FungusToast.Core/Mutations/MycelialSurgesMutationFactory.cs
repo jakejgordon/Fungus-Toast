@@ -41,10 +41,8 @@ namespace FungusToast.Core.Mutations.Factories
                     $"It spawns {GameBalance.HyphalVectoringBaseTiles} cells at level 0, plus {helper.FormatFloat(GameBalance.HyphalVectoringTilesPerLevel)} per level.\n\n" +
                     $"The origin is intelligently selected to prioritize: paths with fewest friendly cells, maximum enemy cells to infest, and proximity to center. " +
                     $"Cells replace anything in their path (toxins, dead mold, enemy mold, empty space) and **skip over friendly living mold** without interruption. " +
-                    $"Each activation costs {GameBalance.HyphalVectoringPointsPerActivation} mutation points, increasing by {GameBalance.HyphalVectoringSurgePointIncreasePerLevel} per level. " +
-                    $"This mutation can only activate once per {GameBalance.HyphalVectoringSurgeDuration} turns.",
-                flavorText:
-                    "Guided by centripetal nutrient gradients, apex hyphae launch invasive pulses straight into the heart of contested substrate.",
+                    $"Each activation costs {GameBalance.HyphalVectoringPointsPerActivation} mutation points plus {GameBalance.HyphalVectoringSurgePointIncreasePerLevel} per level already gained.",
+                flavorText: "Hyphal networks realign toward the center of the substrate, bulldozing through opposition with deliberate, uncompromising purpose.",
                 type: MutationType.HyphalVectoring,
                 effectPerLevel: GameBalance.HyphalVectoringTilesPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
@@ -56,18 +54,67 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerActivation: GameBalance.HyphalVectoringPointsPerActivation,
                 pointIncreasePerLevel: GameBalance.HyphalVectoringSurgePointIncreasePerLevel
             ),
-            new MutationPrerequisite(MutationIds.TendrilNorthwest, 1),
-            new MutationPrerequisite(MutationIds.TendrilSoutheast, 1));
+            new MutationPrerequisite(MutationIds.MycelialBloom, 7)
+            );
+
+            // Tier-3
+            helper.MakeChild(new Mutation(
+                id: MutationIds.MimeticResilience,
+                name: "Mimetic Resilience",
+                description:
+                    $"When activated during the Mutation Phase, enhances your growth cycle by strategically placing resistant fungal cells adjacent to rival resistant cells during the Growth Phase (for {GameBalance.MimeticResilienceSurgeDuration} rounds). " +
+                    $"**Only targets players with {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold)} more living cells than you** and who control at least {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold)} of the board. " +
+                    $"Each successful placement prioritizes **infesting enemy cells over empty placement**. " +
+                    $"Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} mutation points plus {GameBalance.MimeticResiliencePointIncreasePerLevel} per level already gained.",
+                flavorText: "The colony analyzes and replicates the defensive adaptations of more successful rivals, establishing resistant footholds in their territories through biomimetic infiltration.",
+                type: MutationType.MimeticResilience,
+                effectPerLevel: 1.0f, // Static effect: always 1 placement per qualifying target player
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
+                maxLevel: GameBalance.MimeticResilienceMaxLevel,
+                category: MutationCategory.MycelialSurges,
+                tier: MutationTier.Tier3,
+                isSurge: true,
+                surgeDuration: GameBalance.MimeticResilienceSurgeDuration,
+                pointsPerActivation: GameBalance.MimeticResiliencePointsPerActivation,
+                pointIncreasePerLevel: GameBalance.MimeticResiliencePointIncreasePerLevel
+            ),
+            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 5),
+            new MutationPrerequisite(MutationIds.MycotoxinTracer, 3)
+            );
+
+            helper.MakeChild(new Mutation(
+                id: MutationIds.CompetitiveAntagonism,
+                name: "Competitive Antagonism",
+                description:
+                    $"Enhances your Mycotoxin Tracers, Sporicidal Bloom, and Necrophytic Bloom abilities to target players who have larger colonies for {GameBalance.CompetitiveAntagonismSurgeDuration} rounds. " +
+                    $"During the surge, Sporicidal Bloom decreases the likelihood of landing on empty tiles and significantly increases the chance of landing on stronger colonies. " +
+                    $"Likewise, Necrophytic Bloom eliminates friendly cells and weaker colony cells as potential targets, significantly increasing the chance of taking over a stronger colony's dead cells. " +
+                    $"Mycotoxin Tracers will also preferentially target stronger players' borders. " +
+                    $"Each activation costs {GameBalance.CompetitiveAntagonismPointsPerActivation} mutation points plus {GameBalance.CompetitiveAntagonismPointIncreasePerLevel} per level already gained.",
+                flavorText: "Evolved chemoreceptors identify and aggressively target thriving competitors, directing toxin production and necrophytic expansion toward the most successful rival colonies with lethal precision.",
+                type: MutationType.CompetitiveAntagonism,
+                effectPerLevel: 1.0f, // Effect strength per level
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
+                maxLevel: GameBalance.CompetitiveAntagonismMaxLevel,
+                category: MutationCategory.MycelialSurges,
+                tier: MutationTier.Tier3,
+                isSurge: true,
+                surgeDuration: GameBalance.CompetitiveAntagonismSurgeDuration,
+                pointsPerActivation: GameBalance.CompetitiveAntagonismPointsPerActivation,
+                pointIncreasePerLevel: GameBalance.CompetitiveAntagonismPointIncreasePerLevel
+            ),
+            new MutationPrerequisite(MutationIds.MycotoxinTracer, 10),
+            new MutationPrerequisite(MutationIds.SporicidalBloom, 1)
+            );
 
             helper.MakeChild(new Mutation(
                 id: MutationIds.ChitinFortification,
                 name: "Chitin Fortification",
-                description: $"At the start of each Growth Phase (for {GameBalance.ChitinFortificationSurgeDuration} rounds after activation), " +
-                             $"{GameBalance.ChitinFortificationCellsPerLevel} random living fungal cells per level gain permanent resistance, " +
-                             $"making them immune to all death effects. " +
-                             $"Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points, " +
-                             $"increasing by {GameBalance.ChitinFortificationPointIncreasePerLevel} per level gained.",
-                flavorText: "Accelerated chitin synthesis reinforces cellular walls with crystalline matrices, forming impenetrable barriers against hostile incursions.",
+                description:
+                    $"When activated, immediately grants resistance to {GameBalance.ChitinFortificationCellsPerLevel} random living fungal cell(s) per level for {GameBalance.ChitinFortificationDurationRounds} rounds. " +
+                    $"Resistant cells cannot be killed or replaced by any means. The resistance effect lasts until the surge expires. " +
+                    $"Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points plus {GameBalance.ChitinFortificationPointIncreasePerLevel} per level already gained.",
+                flavorText: "Rapid chitin synthesis creates an impenetrable exoskeleton around select cells, rendering them invulnerable to all forms of destruction for a limited time.",
                 type: MutationType.ChitinFortification,
                 effectPerLevel: GameBalance.ChitinFortificationCellsPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
@@ -79,31 +126,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerActivation: GameBalance.ChitinFortificationPointsPerActivation,
                 pointIncreasePerLevel: GameBalance.ChitinFortificationPointIncreasePerLevel
             ),
-            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 5));
-
-            // Tier-3
-            helper.MakeChild(new Mutation(
-                id: MutationIds.MimeticResilience,
-                name: "Mimetic Resilience",
-                description: $"For {GameBalance.MimeticResilienceSurgeDuration} rounds after activation, " +
-                             $"at the end of each Growth Phase, attempts to place 1 resistant cell adjacent to " +
-                             $"resistant cells belonging to each player with at least {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold)} more living cells and controlling " +
-                             $"at least {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold)} of the board. Prioritizes infesting enemy cells over empty placements. Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} " +
-                             $"mutation points, increasing by {GameBalance.MimeticResiliencePointIncreasePerLevel} per level.",
-                flavorText: "Driven to the edge of extinction, the colony activates mimetic pathways, copying the defensive adaptations of thriving neighbors and spreading borrowed resistance through its own weakened cells.",
-                type: MutationType.MimeticResilience,
-                effectPerLevel: 1f, // One resistant cell per activation
-                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
-                maxLevel: GameBalance.MimeticResilienceMaxLevel,
-                category: MutationCategory.MycelialSurges,
-                tier: MutationTier.Tier3,
-                isSurge: true,
-                surgeDuration: GameBalance.MimeticResilienceSurgeDuration,
-                pointsPerActivation: GameBalance.MimeticResiliencePointsPerActivation,
-                pointIncreasePerLevel: GameBalance.MimeticResiliencePointIncreasePerLevel
-            ),
-            new MutationPrerequisite(MutationIds.ChitinFortification, 1), // MycelialSurges
-            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 3)); // CellularResilience
+            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 5)
+            );
         }
     }
 }

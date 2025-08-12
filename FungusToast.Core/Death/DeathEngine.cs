@@ -35,24 +35,15 @@ namespace FungusToast.Core.Death
         {
             List<Player> shuffledPlayers = board.Players.OrderBy(_ => rng.NextDouble()).ToList();
 
+            // Cache the occupied tile ratio at the start of the decay phase to avoid expensive recalculation
+            board.UpdateCachedOccupiedTileRatio();
+
             // Fire consolidated DecayPhase event for all decay-phase mutations (including Mycotoxin Tracer)
             board.OnDecayPhase(failedGrowthsByPlayerId);
-            
+
             ApplyNecrophyticBloomTrigger(shuffledPlayers, board, rng, simulationObserver);
             EvaluateProbabilisticDeaths(board, shuffledPlayers, rng, simulationObserver);
         }
-
-        /*
-        private static void ApplyPerTurnSporeEffects(
-            List<Player> players,
-            GameBoard board,
-            Dictionary<int, int> failedGrowthsByPlayerId,
-            Random rng,
-            ISimulationObserver simulationObserver)
-        {
-            // Mycotoxin Tracer is now handled via DecayPhaseWithFailedGrowths event
-        }
-        */
 
         /// <summary>
         /// Handles the board occupancy trigger for Necrophytic Bloom.
@@ -64,7 +55,8 @@ namespace FungusToast.Core.Death
             Random rng,
             ISimulationObserver simulationObserver)
         {
-            float occupiedPercent = board.GetOccupiedTileRatio();
+            // Use cached ratio instead of recalculating
+            float occupiedPercent = board.CachedOccupiedTileRatio;
 
             if (!board.NecrophyticBloomActivated &&
                 occupiedPercent >= GameBalance.NecrophyticBloomActivationThreshold)
@@ -125,13 +117,12 @@ namespace FungusToast.Core.Death
                     // Trigger spore on death, if relevant
                     board.TryTriggerSporeOnDeath(owner, rng, simulationObserver);
 
-                    // Per-death Necrophytic Bloom effect
+                    // Per-death Necrophytic Bloom effect - use cached ratio
                     if (board.NecrophyticBloomActivated &&
                         owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
                     {
-                        float occupiedPercent = board.GetOccupiedTileRatio();
-                        // Apply Necrophytic Bloom on each cell death
-                        GeneticDriftMutationProcessor.TriggerNecrophyticBloomOnCellDeath(owner, board, rng, occupiedPercent, simulationObserver);
+                        // Use cached occupied percent instead of recalculating
+                        GeneticDriftMutationProcessor.TriggerNecrophyticBloomOnCellDeath(owner, board, rng, board.CachedOccupiedTileRatio, simulationObserver);
                     }
                 }
                 // NOTE: Cell aging is now handled in AgeCells method, not here

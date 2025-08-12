@@ -565,7 +565,7 @@ namespace FungusToast.Simulation.Models
         // ────────────────
         private readonly Dictionary<(int playerId, int mutationId), List<int>> firstUpgradeRounds = new();
         private readonly Dictionary<(int playerId, string strategy, int mutationId), List<int>> firstUpgradeRoundsByStrategy = new();
-        
+
         public void RecordFirstUpgradeRounds(List<Player> players)
         {
             foreach (var player in players)
@@ -580,7 +580,7 @@ namespace FungusToast.Simulation.Models
                         if (!firstUpgradeRounds.ContainsKey(key))
                             firstUpgradeRounds[key] = new List<int>();
                         firstUpgradeRounds[key].Add(pm.FirstUpgradeRound.Value);
-                        
+
                         // Record by strategy (new)
                         var strategyKey = (player.PlayerId, strategyName, pm.MutationId);
                         if (!firstUpgradeRoundsByStrategy.ContainsKey(strategyKey))
@@ -598,7 +598,7 @@ namespace FungusToast.Simulation.Models
             var list = firstUpgradeRounds[key];
             return (list.Average(), list.Min(), list.Max(), list.Count);
         }
-        
+
         public (double? avg, int? min, int? max, int count) GetFirstUpgradeStatsByStrategy(int playerId, string strategy, int mutationId)
         {
             var key = (playerId, strategy, mutationId);
@@ -813,26 +813,26 @@ namespace FungusToast.Simulation.Models
         // ────────────────
         private readonly Dictionary<int, int> mimeticResilienceInfestations = new();
         private readonly Dictionary<int, int> mimeticResilienceDrops = new();
-        
+
         public void RecordMimeticResilienceInfestations(int playerId, int infestations)
         {
             if (!mimeticResilienceInfestations.ContainsKey(playerId))
                 mimeticResilienceInfestations[playerId] = 0;
             mimeticResilienceInfestations[playerId] += infestations;
         }
-        
+
         public void RecordMimeticResilienceDrops(int playerId, int drops)
         {
             if (!mimeticResilienceDrops.TryGetValue(playerId, out _))
                 mimeticResilienceDrops[playerId] = 0;
             mimeticResilienceDrops[playerId] += drops;
         }
-        
+
         public int GetMimeticResilienceInfestations(int playerId)
             => mimeticResilienceInfestations.TryGetValue(playerId, out var val) ? val : 0;
         public int GetMimeticResilienceDrops(int playerId)
             => mimeticResilienceDrops.TryGetValue(playerId, out var val) ? val : 0;
-            
+
         public Dictionary<int, int> GetAllMimeticResilienceInfestations() => new(mimeticResilienceInfestations);
         public Dictionary<int, int> GetAllMimeticResilienceDrops() => new(mimeticResilienceDrops);
 
@@ -841,26 +841,26 @@ namespace FungusToast.Simulation.Models
         // ────────────────
         private readonly Dictionary<int, int> cytolyticBurstToxins = new();
         private readonly Dictionary<int, int> cytolyticBurstKills = new();
-        
+
         public void RecordCytolyticBurstToxins(int playerId, int toxinsCreated)
         {
             if (!cytolyticBurstToxins.ContainsKey(playerId))
                 cytolyticBurstToxins[playerId] = 0;
             cytolyticBurstToxins[playerId] += toxinsCreated;
         }
-        
+
         public void RecordCytolyticBurstKills(int playerId, int cellsKilled)
         {
             if (!cytolyticBurstKills.ContainsKey(playerId))
                 cytolyticBurstKills[playerId] = 0;
             cytolyticBurstKills[playerId] += cellsKilled;
         }
-        
+
         public int GetCytolyticBurstToxins(int playerId)
             => cytolyticBurstToxins.TryGetValue(playerId, out var val) ? val : 0;
         public int GetCytolyticBurstKills(int playerId)
             => cytolyticBurstKills.TryGetValue(playerId, out var val) ? val : 0;
-            
+
         public Dictionary<int, int> GetAllCytolyticBurstToxins() => new(cytolyticBurstToxins);
         public Dictionary<int, int> GetAllCytolyticBurstKills() => new(cytolyticBurstKills);
 
@@ -868,17 +868,17 @@ namespace FungusToast.Simulation.Models
         // Chemotactic Mycotoxins Relocations
         // ────────────────
         private readonly Dictionary<int, int> chemotacticMycotoxinsRelocations = new();
-        
+
         public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations)
         {
             if (!chemotacticMycotoxinsRelocations.ContainsKey(playerId))
                 chemotacticMycotoxinsRelocations[playerId] = 0;
             chemotacticMycotoxinsRelocations[playerId] += relocations;
         }
-        
+
         public int GetChemotacticMycotoxinsRelocations(int playerId)
             => chemotacticMycotoxinsRelocations.TryGetValue(playerId, out var val) ? val : 0;
-            
+
         public Dictionary<int, int> GetAllChemotacticMycotoxinsRelocations() => new(chemotacticMycotoxinsRelocations);
 
         // ────────────────
@@ -886,29 +886,29 @@ namespace FungusToast.Simulation.Models
         // ────────────────
         private readonly Dictionary<int, int> hypersystemicRegenerationResistance = new();
         private readonly Dictionary<int, int> hypersystemicDiagonalReclaims = new();
-        
+
         public void RecordHypersystemicRegenerationResistance(int playerId)
         {
             if (!hypersystemicRegenerationResistance.ContainsKey(playerId))
                 hypersystemicRegenerationResistance[playerId] = 0;
             hypersystemicRegenerationResistance[playerId]++;
         }
-        
+
         public void RecordHypersystemicDiagonalReclaim(int playerId)
         {
             if (!hypersystemicDiagonalReclaims.ContainsKey(playerId))
                 hypersystemicDiagonalReclaims[playerId] = 0;
             hypersystemicDiagonalReclaims[playerId]++;
         }
-        
+
         public int GetHypersystemicRegenerationResistance(int playerId)
             => hypersystemicRegenerationResistance.TryGetValue(playerId, out var val) ? val : 0;
         public int GetHypersystemicDiagonalReclaims(int playerId)
             => hypersystemicDiagonalReclaims.TryGetValue(playerId, out var val) ? val : 0;
-            
+
         public Dictionary<int, int> GetAllHypersystemicRegenerationResistance() => new(hypersystemicRegenerationResistance);
         public Dictionary<int, int> GetAllHypersystemicDiagonalReclaims() => new(hypersystemicDiagonalReclaims);
-        
+
         // ────────────────
         // Mutator Phenotype Upgrades (for UI logging only - not tracked in simulations)
         // ────────────────
@@ -937,12 +937,12 @@ namespace FungusToast.Simulation.Models
             if (!ontogenicRegressionActivations.ContainsKey(playerId))
                 ontogenicRegressionActivations[playerId] = 0;
             ontogenicRegressionActivations[playerId]++;
-            
+
             // Track devolved levels (levels lost from tier 1 mutations)
             if (!ontogenicRegressionDevolvedLevels.ContainsKey(playerId))
                 ontogenicRegressionDevolvedLevels[playerId] = 0;
             ontogenicRegressionDevolvedLevels[playerId] += sourceLevelsLost;
-            
+
             // Track tier 5+ levels gained
             if (!ontogenicRegressionTier5PlusLevels.ContainsKey(playerId))
                 ontogenicRegressionTier5PlusLevels[playerId] = 0;
@@ -958,19 +958,36 @@ namespace FungusToast.Simulation.Models
 
         public int GetOntogenicRegressionActivations(int playerId)
             => ontogenicRegressionActivations.TryGetValue(playerId, out var val) ? val : 0;
-            
+
         public int GetOntogenicRegressionDevolvedLevels(int playerId)
             => ontogenicRegressionDevolvedLevels.TryGetValue(playerId, out var val) ? val : 0;
-            
+
         public int GetOntogenicRegressionTier5PlusLevels(int playerId)
             => ontogenicRegressionTier5PlusLevels.TryGetValue(playerId, out var val) ? val : 0;
-            
+
         public int GetOntogenicRegressionFailureBonuses(int playerId)
             => ontogenicRegressionFailureBonuses.TryGetValue(playerId, out var val) ? val : 0;
-            
+
         public Dictionary<int, int> GetAllOntogenicRegressionActivations() => new(ontogenicRegressionActivations);
         public Dictionary<int, int> GetAllOntogenicRegressionDevolvedLevels() => new(ontogenicRegressionDevolvedLevels);
         public Dictionary<int, int> GetAllOntogenicRegressionTier5PlusLevels() => new(ontogenicRegressionTier5PlusLevels);
         public Dictionary<int, int> GetAllOntogenicRegressionFailureBonuses() => new(ontogenicRegressionFailureBonuses);
+
+        // ────────────────
+        // Competitive Antagonism Targeting
+        // ────────────────
+        private readonly Dictionary<int, int> competitiveAntagonismTargeting = new();
+
+        public void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected)
+        {
+            if (!competitiveAntagonismTargeting.ContainsKey(playerId))
+                competitiveAntagonismTargeting[playerId] = 0;
+            competitiveAntagonismTargeting[playerId] += targetsAffected;
+        }
+
+        public int GetCompetitiveAntagonismTargeting(int playerId)
+            => competitiveAntagonismTargeting.TryGetValue(playerId, out var val) ? val : 0;
+
+        public Dictionary<int, int> GetAllCompetitiveAntagonismTargeting() => new(competitiveAntagonismTargeting);
     }
 }

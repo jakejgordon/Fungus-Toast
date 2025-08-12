@@ -34,7 +34,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.MycotoxinTracer,           new MutationLayoutMetadata(2, 0, MutationCategory.Fungicide) },
                 { MutationIds.MycotoxinPotentiation,     new MutationLayoutMetadata(2, 1, MutationCategory.Fungicide) },
                 { MutationIds.PutrefactiveMycotoxin,     new MutationLayoutMetadata(2, 2, MutationCategory.Fungicide) },
-                { MutationIds.SporocidalBloom,           new MutationLayoutMetadata(2, 3, MutationCategory.Fungicide) },
+                { MutationIds.SporicidalBloom,           new MutationLayoutMetadata(2, 3, MutationCategory.Fungicide) },
                 { MutationIds.PutrefactiveRejuvenation,  new MutationLayoutMetadata(2, 4, MutationCategory.Fungicide) },
                 { MutationIds.NecrotoxicConversion,      new MutationLayoutMetadata(2, 5, MutationCategory.Fungicide) },
                 { MutationIds.PutrefactiveCascade,       new MutationLayoutMetadata(2, 6, MutationCategory.Fungicide) },
@@ -53,6 +53,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.HyphalVectoring,        new MutationLayoutMetadata(4, 1, MutationCategory.MycelialSurges) },
                 { MutationIds.ChitinFortification,    new MutationLayoutMetadata(4, 2, MutationCategory.MycelialSurges) },
                 { MutationIds.MimeticResilience,      new MutationLayoutMetadata(4, 3, MutationCategory.MycelialSurges) },
+                { MutationIds.CompetitiveAntagonism,      new MutationLayoutMetadata(4, 4, MutationCategory.MycelialSurges) }
             };
     }
 }

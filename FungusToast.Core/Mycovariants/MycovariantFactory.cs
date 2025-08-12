@@ -395,7 +395,7 @@ namespace FungusToast.Core.Mycovariants
                     // Only count true toxin-dropping mutations
                     int toxinMutations = 0;
                     if (player.GetMutationLevel(MutationIds.MycotoxinTracer) > 0) toxinMutations++;
-                    if (player.GetMutationLevel(MutationIds.SporocidalBloom) > 0) toxinMutations++;
+                    if (player.GetMutationLevel(MutationIds.SporicidalBloom) > 0) toxinMutations++;
                     // Score: base is log-scaled on toxin count, bonus for toxin mutations
                     double baseScore = 1.0 + 3.0 * Math.Log10(1 + toxinCount);
                     double mutationBonus = toxinMutations * 1.5;

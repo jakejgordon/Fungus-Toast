@@ -36,5 +36,6 @@ namespace FungusToast.Core
         MimeticResilience,
         HypersystemicRegeneration,
         OntogenicRegression,
+        CompetitiveAntagonism,
     }
 }

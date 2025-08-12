@@ -50,10 +50,13 @@ namespace FungusToast.Unity.UI.GameLog
         // Track decay phase deaths by reason for summary
         private Dictionary<DeathReason, int> decayPhaseDeaths = new Dictionary<DeathReason, int>();
         private bool isTrackingDecayPhase = false;
-        
+
         // Track Chemotactic Mycotoxins relocations during decay phase for summary
         private int chemotacticMycotoxinsRelocations = 0;
-        
+
+        // Track Necrophytic Bloom reclamations during decay phase for summary
+        private int necrophyticBloomReclamations = 0;
+
         // Track resistance applications during growth phase for summary
         private int hypersystemicResistanceApplications = 0;
         private bool isTrackingResistanceApplications = false;
@@ -221,9 +224,12 @@ namespace FungusToast.Unity.UI.GameLog
             regenerativeHyphaeReclaims = 0;
             hypersystemicDiagonalReclaims = 0;
             isTrackingGrowthPhaseEffects = true;
-            
+
             // Start tracking Chemotactic Mycotoxins relocations for this round
             chemotacticMycotoxinsRelocations = 0;
+
+            // Start tracking Necrophytic Bloom reclamations for this round
+            necrophyticBloomReclamations = 0;
 
             // Start tracking pre-mutation phase effects for this round
             preMutationPhaseMutatorPhenotypePoints = 0;
@@ -311,13 +317,13 @@ namespace FungusToast.Unity.UI.GameLog
             string message = $"Decay Summary: {string.Join(", ", deathReasonParts)}";
             AddEntry(new GameLogEntry(message, GameLogCategory.Unlucky, null, humanPlayerId));
         }
-        
+
         private void ShowPostDecayPhaseSummary()
         {
             if (IsSilentMode) return;
-            
+
             var summaryParts = new List<string>();
-            
+
             // Chemotactic Mycotoxins relocations
             if (chemotacticMycotoxinsRelocations > 0)
             {
@@ -326,27 +332,22 @@ namespace FungusToast.Unity.UI.GameLog
                     : $"Chemotactic Mycotoxins relocated {chemotacticMycotoxinsRelocations} toxins";
                 summaryParts.Add(part);
             }
-            
+
+            // Necrophytic Bloom reclamations
+            if (necrophyticBloomReclamations > 0)
+            {
+                string part = necrophyticBloomReclamations == 1
+                    ? "Necrophytic Bloom reclaimed 1 dead cell"
+                    : $"Necrophytic Bloom reclaimed {necrophyticBloomReclamations} dead cells";
+                summaryParts.Add(part);
+            }
+
             // Only show summary if there are any positive effects to report
             if (summaryParts.Count > 0)
             {
                 string message = $"Post-Decay Phase Summary: {string.Join(", ", summaryParts)}";
                 AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
             }
-        }
-        
-        private void ShowResistanceApplicationsSummary()
-        {
-            if (IsSilentMode) return;
-            
-            // Only show summary if at least one cell gained resistance
-            if (hypersystemicResistanceApplications == 0) return;
-            
-            string message = hypersystemicResistanceApplications == 1 
-                ? "1 cell gained resistance from Hypersystemic Regeneration!"
-                : $"{hypersystemicResistanceApplications} cells gained resistance from Hypersystemic Regeneration!";
-            
-            AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
         }
         
         private void ShowGrowthPhaseSummary()
@@ -1054,7 +1055,13 @@ namespace FungusToast.Unity.UI.GameLog
         }
         public void ReportSporicidalSporeDrop(int playerId, int count) { }
         public void ReportNecrosporeDrop(int playerId, int count) { }
-        public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims) { }
+        public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims)
+        {
+            if (playerId == humanPlayerId && successfulReclaims > 0)
+            {
+                necrophyticBloomReclamations += successfulReclaims;
+            }
+        }
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
         public void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade) { }
         public void RecordBankedPoints(int playerId, int pointsBanked) { }
@@ -1169,6 +1176,11 @@ namespace FungusToast.Unity.UI.GameLog
         }
 
         public void ReportHyphalVectoringInfested(int playerId, int infested)
+        {
+
+        }
+
+        public void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected)
         {
 
         }
