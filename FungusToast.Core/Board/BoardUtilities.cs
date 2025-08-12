@@ -1,4 +1,6 @@
-﻿namespace FungusToast.Core.Board
+﻿using FungusToast.Core.Players;
+
+namespace FungusToast.Core.Board
 {
     public static class BoardUtilities
     {
@@ -22,6 +24,40 @@
         public static bool IsOnBorder(BoardTile tile, int width, int height)
         {
             return IsWithinEdgeDistance(tile, width, height, 1);
+        }
+
+        /// <summary>
+        /// Categorizes players by colony size relative to the current player.
+        /// Returns players with larger and smaller colonies than the current player.
+        /// </summary>
+        /// <param name="currentPlayer">The player to compare against</param>
+        /// <param name="allPlayers">All players in the game</param>
+        /// <param name="board">The game board</param>
+        /// <returns>Tuple containing lists of players with larger and smaller colonies</returns>
+        public static (List<Player> largerColonies, List<Player> smallerColonies) CategorizePlayersByColonySize(
+            Player currentPlayer,
+            List<Player> allPlayers,
+            GameBoard board)
+        {
+            int currentPlayerLivingCells = board.GetAllCellsOwnedBy(currentPlayer.PlayerId).Count(c => c.IsAlive);
+
+            var largerColonies = new List<Player>();
+            var smallerColonies = new List<Player>();
+
+            foreach (var otherPlayer in allPlayers.Where(p => p.PlayerId != currentPlayer.PlayerId))
+            {
+                int otherPlayerLivingCells = board.GetAllCellsOwnedBy(otherPlayer.PlayerId).Count(c => c.IsAlive);
+                if (otherPlayerLivingCells > currentPlayerLivingCells)
+                {
+                    largerColonies.Add(otherPlayer);
+                }
+                else
+                {
+                    smallerColonies.Add(otherPlayer);
+                }
+            }
+
+            return (largerColonies, smallerColonies);
         }
     }
 }

@@ -124,9 +124,10 @@ namespace FungusToast.Core.Phases
         }
 
         /// <summary>
-        /// Handles Sporocidal Bloom spore drops during decay phase.
+        /// Handles Sporicidal Bloom spore drops during decay phase.
+        /// Enhanced with Competitive Antagonism surge targeting.
         /// </summary>
-        public static void OnDecayPhase_SporocidalBloom(
+        public static void OnDecayPhase_SporicidalBloom(
             GameBoard board,
             List<Player> players,
             Random rng,
@@ -161,24 +162,28 @@ namespace FungusToast.Core.Phases
 
                 if (availableTiles.Count == 0) continue;
 
+                // Check if Competitive Antagonism surge is active for enhanced targeting
+                bool hasCompetitiveAntagonism = player.IsSurgeActive(MutationIds.CompetitiveAntagonism);
+
                 // Max level bonus: Remove 25% of empty tiles to increase enemy targeting
                 bool isMaxLevel = level >= GameBalance.SporicidalBloomMaxLevel;
                 if (isMaxLevel)
                 {
-                    // Separate empty tiles from enemy tiles
-                    var emptyTiles = availableTiles.Where(t => t.FungalCell == null).ToList();
-                    var nonEmptyTiles = availableTiles.Where(t => t.FungalCell != null).ToList();
+                    availableTiles = ApplySporicidalBloomMaxLevelBonus(availableTiles, rng);
+                }
 
-                    // Remove 25% of empty tiles randomly
-                    int emptyTilesToRemove = (int)Math.Floor(emptyTiles.Count * 0.25f);
-                    for (int i = 0; i < emptyTilesToRemove && emptyTiles.Count > 0; i++)
+                // Competitive Antagonism enhancement
+                if (hasCompetitiveAntagonism)
+                {
+                    availableTiles = ApplyCompetitiveAntagonismSporicidalBloomTargeting(
+                        availableTiles, player, players, board, rng);
+
+                    // Record the competitive targeting effect
+                    int targetsAffected = Math.Min(sporesToDrop, availableTiles.Count);
+                    if (targetsAffected > 0)
                     {
-                        int removeIndex = rng.Next(emptyTiles.Count);
-                        emptyTiles.RemoveAt(removeIndex);
+                        observer.RecordCompetitiveAntagonismTargeting(player.PlayerId, targetsAffected);
                     }
-
-                    // Recombine the lists
-                    availableTiles = nonEmptyTiles.Concat(emptyTiles).ToList();
                 }
 
                 int kills = 0, toxified = 0;
@@ -209,6 +214,75 @@ namespace FungusToast.Core.Phases
                     observer.ReportSporicidalSporeDrop(player.PlayerId, sporesToDrop);
                 }
             }
+        }
+
+        /// <summary>
+        /// Applies the max level bonus for Sporicidal Bloom by removing 25% of empty tiles.
+        /// </summary>
+        private static List<BoardTile> ApplySporicidalBloomMaxLevelBonus(List<BoardTile> availableTiles, Random rng)
+        {
+            // Separate empty tiles from enemy tiles
+            var emptyTiles = availableTiles.Where(t => t.FungalCell == null).ToList();
+            var nonEmptyTiles = availableTiles.Where(t => t.FungalCell != null).ToList();
+
+            // Remove 25% of empty tiles randomly
+            int emptyTilesToRemove = (int)Math.Floor(emptyTiles.Count * 0.25f);
+            for (int i = 0; i < emptyTilesToRemove && emptyTiles.Count > 0; i++)
+            {
+                int removeIndex = rng.Next(emptyTiles.Count);
+                emptyTiles.RemoveAt(removeIndex);
+            }
+
+            // Recombine the lists
+            return nonEmptyTiles.Concat(emptyTiles).ToList();
+        }
+
+        /// <summary>
+        /// Applies Competitive Antagonism targeting enhancements to Sporicidal Bloom.
+        /// Further reduces empty tiles and eliminates tiles from smaller colony players.
+        /// </summary>
+        private static List<BoardTile> ApplyCompetitiveAntagonismSporicidalBloomTargeting(
+            List<BoardTile> availableTiles,
+            Player currentPlayer,
+            List<Player> allPlayers,
+            GameBoard board,
+            Random rng)
+        {
+            // Categorize players by colony size
+            var (largerColonies, smallerColonies) = BoardUtilities.CategorizePlayersByColonySize(currentPlayer, allPlayers, board);
+            var smallerColonyPlayerIds = smallerColonies.Select(p => p.PlayerId).ToHashSet();
+
+            // Separate tiles by type
+            var emptyTiles = availableTiles.Where(t => t.FungalCell == null).ToList();
+            var largerColonyTiles = availableTiles.Where(t =>
+                t.FungalCell != null &&
+                t.FungalCell.OwnerPlayerId.HasValue &&
+                largerColonies.Any(p => p.PlayerId == t.FungalCell.OwnerPlayerId.Value)
+            ).ToList();
+            var smallerColonyTiles = availableTiles.Where(t =>
+                t.FungalCell != null &&
+                t.FungalCell.OwnerPlayerId.HasValue &&
+                smallerColonyPlayerIds.Contains(t.FungalCell.OwnerPlayerId.Value)
+            ).ToList();
+
+            // 1. Remove additional 25% of empty tiles (stacks with max level bonus)
+            int emptyTilesToRemove = (int)Math.Floor(emptyTiles.Count * GameBalance.CompetitiveAntagonismSporicidalBloomEmptyTileReduction);
+            for (int i = 0; i < emptyTilesToRemove && emptyTiles.Count > 0; i++)
+            {
+                int removeIndex = rng.Next(emptyTiles.Count);
+                emptyTiles.RemoveAt(removeIndex);
+            }
+
+            // 2. Remove 75% of smaller colony tiles (living, dead, and toxins)
+            int smallerColonyTilesToRemove = (int)Math.Floor(smallerColonyTiles.Count * GameBalance.CompetitiveAntagonismSporicidalBloomSmallerColonyReduction);
+            for (int i = 0; i < smallerColonyTilesToRemove && smallerColonyTiles.Count > 0; i++)
+            {
+                int removeIndex = rng.Next(smallerColonyTiles.Count);
+                smallerColonyTiles.RemoveAt(removeIndex);
+            }
+
+            // Combine remaining tiles: prioritize larger colonies, then smaller colonies, then empty
+            return largerColonyTiles.Concat(smallerColonyTiles).Concat(emptyTiles).ToList();
         }
 
         /// <summary>
@@ -485,39 +559,21 @@ namespace FungusToast.Core.Phases
         /// </summary>
         private static List<BoardTile> FindCompetitiveAntagonismMycotoxinTargets(GameBoard board, Player player, List<Player> allPlayers)
         {
-            // Get living cell count for the current player
-            int playerLivingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive);
-
-            // Group other players by colony size relative to current player
-            var otherPlayers = allPlayers.Where(p => p.PlayerId != player.PlayerId).ToList();
-            var playersWithLargerColonies = new List<Player>();
-            var playersWithSmallerColonies = new List<Player>();
-
-            foreach (var otherPlayer in otherPlayers)
-            {
-                int otherPlayerLivingCells = board.GetAllCellsOwnedBy(otherPlayer.PlayerId).Count(c => c.IsAlive);
-                if (otherPlayerLivingCells > playerLivingCells)
-                {
-                    playersWithLargerColonies.Add(otherPlayer);
-                }
-                else
-                {
-                    playersWithSmallerColonies.Add(otherPlayer);
-                }
-            }
+            // Use shared helper to categorize players by colony size
+            var (largerColonies, smallerColonies) = BoardUtilities.CategorizePlayersByColonySize(player, allPlayers, board);
 
             // Sort players with larger colonies by descending colony size (target largest first)
-            playersWithLargerColonies = playersWithLargerColonies
+            var sortedLargerColonies = largerColonies
                 .OrderByDescending(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
                 .ToList();
 
             // Sort players with smaller colonies by ascending colony size (target weakest last)
-            playersWithSmallerColonies = playersWithSmallerColonies
+            var sortedSmallerColonies = smallerColonies
                 .OrderBy(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
                 .ToList();
 
             // Build prioritized target list: larger colonies first, then smaller colonies
-            var prioritizedTargetPlayers = playersWithLargerColonies.Concat(playersWithSmallerColonies).ToList();
+            var prioritizedTargetPlayers = sortedLargerColonies.Concat(sortedSmallerColonies).ToList();
 
             // Find candidate tiles adjacent to living cells of each player in priority order
             var candidateTiles = new List<BoardTile>();

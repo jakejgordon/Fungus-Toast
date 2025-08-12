@@ -158,7 +158,7 @@ namespace FungusToast.Core.Phases
             // Order matters here - some effects may interact with others
             
             // 1. Sporocidal Bloom (spore effects - should happen first to place spores before other effects)
-            FungicideMutationProcessor.OnDecayPhase_SporocidalBloom(board, players, rng, observer);
+            FungicideMutationProcessor.OnDecayPhase_SporicidalBloom(board, players, rng, observer);
             
             // 2. Mycotoxin Tracer (spore effects based on failed growths - should happen after other spore effects)
             FungicideMutationProcessor.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);

@@ -103,8 +103,7 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerActivation: GameBalance.CompetitiveAntagonismPointsPerActivation,
                 pointIncreasePerLevel: GameBalance.CompetitiveAntagonismPointIncreasePerLevel
             ),
-            new MutationPrerequisite(MutationIds.MycotoxinTracer, 10),
-            new MutationPrerequisite(MutationIds.SporicidalBloom, 1)
+            new MutationPrerequisite(MutationIds.MycotoxinTracer, 15)
             );
 
             helper.MakeChild(new Mutation(
