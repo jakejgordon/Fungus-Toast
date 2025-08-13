@@ -405,8 +405,12 @@ namespace FungusToast.Core.Phases
         {
             if (mutation == null) return false;
 
-            // Surge: can't upgrade while active
-            if (mutation.IsSurge && player.IsSurgeActive(mutation.Id))
+            // Surge mutations cannot be auto-upgraded
+            if (mutation.IsSurge)
+                return false;
+
+            // MycelialSurges category cannot be auto-upgraded
+            if (mutation.Category == MutationCategory.MycelialSurges)
                 return false;
 
             // Check prerequisites
@@ -472,7 +476,7 @@ namespace FungusToast.Core.Phases
         {
             foreach (var player in players)
             {
-                TryApplyOntogenicRegression(player, allMutations, rng, observer);
+                TryApplyOntogenicRegression(player, allMutations, rng, board.CurrentRound, observer);
             }
         }
 
@@ -483,6 +487,7 @@ namespace FungusToast.Core.Phases
             Player player,
             List<Mutation> allMutations,
             Random rng,
+            int currentRound,
             ISimulationObserver observer)
         {
             int regressionLevel = player.GetMutationLevel(MutationIds.OntogenicRegression);
@@ -537,13 +542,13 @@ namespace FungusToast.Core.Phases
                 int sourceLevelsToRemove = GameBalance.OntogenicRegressionTier1LevelsToConsume;
                 int currentSourceLevel = player.GetMutationLevel(sourceMutation.Id);
                 int newSourceLevel = Math.Max(0, currentSourceLevel - sourceLevelsToRemove);
-                
+
                 // Remove levels from source mutation
-                player.SetMutationLevel(sourceMutation.Id, newSourceLevel);
-                
-                // Add 1 level to target mutation (ignoring prerequisites)
+                player.SetMutationLevel(sourceMutation.Id, newSourceLevel, currentRound);
+
+                // Add 1 level to target mutation (ignoring prerequisites) - pass currentRound to properly track PrereqMetRound
                 int currentTargetLevel = player.GetMutationLevel(targetMutation.Id);
-                player.SetMutationLevel(targetMutation.Id, currentTargetLevel + 1);
+                player.SetMutationLevel(targetMutation.Id, currentTargetLevel + 1, currentRound);
 
                 // Record the effect for tracking
                 observer.RecordOntogenicRegressionEffect(player.PlayerId, sourceMutation.Name, GameBalance.OntogenicRegressionTier1LevelsToConsume, targetMutation.Name, 1);

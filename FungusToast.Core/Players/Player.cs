@@ -300,12 +300,6 @@ namespace FungusToast.Core.Players
             return bonus;
         }
 
-        private bool IsEligibleForAutoUpgrade(Mutation mutation)
-        {
-            return (mutation.Tier == MutationTier.Tier1 || mutation.Tier == MutationTier.Tier2)
-                && (mutation.Category == MutationCategory.Growth || mutation.Category == MutationCategory.CellularResilience);
-        }
-
         public bool TryAutoUpgrade(Mutation mut, int currentRound)
         {
             if (mut == null) return false;
@@ -317,6 +311,21 @@ namespace FungusToast.Core.Players
             if (pm.CurrentLevel < mut.MaxLevel)
             {
                 pm.Upgrade(currentRound);
+
+                // --- Set PrereqMetRound on dependents ---
+                foreach (var dependent in MutationRegistry.All.Values)
+                {
+                    if (dependent.Prerequisites.Any(p => p.MutationId == mut.Id))
+                    {
+                        if (!PlayerMutations.ContainsKey(dependent.Id))
+                            PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
+                        var depPlayerMutation = PlayerMutations[dependent.Id];
+                        bool allMet = dependent.Prerequisites.All(p => GetMutationLevel(p.MutationId) >= p.RequiredLevel);
+                        if (dependent.Prerequisites.Count > 0 && allMet && depPlayerMutation.PrereqMetRound == null)
+                            depPlayerMutation.PrereqMetRound = currentRound;
+                    }
+                }
+
                 return true;
             }
             return false;
@@ -435,7 +444,7 @@ namespace FungusToast.Core.Players
             PlayerMycovariants.Add(playerMyco);
         }
 
-        internal void SetMutationLevel(int id, int newLevel)
+        internal void SetMutationLevel(int id, int newLevel, int currentRound = -1)
         {
             // Get the mutation definition from the registry
             if (!FungusToast.Core.Mutations.MutationRegistry.All.TryGetValue(id, out var mutation))
@@ -448,12 +457,33 @@ namespace FungusToast.Core.Players
             if (!PlayerMutations.ContainsKey(id))
                 PlayerMutations[id] = new PlayerMutation(PlayerId, id, mutation);
 
+            var pm = PlayerMutations[id];
+            int oldLevel = pm.CurrentLevel;
+
             // Set the level directly
-            PlayerMutations[id].CurrentLevel = newLevel;
+            pm.CurrentLevel = newLevel;
 
             // If setting to 0, we could remove the entry entirely, but keeping it for consistency
             if (newLevel == 0)
                 PlayerMutations.Remove(id);
+
+            // If the level increased and we have a current round, check if this change affects dependent mutations' PrereqMetRound
+            if (newLevel > oldLevel && currentRound >= 0)
+            {
+                // Check all mutations to see if any now have their prerequisites met for the first time
+                foreach (var dependent in MutationRegistry.All.Values)
+                {
+                    if (dependent.Prerequisites.Any(p => p.MutationId == id))
+                    {
+                        if (!PlayerMutations.ContainsKey(dependent.Id))
+                            PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
+                        var depPlayerMutation = PlayerMutations[dependent.Id];
+                        bool allMet = dependent.Prerequisites.All(p => GetMutationLevel(p.MutationId) >= p.RequiredLevel);
+                        if (dependent.Prerequisites.Count > 0 && allMet && depPlayerMutation.PrereqMetRound == null)
+                            depPlayerMutation.PrereqMetRound = currentRound;
+                    }
+                }
+            }
         }
     }
 }
