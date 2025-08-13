@@ -18,6 +18,7 @@ namespace FungusToast.Unity.Grid
         public Tilemap SelectionHighlightTileMap;   // Persistent selection highlights (prompt mode, pulsing)
         public Tilemap SelectedTileMap;             // Already selected tiles (solid highlighting)
         public Tilemap HoverOverlayTileMap;         // Temporary mouse hover overlays (single-tile, always on top)
+        [Tooltip("Optional dedicated tilemap for transient pings (if null, HoverOverlayTileMap is used)")] public Tilemap PingOverlayTileMap;
 
         [Header("Tiles")]
         public Tile baseTile;             // Toast base
@@ -51,6 +52,10 @@ namespace FungusToast.Unity.Grid
         // Pulse color scheme, can be set by HighlightTiles
         private Color pulseColorA = new Color(1f, 1f, 0.1f, 1f); // Default: yellow
         private Color pulseColorB = new Color(0.1f, 1f, 1f, 1f); // Default: cyan
+
+        // Add ring highlight tracking at the class level
+        private Dictionary<Vector3Int, Coroutine> ringHighlightCoroutines = new Dictionary<Vector3Int, Coroutine>();
+        private HashSet<Vector3Int> ringHighlightPositions = new HashSet<Vector3Int>();
 
         public void Initialize(GameBoard board)
         {
@@ -213,21 +218,118 @@ namespace FungusToast.Unity.Grid
         }
 
         /// <summary>
-        /// Highlights all living tiles for a given player, with default (yellow/cyan) pulse.
+        /// Highlights all living tiles for a given player, with optional starting tile ping.
         /// </summary>
-        public void HighlightPlayerTiles(int playerId)
+        public void HighlightPlayerTiles(int playerId, bool includeStartingTilePing = false)
         {
-            HighlightTiles(
-                board.AllTiles()
-                    .Where(t =>
-                        t.FungalCell != null &&
-                        t.FungalCell.OwnerPlayerId == playerId &&
-                        (t.FungalCell.CellType == FungalCellType.Alive || t.FungalCell.CellType == FungalCellType.Toxin)
-                    )
-                    .Select(t => t.TileId),
-                new Color(1f, 1f, 0.1f, 1f),  // Bright yellow
-                new Color(0.1f, 1f, 1f, 1f)   // Bright cyan
-            );
+            var tileIds = board.AllTiles()
+                .Where(t => t.FungalCell != null && t.FungalCell.OwnerPlayerId == playerId && (t.FungalCell.CellType == FungalCellType.Alive || t.FungalCell.CellType == FungalCellType.Toxin))
+                .Select(t => t.TileId);
+            HighlightTiles(tileIds, pulseColorA, pulseColorB);
+            if (includeStartingTilePing)
+            {
+                TriggerStartingTilePing(playerId);
+            }
+        }
+
+        /// <summary>
+        /// Public helper to trigger a starting tile ping (e.g., button / hotkey).
+        /// </summary>
+        public void TriggerStartingTilePing(int playerId)
+        {
+            int? startingTileId = GetPlayerStartingTile(playerId);
+            if (!startingTileId.HasValue) return;
+            var (x, y) = board.GetXYFromTileId(startingTileId.Value);
+            Vector3Int center = new Vector3Int(x, y, 0);
+            StartCoroutine(StartingTilePingAnimation(center));
+        }
+
+        /// <summary>
+        /// Gets the starting tile ID for a player.
+        /// </summary>
+        private int? GetPlayerStartingTile(int playerId)
+        {
+            if (playerId >= 0 && playerId < board.Players.Count)
+            {
+                return board.Players[playerId].StartingTileId;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Creates an expanding ring animation for the starting tile ping.
+        /// </summary>
+        private IEnumerator StartingTilePingAnimation(Vector3Int centerPos)
+        {
+            // Ensure tilemaps assigned
+            var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
+            if (solidHighlightTile == null || targetTilemap == null) yield break;
+
+            float duration = 2.2f;
+            float maxRadius = Mathf.Min(10f, Mathf.Max(board.Width, board.Height) * 0.25f); // scale slightly with board
+            float ringThickness = 0.6f; // tiles
+            float minVisibleRadius = 0.6f; // avoid empty early frames
+            int ringsPerSecond = 1; // number of pulses
+            int pulses = 1;
+
+            for (int p = 0; p < pulses; p++)
+            {
+                float pulseStart = Time.time;
+                while (true)
+                {
+                    float elapsed = Time.time - pulseStart;
+                    if (elapsed > duration) break;
+                    float tNorm = elapsed / duration; // 0..1
+                    // Ease-out cubic for radius, keep slower early expansion
+                    float eased = 1f - Mathf.Pow(1f - tNorm, 3f);
+                    float radius = Mathf.Lerp(minVisibleRadius, maxRadius, eased);
+                    // Keep alpha strong for most of animation then fade at end
+                    float alpha = tNorm < 0.75f ? 1f : Mathf.Lerp(1f, 0f, (tNorm - 0.75f) / 0.25f);
+                    Color ringColor = new Color(1f, 0.85f, 0.15f, alpha); // gold
+                    DrawRingHighlight(centerPos, radius, ringThickness, ringColor, targetTilemap);
+                    yield return null;
+                }
+                // small gap between pulses
+                ClearRingHighlight(targetTilemap);
+            }
+            ClearRingHighlight(targetTilemap);
+        }
+
+        private void DrawRingHighlight(Vector3Int centerPos, float radius, float thickness, Color color, Tilemap targetTilemap)
+        {
+            // Clear previously drawn ring tiles for this animation (not other overlays)
+            ClearRingHighlight(targetTilemap);
+            if (radius <= 0f) return;
+            float outerSq = radius * radius;
+            float inner = Mathf.Max(0f, radius - thickness);
+            float innerSq = inner * inner;
+            int rInt = Mathf.CeilToInt(radius + 1f);
+            for (int dx = -rInt; dx <= rInt; dx++)
+            {
+                for (int dy = -rInt; dy <= rInt; dy++)
+                {
+                    int gx = centerPos.x + dx;
+                    int gy = centerPos.y + dy;
+                    if (gx < 0 || gx >= board.Width || gy < 0 || gy >= board.Height) continue;
+                    float d2 = dx * dx + dy * dy;
+                    if (d2 > outerSq || d2 < innerSq) continue;
+                    var pos = new Vector3Int(gx, gy, 0);
+                    targetTilemap.SetTile(pos, solidHighlightTile);
+                    targetTilemap.SetTileFlags(pos, TileFlags.None);
+                    targetTilemap.SetColor(pos, color);
+                    ringHighlightPositions.Add(pos);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Clears all ring highlight tiles.
+        /// </summary>
+        private void ClearRingHighlight(Tilemap targetTilemap)
+        {
+            foreach (var pos in ringHighlightPositions)
+                if (targetTilemap.HasTile(pos)) targetTilemap.SetTile(pos, null);
+            ringHighlightPositions.Clear();
         }
 
         /// <summary>

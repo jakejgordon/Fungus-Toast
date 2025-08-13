@@ -9,7 +9,7 @@ namespace FungusToast.Simulation
 {
     class Program
     {
-        private const int DefaultNumberOfSimulationGames = 200;
+        private const int DefaultNumberOfSimulationGames = 10;
         private const int DefaultNumberOfPlayers = 8;
 
         static void Main(string[] args)
@@ -18,8 +18,8 @@ namespace FungusToast.Simulation
             var config = ParseCommandLineArguments(args);
             if (config == null) return; // Help was displayed, exit early
 
-            var strategies = AIRoster.GetStrategies(config.NumberOfPlayers, StrategySetEnum.Proven);
-            //var strategies = AIRoster.GetStrategies(config.NumberOfPlayers, StrategySetEnum.Testing);
+            //var strategies = AIRoster.GetStrategies(config.NumberOfPlayers, StrategySetEnum.Proven);
+            var strategies = AIRoster.GetStrategies(config.NumberOfPlayers, StrategySetEnum.Testing);
 
             // Always set up output redirection - if no filename specified, OutputManager will generate one
             OutputManager? outputManager = null;

@@ -41,6 +41,17 @@ namespace FungusToast.Core.Players
 
         public IMutationSpendingStrategy? MutationStrategy { get; private set; }
 
+        public int? StartingTileId { get; private set; }
+
+        /// <summary>
+        /// Sets the starting tile ID for this player. Can only be set once.
+        /// </summary>
+        public void SetStartingTile(int tileId)
+        {
+            if (!StartingTileId.HasValue) // Only set once
+                StartingTileId = tileId;
+        }
+
         // ------------------- SURGE STATE TRACKING -------------------
 
         public class ActiveSurgeInfo

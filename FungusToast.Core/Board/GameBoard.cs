@@ -286,6 +286,9 @@ namespace FungusToast.Core.Board
                 tileIdToCell[tileId] = cell;
 
                 Players[playerId].ControlledTileIds.Add(tileId);
+                
+                // Track the starting tile
+                Players[playerId].SetStartingTile(tileId);
             }
         }
 
