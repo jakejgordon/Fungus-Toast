@@ -267,13 +267,16 @@ namespace FungusToast.Core.Phases
 
         /// <summary>
         /// Triggers Necrophytic Bloom on individual cell death.
+        /// Enhanced with Competitive Antagonism surge targeting.
         /// </summary>
         public static void TriggerNecrophyticBloomOnCellDeath(
            Player owner,
            GameBoard board,
+           List<Player> allPlayers,
            Random rng,
            float occupiedPercent,
-           ISimulationObserver observer)
+           ISimulationObserver observer,
+           DecayPhaseContext decayPhaseContext)
         {
             int level = owner.GetMutationLevel(MutationIds.NecrophyticBloom);
             if (level <= 0) return;
@@ -284,17 +287,115 @@ namespace FungusToast.Core.Phases
 
             if (spores <= 0) return;
 
-            var allTileIds = board.AllTiles().Select(t => t.TileId).ToList();
-            int reclaims = 0;
+            // Check if Competitive Antagonism surge is active for enhanced targeting
+            bool hasCompetitiveAntagonism = owner.IsSurgeActive(MutationIds.CompetitiveAntagonism);
+            List<int> targetTileIds;
 
+            if (hasCompetitiveAntagonism)
+            {
+                targetTileIds = GetCompetitiveAntagonismNecrophyticBloomTargets(board, owner, allPlayers, rng, decayPhaseContext);
+                
+                // Record the competitive targeting effect
+                int targetsAffected = Math.Min(spores, targetTileIds.Count);
+                if (targetsAffected > 0)
+                {
+                    observer.RecordCompetitiveAntagonismTargeting(owner.PlayerId, targetsAffected);
+                }
+            }
+            else
+            {
+                // Use normal targeting logic - all tiles on the board
+                targetTileIds = board.AllTiles().Select(t => t.TileId).ToList();
+            }
+
+            int reclaims = 0;
             for (int i = 0; i < spores; i++)
             {
-                int randomTileId = allTileIds[rng.Next(allTileIds.Count)];
+                int randomTileId = targetTileIds[rng.Next(targetTileIds.Count)];
                 bool success = board.TryReclaimDeadCell(owner.PlayerId, randomTileId, Growth.GrowthSource.NecrophyticBloom);
                 if (success) reclaims++;
             }
 
             observer.ReportNecrophyticBloomSporeDrop(owner.PlayerId, spores, reclaims);
+        }
+
+        /// <summary>
+        /// Gets prioritized target tile IDs for Necrophytic Bloom when Competitive Antagonism surge is active.
+        /// Prioritizes dead cells from larger colony players, removes 75% of smaller colony dead cells.
+        /// </summary>
+        private static List<int> GetCompetitiveAntagonismNecrophyticBloomTargets(
+            GameBoard board, 
+            Player currentPlayer, 
+            List<Player> allPlayers, 
+            Random rng,
+            DecayPhaseContext decayPhaseContext)
+        {
+            // Use DecayPhaseContext for optimized colony size categorization
+            var (largerColonies, smallerColonies) = decayPhaseContext.GetColonySizeCategorization(currentPlayer);
+            var smallerColonyPlayerIds = smallerColonies.Select(p => p.PlayerId).ToHashSet();
+
+            // Separate tiles by category
+            var emptyTiles = new List<int>();
+            var largerColonyDeadCells = new List<int>();
+            var smallerColonyDeadCells = new List<int>();
+            var otherTiles = new List<int>(); // Living cells, toxins, current player's cells
+
+            foreach (var tile in board.AllTiles())
+            {
+                var cell = tile.FungalCell;
+                
+                if (cell == null)
+                {
+                    // Empty tile
+                    emptyTiles.Add(tile.TileId);
+                }
+                else if (cell.IsDead && cell.OwnerPlayerId.HasValue)
+                {
+                    // Dead cell owned by someone
+                    if (cell.OwnerPlayerId == currentPlayer.PlayerId)
+                    {
+                        // Current player's dead cell - treat as "other" since they can't reclaim their own dead cells
+                        otherTiles.Add(tile.TileId);
+                    }
+                    else if (largerColonies.Any(p => p.PlayerId == cell.OwnerPlayerId.Value))
+                    {
+                        // Dead cell from larger colony player - high priority
+                        largerColonyDeadCells.Add(tile.TileId);
+                    }
+                    else if (smallerColonyPlayerIds.Contains(cell.OwnerPlayerId.Value))
+                    {
+                        // Dead cell from smaller colony player - subject to reduction
+                        smallerColonyDeadCells.Add(tile.TileId);
+                    }
+                    else
+                    {
+                        // Dead cell from player with equal colony size or other edge case
+                        otherTiles.Add(tile.TileId);
+                    }
+                }
+                else
+                {
+                    // Living cell, toxin, or dead cell without owner
+                    otherTiles.Add(tile.TileId);
+                }
+            }
+
+            // Remove 75% of smaller colony dead cells
+            int smallerColonyTilesToRemove = (int)Math.Floor(smallerColonyDeadCells.Count * GameBalance.CompetitiveAntagonismNecrophyticBloomSmallerColonyReduction);
+            for (int i = 0; i < smallerColonyTilesToRemove && smallerColonyDeadCells.Count > 0; i++)
+            {
+                int removeIndex = rng.Next(smallerColonyDeadCells.Count);
+                smallerColonyDeadCells.RemoveAt(removeIndex);
+            }
+
+            // Combine tiles in priority order: larger colony dead cells first, then smaller colony dead cells, then empty, then other
+            var prioritizedTiles = new List<int>();
+            prioritizedTiles.AddRange(largerColonyDeadCells);
+            prioritizedTiles.AddRange(smallerColonyDeadCells);
+            prioritizedTiles.AddRange(emptyTiles);
+            prioritizedTiles.AddRange(otherTiles);
+
+            return prioritizedTiles;
         }
 
         /// <summary>

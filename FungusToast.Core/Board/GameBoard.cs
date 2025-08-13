@@ -43,6 +43,12 @@ namespace FungusToast.Core.Board
         /// </summary>
         public float CachedOccupiedTileRatio { get; private set; } = 0f;
 
+        /// <summary>
+        /// Cached decay phase context for optimized competitive targeting during the decay phase.
+        /// Created once per decay phase and reused for all competitive targeting operations.
+        /// </summary>
+        public DecayPhaseContext? CachedDecayPhaseContext { get; private set; } = null;
+
         public int TotalTiles => Width * Height;
 
         public delegate void CellColonizedEventHandler(int playerId, int tileId, GrowthSource source);
@@ -928,6 +934,23 @@ namespace FungusToast.Core.Board
         public void UpdateCachedOccupiedTileRatio()
         {
             CachedOccupiedTileRatio = GetOccupiedTileRatio();
+        }
+
+        /// <summary>
+        /// Creates and caches the decay phase context for optimized competitive targeting.
+        /// Should be called at the start of the decay phase.
+        /// </summary>
+        public void UpdateCachedDecayPhaseContext()
+        {
+            CachedDecayPhaseContext = new DecayPhaseContext(this, Players);
+        }
+
+        /// <summary>
+        /// Clears the cached decay phase context. Should be called at the end of the decay phase.
+        /// </summary>
+        public void ClearCachedDecayPhaseContext()
+        {
+            CachedDecayPhaseContext = null;
         }
     }
 }

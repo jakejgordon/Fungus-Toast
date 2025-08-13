@@ -5,8 +5,10 @@ using FungusToast.Core.Events;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
+using FungusToast.Core.Phases;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Core.Phases
 {
@@ -66,9 +68,44 @@ namespace FungusToast.Core.Phases
 
         // Cell Death Events
         /// <summary>
-        /// Handles all mutation effects that trigger on cell death.
+        /// Handles all mutation effects that trigger on cell death during the decay phase.
         /// Calls each mutation-specific handler in the appropriate order.
         /// Note: This only handles mutation-based effects. Mycovariant effects should be handled separately.
+        /// </summary>
+        public static void OnCellDeath(
+            FungalCellDiedEventArgs eventArgs,
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver observer,
+            DecayPhaseContext decayPhaseContext)
+        {
+            // Order matters here - some effects may depend on the results of others
+
+            // 1. Necrotoxic Conversion (toxin death reclamation - should happen first to potentially reclaim cells)
+            FungicideMutationProcessor.OnCellDeath_NecrotoxicConversion(eventArgs, board, players, rng, observer);
+
+            // 2. Putrefactive Rejuvenation (age reduction from kills - should happen before cascades)
+            FungicideMutationProcessor.OnCellDeath_PutrefactiveRejuvenation(eventArgs, board, players, observer);
+
+            // 3. Putrefactive Cascade (directional kill chains - should happen last to avoid affecting other mutations)
+            FungicideMutationProcessor.OnCellDeath_PutrefactiveCascade(eventArgs, board, players, rng, observer);
+
+            // 4. Necrophytic Bloom per-death trigger (if activated) - use cached ratio for performance
+            if (board.NecrophyticBloomActivated)
+            {
+                var owner = players.FirstOrDefault(p => p.PlayerId == eventArgs.OwnerPlayerId);
+                if (owner != null && owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
+                {
+                    // Use cached occupied percent and decay phase context for optimized competitive targeting
+                    GeneticDriftMutationProcessor.TriggerNecrophyticBloomOnCellDeath(owner, board, players, rng, board.CachedOccupiedTileRatio, observer, decayPhaseContext);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles all mutation effects that trigger on cell death (general case without decay phase context).
+        /// This version is used for general event handling and tries to use cached context if available.
         /// </summary>
         public static void OnCellDeath(
             FungalCellDiedEventArgs eventArgs,
@@ -88,14 +125,23 @@ namespace FungusToast.Core.Phases
             // 3. Putrefactive Cascade (directional kill chains - should happen last to avoid affecting other mutations)
             FungicideMutationProcessor.OnCellDeath_PutrefactiveCascade(eventArgs, board, players, rng, observer);
 
-            // 4. Necrophytic Bloom per-death trigger (if activated) - use cached ratio for performance
+            // 4. Necrophytic Bloom per-death trigger (if activated) - use cached context if available
             if (board.NecrophyticBloomActivated)
             {
                 var owner = players.FirstOrDefault(p => p.PlayerId == eventArgs.OwnerPlayerId);
                 if (owner != null && owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
                 {
-                    // Use cached occupied percent instead of expensive recalculation
-                    GeneticDriftMutationProcessor.TriggerNecrophyticBloomOnCellDeath(owner, board, rng, board.CachedOccupiedTileRatio, observer);
+                    if (board.CachedDecayPhaseContext != null)
+                    {
+                        // Use cached context for optimal performance
+                        GeneticDriftMutationProcessor.TriggerNecrophyticBloomOnCellDeath(owner, board, players, rng, board.CachedOccupiedTileRatio, observer, board.CachedDecayPhaseContext);
+                    }
+                    else
+                    {
+                        // Create a temporary context for this call - not optimal but needed for compatibility
+                        var tempContext = new DecayPhaseContext(board, players);
+                        GeneticDriftMutationProcessor.TriggerNecrophyticBloomOnCellDeath(owner, board, players, rng, board.CachedOccupiedTileRatio, observer, tempContext);
+                    }
                 }
             }
         }
@@ -147,6 +193,7 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// Handles all mutation effects that trigger during the decay phase.
         /// Calls each mutation-specific handler in the appropriate order.
+        /// Uses the cached DecayPhaseContext from the GameBoard.
         /// </summary>
         public static void OnDecayPhase(
             GameBoard board,
@@ -155,13 +202,21 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver observer)
         {
+            // Require cached decay phase context - should be populated by DeathEngine
+            if (board.CachedDecayPhaseContext == null)
+            {
+                throw new InvalidOperationException("CachedDecayPhaseContext must be populated before calling OnDecayPhase. Ensure UpdateCachedDecayPhaseContext() is called first.");
+            }
+            
+            var decayPhaseContext = board.CachedDecayPhaseContext;
+            
             // Order matters here - some effects may interact with others
             
             // 1. Sporocidal Bloom (spore effects - should happen first to place spores before other effects)
-            FungicideMutationProcessor.OnDecayPhase_SporicidalBloom(board, players, rng, observer);
+            FungicideMutationProcessor.OnDecayPhase_SporicidalBloom(board, players, rng, observer, decayPhaseContext);
             
             // 2. Mycotoxin Tracer (spore effects based on failed growths - should happen after other spore effects)
-            FungicideMutationProcessor.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer);
+            FungicideMutationProcessor.OnDecayPhase_MycotoxinTracer(board, players, failedGrowthsByPlayerId, rng, observer, decayPhaseContext);
             
             // 3. Mycotoxin Potentiation (toxin aura deaths - should happen after spore placement)
             FungicideMutationProcessor.OnDecayPhase_MycotoxinPotentiation(board, players, rng, observer);

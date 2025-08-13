@@ -122,6 +122,7 @@ namespace FungusToast.Core.Config
         public const int CompetitiveAntagonismMaxLevel = 5;
         public const float CompetitiveAntagonismSporicidalBloomEmptyTileReduction = 0.25f; // Additional 25% empty tile reduction
         public const float CompetitiveAntagonismSporicidalBloomSmallerColonyReduction = 0.75f; // 75% smaller colony tile reduction
+        public const float CompetitiveAntagonismNecrophyticBloomSmallerColonyReduction = 0.75f; // 75% smaller colony dead cell reduction
 
         // Regenerative Hyphae (Tier 4 Growth)
         public const float RegenerativeHyphaeReclaimChance = 0.021f;

@@ -65,31 +65,19 @@ namespace FungusToast.Unity.UI
 
         public void UpdatePlayerSummaries(List<Player> players)
         {
+            // Use optimized single-pass board summary calculation
+            var boardSummaries = FungusToast.Core.Board.BoardUtilities.GetPlayerBoardSummaries(players, GameManager.Instance.Board);
+            
             foreach (Player player in players)
             {
                 if (playerSummaryRows.TryGetValue(player.PlayerId, out var row))
                 {
-                    int alive = 0;
-                    int dead = 0;
-                    int toxins = 0;
-
-                    foreach (var cell in GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId))
-                    {
-                        if (cell.IsAlive)
-                        {
-                            alive++;
-                        }
-                        else if (cell.IsDead) // Only count as dead if truly dead
-                        {
-                            dead++;
-                        }
-                        else if (cell.IsToxin)
-                        {
-                            toxins++;
-                        }
-                    }
-
-                    row.SetCounts(alive.ToString(), dead.ToString(), toxins.ToString());
+                    var summary = boardSummaries[player.PlayerId];
+                    row.SetCounts(
+                        summary.LivingCells.ToString(), 
+                        summary.DeadCells.ToString(), 
+                        summary.ToxinCells.ToString()
+                    );
                 }
             }
         }
@@ -102,28 +90,27 @@ namespace FungusToast.Unity.UI
         // Add this method to sort and animate the rows
         private void SortAndAnimatePlayerSummaryRows(List<Player> players)
         {
+            // Use optimized single-pass board summary calculation (same as UpdatePlayerSummaries)
+            var boardSummaries = FungusToast.Core.Board.BoardUtilities.GetPlayerBoardSummaries(players, GameManager.Instance.Board);
+            
             // Build a list of rows with their player data
             var rowPlayerPairs = new List<(PlayerSummaryRow row, Player player, int alive, int dead)>();
             foreach (var player in players)
             {
                 if (playerSummaryRows.TryGetValue(player.PlayerId, out var row))
                 {
-                    int alive = 0;
-                    int dead = 0;
-                    foreach (var cell in GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId))
-                    {
-                        if (cell.IsAlive) alive++;
-                        else if (cell.IsDead) dead++;
-                    }
-                    rowPlayerPairs.Add((row, player, alive, dead));
+                    var summary = boardSummaries[player.PlayerId];
+                    rowPlayerPairs.Add((row, player, summary.LivingCells, summary.DeadCells));
                 }
             }
+            
             // Sort by alive descending, then dead descending
             rowPlayerPairs.Sort((a, b) => {
                 int cmp = b.alive.CompareTo(a.alive);
                 if (cmp != 0) return cmp;
                 return b.dead.CompareTo(a.dead);
             });
+            
             // Set sibling index (header stays at index 0)
             for (int i = 0; i < rowPlayerPairs.Count; i++)
             {

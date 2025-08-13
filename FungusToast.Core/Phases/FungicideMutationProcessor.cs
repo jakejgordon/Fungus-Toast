@@ -131,7 +131,8 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver observer)
+            ISimulationObserver observer,
+            DecayPhaseContext decayPhaseContext)
         {
             var (allMutations, _) = MutationRepository.BuildFullMutationSet();
             Mutation sporocidalBloom = allMutations[MutationIds.SporicidalBloom];
@@ -176,7 +177,7 @@ namespace FungusToast.Core.Phases
                 if (hasCompetitiveAntagonism)
                 {
                     availableTiles = ApplyCompetitiveAntagonismSporicidalBloomTargeting(
-                        availableTiles, player, players, board, rng);
+                        availableTiles, player, players, board, rng, decayPhaseContext);
 
                     // Record the competitive targeting effect
                     int targetsAffected = Math.Min(sporesToDrop, availableTiles.Count);
@@ -246,10 +247,11 @@ namespace FungusToast.Core.Phases
             Player currentPlayer,
             List<Player> allPlayers,
             GameBoard board,
-            Random rng)
+            Random rng,
+            DecayPhaseContext decayPhaseContext)
         {
-            // Categorize players by colony size
-            var (largerColonies, smallerColonies) = BoardUtilities.CategorizePlayersByColonySize(currentPlayer, allPlayers, board);
+            // Use DecayPhaseContext for optimized colony size categorization
+            var (largerColonies, smallerColonies) = decayPhaseContext.GetColonySizeCategorization(currentPlayer);
             var smallerColonyPlayerIds = smallerColonies.Select(p => p.PlayerId).ToHashSet();
 
             // Separate tiles by type
@@ -434,6 +436,7 @@ namespace FungusToast.Core.Phases
 
         /// <summary>
         /// Applies Mycotoxin Tracer spore drops during decay phase.
+        /// Enhanced with Competitive Antagonism surge targeting.
         /// </summary>
         public static int ApplyMycotoxinTracer(
             Player player,
@@ -441,7 +444,8 @@ namespace FungusToast.Core.Phases
             int failedGrowthsThisRound,
             List<Player> allPlayers,
             Random rng,
-            ISimulationObserver observer)
+            ISimulationObserver observer,
+            DecayPhaseContext decayPhaseContext)
         {
             int level = player.GetMutationLevel(MutationIds.MycotoxinTracer);
             if (level == 0) return 0;
@@ -458,7 +462,7 @@ namespace FungusToast.Core.Phases
 
             if (hasCompetitiveAntagonism)
             {
-                candidateTiles = FindCompetitiveAntagonismMycotoxinTargets(board, player, allPlayers);
+                candidateTiles = FindCompetitiveAntagonismMycotoxinTargets(board, player, allPlayers, decayPhaseContext);
 
                 // Record the competitive targeting effect
                 int targetsAffected = Math.Min(totalToxins, candidateTiles.Count);
@@ -557,10 +561,10 @@ namespace FungusToast.Core.Phases
         /// Finds candidate tiles for Mycotoxin Tracer when Competitive Antagonism surge is active.
         /// Prioritizes tiles adjacent to players with larger colonies, falling back to smaller colonies if needed.
         /// </summary>
-        private static List<BoardTile> FindCompetitiveAntagonismMycotoxinTargets(GameBoard board, Player player, List<Player> allPlayers)
+        private static List<BoardTile> FindCompetitiveAntagonismMycotoxinTargets(GameBoard board, Player player, List<Player> allPlayers, DecayPhaseContext decayPhaseContext)
         {
-            // Use shared helper to categorize players by colony size
-            var (largerColonies, smallerColonies) = BoardUtilities.CategorizePlayersByColonySize(player, allPlayers, board);
+            // Use DecayPhaseContext for optimized colony size categorization
+            var (largerColonies, smallerColonies) = decayPhaseContext.GetColonySizeCategorization(player);
 
             // Sort players with larger colonies by descending colony size (target largest first)
             var sortedLargerColonies = largerColonies
@@ -687,7 +691,8 @@ namespace FungusToast.Core.Phases
             List<Player> players,
             Dictionary<int, int> failedGrowthsByPlayerId,
             Random rng,
-            ISimulationObserver observer)
+            ISimulationObserver observer,
+            DecayPhaseContext decayPhaseContext)
         {
             // Count living cells for each player
             var playerLivingCellCounts = players.ToDictionary(p => p.PlayerId, p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive));
@@ -698,7 +703,7 @@ namespace FungusToast.Core.Phases
             foreach (var player in playersOrderedByLivingCells)
             {
                 int failedGrowths = failedGrowthsByPlayerId.TryGetValue(player.PlayerId, out var v) ? v : 0;
-                ApplyMycotoxinTracer(player, board, failedGrowths, players, rng, observer);
+                ApplyMycotoxinTracer(player, board, failedGrowths, players, rng, observer, decayPhaseContext);
             }
         }
 
