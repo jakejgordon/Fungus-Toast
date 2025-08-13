@@ -12,7 +12,7 @@ namespace FungusToast.Unity.UI
         public void OnPointerEnter(PointerEventData eventData)
         {
             //Debug.Log($"👆 Hovering over mold icon for Player {playerId}");
-            gridVisualizer.HighlightPlayerTiles(playerId);
+            gridVisualizer.HighlightPlayerTiles(playerId, true); // Include starting tile ping
         }
 
         public void OnPointerExit(PointerEventData eventData)
