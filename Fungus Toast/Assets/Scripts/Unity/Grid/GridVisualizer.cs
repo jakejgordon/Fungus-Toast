@@ -1,4 +1,4 @@
-﻿using FungusToast.Core;
+using FungusToast.Core;
 using FungusToast.Core.Board;
 using FungusToast.Unity.UI;
 using System.Collections;
@@ -56,6 +56,9 @@ namespace FungusToast.Unity.Grid
         // Add ring highlight tracking at the class level
         private Dictionary<Vector3Int, Coroutine> ringHighlightCoroutines = new Dictionary<Vector3Int, Coroutine>();
         private HashSet<Vector3Int> ringHighlightPositions = new HashSet<Vector3Int>();
+
+        private Coroutine startingTilePingCoroutine; // track current starting tile ping
+        private Tilemap lastPingTilemap; // remember which tilemap the ping used
 
         public void Initialize(GameBoard board)
         {
@@ -241,7 +244,20 @@ namespace FungusToast.Unity.Grid
             if (!startingTileId.HasValue) return;
             var (x, y) = board.GetXYFromTileId(startingTileId.Value);
             Vector3Int center = new Vector3Int(x, y, 0);
-            StartCoroutine(StartingTilePingAnimation(center));
+
+            // Determine target tilemap first
+            var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
+            if (targetTilemap == null || solidHighlightTile == null) return;
+
+            // If a previous ping is running, stop it and clear its visuals immediately
+            if (startingTilePingCoroutine != null)
+            {
+                StopCoroutine(startingTilePingCoroutine);
+                ClearRingHighlight(lastPingTilemap != null ? lastPingTilemap : targetTilemap);
+                startingTilePingCoroutine = null;
+            }
+            lastPingTilemap = targetTilemap;
+            startingTilePingCoroutine = StartCoroutine(StartingTilePingAnimation(center, targetTilemap));
         }
 
         /// <summary>
@@ -261,38 +277,78 @@ namespace FungusToast.Unity.Grid
         /// </summary>
         private IEnumerator StartingTilePingAnimation(Vector3Int centerPos)
         {
-            // Ensure tilemaps assigned
+            // legacy signature retained for any existing callers -> redirect
             var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
-            if (solidHighlightTile == null || targetTilemap == null) yield break;
-
-            float duration = 2.2f;
-            float maxRadius = Mathf.Min(10f, Mathf.Max(board.Width, board.Height) * 0.25f); // scale slightly with board
-            float ringThickness = 0.6f; // tiles
-            float minVisibleRadius = 0.6f; // avoid empty early frames
-            int ringsPerSecond = 1; // number of pulses
-            int pulses = 1;
-
-            for (int p = 0; p < pulses; p++)
+            if (targetTilemap == null || solidHighlightTile == null)
             {
-                float pulseStart = Time.time;
-                while (true)
-                {
-                    float elapsed = Time.time - pulseStart;
-                    if (elapsed > duration) break;
-                    float tNorm = elapsed / duration; // 0..1
-                    // Ease-out cubic for radius, keep slower early expansion
-                    float eased = 1f - Mathf.Pow(1f - tNorm, 3f);
-                    float radius = Mathf.Lerp(minVisibleRadius, maxRadius, eased);
-                    // Keep alpha strong for most of animation then fade at end
-                    float alpha = tNorm < 0.75f ? 1f : Mathf.Lerp(1f, 0f, (tNorm - 0.75f) / 0.25f);
-                    Color ringColor = new Color(1f, 0.85f, 0.15f, alpha); // gold
-                    DrawRingHighlight(centerPos, radius, ringThickness, ringColor, targetTilemap);
-                    yield return null;
-                }
-                // small gap between pulses
-                ClearRingHighlight(targetTilemap);
+                startingTilePingCoroutine = null;
+                yield break;
             }
+            yield return StartingTilePingAnimation(centerPos, targetTilemap);
+        }
+
+        // New internal implementation that accepts the target tilemap explicitly
+        private IEnumerator StartingTilePingAnimation(Vector3Int centerPos, Tilemap targetTilemap)
+        {
+            // Total animation duration shortened (~67% of previous 1.5s)
+            float duration = 1.0f; // was 1.5f
+            float expandPortion = 0.5f; // 50% expand, 50% contract for a snappier feel
+            float contractPortion = 1f - expandPortion;
+
+            float maxRadius = Mathf.Min(10f, Mathf.Max(board.Width, board.Height) * 0.25f);
+            float ringThickness = 0.6f;
+            float minVisibleRadius = 0.5f;
+
+            float startTime = Time.time;
+            while (true)
+            {
+                float elapsed = Time.time - startTime;
+                if (elapsed > duration) break;
+                float tNorm = Mathf.Clamp01(elapsed / duration); // 0..1
+
+                float radius;
+                float thickness = ringThickness;
+
+                if (tNorm <= expandPortion)
+                {
+                    // Expansion phase (ease-out cubic)
+                    float phaseT = tNorm / expandPortion; // 0..1
+                    float eased = 1f - Mathf.Pow(1f - phaseT, 3f);
+                    radius = Mathf.Lerp(minVisibleRadius, maxRadius, eased);
+                }
+                else
+                {
+                    // Contraction phase (ease-in cubic) back toward center.
+                    float phaseT = (tNorm - expandPortion) / contractPortion; // 0..1
+                    float eased = phaseT * phaseT * phaseT; // accelerate inward
+                    radius = Mathf.Lerp(maxRadius, minVisibleRadius, eased);
+                    thickness = Mathf.Lerp(ringThickness, ringThickness * 0.35f, eased);
+                }
+
+                // Alpha profile adjusted for shorter duration:
+                //  - Fade-in first 6%
+                //  - Sustain
+                //  - Fade-out last 15%
+                float alpha;
+                const float fadeInEnd = 0.06f;
+                const float fadeOutStart = 0.85f;
+                if (tNorm < fadeInEnd)
+                    alpha = Mathf.InverseLerp(0f, fadeInEnd, tNorm);
+                else if (tNorm > fadeOutStart)
+                    alpha = Mathf.InverseLerp(1f, fadeOutStart, tNorm);
+                else
+                    alpha = 1f;
+
+                Color ringColor = new Color(1f, 0.85f, 0.15f, alpha);
+                DrawRingHighlight(centerPos, radius, thickness, ringColor, targetTilemap);
+                yield return null;
+            }
+
+            // Center flash on collapse completion
+            DrawRingHighlight(centerPos, minVisibleRadius * 0.65f, ringThickness * 0.5f, new Color(1f, 0.95f, 0.3f, 0.95f), targetTilemap);
+            yield return null; // one frame
             ClearRingHighlight(targetTilemap);
+            startingTilePingCoroutine = null; // mark finished
         }
 
         private void DrawRingHighlight(Vector3Int centerPos, float radius, float thickness, Color color, Tilemap targetTilemap)
