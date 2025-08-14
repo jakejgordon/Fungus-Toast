@@ -478,15 +478,5 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             onComplete?.Invoke();
         }
-
-        // REMOVED: HandleJettingMycelium method - no longer needed since effect resolution is handled in MycovariantEffectResolver
-
-        private void HandlePlasmidBounty(Player player, Mycovariant picked)
-        {
-            // Core logic already handles the mutation point award via MycovariantFactory
-            // No need to duplicate it here
-            GameManager.Instance.GameUI.MoldProfilePanel?.PulseMutationPoints();
-        }
-
     }
 }

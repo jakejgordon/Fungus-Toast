@@ -1,4 +1,4 @@
-﻿using FungusToast.Core.Board;
+using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
@@ -66,9 +66,6 @@ namespace FungusToast.Unity.Effects
                      mycovariant.Id == MycovariantIds.PlasmidBountyIIId ||
                      mycovariant.Id == MycovariantIds.PlasmidBountyIIIId)
             {
-                // Plasmid Bounty effects are now handled by the core ApplyEffect
-                // Just handle the UI feedback
-                HandlePlasmidBountyUI(player);
                 onComplete?.Invoke();
             }
             else if (mycovariant.Id == MycovariantIds.MycelialBastionIId ||
@@ -127,17 +124,6 @@ namespace FungusToast.Unity.Effects
             else
             {
                 onComplete?.Invoke();
-            }
-        }
-
-        private void HandlePlasmidBountyUI(Player player)
-        {
-            // Only handle UI feedback - the core effect is applied by ApplyEffect
-            // Only pulse if the panel is active and enabled
-            var panel = GameManager.Instance.GameUI.MoldProfilePanel;
-            if (panel != null && panel.gameObject.activeInHierarchy && panel.enabled)
-            {
-                panel.PulseMutationPoints();
             }
         }
 

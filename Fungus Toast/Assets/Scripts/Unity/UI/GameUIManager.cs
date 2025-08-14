@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using FungusToast.Unity.UI.MutationTree;
 using FungusToast.Unity.UI.GameLog;
 
@@ -8,7 +8,6 @@ namespace FungusToast.Unity.UI
     {
         [Header("Core UI")]
         [SerializeField] private UI_MutationManager mutationUIManager;
-        [SerializeField] private UI_MoldProfilePanel moldProfilePanel;
         [SerializeField] private UI_PlayerBinder playerUIBinder;
 
         [Header("Sidebars")]
@@ -35,7 +34,6 @@ namespace FungusToast.Unity.UI
         public UI_PhaseProgressTracker PhaseProgressTracker => phaseProgressTracker;
 
         public UI_MutationManager MutationUIManager => mutationUIManager;
-        public UI_MoldProfilePanel MoldProfilePanel => moldProfilePanel;
         public UI_PlayerBinder PlayerUIBinder => playerUIBinder;
         public GameObject LeftSidebar => leftSidebar;
         public UI_RightSidebar RightSidebar => rightSidebar;

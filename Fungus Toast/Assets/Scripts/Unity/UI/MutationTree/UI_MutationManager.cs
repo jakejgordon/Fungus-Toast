@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -195,7 +195,6 @@ namespace FungusToast.Unity.UI.MutationTree
             if (humanPlayer.TryUpgradeMutation(mutation, observer, currentRound))
             {
                 RefreshSpendPointsButtonUI();
-                GameManager.Instance.GameUI.MoldProfilePanel.Refresh();
                 RefreshAllMutationButtons(); // <-- Ensures hourglass overlays update
                 TryEndHumanTurn();
                 return true;

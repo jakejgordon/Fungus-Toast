@@ -1,4 +1,4 @@
-﻿using FungusToast.Core;
+using FungusToast.Core;
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
@@ -224,7 +224,6 @@ namespace FungusToast.Unity
             humanPlayer = Board.Players[0];
 
             // Now initialize UI panels with the correct references
-            gameUIManager.MoldProfilePanel?.Initialize(Board.Players[0], Board.Players);
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(Board.Players);
         }
@@ -338,7 +337,6 @@ namespace FungusToast.Unity
             // Refresh the spend points button to show updated mutation points
             gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
 
-            gameUIManager.MoldProfilePanel?.Refresh();
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
 
             // Notify logs of phase start using unified router
