@@ -17,7 +17,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeRoot(new Mutation(
                 id: MutationIds.HomeostaticHarmony,
                 name: "Homeostatic Harmony",
-                description: $"Each level reduces self-death probability during decay by {helper.FormatPercent(GameBalance.HomeostaticHarmonyEffectPerLevel)}.",
+                description: $"Each level reduces the chance of random and age-based deaths by {helper.FormatPercent(GameBalance.HomeostaticHarmonyEffectPerLevel)}.",
                 flavorText: "Oscillatory homeostasis stabilizes intracellular pressure and toxin accumulation.",
                 type: MutationType.DefenseSurvival,
                 effectPerLevel: GameBalance.HomeostaticHarmonyEffectPerLevel,
