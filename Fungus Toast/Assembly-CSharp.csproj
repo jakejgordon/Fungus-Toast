@@ -84,6 +84,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\UI_PhaseBanner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantArtRepository.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantTooltipTrigger.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\GrowthPreviewDirection.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MultiTileSelectionController.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_MoldProfileRoot.cs" />
@@ -99,6 +100,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\GameLogEntry.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PhaseProgressTracker.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MultiCellSelectionController.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\GrowthDirectionCell.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\GameLogColorSchemes.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\GameLogManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationTreeBuilder.cs" />
