@@ -173,6 +173,8 @@ namespace FungusToast.Core.Players
 
         /* ---------------- Upgrade API ------------------------- */
 
+        public event Action<Player>? MutationsChanged; // Unified event for any mutation level change (manual, surge, auto, regression)
+
         public bool TryUpgradeMutation(Mutation mutation, ISimulationObserver simulationObserver, int currentRound)
         {
             if (mutation == null) return false;
@@ -230,6 +232,7 @@ namespace FungusToast.Core.Players
                 }
 
                 simulationObserver.RecordMutationPointsSpent(PlayerId, mutation.Tier, activationCost);
+                MutationsChanged?.Invoke(this); // notify once per successful upgrade
                 return true;
             }
             else
@@ -259,6 +262,7 @@ namespace FungusToast.Core.Players
                     }
 
                     simulationObserver.RecordMutationPointsSpent(PlayerId, mutation.Tier, mutation.PointsPerUpgrade);
+                    MutationsChanged?.Invoke(this);
                     return true;
                 }
                 return false;
@@ -284,7 +288,7 @@ namespace FungusToast.Core.Players
 
             // Enforce one-round delay after prereqs met (only for non-root mutations)
             if (mut.Prerequisites.Count > 0 && PlayerMutations.TryGetValue(mut.Id, out var pm) && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
-                return false;
+            return false;
 
             return MutationPoints >= cost && currentLevel < mut.MaxLevel;
         }
@@ -322,6 +326,7 @@ namespace FungusToast.Core.Players
             if (pm.CurrentLevel < mut.MaxLevel)
             {
                 pm.Upgrade(currentRound);
+                MutationsChanged?.Invoke(this);
 
                 // --- Set PrereqMetRound on dependents ---
                 foreach (var dependent in MutationRegistry.All.Values)
@@ -485,6 +490,8 @@ namespace FungusToast.Core.Players
                     }
                 }
             }
+            if (newLevel != oldLevel)
+                MutationsChanged?.Invoke(this);
         }
     }
 }

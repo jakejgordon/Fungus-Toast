@@ -229,6 +229,23 @@ namespace FungusToast.Unity
             // Now initialize UI panels with the correct references
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(Board.Players);
+            SubscribeToPlayerMutationEvents();
+        }
+
+        private void SubscribeToPlayerMutationEvents()
+        {
+            foreach (var p in Board.Players)
+            {
+                p.MutationsChanged += OnPlayerMutationsChanged;
+            }
+        }
+
+        private void OnPlayerMutationsChanged(Player player)
+        {
+            if (player == humanPlayer)
+            {
+                gameUIManager.MoldProfileRoot?.Refresh();
+            }
         }
 
         private void PlaceStartingSpores()
