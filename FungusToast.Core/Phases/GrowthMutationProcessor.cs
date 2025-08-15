@@ -106,6 +106,7 @@ namespace FungusToast.Core.Phases
             {
                 int surgeLevel = player.GetMutationLevel(hyphalSurgeId);
                 surgeBonus = surgeLevel * GameBalance.HyphalSurgeEffectPerLevel;
+                surgeBonus = player.GetMutationEffect(MutationType.HyphalSurge);
             }
             return (baseChance, surgeBonus);
         }

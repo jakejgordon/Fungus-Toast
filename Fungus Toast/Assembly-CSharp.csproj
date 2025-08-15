@@ -78,7 +78,6 @@
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationLayoutMetadata.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PlayerBinder.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MagnifyingGlassFollowMouse.cs" />
-    <Compile Include="Assets\Scripts\Unity\UI\UI_MoldProfilePanel.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\CellTooltipUI.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridFiller.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationManager.cs" />
@@ -87,6 +86,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantTooltipTrigger.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MultiTileSelectionController.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\UI_MoldProfileRoot.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantCard.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameUIManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\DraftOrderRow.cs" />

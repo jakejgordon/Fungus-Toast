@@ -36,7 +36,6 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private TooltipPositioner tooltipPositioner;
 
         [Header("UI Wiring")]
-        [SerializeField] private UI_MoldProfilePanel moldProfilePanel;
         [SerializeField] private TextMeshProUGUI mutationPointsCounterText;
         [SerializeField] private Button storePointsButton;
 

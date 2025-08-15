@@ -30,38 +30,43 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver observer)
         {
+            // Homeostatic Harmony (random + age reduction)
             float harmonyReduction = owner.GetMutationEffect(MutationType.DefenseSurvival);
-            float ageDelay = owner.GetMutationEffect(MutationType.SelfAgeResetThreshold);
 
-            float baseChance = Math.Max(0f, GameBalance.BaseDeathChance - harmonyReduction);
+            // Chronoresilient Cytoplasm: increases age threshold before age-based death risk begins.
+            // (MutationType.AgeAndRandomnessDecayResistance is the effect bucket for this.)
+            float addedThreshold = owner.GetMutationEffect(MutationType.AgeAndRandomnessDecayResistance);
+            float ageRiskThreshold = GameBalance.AgeAtWhichDecayChanceIncreases + addedThreshold; // treat as float to allow fractional future tuning
 
-            float ageComponent = cell.GrowthCycleAge > ageDelay
-                ? (cell.GrowthCycleAge - ageDelay) * GameBalance.AgeDeathFactorPerGrowthCycle
+            // Random component (cannot go below zero)
+            float randomChance = Math.Max(0f, GameBalance.BaseDeathChance - harmonyReduction);
+
+            // Age component only after threshold is exceeded
+            float ageComponent = cell.GrowthCycleAge > ageRiskThreshold
+                ? (cell.GrowthCycleAge - ageRiskThreshold) * GameBalance.AgeDeathFactorPerGrowthCycle
                 : 0f;
-
             float ageChance = Math.Max(0f, ageComponent - harmonyReduction);
 
-            float totalFallbackChance = Math.Clamp(baseChance + ageChance, 0f, 1f);
-            float thresholdRandom = baseChance;
-            float thresholdAge = baseChance + ageChance;
+            float totalChance = Math.Clamp(randomChance + ageChance, 0f, 1f);
+            float thresholdRandom = randomChance; // first segment of cumulative range
+            float thresholdAge = randomChance + ageChance; // (== totalChance)
 
-            if (roll < totalFallbackChance)
+            if (roll < totalChance)
             {
                 if (roll < thresholdRandom)
                 {
-                    return DeathCalculationResult.Death(totalFallbackChance, DeathReason.Randomness);
+                    return DeathCalculationResult.Death(totalChance, DeathReason.Randomness);
                 }
-
-                return DeathCalculationResult.Death(totalFallbackChance, DeathReason.Age);
+                return DeathCalculationResult.Death(totalChance, DeathReason.Age);
             }
 
-            // Check Putrefactive Mycotoxin (Fungicide category)
+            // Putrefactive Mycotoxin kill check (resolved only if base death fails)
             if (FungicideMutationProcessor.CheckPutrefactiveMycotoxin(cell, board, allPlayers, roll, out float pmChance, out int? killerPlayerId, out int? attackerTileId, rng, observer))
             {
                 return DeathCalculationResult.Death(pmChance, DeathReason.PutrefactiveMycotoxin, killerPlayerId, attackerTileId);
             }
 
-            return DeathCalculationResult.NoDeath(totalFallbackChance);
+            return DeathCalculationResult.NoDeath(totalChance);
         }
 
         #region Phase Event Orchestration

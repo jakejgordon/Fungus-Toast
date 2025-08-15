@@ -37,5 +37,6 @@ namespace FungusToast.Core
         HypersystemicRegeneration,
         OntogenicRegression,
         CompetitiveAntagonism,
+        HyphalSurge,
     }
 }

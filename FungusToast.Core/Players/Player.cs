@@ -123,7 +123,7 @@ namespace FungusToast.Core.Players
         /* ---------------- Growth / death chance --------------- */
 
         public float GetEffectiveGrowthChance() =>
-            GameBalance.BaseGrowthChance + GetMutationEffect(MutationType.GrowthChance);
+            GameBalance.BaseGrowthChance + GetMutationEffect(MutationType.GrowthChance) + GetMutationEffect(MutationType.HyphalSurge);
 
         public float GetEffectiveSelfDeathChance()
         {
@@ -340,16 +340,6 @@ namespace FungusToast.Core.Players
                 return true;
             }
             return false;
-        }
-
-        /* ---------------- Age reset threshold ----------------- */
-
-        public int GetSelfAgeResetThreshold()
-        {
-            int level = GetMutationLevel(MutationIds.ChronoresilientCytoplasm);
-            int threshold = GameBalance.BaseAgeResetThreshold -
-                            (level * GameBalance.AgeResetReductionPerLevel);
-            return System.Math.Max(1, threshold);
         }
 
         /* ---------------- Tile bookkeeping ------------------- */

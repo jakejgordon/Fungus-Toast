@@ -19,7 +19,7 @@ namespace FungusToast.Core.Mutations.Factories
                 name: "Hyphal Surge",
                 description: $"Increases your hyphal outgrowth chance by {helper.FormatPercent(GameBalance.HyphalSurgeEffectPerLevel)} per level for {GameBalance.HyphalSurgeDurationRounds} rounds. Each activation costs {GameBalance.HyphalSurgePointsPerActivation} mutation points plus {GameBalance.HyphalSurgePointIncreasePerLevel} per level already gained.",
                 flavorText: "A fleeting burst of energy, driving a furious wave of mycelial expansion across new ground.",
-                type: MutationType.GrowthChance,
+                type: MutationType.HyphalSurge,
                 effectPerLevel: GameBalance.HyphalSurgeEffectPerLevel,
                 pointsPerUpgrade: GameBalance.HyphalSurgePointsPerActivation,
                 maxLevel: GameBalance.HyphalSurgeMaxLevel,

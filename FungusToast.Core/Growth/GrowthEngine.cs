@@ -65,7 +65,7 @@ namespace FungusToast.Core.Growth
         /// </summary>
         private static void AgeCells(GameBoard board, List<Player> players)
         {
-            // Age all living cells (with mutation-based age reset logic)
+            // Age all living cells
             List<BoardTile> livingTiles = board.AllTiles()
                 .Where(t => t.FungalCell is { IsAlive: true })
                 .ToList();
@@ -73,11 +73,10 @@ namespace FungusToast.Core.Growth
             foreach (BoardTile tile in livingTiles)
             {
                 FungalCell cell = tile.FungalCell!;
-                Player owner = players.First(p => p.PlayerId == cell.OwnerPlayerId);
-                CellularResilienceMutationProcessor.AdvanceOrResetCellAge(owner, cell);
+                cell.IncrementGrowthAge();
             }
 
-            // Age all toxin cells (no mutation effects, just simple aging)
+            // Age all toxin cells (simple aging)
             List<BoardTile> toxinTiles = board.AllTiles()
                 .Where(t => t.FungalCell is { IsToxin: true })
                 .ToList();
@@ -151,18 +150,26 @@ namespace FungusToast.Core.Growth
                 }
             }
 
-            var diagonalDirs = new (int dx, int dy, DiagonalDirection dir)[]
+            var diagonalDirs = new (int dx, int dy, DiagonalDirection dir, int mutationId)[]
             {
-        (-1,  1, DiagonalDirection.Northwest),
-        ( 1,  1, DiagonalDirection.Northeast),
-        ( 1, -1, DiagonalDirection.Southeast),
-        (-1, -1, DiagonalDirection.Southwest),
+                (-1,  1, DiagonalDirection.Northwest, MutationIds.TendrilNorthwest),
+                ( 1,  1, DiagonalDirection.Northeast, MutationIds.TendrilNortheast),
+                ( 1, -1, DiagonalDirection.Southeast, MutationIds.TendrilSoutheast),
+                (-1, -1, DiagonalDirection.Southwest, MutationIds.TendrilSouthwest),
             };
 
-            foreach (var (dx, dy, dir) in diagonalDirs)
+            foreach (var (dx, dy, dir, mutationId) in diagonalDirs)
             {
-                float chance = owner.GetDiagonalGrowthChance(dir) * diagonalMultiplier * edgeMultiplier;
-                if (chance <= 0) continue;
+                // Hard guard: must actually own at least 1 level of the corresponding Tendril mutation
+                if (owner.GetMutationLevel(mutationId) <= 0)
+                    continue; // Do NOT even consider diagonals without Tendril unlock
+
+                float baseDiagonal = owner.GetDiagonalGrowthChance(dir);
+                if (baseDiagonal <= 0f)
+                    continue; // Defensive check – nothing to apply multiplier to
+
+                float chance = baseDiagonal * diagonalMultiplier * edgeMultiplier;
+                if (chance <= 0f) continue;
 
                 int nx = sourceTile.X + dx;
                 int ny = sourceTile.Y + dy;

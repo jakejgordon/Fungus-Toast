@@ -149,6 +149,9 @@ namespace FungusToast.Unity
             // === THEN initialize and show children/buttons ===
             gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+            
+            // Initialize Mold Profile stats panel
+            gameUIManager.MoldProfileRoot?.Initialize(Board.Players[0], Board.Players);
 
             if (testingModeEnabled)
             {
@@ -336,6 +339,7 @@ namespace FungusToast.Unity
 
             // Refresh the spend points button to show updated mutation points
             gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
+            gameUIManager.MoldProfileRoot?.Refresh();
 
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
 
@@ -434,6 +438,7 @@ namespace FungusToast.Unity
             TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rng, gameUIManager.GameLogRouter);
 
             gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
+            gameUIManager.MoldProfileRoot?.Refresh();
         }
 
         public void SpendAllMutationPointsForAIPlayers()

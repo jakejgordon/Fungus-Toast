@@ -17,17 +17,7 @@ namespace FungusToast.Core.Phases
     /// </summary>
     public static class CellularResilienceMutationProcessor
     {
-        /// <summary>
-        /// Advances or resets cell age based on player's age reset threshold.
-        /// </summary>
-        public static void AdvanceOrResetCellAge(Player player, FungalCell cell)
-        {
-            int resetAt = player.GetSelfAgeResetThreshold();
-            if (cell.GrowthCycleAge >= resetAt)
-                cell.ResetGrowthCycleAge();
-            else
-                cell.IncrementGrowthAge();
-        }
+        // (Aging now handled directly by GrowthEngine without mutation-specific logic.)
 
         /// <summary>
         /// Handles the Regenerative Hyphae effect - reclaims own dead cells adjacent to living cells.

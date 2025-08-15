@@ -13,6 +13,7 @@ namespace FungusToast.Unity.UI
         [Header("Sidebars")]
         [SerializeField] private GameObject leftSidebar;
         [SerializeField] private UI_RightSidebar rightSidebar;
+        [SerializeField] private UI_MoldProfileRoot moldProfileRoot; // Added mold profile root reference
         
         [Header("Player Activity Log (Left Sidebar)")]
         [SerializeField] private UI_GameLogPanel playerActivityLogPanel;
@@ -39,6 +40,7 @@ namespace FungusToast.Unity.UI
         public UI_RightSidebar RightSidebar => rightSidebar;
         public UI_EndGamePanel EndGamePanel => endGamePanel;
         public UI_PhaseBanner PhaseBanner => phaseBanner;
+        public UI_MoldProfileRoot MoldProfileRoot => moldProfileRoot; // Accessor
         
         // Player Activity Log (Left Sidebar)
         public UI_GameLogPanel PlayerActivityLogPanel => playerActivityLogPanel;
