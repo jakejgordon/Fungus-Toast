@@ -131,7 +131,7 @@ namespace FungusToast.Unity.UI
             float ageThreshold = GameBalance.AgeAtWhichDecayChanceIncreases + addedThreshold;
 
             if (statsAgeProtectionText)
-                statsAgeProtectionText.text = $"Homeostatic Reduction: {(harmony * 100f):F3}%";
+                statsAgeProtectionText.text = $"Homeostatic Reduction: {(harmony * 100f):F2}%";
 
             if (statsRandomDecayBreakdownText)
             {
