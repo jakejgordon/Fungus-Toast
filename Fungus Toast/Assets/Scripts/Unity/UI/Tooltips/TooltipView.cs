@@ -14,9 +14,6 @@ namespace FungusToast.Unity.UI.Tooltips
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private LayoutElement layoutElement;
 
-        private float fadeDuration = 0.12f;
-        private float shownTime;
-
         public RectTransform RectTransform => transform as RectTransform;
 
         public void SetText(string value, int? maxWidth)
@@ -45,7 +42,6 @@ namespace FungusToast.Unity.UI.Tooltips
             {
                 canvasGroup.alpha = 1f;
                 canvasGroup.blocksRaycasts = false;
-                shownTime = Time.unscaledTime;
             }
             gameObject.SetActive(true);
         }

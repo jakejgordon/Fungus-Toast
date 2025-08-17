@@ -18,7 +18,6 @@ namespace FungusToast.Unity.UI.Tooltips
         [SerializeField] private bool isHelpIcon = false; // tap toggles on touch
         [SerializeField] private bool followPointer = false; // reserved for future use
 
-        private bool pointerInside;
         private bool touchMode;
         private bool tooltipVisible;
 
@@ -29,7 +28,6 @@ namespace FungusToast.Unity.UI.Tooltips
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            pointerInside = true;
             if (touchMode && !isHelpIcon)
                 return; // use long press instead (not yet implemented for simplicity)
             float delay = useCustomDelay ? hoverDelay : (TooltipManager.Instance != null ? TooltipManager.Instance.showDelay : 0.35f);
@@ -42,7 +40,6 @@ namespace FungusToast.Unity.UI.Tooltips
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            pointerInside = false;
             if (TooltipManager.Instance != null)
                 TooltipManager.Instance.Cancel(this);
             tooltipVisible = false;
