@@ -39,7 +39,7 @@ namespace FungusToast.Core.Phases
             float ageRiskThreshold = GameBalance.AgeAtWhichDecayChanceIncreases + addedThreshold; // treat as float to allow fractional future tuning
 
             // Random component (cannot go below zero)
-            float randomChance = Math.Max(0f, GameBalance.BaseDeathChance - harmonyReduction);
+            float randomChance = Math.Max(0f, GameBalance.BaseRandomDecayChance - harmonyReduction);
 
             // Age component only after threshold is exceeded
             float ageComponent = cell.GrowthCycleAge > ageRiskThreshold

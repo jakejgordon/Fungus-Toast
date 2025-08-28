@@ -132,22 +132,9 @@ namespace FungusToast.Core.Players
             return level * bonusPerLevel;
         }
 
-        public float GetBaseMycelialDegradationRisk(List<Player> allPlayers)
-        {
-            float enemyPressure = allPlayers
-                .Where(p => p.PlayerId != PlayerId)
-                .Sum(p => p.GetMutationEffect(MutationType.EnemyDecayChance));
-
-            return System.Math.Max(
-                0f,
-                GameBalance.BaseDeathChance + enemyPressure - GetEffectiveSelfDeathChance());
-        }
-
         public float GetOffensiveDecayModifierAgainst(FungalCell targetCell, GameBoard board)
         {
-            float boost = GetMutationEffect(MutationType.EnemyDecayChance);
-            boost += GetMutationEffect(MutationType.AdjacentFungicide);
-            return boost;
+            return GetMutationEffect(MutationType.AdjacentFungicide);
         }
 
         /* ---------------- Diagonal growth helpers ------------- */

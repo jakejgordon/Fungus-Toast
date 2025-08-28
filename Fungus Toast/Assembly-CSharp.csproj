@@ -77,6 +77,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationNodeUI.cs" />
     <Compile Include="Assets\Scripts\Unity\Cameras\CameraControls.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantTooltipPanel.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\TooltipProbe.cs" />
     <Compile Include="Assets\Scripts\Unity\Phases\GrowthPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationLayoutMetadata.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\HomeostaticHarmonyTooltipProvider.cs" />

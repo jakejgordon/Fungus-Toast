@@ -5,7 +5,6 @@ namespace FungusToast.Core
         None,
         GrowthChance,
         DefenseSurvival,
-        EnemyDecayChance,
         BonusMutationPointChance,
         GrowthDiagonal_NW,
         GrowthDiagonal_NE,

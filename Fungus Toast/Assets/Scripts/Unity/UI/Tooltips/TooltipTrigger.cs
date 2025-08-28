@@ -75,8 +75,31 @@ namespace FungusToast.Unity.UI.Tooltips
         private TooltipRequest BuildRequest()
         {
             System.Func<string> dyn = null;
-            if (dynamicProvider != null && dynamicProvider is ITooltipContentProvider provider)
-                dyn = provider.GetTooltipText;
+
+            // Prefer explicitly assigned provider if it implements the interface
+            ITooltipContentProvider resolvedProvider = null;
+            if (dynamicProvider != null && dynamicProvider is ITooltipContentProvider p1)
+            {
+                resolvedProvider = p1;
+            }
+            else
+            {
+                // Fallbacks: try to auto-find on the same GameObject, then children
+                resolvedProvider = GetComponent<ITooltipContentProvider>();
+                if (resolvedProvider == null)
+                    resolvedProvider = GetComponentInChildren<ITooltipContentProvider>(true);
+#if UNITY_EDITOR
+                if (resolvedProvider == null && dynamicProvider != null)
+                {
+                    Debug.LogWarning($"TooltipTrigger on '{name}': Assigned 'dynamicProvider' does not implement ITooltipContentProvider. " +
+                                     "Auto-search did not find a provider. Ensure you assign the HomeostaticHarmonyTooltipProvider component itself.");
+                }
+#endif
+            }
+
+            if (resolvedProvider != null)
+                dyn = resolvedProvider.GetTooltipText;
+
             return new TooltipRequest
             {
                 Anchor = transform as RectTransform,
@@ -84,7 +107,7 @@ namespace FungusToast.Unity.UI.Tooltips
                 StaticText = staticText,
                 MaxWidth = maxWidth > 0 ? maxWidth : null,
                 FollowPointer = followPointer,
-                PivotPreference = new Vector2(0f,1f)
+                PivotPreference = new Vector2(0f, 1f)
             };
         }
 

@@ -9,7 +9,7 @@ namespace FungusToast.Core.Config
         public const int BoardHeight = 160;
         public const int MaxNumberOfRoundsBeforeGameEndTrigger = 75;
         public const float BaseGrowthChance = 0.015f;
-        public const float BaseDeathChance = .032f;
+        public const float BaseRandomDecayChance = .032f;
         public const int AgeAtWhichDecayChanceIncreases = 10;
         public const float AgeDeathFactorPerGrowthCycle = 0.008f;
         public const int StartingMutationPoints = 5;

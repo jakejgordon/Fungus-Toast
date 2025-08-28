@@ -8,6 +8,7 @@ using FungusToast.Core.Players;
 using FungusToast.Core.Mutations; // keep if other mutation id helpers needed
 using FungusToast.Core.Config;
 using FungusToast.Core.Phases; // GrowthMutationProcessor lives here
+using FungusToast.Unity.UI.Tooltips; // NEW: for tooltip providers
 
 namespace FungusToast.Unity.UI
 {
@@ -27,6 +28,9 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Color zeroChanceColor = new Color(1f,1f,1f,0.35f);
         [SerializeField] private Color finalZeroGreen = new Color(0.4f, 1f, 0.4f, 1f);
 
+        [Header("Help Icons")] // NEW: optional explicit reference to the HH tooltip provider
+        [SerializeField] private HomeostaticHarmonyTooltipProvider homeostaticHarmonyTooltip;
+
         private Player trackedPlayer;
         private List<Player> allPlayers;
 
@@ -43,6 +47,19 @@ namespace FungusToast.Unity.UI
             allPlayers = players;
             EnsureCellsResolved();
             Refresh();
+
+            // Initialize the dynamic Homeostatic Harmony tooltip provider (if present)
+            var provider = homeostaticHarmonyTooltip != null
+                ? homeostaticHarmonyTooltip
+                : GetComponentInChildren<HomeostaticHarmonyTooltipProvider>(true);
+            if (provider != null)
+            {
+                provider.Initialize(trackedPlayer, allPlayers);
+            }
+            else
+            {
+                 Debug.LogWarning("HomeostaticHarmonyTooltipProvider not found under UI_MoldProfileRoot.");
+            }
         }
 
         public void Refresh()
@@ -124,7 +141,7 @@ namespace FungusToast.Unity.UI
             if (allPlayers == null) return;
             int harmonyLevel = trackedPlayer.GetMutationLevel(MutationIds.HomeostaticHarmony);
             float harmony = harmonyLevel * GameBalance.HomeostaticHarmonyEffectPerLevel;
-            float rawRandom = trackedPlayer.GetBaseMycelialDegradationRisk(allPlayers);
+            float rawRandom = GameBalance.BaseRandomDecayChance;
             float finalRandom = Mathf.Max(0f, rawRandom - harmony);
             int chronoLevel = trackedPlayer.GetMutationLevel(MutationIds.ChronoresilientCytoplasm);
             float addedThreshold = chronoLevel * GameBalance.ChronoresilientCytoplasmEffectPerLevel;
