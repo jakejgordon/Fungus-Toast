@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Text;
 using UnityEngine;
 
-namespace FungusToast.Unity.UI.Tooltips
+namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
 {
     /// <summary>
     /// Example dynamic tooltip provider for Homeostatic Harmony breakdown.
@@ -15,10 +15,6 @@ namespace FungusToast.Unity.UI.Tooltips
     {
         private Player player;
         private System.Collections.Generic.List<Player> allPlayers;
-
-        void Awake()
-        {
-        }
 
         public void Initialize(Player tracked, System.Collections.Generic.List<Player> players)
         {

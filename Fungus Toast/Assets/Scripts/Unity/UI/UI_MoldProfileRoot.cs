@@ -1,14 +1,15 @@
+using FungusToast.Core; // for MutationType enum
+using FungusToast.Core.Config;
+using FungusToast.Core.Mutations; // keep if other mutation id helpers needed
+using FungusToast.Core.Phases; // GrowthMutationProcessor lives here
+using FungusToast.Core.Players;
+using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using System;
 using System.Collections.Generic;
 using TMPro;
+using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.UI;
-using FungusToast.Core; // for MutationType enum
-using FungusToast.Core.Players;
-using FungusToast.Core.Mutations; // keep if other mutation id helpers needed
-using FungusToast.Core.Config;
-using FungusToast.Core.Phases; // GrowthMutationProcessor lives here
-using FungusToast.Unity.UI.Tooltips; // NEW: for tooltip providers
 
 namespace FungusToast.Unity.UI
 {
@@ -20,7 +21,6 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image centerPlayerIcon;
 
         [Header("Stat Text References")] 
-        [SerializeField] private TextMeshProUGUI statsAgeProtectionText;          // UI_StatsRootAgeDecayReductionChance
         [SerializeField] private TextMeshProUGUI statsRandomDecayBreakdownText;    // UI_StatsRootRandomDecayChance
         [SerializeField] private TextMeshProUGUI statsAgeThresholdText;            // UI_StatsRootStartDecayAge
 
@@ -29,7 +29,8 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Color finalZeroGreen = new Color(0.4f, 1f, 0.4f, 1f);
 
         [Header("Help Icons")] // NEW: optional explicit reference to the HH tooltip provider
-        [SerializeField] private HomeostaticHarmonyTooltipProvider homeostaticHarmonyTooltip;
+        [SerializeField] private HomeostaticHarmonyTooltipProvider homeostaticHarmonyTooltipProvider;
+        [SerializeField] private AgeDelayThresholdTooltipProvider ageDelayThresholdTooltipProvider;
 
         private Player trackedPlayer;
         private List<Player> allPlayers;
@@ -48,18 +49,8 @@ namespace FungusToast.Unity.UI
             EnsureCellsResolved();
             Refresh();
 
-            // Initialize the dynamic Homeostatic Harmony tooltip provider (if present)
-            var provider = homeostaticHarmonyTooltip != null
-                ? homeostaticHarmonyTooltip
-                : GetComponentInChildren<HomeostaticHarmonyTooltipProvider>(true);
-            if (provider != null)
-            {
-                provider.Initialize(trackedPlayer, allPlayers);
-            }
-            else
-            {
-                 Debug.LogWarning("HomeostaticHarmonyTooltipProvider not found under UI_MoldProfileRoot.");
-            }
+            homeostaticHarmonyTooltipProvider.Initialize(trackedPlayer, allPlayers);
+            ageDelayThresholdTooltipProvider.Initialize(trackedPlayer);
         }
 
         public void Refresh()
@@ -147,9 +138,6 @@ namespace FungusToast.Unity.UI
             float addedThreshold = chronoLevel * GameBalance.ChronoresilientCytoplasmEffectPerLevel;
             float ageThreshold = GameBalance.AgeAtWhichDecayChanceIncreases + addedThreshold;
 
-            if (statsAgeProtectionText)
-                statsAgeProtectionText.text = $"Homeostatic Reduction: {(harmony * 100f):F2}%";
-
             if (statsRandomDecayBreakdownText)
             {
                 string finalDisplay = finalRandom <= 1e-6f
@@ -159,7 +147,7 @@ namespace FungusToast.Unity.UI
             }
 
             if (statsAgeThresholdText)
-                statsAgeThresholdText.text = $"Age Risk Threshold: {ageThreshold:F0}";
+                statsAgeThresholdText.text = $"Age Risk Threshold: {GameBalance.ChronoresilientCytoplasmEffectPerLevel:F0} - {addedThreshold:F0}  = {ageThreshold:F0}";
         }
     }
 }

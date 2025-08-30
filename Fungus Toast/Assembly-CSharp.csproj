@@ -67,6 +67,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_MutationManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipRequest.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\ITooltipContentProvider.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipProviders\AgeDelayThresholdTooltipProvider.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_RightSideBar.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\SidebarResizer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipManager.cs" />
@@ -77,10 +78,9 @@
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationNodeUI.cs" />
     <Compile Include="Assets\Scripts\Unity\Cameras\CameraControls.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantTooltipPanel.cs" />
-    <Compile Include="Assets\Scripts\Unity\UI\TooltipProbe.cs" />
     <Compile Include="Assets\Scripts\Unity\Phases\GrowthPhaseRunner.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipProviders\HomeostaticHarmonyTooltipProvider.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationLayoutMetadata.cs" />
-    <Compile Include="Assets\Scripts\Unity\UI\Tooltips\HomeostaticHarmonyTooltipProvider.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PlayerBinder.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MagnifyingGlassFollowMouse.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\CellTooltipUI.cs" />
