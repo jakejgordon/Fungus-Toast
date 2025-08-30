@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 1916609}
   - component: {fileID: 1916611}
   - component: {fileID: 1916610}
+  - component: {fileID: 1916612}
   m_Layer: 5
   m_Name: UI_Label_Decay
   m_TagString: Untagged
@@ -255,6 +256,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1916608}
   m_CullTransparentMesh: 1
+--- !u!114 &1916612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1916608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56d1a8a06a90c804286d3897bb5b4b68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  staticText: During the DECAY phase, cells have a chance to die from randomness,
+    age, and other mutation-related abilities. This is also when most toxins are
+    dropped.
+  dynamicProvider: {fileID: 0}
+  hoverDelay: 0.38
+  useCustomDelay: 0
+  maxWidth: 400
+  isHelpIcon: 0
+  followPointer: 0
 --- !u!1 &9829475
 GameObject:
   m_ObjectHideFlags: 0
@@ -2675,6 +2697,7 @@ GameObject:
   m_Component:
   - component: {fileID: 290233801}
   - component: {fileID: 290233802}
+  - component: {fileID: 290233803}
   m_Layer: 5
   m_Name: UI_GrowthCycleWrapper
   m_TagString: Untagged
@@ -2729,6 +2752,26 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &290233803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 290233800}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56d1a8a06a90c804286d3897bb5b4b68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  staticText: During the Growth Phase, 5 successive growth cycles will trigger, allowing
+    cells to grow.
+  dynamicProvider: {fileID: 0}
+  hoverDelay: 0.38
+  useCustomDelay: 0
+  maxWidth: 400
+  isHelpIcon: 0
+  followPointer: 0
 --- !u!1 &291473328 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 200007940375941483, guid: 6bfae62bd7629fe46a110eb496737e9c, type: 3}
@@ -104764,6 +104807,7 @@ GameObject:
   - component: {fileID: 476420977}
   - component: {fileID: 476420979}
   - component: {fileID: 476420978}
+  - component: {fileID: 476420980}
   m_Layer: 5
   m_Name: UI_Label_Mutation
   m_TagString: Untagged
@@ -104889,6 +104933,26 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 476420976}
   m_CullTransparentMesh: 1
+--- !u!114 &476420980
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 476420976}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56d1a8a06a90c804286d3897bb5b4b68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  staticText: During the Mutation phase, players can spend mutation points or store
+    them for the next round.
+  dynamicProvider: {fileID: 0}
+  hoverDelay: 0.38
+  useCustomDelay: 0
+  maxWidth: 400
+  isHelpIcon: 0
+  followPointer: 0
 --- !u!1 &482411956
 GameObject:
   m_ObjectHideFlags: 0
@@ -117644,6 +117708,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1772257565}
+  - component: {fileID: 1772257566}
   m_Layer: 5
   m_Name: UI_GrowthPreviewCenterCell
   m_TagString: Untagged
@@ -117672,6 +117737,25 @@ RectTransform:
   m_AnchoredPosition: {x: 188, y: -237}
   m_SizeDelta: {x: 120, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1772257566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1772257564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56d1a8a06a90c804286d3897bb5b4b68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  staticText: This is what your fungal cells look like.
+  dynamicProvider: {fileID: 0}
+  hoverDelay: 0.38
+  useCustomDelay: 0
+  maxWidth: 400
+  isHelpIcon: 0
+  followPointer: 0
 --- !u!1 &1807839207
 GameObject:
   m_ObjectHideFlags: 0

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 8642183426373050323}
   - component: {fileID: 782014137996561230}
   - component: {fileID: 1612142607452367735}
+  - component: {fileID: 7734291575260839500}
   m_Layer: 5
   m_Name: UI_GrowthPreviewCell
   m_TagString: Untagged
@@ -78,6 +79,27 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7734291575260839500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 200007940375941483}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56d1a8a06a90c804286d3897bb5b4b68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  staticText: '% chance that your living fungal cell will grow into an unoccupied
+    cell in this direction each growth cycle. By default, each cell can grow at most
+    once per growth cycle.'
+  dynamicProvider: {fileID: 0}
+  hoverDelay: 0.38
+  useCustomDelay: 0
+  maxWidth: 400
+  isHelpIcon: 0
+  followPointer: 0
 --- !u!1 &3231191661333288285
 GameObject:
   m_ObjectHideFlags: 0
