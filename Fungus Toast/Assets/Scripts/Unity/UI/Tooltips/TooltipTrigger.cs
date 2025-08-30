@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -17,6 +18,7 @@ namespace FungusToast.Unity.UI.Tooltips
         [SerializeField] private int maxWidth = 400;
         [SerializeField] private bool isHelpIcon = false; // tap toggles on touch
         [SerializeField] private bool followPointer = false; // reserved for future use
+        [SerializeField] private TooltipPlacement placement = TooltipPlacement.Auto; // NEW: developer-selected placement
 
         private bool touchMode;
         private bool tooltipVisible;
@@ -76,38 +78,35 @@ namespace FungusToast.Unity.UI.Tooltips
         {
             System.Func<string> dyn = null;
 
-            // Prefer explicitly assigned provider if it implements the interface
-            ITooltipContentProvider resolvedProvider = null;
-            if (dynamicProvider != null && dynamicProvider is ITooltipContentProvider p1)
+            // If StaticText is empty, a valid dynamic provider is required
+            bool hasStatic = !string.IsNullOrEmpty(staticText);
+            if (!hasStatic)
             {
-                resolvedProvider = p1;
-            }
-            else
-            {
-                // Fallbacks: try to auto-find on the same GameObject, then children
-                resolvedProvider = GetComponent<ITooltipContentProvider>();
-                if (resolvedProvider == null)
-                    resolvedProvider = GetComponentInChildren<ITooltipContentProvider>(true);
-#if UNITY_EDITOR
-                if (resolvedProvider == null && dynamicProvider != null)
+                if (dynamicProvider == null)
                 {
-                    Debug.LogWarning($"TooltipTrigger on '{name}': Assigned 'dynamicProvider' does not implement ITooltipContentProvider. " +
-                                     "Auto-search did not find a provider. Ensure you assign the HomeostaticHarmonyTooltipProvider component itself.");
+                    throw new InvalidOperationException(
+                        $"TooltipTrigger on '{name}' requires either non-empty Static Text or a component implementing {nameof(ITooltipContentProvider)} assigned to 'dynamicProvider'.");
                 }
-#endif
-            }
 
-            if (resolvedProvider != null)
-                dyn = resolvedProvider.GetTooltipText;
+                if (dynamicProvider is not ITooltipContentProvider provider)
+                {
+                    var assignedType = dynamicProvider.GetType().Name;
+                    throw new InvalidOperationException(
+                        $"TooltipTrigger on '{name}': Assigned 'dynamicProvider' of type '{assignedType}' does not implement {nameof(ITooltipContentProvider)}.");
+                }
+
+                dyn = provider.GetTooltipText;
+            }
 
             return new TooltipRequest
             {
                 Anchor = transform as RectTransform,
                 DynamicTextFunc = dyn,
                 StaticText = staticText,
-                MaxWidth = maxWidth > 0 ? maxWidth : null,
+                MaxWidth = maxWidth > 0 ? maxWidth : (int?)null,
                 FollowPointer = followPointer,
-                PivotPreference = new Vector2(0f, 1f)
+                PivotPreference = new Vector2(0f, 1f),
+                Placement = placement
             };
         }
 

@@ -12,6 +12,7 @@ namespace FungusToast.Unity.UI.Tooltips
         public Vector2 PivotPreference;
         public int? MaxWidth;
         public bool FollowPointer;
+        public TooltipPlacement Placement; // new: preferred placement around anchor
 
         public string ResolveText() => DynamicTextFunc != null ? DynamicTextFunc() : StaticText;
     }
