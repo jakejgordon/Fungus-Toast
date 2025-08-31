@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,7 +23,12 @@ namespace FungusToast.Unity.UI
             if (playerResultRowPrefab == null)
                 Debug.LogError("UI_EndGamePanel: PlayerResultRowPrefab reference is missing!");
 
-            closeButton.onClick.AddListener(OnClose);
+            // Safeguard: only add listener if closeButton is assigned
+            if (closeButton != null)
+                closeButton.onClick.AddListener(OnClose);
+            else
+                Debug.LogWarning("UI_EndGamePanel: CloseButton reference is missing!");
+
             HideInstant();
         }
 
@@ -71,9 +76,14 @@ namespace FungusToast.Unity.UI
         /* ─────────── Buttons / Helpers ─────────── */
         private void OnClose()
         {
+            // Just hide the panel so the player can continue to view and zoom the board
             HideInstant();
-            UnityEngine.SceneManagement.SceneManager.LoadScene(
-                UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+
+            // Re-enable the right sidebar so players can see summaries after closing results
+            if (GameManager.Instance != null && GameManager.Instance.GameUI != null && GameManager.Instance.GameUI.RightSidebar != null)
+            {
+                GameManager.Instance.GameUI.RightSidebar.gameObject.SetActive(true);
+            }
         }
 
         private void HideInstant()
