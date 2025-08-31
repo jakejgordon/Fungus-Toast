@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace FungusToast.Unity.UI
 {
@@ -58,5 +59,28 @@ namespace FungusToast.Unity.UI
         /// Duration (in seconds) between growth cycles during the growth phase.
         /// </summary>
         public const float TimeBetweenGrowthCycles = 1f;
+
+        // ==================== NEW GROWTH VISUAL TWEAKS ====================
+
+        /// <summary>
+        /// Duration (in seconds) of the bright green flash when a newly-grown cell reaches full opacity.
+        /// </summary>
+        public const float NewGrowthFlashDurationSeconds = 0.1f;
+
+        /// <summary>
+        /// The color of the flash shown when a newly-grown cell reaches full opacity.
+        /// </summary>
+        public static readonly Color NewGrowthFlashColor = new Color(0.2f, 1f, 0.2f, 1f);
+
+        /// <summary>
+        /// The persistent alpha for cells that grew this round (until the next round begins).
+        /// </summary>
+        public const float NewGrowthFinalAlpha = 0.9f;
+
+        // ==================== TOOLTIP HIGHLIGHTING ====================
+        /// <summary>
+        /// Growth cycle age threshold (exclusive) below which living cells' age is highlighted in tooltips.
+        /// </summary>
+        public const int GrowthCycleAgeHighlightTextThreshold = 5;
     }
 }

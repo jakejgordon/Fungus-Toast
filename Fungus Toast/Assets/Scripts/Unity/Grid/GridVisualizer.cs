@@ -1,5 +1,6 @@
 using FungusToast.Core;
 using FungusToast.Core.Board;
+using FungusToast.Core.Growth;
 using FungusToast.Unity.UI;
 using System.Collections;
 using System.Collections.Generic;
@@ -558,8 +559,23 @@ namespace FungusToast.Unity.Grid
                     if (cell.OwnerPlayerId is int idA && idA >= 0 && idA < playerMoldTiles.Length)
                     {
                         moldTile = playerMoldTiles[idA];
-                        // Start newly grown cells with low alpha for fade-in effect
-                        moldColor = cell.IsNewlyGrown ? new Color(1f, 1f, 1f, 0.1f) : Color.white;
+                        // Newly grown cells start with low alpha for fade-in effect
+                        if (cell.IsNewlyGrown)
+                        {
+                            moldColor = new Color(1f, 1f, 1f, 0.1f);
+                        }
+                        else
+                        {
+                            // Dim young living cells persistently based on growth cycle age threshold
+                            if (cell.GrowthCycleAge < UIEffectConstants.GrowthCycleAgeHighlightTextThreshold)
+                            {
+                                moldColor = new Color(1f, 1f, 1f, UIEffectConstants.NewGrowthFinalAlpha);
+                            }
+                            else
+                            {
+                                moldColor = Color.white;
+                            }
+                        }
                     }
                     // If the cell is resistant, show the shield overlay
                     if (cell.IsResistant && goldShieldOverlayTile != null)
@@ -698,6 +714,28 @@ namespace FungusToast.Unity.Grid
                 Color finalColor = moldTilemap.GetColor(pos);
                 finalColor.a = 1f;
                 moldTilemap.SetColor(pos, finalColor);
+            }
+
+            // Brief green flash to celebrate new growth
+            float flashElapsed = 0f;
+            Color originalColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
+            while (flashElapsed < UIEffectConstants.NewGrowthFlashDurationSeconds)
+            {
+                flashElapsed += Time.deltaTime;
+                // Hard set the flash color for crispness
+                if (moldTilemap.HasTile(pos))
+                {
+                    moldTilemap.SetColor(pos, UIEffectConstants.NewGrowthFlashColor);
+                }
+                yield return null;
+            }
+
+            // Drop to the persistent new-growth alpha until next round
+            if (moldTilemap.HasTile(pos))
+            {
+                Color settleColor = Color.white;
+                settleColor.a = UIEffectConstants.NewGrowthFinalAlpha;
+                moldTilemap.SetColor(pos, settleColor);
             }
 
             // Clear the newly grown flag on the cell
@@ -1005,6 +1043,26 @@ namespace FungusToast.Unity.Grid
 
             // Clean up the coroutine reference
             toxinDropCoroutines.Remove(tileId);
+        }
+    }
+
+    // Helper extension to avoid compile-time coupling while Core evolves
+    internal static class FungalCellVisualExtensions
+    {
+        public static bool GrewThisRoundVisual(this FungalCell cell, int currentRound)
+        {
+            try
+            {
+                var prop = typeof(FungalCell).GetProperty("BirthRound");
+                if (prop != null)
+                {
+                    object value = prop.GetValue(cell, null);
+                    if (value is int birthRound)
+                        return birthRound == currentRound;
+                }
+            }
+            catch { }
+            return false;
         }
     }
 }

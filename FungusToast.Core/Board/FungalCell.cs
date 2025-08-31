@@ -12,6 +12,9 @@ namespace FungusToast.Core.Board
         public int? OwnerPlayerId { get; internal set; }
         public int TileId { get; private set; }
 
+        // Track the round in which this cell became alive
+        public int BirthRound { get; private set; } = 0;
+
         // Enum-based cell type
         private FungalCellType _cellType = FungalCellType.Alive;
         public FungalCellType CellType
@@ -141,6 +144,19 @@ namespace FungusToast.Core.Board
             SourceOfGrowth = growthSource; // Set the provided growth source or null
             // Don't modify ownership tracking here
         }
+
+        /// <summary>
+        /// Explicitly sets the round in which this cell became alive.
+        /// </summary>
+        public void SetBirthRound(int round)
+        {
+            BirthRound = round;
+        }
+
+        /// <summary>
+        /// Helper to check whether this cell grew during the provided round.
+        /// </summary>
+        public bool GrewThisRound(int currentRound) => BirthRound == currentRound;
 
         /// <summary>
         /// Makes this cell resistant to all forms of death and replacement.

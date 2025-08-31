@@ -282,6 +282,8 @@ namespace FungusToast.Core.Board
                 int tileId = y * Width + x;
                 var cell = new FungalCell(playerId, tileId, GrowthSource.InitialSpore);
                 cell.MakeResistant(); // Initial spores MUST be resistant to prevent elimination
+                // Do NOT mark as newly grown – initial spores are setup visuals
+                cell.SetBirthRound(CurrentRound); // Still stamp birth round for history/UI
                 tile.PlaceFungalCell(cell);
                 tileIdToCell[tileId] = cell;
 
@@ -377,8 +379,10 @@ namespace FungusToast.Core.Board
                 return false;
 
             var cell = new FungalCell(player.PlayerId, tileId, source);
+            // Mark as newly grown spore and stamp round for visuals
+            cell.MarkAsNewlyGrown();
+            cell.SetBirthRound(CurrentRound);
             // Note: Spores are NOT resistant by default
-            // They only become resistant if adjacent to resistant cells via Hyphal Resistance Transfer
             tile.PlaceFungalCell(cell);
             tileIdToCell[tileId] = cell;
 
@@ -740,6 +744,13 @@ namespace FungusToast.Core.Board
                     Players[newOwnerId].ControlledTileIds.Add(cell.TileId);
             }
 
+            // VISUAL HOOK: For any living cell placed via this unified path, mark for fade-in and dimming
+            if (cell.IsAlive && (cell.SourceOfGrowth ?? GrowthSource.Unknown) != GrowthSource.InitialSpore)
+            {
+                cell.MarkAsNewlyGrown();
+                cell.SetBirthRound(CurrentRound);
+            }
+
             int ownerId = cell.OwnerPlayerId.GetValueOrDefault(-1);
             GrowthSource source = cell.SourceOfGrowth ?? GrowthSource.Unknown;
 
@@ -847,6 +858,10 @@ namespace FungusToast.Core.Board
             
             // Perform the reclamation (this makes the cell alive and increments ReclaimCount)
             cell.Reclaim(playerId, reclaimGrowthSource);
+
+            // VISUAL HOOK: mark reclaimed cells for fade-in and dimming, stamp round
+            cell.MarkAsNewlyGrown();
+            cell.SetBirthRound(CurrentRound);
             
             // Update board state
             tileIdToCell[cell.TileId] = cell; // Ensure mapping is updated

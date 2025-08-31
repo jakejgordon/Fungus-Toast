@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Core.Board;
@@ -288,7 +288,17 @@ namespace FungusToast.Unity.UI
             
             if (growthAgeText != null)
             {
-                growthAgeText.text = $"Growth Cycle Age: {cell.GrowthCycleAge}";
+                // Make growth age green for young, living cells to draw attention regardless of phase
+                bool highlightYoung = cell.IsAlive && cell.GrowthCycleAge < UIEffectConstants.GrowthCycleAgeHighlightTextThreshold;
+
+                if (highlightYoung)
+                {
+                    growthAgeText.text = $"Growth Cycle Age: <color=#90EE90>{cell.GrowthCycleAge}</color>";
+                }
+                else
+                {
+                    growthAgeText.text = $"Growth Cycle Age: {cell.GrowthCycleAge}";
+                }
             }
 
             // Toxin Expiration - only show for toxins
