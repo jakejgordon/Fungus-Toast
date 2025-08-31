@@ -70,6 +70,7 @@ namespace FungusToast.Unity
         private Player humanPlayer;
 
         private bool isInDraftPhase = false;
+        public bool IsDraftPhaseActive => isInDraftPhase; // <- expose draft state
 
         private Dictionary<(int playerId, int mutationId), List<int>> FirstUpgradeRounds = new();
 
@@ -537,9 +538,9 @@ namespace FungusToast.Unity
             }
             phaseProgressTracker?.HighlightDraftPhase();
 
-            // Hide mutation UI during draft
+            // Hide mutation UI during draft (keep RightSidebar visible)
             gameUIManager.MutationUIManager.gameObject.SetActive(false);
-            gameUIManager.RightSidebar?.gameObject.SetActive(false);
+            // gameUIManager.RightSidebar?.gameObject.SetActive(false); // keep visible during draft
             gameUIManager.LeftSidebar?.gameObject.SetActive(false);
 
             // Show draft UI

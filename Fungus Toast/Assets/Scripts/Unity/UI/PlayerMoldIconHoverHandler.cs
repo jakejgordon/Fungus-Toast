@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using FungusToast.Unity.Grid;
 
@@ -11,13 +11,19 @@ namespace FungusToast.Unity.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            //Debug.Log($"👆 Hovering over mold icon for Player {playerId}");
+            // Disable highlight while draft is active to avoid clobbering draft selection highlights
+            if (FungusToast.Unity.GameManager.Instance != null && FungusToast.Unity.GameManager.Instance.IsDraftPhaseActive)
+                return;
+
             gridVisualizer.HighlightPlayerTiles(playerId, true); // Include starting tile ping
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            //Debug.Log($"👋 Mouse exited mold icon for Player {playerId}");
+            // Do not clear highlights during draft - draft UI controls highlights then
+            if (FungusToast.Unity.GameManager.Instance != null && FungusToast.Unity.GameManager.Instance.IsDraftPhaseActive)
+                return;
+
             gridVisualizer.ClearHighlights();
         }
     }
