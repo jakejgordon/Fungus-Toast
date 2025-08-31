@@ -5,6 +5,7 @@ using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Config;
 using TMPro;
 using FungusToast.Unity;
+using System; // added for strict validation exceptions
 
 namespace FungusToast.Unity.UI.GameStart
 {
@@ -21,6 +22,7 @@ namespace FungusToast.Unity.UI.GameStart
         [SerializeField] private GameObject testingModePanel;
         [SerializeField] private TMP_InputField fastForwardRoundsInput;
         [SerializeField] private TextMeshProUGUI fastForwardLabel;
+        [SerializeField] private Toggle skipToEndgameToggle; // NEW: Skip to end-of-game toggle
 
         // Magnifying glass UI reference
         [SerializeField] private GameObject magnifyingGlassUI;
@@ -32,6 +34,9 @@ namespace FungusToast.Unity.UI.GameStart
         private void Awake()
         {
             Instance = this;
+            // Strict validation: all required refs must be assigned in Inspector
+            ValidateSerializedRefs();
+
             startGameButton.interactable = false;
             InitializeTestingModeUI();
 
@@ -40,27 +45,38 @@ namespace FungusToast.Unity.UI.GameStart
                 magnifierVisualRoot.SetActive(false);
         }
 
+        private void ValidateSerializedRefs()
+        {
+            if (startGameButton == null) throw new InvalidOperationException("UI_StartGamePanel: startGameButton is not assigned.");
+            if (testingModeToggle == null) throw new InvalidOperationException("UI_StartGamePanel: testingModeToggle is not assigned.");
+            if (mycovariantDropdown == null) throw new InvalidOperationException("UI_StartGamePanel: mycovariantDropdown is not assigned.");
+            if (testingModePanel == null) throw new InvalidOperationException("UI_StartGamePanel: testingModePanel is not assigned.");
+            if (fastForwardRoundsInput == null) throw new InvalidOperationException("UI_StartGamePanel: fastForwardRoundsInput is not assigned.");
+            if (fastForwardLabel == null) throw new InvalidOperationException("UI_StartGamePanel: fastForwardLabel is not assigned.");
+            if (skipToEndgameToggle == null) throw new InvalidOperationException("UI_StartGamePanel: skipToEndgameToggle is not assigned.");
+        }
+
         private void InitializeTestingModeUI()
         {
             // Initialize mycovariant dropdown
             mycovariantDropdown.ClearOptions();
             var options = new List<string> { "Select Mycovariant..." };
             var mycovariants = MycovariantRepository.All;
-            
             foreach (var mycovariant in mycovariants)
-            {
                 options.Add($"{mycovariant.Name} (ID: {mycovariant.Id})");
-            }
-            
             mycovariantDropdown.AddOptions(options);
             mycovariantDropdown.value = 0;
-            
+
             // Set up testing mode toggle
             testingModeToggle.onValueChanged.AddListener(OnTestingModeToggled);
             testingModePanel.SetActive(false);
-            
+
             // Initialize fast-forward input
             fastForwardRoundsInput.contentType = TMP_InputField.ContentType.IntegerNumber;
+
+            // Default state for skip-to-end toggle
+            skipToEndgameToggle.isOn = false;
+            skipToEndgameToggle.interactable = false; // disabled until testing mode is enabled
         }
 
         private void OnTestingModeToggled(bool isEnabled)
@@ -69,6 +85,14 @@ namespace FungusToast.Unity.UI.GameStart
             mycovariantDropdown.interactable = isEnabled;
             fastForwardRoundsInput.interactable = isEnabled;
             fastForwardLabel.gameObject.SetActive(isEnabled);
+            
+            // Enable/disable strictly based on Testing Mode; no auto-search fallback
+            skipToEndgameToggle.interactable = isEnabled;
+            if (!isEnabled)
+            {
+                // Reset when turning testing mode off
+                skipToEndgameToggle.isOn = false;
+            }
         }
 
         public void OnPlayerCountSelected(int count)
@@ -81,9 +105,7 @@ namespace FungusToast.Unity.UI.GameStart
         private void UpdateButtonVisuals()
         {
             foreach (var btn in playerButtons)
-            {
                 btn.SetSelected(btn.playerCount == selectedPlayerCount);
-            }
         }
 
         public void OnStartGamePressed()
@@ -96,21 +118,19 @@ namespace FungusToast.Unity.UI.GameStart
                     // Get fast forward rounds regardless of mycovariant selection
                     int fastForwardRounds = 0;
                     if (int.TryParse(fastForwardRoundsInput.text, out int parsedRounds))
-                    {
                         fastForwardRounds = Mathf.Max(0, parsedRounds);
-                    }
-                    
+
+                    bool skipToEnd = skipToEndgameToggle.isOn;
+
                     // Enable testing mode with or without a mycovariant selected
                     if (mycovariantDropdown.value > 0)
                     {
-                        // Mycovariant selected - enable testing mode with specific mycovariant
                         var selectedMycovariant = MycovariantRepository.All[mycovariantDropdown.value - 1];
-                        GameManager.Instance.EnableTestingMode(selectedMycovariant.Id, fastForwardRounds);
+                        GameManager.Instance.EnableTestingMode(selectedMycovariant.Id, fastForwardRounds, skipToEnd);
                     }
                     else
                     {
-                        // No mycovariant selected - enable testing mode without specific mycovariant (will skip draft)
-                        GameManager.Instance.EnableTestingMode(null, fastForwardRounds);
+                        GameManager.Instance.EnableTestingMode(null, fastForwardRounds, skipToEnd);
                     }
                 }
                 else
@@ -125,13 +145,10 @@ namespace FungusToast.Unity.UI.GameStart
                 // Enable the magnifying glass UI after the game starts
                 if (magnifyingGlassUI != null)
                     magnifyingGlassUI.SetActive(true);
-                // Enable the magnifier visuals
                 if (magnifierVisualRoot != null)
                     magnifierVisualRoot.SetActive(true);
-                // Set the flag so the magnifier can appear
                 MagnifyingGlassFollowMouse.gameStarted = true;
             }
         }
     }
-
 }

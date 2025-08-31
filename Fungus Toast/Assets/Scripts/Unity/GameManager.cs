@@ -40,6 +40,7 @@ namespace FungusToast.Unity
         public int? testingMycovariantId = null;
         public bool testingModeForceHumanFirst = true;
         public int fastForwardRounds = 0;
+        public bool testingSkipToEndgameAfterFastForward = false; // NEW: skip to end after FF
 
         [Header("References")]
         public GridVisualizer gridVisualizer;
@@ -638,12 +639,13 @@ namespace FungusToast.Unity
         }
 
         // === TESTING MODE METHODS ===
-        public void EnableTestingMode(int? mycovariantId, int fastForwardRounds = 0)
+        public void EnableTestingMode(int? mycovariantId, int fastForwardRounds = 0, bool skipToEndgameAfterFastForward = false)
         {
             testingModeEnabled = true;
             testingMycovariantId = mycovariantId;
             testingModeForceHumanFirst = mycovariantId.HasValue; // Only force human first when testing a specific mycovariant
             this.fastForwardRounds = fastForwardRounds;
+            this.testingSkipToEndgameAfterFastForward = skipToEndgameAfterFastForward;
         }
 
         public void DisableTestingMode()
@@ -652,6 +654,7 @@ namespace FungusToast.Unity
             testingMycovariantId = null;
             testingModeForceHumanFirst = false; // Reset the flag when disabling testing mode
             fastForwardRounds = 0;
+            testingSkipToEndgameAfterFastForward = false;
         }
 
         private IEnumerator FastForwardRounds()
@@ -719,6 +722,15 @@ namespace FungusToast.Unity
                 int currentRound = Board.CurrentRound;
                 float occupancy = Board.GetOccupiedTileRatio() * 100f;
                 gameUIManager.RightSidebar?.SetRoundAndOccupancy(currentRound, occupancy);
+
+                // If requested, skip directly to end-of-game after fast-forward
+                if (testingSkipToEndgameAfterFastForward)
+                {
+                    // Re-enable logging for endgame announcement
+                    gameUIManager.GameLogRouter.DisableSilentMode();
+                    EndGame();
+                    yield break;
+                }
 
                 // Only trigger a UI draft at the end of fast forward if a specific mycovariant is selected
                 if (testingMycovariantId.HasValue)
