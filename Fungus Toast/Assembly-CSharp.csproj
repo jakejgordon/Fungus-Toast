@@ -83,6 +83,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationLayoutMetadata.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PlayerBinder.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MagnifyingGlassFollowMouse.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipProviders\PlayerSummaryTooltipProvider.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\CellTooltipUI.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridFiller.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationManager.cs" />

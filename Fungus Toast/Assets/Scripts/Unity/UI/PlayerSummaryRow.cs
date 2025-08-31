@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using FungusToast.Unity.UI.Tooltips;
+using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 
 namespace FungusToast.Unity.UI
 {
@@ -57,6 +59,28 @@ namespace FungusToast.Unity.UI
 
             hoverHandler.playerId = playerId;
             hoverHandler.gridVisualizer = gridVisualizer;
+
+            // --- Wire tooltip provider on the icon ---
+            var tooltipTrigger = moldIconImage.GetComponent<TooltipTrigger>();
+            if (tooltipTrigger == null)
+                tooltipTrigger = moldIconImage.gameObject.AddComponent<TooltipTrigger>();
+
+            var provider = moldIconImage.GetComponent<PlayerSummaryTooltipProvider>();
+            if (provider == null)
+                provider = moldIconImage.gameObject.AddComponent<PlayerSummaryTooltipProvider>();
+
+            // Resolve the Player instance from the GameManager's board
+            var board = GameManager.Instance?.Board;
+            var players = board?.Players;
+            if (players != null)
+            {
+                var player = players.Find(p => p.PlayerId == playerId);
+                if (player != null)
+                {
+                    provider.Initialize(player, players);
+                    tooltipTrigger.SetDynamicProvider(provider);
+                }
+            }
         }
 
         public void UpdateMycovariants(IReadOnlyList<PlayerMycovariant> mycovariants)

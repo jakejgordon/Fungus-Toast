@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -26,6 +27,38 @@ namespace FungusToast.Unity.UI.Tooltips
         private void Awake()
         {
             touchMode = Input.touchSupported && (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer);
+
+            // Auto-resolve a provider from attached components if not explicitly set
+            if (dynamicProvider == null)
+            {
+                var resolved = GetComponents<MonoBehaviour>()
+                    .FirstOrDefault(mb => mb is ITooltipContentProvider);
+                if (resolved != null)
+                {
+                    dynamicProvider = resolved;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Assign a dynamic provider at runtime. The provider must implement ITooltipContentProvider.
+        /// </summary>
+        public void SetDynamicProvider(MonoBehaviour provider)
+        {
+            if (provider == null)
+            {
+                dynamicProvider = null;
+                return;
+            }
+
+            if (provider is not ITooltipContentProvider)
+            {
+                var assignedType = provider.GetType().Name;
+                throw new InvalidOperationException(
+                    $"TooltipTrigger on '{name}': Assigned 'provider' of type '{assignedType}' does not implement {nameof(ITooltipContentProvider)}.");
+            }
+
+            dynamicProvider = provider;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -74,6 +107,25 @@ namespace FungusToast.Unity.UI.Tooltips
             }
         }
 
+        private ITooltipContentProvider ResolveProviderOrNull()
+        {
+            // Prefer explicitly assigned provider if valid
+            if (dynamicProvider is ITooltipContentProvider p)
+                return p;
+
+            // Otherwise, try to find any component on this GameObject implementing the interface
+            var found = GetComponents<MonoBehaviour>()
+                .FirstOrDefault(mb => mb is ITooltipContentProvider) as ITooltipContentProvider;
+
+            // Cache it back into dynamicProvider for future calls
+            if (found != null && dynamicProvider == null)
+            {
+                dynamicProvider = found as MonoBehaviour;
+            }
+
+            return found;
+        }
+
         private TooltipRequest BuildRequest()
         {
             System.Func<string> dyn = null;
@@ -82,17 +134,13 @@ namespace FungusToast.Unity.UI.Tooltips
             bool hasStatic = !string.IsNullOrEmpty(staticText);
             if (!hasStatic)
             {
-                if (dynamicProvider == null)
+                var provider = ResolveProviderOrNull();
+                if (provider == null)
                 {
+                    // Provide a helpful error that mentions what we found on this object
+                    var components = string.Join(", ", GetComponents<MonoBehaviour>().Select(c => c.GetType().Name));
                     throw new InvalidOperationException(
-                        $"TooltipTrigger on '{name}' requires either non-empty Static Text or a component implementing {nameof(ITooltipContentProvider)} assigned to 'dynamicProvider'.");
-                }
-
-                if (dynamicProvider is not ITooltipContentProvider provider)
-                {
-                    var assignedType = dynamicProvider.GetType().Name;
-                    throw new InvalidOperationException(
-                        $"TooltipTrigger on '{name}': Assigned 'dynamicProvider' of type '{assignedType}' does not implement {nameof(ITooltipContentProvider)}.");
+                        $"TooltipTrigger on '{name}' requires either non-empty Static Text or a component implementing {nameof(ITooltipContentProvider)}. Found components: [{components}]");
                 }
 
                 dyn = provider.GetTooltipText;
