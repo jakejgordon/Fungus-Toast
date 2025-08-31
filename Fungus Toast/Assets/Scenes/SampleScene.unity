@@ -109088,7 +109088,7 @@ MonoBehaviour:
   maxWidth: 400
   isHelpIcon: 0
   followPointer: 0
-  placement: 0
+  placement: 4
 --- !u!1 &843860850
 GameObject:
   m_ObjectHideFlags: 0
@@ -118597,6 +118597,7 @@ GameObject:
   - component: {fileID: 1920153775}
   - component: {fileID: 1920153776}
   - component: {fileID: 1920153777}
+  - component: {fileID: 1920153778}
   m_Layer: 5
   m_Name: UI_SpendPointsButton
   m_TagString: Untagged
@@ -118753,6 +118754,27 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &1920153778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1920153771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56d1a8a06a90c804286d3897bb5b4b68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  staticText: Click here to view the mutation upgrade tree and upgrade mutations,
+    or to store mutation points until the next round.
+  dynamicProvider: {fileID: 0}
+  hoverDelay: 0.38
+  useCustomDelay: 0
+  maxWidth: 400
+  isHelpIcon: 0
+  followPointer: 0
+  placement: 4
 --- !u!1 &1927571114
 GameObject:
   m_ObjectHideFlags: 0
