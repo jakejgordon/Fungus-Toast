@@ -435,7 +435,8 @@ namespace FungusToast.Unity
             }
 
             gameUIManager.MutationUIManager.gameObject.SetActive(false);
-            gameUIManager.RightSidebar.gameObject.SetActive(false);
+            // Keep the right sidebar visible at endgame
+            gameUIManager.RightSidebar.gameObject.SetActive(true);
             gameUIManager.LeftSidebar.gameObject.SetActive(false);
 
             gameUIManager.EndGamePanel.gameObject.SetActive(true);
