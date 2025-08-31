@@ -40,6 +40,21 @@ namespace FungusToast.Unity.UI.Tooltips
             }
         }
 
+        private void OnDisable()
+        {
+            // If this source is currently displayed, hide it when object is disabled
+            if (TooltipManager.Instance != null)
+                TooltipManager.Instance.Cancel(this);
+            tooltipVisible = false;
+        }
+
+        private void OnDestroy()
+        {
+            if (TooltipManager.Instance != null)
+                TooltipManager.Instance.Cancel(this);
+            tooltipVisible = false;
+        }
+
         /// <summary>
         /// Assign a dynamic provider at runtime. The provider must implement ITooltipContentProvider.
         /// </summary>

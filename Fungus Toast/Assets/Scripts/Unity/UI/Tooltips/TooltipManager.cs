@@ -71,6 +71,17 @@ namespace FungusToast.Unity.UI.Tooltips
             }
         }
 
+        /// <summary>
+        /// Hides any visible or pending tooltip regardless of the source. Use when switching panels/phases.
+        /// </summary>
+        public void CancelAll()
+        {
+            pendingShow = false;
+            if (view != null)
+                view.HideImmediate();
+            currentSource = null;
+        }
+
         private void Update()
         {
             if (pendingShow && Time.unscaledTime - requestTime >= showDelay)

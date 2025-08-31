@@ -24,6 +24,7 @@ using TMPro;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using FungusToast.Core.Metrics;
+using FungusToast.Unity.UI.Tooltips;
 
 namespace FungusToast.Unity
 {
@@ -485,6 +486,9 @@ namespace FungusToast.Unity
         {
             isInDraftPhase = true;
 
+            // Ensure no lingering tooltips from previous UI
+            TooltipManager.Instance?.CancelAll();
+
             // In testing mode, ensure the testing mycovariant is available
             if (testingModeEnabled && testingMycovariantId.HasValue)
             {
@@ -545,6 +549,9 @@ namespace FungusToast.Unity
         public void OnMycovariantDraftComplete()
         {
             isInDraftPhase = false;
+
+            // Clean up any draft tooltips before restoring panels
+            TooltipManager.Instance?.CancelAll();
             
             // Re-enable UI elements that were hidden during draft
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
