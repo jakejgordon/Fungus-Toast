@@ -100,5 +100,27 @@ namespace FungusToast.Unity.UI
         /// Impact squash scale on Y (flatter on impact).
         /// </summary>
         public const float ToxinDropImpactSquashY = 0.88f;
+
+        // ==================== HUMAN POST-EFFECT DELAYS ====================
+        /// <summary>
+        /// Optional delay after human-triggered Jetting Mycelium resolves to allow custom animations.
+        /// </summary>
+        public const float JettingMyceliumHumanPostEffectDelaySeconds = 0.8f;
+        /// <summary>
+        /// Optional delay after human-triggered Mycelial Bastion resolves to allow custom animations.
+        /// </summary>
+        public const float MycelialBastionHumanPostEffectDelaySeconds = 0.65f;
+        /// <summary>
+        /// Optional delay after human-triggered Surgical Inoculation resolves to allow custom animations.
+        /// </summary>
+        public const float SurgicalInoculationHumanPostEffectDelaySeconds = 0.6f;
+        /// <summary>
+        /// Optional delay after human-triggered Ballistospore Discharge resolves to allow custom animations.
+        /// </summary>
+        public const float BallistosporeDischargeHumanPostEffectDelaySeconds = 0.7f;
+        /// <summary>
+        /// Optional delay after human-triggered Cytolytic Burst resolves to allow custom animations.
+        /// </summary>
+        public const float CytolyticBurstHumanPostEffectDelaySeconds = 0.7f;
     }
 }

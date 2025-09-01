@@ -1,4 +1,4 @@
-﻿using FungusToast.Core.Board;
+using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
@@ -52,6 +52,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             GameManager.Instance.GameUI.GameLogRouter
                         );
                         
+                        // Ensure visuals reflect the effect for AI as well
+                        gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                        
                         FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] AI Jetting Mycelium effect completed for player {player.PlayerId}");
                     }
                     else
@@ -74,6 +77,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 draftPanel?.SetActive(false);
                 bool done = false;
 
+                bool selectionResolved = false;
+                bool executed = false;
+                int executedSourceTileId = -1;
+
                 TileSelectionController.Instance.PromptSelectLivingCell(
                     player.PlayerId,
                     (cell) =>
@@ -90,20 +97,33 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                             GameManager.Instance.GameUI.GameLogRouter
                         );
+                        // Render immediately so any per-cell flags (e.g., IsNewlyGrown/IsDying) kick off animations
+                        gridVisualizer.RenderBoard(GameManager.Instance.Board);
                         gridVisualizer.ClearHighlights();
-                        onComplete?.Invoke();
                         done = true;
+                        executedSourceTileId = cell.TileId;
+                        executed = true;
+                        selectionResolved = true;
                     },
                     () =>
                     {
                         gridVisualizer.ClearHighlights();
-                        onComplete?.Invoke();
                         done = true;
+                        selectionResolved = true;
                     },
                     "Select one of your living fungal cells to project mycelium from."
                 );
 
                 while (!done) yield return null;
+                while (!selectionResolved) yield return null;
+
+                if (executed)
+                {
+                    // Always wait for animations to complete
+                    yield return gridVisualizer.WaitForAllAnimations();
+                }
+
+                onComplete?.Invoke();
             }
         }
 
@@ -176,6 +196,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     $"Select up to {maxCellsAllowed} of your living cells to become Resistant."
                 );
 
+                bool selectionResolved = false;
+                bool executed = false;
+
                 // Use a multi-selection controller for Mycelial Bastion
                 MultiCellSelectionController.Instance.PromptSelectMultipleLivingCells(
                     player.PlayerId,
@@ -204,16 +227,26 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         GameManager.Instance.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
                         gridVisualizer.RenderBoard(GameManager.Instance.Board);
-                        onComplete?.Invoke();
+                        executed = true;
+                        selectionResolved = true;
                     },
                     () =>
                     {
                         GameManager.Instance.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
-                        onComplete?.Invoke();
+                        selectionResolved = true;
                     },
                     $"Select up to {maxCellsAllowed} of your living cells to make Resistant (invincible)."
                 );
+
+                while (!selectionResolved) yield return null;
+
+                if (executed)
+                {
+                    yield return gridVisualizer.WaitForAllAnimations();
+                }
+
+                onComplete?.Invoke();
             }
         }
 
@@ -254,6 +287,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     "Select any tile to place your invincible (Resistant) cell.");
 
                 bool done = false;
+                bool selectionResolved = false;
+                bool executed = false;
 
                 // Highlight all valid tiles (not already Resistant)
                 Func<BoardTile, bool> isValidTile = tile => tile.FungalCell == null || (!tile.FungalCell.IsResistant);
@@ -275,7 +310,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             Debug.LogWarning("Selected tile is no longer valid for Surgical Inoculation.");
                             GameManager.Instance.HideSelectionPrompt();
                             gridVisualizer.ClearHighlights();
-                            onComplete?.Invoke();
+                            selectionResolved = true;
                             return;
                         }
                         var playerMyco = player.PlayerMycovariants
@@ -290,7 +325,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         GameManager.Instance.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
                         gridVisualizer.RenderBoard(GameManager.Instance.Board);
-                        onComplete?.Invoke();
+                        executed = true;
+                        selectionResolved = true;
                     },
                     () =>
                     {
@@ -298,12 +334,20 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         done = true;
                         GameManager.Instance.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
-                        onComplete?.Invoke();
+                        selectionResolved = true;
                     },
                     "Select any valid tile to place your invincible (Resistant) cell."
                 );
 
                 while (!done) yield return null;
+                while (!selectionResolved) yield return null;
+
+                if (executed)
+                {
+                    yield return gridVisualizer.WaitForAllAnimations();
+                }
+
+                onComplete?.Invoke();
             }
         }
 
@@ -362,6 +406,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 );
 
                 bool done = false;
+                bool selectionResolved = false;
+                bool executed = false;
                 var playerMyco = player.PlayerMycovariants.FirstOrDefault(pm => pm.MycovariantId == picked.Id);
 
                 MultiTileSelectionController.Instance.PromptSelectMultipleTiles(
@@ -382,20 +428,29 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         gridVisualizer.RenderBoard(GameManager.Instance.Board);
                         GameManager.Instance.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
-                        onComplete?.Invoke();
                         done = true;
+                        executed = true;
+                        selectionResolved = true;
                     },
                     () =>
                     {
                         GameManager.Instance.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
-                        onComplete?.Invoke();
                         done = true;
+                        selectionResolved = true;
                     },
                     $"Select up to {maxSpores} empty tiles to drop toxin spores."
                 );
 
                 while (!done) yield return null;
+                while (!selectionResolved) yield return null;
+
+                if (executed)
+                {
+                    yield return gridVisualizer.WaitForAllAnimations();
+                }
+
+                onComplete?.Invoke();
             }
         }
 
@@ -459,6 +514,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 );
 
                 bool done = false;
+                bool selectionResolved = false;
+                bool executed = false;
 
                 // Highlight all player's toxin tiles
                 var toxinTileIds = playerToxins.Select(c => c.TileId).ToList();
@@ -494,7 +551,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         GameManager.Instance.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
                         gridVisualizer.RenderBoard(GameManager.Instance.Board);
-                        onComplete?.Invoke();
+                        executed = true;
+                        selectionResolved = true;
                     },
                     () =>
                     {
@@ -502,12 +560,20 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         done = true;
                         GameManager.Instance.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
-                        onComplete?.Invoke();
+                        selectionResolved = true;
                     },
                     "Select one of your toxins to explode."
                 );
 
                 while (!done) yield return null;
+                while (!selectionResolved) yield return null;
+
+                if (executed)
+                {
+                    yield return gridVisualizer.WaitForAllAnimations();
+                }
+
+                onComplete?.Invoke();
             }
         }
     }

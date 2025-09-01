@@ -61,6 +61,17 @@ namespace FungusToast.Unity.Grid
         private Coroutine startingTilePingCoroutine; // track current starting tile ping
         private Tilemap lastPingTilemap; // remember which tilemap the ping used
 
+        // Animation tracking so external code can wait for all visual animations to finish
+        private int _activeAnimationCount = 0;
+        public bool HasActiveAnimations => _activeAnimationCount > 0;
+        internal void BeginAnimation() { _activeAnimationCount++; }
+        internal void EndAnimation() { _activeAnimationCount = Mathf.Max(0, _activeAnimationCount - 1); }
+        public IEnumerator WaitForAllAnimations()
+        {
+            while (_activeAnimationCount > 0)
+                yield return null;
+        }
+
         // Lightweight struct to cache per-tile transform during animations
         private struct TileAnimTransform
         {
@@ -153,7 +164,10 @@ namespace FungusToast.Unity.Grid
             foreach (var coroutine in fadeInCoroutines.Values)
             {
                 if (coroutine != null)
+                {
                     StopCoroutine(coroutine);
+                    EndAnimation();
+                }
             }
             fadeInCoroutines.Clear();
             
@@ -161,7 +175,10 @@ namespace FungusToast.Unity.Grid
             foreach (var coroutine in deathAnimationCoroutines.Values)
             {
                 if (coroutine != null)
+                {
                     StopCoroutine(coroutine);
+                    EndAnimation();
+                }
             }
             deathAnimationCoroutines.Clear();
             
@@ -169,7 +186,10 @@ namespace FungusToast.Unity.Grid
             foreach (var coroutine in toxinDropCoroutines.Values)
             {
                 if (coroutine != null)
+                {
                     StopCoroutine(coroutine);
+                    EndAnimation();
+                }
             }
             toxinDropCoroutines.Clear();
             
@@ -264,6 +284,7 @@ namespace FungusToast.Unity.Grid
                 StopCoroutine(startingTilePingCoroutine);
                 ClearRingHighlight(lastPingTilemap != null ? lastPingTilemap : targetTilemap);
                 startingTilePingCoroutine = null;
+                EndAnimation();
             }
             lastPingTilemap = targetTilemap;
             startingTilePingCoroutine = StartCoroutine(StartingTilePingAnimation(center, targetTilemap));
@@ -681,6 +702,7 @@ namespace FungusToast.Unity.Grid
                 if (fadeInCoroutines.ContainsKey(tileId))
                 {
                     StopCoroutine(fadeInCoroutines[tileId]);
+                    EndAnimation();
                 }
                 fadeInCoroutines[tileId] = StartCoroutine(FadeInCell(tileId));
             }
@@ -699,62 +721,70 @@ namespace FungusToast.Unity.Grid
             float targetAlpha = 1f;
             float elapsed = 0f;
 
-            while (elapsed < duration)
+            // Start tracking this animation
+            BeginAnimation();
+            try
             {
-                elapsed += Time.deltaTime;
-                float t = elapsed / duration;
-                float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, t);
-                
-                // Update the mold tile color
+                while (elapsed < duration)
+                {
+                    elapsed += Time.deltaTime;
+                    float t = elapsed / duration;
+                    float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, t);
+                    
+                    // Update the mold tile color
+                    if (moldTilemap.HasTile(pos))
+                    {
+                        Color currentColor = moldTilemap.GetColor(pos);
+                        currentColor.a = currentAlpha;
+                        moldTilemap.SetColor(pos, currentColor);
+                    }
+                    
+                    yield return null;
+                }
+
+                // Ensure final alpha is exactly 1.0
                 if (moldTilemap.HasTile(pos))
                 {
-                    Color currentColor = moldTilemap.GetColor(pos);
-                    currentColor.a = currentAlpha;
-                    moldTilemap.SetColor(pos, currentColor);
+                    Color finalColor = moldTilemap.GetColor(pos);
+                    finalColor.a = 1f;
+                    moldTilemap.SetColor(pos, finalColor);
                 }
-                
-                yield return null;
-            }
 
-            // Ensure final alpha is exactly 1.0
-            if (moldTilemap.HasTile(pos))
-            {
-                Color finalColor = moldTilemap.GetColor(pos);
-                finalColor.a = 1f;
-                moldTilemap.SetColor(pos, finalColor);
-            }
+                // Brief green flash to celebrate new growth
+                float flashElapsed = 0f;
+                Color originalColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
+                while (flashElapsed < UIEffectConstants.NewGrowthFlashDurationSeconds)
+                {
+                    flashElapsed += Time.deltaTime;
+                    // Hard set the flash color for crispness
+                    if (moldTilemap.HasTile(pos))
+                    {
+                        moldTilemap.SetColor(pos, UIEffectConstants.NewGrowthFlashColor);
+                    }
+                    yield return null;
+                }
 
-            // Brief green flash to celebrate new growth
-            float flashElapsed = 0f;
-            Color originalColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
-            while (flashElapsed < UIEffectConstants.NewGrowthFlashDurationSeconds)
-            {
-                flashElapsed += Time.deltaTime;
-                // Hard set the flash color for crispness
+                // Drop to the persistent new-growth alpha until next round
                 if (moldTilemap.HasTile(pos))
                 {
-                    moldTilemap.SetColor(pos, UIEffectConstants.NewGrowthFlashColor);
+                    Color settleColor = Color.white;
+                    settleColor.a = UIEffectConstants.NewGrowthFinalAlpha;
+                    moldTilemap.SetColor(pos, settleColor);
                 }
-                yield return null;
-            }
 
-            // Drop to the persistent new-growth alpha until next round
-            if (moldTilemap.HasTile(pos))
+                // Clear the newly grown flag on the cell
+                var tile = board.GetTileById(tileId);
+                if (tile?.FungalCell != null)
+                {
+                    tile.FungalCell.ClearNewlyGrownFlag();
+                }
+            }
+            finally
             {
-                Color settleColor = Color.white;
-                settleColor.a = UIEffectConstants.NewGrowthFinalAlpha;
-                moldTilemap.SetColor(pos, settleColor);
+                // Clean up the coroutine reference and animation tracking
+                fadeInCoroutines.Remove(tileId);
+                EndAnimation();
             }
-
-            // Clear the newly grown flag on the cell
-            var tile = board.GetTileById(tileId);
-            if (tile?.FungalCell != null)
-            {
-                tile.FungalCell.ClearNewlyGrownFlag();
-            }
-
-            // Clean up the coroutine reference
-            fadeInCoroutines.Remove(tileId);
         }
 
         /// <summary>
@@ -767,6 +797,7 @@ namespace FungusToast.Unity.Grid
                 if (deathAnimationCoroutines.ContainsKey(tileId))
                 {
                     StopCoroutine(deathAnimationCoroutines[tileId]);
+                    EndAnimation();
                 }
                 deathAnimationCoroutines[tileId] = StartCoroutine(DeathAnimation(tileId));
             }
@@ -785,6 +816,7 @@ namespace FungusToast.Unity.Grid
                 if (deathAnimationCoroutines.ContainsKey(tileId))
                 {
                     StopCoroutine(deathAnimationCoroutines[tileId]);
+                    EndAnimation();
                 }
                 deathAnimationCoroutines[tileId] = StartCoroutine(DeathAnimation(tileId));
             }
@@ -809,94 +841,102 @@ namespace FungusToast.Unity.Grid
                 yield break;
             }
 
-            // Store initial colors and transform
-            Color initialLivingColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
-            Color initialOverlayColor = overlayTilemap.HasTile(pos) ? overlayTilemap.GetColor(pos) : Color.white;
-            Matrix4x4 initialTransform = moldTilemap.GetTransformMatrix(pos);
-
-            // Add dramatic red flash at the start
-            Color deathFlashColor = new Color(1f, 0.2f, 0.2f, 1f); // Bright red
-            
-            // Flash phase (first 15% of animation)
-            float flashDuration = duration * 0.15f;
-            float flashElapsed = 0f;
-            
-            while (flashElapsed < flashDuration)
+            // Start tracking this animation
+            BeginAnimation();
+            try
             {
-                flashElapsed += Time.deltaTime;
-                float flashProgress = flashElapsed / flashDuration;
+                // Store initial colors and transform
+                Color initialLivingColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
+                Color initialOverlayColor = overlayTilemap.HasTile(pos) ? overlayTilemap.GetColor(pos) : Color.white;
+                Matrix4x4 initialTransform = moldTilemap.GetTransformMatrix(pos);
+
+                // Add dramatic red flash at the start
+                Color deathFlashColor = new Color(1f, 0.2f, 0.2f, 1f); // Bright red
                 
-                // Intense red flash that fades quickly
-                Color flashColor = Color.Lerp(deathFlashColor, initialLivingColor, flashProgress);
+                // Flash phase (first 15% of animation)
+                float flashDuration = duration * 0.15f;
+                float flashElapsed = 0f;
                 
+                while (flashElapsed < flashDuration)
+                {
+                    flashElapsed += Time.deltaTime;
+                    float flashProgress = flashElapsed / flashDuration;
+                    
+                    // Intense red flash that fades quickly
+                    Color flashColor = Color.Lerp(deathFlashColor, initialLivingColor, flashProgress);
+                    
+                    if (moldTilemap.HasTile(pos))
+                    {
+                        moldTilemap.SetColor(pos, flashColor);
+                    }
+                    
+                    yield return null;
+                }
+
+                // Main animation phase (remaining 85%)
+                float mainDuration = duration - flashDuration;
+                float mainElapsed = 0f;
+
+                while (mainElapsed < mainDuration)
+                {
+                    mainElapsed += Time.deltaTime;
+                    float progress = mainElapsed / mainDuration;
+                    
+                    // Ease-in curve for more dramatic start
+                    float easedProgress = 1f - Mathf.Pow(1f - progress, 2f);
+                    
+                    // Scale effect: slight shrink during death
+                    float scaleAmount = Mathf.Lerp(1f, 0.85f, easedProgress);
+                    Matrix4x4 scaleMatrix = Matrix4x4.Scale(new Vector3(scaleAmount, scaleAmount, 1f));
+                    
+                    // Color desaturation effect
+                    Color currentLivingColor = Color.Lerp(initialLivingColor, 
+                        new Color(initialLivingColor.r * 0.7f, initialLivingColor.g * 0.7f, initialLivingColor.b * 0.7f, 
+                        Mathf.Lerp(1f, 0.8f, easedProgress)), easedProgress);
+                    
+                    // Apply visual changes
+                    if (moldTilemap.HasTile(pos))
+                    {
+                        moldTilemap.SetColor(pos, currentLivingColor);
+                        moldTilemap.SetTransformMatrix(pos, scaleMatrix);
+                    }
+                    
+                    // Fade in dead cell overlay (from 0 to full opacity)
+                    if (overlayTilemap.HasTile(pos))
+                    {
+                        Color overlayColor = initialOverlayColor;
+                        overlayColor.a = Mathf.Lerp(0f, 1f, easedProgress);
+                        overlayTilemap.SetColor(pos, overlayColor);
+                    }
+                    
+                    yield return null;
+                }
+
+                // Ensure final state matches the dead cell appearance
                 if (moldTilemap.HasTile(pos))
                 {
-                    moldTilemap.SetColor(pos, flashColor);
+                    Color finalLivingColor = initialLivingColor;
+                    finalLivingColor.a = 0.8f;
+                    moldTilemap.SetColor(pos, finalLivingColor);
+                    moldTilemap.SetTransformMatrix(pos, Matrix4x4.Scale(new Vector3(0.85f, 0.85f, 1f))); // Keep slight shrink
                 }
                 
-                yield return null;
-            }
-
-            // Main animation phase (remaining 85%)
-            float mainDuration = duration - flashDuration;
-            float mainElapsed = 0f;
-
-            while (mainElapsed < mainDuration)
-            {
-                mainElapsed += Time.deltaTime;
-                float progress = mainElapsed / mainDuration;
-                
-                // Ease-in curve for more dramatic start
-                float easedProgress = 1f - Mathf.Pow(1f - progress, 2f);
-                
-                // Scale effect: slight shrink during death
-                float scaleAmount = Mathf.Lerp(1f, 0.85f, easedProgress);
-                Matrix4x4 scaleMatrix = Matrix4x4.Scale(new Vector3(scaleAmount, scaleAmount, 1f));
-                
-                // Color desaturation effect
-                Color currentLivingColor = Color.Lerp(initialLivingColor, 
-                    new Color(initialLivingColor.r * 0.7f, initialLivingColor.g * 0.7f, initialLivingColor.b * 0.7f, 
-                    Mathf.Lerp(1f, 0.8f, easedProgress)), easedProgress);
-                
-                // Apply visual changes
-                if (moldTilemap.HasTile(pos))
-                {
-                    moldTilemap.SetColor(pos, currentLivingColor);
-                    moldTilemap.SetTransformMatrix(pos, scaleMatrix);
-                }
-                
-                // Fade in dead cell overlay (from 0 to full opacity)
                 if (overlayTilemap.HasTile(pos))
                 {
-                    Color overlayColor = initialOverlayColor;
-                    overlayColor.a = Mathf.Lerp(0f, 1f, easedProgress);
-                    overlayTilemap.SetColor(pos, overlayColor);
+                    Color finalOverlayColor = initialOverlayColor;
+                    finalOverlayColor.a = 1f;
+                    overlayTilemap.SetColor(pos, finalOverlayColor);
                 }
-                
-                yield return null;
-            }
 
-            // Ensure final state matches the dead cell appearance
-            if (moldTilemap.HasTile(pos))
+                // Clear the dying flag on the cell
+                cell.ClearDyingFlag();
+            }
+            finally
             {
-                Color finalLivingColor = initialLivingColor;
-                finalLivingColor.a = 0.8f;
-                moldTilemap.SetColor(pos, finalLivingColor);
-                moldTilemap.SetTransformMatrix(pos, Matrix4x4.Scale(new Vector3(0.85f, 0.85f, 1f))); // Keep slight shrink
+                // Clean up the coroutine reference and animation tracking
+                deathAnimationCoroutines.Remove(tileId);
+                EndAnimation();
             }
-            
-            if (overlayTilemap.HasTile(pos))
-            {
-                Color finalOverlayColor = initialOverlayColor;
-                finalOverlayColor.a = 1f;
-                overlayTilemap.SetColor(pos, finalOverlayColor);
-            }
-
-            // Clear the dying flag on the cell
-            cell.ClearDyingFlag();
-
-            // Clean up the coroutine reference
-            deathAnimationCoroutines.Remove(tileId);
         }
 
         /// <summary>
@@ -909,6 +949,7 @@ namespace FungusToast.Unity.Grid
                 if (toxinDropCoroutines.ContainsKey(tileId))
                 {
                     StopCoroutine(toxinDropCoroutines[tileId]);
+                    EndAnimation();
                 }
                 toxinDropCoroutines[tileId] = StartCoroutine(ToxinDropAnimation(tileId));
             }
@@ -927,6 +968,7 @@ namespace FungusToast.Unity.Grid
                 if (toxinDropCoroutines.ContainsKey(tileId))
                 {
                     StopCoroutine(toxinDropCoroutines[tileId]);
+                    EndAnimation();
                 }
                 toxinDropCoroutines[tileId] = StartCoroutine(ToxinDropAnimation(tileId));
             }
@@ -952,102 +994,110 @@ namespace FungusToast.Unity.Grid
                 yield break;
             }
 
-            // Store initial colors
-            Color initialMoldColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
-            Color initialOverlayColor = overlayTilemap.HasTile(pos) ? overlayTilemap.GetColor(pos) : Color.white;
-
-            // Ensure overlay tile exists
-            if (!overlayTilemap.HasTile(pos) && toxinOverlayTile != null)
+            // Start tracking this animation
+            BeginAnimation();
+            try
             {
-                overlayTilemap.SetTile(pos, toxinOverlayTile);
-                overlayTilemap.SetTileFlags(pos, TileFlags.None);
-                overlayTilemap.SetColor(pos, Color.clear); // start invisible; we'll fade in on impact
-            }
+                // Store initial colors
+                Color initialMoldColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
+                Color initialOverlayColor = overlayTilemap.HasTile(pos) ? overlayTilemap.GetColor(pos) : Color.white;
 
-            // Hide mold icon until the end of the animation
-            if (moldTilemap.HasTile(pos))
-            {
-                var c = moldTilemap.GetColor(pos);
-                c.a = 0f;
-                moldTilemap.SetColor(pos, c);
-            }
+                // Ensure overlay tile exists
+                if (!overlayTilemap.HasTile(pos) && toxinOverlayTile != null)
+                {
+                    overlayTilemap.SetTile(pos, toxinOverlayTile);
+                    overlayTilemap.SetTileFlags(pos, TileFlags.None);
+                    overlayTilemap.SetColor(pos, Color.clear); // start invisible; we'll fade in on impact
+                }
 
-            // Init transform state for overlay tile (translate down from above)
-            float startYOffset = UIEffectConstants.ToxinDropStartYOffset;
-            ApplyOverlayTransform(pos, new Vector3(0f, startYOffset, 0f), Vector3.one);
+                // Hide mold icon until the end of the animation
+                if (moldTilemap.HasTile(pos))
+                {
+                    var c = moldTilemap.GetColor(pos);
+                    c.a = 0f;
+                    moldTilemap.SetColor(pos, c);
+                }
 
-            // Phase 1: Approach (fall from above, 0 → approachPortion)
-            float approachPortion = Mathf.Clamp01(UIEffectConstants.ToxinDropApproachPortion);
-            float approachDuration = duration * approachPortion;
-            float approachElapsed = 0f;
-            while (approachElapsed < approachDuration)
-            {
-                approachElapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(approachElapsed / approachDuration);
-                // Ease-in cubic for acceleration feel
-                float eased = t * t * t;
-                float yOffset = Mathf.Lerp(startYOffset, 0f, eased);
-                ApplyOverlayTransform(pos, new Vector3(0f, yOffset, 0f), Vector3.one);
-                yield return null;
-            }
+                // Init transform state for overlay tile (translate down from above)
+                float startYOffset = UIEffectConstants.ToxinDropStartYOffset;
+                ApplyOverlayTransform(pos, new Vector3(0f, startYOffset, 0f), Vector3.one);
 
-            // Phase 2: Impact squash + fade overlay in quickly
-            float squashX = UIEffectConstants.ToxinDropImpactSquashX;
-            float squashY = UIEffectConstants.ToxinDropImpactSquashY;
-            float impactPortion = 1f - approachPortion; // remaining time
-            float impactDuration = duration * impactPortion * 0.35f; // 35% of remaining for squash-in, rest to settle
-            float settleDuration = duration * impactPortion - impactDuration;
+                // Phase 1: Approach (fall from above, 0 → approachPortion)
+                float approachPortion = Mathf.Clamp01(UIEffectConstants.ToxinDropApproachPortion);
+                float approachDuration = duration * approachPortion;
+                float approachElapsed = 0f;
+                while (approachElapsed < approachDuration)
+                {
+                    approachElapsed += Time.deltaTime;
+                    float t = Mathf.Clamp01(approachElapsed / approachDuration);
+                    // Ease-in cubic for acceleration feel
+                    float eased = t * t * t;
+                    float yOffset = Mathf.Lerp(startYOffset, 0f, eased);
+                    ApplyOverlayTransform(pos, new Vector3(0f, yOffset, 0f), Vector3.one);
+                    yield return null;
+                }
 
-            float impactElapsed = 0f;
-            while (impactElapsed < impactDuration)
-            {
-                impactElapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(impactElapsed / impactDuration);
-                // Squash in using ease-out for a sharp pop
-                float sx = Mathf.Lerp(1f, squashX, 1f - (1f - t) * (1f - t));
-                float sy = Mathf.Lerp(1f, squashY, 1f - (1f - t) * (1f - t));
-                ApplyOverlayTransform(pos, Vector3.zero, new Vector3(sx, sy, 1f));
+                // Phase 2: Impact squash + fade overlay in quickly
+                float squashX = UIEffectConstants.ToxinDropImpactSquashX;
+                float squashY = UIEffectConstants.ToxinDropImpactSquashY;
+                float impactPortion = 1f - approachPortion; // remaining time
+                float impactDuration = duration * impactPortion * 0.35f; // 35% of remaining for squash-in, rest to settle
+                float settleDuration = duration * impactPortion - impactDuration;
 
-                // Fade in overlay from clear to white
+                float impactElapsed = 0f;
+                while (impactElapsed < impactDuration)
+                {
+                    impactElapsed += Time.deltaTime;
+                    float t = Mathf.Clamp01(impactElapsed / impactDuration);
+                    // Squash in using ease-out for a sharp pop
+                    float sx = Mathf.Lerp(1f, squashX, 1f - (1f - t) * (1f - t));
+                    float sy = Mathf.Lerp(1f, squashY, 1f - (1f - t) * (1f - t));
+                    ApplyOverlayTransform(pos, Vector3.zero, new Vector3(sx, sy, 1f));
+
+                    // Fade in overlay from clear to white
+                    if (overlayTilemap.HasTile(pos))
+                    {
+                        Color c = overlayTilemap.GetColor(pos);
+                        c.a = Mathf.Lerp(0f, 1f, t);
+                        overlayTilemap.SetColor(pos, c);
+                    }
+                    yield return null;
+                }
+
+                // Phase 3: Settle back to normal scale
+                float settleElapsed = 0f;
+                while (settleElapsed < settleDuration)
+                {
+                    settleElapsed += Time.deltaTime;
+                    float t = Mathf.Clamp01(settleElapsed / settleDuration);
+                    // Ease back to 1,1
+                    float sx = Mathf.Lerp(squashX, 1f, t);
+                    float sy = Mathf.Lerp(squashY, 1f, t);
+                    ApplyOverlayTransform(pos, Vector3.zero, new Vector3(sx, sy, 1f));
+                    yield return null;
+                }
+
+                // Ensure final states
+                ApplyOverlayTransform(pos, Vector3.zero, Vector3.one);
                 if (overlayTilemap.HasTile(pos))
                 {
-                    Color c = overlayTilemap.GetColor(pos);
-                    c.a = Mathf.Lerp(0f, 1f, t);
-                    overlayTilemap.SetColor(pos, c);
+                    overlayTilemap.SetColor(pos, Color.white);
                 }
-                yield return null;
-            }
+                if (moldTilemap.HasTile(pos))
+                {
+                    // Reveal mold icon now that the toxin has landed
+                    moldTilemap.SetColor(pos, new Color(0.8f, 0.8f, 0.8f, 0.8f));
+                }
 
-            // Phase 3: Settle back to normal scale
-            float settleElapsed = 0f;
-            while (settleElapsed < settleDuration)
+                // Clear the toxin drop flag on the cell
+                cell.ClearToxinDropFlag();
+            }
+            finally
             {
-                settleElapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(settleElapsed / settleDuration);
-                // Ease back to 1,1
-                float sx = Mathf.Lerp(squashX, 1f, t);
-                float sy = Mathf.Lerp(squashY, 1f, t);
-                ApplyOverlayTransform(pos, Vector3.zero, new Vector3(sx, sy, 1f));
-                yield return null;
+                // Clean up the coroutine reference and animation tracking
+                toxinDropCoroutines.Remove(tileId);
+                EndAnimation();
             }
-
-            // Ensure final states
-            ApplyOverlayTransform(pos, Vector3.zero, Vector3.one);
-            if (overlayTilemap.HasTile(pos))
-            {
-                overlayTilemap.SetColor(pos, Color.white);
-            }
-            if (moldTilemap.HasTile(pos))
-            {
-                // Reveal mold icon now that the toxin has landed
-                moldTilemap.SetColor(pos, new Color(0.8f, 0.8f, 0.8f, 0.8f));
-            }
-
-            // Clear the toxin drop flag on the cell
-            cell.ClearToxinDropFlag();
-
-            // Clean up the coroutine reference
-            toxinDropCoroutines.Remove(tileId);
         }
 
         // Helper to apply per-tile transform to overlay tile
