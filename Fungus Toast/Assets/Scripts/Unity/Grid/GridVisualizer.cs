@@ -30,7 +30,6 @@ namespace FungusToast.Unity.Grid
         public Tile goldShieldOverlayTile; // Gold shield for resistant cells
 
         private GameBoard board;
-        // Provide a safe fallback to the live board if Initialize() hasn't been called yet
         private GameBoard ActiveBoard => board ?? GameManager.Instance?.Board;
         private List<Vector3Int> highlightedPositions = new List<Vector3Int>();
         private Coroutine pulseHighlightCoroutine;
@@ -51,11 +50,11 @@ namespace FungusToast.Unity.Grid
         private HashSet<int> toxinDropTileIds = new HashSet<int>();
         private Dictionary<int, Coroutine> toxinDropCoroutines = new Dictionary<int, Coroutine>();
 
-        // Pulse color scheme, can be set by HighlightTiles
+        // Pulse color scheme
         private Color pulseColorA = new Color(1f, 1f, 0.1f, 1f); // Default: yellow
         private Color pulseColorB = new Color(0.1f, 1f, 1f, 1f); // Default: cyan
 
-        // Add ring highlight tracking at the class level
+        // Ring highlight tracking
         private Dictionary<Vector3Int, Coroutine> ringHighlightCoroutines = new Dictionary<Vector3Int, Coroutine>();
         private HashSet<Vector3Int> ringHighlightPositions = new HashSet<Vector3Int>();
 
@@ -73,7 +72,6 @@ namespace FungusToast.Unity.Grid
                 yield return null;
         }
 
-        // Lightweight struct to cache per-tile transform during animations
         private struct TileAnimTransform
         {
             public Vector3 positionOffset; // local offset
@@ -86,44 +84,28 @@ namespace FungusToast.Unity.Grid
             this.board = board;
         }
 
-        /// <summary>
-        /// Shows a glowing outline effect on the specified tile.
-        /// </summary>
-        /// <param name="cellPos">The cell position to show the hover outline on</param>
         public void ShowHoverEffect(Vector3Int cellPos)
         {
-            // Clear any existing hover effect
             ClearHoverEffect();
-            
-            // Set the new hovered position
             currentHoveredPosition = cellPos;
-            
-            // Always use solidHighlightTile for hover outline
             var tileToUse = solidHighlightTile;
             if (tileToUse != null && HoverOverlayTileMap != null)
             {
-                // Place the outline tile directly on the hovered position
                 HoverOverlayTileMap.SetTile(cellPos, tileToUse);
                 HoverOverlayTileMap.SetTileFlags(cellPos, TileFlags.None);
-                
-                // Start the glow animation
                 if (hoverGlowCoroutine != null)
                     StopCoroutine(hoverGlowCoroutine);
                 hoverGlowCoroutine = StartCoroutine(HoverOutlineGlowAnimation(cellPos));
             }
         }
 
-        /// <summary>
-        /// Clears the hover outline effect from all tiles.
-        /// </summary>
         public void ClearHoverEffect()
         {
             if (currentHoveredPosition.HasValue && HoverOverlayTileMap != null)
             {
-                // Clear the hover tile
                 HoverOverlayTileMap.SetTile(currentHoveredPosition.Value, null);
                 currentHoveredPosition = null;
-                
+
                 if (hoverGlowCoroutine != null)
                 {
                     StopCoroutine(hoverGlowCoroutine);
@@ -132,14 +114,9 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        /// <summary>
-        /// Coroutine that creates a subtle pulsing outline effect for the hovered tile.
-        /// </summary>
         private IEnumerator HoverOutlineGlowAnimation(Vector3Int cellPos)
         {
             float pulseDuration = 1.5f; // Slower, more subtle pulse
-            
-            // Outline-style colors - more transparent with emphasis on edges
             Color dimColor = new Color(0.2f, 0.6f, 1f, 0.2f);     // Soft blue, very low alpha
             Color brightColor = new Color(0.4f, 0.8f, 1f, 0.6f);  // Brighter blue, medium alpha
             
@@ -147,20 +124,15 @@ namespace FungusToast.Unity.Grid
             {
                 float time = Time.time / pulseDuration;
                 float t = (Mathf.Sin(time * 2f * Mathf.PI) + 1f) * 0.5f; // Smooth sine wave from 0 to 1
-                
-                // Apply easing for more organic feel
                 float easedT = Mathf.SmoothStep(0f, 1f, t);
-                
                 Color currentColor = Color.Lerp(dimColor, brightColor, easedT);
                 HoverOverlayTileMap.SetColor(cellPos, currentColor);
-                
                 yield return null;
             }
         }
 
         public void RenderBoard(GameBoard board)
         {
-            // Clear any existing fade-in coroutines
             foreach (var coroutine in fadeInCoroutines.Values)
             {
                 if (coroutine != null)
@@ -171,7 +143,6 @@ namespace FungusToast.Unity.Grid
             }
             fadeInCoroutines.Clear();
             
-            // Clear any existing death animation coroutines
             foreach (var coroutine in deathAnimationCoroutines.Values)
             {
                 if (coroutine != null)
@@ -182,7 +153,6 @@ namespace FungusToast.Unity.Grid
             }
             deathAnimationCoroutines.Clear();
             
-            // Clear any existing toxin drop coroutines
             foreach (var coroutine in toxinDropCoroutines.Values)
             {
                 if (coroutine != null)
@@ -193,11 +163,8 @@ namespace FungusToast.Unity.Grid
             }
             toxinDropCoroutines.Clear();
             
-            // Track newly grown cells for fade-in effect
             newlyGrownTileIds.Clear();
-            // Track dying cells for death animation effect
             dyingTileIds.Clear();
-            // Track toxin drop cells for toxin drop animation effect
             toxinDropTileIds.Clear();
             
             for (int x = 0; x < board.Width; x++)
@@ -239,19 +206,11 @@ namespace FungusToast.Unity.Grid
                 }
             }
             
-            // Start fade-in animations for newly grown cells
             StartFadeInAnimations();
-            
-            // Start death animations for dying cells
             StartDeathAnimations();
-            
-            // Start toxin drop animations for toxin drop cells
             StartToxinDropAnimations();
         }
 
-        /// <summary>
-        /// Highlights all living tiles for a given player, with optional starting tile ping.
-        /// </summary>
         public void HighlightPlayerTiles(int playerId, bool includeStartingTilePing = false)
         {
             var activeBoard = ActiveBoard;
@@ -266,23 +225,18 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        /// <summary>
-        /// Public helper to trigger a starting tile ping (e.g., button / hotkey).
-        /// </summary>
         public void TriggerStartingTilePing(int playerId)
         {
             var activeBoard = ActiveBoard;
             if (activeBoard == null) return;
             int? startingTileId = GetPlayerStartingTile(playerId);
             if (!startingTileId.HasValue) return;
-            var (x, y) = activeBoard.GetXYFromTileId(startingTileId.Value);
-            Vector3Int center = new Vector3Int(x, y, 0);
+            var xy = activeBoard.GetXYFromTileId(startingTileId.Value);
+            Vector3Int center = new Vector3Int(xy.Item1, xy.Item2, 0);
 
-            // Determine target tilemap first
             var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
             if (targetTilemap == null || solidHighlightTile == null) return;
 
-            // If a previous ping is running, stop it and clear its visuals immediately
             if (startingTilePingCoroutine != null)
             {
                 StopCoroutine(startingTilePingCoroutine);
@@ -294,9 +248,6 @@ namespace FungusToast.Unity.Grid
             startingTilePingCoroutine = StartCoroutine(StartingTilePingAnimation(center, targetTilemap));
         }
 
-        /// <summary>
-        /// Gets the starting tile ID for a player.
-        /// </summary>
         private int? GetPlayerStartingTile(int playerId)
         {
             var activeBoard = ActiveBoard;
@@ -307,12 +258,8 @@ namespace FungusToast.Unity.Grid
             return null;
         }
 
-        /// <summary>
-        /// Creates an expanding ring animation for the starting tile ping.
-        /// </summary>
         private IEnumerator StartingTilePingAnimation(Vector3Int centerPos)
         {
-            // legacy signature retained for any existing callers -> redirect
             var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
             if (targetTilemap == null || solidHighlightTile == null)
             {
@@ -322,12 +269,10 @@ namespace FungusToast.Unity.Grid
             yield return StartingTilePingAnimation(centerPos, targetTilemap);
         }
 
-        // New internal implementation that accepts the target tilemap explicitly
         private IEnumerator StartingTilePingAnimation(Vector3Int centerPos, Tilemap targetTilemap)
         {
-            // Total animation duration shortened (~67% of previous 1.5s)
-            float duration = 1.0f; // was 1.5f
-            float expandPortion = 0.5f; // 50% expand, 50% contract for a snappier feel
+            float duration = 1.0f;
+            float expandPortion = 0.5f;
             float contractPortion = 1f - expandPortion;
 
             var activeBoard = ActiveBoard;
@@ -342,38 +287,32 @@ namespace FungusToast.Unity.Grid
             {
                 float elapsed = Time.time - startTime;
                 if (elapsed > duration) break;
-                float tNorm = Mathf.Clamp01(elapsed / duration); // 0..1
+                float t = Mathf.Clamp01(elapsed / duration);
 
                 float radius;
                 float thickness = ringThickness;
 
-                if (tNorm <= expandPortion)
+                if (t <= expandPortion)
                 {
-                    // Expansion phase (ease-out cubic)
-                    float phaseT = tNorm / expandPortion; // 0..1
+                    float phaseT = t / expandPortion;
                     float eased = 1f - Mathf.Pow(1f - phaseT, 3f);
                     radius = Mathf.Lerp(minVisibleRadius, maxRadius, eased);
                 }
                 else
                 {
-                    // Contraction phase (ease-in cubic) back toward center.
-                    float phaseT = (tNorm - expandPortion) / contractPortion; // 0..1
-                    float eased = phaseT * phaseT * phaseT; // accelerate inward
+                    float phaseT = (t - expandPortion) / contractPortion;
+                    float eased = phaseT * phaseT * phaseT;
                     radius = Mathf.Lerp(maxRadius, minVisibleRadius, eased);
                     thickness = Mathf.Lerp(ringThickness, ringThickness * 0.35f, eased);
                 }
 
-                // Alpha profile adjusted for shorter duration:
-                //  - Fade-in first 6%
-                //  - Sustain
-                //  - Fade-out last 15%
                 float alpha;
                 const float fadeInEnd = 0.06f;
                 const float fadeOutStart = 0.85f;
-                if (tNorm < fadeInEnd)
-                    alpha = Mathf.InverseLerp(0f, fadeInEnd, tNorm);
-                else if (tNorm > fadeOutStart)
-                    alpha = Mathf.InverseLerp(1f, fadeOutStart, tNorm);
+                if (t < fadeInEnd)
+                    alpha = Mathf.InverseLerp(0f, fadeInEnd, t);
+                else if (t > fadeOutStart)
+                    alpha = Mathf.InverseLerp(1f, fadeOutStart, t);
                 else
                     alpha = 1f;
 
@@ -382,11 +321,10 @@ namespace FungusToast.Unity.Grid
                 yield return null;
             }
 
-            // Center flash on collapse completion
             DrawRingHighlight(centerPos, minVisibleRadius * 0.65f, ringThickness * 0.5f, new Color(1f, 0.95f, 0.3f, 0.95f), targetTilemap);
-            yield return null; // one frame
+            yield return null;
             ClearRingHighlight(targetTilemap);
-            startingTilePingCoroutine = null; // mark finished
+            startingTilePingCoroutine = null;
         }
 
         private void DrawRingHighlight(Vector3Int centerPos, float radius, float thickness, Color color, Tilemap targetTilemap)
@@ -417,9 +355,6 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        /// <summary>
-        /// Clears all ring highlight tiles.
-        /// </summary>
         private void ClearRingHighlight(Tilemap targetTilemap)
         {
             foreach (var pos in ringHighlightPositions)
@@ -427,12 +362,6 @@ namespace FungusToast.Unity.Grid
             ringHighlightPositions.Clear();
         }
 
-        /// <summary>
-        /// Highlights any set of tiles with a pulsing color. Use for selection, special events, etc.
-        /// </summary>
-        /// <param name="tileIds">The tile IDs to highlight</param>
-        /// <param name="colorA">Pulse color A (optional, defaults to yellow)</param>
-        /// <param name="colorB">Pulse color B (optional, defaults to cyan)</param>
         public void HighlightTiles(IEnumerable<int> tileIds, Color? colorA = null, Color? colorB = null)
         {
             var activeBoard = ActiveBoard;
@@ -440,18 +369,16 @@ namespace FungusToast.Unity.Grid
             SelectionHighlightTileMap.ClearAllTiles();
             highlightedPositions.Clear();
 
-            foreach (var tileId in tileIds
-)
+            foreach (var tileId in tileIds)
             {
-                var (x, y) = activeBoard.GetXYFromTileId(tileId);
-                Vector3Int pos = new Vector3Int(x, y, 0);
+                var xy = activeBoard.GetXYFromTileId(tileId);
+                Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
                 SelectionHighlightTileMap.SetTile(pos, solidHighlightTile);
                 SelectionHighlightTileMap.SetTileFlags(pos, TileFlags.None);
                 SelectionHighlightTileMap.SetColor(pos, Color.white);
                 highlightedPositions.Add(pos);
             }
 
-            // Set pulse colors if provided, else use defaults
             pulseColorA = colorA ?? new Color(1f, 1f, 0.1f, 1f);
             pulseColorB = colorB ?? new Color(0.1f, 1f, 1f, 1f);
 
@@ -464,9 +391,6 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        /// <summary>
-        /// Highlights tiles with per-tile color support. Each tileId maps to a (colorA, colorB) tuple.
-        /// </summary>
         public void HighlightTiles(IDictionary<int, (Color colorA, Color colorB)> tileHighlights)
         {
             var activeBoard = ActiveBoard;
@@ -477,17 +401,16 @@ namespace FungusToast.Unity.Grid
             foreach (var kvp in tileHighlights)
             {
                 int tileId = kvp.Key;
-                var (colorA, colorB) = kvp.Value;
-                var (x, y) = activeBoard.GetXYFromTileId(tileId);
-                Vector3Int pos = new Vector3Int(x, y, 0);
+                var tuple = kvp.Value;
+                Color colorA = tuple.colorA;
+                var xy = activeBoard.GetXYFromTileId(tileId);
+                Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
                 SelectionHighlightTileMap.SetTile(pos, solidHighlightTile);
                 SelectionHighlightTileMap.SetTileFlags(pos, TileFlags.None);
-                // Use colorA for now (could pulse between colorA/colorB if needed)
                 SelectionHighlightTileMap.SetColor(pos, colorA);
                 highlightedPositions.Add(pos);
             }
 
-            // No pulsing for per-tile highlights (could be added if needed)
             if (pulseHighlightCoroutine != null)
             {
                 StopCoroutine(pulseHighlightCoroutine);
@@ -495,48 +418,31 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        /// <summary>
-        /// Shows selected tiles with a solid color (no pulsing).
-        /// Used for multi-selection workflows like Mycelial Bastion.
-        /// </summary>
-        /// <param name="tileIds">The tile IDs to show as selected</param>
-        /// <param name="selectedColor">Color to show selected tiles (defaults to orange)</param>
         public void ShowSelectedTiles(IEnumerable<int> tileIds, Color? selectedColor = null)
         {
             var activeBoard = ActiveBoard;
             if (activeBoard == null) return;
             SelectedTileMap.ClearAllTiles();
             
-            Color color = selectedColor ?? new Color(1f, 0.8f, 0.2f, 1f); // Default orange
+            Color color = selectedColor ?? new Color(1f, 0.8f, 0.2f, 1f);
             
             foreach (var tileId in tileIds)
             {
-                var (x, y) = activeBoard.GetXYFromTileId(tileId);
-                Vector3Int pos = new Vector3Int(x, y, 0);
+                var xy = activeBoard.GetXYFromTileId(tileId);
+                Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
                 SelectedTileMap.SetTile(pos, solidHighlightTile);
                 SelectedTileMap.SetTileFlags(pos, TileFlags.None);
                 SelectedTileMap.SetColor(pos, color);
             }
         }
 
-        /// <summary>
-        /// Clears all selected tile highlights.
-        /// </summary>
         public void ClearSelectedTiles()
         {
             SelectedTileMap.ClearAllTiles();
         }
 
-        /// <summary>
-        /// Clears all highlights and stops pulsing.
-        /// </summary>
         public void ClearHighlights()
         {
-            if (SelectionHighlightTileMap == null)
-            {
-                Debug.LogWarning("[DraftDebug][GridVis] ClearHighlights: map is null");
-                return;
-            }
             SelectionHighlightTileMap.ClearAllTiles();
             highlightedPositions.Clear();
             if (pulseHighlightCoroutine != null)
@@ -546,12 +452,8 @@ namespace FungusToast.Unity.Grid
             }
             if (SelectionHighlightTileMap != null)
                 SelectionHighlightTileMap.transform.localScale = Vector3.one;
-            Debug.Log("[DraftDebug][GridVis] ClearHighlights");
         }
 
-        /// <summary>
-        /// Clears both selection highlights and selected tiles.
-        /// </summary>
         public void ClearAllHighlights()
         {
             ClearHighlights();
@@ -561,24 +463,18 @@ namespace FungusToast.Unity.Grid
         private IEnumerator PulseHighlightTiles()
         {
             float pulseDuration = 0.4f;    // Fast pulse for urgency
-            
-            // Changed from black-to-magenta to transparent-to-magenta for better visibility
-            Color transparentColor = new Color(1f, 0f, 0.9f, 0f);  // Transparent magenta
-            Color brightColor = new Color(1f, 0f, 0.9f, 1f);       // Full opacity magenta
+            Color transparentColor = new Color(1f, 0f, 0.9f, 0f);
+            Color brightColor = new Color(1f, 0f, 0.9f, 1f);
 
             while (true)
             {
-                // Color pulse: transparent to bright magenta and back with double easing for more snap
                 float colorT = Mathf.PingPong(Time.time / pulseDuration, 1f);
-                
-                // Double easing: ease-out then ease-in for dramatic snap effect
                 float easedColorT = colorT < 0.5f 
-                    ? 2f * colorT * colorT  // Ease-in for first half (snap to bright)
-                    : 1f - 2f * (1f - colorT) * (1f - colorT);  // Ease-out for second half (smooth return to transparent)
+                    ? 2f * colorT * colorT  
+                    : 1f - 2f * (1f - colorT) * (1f - colorT);  
                 
                 Color pulseColor = Color.Lerp(transparentColor, brightColor, easedColorT);
 
-                // Apply colors to all highlighted positions (NO scaling - just color pulse)
                 foreach (var pos in highlightedPositions)
                 {
                     if (SelectionHighlightTileMap.HasTile(pos))
@@ -608,14 +504,12 @@ namespace FungusToast.Unity.Grid
                     if (cell.OwnerPlayerId is int idA && idA >= 0 && idA < playerMoldTiles.Length)
                     {
                         moldTile = playerMoldTiles[idA];
-                        // Newly grown cells start with low alpha for fade-in effect
                         if (cell.IsNewlyGrown)
                         {
                             moldColor = new Color(1f, 1f, 1f, 0.1f);
                         }
                         else
                         {
-                            // Dim young living cells persistently based on growth cycle age threshold
                             if (cell.GrowthCycleAge < UIEffectConstants.GrowthCycleAgeHighlightTextThreshold)
                             {
                                 moldColor = new Color(1f, 1f, 1f, UIEffectConstants.NewGrowthFinalAlpha);
@@ -626,7 +520,6 @@ namespace FungusToast.Unity.Grid
                             }
                         }
                     }
-                    // If the cell is resistant, show the shield overlay
                     if (cell.IsResistant && goldShieldOverlayTile != null)
                     {
                         overlayTile = goldShieldOverlayTile;
@@ -640,43 +533,34 @@ namespace FungusToast.Unity.Grid
                         moldTilemap.SetTileFlags(pos, TileFlags.None);
                         moldTilemap.SetTile(pos, playerMoldTiles[ownerId]);
                         
-                        // If the cell is dying, show it as living for the crossfade animation
                         if (cell.IsDying)
                         {
-                            moldColor = Color.white; // Full opacity for living appearance
+                            moldColor = Color.white;
                         }
                         else
                         {
-                            moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.8f)); // Increased from 0.55f to 0.8f for better visibility
+                            moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.8f));
                             moldTilemap.RefreshTile(pos);
                         }
                     }
                     overlayTile = deadTile;
-                    // If the cell is dying, start the overlay transparent for crossfade
                     overlayColor = cell.IsDying ? new Color(1f, 1f, 1f, 0f) : Color.white;
                     break;
 
                 case FungalCellType.Toxin:
                     if (cell.OwnerPlayerId is int idT && idT >= 0 && idT < playerMoldTiles.Length)
                     {
-                        // Show more visible, slightly gray mold color under the toxin overlay
                         moldTile = playerMoldTiles[idT];
-                        
-                        // If the cell is receiving a toxin drop, show it as normal for the drop animation
-                        moldColor = Color.white; // Normal appearance for drop animation
-                        //moldColor = new Color(0.8f, 0.8f, 0.8f, 0.8f); // Increased alpha from 0.55f to 0.8f for better visibility
+                        moldColor = Color.white;
                     }
                     overlayTile = toxinOverlayTile;
-                    // If the cell is receiving a toxin drop, start the overlay transparent for drop animation
                     overlayColor = cell.IsReceivingToxinDrop ? new Color(1f, 1f, 1f, 0f) : Color.white;
                     break;
 
                 default:
-                    // Unoccupied or unknown: nothing to render
                     return;
             }
 
-            // Set faded (or normal) mold tile
             if (moldTile != null)
             {
                 moldTilemap.SetTile(pos, moldTile);
@@ -685,7 +569,6 @@ namespace FungusToast.Unity.Grid
                 moldTilemap.RefreshTile(pos);
             }
 
-            // Set overlay tile (dead, toxin, or shield)
             if (overlayTile != null)
             {
                 overlayTilemap.SetTile(pos, overlayTile);
@@ -712,9 +595,6 @@ namespace FungusToast.Unity.Grid
             return null;
         }
 
-        /// <summary>
-        /// Starts fade-in animations for all newly grown cells
-        /// </summary>
         private void StartFadeInAnimations()
         {
             foreach (int tileId in newlyGrownTileIds)
@@ -728,20 +608,16 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        /// <summary>
-        /// Coroutine that fades in a newly grown cell from low alpha to full opacity
-        /// </summary>
         private IEnumerator FadeInCell(int tileId)
         {
-            var (x, y) = board.GetXYFromTileId(tileId);
-            Vector3Int pos = new Vector3Int(x, y, 0);
+            var xy = board.GetXYFromTileId(tileId);
+            Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
             
-            float duration = UIEffectConstants.CellGrowthFadeInDurationSeconds; // Fast fade-in to not slow down the game
+            float duration = UIEffectConstants.CellGrowthFadeInDurationSeconds;
             float startAlpha = 0.1f;
             float targetAlpha = 1f;
             float elapsed = 0f;
 
-            // Start tracking this animation
             BeginAnimation();
             try
             {
@@ -751,7 +627,6 @@ namespace FungusToast.Unity.Grid
                     float t = elapsed / duration;
                     float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, t);
                     
-                    // Update the mold tile color
                     if (moldTilemap.HasTile(pos))
                     {
                         Color currentColor = moldTilemap.GetColor(pos);
@@ -762,7 +637,6 @@ namespace FungusToast.Unity.Grid
                     yield return null;
                 }
 
-                // Ensure final alpha is exactly 1.0
                 if (moldTilemap.HasTile(pos))
                 {
                     Color finalColor = moldTilemap.GetColor(pos);
@@ -770,13 +644,11 @@ namespace FungusToast.Unity.Grid
                     moldTilemap.SetColor(pos, finalColor);
                 }
 
-                // Brief green flash to celebrate new growth
                 float flashElapsed = 0f;
                 Color originalColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
                 while (flashElapsed < UIEffectConstants.NewGrowthFlashDurationSeconds)
                 {
                     flashElapsed += Time.deltaTime;
-                    // Hard set the flash color for crispness
                     if (moldTilemap.HasTile(pos))
                     {
                         moldTilemap.SetColor(pos, UIEffectConstants.NewGrowthFlashColor);
@@ -784,7 +656,6 @@ namespace FungusToast.Unity.Grid
                     yield return null;
                 }
 
-                // Drop to the persistent new-growth alpha until next round
                 if (moldTilemap.HasTile(pos))
                 {
                     Color settleColor = Color.white;
@@ -792,7 +663,6 @@ namespace FungusToast.Unity.Grid
                     moldTilemap.SetColor(pos, settleColor);
                 }
 
-                // Clear the newly grown flag on the cell
                 var tile = board.GetTileById(tileId);
                 if (tile?.FungalCell != null)
                 {
@@ -801,15 +671,11 @@ namespace FungusToast.Unity.Grid
             }
             finally
             {
-                // Clean up the coroutine reference and animation tracking
                 fadeInCoroutines.Remove(tileId);
                 EndAnimation();
             }
         }
 
-        /// <summary>
-        /// Starts death animations for all dying cells
-        /// </summary>
         private void StartDeathAnimations()
         {
             foreach (int tileId in dyingTileIds)
@@ -823,9 +689,6 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        /// <summary>
-        /// Manually triggers a death animation for a specific tile (for testing)
-        /// </summary>
         public void TriggerDeathAnimation(int tileId)
         {
             var tile = board.GetTileById(tileId);
@@ -842,17 +705,13 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        /// <summary>
-        /// Coroutine that handles the death animation for a dying cell
-        /// </summary>
         private IEnumerator DeathAnimation(int tileId)
         {
-            var (x, y) = board.GetXYFromTileId(tileId);
-            Vector3Int pos = new Vector3Int(x, y, 0);
+            var xy = board.GetXYFromTileId(tileId);
+            Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
             
             float duration = UIEffectConstants.CellDeathAnimationDurationSeconds;
 
-            // Get the current cell to determine the death animation parameters
             var tile = board.GetTileById(tileId);
             var cell = tile?.FungalCell;
             if (cell == null)
@@ -861,19 +720,15 @@ namespace FungusToast.Unity.Grid
                 yield break;
             }
 
-            // Start tracking this animation
             BeginAnimation();
             try
             {
-                // Store initial colors and transform
                 Color initialLivingColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
                 Color initialOverlayColor = overlayTilemap.HasTile(pos) ? overlayTilemap.GetColor(pos) : Color.white;
                 Matrix4x4 initialTransform = moldTilemap.GetTransformMatrix(pos);
 
-                // Add dramatic red flash at the start
-                Color deathFlashColor = new Color(1f, 0.2f, 0.2f, 1f); // Bright red
+                Color deathFlashColor = new Color(1f, 0.2f, 0.2f, 1f);
                 
-                // Flash phase (first 15% of animation)
                 float flashDuration = duration * 0.15f;
                 float flashElapsed = 0f;
                 
@@ -882,7 +737,6 @@ namespace FungusToast.Unity.Grid
                     flashElapsed += Time.deltaTime;
                     float flashProgress = flashElapsed / flashDuration;
                     
-                    // Intense red flash that fades quickly
                     Color flashColor = Color.Lerp(deathFlashColor, initialLivingColor, flashProgress);
                     
                     if (moldTilemap.HasTile(pos))
@@ -893,7 +747,6 @@ namespace FungusToast.Unity.Grid
                     yield return null;
                 }
 
-                // Main animation phase (remaining 85%)
                 float mainDuration = duration - flashDuration;
                 float mainElapsed = 0f;
 
@@ -902,26 +755,21 @@ namespace FungusToast.Unity.Grid
                     mainElapsed += Time.deltaTime;
                     float progress = mainElapsed / mainDuration;
                     
-                    // Ease-in curve for more dramatic start
                     float easedProgress = 1f - Mathf.Pow(1f - progress, 2f);
                     
-                    // Scale effect: slight shrink during death
                     float scaleAmount = Mathf.Lerp(1f, 0.85f, easedProgress);
                     Matrix4x4 scaleMatrix = Matrix4x4.Scale(new Vector3(scaleAmount, scaleAmount, 1f));
                     
-                    // Color desaturation effect
                     Color currentLivingColor = Color.Lerp(initialLivingColor, 
                         new Color(initialLivingColor.r * 0.7f, initialLivingColor.g * 0.7f, initialLivingColor.b * 0.7f, 
                         Mathf.Lerp(1f, 0.8f, easedProgress)), easedProgress);
                     
-                    // Apply visual changes
                     if (moldTilemap.HasTile(pos))
                     {
                         moldTilemap.SetColor(pos, currentLivingColor);
                         moldTilemap.SetTransformMatrix(pos, scaleMatrix);
                     }
                     
-                    // Fade in dead cell overlay (from 0 to full opacity)
                     if (overlayTilemap.HasTile(pos))
                     {
                         Color overlayColor = initialOverlayColor;
@@ -932,13 +780,12 @@ namespace FungusToast.Unity.Grid
                     yield return null;
                 }
 
-                // Ensure final state matches the dead cell appearance
                 if (moldTilemap.HasTile(pos))
                 {
                     Color finalLivingColor = initialLivingColor;
                     finalLivingColor.a = 0.8f;
                     moldTilemap.SetColor(pos, finalLivingColor);
-                    moldTilemap.SetTransformMatrix(pos, Matrix4x4.Scale(new Vector3(0.85f, 0.85f, 1f))); // Keep slight shrink
+                    moldTilemap.SetTransformMatrix(pos, Matrix4x4.Scale(new Vector3(0.85f, 0.85f, 1f)));
                 }
                 
                 if (overlayTilemap.HasTile(pos))
@@ -948,20 +795,15 @@ namespace FungusToast.Unity.Grid
                     overlayTilemap.SetColor(pos, finalOverlayColor);
                 }
 
-                // Clear the dying flag on the cell
                 cell.ClearDyingFlag();
             }
             finally
             {
-                // Clean up the coroutine reference and animation tracking
                 deathAnimationCoroutines.Remove(tileId);
                 EndAnimation();
             }
         }
 
-        /// <summary>
-        /// Starts toxin drop animations for all toxin drop cells
-        /// </summary>
         private void StartToxinDropAnimations()
         {
             foreach (int tileId in toxinDropTileIds)
@@ -975,9 +817,6 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        /// <summary>
-        /// Manually triggers a toxin drop animation for a specific tile (for testing)
-        /// </summary>
         public void TriggerToxinDropAnimation(int tileId)
         {
             var tile = board.GetTileById(tileId);
@@ -994,18 +833,13 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        /// <summary>
-        /// Coroutine that handles the toxin drop animation for a cell receiving a toxin
-        /// Now includes a "drop from above" illusion using Tilemap per-tile transform, with an impact squash.
-        /// </summary>
         private IEnumerator ToxinDropAnimation(int tileId)
         {
-            var (x, y) = board.GetXYFromTileId(tileId);
-            Vector3Int pos = new Vector3Int(x, y, 0);
+            var xy = board.GetXYFromTileId(tileId);
+            Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
             
             float duration = UIEffectConstants.ToxinDropAnimationDurationSeconds;
 
-            // Get the current cell to determine the animation parameters
             var tile = board.GetTileById(tileId);
             var cell = tile?.FungalCell;
             if (cell == null)
@@ -1014,23 +848,19 @@ namespace FungusToast.Unity.Grid
                 yield break;
             }
 
-            // Start tracking this animation
             BeginAnimation();
             try
             {
-                // Store initial colors
                 Color initialMoldColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
                 Color initialOverlayColor = overlayTilemap.HasTile(pos) ? overlayTilemap.GetColor(pos) : Color.white;
 
-                // Ensure overlay tile exists
                 if (!overlayTilemap.HasTile(pos) && toxinOverlayTile != null)
                 {
                     overlayTilemap.SetTile(pos, toxinOverlayTile);
                     overlayTilemap.SetTileFlags(pos, TileFlags.None);
-                    overlayTilemap.SetColor(pos, Color.clear); // start invisible; we'll fade in on impact
+                    overlayTilemap.SetColor(pos, Color.clear);
                 }
 
-                // Hide mold icon until the end of the animation
                 if (moldTilemap.HasTile(pos))
                 {
                     var c = moldTilemap.GetColor(pos);
@@ -1038,11 +868,9 @@ namespace FungusToast.Unity.Grid
                     moldTilemap.SetColor(pos, c);
                 }
 
-                // Init transform state for overlay tile (translate down from above)
                 float startYOffset = UIEffectConstants.ToxinDropStartYOffset;
                 ApplyOverlayTransform(pos, new Vector3(0f, startYOffset, 0f), Vector3.one);
 
-                // Phase 1: Approach (fall from above, 0 → approachPortion)
                 float approachPortion = Mathf.Clamp01(UIEffectConstants.ToxinDropApproachPortion);
                 float approachDuration = duration * approachPortion;
                 float approachElapsed = 0f;
@@ -1050,18 +878,16 @@ namespace FungusToast.Unity.Grid
                 {
                     approachElapsed += Time.deltaTime;
                     float t = Mathf.Clamp01(approachElapsed / approachDuration);
-                    // Ease-in cubic for acceleration feel
                     float eased = t * t * t;
                     float yOffset = Mathf.Lerp(startYOffset, 0f, eased);
                     ApplyOverlayTransform(pos, new Vector3(0f, yOffset, 0f), Vector3.one);
                     yield return null;
                 }
 
-                // Phase 2: Impact squash + fade overlay in quickly
                 float squashX = UIEffectConstants.ToxinDropImpactSquashX;
                 float squashY = UIEffectConstants.ToxinDropImpactSquashY;
-                float impactPortion = 1f - approachPortion; // remaining time
-                float impactDuration = duration * impactPortion * 0.35f; // 35% of remaining for squash-in, rest to settle
+                float impactPortion = 1f - approachPortion;
+                float impactDuration = duration * impactPortion * 0.35f;
                 float settleDuration = duration * impactPortion - impactDuration;
 
                 float impactElapsed = 0f;
@@ -1069,12 +895,10 @@ namespace FungusToast.Unity.Grid
                 {
                     impactElapsed += Time.deltaTime;
                     float t = Mathf.Clamp01(impactElapsed / impactDuration);
-                    // Squash in using ease-out for a sharp pop
                     float sx = Mathf.Lerp(1f, squashX, 1f - (1f - t) * (1f - t));
                     float sy = Mathf.Lerp(1f, squashY, 1f - (1f - t) * (1f - t));
                     ApplyOverlayTransform(pos, Vector3.zero, new Vector3(sx, sy, 1f));
 
-                    // Fade in overlay from clear to white
                     if (overlayTilemap.HasTile(pos))
                     {
                         Color c = overlayTilemap.GetColor(pos);
@@ -1084,20 +908,17 @@ namespace FungusToast.Unity.Grid
                     yield return null;
                 }
 
-                // Phase 3: Settle back to normal scale
                 float settleElapsed = 0f;
                 while (settleElapsed < settleDuration)
                 {
                     settleElapsed += Time.deltaTime;
                     float t = Mathf.Clamp01(settleElapsed / settleDuration);
-                    // Ease back to 1,1
                     float sx = Mathf.Lerp(squashX, 1f, t);
                     float sy = Mathf.Lerp(squashY, 1f, t);
                     ApplyOverlayTransform(pos, Vector3.zero, new Vector3(sx, sy, 1f));
                     yield return null;
                 }
 
-                // Ensure final states
                 ApplyOverlayTransform(pos, Vector3.zero, Vector3.one);
                 if (overlayTilemap.HasTile(pos))
                 {
@@ -1105,30 +926,138 @@ namespace FungusToast.Unity.Grid
                 }
                 if (moldTilemap.HasTile(pos))
                 {
-                    // Reveal mold icon now that the toxin has landed
                     moldTilemap.SetColor(pos, new Color(0.8f, 0.8f, 0.8f, 0.8f));
                 }
 
-                // Clear the toxin drop flag on the cell
                 cell.ClearToxinDropFlag();
             }
             finally
             {
-                // Clean up the coroutine reference and animation tracking
                 toxinDropCoroutines.Remove(tileId);
                 EndAnimation();
             }
         }
 
-        // Helper to apply per-tile transform to overlay tile
         private void ApplyOverlayTransform(Vector3Int pos, Vector3 localOffset, Vector3 localScale)
         {
             var trs = Matrix4x4.TRS(localOffset, Quaternion.identity, localScale);
             overlayTilemap.SetTransformMatrix(pos, trs);
         }
+
+        // NEW: Resistant drop animation for Surgical Inoculation (Option A)
+        public IEnumerator ResistantDropAnimation(int tileId)
+        {
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null || goldShieldOverlayTile == null || overlayTilemap == null)
+                yield break;
+
+            var xy = activeBoard.GetXYFromTileId(tileId);
+            Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
+
+            float total = UIEffectConstants.SurgicalInoculationDropDurationSeconds;
+            float dropT = Mathf.Clamp01(UIEffectConstants.SurgicalInoculationDropPortion);
+            float impactT = Mathf.Clamp01(UIEffectConstants.SurgicalInoculationImpactPortion);
+            float settleT = Mathf.Clamp01(UIEffectConstants.SurgicalInoculationSettlePortion);
+            float normSum = dropT + impactT + settleT;
+            if (normSum <= 0f) normSum = 1f;
+            dropT /= normSum; impactT /= normSum; settleT /= normSum;
+
+            float dropDur = total * dropT;
+            float impactDur = total * impactT;
+            float settleDur = total * settleT;
+
+            // Ensure shield tile exists at pos (we animate overlayTilemap transform)
+            overlayTilemap.SetTile(pos, goldShieldOverlayTile);
+            overlayTilemap.SetTileFlags(pos, TileFlags.None);
+            overlayTilemap.SetColor(pos, Color.white);
+
+            // Begin animation tracking
+            BeginAnimation();
+            try
+            {
+                // Phase 1: Drop (ease-in cubic), start high and large, spin while shrinking to 1.0
+                float startYOffset = UIEffectConstants.SurgicalInoculationDropStartYOffset;
+                float startScale = UIEffectConstants.SurgicalInoculationDropStartScale;
+                float spinTurns = UIEffectConstants.SurgicalInoculationDropSpinTurns;
+
+                float t = 0f;
+                while (t < dropDur)
+                {
+                    t += Time.deltaTime;
+                    float u = Mathf.Clamp01(t / dropDur);
+                    float eased = u * u * u; // ease-in cubic
+                    float yOff = Mathf.Lerp(startYOffset, 0f, eased);
+                    float s = Mathf.Lerp(startScale, 1f, eased);
+                    float angle = Mathf.Lerp(0f, 360f * spinTurns, eased);
+                    var rot = Quaternion.Euler(0f, 0f, angle);
+                    var trs = Matrix4x4.TRS(new Vector3(0f, yOff, 0f), rot, new Vector3(s, s, 1f));
+                    overlayTilemap.SetTransformMatrix(pos, trs);
+                    yield return null;
+                }
+
+                // Phase 2: Impact squash (ease-out), optional ring ripple
+                float squashX = UIEffectConstants.SurgicalInoculationImpactSquashX;
+                float squashY = UIEffectConstants.SurgicalInoculationImpactSquashY;
+                t = 0f;
+                // Trigger ring pulse at impact start
+                StartCoroutine(ImpactRingPulse(pos));
+                while (t < impactDur)
+                {
+                    t += Time.deltaTime;
+                    float u = Mathf.Clamp01(t / impactDur);
+                    float eased = 1f - (1f - u) * (1f - u); // ease-out
+                    float sx = Mathf.Lerp(1f, squashX, eased);
+                    float sy = Mathf.Lerp(1f, squashY, eased);
+                    var trs = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(sx, sy, 1f));
+                    overlayTilemap.SetTransformMatrix(pos, trs);
+                    yield return null;
+                }
+
+                // Phase 3: Settle back to scale 1
+                t = 0f;
+                while (t < settleDur)
+                {
+                    t += Time.deltaTime;
+                    float u = Mathf.Clamp01(t / settleDur);
+                    float sx = Mathf.Lerp(squashX, 1f, u);
+                    float sy = Mathf.Lerp(squashY, 1f, u);
+                    var trs = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(sx, sy, 1f));
+                    overlayTilemap.SetTransformMatrix(pos, trs);
+                    yield return null;
+                }
+
+                // Ensure final transform reset
+                overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+            }
+            finally
+            {
+                EndAnimation();
+            }
+        }
+
+        private IEnumerator ImpactRingPulse(Vector3Int centerPos)
+        {
+            var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
+            if (targetTilemap == null || solidHighlightTile == null)
+                yield break;
+
+            float duration = UIEffectConstants.SurgicalInoculationRingPulseDurationSeconds;
+            float maxRadius = 2.5f;
+            float ringThickness = 0.6f;
+            float startTime = Time.time;
+
+            while (Time.time - startTime < duration)
+            {
+                float u = Mathf.Clamp01((Time.time - startTime) / duration);
+                float radius = Mathf.Lerp(0.3f, maxRadius, u);
+                Color ringColor = new Color(1f, 0.95f, 0.5f, 0.9f * (1f - u));
+                DrawRingHighlight(centerPos, radius, ringThickness, ringColor, targetTilemap);
+                yield return null;
+            }
+            ClearRingHighlight(targetTilemap);
+        }
     }
 
-    // Helper extension to avoid compile-time coupling while Core evolves
     internal static class FungalCellVisualExtensions
     {
         public static bool GrewThisRoundVisual(this FungalCell cell, int currentRound)

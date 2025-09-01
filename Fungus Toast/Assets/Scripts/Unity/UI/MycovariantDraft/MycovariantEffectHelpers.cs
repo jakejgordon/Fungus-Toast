@@ -256,15 +256,32 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 var playerMyco = player.PlayerMycovariants
                     .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
                 
+                int placedTileId = -1;
                 if (playerMyco != null)
                 {
+                    // Capture pre-state to detect placement
+                    var board = GameManager.Instance.Board;
+                    var preTiles = board.AllTiles()
+                        .Where(t => t.FungalCell != null && t.FungalCell.IsResistant)
+                        .Select(t => t.TileId)
+                        .ToHashSet();
+
                     MycovariantEffectProcessor.ResolveSurgicalInoculationAI(
                         playerMyco,
-                        GameManager.Instance.Board,
+                        board,
                         new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                         GameManager.Instance.GameUI.GameLogRouter
                     );
-                    gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                    gridVisualizer.RenderBoard(board);
+
+                    // Detect new resistant placement
+                    var postTile = board.AllTiles()
+                        .FirstOrDefault(t => t.FungalCell != null && t.FungalCell.IsResistant && !preTiles.Contains(t.TileId));
+                    if (postTile != null)
+                        placedTileId = postTile.TileId;
+
+                    if (placedTileId >= 0)
+                        yield return gridVisualizer.ResistantDropAnimation(placedTileId);
                     yield return gridVisualizer.WaitForAllAnimations();
                 }
                 yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
@@ -280,7 +297,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 bool selectionResolved = false;
                 bool executed = false;
 
-                // Highlight all valid tiles (not already Resistant)
                 Func<BoardTile, bool> isValidTile = tile => tile.FungalCell == null || (!tile.FungalCell.IsResistant);
                 var validTileIds = GameManager.Instance.Board.AllTiles()
                     .Where(isValidTile)
@@ -288,13 +304,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     .ToList();
                 gridVisualizer.HighlightTiles(validTileIds);
 
+                int placedTileId = -1;
                 TileSelectionController.Instance.PromptSelectBoardTile(
                     isValidTile,
                     (tile) =>
                     {
-                        if (done) return; // Defensive: prevent double-callback
+                        if (done) return;
                         done = true;
-                        // Defensive: re-check tile validity
                         if (!isValidTile(tile))
                         {
                             GameManager.Instance.HideSelectionPrompt();
@@ -304,11 +320,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         }
                         var playerMyco = player.PlayerMycovariants
                             .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+                        placedTileId = tile.TileId;
                         MycovariantEffectProcessor.ResolveSurgicalInoculationHuman(
                             playerMyco,
                             GameManager.Instance.Board,
                             player.PlayerId,
-                            tile.TileId,
+                            placedTileId,
                             GameManager.Instance.GameUI.GameLogRouter
                         );
                         GameManager.Instance.HideSelectionPrompt();
@@ -319,7 +336,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     },
                     () =>
                     {
-                        if (done) return; // Defensive: prevent double-callback
+                        if (done) return;
                         done = true;
                         GameManager.Instance.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
@@ -327,15 +344,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     },
                     "Select any valid tile to place your invincible (Resistant) cell."
                 );
-
                 while (!done) yield return null;
                 while (!selectionResolved) yield return null;
-
-                if (executed)
+                if (executed && placedTileId >= 0)
                 {
+                    yield return gridVisualizer.ResistantDropAnimation(placedTileId);
                     yield return gridVisualizer.WaitForAllAnimations();
                 }
-
                 onComplete?.Invoke();
             }
         }

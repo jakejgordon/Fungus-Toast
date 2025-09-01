@@ -128,5 +128,47 @@ namespace FungusToast.Unity.UI
         /// Optional delay after human-triggered Cytolytic Burst resolves to allow custom animations.
         /// </summary>
         public const float CytolyticBurstHumanPostEffectDelaySeconds = 0.7f;
+
+        // ==================== SURGICAL INOCULATION (RESISTANT DROP) ====================
+        /// <summary>
+        /// Duration of the large shield drop animation for Surgical Inoculation.
+        /// </summary>
+        public const float SurgicalInoculationDropDurationSeconds = 1.0f; // was 0.8f
+        /// <summary>
+        /// Starting local Y offset used for the shield drop.
+        /// </summary>
+        public const float SurgicalInoculationDropStartYOffset = 3.0f;
+        /// <summary>
+        /// Increased to make the starting shield extremely large on big boards
+        /// </summary>
+        public const float SurgicalInoculationDropStartScale = 100.0f;
+        /// <summary>
+        /// Number of spins (turns) the shield makes during the drop phase.
+        /// </summary>
+        public const float SurgicalInoculationDropSpinTurns = 1.25f;
+        /// <summary>
+        /// Impact squash scale on X (wider on impact).
+        /// </summary>
+        public const float SurgicalInoculationImpactSquashX = 1.15f;
+        /// <summary>
+        /// Impact squash scale on Y (flatter on impact).
+        /// </summary>
+        public const float SurgicalInoculationImpactSquashY = 0.85f;
+        /// <summary>
+        /// Portion of total duration used by the drop phase [0..1].
+        /// </summary>
+        public const float SurgicalInoculationDropPortion = 0.45f;
+        /// <summary>
+        /// Portion of total duration used by the impact squash phase [0..1].
+        /// </summary>
+        public const float SurgicalInoculationImpactPortion = 0.20f;
+        /// <summary>
+        /// Portion of total duration used by the settle phase [0..1].
+        /// </summary>
+        public const float SurgicalInoculationSettlePortion = 0.15f;
+        /// <summary>
+        /// Duration for a quick ring pulse on impact (optional ripple effect).
+        /// </summary>
+        public const float SurgicalInoculationRingPulseDurationSeconds = 0.18f;
     }
 }
