@@ -27,9 +27,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] AI player {player.PlayerId} executing Jetting Mycelium {direction}");
-                
-                // AI: Execute the effect directly since Unity drafts don't call ApplyEffect
+                draftPanel?.SetActive(false);
+                // Pre-animation stagger
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
+
                 var livingCells = GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId)
                     .Where(c => c.IsAlive)
                     .ToList();
@@ -39,7 +40,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     var sourceCell = livingCells[UnityEngine.Random.Range(0, livingCells.Count)];
                     var playerMyco = player.PlayerMycovariants
                         .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
-                    
                     if (playerMyco != null)
                     {
                         MycovariantEffectProcessor.ResolveJettingMycelium(
@@ -51,35 +51,33 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                             GameManager.Instance.GameUI.GameLogRouter
                         );
-                        
-                        // Ensure visuals reflect the effect for AI as well
                         gridVisualizer.RenderBoard(GameManager.Instance.Board);
-                        
-                        FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] AI Jetting Mycelium effect completed for player {player.PlayerId}");
-                    }
-                    else
-                    {
-                        FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] WARNING: PlayerMycovariant not found for AI player {player.PlayerId}");
+                        yield return gridVisualizer.WaitForAllAnimations();
                     }
                 }
-                else
-                {
-                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] WARNING: No living cells found for AI player {player.PlayerId}");
-                }
-                
-                // Wait for the effect to visually complete
-                yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumAIDelaySeconds);
+                // Post-animation stagger
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
                 onComplete?.Invoke();
             }
             else
             {
-                // Hide draft panel if supplied
                 draftPanel?.SetActive(false);
-                bool done = false;
 
+                var validCells = GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId)
+                    .Where(c => c.IsAlive)
+                    .ToList();
+                var validTileIds = validCells.Select(c => c.TileId).ToList();
+
+                gridVisualizer.HighlightTiles(
+                    validTileIds,
+                    new Color(1f, 0.2f, 0.8f, 1f),
+                    new Color(1f, 0.7f, 1f, 1f)
+                );
+                GameManager.Instance.ShowSelectionPrompt("Select one of your living fungal cells to project mycelium from.");
+
+                bool done = false;
                 bool selectionResolved = false;
                 bool executed = false;
-                int executedSourceTileId = -1;
 
                 TileSelectionController.Instance.PromptSelectLivingCell(
                     player.PlayerId,
@@ -97,17 +95,17 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                             GameManager.Instance.GameUI.GameLogRouter
                         );
-                        // Render immediately so any per-cell flags (e.g., IsNewlyGrown/IsDying) kick off animations
                         gridVisualizer.RenderBoard(GameManager.Instance.Board);
                         gridVisualizer.ClearHighlights();
+                        GameManager.Instance.HideSelectionPrompt();
                         done = true;
-                        executedSourceTileId = cell.TileId;
                         executed = true;
                         selectionResolved = true;
                     },
                     () =>
                     {
                         gridVisualizer.ClearHighlights();
+                        GameManager.Instance.HideSelectionPrompt();
                         done = true;
                         selectionResolved = true;
                     },
@@ -119,7 +117,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
                 if (executed)
                 {
-                    // Always wait for animations to complete
                     yield return gridVisualizer.WaitForAllAnimations();
                 }
 
@@ -160,9 +157,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] AI player {player.PlayerId} executing Mycelial Bastion with max {maxCellsAllowed} cells");
-                
-                // AI: Execute the effect directly since Unity drafts don't call ApplyEffect
+                draftPanel?.SetActive(false);
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
+
                 var playerMyco = player.PlayerMycovariants
                     .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
                 
@@ -174,23 +171,15 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                         GameManager.Instance.GameUI.GameLogRouter
                     );
-                    
-                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] AI Mycelial Bastion effect completed for player {player.PlayerId}");
+                    gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                    yield return gridVisualizer.WaitForAllAnimations();
                 }
-                else
-                {
-                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] WARNING: PlayerMycovariant not found for AI player {player.PlayerId}");
-                }
-                
-                // Wait for the effect to visually complete
-                yield return new WaitForSeconds(UIEffectConstants.MycelialBastionAIDelaySeconds);
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
                 onComplete?.Invoke();
             }
             else
             {
-                // Hide draft panel if supplied
                 draftPanel?.SetActive(false);
-
                 // Show selection prompt banner
                 GameManager.Instance.ShowSelectionPrompt(
                     $"Select up to {maxCellsAllowed} of your living cells to become Resistant."
@@ -262,7 +251,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                // AI: Execute the effect directly since Unity drafts don't call ApplyEffect
+                draftPanel?.SetActive(false);
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
                 var playerMyco = player.PlayerMycovariants
                     .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
                 
@@ -274,10 +264,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                         GameManager.Instance.GameUI.GameLogRouter
                     );
+                    gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                    yield return gridVisualizer.WaitForAllAnimations();
                 }
-                
-                // Wait for the effect to visually complete
-                yield return new WaitForSeconds(UIEffectConstants.DefaultAIThinkingDelay);
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
                 onComplete?.Invoke();
             }
             else
@@ -307,7 +297,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         // Defensive: re-check tile validity
                         if (!isValidTile(tile))
                         {
-                            Debug.LogWarning("Selected tile is no longer valid for Surgical Inoculation.");
                             GameManager.Instance.HideSelectionPrompt();
                             gridVisualizer.ClearHighlights();
                             selectionResolved = true;
@@ -372,7 +361,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                // AI: Execute the effect directly since Unity drafts don't call ApplyEffect
+                draftPanel?.SetActive(false);
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
                 var playerMyco = player.PlayerMycovariants.FirstOrDefault(pm => pm.MycovariantId == picked.Id);
                 
                 if (playerMyco != null)
@@ -384,10 +374,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                         GameManager.Instance.GameUI.GameLogRouter
                     );
+                    gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                    yield return gridVisualizer.WaitForAllAnimations();
                 }
-                
-                // Wait for the effect to visually complete
-                yield return new WaitForSeconds(UIEffectConstants.DefaultAIThinkingDelay);
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
                 onComplete?.Invoke();
             }
             else
@@ -466,7 +456,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                // AI: Execute the effect directly since Unity drafts don't call ApplyEffect
+                draftPanel?.SetActive(false);
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
                 var playerMyco = player.PlayerMycovariants
                     .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
                 
@@ -484,11 +475,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                             GameManager.Instance.GameUI.GameLogRouter
                         );
+                        gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                        yield return gridVisualizer.WaitForAllAnimations();
                     }
                 }
-                
-                // Wait for the effect to visually complete
-                yield return new WaitForSeconds(UIEffectConstants.DefaultAIThinkingDelay);
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
                 onComplete?.Invoke();
             }
             else

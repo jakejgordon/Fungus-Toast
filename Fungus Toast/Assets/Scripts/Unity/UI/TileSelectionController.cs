@@ -1,4 +1,4 @@
-﻿using FungusToast.Core.Board;
+using FungusToast.Core.Board;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Grid;
 using System;
@@ -13,6 +13,7 @@ namespace FungusToast.Unity.UI
         public static TileSelectionController Instance { get; private set; }
 
         [SerializeField] private GridVisualizer gridVisualizer;
+        [SerializeField] private TileHoverHighlighter hoverHighlighter; // optional
 
         private Action<FungalCell> onCellSelected;
         private Action onCancelled;
@@ -32,25 +33,26 @@ namespace FungusToast.Unity.UI
                 throw new System.Exception($"{nameof(TileSelectionController)} requires a reference to GridVisualizer. Assign it in the Inspector.");
         }
 
-        /// <summary>
-        /// Prompts the player to select one of their living fungal cells.
-        /// Highlights valid cells and waits for click.
-        /// Shows an instructional prompt if provided.
-        /// </summary>
         public void PromptSelectLivingCell(
             int playerId,
             Action<FungalCell> onSelected,
             Action onCancel = null,
             string promptMessage = null)
         {
+            var board = GameManager.Instance?.Board;
+            if (board == null)
+            {
+                Debug.LogError("PromptSelectLivingCell called but GameManager.Instance.Board is null.");
+                onCancel?.Invoke();
+                return;
+            }
+
             selectingPlayerId = playerId;
             selectionActive = true;
 
-            // Show the prompt if a message was provided
             if (!string.IsNullOrEmpty(promptMessage))
                 GameManager.Instance.ShowSelectionPrompt(promptMessage);
 
-            // Wraps to clear the prompt on cell selection or cancel
             onCellSelected = (cell) =>
             {
                 GameManager.Instance.HideSelectionPrompt();
@@ -62,42 +64,45 @@ namespace FungusToast.Unity.UI
                 onCancel?.Invoke();
             };
 
-            // Find valid cells
-            var validCells = GameManager.Instance.Board.GetAllCellsOwnedBy(playerId)
+            var validCells = board.GetAllCellsOwnedBy(playerId)
                 .Where(c => c.IsAlive)
                 .ToList();
 
             selectableTileIds = new HashSet<int>(validCells.Select(c => c.TileId));
 
-            // Highlight valid tiles using GridVisualizer (always set!)
+            if (hoverHighlighter != null)
+                hoverHighlighter.SetSelectableTiles(selectableTileIds);
+
             gridVisualizer.HighlightTiles(
                 selectableTileIds,
-                new Color(1f, 0.2f, 0.8f, 1f),   // Pink pulse
-                new Color(1f, 0.7f, 1f, 1f)      // Pinkish white
+                new Color(1f, 0.2f, 0.8f, 1f),
+                new Color(1f, 0.7f, 1f, 1f)
             );
         }
 
-        /// <summary>
-        /// Prompts the player to select any board tile matching a predicate.
-        /// Highlights valid tiles and waits for click.
-        /// </summary>
         public void PromptSelectBoardTile(
             Func<BoardTile, bool> isValidTile,
             Action<BoardTile> onSelected,
             Action onCancel = null,
             string promptMessage = null)
         {
+            var board = GameManager.Instance?.Board;
+            if (board == null)
+            {
+                Debug.LogError("PromptSelectBoardTile called but GameManager.Instance.Board is null.");
+                onCancel?.Invoke();
+                return;
+            }
+
             selectionActive = true;
 
-            // Show the prompt if a message was provided
             if (!string.IsNullOrEmpty(promptMessage))
                 GameManager.Instance.ShowSelectionPrompt(promptMessage);
 
-            // Wraps to clear the prompt on tile selection or cancel
             Action<int> onTileSelected = (tileId) =>
             {
                 GameManager.Instance.HideSelectionPrompt();
-                var tile = GameManager.Instance.Board.GetTileById(tileId);
+                var tile = board.GetTileById(tileId);
                 onSelected?.Invoke(tile);
             };
             onCancelled = () =>
@@ -106,28 +111,24 @@ namespace FungusToast.Unity.UI
                 onCancel?.Invoke();
             };
 
-            // Find valid tiles
-            var validTiles = GameManager.Instance.Board.AllTiles()
+            var validTiles = board.AllTiles()
                 .Where(isValidTile)
                 .ToList();
             selectableTileIds = new HashSet<int>(validTiles.Select(t => t.TileId));
 
-            // Highlight valid tiles
+            if (hoverHighlighter != null)
+                hoverHighlighter.SetSelectableTiles(selectableTileIds);
+
             gridVisualizer.HighlightTiles(
                 selectableTileIds,
-                new Color(0.2f, 0.8f, 1f, 1f),   // Cyan pulse
-                new Color(0.7f, 1f, 1f, 1f)      // Light cyan
+                new Color(0.2f, 0.8f, 1f, 1f),
+                new Color(0.7f, 1f, 1f, 1f)
             );
 
-            // Override OnTileClicked for this selection
-            onCellSelected = null; // Not used for BoardTile
+            onCellSelected = null;
             this.onTileSelected = onTileSelected;
         }
 
-        /// <summary>
-        /// Prompts the player to select up to maxTiles board tiles matching a predicate.
-        /// Calls onTileSelected for each selection, and onComplete when done or cancelled.
-        /// </summary>
         public void PromptSelectMultipleBoardTiles(
             Func<BoardTile, bool> isValidTile,
             Action<BoardTile> onTileSelected,
@@ -135,49 +136,60 @@ namespace FungusToast.Unity.UI
             int maxTiles,
             string promptMessage = null)
         {
+            var board = GameManager.Instance?.Board;
+            if (board == null)
+            {
+                Debug.LogError("PromptSelectMultipleBoardTiles called but GameManager.Instance.Board is null.");
+                onComplete?.Invoke();
+                return;
+            }
+
             selectionActive = true;
             if (!string.IsNullOrEmpty(promptMessage))
                 GameManager.Instance.ShowSelectionPrompt(promptMessage);
 
-            var validTiles = GameManager.Instance.Board.AllTiles()
+            var validTiles = board.AllTiles()
                 .Where(isValidTile)
                 .ToList();
             selectableTileIds = new HashSet<int>(validTiles.Select(t => t.TileId));
+
+            if (hoverHighlighter != null)
+                hoverHighlighter.SetSelectableTiles(selectableTileIds);
+
             gridVisualizer.HighlightTiles(
                 selectableTileIds,
-                new Color(0.2f, 0.8f, 1f, 1f),   // Cyan pulse
-                new Color(0.7f, 1f, 1f, 1f)      // Light cyan
+                new Color(0.2f, 0.8f, 1f, 1f),
+                new Color(0.7f, 1f, 1f, 1f)
             );
 
             var selectedTileIds = new HashSet<int>();
             int selectedCount = 0;
 
-            // Override OnTileClicked for this selection
             onCellSelected = null;
             this.onTileSelected = (tileId) =>
             {
                 if (!selectableTileIds.Contains(tileId) || selectedTileIds.Contains(tileId))
                     return;
-                var tile = GameManager.Instance.Board.GetTileById(tileId);
+                var tile = board.GetTileById(tileId);
                 selectedTileIds.Add(tileId);
                 selectedCount++;
                 onTileSelected?.Invoke(tile);
-                // Only finish selection if maxTiles or all selectable tiles are picked
                 if (selectedCount >= maxTiles || selectedTileIds.Count >= selectableTileIds.Count)
                 {
                     selectionActive = false;
                     gridVisualizer.ClearHighlights();
                     GameManager.Instance.HideSelectionPrompt();
+                    if (hoverHighlighter != null) hoverHighlighter.ClearSelectableTiles();
                     Reset();
                     onComplete?.Invoke();
                 }
-                // Otherwise, keep selection active and highlights visible
             };
             onCancelled = () =>
             {
                 selectionActive = false;
                 gridVisualizer.ClearHighlights();
                 GameManager.Instance.HideSelectionPrompt();
+                if (hoverHighlighter != null) hoverHighlighter.ClearSelectableTiles();
                 Reset();
                 onComplete?.Invoke();
             };
@@ -192,12 +204,12 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            gridVisualizer.ClearHighlights();
-
             if (onTileSelected != null)
             {
                 onTileSelected(tileId);
                 selectionActive = false;
+                gridVisualizer.ClearHighlights();
+                if (hoverHighlighter != null) hoverHighlighter.ClearSelectableTiles();
                 Reset();
                 return;
             }
@@ -207,6 +219,8 @@ namespace FungusToast.Unity.UI
             {
                 onCellSelected?.Invoke(cell);
                 selectionActive = false;
+                gridVisualizer.ClearHighlights();
+                if (hoverHighlighter != null) hoverHighlighter.ClearSelectableTiles();
                 Reset();
             }
         }
@@ -216,6 +230,7 @@ namespace FungusToast.Unity.UI
             if (!selectionActive) return;
             selectionActive = false;
             gridVisualizer.ClearHighlights();
+            if (hoverHighlighter != null) hoverHighlighter.ClearSelectableTiles();
             Reset();
             onCancelled?.Invoke();
         }
@@ -229,9 +244,6 @@ namespace FungusToast.Unity.UI
             selectableTileIds.Clear();
         }
 
-        /// <summary>
-        /// Returns true if the given tile is currently selectable.
-        /// </summary>
         public bool IsSelectable(int tileId)
         {
             return selectionActive && selectableTileIds.Contains(tileId);

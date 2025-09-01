@@ -28,9 +28,10 @@ namespace FungusToast.Unity.Grid
         public Tile toxinOverlayTile;     // Toxin icon overlay
         [SerializeField] private Tile solidHighlightTile; // For pulses/highlights
         public Tile goldShieldOverlayTile; // Gold shield for resistant cells
-        [SerializeField] private Tile hoverOutlineTile; // For hover outline effect
 
         private GameBoard board;
+        // Provide a safe fallback to the live board if Initialize() hasn't been called yet
+        private GameBoard ActiveBoard => board ?? GameManager.Instance?.Board;
         private List<Vector3Int> highlightedPositions = new List<Vector3Int>();
         private Coroutine pulseHighlightCoroutine;
         
@@ -97,10 +98,9 @@ namespace FungusToast.Unity.Grid
             // Set the new hovered position
             currentHoveredPosition = cellPos;
             
-            // Use the solidHighlightTile if hoverOutlineTile is not assigned
-            Tile tileToUse = hoverOutlineTile != null ? hoverOutlineTile : solidHighlightTile;
-            
-            if (tileToUse != null)
+            // Always use solidHighlightTile for hover outline
+            var tileToUse = solidHighlightTile;
+            if (tileToUse != null && HoverOverlayTileMap != null)
             {
                 // Place the outline tile directly on the hovered position
                 HoverOverlayTileMap.SetTile(cellPos, tileToUse);
@@ -118,7 +118,7 @@ namespace FungusToast.Unity.Grid
         /// </summary>
         public void ClearHoverEffect()
         {
-            if (currentHoveredPosition.HasValue)
+            if (currentHoveredPosition.HasValue && HoverOverlayTileMap != null)
             {
                 // Clear the hover tile
                 HoverOverlayTileMap.SetTile(currentHoveredPosition.Value, null);
@@ -143,7 +143,7 @@ namespace FungusToast.Unity.Grid
             Color dimColor = new Color(0.2f, 0.6f, 1f, 0.2f);     // Soft blue, very low alpha
             Color brightColor = new Color(0.4f, 0.8f, 1f, 0.6f);  // Brighter blue, medium alpha
             
-            while (currentHoveredPosition == cellPos && HoverOverlayTileMap.HasTile(cellPos))
+            while (currentHoveredPosition == cellPos && HoverOverlayTileMap != null && HoverOverlayTileMap.HasTile(cellPos))
             {
                 float time = Time.time / pulseDuration;
                 float t = (Mathf.Sin(time * 2f * Mathf.PI) + 1f) * 0.5f; // Smooth sine wave from 0 to 1
@@ -254,7 +254,9 @@ namespace FungusToast.Unity.Grid
         /// </summary>
         public void HighlightPlayerTiles(int playerId, bool includeStartingTilePing = false)
         {
-            var tileIds = board.AllTiles()
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null) return;
+            var tileIds = activeBoard.AllTiles()
                 .Where(t => t.FungalCell != null && t.FungalCell.OwnerPlayerId == playerId && (t.FungalCell.CellType == FungalCellType.Alive || t.FungalCell.CellType == FungalCellType.Toxin))
                 .Select(t => t.TileId);
             HighlightTiles(tileIds, pulseColorA, pulseColorB);
@@ -269,9 +271,11 @@ namespace FungusToast.Unity.Grid
         /// </summary>
         public void TriggerStartingTilePing(int playerId)
         {
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null) return;
             int? startingTileId = GetPlayerStartingTile(playerId);
             if (!startingTileId.HasValue) return;
-            var (x, y) = board.GetXYFromTileId(startingTileId.Value);
+            var (x, y) = activeBoard.GetXYFromTileId(startingTileId.Value);
             Vector3Int center = new Vector3Int(x, y, 0);
 
             // Determine target tilemap first
@@ -295,9 +299,10 @@ namespace FungusToast.Unity.Grid
         /// </summary>
         private int? GetPlayerStartingTile(int playerId)
         {
-            if (playerId >= 0 && playerId < board.Players.Count)
+            var activeBoard = ActiveBoard;
+            if (activeBoard != null && playerId >= 0 && playerId < activeBoard.Players.Count)
             {
-                return board.Players[playerId].StartingTileId;
+                return activeBoard.Players[playerId].StartingTileId;
             }
             return null;
         }
@@ -325,7 +330,10 @@ namespace FungusToast.Unity.Grid
             float expandPortion = 0.5f; // 50% expand, 50% contract for a snappier feel
             float contractPortion = 1f - expandPortion;
 
-            float maxRadius = Mathf.Min(10f, Mathf.Max(board.Width, board.Height) * 0.25f);
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null) yield break;
+
+            float maxRadius = Mathf.Min(10f, Mathf.Max(activeBoard.Width, activeBoard.Height) * 0.25f);
             float ringThickness = 0.6f;
             float minVisibleRadius = 0.5f;
 
@@ -383,7 +391,8 @@ namespace FungusToast.Unity.Grid
 
         private void DrawRingHighlight(Vector3Int centerPos, float radius, float thickness, Color color, Tilemap targetTilemap)
         {
-            // Clear previously drawn ring tiles for this animation (not other overlays)
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null) return;
             ClearRingHighlight(targetTilemap);
             if (radius <= 0f) return;
             float outerSq = radius * radius;
@@ -396,7 +405,7 @@ namespace FungusToast.Unity.Grid
                 {
                     int gx = centerPos.x + dx;
                     int gy = centerPos.y + dy;
-                    if (gx < 0 || gx >= board.Width || gy < 0 || gy >= board.Height) continue;
+                    if (gx < 0 || gx >= activeBoard.Width || gy < 0 || gy >= activeBoard.Height) continue;
                     float d2 = dx * dx + dy * dy;
                     if (d2 > outerSq || d2 < innerSq) continue;
                     var pos = new Vector3Int(gx, gy, 0);
@@ -426,13 +435,15 @@ namespace FungusToast.Unity.Grid
         /// <param name="colorB">Pulse color B (optional, defaults to cyan)</param>
         public void HighlightTiles(IEnumerable<int> tileIds, Color? colorA = null, Color? colorB = null)
         {
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null) return;
             SelectionHighlightTileMap.ClearAllTiles();
             highlightedPositions.Clear();
 
             foreach (var tileId in tileIds
 )
             {
-                var (x, y) = board.GetXYFromTileId(tileId);
+                var (x, y) = activeBoard.GetXYFromTileId(tileId);
                 Vector3Int pos = new Vector3Int(x, y, 0);
                 SelectionHighlightTileMap.SetTile(pos, solidHighlightTile);
                 SelectionHighlightTileMap.SetTileFlags(pos, TileFlags.None);
@@ -458,6 +469,8 @@ namespace FungusToast.Unity.Grid
         /// </summary>
         public void HighlightTiles(IDictionary<int, (Color colorA, Color colorB)> tileHighlights)
         {
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null) return;
             SelectionHighlightTileMap.ClearAllTiles();
             highlightedPositions.Clear();
 
@@ -465,7 +478,7 @@ namespace FungusToast.Unity.Grid
             {
                 int tileId = kvp.Key;
                 var (colorA, colorB) = kvp.Value;
-                var (x, y) = board.GetXYFromTileId(tileId);
+                var (x, y) = activeBoard.GetXYFromTileId(tileId);
                 Vector3Int pos = new Vector3Int(x, y, 0);
                 SelectionHighlightTileMap.SetTile(pos, solidHighlightTile);
                 SelectionHighlightTileMap.SetTileFlags(pos, TileFlags.None);
@@ -490,13 +503,15 @@ namespace FungusToast.Unity.Grid
         /// <param name="selectedColor">Color to show selected tiles (defaults to orange)</param>
         public void ShowSelectedTiles(IEnumerable<int> tileIds, Color? selectedColor = null)
         {
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null) return;
             SelectedTileMap.ClearAllTiles();
             
             Color color = selectedColor ?? new Color(1f, 0.8f, 0.2f, 1f); // Default orange
             
             foreach (var tileId in tileIds)
             {
-                var (x, y) = board.GetXYFromTileId(tileId);
+                var (x, y) = activeBoard.GetXYFromTileId(tileId);
                 Vector3Int pos = new Vector3Int(x, y, 0);
                 SelectedTileMap.SetTile(pos, solidHighlightTile);
                 SelectedTileMap.SetTileFlags(pos, TileFlags.None);
@@ -517,6 +532,11 @@ namespace FungusToast.Unity.Grid
         /// </summary>
         public void ClearHighlights()
         {
+            if (SelectionHighlightTileMap == null)
+            {
+                Debug.LogWarning("[DraftDebug][GridVis] ClearHighlights: map is null");
+                return;
+            }
             SelectionHighlightTileMap.ClearAllTiles();
             highlightedPositions.Clear();
             if (pulseHighlightCoroutine != null)
@@ -524,9 +544,9 @@ namespace FungusToast.Unity.Grid
                 StopCoroutine(pulseHighlightCoroutine);
                 pulseHighlightCoroutine = null;
             }
-            // Reset scale!
             if (SelectionHighlightTileMap != null)
                 SelectionHighlightTileMap.transform.localScale = Vector3.one;
+            Debug.Log("[DraftDebug][GridVis] ClearHighlights");
         }
 
         /// <summary>

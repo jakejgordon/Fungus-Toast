@@ -7,42 +7,39 @@ namespace FungusToast.Unity.Grid
 {
     public class TileHoverHighlighter : MonoBehaviour
     {
-        public Tilemap groundTilemap;
+        public Tilemap groundTilemap; // unused for ID mapping now, kept for backward compat
         [SerializeField] private GridVisualizer gridVisualizer;
         public Tile glowyTile;
         public Tile pressedTile;
 
-        // Crosshair prefab to use for hover highlight
         public GameObject crosshairPrefab;
         private GameObject crosshairInstance;
 
         private Vector3Int? lastHoveredCell = null;
-        // New: Set of currently "selectable" tile IDs for interaction
         private HashSet<int> selectionTiles = new();
 
         void Start()
         {
             if (crosshairPrefab != null)
             {
-                crosshairInstance = Instantiate(crosshairPrefab, this.transform); // Child of Grid
+                crosshairInstance = Instantiate(crosshairPrefab, this.transform);
                 crosshairInstance.SetActive(false);
             }
         }
 
         void Update()
         {
+            if (gridVisualizer == null || gridVisualizer.toastTilemap == null)
+                return;
+
             Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector3Int cellPos = gridVisualizer.toastTilemap.WorldToCell(mouseWorldPos);
 
             if (!IsCellOnBoard(cellPos))
             {
-                // Clear hover effect when mouse leaves the board
-                if (gridVisualizer != null)
-                    gridVisualizer.ClearHoverEffect();
-                
+                gridVisualizer?.ClearHoverEffect();
                 if (crosshairInstance != null)
                     crosshairInstance.SetActive(false);
-                    
                 lastHoveredCell = null;
                 return;
             }
@@ -51,11 +48,9 @@ namespace FungusToast.Unity.Grid
 
             if (isSelectable && gridVisualizer.toastTilemap.HasTile(cellPos))
             {
-                // Show hover effect if this is a new cell or if we're just entering a valid cell
                 if (lastHoveredCell != cellPos)
                 {
-                    if (gridVisualizer != null)
-                        gridVisualizer.ShowHoverEffect(cellPos);
+                    gridVisualizer?.ShowHoverEffect(cellPos);
                 }
 
                 if (crosshairInstance != null)
@@ -68,22 +63,18 @@ namespace FungusToast.Unity.Grid
             }
             else
             {
-                // Clear hover effect when over non-selectable tiles
-                if (gridVisualizer != null)
-                    gridVisualizer.ClearHoverEffect();
-                    
+                gridVisualizer?.ClearHoverEffect();
                 if (crosshairInstance != null)
                     crosshairInstance.SetActive(false);
-                    
                 lastHoveredCell = null;
             }
 
-            // Handle click
             if (Input.GetMouseButtonDown(0) && gridVisualizer.toastTilemap.HasTile(cellPos))
             {
-                if (selectionTiles.Count == 0 || IsSelectable(cellPos))
+                int tileId = TileIdFromCell(cellPos);
+                bool gateOk = selectionTiles.Count == 0 || selectionTiles.Contains(tileId);
+                if (gateOk)
                 {
-                    int tileId = TileIdFromCell(cellPos);
                     if (MultiTileSelectionController.Instance != null && MultiTileSelectionController.Instance.IsSelectable(tileId))
                     {
                         MultiTileSelectionController.Instance.OnTileClicked(tileId);
@@ -100,7 +91,6 @@ namespace FungusToast.Unity.Grid
                 TriggerPressedAnimation(cellPos);
             }
 
-            // Handle cancel (right-click or escape)
             if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
             {
                 if (selectionTiles.Count > 0)
@@ -125,39 +115,25 @@ namespace FungusToast.Unity.Grid
 
         int TileIdFromCell(Vector3Int cell)
         {
-            // Matches your Board's GetXYFromTileId logic
+            var board = GameManager.Instance != null ? GameManager.Instance.Board : null;
+            if (board == null) return -1;
             int x = cell.x;
             int y = cell.y;
-            return y * groundTilemap.size.x + x;
+            return y * board.Width + x;
         }
 
-        void TriggerPressedAnimation(Vector3Int cell)
-        {
-            // Optionally, you can add a pressed effect to the crosshair here
-            // For now, just keep the crosshair visible
-        }
-
-        void RestoreGlowyTile()
-        {
-            // No longer needed
-        }
+        void TriggerPressedAnimation(Vector3Int cell) { }
 
         bool IsCellOnBoard(Vector3Int cellPos)
         {
             return gridVisualizer.toastTilemap.cellBounds.Contains(cellPos);
         }
 
-        /// <summary>
-        /// Sets the tiles that are selectable for interaction. If empty, all tiles are selectable.
-        /// </summary>
         public void SetSelectableTiles(HashSet<int> selectableTileIds)
         {
-            selectionTiles = selectableTileIds;
+            selectionTiles = selectableTileIds ?? new HashSet<int>();
         }
 
-        /// <summary>
-        /// Clears the selectable tiles, making all tiles selectable.
-        /// </summary>
         public void ClearSelectableTiles()
         {
             selectionTiles.Clear();

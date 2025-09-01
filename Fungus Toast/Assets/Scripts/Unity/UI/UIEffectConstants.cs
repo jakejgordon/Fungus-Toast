@@ -43,6 +43,12 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public const float AIDraftPickDelaySeconds = 0.7f;
 
+        /// <summary>
+        /// Short stagger used when AI selects an active mycovariant: applied before effect animations start
+        /// and again after they complete, before reopening the draft window.
+        /// </summary>
+        public const float AIActiveMycovariantStaggerSeconds = 0.25f;
+
         // ==================== GAME PHASE TIMING CONSTANTS ====================
         
         /// <summary>
