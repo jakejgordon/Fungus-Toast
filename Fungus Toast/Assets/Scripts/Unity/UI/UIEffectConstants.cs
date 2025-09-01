@@ -36,7 +36,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Duration (in seconds) for toxin drop animation.
         /// </summary>
-        public const float ToxinDropAnimationDurationSeconds = 0.8f;
+        public const float ToxinDropAnimationDurationSeconds = 0.9f; // was 0.8f, +0.1s for more hang time
 
         /// <summary>
         /// Delay (in seconds) for AI to "think" before picking a mycovariant during draft.
@@ -93,7 +93,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Starting local Y offset applied to the toxin overlay tile during the drop.
         /// </summary>
-        public const float ToxinDropStartYOffset = 1.8f; // was 0.6f; increased 3x for visibility on large grids
+        public const float ToxinDropStartYOffset = 2.7f; // was 1.8f; ~50% higher for more noticeable drop
         /// <summary>
         /// Portion of the total drop duration spent on the approach (falling) phase [0..1].
         /// </summary>
