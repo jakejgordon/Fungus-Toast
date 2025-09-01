@@ -61,6 +61,14 @@ namespace FungusToast.Unity.Grid
         private Coroutine startingTilePingCoroutine; // track current starting tile ping
         private Tilemap lastPingTilemap; // remember which tilemap the ping used
 
+        // Lightweight struct to cache per-tile transform during animations
+        private struct TileAnimTransform
+        {
+            public Vector3 positionOffset; // local offset
+            public Vector3 scale;          // local scale
+            public static TileAnimTransform Identity => new TileAnimTransform { positionOffset = Vector3.zero, scale = Vector3.one };
+        }
+
         public void Initialize(GameBoard board)
         {
             this.board = board;
@@ -926,6 +934,7 @@ namespace FungusToast.Unity.Grid
 
         /// <summary>
         /// Coroutine that handles the toxin drop animation for a cell receiving a toxin
+        /// Now includes a "drop from above" illusion using Tilemap per-tile transform, with an impact squash.
         /// </summary>
         private IEnumerator ToxinDropAnimation(int tileId)
         {
@@ -947,95 +956,91 @@ namespace FungusToast.Unity.Grid
             Color initialMoldColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
             Color initialOverlayColor = overlayTilemap.HasTile(pos) ? overlayTilemap.GetColor(pos) : Color.white;
 
-            // Phase 1: Drop appears (0-20% of duration)
-            float dropPhaseDuration = duration * 0.2f;
-            float dropPhaseElapsed = 0f;
-            
-            while (dropPhaseElapsed < dropPhaseDuration)
+            // Ensure overlay tile exists
+            if (!overlayTilemap.HasTile(pos) && toxinOverlayTile != null)
             {
-                dropPhaseElapsed += Time.deltaTime;
-                float progress = dropPhaseElapsed / dropPhaseDuration;
-                
-                // Create a toxic green drop effect by tinting the tile
-                Color toxicTint = Color.Lerp(Color.white, new Color(0f, 1f, 0.25f, 0.3f), progress);
-                
-                if (moldTilemap.HasTile(pos))
-                {
-                    moldTilemap.SetColor(pos, toxicTint);
-                }
-                
-                yield return null;
+                overlayTilemap.SetTile(pos, toxinOverlayTile);
+                overlayTilemap.SetTileFlags(pos, TileFlags.None);
+                overlayTilemap.SetColor(pos, Color.clear); // start invisible; we'll fade in on impact
             }
 
-            // Phase 2: Drop spreads (20-70% of duration)
-            float spreadPhaseDuration = duration * 0.5f;
-            float spreadPhaseElapsed = 0f;
-            
-            while (spreadPhaseElapsed < spreadPhaseDuration)
-            {
-                spreadPhaseElapsed += Time.deltaTime;
-                float progress = spreadPhaseElapsed / spreadPhaseDuration;
-                
-                // Spread the toxic effect and intensify it
-                Color toxicSpread = Color.Lerp(
-                    new Color(0f, 1f, 0.25f, 0.3f), 
-                    new Color(0f, 1f, 0.25f, 0.8f), 
-                    progress
-                );
-                
-                if (moldTilemap.HasTile(pos))
-                {
-                    moldTilemap.SetColor(pos, toxicSpread);
-                }
-                
-                yield return null;
-            }
-
-            // Phase 3: Settle into final toxin state (70-100% of duration)
-            float settlePhaseDuration = duration * 0.3f;
-            float settlePhaseElapsed = 0f;
-            
-            while (settlePhaseElapsed < settlePhaseDuration)
-            {
-                settlePhaseElapsed += Time.deltaTime;
-                float progress = settlePhaseElapsed / settlePhaseDuration;
-                
-                // Transition to final toxin appearance
-                Color finalToxinColor = Color.Lerp(
-                    new Color(0f, 1f, 0.25f, 0.8f),
-                    new Color(0.8f, 0.8f, 0.8f, 0.8f), // Changed alpha from 0.55f to 0.8f to match new toxin cell opacity
-                    progress
-                );
-                
-                Color finalOverlayColor = Color.Lerp(
-                    Color.clear,
-                    Color.white, // Final toxin overlay color
-                    progress
-                );
-                
-                if (moldTilemap.HasTile(pos))
-                {
-                    moldTilemap.SetColor(pos, finalToxinColor);
-                }
-                
-                if (overlayTilemap.HasTile(pos))
-                {
-                    overlayTilemap.SetColor(pos, finalOverlayColor);
-                }
-                
-                yield return null;
-            }
-
-            // Ensure final state matches the toxin appearance
+            // Hide mold icon until the end of the animation
             if (moldTilemap.HasTile(pos))
             {
-                Color finalMoldColor = new Color(0.8f, 0.8f, 0.8f, 0.8f); // Changed alpha from 0.55f to 0.8f to match new toxin cell opacity
-                moldTilemap.SetColor(pos, finalMoldColor);
+                var c = moldTilemap.GetColor(pos);
+                c.a = 0f;
+                moldTilemap.SetColor(pos, c);
             }
-            
+
+            // Init transform state for overlay tile (translate down from above)
+            float startYOffset = UIEffectConstants.ToxinDropStartYOffset;
+            ApplyOverlayTransform(pos, new Vector3(0f, startYOffset, 0f), Vector3.one);
+
+            // Phase 1: Approach (fall from above, 0 → approachPortion)
+            float approachPortion = Mathf.Clamp01(UIEffectConstants.ToxinDropApproachPortion);
+            float approachDuration = duration * approachPortion;
+            float approachElapsed = 0f;
+            while (approachElapsed < approachDuration)
+            {
+                approachElapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(approachElapsed / approachDuration);
+                // Ease-in cubic for acceleration feel
+                float eased = t * t * t;
+                float yOffset = Mathf.Lerp(startYOffset, 0f, eased);
+                ApplyOverlayTransform(pos, new Vector3(0f, yOffset, 0f), Vector3.one);
+                yield return null;
+            }
+
+            // Phase 2: Impact squash + fade overlay in quickly
+            float squashX = UIEffectConstants.ToxinDropImpactSquashX;
+            float squashY = UIEffectConstants.ToxinDropImpactSquashY;
+            float impactPortion = 1f - approachPortion; // remaining time
+            float impactDuration = duration * impactPortion * 0.35f; // 35% of remaining for squash-in, rest to settle
+            float settleDuration = duration * impactPortion - impactDuration;
+
+            float impactElapsed = 0f;
+            while (impactElapsed < impactDuration)
+            {
+                impactElapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(impactElapsed / impactDuration);
+                // Squash in using ease-out for a sharp pop
+                float sx = Mathf.Lerp(1f, squashX, 1f - (1f - t) * (1f - t));
+                float sy = Mathf.Lerp(1f, squashY, 1f - (1f - t) * (1f - t));
+                ApplyOverlayTransform(pos, Vector3.zero, new Vector3(sx, sy, 1f));
+
+                // Fade in overlay from clear to white
+                if (overlayTilemap.HasTile(pos))
+                {
+                    Color c = overlayTilemap.GetColor(pos);
+                    c.a = Mathf.Lerp(0f, 1f, t);
+                    overlayTilemap.SetColor(pos, c);
+                }
+                yield return null;
+            }
+
+            // Phase 3: Settle back to normal scale
+            float settleElapsed = 0f;
+            while (settleElapsed < settleDuration)
+            {
+                settleElapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(settleElapsed / settleDuration);
+                // Ease back to 1,1
+                float sx = Mathf.Lerp(squashX, 1f, t);
+                float sy = Mathf.Lerp(squashY, 1f, t);
+                ApplyOverlayTransform(pos, Vector3.zero, new Vector3(sx, sy, 1f));
+                yield return null;
+            }
+
+            // Ensure final states
+            ApplyOverlayTransform(pos, Vector3.zero, Vector3.one);
             if (overlayTilemap.HasTile(pos))
             {
-                overlayTilemap.SetColor(pos, Color.white); // Full toxin overlay opacity
+                overlayTilemap.SetColor(pos, Color.white);
+            }
+            if (moldTilemap.HasTile(pos))
+            {
+                // Reveal mold icon now that the toxin has landed
+                moldTilemap.SetColor(pos, new Color(0.8f, 0.8f, 0.8f, 0.8f));
             }
 
             // Clear the toxin drop flag on the cell
@@ -1043,6 +1048,13 @@ namespace FungusToast.Unity.Grid
 
             // Clean up the coroutine reference
             toxinDropCoroutines.Remove(tileId);
+        }
+
+        // Helper to apply per-tile transform to overlay tile
+        private void ApplyOverlayTransform(Vector3Int pos, Vector3 localOffset, Vector3 localScale)
+        {
+            var trs = Matrix4x4.TRS(localOffset, Quaternion.identity, localScale);
+            overlayTilemap.SetTransformMatrix(pos, trs);
         }
     }
 

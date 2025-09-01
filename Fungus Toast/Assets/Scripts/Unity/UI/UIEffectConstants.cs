@@ -82,5 +82,23 @@ namespace FungusToast.Unity.UI
         /// Growth cycle age threshold (exclusive) below which living cells' age is highlighted in tooltips.
         /// </summary>
         public const int GrowthCycleAgeHighlightTextThreshold = 5;
+
+        // ==================== TOXIN DROP (DROP-FROM-ABOVE) ====================
+        /// <summary>
+        /// Starting local Y offset applied to the toxin overlay tile during the drop.
+        /// </summary>
+        public const float ToxinDropStartYOffset = 1.8f; // was 0.6f; increased 3x for visibility on large grids
+        /// <summary>
+        /// Portion of the total drop duration spent on the approach (falling) phase [0..1].
+        /// </summary>
+        public const float ToxinDropApproachPortion = 0.65f;
+        /// <summary>
+        /// Impact squash scale on X (wider on impact).
+        /// </summary>
+        public const float ToxinDropImpactSquashX = 1.12f;
+        /// <summary>
+        /// Impact squash scale on Y (flatter on impact).
+        /// </summary>
+        public const float ToxinDropImpactSquashY = 0.88f;
     }
 }
