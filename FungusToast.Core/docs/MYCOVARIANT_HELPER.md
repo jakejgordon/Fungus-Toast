@@ -45,56 +45,68 @@ This guide describes the step-by-step process for adding a new mycovariant to th
    
    If your mycovariant requires player selection (tiles, cells, etc.), you MUST implement both paths:
    
-   a) **Factory ApplyEffect Logic:**ApplyEffect = (playerMyco, board, rng, observer) =>
-{
-    var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
-    
-    bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI;
-    
-    if (shouldUseCoreLogic)
-    {
-        // AI or Simulation: Core handles everything (selection + effect application)
-        // Auto-select appropriate targets and execute effect
-        // Example: var livingCells = board.GetAllCellsOwnedBy(player.PlayerId).Where(c => c.IsAlive).ToList();
-        // if (livingCells.Count > 0) { /* auto-select and execute */ }
-    }
-    // Human in Unity: UI layer handles selection + effect application
-    // (ApplyEffect does nothing, avoiding double execution)
-   },   
-   b) **Unity UI Effect Helper:**
-   Add a handler method in `@MycovariantEffectHelpers.cs`:public static IEnumerator HandleYourMycovariant(
-    Player player, Mycovariant picked, Action onComplete,
-    GameObject draftPanel, GridVisualizer gridVisualizer)
-{
-    if (player.PlayerType == PlayerTypeEnum.AI)
-    {
-        // AI: Execute the effect directly since Unity drafts don't call ApplyEffect
-        var playerMyco = player.PlayerMycovariants
-            .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
-        
-        if (playerMyco != null)
-        {
-            // Call your effect processor method directly
-            MycovariantEffectProcessor.ResolveYourMycovariant(
-                playerMyco, player, GameManager.Instance.Board, /* params */, rng, null);
-        }
-        
-        yield return new WaitForSeconds(UIEffectConstants.DefaultAIThinkingDelay);
-        onComplete?.Invoke();
-    }
-    else
-    {
-        // Human: Implement UI selection logic
-        // Show selection prompts, handle tile/cell selection, etc.
+   a) **Factory ApplyEffect Logic:**
+   ```csharp
+   ApplyEffect = (playerMyco, board, rng, observer) =>
+   {
+       var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
+       bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI;
+       if (shouldUseCoreLogic)
+       {
+           // AI or Simulation: Core handles everything (selection + effect application)
+           // Auto-select appropriate targets and execute effect
        }
-   }   
+       // Human in Unity: UI layer handles selection + effect application
+       // (ApplyEffect does nothing, avoiding double execution)
+   },
+   ```
+   
+   b) **Unity UI Effect Helper:**
+   ```csharp
+   public static IEnumerator HandleYourMycovariant(
+       Player player, Mycovariant picked, Action onComplete,
+       GameObject draftPanel, GridVisualizer gridVisualizer)
+   {
+       if (player.PlayerType == PlayerTypeEnum.AI)
+       {
+           // Unity drafts bypass ApplyEffect for AI; execute directly here
+           // ... resolve effect ...
+           yield return new WaitForSeconds(UIEffectConstants.DefaultAIThinkingDelay);
+           onComplete?.Invoke();
+       }
+       else
+       {
+           // Human: Implement UI selection logic
+           // After resolving the effect, render and WAIT for animations:
+           gridVisualizer.RenderBoard(GameManager.Instance.Board);
+           yield return gridVisualizer.WaitForAllAnimations();
+           onComplete?.Invoke();
+       }
+   }
+   ```
+   
    c) **Effect Resolver Integration:**
-   Add your mycovariant case to `@MycovariantEffectResolver.cs` in the `ResolveEffect` method:else if (mycovariant.Id == MycovariantIds.YourMycovariantId)
-{
-    yield return StartCoroutine(
+   ```csharp
+   else if (mycovariant.Id == MycovariantIds.YourMycovariantId)
+   {
+       yield return StartCoroutine(
            MycovariantEffectHelpers.HandleYourMycovariant(
                player, mycovariant, onComplete, draftPanel, gridVisualizer));
    }
+   ```
+
+   d) **Unity animations must be waitable (new):**
+   - Grid visuals use an animation tracker so drafts can block until visuals finish.
+   - In `GridVisualizer`, wrap each visual coroutine with:
+     ```csharp
+     BeginAnimation();
+     try { /* animation loop */ }
+     finally { EndAnimation(); }
+     ```
+   - If you stop/replace a running animation via `StopCoroutine`, ensure the counter is decremented (call `EndAnimation()` when interrupting) so `WaitForAllAnimations()` does not hang.
+   - After you resolve an effect in the helper, call `gridVisualizer.RenderBoard(board)` so any per-cell flags (e.g., `IsNewlyGrown`, `IsDying`, toxin drop flags) start their visuals, then `yield return gridVisualizer.WaitForAllAnimations()` before calling `onComplete`.
+   - Avoid calling `onComplete` inside selection callbacks; call it once, after the wait.
+
    **For Passive Mycovariants (no player input):**
    
    If your mycovariant has an instant effect or purely passive behavior, you only need the `ApplyEffect` logic in the factory. The Unity draft system will call this directly.
@@ -111,7 +123,7 @@ This guide describes the step-by-step process for adding a new mycovariant to th
 
 ## Common Pitfalls to Avoid
 
-### ? **CRITICAL ERROR: Assuming ApplyEffect is Called in Unity Drafts**
+### ? CRITICAL ERROR: Assuming ApplyEffect is Called in Unity Drafts
 
 **Problem:** Assuming that the `ApplyEffect` property will be called for AI players during Unity drafts.
 
@@ -122,28 +134,40 @@ This guide describes the step-by-step process for adding a new mycovariant to th
 
 **Solution:** Always implement both the `ApplyEffect` logic AND the Unity UI handler for active mycovariants.
 
-### ? **Incomplete Unity AI Implementation**
+### ? Incomplete Unity AI Implementation
 
 **Problem:** Implementing the human UI path but forgetting the AI execution path in `MycovariantEffectHelpers`.
 
-**Wrong:**if (player.PlayerType == PlayerTypeEnum.AI)
+**Wrong:**
+```csharp
+if (player.PlayerType == PlayerTypeEnum.AI)
 {
-    // AI: Core ApplyEffect handles everything  ? WRONG! ApplyEffect isn't called
+    // AI: Core ApplyEffect handles everything  – WRONG! ApplyEffect isn't called
     yield return new WaitForSeconds(delay);
     onComplete?.Invoke();
 }
+```
 **Correct:**
+```csharp
 if (player.PlayerType == PlayerTypeEnum.AI)
 {
     // AI: Execute the effect directly since Unity drafts don't call ApplyEffect
     var playerMyco = player.PlayerMycovariants.FirstOrDefault(pm => pm.MycovariantId == picked.Id);
     if (playerMyco != null)
     {
-        MycovariantEffectProcessor.ResolveYourEffect(playerMyco, /* params */);
+        MycovariantEffectProcessor.ResolveYourEffect(playerMyco /* ... */);
     }
     yield return new WaitForSeconds(delay);
     onComplete?.Invoke();
 }
+```
+
+### ? Visuals not finishing before draft resumes (new)
+
+**Problem:** Draft resumes immediately after selection, cutting off mycovariant animations.
+
+**Solution:** After resolving the effect, call `gridVisualizer.RenderBoard(board)` and then `yield return gridVisualizer.WaitForAllAnimations()` before invoking `onComplete`. If you add bespoke animations (e.g., a “jetting line”), implement them in `GridVisualizer` and wrap with `BeginAnimation/EndAnimation` so they are included in the wait.
+
 ---
 
 ## Additional Tips
@@ -155,5 +179,3 @@ if (player.PlayerType == PlayerTypeEnum.AI)
 - **Debug Logging:** Add logging to verify that your effects are being executed correctly in both contexts.
 - **Auto-Trigger Declaration:** Use `AutoMarkTriggered = true` for passive mycovariants that don't require player input.
 - **Unity Log Manager Stubs:** For any new `ISimulationObserver` methods you add, you must also add stub implementations to both `@GameLogRouter.cs` and `@GameLogManager.cs` in the Unity project. These should follow the pattern of checking `IsSilentMode` in the router and implementing the actual logging logic in the manager. By default, most methods should be stubbed as empty implementations unless they need specific player activity logging.
-
----
