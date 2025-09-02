@@ -901,6 +901,68 @@ namespace FungusToast.Unity.Grid
             }
         }
 
+        // NEW: Shield pulse for Mycelial Bastion on a single tile (zoom out, then back in, no spin)
+        public IEnumerator BastionResistantPulseAnimation(int tileId)
+        {
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null || goldShieldOverlayTile == null || overlayTilemap == null)
+                yield break;
+
+            var xy = activeBoard.GetXYFromTileId(tileId);
+            Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
+
+            float total = UIEffectConstants.MycelialBastionPulseDurationSeconds;
+            float outT = Mathf.Clamp01(UIEffectConstants.MycelialBastionPulseOutPortion);
+            float inT = Mathf.Clamp01(UIEffectConstants.MycelialBastionPulseInPortion);
+            float norm = outT + inT; if (norm <= 0f) norm = 1f; outT /= norm; inT /= norm;
+            float outDur = total * outT;
+            float inDur = total * inT;
+            float maxScale = Mathf.Max(1f, UIEffectConstants.MycelialBastionPulseMaxScale);
+            float yPop = UIEffectConstants.MycelialBastionPulseYOffset;
+
+            overlayTilemap.SetTile(pos, goldShieldOverlayTile);
+            overlayTilemap.SetTileFlags(pos, TileFlags.None);
+            overlayTilemap.SetColor(pos, Color.white);
+
+            BeginAnimation();
+            try
+            {
+                // Outward pulse (ease-out): rise up and scale up
+                float t = 0f;
+                while (t < outDur)
+                {
+                    t += Time.deltaTime;
+                    float u = Mathf.Clamp01(t / outDur);
+                    float eased = 1f - (1f - u) * (1f - u);
+                    float s = Mathf.Lerp(1f, maxScale, eased);
+                    float y = Mathf.Lerp(0f, yPop, eased);
+                    var trs = Matrix4x4.TRS(new Vector3(0f, y, 0f), Quaternion.identity, new Vector3(s, s, 1f));
+                    overlayTilemap.SetTransformMatrix(pos, trs);
+                    yield return null;
+                }
+
+                // Inward settle (ease-in): go back down and scale to normal then hide transform
+                t = 0f;
+                while (t < inDur)
+                {
+                    t += Time.deltaTime;
+                    float u = Mathf.Clamp01(t / inDur);
+                    float eased = u * u;
+                    float s = Mathf.Lerp(maxScale, 1f, eased);
+                    float y = Mathf.Lerp(yPop, 0f, eased);
+                    var trs = Matrix4x4.TRS(new Vector3(0f, y, 0f), Quaternion.identity, new Vector3(s, s, 1f));
+                    overlayTilemap.SetTransformMatrix(pos, trs);
+                    yield return null;
+                }
+
+                overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+            }
+            finally
+            {
+                EndAnimation();
+            }
+        }
+
         private IEnumerator ImpactRingPulse(Vector3Int centerPos)
         {
             var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;

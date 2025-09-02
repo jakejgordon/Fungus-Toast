@@ -170,5 +170,27 @@ namespace FungusToast.Unity.UI
         /// Duration for a quick ring pulse on impact (optional ripple effect).
         /// </summary>
         public const float SurgicalInoculationRingPulseDurationSeconds = 0.18f;
+
+        // ==================== MYCELIAL BASTION PULSE ====================
+        /// <summary>
+        /// Duration (in seconds) for mycelial bastion pulse animation.
+        /// </summary>
+        public const float MycelialBastionPulseDurationSeconds = 0.9f; // was 0.6f
+        /// <summary>
+        /// Maximum scale for mycelial bastion pulse.
+        /// </summary>
+        public const float MycelialBastionPulseMaxScale = 13.0f; // was 1.6f
+        /// <summary>
+        /// Portion of mycelial bastion pulse duration for the outward scaling animation.
+        /// </summary>
+        public const float MycelialBastionPulseOutPortion = 0.45f;
+        /// <summary>
+        /// Portion of mycelial bastion pulse duration for the inward scaling animation.
+        /// </summary>
+        public const float MycelialBastionPulseInPortion = 0.55f;
+        /// <summary>
+        /// Vertical pop height for Bastion pulse.
+        /// </summary>
+        public const float MycelialBastionPulseYOffset = 2.4f; // pronounced pop-up height
     }
 }
