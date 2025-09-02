@@ -80,11 +80,13 @@
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantTooltipPanel.cs" />
     <Compile Include="Assets\Scripts\Unity\Phases\GrowthPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipProviders\HomeostaticHarmonyTooltipProvider.cs" />
+    <Compile Include="Assets\Scripts\Unity\Grid\Helpers\HoverEffectHelper.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationLayoutMetadata.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PlayerBinder.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MagnifyingGlassFollowMouse.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipProviders\PlayerSummaryTooltipProvider.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\CellTooltipUI.cs" />
+    <Compile Include="Assets\Scripts\Unity\Grid\Helpers\SelectionHighlightHelper.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridFiller.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PhaseBanner.cs" />
@@ -110,6 +112,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\MultiCellSelectionController.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GrowthDirectionCell.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\GameLogColorSchemes.cs" />
+    <Compile Include="Assets\Scripts\Unity\Grid\Helpers\RingHighlightHelper.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\GameLogManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationTreeBuilder.cs" />
     <Compile Include="Assets\Scripts\Unity\Effects\MycovariantEffectResolver.cs" />
