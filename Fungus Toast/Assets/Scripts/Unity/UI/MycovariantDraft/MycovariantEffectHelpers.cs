@@ -305,7 +305,14 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         placedTileId = postTile.TileId;
 
                     if (placedTileId >= 0)
-                        yield return gridVisualizer.ResistantDropAnimation(placedTileId);
+                    {
+                        // Use arc from player's start if available
+                        var shieldSprite = gridVisualizer.goldShieldOverlayTile != null ? gridVisualizer.goldShieldOverlayTile.sprite : null;
+                        if (player.StartingTileId.HasValue && shieldSprite != null)
+                            yield return gridVisualizer.SurgicalInoculationArcAnimation(player.PlayerId, placedTileId, shieldSprite);
+                        else
+                            yield return gridVisualizer.ResistantDropAnimation(placedTileId);
+                    }
                     yield return gridVisualizer.WaitForAllAnimations();
                 }
                 yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
@@ -372,7 +379,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 while (!selectionResolved) yield return null;
                 if (executed && placedTileId >= 0)
                 {
-                    yield return gridVisualizer.ResistantDropAnimation(placedTileId);
+                    var shieldSprite = gridVisualizer.goldShieldOverlayTile != null ? gridVisualizer.goldShieldOverlayTile.sprite : null;
+                    if (player.StartingTileId.HasValue && shieldSprite != null)
+                        yield return gridVisualizer.SurgicalInoculationArcAnimation(player.PlayerId, placedTileId, shieldSprite);
+                    else
+                        yield return gridVisualizer.ResistantDropAnimation(placedTileId);
                     yield return gridVisualizer.WaitForAllAnimations();
                 }
                 onComplete?.Invoke();

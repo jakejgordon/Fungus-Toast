@@ -124,6 +124,7 @@
     <Compile Include="Assets\Scripts\Unity\Grid\TileHoverHighlighter.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantEffectHelpers.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\IGameLogManager.cs" />
+    <Compile Include="Assets\Scripts\Unity\Grid\Helpers\ArcProjectileHelper.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_GameEndPlayerResultsRow.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\PlayerMoldIconHoverHandler.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantDraftController.cs" />

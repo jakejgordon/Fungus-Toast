@@ -50,6 +50,7 @@ namespace FungusToast.Unity.Grid
         private SelectionHighlightHelper selectionHelper;
         private RingHighlightHelper ringHelper;
         private HoverEffectHelper hoverHelper;
+        private ArcProjectileHelper arcHelper;
 
         private Coroutine startingTilePingCoroutine; // track current starting tile ping
         private Tilemap lastPingTilemap; // remember which tilemap the ping used
@@ -78,6 +79,7 @@ namespace FungusToast.Unity.Grid
             selectionHelper = new SelectionHighlightHelper(SelectionHighlightTileMap, SelectedTileMap, solidHighlightTile);
             ringHelper = new RingHighlightHelper(PingOverlayTileMap, HoverOverlayTileMap, solidHighlightTile);
             hoverHelper = new HoverEffectHelper(this, HoverOverlayTileMap, solidHighlightTile);
+            arcHelper = new ArcProjectileHelper(this, overlayTilemap);
         }
 
         public void Initialize(GameBoard board)
@@ -983,6 +985,57 @@ namespace FungusToast.Unity.Grid
                 yield return null;
             }
             ClearRingHighlight(targetTilemap);
+        }
+
+        public IEnumerator SurgicalInoculationArcAnimation(int playerId, int targetTileId, Sprite shieldSprite)
+        {
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null || overlayTilemap == null || shieldSprite == null)
+                yield break;
+
+            // Determine start (player starting tile) and end from tileIds
+            var player = activeBoard.Players.FirstOrDefault(p => p.PlayerId == playerId);
+            if (player == null || !player.StartingTileId.HasValue)
+            {
+                // Fallback: use existing drop animation
+                yield return ResistantDropAnimation(targetTileId);
+                yield break;
+            }
+
+            var (sx, sy) = activeBoard.GetXYFromTileId(player.StartingTileId.Value);
+            var (ex, ey) = activeBoard.GetXYFromTileId(targetTileId);
+            Vector3Int startCell = new Vector3Int(sx, sy, 0);
+            Vector3Int endCell = new Vector3Int(ex, ey, 0);
+
+            float duration = UIEffectConstants.SurgicalInoculationArcDurationSeconds;
+            float baseHeightWorld = UIEffectConstants.SurgicalInoculationArcBaseHeightWorld;
+            float heightPerTile = UIEffectConstants.SurgicalInoculationArcHeightPerTile;
+            float scalePerHeightTile = UIEffectConstants.SurgicalInoculationArcScalePerHeightTile;
+
+            BeginAnimation();
+            try
+            {
+                // Run the arc projectile
+                yield return arcHelper.AnimateArc(
+                    startCell,
+                    endCell,
+                    shieldSprite,
+                    duration,
+                    baseHeightWorld,
+                    heightPerTile,
+                    scalePerHeightTile);
+
+                // Ensure final placement visuals on overlay tilemap (shield on the cell)
+                Vector3Int pos = endCell;
+                overlayTilemap.SetTile(pos, goldShieldOverlayTile);
+                overlayTilemap.SetTileFlags(pos, TileFlags.None);
+                overlayTilemap.SetColor(pos, Color.white);
+                overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+            }
+            finally
+            {
+                EndAnimation();
+            }
         }
     }
 

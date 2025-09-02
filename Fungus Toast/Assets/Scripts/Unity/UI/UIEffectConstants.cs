@@ -192,5 +192,27 @@ namespace FungusToast.Unity.UI
         /// Vertical pop height for Bastion pulse.
         /// </summary>
         public const float MycelialBastionPulseYOffset = 2.4f; // pronounced pop-up height
+
+        // ==================== SURGICAL INOCULATION ARC (PROJECTILE) ====================
+        /// <summary>
+        /// Duration of the arc animation for Surgical Inoculation.
+        /// </summary>
+        public const float SurgicalInoculationArcDurationSeconds = 0.9f; // sync with Bastion feel
+        /// <summary>
+        /// Base height of the arc in world units.
+        /// </summary>
+        public const float SurgicalInoculationArcBaseHeightWorld = 0.8f; // world units of extra height
+        /// <summary>
+        /// Additional height per tile of distance for the arc.
+        /// </summary>
+        public const float SurgicalInoculationArcHeightPerTile = 0.10f; // addl height per tile of distance
+        /// <summary>
+        /// Scale boost per tile of height for the arc.
+        /// </summary>
+        public const float SurgicalInoculationArcScalePerHeightTile = 0.08f; // scale boost per tile of height
+        /// <summary>
+        /// Peak visual scale at the apex of the arc (~10x requested).
+        /// </summary>
+        public const float SurgicalInoculationArcPeakScale = 10.0f;
     }
 }
