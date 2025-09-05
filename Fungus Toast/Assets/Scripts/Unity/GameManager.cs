@@ -856,11 +856,10 @@ namespace FungusToast.Unity
 
         private void OnResistanceAppliedBatch(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
         {
-            // Only animate Mimetic Resilience for now (can extend to others later)
             if (source == GrowthSource.MimeticResilience)
             {
-                // Trigger simultaneous Bastion-style pulses
-                gridVisualizer.PlayResistancePulseBatch(tileIds);
+                // Use a reduced scale (50% of original) to avoid overwhelming visuals during mass placements
+                gridVisualizer.PlayResistancePulseBatchScaled(tileIds, 0.5f);
             }
         }
 

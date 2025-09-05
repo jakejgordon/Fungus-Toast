@@ -904,7 +904,7 @@ namespace FungusToast.Unity.Grid
         }
 
         // NEW: Shield pulse for Mycelial Bastion on a single tile (zoom out, then back in, no spin)
-        public IEnumerator BastionResistantPulseAnimation(int tileId)
+        public IEnumerator BastionResistantPulseAnimation(int tileId, float scaleMultiplier = 1f)
         {
             var activeBoard = ActiveBoard;
             if (activeBoard == null || goldShieldOverlayTile == null || overlayTilemap == null)
@@ -919,8 +919,10 @@ namespace FungusToast.Unity.Grid
             float norm = outT + inT; if (norm <= 0f) norm = 1f; outT /= norm; inT /= norm;
             float outDur = total * outT;
             float inDur = total * inT;
-            float maxScale = Mathf.Max(1f, UIEffectConstants.MycelialBastionPulseMaxScale);
-            float yPop = UIEffectConstants.MycelialBastionPulseYOffset;
+            float baseMaxScale = Mathf.Max(1f, UIEffectConstants.MycelialBastionPulseMaxScale);
+            float maxScale = Mathf.Max(1f, baseMaxScale * Mathf.Clamp(scaleMultiplier, 0.1f, 10f));
+            float yPopBase = UIEffectConstants.MycelialBastionPulseYOffset;
+            float yPop = yPopBase * Mathf.Clamp(scaleMultiplier, 0.1f, 10f);
 
             overlayTilemap.SetTile(pos, goldShieldOverlayTile);
             overlayTilemap.SetTileFlags(pos, TileFlags.None);
@@ -965,14 +967,19 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        // NEW: Batch helper to trigger Bastion-style resistance pulses simultaneously
+        // UPDATED: original signature preserved for existing callers
         public void PlayResistancePulseBatch(IReadOnlyList<int> tileIds)
+        {
+            PlayResistancePulseBatchScaled(tileIds, 1f);
+        }
+
+        // NEW: Batch helper with scale multiplier
+        public void PlayResistancePulseBatchScaled(IReadOnlyList<int> tileIds, float scaleMultiplier)
         {
             if (tileIds == null || tileIds.Count == 0) return;
             foreach (var id in tileIds)
             {
-                // Fire and forget – each coroutine handles its own Begin/EndAnimation
-                StartCoroutine(BastionResistantPulseAnimation(id));
+                StartCoroutine(BastionResistantPulseAnimation(id, scaleMultiplier));
             }
         }
 
