@@ -184,14 +184,7 @@ namespace FungusToast.Core.Phases
 
         /// <summary>
         /// Handles Mimetic Resilience effect at the end of Growth Phase (UPDATED LOGIC).
-        /// For each qualifying stronger opponent (cell & board control thresholds), iterate over that opponent's
-        /// living resistant cells. For each such source cell we attempt (probabilistically) to create one adjacent
-        /// resistant cell for the Mimetic player with probability: (100% - 5% * priorSuccessesAgainstThatOpponentThisPhase).
-        /// Stops after 20 successful placements per opponent per phase. Target search radius (Chebyshev) is (1 + mutation level),
-        /// i.e. includes diagonals and increases with level. Target priority on a successful roll:
-        /// 1) Enemy living non?resistant cell (infest) 2) Enemy toxin cell (replace) 3) Empty tile (colonize) 4) Dead cell (reclaim).
-        /// Toxins can now be replaced (allowToxin = true). Skips source cells that have no valid targets in the radius.
-        /// Aggregates total infestations vs other drops (replacements / colonizations / reclaims) for observer.
+        /// Now also accumulates resistant placements and fires a single batch event per acting player.
         /// </summary>
         public static void OnPostGrowthPhase_MimeticResilience(
             GameBoard board,
@@ -212,6 +205,9 @@ namespace FungusToast.Core.Phases
                 int totalInfestations = 0;
                 int totalDrops = 0;
                 int radius = 1 + level; // dynamic Chebyshev radius
+
+                // NEW: Collect all tileIds that became newly resistant due to Mimetic Resilience for this acting player
+                var newlyResistantTileIds = new List<int>(64);
 
                 foreach (var targetPlayer in targetPlayers)
                 {
@@ -276,6 +272,8 @@ namespace FungusToast.Core.Phases
                                 takeover == FungalCellTakeoverResult.CatabolicGrowth)
                             {
                                 targetTile.FungalCell?.MakeResistant();
+                                if (targetTile.FungalCell != null)
+                                    newlyResistantTileIds.Add(targetTile.TileId);
                                 placement = true;
                                 if (takeover == FungalCellTakeoverResult.Infested) totalInfestations++; else totalDrops++;
                             }
@@ -285,6 +283,7 @@ namespace FungusToast.Core.Phases
                             var newCell = new FungalCell(player.PlayerId, targetTile.TileId, GrowthSource.MimeticResilience);
                             newCell.MakeResistant();
                             targetTile.PlaceFungalCell(newCell);
+                            newlyResistantTileIds.Add(targetTile.TileId);
                             placement = true;
                             totalDrops++;
                         }
@@ -296,6 +295,12 @@ namespace FungusToast.Core.Phases
 
                 if (totalInfestations > 0) observer.RecordMimeticResilienceInfestations(player.PlayerId, totalInfestations);
                 if (totalDrops > 0) observer.RecordMimeticResilienceDrops(player.PlayerId, totalDrops);
+
+                // Fire batch resistance event for visualization (Unity can animate pulses)
+                if (newlyResistantTileIds.Count > 0)
+                {
+                    board.OnResistanceAppliedBatch(player.PlayerId, GrowthSource.MimeticResilience, newlyResistantTileIds);
+                }
             }
         }
 

@@ -116,6 +116,9 @@ namespace FungusToast.Unity
             GameUIEventSubscriber.Subscribe(Board, gameUIManager);
             AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
 
+            // NEW: Subscribe to batch resistance applications for surge animations
+            Board.ResistanceAppliedBatch += OnResistanceAppliedBatch;
+
             InitializePlayersWithHumanFirst();
 
             // Initialize the persistent pool manager once per game
@@ -849,6 +852,16 @@ namespace FungusToast.Unity
             var emptyFailedGrowths = new Dictionary<int, int>();
             DeathEngine.ExecuteDeathCycle(Board, emptyFailedGrowths, rng, gameUIManager.GameLogRouter);
             yield return null; // One frame delay
+        }
+
+        private void OnResistanceAppliedBatch(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
+        {
+            // Only animate Mimetic Resilience for now (can extend to others later)
+            if (source == GrowthSource.MimeticResilience)
+            {
+                // Trigger simultaneous Bastion-style pulses
+                gridVisualizer.PlayResistancePulseBatch(tileIds);
+            }
         }
 
         /// <summary>

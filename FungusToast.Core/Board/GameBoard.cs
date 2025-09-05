@@ -76,6 +76,8 @@ namespace FungusToast.Core.Board
         public delegate void ToxinExpiredEventHandler(object sender, ToxinExpiredEventArgs e);
         public delegate void CatabolicRebirthEventHandler(object sender, CatabolicRebirthEventArgs e);
         public delegate void PreGrowthPhaseEventHandler();
+        // NEW: Batch resistance application (e.g., Mimetic Resilience placements)
+        public delegate void ResistanceAppliedBatchEventHandler(int playerId, GrowthSource source, IReadOnlyList<int> tileIds);
 
         // 2. Events (public, so other components can subscribe)
         public event CellColonizedEventHandler? CellColonized;
@@ -103,6 +105,8 @@ namespace FungusToast.Core.Board
         public event ToxinExpiredEventHandler? ToxinExpired;
         public event CatabolicRebirthEventHandler? CatabolicRebirth;
         public event PreGrowthPhaseEventHandler? PreGrowthPhase;
+        // NEW: Batch resistance event
+        public event ResistanceAppliedBatchEventHandler? ResistanceAppliedBatch;
 
         // 3. Helper methods to invoke (recommended: protected virtual, as in standard .NET pattern)
         protected virtual void OnCellColonized(int playerId, int tileId, GrowthSource source) =>
@@ -192,6 +196,10 @@ namespace FungusToast.Core.Board
         /// </summary>
         protected virtual void OnAfterGrowthAttempt(GrowthAttemptEventArgs e) =>
             AfterGrowthAttempt?.Invoke(this, e);
+
+        // NEW: Public invoker for batch resistance application
+        public virtual void OnResistanceAppliedBatch(int playerId, GrowthSource source, List<int> tileIds) =>
+            ResistanceAppliedBatch?.Invoke(playerId, source, tileIds);
 
         public GameBoard(int width, int height, int playerCount)
         {

@@ -965,6 +965,17 @@ namespace FungusToast.Unity.Grid
             }
         }
 
+        // NEW: Batch helper to trigger Bastion-style resistance pulses simultaneously
+        public void PlayResistancePulseBatch(IReadOnlyList<int> tileIds)
+        {
+            if (tileIds == null || tileIds.Count == 0) return;
+            foreach (var id in tileIds)
+            {
+                // Fire and forget – each coroutine handles its own Begin/EndAnimation
+                StartCoroutine(BastionResistantPulseAnimation(id));
+            }
+        }
+
         private IEnumerator ImpactRingPulse(Vector3Int centerPos)
         {
             var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
