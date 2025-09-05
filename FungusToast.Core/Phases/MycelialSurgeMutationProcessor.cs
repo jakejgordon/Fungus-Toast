@@ -187,9 +187,10 @@ namespace FungusToast.Core.Phases
         /// For each qualifying stronger opponent (cell & board control thresholds), iterate over that opponent's
         /// living resistant cells. For each such source cell we attempt (probabilistically) to create one adjacent
         /// resistant cell for the Mimetic player with probability: (100% - 5% * priorSuccessesAgainstThatOpponentThisPhase).
-        /// Stops after 20 successful placements per opponent per phase. Target priority on a successful roll:
+        /// Stops after 20 successful placements per opponent per phase. Target search radius (Chebyshev) is (1 + mutation level),
+        /// i.e. includes diagonals and increases with level. Target priority on a successful roll:
         /// 1) Enemy living non?resistant cell (infest) 2) Enemy toxin cell (replace) 3) Empty tile (colonize) 4) Dead cell (reclaim).
-        /// Toxins can now be replaced (allowToxin = true). Skips source cells that have no valid adjacent targets.
+        /// Toxins can now be replaced (allowToxin = true). Skips source cells that have no valid targets in the radius.
         /// Aggregates total infestations vs other drops (replacements / colonizations / reclaims) for observer.
         /// </summary>
         public static void OnPostGrowthPhase_MimeticResilience(
@@ -210,6 +211,7 @@ namespace FungusToast.Core.Phases
 
                 int totalInfestations = 0;
                 int totalDrops = 0;
+                int radius = 1 + level; // dynamic Chebyshev radius
 
                 foreach (var targetPlayer in targetPlayers)
                 {
@@ -237,15 +239,19 @@ namespace FungusToast.Core.Phases
                         if (sourceTile == null)
                             continue;
 
-                        var adjacent = board.GetOrthogonalNeighbors(sourceCell.TileId);
+                        // Collect candidate tiles within Chebyshev radius (includes diagonals)
+                        var candidateTiles = GetTilesInChebyshevRange(board, sourceTile.X, sourceTile.Y, radius)
+                            .Where(t => t.TileId != sourceTile.TileId) // exclude the source tile itself
+                            .ToList();
 
-                        var enemyLiving = adjacent.Where(t => t.FungalCell != null && t.FungalCell.IsAlive && !t.FungalCell.IsResistant && t.FungalCell.OwnerPlayerId != player.PlayerId).ToList();
-                        var enemyToxins = adjacent.Where(t => t.FungalCell != null && t.FungalCell.CellType == FungalCellType.Toxin && t.FungalCell.OwnerPlayerId != player.PlayerId).ToList();
-                        var empty = adjacent.Where(t => t.FungalCell == null).ToList();
-                        var dead = adjacent.Where(t => t.FungalCell != null && !t.FungalCell.IsAlive).ToList();
+                        // Priority buckets
+                        var enemyLiving = candidateTiles.Where(t => t.FungalCell != null && t.FungalCell.IsAlive && !t.FungalCell.IsResistant && t.FungalCell.OwnerPlayerId != player.PlayerId).ToList();
+                        var enemyToxins = candidateTiles.Where(t => t.FungalCell != null && t.FungalCell.CellType == FungalCellType.Toxin && t.FungalCell.OwnerPlayerId != player.PlayerId).ToList();
+                        var empty = candidateTiles.Where(t => t.FungalCell == null).ToList();
+                        var dead = candidateTiles.Where(t => t.FungalCell != null && !t.FungalCell.IsAlive).ToList();
 
                         if (enemyLiving.Count == 0 && enemyToxins.Count == 0 && empty.Count == 0 && dead.Count == 0)
-                            continue; // no valid targets around this source
+                            continue; // no valid targets around this source in extended radius
 
                         float chance = 1f - 0.05f * successesForOpponent; // 100% - 5% * X
                         if (chance <= 0f)
@@ -290,6 +296,25 @@ namespace FungusToast.Core.Phases
 
                 if (totalInfestations > 0) observer.RecordMimeticResilienceInfestations(player.PlayerId, totalInfestations);
                 if (totalDrops > 0) observer.RecordMimeticResilienceDrops(player.PlayerId, totalDrops);
+            }
+        }
+
+        /// <summary>
+        /// Returns tiles within Chebyshev (king-move) distance <= radius from (x,y).
+        /// </summary>
+        private static IEnumerable<BoardTile> GetTilesInChebyshevRange(GameBoard board, int x, int y, int radius)
+        {
+            int minX = Math.Max(0, x - radius);
+            int maxX = Math.Min(board.Width - 1, x + radius);
+            int minY = Math.Max(0, y - radius);
+            int maxY = Math.Min(board.Height - 1, y + radius);
+            for (int cx = minX; cx <= maxX; cx++)
+            {
+                for (int cy = minY; cy <= maxY; cy++)
+                {
+                    if (Math.Max(Math.Abs(cx - x), Math.Abs(cy - y)) <= radius)
+                        yield return board.Grid[cx, cy];
+                }
             }
         }
 

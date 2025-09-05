@@ -38,7 +38,7 @@ namespace FungusToast.Core.Mutations.Factories
                 name: "Hyphal Vectoring",
                 description:
                     $"At the end of the Growth Phase (for {GameBalance.HyphalVectoringSurgeDuration} turns after activation), this mutation projects a straight line of living fungal cells toward the center of the toast. " +
-                    $"It spawns {GameBalance.HyphalVectoringBaseTiles} cells at level 0, plus {helper.FormatFloat(GameBalance.HyphalVectoringTilesPerLevel)} per level.\n\n" +
+                    $"It spawns {GameBalance.HyphalVectoringBaseTiles} cells at level 0, plus {GameBalance.HyphalVectoringTilesPerLevel} per level.\n\n" +
                     $"The origin is intelligently selected to prioritize: paths with fewest friendly cells, maximum enemy cells to infest, and proximity to center. " +
                     $"Cells replace anything in their path (toxins, dead mold, enemy mold, empty space) and **skip over friendly living mold** without interruption. " +
                     $"Each activation costs {GameBalance.HyphalVectoringPointsPerActivation} mutation points plus {GameBalance.HyphalVectoringSurgePointIncreasePerLevel} per level already gained.",
@@ -62,9 +62,9 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.MimeticResilience,
                 name: "Mimetic Resilience",
                 description:
-                    $"At the end of the Growth Phase (for {GameBalance.MimeticResilienceSurgeDuration} rounds), strategically places resistant fungal cells within two tiles from rival resistant cells of " +
-                    $"players with {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold)} more living cells than you, and who control at least {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold)} of the board. " +
-                    $"Targeting prioritizes infesting enemy cells over empty placement. " +
+                    $"At the end of the Growth Phase (for {GameBalance.MimeticResilienceSurgeDuration} rounds), strategically places resistant fungal cells near rival resistant cells of " +
+                    $"players with {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold, 1)} more living cells than you, and who control at least {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold, 1)} of the board. " +
+                    $"Cells will be placed within X + 1 tiles of target enemy cells, where X is the mutation level. Targeting prioritizes infesting enemy cells over empty placement. " +
                     $"Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} mutation points plus {GameBalance.MimeticResiliencePointIncreasePerLevel} per level already gained.",
                 flavorText: "The colony analyzes and replicates the defensive adaptations of more successful rivals, establishing resistant footholds in their territories through biomimetic infiltration.",
                 type: MutationType.MimeticResilience,
