@@ -40,7 +40,7 @@ namespace FungusToast.Core.Mutations.Factories
                     $"At the end of the Growth Phase (for {GameBalance.HyphalVectoringSurgeDuration} turns after activation), this mutation projects a straight line of living fungal cells toward the center of the toast. " +
                     $"It spawns {GameBalance.HyphalVectoringBaseTiles} cells at level 0, plus {helper.FormatFloat(GameBalance.HyphalVectoringTilesPerLevel)} per level.\n\n" +
                     $"The origin is intelligently selected to prioritize: paths with fewest friendly cells, maximum enemy cells to infest, and proximity to center. " +
-                    $"Cells replace anything in their path (toxins, dead mold, enemy mold, empty space) and **skip over friendly living mold** without interruption. " +
+                    $"Cells replace anything in their path (toxins, dead mold, enemy mold, empty space) and skip over friendly living mold without interruption. " +
                     $"Each activation costs {GameBalance.HyphalVectoringPointsPerActivation} mutation points plus {GameBalance.HyphalVectoringSurgePointIncreasePerLevel} per level already gained.",
                 flavorText: "Hyphal networks realign toward the center of the substrate, bulldozing through opposition with deliberate, uncompromising purpose.",
                 type: MutationType.HyphalVectoring,
@@ -62,13 +62,13 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.MimeticResilience,
                 name: "Mimetic Resilience",
                 description:
-                    $"When activated during the Mutation Phase, enhances your growth cycle by strategically placing resistant fungal cells adjacent to rival resistant cells during the Growth Phase (for {GameBalance.MimeticResilienceSurgeDuration} rounds). " +
-                    $"**Only targets players with {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold)} more living cells than you** and who control at least {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold)} of the board. " +
-                    $"Each successful placement prioritizes **infesting enemy cells over empty placement**. " +
+                    $"For {GameBalance.MimeticResilienceSurgeDuration} rounds after activation (end of each Growth Phase), scans stronger opponents (those with at least {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold)} more living cells and at least {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold)} of the board). " +
+                    $"For each qualifying opponent and for each of that opponent's living resistant cells, you have a (100% - 5% * prior successful placements against that opponent this phase) chance to spawn one adjacent resistant cell. " +
+                    $"Priorities: infest their living cells first, then replace their toxins, then colonize empty tiles, then reclaim dead cells. Stops after 20 successful placements per opponent in a single phase. " +
                     $"Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} mutation points plus {GameBalance.MimeticResiliencePointIncreasePerLevel} per level already gained.",
                 flavorText: "The colony analyzes and replicates the defensive adaptations of more successful rivals, establishing resistant footholds in their territories through biomimetic infiltration.",
                 type: MutationType.MimeticResilience,
-                effectPerLevel: 1.0f, // Static effect: always 1 placement per qualifying target player
+                effectPerLevel: 1.0f, // Effect does not currently scale per level
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
                 maxLevel: GameBalance.MimeticResilienceMaxLevel,
                 category: MutationCategory.MycelialSurges,

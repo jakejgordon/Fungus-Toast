@@ -665,9 +665,21 @@ namespace FungusToast.Unity
             
             try
             {
-                // Store original human player type and strategy
+                // Store original human player type and strategy (will restore after FF)
                 var originalHumanType = humanPlayer.PlayerType;
                 var originalHumanStrategy = humanPlayer.MutationStrategy;
+
+                // OPTION 2 IMPLEMENTATION: Assign a single persistent AI strategy once and reuse it
+                // If human already had a strategy (unlikely), reuse it; else pick one proven strategy
+                IMutationSpendingStrategy? persistentStrategy = originalHumanStrategy;
+                if (persistentStrategy == null)
+                {
+                    persistentStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
+                }
+
+                // Convert human to AI for duration of fast-forward and keep chosen strategy
+                humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
+                humanPlayer.SetMutationStrategy(persistentStrategy);
 
                 for (int round = 1; round <= fastForwardRounds; round++)
                 {
@@ -675,41 +687,22 @@ namespace FungusToast.Unity
                     yield return StartCoroutine(RunSilentGrowthPhase());
                     // Silent decay phase
                     yield return StartCoroutine(RunSilentDecayPhase());
-
-                    // --- Temporarily make human an AI for mutation spending ---
-                    var tempType = humanPlayer.PlayerType;
-                    var tempStrat = humanPlayer.MutationStrategy;
-                    humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
-                    var aiStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
-                    humanPlayer.SetMutationStrategy(aiStrategy);
-
-                    // Silent mutation phase (auto-spend for all players)
+                    // Silent mutation phase (auto-spend for all players, including human with persistent strategy)
                     yield return StartCoroutine(RunSilentMutationPhase());
-
-                    // Restore human player type and strategy
-                    humanPlayer.SetPlayerType(tempType);
-                    humanPlayer.SetMutationStrategy(tempStrat);
 
                     // Increment round
                     Board.IncrementRound();
 
-                    // If this is a draft round, run a silent draft for all players (including human as AI)
+                    // If this is a draft round, run a silent draft (human already AI, no temporary reassignment needed)
                     if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
                     {
-                        // Temporarily make human an AI for the draft
-                        var originalType = humanPlayer.PlayerType;
-                        var originalStrat = humanPlayer.MutationStrategy;
-                        humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
-                        var draftAIStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
-                        humanPlayer.SetMutationStrategy(draftAIStrategy);
-
                         RunSilentDraftForAllPlayers(gameUIManager.GameLogRouter);
-
-                        // Restore human player type and strategy
-                        humanPlayer.SetPlayerType(originalType);
-                        humanPlayer.SetMutationStrategy(originalStrat);
                     }
                 }
+
+                // Restore original human type and strategy AFTER fast-forward
+                humanPlayer.SetPlayerType(originalHumanType);
+                humanPlayer.SetMutationStrategy(originalHumanStrategy);
 
                 // Update the board visualization after fast-forward
                 gridVisualizer.RenderBoard(Board);
