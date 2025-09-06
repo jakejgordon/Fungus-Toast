@@ -706,6 +706,12 @@ namespace FungusToast.Unity
                     // Silent mutation phase (auto-spend for all players, including human with persistent strategy)
                     yield return StartCoroutine(RunSilentMutationPhase());
 
+                    // Mirror normal round completion: tick down active surges BEFORE incrementing round
+                    foreach (var p in Board.Players)
+                    {
+                        p.TickDownActiveSurges();
+                    }
+
                     // Increment round
                     Board.IncrementRound();
 
