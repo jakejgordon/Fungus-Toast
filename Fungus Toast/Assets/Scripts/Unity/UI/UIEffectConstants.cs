@@ -214,5 +214,72 @@ namespace FungusToast.Unity.UI
         /// Peak visual scale at the apex of the arc (~10x requested).
         /// </summary>
         public const float SurgicalInoculationArcPeakScale = 10.0f;
+
+        // ==================== REGENERATIVE HYPHAE ====================
+        /// <summary>
+        /// Duration of the rise animation for Regenerative Hyphae. (Doubled from 0.22f)
+        /// </summary>
+        public const float RegenerativeHyphaeRiseDurationSeconds = 0.44f; // was 0.22f
+        /// <summary>
+        /// Duration of the fade swap animation for Regenerative Hyphae. (Doubled from 0.20f)
+        /// </summary>
+        public const float RegenerativeHyphaeFadeSwapDurationSeconds = 0.40f; // was 0.20f
+        /// <summary>
+        /// Duration of the settle animation for Regenerative Hyphae. (Doubled from 0.23f)
+        /// </summary>
+        public const float RegenerativeHyphaeSettleDurationSeconds = 0.46f; // was 0.23f
+        /// <summary>
+        /// Maximum scale for Regenerative Hyphae.
+        /// </summary>
+        public const float RegenerativeHyphaeMaxScale = 1.18f;
+        /// <summary>
+        /// Overshoot scale for Regenerative Hyphae.
+        /// </summary>
+        public const float RegenerativeHyphaeOvershootScale = 1.05f;
+        /// <summary>
+        /// Lift offset for Regenerative Hyphae.
+        /// </summary>
+        public const float RegenerativeHyphaeLiftOffset = 0.25f;
+        /// <summary>
+        /// Simplified threshold for Regenerative Hyphae.
+        /// </summary>
+        public const int RegenerativeHyphaeSimplifiedThreshold = 40;
+        /// <summary>
+        /// Minimum scale multiplier for Regenerative Hyphae.
+        /// </summary>
+        public const float RegenerativeHyphaeMinScaleMultiplier = 0.55f;
+        /// <summary>
+        /// Maximum load for scale dampening in Regenerative Hyphae.
+        /// </summary>
+        public const int RegenerativeHyphaeMaxLoadForScaleDampen = 160;
+        /// <summary>
+        /// Base hold phase (peak pause) duration used for proportional scaling of full Regenerative Hyphae animation.
+        /// </summary>
+        public const float RegenerativeHyphaeHoldBaseSeconds = 0.15f;
+        /// <summary>
+        /// Total base duration (sum of rise + hold + swap + settle) for full Regenerative Hyphae reclaim animation.
+        /// </summary>
+        public const float RegenerativeHyphaeTotalBaseDurationSeconds = RegenerativeHyphaeRiseDurationSeconds + RegenerativeHyphaeFadeSwapDurationSeconds + RegenerativeHyphaeSettleDurationSeconds + RegenerativeHyphaeHoldBaseSeconds;
+        /// <summary>
+        /// Portion of total base duration used by the rise phase.
+        /// </summary>
+        public const float RegenerativeHyphaeRisePortion = RegenerativeHyphaeRiseDurationSeconds / RegenerativeHyphaeTotalBaseDurationSeconds;
+        /// <summary>
+        /// Portion of total base duration used by the hold (peak) phase.
+        /// </summary>
+        public const float RegenerativeHyphaeHoldPortion = RegenerativeHyphaeHoldBaseSeconds / RegenerativeHyphaeTotalBaseDurationSeconds;
+        /// <summary>
+        /// Portion of total base duration used by the fade/swap phase.
+        /// </summary>
+        public const float RegenerativeHyphaeSwapPortion = RegenerativeHyphaeFadeSwapDurationSeconds / RegenerativeHyphaeTotalBaseDurationSeconds;
+        /// <summary>
+        /// Portion of total base duration used by the settle phase.
+        /// </summary>
+        public const float RegenerativeHyphaeSettlePortion = RegenerativeHyphaeSettleDurationSeconds / RegenerativeHyphaeTotalBaseDurationSeconds;
+        /// <summary>
+        /// Total target duration (in seconds) for a Regenerative Hyphae reclaim animation batch when using the simplified (lite) animation.
+        /// Passed directly to PlayRegenerativeHyphaeReclaimBatch when explicit timing is desired.
+        /// </summary>
+        public const float RegenerativeHyphaeReclaimTotalDurationSeconds = 3.2f;
     }
 }

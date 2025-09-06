@@ -1,13 +1,12 @@
-﻿using FungusToast.Core.Board;
+﻿using System;
+using System.Collections.Generic;
+using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
-using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
-using System;
-using System.Collections.Generic;
 
 namespace FungusToast.Core.Phases
 {
@@ -16,7 +15,12 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// Assigns base, bonus, and mutation-derived points and triggers auto-upgrades and strategy spending.
         /// </summary>
-        public static void AssignMutationPoints(GameBoard board, List<Player> players, List<Mutation> allMutations, Random rng, ISimulationObserver simulationObserver)
+        public static void AssignMutationPoints(
+            GameBoard board,
+            List<Player> players,
+            List<Mutation> allMutations,
+            Random rng,
+            ISimulationObserver simulationObserver)
         {
             // Fire MutationPhaseStart event for Mutator Phenotype and other mutation phase effects
             board.OnMutationPhaseStart();
@@ -31,7 +35,11 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// Executes a full multi-cycle growth phase, including mutation-based pre-growth effects.
         /// </summary>
-        public static void RunGrowthPhase(GameBoard board, List<Player> players, Random rng, ISimulationObserver observer)
+        public static void RunGrowthPhase(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver observer)
         {
             board.OnPreGrowthPhase();
             var processor = new GrowthPhaseProcessor(board, players, rng, observer);
@@ -41,11 +49,14 @@ namespace FungusToast.Core.Phases
                 processor.ExecuteSingleCycle(board.CurrentRoundContext);
             }
 
-            // Apply post-growth reclaim effects
+            // Fire post-growth phase event (listeners may buffer animations / effects)
             board.OnPostGrowthPhase();
 
-            // Apply Hyphal Resistance Transfer effect after growth phase
+            // Apply Hyphal Resistance Transfer effect after the initial post-growth callbacks
             MycovariantEffectProcessor.OnPostGrowthPhase_HyphalResistanceTransfer(board, players, rng, observer);
+
+            // Signal that all logical post-growth effects (including HRT) are complete
+            board.OnPostGrowthPhaseCompleted();
         }
 
         /// <summary>

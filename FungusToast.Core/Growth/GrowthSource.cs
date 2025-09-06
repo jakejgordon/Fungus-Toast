@@ -112,6 +112,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Toxin created from Putrefactive Cascade mutation
         /// </summary>
-        PutrefactiveCascade
+        PutrefactiveCascade,
+        
+        /// <summary>
+        /// Resistance granted via Chitin Fortification surge
+        /// </summary>
+        ChitinFortification
     }
 }

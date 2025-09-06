@@ -163,6 +163,13 @@ namespace FungusToast.Core.Phases
                 {
                     observer.RecordChitinFortificationCellsFortified(player.PlayerId, cellsToFortify);
                 }
+
+                // NEW: Fire batch resistance animation events for Chitin Fortification placements.
+                if (cellsToFortifyList.Count > 0)
+                {
+                    var fortifiedIds = cellsToFortifyList.Select(c => c.TileId).ToList();
+                    board.OnResistanceAppliedBatch(player.PlayerId, GrowthSource.ChitinFortification, fortifiedIds);
+                }
             }
         }
 

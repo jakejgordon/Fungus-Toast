@@ -67,6 +67,7 @@ namespace FungusToast.Core.Board
         public delegate void CreepingMoldMoveEventHandler(int playerId, int fromTileId, int toTileId);
         public delegate void JettingMyceliumCatabolicGrowthEventHandler(int playerId, int tileId);
         public delegate void PostGrowthPhaseEventHandler();
+        public delegate void PostGrowthPhaseCompletedEventHandler(); // NEW
         public delegate void DecayPhaseEventHandler(Dictionary<int, int> failedGrowthsByPlayerId);
         public delegate void PreGrowthCycleEventHandler();
         public delegate void DecayPhaseWithFailedGrowthsEventHandler(Dictionary<int, int> failedGrowthsByPlayerId);
@@ -96,6 +97,7 @@ namespace FungusToast.Core.Board
         public event CreepingMoldMoveEventHandler? CreepingMoldMove;
         public event JettingMyceliumCatabolicGrowthEventHandler? JettingMyceliumCatabolicGrowth;
         public event PostGrowthPhaseEventHandler? PostGrowthPhase;
+        public event PostGrowthPhaseCompletedEventHandler? PostGrowthPhaseCompleted; // NEW
         public event DecayPhaseEventHandler? DecayPhase;
         public event PreGrowthCycleEventHandler? PreGrowthCycle;
         public event DecayPhaseWithFailedGrowthsEventHandler? DecayPhaseWithFailedGrowths;
@@ -160,6 +162,9 @@ namespace FungusToast.Core.Board
 
         public virtual void OnPostGrowthPhase() =>
             PostGrowthPhase?.Invoke();
+
+        public virtual void OnPostGrowthPhaseCompleted() => // NEW
+            PostGrowthPhaseCompleted?.Invoke();
 
         public virtual void OnDecayPhase(Dictionary<int, int> failedGrowthsByPlayerId) =>
             DecayPhase?.Invoke(failedGrowthsByPlayerId);

@@ -11,349 +11,92 @@ using UnityEngine.Tilemaps;
 
 namespace FungusToast.Unity.Grid
 {
-    public class GridVisualizer : MonoBehaviour
+    public partial class GridVisualizer : MonoBehaviour
     {
+        // Timing context passed in from GameManager per post-growth sequence
+        private PostGrowthPhaseTiming _timingContext; // default values = 0 => fallback to constants
+        public void SetPostGrowthTiming(PostGrowthPhaseTiming timing) => _timingContext = timing;
+
+        [Header("Timing / Tweaks")]
+        [Tooltip("Multiplier for post-growth phase reclaim & resistance animations durations (1 = original speed, >1 slower)")]
+        [Range(0.1f,5f)] public float postGrowthPhaseDurationMultiplier = 1.5f;
+
+        [Tooltip("Additional multiplier ONLY for Regenerative Hyphae reclaim durations (stacked on general multiplier). Set higher if animation flashes too fast.")]
+        [Range(0.1f,6f)] public float regenerativeHyphaeDurationMultiplier = 3f; // legacy multiplier (may be unused when explicit total supplied)
+
         [Header("Tilemaps")]
-        public Tilemap toastTilemap;      // Base toast layer
-        public Tilemap moldTilemap;       // Player mold layer (including faded icons)
-        public Tilemap overlayTilemap;    // Dead/toxin overlays
-        public Tilemap SelectionHighlightTileMap;   // Persistent selection highlights (prompt mode, pulsing)
-        public Tilemap SelectedTileMap;             // Already selected tiles (solid highlighting)
-        public Tilemap HoverOverlayTileMap;         // Temporary mouse hover overlays (single-tile, always on top)
-        [Tooltip("Optional dedicated tilemap for transient pings (if null, HoverOverlayTileMap is used)")] public Tilemap PingOverlayTileMap;
+        public Tilemap toastTilemap;
+        public Tilemap moldTilemap;
+        public Tilemap overlayTilemap;
+        public Tilemap SelectionHighlightTileMap;
+        public Tilemap SelectedTileMap;
+        public Tilemap HoverOverlayTileMap;
+        [Tooltip("Optional dedicated tilemap for transient pings (if null, HoverOverlayTileMap is used)")]
+        public Tilemap PingOverlayTileMap;
 
         [Header("Tiles")]
-        public Tile baseTile;             // Toast base
-        public Tile deadTile;             // Dead mold
-        public Tile[] playerMoldTiles;    // Living mold, indexed by PlayerId
-        public Tile toxinOverlayTile;     // Toxin icon overlay
-        [SerializeField] private Tile solidHighlightTile; // For pulses/highlights
-        public Tile goldShieldOverlayTile; // Gold shield for resistant cells
+        public Tile baseTile;
+        public Tile deadTile;
+        public Tile[] playerMoldTiles;
+        public Tile toxinOverlayTile;
+        [SerializeField] private Tile solidHighlightTile;
+        public Tile goldShieldOverlayTile;
 
         private GameBoard board;
-        private GameBoard ActiveBoard => board ?? GameManager.Instance?.Board;
+        public GameBoard ActiveBoard => board ?? GameManager.Instance?.Board; // now public for helper access
 
         // Selection highlight state
-        private readonly List<Vector3Int> highlightedPositions = new List<Vector3Int>();
+        private readonly List<Vector3Int> highlightedPositions = new();
         private Coroutine pulseHighlightCoroutine;
-        private Color pulseColorA = new Color(1f, 1f, 0.1f, 1f); // Default: yellow
-        private Color pulseColorB = new Color(0.1f, 1f, 1f, 1f); // Default: cyan
+        private Color pulseColorA = new(1f, 1f, 0.1f, 1f);
+        private Color pulseColorB = new(0.1f, 1f, 1f, 1f);
 
         // Animation effect tracking
-        private HashSet<int> newlyGrownTileIds = new HashSet<int>();
-        private Dictionary<int, Coroutine> fadeInCoroutines = new Dictionary<int, Coroutine>();
-        private HashSet<int> dyingTileIds = new HashSet<int>();
-        private Dictionary<int, Coroutine> deathAnimationCoroutines = new Dictionary<int, Coroutine>();
-        private HashSet<int> toxinDropTileIds = new HashSet<int>();
-        private Dictionary<int, Coroutine> toxinDropCoroutines = new Dictionary<int, Coroutine>();
+        private readonly HashSet<int> newlyGrownTileIds = new();
+        private readonly Dictionary<int, Coroutine> fadeInCoroutines = new();
+        private readonly HashSet<int> dyingTileIds = new();
+        private readonly Dictionary<int, Coroutine> deathAnimationCoroutines = new();
+        private readonly HashSet<int> toxinDropTileIds = new();
+        private readonly Dictionary<int, Coroutine> toxinDropCoroutines = new();
 
         private SelectionHighlightHelper selectionHelper;
         private RingHighlightHelper ringHelper;
         private HoverEffectHelper hoverHelper;
         private ArcProjectileHelper arcHelper;
 
-        private Coroutine startingTilePingCoroutine; // track current starting tile ping
-        private Tilemap lastPingTilemap; // remember which tilemap the ping used
+        private Coroutine startingTilePingCoroutine;
+        private Tilemap lastPingTilemap;
+
+        // Animators (new helpers replacing partial class split)
+        private Animation.RegenerativeHyphaeReclaimAnimator _reclaimAnimator;
+        private Animation.SurgicalInoculationAnimator _surgicalAnimator; // ensure correct reference
 
         // Animation tracking so external code can wait for all visual animations to finish
         private int _activeAnimationCount = 0;
         public bool HasActiveAnimations => _activeAnimationCount > 0;
-        internal void BeginAnimation() { _activeAnimationCount++; }
-        internal void EndAnimation() { _activeAnimationCount = Mathf.Max(0, _activeAnimationCount - 1); }
-        public IEnumerator WaitForAllAnimations()
-        {
-            while (_activeAnimationCount > 0)
-                yield return null;
-        }
-
-        private struct TileAnimTransform
-        {
-            public Vector3 positionOffset; // local offset
-            public Vector3 scale;          // local scale
-            public static TileAnimTransform Identity => new TileAnimTransform { positionOffset = Vector3.zero, scale = Vector3.one };
-        }
+        internal void BeginAnimation() => _activeAnimationCount++;
+        internal void EndAnimation() => _activeAnimationCount = Mathf.Max(0, _activeAnimationCount - 1);
+        public IEnumerator WaitForAllAnimations() { while (_activeAnimationCount > 0) yield return null; }
 
         private void Awake()
         {
-            // Initialize helpers using serialized references
             selectionHelper = new SelectionHighlightHelper(SelectionHighlightTileMap, SelectedTileMap, solidHighlightTile);
             ringHelper = new RingHighlightHelper(PingOverlayTileMap, HoverOverlayTileMap, solidHighlightTile);
             hoverHelper = new HoverEffectHelper(this, HoverOverlayTileMap, solidHighlightTile);
             arcHelper = new ArcProjectileHelper(this, overlayTilemap);
+            _reclaimAnimator = new Animation.RegenerativeHyphaeReclaimAnimator(this);
+            _surgicalAnimator = new Animation.SurgicalInoculationAnimator(this);
         }
 
-        public void Initialize(GameBoard board)
-        {
-            this.board = board;
-        }
+        public void Initialize(GameBoard board) => this.board = board;
 
-        public void ShowHoverEffect(Vector3Int cellPos)
-        {
-            hoverHelper.ShowHoverEffect(cellPos);
-        }
-
-        public void ClearHoverEffect()
-        {
-            hoverHelper.ClearHoverEffect();
-        }
-
-        private IEnumerator HoverOutlineGlowAnimation(Vector3Int cellPos)
-        {
-            // No longer used; behavior lives in HoverEffectHelper
-            yield break;
-        }
-
-        public void RenderBoard(GameBoard board)
-        {
-            foreach (var coroutine in fadeInCoroutines.Values)
-            {
-                if (coroutine != null)
-                {
-                    StopCoroutine(coroutine);
-                    EndAnimation();
-                }
-            }
-            fadeInCoroutines.Clear();
-            
-            foreach (var coroutine in deathAnimationCoroutines.Values)
-            {
-                if (coroutine != null)
-                {
-                    StopCoroutine(coroutine);
-                    EndAnimation();
-                }
-            }
-            deathAnimationCoroutines.Clear();
-            
-            foreach (var coroutine in toxinDropCoroutines.Values)
-            {
-                if (coroutine != null)
-                {
-                    StopCoroutine(coroutine);
-                    EndAnimation();
-                }
-            }
-            toxinDropCoroutines.Clear();
-            
-            newlyGrownTileIds.Clear();
-            dyingTileIds.Clear();
-            toxinDropTileIds.Clear();
-            
-            for (int x = 0; x < board.Width; x++)
-            {
-                for (int y = 0; y < board.Height; y++)
-                {
-                    var tile = board.Grid[x, y];
-                    if (tile.FungalCell?.IsNewlyGrown == true)
-                    {
-                        newlyGrownTileIds.Add(tile.TileId);
-                    }
-                    if (tile.FungalCell?.IsDying == true)
-                    {
-                        dyingTileIds.Add(tile.TileId);
-                    }
-                    if (tile.FungalCell?.IsReceivingToxinDrop == true)
-                    {
-                        toxinDropTileIds.Add(tile.TileId);
-                    }
-                }
-            }
-
-            toastTilemap.ClearAllTiles();
-            moldTilemap.ClearAllTiles();
-            overlayTilemap.ClearAllTiles();
-
-            for (int x = 0; x < board.Width; x++)
-            {
-                for (int y = 0; y < board.Height; y++)
-                {
-                    Vector3Int pos = new Vector3Int(x, y, 0);
-                    BoardTile tile = board.Grid[x, y];
-
-                    toastTilemap.SetTile(pos, baseTile);
-                    toastTilemap.SetTileFlags(pos, TileFlags.None);
-                    toastTilemap.SetColor(pos, Color.white);
-
-                    RenderFungalCellOverlay(tile, pos);
-                }
-            }
-            
-            StartFadeInAnimations();
-            StartDeathAnimations();
-            StartToxinDropAnimations();
-        }
-
-        public void HighlightPlayerTiles(int playerId, bool includeStartingTilePing = false)
-        {
-            var activeBoard = ActiveBoard;
-            if (activeBoard == null) return;
-            var tileIds = activeBoard.AllTiles()
-                .Where(t => t.FungalCell != null && t.FungalCell.OwnerPlayerId == playerId && (t.FungalCell.CellType == FungalCellType.Alive || t.FungalCell.CellType == FungalCellType.Toxin))
-                .Select(t => t.TileId);
-            HighlightTiles(tileIds, pulseColorA, pulseColorB);
-            if (includeStartingTilePing)
-            {
-                TriggerStartingTilePing(playerId);
-            }
-        }
-
-        public void TriggerStartingTilePing(int playerId)
-        {
-            var activeBoard = ActiveBoard;
-            if (activeBoard == null) return;
-            int? startingTileId = GetPlayerStartingTile(playerId);
-            if (!startingTileId.HasValue) return;
-            var xy = activeBoard.GetXYFromTileId(startingTileId.Value);
-            Vector3Int center = new Vector3Int(xy.Item1, xy.Item2, 0);
-
-            var targetTilemap = ringHelper.ChoosePingTarget();
-            if (targetTilemap == null || solidHighlightTile == null) return;
-
-            if (startingTilePingCoroutine != null)
-            {
-                StopCoroutine(startingTilePingCoroutine);
-                ringHelper.ClearRingHighlight(lastPingTilemap != null ? lastPingTilemap : targetTilemap);
-                startingTilePingCoroutine = null;
-                EndAnimation();
-            }
-            lastPingTilemap = targetTilemap;
-            BeginAnimation();
-            startingTilePingCoroutine = StartCoroutine(RunStartingTilePing(center, targetTilemap));
-        }
-
-        private IEnumerator RunStartingTilePing(Vector3Int center, Tilemap targetTilemap)
-        {
-            float duration = 1.0f;
-            float expandPortion = 0.5f;
-
-            var activeBoard = ActiveBoard;
-            float maxRadius = Mathf.Min(10f, Mathf.Max(activeBoard.Width, activeBoard.Height) * 0.25f);
-            float ringThickness = 0.6f;
-            yield return ringHelper.StartingTilePingAnimation(center, targetTilemap, duration, expandPortion, maxRadius, ringThickness);
-            EndAnimation();
-        }
-
-        private int? GetPlayerStartingTile(int playerId)
-        {
-            var activeBoard = ActiveBoard;
-            if (activeBoard != null && playerId >= 0 && playerId < activeBoard.Players.Count)
-            {
-                return activeBoard.Players[playerId].StartingTileId;
-            }
-            return null;
-        }
-
-        private IEnumerator StartingTilePingAnimation(Vector3Int centerPos)
-        {
-            // obsolete
-            yield break;
-        }
-
-        private IEnumerator StartingTilePingAnimation(Vector3Int centerPos, Tilemap targetTilemap)
-        {
-            // obsolete
-            yield break;
-        }
-
-        private void DrawRingHighlight(Vector3Int centerPos, float radius, float thickness, Color color, Tilemap targetTilemap)
-        {
-            ringHelper.DrawRingHighlight(centerPos, radius, thickness, color, targetTilemap);
-        }
-
-        private void ClearRingHighlight(Tilemap targetTilemap)
-        {
-            ringHelper.ClearRingHighlight(targetTilemap);
-        }
-
-        public void HighlightTiles(IEnumerable<int> tileIds, Color? colorA = null, Color? colorB = null)
-        {
-            var activeBoard = ActiveBoard;
-            if (activeBoard == null) return;
-            selectionHelper.HighlightTiles(tileIds, activeBoard, highlightedPositions);
-
-            Color a = colorA ?? new Color(1f, 1f, 0.1f, 1f);
-            Color b = colorB ?? new Color(0.1f, 1f, 1f, 1f);
-
-            if (highlightedPositions.Count > 0)
-            {
-                if (pulseHighlightCoroutine != null)
-                    StopCoroutine(pulseHighlightCoroutine);
-
-                pulseHighlightCoroutine = StartCoroutine(selectionHelper.PulseHighlightTiles(
-                    highlightedPositions,
-                    new Color(1f, 0f, 0.9f, 0f),
-                    new Color(1f, 0f, 0.9f, 1f),
-                    0.4f));
-            }
-        }
-
-        public void HighlightTiles(IDictionary<int, (Color colorA, Color colorB)> tileHighlights)
-        {
-            var activeBoard = ActiveBoard;
-            if (activeBoard == null) return;
-            selectionHelper.HighlightTiles(tileHighlights, activeBoard, highlightedPositions);
-
-            if (pulseHighlightCoroutine != null)
-            {
-                StopCoroutine(pulseHighlightCoroutine);
-                pulseHighlightCoroutine = null;
-            }
-        }
-
-        public void ShowSelectedTiles(IEnumerable<int> tileIds, Color? selectedColor = null)
-        {
-            var activeBoard = ActiveBoard;
-            if (activeBoard == null) return;
-            selectionHelper.ShowSelectedTiles(tileIds, activeBoard, selectedColor);
-        }
-
-        public void ClearSelectedTiles()
-        {
-            selectionHelper.ClearSelectedTiles();
-        }
-
-        public void ClearHighlights()
-        {
-            selectionHelper.ClearHighlights(highlightedPositions);
-            if (pulseHighlightCoroutine != null)
-            {
-                StopCoroutine(pulseHighlightCoroutine);
-                pulseHighlightCoroutine = null;
-            }
-        }
-
-        public void ClearAllHighlights()
-        {
-            ClearHighlights();
-            ClearSelectedTiles();
-        }
-
-        private IEnumerator PulseHighlightTiles()
-        {
-            float pulseDuration = 0.4f;    // Fast pulse for urgency
-            Color transparentColor = new Color(1f, 0f, 0.9f, 0f);
-            Color brightColor = new Color(1f, 0f, 0.9f, 1f);
-
-            while (true)
-            {
-                float colorT = Mathf.PingPong(Time.time / pulseDuration, 1f);
-                float easedColorT = colorT < 0.5f 
-                    ? 2f * colorT * colorT  
-                    : 1f - 2f * (1f - colorT) * (1f - colorT);  
-                
-                Color pulseColor = Color.Lerp(transparentColor, brightColor, easedColorT);
-
-                foreach (var pos in highlightedPositions)
-                {
-                    if (SelectionHighlightTileMap.HasTile(pos))
-                    {
-                        SelectionHighlightTileMap.SetColor(pos, pulseColor);
-                    }
-                }
-                
-                yield return null;
-            }
-        }
+        // === Public wrappers for extracted reclaim & surgical animations ===
+        public void PlayRegenerativeHyphaeReclaimBatch(IReadOnlyList<int> tileIds, bool simplified, float scaleMultiplier, float explicitTotalSeconds)
+            => _reclaimAnimator.PlayBatch(tileIds, simplified, scaleMultiplier, explicitTotalSeconds);
+        public void PlayRegenerativeHyphaeReclaimBatch(IReadOnlyList<int> tileIds, bool simplified, float scaleMultiplier)
+            => _reclaimAnimator.PlayBatch(tileIds, simplified, scaleMultiplier, UIEffectConstants.RegenerativeHyphaeReclaimTotalDurationSeconds);
+        public IEnumerator SurgicalInoculationArcAnimation(int playerId, int targetTileId, Sprite sprite)
+            => _surgicalAnimator.RunArcAndDrop(playerId, targetTileId, sprite);
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
         {
@@ -812,6 +555,13 @@ namespace FungusToast.Unity.Grid
             overlayTilemap.SetTransformMatrix(pos, trs);
         }
 
+        private void ApplyCompositeTransform(Vector3Int pos, Vector3 localOffset, Vector3 localScale)
+        {
+            var m = Matrix4x4.TRS(localOffset, Quaternion.identity, localScale);
+            if (moldTilemap.HasTile(pos)) moldTilemap.SetTransformMatrix(pos, m);
+            if (overlayTilemap.HasTile(pos)) overlayTilemap.SetTransformMatrix(pos, m);
+        }
+
         // NEW: Resistant drop animation for Surgical Inoculation (Option A)
         public IEnumerator ResistantDropAnimation(int tileId)
         {
@@ -909,16 +659,15 @@ namespace FungusToast.Unity.Grid
             var activeBoard = ActiveBoard;
             if (activeBoard == null || goldShieldOverlayTile == null || overlayTilemap == null)
                 yield break;
-
             var xy = activeBoard.GetXYFromTileId(tileId);
             Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
 
-            float total = UIEffectConstants.MycelialBastionPulseDurationSeconds;
+            float baseTotal = UIEffectConstants.MycelialBastionPulseDurationSeconds;
+            float total = _timingContext.ResistancePulseTotal > 0f ? _timingContext.ResistancePulseTotal : baseTotal * postGrowthPhaseDurationMultiplier;
             float outT = Mathf.Clamp01(UIEffectConstants.MycelialBastionPulseOutPortion);
             float inT = Mathf.Clamp01(UIEffectConstants.MycelialBastionPulseInPortion);
             float norm = outT + inT; if (norm <= 0f) norm = 1f; outT /= norm; inT /= norm;
-            float outDur = total * outT;
-            float inDur = total * inT;
+            float outDur = total * outT; float inDur = total * inT;
             float baseMaxScale = Mathf.Max(1f, UIEffectConstants.MycelialBastionPulseMaxScale);
             float maxScale = Mathf.Max(1f, baseMaxScale * Mathf.Clamp(scaleMultiplier, 0.1f, 10f));
             float yPopBase = UIEffectConstants.MycelialBastionPulseYOffset;
@@ -931,7 +680,7 @@ namespace FungusToast.Unity.Grid
             BeginAnimation();
             try
             {
-                // Outward pulse (ease-out): rise up and scale up
+                // Outward pulse
                 float t = 0f;
                 while (t < outDur)
                 {
@@ -944,8 +693,7 @@ namespace FungusToast.Unity.Grid
                     overlayTilemap.SetTransformMatrix(pos, trs);
                     yield return null;
                 }
-
-                // Inward settle (ease-in): go back down and scale to normal then hide transform
+                // Return pulse
                 t = 0f;
                 while (t < inDur)
                 {
@@ -958,7 +706,6 @@ namespace FungusToast.Unity.Grid
                     overlayTilemap.SetTransformMatrix(pos, trs);
                     yield return null;
                 }
-
                 overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
             }
             finally
@@ -967,112 +714,200 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        // UPDATED: original signature preserved for existing callers
-        public void PlayResistancePulseBatch(IReadOnlyList<int> tileIds)
-        {
-            PlayResistancePulseBatchScaled(tileIds, 1f);
-        }
-
-        // NEW: Batch helper with scale multiplier
-        public void PlayResistancePulseBatchScaled(IReadOnlyList<int> tileIds, float scaleMultiplier)
+        // ADD timing-aware version before back compat overloads
+        public void PlayResistancePulseBatchScaled(IReadOnlyList<int> tileIds, float scaleMultiplier, bool useTimingContext)
         {
             if (tileIds == null || tileIds.Count == 0) return;
             foreach (var id in tileIds)
-            {
                 StartCoroutine(BastionResistantPulseAnimation(id, scaleMultiplier));
-            }
         }
+        // BACK COMPAT overloads (old signatures) -----------------
+        public void PlayResistancePulseBatchScaled(IReadOnlyList<int> tileIds, float scaleMultiplier)
+        {
+            PlayResistancePulseBatchScaled(tileIds, scaleMultiplier, true);
+        }
+
+        internal ArcProjectileHelper ArcHelper => arcHelper;
+        internal void InternalDrawRing(Vector3Int c, float r, float th, Color col, Tilemap tm) => ringHelper.DrawRingHighlight(c,r,th,col,tm);
+        internal void InternalClearRing(Tilemap tm) => ringHelper.ClearRingHighlight(tm);
 
         private IEnumerator ImpactRingPulse(Vector3Int centerPos)
         {
             var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
             if (targetTilemap == null || solidHighlightTile == null)
                 yield break;
-
             float duration = UIEffectConstants.SurgicalInoculationRingPulseDurationSeconds;
             float maxRadius = 2.5f;
             float ringThickness = 0.6f;
             float startTime = Time.time;
-
             while (Time.time - startTime < duration)
             {
                 float u = Mathf.Clamp01((Time.time - startTime) / duration);
                 float radius = Mathf.Lerp(0.3f, maxRadius, u);
                 Color ringColor = new Color(1f, 0.95f, 0.5f, 0.9f * (1f - u));
-                DrawRingHighlight(centerPos, radius, ringThickness, ringColor, targetTilemap);
+                InternalDrawRing(centerPos, radius, ringThickness, ringColor, targetTilemap);
                 yield return null;
             }
-            ClearRingHighlight(targetTilemap);
+            InternalClearRing(targetTilemap);
         }
 
-        public IEnumerator SurgicalInoculationArcAnimation(int playerId, int targetTileId, Sprite shieldSprite)
+        #region Public Interaction / Rendering API (restored)
+        public void RenderBoard(GameBoard board)
         {
-            var activeBoard = ActiveBoard;
-            if (activeBoard == null || overlayTilemap == null || shieldSprite == null)
-                yield break;
+            // Stop any in-flight fade/death/toxin coroutines so we can rebuild fresh state
+            foreach (var c in fadeInCoroutines.Values) if (c != null) { StopCoroutine(c); EndAnimation(); }
+            fadeInCoroutines.Clear();
+            foreach (var c in deathAnimationCoroutines.Values) if (c != null) { StopCoroutine(c); EndAnimation(); }
+            deathAnimationCoroutines.Clear();
+            foreach (var c in toxinDropCoroutines.Values) if (c != null) { StopCoroutine(c); EndAnimation(); }
+            toxinDropCoroutines.Clear();
 
-            // Determine start (player starting tile) and end from tileIds
-            var player = activeBoard.Players.FirstOrDefault(p => p.PlayerId == playerId);
-            if (player == null || !player.StartingTileId.HasValue)
+            newlyGrownTileIds.Clear();
+            dyingTileIds.Clear();
+            toxinDropTileIds.Clear();
+
+            for (int x = 0; x < board.Width; x++)
             {
-                // Fallback: use existing drop animation
-                yield return ResistantDropAnimation(targetTileId);
-                yield break;
-            }
-
-            var (sx, sy) = activeBoard.GetXYFromTileId(player.StartingTileId.Value);
-            var (ex, ey) = activeBoard.GetXYFromTileId(targetTileId);
-            Vector3Int startCell = new Vector3Int(sx, sy, 0);
-            Vector3Int endCell = new Vector3Int(ex, ey, 0);
-
-            float duration = UIEffectConstants.SurgicalInoculationArcDurationSeconds;
-            float baseHeightWorld = UIEffectConstants.SurgicalInoculationArcBaseHeightWorld;
-            float heightPerTile = UIEffectConstants.SurgicalInoculationArcHeightPerTile;
-            float scalePerHeightTile = UIEffectConstants.SurgicalInoculationArcScalePerHeightTile;
-
-            BeginAnimation();
-            try
-            {
-                // Run the arc projectile
-                yield return arcHelper.AnimateArc(
-                    startCell,
-                    endCell,
-                    shieldSprite,
-                    duration,
-                    baseHeightWorld,
-                    heightPerTile,
-                    scalePerHeightTile);
-
-                // Ensure final placement visuals on overlay tilemap (shield on the cell)
-                Vector3Int pos = endCell;
-                overlayTilemap.SetTile(pos, goldShieldOverlayTile);
-                overlayTilemap.SetTileFlags(pos, TileFlags.None);
-                overlayTilemap.SetColor(pos, Color.white);
-                overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
-            }
-            finally
-            {
-                EndAnimation();
-            }
-        }
-    }
-
-    internal static class FungalCellVisualExtensions
-    {
-        public static bool GrewThisRoundVisual(this FungalCell cell, int currentRound)
-        {
-            try
-            {
-                var prop = typeof(FungalCell).GetProperty("BirthRound");
-                if (prop != null)
+                for (int y = 0; y < board.Height; y++)
                 {
-                    object value = prop.GetValue(cell, null);
-                    if (value is int birthRound)
-                        return birthRound == currentRound;
+                    var tile = board.Grid[x, y];
+                    if (tile.FungalCell?.IsNewlyGrown == true) newlyGrownTileIds.Add(tile.TileId);
+                    if (tile.FungalCell?.IsDying == true)        dyingTileIds.Add(tile.TileId);
+                    if (tile.FungalCell?.IsReceivingToxinDrop == true) toxinDropTileIds.Add(tile.TileId);
                 }
             }
-            catch { }
-            return false;
+
+            toastTilemap.ClearAllTiles();
+            moldTilemap.ClearAllTiles();
+            overlayTilemap.ClearAllTiles();
+
+            for (int x = 0; x < board.Width; x++)
+            {
+                for (int y = 0; y < board.Height; y++)
+                {
+                    var pos = new Vector3Int(x, y, 0);
+                    var tile = board.Grid[x, y];
+                    toastTilemap.SetTile(pos, baseTile);
+                    toastTilemap.SetTileFlags(pos, TileFlags.None);
+                    toastTilemap.SetColor(pos, Color.white);
+                    RenderFungalCellOverlay(tile, pos);
+                }
+            }
+
+            StartFadeInAnimations();
+            StartDeathAnimations();
+            StartToxinDropAnimations();
         }
+
+        public void ShowHoverEffect(Vector3Int cellPos) => hoverHelper?.ShowHoverEffect(cellPos);
+        public void ClearHoverEffect() => hoverHelper?.ClearHoverEffect();
+
+        public void HighlightPlayerTiles(int playerId, bool includeStartingTilePing = false)
+        {
+            var active = ActiveBoard; if (active == null) return;
+            var ids = active.AllTiles()
+                .Where(t => t.FungalCell != null && t.FungalCell.OwnerPlayerId == playerId && (t.FungalCell.CellType == FungalCellType.Alive || t.FungalCell.CellType == FungalCellType.Toxin))
+                .Select(t => t.TileId);
+            HighlightTiles(ids, pulseColorA, pulseColorB);
+            if (includeStartingTilePing) TriggerStartingTilePing(playerId);
+        }
+
+        public void HighlightTiles(IEnumerable<int> tileIds, Color? colorA = null, Color? colorB = null)
+        {
+            var active = ActiveBoard; if (active == null) return;
+            selectionHelper.HighlightTiles(tileIds, active, highlightedPositions);
+            if (highlightedPositions.Count == 0) return;
+            if (pulseHighlightCoroutine != null) StopCoroutine(pulseHighlightCoroutine);
+            pulseHighlightCoroutine = StartCoroutine(selectionHelper.PulseHighlightTiles(
+                highlightedPositions,
+                new Color(1f, 0f, 0.9f, 0f),
+                new Color(1f, 0f, 0.9f, 1f),
+                0.4f));
+        }
+
+        public void HighlightTiles(IDictionary<int, (Color colorA, Color colorB)> tileHighlights)
+        {
+            var active = ActiveBoard; if (active == null) return;
+            selectionHelper.HighlightTiles(tileHighlights, active, highlightedPositions);
+            if (pulseHighlightCoroutine != null)
+            {
+                StopCoroutine(pulseHighlightCoroutine);
+                pulseHighlightCoroutine = null;
+            }
+        }
+
+        public void ShowSelectedTiles(IEnumerable<int> tileIds, Color? selectedColor = null)
+        {
+            var active = ActiveBoard; if (active == null) return;
+            selectionHelper.ShowSelectedTiles(tileIds, active, selectedColor);
+        }
+        public void ClearSelectedTiles() => selectionHelper.ClearSelectedTiles();
+        public void ClearHighlights()
+        {
+            selectionHelper.ClearHighlights(highlightedPositions);
+            if (pulseHighlightCoroutine != null)
+            {
+                StopCoroutine(pulseHighlightCoroutine);
+                pulseHighlightCoroutine = null;
+            }
+        }
+        public void ClearAllHighlights()
+        {
+            ClearHighlights();
+            ClearSelectedTiles();
+        }
+
+        #region Starting Tile Ping
+        public void TriggerStartingTilePing(int playerId)
+        {
+            var active = ActiveBoard; if (active == null) return;
+            int? startId = GetPlayerStartingTile(playerId); if (!startId.HasValue) return;
+            var (sx, sy) = active.GetXYFromTileId(startId.Value);
+            Vector3Int center = new Vector3Int(sx, sy, 0);
+            var targetTilemap = ringHelper.ChoosePingTarget();
+            if (targetTilemap == null || solidHighlightTile == null) return;
+            if (startingTilePingCoroutine != null)
+            {
+                StopCoroutine(startingTilePingCoroutine);
+                ringHelper.ClearRingHighlight(lastPingTilemap != null ? lastPingTilemap : targetTilemap);
+                startingTilePingCoroutine = null;
+                EndAnimation();
+            }
+            lastPingTilemap = targetTilemap;
+            BeginAnimation();
+            startingTilePingCoroutine = StartCoroutine(RunStartingTilePing(center, targetTilemap));
+        }
+
+        private IEnumerator RunStartingTilePing(Vector3Int center, Tilemap targetTilemap)
+        {
+            float duration = 1.0f;
+            float expandPortion = 0.5f;
+            var active = ActiveBoard; float maxRadius = Mathf.Min(10f, Mathf.Max(active.Width, active.Height) * 0.25f);
+            float ringThickness = 0.6f;
+            yield return ringHelper.StartingTilePingAnimation(center, targetTilemap, duration, expandPortion, maxRadius, ringThickness);
+            EndAnimation();
+        }
+
+        private int? GetPlayerStartingTile(int playerId)
+        {
+            var active = ActiveBoard;
+            if (active != null && playerId >= 0 && playerId < active.Players.Count)
+                return active.Players[playerId].StartingTileId;
+            return null;
+        }
+        #endregion
+        #endregion
+    }
+
+    // Timing data container
+    public struct PostGrowthPhaseTiming
+    {
+        public float ReclaimRise;
+        public float ReclaimSwap;
+        public float ReclaimSettle;
+        public float ReclaimHold;
+        public float ReclaimLiteTotal;
+        public float ResistancePulseTotal;
+        public float HrtPulseTotal; // if different from resistance pulses (can reuse ResistancePulseTotal if zero)
     }
 }

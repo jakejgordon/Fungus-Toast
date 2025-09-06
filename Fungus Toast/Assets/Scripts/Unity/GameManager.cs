@@ -78,6 +78,13 @@ namespace FungusToast.Unity
         public bool IsTestingModeEnabled => testingModeEnabled;
         public int? TestingMycovariantId => testingMycovariantId;
 
+        private readonly Dictionary<int, List<int>> _regenReclaimBuffer = new();
+        private readonly List<int> _postGrowthResistanceTiles = new(); // buffered non-HRT resistances
+        private readonly List<int> _postGrowthHrtNewResistantTiles = new(); // tiles newly resistant via HRT
+        private HashSet<int> _resistantBaseline = new();
+        private bool _postGrowthSequenceRunning = false;
+        private bool _pendingDecayAfterSequence = false;
+
         private void Awake()
         {
             FungusToast.Core.Logging.CoreLogger.Log = Debug.Log;
@@ -112,12 +119,16 @@ namespace FungusToast.Unity
 
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
 
+            // Subscribe early so baseline capture runs BEFORE other PostGrowthPhase handlers (needed for Mimetic Resilience diff)
+            Board.PostGrowthPhase += OnPostGrowthPhase_StartSequence;
+            Board.PostGrowthPhaseCompleted += OnPostGrowthPhaseCompleted_CaptureHrt;
+
             GameRulesEventSubscriber.SubscribeAll(Board, players, rng, gameUIManager.GameLogRouter);
             GameUIEventSubscriber.Subscribe(Board, gameUIManager);
             AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
 
             // NEW: Subscribe to batch resistance applications for surge animations
-            Board.ResistanceAppliedBatch += OnResistanceAppliedBatch;
+            Board.ResistanceAppliedBatch += OnResistanceAppliedBatchBuffered; // replace direct animation
 
             InitializePlayersWithHumanFirst();
 
@@ -854,41 +865,96 @@ namespace FungusToast.Unity
             yield return null; // One frame delay
         }
 
-        private void OnResistanceAppliedBatch(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
+        private IEnumerator WaitForFadeInAnimationsToComplete()
         {
-            if (source == GrowthSource.MimeticResilience)
+            if (gridVisualizer == null) yield break;
+            while (gridVisualizer.HasActiveAnimations)
+                yield return null;
+        }
+
+        private void OnResistanceAppliedBatchBuffered(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
+        {
+            // Ensure visuals show new resistance state
+            gridVisualizer.RenderBoard(Board);
+            // Play immediate shield pulse for ALL sources (Mimetic Resilience no longer buffered)
+            float scale = 0.5f;
+            gridVisualizer.PlayResistancePulseBatchScaled(tileIds, scale);
+        }
+
+        private void OnPostGrowthPhase_StartSequence()
+        {
+            // snapshot baseline resistant tiles BEFORE HRT executes
+            _resistantBaseline = new HashSet<int>(Board.AllTiles()
+                .Where(t => t.FungalCell?.IsAlive == true && t.FungalCell.IsResistant)
+                .Select(t => t.TileId));
+        }
+
+        private void OnPostGrowthPhaseCompleted_CaptureHrt()
+        {
+            // identify newly resistant tiles (after HRT) excluding ones already resistant baseline
+            var allResistantNow = Board.AllTiles()
+                .Where(t => t.FungalCell?.IsAlive == true && t.FungalCell.IsResistant)
+                .Select(t => t.TileId)
+                .ToList();
+            _postGrowthHrtNewResistantTiles.Clear();
+            foreach (var id in allResistantNow)
             {
-                // Use a reduced scale (50% of original) to avoid overwhelming visuals during mass placements
-                gridVisualizer.PlayResistancePulseBatchScaled(tileIds, 0.5f);
+                if (!_resistantBaseline.Contains(id))
+                    _postGrowthHrtNewResistantTiles.Add(id);
+            }
+
+            if (!_postGrowthSequenceRunning)
+            {
+                _postGrowthSequenceRunning = true;
+                StartCoroutine(RunPostGrowthVisualSequence());
+            }
+            else
+            {
+                _pendingDecayAfterSequence = true; // safety
             }
         }
 
-        /// <summary>
-        /// Waits for all fade-in animations to complete to ensure newly grown cells are fully visible.
-        /// This is crucial when transitioning from fast-forward to interactive phases like drafts.
-        /// </summary>
-        private IEnumerator WaitForFadeInAnimationsToComplete()
+        private IEnumerator RunPostGrowthVisualSequence()
         {
-            // Check if the GridVisualizer has any active fade-in animations
-            if (gridVisualizer == null) yield break;
-            
-            // Wait for the duration of fade-in animations plus a small buffer
-            float fadeInDuration = UIEffectConstants.CellGrowthFadeInDurationSeconds;
-            float bufferTime = 0.1f; // Small buffer to ensure completion
-            
-            yield return new WaitForSeconds(fadeInDuration + bufferTime);
-            
-            // Additional safety: Clear all IsNewlyGrown flags to prevent any lingering transparency issues
-            foreach (var tile in Board.AllTiles())
+            // Phase 1: Regenerative Hyphae (already buffered via _regenReclaimBuffer)
+            if (_regenReclaimBuffer.Count > 0)
             {
-                if (tile.FungalCell?.IsNewlyGrown == true)
+                foreach (var kvp in _regenReclaimBuffer)
                 {
-                    tile.FungalCell.ClearNewlyGrownFlag();
+                    var ids = kvp.Value;
+                    if (ids.Count == 0) continue;
+                    // Simplified: always play the light-weight (lite) reclaim animation with a fixed scale multiplier.
+                    // Removed load-based scale dampening & threshold logic.
+                    gridVisualizer.PlayRegenerativeHyphaeReclaimBatch(ids, simplified: true, scaleMultiplier: 1f);
                 }
+                yield return gridVisualizer.WaitForAllAnimations();
+                _regenReclaimBuffer.Clear();
             }
-            
-            // Force a final render to ensure all cells are at full opacity
-            gridVisualizer.RenderBoard(Board);
+
+            // Phase 2: Resistance pulses (non-HRT buffered)
+            if (_postGrowthResistanceTiles.Count > 0)
+            {
+                gridVisualizer.PlayResistancePulseBatchScaled(_postGrowthResistanceTiles, 0.5f);
+                yield return gridVisualizer.WaitForAllAnimations();
+                _postGrowthResistanceTiles.Clear();
+            }
+
+            // Phase 3: HRT Spread (only if any player owns HRT mycovariant AND we have new tiles)
+            bool anyPlayerHasHrt = Board.Players.Any(p => p.GetMycovariant(MycovariantIds.HyphalResistanceTransferId) != null);
+            if (anyPlayerHasHrt && _postGrowthHrtNewResistantTiles.Count > 0)
+            {
+                // Visual: treat newly resistant cells like a scaled pulse (slightly different scale)
+                gridVisualizer.PlayResistancePulseBatchScaled(_postGrowthHrtNewResistantTiles, 0.35f);
+                yield return gridVisualizer.WaitForAllAnimations();
+            }
+
+            _postGrowthHrtNewResistantTiles.Clear();
+            _postGrowthSequenceRunning = false;
+            _pendingDecayAfterSequence = false;
+
+            // Proceed to decay phase now that all post-growth visuals are done
+            StartDecayPhase();
         }
+        // ...existing code...
     }
 }
