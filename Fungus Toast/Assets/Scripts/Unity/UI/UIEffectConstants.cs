@@ -281,5 +281,11 @@ namespace FungusToast.Unity.UI
         /// Passed directly to PlayRegenerativeHyphaeReclaimBatch when explicit timing is desired.
         /// </summary>
         public const float RegenerativeHyphaeReclaimTotalDurationSeconds = 2.0f;
+
+        // ==================== DRAFT CAMERA RECENTER ====================
+        /// <summary>
+        /// Duration (in seconds) for smooth camera restore to initial framing at draft start.
+        /// </summary>
+        public const float DraftCameraRecenteringDurationSeconds = 0.5f;
     }
 }

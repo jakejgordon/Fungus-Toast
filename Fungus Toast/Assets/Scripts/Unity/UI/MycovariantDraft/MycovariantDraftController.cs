@@ -46,6 +46,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private DraftUIState uiState = DraftUIState.Idle;
 
+        private bool _cameraRecenteredThisDraftPhase = false;
+
         // Public entry point: starts draft phase
         public void StartDraft(
             List<Player> players,
@@ -383,6 +385,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             interactionBlocker.blocksRaycasts = true;
             interactionBlocker.alpha = 0.8f;
             uiState = DraftUIState.Idle;
+
+            // Smoothly restore initial camera framing only once per draft start
+            if (!_cameraRecenteredThisDraftPhase && GameManager.Instance?.cameraCenterer != null)
+            {
+                _cameraRecenteredThisDraftPhase = true;
+                GameManager.Instance.cameraCenterer.RestoreInitialFramingSmooth(FungusToast.Unity.UI.UIEffectConstants.DraftCameraRecenteringDurationSeconds);
+            }
         }
 
         private void HideDraftUI()

@@ -15,9 +15,27 @@ namespace FungusToast.Unity.Cameras
 
         private Coroutine moveCoroutine;
 
+        // Cache of the initial framing so it can be restored (e.g., at draft start)
+        private bool _initialFramingCaptured = false;
+        private Vector3 _initialPosition;
+        private float _initialOrthographicSize;
+
         void Start()
         {
             CenterCameraInstant();
+            CaptureInitialFraming();
+        }
+
+        /// <summary>
+        /// Capture current camera position & size as the reference initial framing.
+        /// Call after first board render & UI layout.
+        /// </summary>
+        public void CaptureInitialFraming()
+        {
+            if (Camera.main == null) return;
+            _initialFramingCaptured = true;
+            _initialPosition = Camera.main.transform.position;
+            _initialOrthographicSize = Camera.main.orthographicSize;
         }
 
         public void CenterCameraInstant()
@@ -33,7 +51,15 @@ namespace FungusToast.Unity.Cameras
             if (moveCoroutine != null)
                 StopCoroutine(moveCoroutine);
 
-            moveCoroutine = StartCoroutine(SmoothMove());
+            moveCoroutine = StartCoroutine(SmoothMove(moveDuration));
+        }
+
+        public void RestoreInitialFramingSmooth(float duration)
+        {
+            if (!_initialFramingCaptured || Camera.main == null) return;
+            if (moveCoroutine != null)
+                StopCoroutine(moveCoroutine);
+            moveCoroutine = StartCoroutine(SmoothMoveTo(_initialPosition, _initialOrthographicSize, duration));
         }
 
         private void CalculateTarget()
@@ -68,18 +94,17 @@ namespace FungusToast.Unity.Cameras
             Camera.main.orthographicSize = targetOrthographicSize;
         }
 
-        private IEnumerator SmoothMove()
+        private IEnumerator SmoothMove(float duration)
         {
             Vector3 startPosition = Camera.main.transform.position;
             float startSize = Camera.main.orthographicSize;
 
             float elapsed = 0f;
 
-            while (elapsed < moveDuration)
+            while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / moveDuration);
-
+                float t = Mathf.Clamp01(elapsed / duration);
                 // Smooth interpolation (ease in/out)
                 t = t * t * (3f - 2f * t);
 
@@ -89,9 +114,26 @@ namespace FungusToast.Unity.Cameras
                 yield return null;
             }
 
-            // Ensure final exact position and size
             Camera.main.transform.position = targetPosition;
             Camera.main.orthographicSize = targetOrthographicSize;
+        }
+
+        private IEnumerator SmoothMoveTo(Vector3 endPos, float endSize, float duration)
+        {
+            Vector3 startPosition = Camera.main.transform.position;
+            float startSize = Camera.main.orthographicSize;
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                t = t * t * (3f - 2f * t);
+                Camera.main.transform.position = Vector3.Lerp(startPosition, endPos, t);
+                Camera.main.orthographicSize = Mathf.Lerp(startSize, endSize, t);
+                yield return null;
+            }
+            Camera.main.transform.position = endPos;
+            Camera.main.orthographicSize = endSize;
         }
     }
 

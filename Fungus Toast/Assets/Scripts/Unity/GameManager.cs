@@ -151,6 +151,9 @@ namespace FungusToast.Unity
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
             mycovariantDraftController?.gameObject.SetActive(false);
 
+            // Capture initial camera framing after first render & UI activation
+            cameraCenterer?.CaptureInitialFraming();
+
             // === Initialize Game Log ===
             if (gameUIManager.GameLogManager != null && gameUIManager.GameLogPanel != null)
             {
