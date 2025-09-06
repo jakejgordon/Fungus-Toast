@@ -343,16 +343,40 @@ namespace FungusToast.Core.Players
         }
         public void RemoveControlledTile(int id) => ControlledTileIds.Remove(id);
 
-        public int RollAnabolicInversionBonus(List<Player> allPlayers, System.Random rng, GameBoard board)
+        public int RollAnabolicInversionBonus(List<Player> allPlayers, System.Random rng, GameBoard board, IReadOnlyDictionary<int,int>? precomputedLivingCellCounts = null)
         {
             if (!PlayerMutations.TryGetValue(MutationIds.AnabolicInversion, out var pm) || pm.CurrentLevel <= 0)
                 return 0;
 
-            int myLivingCells = board.GetAllCellsOwnedBy(PlayerId).Count(c => c.IsAlive);
+            // Use precomputed counts if supplied; otherwise fall back to per-player enumeration
+            int myLivingCells;
+            if (precomputedLivingCellCounts != null)
+            {
+                precomputedLivingCellCounts.TryGetValue(PlayerId, out myLivingCells);
+            }
+            else
+            {
+                myLivingCells = board.GetAllCellsOwnedBy(PlayerId).Count(c => c.IsAlive);
+            }
+
             var others = allPlayers.Where(p => p != this).ToList();
             if (others.Count == 0) return 0;
 
-            float avgOthersLivingCells = (float)others.Average(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive));
+            float avgOthersLivingCells;
+            if (precomputedLivingCellCounts != null)
+            {
+                float sum = 0f;
+                foreach (var op in others)
+                {
+                    precomputedLivingCellCounts.TryGetValue(op.PlayerId, out int val);
+                    sum += val;
+                }
+                avgOthersLivingCells = sum / others.Count;
+            }
+            else
+            {
+                avgOthersLivingCells = (float)others.Average(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive));
+            }
             if (avgOthersLivingCells <= 0f) avgOthersLivingCells = 1f;
 
             float ratio = Math.Clamp(myLivingCells / avgOthersLivingCells, 0f, 1f);

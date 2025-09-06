@@ -598,13 +598,13 @@ namespace FungusToast.Core.Phases
             List<Player> allPlayers,
             GameBoard board,
             Random rng,
-            ISimulationObserver observer)
+            ISimulationObserver observer,
+            IReadOnlyDictionary<int,int> livingCellCounts)
         {
             int level = player.GetMutationLevel(MutationIds.AnabolicInversion);
             if (level <= 0) return;
 
-            // Use the existing RollAnabolicInversionBonus logic
-            int bonusPoints = player.RollAnabolicInversionBonus(allPlayers, rng, board);
+            int bonusPoints = player.RollAnabolicInversionBonus(allPlayers, rng, board, livingCellCounts);
             if (bonusPoints > 0)
             {
                 player.MutationPoints += bonusPoints;
@@ -632,9 +632,17 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver observer)
         {
+            // Precompute living cell counts once for all players to avoid repeated enumeration
+            var livingCounts = new Dictionary<int,int>(players.Count);
+            foreach (var p in players)
+            {
+                int count = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive);
+                livingCounts[p.PlayerId] = count;
+            }
+
             foreach (var player in players)
             {
-                TryApplyAnabolicInversion(player, players, board, rng, observer);
+                TryApplyAnabolicInversion(player, players, board, rng, observer, livingCounts);
             }
         }
     }
