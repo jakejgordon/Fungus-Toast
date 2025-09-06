@@ -60,10 +60,10 @@ namespace FungusToast.Core.Config
         public const int AdaptiveExpressionMaxLevel = 5;
 
         // Mycotoxin Catabolism (Tier 2 GeneticDrift)
-        public const float MycotoxinCatabolismCleanupChancePerLevel = 0.025f;
+        public const float MycotoxinCatabolismCleanupChancePerLevel = 0.032f;
         public const float MycotoxinCatabolismMutationPointChancePerLevel = 0.08f;
         public const int MycotoxinCatabolismMaxMutationPointsPerRound = 3;
-        public const int MycotoxinCatabolismMaxLevel = 10;
+        public const int MycotoxinCatabolismMaxLevel = 8;
 
         // Hyphal Surge (Tier 2 MycelialSurges)
         public const float HyphalSurgeEffectPerLevel = .009f;

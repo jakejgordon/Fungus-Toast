@@ -45,7 +45,7 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.MycotoxinCatabolism,
                 name: "Mycotoxin Catabolism",
                 description: $"At the start of each growth phase, each level grants a {helper.FormatPercent(GameBalance.MycotoxinCatabolismCleanupChancePerLevel, 1)} chance for each living fungal cell to metabolize each orthogonally adjacent toxin tile. " +
-                             $"Each toxin tile metabolized this way grants a {helper.FormatPercent(GameBalance.MycotoxinCatabolismMutationPointChancePerLevel, 1)} chance to gain a bonus mutation point, up to one point per tile (multiple points possible per turn, depending on the number of toxin tiles catabolized).",
+                             $"Each toxin tile metabolized this way grants a {helper.FormatPercent(GameBalance.MycotoxinCatabolismMutationPointChancePerLevel, 1)} chance to gain a bonus mutation point, up to {GameBalance.MycotoxinCatabolismMaxMutationPointsPerRound} per round.",
                 flavorText: "Evolved metabolic pathways enable the breakdown of toxic compounds, reclaiming nutrients from chemical hazards and occasionally triggering adaptive bursts of mutation.",
                 type: MutationType.ToxinCleanupAndMPBonus,
                 effectPerLevel: GameBalance.MycotoxinCatabolismCleanupChancePerLevel,
