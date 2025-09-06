@@ -280,6 +280,6 @@ namespace FungusToast.Unity.UI
         /// Total target duration (in seconds) for a Regenerative Hyphae reclaim animation batch when using the simplified (lite) animation.
         /// Passed directly to PlayRegenerativeHyphaeReclaimBatch when explicit timing is desired.
         /// </summary>
-        public const float RegenerativeHyphaeReclaimTotalDurationSeconds = 3.2f;
+        public const float RegenerativeHyphaeReclaimTotalDurationSeconds = 2.0f;
     }
 }

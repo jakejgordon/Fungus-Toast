@@ -79,6 +79,7 @@ namespace FungusToast.Core.Board
         public delegate void PreGrowthPhaseEventHandler();
         // NEW: Batch resistance application (e.g., Mimetic Resilience placements)
         public delegate void ResistanceAppliedBatchEventHandler(int playerId, GrowthSource source, IReadOnlyList<int> tileIds);
+        public delegate void RegenerativeHyphaeReclaimedEventHandler(int playerId, int tileId); // NEW for Unity visuals
 
         // 2. Events (public, so other components can subscribe)
         public event CellColonizedEventHandler? CellColonized;
@@ -109,6 +110,7 @@ namespace FungusToast.Core.Board
         public event PreGrowthPhaseEventHandler? PreGrowthPhase;
         // NEW: Batch resistance event
         public event ResistanceAppliedBatchEventHandler? ResistanceAppliedBatch;
+        public event RegenerativeHyphaeReclaimedEventHandler? RegenerativeHyphaeReclaimed; // NEW for Unity visuals
 
         // 3. Helper methods to invoke (recommended: protected virtual, as in standard .NET pattern)
         protected virtual void OnCellColonized(int playerId, int tileId, GrowthSource source) =>
@@ -157,8 +159,8 @@ namespace FungusToast.Core.Board
         protected virtual void OnCreepingMoldMove(int playerId, int fromTileId, int toTileId) =>
             CreepingMoldMove?.Invoke(playerId, fromTileId, toTileId);
 
-        protected virtual void OnJettingMyceliumCatabolicGrowth(int playerId, int tileId) =>
-            JettingMyceliumCatabolicGrowth?.Invoke(playerId, tileId);
+        protected virtual void OnToxinExpired(ToxinExpiredEventArgs e) =>
+            ToxinExpired?.Invoke(this, e);
 
         public virtual void OnPostGrowthPhase() =>
             PostGrowthPhase?.Invoke();
@@ -527,12 +529,14 @@ namespace FungusToast.Core.Board
                     int? toxinOwnerId = cell.OwnerPlayerId;
                     
                     // Fire the toxin expired event before removing the cell
-                    OnToxinExpired(new ToxinExpiredEventArgs(cell.TileId, toxinOwnerId));
+                    RaiseToxinExpired(new ToxinExpiredEventArgs(cell.TileId, toxinOwnerId)); // invoke toxin expired event
                     
                     tile?.RemoveFungalCell(); // Clear the cell entirely from the board
                 }
             }
         }
+
+        protected virtual void RaiseToxinExpired(ToxinExpiredEventArgs e) => ToxinExpired?.Invoke(this, e);
 
         public void IncrementRound()
         {
@@ -799,7 +803,7 @@ namespace FungusToast.Core.Board
                     OnCellInfested(ownerId, cell.TileId, oldOwnerId, source);
                 else
                     OnCellColonized(ownerId, cell.TileId, source); // Unusual, but treat as colonization
-            }
+            }            
             else if (oldCell.IsToxin)
             {
                 int oldOwnerId = oldCell.OwnerPlayerId.GetValueOrDefault(-1);
@@ -866,122 +870,93 @@ namespace FungusToast.Core.Board
                 return false;
             }
 
-            // Store the old cell state before reclaiming
             var oldOwnerPlayerId = cell.OwnerPlayerId ?? -1;
-            
-            // Perform the reclamation (this makes the cell alive and increments ReclaimCount)
             cell.Reclaim(playerId, reclaimGrowthSource);
-
-            // VISUAL HOOK: mark reclaimed cells for fade-in and dimming, stamp round
             cell.MarkAsNewlyGrown();
             cell.SetBirthRound(CurrentRound);
-            
-            // Update board state
-            tileIdToCell[cell.TileId] = cell; // Ensure mapping is updated
+            tileIdToCell[cell.TileId] = cell;
             Players[playerId].AddControlledTile(tileId);
-            
-            // Fire the reclaim event directly - don't go through PlaceFungalCell
-            // since the cell is already in place and we know this is a reclamation
             OnCellReclaimed(playerId, cell.TileId, reclaimGrowthSource);
             OnDeadCellReclaim?.Invoke(cell, playerId);
-            
+            if (reclaimGrowthSource == GrowthSource.RegenerativeHyphae)
+            {
+                OnRegenerativeHyphaeReclaimed(playerId, cell.TileId);
+            }
             return true;
         }
 
-        public virtual void OnNecrophyticBloomActivatedEvent() =>
-            NecrophyticBloomActivatedEvent?.Invoke();
+        protected virtual void OnRegenerativeHyphaeReclaimed(int playerId, int tileId) =>
+            RegenerativeHyphaeReclaimed?.Invoke(playerId, tileId);
 
-        public virtual void OnMutationPhaseStart() =>
-            MutationPhaseStart?.Invoke();
-
-        public virtual void OnToxinPlaced(ToxinPlacedEventArgs e) =>
-            ToxinPlaced?.Invoke(this, e);
-
-        public virtual void OnToxinExpired(ToxinExpiredEventArgs e) =>
-            ToxinExpired?.Invoke(this, e);
-
-        public virtual void OnCatabolicRebirth(CatabolicRebirthEventArgs e) =>
-            CatabolicRebirth?.Invoke(this, e);
-
-        public virtual void OnPreGrowthPhase() =>
-            PreGrowthPhase?.Invoke();
-
-        /// <summary>
-        /// Attempts to take over a cell at the given tile for the specified player.
-        /// Handles all board state, player control, and event firing.
-        /// Use this instead of calling FungalCell.Takeover directly.
-        /// </summary>
-        /// <param name="tileId">The tile to take over.</param>
-        /// <param name="newOwnerPlayerId">The player taking over the cell.</param>
-        /// <param name="allowToxin">Whether to allow takeover of toxin cells.</param>
-        /// <param name="growthSource">The source/reason for this takeover (e.g., HyphalVectoring, MimeticResilience)</param>
-        /// <param name="players">List of players (needed for Reclamation Rhizomorphs effect)</param>
-        /// <param name="rng">Random number generator (needed for Reclamation Rhizomorphs effect)</param>
-        /// <param name="observer">Simulation observer (needed for tracking)</param>
-        /// <returns>The result of the takeover attempt.</returns>
-        public FungalCellTakeoverResult TakeoverCell(
-            int tileId,
-            int newOwnerPlayerId,
-            bool allowToxin,
-            GrowthSource growthSource,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver observer)
-        {
-            var cell = GetTileById(tileId)?.FungalCell;
-            if (cell == null)
-                return FungalCellTakeoverResult.Invalid;
-            
-            var result = cell.Takeover(newOwnerPlayerId, growthSource, allowToxin);
-            
-            if (result == FungalCellTakeoverResult.Infested ||
-                result == FungalCellTakeoverResult.Reclaimed ||
-                result == FungalCellTakeoverResult.CatabolicGrowth)
-            {
-                PlaceFungalCell(cell);
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Public method to invoke the OnDeadCellReclaim event from outside this class.
-        /// </summary>
-        public void InvokeDeadCellReclaim(FungalCell cell, int playerId)
-        {
-            OnDeadCellReclaim?.Invoke(cell, playerId);
-        }
-
-        /// <summary>
-        /// Public method to fire CellPoisoned event with ability source information.
-        /// </summary>
-        public void FireCellPoisonedEvent(int playerId, int tileId, int oldOwnerId, GrowthSource source = GrowthSource.Manual)
-        {
-            OnCellPoisoned(playerId, tileId, oldOwnerId, source);
-        }
-
-        /// <summary>
-        /// Updates the cached occupied tile ratio. Should be called at the start of the decay phase.
-        /// </summary>
-        public void UpdateCachedOccupiedTileRatio()
-        {
-            CachedOccupiedTileRatio = GetOccupiedTileRatio();
-        }
-
-        /// <summary>
-        /// Creates and caches the decay phase context for optimized competitive targeting.
-        /// Should be called at the start of the decay phase.
-        /// </summary>
+        // === Compatibility / bridging methods added for refactored callers ===
+        public void OnMutationPhaseStart() => MutationPhaseStart?.Invoke();
+        public void OnPreGrowthPhase() => PreGrowthPhase?.Invoke();
+        public void UpdateCachedOccupiedTileRatio() => CachedOccupiedTileRatio = GetOccupiedTileRatio();
         public void UpdateCachedDecayPhaseContext()
         {
-            CachedDecayPhaseContext = new DecayPhaseContext(this, Players);
+            if (CachedDecayPhaseContext == null)
+            {
+                CachedDecayPhaseContext = new DecayPhaseContext(this, Players);
+            }
         }
+        public void ClearCachedDecayPhaseContext() => CachedDecayPhaseContext = null;
+        public void OnNecrophyticBloomActivatedEvent() => NecrophyticBloomActivatedEvent?.Invoke();
+        public void OnCatabolicRebirth(CatabolicRebirthEventArgs e) => CatabolicRebirth?.Invoke(this, e);
+        public void OnToxinPlaced(ToxinPlacedEventArgs e) => ToxinPlaced?.Invoke(this, e);
+        public void FireCellPoisonedEvent(int playerId, int tileId, int oldOwnerId, GrowthSource source) => OnCellPoisoned(playerId, tileId, oldOwnerId, source);
 
         /// <summary>
-        /// Clears the cached decay phase context. Should be called at the end of the decay phase.
+        /// Unified cell takeover helper used by several effect processors. Handles replacement logic and fires appropriate events via PlaceFungalCell.
         /// </summary>
-        public void ClearCachedDecayPhaseContext()
+        /// <returns>Result enum describing what happened.</returns>
+        public FungalCellTakeoverResult TakeoverCell(int tileId, int newOwnerPlayerId, bool allowToxin, GrowthSource source, List<Player> players, Random rng, ISimulationObserver observer)
         {
-            CachedDecayPhaseContext = null;
+            var tile = GetTileById(tileId);
+            if (tile == null) return FungalCellTakeoverResult.Invalid;
+            var existing = tile.FungalCell;
+
+            // Empty tile should not route through takeover (callers normally guard) – treat as invalid for safety
+            if (existing == null) return FungalCellTakeoverResult.Invalid;
+
+            // Resistant cells cannot be replaced
+            if (existing.IsResistant)
+                return FungalCellTakeoverResult.InvalidBecauseResistant;
+
+            // Already owned living cell
+            if (existing.IsAlive && existing.OwnerPlayerId == newOwnerPlayerId)
+                return FungalCellTakeoverResult.AlreadyOwned;
+
+            FungalCellTakeoverResult result;
+
+            if (existing.IsAlive)
+            {
+                // Enemy living cell becomes infestation
+                var newCell = new FungalCell(newOwnerPlayerId, tileId, source);
+                PlaceFungalCell(newCell);
+                result = FungalCellTakeoverResult.Infested;
+            }
+            else if (existing.IsDead)
+            {
+                // Reclaim dead cell (own or enemy dead counts as reclaim in current analytics)
+                var newCell = new FungalCell(newOwnerPlayerId, tileId, source);
+                PlaceFungalCell(newCell);
+                result = FungalCellTakeoverResult.Reclaimed;
+            }
+            else if (existing.IsToxin)
+            {
+                // Replace toxin with living cell if allowed
+                if (!allowToxin) return FungalCellTakeoverResult.Invalid;
+                var newCell = new FungalCell(newOwnerPlayerId, tileId, source);
+                PlaceFungalCell(newCell);
+                // Map toxin replacement to CatabolicGrowth bucket (legacy semantic – distinct from Infested/Reclaimed)
+                result = FungalCellTakeoverResult.CatabolicGrowth;
+            }
+            else
+            {
+                return FungalCellTakeoverResult.Invalid;
+            }
+
+            return result;
         }
     }
 }

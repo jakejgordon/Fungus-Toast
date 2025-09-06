@@ -91,10 +91,8 @@ namespace FungusToast.Unity.Grid
         public void Initialize(GameBoard board) => this.board = board;
 
         // === Public wrappers for extracted reclaim & surgical animations ===
-        public void PlayRegenerativeHyphaeReclaimBatch(IReadOnlyList<int> tileIds, bool simplified, float scaleMultiplier, float explicitTotalSeconds)
-            => _reclaimAnimator.PlayBatch(tileIds, simplified, scaleMultiplier, explicitTotalSeconds);
-        public void PlayRegenerativeHyphaeReclaimBatch(IReadOnlyList<int> tileIds, bool simplified, float scaleMultiplier)
-            => _reclaimAnimator.PlayBatch(tileIds, simplified, scaleMultiplier, UIEffectConstants.RegenerativeHyphaeReclaimTotalDurationSeconds);
+        public void PlayRegenerativeHyphaeReclaimBatch(IReadOnlyList<int> tileIds, float scaleMultiplier, float explicitTotalSeconds)
+            => _reclaimAnimator.PlayBatch(tileIds, scaleMultiplier, explicitTotalSeconds);
         public IEnumerator SurgicalInoculationArcAnimation(int playerId, int targetTileId, Sprite sprite)
             => _surgicalAnimator.RunArcAndDrop(playerId, targetTileId, sprite);
 

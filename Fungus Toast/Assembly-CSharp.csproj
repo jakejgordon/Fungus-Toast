@@ -77,6 +77,7 @@
     <Compile Include="Assets\Scripts\Unity\Phases\DecayPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationNodeUI.cs" />
     <Compile Include="Assets\Scripts\Unity\Cameras\CameraControls.cs" />
+    <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.SurgicalInoculation.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantTooltipPanel.cs" />
     <Compile Include="Assets\Scripts\Unity\Phases\GrowthPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipProviders\HomeostaticHarmonyTooltipProvider.cs" />
@@ -89,6 +90,7 @@
     <Compile Include="Assets\Scripts\Unity\Grid\Helpers\SelectionHighlightHelper.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridFiller.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationManager.cs" />
+    <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.Reclaim.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PhaseBanner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantArtRepository.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipTrigger.cs" />

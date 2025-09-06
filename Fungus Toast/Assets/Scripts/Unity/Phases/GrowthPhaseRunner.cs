@@ -1,4 +1,4 @@
-﻿using FungusToast.Core;
+using FungusToast.Core;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Phases;
@@ -61,6 +61,9 @@ namespace FungusToast.Unity.Phases
 
                 // Apply Hyphal Resistance Transfer effect after growth phase
                 MycovariantEffectProcessor.OnPostGrowthPhase_HyphalResistanceTransfer(board, board.Players, rng, observer);
+
+                // NOW signal completion so listeners (e.g. GameManager OnPostGrowthPhaseCompleted_CaptureHrt) run
+                board.OnPostGrowthPhaseCompleted();
 
                 // Sort player summary rows at the end of growth phase
                 GameManager.Instance.GameUI.RightSidebar?.SortPlayerSummaryRows(board.Players);

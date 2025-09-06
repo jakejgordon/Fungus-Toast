@@ -129,6 +129,8 @@ namespace FungusToast.Unity
 
             // NEW: Subscribe to batch resistance applications for surge animations
             Board.ResistanceAppliedBatch += OnResistanceAppliedBatchBuffered; // replace direct animation
+            // Buffer Regenerative Hyphae reclaims via generic CellReclaimed event (filter by source)
+            Board.CellReclaimed += OnCellReclaimed_RegenerativeHyphae;
 
             InitializePlayersWithHumanFirst();
 
@@ -881,6 +883,17 @@ namespace FungusToast.Unity
             gridVisualizer.PlayResistancePulseBatchScaled(tileIds, scale);
         }
 
+        private void OnCellReclaimed_RegenerativeHyphae(int playerId, int tileId, GrowthSource source)
+        {
+            if (source != GrowthSource.RegenerativeHyphae) return;
+            if (!_regenReclaimBuffer.TryGetValue(playerId, out var list))
+            {
+                list = new List<int>();
+                _regenReclaimBuffer[playerId] = list;
+            }
+            list.Add(tileId);
+            // Debug.Log($"[RegenerativeHyphae] Buffered reclaim p={playerId} tile={tileId} (count={list.Count})");
+        }
         private void OnPostGrowthPhase_StartSequence()
         {
             // snapshot baseline resistant tiles BEFORE HRT executes
@@ -923,9 +936,7 @@ namespace FungusToast.Unity
                 {
                     var ids = kvp.Value;
                     if (ids.Count == 0) continue;
-                    // Simplified: always play the light-weight (lite) reclaim animation with a fixed scale multiplier.
-                    // Removed load-based scale dampening & threshold logic.
-                    gridVisualizer.PlayRegenerativeHyphaeReclaimBatch(ids, simplified: true, scaleMultiplier: 1f);
+                    gridVisualizer.PlayRegenerativeHyphaeReclaimBatch(ids, scaleMultiplier: 1f, explicitTotalSeconds: UIEffectConstants.RegenerativeHyphaeReclaimTotalDurationSeconds);
                 }
                 yield return gridVisualizer.WaitForAllAnimations();
                 _regenReclaimBuffer.Clear();

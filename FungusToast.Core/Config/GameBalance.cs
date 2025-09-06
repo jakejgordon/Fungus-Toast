@@ -125,7 +125,7 @@ namespace FungusToast.Core.Config
         public const float CompetitiveAntagonismNecrophyticBloomSmallerColonyReduction = 0.75f; // 75% smaller colony dead cell reduction
 
         // Regenerative Hyphae (Tier 4 Growth)
-        public const float RegenerativeHyphaeReclaimChance = 0.021f;
+        public const float RegenerativeHyphaeReclaimChance = 0.03f;
         public const int RegenerativeHyphaeMaxLevel = 5;
 
         // Creeping Mold (Tier 4 Growth)
