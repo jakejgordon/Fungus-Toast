@@ -177,6 +177,7 @@ namespace FungusToast.Core.Phases
 
             int maxPointsPerRound = GameBalance.MycotoxinCatabolismMaxMutationPointsPerRound;
             int pointsSoFar = roundContext.GetEffectCount(player.PlayerId, "CatabolizedMP");
+            int bonusPointsEarned = 0; // newly added points this invocation
 
             foreach (var cell in board.GetAllCellsOwnedBy(player.PlayerId))
             {
@@ -198,6 +199,7 @@ namespace FungusToast.Core.Phases
                             player.MutationPoints += 1;
                             roundContext.IncrementEffectCount(player.PlayerId, "CatabolizedMP");
                             pointsSoFar++;
+                            bonusPointsEarned++;
 
                             if (pointsSoFar >= maxPointsPerRound)
                                 break;
@@ -211,6 +213,10 @@ namespace FungusToast.Core.Phases
             if (toxinsMetabolized > 0)
             {
                 observer.RecordToxinCatabolism(player.PlayerId, toxinsMetabolized, pointsSoFar);
+            }
+            if (bonusPointsEarned > 0)
+            {
+                observer.RecordMutationPointIncome(player.PlayerId, bonusPointsEarned);
             }
 
             return toxinsMetabolized;
@@ -500,9 +506,11 @@ namespace FungusToast.Core.Phases
             {
                 if (rng.NextDouble() >= baseChance)
                 {
-                    // Failed to trigger - award 2 mutation points as consolation
-                    player.MutationPoints += GameBalance.OntogenicRegressionFailureConsolationPoints;
-                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, GameBalance.OntogenicRegressionFailureConsolationPoints);
+                    // Failed to trigger - award consolation points (record as income)
+                    int failureBonus = GameBalance.OntogenicRegressionFailureConsolationPoints;
+                    player.MutationPoints += failureBonus;
+                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, failureBonus);
+                    observer.RecordMutationPointIncome(player.PlayerId, failureBonus);
                     continue;
                 }
 
@@ -514,9 +522,10 @@ namespace FungusToast.Core.Phases
 
                 if (!tier1Mutations.Any())
                 {
-                    // Can't find mutations to devolve - award 2 mutation points as consolation
-                    player.MutationPoints += GameBalance.OntogenicRegressionFailureConsolationPoints;
-                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, GameBalance.OntogenicRegressionFailureConsolationPoints);
+                    int failureBonus = GameBalance.OntogenicRegressionFailureConsolationPoints;
+                    player.MutationPoints += failureBonus;
+                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, failureBonus);
+                    observer.RecordMutationPointIncome(player.PlayerId, failureBonus);
                     continue;
                 }
 
@@ -528,9 +537,10 @@ namespace FungusToast.Core.Phases
 
                 if (!targetMutations.Any())
                 {
-                    // Can't find target mutations to upgrade - award 2 mutation points as consolation
-                    player.MutationPoints += GameBalance.OntogenicRegressionFailureConsolationPoints;
-                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, GameBalance.OntogenicRegressionFailureConsolationPoints);
+                    int failureBonus = GameBalance.OntogenicRegressionFailureConsolationPoints;
+                    player.MutationPoints += failureBonus;
+                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, failureBonus);
+                    observer.RecordMutationPointIncome(player.PlayerId, failureBonus);
                     continue;
                 }
 
@@ -578,7 +588,9 @@ namespace FungusToast.Core.Phases
                 player.MutationPoints += 1;
             }
 
+            // Record detailed bonus source and aggregate income
             observer.RecordAdaptiveExpressionBonus(player.PlayerId, bonusPoints);
+            observer.RecordMutationPointIncome(player.PlayerId, bonusPoints);
         }
 
         public static void TryApplyAnabolicInversion(
@@ -597,6 +609,7 @@ namespace FungusToast.Core.Phases
             {
                 player.MutationPoints += bonusPoints;
                 observer.RecordAnabolicInversionBonus(player.PlayerId, bonusPoints);
+                observer.RecordMutationPointIncome(player.PlayerId, bonusPoints);
             }
         }
 
