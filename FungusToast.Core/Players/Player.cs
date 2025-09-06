@@ -348,45 +348,43 @@ namespace FungusToast.Core.Players
             if (!PlayerMutations.TryGetValue(MutationIds.AnabolicInversion, out var pm) || pm.CurrentLevel <= 0)
                 return 0;
 
-            // Get living cells for this player
             int myLivingCells = board.GetAllCellsOwnedBy(PlayerId).Count(c => c.IsAlive);
             var others = allPlayers.Where(p => p != this).ToList();
             if (others.Count == 0) return 0;
 
-            // Get living cells for other players
             float avgOthersLivingCells = (float)others.Average(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive));
             if (avgOthersLivingCells <= 0f) avgOthersLivingCells = 1f;
 
-            float ratio = Math.Max(0f, Math.Min(1f, myLivingCells / avgOthersLivingCells)); // clamp between 0 and 1
+            float ratio = Math.Clamp(myLivingCells / avgOthersLivingCells, 0f, 1f);
             float chance = (1f - ratio) + pm.CurrentLevel * GameBalance.AnabolicInversionGapBonusPerLevel;
 
             if (rng.NextDouble() < chance)
             {
-                // Weighted random selection: the further behind you are, the higher chance of getting 5 MP
-                // ratio = 0 means you're way behind (get higher MP), ratio = 1 means you're ahead (get lower MP)
                 float weight = 1f - ratio; // 0 = ahead, 1 = behind
-                
-                // Create weighted distribution: higher weight = higher chance of 5 MP
                 float rand = (float)rng.NextDouble();
                 int bonus;
-                
-                if (rand < weight * 0.6f) // 60% of weight goes to 4-5 MP
+
+                float highCutoff = weight * GameBalance.AnabolicInversionHighRewardCutoff;
+                float midCutoff  = weight * GameBalance.AnabolicInversionMidRewardCutoff;
+                float lowCutoff  = weight * GameBalance.AnabolicInversionLowRewardCutoff;
+
+                if (rand < highCutoff)
                 {
                     bonus = rng.NextDouble() < weight ? 5 : 4;
                 }
-                else if (rand < weight * 0.8f) // 20% of weight goes to 3 MP
+                else if (rand < midCutoff)
                 {
                     bonus = 3;
                 }
-                else if (rand < weight * 0.9f) // 10% of weight goes to 2 MP
+                else if (rand < lowCutoff)
                 {
                     bonus = 2;
                 }
-                else // Remaining goes to 1 MP
+                else
                 {
                     bonus = 1;
                 }
-                
+
                 return bonus;
             }
 

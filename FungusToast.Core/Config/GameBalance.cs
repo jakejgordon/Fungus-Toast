@@ -102,6 +102,10 @@ namespace FungusToast.Core.Config
         public const float AnabolicInversionGapBonusPerLevel = 0.30f;
         public const int AnabolicInversionMaxMutationPointsPerRound = 4; // Cap on Anabolic Inversion points per round
         public const int AnabolicInversionMaxLevel = 3;
+        // New distribution threshold constants (fractions of weight span)
+        public const float AnabolicInversionHighRewardCutoff = 0.6f; // boundary before 4-5 MP bucket ends
+        public const float AnabolicInversionMidRewardCutoff  = 0.8f; // boundary before 3 MP bucket ends
+        public const float AnabolicInversionLowRewardCutoff  = 0.9f; // boundary before 2 MP bucket ends
 
         // Mycotropic Induction (Tier 3 Growth)
         public const float MycotropicInductionEffectPerLevel = 0.25f;
