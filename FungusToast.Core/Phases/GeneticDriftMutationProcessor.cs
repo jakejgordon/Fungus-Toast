@@ -243,12 +243,14 @@ namespace FungusToast.Core.Phases
 
         /// <summary>
         /// Returns the damping factor for Necrophytic Bloom based on occupied percent.
+        /// Now linearly decreases from 1.0 at 20% occupancy to 0.15 at 100% (previously went to 0).
         /// </summary>
         public static float GetNecrophyticBloomDamping(float occupiedPercent)
         {
             if (occupiedPercent <= 0.20f) return 1f;
-            float raw = 1f - ((occupiedPercent - 0.20f) / 0.80f);
-            return Math.Clamp(raw, 0f, 1f);
+            float t = (occupiedPercent - 0.20f) / 0.80f; // 0 at 20%, 1 at 100%
+            float value = 1f - 0.85f * t; // 1 -> 0.15 across the interval
+            return Math.Clamp(value, 0.15f, 1f);
         }
 
         /// <summary>
