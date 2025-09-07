@@ -3033,7 +3033,7 @@ MonoBehaviour:
   tooltipOffset: {x: 150, y: 30}
   autoDetectRadius: 1
   manualRadius: 128
-  enableDebugLogs: 1
+  enableDebugLogs: 0
 --- !u!225 &325918931
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -110638,6 +110638,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f778aa75d0d8a04eb45f90280b91d73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  postGrowthPhaseDurationMultiplier: 1.5
+  regenerativeHyphaeDurationMultiplier: 3
   toastTilemap: {fileID: 382906180}
   moldTilemap: {fileID: 2001715907}
   overlayTilemap: {fileID: 775599106}
@@ -110659,7 +110661,6 @@ MonoBehaviour:
   toxinOverlayTile: {fileID: 11400000, guid: b03fa0ef3f880e944836bca2e3270b89, type: 2}
   solidHighlightTile: {fileID: 11400000, guid: 2948f1915b2f9f94faed40359df6b9d4, type: 2}
   goldShieldOverlayTile: {fileID: 11400000, guid: c263d2624d4a84043852764dbdb51385, type: 2}
-  hoverOutlineTile: {fileID: 0}
 --- !u!4 &989759030
 Transform:
   m_ObjectHideFlags: 0

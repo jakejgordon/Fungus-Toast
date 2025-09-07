@@ -507,12 +507,11 @@ namespace FungusToast.Core.Phases
             List<Player> players,
             List<Mutation> allMutations,
             Random rng,
-            int currentRound,
             ISimulationObserver observer)
         {
             foreach (var player in players)
             {
-                TryApplyMutatorPhenotype(player, allMutations, rng, currentRound, observer);
+                TryApplyMutatorPhenotype(player, allMutations, rng, board.CurrentRound, observer);
             }
         }
 
@@ -562,138 +561,10 @@ namespace FungusToast.Core.Phases
         {
             foreach (var player in players)
             {
-                TryApplyOntogenicRegression(player, allMutations, rng, board.CurrentRound, observer);
+                TryApplyOntogenicRegression(player, allMutations, rng, board, observer);
             }
         }
 
-        /// <summary>
-        /// Tries to apply Ontogenic Regression - devolves tier 1 mutations into tier 5/6 mutations.
-        /// </summary>
-        public static void TryApplyOntogenicRegression(
-            Player player,
-            List<Mutation> allMutations,
-            Random rng,
-            int currentRound,
-            ISimulationObserver observer)
-        {
-            int regressionLevel = player.GetMutationLevel(MutationIds.OntogenicRegression);
-            if (regressionLevel <= 0) return;
-
-            float baseChance = GameBalance.OntogenicRegressionChancePerLevel * regressionLevel;
-            int maxAttempts = regressionLevel >= GameBalance.OntogenicRegressionMaxLevel ? 2 : 1;
-
-            for (int attempt = 0; attempt < maxAttempts; attempt++)
-            {
-                if (rng.NextDouble() >= baseChance)
-                {
-                    // Failed to trigger - award consolation points (record as income)
-                    int failureBonus = GameBalance.OntogenicRegressionFailureConsolationPoints;
-                    player.MutationPoints += failureBonus;
-                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, failureBonus);
-                    observer.RecordMutationPointIncome(player.PlayerId, failureBonus);
-                    continue;
-                }
-
-                // Find tier 1 mutations that can be devolved (have enough levels)
-                var tier1Mutations = allMutations
-                    .Where(m => m.Tier == MutationTier.Tier1)
-                    .Where(m => player.GetMutationLevel(m.Id) >= GameBalance.OntogenicRegressionTier1LevelsToConsume)
-                    .ToList();
-
-                if (!tier1Mutations.Any())
-                {
-                    int failureBonus = GameBalance.OntogenicRegressionFailureConsolationPoints;
-                    player.MutationPoints += failureBonus;
-                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, failureBonus);
-                    observer.RecordMutationPointIncome(player.PlayerId, failureBonus);
-                    continue;
-                }
-
-                // Find tier 5 and 6 mutations that can be gained (ignoring prerequisites)
-                var targetMutations = allMutations
-                    .Where(m => m.Tier == MutationTier.Tier5 || m.Tier == MutationTier.Tier6)
-                    .Where(m => player.GetMutationLevel(m.Id) < m.MaxLevel)
-                    .ToList();
-
-                if (!targetMutations.Any())
-                {
-                    int failureBonus = GameBalance.OntogenicRegressionFailureConsolationPoints;
-                    player.MutationPoints += failureBonus;
-                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, failureBonus);
-                    observer.RecordMutationPointIncome(player.PlayerId, failureBonus);
-                    continue;
-                }
-
-                // Select random source and target mutations
-                var sourceMutation = tier1Mutations[rng.Next(tier1Mutations.Count)];
-                var targetMutation = targetMutations[rng.Next(targetMutations.Count)];
-
-                // Perform the devolution
-                int sourceLevelsToRemove = GameBalance.OntogenicRegressionTier1LevelsToConsume;
-                int currentSourceLevel = player.GetMutationLevel(sourceMutation.Id);
-                int newSourceLevel = Math.Max(0, currentSourceLevel - sourceLevelsToRemove);
-
-                // Remove levels from source mutation
-                player.SetMutationLevel(sourceMutation.Id, newSourceLevel, currentRound);
-
-                // Add 1 level to target mutation (ignoring prerequisites) - pass currentRound to properly track PrereqMetRound
-                int currentTargetLevel = player.GetMutationLevel(targetMutation.Id);
-                player.SetMutationLevel(targetMutation.Id, currentTargetLevel + 1, currentRound);
-
-                // Record the effect for tracking
-                observer.RecordOntogenicRegressionEffect(player.PlayerId, sourceMutation.Name, GameBalance.OntogenicRegressionTier1LevelsToConsume, targetMutation.Name, 1);
-            }
-        }
-
-        public static void TryApplyAdaptiveExpression(
-            Player player,
-            Random rng,
-            ISimulationObserver observer)
-        {
-            int level = player.GetMutationLevel(MutationIds.AdaptiveExpression);
-            if (level <= 0) return;
-
-            float chance = level * GameBalance.AdaptiveExpressionEffectPerLevel;
-            if (rng.NextDouble() >= chance) return;
-
-            // First bonus point
-            int bonusPoints = 1;
-            player.MutationPoints += 1;
-
-            // Check for second bonus point
-            float secondChance = level * GameBalance.AdaptiveExpressionSecondPointChancePerLevel;
-            if (rng.NextDouble() < secondChance)
-            {
-                bonusPoints++;
-                player.MutationPoints += 1;
-            }
-
-            // Record detailed bonus source and aggregate income
-            observer.RecordAdaptiveExpressionBonus(player.PlayerId, bonusPoints);
-            observer.RecordMutationPointIncome(player.PlayerId, bonusPoints);
-        }
-
-        public static void TryApplyAnabolicInversion(
-            Player player,
-            List<Player> allPlayers,
-            GameBoard board,
-            Random rng,
-            ISimulationObserver observer,
-            IReadOnlyDictionary<int,int> livingCellCounts)
-        {
-            int level = player.GetMutationLevel(MutationIds.AnabolicInversion);
-            if (level <= 0) return;
-
-            int bonusPoints = player.RollAnabolicInversionBonus(allPlayers, rng, board, livingCellCounts);
-            if (bonusPoints > 0)
-            {
-                player.MutationPoints += bonusPoints;
-                observer.RecordAnabolicInversionBonus(player.PlayerId, bonusPoints);
-                observer.RecordMutationPointIncome(player.PlayerId, bonusPoints);
-            }
-        }
-
-        // Add new phase event handlers:
         public static void OnMutationPhaseStart_AdaptiveExpression(
             GameBoard board,
             List<Player> players,
@@ -712,17 +583,179 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver observer)
         {
-            // Precompute living cell counts once for all players to avoid repeated enumeration
             var livingCounts = new Dictionary<int,int>(players.Count);
             foreach (var p in players)
             {
                 int count = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive);
                 livingCounts[p.PlayerId] = count;
             }
-
             foreach (var player in players)
             {
                 TryApplyAnabolicInversion(player, players, board, rng, observer, livingCounts);
+            }
+        }
+
+        // Updated signature to include board so sacrifice mechanic can function
+        public static void TryApplyOntogenicRegression(
+            Player player,
+            List<Mutation> allMutations,
+            Random rng,
+            GameBoard board,
+            ISimulationObserver observer)
+        {
+            int regressionLevel = player.GetMutationLevel(MutationIds.OntogenicRegression);
+            if (regressionLevel <= 0) return;
+
+            float baseChance = GameBalance.OntogenicRegressionChancePerLevel * regressionLevel;
+            int maxAttempts = regressionLevel >= GameBalance.OntogenicRegressionMaxLevel ? 2 : 1;
+            bool atMaxLevel = regressionLevel >= GameBalance.OntogenicRegressionMaxLevel;
+
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                if (rng.NextDouble() >= baseChance)
+                {
+                    int failureBonus = GameBalance.OntogenicRegressionFailureConsolationPoints;
+                    player.MutationPoints += failureBonus;
+                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, failureBonus);
+                    observer.RecordMutationPointIncome(player.PlayerId, failureBonus);
+                    continue;
+                }
+
+                List<FungalCell> sacrificed = new();
+                int effectiveLevelsToConsume = GameBalance.OntogenicRegressionTier1LevelsToConsume;
+                int reductionsAchieved = 0;
+                if (atMaxLevel && board != null)
+                {
+                    sacrificed = CollectOntogenicRegressionSacrifices(player, board, rng, effectiveLevelsToConsume, out reductionsAchieved);
+                    if (reductionsAchieved > 0)
+                        effectiveLevelsToConsume = Math.Max(1, effectiveLevelsToConsume - reductionsAchieved);
+                }
+
+                var tier1Mutations = allMutations
+                    .Where(m => m.Tier == MutationTier.Tier1)
+                    .Where(m => player.GetMutationLevel(m.Id) >= effectiveLevelsToConsume)
+                    .ToList();
+
+                if (!tier1Mutations.Any())
+                {
+                    int failureBonus = GameBalance.OntogenicRegressionFailureConsolationPoints;
+                    player.MutationPoints += failureBonus;
+                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, failureBonus);
+                    observer.RecordMutationPointIncome(player.PlayerId, failureBonus);
+                    continue;
+                }
+
+                var targetMutations = allMutations
+                    .Where(m => m.Tier == MutationTier.Tier5 || m.Tier == MutationTier.Tier6)
+                    .Where(m => player.GetMutationLevel(m.Id) < m.MaxLevel)
+                    .ToList();
+
+                if (!targetMutations.Any())
+                {
+                    int failureBonus = GameBalance.OntogenicRegressionFailureConsolationPoints;
+                    player.MutationPoints += failureBonus;
+                    observer.RecordOntogenicRegressionFailureBonus(player.PlayerId, failureBonus);
+                    observer.RecordMutationPointIncome(player.PlayerId, failureBonus);
+                    continue;
+                }
+
+                var sourceMutation = tier1Mutations[rng.Next(tier1Mutations.Count)];
+                var targetMutation = targetMutations[rng.Next(targetMutations.Count)];
+
+                int currentSourceLevel = player.GetMutationLevel(sourceMutation.Id);
+                int newSourceLevel = Math.Max(0, currentSourceLevel - effectiveLevelsToConsume);
+                player.SetMutationLevel(sourceMutation.Id, newSourceLevel, board.CurrentRound);
+
+                int currentTargetLevel = player.GetMutationLevel(targetMutation.Id);
+                player.SetMutationLevel(targetMutation.Id, currentTargetLevel + 1, board.CurrentRound);
+
+                observer.RecordOntogenicRegressionEffect(player.PlayerId, sourceMutation.Name, effectiveLevelsToConsume, targetMutation.Name, 1);
+                if (sacrificed.Count > 0)
+                {
+                    observer.RecordOntogenicRegressionSacrifices(player.PlayerId, sacrificed.Count, reductionsAchieved);
+                }
+            }
+        }
+
+        private static List<FungalCell> CollectOntogenicRegressionSacrifices(Player player, GameBoard board, Random rng, int baseLevelsToConsume, out int levelReductions)
+        {
+            levelReductions = 0;
+            var enemyCells = new HashSet<FungalCell>();
+            foreach (var myCell in board.GetAllCellsOwnedBy(player.PlayerId))
+            {
+                if (!myCell.IsAlive) continue;
+                foreach (var neighbor in board.GetOrthogonalNeighbors(myCell.TileId))
+                {
+                    var c = neighbor.FungalCell;
+                    if (c != null && c.IsAlive && c.OwnerPlayerId.HasValue && c.OwnerPlayerId.Value != player.PlayerId && !c.IsResistant)
+                    {
+                        enemyCells.Add(c);
+                    }
+                }
+            }
+            if (enemyCells.Count == 0) return new();
+
+            var list = enemyCells.ToList();
+            // Shuffle
+            for (int i = list.Count - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                (list[i], list[j]) = (list[j], list[i]);
+            }
+
+            int killsPerReduction = GameBalance.OntogenicRegressionEnemyKillsPerLevelReduction;
+            int maxKillsNeeded = (baseLevelsToConsume - 1) * killsPerReduction;
+            int killsPerformed = 0;
+            var sacrificed = new List<FungalCell>();
+            foreach (var enemy in list)
+            {
+                if (killsPerformed >= maxKillsNeeded) break;
+                // Execute normal kill pipeline so other effects can react
+                board.KillFungalCell(enemy, Death.DeathReason.CytolyticBurst, player.PlayerId); // reuse a reason; ideally add new reason later
+                sacrificed.Add(enemy);
+                killsPerformed++;
+            }
+            levelReductions = killsPerformed / killsPerReduction;
+            return sacrificed;
+        }
+
+        public static void TryApplyAdaptiveExpression(
+            Player player,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            int level = player.GetMutationLevel(MutationIds.AdaptiveExpression);
+            if (level <= 0) return;
+            float chance = level * GameBalance.AdaptiveExpressionEffectPerLevel;
+            if (rng.NextDouble() >= chance) return;
+            int bonusPoints = 1;
+            player.MutationPoints += 1;
+            float secondChance = level * GameBalance.AdaptiveExpressionSecondPointChancePerLevel;
+            if (rng.NextDouble() < secondChance)
+            {
+                bonusPoints++;
+                player.MutationPoints += 1;
+            }
+            observer.RecordAdaptiveExpressionBonus(player.PlayerId, bonusPoints);
+            observer.RecordMutationPointIncome(player.PlayerId, bonusPoints);
+        }
+
+        public static void TryApplyAnabolicInversion(
+            Player player,
+            List<Player> allPlayers,
+            GameBoard board,
+            Random rng,
+            ISimulationObserver observer,
+            IReadOnlyDictionary<int,int> livingCellCounts)
+        {
+            int level = player.GetMutationLevel(MutationIds.AnabolicInversion);
+            if (level <= 0) return;
+            int bonusPoints = player.RollAnabolicInversionBonus(allPlayers, rng, board, livingCellCounts);
+            if (bonusPoints > 0)
+            {
+                player.MutationPoints += bonusPoints;
+                observer.RecordAnabolicInversionBonus(player.PlayerId, bonusPoints);
+                observer.RecordMutationPointIncome(player.PlayerId, bonusPoints);
             }
         }
     }

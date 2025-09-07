@@ -236,10 +236,9 @@ namespace FungusToast.Core.Phases
             List<Player> players,
             List<Mutation> allMutations,
             Random rng,
-            int currentRound,
             ISimulationObserver observer)
         {
-            GeneticDriftMutationProcessor.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, currentRound, observer);
+            GeneticDriftMutationProcessor.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, observer);
         }
 
         public static void OnMutationPhaseStart_OntogenicRegression(
@@ -247,10 +246,12 @@ namespace FungusToast.Core.Phases
             List<Player> players,
             List<Mutation> allMutations,
             Random rng,
-            int currentRound,
             ISimulationObserver observer)
         {
-            GeneticDriftMutationProcessor.OnMutationPhaseStart_OntogenicRegression(board, players, allMutations, rng, currentRound, observer);
+            foreach (var player in players)
+            {
+                GeneticDriftMutationProcessor.TryApplyOntogenicRegression(player, allMutations, rng, board, observer);
+            }
         }
 
         public static void OnMutationPhaseStart_AdaptiveExpression(

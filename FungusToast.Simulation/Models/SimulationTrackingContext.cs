@@ -989,5 +989,14 @@ namespace FungusToast.Simulation.Models
             => competitiveAntagonismTargeting.TryGetValue(playerId, out var val) ? val : 0;
 
         public Dictionary<int, int> GetAllCompetitiveAntagonismTargeting() => new(competitiveAntagonismTargeting);
+
+        // ────────────────
+        // Ontogenic Regression Sacrifices
+        // ────────────────
+        public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset)
+        {
+            // Simple aggregation: reuse deaths by reason tracking (not distinguishing reason here) or extend with separate counters if needed later.
+            RecordCellDeath(playerId, DeathReason.CytolyticBurst, cellsKilled);
+        }
     }
 }

@@ -6,8 +6,8 @@ set SCRIPT_DIR=%~dp0
 
 :: Define paths relative to FungusToast.Core\
 set SOURCE=%SCRIPT_DIR%bin\Debug\netstandard2.1
-set TARGET=%SCRIPT_DIR%..\Fungus Toast\Assets\Plugins
-set TOUCH_FILE=%SCRIPT_DIR%..\Fungus Toast\Assets\Scripts\Unity\ForceRecompile.cs
+set TARGET=%SCRIPT_DIR%..\FungusToast.Unity\Assets\Plugins
+set TOUCH_FILE=%SCRIPT_DIR%..\FungusToast.Unity\Assets\Scripts\Unity\ForceRecompile.cs
 
 echo Copying FungusToast.Core artifacts to Unity...
 

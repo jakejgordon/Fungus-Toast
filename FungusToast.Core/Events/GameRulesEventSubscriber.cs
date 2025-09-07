@@ -73,8 +73,8 @@ namespace FungusToast.Core.Events
             board.MutationPhaseStart += () =>
             {
                 var allMutations = MutationRepository.BuildFullMutationSet().Item1.Values.ToList();
-                MutationEffectCoordinator.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, board.CurrentRound, observer);
-                MutationEffectCoordinator.OnMutationPhaseStart_OntogenicRegression(board, players, allMutations, rng, board.CurrentRound, observer);
+                MutationEffectCoordinator.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, observer);
+                MutationEffectCoordinator.OnMutationPhaseStart_OntogenicRegression(board, players, allMutations, rng, observer);
                 MutationEffectCoordinator.OnMutationPhaseStart_AdaptiveExpression(board, players, rng, observer);
                 MutationEffectCoordinator.OnMutationPhaseStart_AnabolicInversion(board, players, rng, observer);
             };

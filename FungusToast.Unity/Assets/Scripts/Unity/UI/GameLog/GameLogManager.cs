@@ -1184,5 +1184,10 @@ namespace FungusToast.Unity.UI.GameLog
         {
 
         }
+        
+        public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset)
+        {
+            // Unity UI: currently not displayed to avoid clutter. Could be added similarly to other summaries.
+        }
     }
 }

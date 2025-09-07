@@ -1,4 +1,4 @@
-﻿using FungusToast.Core.Death;
+using FungusToast.Core.Death;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
@@ -236,6 +236,12 @@ namespace FungusToast.Unity.UI.GameLog
         {
             if (IsSilentMode) return;
             playerActivityLogManager?.RecordOntogenicRegressionFailureBonus(playerId, bonusPoints);
+        }
+
+        public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset)
+        {
+            // Unity log suppression by default to avoid spam; could be hooked for UI later.
+            if (IsSilentMode) return;
         }
     }
 }
