@@ -69,7 +69,9 @@ namespace FungusToast.Unity.Phases
                 GameManager.Instance.GameUI.RightSidebar?.SortPlayerSummaryRows(board.Players);
 
                 isRunning = false;
-                GameManager.Instance.StartDecayPhase();
+
+                // IMPORTANT: Do NOT start decay phase directly here.
+                // GameManager's post-growth visual sequence coroutine will call StartDecayPhase()
                 yield break;
             }
 

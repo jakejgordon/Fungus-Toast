@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.Mycovariants;
+using FungusToast.Core.Logging;
 
 namespace FungusToast.Core.Board
 {
@@ -540,7 +541,9 @@ namespace FungusToast.Core.Board
 
         public void IncrementRound()
         {
+            CoreLogger.Log?.Invoke($"[ROUND][IncrementRound][Before] CurrentRound={CurrentRound}");
             CurrentRound++;
+            CoreLogger.Log?.Invoke($"[ROUND][IncrementRound][After ] CurrentRound={CurrentRound}");
             // Reset round context at the start of each new round
             CurrentRoundContext.Reset();
         }

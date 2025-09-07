@@ -409,6 +409,7 @@ namespace FungusToast.Core.Players
                 if (bonus > GameBalance.AnabolicInversionMaxMutationPointsPerRound)
                     bonus = GameBalance.AnabolicInversionMaxMutationPointsPerRound;
 
+                CoreLogger.Log?.Invoke($"[MP][AnabolicInversion] Round={board.CurrentRound} Player={PlayerId} Bonus={bonus} ratio={ratio:F2} chance={chance:F2}");
                 return bonus;
             }
 
@@ -422,17 +423,21 @@ namespace FungusToast.Core.Players
                                         IEnumerable<Mutation>? allMutations = null)
         {
             int baseIncome = GetMutationPointIncome();
+            CoreLogger.Log?.Invoke($"[MP][Assign][Before] Round={board.CurrentRound} Player={PlayerId} MP={MutationPoints} BaseIncome={baseIncome}");
             int newMutationPoints = baseIncome;
             simulationObserver.RecordMutationPointIncome(PlayerId, newMutationPoints);
 
             AddMutationPoints(newMutationPoints);
+            CoreLogger.Log?.Invoke($"[MP][Assign][After ] Round={board.CurrentRound} Player={PlayerId} MP={MutationPoints} (+{newMutationPoints})");
 
             return MutationPoints;
         }
 
         public void AddMutationPoints(int amount)
         {
+            CoreLogger.Log?.Invoke($"[MP][Add] Player={PlayerId} +{amount} (Before={MutationPoints})");
             MutationPoints += amount;
+            CoreLogger.Log?.Invoke($"[MP][Add] Player={PlayerId} After={MutationPoints}");
         }
 
 
