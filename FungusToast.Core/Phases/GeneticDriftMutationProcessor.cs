@@ -25,10 +25,9 @@ namespace FungusToast.Core.Phases
             ISimulationObserver observer
         )
         {
-            float chance = player.GetMutationEffect(MutationType.AutoUpgradeRandom);
-            if (chance <= 0f || rng.NextDouble() >= chance) return;
+            float triggerChance = player.GetMutationEffect(MutationType.AutoUpgradeRandom);
+            if (triggerChance <= 0f || rng.NextDouble() >= triggerChance) return;
 
-            // Check Hyperadaptive Drift levels and associated per-level effects
             int hyperadaptiveLevel = player.GetMutationLevel(MutationIds.HyperadaptiveDrift);
             bool hasHyperadaptive = hyperadaptiveLevel > 0;
 
@@ -40,123 +39,175 @@ namespace FungusToast.Core.Phases
                 ? GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel * hyperadaptiveLevel
                 : 0f;
 
-            // Gather upgradable mutations by tier - for auto-upgrades, we don't need mutation points
-            var tier1 = allMutations.Where(m => m.Tier == MutationTier.Tier1 && CanAutoUpgrade(player, m)).ToList();
-            var tier2 = allMutations.Where(m => m.Tier == MutationTier.Tier2 && CanAutoUpgrade(player, m)).ToList();
-            var tier3 = allMutations.Where(m => m.Tier == MutationTier.Tier3 && CanAutoUpgrade(player, m)).ToList();
-            var tier4 = allMutations.Where(m => m.Tier == MutationTier.Tier4 && CanAutoUpgrade(player, m)).ToList();
+            // Build mutation pools (tiers 1-4 only relevant)
+            var pools = BuildUpgradablePools(player, allMutations);
+            if (pools.Tier1.Count == 0 && !pools.HasAnyHigherTier) return; // nothing upgradable
 
-            List<Mutation> pool;
-            MutationTier targetTier;
+            // Select the target tier + pool
+            if (!TrySelectTargetTier(hasHyperadaptive, higherTierChance, rng, pools, out var targetTier, out var candidatePool))
+                return;
 
-            // Hyperadaptive Drift: roll to see if we try for tier 2, 3, or 4 instead of 1
+            // Pick specific mutation from chosen pool
+            var pick = candidatePool[rng.Next(candidatePool.Count)];
+
+            // Determine number of upgrade attempts (1 or 2 for tier1 double proc)
+            int upgradeAttempts = DetermineUpgradeCount(hasHyperadaptive, targetTier, bonusTierOneChance, rng);
+
+            // Execute core upgrades
+            var (mutatorPoints, hyperadaptivePoints, upgradedNames) = ExecuteUpgrades(player, pick, upgradeAttempts, targetTier, currentRound);
+
+            // Max-level Hyperadaptive bonus (extra tier1 attempt using original tier1 snapshot)
+            if (ShouldApplyMaxLevelBonus(hasHyperadaptive, hyperadaptiveLevel) && pools.Tier1.Count > 0)
+            {
+                ApplyMaxLevelBonus(player, rng, currentRound, pools.Tier1, ref hyperadaptivePoints, upgradedNames);
+            }
+
+            // Observer notifications
+            NotifyObserver(observer, player.PlayerId, mutatorPoints, hyperadaptivePoints, upgradedNames);
+        }
+
+        #region TryApplyMutatorPhenotype helpers
+        private sealed class UpgradablePools
+        {
+            public List<Mutation> Tier1 { get; } = new();
+            public List<Mutation> Tier2 { get; } = new();
+            public List<Mutation> Tier3 { get; } = new();
+            public List<Mutation> Tier4 { get; } = new();
+            public bool HasAnyHigherTier => Tier2.Count > 0 || Tier3.Count > 0 || Tier4.Count > 0;
+            public IEnumerable<(List<Mutation> list, MutationTier tier)> EnumerateHigherTiers()
+            {
+                if (Tier2.Count > 0) yield return (Tier2, MutationTier.Tier2);
+                if (Tier3.Count > 0) yield return (Tier3, MutationTier.Tier3);
+                if (Tier4.Count > 0) yield return (Tier4, MutationTier.Tier4);
+            }
+        }
+
+        private static UpgradablePools BuildUpgradablePools(Player player, IEnumerable<Mutation> mutations)
+        {
+            var pools = new UpgradablePools();
+            foreach (var m in mutations)
+            {
+                if (!CanAutoUpgrade(player, m)) continue;
+                switch (m.Tier)
+                {
+                    case MutationTier.Tier1: pools.Tier1.Add(m); break;
+                    case MutationTier.Tier2: pools.Tier2.Add(m); break;
+                    case MutationTier.Tier3: pools.Tier3.Add(m); break;
+                    case MutationTier.Tier4: pools.Tier4.Add(m); break;
+                }
+            }
+            return pools;
+        }
+
+        private static bool TrySelectTargetTier(
+            bool hasHyperadaptive,
+            float higherTierChance,
+            Random rng,
+            UpgradablePools pools,
+            out MutationTier targetTier,
+            out List<Mutation> pool)
+        {
             if (hasHyperadaptive && rng.NextDouble() < higherTierChance)
             {
-                // Try tier 2, 3, or 4 randomly, but only among those with upgradable mutations
-                var availableHigherTiers = new List<(List<Mutation> mutations, MutationTier tier)>
-        {
-            (tier2, MutationTier.Tier2),
-            (tier3, MutationTier.Tier3),
-            (tier4, MutationTier.Tier4)
-        }.Where(t => t.mutations.Count > 0).ToList();
-
-                if (availableHigherTiers.Count > 0)
+                var higher = pools.EnumerateHigherTiers().ToList();
+                if (higher.Count > 0)
                 {
-                    var selected = availableHigherTiers[rng.Next(availableHigherTiers.Count)];
-                    pool = selected.mutations;
-                    targetTier = selected.tier;
+                    var chosen = higher[rng.Next(higher.Count)];
+                    targetTier = chosen.tier;
+                    pool = chosen.list;
+                    return true;
                 }
-                else if (tier1.Count > 0)
+                if (pools.Tier1.Count > 0)
                 {
-                    pool = tier1;
                     targetTier = MutationTier.Tier1;
+                    pool = pools.Tier1;
+                    return true;
                 }
-                else
-                {
-                    return;
-                }
+                targetTier = default;
+                pool = null!;
+                return false;
             }
-            else if (tier1.Count > 0)
+            if (pools.Tier1.Count > 0)
             {
-                pool = tier1;
                 targetTier = MutationTier.Tier1;
+                pool = pools.Tier1;
+                return true;
             }
-            else
-            {
-                return;
-            }
+            targetTier = default;
+            pool = null!;
+            return false;
+        }
 
-            // Pick a mutation to auto-upgrade
-            var pick = pool[rng.Next(pool.Count)];
-            int upgrades = 1;
+        private static int DetermineUpgradeCount(bool hasHyperadaptive, MutationTier targetTier, float bonusTierOneChance, Random rng)
+            => (hasHyperadaptive && targetTier == MutationTier.Tier1 && rng.NextDouble() < bonusTierOneChance)
+                ? Math.Max(2, GameBalance.HyperadaptiveDriftBonusTierOneMutationFreeUpgradeTimes) // ensure at least the old behavior of 2
+                : 1;
 
-            // Hyperadaptive Drift: Tier 1 can double-upgrade
-            if (hasHyperadaptive && targetTier == MutationTier.Tier1 && rng.NextDouble() < bonusTierOneChance)
-            {
-                upgrades = 2;
-            }
-
-            // Track upgraded mutations for logging
-            var upgradedMutations = new List<string>();
-
-            // Actually perform the upgrades, attributing each point appropriately
+        private static (int mutatorPoints, int hyperadaptivePoints, List<string> upgradedNames) ExecuteUpgrades(
+            Player player,
+            Mutation pick,
+            int attempts,
+            MutationTier targetTier,
+            int currentRound)
+        {
             int mutatorPoints = 0;
             int hyperadaptivePoints = 0;
+            var upgradedNames = new List<string>();
 
-            for (int i = 0; i < upgrades; i++)
+            for (int i = 0; i < attempts; i++)
             {
-                bool upgraded = player.TryAutoUpgrade(pick, currentRound);
-                if (!upgraded) break;
-
-                // Track the upgrade for logging
-                upgradedMutations.Add(pick.Name);
-
-                // Attribution logic:
+                if (!player.TryAutoUpgrade(pick, currentRound)) break;
+                upgradedNames.Add(pick.Name);
                 if (targetTier == MutationTier.Tier1)
                 {
                     if (i == 0)
-                    {
                         mutatorPoints += pick.PointsPerUpgrade;
-                    }
                     else
-                    {
                         hyperadaptivePoints += pick.PointsPerUpgrade;
-                    }
                 }
-                else // Tier 2, 3, or 4
+                else
                 {
                     hyperadaptivePoints += pick.PointsPerUpgrade;
                 }
             }
+            return (mutatorPoints, hyperadaptivePoints, upgradedNames);
+        }
 
-            // Hyperadaptive Drift Max Level Effect: Automatically upgrade an additional Tier 1 mutation
-            if (hasHyperadaptive && hyperadaptiveLevel >= GameBalance.HyperadaptiveDriftMaxLevel && tier1.Count > 0)
+        private static bool ShouldApplyMaxLevelBonus(bool hasHyperadaptive, int level)
+            => hasHyperadaptive && level >= GameBalance.HyperadaptiveDriftMaxLevel;
+
+        private static void ApplyMaxLevelBonus(
+            Player player,
+            Random rng,
+            int currentRound,
+            List<Mutation> tier1Pool,
+            ref int hyperadaptivePoints,
+            List<string> upgradedNames)
+        {
+            var addPick = tier1Pool[rng.Next(tier1Pool.Count)];
+            if (player.TryAutoUpgrade(addPick, currentRound))
             {
-                var additionalPick = tier1[rng.Next(tier1.Count)];
-                bool additionalUpgraded = player.TryAutoUpgrade(additionalPick, currentRound);
-                if (additionalUpgraded)
-                {
-                    hyperadaptivePoints += additionalPick.PointsPerUpgrade;
-                    upgradedMutations.Add(additionalPick.Name);
-                }
-            }
-
-            // Notify observer
-            if (observer != null)
-            {
-                if (mutatorPoints > 0)
-                    observer.RecordMutatorPhenotypeMutationPointsEarned(player.PlayerId, mutatorPoints);
-
-                if (hyperadaptivePoints > 0)
-                    observer.RecordHyperadaptiveDriftMutationPointsEarned(player.PlayerId, hyperadaptivePoints);
-
-                // Report each upgraded mutation
-                foreach (var mutationName in upgradedMutations)
-                {
-                    observer.RecordMutatorPhenotypeUpgrade(player.PlayerId, mutationName);
-                }
+                hyperadaptivePoints += addPick.PointsPerUpgrade;
+                upgradedNames.Add(addPick.Name);
             }
         }
+
+        private static void NotifyObserver(
+            ISimulationObserver observer,
+            int playerId,
+            int mutatorPoints,
+            int hyperadaptivePoints,
+            List<string> upgradedNames)
+        {
+            if (observer == null) return;
+            if (mutatorPoints > 0)
+                observer.RecordMutatorPhenotypeMutationPointsEarned(playerId, mutatorPoints);
+            if (hyperadaptivePoints > 0)
+                observer.RecordHyperadaptiveDriftMutationPointsEarned(playerId, hyperadaptivePoints);
+            foreach (var name in upgradedNames)
+                observer.RecordMutatorPhenotypeUpgrade(playerId, name);
+        }
+        #endregion
 
         /// <summary>
         /// Applies Mycotoxin Catabolism effect during pre-growth phase.

@@ -97,9 +97,10 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.HyperadaptiveDrift,
                 name: "Hyperadaptive Drift",
                 description:
-                    $"Enhances your Mutator Phenotype's auto-upgrade ability. Each level provides a {helper.FormatPercent(GameBalance.HyperadaptiveDriftHigherTierChancePerLevel, 1)} chance to target higher-tier mutations (Tier 2-4) instead of Tier 1, and a {helper.FormatPercent(GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel, 1)} chance to upgrade Tier 1 mutations twice instead of once.\n" +
+                    $"Enhances your Mutator Phenotype's auto-upgrade ability. Each level provides a {helper.FormatPercent(GameBalance.HyperadaptiveDriftHigherTierChancePerLevel, 1)} chance to target higher-tier mutations (Tier 2-4) instead of Tier 1." +
+                    $"If not successful and a tier 1 mutation is upgraded, has {helper.FormatPercent(GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel, 1)} chance per level to upgrade the target Tier 1 mutation {GameBalance.HyperadaptiveDriftBonusTierOneMutationFreeUpgradeTimes} times.\n" +
                     "\n" +
-                    "At max level, automatically upgrades an additional Tier 1 mutation whenever this effect triggers.\n" +
+                    $"At max level, automatically upgrades an additional Tier 1 mutation {GameBalance.HyperadaptiveDriftBonusTierOneMutationFreeUpgradeTimes} times." +
                     "\n" +
                     "This works passively with your existing Mutator Phenotype auto-upgrade system.",
                 flavorText: "The colony achieves a state of hyperplasticity, capable of instantaneous genomic restructuring and parallel mutation cascades.",

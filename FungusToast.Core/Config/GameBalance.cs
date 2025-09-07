@@ -167,7 +167,8 @@ namespace FungusToast.Core.Config
         // Hyperadaptive Drift (Tier 5 GeneticDrift)
         public const float HyperadaptiveDriftHigherTierChancePerLevel = .28f;
         public const float HyperadaptiveDriftBonusTierOneMutationChancePerLevel = .3f;
-        public const int HyperadaptiveDriftMaxLevel = 4;
+        public const int HyperadaptiveDriftBonusTierOneMutationFreeUpgradeTimes = 3;
+        public const int HyperadaptiveDriftMaxLevel = 3;
 
         // Catabolic Rebirth (Tier 6 CellularResilience)
         public const float CatabolicRebirthResurrectionChancePerLevel = 0.12f;
@@ -192,6 +193,7 @@ namespace FungusToast.Core.Config
 
         // Legacy constants (keeping for backward compatibility, can be removed later if not needed)
         public const int AgeResetReductionPerLevel = 5;
+
 
         public static class MutationCosts
         {
