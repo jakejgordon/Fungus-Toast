@@ -9,7 +9,7 @@ Fungus Toast is a 2D Unity game where each player represents a mold colony tryin
 - **FungusToast.Unity**: Unity game project (Unity 6000.0.45f1) with UI, graphics, and game presentation layer
 
 **Key Facts:**
-- Total codebase: ~189 C# files with ~2,200+ lines of code
+- Total codebase: > 180 files
 - Language: C# with some PowerShell scripting
 - Primary target: Windows development environment with Unity Editor
 - Architecture: Clean separation between core logic, simulation, and presentation
@@ -39,39 +39,17 @@ dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj
 
 **Cause:** The FungusToast.Core project has a Windows batch file post-build step that copies the compiled DLL to Unity's Assets/Plugins folder.
 
-**Workarounds:**
-1. **For non-Unity development:** Temporarily remove the PostBuild target from `FungusToast.Core/FungusToast.Core.csproj`:
-   ```xml
-   <!-- Comment out or remove these lines: -->
-   <!--
-   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-     <Exec Command="call &quot;$(ProjectDir)PostBuild_CopyAndTouch.bat&quot;" />
-   </Target>
-   -->
-   ```
-
-2. **For Unity integration:** Manually copy files after build:
-   ```bash
-   # After successful dotnet build FungusToast.Core/FungusToast.Core.csproj
-   mkdir -p FungusToast.Unity/Assets/Plugins
-   cp FungusToast.Core/bin/Debug/netstandard2.1/FungusToast.Core.dll FungusToast.Unity/Assets/Plugins/
-   cp FungusToast.Core/bin/Debug/netstandard2.1/FungusToast.Core.pdb FungusToast.Unity/Assets/Plugins/
-   ```
+**Solution:**
+If the script fails due to a locked .dll file, simply run the build command a second time - this almost always succeeds. For Unity integration, use the post-build .bat file which copies the DLL and touches forcecompile.cs to trigger Unity rebuild.
 
 #### Build Time Expectations
 - **FungusToast.Core**: ~6 seconds (clean build), ~2 seconds (incremental)
 - **FungusToast.Simulation**: ~5 seconds (clean build), ~1 second (incremental)
 
-#### Common Warnings (Non-blocking)
-The codebase has some expected nullable reference warnings that don't prevent compilation:
-- `CS8600`: Converting null literal to non-nullable type
-- `CS8602`: Dereference of possibly null reference  
-- `CS0067`: Unused events
-
 ## Running Simulations
 
 ### Using PowerShell Script (Recommended)
-The simulation includes a comprehensive PowerShell script for building and execution:
+The simulation includes a comprehensive PowerShell script that builds the project and launches a simulation in a separate window:
 
 ```powershell
 # Navigate to simulation directory
@@ -304,7 +282,7 @@ FungusToast.Unity/
 - **For Unity integration:** Check `FungusToast.Unity/Assets/Scripts/Unity/`
 
 ### Code Quality and Conventions
-- **Nullable reference types:** Enabled but with some legacy warnings
+- **Nullable reference types:** Enabled
 - **Architecture:** Clean domain separation between Core, Simulation, and Unity layers
 - **Error handling:** Comprehensive logging and event systems for debugging
 - **Testing strategy:** Simulation-based validation rather than unit tests
@@ -332,7 +310,6 @@ dotnet run -- --help
 
 ### Expected Console Output Patterns
 **Successful simulation run includes:**
-- Build warnings (nullable references) - these are expected
 - "Simulation output redirected to: [path]" message
 - Real-time game progress with turn counts and winners
 - Comprehensive statistical summary at completion
