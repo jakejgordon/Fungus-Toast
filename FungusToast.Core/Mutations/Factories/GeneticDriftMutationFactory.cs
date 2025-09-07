@@ -59,7 +59,9 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.AnabolicInversion,
                 name: "Anabolic Inversion",
-                description: $"Each level adds a {helper.FormatPercent(GameBalance.AnabolicInversionGapBonusPerLevel, 1)} chance to earn 1–5 bonus mutation points at the start of each Mutation Phase when you control fewer living cells than other players. The chance increases the further behind you are, and the bonus amount is weighted - the further behind you are, the higher chance of getting the maximum payout.",
+                description: $"Each level adds a {helper.FormatPercent(GameBalance.AnabolicInversionGapBonusPerLevel, 1)} chance to earn 1–5 bonus mutation points at the start of each Mutation Phase when you control fewer living cells than other players. The chance increases the further behind you are, and the bonus amount is weighted - the further behind you are, the higher chance of getting the maximum payout." +
+                    "\n" +
+                    $"At max level, increases Mycotoxin Catabolism chance of consuming enemy toxins by {helper.FormatPercent(GameBalance.AnabolicInversionCatabolismCleanupMultiplier)} when the enemy has more living cells.",
                 flavorText: "Under metabolic duress, anabolism inverts into compensatory feedback loops, prioritizing genomic plasticity.",
                 type: MutationType.BonusMutationPointChance,
                 effectPerLevel: GameBalance.AnabolicInversionGapBonusPerLevel,

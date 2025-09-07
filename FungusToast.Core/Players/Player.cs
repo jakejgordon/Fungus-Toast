@@ -348,16 +348,11 @@ namespace FungusToast.Core.Players
             if (!PlayerMutations.TryGetValue(MutationIds.AnabolicInversion, out var pm) || pm.CurrentLevel <= 0)
                 return 0;
 
-            // Use precomputed counts if supplied; otherwise fall back to per-player enumeration
             int myLivingCells;
             if (precomputedLivingCellCounts != null)
-            {
                 precomputedLivingCellCounts.TryGetValue(PlayerId, out myLivingCells);
-            }
             else
-            {
                 myLivingCells = board.GetAllCellsOwnedBy(PlayerId).Count(c => c.IsAlive);
-            }
 
             var others = allPlayers.Where(p => p != this).ToList();
             if (others.Count == 0) return 0;
@@ -379,12 +374,13 @@ namespace FungusToast.Core.Players
             }
             if (avgOthersLivingCells <= 0f) avgOthersLivingCells = 1f;
 
-            float ratio = Math.Clamp(myLivingCells / avgOthersLivingCells, 0f, 1f);
-            float chance = (1f - ratio) + pm.CurrentLevel * GameBalance.AnabolicInversionGapBonusPerLevel;
+            float ratio = Math.Clamp(myLivingCells / avgOthersLivingCells, 0f, 1f); // 0 = far behind, 1 = at/above average
+            float rawChance = (1f - ratio) + pm.CurrentLevel * GameBalance.AnabolicInversionGapBonusPerLevel;
+            float chance = Math.Clamp(rawChance, 0f, 1f); // Prevent >100% auto-triggering
 
             if (rng.NextDouble() < chance)
             {
-                float weight = 1f - ratio; // 0 = ahead, 1 = behind
+                float weight = 1f - ratio; // More weight => more likely higher payout
                 float rand = (float)rng.NextDouble();
                 int bonus;
 
@@ -408,6 +404,10 @@ namespace FungusToast.Core.Players
                 {
                     bonus = 1;
                 }
+
+                // Enforce configured per-round cap (prevents 5 if cap is 4)
+                if (bonus > GameBalance.AnabolicInversionMaxMutationPointsPerRound)
+                    bonus = GameBalance.AnabolicInversionMaxMutationPointsPerRound;
 
                 return bonus;
             }

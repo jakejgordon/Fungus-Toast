@@ -166,12 +166,13 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             Random rng,
             RoundContext roundContext,
-            ISimulationObserver observer)
+            ISimulationObserver observer,
+            IReadOnlyDictionary<int,int>? livingCellCounts = null)
         {
             int level = player.GetMutationLevel(MutationIds.MycotoxinCatabolism);
             if (level <= 0) return 0;
 
-            float cleanupChance = level * GameBalance.MycotoxinCatabolismCleanupChancePerLevel;
+            float baseCleanupChance = level * GameBalance.MycotoxinCatabolismCleanupChancePerLevel;
             int toxinsMetabolized = 0;
             var processedToxins = new HashSet<int>();
 
@@ -179,14 +180,32 @@ namespace FungusToast.Core.Phases
             int pointsSoFar = roundContext.GetEffectCount(player.PlayerId, "CatabolizedMP");
             int bonusPointsEarned = 0; // newly added points this invocation
 
+            // Determine Anabolic Inversion boost eligibility once
+            bool hasAnabolicInversionMax = player.GetMutationLevel(MutationIds.AnabolicInversion) >= GameBalance.AnabolicInversionMaxLevel;
+            int myLiving = 0;
+            if (hasAnabolicInversionMax && livingCellCounts != null)
+                livingCellCounts.TryGetValue(player.PlayerId, out myLiving);
+
             foreach (var cell in board.GetAllCellsOwnedBy(player.PlayerId))
             {
                 if (!cell.IsAlive) continue;
 
                 foreach (var neighborTile in board.GetOrthogonalNeighbors(cell.TileId))
                 {
-                    if (neighborTile.FungalCell is not { IsToxin: true }) continue;
+                    if (neighborTile.FungalCell is not { IsToxin: true } toxinCell) continue;
                     if (!processedToxins.Add(neighborTile.TileId)) continue;
+
+                    float cleanupChance = baseCleanupChance;
+
+                    // Apply boosted cleanup chance only if: player has max Anabolic Inversion, toxin has an owner with more living cells
+                    if (hasAnabolicInversionMax && livingCellCounts != null && toxinCell.OwnerPlayerId.HasValue)
+                    {
+                        livingCellCounts.TryGetValue(toxinCell.OwnerPlayerId.Value, out int ownerLiving);
+                        if (ownerLiving > myLiving && myLiving > 0) // ensure meaningful comparison
+                        {
+                            cleanupChance = Math.Min(1f, cleanupChance * GameBalance.AnabolicInversionCatabolismCleanupMultiplier);
+                        }
+                    }
 
                     if (rng.NextDouble() < cleanupChance)
                     {
@@ -451,9 +470,17 @@ namespace FungusToast.Core.Phases
             RoundContext roundContext,
             ISimulationObserver observer)
         {
+            // Precompute living cell counts once for Anabolic Inversion max-level boost logic
+            var livingCounts = new Dictionary<int,int>(players.Count);
+            foreach (var p in players)
+            {
+                int count = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive);
+                livingCounts[p.PlayerId] = count;
+            }
+
             foreach (var player in players)
             {
-                ApplyMycotoxinCatabolism(player, board, rng, roundContext, observer);
+                ApplyMycotoxinCatabolism(player, board, rng, roundContext, observer, livingCounts);
             }
         }
 

@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 using System.IO;
 using UnityEngine.Tilemaps;
@@ -43,7 +43,6 @@ public class MoldSpriteImporter : AssetPostprocessor
             tile.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
             EditorUtility.SetDirty(tile);
             AssetDatabase.SaveAssets();
-            Debug.Log($"🔄 Reassigned sprite '{spriteName}' to tile asset at {tilePath}");
         }
     }
 }

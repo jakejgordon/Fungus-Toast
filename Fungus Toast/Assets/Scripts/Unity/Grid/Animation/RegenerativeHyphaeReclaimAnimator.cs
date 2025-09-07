@@ -15,7 +15,6 @@ namespace FungusToast.Unity.Grid.Animation
         {
             if (tileIds == null || tileIds.Count == 0) return;
             float appliedTotal = explicitTotalSeconds > 0 ? explicitTotalSeconds : UIEffectConstants.RegenerativeHyphaeReclaimTotalDurationSeconds;
-            Debug.Log($"[RegenerativeHyphae] Reclaim batch | tiles={tileIds.Count} | totalSeconds={appliedTotal:F2}");
             foreach (var id in tileIds)
             {
                 _viz.StartCoroutine(Reclaim(id, scaleMultiplier, appliedTotal));
@@ -34,7 +33,6 @@ namespace FungusToast.Unity.Grid.Animation
             float totalBase = baseRise + baseSwap; if (totalBase <= 0) totalBase = 1f;
             float riseDur = totalDuration * (baseRise / totalBase);
             float swapDur = totalDuration * (baseSwap / totalBase);
-            Debug.Log($"[RegenerativeHyphae] tile {tileId} durations => rise={riseDur:F2} swap={swapDur:F2} total={totalDuration:F2}");
 
             float maxScale = Mathf.Lerp(1f, UIEffectConstants.RegenerativeHyphaeMaxScale, 0.55f) * Mathf.Max(0.1f, scaleMult);
             float lift = UIEffectConstants.RegenerativeHyphaeLiftOffset * 0.7f * Mathf.Max(0.1f, scaleMult);
