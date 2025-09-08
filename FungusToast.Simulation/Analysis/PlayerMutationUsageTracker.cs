@@ -252,21 +252,21 @@ namespace FungusToast.Simulation.Analysis
             };
 
             Console.WriteLine("\nPlayer-Mutation Usage Summary (per Player, all games):");
-            Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-12} | {5,-8} | {6,-8} | {7,-10} | {8,-12} | {9,12} | {10,6} | {11,6} | {12,4}",
-                "PlayerId", "Strategy", "Tier", "Mutation Name", "Effect", "Games", "AvgLvl", "Avg Eff", "Tot Eff", "AvgFirstRound", "Min", "Max", "N");
+            // Effect column widened to 16, removed final 'N' column
+            Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-16} | {5,-8} | {6,-8} | {7,-10} | {8,-12} | {9,12} | {10,6} | {11,6}",
+                "PlayerId", "Strategy", "Tier", "Mutation Name", "Effect", "Games", "AvgLvl", "Avg Eff", "Tot Eff", "AvgFirstRound", "Min", "Max");
             Console.WriteLine(new string('-', 8) + "-|-" +
                                 new string('-', 25) + "-|-" +
                                 new string('-', 6) + "-|-" +
                                 new string('-', 28) + "-|-" +
-                                new string('-', 12) + "-|-" +
+                                new string('-', 16) + "-|-" + // Effect widened
                                 new string('-', 8) + "-|-" +
                                 new string('-', 8) + "-|-" +
                                 new string('-', 10) + "-|-" +
                                 new string('-', 12) + "-|-" +
                                 new string('-', 12) + "-|-" +
                                 new string('-', 6) + "-|-" +
-                                new string('-', 6) + "-|-" +
-                                new string('-', 4));
+                                new string('-', 6));
 
             // Group by player/strategy/mutation/effect type
             var grouped = _records
@@ -299,24 +299,23 @@ namespace FungusToast.Simulation.Analysis
 
                 foreach (var r in playerRecords)
                 {
-                    var (avgFirst, minFirst, maxFirst, nFirst) = tracking.GetFirstUpgradeStatsByStrategy(r.PlayerId, r.Strategy, r.MutationId);
-                    Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-12} | {5,-8} | {6,-8} | {7,-10:N2} | {8,-12} | {9,12} | {10,6} | {11,6} | {12,4}",
+                    var (avgFirst, minFirst, maxFirst, _) = tracking.GetFirstUpgradeStatsByStrategy(r.PlayerId, r.Strategy, r.MutationId);
+                    Console.WriteLine("{0,8} | {1,-25} | {2,-6} | {3,-28} | {4,-16} | {5,-8} | {6,-8} | {7,-10:N2} | {8,-12} | {9,12} | {10,6} | {11,6}",
                         r.PlayerId,
                         Truncate(r.Strategy, 25),
                         r.Tier.ToString(),
                         Truncate(r.MutationName, 28),
-                        Truncate(r.EffectType, 12),
+                        Truncate(r.EffectType, 16),
                         r.Games,
                         r.AvgLevel.ToString("F1"),
                         r.AvgEffect,
                         r.TotalEffect,
                         avgFirst.HasValue ? avgFirst.Value.ToString("F2") : "-",
                         minFirst.HasValue ? minFirst.Value.ToString() : "-",
-                        maxFirst.HasValue ? maxFirst.Value.ToString() : "-",
-                        nFirst);
+                        maxFirst.HasValue ? maxFirst.Value.ToString() : "-");
                 }
             }
-            Console.WriteLine(new string('-', 160));
+            Console.WriteLine(new string('-', 156));
         }
 
         private static string Truncate(string value, int maxLength) =>

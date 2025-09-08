@@ -54,20 +54,19 @@ namespace FungusToast.Simulation.Analysis
         public void PrintReport(List<(int PlayerId, string StrategyName)> rankedPlayers)
         {
             Console.WriteLine("\nPlayer-Mycovariant Usage Summary (per Player, all games):");
-            Console.WriteLine("{0,8} | {1,-25} | {2,-28} | {3,-12} | {4,-12} | {5,-8} | {6,-8} | {7,-10} | {8,-12} | {9,-12}",
-                "PlayerId", "Strategy", "Mycovariant Name", "Type", "Effect", "Games", "Trig.", "Avg Eff", "Tot Eff", "Avg AI Draft");
+            // Adjusted: Effect column widened to 22, Games column narrowed to 4
+            Console.WriteLine("{0,8} | {1,-25} | {2,-28} | {3,-12} | {4,-22} | {5,-4} | {6,-10} | {7,-12} | {8,-12}",
+                "PlayerId", "Strategy", "Mycovariant Name", "Type", "Effect", "Game", "Avg Eff", "Tot Eff", "Avg AI Draft");
             Console.WriteLine(new string('-', 8) + "-|-" +
                                 new string('-', 25) + "-|-" +
                                 new string('-', 28) + "-|-" +
                                 new string('-', 12) + "-|-" +
-                                new string('-', 12) + "-|-" +
-                                new string('-', 8) + "-|-" +
-                                new string('-', 8) + "-|-" +
+                                new string('-', 22) + "-|-" + // Effect widened
+                                new string('-', 4) + "-|-" +   // Games narrowed
                                 new string('-', 10) + "-|-" +
                                 new string('-', 12) + "-|-" +
                                 new string('-', 12));
 
-            // Group by player/strategy/mycovariant/effect/type
             var grouped = _records
                 .GroupBy(r => (r.PlayerId, r.Strategy, r.MycovariantName, r.Type, r.EffectType))
                 .Select(g => new
@@ -78,7 +77,6 @@ namespace FungusToast.Simulation.Analysis
                     g.Key.Type,
                     g.Key.EffectType,
                     Games = g.Count(),
-                    Triggered = g.Count(x => x.Triggered),
                     TotalEffect = g.Sum(x => x.EffectValue),
                     AvgEffect = g.Count() > 0 ? g.Average(x => x.EffectValue) : 0.0,
                     AvgAIScoreAtDraft = g.Select(x => x.AIScoreAtDraft).Where(x => x.HasValue).DefaultIfEmpty().Average(x => x ?? 0)
@@ -93,14 +91,13 @@ namespace FungusToast.Simulation.Analysis
 
                 foreach (var r in playerRecords.OrderBy(x => x.MycovariantName).ThenBy(x => x.EffectType))
                 {
-                    Console.WriteLine("{0,8} | {1,-25} | {2,-28} | {3,-12} | {4,-12} | {5,-8} | {6,-8} | {7,-10:N2} | {8,-12} | {9,-12:N2}",
+                    Console.WriteLine("{0,8} | {1,-25} | {2,-28} | {3,-12} | {4,-22} | {5,-4} | {6,-10:N2} | {7,-12} | {8,-12:N2}",
                         r.PlayerId,
                         Truncate(r.Strategy, 25),
                         Truncate(r.MycovariantName, 28),
                         Truncate(r.Type, 12),
-                        Truncate(MapEffectType(r.EffectType), 12),
+                        Truncate(MapEffectType(r.EffectType), 22),
                         r.Games,
-                        r.Triggered,
                         r.AvgEffect,
                         r.TotalEffect,
                         r.AvgAIScoreAtDraft);
@@ -120,7 +117,6 @@ namespace FungusToast.Simulation.Analysis
                 return "Resistance Transfers";
             if (string.Equals(effectType, "NecrophoricAdaptationReclamations", StringComparison.OrdinalIgnoreCase))
                 return "Death Reclms";
-            // Add more mappings as needed
             return effectType;
         }
     }
