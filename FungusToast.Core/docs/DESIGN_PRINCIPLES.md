@@ -248,7 +248,8 @@ Fungus Toast uses precise terminology for all game state changes to ensure code,
 |----------------------------------------------|-----------------------|----------------------------------------------------------------------------------------|
 | Place new living cell in **empty** tile      | `Colonize`            | A fungal cell spreads into an unoccupied (empty) tile.                                 |
 | Place new living cell over **any dead cell** | `Reclaim`             | A fungal cell revives one of its own dead cells, returning it to life.                 |
-| Place new living cell over **enemy living cell** | `Infest`         | A fungal cell kills an enemy's living cell, then occupies the tile with its own cell.  |
+| Place new living cell over **enemy living cell** | `Infest`         | A fungal cell kills an enemy's living cell, then occupies the tile with its own cell.   |
+| Place new living cell over **any toxin**     | `Overgrow`            | A new fungal cell grows over top of a toxin tile, removing the toxin and occupying the tile. |
 
 ### Toxin Tile Placement & Cell Death
 
@@ -275,6 +276,7 @@ Fungus Toast uses precise terminology for all game state changes to ensure code,
 - **Infest** – Overtakes an enemy's dead or living cell.
 - **Toxify** – Places toxin in empty or dead cells.
 - **Poison** – Kills a living cell and converts it to toxin.
+- **Overgrow** – New growth that removes toxin.
 
 ---
 
