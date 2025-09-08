@@ -56,6 +56,11 @@ namespace FungusToast.Core.Config
         // Chemotactic Mycotoxins parameters
         public const float ChemotacticMycotoxinsMycotoxinTracerMultiplier = 3.0f; // Y value: 3.0% per Mycotoxin Tracer level
 
+        // Corner Conduit balance constants (per growth phase replacements)
+        public const int CornerConduitIReplacementsPerPhase = 2;
+        public const int CornerConduitIIReplacementsPerPhase = 3; // reserved
+        public const int CornerConduitIIIReplacementsPerPhase = 4; // reserved
+
         // AI scoring for Mycovariants
         public const float MycelialBastionIBaseAIScore = 4f;
         public const float MycelialBastionIIBaseAIScore = 5f;

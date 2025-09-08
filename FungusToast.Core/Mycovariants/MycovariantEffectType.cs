@@ -26,6 +26,11 @@
         CytolyticBurstToxins, // Toxins created by Cytolytic Burst
         CytolyticBurstKills, // Cells killed by Cytolytic Burst toxins
         Relocations, // Toxins relocated by Chemotactic Mycotoxins
+        // Corner Conduit specific counts
+        CornerConduitInfestations,
+        CornerConduitColonizations,
+        CornerConduitReclaims,
+        CornerConduitToxinsReplaced,
         // Add others as needed
     }
 }

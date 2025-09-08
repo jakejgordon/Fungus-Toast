@@ -70,11 +70,12 @@ namespace FungusToast.Core.Board
 
         public FungalCell() { }
 
-        public FungalCell(int? ownerPlayerId, int tileId, GrowthSource source)
+        public FungalCell(int? ownerPlayerId, int tileId, GrowthSource source, int? lastOwnerPlayerId = null)
         {
             OwnerPlayerId = ownerPlayerId;
             if (ownerPlayerId.HasValue)
                 OriginalOwnerPlayerId = ownerPlayerId.Value;
+            LastOwnerPlayerId = lastOwnerPlayerId; // preserve previous owner if provided (takeover replacement)
             TileId = tileId;
             GrowthCycleAge = 0;
             SourceOfGrowth = source;
@@ -84,16 +85,15 @@ namespace FungusToast.Core.Board
         /// <summary>
         /// Create a toxin Fungal Cell with specified lifespan.
         /// </summary>
-        public FungalCell(int? ownerPlayerId, int tileId, GrowthSource source, int toxinExpirationAge = GameBalance.DefaultToxinDuration)
+        public FungalCell(int? ownerPlayerId, int tileId, GrowthSource source, int toxinExpirationAge = GameBalance.DefaultToxinDuration, int? lastOwnerPlayerId = null)
         {
             OwnerPlayerId = ownerPlayerId;
             if (ownerPlayerId.HasValue)
                 OriginalOwnerPlayerId = ownerPlayerId.Value;
+            LastOwnerPlayerId = lastOwnerPlayerId;
             TileId = tileId;
             GrowthCycleAge = 0;
             SourceOfGrowth = source;
-
-            // set toxin stuff
             ToxinExpirationAge = toxinExpirationAge;
             CellType = FungalCellType.Toxin;
         }
@@ -239,8 +239,8 @@ namespace FungusToast.Core.Board
             {
                 ChangeOwnership(newOwnerPlayerId);
                 SetAlive(source);
-                // Optionally reset toxin-related fields/stats here
-                return FungalCellTakeoverResult.CatabolicGrowth;
+                // Return new standardized Overgrown result (was CatabolicGrowth)
+                return FungalCellTakeoverResult.Overgrown;
             }
 
             return FungalCellTakeoverResult.Invalid;

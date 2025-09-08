@@ -304,6 +304,19 @@ namespace FungusToast.Simulation.Models
                             break;
                         }
 
+                    case var id when id == MycovariantIds.CornerConduitIId:
+                        {
+                            // Pull counts directly from PlayerMycovariant.EffectCounts (observer integration optional for this mycovariant)
+                            if (myco.EffectCounts.TryGetValue(MycovariantEffectType.CornerConduitInfestations, out var inf) && inf > 0)
+                                effectCounts[MycovariantEffectType.CornerConduitInfestations] = inf;
+                            if (myco.EffectCounts.TryGetValue(MycovariantEffectType.CornerConduitColonizations, out var col) && col > 0)
+                                effectCounts[MycovariantEffectType.CornerConduitColonizations] = col;
+                            if (myco.EffectCounts.TryGetValue(MycovariantEffectType.CornerConduitReclaims, out var rec) && rec > 0)
+                                effectCounts[MycovariantEffectType.CornerConduitReclaims] = rec;
+                            if (myco.EffectCounts.TryGetValue(MycovariantEffectType.CornerConduitToxinsReplaced, out var tox) && tox > 0)
+                                effectCounts[MycovariantEffectType.CornerConduitToxinsReplaced] = tox;
+                            break;
+                        }
                         // ...more cases...
                 }
 

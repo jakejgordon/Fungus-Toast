@@ -28,5 +28,9 @@ namespace FungusToast.Core.Mycovariants
         public const int NecrophoricAdaptation = 1021;
         public const int CytolyticBurstId = 1022;
         public const int ChemotacticMycotoxinsId = 1023;
+        // Corner Conduit series (I implemented; II & III reserved)
+        public const int CornerConduitIId = 1024;
+        public const int CornerConduitIIId = 1025; // reserved
+        public const int CornerConduitIIIId = 1026; // reserved
     }
 }

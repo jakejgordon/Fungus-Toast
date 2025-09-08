@@ -117,6 +117,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Resistance granted via Chitin Fortification surge
         /// </summary>
-        ChitinFortification
+        ChitinFortification,
+        
+        /// <summary>
+        /// Growth created by Corner Conduit pre-growth effect
+        /// </summary>
+        CornerConduit
     }
 }

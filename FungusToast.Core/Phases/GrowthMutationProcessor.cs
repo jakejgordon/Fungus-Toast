@@ -114,7 +114,7 @@ namespace FungusToast.Core.Phases
         // Helper for creating and moving a Creeping Mold cell
         private static void CreateCreepingMoldCell(Player player, FungalCell sourceCell, BoardTile sourceTile, BoardTile targetTile, GameBoard board)
         {
-            var newCell = new FungalCell(player.PlayerId, targetTile.TileId, GrowthSource.CreepingMold);
+            var newCell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: targetTile.TileId, source: GrowthSource.CreepingMold, lastOwnerPlayerId: null);
             board.PlaceFungalCell(newCell); // Event hooks will fire as appropriate
             player.RemoveControlledTile(sourceCell.TileId);
             sourceTile.RemoveFungalCell();

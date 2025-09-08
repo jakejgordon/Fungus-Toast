@@ -62,7 +62,7 @@ public static class MycovariantEffectProcessor
             if (prevCell == null)
             {
                 // Place a new living cell
-                var newCell = new FungalCell(playerId, livingLine[i], FungusToast.Core.Growth.GrowthSource.JettingMycelium);
+                var newCell = new FungalCell(ownerPlayerId: playerId, tileId: livingLine[i], source: GrowthSource.JettingMycelium, lastOwnerPlayerId: null);
                 targetTile.PlaceFungalCell(newCell);
                 board.Players[playerId].ControlledTileIds.Add(livingLine[i]);
                 colonized++;
@@ -77,7 +77,7 @@ public static class MycovariantEffectProcessor
                 {
                     case FungalCellTakeoverResult.Infested: infested++; break;
                     case FungalCellTakeoverResult.Reclaimed: reclaimed++; break;
-                    case FungalCellTakeoverResult.CatabolicGrowth: catabolicGrowth++; break;
+                    case FungalCellTakeoverResult.Overgrown: catabolicGrowth++; break; // legacy bucket
                     case FungalCellTakeoverResult.AlreadyOwned: alreadyOwned++; break;
                     case FungalCellTakeoverResult.InvalidBecauseResistant: invalid++; break;
                     case FungalCellTakeoverResult.Invalid: invalid++; break;
@@ -400,7 +400,7 @@ public static class MycovariantEffectProcessor
             if (prevCell == null)
             {
                 // Place new Resistant cell using board method
-                var newCell = new FungalCell(playerId, tileId, GrowthSource.SurgicalInoculation);
+                var newCell = new FungalCell(ownerPlayerId: playerId, tileId: tileId, source: GrowthSource.SurgicalInoculation, lastOwnerPlayerId: null);
                 newCell.MakeResistant();
                 board.PlaceFungalCell(newCell);
                 observer.RecordSurgicalInoculationDrop(playerId, 1);
@@ -748,5 +748,176 @@ public static class MycovariantEffectProcessor
         return board.GetOrthogonalNeighbors(toxinCell.TileId)
             .Any(tile => tile.FungalCell?.IsAlive == true && 
                         tile.FungalCell.OwnerPlayerId != playerId);
+    }
+
+    // ================== Corner Conduit (Refactored Helpers) ==================
+    private static (int x,int y)? GetNearestCorner(GameBoard board, int sx, int sy)
+    {
+        // Tie-break order: TL, TR, BR, BL
+        var corners = new (int x,int y)[]
+        {
+            (0,0),
+            (board.Width-1,0),
+            (board.Width-1,board.Height-1),
+            (0,board.Height-1)
+        };
+        int bestIndex = -1;
+        int bestDist = int.MaxValue;
+        for (int i=0;i<corners.Length;i++)
+        {
+            var c = corners[i];
+            int dist = Math.Abs(c.x - sx) + Math.Abs(c.y - sy);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                bestIndex = i;
+            }
+        }
+        if (bestIndex < 0) return null;
+        return corners[bestIndex];
+    }
+
+    private static bool ShouldSkipTile(FungalCell? existing, int playerId)
+    {
+        if (existing == null) return false; // empty tile actionable
+        if (existing.IsAlive && existing.OwnerPlayerId == playerId) return true; // friendly living
+        if (existing.IsAlive && existing.OwnerPlayerId != playerId && existing.IsResistant) return true; // enemy resistant
+        return false; // actionable otherwise
+    }
+
+    private static void ApplyCornerConduitAction(
+        GameBoard board,
+        int playerId,
+        int tileId,
+        FungalCell? existing,
+        ref int quota,
+        Random rng,
+        ISimulationObserver observer,
+        ref int infestations,
+        ref int colonizations,
+        ref int reclaims,
+        ref int toxinsReplaced)
+    {
+        if (quota <= 0) return;
+
+        // Empty
+        if (existing == null)
+        {
+            var newCell = new FungalCell(ownerPlayerId: playerId, tileId: tileId, source: GrowthSource.CornerConduit, lastOwnerPlayerId: null);
+            board.PlaceFungalCell(newCell);
+            colonizations++; quota--; return;
+        }
+
+        // Dead cell
+        if (existing.IsDead)
+        {
+            var result = board.TakeoverCell(tileId, playerId, allowToxin: true, GrowthSource.CornerConduit, board.Players, rng, observer);
+            if (result == FungalCellTakeoverResult.Reclaimed)
+            {
+                reclaims++; quota--; return;
+            }
+        }
+        // Enemy living (non-resistant handled by ShouldSkipTile)
+        else if (existing.IsAlive && existing.OwnerPlayerId != playerId)
+        {
+            var result = board.TakeoverCell(tileId, playerId, allowToxin: true, GrowthSource.CornerConduit, board.Players, rng, observer);
+            if (result == FungalCellTakeoverResult.Infested)
+            {
+                infestations++; quota--; return;
+            }
+        }
+        // Toxin
+        else if (existing.IsToxin)
+        {
+            // Any toxin -> Overgrow (internally Overgrown result)
+            var result = board.TakeoverCell(tileId, playerId, allowToxin: true, GrowthSource.CornerConduit, board.Players, rng, observer);
+            if (result == FungalCellTakeoverResult.Overgrown)
+            {
+                toxinsReplaced++; quota--; return;
+            }
+        }
+    }
+
+    private static void ProcessCornerConduitForPlayer(
+        GameBoard board,
+        Player player,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        var myco = player.GetMycovariant(MycovariantIds.CornerConduitIId);
+        if (myco == null) return;           // Only Tier I implemented
+        if (!player.StartingTileId.HasValue) return;
+
+        int quota = MycovariantGameBalance.CornerConduitIReplacementsPerPhase;
+        if (quota <= 0) return;
+
+        int startTile = player.StartingTileId.Value;
+        var (sx, sy) = board.GetXYFromTileId(startTile);
+        var target = GetNearestCorner(board, sx, sy);
+        if (!target.HasValue) return;
+
+        var line = GenerateBresenhamLine(sx, sy, target.Value.x, target.Value.y);
+        if (line.Count <= 1) return; // No actionable tiles beyond start
+
+        int infestations = 0, colonizations = 0, reclaims = 0, toxinsReplaced = 0;
+
+        for (int i = 1; i < line.Count && quota > 0; i++)
+        {
+            var (tx, ty) = line[i];
+            int tileId = ty * board.Width + tx;
+            var tile = board.GetTileById(tileId);
+            if (tile == null) continue;
+            var existing = tile.FungalCell;
+            if (ShouldSkipTile(existing, player.PlayerId)) continue;
+
+            ApplyCornerConduitAction(board, player.PlayerId, tileId, existing, ref quota, rng, observer, ref infestations, ref colonizations, ref reclaims, ref toxinsReplaced);
+        }
+
+        if (infestations > 0) myco.IncrementEffectCount(MycovariantEffectType.CornerConduitInfestations, infestations);
+        if (colonizations > 0) myco.IncrementEffectCount(MycovariantEffectType.CornerConduitColonizations, colonizations);
+        if (reclaims > 0) myco.IncrementEffectCount(MycovariantEffectType.CornerConduitReclaims, reclaims);
+        if (toxinsReplaced > 0) myco.IncrementEffectCount(MycovariantEffectType.CornerConduitToxinsReplaced, toxinsReplaced);
+    }
+
+    /// <summary>
+    /// Executes Corner Conduit I pre-growth effect once per player who owns it.
+    /// Traces Bresenham line from starting spore to nearest corner (TL, TR, BR, BL tie-break order)
+    /// and performs up to N replacements according to actionable rules.
+    /// </summary>
+    public static void OnPreGrowthPhase_CornerConduit(
+        GameBoard board,
+        List<Player> players,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        foreach (var player in players)
+        {
+            ProcessCornerConduitForPlayer(board, player, rng, observer);
+        }
+    }
+
+    /// <summary>
+    /// Bresenham line generator producing inclusive endpoints list of (x,y) tuples.
+    /// </summary>
+    public static List<(int x,int y)> GenerateBresenhamLine(int x0, int y0, int x1, int y1)
+    {
+        List<(int x,int y)> points = new();
+        int dx = Math.Abs(x1 - x0);
+        int dy = Math.Abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx - dy;
+
+        int x = x0;
+        int y = y0;
+        while (true)
+        {
+            points.Add((x,y));
+            if (x == x1 && y == y1) break;
+            int e2 = 2 * err;
+            if (e2 > -dy){ err -= dy; x += sx; }
+            if (e2 < dx){ err += dx; y += sy; }
+        }
+        return points;
     }
 }

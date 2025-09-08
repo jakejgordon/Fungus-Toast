@@ -250,7 +250,7 @@ namespace FungusToast.Core.Growth
                 return false;
 
             // Create the cell with the correct growth source
-            var newCell = new FungalCell(playerId, targetTileId, growthSource);
+            var newCell = new FungalCell(ownerPlayerId: playerId, tileId: targetTileId, source: growthSource, lastOwnerPlayerId: null);
             
             // Place the cell manually to ensure the source is preserved
             targetTile.PlaceFungalCell(newCell);

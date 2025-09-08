@@ -9,7 +9,7 @@ namespace FungusToast.Core.Board
         AlreadyOwned,
         Infested,       // Used to be Parasitized
         Reclaimed,
-        CatabolicGrowth,
+        Overgrown,      // Replaced a toxin with a living cell (preferred term)
         Invalid,
         InvalidBecauseResistant
     }

@@ -49,6 +49,8 @@ namespace FungusToast.Core.Events
             board.PreGrowthPhase += () =>
             {
                 MutationEffectCoordinator.OnPreGrowthPhase(board, players, rng, observer);
+                // Corner Conduit should run AFTER toxin cleaning (Mycotoxin Catabolism) and surge prep
+                MycovariantEffectProcessor.OnPreGrowthPhase_CornerConduit(board, players, rng, observer);
             };
 
             // All mutation-based post-growth phase effects (consolidated)

@@ -86,7 +86,7 @@ namespace FungusToast.Core.Phases
                         {
                             case FungalCellTakeoverResult.Infested: infested++; break;
                             case FungalCellTakeoverResult.Reclaimed: reclaimed++; break;
-                            case FungalCellTakeoverResult.CatabolicGrowth: catabolicGrowth++; break;
+                            case FungalCellTakeoverResult.Overgrown: catabolicGrowth++; break;
                             case FungalCellTakeoverResult.AlreadyOwned: alreadyOwned++; break;
                             case FungalCellTakeoverResult.Invalid: invalid++; break;
                         }
@@ -94,7 +94,7 @@ namespace FungusToast.Core.Phases
                     else
                     {
                         // Place a new living cell if empty
-                        var newCell = new FungalCell(player.PlayerId, targetTileId, GrowthSource.HyphalVectoring);
+                        var newCell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: targetTileId, source: GrowthSource.HyphalVectoring, lastOwnerPlayerId: null);
                         board.PlaceFungalCell(newCell); // Use board.PlaceFungalCell instead of targetTile.PlaceFungalCell for proper tracking
                         colonized++;
                     }
@@ -276,7 +276,7 @@ namespace FungusToast.Core.Phases
                             var takeover = board.TakeoverCell(targetTile.TileId, player.PlayerId, allowToxin, GrowthSource.MimeticResilience, players, rng, observer);
                             if (takeover == FungalCellTakeoverResult.Infested ||
                                 takeover == FungalCellTakeoverResult.Reclaimed ||
-                                takeover == FungalCellTakeoverResult.CatabolicGrowth)
+                                takeover == FungalCellTakeoverResult.Overgrown)
                             {
                                 targetTile.FungalCell?.MakeResistant();
                                 if (targetTile.FungalCell != null)
@@ -287,7 +287,7 @@ namespace FungusToast.Core.Phases
                         }
                         else
                         {
-                            var newCell = new FungalCell(player.PlayerId, targetTile.TileId, GrowthSource.MimeticResilience);
+                            var newCell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: targetTile.TileId, source: GrowthSource.MimeticResilience, lastOwnerPlayerId: null);
                             newCell.MakeResistant();
                             targetTile.PlaceFungalCell(newCell);
                             newlyResistantTileIds.Add(targetTile.TileId);

@@ -593,5 +593,52 @@ namespace FungusToast.Core.Mycovariants
                     return Math.Min(10f, score);
                 }
             };
+
+        public static Mycovariant CornerConduitI() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.CornerConduitIId,
+                Name = "Corner Conduit I",
+                Description = $"Before each growth phase, trace a path from your starting spore toward the nearest corner (TL→TR→BR→BL tie-break). Replace up to {MycovariantGameBalance.CornerConduitIReplacementsPerPhase} actionable tile along that path (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skips friendly living and enemy Resistant cells.",
+                FlavorText = "Hyphae prioritize a direct arterial route to a strategic corner, exploiting vulnerabilities along the corridor.",
+                Type = MycovariantType.Passive,
+                Category = MycovariantCategory.Growth,
+                IsUniversal = true,
+                AutoMarkTriggered = true,
+                AIScore = (player, board) =>
+                {
+                    if (!player.StartingTileId.HasValue) return 1f;
+                    var (sx, sy) = board.GetXYFromTileId(player.StartingTileId.Value);
+                    // Determine nearest corner using Manhattan distance with tie-break TL, TR, BR, BL
+                    var corners = new List<(int x,int y)>{(0,0),(board.Width-1,0),(board.Width-1,board.Height-1),(0,board.Height-1)};
+                    int bestIndex = 0;
+                    int bestDist = int.MaxValue;
+                    for(int i=0;i<corners.Count;i++)
+                    {
+                        var c = corners[i];
+                        int dist = Math.Abs(c.x - sx) + Math.Abs(c.y - sy);
+                        if (dist < bestDist){ bestDist = dist; bestIndex = i; }
+                    }
+                    var target = corners[bestIndex];
+                    var line = MycovariantEffectProcessor.GenerateBresenhamLine(sx, sy, target.x, target.y);
+                    if (line.Count <= 1) return 1f;
+                    int actionable = 0;
+                    for(int i=1;i<line.Count;i++)
+                    {
+                        int tx = line[i].x; int ty = line[i].y; int tileId = ty*board.Width+tx;
+                        var tile = board.GetTileById(tileId);
+                        var cell = tile?.FungalCell;
+                        if (cell != null && cell.IsAlive && cell.OwnerPlayerId == player.PlayerId) continue; // friendly living skip
+                        if (cell != null && cell.IsAlive && cell.OwnerPlayerId != player.PlayerId && cell.IsResistant) continue; // enemy resistant skip
+                        actionable++;
+                    }
+                    int denom = line.Count -1;
+                    float fraction = denom>0 ? (float)actionable/denom : 0f;
+                    if (fraction >= 0.75f) return 6f;
+                    if (fraction >= 0.50f) return 4f;
+                    if (fraction > 0f) return 2f;
+                    return 1f;
+                }
+            };
     }
 }

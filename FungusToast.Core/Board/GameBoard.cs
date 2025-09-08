@@ -295,7 +295,7 @@ namespace FungusToast.Core.Board
             if (!tile.IsOccupied)
             {
                 int tileId = y * Width + x;
-                var cell = new FungalCell(playerId, tileId, GrowthSource.InitialSpore);
+                var cell = new FungalCell(ownerPlayerId: playerId, tileId: tileId, source: GrowthSource.InitialSpore, lastOwnerPlayerId: null);
                 cell.MakeResistant(); // Initial spores MUST be resistant to prevent elimination
                 // Do NOT mark as newly grown – initial spores are setup visuals
                 cell.SetBirthRound(CurrentRound); // Still stamp birth round for history/UI
@@ -393,7 +393,7 @@ namespace FungusToast.Core.Board
             if (tile == null || tile.IsOccupied)
                 return false;
 
-            var cell = new FungalCell(player.PlayerId, tileId, source);
+            var cell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: tileId, source: source, lastOwnerPlayerId: null);
             // Mark as newly grown spore and stamp round for visuals
             cell.MarkAsNewlyGrown();
             cell.SetBirthRound(CurrentRound);
@@ -929,26 +929,22 @@ namespace FungusToast.Core.Board
 
             if (existing.IsAlive)
             {
-                // Enemy living cell becomes infestation
-                var newCell = new FungalCell(newOwnerPlayerId, tileId, source);
+                var newCell = new FungalCell(ownerPlayerId: newOwnerPlayerId, tileId: tileId, source: source, lastOwnerPlayerId: existing.OwnerPlayerId);
                 PlaceFungalCell(newCell);
                 result = FungalCellTakeoverResult.Infested;
             }
             else if (existing.IsDead)
             {
-                // Reclaim dead cell (own or enemy dead counts as reclaim in current analytics)
-                var newCell = new FungalCell(newOwnerPlayerId, tileId, source);
+                var newCell = new FungalCell(ownerPlayerId: newOwnerPlayerId, tileId: tileId, source: source, lastOwnerPlayerId: existing.OwnerPlayerId);
                 PlaceFungalCell(newCell);
                 result = FungalCellTakeoverResult.Reclaimed;
             }
             else if (existing.IsToxin)
             {
-                // Replace toxin with living cell if allowed
                 if (!allowToxin) return FungalCellTakeoverResult.Invalid;
-                var newCell = new FungalCell(newOwnerPlayerId, tileId, source);
+                var newCell = new FungalCell(ownerPlayerId: newOwnerPlayerId, tileId: tileId, source: source, lastOwnerPlayerId: existing.OwnerPlayerId);
                 PlaceFungalCell(newCell);
-                // Map toxin replacement to CatabolicGrowth bucket (legacy semantic – distinct from Infested/Reclaimed)
-                result = FungalCellTakeoverResult.CatabolicGrowth;
+                result = FungalCellTakeoverResult.Overgrown;
             }
             else
             {
