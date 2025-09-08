@@ -78,6 +78,7 @@ ExportedObj/
 !Assembly-CSharp.csproj
 !FungusToast.Unity.csproj
 !Fungus Toast.sln
+!FungusToast.sln
 
 # Keep Visual Studio configuration for required workloads
 !.vsconfig
@@ -93,11 +94,11 @@ Thumbs.db
 .plastic/
 FungusToast.Simulation/simulation_output.txt
 FungusToast.Simulation/SimulationOutput/
-Fungus Toast/Assets/Plugins/FungusToast.Core.dll
-Fungus Toast/Assets/Plugins/FungusToast.Core.pdb
-Fungus Toast/Assets/Scripts/Unity/ForceRecompile.cs
-Fungus Toast/Assets/Scripts/Unity/ForceRecompile.cs
-Fungus Toast/Assets/Plugins/FungusToast.Core.pdb
-Fungus Toast/Assets/Plugins/FungusToast.Core.dll
-Fungus Toast/Assets/Scripts/Unity/ForceRecompile.cs
+FungusToast.Unity/Assets/Plugins/FungusToast.Core.dll
+FungusToast.Unity/Assets/Plugins/FungusToast.Core.pdb
+FungusToast.Unity/Assets/Scripts/Unity/ForceRecompile.cs
+FungusToast.Unity/Assets/Scripts/Unity/ForceRecompile.cs
+FungusToast.Unity/Assets/Plugins/FungusToast.Core.pdb
+FungusToast.Unity/Assets/Plugins/FungusToast.Core.dll
+FungusToast.Unity/Assets/Scripts/Unity/ForceRecompile.cs
 _xxx
