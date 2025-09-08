@@ -640,5 +640,88 @@ namespace FungusToast.Core.Mycovariants
                     return 1f;
                 }
             };
+
+        public static Mycovariant CornerConduitII() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.CornerConduitIIId,
+                Name = "Corner Conduit II",
+                Description = $"Before each growth phase, trace a path from your starting spore toward the nearest corner (TL→TR→BR→BL tie-break). Replace up to {MycovariantGameBalance.CornerConduitIIReplacementsPerPhase} actionable tiles along that path (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skips friendly living and enemy Resistant cells.",
+                FlavorText = "Hyphal arterial routing intensifies, widening strategic throughput toward a dominant corner nexus.",
+                Type = MycovariantType.Passive,
+                Category = MycovariantCategory.Growth,
+                IsUniversal = false,
+                AutoMarkTriggered = true,
+                AIScore = (player, board) =>
+                {
+                    // Reuse Corner Conduit I scoring heuristic (actionable fraction) – higher tier just scales a bit
+                    if (!player.StartingTileId.HasValue) return 1f;
+                    var (sx, sy) = board.GetXYFromTileId(player.StartingTileId.Value);
+                    var corners = new List<(int x,int y)>{(0,0),(board.Width-1,0),(board.Width-1,board.Height-1),(0,board.Height-1)};
+                    int bestIndex = 0; int bestDist = int.MaxValue;
+                    for (int i = 0; i < corners.Count; i++)
+                    { var c = corners[i]; int dist = Math.Abs(c.x - sx) + Math.Abs(c.y - sy); if (dist < bestDist){ bestDist = dist; bestIndex = i; } }
+                    var target = corners[bestIndex];
+                    var line = MycovariantEffectProcessor.GenerateBresenhamLine(sx, sy, target.x, target.y);
+                    if (line.Count <= 1) return 1f;
+                    int actionable = 0;
+                    for (int i = 1; i < line.Count; i++)
+                    {
+                        int tx = line[i].x; int ty = line[i].y; int tileId = ty * board.Width + tx;
+                        var tile = board.GetTileById(tileId);
+                        var cell = tile?.FungalCell;
+                        if (cell != null && cell.IsAlive && cell.OwnerPlayerId == player.PlayerId) continue;
+                        if (cell != null && cell.IsAlive && cell.OwnerPlayerId != player.PlayerId && cell.IsResistant) continue;
+                        actionable++;
+                    }
+                    int denom = line.Count - 1;
+                    float fraction = denom > 0 ? (float)actionable / denom : 0f;
+                    if (fraction >= 0.75f) return 7f; // Slightly higher ceiling than Tier I
+                    if (fraction >= 0.50f) return 5f;
+                    if (fraction > 0f) return 3f;
+                    return 1f;
+                }
+            };
+
+        public static Mycovariant CornerConduitIII() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.CornerConduitIIIId,
+                Name = "Corner Conduit III",
+                Description = $"Before each growth phase, trace a path from your starting spore toward the nearest corner (TL→TR→BR→BL tie-break). Replace up to {MycovariantGameBalance.CornerConduitIIIReplacementsPerPhase} actionable tiles along that path (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skips friendly living and enemy Resistant cells.",
+                FlavorText = "A fully vascularized hyphal highway surges toward strategic dominance, overwhelming resistance in a focused advance.",
+                Type = MycovariantType.Passive,
+                Category = MycovariantCategory.Growth,
+                IsUniversal = false,
+                AutoMarkTriggered = true,
+                AIScore = (player, board) =>
+                {
+                    if (!player.StartingTileId.HasValue) return 1f;
+                    var (sx, sy) = board.GetXYFromTileId(player.StartingTileId.Value);
+                    var corners = new List<(int x,int y)>{(0,0),(board.Width-1,0),(board.Width-1,board.Height-1),(0,board.Height-1)};
+                    int bestIndex = 0; int bestDist = int.MaxValue;
+                    for (int i = 0; i < corners.Count; i++)
+                    { var c = corners[i]; int dist = Math.Abs(c.x - sx) + Math.Abs(c.y - sy); if (dist < bestDist){ bestDist = dist; bestIndex = i; } }
+                    var target = corners[bestIndex];
+                    var line = MycovariantEffectProcessor.GenerateBresenhamLine(sx, sy, target.x, target.y);
+                    if (line.Count <= 1) return 1f;
+                    int actionable = 0;
+                    for (int i = 1; i < line.Count; i++)
+                    {
+                        int tx = line[i].x; int ty = line[i].y; int tileId = ty * board.Width + tx;
+                        var tile = board.GetTileById(tileId);
+                        var cell = tile?.FungalCell;
+                        if (cell != null && cell.IsAlive && cell.OwnerPlayerId == player.PlayerId) continue;
+                        if (cell != null && cell.IsAlive && cell.OwnerPlayerId != player.PlayerId && cell.IsResistant) continue;
+                        actionable++;
+                    }
+                    int denom = line.Count - 1;
+                    float fraction = denom > 0 ? (float)actionable / denom : 0f;
+                    if (fraction >= 0.75f) return 8f; // Slightly higher again
+                    if (fraction >= 0.50f) return 6f;
+                    if (fraction > 0f) return 4f;
+                    return 1f;
+                }
+            };
     }
 }

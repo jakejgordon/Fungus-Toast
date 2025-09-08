@@ -46,6 +46,8 @@ namespace FungusToast.Core.Mycovariants
                 // --- Growth/Edge options ---
                 MycovariantFactory.PerimeterProliferator(),
                 MycovariantFactory.CornerConduitI(), // NEW Corner Conduit I
+                MycovariantFactory.CornerConduitII(), // NEW Corner Conduit II
+                MycovariantFactory.CornerConduitIII(), // NEW Corner Conduit III
                 
                 // --- Resistance/Defense options ---
                 MycovariantFactory.HyphalResistanceTransfer(),

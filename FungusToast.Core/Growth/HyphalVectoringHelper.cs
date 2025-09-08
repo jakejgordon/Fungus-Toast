@@ -140,30 +140,6 @@ namespace FungusToast.Core.Growth
         }
 
         /// <summary>
-        /// Returns true if the path is blocked by a friendly cell, otherwise false. Also returns how many unblocked tiles there were.
-        /// </summary>
-        private static bool PathBlockedByFriendly(List<(int x, int y)> path, GameBoard board, int playerId, out int unblockedTiles)
-        {
-            unblockedTiles = 0;
-            foreach (var (x, y) in path)
-            {
-                var pathTile = board.GetTile(x, y);
-                if (pathTile == null)
-                    continue;
-
-                if (pathTile.IsOccupied &&
-                    pathTile.FungalCell is { IsAlive: true, OwnerPlayerId: var oid } &&
-                    oid == playerId)
-                {
-                    return true;
-                }
-
-                unblockedTiles++;
-            }
-            return false;
-        }
-
-        /// <summary>
         /// Returns a straight line of (x, y) points from (fromX, fromY) to (toX, toY), length up to maxLength.
         /// </summary>
         public static List<(int x, int y)> GetLineToCenter(int fromX, int fromY, int toX, int toY, int maxLength)

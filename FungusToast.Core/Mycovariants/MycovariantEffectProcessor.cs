@@ -844,11 +844,19 @@ public static class MycovariantEffectProcessor
         Random rng,
         ISimulationObserver observer)
     {
-        var myco = player.GetMycovariant(MycovariantIds.CornerConduitIId);
-        if (myco == null) return;           // Only Tier I implemented
+        // Determine which Corner Conduit tier (if any) the player owns. Prefer highest tier if multiple somehow present.
+        PlayerMycovariant? myco = player.GetMycovariant(MycovariantIds.CornerConduitIIIId)
+            ?? player.GetMycovariant(MycovariantIds.CornerConduitIIId)
+            ?? player.GetMycovariant(MycovariantIds.CornerConduitIId);
+        if (myco == null) return; // Player has none of the Corner Conduit tiers
         if (!player.StartingTileId.HasValue) return;
 
-        int quota = MycovariantGameBalance.CornerConduitIReplacementsPerPhase;
+        int quota = myco.MycovariantId switch
+        {
+            var id when id == MycovariantIds.CornerConduitIIIId => MycovariantGameBalance.CornerConduitIIIReplacementsPerPhase,
+            var id when id == MycovariantIds.CornerConduitIIId => MycovariantGameBalance.CornerConduitIIReplacementsPerPhase,
+            _ => MycovariantGameBalance.CornerConduitIReplacementsPerPhase
+        };
         if (quota <= 0) return;
 
         int startTile = player.StartingTileId.Value;
