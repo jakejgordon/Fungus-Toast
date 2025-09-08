@@ -242,6 +242,7 @@ namespace FungusToast.Unity.UI.GameLog
         {
             // Unity log suppression by default to avoid spam; could be hooked for UI later.
             if (IsSilentMode) return;
+            playerActivityLogManager?.RecordOntogenicRegressionSacrifices(playerId, cellsKilled, levelsOffset);
         }
     }
 }

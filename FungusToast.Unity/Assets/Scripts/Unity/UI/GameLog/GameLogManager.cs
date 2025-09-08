@@ -81,7 +81,10 @@ namespace FungusToast.Unity.UI.GameLog
         
         // Reference to GameLogRouter to check silent mode
         private GameLogRouter gameLogRouter;
-        
+
+        private int preMutationPhaseOntogenicRegressionSacrificeCells = 0;
+        private int preMutationPhaseOntogenicRegressionSacrificeLevelOffset = 0;
+
         private struct PlayerSnapshot
         {
             public int LivingCells;
@@ -420,6 +423,15 @@ namespace FungusToast.Unity.UI.GameLog
             if (preMutationPhaseOntogenicRegressionFailureBonuses > 0)
             {
                 summaryParts.Add($"Ontogenic Regression: {preMutationPhaseOntogenicRegressionFailureBonuses} points");
+            }
+            
+            if (preMutationPhaseOntogenicRegressionSacrificeCells > 0)
+            {
+                summaryParts.Add($"Ontogenic Regression Sacrifices: {preMutationPhaseOntogenicRegressionSacrificeCells} cells");
+            }
+            if (preMutationPhaseOntogenicRegressionSacrificeLevelOffset != 0)
+            {
+                summaryParts.Add($"Ontogenic Regression Offset: {preMutationPhaseOntogenicRegressionSacrificeLevelOffset} levels");
             }
             
             if (summaryParts.Count > 0)
@@ -1187,7 +1199,14 @@ namespace FungusToast.Unity.UI.GameLog
         
         public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset)
         {
-            // Unity UI: currently not displayed to avoid clutter. Could be added similarly to other summaries.
+            if (IsSilentMode) return;
+            if (isTrackingPreMutationPhase && playerId == humanPlayerId)
+            {
+                if (cellsKilled > 0)
+                    preMutationPhaseOntogenicRegressionSacrificeCells += cellsKilled;
+                if (levelsOffset != 0)
+                    preMutationPhaseOntogenicRegressionSacrificeLevelOffset += levelsOffset;
+            }
         }
     }
 }

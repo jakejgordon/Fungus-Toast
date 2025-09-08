@@ -218,7 +218,7 @@ namespace FungusToast.Simulation.Analysis
                     if (player.HypersystemicDiagonalReclaims > 0)
                         effects["Diagonal Reclaims"] = player.HypersystemicDiagonalReclaims;
                     break;
-                    
+
                 case MutationIds.OntogenicRegression:
                     if (player.OntogenicRegressionDevolvedLevels > 0)
                         effects["Devolved Levels"] = player.OntogenicRegressionDevolvedLevels;
@@ -226,10 +226,14 @@ namespace FungusToast.Simulation.Analysis
                         effects["Tier 5+ Levels"] = player.OntogenicRegressionTier5PlusLevels;
                     if (player.OntogenicRegressionFailureBonuses > 0)
                         effects["Failure Bonuses"] = player.OntogenicRegressionFailureBonuses;
+                    if (player.OntogenicRegressionSacrificeCells > 0)
+                        effects["Cells Sacrificed"] = player.OntogenicRegressionSacrificeCells;
+                    if (player.OntogenicRegressionSacrificeLevelOffset != 0)
+                        effects["Level Offset"] = player.OntogenicRegressionSacrificeLevelOffset;
                     break;
-                
-                // Note: Mycovariant effects are not mutations, so they're not tracked here
-                // They are tracked separately in MycovariantResult
+
+                    // Note: Mycovariant effects are not mutations, so they're not tracked here
+                    // They are tracked separately in MycovariantResult
             }
 
             return effects;

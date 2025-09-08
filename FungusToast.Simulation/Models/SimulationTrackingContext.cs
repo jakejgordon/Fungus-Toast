@@ -931,6 +931,8 @@ namespace FungusToast.Simulation.Models
         private readonly Dictionary<int, int> ontogenicRegressionDevolvedLevels = new();
         private readonly Dictionary<int, int> ontogenicRegressionTier5PlusLevels = new();
         private readonly Dictionary<int, int> ontogenicRegressionFailureBonuses = new();
+        private readonly Dictionary<int, int> ontogenicRegressionSacrificeCells = new();
+        private readonly Dictionary<int, int> ontogenicRegressionSacrificeLevelOffsets = new();
 
         public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained)
         {
@@ -956,6 +958,26 @@ namespace FungusToast.Simulation.Models
             ontogenicRegressionFailureBonuses[playerId] += bonusPoints;
         }
 
+        // Add or replace this implementation (ensure only ONE exists)
+        public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset)
+        {
+            if (cellsKilled <= 0 && levelsOffset == 0) return;
+
+            if (cellsKilled > 0)
+            {
+                if (!ontogenicRegressionSacrificeCells.ContainsKey(playerId))
+                    ontogenicRegressionSacrificeCells[playerId] = 0;
+                ontogenicRegressionSacrificeCells[playerId] += cellsKilled;
+            }
+
+            if (levelsOffset != 0)
+            {
+                if (!ontogenicRegressionSacrificeLevelOffsets.ContainsKey(playerId))
+                    ontogenicRegressionSacrificeLevelOffsets[playerId] = 0;
+                ontogenicRegressionSacrificeLevelOffsets[playerId] += levelsOffset;
+            }
+        }
+
         public int GetOntogenicRegressionActivations(int playerId)
             => ontogenicRegressionActivations.TryGetValue(playerId, out var val) ? val : 0;
 
@@ -967,6 +989,11 @@ namespace FungusToast.Simulation.Models
 
         public int GetOntogenicRegressionFailureBonuses(int playerId)
             => ontogenicRegressionFailureBonuses.TryGetValue(playerId, out var val) ? val : 0;
+
+        public int GetOntogenicRegressionSacrificeCells(int playerId)
+            => ontogenicRegressionSacrificeCells.TryGetValue(playerId, out var v) ? v : 0;
+        public int GetOntogenicRegressionSacrificeLevelOffset(int playerId)
+            => ontogenicRegressionSacrificeLevelOffsets.TryGetValue(playerId, out var v) ? v : 0;
 
         public Dictionary<int, int> GetAllOntogenicRegressionActivations() => new(ontogenicRegressionActivations);
         public Dictionary<int, int> GetAllOntogenicRegressionDevolvedLevels() => new(ontogenicRegressionDevolvedLevels);
@@ -989,14 +1016,5 @@ namespace FungusToast.Simulation.Models
             => competitiveAntagonismTargeting.TryGetValue(playerId, out var val) ? val : 0;
 
         public Dictionary<int, int> GetAllCompetitiveAntagonismTargeting() => new(competitiveAntagonismTargeting);
-
-        // ────────────────
-        // Ontogenic Regression Sacrifices
-        // ────────────────
-        public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset)
-        {
-            // Simple aggregation: reuse deaths by reason tracking (not distinguishing reason here) or extend with separate counters if needed later.
-            RecordCellDeath(playerId, DeathReason.CytolyticBurst, cellsKilled);
-        }
     }
 }

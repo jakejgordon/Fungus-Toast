@@ -133,6 +133,8 @@ namespace FungusToast.Simulation.Models
                     OntogenicRegressionTier5PlusLevels = tracking.GetOntogenicRegressionTier5PlusLevels(player.PlayerId),
 
                     OntogenicRegressionFailureBonuses = tracking.GetOntogenicRegressionFailureBonuses(player.PlayerId),
+                    OntogenicRegressionSacrificeCells = tracking.GetOntogenicRegressionSacrificeCells(player.PlayerId),
+                    OntogenicRegressionSacrificeLevelOffset = tracking.GetOntogenicRegressionSacrificeLevelOffset(player.PlayerId),
 
                     // --- Mutation point income and spending ---
                     AdaptiveExpressionPointsEarned = tracking.GetAdaptiveExpressionPointsEarned(player.PlayerId),

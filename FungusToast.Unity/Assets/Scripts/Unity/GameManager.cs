@@ -83,7 +83,7 @@ namespace FungusToast.Unity
         private readonly List<int> _postGrowthHrtNewResistantTiles = new(); // tiles newly resistant via HRT
         private HashSet<int> _resistantBaseline = new();
         private bool _postGrowthSequenceRunning = false;
-        private bool _pendingDecayAfterSequence = false;
+        private bool _pendingDecayAfterSequence;
 
         private void Awake()
         {
@@ -690,7 +690,7 @@ namespace FungusToast.Unity
 
                 // OPTION 2 IMPLEMENTATION: Assign a single persistent AI strategy once and reuse it
                 // If human already had a strategy (unlikely), reuse it; else pick one proven strategy
-                IMutationSpendingStrategy? persistentStrategy = originalHumanStrategy;
+                IMutationSpendingStrategy persistentStrategy = originalHumanStrategy;
                 if (persistentStrategy == null)
                 {
                     persistentStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();

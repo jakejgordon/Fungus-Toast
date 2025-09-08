@@ -161,5 +161,7 @@ namespace FungusToast.Simulation.Models
         public int OntogenicRegressionDevolvedLevels { get; set; }
         public int OntogenicRegressionTier5PlusLevels { get; set; }
         public int OntogenicRegressionFailureBonuses { get; set; }
+        public int OntogenicRegressionSacrificeCells { get; set; }
+        public int OntogenicRegressionSacrificeLevelOffset { get; set; }
     }
 }
