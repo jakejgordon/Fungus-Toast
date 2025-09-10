@@ -19,44 +19,51 @@ namespace FungusToast.Core.Growth
             RoundContext roundContext,
             ISimulationObserver observer)
         {
-            // Fire PreGrowthCycle event for Mycotoxin Catabolism and other pre-growth effects
             board.OnPreGrowthCycle();
 
-            // Track failed growths for simulation analysis
             var failedGrowthsByPlayerId = players.ToDictionary(p => p.PlayerId, _ => 0);
 
-            // Count living cells for each player at the start of the growth cycle
-            var playerLivingCellCounts = players.ToDictionary(p => p.PlayerId, p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive));
-            
-            // Order players by living cell count (fewest first, most last)
+            // PRIORITY 2 (Option B): Use ControlledTileIds instead of rescanning board per player
+            int CountAlive(Player p)
+            {
+                int count = 0;
+                foreach (var tileId in p.ControlledTileIds)
+                {
+                    var tile = board.GetTileById(tileId);
+                    var cell = tile?.FungalCell;
+                    if (cell != null && cell.IsAlive && cell.OwnerPlayerId == p.PlayerId)
+                        count++;
+                }
+                return count;
+            }
+            var playerLivingCellCounts = players.ToDictionary(p => p.PlayerId, p => CountAlive(p));
             var playersOrderedByLivingCells = players.OrderBy(p => playerLivingCellCounts[p.PlayerId]).ToList();
 
-            // Process each player's living cells in order (fewest living cells first)
             foreach (var player in playersOrderedByLivingCells)
             {
-                var playerCells = board.AllLivingFungalCellsWithTiles()
-                    .Where(x => x.cell.OwnerPlayerId == player.PlayerId)
-                    .ToList();
+                // Gather this player's living cells via ControlledTileIds (avoids full-board enumeration)
+                var playerCells = new List<(BoardTile tile, FungalCell cell)>();
+                foreach (var tileId in player.ControlledTileIds)
+                {
+                    var tile = board.GetTileById(tileId);
+                    var cell = tile?.FungalCell;
+                    if (cell != null && cell.IsAlive && cell.OwnerPlayerId == player.PlayerId)
+                        playerCells.Add((tile!, cell));
+                }
 
                 Shuffle(playerCells, rng);
 
                 foreach (var (tile, cell) in playerCells)
                 {
                     bool grewOrMoved = TryExpandFromTile(board, tile, player, rng, observer);
-
                     if (!grewOrMoved)
                         failedGrowthsByPlayerId[player.PlayerId]++;
                 }
             }
 
             board.IncrementGrowthCycle();
-
-            // Age all cells at the end of each growth cycle (per design principles)
             AgeCells(board, players);
-
-            // Expire toxins after aging
             board.ExpireToxinTiles(board.CurrentGrowthCycle, observer);
-
             return failedGrowthsByPlayerId;
         }
 
@@ -65,22 +72,18 @@ namespace FungusToast.Core.Growth
         /// </summary>
         private static void AgeCells(GameBoard board, List<Player> players)
         {
-            // Age all living cells
+            // Age all living cells (retain existing implementation; could be optimized later if needed)
             List<BoardTile> livingTiles = board.AllTiles()
                 .Where(t => t.FungalCell is { IsAlive: true })
                 .ToList();
-
             foreach (BoardTile tile in livingTiles)
             {
                 FungalCell cell = tile.FungalCell!;
                 cell.IncrementGrowthAge();
             }
-
-            // Age all toxin cells (simple aging)
             List<BoardTile> toxinTiles = board.AllTiles()
                 .Where(t => t.FungalCell is { IsToxin: true })
                 .ToList();
-
             foreach (BoardTile tile in toxinTiles)
             {
                 FungalCell toxinCell = tile.FungalCell!;
@@ -106,21 +109,16 @@ namespace FungusToast.Core.Growth
 
             (float baseChance, float surgeBonus) = GrowthMutationProcessor.GetGrowthChancesWithHyphalSurge(owner);
             float diagonalMultiplier = GrowthMutationProcessor.GetTendrilDiagonalGrowthMultiplier(owner);
-
             float edgeMultiplier = GetEdgeGrowthMultiplier(owner, sourceTile, board);
-
             var allTargets = GetAllGrowthTargets(board, sourceTile, owner, baseChance, surgeBonus, diagonalMultiplier);
             Shuffle(allTargets, rng);
-
             foreach (var target in allTargets)
             {
                 if (AttemptStandardOrSurgeGrowth(board, owner, sourceTile.TileId, target, rng, observer))
                     return true;
-
                 if (target == allTargets[0] && AttemptCreepingMold(board, owner, sourceCell, sourceTile, target.Tile, rng, observer))
                     return true;
             }
-
             return AttemptNecrohyphalInfiltration(board, sourceTile, sourceCell, owner, rng, observer);
         }
 
@@ -133,11 +131,8 @@ namespace FungusToast.Core.Growth
             float diagonalMultiplier)
         {
             var targets = new List<GrowthTarget>();
-
             bool hasMaxCreepingMold = owner.GetMutationLevel(MutationIds.CreepingMold) == GameBalance.CreepingMoldMaxLevel;
-
             float edgeMultiplier = GetEdgeGrowthMultiplier(owner, sourceTile, board);
-
             foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
             {
                 if (!tile.IsOccupied && tile.TileId != sourceTile.TileId)
@@ -149,7 +144,6 @@ namespace FungusToast.Core.Growth
                     targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier, null, surgeBonus));
                 }
             }
-
             var diagonalDirs = new (int dx, int dy, DiagonalDirection dir, int mutationId)[]
             {
                 (-1,  1, DiagonalDirection.Northwest, MutationIds.TendrilNorthwest),
@@ -157,27 +151,20 @@ namespace FungusToast.Core.Growth
                 ( 1, -1, DiagonalDirection.Southeast, MutationIds.TendrilSoutheast),
                 (-1, -1, DiagonalDirection.Southwest, MutationIds.TendrilSouthwest),
             };
-
             foreach (var (dx, dy, dir, mutationId) in diagonalDirs)
             {
-                // Hard guard: must actually own at least 1 level of the corresponding Tendril mutation
                 if (owner.GetMutationLevel(mutationId) <= 0)
-                    continue; // Do NOT even consider diagonals without Tendril unlock
-
+                    continue;
                 float baseDiagonal = owner.GetDiagonalGrowthChance(dir);
-                if (baseDiagonal <= 0f)
-                    continue; // Defensive check – nothing to apply multiplier to
-
+                if (baseDiagonal <= 0f) continue;
                 float chance = baseDiagonal * diagonalMultiplier * edgeMultiplier;
                 if (chance <= 0f) continue;
-
                 int nx = sourceTile.X + dx;
                 int ny = sourceTile.Y + dy;
                 var maybeTile = board.GetTile(nx, ny);
                 if (maybeTile is { IsOccupied: false, TileId: var id } && id != sourceTile.TileId)
                     targets.Add(new GrowthTarget(maybeTile, chance, dir, 0f));
             }
-
             return targets;
         }
 
@@ -189,18 +176,12 @@ namespace FungusToast.Core.Growth
             Random rng,
             ISimulationObserver observer)
         {
-            // Prevent direct growth into any occupied tile (including toxins, dead cells, or living cells)
             if (target.Tile.IsOccupied) return false;
-
             double roll = rng.NextDouble();
-
             var (edgeMultiplier, baseChance) = GetPerimeterProliferatorContext(board, owner, sourceTileId, target);
-
-            // Determine the correct growth source based on the target type
-            GrowthSource growthSource = target.DiagonalDirection.HasValue 
-                ? GrowthSource.TendrilOutgrowth 
+            GrowthSource growthSource = target.DiagonalDirection.HasValue
+                ? GrowthSource.TendrilOutgrowth
                 : GrowthSource.HyphalOutgrowth;
-
             if (target.SurgeBonus > 0f && target.DiagonalDirection == null)
             {
                 if (roll < target.Chance)
@@ -214,7 +195,6 @@ namespace FungusToast.Core.Growth
                 }
                 else if (roll < target.Chance + target.SurgeBonus)
                 {
-                    // Surge growth always uses HyphalSurge source
                     if (TryGrowWithCorrectSource(board, owner.PlayerId, sourceTileId, target.Tile.TileId, GrowthSource.HyphalSurge))
                     {
                         observer.RecordHyphalSurgeGrowth(owner.PlayerId);
@@ -235,7 +215,6 @@ namespace FungusToast.Core.Growth
                     }
                 }
             }
-
             return false;
         }
 
@@ -248,14 +227,9 @@ namespace FungusToast.Core.Growth
             var targetTile = board.GetTileById(targetTileId);
             if (targetTile == null || targetTile.IsOccupied || targetTile.IsResistant)
                 return false;
-
-            // Create the cell with the correct growth source
             var newCell = new FungalCell(ownerPlayerId: playerId, tileId: targetTileId, source: growthSource, lastOwnerPlayerId: null);
-            
-            // Place the cell manually to ensure the source is preserved
             targetTile.PlaceFungalCell(newCell);
             board.PlaceFungalCell(newCell);
-            
             return true;
         }
 
@@ -314,7 +288,6 @@ namespace FungusToast.Core.Growth
                 observer.RecordCreepingMoldMove(owner.PlayerId);
                 return true;
             }
-
             return false;
         }
 
