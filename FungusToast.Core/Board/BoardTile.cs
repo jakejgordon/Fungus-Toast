@@ -19,12 +19,12 @@ namespace FungusToast.Core.Board
             TileId = y * boardWidth + x;
         }
 
-        public void PlaceFungalCell(FungalCell fungalCell)
+        internal void PlaceFungalCell(FungalCell fungalCell)
         {
             FungalCell = fungalCell;
         }
 
-        public void RemoveFungalCell()
+        internal void ClearCell()
         {
             FungalCell = null;
         }

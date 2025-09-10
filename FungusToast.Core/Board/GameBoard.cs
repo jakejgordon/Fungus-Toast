@@ -4,55 +4,34 @@ using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
-using FungusToast.Core.Board;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Growth;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FungusToast.Core.Mycovariants;
 
 namespace FungusToast.Core.Board
 {
-    public class GameBoard
+    // Game board root – maintains authoritative mapping of tileId -> FungalCell
+    public partial class GameBoard
     {
         public int Width { get; }
         public int Height { get; }
         public BoardTile[,] Grid { get; }
         public List<Player> Players { get; }
 
-        // Mapping of tileId -> current fungal cell (only for occupied tiles)
+        // Occupancy index (authoritative for all occupied tiles)
         private readonly Dictionary<int, FungalCell> tileIdToCell = new();
 
         public int CurrentRound { get; private set; } = 1;
         public int CurrentGrowthCycle { get; private set; } = 0;
-
-        /// <summary>
-        /// Round-scoped context for tracking per-player, per-effect counters during the current round.
-        /// Reset at the start of each round.
-        /// </summary>
         public RoundContext CurrentRoundContext { get; private set; } = new();
-
-        /// <summary>
-        /// True once Necrophytic Bloom has activated in this game instance.
-        /// </summary>
         public bool NecrophyticBloomActivated { get; set; } = false;
-
-        /// <summary>
-        /// Cached occupied tile ratio calculated at the start of the decay phase.
-        /// Used to avoid expensive recalculation during individual cell death events.
-        /// </summary>
         public float CachedOccupiedTileRatio { get; private set; } = 0f;
-
-        /// <summary>
-        /// Cached decay phase context for optimized competitive targeting during the decay phase.
-        /// Created once per decay phase and reused for all competitive targeting operations.
-        /// </summary>
         public DecayPhaseContext? CachedDecayPhaseContext { get; private set; } = null;
-
         public int TotalTiles => Width * Height;
 
-        #region Events & Delegates
+        #region Delegates
         public delegate void CellColonizedEventHandler(int playerId, int tileId, GrowthSource source);
         public delegate void CellInfestedEventHandler(int playerId, int tileId, int oldOwnerId, GrowthSource source);
         public delegate void CellReclaimedEventHandler(int playerId, int tileId, GrowthSource source);
@@ -69,7 +48,7 @@ namespace FungusToast.Core.Board
         public delegate void CreepingMoldMoveEventHandler(int playerId, int fromTileId, int toTileId);
         public delegate void JettingMyceliumCatabolicGrowthEventHandler(int playerId, int tileId);
         public delegate void PostGrowthPhaseEventHandler();
-        public delegate void PostGrowthPhaseCompletedEventHandler(); // NEW
+        public delegate void PostGrowthPhaseCompletedEventHandler();
         public delegate void DecayPhaseEventHandler(Dictionary<int, int> failedGrowthsByPlayerId);
         public delegate void PreGrowthCycleEventHandler();
         public delegate void DecayPhaseWithFailedGrowthsEventHandler(Dictionary<int, int> failedGrowthsByPlayerId);
@@ -80,8 +59,10 @@ namespace FungusToast.Core.Board
         public delegate void CatabolicRebirthEventHandler(object sender, CatabolicRebirthEventArgs e);
         public delegate void PreGrowthPhaseEventHandler();
         public delegate void ResistanceAppliedBatchEventHandler(int playerId, GrowthSource source, IReadOnlyList<int> tileIds);
-        public delegate void RegenerativeHyphaeReclaimedEventHandler(int playerId, int tileId); // NEW for Unity visuals
+        public delegate void RegenerativeHyphaeReclaimedEventHandler(int playerId, int tileId);
+        #endregion
 
+        #region Events
         public event CellColonizedEventHandler? CellColonized;
         public event CellInfestedEventHandler? CellInfested;
         public event CellReclaimedEventHandler? CellReclaimed;
@@ -98,7 +79,7 @@ namespace FungusToast.Core.Board
         public event CreepingMoldMoveEventHandler? CreepingMoldMove;
         public event JettingMyceliumCatabolicGrowthEventHandler? JettingMyceliumCatabolicGrowth;
         public event PostGrowthPhaseEventHandler? PostGrowthPhase;
-        public event PostGrowthPhaseCompletedEventHandler? PostGrowthPhaseCompleted; // NEW
+        public event PostGrowthPhaseCompletedEventHandler? PostGrowthPhaseCompleted;
         public event DecayPhaseEventHandler? DecayPhase;
         public event PreGrowthCycleEventHandler? PreGrowthCycle;
         public event DecayPhaseWithFailedGrowthsEventHandler? DecayPhaseWithFailedGrowths;
@@ -109,83 +90,58 @@ namespace FungusToast.Core.Board
         public event CatabolicRebirthEventHandler? CatabolicRebirth;
         public event PreGrowthPhaseEventHandler? PreGrowthPhase;
         public event ResistanceAppliedBatchEventHandler? ResistanceAppliedBatch;
-        public event RegenerativeHyphaeReclaimedEventHandler? RegenerativeHyphaeReclaimed; // NEW for Unity visuals
+        public event RegenerativeHyphaeReclaimedEventHandler? RegenerativeHyphaeReclaimed;
+
+        // Growth attempt lifecycle events
+        public event EventHandler<GrowthAttemptEventArgs>? BeforeGrowthAttempt;
+        public event EventHandler<GrowthAttemptEventArgs>? AfterGrowthAttempt;
+        public event Action<FungalCell, int>? OnDeadCellReclaim; // (cell, playerId)
         #endregion
 
         #region Event Invokers
-        protected virtual void OnCellColonized(int playerId, int tileId, GrowthSource source) =>
-            CellColonized?.Invoke(playerId, tileId, source);
-        protected virtual void OnCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource source) =>
-            CellInfested?.Invoke(playerId, tileId, oldOwnerId, source);
-        protected virtual void OnCellReclaimed(int playerId, int tileId, GrowthSource source) =>
-            CellReclaimed?.Invoke(playerId, tileId, source);
-        protected virtual void OnCellToxified(int playerId, int tileId, GrowthSource source) =>
-            CellToxified?.Invoke(playerId, tileId, source);
-        protected virtual void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource source) =>
-            CellPoisoned?.Invoke(playerId, tileId, oldOwnerId, source);
-        protected virtual void OnCellCatabolized(int playerId, int tileId) =>
-            CellCatabolized?.Invoke(playerId, tileId);
+        protected virtual void OnCellColonized(int playerId, int tileId, GrowthSource source) => CellColonized?.Invoke(playerId, tileId, source);
+        protected virtual void OnCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource source) => CellInfested?.Invoke(playerId, tileId, oldOwnerId, source);
+        protected virtual void OnCellReclaimed(int playerId, int tileId, GrowthSource source) => CellReclaimed?.Invoke(playerId, tileId, source);
+        protected virtual void OnCellToxified(int playerId, int tileId, GrowthSource source) => CellToxified?.Invoke(playerId, tileId, source);
+        protected virtual void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource source) => CellPoisoned?.Invoke(playerId, tileId, oldOwnerId, source);
+        protected virtual void OnCellCatabolized(int playerId, int tileId) => CellCatabolized?.Invoke(playerId, tileId);
         protected virtual void OnCellDeath(int playerId, int tileId, DeathReason reason, int? killerPlayerId = null, FungalCell? cell = null, int? attackerTileId = null)
         {
             var args = new FungalCellDiedEventArgs(tileId, playerId, reason, killerPlayerId, cell!, attackerTileId);
             CellDeath?.Invoke(this, args);
         }
-        protected virtual void OnCellSurgeGrowth(int playerId, int tileId) =>
-            CellSurgeGrowth?.Invoke(playerId, tileId);
-        protected virtual void OnNecrotoxicConversion(int playerId, int tileId, int oldOwnerId) =>
-            NecrotoxicConversion?.Invoke(playerId, tileId, oldOwnerId);
-        protected virtual void OnSporeDrop(int playerId, int tileId, MutationType mutationType) =>
-            SporeDrop?.Invoke(playerId, tileId, mutationType);
-        protected virtual void OnMutationPointsEarned(int playerId, int amount) =>
-            MutationPointsEarned?.Invoke(playerId, amount);
-        protected virtual void OnMutationPointsSpent(int playerId, MutationTier tier, int amount) =>
-            MutationPointsSpent?.Invoke(playerId, tier, amount);
-        protected virtual void OnTendrilGrowth(int playerId, int tileId, DiagonalDirection direction) =>
-            TendrilGrowth?.Invoke(playerId, tileId, direction);
-        protected virtual void OnCreepingMoldMove(int playerId, int fromTileId, int toTileId) =>
-            CreepingMoldMove?.Invoke(playerId, fromTileId, toTileId);
-        protected virtual void OnToxinExpired(ToxinExpiredEventArgs e) =>
-            ToxinExpired?.Invoke(this, e);
-        public virtual void OnPostGrowthPhase() =>
-            PostGrowthPhase?.Invoke();
-        public virtual void OnPostGrowthPhaseCompleted() =>
-            PostGrowthPhaseCompleted?.Invoke();
-        public virtual void OnDecayPhase(Dictionary<int, int> failedGrowthsByPlayerId) =>
-            DecayPhase?.Invoke(failedGrowthsByPlayerId);
-        public virtual void OnPreGrowthCycle() =>
-            PreGrowthCycle?.Invoke();
-        public virtual void OnDecayPhaseWithFailedGrowths(Dictionary<int, int> failedGrowthsByPlayerId) =>
-            DecayPhaseWithFailedGrowths?.Invoke(failedGrowthsByPlayerId);
+        protected virtual void OnCellSurgeGrowth(int playerId, int tileId) => CellSurgeGrowth?.Invoke(playerId, tileId);
+        protected virtual void OnNecrotoxicConversion(int playerId, int tileId, int oldOwnerId) => NecrotoxicConversion?.Invoke(playerId, tileId, oldOwnerId);
+        protected virtual void OnSporeDrop(int playerId, int tileId, MutationType mutationType) => SporeDrop?.Invoke(playerId, tileId, mutationType);
+        protected virtual void OnMutationPointsEarned(int playerId, int amount) => MutationPointsEarned?.Invoke(playerId, amount);
+        protected virtual void OnMutationPointsSpent(int playerId, MutationTier tier, int amount) => MutationPointsSpent?.Invoke(playerId, tier, amount);
+        protected virtual void OnTendrilGrowth(int playerId, int tileId, DiagonalDirection direction) => TendrilGrowth?.Invoke(playerId, tileId, direction);
+        protected virtual void OnCreepingMoldMove(int playerId, int fromTileId, int toTileId) => CreepingMoldMove?.Invoke(playerId, fromTileId, toTileId);
+        protected virtual void OnToxinExpiredInternal(ToxinExpiredEventArgs e) => ToxinExpired?.Invoke(this, e);
+        public virtual void OnPostGrowthPhase() => PostGrowthPhase?.Invoke();
+        public virtual void OnPostGrowthPhaseCompleted() => PostGrowthPhaseCompleted?.Invoke();
+        public virtual void OnDecayPhase(Dictionary<int, int> failedGrowthsByPlayerId) => DecayPhase?.Invoke(failedGrowthsByPlayerId);
+        public virtual void OnPreGrowthCycle() => PreGrowthCycle?.Invoke();
+        public virtual void OnDecayPhaseWithFailedGrowths(Dictionary<int, int> failedGrowthsByPlayerId) => DecayPhaseWithFailedGrowths?.Invoke(failedGrowthsByPlayerId);
         protected virtual void RaiseToxinExpired(ToxinExpiredEventArgs e) => ToxinExpired?.Invoke(this, e);
-        protected virtual void OnRegenerativeHyphaeReclaimed(int playerId, int tileId) =>
-            RegenerativeHyphaeReclaimed?.Invoke(playerId, tileId);
+        protected virtual void OnRegenerativeHyphaeReclaimed(int playerId, int tileId) => RegenerativeHyphaeReclaimed?.Invoke(playerId, tileId);
+        protected virtual void OnBeforeGrowthAttempt(GrowthAttemptEventArgs e) => BeforeGrowthAttempt?.Invoke(this, e);
+        protected virtual void OnAfterGrowthAttempt(GrowthAttemptEventArgs e) => AfterGrowthAttempt?.Invoke(this, e);
+        public virtual void OnResistanceAppliedBatch(int playerId, GrowthSource source, List<int> tileIds) => ResistanceAppliedBatch?.Invoke(playerId, source, tileIds);
         #endregion
 
-        #region Growth Attempt Events
-        public event EventHandler<GrowthAttemptEventArgs>? BeforeGrowthAttempt;
-        public event EventHandler<GrowthAttemptEventArgs>? AfterGrowthAttempt;
-        public event Action<FungalCell, int>? OnDeadCellReclaim;
-        protected virtual void OnBeforeGrowthAttempt(GrowthAttemptEventArgs e) =>
-            BeforeGrowthAttempt?.Invoke(this, e);
-        protected virtual void OnAfterGrowthAttempt(GrowthAttemptEventArgs e) =>
-            AfterGrowthAttempt?.Invoke(this, e);
-        #endregion
-
-        // NEW: Public invoker for batch resistance application
-        public virtual void OnResistanceAppliedBatch(int playerId, GrowthSource source, List<int> tileIds) =>
-            ResistanceAppliedBatch?.Invoke(playerId, source, tileIds);
-
+        #region Construction
         public GameBoard(int width, int height, int playerCount)
         {
             Width = width;
             Height = height;
             Grid = new BoardTile[width, height];
             Players = new List<Player>(playerCount);
-
             for (int x = 0; x < width; x++)
                 for (int y = 0; y < height; y++)
                     Grid[x, y] = new BoardTile(x, y, width);
         }
+        #endregion
 
         #region Basic Tile Accessors
         public IEnumerable<BoardTile> AllTiles()
@@ -194,26 +150,9 @@ namespace FungusToast.Core.Board
                 for (int y = 0; y < Height; y++)
                     yield return Grid[x, y];
         }
-
-        public (int x, int y) GetXYFromTileId(int tileId)
-        {
-            int x = tileId % Width;
-            int y = tileId / Width;
-            return (x, y);
-        }
-
-        public BoardTile? GetTile(int x, int y)
-        {
-            if (x >= 0 && y >= 0 && x < Width && y < Height)
-                return Grid[x, y];
-            return null;
-        }
-
-        public BoardTile? GetTileById(int tileId)
-        {
-            var (x, y) = GetXYFromTileId(tileId);
-            return GetTile(x, y);
-        }
+        public (int x, int y) GetXYFromTileId(int tileId) => (tileId % Width, tileId / Width);
+        public BoardTile? GetTile(int x, int y) => (x >= 0 && y >= 0 && x < Width && y < Height) ? Grid[x, y] : null;
+        public BoardTile? GetTileById(int tileId) { var (x, y) = GetXYFromTileId(tileId); return GetTile(x, y); }
         #endregion
 
         #region Neighbor Queries
@@ -231,17 +170,13 @@ namespace FungusToast.Core.Board
             }
             return neighbors;
         }
-        public List<BoardTile> GetOrthogonalNeighbors(int tileId)
-        {
-            var (x, y) = GetXYFromTileId(tileId);
-            return GetOrthogonalNeighbors(x, y);
-        }
+        public List<BoardTile> GetOrthogonalNeighbors(int tileId) { var (x, y) = GetXYFromTileId(tileId); return GetOrthogonalNeighbors(x, y); }
         public List<BoardTile> GetDiagonalNeighbors(int x, int y)
         {
             List<BoardTile> neighbors = new();
             int[] dx = { -1, -1, -1, 0, 0, 1, 1, 1 };
             int[] dy = { -1, 0, 1, -1, 1, -1, 0, 1 };
-            int[] diagonalIndices = { 0, 2, 5, 7 };
+            int[] diagonalIndices = { 0, 2, 5, 7 }; // NW, NE, SW, SE
             foreach (int d in diagonalIndices)
             {
                 int nx = x + dx[d];
@@ -251,85 +186,74 @@ namespace FungusToast.Core.Board
             }
             return neighbors;
         }
-        public List<BoardTile> GetDiagonalNeighbors(int tileId)
-        {
-            var (x, y) = GetXYFromTileId(tileId);
-            return GetDiagonalNeighbors(x, y);
-        }
+        public List<BoardTile> GetDiagonalNeighbors(int tileId) { var (x, y) = GetXYFromTileId(tileId); return GetDiagonalNeighbors(x, y); }
         public List<int> GetAdjacentTileIds(int tileId)
         {
             var (x, y) = GetXYFromTileId(tileId);
             List<int> neighbors = new();
             for (int dx = -1; dx <= 1; dx++)
-            {
                 for (int dy = -1; dy <= 1; dy++)
                 {
                     if (dx == 0 && dy == 0) continue;
-                    int nx = x + dx;
-                    int ny = y + dy;
+                    int nx = x + dx; int ny = y + dy;
                     if (nx >= 0 && ny >= 0 && nx < Width && ny < Height)
                         neighbors.Add(ny * Width + nx);
                 }
-            }
             return neighbors;
         }
         public List<BoardTile> GetAdjacentTiles(int tileId)
         {
             List<BoardTile> result = new();
-            foreach (int neighborId in GetAdjacentTileIds(tileId))
+            foreach (int id in GetAdjacentTileIds(tileId))
             {
-                var tile = GetTileById(neighborId);
-                if (tile != null)
-                    result.Add(tile);
+                var tile = GetTileById(id);
+                if (tile != null) result.Add(tile);
             }
             return result;
         }
+        public IEnumerable<BoardTile> GetAdjacentLivingTiles(int tileId, int? excludePlayerId = null)
+        {
+            foreach (int id in GetAdjacentTileIds(tileId))
+            {
+                var tile = GetTileById(id);
+                var cell = tile?.FungalCell;
+                if (cell == null || !cell.IsAlive) continue;
+                if (excludePlayerId.HasValue && cell.OwnerPlayerId == excludePlayerId.Value) continue;
+                yield return tile!;
+            }
+        }
         #endregion
 
-        #region Occupancy Helpers (Performance – Priority 1)
-        /// <summary>
-        /// Fast enumeration of all currently occupied cells (dictionary values).
-        /// Integrity is maintained by PlaceFungalCell / RemoveCellInternal.
-        /// </summary>
+        #region Occupancy Helpers
         private IEnumerable<FungalCell> OccupiedCells() => tileIdToCell.Values;
-
-#if DEBUG
-        public void DebugPruneStaleCellMappings()
+        private BoardTile GetTileForCell(FungalCell cell) { var (x, y) = GetXYFromTileId(cell.TileId); return Grid[x, y]; }
+        public IEnumerable<BoardTile> AllToxinTiles()
         {
-            var stale = new List<int>();
-            foreach (var kv in tileIdToCell)
+            var snapshot = tileIdToCell.Values.Where(c => c.CellType == FungalCellType.Toxin).ToList();
+            foreach (var c in snapshot)
             {
-                var tile = GetTileById(kv.Key);
-                if (tile?.FungalCell == null || !ReferenceEquals(tile.FungalCell, kv.Value))
-                    stale.Add(kv.Key);
+                var tile = GetTileForCell(c);
+                if (tile.FungalCell != null && tile.FungalCell.CellType == FungalCellType.Toxin)
+                    yield return tile;
             }
-            if (stale.Count > 0)
-                foreach (var id in stale) tileIdToCell.Remove(id);
         }
-#endif
-
-        private BoardTile GetTileForCell(FungalCell cell)
+        public IEnumerable<FungalCell> AllToxinFungalCells()
         {
-            var (x, y) = GetXYFromTileId(cell.TileId);
-            return Grid[x, y];
+            var snapshot = tileIdToCell.Values.Where(c => c.CellType == FungalCellType.Toxin).ToList();
+            foreach (var c in snapshot)
+            {
+                var tile = GetTileForCell(c);
+                if (tile.FungalCell != null && ReferenceEquals(tile.FungalCell, c) && tile.FungalCell.CellType == FungalCellType.Toxin)
+                    yield return c;
+            }
         }
-
-        /// <summary>
-        /// Safely removes a cell from the board ensuring tile state, dictionary, and player control lists stay in sync.
-        /// </summary>
-        /// <param name="tileId">Tile id to clear.</param>
-        /// <param name="removeControl">Whether to remove control from owning player (true for toxins & living cells).</param>
         internal void RemoveCellInternal(int tileId, bool removeControl = true)
         {
-            if (!tileIdToCell.TryGetValue(tileId, out var cell)) return; // Already removed
+            if (!tileIdToCell.TryGetValue(tileId, out var cell)) return;
             var (x, y) = GetXYFromTileId(tileId);
             var tile = Grid[x, y];
-            if (tile.FungalCell != null && !ReferenceEquals(tile.FungalCell, cell))
-            {
-                tileIdToCell.Remove(tileId); // stale mapping
-                return;
-            }
-            tile.RemoveFungalCell();
+            if (tile.FungalCell != null && !ReferenceEquals(tile.FungalCell, cell)) { tileIdToCell.Remove(tileId); return; }
+            tile.ClearCell();
             tileIdToCell.Remove(tileId);
             if (removeControl && cell.OwnerPlayerId.HasValue)
             {
@@ -338,15 +262,13 @@ namespace FungusToast.Core.Board
                     Players[ownerId].ControlledTileIds.Remove(tileId);
             }
         }
-
         private int ComputeOccupiedTileCount()
         {
             int count = 0;
             foreach (var kv in tileIdToCell)
             {
                 var (x, y) = GetXYFromTileId(kv.Key);
-                if (Grid[x, y].FungalCell != null)
-                    count++;
+                if (Grid[x, y].FungalCell != null) count++;
             }
             return count;
         }
@@ -356,203 +278,110 @@ namespace FungusToast.Core.Board
         public List<FungalCell> GetAllCells() => tileIdToCell.Values.ToList();
         public List<FungalCell> GetAllCellsOwnedBy(int playerId) => tileIdToCell.Values.Where(c => c.OwnerPlayerId == playerId).ToList();
         public List<int> GetAllTileIds() => tileIdToCell.Keys.ToList();
-
-        public List<BoardTile> GetDeadTiles()
-        {
-            var snapshot = tileIdToCell.Values.ToList();
-            var list = new List<BoardTile>();
-            foreach (var cell in snapshot)
-            {
-                if (cell.CellType == FungalCellType.Dead)
-                    list.Add(GetTileForCell(cell));
-            }
-            return list;
-        }
-
-        public float GetOccupiedTileRatio()
-        {
-            int occupied = ComputeOccupiedTileCount();
-            return occupied == 0 ? 0f : (float)occupied / TotalTiles;
-        }
-
+        public float GetOccupiedTileRatio() { int occupied = ComputeOccupiedTileCount(); return occupied == 0 ? 0f : (float)occupied / TotalTiles; }
         public bool ShouldTriggerEndgame() => GetOccupiedTileRatio() >= GameBalance.GameEndTileOccupancyThreshold;
-
         public IEnumerable<FungalCell> AllLivingFungalCells()
         {
             var snapshot = tileIdToCell.Values.ToList();
-            foreach (var cell in snapshot)
-                if (cell.CellType == FungalCellType.Alive)
-                    yield return cell;
+            foreach (var c in snapshot) if (c.CellType == FungalCellType.Alive) yield return c;
         }
-
         public IEnumerable<(BoardTile tile, FungalCell cell)> AllLivingFungalCellsWithTiles()
         {
             var snapshot = tileIdToCell.Values.ToList();
-            foreach (var cell in snapshot)
-            {
-                if (cell.CellType == FungalCellType.Alive)
-                    yield return (GetTileForCell(cell), cell);
-            }
-        }
-
-        public IEnumerable<BoardTile> AllToxinTiles()
-        {
-            var snapshot = tileIdToCell.Values
-                .Where(c => c.CellType == FungalCellType.Toxin)
-                .Select(c => GetTileForCell(c))
-                .ToList();
-            foreach (var tile in snapshot)
-            {
-                if (tile.FungalCell != null && tile.FungalCell.IsToxin)
-                    yield return tile;
-            }
-        }
-
-        public IEnumerable<FungalCell> AllToxinFungalCells()
-        {
-            var snapshot = tileIdToCell.Values
-                .Where(c => c.CellType == FungalCellType.Toxin)
-                .ToList();
-            foreach (var cell in snapshot)
-            {
-                var tile = GetTileForCell(cell);
-                if (tile.FungalCell != null && ReferenceEquals(tile.FungalCell, cell) && tile.FungalCell.IsToxin)
-                    yield return cell;
-            }
-        }
-
-        public IEnumerable<BoardTile> GetAdjacentLivingTiles(int tileId, int? excludePlayerId = null)
-        {
-            foreach (int neighborId in GetAdjacentTileIds(tileId))
-            {
-                var tile = GetTileById(neighborId);
-                if (tile == null) continue;
-                var cell = tile.FungalCell;
-                if (cell == null || cell.CellType != FungalCellType.Alive) continue;
-                if (excludePlayerId.HasValue && cell.OwnerPlayerId == excludePlayerId.Value) continue;
-                yield return tile;
-            }
+            foreach (var c in snapshot) if (c.CellType == FungalCellType.Alive) yield return (GetTileForCell(c), c);
         }
         #endregion
 
         #region Spawning / Placement / Removal
         public void PlaceInitialSpore(int playerId, int x, int y)
         {
-            BoardTile tile = Grid[x, y];
-            if (!tile.IsOccupied)
-            {
-                int tileId = y * Width + x;
-                var cell = new FungalCell(ownerPlayerId: playerId, tileId: tileId, source: GrowthSource.InitialSpore, lastOwnerPlayerId: null);
-                cell.MakeResistant();
-                cell.SetBirthRound(CurrentRound);
-                tile.PlaceFungalCell(cell);
-                tileIdToCell[tileId] = cell;
-                Players[playerId].ControlledTileIds.Add(tileId);
-                Players[playerId].SetStartingTile(tileId);
-            }
+            var tile = Grid[x, y];
+            if (tile.IsOccupied) return;
+            int tileId = y * Width + x;
+            var cell = new FungalCell(ownerPlayerId: playerId, tileId: tileId, source: GrowthSource.InitialSpore, lastOwnerPlayerId: null);
+            cell.MakeResistant();
+            cell.SetBirthRound(CurrentRound);
+            tile.PlaceFungalCell(cell);
+            tileIdToCell[tileId] = cell;
+            Players[playerId].ControlledTileIds.Add(tileId);
+            Players[playerId].SetStartingTile(tileId);
         }
-
-        public FungalCell? GetCell(int tileId)
-        {
-            tileIdToCell.TryGetValue(tileId, out var cell);
-            return cell;
-        }
-
+        public FungalCell? GetCell(int tileId) { tileIdToCell.TryGetValue(tileId, out var cell); return cell; }
         public bool SpawnSporeForPlayer(Player player, int tileId, GrowthSource source)
         {
-            var (x, y) = GetXYFromTileId(tileId);
-            var tile = GetTile(x, y);
-            if (tile == null || tile.IsOccupied) return false;
+            var tile = GetTileById(tileId);
+            if (tile == null || tile.FungalCell != null) return false;
             var cell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: tileId, source: source, lastOwnerPlayerId: null);
             cell.MarkAsNewlyGrown();
             cell.SetBirthRound(CurrentRound);
             tile.PlaceFungalCell(cell);
             tileIdToCell[tileId] = cell;
             player.ControlledTileIds.Add(tileId);
+            OnCellColonized(player.PlayerId, tileId, source);
             return true;
         }
-
-        public void RemoveControlFromPlayer(int tileId)
-        {
-            foreach (var player in Players)
-                player.ControlledTileIds.Remove(tileId);
-        }
-
         internal void PlaceFungalCell(FungalCell cell)
         {
             var (x, y) = GetXYFromTileId(cell.TileId);
             var tile = Grid[x, y];
             var oldCell = tile.FungalCell;
+            if (oldCell != null && oldCell.IsResistant && !ReferenceEquals(oldCell, cell)) return; // cannot replace resistant
+            bool isNew = oldCell == null;
 
-            if (oldCell != null && oldCell.IsResistant)
-                return; // Cannot replace resistant
-
-            if (oldCell != null && oldCell.OwnerPlayerId.HasValue)
+            if (oldCell != null && !ReferenceEquals(oldCell, cell) && oldCell.OwnerPlayerId.HasValue)
             {
-                int prevOwnerId = oldCell.OwnerPlayerId.Value;
-                Players[prevOwnerId].ControlledTileIds.Remove(cell.TileId);
+                int prevOwner = oldCell.OwnerPlayerId.Value;
+                if (prevOwner >= 0 && prevOwner < Players.Count)
+                    Players[prevOwner].ControlledTileIds.Remove(cell.TileId);
             }
-
-            tile.PlaceFungalCell(cell);
+            if (!ReferenceEquals(oldCell, cell)) tile.PlaceFungalCell(cell);
             tileIdToCell[cell.TileId] = cell;
 
             if (cell.OwnerPlayerId.HasValue)
             {
-                int newOwnerId = cell.OwnerPlayerId.Value;
-                if (!Players[newOwnerId].ControlledTileIds.Contains(cell.TileId))
-                    Players[newOwnerId].ControlledTileIds.Add(cell.TileId);
+                int newOwner = cell.OwnerPlayerId.Value;
+                if (newOwner >= 0 && newOwner < Players.Count && !Players[newOwner].ControlledTileIds.Contains(cell.TileId))
+                    Players[newOwner].ControlledTileIds.Add(cell.TileId);
             }
-
-            if (cell.IsAlive && (cell.SourceOfGrowth ?? GrowthSource.Unknown) != GrowthSource.InitialSpore)
+            if (cell.IsAlive && cell.BirthRound == 0 && (cell.SourceOfGrowth ?? GrowthSource.Unknown) != GrowthSource.InitialSpore)
             {
                 cell.MarkAsNewlyGrown();
                 cell.SetBirthRound(CurrentRound);
             }
-
             int ownerId = cell.OwnerPlayerId.GetValueOrDefault(-1);
-            GrowthSource source = cell.SourceOfGrowth ?? GrowthSource.Unknown;
-
-            if (cell.ReclaimCount > 0)
+            var source = cell.SourceOfGrowth ?? GrowthSource.Unknown;
+            if (cell.ReclaimCount > 0 && !isNew) { OnCellReclaimed(ownerId, cell.TileId, source); return; }
+            if (isNew)
             {
-                OnCellReclaimed(ownerId, cell.TileId, source);
+                if (cell.IsToxin) OnCellToxified(ownerId, cell.TileId, source); else OnCellColonized(ownerId, cell.TileId, source);
                 return;
             }
-
-            // Event dispatch based on what was replaced
-            if (oldCell == null)
+            if (oldCell == null || ReferenceEquals(oldCell, cell)) return;
+            if (oldCell.IsAlive)
             {
-                if (cell.IsToxin) OnCellToxified(ownerId, cell.TileId, source);
-                else OnCellColonized(ownerId, cell.TileId, source);
-            }
-            else if (oldCell.IsAlive)
-            {
-                int oldOwnerId = oldCell.OwnerPlayerId.GetValueOrDefault(-1);
-                if (oldOwnerId != ownerId) OnCellInfested(ownerId, cell.TileId, oldOwnerId, source);
-                else OnCellColonized(ownerId, cell.TileId, source);
+                int oldOwner = oldCell.OwnerPlayerId.GetValueOrDefault(-1);
+                if (oldOwner != ownerId) OnCellInfested(ownerId, cell.TileId, oldOwner, source); else OnCellColonized(ownerId, cell.TileId, source);
             }
             else if (oldCell.IsToxin)
             {
-                int oldOwnerId = oldCell.OwnerPlayerId.GetValueOrDefault(-1);
-                OnCellPoisoned(ownerId, cell.TileId, oldOwnerId, source);
+                int oldOwner = oldCell.OwnerPlayerId.GetValueOrDefault(-1);
+                OnCellPoisoned(ownerId, cell.TileId, oldOwner, source);
             }
             else if (oldCell.IsDead)
             {
-                if (cell.IsToxin) OnCellToxified(ownerId, cell.TileId, source);
-                else OnCellReclaimed(ownerId, cell.TileId, source);
+                if (cell.IsToxin) OnCellToxified(ownerId, cell.TileId, source); else OnCellReclaimed(ownerId, cell.TileId, source);
             }
         }
-
         public void KillFungalCell(FungalCell cell, DeathReason reason, int? killerPlayerId = null, int? attackerTileId = null)
         {
             if (cell.IsResistant) return;
             int tileId = cell.TileId;
-            int playerId = cell.OwnerPlayerId ?? -1;
+            int ownerId = cell.OwnerPlayerId ?? -1;
             cell.MarkAsDying();
             cell.Kill(reason);
             RemoveControlFromPlayer(tileId);
-            OnCellDeath(playerId, tileId, reason, killerPlayerId, cell, attackerTileId);
+            OnCellDeath(ownerId, tileId, reason, killerPlayerId, cell, attackerTileId);
         }
-
         public bool TryReclaimDeadCell(int playerId, int tileId, GrowthSource reclaimGrowthSource)
         {
             var tile = GetTileById(tileId);
@@ -566,32 +395,24 @@ namespace FungusToast.Core.Board
             Players[playerId].AddControlledTile(tileId);
             OnCellReclaimed(playerId, cell.TileId, reclaimGrowthSource);
             OnDeadCellReclaim?.Invoke(cell, playerId);
-            if (reclaimGrowthSource == GrowthSource.RegenerativeHyphae)
-                OnRegenerativeHyphaeReclaimed(playerId, cell.TileId);
+            if (reclaimGrowthSource == GrowthSource.RegenerativeHyphae) OnRegenerativeHyphaeReclaimed(playerId, cell.TileId);
             return true;
+        }
+        public void RemoveControlFromPlayer(int tileId)
+        {
+            foreach (var p in Players) p.ControlledTileIds.Remove(tileId);
         }
         #endregion
 
         #region Metrics / Counts
-        public int CountReclaimedCellsByPlayer(int playerId)
-        {
-            return tileIdToCell.Values.Count(c =>
-                c.CellType == FungalCellType.Alive &&
-                c.OwnerPlayerId == playerId &&
-                c.OriginalOwnerPlayerId == playerId &&
-                c.ReclaimCount > 0);
-        }
+        public int CountReclaimedCellsByPlayer(int playerId) => tileIdToCell.Values.Count(c => c.CellType == FungalCellType.Alive && c.OwnerPlayerId == playerId && c.OriginalOwnerPlayerId == playerId && c.ReclaimCount > 0);
         #endregion
 
         #region Cached / Phase Helpers
         public void OnMutationPhaseStart() => MutationPhaseStart?.Invoke();
         public void OnPreGrowthPhase() => PreGrowthPhase?.Invoke();
         public void UpdateCachedOccupiedTileRatio() => CachedOccupiedTileRatio = GetOccupiedTileRatio();
-        public void UpdateCachedDecayPhaseContext()
-        {
-            if (CachedDecayPhaseContext == null)
-                CachedDecayPhaseContext = new DecayPhaseContext(this, Players);
-        }
+        public void UpdateCachedDecayPhaseContext() { if (CachedDecayPhaseContext == null) CachedDecayPhaseContext = new DecayPhaseContext(this, Players); }
         public void ClearCachedDecayPhaseContext() => CachedDecayPhaseContext = null;
         public void OnNecrophyticBloomActivatedEvent() => NecrophyticBloomActivatedEvent?.Invoke();
         public void OnCatabolicRebirth(CatabolicRebirthEventArgs e) => CatabolicRebirth?.Invoke(this, e);
@@ -604,14 +425,14 @@ namespace FungusToast.Core.Board
         {
             foreach (var toxinCell in AllToxinFungalCells())
             {
-                var adjacentTiles = GetOrthogonalNeighbors(toxinCell.TileId);
+                var adjacent = GetOrthogonalNeighbors(toxinCell.TileId);
                 bool shouldAgeDouble = false;
-                foreach (var adjTile in adjacentTiles)
+                foreach (var t in adjacent)
                 {
-                    var adjCell = adjTile.FungalCell;
-                    if (adjCell != null && adjCell.IsDead && adjCell.OwnerPlayerId.HasValue)
+                    var c = t.FungalCell;
+                    if (c != null && c.IsDead && c.OwnerPlayerId.HasValue)
                     {
-                        var owner = Players.FirstOrDefault(p => p.PlayerId == adjCell.OwnerPlayerId.Value);
+                        var owner = Players.FirstOrDefault(p => p.PlayerId == c.OwnerPlayerId.Value);
                         var catabolicRebirth = MutationRegistry.GetById(MutationIds.CatabolicRebirth);
                         if (owner != null && catabolicRebirth != null && owner.GetMutationLevel(MutationIds.CatabolicRebirth) == catabolicRebirth.MaxLevel)
                         {
@@ -621,12 +442,10 @@ namespace FungusToast.Core.Board
                         }
                     }
                 }
-                if (shouldAgeDouble)
-                    toxinCell.IncrementGrowthAge();
+                if (shouldAgeDouble) toxinCell.IncrementGrowthAge();
             }
-
-            var toxinCells = AllToxinFungalCells().ToList();
-            foreach (var cell in toxinCells)
+            var toxins = AllToxinFungalCells().ToList();
+            foreach (var cell in toxins)
             {
                 if (cell.HasToxinExpired())
                 {
@@ -642,43 +461,33 @@ namespace FungusToast.Core.Board
         public List<int> GetTileLine(int startTileId, CardinalDirection direction, int length, bool includeStartingTile = false)
         {
             var result = new List<int>();
-            int currentTileId = startTileId;
+            int current = startTileId;
             if (includeStartingTile)
             {
-                result.Add(currentTileId);
+                result.Add(current);
                 if (result.Count >= length) return result;
             }
             for (int i = 0; i < length; i++)
             {
-                int nextTileId = GetNeighborTileId(currentTileId, direction);
-                if (nextTileId == -1) break;
-                result.Add(nextTileId);
+                int next = GetNeighborTileId(current, direction);
+                if (next == -1) break;
+                result.Add(next);
                 if (result.Count >= length) break;
-                currentTileId = nextTileId;
+                current = next;
             }
             return result;
         }
-
         public List<int> GetTileCone(int startTileId, CardinalDirection direction)
         {
             var result = new List<int>();
             var (startX, startY) = GetXYFromTileId(startTileId);
             var (dirX, dirY) = GetDirectionVector(direction);
             var (perpX, perpY) = GetPerpendicularVector(direction);
-            AddConeSection(result, startX, startY, dirX, dirY, perpX, perpY,
-                MycovariantGameBalance.JettingMyceliumConeNarrowLength,
-                MycovariantGameBalance.JettingMyceliumConeNarrowWidth, 0);
-            AddConeSection(result, startX, startY, dirX, dirY, perpX, perpY,
-                MycovariantGameBalance.JettingMyceliumConeMediumLength,
-                MycovariantGameBalance.JettingMyceliumConeMediumWidth,
-                MycovariantGameBalance.JettingMyceliumConeNarrowLength);
-            AddConeSection(result, startX, startY, dirX, dirY, perpX, perpY,
-                MycovariantGameBalance.JettingMyceliumConeWideLength,
-                MycovariantGameBalance.JettingMyceliumConeWideWidth,
-                MycovariantGameBalance.JettingMyceliumConeNarrowLength + MycovariantGameBalance.JettingMyceliumConeMediumLength);
+            AddConeSection(result, startX, startY, dirX, dirY, perpX, perpY, MycovariantGameBalance.JettingMyceliumConeNarrowLength, MycovariantGameBalance.JettingMyceliumConeNarrowWidth, 0);
+            AddConeSection(result, startX, startY, dirX, dirY, perpX, perpY, MycovariantGameBalance.JettingMyceliumConeMediumLength, MycovariantGameBalance.JettingMyceliumConeMediumWidth, MycovariantGameBalance.JettingMyceliumConeNarrowLength);
+            AddConeSection(result, startX, startY, dirX, dirY, perpX, perpY, MycovariantGameBalance.JettingMyceliumConeWideLength, MycovariantGameBalance.JettingMyceliumConeWideWidth, MycovariantGameBalance.JettingMyceliumConeNarrowLength + MycovariantGameBalance.JettingMyceliumConeMediumLength);
             return result;
         }
-
         private (int dx, int dy) GetDirectionVector(CardinalDirection direction) => direction switch
         {
             CardinalDirection.North => (0, 1),
@@ -695,8 +504,7 @@ namespace FungusToast.Core.Board
             CardinalDirection.West => (0, 1),
             _ => (0, 0)
         };
-        private void AddConeSection(List<int> result, int startX, int startY, int dirX, int dirY,
-            int perpX, int perpY, int sectionLength, int sectionWidth, int distanceOffset)
+        private void AddConeSection(List<int> result, int startX, int startY, int dirX, int dirY, int perpX, int perpY, int sectionLength, int sectionWidth, int distanceOffset)
         {
             for (int distance = 1; distance <= sectionLength; distance++)
             {
@@ -715,11 +523,9 @@ namespace FungusToast.Core.Board
                 }
             }
         }
-
         public int GetNeighborTileId(int tileId, CardinalDirection direction)
         {
-            int x = tileId % Width;
-            int y = tileId / Width;
+            int x = tileId % Width; int y = tileId / Width;
             switch (direction)
             {
                 case CardinalDirection.North: y += 1; break;
@@ -737,14 +543,10 @@ namespace FungusToast.Core.Board
         {
             float dropChance = player.GetMutationEffect(MutationType.Necrosporulation);
             if (dropChance <= 0f || rng.NextDouble() > dropChance) return;
-            var candidateTiles = AllTiles()
-                .Where(t => !t.IsOccupied)
-                .OrderBy(_ => rng.NextDouble())
-                .ToList();
-            foreach (var tile in candidateTiles)
+            var candidates = AllTiles().Where(t => !t.IsOccupied).OrderBy(_ => rng.NextDouble()).ToList();
+            foreach (var tile in candidates)
             {
-                bool spawned = SpawnSporeForPlayer(player, tile.TileId, GrowthSource.Necrosporulation);
-                if (spawned)
+                if (SpawnSporeForPlayer(player, tile.TileId, GrowthSource.Necrosporulation))
                 {
                     OnSporeDrop(player.PlayerId, tile.TileId, MutationType.Necrosporulation);
                     observer.ReportNecrosporeDrop(player.PlayerId, 1);
@@ -760,42 +562,30 @@ namespace FungusToast.Core.Board
             var tile = GetTileById(tileId);
             if (tile == null) return FungalCellTakeoverResult.Invalid;
             var existing = tile.FungalCell;
-            if (existing == null) return FungalCellTakeoverResult.Invalid; // Empty not handled here
+            if (existing == null) return FungalCellTakeoverResult.Invalid;
             if (existing.IsResistant) return FungalCellTakeoverResult.Invalid;
-            if (existing.IsAlive && existing.OwnerPlayerId == newOwnerPlayerId)
-                return FungalCellTakeoverResult.AlreadyOwned;
+            if (existing.IsAlive && existing.OwnerPlayerId == newOwnerPlayerId) return FungalCellTakeoverResult.AlreadyOwned;
 
-            FungalCellTakeoverResult result;
             var newCell = new FungalCell(ownerPlayerId: newOwnerPlayerId, tileId: tileId, source: source, lastOwnerPlayerId: existing.OwnerPlayerId);
-            if (existing.IsAlive)
-            {
-                PlaceFungalCell(newCell);
-                result = FungalCellTakeoverResult.Infested;
-            }
-            else if (existing.IsDead)
-            {
-                PlaceFungalCell(newCell);
-                result = FungalCellTakeoverResult.Reclaimed;
-            }
-            else if (existing.IsToxin)
+            if (existing.IsAlive) { PlaceFungalCell(newCell); return FungalCellTakeoverResult.Infested; }
+            if (existing.IsDead) { PlaceFungalCell(newCell); return FungalCellTakeoverResult.Reclaimed; }
+            if (existing.IsToxin)
             {
                 if (!allowToxin) return FungalCellTakeoverResult.Invalid;
                 PlaceFungalCell(newCell);
-                result = FungalCellTakeoverResult.Overgrown;
+                return FungalCellTakeoverResult.Overgrown;
             }
-            else
-            {
-                return FungalCellTakeoverResult.Invalid;
-            }
-            return result;
+            return FungalCellTakeoverResult.Invalid;
         }
         #endregion
 
+        #region Round / Cycle
         public void IncrementGrowthCycle() => CurrentGrowthCycle++;
         public void IncrementRound()
         {
             CurrentRound++;
             CurrentRoundContext.Reset();
         }
+        #endregion
     }
 }

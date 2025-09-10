@@ -61,10 +61,9 @@ public static class MycovariantEffectProcessor
 
             if (prevCell == null)
             {
-                // Place a new living cell
+                // Place a new living cell via GameBoard to keep mapping & control lists in sync
                 var newCell = new FungalCell(ownerPlayerId: playerId, tileId: livingLine[i], source: GrowthSource.JettingMycelium, lastOwnerPlayerId: null);
-                targetTile.PlaceFungalCell(newCell);
-                board.Players[playerId].ControlledTileIds.Add(livingLine[i]);
+                board.PlaceFungalCell(newCell); // handles ControlledTileIds & events
                 colonized++;
                 affectedCells.Add(newCell);
             }
@@ -715,7 +714,7 @@ public static class MycovariantEffectProcessor
                     var oldTile = board.GetTileById(toxinCell.TileId);
                     if (oldTile != null)
                     {
-                        oldTile.RemoveFungalCell();
+                        board.RemoveCellInternal(toxinCell.TileId, removeControl: true);
                         player.ControlledTileIds.Remove(toxinCell.TileId);
                     }
                     

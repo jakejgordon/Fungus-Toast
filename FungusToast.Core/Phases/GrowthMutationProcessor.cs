@@ -117,7 +117,7 @@ namespace FungusToast.Core.Phases
             var newCell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: targetTile.TileId, source: GrowthSource.CreepingMold, lastOwnerPlayerId: null);
             board.PlaceFungalCell(newCell); // Event hooks will fire as appropriate
             player.RemoveControlledTile(sourceCell.TileId);
-            sourceTile.RemoveFungalCell();
+            board.RemoveCellInternal(sourceCell.TileId, removeControl: false); // was sourceTile.RemoveFungalCell();
         }
     }
 }

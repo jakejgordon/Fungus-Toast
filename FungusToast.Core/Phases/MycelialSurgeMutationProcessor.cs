@@ -289,7 +289,7 @@ namespace FungusToast.Core.Phases
                         {
                             var newCell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: targetTile.TileId, source: GrowthSource.MimeticResilience, lastOwnerPlayerId: null);
                             newCell.MakeResistant();
-                            targetTile.PlaceFungalCell(newCell);
+                            board.PlaceFungalCell(newCell); // ensure dictionary + events stay consistent
                             newlyResistantTileIds.Add(targetTile.TileId);
                             placement = true;
                             totalDrops++;
