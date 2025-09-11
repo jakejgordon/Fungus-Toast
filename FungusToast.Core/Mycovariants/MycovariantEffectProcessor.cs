@@ -784,7 +784,7 @@ public static class MycovariantEffectProcessor
         return false; // actionable otherwise
     }
 
-    private static void ApplyCornerConduitAction(
+    private static void ApplyConduitAction(
         GameBoard board,
         int playerId,
         int tileId,
@@ -795,45 +795,34 @@ public static class MycovariantEffectProcessor
         ref int infestations,
         ref int colonizations,
         ref int reclaims,
-        ref int toxinsReplaced)
+        ref int toxinsReplaced,
+        GrowthSource conduitSource)
     {
         if (quota <= 0) return;
 
-        // Empty
         if (existing == null)
         {
-            var newCell = new FungalCell(ownerPlayerId: playerId, tileId: tileId, source: GrowthSource.CornerConduit, lastOwnerPlayerId: null);
+            var newCell = new FungalCell(ownerPlayerId: playerId, tileId: tileId, source: conduitSource, lastOwnerPlayerId: null);
             board.PlaceFungalCell(newCell);
             colonizations++; quota--; return;
         }
-
-        // Dead cell
         if (existing.IsDead)
         {
-            var result = board.TakeoverCell(tileId, playerId, allowToxin: true, GrowthSource.CornerConduit, board.Players, rng, observer);
+            var result = board.TakeoverCell(tileId, playerId, allowToxin: true, conduitSource, board.Players, rng, observer);
             if (result == FungalCellTakeoverResult.Reclaimed)
-            {
-                reclaims++; quota--; return;
-            }
+            { reclaims++; quota--; return; }
         }
-        // Enemy living (non-resistant handled by ShouldSkipTile)
         else if (existing.IsAlive && existing.OwnerPlayerId != playerId)
         {
-            var result = board.TakeoverCell(tileId, playerId, allowToxin: true, GrowthSource.CornerConduit, board.Players, rng, observer);
+            var result = board.TakeoverCell(tileId, playerId, allowToxin: true, conduitSource, board.Players, rng, observer);
             if (result == FungalCellTakeoverResult.Infested)
-            {
-                infestations++; quota--; return;
-            }
+            { infestations++; quota--; return; }
         }
-        // Toxin
         else if (existing.IsToxin)
         {
-            // Any toxin -> Overgrow (internally Overgrown result)
-            var result = board.TakeoverCell(tileId, playerId, allowToxin: true, GrowthSource.CornerConduit, board.Players, rng, observer);
+            var result = board.TakeoverCell(tileId, playerId, allowToxin: true, conduitSource, board.Players, rng, observer);
             if (result == FungalCellTakeoverResult.Overgrown)
-            {
-                toxinsReplaced++; quota--; return;
-            }
+            { toxinsReplaced++; quota--; return; }
         }
     }
 
@@ -877,7 +866,7 @@ public static class MycovariantEffectProcessor
             var existing = tile.FungalCell;
             if (ShouldSkipTile(existing, player.PlayerId)) continue;
 
-            ApplyCornerConduitAction(board, player.PlayerId, tileId, existing, ref quota, rng, observer, ref infestations, ref colonizations, ref reclaims, ref toxinsReplaced);
+            ApplyConduitAction(board, player.PlayerId, tileId, existing, ref quota, rng, observer, ref infestations, ref colonizations, ref reclaims, ref toxinsReplaced, GrowthSource.CornerConduit);
         }
 
         if (infestations > 0) myco.IncrementEffectCount(MycovariantEffectType.CornerConduitInfestations, infestations);
@@ -999,7 +988,7 @@ public static class MycovariantEffectProcessor
             if (ShouldSkipTile(existing, player.PlayerId)) continue;
 
             int beforeQuota = quota;
-            ApplyCornerConduitAction(board, player.PlayerId, tileId, existing, ref quota, rng, observer, ref infestations, ref colonizations, ref reclaims, ref toxinsReplaced);
+            ApplyConduitAction(board, player.PlayerId, tileId, existing, ref quota, rng, observer, ref infestations, ref colonizations, ref reclaims, ref toxinsReplaced, GrowthSource.AggressotropicConduit);
             if (quota < beforeQuota)
             {
                 actedTileIds.Add(tileId);

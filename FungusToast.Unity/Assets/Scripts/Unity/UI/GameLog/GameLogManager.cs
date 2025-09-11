@@ -881,6 +881,8 @@ namespace FungusToast.Unity.UI.GameLog
                 GrowthSource.HyphalOutgrowth => "Hyphal Outgrowth",
                 GrowthSource.TendrilOutgrowth => "Tendril Outgrowth",
                 GrowthSource.RegenerativeHyphae => "Regenerative Hyphae",
+                GrowthSource.CornerConduit => "Corner Conduit",
+                GrowthSource.AggressotropicConduit => "Aggressotropic Conduit",
                 GrowthSource.Manual => "Manual placement",
                 _ => source.ToString()
             };

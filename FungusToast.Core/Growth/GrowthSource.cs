@@ -122,6 +122,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Growth created by Corner Conduit pre-growth effect
         /// </summary>
-        CornerConduit
+        CornerConduit,
+        
+        /// <summary>
+        /// Growth created by Aggressotropic Conduit pre-growth effect
+        /// </summary>
+        AggressotropicConduit
     }
 }

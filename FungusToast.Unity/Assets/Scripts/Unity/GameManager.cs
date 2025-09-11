@@ -507,43 +507,37 @@ namespace FungusToast.Unity
         {
             isInDraftPhase = true;
 
-            // Ensure no lingering tooltips from previous UI
             TooltipManager.Instance?.CancelAll();
 
-            // In testing mode, ensure the testing mycovariant is available
             if (testingModeEnabled && testingMycovariantId.HasValue)
             {
                 var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId.Value);
-                if (testingMycovariant != null)
-                {
-                    // The testing mycovariant should already be in the persistent pool manager
-                    // No need to modify the pool here
-                }
+                // no pool manipulation needed here currently
             }
 
-            // Determine draft order
             List<Player> draftOrder;
             if (testingModeEnabled && testingModeForceHumanFirst)
             {
-                // In testing mode with human first, ensure human player goes first
                 draftOrder = Board.Players
                     .OrderBy(p => p.PlayerType == PlayerTypeEnum.Human ? 0 : 1)
                     .ThenBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
                     .ToList();
+
+                // FIX: Only force human first for the initial testing draft. Subsequent drafts
+                // should follow normal living-cell ascending order as per design.
+                testingModeForceHumanFirst = false;
             }
             else
             {
-                // Normal draft order: fewest living cells goes first
                 draftOrder = Board.Players
                     .OrderBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
+                    .ThenBy(p => p.PlayerId) // stable tie-breaker
                     .ToList();
             }
 
-            // Start the draft UI/controllers using the persistent pool manager
             mycovariantDraftController.StartDraft(
                 Board.Players, persistentPoolManager, draftOrder, rng, MycovariantGameBalance.MycovariantSelectionDraftSize);
 
-            // Show a phase banner (optional, for player feedback)
             if (testingModeEnabled)
             {
                 var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
@@ -558,12 +552,8 @@ namespace FungusToast.Unity
             }
             phaseProgressTracker?.HighlightDraftPhase();
 
-            // Hide mutation UI during draft (keep RightSidebar visible)
             gameUIManager.MutationUIManager.gameObject.SetActive(false);
-            // gameUIManager.RightSidebar?.gameObject.SetActive(false); // keep visible during draft
             gameUIManager.LeftSidebar?.gameObject.SetActive(false);
-
-            // Show draft UI
             mycovariantDraftController.gameObject.SetActive(true);
         }
 

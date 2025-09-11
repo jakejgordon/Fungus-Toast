@@ -606,6 +606,8 @@ namespace FungusToast.Unity.UI
                 GrowthSource.MycotoxinTracer => "Mycotoxin Tracers",
                 GrowthSource.SporicidalBloom => "Sporicidal Bloom",
                 GrowthSource.MimeticResilience => "Mimetic Resilience",
+                GrowthSource.CornerConduit => "Corner Conduit",
+                GrowthSource.AggressotropicConduit => "Aggressotropic Conduit",
                 GrowthSource.Manual => "Manual",
                 GrowthSource.Unknown => "Unknown",
                 _ => source.ToString()
