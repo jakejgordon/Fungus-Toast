@@ -113,6 +113,12 @@ namespace FungusToast.Core.Phases
                 if (higher.Count > 0)
                 {
                     var chosen = higher[rng.Next(higher.Count)];
+                    if (chosen.list == null || chosen.list.Count == 0)
+                    {
+                        targetTier = default;
+                        pool = new List<Mutation>();
+                        return false;
+                    }
                     targetTier = chosen.tier;
                     pool = chosen.list;
                     return true;
@@ -124,7 +130,7 @@ namespace FungusToast.Core.Phases
                     return true;
                 }
                 targetTier = default;
-                pool = null!;
+                pool = new List<Mutation>();
                 return false;
             }
             if (pools.Tier1.Count > 0)
@@ -134,7 +140,7 @@ namespace FungusToast.Core.Phases
                 return true;
             }
             targetTier = default;
-            pool = null!;
+            pool = new List<Mutation>();
             return false;
         }
 

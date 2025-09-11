@@ -20,6 +20,7 @@ This guide describes the step-by-step process for adding a new mycovariant to th
    - Add a new entry in `@MycovariantFactory.cs`:
      - Use constants from `@MycovariantGameBalance.cs` for all numbers (never hard-code).
      - Write a clear Description (with numbers where possible) and a fun, thematic FlavorText.
+     - Based on the effect of the mycovariant, add it to the appropriate list(s) in MycovariantSynergyListFactory, and add syngergy with the appropriate group (if appropriate).
    - Add any new balance constants to `@MycovariantGameBalance.cs`.
 
    **3.2) Registration**

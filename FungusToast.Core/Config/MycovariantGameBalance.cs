@@ -61,6 +61,11 @@ namespace FungusToast.Core.Config
         public const int CornerConduitIIReplacementsPerPhase = 3; // reserved
         public const int CornerConduitIIIReplacementsPerPhase = 4; // reserved
 
+        // Aggressotropic Conduit balance constants (enemy-tracking conduit) replacements per phase
+        public const int AggressotropicConduitIReplacementsPerPhase = 1;
+        public const int AggressotropicConduitIIReplacementsPerPhase = 2;
+        public const int AggressotropicConduitIIIReplacementsPerPhase = 3;
+
         // AI scoring for Mycovariants
         public const float MycelialBastionIBaseAIScore = 4f;
         public const float MycelialBastionIIBaseAIScore = 5f;

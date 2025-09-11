@@ -83,7 +83,6 @@ namespace FungusToast.Unity
         private readonly List<int> _postGrowthHrtNewResistantTiles = new(); // tiles newly resistant via HRT
         private HashSet<int> _resistantBaseline = new();
         private bool _postGrowthSequenceRunning = false;
-        private bool _pendingDecayAfterSequence;
 
         private void Awake()
         {
@@ -930,10 +929,6 @@ namespace FungusToast.Unity
                 _postGrowthSequenceRunning = true;
                 StartCoroutine(RunPostGrowthVisualSequence());
             }
-            else
-            {
-                _pendingDecayAfterSequence = true; // safety
-            }
         }
 
         private IEnumerator RunPostGrowthVisualSequence()
@@ -970,7 +965,6 @@ namespace FungusToast.Unity
 
             _postGrowthHrtNewResistantTiles.Clear();
             _postGrowthSequenceRunning = false;
-            _pendingDecayAfterSequence = false;
 
             // Proceed to decay phase now that all post-growth visuals are done
             StartDecayPhase();

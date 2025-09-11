@@ -37,7 +37,7 @@ namespace FungusToast.Core.Phases
 
                 var origin = HyphalVectoringHelper.TrySelectHyphalVectorOrigin(player, board, rng, centerX, centerY, totalTiles);
 
-                if (origin == null)
+                if (!origin.HasValue || origin.Value.tile == null)
                 {
                     Console.WriteLine($"[HyphalVectoring] Player {player.PlayerId}: no valid origin found.");
                     continue;

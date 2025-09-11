@@ -31,6 +31,12 @@
         CornerConduitColonizations,
         CornerConduitReclaims,
         CornerConduitToxinsReplaced,
+        // Aggressotropic Conduit (enemy-tracking conduit) specific counts
+        AggressotropicConduitInfestations,
+        AggressotropicConduitColonizations,
+        AggressotropicConduitReclaims,
+        AggressotropicConduitToxinsReplaced,
+        AggressotropicConduitResistantPlacements,
         // Add others as needed
     }
 }

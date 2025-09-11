@@ -306,7 +306,6 @@ namespace FungusToast.Simulation.Models
 
                     case var id when id == MycovariantIds.CornerConduitIId:
                         {
-                            // Pull counts directly from PlayerMycovariant.EffectCounts (observer integration optional for this mycovariant)
                             if (myco.EffectCounts.TryGetValue(MycovariantEffectType.CornerConduitInfestations, out var inf) && inf > 0)
                                 effectCounts[MycovariantEffectType.CornerConduitInfestations] = inf;
                             if (myco.EffectCounts.TryGetValue(MycovariantEffectType.CornerConduitColonizations, out var col) && col > 0)
@@ -317,7 +316,23 @@ namespace FungusToast.Simulation.Models
                                 effectCounts[MycovariantEffectType.CornerConduitToxinsReplaced] = tox;
                             break;
                         }
-                        // ...more cases...
+
+                    case var id when id == MycovariantIds.AggressotropicConduitIId ||
+                                     id == MycovariantIds.AggressotropicConduitIIId ||
+                                     id == MycovariantIds.AggressotropicConduitIIIId:
+                        {
+                            if (myco.EffectCounts.TryGetValue(MycovariantEffectType.AggressotropicConduitInfestations, out var inf) && inf > 0)
+                                effectCounts[MycovariantEffectType.AggressotropicConduitInfestations] = inf;
+                            if (myco.EffectCounts.TryGetValue(MycovariantEffectType.AggressotropicConduitColonizations, out var col) && col > 0)
+                                effectCounts[MycovariantEffectType.AggressotropicConduitColonizations] = col;
+                            if (myco.EffectCounts.TryGetValue(MycovariantEffectType.AggressotropicConduitReclaims, out var rec) && rec > 0)
+                                effectCounts[MycovariantEffectType.AggressotropicConduitReclaims] = rec;
+                            if (myco.EffectCounts.TryGetValue(MycovariantEffectType.AggressotropicConduitToxinsReplaced, out var tox) && tox > 0)
+                                effectCounts[MycovariantEffectType.AggressotropicConduitToxinsReplaced] = tox;
+                            if (myco.EffectCounts.TryGetValue(MycovariantEffectType.AggressotropicConduitResistantPlacements, out var rp) && rp > 0)
+                                effectCounts[MycovariantEffectType.AggressotropicConduitResistantPlacements] = rp;
+                            break;
+                        }
                 }
 
                 // Convert keys to string for MycovariantResult

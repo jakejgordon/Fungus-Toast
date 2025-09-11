@@ -927,4 +927,101 @@ public static class MycovariantEffectProcessor
         }
         return points;
     }
+
+    public static void OnPreGrowthPhase_AggressotropicConduit(
+        GameBoard board,
+        List<Player> players,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        foreach (var player in players)
+        {
+            ProcessAggressotropicConduitForPlayer(board, player, players, rng, observer);
+        }
+    }
+
+    private static void ProcessAggressotropicConduitForPlayer(
+        GameBoard board,
+        Player player,
+        List<Player> allPlayers,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        // Determine which Aggressotropic Conduit tier (prefer highest)
+        PlayerMycovariant? myco = player.GetMycovariant(MycovariantIds.AggressotropicConduitIIIId)
+            ?? player.GetMycovariant(MycovariantIds.AggressotropicConduitIIId)
+            ?? player.GetMycovariant(MycovariantIds.AggressotropicConduitIId);
+        if (myco == null) return;
+        if (!player.StartingTileId.HasValue) return;
+
+        // Find enemy with most living cells (exclude self). Tie-break randomly via RNG.
+        var enemyLivingCounts = allPlayers
+            .Where(p => p.PlayerId != player.PlayerId)
+            .Select(p => new { Enemy = p, Living = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive) })
+            .Where(x => x.Living > 0)
+            .ToList();
+        if (enemyLivingCounts.Count == 0) return; // No enemies? nothing to do.
+        int maxLiving = enemyLivingCounts.Max(e => e.Living);
+        var topCandidates = enemyLivingCounts.Where(e => e.Living == maxLiving).ToList();
+        var targetEnemy = topCandidates[rng.Next(topCandidates.Count)].Enemy;
+        if (!targetEnemy.StartingTileId.HasValue)
+        {
+            FungusToast.Core.Logging.CoreLogger.Log?.Invoke("[AggressotropicConduit] Target enemy missing StartingTileId (unexpected)");
+            return;
+        }
+
+        int quota = myco.MycovariantId switch
+        {
+            var id when id == MycovariantIds.AggressotropicConduitIIIId => MycovariantGameBalance.AggressotropicConduitIIIReplacementsPerPhase,
+            var id when id == MycovariantIds.AggressotropicConduitIIId => MycovariantGameBalance.AggressotropicConduitIIReplacementsPerPhase,
+            _ => MycovariantGameBalance.AggressotropicConduitIReplacementsPerPhase
+        };
+        if (quota <= 0) return;
+
+        int startTile = player.StartingTileId.Value;
+        int enemyStart = targetEnemy.StartingTileId.Value;
+        var (sx, sy) = board.GetXYFromTileId(startTile);
+        var (ex, ey) = board.GetXYFromTileId(enemyStart);
+        var line = GenerateBresenhamLine(sx, sy, ex, ey);
+        if (line.Count <= 1) return;
+
+        int infestations = 0, colonizations = 0, reclaims = 0, toxinsReplaced = 0;
+        // Track tile ids we successfully acted on for later resistant assignment.
+        var actedTileIds = new List<int>();
+
+        for (int i = 1; i < line.Count && quota > 0; i++)
+        {
+            var (tx, ty) = line[i];
+            int tileId = ty * board.Width + tx;
+            var tile = board.GetTileById(tileId);
+            if (tile == null) continue;
+            var existing = tile.FungalCell;
+            if (ShouldSkipTile(existing, player.PlayerId)) continue;
+
+            int beforeQuota = quota;
+            ApplyCornerConduitAction(board, player.PlayerId, tileId, existing, ref quota, rng, observer, ref infestations, ref colonizations, ref reclaims, ref toxinsReplaced);
+            if (quota < beforeQuota)
+            {
+                actedTileIds.Add(tileId);
+            }
+        }
+
+        // Make last successfully replaced/placed tile resistant (if any and cell owned by player).
+        if (actedTileIds.Count > 0)
+        {
+            int lastTileId = actedTileIds.Last();
+            var lastTile = board.GetTileById(lastTileId);
+            var cell = lastTile?.FungalCell;
+            if (cell != null && cell.IsAlive && cell.OwnerPlayerId == player.PlayerId && !cell.IsResistant)
+            {
+                cell.MakeResistant();
+                myco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitResistantPlacements, 1);
+            }
+        }
+
+        if (infestations > 0) myco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitInfestations, infestations);
+        if (colonizations > 0) myco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitColonizations, colonizations);
+        if (reclaims > 0) myco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitReclaims, reclaims);
+        if (toxinsReplaced > 0) myco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitToxinsReplaced, toxinsReplaced);
+    }
 }
