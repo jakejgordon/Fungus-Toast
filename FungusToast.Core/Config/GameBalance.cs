@@ -20,6 +20,20 @@ namespace FungusToast.Core.Config
         public const int TotalGrowthCycles = 5;
         public const int DefaultToxinDuration = 6;
 
+        // --- NEW: Dynamic random decay scaling (starting at round 10 adds +0.1% per round) ---
+        public const int RandomDecayScalingStartRound = 10; // Round at which incremental scaling begins
+        public const float RandomDecayAdditionalChancePerRound = 0.001f; // 0.1% per round (expressed as fraction)
+        /// <summary>
+        /// Returns the additional random decay chance applied on top of BaseRandomDecayChance for the given round.
+        /// Round 10 yields one increment (i.e., +RandomDecayAdditionalChancePerRound), round 11 yields two, etc.
+        /// </summary>
+        public static float GetAdditionalRandomDecayChance(int currentRound)
+        {
+            if (currentRound < RandomDecayScalingStartRound) return 0f;
+            int roundsElapsed = currentRound - RandomDecayScalingStartRound + 1; // inclusive of start round
+            return roundsElapsed * RandomDecayAdditionalChancePerRound;
+        }
+
         // ==================== MUTATION-SPECIFIC CONSTANTS ====================
         
         // Mycelial Bloom (Tier 1 Growth)

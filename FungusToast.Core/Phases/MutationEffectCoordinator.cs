@@ -38,8 +38,12 @@ namespace FungusToast.Core.Phases
             float addedThreshold = owner.GetMutationEffect(MutationType.AgeAndRandomnessDecayResistance);
             float ageRiskThreshold = GameBalance.AgeAtWhichDecayChanceIncreases + addedThreshold; // treat as float to allow fractional future tuning
 
-            // Random component (cannot go below zero)
-            float randomChance = Math.Max(0f, GameBalance.BaseRandomDecayChance - harmonyReduction);
+            // Dynamic random decay scaling based on round (starts adding after configured start round)
+            float additionalRandom = GameBalance.GetAdditionalRandomDecayChance(board.CurrentRound);
+
+            // Random component (cannot go below zero) – includes dynamic scaling, then subtracts harmony reduction
+            float basePlusScaling = GameBalance.BaseRandomDecayChance + additionalRandom;
+            float randomChance = Math.Max(0f, basePlusScaling - harmonyReduction);
 
             // Age component only after threshold is exceeded
             float ageComponent = cell.GrowthCycleAge > ageRiskThreshold

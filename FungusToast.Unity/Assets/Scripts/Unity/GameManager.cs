@@ -331,8 +331,6 @@ namespace FungusToast.Unity
             // === 1. Trigger draft phase if this is a draft round ===
             if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
             {
-                // IMPORTANT: Wait for any ongoing fade-in animations to complete before starting draft
-                // This ensures newly grown cells are fully visible when highlighted for selection
                 StartCoroutine(DelayedStartDraft());
                 return; // Prevent starting mutation phase until draft is complete!
             }
@@ -342,7 +340,10 @@ namespace FungusToast.Unity
 
             int round = Board.CurrentRound;
             float occupancy = Board.GetOccupiedTileRatio() * 100f; // ratio to percent
-            gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy);
+            gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy); // also updates random decay chance
+
+            // NEW: Ensure random decay chance label refreshed even if SetRoundAndOccupancy not called elsewhere
+            gameUIManager.RightSidebar.UpdateRandomDecayChance(round);
 
             foreach (var player in Board.Players)
             {
@@ -380,6 +381,9 @@ namespace FungusToast.Unity
             gameUIManager.MoldProfileRoot?.Refresh();
 
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
+
+            // Update random decay chance at the start of mutation phase too (visible early in round)
+            gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
 
             // Notify logs of phase start using unified router
             gameUIManager.GameLogRouter?.OnPhaseStart("Mutation");

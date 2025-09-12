@@ -1,9 +1,10 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
 using System.Collections.Generic;
 using FungusToast.Core.Players;
 using FungusToast.Core.Board;
 using FungusToast.Unity.Grid; // Needed for GridVisualizer
+using FungusToast.Core.Config;
 
 namespace FungusToast.Unity.UI
 {
@@ -14,6 +15,8 @@ namespace FungusToast.Unity.UI
         [SerializeField] private GameObject playerSummaryPrefab;
         [SerializeField] private TextMeshProUGUI endgameCountdownText;
         [SerializeField] private TextMeshProUGUI roundAndOccupancyText;
+        [Header("Dynamic Chances")]
+        [SerializeField] private TextMeshProUGUI randomDecayChanceText; // NEW UI label (assign in prefab)
 
         // Add a GridVisualizer field and setter
         private GridVisualizer gridVisualizer;
@@ -133,6 +136,21 @@ namespace FungusToast.Unity.UI
         {
             // Show as: "Round: 7 | Occupancy: 32.7%"
             roundAndOccupancyText.text = $"<b>Round:</b> {round}   <b>Occupancy:</b> {occupancy:F2}%";
+            UpdateRandomDecayChance(round); // update dynamic label each round update
+        }
+
+        // NEW: update random decay chance label
+        public void UpdateRandomDecayChance(int currentRound)
+        {
+            if (randomDecayChanceText == null) return; // optional safety
+            float baseChance = GameBalance.BaseRandomDecayChance;
+            // Fallback/local duplicates of core constants to avoid version skew
+            const int ScalingStartRoundLocal = 10; // must match GameBalance.RandomDecayScalingStartRound
+            const float AdditionalPerRoundLocal = 0.001f; // must match GameBalance.RandomDecayAdditionalChancePerRound
+            float additional = currentRound >= ScalingStartRoundLocal
+                ? (currentRound - ScalingStartRoundLocal + 1) * AdditionalPerRoundLocal
+                : 0f;
+            randomDecayChanceText.text = $"<b>Random Decay Chance:</b> {(baseChance * 100f):0.0}% (+{(additional * 100f):0.0}%)";
         }
 
     }
