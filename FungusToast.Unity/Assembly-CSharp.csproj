@@ -81,6 +81,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantTooltipPanel.cs" />
     <Compile Include="Assets\Scripts\Unity\Phases\GrowthPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipProviders\HomeostaticHarmonyTooltipProvider.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipProviders\RandomDecayChanceTooltipProvider.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\Helpers\HoverEffectHelper.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationLayoutMetadata.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PlayerBinder.cs" />

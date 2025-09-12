@@ -5,6 +5,8 @@ using FungusToast.Core.Players;
 using FungusToast.Core.Board;
 using FungusToast.Unity.Grid; // Needed for GridVisualizer
 using FungusToast.Core.Config;
+using FungusToast.Unity.UI.Tooltips;
+using FungusToast.Unity.UI.Tooltips.TooltipProviders; // ensure provider namespace is imported
 
 namespace FungusToast.Unity.UI
 {
@@ -153,5 +155,18 @@ namespace FungusToast.Unity.UI
             randomDecayChanceText.text = $"<b>Random Decay Chance:</b> {(baseChance * 100f):0.0}% (+{(additional * 100f):0.0}%)";
         }
 
+        public void InitializeRandomDecayChanceTooltip(GameBoard board, Player perspectivePlayer)
+        {
+            if (randomDecayChanceText == null) return;
+            var go = randomDecayChanceText.gameObject;
+            var provider = go.GetComponent<RandomDecayChanceTooltipProvider>();
+            if (provider == null)
+                provider = go.AddComponent<RandomDecayChanceTooltipProvider>();
+            provider.Initialize(board, perspectivePlayer);
+            var trigger = go.GetComponent<TooltipTrigger>();
+            if (trigger == null)
+                trigger = go.AddComponent<TooltipTrigger>();
+            trigger.SetDynamicProvider(provider);
+        }
     }
 }

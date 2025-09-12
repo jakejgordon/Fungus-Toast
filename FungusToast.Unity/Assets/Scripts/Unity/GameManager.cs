@@ -202,6 +202,10 @@ namespace FungusToast.Unity
             // --- Set the GridVisualizer on the RightSidebar before initializing player summaries
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
+
+            // NEW: Initialize random decay chance tooltip and update label
+            gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
+            gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
         }
 
         private void InitializePlayersWithHumanFirst()
