@@ -4,6 +4,32 @@ This guide describes the step-by-step process for adding a new mycovariant to th
 
 ---
 
+## NEW: Factory / Repository Structure (Post-Refactor)
+
+Mycovariants are now organized by category (directional, economy, resistance, growth, fungicide, reclamation) in separate factory files under:
+```
+FungusToast.Core/Mycovariants/Factories/
+```
+Each category exposes an internal `CreateAll()` method that yields its `Mycovariant` definitions. The public `MycovariantFactory` is now an **aggregator** (see `MycovariantFactory.GetAll()`) that concatenates all category outputs. The `MycovariantRepository` builds its canonical list from `MycovariantFactory.GetAll()`.
+
+Backward-compatible (obsolete) individual factory methods remain for now, but new code and additions should target the categorized factory files.
+
+### When Adding a New Mycovariant
+1. Pick the correct existing category factory file (e.g. `EconomyMycovariantFactory.cs`).
+2. Add a private factory method (pattern: `private static Mycovariant NewThing() => new Mycovariant { ... };`).
+3. Add a `yield return NewThing();` inside that file's `CreateAll()` enumerator.
+4. If it forms a new conceptual cluster not covered by existing categories, you may create a new file `YourCategoryMycovariantFactory.cs` with:
+   - `internal static class YourCategoryMycovariantFactory { public static IEnumerable<Mycovariant> CreateAll() { yield return ...; } }`
+   - Add the new factory to the aggregation chain in `MycovariantFactory.GetAll()`.
+5. Do NOT add individual public methods in the aggregator; rely on `GetAll()` + repository or Id-based filtering.
+
+### Benefits
+- Smaller, focused files per synergy / thematic group.
+- Faster navigation & reduced merge conflicts.
+- Easier future automation (reflection-based loading possible later).
+
+---
+
 ## Steps to Add a New Mycovariant
 
 1. **Concept & Naming**
@@ -17,10 +43,55 @@ This guide describes the step-by-step process for adding a new mycovariant to th
 
    **3.1) Core Definition**
    - Add a new constant in `@MycovariantIds.cs` for the mycovariant's unique ID.
-   - Add a new entry in `@MycovariantFactory.cs`:
-     - Use constants from `@MycovariantGameBalance.cs` for all numbers (never hard-code).
-     - Write a clear Description (with numbers where possible) and a fun, thematic FlavorText.
-     - Based on the effect of the mycovariant, add it to the appropriate list(s) in MycovariantSynergyListFactory, and add syngergy with the appropriate group (if appropriate).
+   - Add any new balance constants to `@MycovariantGameBalance.cs` (NEVER hard-code numeric values inside the factory method).
+   - Choose the correct category factory under `Mycovariants/Factories/` and implement the mycovariant there (see pattern above). Update its `CreateAll()` with a `yield return`.
+   - Add synergy references in `@MycovariantSynergyListFactory.cs` if it belongs to an existing synergy group (or create a new grouping if justified).
+   - (If you introduce a **new category file**): add its `CreateAll()` output into the aggregation chain inside `@MycovariantFactory.cs` (`GetAll()` method).
+
+   **3.2) Registration**
+   - Automatic: Once included in a category factory returned by `GetAll()`, it is registered via `@MycovariantRepository`. No manual list edit required now.
+   - Double-check by querying: `MycovariantRepository.All.First(m => m.Id == MycovariantIds.YourId)` in a debugger or test.
+
+   **3.3) Effect Logic & Simulation Output**
+   - Implement effect logic in `@MycovariantEffectProcessor.cs` (and/or other relevant processors).
+   - If the effect should be tracked in simulation output:
+     - Add a new effect type in `@MycovariantEffectType.cs` (if needed).
+     - Record occurrences via `playerMyco.IncrementEffectCount(...)` or observer calls.
+     - Add a case in `@GameResult.cs` (switch in `BuildMycovariantResults`).
+     - Add observer interface method + implementation if you need explicit tracking (see existing patterns in `ISimulationObserver` / `SimulationTrackingContext`).
+
+   **3.4) Draft System Integration (CRITICAL)**
+   - Follow the existing guidance (see original section below) for active vs passive mycovariants.
+   - Active = implement both `ApplyEffect` (simulation/silent draft + AI path) AND a Unity handler in `MycovariantEffectHelpers` + resolver wiring.
+   - Passive/instant = `ApplyEffect` only (Unity draft will call it directly if passive or mark-triggered).
+
+   **3.5) Event Subscription**
+   - Subscribe in `@GameRulesEventSubscriber.cs` if the effect depends on lifecycle events (growth, decay, death, etc.).
+
+   **3.6) Game Lifecycle Integration**
+   - Insert logic into appropriate phase processors (`GrowthPhaseRunner`, `DecayPhaseRunner`, etc.) only if required by timing semantics.
+
+---
+
+## (Retained) Draft & Effect Integration Guidance
+
+(The remainder of this document is unchanged and still applies. The only difference is WHERE you define the mycovariant: now inside a category factory file.)
+
+1. **Concept & Naming**
+   - The human describes the new mycovariant's concept and desired gameplay effect.
+   - Cursor (the AI) provides a list of fungally-themed name ideas that fit the effect.
+
+2. **Name Selection**
+   - The human selects a name and confirms the effect details (including any numbers or balance parameters).
+
+3. **Implementation Steps:**
+
+   **3.1) Core Definition**
+   - Add a new constant in `@MycovariantIds.cs` for the mycovariant's unique ID.
+   - Add a new entry in the appropriate category factory (see NEW section above).
+   - Use constants from `@MycovariantGameBalance.cs` for all numbers (never hard-code).
+   - Write a clear Description (with numbers where possible) and a fun, thematic FlavorText.
+   - Based on the effect of the mycovariant, add it to the appropriate list(s) in `MycovariantSynergyListFactory`, and add synergy with the appropriate group (if appropriate).
    - Add any new balance constants to `@MycovariantGameBalance.cs`.
 
    **3.2) Registration**
