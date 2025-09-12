@@ -47,20 +47,16 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Immediately grow {MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles} mold tiles {directionLabel.ToLower()} from a chosen cell, followed by a spreading cone of toxins that starts {MycovariantGameBalance.JettingMyceliumConeNarrowWidth} tile wide and expands to {MycovariantGameBalance.JettingMyceliumConeWideWidth} tiles wide.",
                 FlavorText = $"The cap ruptures violently. The colony explodes {directionLabel.ToLower()}ward in a widening cloud of toxic spores.",
                 Type = MycovariantType.Directional,
-                Category = MycovariantCategory.Fungicide, // Provides aggressive directional growth + toxins
+                Category = MycovariantCategory.Fungicide,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
                     var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
-                    
                     bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI;
-                    
                     if (shouldUseCoreLogic)
                     {
-                        // AI or Simulation: Core handles everything (selection + effect application)
                         var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
                             .Where(c => c.IsAlive)
                             .ToList();
-                        
                         if (livingCells.Count > 0)
                         {
                             var sourceCell = livingCells[rng.Next(livingCells.Count)];
@@ -68,14 +64,11 @@ namespace FungusToast.Core.Mycovariants
                                 playerMyco, player, board, sourceCell.TileId, cardinalDirection, rng, observer);
                         }
                     }
-                    // Human in Unity: UI layer handles selection + effect application
-                    // (ApplyEffect does nothing, avoiding double execution)
                 },
                 AIScore = (player, board) =>
                 {
                     var bestPlacement = JettingMyceliumHelper.FindBestPlacement(player, board, cardinalDirection);
-                    if (bestPlacement == null) return 1f; // No valid placement possible
-                    
+                    if (bestPlacement == null) return 1f;
                     return JettingMyceliumHelper.ScoreToAIScore(bestPlacement.Value.score);
                 }
             };
@@ -89,21 +82,16 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"When a mold cell dies, there is a {MycovariantGameBalance.NecrophoricAdaptationReclamationChance * 100f:0}% chance to reclaim an orthogonally adjacent dead tile.",
                 FlavorText = "Even in death, the colony endures.",
                 Type = MycovariantType.Passive,
-                Category = MycovariantCategory.Reclamation, // Cell recovery from death
+                Category = MycovariantCategory.Reclamation,
                 IsUniversal = false,
-                AutoMarkTriggered = true, // Passive effect, always considered triggered
+                AutoMarkTriggered = true,
                 SynergyWith = MycovariantSynergyListFactory.GetReclamationSynergyMycovariantIdsExcluding(MycovariantIds.NecrophoricAdaptation),
                 AIScore = (player, board) => {
-                    // Score based on the number of living cells (more cells = more death potential)
                     int livingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive);
-                    // Scale from 1 to 6: 0 cells = 1, 50+ cells = 6
                     float baseScore = Math.Min(6f, Math.Max(1f, 1f + (livingCells * 5f / 50f)));
-                    
-                    // Bonus if player has Reclamation Rhizomorphs (synergy)
                     bool hasRhizomorphs = player.PlayerMycovariants.Any(pm =>
                         pm.MycovariantId == MycovariantIds.ReclamationRhizomorphsId);
                     float synergyBonus = hasRhizomorphs ? MycovariantGameBalance.MycovariantSynergyBonus : 0f;
-                    
                     return baseScore + synergyBonus;
                 }
             };
@@ -116,12 +104,11 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Instantly gain {MycovariantGameBalance.PlasmidBountyMutationPointAward} mutation points as foreign DNA infuses the colony.",
                 FlavorText = "Horizontal gene transfer introduces novel genetic material, accelerating the colony's evolutionary potential.",
                 Type = MycovariantType.Economy,
-                Category = MycovariantCategory.Economy, // Direct mutation point boost
+                Category = MycovariantCategory.Economy,
                 IsUniversal = true,
-                AutoMarkTriggered = true, // Instant effect, always considered triggered
+                AutoMarkTriggered = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // Always apply the effect - works for both Unity and simulation
                     var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
                     if (player != null)
                     {
@@ -140,12 +127,11 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Instantly gain {MycovariantGameBalance.PlasmidBountyIIMutationPointAward} mutation points as foreign DNA infuses the colony.",
                 FlavorText = "Multiple plasmid integrations trigger a cascade of genetic recombination events across the mycelial network.",
                 Type = MycovariantType.Economy,
-                Category = MycovariantCategory.Economy, // Direct mutation point boost
+                Category = MycovariantCategory.Economy,
                 IsUniversal = false,
-                AutoMarkTriggered = true, // Instant effect, always considered triggered
+                AutoMarkTriggered = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // Always apply the effect - works for both Unity and simulation
                     var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
                     if (player != null)
                     {
@@ -164,12 +150,11 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Instantly gain {MycovariantGameBalance.PlasmidBountyIIIMutationPointAward} mutation points as foreign DNA infuses the colony.",
                 FlavorText = "Massive genetic influx overwhelms cellular repair mechanisms, creating unprecedented mutation rates throughout the colony.",
                 Type = MycovariantType.Economy,
-                Category = MycovariantCategory.Economy, // Direct mutation point boost
+                Category = MycovariantCategory.Economy,
                 IsUniversal = false,
-                AutoMarkTriggered = true, // Instant effect, always considered triggered
+                AutoMarkTriggered = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // Always apply the effect - works for both Unity and simulation
                     var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
                     if (player != null)
                     {
@@ -190,7 +175,7 @@ namespace FungusToast.Core.Mycovariants
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Defense,
             IsUniversal = false,
-            AutoMarkTriggered = true, // Passive effect, always considered triggered
+            AutoMarkTriggered = true,
             AIScore = (player, board) => MycovariantGameBalance.AIDraftModeratePriority
         };
 
@@ -202,7 +187,7 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Immediately select up to {MycovariantGameBalance.MycelialBastionIMaxResistantCells} of your living cells to become Resistant (invincible). These cells cannot be killed, replaced, or converted for the rest of the game.",
                 FlavorText = "A fortified network of hyphae, woven to withstand any threat.",
                 Type = MycovariantType.Active,
-                Category = MycovariantCategory.Resistance, // Makes cells invincible
+                Category = MycovariantCategory.Resistance,
                 IsUniversal = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
@@ -224,7 +209,7 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Immediately select up to {MycovariantGameBalance.MycelialBastionIIMaxResistantCells} of your living cells to become Resistant (invincible). These cells cannot be killed, replaced, or converted for the rest of the game.",
                 FlavorText = "Advanced fortification techniques create an impenetrable mycelial bulwark.",
                 Type = MycovariantType.Active,
-                Category = MycovariantCategory.Resistance, // Makes cells invincible
+                Category = MycovariantCategory.Resistance,
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
@@ -246,7 +231,7 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Immediately select up to {MycovariantGameBalance.MycelialBastionIIIMaxResistantCells} of your living cells to become Resistant (invincible). These cells cannot be killed, replaced, or converted for the rest of the game.",
                 FlavorText = "Master-level mycelial engineering creates an unassailable fortress of living tissue.",
                 Type = MycovariantType.Active,
-                Category = MycovariantCategory.Resistance, // Makes cells invincible
+                Category = MycovariantCategory.Resistance,
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
@@ -268,21 +253,16 @@ namespace FungusToast.Core.Mycovariants
                 Description = "Place a single Resistant (invincible) fungal cell anywhere on the board, except on top of another Resistant cell.",
                 FlavorText = "A single spore, delivered with surgical precision, takes root where none could before.",
                 Type = MycovariantType.Active,
-                Category = MycovariantCategory.Resistance, // Places invincible cell
+                Category = MycovariantCategory.Resistance,
                 IsUniversal = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
                     var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
-                    
                     bool shouldUseCoreLogic = player?.PlayerType == PlayerTypeEnum.AI;
-                    
                     if (shouldUseCoreLogic)
                     {
-                        // AI or Simulation: Core handles everything (selection + effect application)
                         MycovariantEffectProcessor.ResolveSurgicalInoculationAI(playerMyco, board, rng, observer);
                     }
-                    // Human in Unity: UI layer handles selection + effect application
-                    // (ApplyEffect does nothing, avoiding double execution)
                 },
                 SynergyWith = MycovariantSynergyListFactory.GetResistanceSynergyMycovariantIdsExcluding(MycovariantIds.SurgicalInoculationId),
                 AIScore = (player, board) => MycovariantGameBalance.AIDraftModeratePriority
@@ -296,12 +276,11 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Multiplies the growth rate of your mold by {MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier}x when it is within {MycovariantGameBalance.PerimeterProliferatorEdgeDistance} tiles of the edge of the board (the crust).",
                 FlavorText = "At the bread's edge, the colony finds untapped vigor, racing along the crust in a surge of expansion.",
                 Type = MycovariantType.Passive,
-                Category = MycovariantCategory.Growth, // Enhances growth at board edges
+                Category = MycovariantCategory.Growth,
                 IsUniversal = false,
-                AutoMarkTriggered = true, // Passive effect, always considered triggered
+                AutoMarkTriggered = true,
                 AIScore = (player, board) =>
                 {
-                    // Count living cells within PerimeterProliferatorEdgeDistance of the border
                     int borderCells = 0;
                     foreach (var tile in board.AllTiles())
                     {
@@ -312,7 +291,6 @@ namespace FungusToast.Core.Mycovariants
                             borderCells++;
                         }
                     }
-                    // Scale from 1 to 10: 0 cells = 1, 100+ cells = 10
                     float score = Math.Min(10f, Math.Max(1f, 1f + (borderCells * 9f / 100f)));
                     return score;
                 }
@@ -326,9 +304,9 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"After each growth phase, your living cells adjacent to Resistant cells (including diagonally) have a {MycovariantGameBalance.HyphalResistanceTransferChance * 100f:0}% chance to become Resistant.",
                 FlavorText = "The protective genetic material flows through the mycelial network, sharing resilience with neighboring cells.",
                 Type = MycovariantType.Passive,
-                Category = MycovariantCategory.Resistance, // Spreads resistance to adjacent cells
+                Category = MycovariantCategory.Resistance,
                 IsUniversal = false,
-                AutoMarkTriggered = true, // Passive effect, always considered triggered
+                AutoMarkTriggered = true,
                 SynergyWith = MycovariantSynergyListFactory.GetResistanceSynergyMycovariantIdsExcluding(MycovariantIds.HyphalResistanceTransferId),
                 AIScore = (player, board) => MycovariantGameBalance.HyphalResistanceTransferBaseAIScoreEarly
             };
@@ -341,12 +319,11 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Immediately adds {MycovariantGameBalance.EnduringToxaphoresExistingToxinExtension} growth cycles to all your existing toxins. Additionally, all toxins you place after acquiring this will last {MycovariantGameBalance.EnduringToxaphoresNewToxinExtension} cycles longer than normal.",
                 FlavorText = "Through secreted compounds, the colony's toxins linger long after their release, defying the march of time.",
                 Type = MycovariantType.Passive,
-                Category = MycovariantCategory.Fungicide, // Enhances toxin effectiveness
+                Category = MycovariantCategory.Fungicide,
                 IsUniversal = false,
-                AutoMarkTriggered = true, // Immediate effect, always considered triggered
+                AutoMarkTriggered = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
-                    // Extend all existing toxins by the configured number of cycles at acquisition
                     var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
                     int extension = MycovariantGameBalance.EnduringToxaphoresExistingToxinExtension;
                     int extendedCount = 0;
@@ -354,7 +331,6 @@ namespace FungusToast.Core.Mycovariants
                     {
                         if (cell.IsToxin)
                         {
-                            // Use the new age-based system instead of the old cycle-based system
                             cell.ToxinExpirationAge += extension;
                             extendedCount += extension;
                         }
@@ -362,21 +338,17 @@ namespace FungusToast.Core.Mycovariants
                     if (extendedCount > 0)
                     {
                         playerMyco.IncrementEffectCount(MycovariantEffectType.ExistingExtensions, extendedCount);
-                        if (observer != null)
-                            observer.RecordEnduringToxaphoresExistingExtensions(player.PlayerId, extendedCount);
+                        observer?.RecordEnduringToxaphoresExistingExtensions(player.PlayerId, extendedCount);
                     }
                 },
                 SynergyWith = MycovariantSynergyListFactory.GetToxinSynergyMycovariantIdsExcluding(MycovariantIds.EnduringToxaphoresId),
-                // AI score: 1 if no toxins, scales up to 10 based on toxin count and toxin-placing mutations
                 AIScore = (player, board) =>
                 {
                     int toxinCount = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsToxin);
                     if (toxinCount == 0) return 1f;
-                    // Only count true toxin-dropping mutations
                     int toxinMutations = 0;
                     if (player.GetMutationLevel(MutationIds.MycotoxinTracer) > 0) toxinMutations++;
                     if (player.GetMutationLevel(MutationIds.SporicidalBloom) > 0) toxinMutations++;
-                    // Score: base is log-scaled on toxin count, bonus for toxin mutations
                     double baseScore = 1.0 + 3.0 * Math.Log10(1 + toxinCount);
                     double mutationBonus = toxinMutations * 1.5;
                     double total = baseScore + mutationBonus;
@@ -392,9 +364,9 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"When your reclamation attempts fail, you have a {MycovariantGameBalance.ReclamationRhizomorphsSecondAttemptChance * 100f:0}% chance to immediately try again.",
                 FlavorText = "Specialized hyphal networks persist even after setbacks, allowing the colony to recover and try again with renewed vigor.",
                 Type = MycovariantType.Passive,
-                Category = MycovariantCategory.Reclamation, // Improves reclamation success
+                Category = MycovariantCategory.Reclamation,
                 IsUniversal = false,
-                AutoMarkTriggered = true, // Passive effect, always considered triggered
+                AutoMarkTriggered = true,
                 SynergyWith = MycovariantSynergyListFactory.GetReclamationSynergyMycovariantIdsExcluding(MycovariantIds.ReclamationRhizomorphsId),
                 AIScore = (player, board) => {
                     bool hasBastion = player.PlayerMycovariants.Any(pm =>
@@ -414,7 +386,7 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Immediately drop up to {MycovariantGameBalance.BallistosporeDischargeISpores} toxin spores on any empty space (or less, if fewer than that are available).",
                 FlavorText = "The colony's fruiting bodies tense, launching a volley of toxin-laden spores across the substrate.",
                 Type = MycovariantType.Active,
-                Category = MycovariantCategory.Fungicide, // Deploys toxin spores
+                Category = MycovariantCategory.Fungicide,
                 IsUniversal = true,
                 SynergyWith = MycovariantSynergyListFactory.GetToxinSynergyMycovariantIds(),
                 ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -437,7 +409,7 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Immediately drop up to {MycovariantGameBalance.BallistosporeDischargeIISpores} toxin spores on any empty space (or less, if fewer than that are available).",
                 FlavorText = "A thunderous burst of spores erupts, blanketing the battlefield in a toxic haze.",
                 Type = MycovariantType.Active,
-                Category = MycovariantCategory.Fungicide, // Deploys toxin spores
+                Category = MycovariantCategory.Fungicide,
                 IsUniversal = false,
                 SynergyWith = MycovariantSynergyListFactory.GetToxinSynergyMycovariantIds(),
                 ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -460,7 +432,7 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Immediately drop up to {MycovariantGameBalance.BallistosporeDischargeIIISpores} toxin spores on any empty space (or less, if fewer than that are available).",
                 FlavorText = "The ultimate actinic volley: a storm of spores rains down, saturating the terrain with lethal intent.",
                 Type = MycovariantType.Active,
-                Category = MycovariantCategory.Fungicide, // Deploys toxin spores
+                Category = MycovariantCategory.Fungicide,
                 IsUniversal = false,
                 SynergyWith = MycovariantSynergyListFactory.GetToxinSynergyMycovariantIds(),
                 ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -483,55 +455,32 @@ namespace FungusToast.Core.Mycovariants
                 Description = $"Select one of your toxins to explode in a {MycovariantGameBalance.CytolyticBurstRadius}-tile radius. Each tile in the area has a {MycovariantGameBalance.CytolyticBurstToxinChance * 100f:0}% chance to receive a toxin, killing anything in its path.",
                 FlavorText = "The toxin's cellular membrane ruptures catastrophically, releasing cytolytic enzymes in a violent cascade that spreads destruction through the surrounding substrate.",
                 Type = MycovariantType.Active,
-                Category = MycovariantCategory.Fungicide, // Area-of-effect toxin creation
+                Category = MycovariantCategory.Fungicide,
                 IsUniversal = false,
                 SynergyWith = MycovariantSynergyListFactory.GetToxinSynergyMycovariantIds(),
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
                     var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
-                    
                     bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI;
-                    
                     if (shouldUseCoreLogic)
                     {
-                        // AI or Simulation: Use helper to find best toxin to explode
                         var bestToxin = CytolyticBurstHelper.FindBestToxinToExplode(player, board);
-                        
                         if (bestToxin.HasValue)
                         {
                             MycovariantEffectProcessor.ResolveCytolyticBurst(
                                 playerMyco, board, bestToxin.Value.tileId, rng, observer);
                         }
                     }
-                    // Human in Unity: UI layer handles selection + effect application
-                    // (ApplyEffect does nothing, avoiding double execution)
                 },
                 AIScore = (player, board) =>
                 {
-                    // Use helper to find the best possible explosion and score accordingly
                     var bestToxin = CytolyticBurstHelper.FindBestToxinToExplode(player, board);
-                    
-                    if (!bestToxin.HasValue)
-                        return 1f; // No toxins available
-                    
+                    if (!bestToxin.HasValue) return 1f;
                     int explosionScore = bestToxin.Value.score;
                     float baseScore = MycovariantGameBalance.CytolyticBurstBaseAIScore;
-                    
-                    if (explosionScore <= 0)
-                    {
-                        // Subtract 3 points if explosion would hurt more friendlies than enemies
-                        return Math.Max(1f, baseScore - 3f);
-                    }
-                    else if (explosionScore < 20)
-                    {
-                        // Add 1 point for positive but modest benefit
-                        return Math.Min(10f, baseScore + 1f);
-                    }
-                    else
-                    {
-                        // Add 2 points for high-value explosions
-                        return Math.Min(10f, baseScore + 2f);
-                    }
+                    if (explosionScore <= 0) return Math.Max(1f, baseScore - 3f);
+                    if (explosionScore < 20) return Math.Min(10f, baseScore + 1f);
+                    return Math.Min(10f, baseScore + 2f);
                 }
             };
 
@@ -540,35 +489,22 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.ChemotacticMycotoxinsId,
                 Name = "Chemotactic Mycotoxins",
-                Description = $"At the end of each decay phase, your toxins that are no longer next to living enemy cells have an X% chance to relocate to a living enemy cell, where X is {MycovariantGameBalance.ChemotacticMycotoxinsMycotoxinTracerMultiplier} times your Mycotoxin Tracer level. Toxins relocate following the same rules as Mycotoxin Tracer.",
+                Description = $"End of decay: isolated toxins each have X% chance to relocate to a living enemy (X = {MycovariantGameBalance.ChemotacticMycotoxinsMycotoxinTracerMultiplier} × Mycotoxin Tracer level; same targeting rules).",
                 FlavorText = "Sensing the absence of targets, the colony's toxic spores drift through microscopic gradients, seeking new hosts to poison.",
                 Type = MycovariantType.Passive,
-                Category = MycovariantCategory.Fungicide, // Enhances toxin effectiveness
+                Category = MycovariantCategory.Fungicide,
                 IsUniversal = false,
-                AutoMarkTriggered = true, // Passive effect, always considered triggered
+                AutoMarkTriggered = true,
                 SynergyWith = MycovariantSynergyListFactory.GetToxinSynergyMycovariantIdsExcluding(MycovariantIds.ChemotacticMycotoxinsId),
                 AIScore = (player, board) =>
                 {
                     int toxinCount = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsToxin);
                     int mycotoxinTracerLevel = player.GetMutationLevel(MutationIds.MycotoxinTracer);
-                    
-                    if (toxinCount == 0 || mycotoxinTracerLevel == 0) 
-                        return 1f; // No benefit without toxins or Mycotoxin Tracer
-                    
-                    // Base score is 3
+                    if (toxinCount == 0 || mycotoxinTracerLevel == 0) return 1f;
                     float score = 3f;
-                    
-                    // Bonus: +1 point if player has at least 10 toxins on the board
-                    if (toxinCount >= 10)
-                    {
-                        score += 1f;
-                    }
-                    
-                    // Bonus: +1 point per 5 levels of Mycotoxin Tracer
+                    if (toxinCount >= 10) score += 1f;
                     float tracerBonus = (mycotoxinTracerLevel / 5) * 1f;
                     score += tracerBonus;
-                    
-                    // Cap at maximum of 10
                     return Math.Min(10f, score);
                 }
             };
@@ -578,7 +514,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.CornerConduitIId,
                 Name = "Corner Conduit I",
-                Description = $"Before each growth phase, trace a path from your starting spore toward the nearest corner (TL→TR→BR→BL tie-break). Replace up to {MycovariantGameBalance.CornerConduitIReplacementsPerPhase} actionable tile along that path (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skips friendly living and enemy Resistant cells.",
+                Description = $"Pre-growth: path to nearest corner. Replace up to {MycovariantGameBalance.CornerConduitIReplacementsPerPhase} actionable tile (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skips friendly living & enemy Resistant.",
                 FlavorText = "Hyphae prioritize a direct arterial route to a strategic corner, exploiting vulnerabilities along the corridor.",
                 Type = MycovariantType.Passive,
                 Category = MycovariantCategory.Growth,
@@ -607,8 +543,8 @@ namespace FungusToast.Core.Mycovariants
                         int tx = line[i].x; int ty = line[i].y; int tileId = ty*board.Width+tx;
                         var tile = board.GetTileById(tileId);
                         var cell = tile?.FungalCell;
-                        if (cell != null && cell.IsAlive && cell.OwnerPlayerId == player.PlayerId) continue; // friendly living skip
-                        if (cell != null && cell.IsAlive && cell.OwnerPlayerId != player.PlayerId && cell.IsResistant) continue; // enemy resistant skip
+                        if (cell != null && cell.IsAlive && cell.OwnerPlayerId == player.PlayerId) continue;
+                        if (cell != null && cell.IsAlive && cell.OwnerPlayerId != player.PlayerId && cell.IsResistant) continue;
                         actionable++;
                     }
                     int denom = line.Count -1;
@@ -625,7 +561,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.CornerConduitIIId,
                 Name = "Corner Conduit II",
-                Description = $"Before each growth phase, trace a path from your starting spore toward the nearest corner (TL→TR→BR→BL tie-break). Replace up to {MycovariantGameBalance.CornerConduitIIReplacementsPerPhase} actionable tiles along that path (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skips friendly living and enemy Resistant cells.",
+                Description = $"Pre-growth: corner path. Replace up to {MycovariantGameBalance.CornerConduitIIReplacementsPerPhase} actionable tiles (same rules as I).",
                 FlavorText = "Hyphal arterial routing intensifies, widening strategic throughput toward a dominant corner nexus.",
                 Type = MycovariantType.Passive,
                 Category = MycovariantCategory.Growth,
@@ -667,7 +603,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.CornerConduitIIIId,
                 Name = "Corner Conduit III",
-                Description = $"Before each growth phase, trace a path from your starting spore toward the nearest corner (TL→TR→BR→BL tie-break). Replace up to {MycovariantGameBalance.CornerConduitIIIReplacementsPerPhase} actionable tiles along that path (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skips friendly living and enemy Resistant cells.",
+                Description = $"Pre-growth: corner path. Replace up to {MycovariantGameBalance.CornerConduitIIIReplacementsPerPhase} actionable tiles (same rules as I).",
                 FlavorText = "A fully vascularized hyphal highway surges toward strategic dominance, overwhelming resistance in a focused advance.",
                 Type = MycovariantType.Passive,
                 Category = MycovariantCategory.Growth,
@@ -708,7 +644,9 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.AggressotropicConduitIId,
                 Name = "Aggressotropic Conduit I",
-                Description = $"Before each growth phase, trace a path from your starting spore toward the starting spore of the enemy with the most living cells (random tie-break). Replace up to {MycovariantGameBalance.AggressotropicConduitIReplacementsPerPhase} actionable tile along that path (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). The final replaced tile becomes Resistant. Skips friendly living and enemy Resistant cells.",
+                Description = $"Before each growth phase, trace a path from your starting spore toward the enemy starting spore with the most living cells (random tie-break)."
+                    + $"Replace up to {MycovariantGameBalance.AggressotropicConduitIReplacementsPerPhase} tiles along that path. The final replaced tile becomes Resistant. "
+                    + "Skips friendly living and enemy Resistant cells. Stacks with other Aggressotropic Conduit upgrades.",
                 FlavorText = "A probing arterial strand advances toward dominant rival biomass, crystallizing a hardened foothold at its leading edge.",
                 Type = MycovariantType.Passive,
                 Category = MycovariantCategory.Growth,
@@ -723,7 +661,9 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.AggressotropicConduitIIId,
                 Name = "Aggressotropic Conduit II",
-                Description = $"Before each growth phase, trace a path from your starting spore toward the starting spore of the enemy with the most living cells (random tie-break). Replace up to {MycovariantGameBalance.AggressotropicConduitIIReplacementsPerPhase} actionable tiles along that path. The final replaced tile becomes Resistant. Skips friendly living and enemy Resistant cells.",
+                Description = $"Before each growth phase, trace a path from your starting spore toward the enemy starting spore with the most living cells (random tie-break)."
+                    + $"Replace up to {MycovariantGameBalance.AggressotropicConduitIIReplacementsPerPhase} tiles along that path. The final replaced tile becomes Resistant. "
+                    + "Skips friendly living and enemy Resistant cells. Stacks with other Aggressotropic Conduit upgrades.",
                 FlavorText = "The invasive corridor thickens, boring deeper toward hostile dominance while fortifying its terminal node.",
                 Type = MycovariantType.Passive,
                 Category = MycovariantCategory.Growth,
@@ -738,7 +678,9 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.AggressotropicConduitIIIId,
                 Name = "Aggressotropic Conduit III",
-                Description = $"Before each growth phase, trace a path from your starting spore toward the starting spore of the enemy with the most living cells (random tie-break). Replace up to {MycovariantGameBalance.AggressotropicConduitIIIReplacementsPerPhase} actionable tiles along that path. The final replaced tile becomes Resistant. Skips friendly living and enemy Resistant cells.",
+                Description = $"Before each growth phase, trace a path from your starting spore toward the enemy starting spore with the most living cells (random tie-break)."
+                    + $"Replace up to {MycovariantGameBalance.AggressotropicConduitIIIReplacementsPerPhase} tiles along that path. The final replaced tile becomes Resistant. "
+                    + "Skips friendly living and enemy Resistant cells. Stacks with other Aggressotropic Conduit upgrades.",
                 FlavorText = "A fully committed invasive artery, tunneling decisively toward the heart of rival dominance and sealing its spearpoint in impervious tissue.",
                 Type = MycovariantType.Passive,
                 Category = MycovariantCategory.Growth,

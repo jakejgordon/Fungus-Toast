@@ -936,20 +936,20 @@ public static class MycovariantEffectProcessor
         Random rng,
         ISimulationObserver observer)
     {
-        // Determine which Aggressotropic Conduit tier (prefer highest)
-        PlayerMycovariant? myco = player.GetMycovariant(MycovariantIds.AggressotropicConduitIIIId)
-            ?? player.GetMycovariant(MycovariantIds.AggressotropicConduitIIId)
-            ?? player.GetMycovariant(MycovariantIds.AggressotropicConduitIId);
-        if (myco == null) return;
+        // Gather all owned tiers (stacking allowed). Highest tier used for effect attribution / resistant placement.
+        var tierI = player.GetMycovariant(MycovariantIds.AggressotropicConduitIId);
+        var tierII = player.GetMycovariant(MycovariantIds.AggressotropicConduitIIId);
+        var tierIII = player.GetMycovariant(MycovariantIds.AggressotropicConduitIIIId);
+        if (tierI == null && tierII == null && tierIII == null) return;
         if (!player.StartingTileId.HasValue) return;
 
-        // Find enemy with most living cells (exclude self). Tie-break randomly via RNG.
+        // Determine target enemy (same logic as before)
         var enemyLivingCounts = allPlayers
             .Where(p => p.PlayerId != player.PlayerId)
             .Select(p => new { Enemy = p, Living = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive) })
             .Where(x => x.Living > 0)
             .ToList();
-        if (enemyLivingCounts.Count == 0) return; // No enemies? nothing to do.
+        if (enemyLivingCounts.Count == 0) return;
         int maxLiving = enemyLivingCounts.Max(e => e.Living);
         var topCandidates = enemyLivingCounts.Where(e => e.Living == maxLiving).ToList();
         var targetEnemy = topCandidates[rng.Next(topCandidates.Count)].Enemy;
@@ -959,13 +959,15 @@ public static class MycovariantEffectProcessor
             return;
         }
 
-        int quota = myco.MycovariantId switch
-        {
-            var id when id == MycovariantIds.AggressotropicConduitIIIId => MycovariantGameBalance.AggressotropicConduitIIIReplacementsPerPhase,
-            var id when id == MycovariantIds.AggressotropicConduitIIId => MycovariantGameBalance.AggressotropicConduitIIReplacementsPerPhase,
-            _ => MycovariantGameBalance.AggressotropicConduitIReplacementsPerPhase
-        };
+        // Sum quotas from all owned tiers
+        int quota = 0;
+        if (tierI != null) quota += MycovariantGameBalance.AggressotropicConduitIReplacementsPerPhase;
+        if (tierII != null) quota += MycovariantGameBalance.AggressotropicConduitIIReplacementsPerPhase;
+        if (tierIII != null) quota += MycovariantGameBalance.AggressotropicConduitIIIReplacementsPerPhase;
         if (quota <= 0) return;
+
+        // Use highest tier for recording (III > II > I)
+        var attributionMyco = tierIII ?? tierII ?? tierI;
 
         int startTile = player.StartingTileId.Value;
         int enemyStart = targetEnemy.StartingTileId.Value;
@@ -975,7 +977,6 @@ public static class MycovariantEffectProcessor
         if (line.Count <= 1) return;
 
         int infestations = 0, colonizations = 0, reclaims = 0, toxinsReplaced = 0;
-        // Track tile ids we successfully acted on for later resistant assignment.
         var actedTileIds = new List<int>();
 
         for (int i = 1; i < line.Count && quota > 0; i++)
@@ -995,7 +996,7 @@ public static class MycovariantEffectProcessor
             }
         }
 
-        // Make last successfully replaced/placed tile resistant (if any and cell owned by player).
+        // Make last successfully replaced/placed tile resistant (single resistant regardless of tiers stacked)
         if (actedTileIds.Count > 0)
         {
             int lastTileId = actedTileIds.Last();
@@ -1004,13 +1005,13 @@ public static class MycovariantEffectProcessor
             if (cell != null && cell.IsAlive && cell.OwnerPlayerId == player.PlayerId && !cell.IsResistant)
             {
                 cell.MakeResistant();
-                myco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitResistantPlacements, 1);
+                attributionMyco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitResistantPlacements, 1);
             }
         }
 
-        if (infestations > 0) myco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitInfestations, infestations);
-        if (colonizations > 0) myco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitColonizations, colonizations);
-        if (reclaims > 0) myco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitReclaims, reclaims);
-        if (toxinsReplaced > 0) myco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitToxinsReplaced, toxinsReplaced);
+        if (infestations > 0) attributionMyco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitInfestations, infestations);
+        if (colonizations > 0) attributionMyco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitColonizations, colonizations);
+        if (reclaims > 0) attributionMyco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitReclaims, reclaims);
+        if (toxinsReplaced > 0) attributionMyco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitToxinsReplaced, toxinsReplaced);
     }
 }
