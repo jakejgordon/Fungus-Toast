@@ -21,15 +21,13 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image centerPlayerIcon;
 
         [Header("Stat Text References")] 
-        [SerializeField] private TextMeshProUGUI statsRandomDecayBreakdownText;    // UI_StatsRootRandomDecayChance
         [SerializeField] private TextMeshProUGUI statsAgeThresholdText;            // UI_StatsRootStartDecayAge
 
         [Header("Formatting / Visuals")] 
         [SerializeField] private Color zeroChanceColor = new Color(1f,1f,1f,0.35f);
         [SerializeField] private Color finalZeroGreen = new Color(0.4f, 1f, 0.4f, 1f);
 
-        [Header("Help Icons")] // NEW: optional explicit reference to the HH tooltip provider
-        [SerializeField] private HomeostaticHarmonyTooltipProvider homeostaticHarmonyTooltipProvider;
+        [Header("Help Icons")]
         [SerializeField] private AgeDelayThresholdTooltipProvider ageDelayThresholdTooltipProvider;
 
         private Player trackedPlayer;
@@ -49,7 +47,6 @@ namespace FungusToast.Unity.UI
             EnsureCellsResolved();
             Refresh();
 
-            homeostaticHarmonyTooltipProvider.Initialize(trackedPlayer, allPlayers);
             ageDelayThresholdTooltipProvider.Initialize(trackedPlayer);
         }
 
@@ -137,14 +134,6 @@ namespace FungusToast.Unity.UI
             int chronoLevel = trackedPlayer.GetMutationLevel(MutationIds.ChronoresilientCytoplasm);
             float addedThreshold = chronoLevel * GameBalance.ChronoresilientCytoplasmEffectPerLevel;
             float ageThreshold = GameBalance.AgeAtWhichDecayChanceIncreases + addedThreshold;
-
-            if (statsRandomDecayBreakdownText)
-            {
-                string finalDisplay = finalRandom <= 1e-6f
-                    ? $"<color=#{ColorUtility.ToHtmlStringRGB(finalZeroGreen)}>{(finalRandom*100f):F2}%</color>"
-                    : $"{(finalRandom*100f):F2}%";
-                statsRandomDecayBreakdownText.text = $"Random Decay Chance: {(rawRandom*100f):F2}% - {(harmony*100f):F2}% = {finalDisplay}";
-            }
 
             if (statsAgeThresholdText)
                 statsAgeThresholdText.text = $"Age Risk Threshold: {GameBalance.ChronoresilientCytoplasmEffectPerLevel:F0} - {addedThreshold:F0}  = {ageThreshold:F0}";

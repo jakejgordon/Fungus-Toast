@@ -5,10 +5,11 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Events;
 using FungusToast.Core.Growth;
-using FungusToast.Core.Phases;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
+using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
+using FungusToast.Core.Metrics;
 using FungusToast.Unity.Cameras;
 using FungusToast.Unity.Events;
 using FungusToast.Unity.Grid;
@@ -16,6 +17,7 @@ using FungusToast.Unity.Phases;
 using FungusToast.Unity.UI;
 using FungusToast.Unity.UI.GameStart;
 using FungusToast.Unity.UI.MycovariantDraft;
+using FungusToast.Unity.UI.Tooltips;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,29 +25,27 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using Random = UnityEngine.Random;
-using FungusToast.Core.Metrics;
-using FungusToast.Unity.UI.Tooltips;
 
 namespace FungusToast.Unity
 {
     public class GameManager : MonoBehaviour
     {
-        [Header("Board Settings")]
+        #region Inspector Fields
+        [Header("Board Settings")] 
         public int boardWidth = 20;
         public int boardHeight = 20;
         public int playerCount = 2;
 
-        [Header("Testing Mode")]
+        [Header("Testing Mode")] 
         public bool testingModeEnabled = false;
         public int? testingMycovariantId = null;
         public bool testingModeForceHumanFirst = true;
         public int fastForwardRounds = 0;
-        public bool testingSkipToEndgameAfterFastForward = false; // NEW: skip to end after FF
+        public bool testingSkipToEndgameAfterFastForward = false; // Skip to end after FF
 
-        [Header("References")]
+        [Header("References")] 
         public GridVisualizer gridVisualizer;
         public CameraCenterer cameraCenterer;
-
         [SerializeField] private MutationManager mutationManager;
         [SerializeField] private GrowthPhaseRunner growthPhaseRunner;
         [SerializeField] private GameUIManager gameUIManager;
@@ -55,7 +55,9 @@ namespace FungusToast.Unity
         [SerializeField] private UI_StartGamePanel startGamePanel;
         public GameObject SelectionPromptPanel;
         public TextMeshProUGUI SelectionPromptText;
+        #endregion
 
+        #region State Fields
         private bool isCountdownActive = false;
         private int roundsRemainingUntilGameEnd = 0;
         private bool gameEnded = false;
@@ -71,19 +73,25 @@ namespace FungusToast.Unity
         private Player humanPlayer;
 
         private bool isInDraftPhase = false;
-        public bool IsDraftPhaseActive => isInDraftPhase; // <- expose draft state
+        public bool IsDraftPhaseActive => isInDraftPhase;
 
         private Dictionary<(int playerId, int mutationId), List<int>> FirstUpgradeRounds = new();
 
         public bool IsTestingModeEnabled => testingModeEnabled;
         public int? TestingMycovariantId => testingMycovariantId;
 
+        // Buffers for post-growth visual sequencing
         private readonly Dictionary<int, List<int>> _regenReclaimBuffer = new();
-        private readonly List<int> _postGrowthResistanceTiles = new(); // buffered non-HRT resistances
-        private readonly List<int> _postGrowthHrtNewResistantTiles = new(); // tiles newly resistant via HRT
+        private readonly List<int> _postGrowthResistanceTiles = new(); // (currently not externally populated in this excerpt)
+        private readonly List<int> _postGrowthHrtNewResistantTiles = new();
         private HashSet<int> _resistantBaseline = new();
         private bool _postGrowthSequenceRunning = false;
 
+        // NEW: Flag to suppress all Unity-side animations & visual coroutines while fast-forwarding
+        private bool isFastForwarding = false;
+        #endregion
+
+        #region Unity Lifecycle
         private void Awake()
         {
             FungusToast.Core.Logging.CoreLogger.Log = Debug.Log;
@@ -94,19 +102,33 @@ namespace FungusToast.Unity
             }
             Instance = this;
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
-
             rng = new System.Random();
         }
 
         private void Start()
         {
-            // Only show StartGamePanel when the game is actually running (not in edit mode)
             if (Application.isPlaying)
             {
                 ShowStartGamePanel();
             }
         }
+        #endregion
 
+        #region Event Handlers / Buffering
+        // Buffer Regenerative Hyphae reclaims for post-growth sequence (when not fast-forwarding)
+        private void OnCellReclaimed_RegenerativeHyphae(int playerId, int tileId, GrowthSource source)
+        {
+            if (source != GrowthSource.RegenerativeHyphae) return;
+            if (!_regenReclaimBuffer.TryGetValue(playerId, out var list))
+            {
+                list = new List<int>();
+                _regenReclaimBuffer[playerId] = list;
+            }
+            list.Add(tileId);
+        }
+        #endregion
+
+        #region Initialization
         public void InitializeGame(int numberOfPlayers)
         {
             gameEnded = false;
@@ -118,7 +140,7 @@ namespace FungusToast.Unity
 
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
 
-            // Subscribe early so baseline capture runs BEFORE other PostGrowthPhase handlers (needed for Mimetic Resilience diff)
+            // Subscribe early for baseline capture BEFORE other PostGrowthPhase handlers
             Board.PostGrowthPhase += OnPostGrowthPhase_StartSequence;
             Board.PostGrowthPhaseCompleted += OnPostGrowthPhaseCompleted_CaptureHrt;
 
@@ -126,14 +148,12 @@ namespace FungusToast.Unity
             GameUIEventSubscriber.Subscribe(Board, gameUIManager);
             AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
 
-            // NEW: Subscribe to batch resistance applications for surge animations
-            Board.ResistanceAppliedBatch += OnResistanceAppliedBatchBuffered; // replace direct animation
-            // Buffer Regenerative Hyphae reclaims via generic CellReclaimed event (filter by source)
+            Board.ResistanceAppliedBatch += OnResistanceAppliedBatchBuffered;
             Board.CellReclaimed += OnCellReclaimed_RegenerativeHyphae;
 
             InitializePlayersWithHumanFirst();
 
-            // Initialize the persistent pool manager once per game
+            // Persistent draft pool
             var allMycovariants = MycovariantRepository.All.ToList();
             persistentPoolManager = new MycovariantPoolManager();
             persistentPoolManager.InitializePool(allMycovariants, rng);
@@ -142,12 +162,9 @@ namespace FungusToast.Unity
             PlaceStartingSpores();
             gridVisualizer.RenderBoard(Board);
 
-            // === Play starting spore cinematic before enabling UI interaction ===
             StartCoroutine(PlayStartingSporeIntroAndContinue());
-
             mutationManager.ResetMutationPoints(players);
 
-            // === ACTIVATE ALL UI PANELS FIRST ===
             gameUIManager.LeftSidebar?.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
@@ -155,13 +172,11 @@ namespace FungusToast.Unity
 
             cameraCenterer?.CaptureInitialFraming();
 
-            // === Initialize Game Log ===
             if (gameUIManager.GameLogManager != null && gameUIManager.GameLogPanel != null)
             {
                 gameUIManager.GameLogManager.Initialize(Board);
                 gameUIManager.GameLogPanel.Initialize(gameUIManager.GameLogManager);
             }
-            // === Initialize Global Game Log ===
             if (gameUIManager.GlobalGameLogManager != null && gameUIManager.GlobalGameLogPanel != null)
             {
                 gameUIManager.GlobalGameLogManager.Initialize(Board);
@@ -174,22 +189,17 @@ namespace FungusToast.Unity
             if (testingModeEnabled)
             {
                 if (fastForwardRounds > 0)
-                {
                     StartCoroutine(FastForwardRounds());
-                }
                 else if (testingMycovariantId.HasValue)
-                {
                     StartMycovariantDraftPhase();
-                }
                 else
-                {
                     gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
-                }
             }
             else
             {
                 gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
             }
+
             phaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
             phaseProgressTracker?.HighlightMutationPhase();
@@ -204,45 +214,32 @@ namespace FungusToast.Unity
             players.Clear();
             int baseMP = GameBalance.StartingMutationPoints;
 
-            // Add human player first
             humanPlayer = new Player(0, "Human", PlayerTypeEnum.Human, AITypeEnum.Random);
             humanPlayer.SetBaseMutationPoints(baseMP);
             players.Add(humanPlayer);
 
-            // Get AI strategies from AIRoster
-            var aiStrategies = AIRoster.GetStrategies(playerCount - 1, StrategySetEnum.Proven);
-
-            // Shuffle for variety (if AIRoster didn't already do so)
-            aiStrategies = aiStrategies.OrderBy(_ => UnityEngine.Random.value).ToList();
-
-            // Create AI players with shuffled order and assign strategy
+            var aiStrategies = AIRoster.GetStrategies(playerCount - 1, StrategySetEnum.Proven)
+                                      .OrderBy(_ => UnityEngine.Random.value)
+                                      .ToList();
             for (int i = 0; i < aiStrategies.Count; i++)
             {
-                int playerId = i + 1; // AI player IDs start at 1
-                var aiPlayer = new Player(playerId, $"AI Player {playerId}", PlayerTypeEnum.AI, AITypeEnum.Random);
-                aiPlayer.SetBaseMutationPoints(baseMP);
-                aiPlayer.SetMutationStrategy(aiStrategies[i]);
-                players.Add(aiPlayer);
+                int playerId = i + 1;
+                var ai = new Player(playerId, $"AI Player {playerId}", PlayerTypeEnum.AI, AITypeEnum.Random);
+                ai.SetBaseMutationPoints(baseMP);
+                ai.SetMutationStrategy(aiStrategies[i]);
+                players.Add(ai);
             }
 
-            // Re-assign icons and initialize UI panels
             foreach (var p in players)
             {
                 var icon = gridVisualizer.GetTileForPlayer(p.PlayerId)?.sprite;
-                if (icon != null) 
-                {
-                    gameUIManager.PlayerUIBinder.AssignIcon(p, icon);
-                }
+                if (icon != null) gameUIManager.PlayerUIBinder.AssignIcon(p, icon);
             }
 
-            // First populate Board.Players
             Board.Players.Clear();
             Board.Players.AddRange(players);
-            
-            // Update humanPlayer to reference the canonical player object
             humanPlayer = Board.Players[0];
 
-            // Now initialize UI panels with the correct references
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(Board.Players);
             SubscribeToPlayerMutationEvents();
@@ -251,35 +248,28 @@ namespace FungusToast.Unity
         private void SubscribeToPlayerMutationEvents()
         {
             foreach (var p in Board.Players)
-            {
                 p.MutationsChanged += OnPlayerMutationsChanged;
-            }
         }
 
         private void OnPlayerMutationsChanged(Player player)
         {
             if (player == humanPlayer)
-            {
                 gameUIManager.MoldProfileRoot?.Refresh();
-            }
         }
+        #endregion
 
+        #region Phase Control
         private void PlaceStartingSpores()
         {
-            // Use the shared starting spore placement utility from FungusToast.Core
             StartingSporeUtility.PlaceStartingSpores(Board, players, rng);
-
             int round = Board.CurrentRound;
-            float occupancy = Board.GetOccupiedTileRatio() * 100f; // ratio to percent
+            float occupancy = Board.GetOccupiedTileRatio() * 100f;
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy);
         }
 
         public void StartGrowthPhase()
         {
-            // Disable Spend Points before leaving mutation phase
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
-
-            // Notify logs of phase start using unified router
             gameUIManager.GameLogRouter?.OnPhaseStart("Growth");
 
             if (growthPhaseRunner != null)
@@ -287,10 +277,7 @@ namespace FungusToast.Unity
                 growthPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
                 gameUIManager.PhaseBanner.Show("Growth Phase Begins!", 2f);
                 phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
-                
-                // 🔧 CRITICAL FIX: Add the missing PreGrowthPhase event for Chitin Fortification and other pre-growth effects
                 Board.OnPreGrowthPhase();
-                
                 growthPhaseRunner.StartGrowthPhase();
             }
         }
@@ -298,10 +285,7 @@ namespace FungusToast.Unity
         public void StartDecayPhase()
         {
             if (gameEnded) return;
-
-            // Notify logs of phase start using unified router
             gameUIManager.GameLogRouter?.OnPhaseStart("Decay");
-
             decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
             gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f);
             phaseProgressTracker?.HighlightDecayPhase();
@@ -312,45 +296,36 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
 
-            // Notify both logs of round completion using unified router
             gameUIManager.GameLogRouter?.OnRoundComplete(Board.CurrentRound, Board);
-
-            foreach (var player in Board.Players)
-                player.TickDownActiveSurges();
+            foreach (var p in Board.Players) p.TickDownActiveSurges();
 
             CheckForEndgameCondition();
             if (gameEnded) return;
 
             Board.IncrementRound();
 
-            // === 1. Trigger draft phase if this is a draft round ===
             if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
             {
                 StartCoroutine(DelayedStartDraft());
-                return; // Prevent starting mutation phase until draft is complete!
+                return;
             }
 
-            // === 2. Otherwise, start the next mutation phase as usual ===
             StartNextRound();
 
             int round = Board.CurrentRound;
-            float occupancy = Board.GetOccupiedTileRatio() * 100f; // ratio to percent
-            gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy); // also updates random decay chance
-
-            // NEW: Ensure random decay chance label refreshed even if SetRoundAndOccupancy not called elsewhere
+            float occupancy = Board.GetOccupiedTileRatio() * 100f;
+            gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy);
             gameUIManager.RightSidebar.UpdateRandomDecayChance(round);
 
             foreach (var player in Board.Players)
             {
                 foreach (var pm in player.PlayerMutations.Values)
                 {
-                    if (pm.FirstUpgradeRound.HasValue)
-                    {
-                        var key = (player.PlayerId, pm.MutationId);
-                        if (!FirstUpgradeRounds.ContainsKey(key))
-                            FirstUpgradeRounds[key] = new List<int>();
-                        FirstUpgradeRounds[key].Add(pm.FirstUpgradeRound.Value);
-                    }
+                    if (!pm.FirstUpgradeRound.HasValue) continue;
+                    var key = (player.PlayerId, pm.MutationId);
+                    if (!FirstUpgradeRounds.ContainsKey(key))
+                        FirstUpgradeRounds[key] = new List<int>();
+                    FirstUpgradeRounds[key].Add(pm.FirstUpgradeRound.Value);
                 }
             }
         }
@@ -358,38 +333,23 @@ namespace FungusToast.Unity
         public void StartNextRound()
         {
             if (gameEnded) return;
-
-            // Notify logs of round start using unified router
             gameUIManager.GameLogRouter?.OnRoundStart(Board.CurrentRound);
-
             AssignMutationPoints();
-            
-            // At the true start of a new mutation phase, reset humanTurnEnded
             gameUIManager.MutationUIManager.StartNewMutationPhase();
-            
-            // Don't initialize immediately - just set up the UI state
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(true);
-
-            // Refresh the spend points button to show updated mutation points
             gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
             gameUIManager.MoldProfileRoot?.Refresh();
-
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
-
-            // Update random decay chance at the start of mutation phase too (visible early in round)
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
-
-            // Notify logs of phase start using unified router
             gameUIManager.GameLogRouter?.OnPhaseStart("Mutation");
-
             gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
-
             UpdatePhaseProgressTrackerLabel();
-
             phaseProgressTracker?.HighlightMutationPhase();
         }
+        #endregion
 
+        #region Endgame / Countdown
         private void CheckForEndgameCondition()
         {
             if (!isCountdownActive && Board.ShouldTriggerEndgame())
@@ -401,14 +361,7 @@ namespace FungusToast.Unity
             else if (isCountdownActive)
             {
                 roundsRemainingUntilGameEnd--;
-                if (roundsRemainingUntilGameEnd <= 0)
-                {
-                    EndGame();
-                }
-                else
-                {
-                    UpdateCountdownUI();
-                }
+                if (roundsRemainingUntilGameEnd <= 0) EndGame(); else UpdateCountdownUI();
             }
         }
 
@@ -419,7 +372,6 @@ namespace FungusToast.Unity
                 gameUIManager.RightSidebar?.SetEndgameCountdownText(null);
                 return;
             }
-
             if (roundsRemainingUntilGameEnd == 1)
             {
                 gameUIManager.RightSidebar?.SetEndgameCountdownText("<b><color=#FF0000>Final Round!</color></b>");
@@ -436,7 +388,6 @@ namespace FungusToast.Unity
         {
             if (gameEnded) return;
             gameEnded = true;
-
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
 
             var ranked = Board.Players
@@ -444,18 +395,13 @@ namespace FungusToast.Unity
                 .ThenByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => !c.IsAlive))
                 .ToList();
 
-            // Notify global log of game end using unified router
             var winner = ranked.FirstOrDefault();
             if (winner != null)
-            {
                 gameUIManager.GameLogRouter?.OnGameEnd(winner.PlayerName);
-            }
 
             gameUIManager.MutationUIManager.gameObject.SetActive(false);
-            // Keep the right sidebar visible at endgame
             gameUIManager.RightSidebar.gameObject.SetActive(true);
             gameUIManager.LeftSidebar.gameObject.SetActive(false);
-
             gameUIManager.EndGamePanel.gameObject.SetActive(true);
             gameUIManager.EndGamePanel.ShowResults(ranked, Board);
 
@@ -467,14 +413,14 @@ namespace FungusToast.Unity
                 Console.WriteLine($"Player {playerId} | Mutation {mutationId} | Avg First Acquired: {avg:F1} | Min: {min} | Max: {max}");
             }
         }
+        #endregion
 
+        #region Mutation Points
         private void AssignMutationPoints()
         {
             var allMutations = mutationManager.AllMutations.Values.ToList();
-            var rng = new System.Random();
-
-            TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rng, gameUIManager.GameLogRouter);
-
+            var rngLocal = new System.Random();
+            TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rngLocal, gameUIManager.GameLogRouter);
             gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
             gameUIManager.MoldProfileRoot?.Refresh();
         }
@@ -486,33 +432,20 @@ namespace FungusToast.Unity
                 if (p.PlayerType == PlayerTypeEnum.AI)
                     p.MutationStrategy?.SpendMutationPoints(p, mutationManager.GetAllMutations().ToList(), Board, rng, gameUIManager.GameLogRouter);
             }
-
             StartGrowthPhase();
         }
+        #endregion
 
+        #region Draft Phase
         private void UpdatePhaseProgressTrackerLabel()
         {
-            if (isInDraftPhase)
-            {
-                phaseProgressTracker?.SetMutationPhaseLabel("DRAFT");
-            }
-            else
-            {
-                phaseProgressTracker?.SetMutationPhaseLabel("MUTATION");
-            }
+            phaseProgressTracker?.SetMutationPhaseLabel(isInDraftPhase ? "DRAFT" : "MUTATION");
         }
 
         public void StartMycovariantDraftPhase()
         {
             isInDraftPhase = true;
-
             TooltipManager.Instance?.CancelAll();
-
-            if (testingModeEnabled && testingMycovariantId.HasValue)
-            {
-                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId.Value);
-                // no pool manipulation needed here currently
-            }
 
             List<Player> draftOrder;
             if (testingModeEnabled && testingModeForceHumanFirst)
@@ -521,36 +454,37 @@ namespace FungusToast.Unity
                     .OrderBy(p => p.PlayerType == PlayerTypeEnum.Human ? 0 : 1)
                     .ThenBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
                     .ToList();
-
-                // FIX: Only force human first for the initial testing draft. Subsequent drafts
-                // should follow normal living-cell ascending order as per design.
-                testingModeForceHumanFirst = false;
+                testingModeForceHumanFirst = false; // only once
             }
             else
             {
                 draftOrder = Board.Players
                     .OrderBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
-                    .ThenBy(p => p.PlayerId) // stable tie-breaker
+                    .ThenBy(p => p.PlayerId)
                     .ToList();
             }
 
             mycovariantDraftController.StartDraft(
-                Board.Players, persistentPoolManager, draftOrder, rng, MycovariantGameBalance.MycovariantSelectionDraftSize);
+                Board.Players,
+                persistentPoolManager,
+                draftOrder,
+                rng,
+                MycovariantGameBalance.MycovariantSelectionDraftSize);
 
             if (testingModeEnabled)
             {
-                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
-                var mycovariantName = testingMycovariant?.Name ?? "Unknown";
-                gameUIManager.PhaseBanner.Show($"Testing: {mycovariantName}", 2f);
-                gameUIManager.GameLogRouter?.OnDraftPhaseStart(mycovariantName);
+                var testingMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
+                var mycoName = testingMyco?.Name ?? "Unknown";
+                gameUIManager.PhaseBanner.Show($"Testing: {mycoName}", 2f);
+                gameUIManager.GameLogRouter?.OnDraftPhaseStart(mycoName);
             }
             else
             {
                 gameUIManager.PhaseBanner.Show("Mycovariant Draft Phase!", 2f);
                 gameUIManager.GameLogRouter?.OnDraftPhaseStart();
             }
-            phaseProgressTracker?.HighlightDraftPhase();
 
+            phaseProgressTracker?.HighlightDraftPhase();
             gameUIManager.MutationUIManager.gameObject.SetActive(false);
             gameUIManager.LeftSidebar?.gameObject.SetActive(false);
             mycovariantDraftController.gameObject.SetActive(true);
@@ -559,28 +493,13 @@ namespace FungusToast.Unity
         public void OnMycovariantDraftComplete()
         {
             isInDraftPhase = false;
-
-            // Clean up any draft tooltips before restoring panels
             TooltipManager.Instance?.CancelAll();
-            
-            // Re-enable UI elements that were hidden during draft
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.LeftSidebar?.gameObject.SetActive(true);
-            
-            // Hide draft UI
             mycovariantDraftController.gameObject.SetActive(false);
-            
-            // In testing mode, start the next round immediately
-            if (testingModeEnabled)
-            {
-                StartNextRound();
-            }
-            else
-            {
-                // Start a coroutine to delay the next round start, ensuring UI is properly activated
-                StartCoroutine(DelayedStartNextRound());
-            }
+
+            if (testingModeEnabled) StartNextRound(); else StartCoroutine(DelayedStartNextRound());
         }
 
         private IEnumerator DelayedStartNextRound()
@@ -591,39 +510,24 @@ namespace FungusToast.Unity
 
         private IEnumerator DelayedStartDraft()
         {
-            yield return new WaitForSeconds(2.5f); // Wait for banner to show
-            
-            // CRITICAL FIX: Ensure fade-in animations complete before draft highlighting
+            yield return new WaitForSeconds(2.5f);
             yield return StartCoroutine(WaitForFadeInAnimationsToComplete());
-            
             StartMycovariantDraftPhase();
         }
 
         public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)
         {
             player.AddMycovariant(picked);
-            
-            // Apply the core effect for mycovariants with AutoMarkTriggered = true
-            // These are passive/instant effects that don't require UI selection
-            // Active mycovariants (AutoMarkTriggered = false) are handled by MycovariantEffectResolver
             var playerMyco = player.PlayerMycovariants.LastOrDefault(pm => pm.MycovariantId == picked.Id);
             if (playerMyco != null && picked.AutoMarkTriggered)
-            {
                 picked.ApplyEffect?.Invoke(playerMyco, Board, rng, gameUIManager.GameLogRouter);
-                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] Applied core effect for AutoMarkTriggered mycovariant {picked.Name} (Id={picked.Id}) for PlayerId={playerMyco.PlayerId}");
-            }
-            else if (playerMyco != null)
-            {
-                FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[UnityDraft] Skipping ApplyEffect for interactive mycovariant {picked.Name} (Id={picked.Id}) - will be handled by UI layer");
-            }
-            
-            // Optionally update UI
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
         }
+        #endregion
 
+        #region UI Helpers
         public void ShowStartGamePanel()
         {
-            // Hide other major panels if desired (optional for clarity)
             if (gameUIManager != null)
             {
                 gameUIManager.LeftSidebar?.gameObject.SetActive(false);
@@ -631,7 +535,6 @@ namespace FungusToast.Unity
                 gameUIManager.MutationUIManager?.gameObject.SetActive(false);
                 gameUIManager.EndGamePanel?.gameObject.SetActive(false);
             }
-            // Show the start panel
             if (startGamePanel != null)
                 startGamePanel.gameObject.SetActive(true);
         }
@@ -641,162 +544,115 @@ namespace FungusToast.Unity
             SelectionPromptPanel.SetActive(true);
             SelectionPromptText.text = message;
         }
-        public void HideSelectionPrompt()
-        {
-            SelectionPromptPanel.SetActive(false);
-        }
 
-        // === TESTING MODE METHODS ===
+        public void HideSelectionPrompt() => SelectionPromptPanel.SetActive(false);
+        #endregion
+
+        #region Testing Mode API
         public void EnableTestingMode(int? mycovariantId, int fastForwardRounds = 0, bool skipToEndgameAfterFastForward = false)
         {
             testingModeEnabled = true;
             testingMycovariantId = mycovariantId;
-            testingModeForceHumanFirst = mycovariantId.HasValue; // Only force human first when testing a specific mycovariant
+            testingModeForceHumanFirst = mycovariantId.HasValue;
             this.fastForwardRounds = fastForwardRounds;
-            this.testingSkipToEndgameAfterFastForward = skipToEndgameAfterFastForward;
+            testingSkipToEndgameAfterFastForward = skipToEndgameAfterFastForward;
         }
 
         public void DisableTestingMode()
         {
             testingModeEnabled = false;
             testingMycovariantId = null;
-            testingModeForceHumanFirst = false; // Reset the flag when disabling testing mode
+            testingModeForceHumanFirst = false;
             fastForwardRounds = 0;
             testingSkipToEndgameAfterFastForward = false;
         }
+        #endregion
 
+        #region Fast Forward (Animation Suppression)
         private IEnumerator FastForwardRounds()
         {
-            // Enable silent mode to suppress logging during fast-forward
             gameUIManager.GameLogRouter.EnableSilentMode();
-            
+            isFastForwarding = true;
             try
             {
-                // Store original human player type and strategy (will restore after FF)
                 var originalHumanType = humanPlayer.PlayerType;
                 var originalHumanStrategy = humanPlayer.MutationStrategy;
 
-                // OPTION 2 IMPLEMENTATION: Assign a single persistent AI strategy once and reuse it
-                // If human already had a strategy (unlikely), reuse it; else pick one proven strategy
-                IMutationSpendingStrategy persistentStrategy = originalHumanStrategy;
-                if (persistentStrategy == null)
-                {
-                    persistentStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
-                }
+                IMutationSpendingStrategy persistentStrategy = originalHumanStrategy ??
+                    AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
 
-                // Convert human to AI for duration of fast-forward and keep chosen strategy
                 humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
                 humanPlayer.SetMutationStrategy(persistentStrategy);
 
                 for (int round = 1; round <= fastForwardRounds; round++)
                 {
-                    // Silent growth phase
                     yield return StartCoroutine(RunSilentGrowthPhase());
-                    // Silent decay phase
                     yield return StartCoroutine(RunSilentDecayPhase());
-                    // Silent mutation phase (auto-spend for all players, including human with persistent strategy)
                     yield return StartCoroutine(RunSilentMutationPhase());
 
-                    // Mirror normal round completion: tick down active surges BEFORE incrementing round
-                    foreach (var p in Board.Players)
-                    {
-                        p.TickDownActiveSurges();
-                    }
-
-                    // Increment round
+                    foreach (var p in Board.Players) p.TickDownActiveSurges();
                     Board.IncrementRound();
 
-                    // If this is a draft round, run a silent draft (human already AI, no temporary reassignment needed)
                     if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
-                    {
                         RunSilentDraftForAllPlayers(gameUIManager.GameLogRouter);
-                    }
                 }
 
-                // Restore original human type and strategy AFTER fast-forward
                 humanPlayer.SetPlayerType(originalHumanType);
                 humanPlayer.SetMutationStrategy(originalHumanStrategy);
+                isFastForwarding = false; // re-enable visuals
 
-                // Update the board visualization after fast-forward
                 gridVisualizer.RenderBoard(Board);
-                
-                // CRITICAL FIX: Wait for fade-in animations to complete before starting draft
-                // This ensures newly grown cells are fully visible when highlighted
                 yield return StartCoroutine(WaitForFadeInAnimationsToComplete());
-                
-                // Update UI elements to reflect the new board state
+
                 gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
                 int currentRound = Board.CurrentRound;
                 float occupancy = Board.GetOccupiedTileRatio() * 100f;
                 gameUIManager.RightSidebar?.SetRoundAndOccupancy(currentRound, occupancy);
 
-                // If requested, skip directly to end-of-game after fast-forward
                 if (testingSkipToEndgameAfterFastForward)
                 {
-                    // Re-enable logging for endgame announcement
                     gameUIManager.GameLogRouter.DisableSilentMode();
                     EndGame();
                     yield break;
                 }
 
-                // Only trigger a UI draft at the end of fast forward if a specific mycovariant is selected
                 if (testingMycovariantId.HasValue)
-                {
                     StartMycovariantDraftPhase();
-                }
                 else
                 {
-                    // No specific mycovariant selected - start normal mutation phase
                     gameUIManager.PhaseBanner.Show($"Fast-forwarded {fastForwardRounds} rounds", 2f);
                     StartNextRound();
                 }
             }
             finally
             {
-                // Always disable silent mode to ensure normal logging resumes, even if an error occurred
+                isFastForwarding = false;
                 gameUIManager.GameLogRouter.DisableSilentMode();
             }
         }
 
         private void RunSilentDraftForAllPlayers(ISimulationObserver observer)
         {
-            // Create a custom draft function that excludes the testing mycovariant for AI players during silent drafts
             Func<Player, List<Mycovariant>, Mycovariant> customSelectionCallback = null;
-            
+
             if (testingModeEnabled && testingMycovariantId.HasValue)
             {
-                // Find the testing mycovariant to check if it's universal
-                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId.Value);
-                
-                if (testingMycovariant != null && !testingMycovariant.IsUniversal)
+                var testingMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId.Value);
+                if (testingMyco != null && !testingMyco.IsUniversal)
                 {
-                    // If the testing mycovariant is non-universal, temporarily remove it from the pool during silent drafts
-                    // This prevents AI players from receiving it in their draft choices
-                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[SilentDraft] Temporarily removing non-universal testing mycovariant '{testingMycovariant.Name}' (ID: {testingMycovariantId.Value}) from pool during silent draft");
                     persistentPoolManager.TemporarilyRemoveFromPool(testingMycovariantId.Value);
-                    
-                    // Create custom selection callback for any edge cases where it might still appear
                     customSelectionCallback = (player, choices) =>
                     {
-                        // Filter out the testing mycovariant for AI players as a safety net
-                        var availableChoices = choices.Where(m => m.Id != testingMycovariantId.Value).ToList();
-                        
-                        if (availableChoices.Count == 0)
-                        {
-                            // Fallback: if no other choices available, pick randomly from all choices
-                            availableChoices = choices;
-                        }
-                        
-                        // AI pick: highest AI score from available choices
-                        return availableChoices
+                        var available = choices.Where(m => m.Id != testingMycovariantId.Value).ToList();
+                        if (available.Count == 0) available = choices;
+                        return available
                             .OrderByDescending(m => m.GetBaseAIScore(player, Board))
                             .ThenBy(_ => rng.Next())
                             .First();
                     };
                 }
             }
-            
-            // Use the persistent pool manager for silent drafts to maintain state consistency
+
             MycovariantDraftManager.RunDraft(
                 Board.Players,
                 persistentPoolManager,
@@ -804,96 +660,64 @@ namespace FungusToast.Unity
                 rng,
                 observer,
                 MycovariantGameBalance.MycovariantSelectionDraftSize,
-                customSelectionCallback // Use custom callback to exclude testing mycovariant from AI
-            );
-            
-            // After silent draft is complete, restore the testing mycovariant to the pool
+                customSelectionCallback);
+
             if (testingModeEnabled && testingMycovariantId.HasValue)
             {
-                var testingMycovariant = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId.Value);
-                if (testingMycovariant != null && !testingMycovariant.IsUniversal)
-                {
+                var testingMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId.Value);
+                if (testingMyco != null && !testingMyco.IsUniversal)
                     persistentPoolManager.RestoreToPool(testingMycovariantId.Value);
-                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[SilentDraft] Restored testing mycovariant '{testingMycovariant.Name}' (ID: {testingMycovariantId.Value}) to pool after silent draft");
-                }
-            }
-        }
-
-        private void SpendMutationPointsForAllPlayers(List<Mutation> allMutations, GameBoard board, System.Random rng)
-        {
-            foreach (var player in board.Players)
-            {
-                var strategy = player.MutationStrategy;
-                if (strategy != null)
-                {
-                    strategy.SpendMutationPoints(player, allMutations, board, rng, gameUIManager.GameLogRouter);
-                }
             }
         }
 
         private IEnumerator RunSilentMutationPhase()
         {
-            // Assign mutation points to all players
             var allMutations = mutationManager.AllMutations.Values.ToList();
             TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rng, gameUIManager.GameLogRouter);
-            SpendMutationPointsForAllPlayers(allMutations, Board, rng);
-            yield return null; // One frame delay
+            foreach (var player in Board.Players)
+            {
+                player.MutationStrategy?.SpendMutationPoints(player, allMutations, Board, rng, gameUIManager.GameLogRouter);
+            }
+            yield return null;
         }
 
         private IEnumerator RunSilentGrowthPhase()
         {
             var processor = new GrowthPhaseProcessor(Board, Board.Players, rng, gameUIManager.GameLogRouter);
-
             for (int cycle = 1; cycle <= GameBalance.TotalGrowthCycles; cycle++)
             {
                 Board.IncrementGrowthCycle();
                 processor.ExecuteSingleCycle(Board.CurrentRoundContext);
             }
-
-            // Post-growth effects
             Board.OnPostGrowthPhase();
-            
-            yield return null; // One frame delay
+            yield return null;
         }
 
         private IEnumerator RunSilentDecayPhase()
         {
-            // Use empty failed growths since we're not tracking them in silent mode
-            var emptyFailedGrowths = new Dictionary<int, int>();
-            DeathEngine.ExecuteDeathCycle(Board, emptyFailedGrowths, rng, gameUIManager.GameLogRouter);
-            yield return null; // One frame delay
+            var emptyFailed = new Dictionary<int, int>();
+            DeathEngine.ExecuteDeathCycle(Board, emptyFailed, rng, gameUIManager.GameLogRouter);
+            yield return null;
         }
 
         private IEnumerator WaitForFadeInAnimationsToComplete()
         {
             if (gridVisualizer == null) yield break;
-            while (gridVisualizer.HasActiveAnimations)
-                yield return null;
+            while (gridVisualizer.HasActiveAnimations) yield return null;
         }
+        #endregion
 
+        #region Visual Event Hooks (Suppressed During Fast-Forward)
         private void OnResistanceAppliedBatchBuffered(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
         {
-            // Ensure visuals show new resistance state
+            if (isFastForwarding) return; // suppress visuals
             gridVisualizer.RenderBoard(Board);
-            // Play immediate shield pulse for ALL sources (Mimetic Resilience no longer buffered)
-            float scale = 0.5f;
-            gridVisualizer.PlayResistancePulseBatchScaled(tileIds, scale);
+            gridVisualizer.PlayResistancePulseBatchScaled(tileIds, 0.5f);
         }
 
-        private void OnCellReclaimed_RegenerativeHyphae(int playerId, int tileId, GrowthSource source)
-        {
-            if (source != GrowthSource.RegenerativeHyphae) return;
-            if (!_regenReclaimBuffer.TryGetValue(playerId, out var list))
-            {
-                list = new List<int>();
-                _regenReclaimBuffer[playerId] = list;
-            }
-            list.Add(tileId);
-            // Debug.Log($"[RegenerativeHyphae] Buffered reclaim p={playerId} tile={tileId} (count={list.Count})");
-        }
         private void OnPostGrowthPhase_StartSequence()
         {
-            // snapshot baseline resistant tiles BEFORE HRT executes
+            if (isFastForwarding) return; // skip baseline capture
             _resistantBaseline = new HashSet<int>(Board.AllTiles()
                 .Where(t => t.FungalCell?.IsAlive == true && t.FungalCell.IsResistant)
                 .Select(t => t.TileId));
@@ -901,17 +725,21 @@ namespace FungusToast.Unity
 
         private void OnPostGrowthPhaseCompleted_CaptureHrt()
         {
-            // identify newly resistant tiles (after HRT) excluding ones already resistant baseline
+            if (isFastForwarding)
+            {
+                _postGrowthHrtNewResistantTiles.Clear();
+                return;
+            }
+
             var allResistantNow = Board.AllTiles()
                 .Where(t => t.FungalCell?.IsAlive == true && t.FungalCell.IsResistant)
                 .Select(t => t.TileId)
                 .ToList();
+
             _postGrowthHrtNewResistantTiles.Clear();
             foreach (var id in allResistantNow)
-            {
                 if (!_resistantBaseline.Contains(id))
                     _postGrowthHrtNewResistantTiles.Add(id);
-            }
 
             if (!_postGrowthSequenceRunning)
             {
@@ -922,20 +750,30 @@ namespace FungusToast.Unity
 
         private IEnumerator RunPostGrowthVisualSequence()
         {
-            // Phase 1: Regenerative Hyphae (already buffered via _regenReclaimBuffer)
+            if (isFastForwarding)
+            {
+                _regenReclaimBuffer.Clear();
+                _postGrowthResistanceTiles.Clear();
+                _postGrowthHrtNewResistantTiles.Clear();
+                _postGrowthSequenceRunning = false;
+                StartDecayPhase();
+                yield break;
+            }
+
+            // Phase 1: Regenerative Hyphae
             if (_regenReclaimBuffer.Count > 0)
             {
                 foreach (var kvp in _regenReclaimBuffer)
                 {
                     var ids = kvp.Value;
                     if (ids.Count == 0) continue;
-                    gridVisualizer.PlayRegenerativeHyphaeReclaimBatch(ids, scaleMultiplier: 1f, explicitTotalSeconds: UIEffectConstants.RegenerativeHyphaeReclaimTotalDurationSeconds);
+                    gridVisualizer.PlayRegenerativeHyphaeReclaimBatch(ids, 1f, UIEffectConstants.RegenerativeHyphaeReclaimTotalDurationSeconds);
                 }
                 yield return gridVisualizer.WaitForAllAnimations();
                 _regenReclaimBuffer.Clear();
             }
 
-            // Phase 2: Resistance pulses (non-HRT buffered)
+            // Phase 2: Resistance pulses (if any were buffered elsewhere)
             if (_postGrowthResistanceTiles.Count > 0)
             {
                 gridVisualizer.PlayResistancePulseBatchScaled(_postGrowthResistanceTiles, 0.5f);
@@ -943,24 +781,23 @@ namespace FungusToast.Unity
                 _postGrowthResistanceTiles.Clear();
             }
 
-            // Phase 3: HRT Spread (only if any player owns HRT mycovariant AND we have new tiles)
+            // Phase 3: HRT spread
             bool anyPlayerHasHrt = Board.Players.Any(p => p.GetMycovariant(MycovariantIds.HyphalResistanceTransferId) != null);
             if (anyPlayerHasHrt && _postGrowthHrtNewResistantTiles.Count > 0)
             {
-                // Visual: treat newly resistant cells like a scaled pulse (slightly different scale)
                 gridVisualizer.PlayResistancePulseBatchScaled(_postGrowthHrtNewResistantTiles, 0.35f);
                 yield return gridVisualizer.WaitForAllAnimations();
             }
 
             _postGrowthHrtNewResistantTiles.Clear();
             _postGrowthSequenceRunning = false;
-
-            // Proceed to decay phase now that all post-growth visuals are done
             StartDecayPhase();
         }
+        #endregion
+
+        #region Intro Coroutine
         private IEnumerator PlayStartingSporeIntroAndContinue()
         {
-            // Collect starting tile ids (resistant spores) once board is rendered
             var startingIds = Board.Players
                 .Select(p => p.StartingTileId)
                 .Where(id => id.HasValue)
@@ -968,14 +805,10 @@ namespace FungusToast.Unity
                 .ToList();
 
             if (startingIds.Count > 0 && !testingModeEnabled)
-            {
                 yield return gridVisualizer.PlayStartingSporeArrivalAnimation(startingIds);
-            }
 
-            // Proceed with remaining init UI after animation (was originally here directly in InitializeGame)
             mutationManager.ResetMutationPoints(players);
 
-            // === ACTIVATE ALL UI PANELS FIRST ===
             gameUIManager.LeftSidebar?.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
@@ -1000,22 +833,17 @@ namespace FungusToast.Unity
             if (testingModeEnabled)
             {
                 if (fastForwardRounds > 0)
-                {
                     StartCoroutine(FastForwardRounds());
-                }
                 else if (testingMycovariantId.HasValue)
-                {
                     StartMycovariantDraftPhase();
-                }
                 else
-                {
                     gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
-                }
             }
             else
             {
                 gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
             }
+
             phaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
             phaseProgressTracker?.HighlightMutationPhase();
@@ -1024,5 +852,6 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
         }
+        #endregion
     }
 }
