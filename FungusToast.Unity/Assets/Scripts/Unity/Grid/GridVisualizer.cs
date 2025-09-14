@@ -70,6 +70,7 @@ namespace FungusToast.Unity.Grid
         // Animators (new helpers replacing partial class split)
         private Animation.RegenerativeHyphaeReclaimAnimator _reclaimAnimator;
         private Animation.SurgicalInoculationAnimator _surgicalAnimator; // ensure correct reference
+        private Animation.StartingSporeArrivalAnimator _startingSporeAnimator; // NEW: starting spores
 
         // Animation tracking so external code can wait for all visual animations to finish
         private int _activeAnimationCount = 0;
@@ -86,6 +87,7 @@ namespace FungusToast.Unity.Grid
             arcHelper = new ArcProjectileHelper(this, overlayTilemap);
             _reclaimAnimator = new Animation.RegenerativeHyphaeReclaimAnimator(this);
             _surgicalAnimator = new Animation.SurgicalInoculationAnimator(this);
+            _startingSporeAnimator = new Animation.StartingSporeArrivalAnimator(this); // NEW
         }
 
         public void Initialize(GameBoard board) => this.board = board;
@@ -95,6 +97,8 @@ namespace FungusToast.Unity.Grid
             => _reclaimAnimator.PlayBatch(tileIds, scaleMultiplier, explicitTotalSeconds);
         public IEnumerator SurgicalInoculationArcAnimation(int playerId, int targetTileId, Sprite sprite)
             => _surgicalAnimator.RunArcAndDrop(playerId, targetTileId, sprite);
+        public IEnumerator PlayStartingSporeArrivalAnimation(IEnumerable<int> startingTileIds)
+            => _startingSporeAnimator != null ? _startingSporeAnimator.Play(startingTileIds) : null;
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
         {
@@ -206,7 +210,8 @@ namespace FungusToast.Unity.Grid
 
         private void StartFadeInAnimations()
         {
-            foreach (int tileId in newlyGrownTileIds)
+            foreach (int tileId in newlyGrownTileIds
+        )
             {
                 if (fadeInCoroutines.ContainsKey(tileId))
                 {
@@ -561,7 +566,7 @@ namespace FungusToast.Unity.Grid
         }
 
         // NEW: Resistant drop animation for Surgical Inoculation (Option A)
-        public IEnumerator ResistantDropAnimation(int tileId)
+        public IEnumerator ResistantDropAnimation(int tileId, float finalScale = 1f)
         {
             var activeBoard = ActiveBoard;
             if (activeBoard == null || goldShieldOverlayTile == null || overlayTilemap == null)
@@ -593,7 +598,7 @@ namespace FungusToast.Unity.Grid
             {
                 // Phase 1: Drop (ease-in cubic), start high and large, spin while shrinking to 1.0
                 float startYOffset = UIEffectConstants.SurgicalInoculationDropStartYOffset;
-                float startScale = UIEffectConstants.SurgicalInoculationDropStartScale;
+                float startScale = UIEffectConstants.SurgicalInoculationDropStartScale * finalScale; // scale starting size too
                 float spinTurns = UIEffectConstants.SurgicalInoculationDropSpinTurns;
 
                 float t = 0f;
@@ -603,7 +608,7 @@ namespace FungusToast.Unity.Grid
                     float u = Mathf.Clamp01(t / dropDur);
                     float eased = u * u * u; // ease-in cubic
                     float yOff = Mathf.Lerp(startYOffset, 0f, eased);
-                    float s = Mathf.Lerp(startScale, 1f, eased);
+                    float s = Mathf.Lerp(startScale, finalScale, eased);
                     float angle = Mathf.Lerp(0f, 360f * spinTurns, eased);
                     var rot = Quaternion.Euler(0f, 0f, angle);
                     var trs = Matrix4x4.TRS(new Vector3(0f, yOff, 0f), rot, new Vector3(s, s, 1f));
@@ -612,8 +617,8 @@ namespace FungusToast.Unity.Grid
                 }
 
                 // Phase 2: Impact squash (ease-out), optional ring ripple
-                float squashX = UIEffectConstants.SurgicalInoculationImpactSquashX;
-                float squashY = UIEffectConstants.SurgicalInoculationImpactSquashY;
+                float squashX = UIEffectConstants.SurgicalInoculationImpactSquashX * finalScale;
+                float squashY = UIEffectConstants.SurgicalInoculationImpactSquashY * finalScale;
                 t = 0f;
                 // Trigger ring pulse at impact start
                 StartCoroutine(ImpactRingPulse(pos));
@@ -622,8 +627,8 @@ namespace FungusToast.Unity.Grid
                     t += Time.deltaTime;
                     float u = Mathf.Clamp01(t / impactDur);
                     float eased = 1f - (1f - u) * (1f - u); // ease-out
-                    float sx = Mathf.Lerp(1f, squashX, eased);
-                    float sy = Mathf.Lerp(1f, squashY, eased);
+                    float sx = Mathf.Lerp(finalScale, squashX, eased);
+                    float sy = Mathf.Lerp(finalScale, squashY, eased);
                     var trs = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(sx, sy, 1f));
                     overlayTilemap.SetTransformMatrix(pos, trs);
                     yield return null;
@@ -635,15 +640,18 @@ namespace FungusToast.Unity.Grid
                 {
                     t += Time.deltaTime;
                     float u = Mathf.Clamp01(t / settleDur);
-                    float sx = Mathf.Lerp(squashX, 1f, u);
-                    float sy = Mathf.Lerp(squashY, 1f, u);
+                    float sx = Mathf.Lerp(squashX, finalScale, u);
+                    float sy = Mathf.Lerp(squashY, finalScale, u);
                     var trs = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(sx, sy, 1f));
                     overlayTilemap.SetTransformMatrix(pos, trs);
                     yield return null;
                 }
 
-                // Ensure final transform reset
-                overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+                // Maintain final reduced scale instead of resetting to identity if custom scale used
+                if (Mathf.Approximately(finalScale, 1f))
+                    overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+                else
+                    overlayTilemap.SetTransformMatrix(pos, Matrix4x4.Scale(new Vector3(finalScale, finalScale, 1f)));
             }
             finally
             {

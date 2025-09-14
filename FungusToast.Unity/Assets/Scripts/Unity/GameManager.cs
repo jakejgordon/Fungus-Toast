@@ -142,6 +142,9 @@ namespace FungusToast.Unity
             PlaceStartingSpores();
             gridVisualizer.RenderBoard(Board);
 
+            // === Play starting spore cinematic before enabling UI interaction ===
+            StartCoroutine(PlayStartingSporeIntroAndContinue());
+
             mutationManager.ResetMutationPoints(players);
 
             // === ACTIVATE ALL UI PANELS FIRST ===
@@ -150,7 +153,6 @@ namespace FungusToast.Unity
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
             mycovariantDraftController?.gameObject.SetActive(false);
 
-            // Capture initial camera framing after first render & UI activation
             cameraCenterer?.CaptureInitialFraming();
 
             // === Initialize Game Log ===
@@ -159,19 +161,14 @@ namespace FungusToast.Unity
                 gameUIManager.GameLogManager.Initialize(Board);
                 gameUIManager.GameLogPanel.Initialize(gameUIManager.GameLogManager);
             }
-            
             // === Initialize Global Game Log ===
             if (gameUIManager.GlobalGameLogManager != null && gameUIManager.GlobalGameLogPanel != null)
             {
                 gameUIManager.GlobalGameLogManager.Initialize(Board);
                 gameUIManager.GlobalGameLogPanel.Initialize(gameUIManager.GlobalGameLogManager);
             }
-
-            // === THEN initialize and show children/buttons ===
             gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-            
-            // Initialize Mold Profile stats panel
             gameUIManager.MoldProfileRoot?.Initialize(Board.Players[0], Board.Players);
 
             if (testingModeEnabled)
@@ -182,12 +179,10 @@ namespace FungusToast.Unity
                 }
                 else if (testingMycovariantId.HasValue)
                 {
-                    // Start draft immediately in testing mode only if a specific mycovariant is selected
                     StartMycovariantDraftPhase();
                 }
                 else
                 {
-                    // Testing mode enabled but no mycovariant selected and no fast-forward - start normal game
                     gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
                 }
             }
@@ -198,12 +193,8 @@ namespace FungusToast.Unity
             phaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
             phaseProgressTracker?.HighlightMutationPhase();
-
-            // --- Set the GridVisualizer on the RightSidebar before initializing player summaries
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
-
-            // NEW: Initialize random decay chance tooltip and update label
             gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
         }
@@ -967,6 +958,71 @@ namespace FungusToast.Unity
             // Proceed to decay phase now that all post-growth visuals are done
             StartDecayPhase();
         }
-        // ...existing code...
+        private IEnumerator PlayStartingSporeIntroAndContinue()
+        {
+            // Collect starting tile ids (resistant spores) once board is rendered
+            var startingIds = Board.Players
+                .Select(p => p.StartingTileId)
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .ToList();
+
+            if (startingIds.Count > 0 && !testingModeEnabled)
+            {
+                yield return gridVisualizer.PlayStartingSporeArrivalAnimation(startingIds);
+            }
+
+            // Proceed with remaining init UI after animation (was originally here directly in InitializeGame)
+            mutationManager.ResetMutationPoints(players);
+
+            // === ACTIVATE ALL UI PANELS FIRST ===
+            gameUIManager.LeftSidebar?.gameObject.SetActive(true);
+            gameUIManager.RightSidebar?.gameObject.SetActive(true);
+            gameUIManager.MutationUIManager.gameObject.SetActive(true);
+            mycovariantDraftController?.gameObject.SetActive(false);
+
+            cameraCenterer?.CaptureInitialFraming();
+
+            if (gameUIManager.GameLogManager != null && gameUIManager.GameLogPanel != null)
+            {
+                gameUIManager.GameLogManager.Initialize(Board);
+                gameUIManager.GameLogPanel.Initialize(gameUIManager.GameLogManager);
+            }
+            if (gameUIManager.GlobalGameLogManager != null && gameUIManager.GlobalGameLogPanel != null)
+            {
+                gameUIManager.GlobalGameLogManager.Initialize(Board);
+                gameUIManager.GlobalGameLogPanel.Initialize(gameUIManager.GlobalGameLogManager);
+            }
+            gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
+            gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+            gameUIManager.MoldProfileRoot?.Initialize(Board.Players[0], Board.Players);
+
+            if (testingModeEnabled)
+            {
+                if (fastForwardRounds > 0)
+                {
+                    StartCoroutine(FastForwardRounds());
+                }
+                else if (testingMycovariantId.HasValue)
+                {
+                    StartMycovariantDraftPhase();
+                }
+                else
+                {
+                    gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
+                }
+            }
+            else
+            {
+                gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
+            }
+            phaseProgressTracker?.ResetTracker();
+            UpdatePhaseProgressTrackerLabel();
+            phaseProgressTracker?.HighlightMutationPhase();
+            gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
+            gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
+            gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
+            gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
+        }
     }
 }
