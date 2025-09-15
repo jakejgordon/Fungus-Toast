@@ -91,6 +91,8 @@ namespace FungusToast.Unity
         private bool isFastForwarding = false;
         public bool IsFastForwarding => isFastForwarding;
         private int _fastForwardTargetRound = 0;
+
+        private bool _fastForwardStarted = false; // ensure single start
         #endregion
 
         #region Unity Lifecycle
@@ -190,12 +192,15 @@ namespace FungusToast.Unity
 
             if (testingModeEnabled)
             {
-                if (fastForwardRounds > 0)
-                    StartCoroutine(FastForwardRounds());
-                else if (testingMycovariantId.HasValue)
+                // Do not start fast-forward here (prevents duplicate); wait until intro coroutine finishes setup
+                if (fastForwardRounds <= 0 && testingMycovariantId.HasValue)
+                {
                     StartMycovariantDraftPhase();
-                else
+                }
+                else if (fastForwardRounds <= 0)
+                {
                     gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
+                }
             }
             else
             {
@@ -244,10 +249,10 @@ namespace FungusToast.Unity
 
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(Board.Players);
-            SubscribeToPlayerMutationEvents();
+            subscribeToPlayerMutationEvents();
         }
 
-        private void SubscribeToPlayerMutationEvents()
+        private void subscribeToPlayerMutationEvents()
         {
             foreach (var p in Board.Players)
                 p.MutationsChanged += OnPlayerMutationsChanged;
@@ -578,26 +583,27 @@ namespace FungusToast.Unity
         {
             gameUIManager.GameLogRouter.EnableSilentMode();
             isFastForwarding = true;
-            int startingRound = Board.CurrentRound; // inclusive start
-            int desiredRounds = Mathf.Max(0, fastForwardRounds);
-            _fastForwardTargetRound = startingRound + desiredRounds; // we want to end at this round number
 
-            // Temporarily detach non-core visual/analytics subscribers to reduce overhead
-            // (GameRulesEventSubscriber stays attached for mechanics.)
-            // Currently GameUIEventSubscriber and AnalyticsEventSubscriber have no stored delegates; skip if not implemented
-            // Could add flags instead if needed.
+            int startingRound = Board.CurrentRound; // inclusive
+            int requestedValue = fastForwardRounds;
+            // Treat input as target round if it is greater than current; otherwise as number of rounds to advance
+            bool treatAsTargetRound = requestedValue > startingRound;
+            int targetRound = treatAsTargetRound ? requestedValue : (startingRound + requestedValue);
+            if (targetRound < startingRound) targetRound = startingRound; // safety
+            int desiredRounds = targetRound - startingRound;
+            int iterations = 0;
+
+            FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[FF] Begin fast-forward: start={startingRound} requested={requestedValue} target={targetRound} desiredRounds={desiredRounds}");
 
             try
             {
                 var originalHumanType = humanPlayer.PlayerType;
                 var originalHumanStrategy = humanPlayer.MutationStrategy;
-                IMutationSpendingStrategy persistentStrategy = originalHumanStrategy ??
-                    AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
+                IMutationSpendingStrategy persistentStrategy = originalHumanStrategy ?? AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
                 humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
                 humanPlayer.SetMutationStrategy(persistentStrategy);
 
-                // Loop until board round reaches target (do not rely on loop counter alone)
-                while (Board.CurrentRound < _fastForwardTargetRound && !gameEnded)
+                while (Board.CurrentRound < targetRound && iterations < desiredRounds && !gameEnded)
                 {
                     yield return RunSilentGrowthPhase();
                     yield return RunSilentDecayPhase();
@@ -605,6 +611,7 @@ namespace FungusToast.Unity
 
                     foreach (var p in Board.Players) p.TickDownActiveSurges();
                     Board.IncrementRound();
+                    iterations++;
 
                     if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
                     {
@@ -612,20 +619,25 @@ namespace FungusToast.Unity
                     }
                 }
 
-                // Restore player type
                 humanPlayer.SetPlayerType(originalHumanType);
                 humanPlayer.SetMutationStrategy(originalHumanStrategy);
                 isFastForwarding = false;
 
-                // Render final board snapshot WITHOUT animations
-                gridVisualizer.RenderBoard(Board, true);
-
-                // Skip waiting for animations because suppressed
+                gridVisualizer.RenderBoard(Board, true); // no animations
                 gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
-                int currentRound = Board.CurrentRound;
                 float occupancy = Board.GetOccupiedTileRatio() * 100f;
-                gameUIManager.RightSidebar?.SetRoundAndOccupancy(currentRound, occupancy);
+                gameUIManager.RightSidebar?.SetRoundAndOccupancy(Board.CurrentRound, occupancy);
                 gameUIManager.MoldProfileRoot?.ApplyDeferredRefreshIfNeeded();
+
+                int actualAdvanced = Board.CurrentRound - startingRound;
+                if (actualAdvanced != desiredRounds)
+                {
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[FF][WARN] mismatch desired={desiredRounds} actual={actualAdvanced} start={startingRound} end={Board.CurrentRound}");
+                }
+                else
+                {
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[FF] complete advanced={actualAdvanced} finalRound={Board.CurrentRound}");
+                }
 
                 if (testingSkipToEndgameAfterFastForward)
                 {
@@ -640,13 +652,15 @@ namespace FungusToast.Unity
                 }
                 else
                 {
-                    gameUIManager.PhaseBanner.Show($"Fast-forwarded {Board.CurrentRound - startingRound} rounds", 2f);
+                    string bannerMsg = treatAsTargetRound ? $"Reached Round {Board.CurrentRound}" : $"Fast-forwarded {actualAdvanced} rounds";
+                    gameUIManager.PhaseBanner.Show(bannerMsg, 2f);
+                    // Start the mutation phase for the target round (do NOT increment round again)
                     StartNextRound();
                 }
             }
             finally
             {
-                isFastForwarding = false;
+                isFastForwarding = false; // safety
                 gameUIManager.GameLogRouter.DisableSilentMode();
             }
         }
@@ -833,7 +847,6 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
             mycovariantDraftController?.gameObject.SetActive(false);
-
             cameraCenterer?.CaptureInitialFraming();
 
             if (gameUIManager.GameLogManager != null && gameUIManager.GameLogPanel != null)
@@ -850,14 +863,22 @@ namespace FungusToast.Unity
             gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
             gameUIManager.MoldProfileRoot?.Initialize(Board.Players[0], Board.Players);
 
+            // Decide what to do after intro based on testing flags
             if (testingModeEnabled)
             {
-                if (fastForwardRounds > 0)
+                if (fastForwardRounds > 0 && !_fastForwardStarted)
+                {
+                    _fastForwardStarted = true;
                     StartCoroutine(FastForwardRounds());
+                }
                 else if (testingMycovariantId.HasValue)
+                {
                     StartMycovariantDraftPhase();
+                }
                 else
+                {
                     gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
+                }
             }
             else
             {
