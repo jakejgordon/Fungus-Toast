@@ -758,9 +758,9 @@ namespace FungusToast.Unity.Grid
         }
 
         #region Public Interaction / Rendering API (restored)
-        public void RenderBoard(GameBoard board)
+        public void RenderBoard(GameBoard board, bool suppressAnimations)
         {
-            // Stop any in-flight fade/death/toxin coroutines so we can rebuild fresh state
+            // Stop any in-flight animation coroutines
             foreach (var c in fadeInCoroutines.Values) if (c != null) { StopCoroutine(c); EndAnimation(); }
             fadeInCoroutines.Clear();
             foreach (var c in deathAnimationCoroutines.Values) if (c != null) { StopCoroutine(c); EndAnimation(); }
@@ -772,14 +772,29 @@ namespace FungusToast.Unity.Grid
             dyingTileIds.Clear();
             toxinDropTileIds.Clear();
 
-            for (int x = 0; x < board.Width; x++)
+            // When suppressing animations (fast-forward completion), clear transient flags so no new coroutines would start later.
+            if (suppressAnimations)
             {
-                for (int y = 0; y < board.Height; y++)
+                foreach (var tile in board.AllTiles())
                 {
-                    var tile = board.Grid[x, y];
-                    if (tile.FungalCell?.IsNewlyGrown == true) newlyGrownTileIds.Add(tile.TileId);
-                    if (tile.FungalCell?.IsDying == true)        dyingTileIds.Add(tile.TileId);
-                    if (tile.FungalCell?.IsReceivingToxinDrop == true) toxinDropTileIds.Add(tile.TileId);
+                    var fc = tile.FungalCell;
+                    if (fc == null) continue;
+                    if (fc.IsNewlyGrown) fc.ClearNewlyGrownFlag();
+                    if (fc.IsDying) fc.ClearDyingFlag();
+                    if (fc.IsReceivingToxinDrop) fc.ClearToxinDropFlag();
+                }
+            }
+            else
+            {
+                for (int x = 0; x < board.Width; x++)
+                {
+                    for (int y = 0; y < board.Height; y++)
+                    {
+                        var tile = board.Grid[x, y];
+                        if (tile.FungalCell?.IsNewlyGrown == true) newlyGrownTileIds.Add(tile.TileId);
+                        if (tile.FungalCell?.IsDying == true) dyingTileIds.Add(tile.TileId);
+                        if (tile.FungalCell?.IsReceivingToxinDrop == true) toxinDropTileIds.Add(tile.TileId);
+                    }
                 }
             }
 
@@ -800,9 +815,18 @@ namespace FungusToast.Unity.Grid
                 }
             }
 
-            StartFadeInAnimations();
-            StartDeathAnimations();
-            StartToxinDropAnimations();
+            if (!suppressAnimations)
+            {
+                StartFadeInAnimations();
+                StartDeathAnimations();
+                StartToxinDropAnimations();
+            }
+        }
+
+        // Backwards-compatible single-parameter call (default animations enabled)
+        public void RenderBoard(GameBoard board)
+        {
+            RenderBoard(board, false);
         }
 
         public void ShowHoverEffect(Vector3Int cellPos) => hoverHelper?.ShowHoverEffect(cellPos);

@@ -89,6 +89,8 @@ namespace FungusToast.Unity
 
         // NEW: Flag to suppress all Unity-side animations & visual coroutines while fast-forwarding
         private bool isFastForwarding = false;
+        public bool IsFastForwarding => isFastForwarding;
+        private int _fastForwardTargetRound = 0;
         #endregion
 
         #region Unity Lifecycle
@@ -254,7 +256,10 @@ namespace FungusToast.Unity
         private void OnPlayerMutationsChanged(Player player)
         {
             if (player == humanPlayer)
+            {
+                if (isFastForwarding) return; // suppress per-upgrade UI refresh during fast-forward
                 gameUIManager.MoldProfileRoot?.Refresh();
+            }
         }
         #endregion
 
@@ -573,41 +578,54 @@ namespace FungusToast.Unity
         {
             gameUIManager.GameLogRouter.EnableSilentMode();
             isFastForwarding = true;
+            int startingRound = Board.CurrentRound; // inclusive start
+            int desiredRounds = Mathf.Max(0, fastForwardRounds);
+            _fastForwardTargetRound = startingRound + desiredRounds; // we want to end at this round number
+
+            // Temporarily detach non-core visual/analytics subscribers to reduce overhead
+            // (GameRulesEventSubscriber stays attached for mechanics.)
+            // Currently GameUIEventSubscriber and AnalyticsEventSubscriber have no stored delegates; skip if not implemented
+            // Could add flags instead if needed.
+
             try
             {
                 var originalHumanType = humanPlayer.PlayerType;
                 var originalHumanStrategy = humanPlayer.MutationStrategy;
-
                 IMutationSpendingStrategy persistentStrategy = originalHumanStrategy ??
                     AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
-
                 humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
                 humanPlayer.SetMutationStrategy(persistentStrategy);
 
-                for (int round = 1; round <= fastForwardRounds; round++)
+                // Loop until board round reaches target (do not rely on loop counter alone)
+                while (Board.CurrentRound < _fastForwardTargetRound && !gameEnded)
                 {
-                    yield return StartCoroutine(RunSilentGrowthPhase());
-                    yield return StartCoroutine(RunSilentDecayPhase());
-                    yield return StartCoroutine(RunSilentMutationPhase());
+                    yield return RunSilentGrowthPhase();
+                    yield return RunSilentDecayPhase();
+                    yield return RunSilentMutationPhase();
 
                     foreach (var p in Board.Players) p.TickDownActiveSurges();
                     Board.IncrementRound();
 
                     if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
+                    {
                         RunSilentDraftForAllPlayers(gameUIManager.GameLogRouter);
+                    }
                 }
 
+                // Restore player type
                 humanPlayer.SetPlayerType(originalHumanType);
                 humanPlayer.SetMutationStrategy(originalHumanStrategy);
-                isFastForwarding = false; // re-enable visuals
+                isFastForwarding = false;
 
-                gridVisualizer.RenderBoard(Board);
-                yield return StartCoroutine(WaitForFadeInAnimationsToComplete());
+                // Render final board snapshot WITHOUT animations
+                gridVisualizer.RenderBoard(Board, true);
 
+                // Skip waiting for animations because suppressed
                 gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
                 int currentRound = Board.CurrentRound;
                 float occupancy = Board.GetOccupiedTileRatio() * 100f;
                 gameUIManager.RightSidebar?.SetRoundAndOccupancy(currentRound, occupancy);
+                gameUIManager.MoldProfileRoot?.ApplyDeferredRefreshIfNeeded();
 
                 if (testingSkipToEndgameAfterFastForward)
                 {
@@ -617,10 +635,12 @@ namespace FungusToast.Unity
                 }
 
                 if (testingMycovariantId.HasValue)
+                {
                     StartMycovariantDraftPhase();
+                }
                 else
                 {
-                    gameUIManager.PhaseBanner.Show($"Fast-forwarded {fastForwardRounds} rounds", 2f);
+                    gameUIManager.PhaseBanner.Show($"Fast-forwarded {Board.CurrentRound - startingRound} rounds", 2f);
                     StartNextRound();
                 }
             }
