@@ -32,8 +32,8 @@ namespace FungusToast.Unity
     {
         #region Inspector Fields
         [Header("Board Settings")] 
-        public int boardWidth = 20;
-        public int boardHeight = 20;
+        public int boardWidth = 160;
+        public int boardHeight = 160;
         public int playerCount = 2;
 
         [Header("Testing Mode")] 
