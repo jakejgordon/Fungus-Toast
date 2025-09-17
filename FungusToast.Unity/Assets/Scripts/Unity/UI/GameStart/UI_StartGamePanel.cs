@@ -201,6 +201,9 @@ namespace FungusToast.Unity.UI.GameStart
         {
             if (selectedPlayerCount.HasValue)
             {
+                // Persist hotseat config for future multi-human implementation
+                GameManager.Instance?.SetHotseatConfig(selectedHumanPlayerCount);
+
                 // Handle testing mode
                 if (testingModeToggle.isOn)
                 {

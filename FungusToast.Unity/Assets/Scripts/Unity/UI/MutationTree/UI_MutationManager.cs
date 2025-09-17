@@ -396,7 +396,13 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (isTreeOpen)
                 yield return StartCoroutine(SlideOutTree());
-
+            // Multi-human: now signal GameManager to advance to next human
+            if (GameManager.Instance != null && GameManager.Instance.ConfiguredHumanPlayerCount > 1)
+            {
+                GameManager.Instance.OnHumanMutationTurnFinished(humanPlayer);
+                yield break;
+            }
+            // Single human: go straight to AI spending
             GameManager.Instance.SpendAllMutationPointsForAIPlayers();
         }
 
@@ -426,6 +432,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             humanTurnEnded = true;
             SetSpendPointsButtonInteractable(false);
+            // Defer notifying GameManager until UI is closed so prompt shows cleanly
             StartCoroutine(ClosePanelThenTriggerAI());
         }
 
@@ -473,5 +480,57 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
+        public void ReinitializeForPlayer(Player player, bool keepPanelClosed = true)
+        {
+            if (player == null)
+            {
+                Debug.LogError("❌ ReinitializeForPlayer received null player");
+                return;
+            }
+            Debug.Log($"[UI_MutationManager] ReinitializeForPlayer playerId={player.PlayerId} name={player.PlayerName} mp={player.MutationPoints}");
+            humanPlayer = player;
+            // Ensure spend button exists
+            if (spendPointsButton == null)
+                Debug.LogError("[UI_MutationManager] spendPointsButton missing");
+
+            RefreshSpendPointsButtonUI();
+
+            // Update icon
+            if (gridVisualizer != null)
+            {
+                Tile tile = gridVisualizer.GetTileForPlayer(player.PlayerId);
+                if (tile != null && tile.sprite != null)
+                {
+                    playerMoldIcon.sprite = tile.sprite;
+                    playerMoldIcon.enabled = true;
+                }
+                else
+                {
+                    playerMoldIcon.enabled = false;
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[UI_MutationManager] GridVisualizer null during ReinitializeForPlayer");
+            }
+
+            PopulateAllMutations();
+            // Force enable controls regardless of previous turn state
+            SetSpendPointsButtonInteractable(true);
+            if (buttonOutline != null) buttonOutline.enabled = player.MutationPoints > 0;
+            if (spendPointsButtonText != null)
+            {
+                spendPointsButtonText.text = player.MutationPoints > 0 ? $"Spend {player.MutationPoints} Points!" : "No Points Available";
+            }
+            if (mutationPointsCounterText != null)
+                mutationPointsCounterText.text = $"Mutation Points: {player.MutationPoints}";
+
+            Debug.Log($"[UI_MutationManager] After force-enable interactable={spendPointsButton?.interactable} text='{spendPointsButtonText?.text}'");
+
+            if (!keepPanelClosed && !isTreeOpen && gameObject.activeInHierarchy && enabled)
+            {
+                StartCoroutine(SlideOutTree()); // maintain original closed presentation
+            }
+        }
     }
 }

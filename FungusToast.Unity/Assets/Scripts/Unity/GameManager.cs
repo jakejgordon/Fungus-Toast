@@ -18,881 +18,158 @@ using FungusToast.Unity.UI;
 using FungusToast.Unity.UI.GameStart;
 using FungusToast.Unity.UI.MycovariantDraft;
 using FungusToast.Unity.UI.Tooltips;
+using FungusToast.Unity.UI.Hotseat;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace FungusToast.Unity
 {
     public class GameManager : MonoBehaviour
     {
         #region Inspector Fields
-        [Header("Board Settings")] 
-        public int boardWidth = 160;
-        public int boardHeight = 160;
-        public int playerCount = 2;
-
-        [Header("Testing Mode")] 
-        public bool testingModeEnabled = false;
-        public int? testingMycovariantId = null;
-        public bool testingModeForceHumanFirst = true;
-        public int fastForwardRounds = 0;
-        public bool testingSkipToEndgameAfterFastForward = false; // Skip to end after FF
-
-        [Header("References")] 
-        public GridVisualizer gridVisualizer;
-        public CameraCenterer cameraCenterer;
-        [SerializeField] private MutationManager mutationManager;
-        [SerializeField] private GrowthPhaseRunner growthPhaseRunner;
-        [SerializeField] private GameUIManager gameUIManager;
-        [SerializeField] private DecayPhaseRunner decayPhaseRunner;
-        [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker;
-        [SerializeField] private MycovariantDraftController mycovariantDraftController;
-        [SerializeField] private UI_StartGamePanel startGamePanel;
-        public GameObject SelectionPromptPanel;
-        public TextMeshProUGUI SelectionPromptText;
+        [Header("Board Settings")] public int boardWidth = 160; public int boardHeight = 160; public int playerCount = 2;
+        [Header("Testing Mode")] public bool testingModeEnabled = false; public int? testingMycovariantId = null; public bool testingModeForceHumanFirst = true; public int fastForwardRounds = 0; public bool testingSkipToEndgameAfterFastForward = false;
+        [Header("References")] public GridVisualizer gridVisualizer; public CameraCenterer cameraCenterer; [SerializeField] private MutationManager mutationManager; [SerializeField] private GrowthPhaseRunner growthPhaseRunner; [SerializeField] private GameUIManager gameUIManager; [SerializeField] private DecayPhaseRunner decayPhaseRunner; [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker; [SerializeField] private MycovariantDraftController mycovariantDraftController; [SerializeField] private UI_StartGamePanel startGamePanel; [SerializeField] private UI_HotseatTurnPrompt hotseatTurnPrompt; public GameObject SelectionPromptPanel; public TextMeshProUGUI SelectionPromptText;
+        [Header("Hotseat Config")] public int configuredHumanPlayerCount = 1; public int ConfiguredHumanPlayerCount => configuredHumanPlayerCount; public void SetHotseatConfig(int humanCount) { configuredHumanPlayerCount = Mathf.Max(1, humanCount); }
         #endregion
 
-        #region State Fields
-        private bool isCountdownActive = false;
-        private int roundsRemainingUntilGameEnd = 0;
-        private bool gameEnded = false;
+        #region State Fields / Services
+        private bool isCountdownActive = false; private int roundsRemainingUntilGameEnd = 0; private bool gameEnded = false; private System.Random rng; private MycovariantPoolManager persistentPoolManager;
+        public GameBoard Board { get; private set; } public GameUIManager GameUI => gameUIManager; public static GameManager Instance { get; private set; }
+        private readonly List<Player> players = new(); private readonly List<Player> humanPlayers = new(); private Player humanPlayer; // primary
+        private bool isInDraftPhase = false; public bool IsDraftPhaseActive => isInDraftPhase; private Dictionary<(int playerId, int mutationId), List<int>> FirstUpgradeRounds = new();
+        public bool IsTestingModeEnabled => testingModeEnabled; public int? TestingMycovariantId => testingMycovariantId;
+        private bool isFastForwarding = false; public bool IsFastForwarding => isFastForwarding; private bool _fastForwardStarted = false;
+        private bool initialMutationPointsAssigned = false;
 
-        private System.Random rng;
-        private MycovariantPoolManager persistentPoolManager;
-
-        public GameBoard Board { get; private set; }
-        public GameUIManager GameUI => gameUIManager;
-        public static GameManager Instance { get; private set; }
-
-        private readonly List<Player> players = new();
-        private Player humanPlayer;
-
-        private bool isInDraftPhase = false;
-        public bool IsDraftPhaseActive => isInDraftPhase;
-
-        private Dictionary<(int playerId, int mutationId), List<int>> FirstUpgradeRounds = new();
-
-        public bool IsTestingModeEnabled => testingModeEnabled;
-        public int? TestingMycovariantId => testingMycovariantId;
-
-        // Buffers for post-growth visual sequencing
-        private readonly Dictionary<int, List<int>> _regenReclaimBuffer = new();
-        private readonly List<int> _postGrowthResistanceTiles = new(); // (currently not externally populated in this excerpt)
-        private readonly List<int> _postGrowthHrtNewResistantTiles = new();
-        private HashSet<int> _resistantBaseline = new();
-        private bool _postGrowthSequenceRunning = false;
-
-        // NEW: Flag to suppress all Unity-side animations & visual coroutines while fast-forwarding
-        private bool isFastForwarding = false;
-        public bool IsFastForwarding => isFastForwarding;
-        private int _fastForwardTargetRound = 0;
-
-        private bool _fastForwardStarted = false; // ensure single start
+        // Services
+        private PlayerInitializer playerInitializer; private HotseatTurnManager hotseatTurnManager; private FastForwardService fastForwardService; private PostGrowthVisualSequence postGrowthVisualSequence;
         #endregion
 
         #region Unity Lifecycle
         private void Awake()
         {
             FungusToast.Core.Logging.CoreLogger.Log = Debug.Log;
-            if (Instance != null && Instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
+            if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
             rng = new System.Random();
+            BootstrapServices();
         }
-
-        private void Start()
-        {
-            if (Application.isPlaying)
-            {
-                ShowStartGamePanel();
-            }
-        }
+        private void Start() { if (Application.isPlaying) ShowStartGamePanel(); }
         #endregion
 
-        #region Event Handlers / Buffering
-        // Buffer Regenerative Hyphae reclaims for post-growth sequence (when not fast-forwarding)
-        private void OnCellReclaimed_RegenerativeHyphae(int playerId, int tileId, GrowthSource source)
+        #region Bootstrap
+        private void BootstrapServices()
         {
-            if (source != GrowthSource.RegenerativeHyphae) return;
-            if (!_regenReclaimBuffer.TryGetValue(playerId, out var list))
-            {
-                list = new List<int>();
-                _regenReclaimBuffer[playerId] = list;
-            }
-            list.Add(tileId);
+            playerInitializer = new PlayerInitializer(gridVisualizer, gameUIManager, () => configuredHumanPlayerCount);
+            hotseatTurnManager = new HotseatTurnManager(gameUIManager, hotseatTurnPrompt, humanPlayers, () => humanPlayer, () => isFastForwarding, () => testingModeEnabled, OnAllHumansFinishedMutationTurn);
+            fastForwardService = new FastForwardService(this, () => isFastForwarding, v => isFastForwarding = v, () => gameEnded);
+            postGrowthVisualSequence = new PostGrowthVisualSequence(this, gridVisualizer, () => isFastForwarding, StartDecayPhase);
         }
         #endregion
 
         #region Initialization
         public void InitializeGame(int numberOfPlayers)
         {
-            gameEnded = false;
-            isCountdownActive = false;
-            roundsRemainingUntilGameEnd = 0;
-
-            playerCount = numberOfPlayers;
-            gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
-
+            gameEnded = false; isCountdownActive = false; roundsRemainingUntilGameEnd = 0; playerCount = numberOfPlayers; gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
+            rng = new System.Random();
+            postGrowthVisualSequence.Register(Board); // board post-growth events
 
-            // Subscribe early for baseline capture BEFORE other PostGrowthPhase handlers
-            Board.PostGrowthPhase += OnPostGrowthPhase_StartSequence;
-            Board.PostGrowthPhaseCompleted += OnPostGrowthPhaseCompleted_CaptureHrt;
+            GameRulesEventSubscriber.SubscribeAll(Board, players, rng, gameUIManager.GameLogRouter); GameUIEventSubscriber.Subscribe(Board, gameUIManager); AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
 
-            GameRulesEventSubscriber.SubscribeAll(Board, players, rng, gameUIManager.GameLogRouter);
-            GameUIEventSubscriber.Subscribe(Board, gameUIManager);
-            AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
+            // Player init
+            playerInitializer.InitializePlayers(Board, players, humanPlayers, out humanPlayer, playerCount);
+            SubscribeToPlayerMutationEvents();
 
-            Board.ResistanceAppliedBatch += OnResistanceAppliedBatchBuffered;
-            Board.CellReclaimed += OnCellReclaimed_RegenerativeHyphae;
+            // Draft pool
+            persistentPoolManager = new MycovariantPoolManager(); persistentPoolManager.InitializePool(MycovariantRepository.All.ToList(), rng);
 
-            InitializePlayersWithHumanFirst();
+            gridVisualizer.Initialize(Board); PlaceStartingSpores(); gridVisualizer.RenderBoard(Board);
+            StartCoroutine(PlayStartingSporeIntroAndContinue()); mutationManager.ResetMutationPoints(players);
+            initialMutationPointsAssigned = true;
 
-            // Persistent draft pool
-            var allMycovariants = MycovariantRepository.All.ToList();
-            persistentPoolManager = new MycovariantPoolManager();
-            persistentPoolManager.InitializePool(allMycovariants, rng);
-
-            gridVisualizer.Initialize(Board);
-            PlaceStartingSpores();
-            gridVisualizer.RenderBoard(Board);
-
-            StartCoroutine(PlayStartingSporeIntroAndContinue());
-            mutationManager.ResetMutationPoints(players);
-
-            gameUIManager.LeftSidebar?.gameObject.SetActive(true);
-            gameUIManager.RightSidebar?.gameObject.SetActive(true);
-            gameUIManager.MutationUIManager.gameObject.SetActive(true);
-            mycovariantDraftController?.gameObject.SetActive(false);
-
-            cameraCenterer?.CaptureInitialFraming();
-
-            if (gameUIManager.GameLogManager != null && gameUIManager.GameLogPanel != null)
-            {
-                gameUIManager.GameLogManager.Initialize(Board);
-                gameUIManager.GameLogPanel.Initialize(gameUIManager.GameLogManager);
-            }
-            if (gameUIManager.GlobalGameLogManager != null && gameUIManager.GlobalGameLogPanel != null)
-            {
-                gameUIManager.GlobalGameLogManager.Initialize(Board);
-                gameUIManager.GlobalGameLogPanel.Initialize(gameUIManager.GlobalGameLogManager);
-            }
-            gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
-            gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-            gameUIManager.MoldProfileRoot?.Initialize(Board.Players[0], Board.Players);
+            gameUIManager.LeftSidebar?.gameObject.SetActive(true); gameUIManager.RightSidebar?.gameObject.SetActive(true); gameUIManager.MutationUIManager.gameObject.SetActive(true); mycovariantDraftController?.gameObject.SetActive(false); cameraCenterer?.CaptureInitialFraming();
+            InitGameLogs();
 
             if (testingModeEnabled)
             {
-                // Do not start fast-forward here (prevents duplicate); wait until intro coroutine finishes setup
-                if (fastForwardRounds <= 0 && testingMycovariantId.HasValue)
-                {
-                    StartMycovariantDraftPhase();
-                }
-                else if (fastForwardRounds <= 0)
-                {
-                    gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
-                }
+                if (fastForwardRounds <= 0 && testingMycovariantId.HasValue) StartMycovariantDraftPhase(); else if (fastForwardRounds <= 0) gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
             }
-            else
-            {
-                gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
-            }
+            else gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
 
-            phaseProgressTracker?.ResetTracker();
-            UpdatePhaseProgressTrackerLabel();
-            phaseProgressTracker?.HighlightMutationPhase();
-            gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
-            gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
-            gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
-            gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
+            phaseProgressTracker?.ResetTracker(); UpdatePhaseProgressTrackerLabel(); phaseProgressTracker?.HighlightMutationPhase(); gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer); gameUIManager.RightSidebar?.InitializePlayerSummaries(players); gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer); gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
         }
-
-        private void InitializePlayersWithHumanFirst()
+        private void InitGameLogs()
         {
-            players.Clear();
-            int baseMP = GameBalance.StartingMutationPoints;
-
-            humanPlayer = new Player(0, "Human", PlayerTypeEnum.Human, AITypeEnum.Random);
-            humanPlayer.SetBaseMutationPoints(baseMP);
-            players.Add(humanPlayer);
-
-            var aiStrategies = AIRoster.GetStrategies(playerCount - 1, StrategySetEnum.Proven)
-                                      .OrderBy(_ => UnityEngine.Random.value)
-                                      .ToList();
-            for (int i = 0; i < aiStrategies.Count; i++)
-            {
-                int playerId = i + 1;
-                var ai = new Player(playerId, $"AI Player {playerId}", PlayerTypeEnum.AI, AITypeEnum.Random);
-                ai.SetBaseMutationPoints(baseMP);
-                ai.SetMutationStrategy(aiStrategies[i]);
-                players.Add(ai);
-            }
-
-            foreach (var p in players)
-            {
-                var icon = gridVisualizer.GetTileForPlayer(p.PlayerId)?.sprite;
-                if (icon != null) gameUIManager.PlayerUIBinder.AssignIcon(p, icon);
-            }
-
-            Board.Players.Clear();
-            Board.Players.AddRange(players);
-            humanPlayer = Board.Players[0];
-
-            gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
-            gameUIManager.RightSidebar?.InitializePlayerSummaries(Board.Players);
-            subscribeToPlayerMutationEvents();
+            if (gameUIManager.GameLogManager != null && gameUIManager.GameLogPanel != null) { gameUIManager.GameLogManager.Initialize(Board); gameUIManager.GameLogPanel.Initialize(gameUIManager.GameLogManager); }
+            if (gameUIManager.GlobalGameLogManager != null && gameUIManager.GlobalGameLogPanel != null) { gameUIManager.GlobalGameLogManager.Initialize(Board); gameUIManager.GlobalGameLogPanel.Initialize(gameUIManager.GlobalGameLogManager); }
         }
-
-        private void subscribeToPlayerMutationEvents()
-        {
-            foreach (var p in Board.Players)
-                p.MutationsChanged += OnPlayerMutationsChanged;
-        }
-
-        private void OnPlayerMutationsChanged(Player player)
-        {
-            if (player == humanPlayer)
-            {
-                if (isFastForwarding) return; // suppress per-upgrade UI refresh during fast-forward
-                gameUIManager.MoldProfileRoot?.Refresh();
-            }
-        }
+        private void SubscribeToPlayerMutationEvents() { foreach (var p in Board.Players) p.MutationsChanged += OnPlayerMutationsChanged; }
+        private void OnPlayerMutationsChanged(Player p) { if (p == humanPlayer && !isFastForwarding) gameUIManager.MoldProfileRoot?.Refresh(); }
         #endregion
 
         #region Phase Control
-        private void PlaceStartingSpores()
-        {
-            StartingSporeUtility.PlaceStartingSpores(Board, players, rng);
-            int round = Board.CurrentRound;
-            float occupancy = Board.GetOccupiedTileRatio() * 100f;
-            gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy);
-        }
+        private void PlaceStartingSpores() { StartingSporeUtility.PlaceStartingSpores(Board, players, rng); int round = Board.CurrentRound; float occ = Board.GetOccupiedTileRatio() * 100f; gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ); }
+        public void StartGrowthPhase() { gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false); gameUIManager.GameLogRouter?.OnPhaseStart("Growth"); growthPhaseRunner.Initialize(Board, Board.Players, gridVisualizer); gameUIManager.PhaseBanner.Show("Growth Phase Begins!", 2f); phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle); Board.OnPreGrowthPhase(); growthPhaseRunner.StartGrowthPhase(); }
+        public void StartDecayPhase() { if (gameEnded) return; gameUIManager.GameLogRouter?.OnPhaseStart("Decay"); decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer); gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f); phaseProgressTracker?.HighlightDecayPhase(); decayPhaseRunner.StartDecayPhase(growthPhaseRunner.FailedGrowthsByPlayerId, rng, gameUIManager.GameLogRouter); }
+        public void OnRoundComplete() { if (gameEnded) return; gameUIManager.GameLogRouter?.OnRoundComplete(Board.CurrentRound, Board); foreach (var p in Board.Players) p.TickDownActiveSurges(); CheckForEndgameCondition(); if (gameEnded) return; Board.IncrementRound(); if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound)) { StartCoroutine(DelayedStartDraft()); return; } StartNextRound(); int round = Board.CurrentRound; float occ = Board.GetOccupiedTileRatio() * 100f; gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ); gameUIManager.RightSidebar.UpdateRandomDecayChance(round); TrackFirstUpgradeRounds(); }
+        private void TrackFirstUpgradeRounds() { foreach (var player in Board.Players) foreach (var pm in player.PlayerMutations.Values) { if (!pm.FirstUpgradeRound.HasValue) continue; var key = (player.PlayerId, pm.MutationId); if (!FirstUpgradeRounds.ContainsKey(key)) FirstUpgradeRounds[key] = new List<int>(); FirstUpgradeRounds[key].Add(pm.FirstUpgradeRound.Value); } }
+        public void StartNextRound() { if (gameEnded) return; gameUIManager.GameLogRouter?.OnRoundStart(Board.CurrentRound); if (!(Board.CurrentRound == 1 && initialMutationPointsAssigned)) AssignMutationPoints(); hotseatTurnManager.BeginHumanMutationPhase(); gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players); gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound); gameUIManager.GameLogRouter?.OnPhaseStart("Mutation"); gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f); UpdatePhaseProgressTrackerLabel(); phaseProgressTracker?.HighlightMutationPhase(); }
+        #endregion
 
-        public void StartGrowthPhase()
-        {
-            gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
-            gameUIManager.GameLogRouter?.OnPhaseStart("Growth");
-
-            if (growthPhaseRunner != null)
-            {
-                growthPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
-                gameUIManager.PhaseBanner.Show("Growth Phase Begins!", 2f);
-                phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
-                Board.OnPreGrowthPhase();
-                growthPhaseRunner.StartGrowthPhase();
-            }
-        }
-
-        public void StartDecayPhase()
-        {
-            if (gameEnded) return;
-            gameUIManager.GameLogRouter?.OnPhaseStart("Decay");
-            decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
-            gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f);
-            phaseProgressTracker?.HighlightDecayPhase();
-            decayPhaseRunner.StartDecayPhase(growthPhaseRunner.FailedGrowthsByPlayerId, rng, gameUIManager.GameLogRouter);
-        }
-
-        public void OnRoundComplete()
-        {
-            if (gameEnded) return;
-
-            gameUIManager.GameLogRouter?.OnRoundComplete(Board.CurrentRound, Board);
-            foreach (var p in Board.Players) p.TickDownActiveSurges();
-
-            CheckForEndgameCondition();
-            if (gameEnded) return;
-
-            Board.IncrementRound();
-
-            if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
-            {
-                StartCoroutine(DelayedStartDraft());
-                return;
-            }
-
-            StartNextRound();
-
-            int round = Board.CurrentRound;
-            float occupancy = Board.GetOccupiedTileRatio() * 100f;
-            gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occupancy);
-            gameUIManager.RightSidebar.UpdateRandomDecayChance(round);
-
-            foreach (var player in Board.Players)
-            {
-                foreach (var pm in player.PlayerMutations.Values)
-                {
-                    if (!pm.FirstUpgradeRound.HasValue) continue;
-                    var key = (player.PlayerId, pm.MutationId);
-                    if (!FirstUpgradeRounds.ContainsKey(key))
-                        FirstUpgradeRounds[key] = new List<int>();
-                    FirstUpgradeRounds[key].Add(pm.FirstUpgradeRound.Value);
-                }
-            }
-        }
-
-        public void StartNextRound()
-        {
-            if (gameEnded) return;
-            gameUIManager.GameLogRouter?.OnRoundStart(Board.CurrentRound);
-            AssignMutationPoints();
-            gameUIManager.MutationUIManager.StartNewMutationPhase();
-            gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-            gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(true);
-            gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
-            gameUIManager.MoldProfileRoot?.Refresh();
-            gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
-            gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
-            gameUIManager.GameLogRouter?.OnPhaseStart("Mutation");
-            gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
-            UpdatePhaseProgressTrackerLabel();
-            phaseProgressTracker?.HighlightMutationPhase();
-        }
+        #region Hotseat Callbacks
+        public void OnHumanMutationTurnFinished(Player player) { hotseatTurnManager.HandleHumanTurnFinished(player); }
+        private void OnAllHumansFinishedMutationTurn() { SpendAllMutationPointsForAIPlayers(); }
         #endregion
 
         #region Endgame / Countdown
-        private void CheckForEndgameCondition()
-        {
-            if (!isCountdownActive && Board.ShouldTriggerEndgame())
-            {
-                isCountdownActive = true;
-                roundsRemainingUntilGameEnd = GameBalance.TurnsAfterEndGameTileOccupancyThresholdMet;
-                UpdateCountdownUI();
-            }
-            else if (isCountdownActive)
-            {
-                roundsRemainingUntilGameEnd--;
-                if (roundsRemainingUntilGameEnd <= 0) EndGame(); else UpdateCountdownUI();
-            }
-        }
-
-        private void UpdateCountdownUI()
-        {
-            if (!isCountdownActive)
-            {
-                gameUIManager.RightSidebar?.SetEndgameCountdownText(null);
-                return;
-            }
-            if (roundsRemainingUntilGameEnd == 1)
-            {
-                gameUIManager.RightSidebar?.SetEndgameCountdownText("<b><color=#FF0000>Final Round!</color></b>");
-                gameUIManager.GameLogRouter?.OnEndgameTriggered(1);
-            }
-            else
-            {
-                gameUIManager.RightSidebar?.SetEndgameCountdownText($"<b><color=#FFA500>Endgame in {roundsRemainingUntilGameEnd} rounds</color></b>");
-                gameUIManager.GameLogRouter?.OnEndgameTriggered(roundsRemainingUntilGameEnd);
-            }
-        }
-
-        private void EndGame()
-        {
-            if (gameEnded) return;
-            gameEnded = true;
-            gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
-
-            var ranked = Board.Players
-                .OrderByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
-                .ThenByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => !c.IsAlive))
-                .ToList();
-
-            var winner = ranked.FirstOrDefault();
-            if (winner != null)
-                gameUIManager.GameLogRouter?.OnGameEnd(winner.PlayerName);
-
-            gameUIManager.MutationUIManager.gameObject.SetActive(false);
-            gameUIManager.RightSidebar.gameObject.SetActive(true);
-            gameUIManager.LeftSidebar.gameObject.SetActive(false);
-            gameUIManager.EndGamePanel.gameObject.SetActive(true);
-            gameUIManager.EndGamePanel.ShowResults(ranked, Board);
-
-            foreach (var ((playerId, mutationId), rounds) in FirstUpgradeRounds)
-            {
-                double avg = rounds.Average();
-                int min = rounds.Min();
-                int max = rounds.Max();
-                Console.WriteLine($"Player {playerId} | Mutation {mutationId} | Avg First Acquired: {avg:F1} | Min: {min} | Max: {max}");
-            }
-        }
+        private void CheckForEndgameCondition() { if (!isCountdownActive && Board.ShouldTriggerEndgame()) { isCountdownActive = true; roundsRemainingUntilGameEnd = GameBalance.TurnsAfterEndGameTileOccupancyThresholdMet; UpdateCountdownUI(); } else if (isCountdownActive) { roundsRemainingUntilGameEnd--; if (roundsRemainingUntilGameEnd <= 0) EndGame(); else UpdateCountdownUI(); } }
+        private void UpdateCountdownUI() { if (!isCountdownActive) { gameUIManager.RightSidebar?.SetEndgameCountdownText(null); return; } if (roundsRemainingUntilGameEnd == 1) { gameUIManager.RightSidebar?.SetEndgameCountdownText("<b><color=#FF0000>Final Round!</color></b>"); gameUIManager.GameLogRouter?.OnEndgameTriggered(1); } else { gameUIManager.RightSidebar?.SetEndgameCountdownText($"<b><color=#FFA500>Endgame in {roundsRemainingUntilGameEnd} rounds</color></b>"); gameUIManager.GameLogRouter?.OnEndgameTriggered(roundsRemainingUntilGameEnd); } }
+        private void EndGame() { if (gameEnded) return; gameEnded = true; gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false); var ranked = Board.Players.OrderByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive)).ThenByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => !c.IsAlive)).ToList(); var winner = ranked.FirstOrDefault(); if (winner != null) gameUIManager.GameLogRouter?.OnGameEnd(winner.PlayerName); gameUIManager.MutationUIManager.gameObject.SetActive(false); gameUIManager.RightSidebar.gameObject.SetActive(true); gameUIManager.LeftSidebar.gameObject.SetActive(false); gameUIManager.EndGamePanel.gameObject.SetActive(true); gameUIManager.EndGamePanel.ShowResults(ranked, Board); foreach (var ((pid, mid), rounds) in FirstUpgradeRounds) { double avg = rounds.Average(); int min = rounds.Min(); int max = rounds.Max(); Console.WriteLine($"Player {pid} | Mutation {mid} | Avg First Acquired: {avg:F1} | Min: {min} | Max: {max}"); } }
         #endregion
 
-        #region Mutation Points
-        private void AssignMutationPoints()
-        {
-            var allMutations = mutationManager.AllMutations.Values.ToList();
-            var rngLocal = new System.Random();
-            TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rngLocal, gameUIManager.GameLogRouter);
-            gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
-            gameUIManager.MoldProfileRoot?.Refresh();
-        }
-
-        public void SpendAllMutationPointsForAIPlayers()
-        {
-            foreach (var p in Board.Players)
-            {
-                if (p.PlayerType == PlayerTypeEnum.AI)
-                    p.MutationStrategy?.SpendMutationPoints(p, mutationManager.GetAllMutations().ToList(), Board, rng, gameUIManager.GameLogRouter);
-            }
-            StartGrowthPhase();
-        }
+        #region Mutation Points / AI
+        private void AssignMutationPoints() { var all = mutationManager.AllMutations.Values.ToList(); var localRng = new System.Random(); TurnEngine.AssignMutationPoints(Board, Board.Players, all, localRng, gameUIManager.GameLogRouter); gameUIManager.MutationUIManager?.RefreshAllMutationButtons(); gameUIManager.MoldProfileRoot?.Refresh(); }
+        public void SpendAllMutationPointsForAIPlayers() { var all = mutationManager.GetAllMutations().ToList(); foreach (var p in Board.Players) if (p.PlayerType == PlayerTypeEnum.AI) p.MutationStrategy?.SpendMutationPoints(p, all, Board, rng, gameUIManager.GameLogRouter); StartGrowthPhase(); }
         #endregion
 
         #region Draft Phase
-        private void UpdatePhaseProgressTrackerLabel()
-        {
-            phaseProgressTracker?.SetMutationPhaseLabel(isInDraftPhase ? "DRAFT" : "MUTATION");
-        }
-
-        public void StartMycovariantDraftPhase()
-        {
-            isInDraftPhase = true;
-            TooltipManager.Instance?.CancelAll();
-
-            List<Player> draftOrder;
-            if (testingModeEnabled && testingModeForceHumanFirst)
-            {
-                draftOrder = Board.Players
-                    .OrderBy(p => p.PlayerType == PlayerTypeEnum.Human ? 0 : 1)
-                    .ThenBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
-                    .ToList();
-                testingModeForceHumanFirst = false; // only once
-            }
-            else
-            {
-                draftOrder = Board.Players
-                    .OrderBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
-                    .ThenBy(p => p.PlayerId)
-                    .ToList();
-            }
-
-            mycovariantDraftController.StartDraft(
-                Board.Players,
-                persistentPoolManager,
-                draftOrder,
-                rng,
-                MycovariantGameBalance.MycovariantSelectionDraftSize);
-
-            if (testingModeEnabled)
-            {
-                var testingMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
-                var mycoName = testingMyco?.Name ?? "Unknown";
-                gameUIManager.PhaseBanner.Show($"Testing: {mycoName}", 2f);
-                gameUIManager.GameLogRouter?.OnDraftPhaseStart(mycoName);
-            }
-            else
-            {
-                gameUIManager.PhaseBanner.Show("Mycovariant Draft Phase!", 2f);
-                gameUIManager.GameLogRouter?.OnDraftPhaseStart();
-            }
-
-            phaseProgressTracker?.HighlightDraftPhase();
-            gameUIManager.MutationUIManager.gameObject.SetActive(false);
-            gameUIManager.LeftSidebar?.gameObject.SetActive(false);
-            mycovariantDraftController.gameObject.SetActive(true);
-        }
-
-        public void OnMycovariantDraftComplete()
-        {
-            isInDraftPhase = false;
-            TooltipManager.Instance?.CancelAll();
-            gameUIManager.MutationUIManager.gameObject.SetActive(true);
-            gameUIManager.RightSidebar?.gameObject.SetActive(true);
-            gameUIManager.LeftSidebar?.gameObject.SetActive(true);
-            mycovariantDraftController.gameObject.SetActive(false);
-
-            if (testingModeEnabled) StartNextRound(); else StartCoroutine(DelayedStartNextRound());
-        }
-
-        private IEnumerator DelayedStartNextRound()
-        {
-            yield return new WaitForSeconds(1f);
-            StartNextRound();
-        }
-
-        private IEnumerator DelayedStartDraft()
-        {
-            yield return new WaitForSeconds(2.5f);
-            yield return StartCoroutine(WaitForFadeInAnimationsToComplete());
-            StartMycovariantDraftPhase();
-        }
-
-        public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)
-        {
-            player.AddMycovariant(picked);
-            var playerMyco = player.PlayerMycovariants.LastOrDefault(pm => pm.MycovariantId == picked.Id);
-            if (playerMyco != null && picked.AutoMarkTriggered)
-                picked.ApplyEffect?.Invoke(playerMyco, Board, rng, gameUIManager.GameLogRouter);
-            gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
-        }
+        private void UpdatePhaseProgressTrackerLabel() { phaseProgressTracker?.SetMutationPhaseLabel(isInDraftPhase ? "DRAFT" : "MUTATION"); }
+        public void StartMycovariantDraftPhase() { isInDraftPhase = true; TooltipManager.Instance?.CancelAll(); var order = testingModeEnabled && testingModeForceHumanFirst ? Board.Players.OrderBy(p => p.PlayerType == PlayerTypeEnum.Human ? 0 : 1).ThenBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive)).ToList() : Board.Players.OrderBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive)).ThenBy(p => p.PlayerId).ToList(); if (testingModeEnabled && testingModeForceHumanFirst) testingModeForceHumanFirst = false; mycovariantDraftController.StartDraft(Board.Players, persistentPoolManager, order, rng, MycovariantGameBalance.MycovariantSelectionDraftSize); if (testingModeEnabled) { var tMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId); var name = tMyco?.Name ?? "Unknown"; gameUIManager.PhaseBanner.Show($"Testing: {name}", 2f); gameUIManager.GameLogRouter?.OnDraftPhaseStart(name); } else { gameUIManager.PhaseBanner.Show("Mycovariant Draft Phase!", 2f); gameUIManager.GameLogRouter?.OnDraftPhaseStart(); } phaseProgressTracker?.HighlightDraftPhase(); gameUIManager.MutationUIManager.gameObject.SetActive(false); gameUIManager.LeftSidebar?.gameObject.SetActive(false); mycovariantDraftController.gameObject.SetActive(true); }
+        public void OnMycovariantDraftComplete() { isInDraftPhase = false; TooltipManager.Instance?.CancelAll(); gameUIManager.MutationUIManager.gameObject.SetActive(true); gameUIManager.RightSidebar?.gameObject.SetActive(true); gameUIManager.LeftSidebar?.gameObject.SetActive(true); mycovariantDraftController.gameObject.SetActive(false); if (testingModeEnabled) StartNextRound(); else StartCoroutine(DelayedStartNextRound()); }
+        private IEnumerator DelayedStartNextRound() { yield return new WaitForSeconds(1f); StartNextRound(); }
+        private IEnumerator DelayedStartDraft() { yield return new WaitForSeconds(2.5f); yield return StartCoroutine(fastForwardService.WaitForFadeInAnimationsToComplete(gridVisualizer)); StartMycovariantDraftPhase(); }
+        public void ResolveMycovariantDraftPick(Player player, Mycovariant picked) { player.AddMycovariant(picked); var pm = player.PlayerMycovariants.LastOrDefault(x => x.MycovariantId == picked.Id); if (pm != null && picked.AutoMarkTriggered) picked.ApplyEffect?.Invoke(pm, Board, rng, gameUIManager.GameLogRouter); gameUIManager.RightSidebar?.UpdatePlayerSummaries(players); }
         #endregion
 
         #region UI Helpers
-        public void ShowStartGamePanel()
-        {
-            if (gameUIManager != null)
-            {
-                gameUIManager.LeftSidebar?.gameObject.SetActive(false);
-                gameUIManager.RightSidebar?.gameObject.SetActive(false);
-                gameUIManager.MutationUIManager?.gameObject.SetActive(false);
-                gameUIManager.EndGamePanel?.gameObject.SetActive(false);
-            }
-            if (startGamePanel != null)
-                startGamePanel.gameObject.SetActive(true);
-        }
-
-        public void ShowSelectionPrompt(string message)
-        {
-            SelectionPromptPanel.SetActive(true);
-            SelectionPromptText.text = message;
-        }
-
+        public void ShowStartGamePanel() { if (gameUIManager != null) { gameUIManager.LeftSidebar?.gameObject.SetActive(false); gameUIManager.RightSidebar?.gameObject.SetActive(false); gameUIManager.MutationUIManager?.gameObject.SetActive(false); gameUIManager.EndGamePanel?.gameObject.SetActive(false); } if (startGamePanel != null) startGamePanel.gameObject.SetActive(true); }
+        public void ShowSelectionPrompt(string message) { SelectionPromptPanel.SetActive(true); SelectionPromptText.text = message; }
         public void HideSelectionPrompt() => SelectionPromptPanel.SetActive(false);
         #endregion
 
-        #region Testing Mode API
-        public void EnableTestingMode(int? mycovariantId, int fastForwardRounds = 0, bool skipToEndgameAfterFastForward = false)
-        {
-            testingModeEnabled = true;
-            testingMycovariantId = mycovariantId;
-            testingModeForceHumanFirst = mycovariantId.HasValue;
-            this.fastForwardRounds = fastForwardRounds;
-            testingSkipToEndgameAfterFastForward = skipToEndgameAfterFastForward;
-        }
-
-        public void DisableTestingMode()
-        {
-            testingModeEnabled = false;
-            testingMycovariantId = null;
-            testingModeForceHumanFirst = false;
-            fastForwardRounds = 0;
-            testingSkipToEndgameAfterFastForward = false;
-        }
-        #endregion
-
-        #region Fast Forward (Animation Suppression)
-        private IEnumerator FastForwardRounds()
-        {
-            gameUIManager.GameLogRouter.EnableSilentMode();
-            isFastForwarding = true;
-
-            int startingRound = Board.CurrentRound; // inclusive
-            int requestedValue = fastForwardRounds;
-            // Treat input as target round if it is greater than current; otherwise as number of rounds to advance
-            bool treatAsTargetRound = requestedValue > startingRound;
-            int targetRound = treatAsTargetRound ? requestedValue : (startingRound + requestedValue);
-            if (targetRound < startingRound) targetRound = startingRound; // safety
-            int desiredRounds = targetRound - startingRound;
-            int iterations = 0;
-
-            FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[FF] Begin fast-forward: start={startingRound} requested={requestedValue} target={targetRound} desiredRounds={desiredRounds}");
-
-            try
-            {
-                var originalHumanType = humanPlayer.PlayerType;
-                var originalHumanStrategy = humanPlayer.MutationStrategy;
-                IMutationSpendingStrategy persistentStrategy = originalHumanStrategy ?? AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
-                humanPlayer.SetPlayerType(PlayerTypeEnum.AI);
-                humanPlayer.SetMutationStrategy(persistentStrategy);
-
-                while (Board.CurrentRound < targetRound && iterations < desiredRounds && !gameEnded)
-                {
-                    yield return RunSilentGrowthPhase();
-                    yield return RunSilentDecayPhase();
-                    yield return RunSilentMutationPhase();
-
-                    foreach (var p in Board.Players) p.TickDownActiveSurges();
-                    Board.IncrementRound();
-                    iterations++;
-
-                    if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
-                    {
-                        RunSilentDraftForAllPlayers(gameUIManager.GameLogRouter);
-                    }
-                }
-
-                humanPlayer.SetPlayerType(originalHumanType);
-                humanPlayer.SetMutationStrategy(originalHumanStrategy);
-                isFastForwarding = false;
-
-                gridVisualizer.RenderBoard(Board, true); // no animations
-                gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
-                float occupancy = Board.GetOccupiedTileRatio() * 100f;
-                gameUIManager.RightSidebar?.SetRoundAndOccupancy(Board.CurrentRound, occupancy);
-                gameUIManager.MoldProfileRoot?.ApplyDeferredRefreshIfNeeded();
-
-                int actualAdvanced = Board.CurrentRound - startingRound;
-                if (actualAdvanced != desiredRounds)
-                {
-                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[FF][WARN] mismatch desired={desiredRounds} actual={actualAdvanced} start={startingRound} end={Board.CurrentRound}");
-                }
-                else
-                {
-                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[FF] complete advanced={actualAdvanced} finalRound={Board.CurrentRound}");
-                }
-
-                if (testingSkipToEndgameAfterFastForward)
-                {
-                    gameUIManager.GameLogRouter.DisableSilentMode();
-                    EndGame();
-                    yield break;
-                }
-
-                if (testingMycovariantId.HasValue)
-                {
-                    StartMycovariantDraftPhase();
-                }
-                else
-                {
-                    string bannerMsg = treatAsTargetRound ? $"Reached Round {Board.CurrentRound}" : $"Fast-forwarded {actualAdvanced} rounds";
-                    gameUIManager.PhaseBanner.Show(bannerMsg, 2f);
-                    // Start the mutation phase for the target round (do NOT increment round again)
-                    StartNextRound();
-                }
-            }
-            finally
-            {
-                isFastForwarding = false; // safety
-                gameUIManager.GameLogRouter.DisableSilentMode();
-            }
-        }
-
-        private void RunSilentDraftForAllPlayers(ISimulationObserver observer)
-        {
-            Func<Player, List<Mycovariant>, Mycovariant> customSelectionCallback = null;
-
-            if (testingModeEnabled && testingMycovariantId.HasValue)
-            {
-                var testingMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId.Value);
-                if (testingMyco != null && !testingMyco.IsUniversal)
-                {
-                    persistentPoolManager.TemporarilyRemoveFromPool(testingMycovariantId.Value);
-                    customSelectionCallback = (player, choices) =>
-                    {
-                        var available = choices.Where(m => m.Id != testingMycovariantId.Value).ToList();
-                        if (available.Count == 0) available = choices;
-                        return available
-                            .OrderByDescending(m => m.GetBaseAIScore(player, Board))
-                            .ThenBy(_ => rng.Next())
-                            .First();
-                    };
-                }
-            }
-
-            MycovariantDraftManager.RunDraft(
-                Board.Players,
-                persistentPoolManager,
-                Board,
-                rng,
-                observer,
-                MycovariantGameBalance.MycovariantSelectionDraftSize,
-                customSelectionCallback);
-
-            if (testingModeEnabled && testingMycovariantId.HasValue)
-            {
-                var testingMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId.Value);
-                if (testingMyco != null && !testingMyco.IsUniversal)
-                    persistentPoolManager.RestoreToPool(testingMycovariantId.Value);
-            }
-        }
-
-        private IEnumerator RunSilentMutationPhase()
-        {
-            var allMutations = mutationManager.AllMutations.Values.ToList();
-            TurnEngine.AssignMutationPoints(Board, Board.Players, allMutations, rng, gameUIManager.GameLogRouter);
-            foreach (var player in Board.Players)
-            {
-                player.MutationStrategy?.SpendMutationPoints(player, allMutations, Board, rng, gameUIManager.GameLogRouter);
-            }
-            yield return null;
-        }
-
-        private IEnumerator RunSilentGrowthPhase()
-        {
-            var processor = new GrowthPhaseProcessor(Board, Board.Players, rng, gameUIManager.GameLogRouter);
-            for (int cycle = 1; cycle <= GameBalance.TotalGrowthCycles; cycle++)
-            {
-                Board.IncrementGrowthCycle();
-                processor.ExecuteSingleCycle(Board.CurrentRoundContext);
-            }
-            Board.OnPostGrowthPhase();
-            yield return null;
-        }
-
-        private IEnumerator RunSilentDecayPhase()
-        {
-            var emptyFailed = new Dictionary<int, int>();
-            DeathEngine.ExecuteDeathCycle(Board, emptyFailed, rng, gameUIManager.GameLogRouter);
-            yield return null;
-        }
-
-        private IEnumerator WaitForFadeInAnimationsToComplete()
-        {
-            if (gridVisualizer == null) yield break;
-            while (gridVisualizer.HasActiveAnimations) yield return null;
-        }
-        #endregion
-
-        #region Visual Event Hooks (Suppressed During Fast-Forward)
-        private void OnResistanceAppliedBatchBuffered(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
-        {
-            if (isFastForwarding) return; // suppress visuals
-            gridVisualizer.RenderBoard(Board);
-            gridVisualizer.PlayResistancePulseBatchScaled(tileIds, 0.5f);
-        }
-
-        private void OnPostGrowthPhase_StartSequence()
-        {
-            if (isFastForwarding) return; // skip baseline capture
-            _resistantBaseline = new HashSet<int>(Board.AllTiles()
-                .Where(t => t.FungalCell?.IsAlive == true && t.FungalCell.IsResistant)
-                .Select(t => t.TileId));
-        }
-
-        private void OnPostGrowthPhaseCompleted_CaptureHrt()
-        {
-            if (isFastForwarding)
-            {
-                _postGrowthHrtNewResistantTiles.Clear();
-                return;
-            }
-
-            var allResistantNow = Board.AllTiles()
-                .Where(t => t.FungalCell?.IsAlive == true && t.FungalCell.IsResistant)
-                .Select(t => t.TileId)
-                .ToList();
-
-            _postGrowthHrtNewResistantTiles.Clear();
-            foreach (var id in allResistantNow)
-                if (!_resistantBaseline.Contains(id))
-                    _postGrowthHrtNewResistantTiles.Add(id);
-
-            if (!_postGrowthSequenceRunning)
-            {
-                _postGrowthSequenceRunning = true;
-                StartCoroutine(RunPostGrowthVisualSequence());
-            }
-        }
-
-        private IEnumerator RunPostGrowthVisualSequence()
-        {
-            if (isFastForwarding)
-            {
-                _regenReclaimBuffer.Clear();
-                _postGrowthResistanceTiles.Clear();
-                _postGrowthHrtNewResistantTiles.Clear();
-                _postGrowthSequenceRunning = false;
-                StartDecayPhase();
-                yield break;
-            }
-
-            // Phase 1: Regenerative Hyphae
-            if (_regenReclaimBuffer.Count > 0)
-            {
-                foreach (var kvp in _regenReclaimBuffer)
-                {
-                    var ids = kvp.Value;
-                    if (ids.Count == 0) continue;
-                    gridVisualizer.PlayRegenerativeHyphaeReclaimBatch(ids, 1f, UIEffectConstants.RegenerativeHyphaeReclaimTotalDurationSeconds);
-                }
-                yield return gridVisualizer.WaitForAllAnimations();
-                _regenReclaimBuffer.Clear();
-            }
-
-            // Phase 2: Resistance pulses (if any were buffered elsewhere)
-            if (_postGrowthResistanceTiles.Count > 0)
-            {
-                gridVisualizer.PlayResistancePulseBatchScaled(_postGrowthResistanceTiles, 0.5f);
-                yield return gridVisualizer.WaitForAllAnimations();
-                _postGrowthResistanceTiles.Clear();
-            }
-
-            // Phase 3: HRT spread
-            bool anyPlayerHasHrt = Board.Players.Any(p => p.GetMycovariant(MycovariantIds.HyphalResistanceTransferId) != null);
-            if (anyPlayerHasHrt && _postGrowthHrtNewResistantTiles.Count > 0)
-            {
-                gridVisualizer.PlayResistancePulseBatchScaled(_postGrowthHrtNewResistantTiles, 0.35f);
-                yield return gridVisualizer.WaitForAllAnimations();
-            }
-
-            _postGrowthHrtNewResistantTiles.Clear();
-            _postGrowthSequenceRunning = false;
-            StartDecayPhase();
-        }
+        #region Testing Mode API / Fast Forward
+        public void EnableTestingMode(int? mycovariantId, int fastForwardRounds = 0, bool skipToEndgameAfterFastForward = false) { testingModeEnabled = true; testingMycovariantId = mycovariantId; testingModeForceHumanFirst = mycovariantId.HasValue; this.fastForwardRounds = fastForwardRounds; testingSkipToEndgameAfterFastForward = skipToEndgameAfterFastForward; }
+        public void DisableTestingMode() { testingModeEnabled = false; testingMycovariantId = null; testingModeForceHumanFirst = false; fastForwardRounds = 0; testingSkipToEndgameAfterFastForward = false; }
+        internal void RequestFastForwardIfNeeded() { if (testingModeEnabled && fastForwardRounds > 0 && !_fastForwardStarted) { _fastForwardStarted = true; fastForwardService.StartFastForward(fastForwardRounds, testingSkipToEndgameAfterFastForward, testingMycovariantId); } }
         #endregion
 
         #region Intro Coroutine
-        private IEnumerator PlayStartingSporeIntroAndContinue()
-        {
-            var startingIds = Board.Players
-                .Select(p => p.StartingTileId)
-                .Where(id => id.HasValue)
-                .Select(id => id!.Value)
-                .ToList();
+        private IEnumerator PlayStartingSporeIntroAndContinue() { var startingIds = Board.Players.Select(p => p.StartingTileId).Where(id => id.HasValue).Select(id => id!.Value).ToList(); if (startingIds.Count > 0 && !testingModeEnabled) yield return gridVisualizer.PlayStartingSporeArrivalAnimation(startingIds); /* removed duplicate reset to avoid double MP */ gameUIManager.LeftSidebar?.gameObject.SetActive(true); gameUIManager.RightSidebar?.gameObject.SetActive(true); gameUIManager.MutationUIManager.gameObject.SetActive(true); mycovariantDraftController?.gameObject.SetActive(false); cameraCenterer?.CaptureInitialFraming(); InitGameLogs(); gameUIManager.MoldProfileRoot?.Initialize(Board.Players[0], Board.Players); if (testingModeEnabled) { if (fastForwardRounds > 0 && !_fastForwardStarted) { _fastForwardStarted = true; fastForwardService.StartFastForward(fastForwardRounds, testingSkipToEndgameAfterFastForward, testingMycovariantId); } else if (testingMycovariantId.HasValue) { StartMycovariantDraftPhase(); yield break; } else gameUIManager.PhaseBanner.Show("New Game Settings", 2f); } else gameUIManager.PhaseBanner.Show("New Game Settings", 2f); phaseProgressTracker?.ResetTracker(); UpdatePhaseProgressTrackerLabel(); phaseProgressTracker?.HighlightMutationPhase(); gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer); gameUIManager.RightSidebar?.InitializePlayerSummaries(players); gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer); gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound); if (!(testingModeEnabled && (fastForwardRounds > 0 || testingMycovariantId.HasValue))) { Debug.Log("[GameManager] Starting initial round mutation phase via StartNextRound()"); StartNextRound(); } }
+        #endregion
 
-            if (startingIds.Count > 0 && !testingModeEnabled)
-                yield return gridVisualizer.PlayStartingSporeArrivalAnimation(startingIds);
-
-            mutationManager.ResetMutationPoints(players);
-
-            gameUIManager.LeftSidebar?.gameObject.SetActive(true);
-            gameUIManager.RightSidebar?.gameObject.SetActive(true);
-            gameUIManager.MutationUIManager.gameObject.SetActive(true);
-            mycovariantDraftController?.gameObject.SetActive(false);
-            cameraCenterer?.CaptureInitialFraming();
-
-            if (gameUIManager.GameLogManager != null && gameUIManager.GameLogPanel != null)
-            {
-                gameUIManager.GameLogManager.Initialize(Board);
-                gameUIManager.GameLogPanel.Initialize(gameUIManager.GameLogManager);
-            }
-            if (gameUIManager.GlobalGameLogManager != null && gameUIManager.GlobalGameLogPanel != null)
-            {
-                gameUIManager.GlobalGameLogManager.Initialize(Board);
-                gameUIManager.GlobalGameLogPanel.Initialize(gameUIManager.GlobalGameLogManager);
-            }
-            gameUIManager.MutationUIManager.Initialize(Board.Players[0]);
-            gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-            gameUIManager.MoldProfileRoot?.Initialize(Board.Players[0], Board.Players);
-
-            // Decide what to do after intro based on testing flags
-            if (testingModeEnabled)
-            {
-                if (fastForwardRounds > 0 && !_fastForwardStarted)
-                {
-                    _fastForwardStarted = true;
-                    StartCoroutine(FastForwardRounds());
-                }
-                else if (testingMycovariantId.HasValue)
-                {
-                    StartMycovariantDraftPhase();
-                }
-                else
-                {
-                    gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
-                }
-            }
-            else
-            {
-                gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
-            }
-
-            phaseProgressTracker?.ResetTracker();
-            UpdatePhaseProgressTrackerLabel();
-            phaseProgressTracker?.HighlightMutationPhase();
-            gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
-            gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
-            gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
-            gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
-        }
+        #region Internal Accessors For Services
+        internal MutationManager GetPrivateMutationManager() => mutationManager;
+        internal Player GetPrimaryHumanInternal() => humanPlayer;
+        internal System.Random GetRngInternal() => rng;
+        internal MycovariantPoolManager GetPersistentPoolInternal() => persistentPoolManager;
+        internal void TriggerEndGameInternal() => EndGame();
         #endregion
     }
 }

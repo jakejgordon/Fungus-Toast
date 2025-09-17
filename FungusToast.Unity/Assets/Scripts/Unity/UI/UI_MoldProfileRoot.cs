@@ -46,6 +46,18 @@ namespace FungusToast.Unity.UI
             EnsureCellsResolved();
             Refresh();
             ageDelayThresholdTooltipProvider.Initialize(trackedPlayer);
+
+            // Center Player Icon
+            if (centerPlayerIcon != null)
+            {
+                try
+                {
+                    var sprite = GameManager.Instance?.gridVisualizer?.GetTileForPlayer(player.PlayerId)?.sprite;
+                    if (sprite != null) { centerPlayerIcon.sprite = sprite; centerPlayerIcon.enabled = true; }
+                    else centerPlayerIcon.enabled = false;
+                }
+                catch { centerPlayerIcon.enabled = false; }
+            }
         }
 
         public void Refresh()
@@ -72,6 +84,32 @@ namespace FungusToast.Unity.UI
             {
                 Refresh();
             }
+        }
+
+        public void SwitchPlayer(Player player, List<Player> players)
+        {
+            if (player == null) { Debug.LogError("UI_MoldProfileRoot.SwitchPlayer called with null player"); return; }
+            trackedPlayer = player;
+            allPlayers = players;
+            // Re-init tooltip provider if present
+            if (ageDelayThresholdTooltipProvider != null)
+            {
+                ageDelayThresholdTooltipProvider.Initialize(trackedPlayer);
+            }
+
+            // Center Player Icon
+            if (centerPlayerIcon != null)
+            {
+                try
+                {
+                    var sprite = GameManager.Instance?.gridVisualizer?.GetTileForPlayer(player.PlayerId)?.sprite;
+                    if (sprite != null) { centerPlayerIcon.sprite = sprite; centerPlayerIcon.enabled = true; }
+                    else centerPlayerIcon.enabled = false;
+                }
+                catch { centerPlayerIcon.enabled = false; }
+            }
+
+            Refresh();
         }
 
         private void EnsureCellsResolved()
