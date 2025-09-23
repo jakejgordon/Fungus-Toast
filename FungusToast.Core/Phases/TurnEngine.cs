@@ -70,6 +70,8 @@ namespace FungusToast.Core.Phases
             ISimulationObserver simulationObserver)
         {
             DeathEngine.ExecuteDeathCycle(board, failedGrowthsByPlayerId, rng, simulationObserver);
+            // Fire post-decay phase hook for UI/log aggregation
+            board.OnPostDecayPhase();
         }
     }
 }

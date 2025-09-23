@@ -37,6 +37,7 @@ namespace FungusToast.Core.Board
         public delegate void CellReclaimedEventHandler(int playerId, int tileId, GrowthSource source);
         public delegate void CellToxifiedEventHandler(int playerId, int tileId, GrowthSource source);
         public delegate void CellPoisonedEventHandler(int playerId, int tileId, int oldOwnerId, GrowthSource source);
+        public delegate void CellOvergrownEventHandler(int playerId, int tileId, int oldOwnerId, GrowthSource source); // NEW
         public delegate void CellCatabolizedEventHandler(int playerId, int tileId);
         public delegate void CellDeathEventHandler(int playerId, int tileId, DeathReason reason);
         public delegate void CellSurgeGrowthEventHandler(int playerId, int tileId);
@@ -60,6 +61,7 @@ namespace FungusToast.Core.Board
         public delegate void PreGrowthPhaseEventHandler();
         public delegate void ResistanceAppliedBatchEventHandler(int playerId, GrowthSource source, IReadOnlyList<int> tileIds);
         public delegate void RegenerativeHyphaeReclaimedEventHandler(int playerId, int tileId);
+        public delegate void PostDecayPhaseEventHandler(); // NEW
         #endregion
 
         #region Events
@@ -68,6 +70,7 @@ namespace FungusToast.Core.Board
         public event CellReclaimedEventHandler? CellReclaimed;
         public event CellToxifiedEventHandler? CellToxified;
         public event CellPoisonedEventHandler? CellPoisoned;
+        public event CellOvergrownEventHandler? CellOvergrown; // NEW
         public event CellCatabolizedEventHandler? CellCatabolized;
         public event EventHandler<FungalCellDiedEventArgs>? CellDeath;
         public event CellSurgeGrowthEventHandler? CellSurgeGrowth;
@@ -91,7 +94,7 @@ namespace FungusToast.Core.Board
         public event PreGrowthPhaseEventHandler? PreGrowthPhase;
         public event ResistanceAppliedBatchEventHandler? ResistanceAppliedBatch;
         public event RegenerativeHyphaeReclaimedEventHandler? RegenerativeHyphaeReclaimed;
-
+        public event PostDecayPhaseEventHandler? PostDecayPhase; // NEW
         // Growth attempt lifecycle events
         public event EventHandler<GrowthAttemptEventArgs>? BeforeGrowthAttempt;
         public event EventHandler<GrowthAttemptEventArgs>? AfterGrowthAttempt;
@@ -104,6 +107,7 @@ namespace FungusToast.Core.Board
         protected virtual void OnCellReclaimed(int playerId, int tileId, GrowthSource source) => CellReclaimed?.Invoke(playerId, tileId, source);
         protected virtual void OnCellToxified(int playerId, int tileId, GrowthSource source) => CellToxified?.Invoke(playerId, tileId, source);
         protected virtual void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource source) => CellPoisoned?.Invoke(playerId, tileId, oldOwnerId, source);
+        protected virtual void OnCellOvergrown(int playerId, int tileId, int oldOwnerId, GrowthSource source) => CellOvergrown?.Invoke(playerId, tileId, oldOwnerId, source); // NEW
         protected virtual void OnCellCatabolized(int playerId, int tileId) => CellCatabolized?.Invoke(playerId, tileId);
         protected virtual void OnCellDeath(int playerId, int tileId, DeathReason reason, int? killerPlayerId = null, FungalCell? cell = null, int? attackerTileId = null)
         {
@@ -123,6 +127,7 @@ namespace FungusToast.Core.Board
         public virtual void OnDecayPhase(Dictionary<int, int> failedGrowthsByPlayerId) => DecayPhase?.Invoke(failedGrowthsByPlayerId);
         public virtual void OnPreGrowthCycle() => PreGrowthCycle?.Invoke();
         public virtual void OnDecayPhaseWithFailedGrowths(Dictionary<int, int> failedGrowthsByPlayerId) => DecayPhaseWithFailedGrowths?.Invoke(failedGrowthsByPlayerId);
+        public virtual void OnPostDecayPhase() => PostDecayPhase?.Invoke(); // NEW
         protected virtual void RaiseToxinExpired(ToxinExpiredEventArgs e) => ToxinExpired?.Invoke(this, e);
         protected virtual void OnRegenerativeHyphaeReclaimed(int playerId, int tileId) => RegenerativeHyphaeReclaimed?.Invoke(playerId, tileId);
         protected virtual void OnBeforeGrowthAttempt(GrowthAttemptEventArgs e) => BeforeGrowthAttempt?.Invoke(this, e);
@@ -353,7 +358,8 @@ namespace FungusToast.Core.Board
             if (cell.ReclaimCount > 0 && !isNew) { OnCellReclaimed(ownerId, cell.TileId, source); return; }
             if (isNew)
             {
-                if (cell.IsToxin) OnCellToxified(ownerId, cell.TileId, source); else OnCellColonized(ownerId, cell.TileId, source);
+                if (cell.IsToxin) { OnCellToxified(ownerId, cell.TileId, source); }
+                else { OnCellColonized(ownerId, cell.TileId, source); }
                 return;
             }
             if (oldCell == null || ReferenceEquals(oldCell, cell)) return;
@@ -365,7 +371,7 @@ namespace FungusToast.Core.Board
             else if (oldCell.IsToxin)
             {
                 int oldOwner = oldCell.OwnerPlayerId.GetValueOrDefault(-1);
-                OnCellPoisoned(ownerId, cell.TileId, oldOwner, source);
+                OnCellOvergrown(ownerId, cell.TileId, oldOwner, source); // changed from OnCellPoisoned
             }
             else if (oldCell.IsDead)
             {

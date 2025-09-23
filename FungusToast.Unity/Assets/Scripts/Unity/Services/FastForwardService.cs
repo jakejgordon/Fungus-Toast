@@ -40,7 +40,18 @@ namespace FungusToast.Unity
             ui.GameLogRouter.EnableSilentMode(); setFastForwardFlag(true);
             int startingRound = board.CurrentRound; int requestedValue = fastForwardRounds;
             bool treatAsTargetRound = requestedValue > startingRound; int targetRound = treatAsTargetRound ? requestedValue : (startingRound + requestedValue); if (targetRound < startingRound) targetRound = startingRound; int desiredRounds = targetRound - startingRound; int iterations = 0;
-            var primary = gameManager.GetPrimaryHuman(); var originalType = primary.PlayerType; var originalStrategy = primary.MutationStrategy; var fallbackStrategy = originalStrategy ?? AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault(); primary.SetPlayerType(PlayerTypeEnum.AI); primary.SetMutationStrategy(fallbackStrategy);
+            // NEW: Capture and convert ALL human players (previous code only handled primary human)
+            var humanPlayers = board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human).ToList();
+            var originalStates = new List<(Player player, PlayerTypeEnum type, IMutationSpendingStrategy strategy)>();
+            // A single fallback strategy is sufficient; assign to any human lacking a strategy
+            var fallbackStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
+            foreach (var hp in humanPlayers)
+            {
+                originalStates.Add((hp, hp.PlayerType, hp.MutationStrategy));
+                hp.SetPlayerType(PlayerTypeEnum.AI);
+                if (hp.MutationStrategy == null && fallbackStrategy != null)
+                    hp.SetMutationStrategy(fallbackStrategy);
+            }
             try
             {
                 while (board.CurrentRound < targetRound && iterations < desiredRounds && !gameEndedFunc())
@@ -51,12 +62,27 @@ namespace FungusToast.Unity
                     foreach (var p in board.Players) p.TickDownActiveSurges(); board.IncrementRound(); iterations++;
                     if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(board.CurrentRound)) RunSilentDraft(board, ui, testingMycoId);
                 }
-                primary.SetPlayerType(originalType); primary.SetMutationStrategy(originalStrategy); setFastForwardFlag(false);
+                // Restore original player types and strategies before UI updates
+                foreach (var state in originalStates)
+                {
+                    state.player.SetPlayerType(state.type);
+                    state.player.SetMutationStrategy(state.strategy);
+                }
+                setFastForwardFlag(false);
                 gameManager.gridVisualizer.RenderBoard(board, true); ui.RightSidebar?.UpdatePlayerSummaries(board.Players); float occupancy = board.GetOccupiedTileRatio() * 100f; ui.RightSidebar?.SetRoundAndOccupancy(board.CurrentRound, occupancy); ui.MoldProfileRoot?.ApplyDeferredRefreshIfNeeded();
                 if (skipToEnd) { ui.GameLogRouter.DisableSilentMode(); gameManager.TriggerEndGameFromFastForward(); yield break; }
                 if (testingMycoId.HasValue) gameManager.StartMycovariantDraftPhase(); else { string msg = treatAsTargetRound ? $"Reached Round {board.CurrentRound}" : $"Fast-forwarded {board.CurrentRound - startingRound} rounds"; ui.PhaseBanner.Show(msg, 2f); gameManager.StartNextRound(); }
             }
-            finally { setFastForwardFlag(false); ui.GameLogRouter.DisableSilentMode(); }
+            finally
+            {
+                // Defensive restoration in case of exception prior to normal restoration
+                foreach (var state in originalStates)
+                {
+                    if (state.player.PlayerType != state.type) state.player.SetPlayerType(state.type);
+                    if (state.player.MutationStrategy != state.strategy) state.player.SetMutationStrategy(state.strategy);
+                }
+                setFastForwardFlag(false); ui.GameLogRouter.DisableSilentMode();
+            }
         }
 
         private void RunSilentDraft(GameBoard board, GameUIManager ui, int? testingMycoId)
