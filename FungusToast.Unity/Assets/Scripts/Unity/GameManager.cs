@@ -19,6 +19,7 @@ using FungusToast.Unity.UI.GameStart;
 using FungusToast.Unity.UI.MycovariantDraft;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Hotseat;
+using FungusToast.Unity.UI.GameLog; // added for EnablePlayerSpecificFiltering
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -120,7 +121,7 @@ namespace FungusToast.Unity
         public void StartDecayPhase() { if (gameEnded) return; gameUIManager.GameLogRouter?.OnPhaseStart("Decay"); decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer); gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f); phaseProgressTracker?.HighlightDecayPhase(); decayPhaseRunner.StartDecayPhase(growthPhaseRunner.FailedGrowthsByPlayerId, rng, gameUIManager.GameLogRouter); }
         public void OnRoundComplete() { if (gameEnded) return; gameUIManager.GameLogRouter?.OnRoundComplete(Board.CurrentRound, Board); foreach (var p in Board.Players) p.TickDownActiveSurges(); CheckForEndgameCondition(); if (gameEnded) return; Board.IncrementRound(); if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound)) { StartCoroutine(DelayedStartDraft()); return; } StartNextRound(); int round = Board.CurrentRound; float occ = Board.GetOccupiedTileRatio() * 100f; gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ); gameUIManager.RightSidebar.UpdateRandomDecayChance(round); TrackFirstUpgradeRounds(); }
         private void TrackFirstUpgradeRounds() { foreach (var player in Board.Players) foreach (var pm in player.PlayerMutations.Values) { if (!pm.FirstUpgradeRound.HasValue) continue; var key = (player.PlayerId, pm.MutationId); if (!FirstUpgradeRounds.ContainsKey(key)) FirstUpgradeRounds[key] = new List<int>(); FirstUpgradeRounds[key].Add(pm.FirstUpgradeRound.Value); } }
-        public void StartNextRound() { if (gameEnded) return; gameUIManager.GameLogRouter?.OnRoundStart(Board.CurrentRound); if (!(Board.CurrentRound == 1 && initialMutationPointsAssigned)) AssignMutationPoints(); hotseatTurnManager.BeginHumanMutationPhase(); gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players); gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound); gameUIManager.GameLogRouter?.OnPhaseStart("Mutation"); gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f); UpdatePhaseProgressTrackerLabel(); phaseProgressTracker?.HighlightMutationPhase(); }
+        public void StartNextRound() { if (gameEnded) return; gameUIManager.GameLogRouter?.OnRoundStart(Board.CurrentRound); if (!(Board.CurrentRound == 1 && initialMutationPointsAssigned)) AssignMutationPoints(); if (humanPlayers.Count > 0) SetActiveHumanPlayer(humanPlayers[0]); hotseatTurnManager.BeginHumanMutationPhase(); gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players); gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound); gameUIManager.GameLogRouter?.OnPhaseStart("Mutation"); gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f); UpdatePhaseProgressTrackerLabel(); phaseProgressTracker?.HighlightMutationPhase(); }
         #endregion
 
         #region Hotseat Callbacks
@@ -136,7 +137,20 @@ namespace FungusToast.Unity
 
         #region Mutation Points / AI
         private void AssignMutationPoints() { var all = mutationManager.AllMutations.Values.ToList(); var localRng = new System.Random(); TurnEngine.AssignMutationPoints(Board, Board.Players, all, localRng, gameUIManager.GameLogRouter); gameUIManager.MutationUIManager?.RefreshAllMutationButtons(); gameUIManager.MoldProfileRoot?.Refresh(); }
-        public void SpendAllMutationPointsForAIPlayers() { var all = mutationManager.GetAllMutations().ToList(); foreach (var p in Board.Players) if (p.PlayerType == PlayerTypeEnum.AI) p.MutationStrategy?.SpendMutationPoints(p, all, Board, rng, gameUIManager.GameLogRouter); StartGrowthPhase(); }
+        public void SpendAllMutationPointsForAIPlayers()
+        {
+            var all = mutationManager.GetAllMutations().ToList();
+            // If fast forwarding and multiple humans, auto-spend for all humans after first as well
+            bool includeHumans = isFastForwarding || (testingModeEnabled && fastForwardRounds > 0);
+            foreach (var p in Board.Players)
+            {
+                if (p.PlayerType == PlayerTypeEnum.AI || (includeHumans && p.PlayerType == PlayerTypeEnum.Human))
+                {
+                    p.MutationStrategy?.SpendMutationPoints(p, all, Board, rng, gameUIManager.GameLogRouter);
+                }
+            }
+            StartGrowthPhase();
+        }
         #endregion
 
         #region Draft Phase
@@ -152,6 +166,20 @@ namespace FungusToast.Unity
         public void ShowStartGamePanel() { if (gameUIManager != null) { gameUIManager.LeftSidebar?.gameObject.SetActive(false); gameUIManager.RightSidebar?.gameObject.SetActive(false); gameUIManager.MutationUIManager?.gameObject.SetActive(false); gameUIManager.EndGamePanel?.gameObject.SetActive(false); } if (startGamePanel != null) startGamePanel.gameObject.SetActive(true); }
         public void ShowSelectionPrompt(string message) { SelectionPromptPanel.SetActive(true); SelectionPromptText.text = message; }
         public void HideSelectionPrompt() => SelectionPromptPanel.SetActive(false);
+        public void SetActiveHumanPlayer(Player player)
+        {
+            if (player == null) return;
+            var playerLogPanel = gameUIManager?.GameLogPanel;
+            // First set active player id (so initial logs for that player show even if we enable filtering next)
+            playerLogPanel?.SetActivePlayer(player.PlayerId, player.PlayerName);
+            // If multiple human players are present, ensure the log panel is in filtering mode AFTER setting active player
+            if (humanPlayers.Count > 1)
+            {
+                playerLogPanel?.EnablePlayerSpecificFiltering();
+            }
+            gameUIManager?.GameLogManager?.SetActiveHumanPlayer(player.PlayerId, Board);
+            humanPlayer = player; // update after log manager for ordering
+        }
         #endregion
 
         #region Testing Mode API / Fast Forward

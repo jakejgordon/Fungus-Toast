@@ -54,11 +54,10 @@ namespace FungusToast.Unity
             }
             var hp = humanPlayers[currentIndex];
             // Show prompt only for players AFTER the first turn (prevents prompt while parents still activating & unnecessary first-player pause)
-            bool showPrompt = humanPlayers.Count > 1 && currentIndex > 0 && prompt != null && !isFastForwarding() && !isTesting();
+            bool showPrompt = humanPlayers.Count >= 1 && prompt != null && !isFastForwarding() && !isTesting();
             Debug.Log($"[HotseatTurnManager] Human turn index={currentIndex} player={hp.PlayerName} showPrompt={showPrompt} promptAssigned={(prompt!=null)}");
             if (showPrompt)
             {
-                // Pre-update UI to reflect upcoming player before prompt so user sees updated panels behind it
                 PreSwitchPlayerUI(hp);
                 try { prompt.Show(hp, () => InitializeUI(hp)); }
                 catch (Exception ex) { Debug.LogWarning($"[HotseatTurnManager] Prompt Show failed: {ex.Message}. Falling back to direct init."); InitializeUI(hp); }
@@ -92,6 +91,7 @@ namespace FungusToast.Unity
                 GameManager.Instance.GameUI.MoldProfileRoot.SwitchPlayer(hp, GameManager.Instance.Board.Players);
             }
             ui.MutationUIManager.SetSpendPointsButtonInteractable(true);
+            GameManager.Instance?.SetActiveHumanPlayer(hp);
         }
 
         public void HandleHumanTurnFinished(Player finished)

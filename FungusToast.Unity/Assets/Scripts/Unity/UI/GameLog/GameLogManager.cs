@@ -5,1056 +5,327 @@ using UnityEngine;
 using FungusToast.Core.Board;
 using FungusToast.Core.Players;
 using FungusToast.Core.Death;
-using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Growth;
+using FungusToast.Core.Metrics;
 
 namespace FungusToast.Unity.UI.GameLog
 {
+    /// <summary>
+    /// Player-centric log manager. Stores independent logs per human player.
+    /// Global game messages are handled elsewhere (GlobalGameLogManager).
+    /// </summary>
     public class GameLogManager : MonoBehaviour, ISimulationObserver, IGameLogManager
     {
-        private Queue<GameLogEntry> logEntries = new Queue<GameLogEntry>();
-        private const int MAX_ENTRIES = 50;
-        
-        // Round summary tracking for the human player using snapshots (like GlobalGameLogManager)
-        private PlayerSnapshot roundStartSnapshot;
-        
-        // Real-time event aggregation tracking
-        private Dictionary<string, int> currentEventCounts = new Dictionary<string, int>();
-        private Coroutine aggregationCoroutine;
-        
-        // Growth cycle consolidation tracking
-        private Dictionary<string, int> growthCycleColonizationCounts = new Dictionary<string, int>();
-        private Dictionary<string, int> growthCycleInfestationCounts = new Dictionary<string, int>();
-        private Dictionary<string, int> growthCycleReclamationCounts = new Dictionary<string, int>();
-        private Dictionary<string, int> growthCycleToxificationCounts = new Dictionary<string, int>();
-        private bool isTrackingGrowthCycle = false;
-        
-        // Track poisoning attacks against the player by ability
-        private Dictionary<string, int> playerPoisonedCounts = new Dictionary<string, int>();
-        private Coroutine playerPoisonedCoroutine;
-        
-        // Track various attacks against the player by ability
-        private Dictionary<string, int> playerInfestedCounts = new Dictionary<string, int>();
-        private Coroutine playerInfestedCoroutine;
-        
-        private Dictionary<string, int> playerColonizedCounts = new Dictionary<string, int>();
-        private Coroutine playerColonizedCoroutine;
-        
-        private Dictionary<string, int> playerReclaimedCounts = new Dictionary<string, int>();
-        private Coroutine playerReclaimedCoroutine;
-        
-        private Dictionary<string, int> playerToxifiedCounts = new Dictionary<string, int>();
-        private Coroutine playerToxifiedCoroutine;
-        
-        // Track decay phase deaths by reason for summary
-        private Dictionary<DeathReason, int> decayPhaseDeaths = new Dictionary<DeathReason, int>();
-        private bool isTrackingDecayPhase = false;
-
-        // Track Chemotactic Mycotoxins relocations during decay phase for summary
-        private int chemotacticMycotoxinsRelocations = 0;
-
-        // Track Necrophytic Bloom reclamations during decay phase for summary
-        private int necrophyticBloomReclamations = 0;
-
-        // Track resistance applications during growth phase for summary
-        private int hypersystemicResistanceApplications = 0;
-        private bool isTrackingResistanceApplications = false;
-        
-        // Track growth phase effects for summary
-        private int regenerativeHyphaeReclaims = 0;
-        private int hypersystemicDiagonalReclaims = 0;
-        private bool isTrackingGrowthPhaseEffects = false;
-        
-        // Track pre-mutation phase effects for summary
-        private int preMutationPhaseMutatorPhenotypePoints = 0;
-        private int preMutationPhaseHyperadaptiveDriftPoints = 0;
-        private int preMutationPhaseAdaptiveExpressionPoints = 0;
-        private int preMutationPhaseAnabolicInversionPoints = 0;
-        private int preMutationPhaseOntogenicRegressionFailureBonuses = 0;
-        private bool isTrackingPreMutationPhase = false;
-        
-        public event Action<GameLogEntry> OnNewLogEntry;
-        
-        private GameBoard board;
-        private int humanPlayerId = 0; // Assuming human is always player 0
-        
-        // Reference to GameLogRouter to check silent mode
-        private GameLogRouter gameLogRouter;
-
-        private int preMutationPhaseOntogenicRegressionSacrificeCells = 0;
-        private int preMutationPhaseOntogenicRegressionSacrificeLevelOffset = 0;
-
-        private struct PlayerSnapshot
+        #region Internal Models
+        private class PlayerLogEvent
         {
-            public int LivingCells;
-            public int DeadCells;
-            public int ToxinCells;
+            public string Message;
+            public GameLogCategory Category;
+            public int Round;
+            public DateTime Timestamp;
+            public bool IsClearMarker;
         }
-        
-        private PlayerSnapshot TakePlayerSnapshot(GameBoard gameBoard, int playerId)
+        private class PlayerLogSummary
         {
-            var playerCells = gameBoard.GetAllCellsOwnedBy(playerId);
-            var livingCount = playerCells.Count(c => c.IsAlive);
-            var deadCount = playerCells.Count(c => c.IsDead);
-            var toxinCount = playerCells.Count(c => c.IsToxin);
-            
-            return new PlayerSnapshot
+            public int PlayerId { get; }
+            private readonly List<PlayerLogEvent> _events = new();
+            public int LastResetRound { get; private set; } = -1;
+            public PlayerLogSummary(int id) { PlayerId = id; }
+            public void Add(PlayerLogEvent e) => _events.Add(e);
+            public IEnumerable<PlayerLogEvent> GetLast(int count) => _events.TakeLast(count);
+            public void Clear(int round)
             {
-                LivingCells = livingCount,
-                DeadCells = deadCount,
-                ToxinCells = toxinCount
-            };
+                _events.Clear();
+                LastResetRound = round;
+                _events.Add(new PlayerLogEvent
+                {
+                    Message = "Log cleared",
+                    Category = GameLogCategory.Normal,
+                    Round = round,
+                    Timestamp = DateTime.Now,
+                    IsClearMarker = true
+                });
+            }
         }
-        
+        private struct PlayerSnapshot { public int Living; public int Dead; public int Toxins; }
+        private class PreMutationTracker
+        {
+            public int MutatorPhenotype;
+            public int HyperadaptiveDrift;
+            public int AdaptiveExpression;
+            public int AnabolicInversion;
+            public int OntogenicRegressionFailure;
+            public int OntogenicSacrificeCells;
+            public int OntogenicSacrificeLevelOffset;
+            public bool HasAny => MutatorPhenotype + HyperadaptiveDrift + AdaptiveExpression + AnabolicInversion + OntogenicRegressionFailure > 0
+                                   || OntogenicSacrificeCells > 0 || OntogenicSacrificeLevelOffset != 0;
+            public void Reset()
+            {
+                MutatorPhenotype = HyperadaptiveDrift = AdaptiveExpression = AnabolicInversion = OntogenicRegressionFailure = 0;
+                OntogenicSacrificeCells = 0; OntogenicSacrificeLevelOffset = 0;
+            }
+        }
+        #endregion
+
+        #region Fields
+        public event Action<GameLogEntry> OnNewLogEntry;
+
+        private GameBoard board;
+        private GameLogRouter router;
+        private readonly Dictionary<int, PlayerLogSummary> summaries = new();
+        private readonly Dictionary<int, PlayerSnapshot> roundStartSnapshots = new();
+        private readonly Dictionary<int, PreMutationTracker> preMutationTrackers = new();
+
+        private readonly Dictionary<DeathReason, int> decayPhaseDeaths = new();
+        private bool trackDecayPhase;
+        private bool trackPreMutation;
+        private bool trackGrowthPhase;
+        private bool trackResistance;
+
+        private int chemotacticRelocations;
+        private int necrophyticReclaims;
+        private int regenerativeHyphaeReclaims;
+        private int hypersystemicDiagonalReclaims;
+        private int hypersystemicResistanceApplications;
+
+        private int activePlayerId = -1; // current UI perspective
+        private const int MAX_RETURN = 50;
+        private bool IsSilentMode => router?.IsSilentMode ?? false;
+        #endregion
+
+        #region Initialization
         public void Initialize(GameBoard gameBoard)
         {
             board = gameBoard;
-            
-            // Take initial snapshot BEFORE any spores are placed (for accurate Round 1 tracking)
-            if (board != null)
+            if (board == null) return;
+            foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
             {
-                roundStartSnapshot = TakePlayerSnapshot(board, humanPlayerId);
+                roundStartSnapshots[hp.PlayerId] = TakeSnapshot(hp.PlayerId);
+                preMutationTrackers[hp.PlayerId] = new PreMutationTracker();
             }
-            
-            // Subscribe to relevant board events for immediate feedback
             board.CellPoisoned += OnCellPoisoned;
             board.CellColonized += OnCellColonized;
             board.CellInfested += OnCellInfested;
             board.CellReclaimed += OnCellReclaimed;
             board.CellToxified += OnCellToxified;
-            
-            // Subscribe to growth cycle events for consolidation
-            board.PreGrowthCycle += OnPreGrowthCycle;
-            board.PostGrowthPhase += OnPostGrowthPhase;
+            board.PreGrowthCycle += OnPreGrowthCycle; // stubs
+            board.PostGrowthPhase += OnPostGrowthPhase; // stubs
         }
-        
-        /// <summary>
-        /// Sets the GameLogRouter reference to check for silent mode.
-        /// Should be called after GameLogRouter is created.
-        /// </summary>
-        public void SetGameLogRouter(GameLogRouter router)
-        {
-            gameLogRouter = router;
-        }
-        
-        /// <summary>
-        /// Checks if logging should be suppressed due to silent mode.
-        /// </summary>
-        private bool IsSilentMode => gameLogRouter?.IsSilentMode ?? false;
-        
+        public void SetGameLogRouter(GameLogRouter r) => router = r;
         private void OnDestroy()
         {
-            if (board != null)
-            {
-                board.CellPoisoned -= OnCellPoisoned;
-                board.CellColonized -= OnCellColonized;
-                board.CellInfested -= OnCellInfested;
-                board.CellReclaimed -= OnCellReclaimed;
-                board.CellToxified -= OnCellToxified;
-                board.PreGrowthCycle -= OnPreGrowthCycle;
-                board.PostGrowthPhase -= OnPostGrowthPhase;
-            }
-            
-            // Clean up any running aggregation coroutines
-            if (aggregationCoroutine != null)
-            {
-                StopCoroutine(aggregationCoroutine);
-                aggregationCoroutine = null;
-            }
-            
-            if (playerPoisonedCoroutine != null)
-            {
-                StopCoroutine(playerPoisonedCoroutine);
-                playerPoisonedCoroutine = null;
-            }
-            
-            if (playerInfestedCoroutine != null)
-            {
-                StopCoroutine(playerInfestedCoroutine);
-                playerInfestedCoroutine = null;
-            }
-            
-            if (playerColonizedCoroutine != null)
-            {
-                StopCoroutine(playerColonizedCoroutine);
-                playerColonizedCoroutine = null;
-            }
-            
-            if (playerReclaimedCoroutine != null)
-            {
-                StopCoroutine(playerReclaimedCoroutine);
-                playerReclaimedCoroutine = null;
-            }
-            
-            if (playerToxifiedCoroutine != null)
-            {
-                StopCoroutine(playerToxifiedCoroutine);
-                playerToxifiedCoroutine = null;
-            }
+            if (board == null) return;
+            board.CellPoisoned -= OnCellPoisoned;
+            board.CellColonized -= OnCellColonized;
+            board.CellInfested -= OnCellInfested;
+            board.CellReclaimed -= OnCellReclaimed;
+            board.CellToxified -= OnCellToxified;
+            board.PreGrowthCycle -= OnPreGrowthCycle;
+            board.PostGrowthPhase -= OnPostGrowthPhase;
         }
-        
-        public void OnRoundStart(int roundNumber)
+        #endregion
+
+        #region Round / Phase Hooks
+        public void OnRoundStart(int round)
         {
-            // For Round 1, we already took the snapshot in Initialize() before spores were placed
-            // For subsequent rounds, take a fresh snapshot at the start
-            if (roundNumber > 1 && board != null)
+            if (board == null) return;
+            foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
             {
-                roundStartSnapshot = TakePlayerSnapshot(board, humanPlayerId);
+                roundStartSnapshots[hp.PlayerId] = TakeSnapshot(hp.PlayerId);
+                if (!preMutationTrackers.ContainsKey(hp.PlayerId)) preMutationTrackers[hp.PlayerId] = new PreMutationTracker();
+                preMutationTrackers[hp.PlayerId].Reset();
             }
-            
-            // Clear event aggregation counters for the new round
-            currentEventCounts.Clear();
-            playerPoisonedCounts.Clear();
-            playerInfestedCounts.Clear();
-            playerColonizedCounts.Clear();
-            playerReclaimedCounts.Clear();
-            playerToxifiedCounts.Clear();
-            growthCycleColonizationCounts.Clear();
-            growthCycleInfestationCounts.Clear();
-            growthCycleReclamationCounts.Clear();
-            growthCycleToxificationCounts.Clear();
-            
-            // Start tracking decay phase deaths for this round
             decayPhaseDeaths.Clear();
-            isTrackingDecayPhase = true;
-            
-            // Start tracking resistance applications for this round
-            hypersystemicResistanceApplications = 0;
-            isTrackingResistanceApplications = true;
-            
-            // Start tracking growth phase effects for this round
-            regenerativeHyphaeReclaims = 0;
-            hypersystemicDiagonalReclaims = 0;
-            isTrackingGrowthPhaseEffects = true;
-
-            // Start tracking Chemotactic Mycotoxins relocations for this round
-            chemotacticMycotoxinsRelocations = 0;
-
-            // Start tracking Necrophytic Bloom reclamations for this round
-            necrophyticBloomReclamations = 0;
-
-            // Start tracking pre-mutation phase effects for this round
-            preMutationPhaseMutatorPhenotypePoints = 0;
-            preMutationPhaseHyperadaptiveDriftPoints = 0;
-            preMutationPhaseAdaptiveExpressionPoints = 0;
-            preMutationPhaseAnabolicInversionPoints = 0;
-            preMutationPhaseOntogenicRegressionFailureBonuses = 0;
-            isTrackingPreMutationPhase = true;
-
-
-            // Don't add round start messages here - that's for the global log
+            chemotacticRelocations = 0; necrophyticReclaims = 0;
+            regenerativeHyphaeReclaims = 0; hypersystemicDiagonalReclaims = 0; hypersystemicResistanceApplications = 0;
+            trackDecayPhase = true; trackPreMutation = true; trackGrowthPhase = true; trackResistance = true;
         }
-        
-        public void OnRoundComplete(int roundNumber)
+        public void OnRoundComplete(int round)
         {
-            // Show decay phase summary if we were tracking deaths (do this first, before round summary)
-            if (isTrackingDecayPhase)
+            if (board == null) return;
+            foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
             {
-                ShowDecayPhaseSummary();
-                ShowPostDecayPhaseSummary();
-                isTrackingDecayPhase = false;
+                if (!roundStartSnapshots.TryGetValue(hp.PlayerId, out var start)) continue;
+                var end = TakeSnapshot(hp.PlayerId);
+                int dl = end.Living - start.Living;
+                int dd = end.Dead - start.Dead;
+                int dt = end.Toxins - start.Toxins;
+                if (dl != 0 || dd != 0 || dt != 0)
+                {
+                    string msg = RoundSummaryFormatter.FormatRoundSummary(round, dl, dd, dt, end.Living, end.Dead, end.Toxins, 0f, true);
+                    AddPlayerEvent(hp.PlayerId, msg, GameLogCategory.Normal);
+                }
             }
-            
-            // Take snapshot at end of round and calculate deltas for the human player
-            var roundEndSnapshot = TakePlayerSnapshot(board, humanPlayerId);
-            
-            int livingCellChange = roundEndSnapshot.LivingCells - roundStartSnapshot.LivingCells;
-            int deadCellChange = roundEndSnapshot.DeadCells - roundStartSnapshot.DeadCells;
-            int toxinChange = roundEndSnapshot.ToxinCells - roundStartSnapshot.ToxinCells;
-            
-            // Only show summary if there were changes
-            if (livingCellChange != 0 || deadCellChange != 0 || toxinChange != 0)
-            {
-                // Use shared formatter for consistent messaging
-                string summary = RoundSummaryFormatter.FormatRoundSummary(
-                    roundNumber,
-                    livingCellChange,
-                    deadCellChange,
-                    toxinChange,
-                    roundEndSnapshot.LivingCells,
-                    roundEndSnapshot.DeadCells,
-                    roundEndSnapshot.ToxinCells,
-                    0f, // occupancy not needed for player-specific format
-                    isPlayerSpecific: true);
-                
-                AddEntry(new GameLogEntry(summary, GameLogCategory.Normal, null, humanPlayerId));
-            }
+            trackDecayPhase = false;
         }
-        
         public void OnPhaseStart(string phaseName)
         {
-            // Show pre-mutation phase summary when mutation phase starts
-            if (phaseName == "Mutation Phase" && isTrackingPreMutationPhase)
+            if (phaseName == "Mutation Phase" && trackPreMutation)
             {
-                ShowPreMutationPhaseSummary();
-                isTrackingPreMutationPhase = false;
+                EmitPreMutationSummaries();
+                trackPreMutation = false;
             }
         }
-        
-        private void ShowDecayPhaseSummary()
-        {
-            if (IsSilentMode) return;
-            
-            // Only show summary if at least one cell died
-            int totalDeaths = decayPhaseDeaths.Values.Sum();
-            if (totalDeaths == 0) return;
-            
-            var deathReasonParts = new List<string>();
-            
-            // Sort death reasons by count (descending) for consistent ordering
-            var sortedDeaths = decayPhaseDeaths
-                .Where(kvp => kvp.Value > 0)
-                .OrderByDescending(kvp => kvp.Value)
-                .ThenBy(kvp => kvp.Key.ToString()); // Secondary sort by name for consistency
-            
-            foreach (var kvp in sortedDeaths)
-            {
-                string reasonName = GetDeathReasonDisplayName(kvp.Key);
-                string part = kvp.Value == 1 
-                    ? $"1 cell killed by {reasonName}"
-                    : $"{kvp.Value} cells killed by {reasonName}";
-                deathReasonParts.Add(part);
-            }
-            
-            string message = $"Decay Summary: {string.Join(", ", deathReasonParts)}";
-            AddEntry(new GameLogEntry(message, GameLogCategory.Unlucky, null, humanPlayerId));
-        }
+        #endregion
 
-        private void ShowPostDecayPhaseSummary()
+        #region Logging Helpers
+        private PlayerSnapshot TakeSnapshot(int playerId)
         {
-            if (IsSilentMode) return;
-
-            var summaryParts = new List<string>();
-
-            // Chemotactic Mycotoxins relocations
-            if (chemotacticMycotoxinsRelocations > 0)
+            var cells = board.GetAllCellsOwnedBy(playerId);
+            return new PlayerSnapshot
             {
-                string part = chemotacticMycotoxinsRelocations == 1
-                    ? "Chemotactic Mycotoxins relocated 1 toxin"
-                    : $"Chemotactic Mycotoxins relocated {chemotacticMycotoxinsRelocations} toxins";
-                summaryParts.Add(part);
-            }
-
-            // Necrophytic Bloom reclamations
-            if (necrophyticBloomReclamations > 0)
-            {
-                string part = necrophyticBloomReclamations == 1
-                    ? "Necrophytic Bloom reclaimed 1 dead cell"
-                    : $"Necrophytic Bloom reclaimed {necrophyticBloomReclamations} dead cells";
-                summaryParts.Add(part);
-            }
-
-            // Only show summary if there are any positive effects to report
-            if (summaryParts.Count > 0)
-            {
-                string message = $"Post-Decay Phase Summary: {string.Join(", ", summaryParts)}";
-                AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
-            }
-        }
-        
-        private void ShowGrowthPhaseSummary()
-        {
-            if (IsSilentMode) return;
-            
-            var summaryParts = new List<string>();
-            
-            // Regenerative Hyphae reclamations
-            if (regenerativeHyphaeReclaims > 0)
-            {
-                string part = regenerativeHyphaeReclaims == 1 
-                    ? "Regenerative Hyphae reclaimed 1 dead cell"
-                    : $"Regenerative Hyphae reclaimed {regenerativeHyphaeReclaims} dead cells";
-                summaryParts.Add(part);
-            }
-            
-            // Hypersystemic Regeneration diagonal reclamations (subset of total reclamations)
-            if (hypersystemicDiagonalReclaims > 0)
-            {
-                string part = hypersystemicDiagonalReclaims == 1 
-                    ? "Hypersystemic Regeneration reclaimed 1 cell diagonally"
-                    : $"Hypersystemic Regeneration reclaimed {hypersystemicDiagonalReclaims} cells diagonally";
-                summaryParts.Add(part);
-            }
-            
-            // Hypersystemic Regeneration resistance applications
-            if (hypersystemicResistanceApplications > 0)
-            {
-                string part = hypersystemicResistanceApplications == 1 
-                    ? "Hypersystemic Regeneration granted resistance to 1 cell"
-                    : $"Hypersystemic Regeneration granted resistance to {hypersystemicResistanceApplications} cells";
-                summaryParts.Add(part);
-            }
-            
-            // Only show summary if there were any growth phase effects
-            if (summaryParts.Count > 0)
-            {
-                string message = $"Growth Phase Summary: {string.Join(", ", summaryParts)}";
-                AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
-            }
-        }
-        
-        private void ShowPreMutationPhaseSummary()
-        {
-            if (IsSilentMode) return;
-            
-            var summaryParts = new List<string>();
-            
-            if (preMutationPhaseMutatorPhenotypePoints > 0)
-            {
-                summaryParts.Add($"Mutator Phenotype: {preMutationPhaseMutatorPhenotypePoints} points");
-            }
-            
-            if (preMutationPhaseHyperadaptiveDriftPoints > 0)
-            {
-                summaryParts.Add($"Hyperadaptive Drift: {preMutationPhaseHyperadaptiveDriftPoints} points");
-            }
-            
-            if (preMutationPhaseAdaptiveExpressionPoints > 0)
-            {
-                summaryParts.Add($"Adaptive Expression: {preMutationPhaseAdaptiveExpressionPoints} points");
-            }
-            
-            if (preMutationPhaseAnabolicInversionPoints > 0)
-            {
-                summaryParts.Add($"Anabolic Inversion: {preMutationPhaseAnabolicInversionPoints} points");
-            }
-            
-            if (preMutationPhaseOntogenicRegressionFailureBonuses > 0)
-            {
-                summaryParts.Add($"Ontogenic Regression: {preMutationPhaseOntogenicRegressionFailureBonuses} points");
-            }
-            
-            if (preMutationPhaseOntogenicRegressionSacrificeCells > 0)
-            {
-                summaryParts.Add($"Ontogenic Regression Sacrifices: {preMutationPhaseOntogenicRegressionSacrificeCells} cells");
-            }
-            if (preMutationPhaseOntogenicRegressionSacrificeLevelOffset != 0)
-            {
-                summaryParts.Add($"Ontogenic Regression Offset: {preMutationPhaseOntogenicRegressionSacrificeLevelOffset} levels");
-            }
-            
-            if (summaryParts.Count > 0)
-            {
-                int totalPoints = preMutationPhaseMutatorPhenotypePoints + preMutationPhaseHyperadaptiveDriftPoints + 
-                                 preMutationPhaseAdaptiveExpressionPoints + preMutationPhaseAnabolicInversionPoints + 
-                                 preMutationPhaseOntogenicRegressionFailureBonuses;
-                
-                string message = $"Pre-Mutation Phase: Earned {totalPoints} mutation points ({string.Join(", ", summaryParts)})";
-                AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
-            }
-        }
-        
-        private string GetDeathReasonDisplayName(DeathReason reason)
-        {
-            return reason switch
-            {
-                DeathReason.Age => "Old Age",
-                DeathReason.Randomness => "Randomness",
-                DeathReason.PutrefactiveMycotoxin => "Putrefactive Mycotoxin",
-                DeathReason.SporicidalBloom => "Sporicidal Bloom",
-                DeathReason.MycotoxinPotentiation => "Mycotoxin Potentiation",
-                DeathReason.HyphalVectoring => "Hyphal Vectoring",
-                DeathReason.JettingMycelium => "Jetting Mycelium",
-                DeathReason.Infested => "Infestation",
-                DeathReason.Poisoned => "Poisoning",
-                DeathReason.PutrefactiveCascade => "Putrefactive Cascade",
-                DeathReason.PutrefactiveCascadePoison => "Putrefactive Cascade Poison",
-                DeathReason.CytolyticBurst => "Cytolytic Burst",
-                DeathReason.Unknown => "Unknown Cause",
-                _ => reason.ToString()
+                Living = cells.Count(c => c.IsAlive),
+                Dead = cells.Count(c => c.IsDead),
+                Toxins = cells.Count(c => c.IsToxin)
             };
         }
-        
-        private void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource source)
+        private PlayerLogSummary GetSummary(int playerId)
         {
-            if (IsSilentMode) return;
-            
-            if (playerId == humanPlayerId)
+            if (!summaries.TryGetValue(playerId, out var s))
             {
-                // Create ability-specific key for aggregation
-                string abilityKey = GetAbilityDisplayName(source);
-                IncrementAbilityEffect(abilityKey, "poisoned", GameLogCategory.Lucky);
+                s = new PlayerLogSummary(playerId);
+                summaries[playerId] = s;
             }
-            else if (oldOwnerId == humanPlayerId)
-            {
-                // Player's cell was poisoned - track by ability
-                string abilityKey = GetAbilityDisplayName(source);
-                IncrementPlayerPoisonedEffect(abilityKey);
-            }
+            return s;
         }
-        
-        private void OnCellColonized(int playerId, int tileId, GrowthSource source)
+        private void AddPlayerEvent(int playerId, string message, GameLogCategory cat)
         {
-            if (IsSilentMode) return;
-            
-            if (playerId == humanPlayerId)
-            {
-                // Player colonized a tile - track for offensive aggregation
-                string abilityKey = GetAbilityDisplayName(source);
-                
-                // During growth cycles, track for consolidation instead of immediate aggregation
-                if (isTrackingGrowthCycle)
-                {
-                    if (!growthCycleColonizationCounts.ContainsKey(abilityKey))
-                        growthCycleColonizationCounts[abilityKey] = 0;
-                    growthCycleColonizationCounts[abilityKey]++;
-                }
-                else
-                {
-                    // Outside of growth cycles, use normal aggregation
-                    IncrementAbilityEffect(abilityKey, "colonized", GameLogCategory.Lucky);
-                }
-            }
-            // Note: There's no "enemy colonized our tiles" since colonization is only into empty tiles
+            if (IsSilentMode || playerId < 0) return;
+            var s = GetSummary(playerId);
+            s.Add(new PlayerLogEvent { Message = message, Category = cat, Round = board?.CurrentRound ?? 0, Timestamp = DateTime.Now, IsClearMarker = false });
+            if (playerId == activePlayerId)
+                OnNewLogEntry?.Invoke(new GameLogEntry(message, cat, null, playerId));
         }
-        
-        private void OnCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource source)
+        private bool IsHuman(int playerId)
         {
-            if (IsSilentMode) return;
-            
-            if (playerId == humanPlayerId)
-            {
-                // Player infested enemy cells - track for offensive aggregation
-                string abilityKey = GetAbilityDisplayName(source);
-                
-                // During growth cycles, track for consolidation instead of immediate aggregation
-                if (isTrackingGrowthCycle)
-                {
-                    if (!growthCycleInfestationCounts.ContainsKey(abilityKey))
-                        growthCycleInfestationCounts[abilityKey] = 0;
-                    growthCycleInfestationCounts[abilityKey]++;
-                }
-                else
-                {
-                    // Outside of growth cycles, use normal aggregation
-                    IncrementAbilityEffect(abilityKey, "infested", GameLogCategory.Lucky);
-                }
-            }
-            else if (oldOwnerId == humanPlayerId)
-            {
-                // Player's cell was infested - track by ability
-                string abilityKey = GetAbilityDisplayName(source);
-                IncrementPlayerInfestedEffect(abilityKey);
-            }
+            if (board == null) return false;
+            var p = board.Players.FirstOrDefault(pl => pl.PlayerId == playerId);
+            return p != null && p.PlayerType == PlayerTypeEnum.Human;
         }
-        
-        private void OnCellReclaimed(int playerId, int tileId, GrowthSource source)
+        private string AbilityName(GrowthSource src) => src switch
         {
-            if (IsSilentMode) return;
-            
-            if (playerId == humanPlayerId)
-            {
-                // Handle growth phase effects tracking for RegenerativeHyphae
-                if (source == GrowthSource.RegenerativeHyphae)
-                {
-                    // Track regenerative hyphae reclamations for growth phase summary
-                    if (isTrackingGrowthPhaseEffects)
-                    {
-                        regenerativeHyphaeReclaims++;
-                    }
-                    
-                    // Skip growth cycle tracking - this belongs in growth phase summary
-                    return;
-                }
-                
-                // For all other reclaim sources, use normal growth cycle or immediate tracking
-                string abilityKey = GetAbilityDisplayName(source);
-                
-                if (isTrackingGrowthCycle)
-                {
-                    // During growth cycles, track for consolidation instead of immediate aggregation
-                    if (!growthCycleReclamationCounts.ContainsKey(abilityKey))
-                        growthCycleReclamationCounts[abilityKey] = 0;
-                    growthCycleReclamationCounts[abilityKey]++;
-                }
-                else
-                {
-                    // Outside of growth cycles, use normal aggregation
-                    IncrementAbilityEffect(abilityKey, "reclaimed", GameLogCategory.Lucky);
-                }
-            }
-            // Note: There's no "enemy reclaimed our dead cells" since reclamation is only for your own cells
-        }
-        
-        private void OnCellToxified(int playerId, int tileId, GrowthSource source)
-        {
-            if (IsSilentMode) return;
-            
-            if (playerId == humanPlayerId)
-            {
-                // Player toxified empty/dead tiles - track for offensive aggregation
-                string abilityKey = GetAbilityDisplayName(source);
-                
-                // During growth cycles, track for consolidation instead of immediate aggregation
-                if (isTrackingGrowthCycle)
-                {
-                    if (!growthCycleToxificationCounts.ContainsKey(abilityKey))
-                        growthCycleToxificationCounts[abilityKey] = 0;
-                    growthCycleToxificationCounts[abilityKey]++;
-                }
-                else
-                {
-                    // Outside of growth cycles, use normal aggregation
-                    IncrementAbilityEffect(abilityKey, "toxified", GameLogCategory.Lucky);
-                }
-            }
-            // Note: There's no "enemy toxified our tiles" since toxification only affects empty/dead tiles
-        }
-        
-        private void OnPreGrowthCycle()
-        {
-            if (IsSilentMode) return;
-            
-            // If we were already tracking, show the previous cycle's results
-            if (isTrackingGrowthCycle)
-            {
-                ShowConsolidatedGrowthCycleSummary();
-            }
-            
-            // Start tracking growth cycle events for this growth cycle
-            isTrackingGrowthCycle = true;
-            growthCycleColonizationCounts.Clear();
-            growthCycleInfestationCounts.Clear();
-            growthCycleReclamationCounts.Clear();
-            growthCycleToxificationCounts.Clear();
-        }
-        
-        private void OnPostGrowthPhase()
-        {
-            if (IsSilentMode) return;
-            
-            // Show growth phase summary with regenerative hyphae and hypersystemic regeneration effects
-            if (isTrackingGrowthPhaseEffects)
-            {
-                ShowGrowthPhaseSummary();
-                regenerativeHyphaeReclaims = 0;
-                hypersystemicDiagonalReclaims = 0;
-                isTrackingGrowthPhaseEffects = false;
-            }
-            
-            // Show resistance applications summary separately (kept for compatibility)
-            if (isTrackingResistanceApplications)
-            {
-                // Note: resistance applications are now included in growth phase summary above
-                // but we keep this for backwards compatibility in case other systems use it
-                hypersystemicResistanceApplications = 0;
-                isTrackingResistanceApplications = false;
-            }
-            
-            // Show final cycle's consolidated growth cycle summary after growth phase completes
-            if (isTrackingGrowthCycle)
-            {
-                ShowConsolidatedGrowthCycleSummary();
-                growthCycleColonizationCounts.Clear();
-                growthCycleInfestationCounts.Clear();
-                growthCycleReclamationCounts.Clear();
-                growthCycleToxificationCounts.Clear();
-            }
-            isTrackingGrowthCycle = false;
-        }
-        
-        private void ShowConsolidatedGrowthCycleSummary()
-        {
-            if (IsSilentMode) return;
-            
-            var allActivities = new List<(string action, Dictionary<string, int> counts)>
-            {
-                ("Colonized", growthCycleColonizationCounts),
-                ("Killed", growthCycleInfestationCounts),
-                ("Reclaimed", growthCycleReclamationCounts),
-                ("Toxified", growthCycleToxificationCounts)
-            };
+            GrowthSource.JettingMycelium => "Jetting Mycelium",
+            GrowthSource.CytolyticBurst => "Cytolytic Burst",
+            GrowthSource.SporicidalBloom => "Sporicidal Bloom",
+            GrowthSource.MycotoxinTracer => "Mycotoxin Tracer",
+            GrowthSource.PutrefactiveCascade => "Putrefactive Cascade",
+            GrowthSource.HyphalVectoring => "Hyphal Vectoring",
+            GrowthSource.MimeticResilience => "Mimetic Resilience",
+            GrowthSource.SurgicalInoculation => "Surgical Inoculation",
+            GrowthSource.Ballistospore => "Ballistospore Discharge",
+            GrowthSource.HyphalOutgrowth => "Hyphal Outgrowth",
+            GrowthSource.TendrilOutgrowth => "Tendril Outgrowth",
+            GrowthSource.RegenerativeHyphae => "Regenerative Hyphae",
+            GrowthSource.CornerConduit => "Corner Conduit",
+            GrowthSource.AggressotropicConduit => "Aggressotropic Conduit",
+            GrowthSource.Manual => "Manual placement",
+            _ => src.ToString()
+        };
+        #endregion
 
-            var summaries = new List<string>();
+        #region Pre-Mutation Summary
+        private void EmitPreMutationSummaries()
+        {
+            if (board == null) return;
+            foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
+            {
+                if (!preMutationTrackers.TryGetValue(hp.PlayerId, out var t) || !t.HasAny) continue;
+                var parts = new List<string>();
+                if (t.MutatorPhenotype > 0) parts.Add($"Mutator Phenotype: {t.MutatorPhenotype}");
+                if (t.HyperadaptiveDrift > 0) parts.Add($"Hyperadaptive Drift: {t.HyperadaptiveDrift}");
+                if (t.AdaptiveExpression > 0) parts.Add($"Adaptive Expression: {t.AdaptiveExpression}");
+                if (t.AnabolicInversion > 0) parts.Add($"Anabolic Inversion: {t.AnabolicInversion}");
+                if (t.OntogenicRegressionFailure > 0) parts.Add($"Ontogenic Regression: {t.OntogenicRegressionFailure}");
+                if (t.OntogenicSacrificeCells > 0) parts.Add($"OR Sacrifices: {t.OntogenicSacrificeCells} cells");
+                if (t.OntogenicSacrificeLevelOffset != 0) parts.Add($"OR Level Offset: {t.OntogenicSacrificeLevelOffset}");
+                int total = t.MutatorPhenotype + t.HyperadaptiveDrift + t.AdaptiveExpression + t.AnabolicInversion + t.OntogenicRegressionFailure;
+                string msg = $"Pre-Mutation Phase: Earned {total} mutation points ({string.Join(", ", parts)})";
+                AddPlayerEvent(hp.PlayerId, msg, GameLogCategory.Lucky);
+            }
+        }
+        #endregion
 
-            foreach (var (action, counts) in allActivities)
-            {
-                var total = counts.Values.Sum();
-                if (total == 0) continue;
-
-                var breakdownParts = counts
-                    .Where(kvp => kvp.Value > 0)
-                    .OrderByDescending(kvp => kvp.Value)
-                    .Select(kvp => $"{kvp.Value} from {kvp.Key}")
-                    .ToList();
-
-                string breakdown = string.Join(", ", breakdownParts);
-                string activity = total == 1
-                    ? $"{action.ToLower()} 1 {GetTargetType(action)}: {breakdown}"
-                    : $"{action.ToLower()} {total} {GetTargetTypePlural(action)}: {breakdown}";
-
-                summaries.Add(activity);
-            }
-
-            if (summaries.Count > 0)
-            {
-                string message = $"Growth Cycle #{board.CurrentGrowthCycle} - {string.Join(", ", summaries)}";
-                AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, humanPlayerId));
-            }
-        }
-
-        private string GetTargetType(string action)
-        {
-            return action switch
-            {
-                "Colonized" => "cell",
-                "Killed" => "enemy cell",
-                "Reclaimed" => "dead cell",
-                "Toxified" => "tile",
-                _ => "target"
-            };
-        }
-
-        private string GetTargetTypePlural(string action)
-        {
-            return action switch
-            {
-                "Colonized" => "cells",
-                "Killed" => "enemy cells",
-                "Reclaimed" => "dead cells",
-                "Toxified" => "tiles",
-                _ => "targets"
-            };
-        }
-        
-        private void IncrementPlayerPoisonedEffect(string abilityKey)
-        {
-            if (!playerPoisonedCounts.ContainsKey(abilityKey))
-                playerPoisonedCounts[abilityKey] = 0;
-            playerPoisonedCounts[abilityKey]++;
-            
-            // Stop any existing player poisoned coroutine and start a new one
-            if (playerPoisonedCoroutine != null)
-                StopCoroutine(playerPoisonedCoroutine);
-            playerPoisonedCoroutine = StartCoroutine(ShowAggregatedPlayerPoisonedAfterDelay());
-        }
-        
-        private System.Collections.IEnumerator ShowAggregatedPlayerPoisonedAfterDelay()
-        {
-            // Wait a short time to allow multiple poisoning events to aggregate
-            yield return new WaitForSeconds(0.5f);
-            
-            // Check silent mode before showing the message
-            if (IsSilentMode)
-            {
-                // Reset counters but don't show message
-                playerPoisonedCounts.Clear();
-                playerPoisonedCoroutine = null;
-                yield break;
-            }
-            
-            // Calculate total poisoned cells and build breakdown message
-            int totalPoisoned = playerPoisonedCounts.Values.Sum();
-            if (totalPoisoned > 0)
-            {
-                var breakdownParts = playerPoisonedCounts
-                    .Where(kvp => kvp.Value > 0)
-                    .Select(kvp => $"{kvp.Value} by {kvp.Key}")
-                    .ToList();
-                
-                string breakdown = string.Join(", ", breakdownParts);
-                string message = totalPoisoned == 1 
-                    ? $"1 of your cells was poisoned: {breakdown}"
-                    : $"{totalPoisoned} of your cells were poisoned: {breakdown}";
-                
-                AddEntry(new GameLogEntry(message, GameLogCategory.Unlucky, null, humanPlayerId));
-                
-                // Reset the counters
-                playerPoisonedCounts.Clear();
-            }
-            
-            playerPoisonedCoroutine = null;
-        }
-        
-        private void IncrementPlayerInfestedEffect(string abilityKey)
-        {
-            if (!playerInfestedCounts.ContainsKey(abilityKey))
-                playerInfestedCounts[abilityKey] = 0;
-            playerInfestedCounts[abilityKey]++;
-            
-            // Stop any existing player infested coroutine and start a new one
-            if (playerInfestedCoroutine != null)
-                StopCoroutine(playerInfestedCoroutine);
-            playerInfestedCoroutine = StartCoroutine(ShowAggregatedPlayerInfestedAfterDelay());
-        }
-        
-        private System.Collections.IEnumerator ShowAggregatedPlayerInfestedAfterDelay()
-        {
-            // Wait a short time to allow multiple infestation events to aggregate
-            yield return new WaitForSeconds(0.5f);
-            
-            // Check silent mode before showing the message
-            if (IsSilentMode)
-            {
-                // Reset counters but don't show message
-                playerInfestedCounts.Clear();
-                playerInfestedCoroutine = null;
-                yield break;
-            }
-            
-            // Calculate total infested cells and build breakdown message
-            int totalInfested = playerInfestedCounts.Values.Sum();
-            if (totalInfested > 0)
-            {
-                var breakdownParts = playerInfestedCounts
-                    .Where(kvp => kvp.Value > 0)
-                    .Select(kvp => $"{kvp.Value} by {kvp.Key}")
-                    .ToList();
-                
-                string breakdown = string.Join(", ", breakdownParts);
-                string message = totalInfested == 1 
-                    ? $"1 of your cells was killed: {breakdown}"
-                    : $"{totalInfested} of your cells were killed: {breakdown}";
-                
-                AddEntry(new GameLogEntry(message, GameLogCategory.Unlucky, null, humanPlayerId));
-                
-                // Reset the counters
-                playerInfestedCounts.Clear();
-            }
-            
-            playerInfestedCoroutine = null;
-        }
-        
-        private void IncrementPlayerToxifiedEffect(string abilityKey)
-        {
-            if (!playerToxifiedCounts.ContainsKey(abilityKey))
-                playerToxifiedCounts[abilityKey] = 0;
-            playerToxifiedCounts[abilityKey]++;
-            
-            // Stop any existing player toxified coroutine and start a new one
-            if (playerToxifiedCoroutine != null)
-                StopCoroutine(playerToxifiedCoroutine);
-            playerToxifiedCoroutine = StartCoroutine(ShowAggregatedPlayerToxifiedAfterDelay());
-        }
-        
-        private System.Collections.IEnumerator ShowAggregatedPlayerToxifiedAfterDelay()
-        {
-            // Wait a short time to allow multiple toxification events to aggregate
-            yield return new WaitForSeconds(0.5f);
-            
-            // Check silent mode before showing the message
-            if (IsSilentMode)
-            {
-                // Reset counters but don't show message
-                playerToxifiedCounts.Clear();
-                playerToxifiedCoroutine = null;
-                yield break;
-            }
-            
-            // Calculate total toxified cells and build breakdown message
-            int totalToxified = playerToxifiedCounts.Values.Sum();
-            if (totalToxified > 0)
-            {
-                var breakdownParts = playerToxifiedCounts
-                    .Where(kvp => kvp.Value > 0)
-                    .Select(kvp => $"{kvp.Value} by {kvp.Key}")
-                    .ToList();
-                
-                string breakdown = string.Join(", ", breakdownParts);
-                string message = totalToxified == 1 
-                    ? $"1 of your cells was toxified: {breakdown}"
-                    : $"{totalToxified} of your cells were toxified: {breakdown}";
-                
-                AddEntry(new GameLogEntry(message, GameLogCategory.Unlucky, null, humanPlayerId));
-                
-                // Reset the counters
-                playerToxifiedCounts.Clear();
-            }
-            
-            playerToxifiedCoroutine = null;
-        }
-        
-        private string GetAbilityDisplayName(GrowthSource source)
-        {
-            return source switch
-            {
-                GrowthSource.JettingMycelium => "Jetting Mycelium",
-                GrowthSource.CytolyticBurst => "Cytolytic Burst",
-                GrowthSource.SporicidalBloom => "Sporicidal Bloom",
-                GrowthSource.MycotoxinTracer => "Mycotoxin Tracer",
-                GrowthSource.PutrefactiveCascade => "Putrefactive Cascade",
-                GrowthSource.HyphalVectoring => "Hyphal Vectoring",
-                GrowthSource.MimeticResilience => "Mimetic Resilience",
-                GrowthSource.SurgicalInoculation => "Surgical Inoculation",
-                GrowthSource.Ballistospore => "Ballistospore Discharge",
-                GrowthSource.HyphalOutgrowth => "Hyphal Outgrowth",
-                GrowthSource.TendrilOutgrowth => "Tendril Outgrowth",
-                GrowthSource.RegenerativeHyphae => "Regenerative Hyphae",
-                GrowthSource.CornerConduit => "Corner Conduit",
-                GrowthSource.AggressotropicConduit => "Aggressotropic Conduit",
-                GrowthSource.Manual => "Manual placement",
-                _ => source.ToString()
-            };
-        }
-        
-        private void IncrementAbilityEffect(string abilityKey, string effectType, GameLogCategory category)
-        {
-            string eventKey = $"{abilityKey}_{effectType}";
-
-
-
-            
-            if (!currentEventCounts.ContainsKey(eventKey))
-                currentEventCounts[eventKey] = 0;
-            currentEventCounts[eventKey]++;
-            
-            // Stop any existing aggregation coroutine and start a new one
-            if (aggregationCoroutine != null)
-                StopCoroutine(aggregationCoroutine);
-            aggregationCoroutine = StartCoroutine(ShowAggregatedAbilityEffectAfterDelay(abilityKey, effectType, category));
-        }
-        
-        private System.Collections.IEnumerator ShowAggregatedAbilityEffectAfterDelay(string abilityKey, string effectType, GameLogCategory category)
-        {
-            // Wait a short time to allow multiple events to aggregate
-            yield return new WaitForSeconds(0.5f);
-            
-            string eventKey = $"{abilityKey}_{effectType}";
-            
-            // Check silent mode before showing the message
-            if (IsSilentMode)
-            {
-                // Reset counters but don't show message
-                if (currentEventCounts.ContainsKey(eventKey))
-                {
-                    currentEventCounts[eventKey] = 0;
-                }
-                aggregationCoroutine = null;
-                yield break;
-            }
-            
-            // Show the aggregated message
-            if (currentEventCounts.TryGetValue(eventKey, out int count) && count > 0)
-            {
-                string message = effectType switch
-                {
-                    "poisoned" => count == 1 ? $"{abilityKey} poisoned 1 enemy cell" : $"{abilityKey} poisoned {count} enemy cells",
-                    "colonized" => count == 1 ? $"{abilityKey} colonized 1 empty tile" : $"{abilityKey} colonized {count} empty tiles",
-                    "infested" => count == 1 ? $"{abilityKey} killed 1 enemy cell" : $"{abilityKey} killed {count} enemy cells",
-                    "reclaimed" => count == 1 ? $"{abilityKey} reclaimed 1 dead cell" : $"{abilityKey} reclaimed {count} dead cells",
-                    "toxified" => count == 1 ? $"{abilityKey} toxified 1 empty tile" : $"{abilityKey} toxified {count} empty tiles",
-                    _ => $"{abilityKey}: unknown effect {effectType} ({count})"
-                };
-                
-                // Defensive validation to prevent malformed messages
-                if (string.IsNullOrEmpty(message) || message.Contains("colonized") && message.Contains("reclaim"))
-                {
-                    UnityEngine.Debug.LogError($"Malformed message detected for {abilityKey} with effect type '{effectType}' and count {count}. Generated message: '{message}'");
-                    message = $"{abilityKey}: {effectType} {count} tiles/cells"; // Fallback message
-                }
-                
-                AddEntry(new GameLogEntry(message, category, null, humanPlayerId));
-                
-                // Reset the counter for this event
-                currentEventCounts[eventKey] = 0;
-            }
-            
-            aggregationCoroutine = null;
-        }
-        
-        private void AddEntry(GameLogEntry entry)
-        {
-            // Suppress logging if in silent mode
-            if (IsSilentMode) return;
-            
-            logEntries.Enqueue(entry);
-            
-            // Remove old entries if over limit
-            while (logEntries.Count > MAX_ENTRIES)
-            {
-                logEntries.Dequeue();
-            }
-            
-            OnNewLogEntry?.Invoke(entry);
-        }
-        
+        #region IGameLogManager (UI consumption)
         public IEnumerable<GameLogEntry> GetRecentEntries(int count = 20)
         {
-            return logEntries.TakeLast(count);
+            if (activePlayerId < 0) return Enumerable.Empty<GameLogEntry>();
+            if (!summaries.TryGetValue(activePlayerId, out var s)) return Enumerable.Empty<GameLogEntry>();
+            return s.GetLast(Math.Min(count, MAX_RETURN))
+                .Select(e => new GameLogEntry(e.Message, e.Category, null, activePlayerId));
         }
-        
         public void ClearLog()
         {
-            logEntries.Clear();
-            AddEntry(new GameLogEntry("Log cleared", GameLogCategory.Normal));
+            if (activePlayerId < 0) return;
+            int round = board?.CurrentRound ?? 0;
+            GetSummary(activePlayerId).Clear(round);
+            OnNewLogEntry?.Invoke(new GameLogEntry("Log cleared", GameLogCategory.Normal, null, activePlayerId));
         }
-        
-        // Helper methods for adding specific types of log entries
-        public void AddNormalEntry(string message, int? playerId = null)
+        public void AddNormalEntry(string message, int? playerId = null) => AddPlayerEvent(playerId ?? activePlayerId, message, GameLogCategory.Normal);
+        public void AddLuckyEntry(string message, int? playerId = null) => AddPlayerEvent(playerId ?? activePlayerId, message, GameLogCategory.Lucky);
+        public void AddUnluckyEntry(string message, int? playerId = null) => AddPlayerEvent(playerId ?? activePlayerId, message, GameLogCategory.Unlucky);
+        #endregion
+
+        #region Perspective Switch
+        public void SetActiveHumanPlayer(int newHumanPlayerId, GameBoard currentBoard)
         {
-            AddEntry(new GameLogEntry(message, GameLogCategory.Normal, null, playerId));
+            if (newHumanPlayerId == activePlayerId) return;
+            activePlayerId = newHumanPlayerId;
+            if (currentBoard != null && !roundStartSnapshots.ContainsKey(activePlayerId))
+                roundStartSnapshots[activePlayerId] = TakeSnapshot(activePlayerId);
+            Debug.Log($"[GameLogManager] Active player context switched -> PlayerId={activePlayerId}");
         }
-        
-        public void AddLuckyEntry(string message, int? playerId = null)
+        #endregion
+
+        #region Board Event Handlers (single-event logging)
+        private void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource src)
         {
-            AddEntry(new GameLogEntry(message, GameLogCategory.Lucky, null, playerId));
+            if (IsSilentMode) return;
+            if (IsHuman(playerId)) AddPlayerEvent(playerId, $"{AbilityName(src)} poisoned a cell", GameLogCategory.Lucky);
+            else if (IsHuman(oldOwnerId)) AddPlayerEvent(oldOwnerId, $"Cell poisoned by {AbilityName(src)}", GameLogCategory.Unlucky);
         }
-        
-        public void AddUnluckyEntry(string message, int? playerId = null)
+        private void OnCellColonized(int playerId, int tileId, GrowthSource src)
+        { if (!IsSilentMode && IsHuman(playerId)) AddPlayerEvent(playerId, $"{AbilityName(src)} colonized a tile", GameLogCategory.Lucky); }
+        private void OnCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource src)
         {
-            AddEntry(new GameLogEntry(message, GameLogCategory.Unlucky, null, playerId));
+            if (IsSilentMode) return;
+            if (IsHuman(playerId)) AddPlayerEvent(playerId, $"{AbilityName(src)} killed a cell", GameLogCategory.Lucky);
+            if (IsHuman(oldOwnerId)) AddPlayerEvent(oldOwnerId, $"Cell killed by {AbilityName(src)}", GameLogCategory.Unlucky);
         }
-        
-        // Implement ISimulationObserver methods we care about
-        public void RecordMutationPointIncome(int playerId, int totalMutationPoints)
+        private void OnCellReclaimed(int playerId, int tileId, GrowthSource src)
         {
-            // Note: This method receives the total points (base + bonuses) from Player.AssignMutationPoints
-            // Since bonuses are reported separately via RecordAdaptiveExpressionBonus, RecordAnabolicInversionBonus, etc.
-            // we don't show the total here to avoid confusion.
-            
-            // If we wanted to show base income only, we'd need a separate method since this gets total.
-            // For now, we rely on the bonus-specific messages and round summaries to show point changes.
-            
-            // Uncomment below if you want to show total mutation points earned each round:
-            // if (playerId == humanPlayerId && totalMutationPoints > 0)
-            // {
-            //     AddNormalEntry($"Earned {totalMutationPoints} mutation points", playerId);
-            // }
+            if (IsSilentMode) return;
+            if (!IsHuman(playerId)) return;
+            if (src == GrowthSource.RegenerativeHyphae) { regenerativeHyphaeReclaims++; return; }
+            AddPlayerEvent(playerId, $"{AbilityName(src)} reclaimed a cell", GameLogCategory.Lucky);
         }
-        
-        // Enhanced ISimulationObserver methods for interesting events
-        public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned) 
-        {
-            if (isTrackingPreMutationPhase && playerId == humanPlayerId)
-            {
-                preMutationPhaseMutatorPhenotypePoints += freePointsEarned;
-            }
-        }
-        
-        public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned) 
-        {
-            if (isTrackingPreMutationPhase && playerId == humanPlayerId)
-            {
-                preMutationPhaseHyperadaptiveDriftPoints += freePointsEarned;
-            }
-        }
-        
-        public void RecordAdaptiveExpressionBonus(int playerId, int bonus) 
-        {
-            if (isTrackingPreMutationPhase && playerId == humanPlayerId)
-            {
-                preMutationPhaseAdaptiveExpressionPoints += bonus;
-            }
-        }
-        
-        public void RecordAnabolicInversionBonus(int playerId, int bonus) 
-        {
-            if (isTrackingPreMutationPhase && playerId == humanPlayerId)
-            {
-                preMutationPhaseAnabolicInversionPoints += bonus;
-            }
-        }
-        
-        public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints)
-        {
-            if (isTrackingPreMutationPhase && playerId == humanPlayerId)
-            {
-                preMutationPhaseOntogenicRegressionFailureBonuses += bonusPoints;
-            }
-        }
-        
-        // Stub implementations for other ISimulationObserver methods that we don't need detailed logging for
+        private void OnCellToxified(int playerId, int tileId, GrowthSource src)
+        { if (!IsSilentMode && IsHuman(playerId)) AddPlayerEvent(playerId, $"{AbilityName(src)} toxified a tile", GameLogCategory.Lucky); }
+        private void OnPreGrowthCycle() { }
+        private void OnPostGrowthPhase() { }
+        #endregion
+
+        #region ISimulationObserver (tracked)
+        public void RecordMutationPointIncome(int playerId, int totalMutationPoints) { }
+        public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned) { if (trackPreMutation && IsHuman(playerId)) preMutationTrackers[playerId].MutatorPhenotype += freePointsEarned; }
+        public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned) { if (trackPreMutation && IsHuman(playerId)) preMutationTrackers[playerId].HyperadaptiveDrift += freePointsEarned; }
+        public void RecordAdaptiveExpressionBonus(int playerId, int bonus) { if (trackPreMutation && IsHuman(playerId)) preMutationTrackers[playerId].AdaptiveExpression += bonus; }
+        public void RecordAnabolicInversionBonus(int playerId, int bonus) { if (trackPreMutation && IsHuman(playerId)) preMutationTrackers[playerId].AnabolicInversion += bonus; }
+        public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints) { if (trackPreMutation && IsHuman(playerId)) preMutationTrackers[playerId].OntogenicRegressionFailure += bonusPoints; }
+        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1) { if (trackDecayPhase && IsHuman(playerId)) { if (!decayPhaseDeaths.ContainsKey(reason)) decayPhaseDeaths[reason] = 0; decayPhaseDeaths[reason] += deathCount; } }
+        public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints) { if (catabolizedMutationPoints > 0 && IsHuman(playerId)) AddPlayerEvent(playerId, catabolizedMutationPoints == 1 ? "Earned 1 mutation point from Mycotoxin Catabolism" : $"Earned {catabolizedMutationPoints} mutation points from Mycotoxin Catabolism", GameLogCategory.Lucky); }
+        public void RecordHypersystemicRegenerationResistance(int playerId) { if (trackResistance && IsHuman(playerId)) hypersystemicResistanceApplications++; }
+        public void RecordHypersystemicDiagonalReclaim(int playerId) { if (trackGrowthPhase && IsHuman(playerId)) hypersystemicDiagonalReclaims++; }
+        public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName) { if (IsHuman(playerId) && !string.IsNullOrEmpty(mutationName)) AddPlayerEvent(playerId, $"Mutator Phenotype upgraded {mutationName}", GameLogCategory.Lucky); }
+        public void RecordSpecificMutationUpgrade(int playerId, string mutationName) => RecordMutatorPhenotypeUpgrade(playerId, mutationName);
+        public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations) { if (IsHuman(playerId) && relocations > 0) chemotacticRelocations += relocations; }
+        public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained)
+        { if (IsHuman(playerId) && sourceLevelsLost > 0 && targetLevelsGained > 0) AddPlayerEvent(playerId, $"Ontogenic Regression: {sourceMutationName} -> {targetMutationName}", GameLogCategory.Lucky); }
+        public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset)
+        { if (trackPreMutation && IsHuman(playerId)) { if (cellsKilled > 0) preMutationTrackers[playerId].OntogenicSacrificeCells += cellsKilled; if (levelsOffset != 0) preMutationTrackers[playerId].OntogenicSacrificeLevelOffset += levelsOffset; } }
+        #endregion
+
+        #region ISimulationObserver (unused stubs)
         public void RecordCreepingMoldMove(int playerId) { }
         public void RecordCreepingMoldToxinJump(int playerId) { }
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }
@@ -1062,20 +333,10 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordTendrilGrowth(int playerId, DiagonalDirection value) { }
         public void RecordNecrotoxicConversionReclaim(int playerId, int necrotoxicConversions) { }
         public void RecordCatabolicRebirthResurrection(int playerId, int resurrectedCells) { }
-        public void RecordRegenerativeHyphaeReclaim(int playerId) 
-        {
-            // Regenerative hyphae reclaims are now tracked via GameBoard.CellReclaimed event in OnCellReclaimed method
-            // This method is kept for compatibility with ISimulationObserver but no longer used
-        }
+        public void RecordRegenerativeHyphaeReclaim(int playerId) { }
         public void ReportSporicidalSporeDrop(int playerId, int count) { }
         public void ReportNecrosporeDrop(int playerId, int count) { }
-        public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims)
-        {
-            if (playerId == humanPlayerId && successfulReclaims > 0)
-            {
-                necrophyticBloomReclamations += successfulReclaims;
-            }
-        }
+        public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims) { if (IsHuman(playerId) && successfulReclaims > 0) necrophyticReclaims += successfulReclaims; }
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
         public void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade) { }
         public void RecordBankedPoints(int playerId, int pointsBanked) { }
@@ -1088,11 +349,13 @@ namespace FungusToast.Unity.UI.GameLog
         public void ReportJettingMyceliumColonized(int playerId, int colonized) { }
         public void ReportJettingMyceliumToxified(int playerId, int toxified) { }
         public void ReportJettingMyceliumPoisoned(int playerId, int poisoned) { }
+        public void ReportJettingMyceliumInfested(int playerId, int infested) { }
         public void ReportHyphalVectoringReclaimed(int playerId, int reclaimed) { }
         public void ReportHyphalVectoringCatabolicGrowth(int playerId, int catabolicGrowth) { }
         public void ReportHyphalVectoringAlreadyOwned(int playerId, int alreadyOwned) { }
         public void ReportHyphalVectoringColonized(int playerId, int colonized) { }
         public void ReportHyphalVectoringInvalid(int playerId, int invalid) { }
+        public void ReportHyphalVectoringInfested(int playerId, int infested) { }
         public void RecordStandardGrowth(int playerId) { }
         public void RecordNeutralizingMantleEffect(int playerId, int toxinsNeutralized) { }
         public void RecordBastionedCells(int playerId, int count) { }
@@ -1113,102 +376,7 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordMimeticResilienceDrops(int playerId, int drops) { }
         public void RecordCytolyticBurstToxins(int playerId, int toxinsCreated) { }
         public void RecordCytolyticBurstKills(int playerId, int cellsKilled) { }
-
-        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
-        {
-            // Only track player deaths during decay phase for summary
-            if (isTrackingDecayPhase && playerId == humanPlayerId)
-            {
-                if (!decayPhaseDeaths.ContainsKey(reason))
-                    decayPhaseDeaths[reason] = 0;
-                decayPhaseDeaths[reason] += deathCount;
-            }
-        }
-
-        public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints)
-        {
-            if (playerId == humanPlayerId && catabolizedMutationPoints > 0)
-            {
-                string message = catabolizedMutationPoints == 1
-                    ? $"Earned 1 free mutation point from Mycotoxin Catabolism (catabolized {toxinsCatabolized} toxin{(toxinsCatabolized == 1 ? "" : "s")})!"
-                    : $"Earned {catabolizedMutationPoints} free mutation points from Mycotoxin Catabolism (catabolized {toxinsCatabolized} toxin{(toxinsCatabolized == 1 ? "" : "s")})!";
-                AddLuckyEntry(message, playerId);
-            }
-        }
-
-        public void RecordHypersystemicRegenerationResistance(int playerId) 
-        {
-            // Only track resistance applications during growth phase for batching summary
-            if (isTrackingResistanceApplications && playerId == humanPlayerId)
-            {
-                hypersystemicResistanceApplications++;
-            }
-        }
-        public void RecordHypersystemicDiagonalReclaim(int playerId) 
-        {
-            // Track diagonal reclamations during growth phase for batching summary
-            if (isTrackingGrowthPhaseEffects && playerId == humanPlayerId)
-            {
-                hypersystemicDiagonalReclaims++;
-            }
-        }
-        
-        public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName)
-        {
-            if (playerId == humanPlayerId && !string.IsNullOrEmpty(mutationName))
-            {
-                AddLuckyEntry($"Mutator Phenotype automatically upgraded {mutationName}!", playerId);
-            }
-        }
-        
-        public void RecordSpecificMutationUpgrade(int playerId, string mutationName)
-        {
-            // This is a more generic version - we'll route it to the same implementation
-            RecordMutatorPhenotypeUpgrade(playerId, mutationName);
-        }
-        
-        public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations)
-        {
-            if (playerId == humanPlayerId && relocations > 0)
-            {
-                chemotacticMycotoxinsRelocations += relocations;
-            }
-        }
-
-        public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained)
-        {
-            if (playerId == humanPlayerId && sourceLevelsLost > 0 && targetLevelsGained > 0)
-            {
-                string message = $"Ontogenic Regression: {sourceMutationName} lost {sourceLevelsLost} level{(sourceLevelsLost > 1 ? "s" : "")}, {targetMutationName} gained {targetLevelsGained} level{(targetLevelsGained > 1 ? "s" : "")}";
-                AddLuckyEntry(message, playerId);
-            }
-        }
-
-        public void ReportJettingMyceliumInfested(int playerId, int infested)
-        {
-
-        }
-
-        public void ReportHyphalVectoringInfested(int playerId, int infested)
-        {
-
-        }
-
-        public void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected)
-        {
-
-        }
-        
-        public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset)
-        {
-            if (IsSilentMode) return;
-            if (isTrackingPreMutationPhase && playerId == humanPlayerId)
-            {
-                if (cellsKilled > 0)
-                    preMutationPhaseOntogenicRegressionSacrificeCells += cellsKilled;
-                if (levelsOffset != 0)
-                    preMutationPhaseOntogenicRegressionSacrificeLevelOffset += levelsOffset;
-            }
-        }
+        public void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected) { }
+        #endregion
     }
 }

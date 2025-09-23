@@ -1,14 +1,11 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
 namespace FungusToast.Unity.UI.GameLog
 {
-    /// <summary>
-    /// Generic, reusable UI panel for displaying game log entries.
-    /// Can be used with any log manager that implements IGameLogManager interface.
-    /// </summary>
     public class UI_GameLogPanel : MonoBehaviour
     {
         [Header("UI References")]
@@ -17,60 +14,81 @@ namespace FungusToast.Unity.UI.GameLog
         [SerializeField] private UI_GameLogEntry entryPrefab;
         [SerializeField] private Button clearButton;
         [SerializeField] private TextMeshProUGUI headerText;
-        
+
         [Header("Settings")]
         [SerializeField] private int maxVisibleEntries = 30;
         [SerializeField] private bool autoScrollToBottom = true;
         [SerializeField] private string defaultHeaderText = "Game Log";
-        
-        private List<UI_GameLogEntry> entryUIs = new List<UI_GameLogEntry>();
+        [SerializeField] private bool isPlayerSpecificPanel = false; // set true for per-player log (can be forced at runtime)
+
+        private readonly List<UI_GameLogEntry> entryUIs = new();
         private IGameLogManager logManager;
-        
+        private int activePlayerId = -1; // for player-specific filtering
+
         private void Awake()
         {
             if (clearButton != null)
                 clearButton.onClick.AddListener(ClearLog);
-                
+
             if (headerText != null && string.IsNullOrEmpty(headerText.text))
                 headerText.text = defaultHeaderText;
         }
-        
-        /// <summary>
-        /// Initialize with any log manager that implements IGameLogManager
-        /// </summary>
+
         public void Initialize(IGameLogManager gameLogManager)
         {
             logManager = gameLogManager;
-            
             if (logManager != null)
             {
                 logManager.OnNewLogEntry += AddLogEntry;
-                
-                // Add any existing entries
                 foreach (var entry in logManager.GetRecentEntries())
                 {
                     AddLogEntry(entry);
                 }
             }
         }
-        
+
         /// <summary>
-        /// Set the header text for this log panel
+        /// Force this panel into player-specific filtering mode at runtime (safety for misconfigured inspector).
         /// </summary>
+        public void EnablePlayerSpecificFiltering()
+        {
+            if (!isPlayerSpecificPanel)
+            {
+                isPlayerSpecificPanel = true;
+                Debug.Log("[UI_GameLogPanel] Player-specific filtering enabled at runtime.");
+                // Rebuild with current player filter if already set
+                if (activePlayerId >= 0 && logManager != null)
+                {
+                    RebuildForPlayerEntries(logManager.GetRecentEntries(maxVisibleEntries));
+                }
+            }
+        }
+
         public void SetHeaderText(string text)
         {
             if (headerText != null)
                 headerText.text = text;
         }
-        
+
+        public void SetActivePlayer(int playerId, string playerName)
+        {
+            // Always allow header update (even if panel not flagged) so misconfigured inspector still works
+            activePlayerId = playerId;
+            if (headerText != null)
+                headerText.text = $"{playerName} Activity Log";
+            if (isPlayerSpecificPanel)
+            {
+                Debug.Log($"[UI_GameLogPanel] Switching active player filter -> {playerName} (Id={playerId})");
+                RebuildForPlayerEntries(logManager?.GetRecentEntries(maxVisibleEntries) ?? Enumerable.Empty<GameLogEntry>());
+            }
+        }
+
         private void OnDestroy()
         {
             if (logManager != null)
-            {
                 logManager.OnNewLogEntry -= AddLogEntry;
-            }
         }
-        
+
         public void AddLogEntry(GameLogEntry entry)
         {
             if (entryPrefab == null || contentParent == null)
@@ -78,16 +96,24 @@ namespace FungusToast.Unity.UI.GameLog
                 Debug.LogError("UI_GameLogPanel: Missing prefab or content parent references!");
                 return;
             }
-            
-            // Create new UI entry
+
+            if (isPlayerSpecificPanel)
+            {
+                // Only display entries relevant to the active player
+                if (activePlayerId < 0) return; // not yet bound
+                if (entry.PlayerId.HasValue && entry.PlayerId.Value != activePlayerId) return;
+            }
+
+            CreateVisualEntry(entry);
+        }
+
+        private void CreateVisualEntry(GameLogEntry entry)
+        {
             var entryUI = Instantiate(entryPrefab, contentParent);
             entryUI.SetEntry(entry);
             entryUIs.Add(entryUI);
-            
-            // Add fade-in effect
             entryUI.FadeIn();
-            
-            // Remove old entries if over limit
+
             while (entryUIs.Count > maxVisibleEntries)
             {
                 var oldEntry = entryUIs[0];
@@ -95,35 +121,38 @@ namespace FungusToast.Unity.UI.GameLog
                 if (oldEntry != null)
                     Destroy(oldEntry.gameObject);
             }
-            
-            // Auto-scroll to bottom
+
             if (autoScrollToBottom && scrollRect != null)
             {
                 Canvas.ForceUpdateCanvases();
                 scrollRect.verticalNormalizedPosition = 0f;
             }
         }
-        
+
         private void ClearLog()
         {
-            // Clear UI entries
             foreach (var entryUI in entryUIs)
             {
                 if (entryUI != null)
                     Destroy(entryUI.gameObject);
             }
             entryUIs.Clear();
-            
-            // Clear log manager
-            if (logManager != null)
+
+            if (!isPlayerSpecificPanel && logManager != null)
                 logManager.ClearLog();
         }
-        
-        public void SetAutoScroll(bool enabled)
+
+        private void RebuildForPlayerEntries(IEnumerable<GameLogEntry> entries)
         {
-            autoScrollToBottom = enabled;
+            foreach (var e in entryUIs)
+                if (e != null) Destroy(e.gameObject);
+            entryUIs.Clear();
+            if (entries == null) return;
+            foreach (var entry in entries.Where(e => !e.PlayerId.HasValue || e.PlayerId == activePlayerId).TakeLast(maxVisibleEntries))
+                CreateVisualEntry(entry);
         }
-        
+
+        public void SetAutoScroll(bool enabled) => autoScrollToBottom = enabled;
         public void ScrollToBottom()
         {
             if (scrollRect != null)
@@ -132,7 +161,6 @@ namespace FungusToast.Unity.UI.GameLog
                 scrollRect.verticalNormalizedPosition = 0f;
             }
         }
-        
         public void ScrollToTop()
         {
             if (scrollRect != null)
