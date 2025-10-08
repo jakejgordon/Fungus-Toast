@@ -75,11 +75,13 @@ namespace FungusToast.Unity.UI.GameLog
         private readonly Dictionary<int, PlayerLogAggregation> aggregations = new();
         private readonly Dictionary<int, Queue<string>> pendingSegmentSummaries = new();
         private readonly Dictionary<int, string> pendingRoundSummaries = new(); // deferred Round N summary per player
+        private readonly Dictionary<int, int> pendingRoundNumber = new(); // original round number for deferred summary
         private int activePlayerId = -1;
         private bool initialized = false;
         private LogSegmentType currentSegment = LogSegmentType.None;
         private const int MAX_RETURN = 50;
         private bool IsSilentMode => router?.IsSilentMode ?? false;
+        private bool lastRoundCompleteProcessed = false;
         #endregion
 
         #region Initialization
@@ -159,11 +161,12 @@ namespace FungusToast.Unity.UI.GameLog
                     AddPlayerEvent(playerId, msg, GameLogCategory.Normal);
                 }
             }
-            // Emit deferred round summary AFTER prior segment summaries
             if (pendingRoundSummaries.TryGetValue(playerId, out var roundMsg))
             {
-                AddPlayerEvent(playerId, roundMsg, GameLogCategory.Normal);
+                int roundNumber = pendingRoundNumber.TryGetValue(playerId, out var rn) ? rn : (board?.CurrentRound ?? 0) - 1;
+                AddPlayerEvent(playerId, roundMsg, GameLogCategory.Normal, explicitRound: roundNumber);
                 pendingRoundSummaries.Remove(playerId);
+                pendingRoundNumber.Remove(playerId);
             }
         }
         public bool HasPendingSummaries(int playerId) => (pendingSegmentSummaries.TryGetValue(playerId, out var q) && q.Count > 0) || pendingRoundSummaries.ContainsKey(playerId);
@@ -235,6 +238,7 @@ namespace FungusToast.Unity.UI.GameLog
         #region Round Hooks (Round Summary Deferred)
         public void OnRoundStart(int round)
         {
+            lastRoundCompleteProcessed = false; // reset guard for new round
             if (board == null) return;
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
                 roundStartSnapshots[hp.PlayerId] = TakeSnapshot(hp.PlayerId);
@@ -242,18 +246,18 @@ namespace FungusToast.Unity.UI.GameLog
         public void OnRoundComplete(int round)
         {
             if (board == null) return;
+            if (lastRoundCompleteProcessed) return; // guard against multiple invocations per round
+            lastRoundCompleteProcessed = true;
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
             {
                 if (!roundStartSnapshots.TryGetValue(hp.PlayerId, out var start)) continue;
                 var end = TakeSnapshot(hp.PlayerId);
                 int dl = end.Living - start.Living; int dd = end.Dead - start.Dead; int dt = end.Toxins - start.Toxins;
-                string msg;
-                if (dl != 0 || dd != 0 || dt != 0)
-                {
-                    msg = RoundSummaryFormatter.FormatRoundSummary(round, dl, dd, dt, end.Living, end.Dead, end.Toxins, 0f, true).Replace("summary:", "Summary:");
-                }
-                else msg = $"Round {round} Summary: no changes";
-                pendingRoundSummaries[hp.PlayerId] = msg; // defer until next mutation phase start
+                string msg = (dl != 0 || dd != 0 || dt != 0)
+                    ? RoundSummaryFormatter.FormatRoundSummary(round, dl, dd, dt, end.Living, end.Dead, end.Toxins, 0f, true).Replace("summary:", "Summary:")
+                    : $"Round {round} Summary: no changes";
+                pendingRoundSummaries[hp.PlayerId] = msg;
+                pendingRoundNumber[hp.PlayerId] = round;
             }
         }
         #endregion
@@ -271,12 +275,12 @@ namespace FungusToast.Unity.UI.GameLog
         }
         private PlayerLogSummary GetSummary(int playerId)
         { if (!summaries.TryGetValue(playerId, out var s)) { s = new PlayerLogSummary(playerId); summaries[playerId] = s; } return s; }
-        private void AddPlayerEvent(int playerId, string message, GameLogCategory cat)
+        private void AddPlayerEvent(int playerId, string message, GameLogCategory cat, int? explicitRound = null)
         {
             if (IsSilentMode || playerId < 0) return;
             var s = GetSummary(playerId);
-            s.Add(new PlayerLogEvent { Message = message, Category = cat, Round = board?.CurrentRound ?? 0, Timestamp = DateTime.Now, IsClearMarker = false });
-            if (playerId == activePlayerId) OnNewLogEntry?.Invoke(new GameLogEntry(message, cat, null, playerId));
+            s.Add(new PlayerLogEvent { Message = message, Category = cat, Round = explicitRound ?? (board?.CurrentRound ?? 0), Timestamp = DateTime.Now, IsClearMarker = false });
+            if (playerId == activePlayerId) OnNewLogEntry?.Invoke(new GameLogEntry(message, cat, null, playerId, explicitRound));
         }
         private bool IsHuman(int playerId)
         { if (board == null) return false; var p = board.Players.FirstOrDefault(pl => pl.PlayerId == playerId); return p != null && p.PlayerType == PlayerTypeEnum.Human; }
