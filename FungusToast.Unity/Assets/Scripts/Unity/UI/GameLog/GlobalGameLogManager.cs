@@ -21,6 +21,7 @@ namespace FungusToast.Unity.UI.GameLog
         
         // Board state snapshots for round summaries
         private BoardSnapshot roundStartSnapshot;
+        private int lastRoundCompleteProcessed = -1; // duplicate guard
         
         private struct BoardSnapshot
         {
@@ -75,6 +76,9 @@ namespace FungusToast.Unity.UI.GameLog
         
         public void OnRoundComplete(int roundNumber, GameBoard gameBoard)
         {
+            if (roundNumber == lastRoundCompleteProcessed) return; // prevent duplication
+            lastRoundCompleteProcessed = roundNumber;
+            
             // Take snapshot at end of round and calculate deltas
             var roundEndSnapshot = TakeSnapshot(gameBoard);
             
@@ -94,7 +98,7 @@ namespace FungusToast.Unity.UI.GameLog
                 roundEndSnapshot.Occupancy,
                 isPlayerSpecific: false);
             
-            AddEntry(new GameLogEntry(summary, GameLogCategory.Normal));
+            AddEntry(new GameLogEntry(summary, GameLogCategory.Normal, null, null, roundNumber));
         }
         
         public void OnPhaseStart(string phaseName)

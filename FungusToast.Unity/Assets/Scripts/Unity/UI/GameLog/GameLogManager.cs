@@ -81,7 +81,7 @@ namespace FungusToast.Unity.UI.GameLog
         private LogSegmentType currentSegment = LogSegmentType.None;
         private const int MAX_RETURN = 50;
         private bool IsSilentMode => router?.IsSilentMode ?? false;
-        private bool lastRoundCompleteProcessed = false;
+        private int lastRoundCompletedRound = -1; // guard against duplicate OnRoundComplete per round
         #endregion
 
         #region Initialization
@@ -238,16 +238,16 @@ namespace FungusToast.Unity.UI.GameLog
         #region Round Hooks (Round Summary Deferred)
         public void OnRoundStart(int round)
         {
-            lastRoundCompleteProcessed = false; // reset guard for new round
             if (board == null) return;
+            // Only take snapshots; do NOT reset lastRoundCompletedRound here (prevents duplicate summary if start called multiple times before complete)
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
                 roundStartSnapshots[hp.PlayerId] = TakeSnapshot(hp.PlayerId);
         }
         public void OnRoundComplete(int round)
         {
             if (board == null) return;
-            if (lastRoundCompleteProcessed) return; // guard against multiple invocations per round
-            lastRoundCompleteProcessed = true;
+            if (round == lastRoundCompletedRound) return; // already processed
+            lastRoundCompletedRound = round;
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
             {
                 if (!roundStartSnapshots.TryGetValue(hp.PlayerId, out var start)) continue;
@@ -419,7 +419,8 @@ namespace FungusToast.Unity.UI.GameLog
         {
             if (activePlayerId < 0) return Enumerable.Empty<GameLogEntry>();
             if (!summaries.TryGetValue(activePlayerId, out var s)) return Enumerable.Empty<GameLogEntry>();
-            return s.GetLast(Math.Min(count, MAX_RETURN)).Select(e => new GameLogEntry(e.Message, e.Category, null, activePlayerId));
+            return s.GetLast(Math.Min(count, MAX_RETURN))
+                    .Select(e => new GameLogEntry(e.Message, e.Category, null, activePlayerId, e.Round));
         }
         public void ClearLog()
         {

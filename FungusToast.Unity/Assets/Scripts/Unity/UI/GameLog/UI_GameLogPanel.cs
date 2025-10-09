@@ -24,6 +24,7 @@ namespace FungusToast.Unity.UI.GameLog
         private readonly List<UI_GameLogEntry> entryUIs = new();
         private IGameLogManager logManager;
         private int activePlayerId = -1; // for player-specific filtering
+        private bool subscribed = false; // prevent double subscription
 
         private void Awake()
         {
@@ -36,11 +37,33 @@ namespace FungusToast.Unity.UI.GameLog
 
         public void Initialize(IGameLogManager gameLogManager)
         {
+            // If already subscribed to same manager, ignore
+            if (subscribed && ReferenceEquals(logManager, gameLogManager))
+            {
+                Debug.Log("[UI_GameLogPanel] Initialize called again with same manager; ignored.");
+                return;
+            }
+
+            // Unsubscribe old manager if switching
+            if (subscribed && logManager != null)
+            {
+                logManager.OnNewLogEntry -= AddLogEntry;
+                subscribed = false;
+            }
+
             logManager = gameLogManager;
             if (logManager != null)
             {
                 logManager.OnNewLogEntry += AddLogEntry;
-                foreach (var entry in logManager.GetRecentEntries())
+                subscribed = true;
+
+                // Clear existing visual list to avoid duplicates when re-initializing
+                foreach (var e in entryUIs)
+                    if (e != null) Destroy(e.gameObject);
+                entryUIs.Clear();
+
+                // Populate with current history once
+                foreach (var entry in logManager.GetRecentEntries(maxVisibleEntries))
                 {
                     AddLogEntry(entry);
                 }
@@ -72,7 +95,6 @@ namespace FungusToast.Unity.UI.GameLog
 
         public void SetActivePlayer(int playerId, string playerName)
         {
-            // Always allow header update (even if panel not flagged) so misconfigured inspector still works
             activePlayerId = playerId;
             if (headerText != null)
                 headerText.text = $"{playerName} Activity Log";
@@ -85,8 +107,11 @@ namespace FungusToast.Unity.UI.GameLog
 
         private void OnDestroy()
         {
-            if (logManager != null)
+            if (subscribed && logManager != null)
+            {
                 logManager.OnNewLogEntry -= AddLogEntry;
+                subscribed = false;
+            }
         }
 
         public void AddLogEntry(GameLogEntry entry)
@@ -99,7 +124,6 @@ namespace FungusToast.Unity.UI.GameLog
 
             if (isPlayerSpecificPanel)
             {
-                // Only display entries relevant to the active player
                 if (activePlayerId < 0) return; // not yet bound
                 if (entry.PlayerId.HasValue && entry.PlayerId.Value != activePlayerId) return;
             }
