@@ -596,7 +596,7 @@ namespace FungusToast.Unity.UI.GameLog
         #region ISimulationObserver (Implemented / Routed)
 
         public void RecordMutationPointIncome(int playerId, int totalMutationPoints) { }
-        public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Mutator Phenotype", freePointsEarned); }
+        public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned) { /* Mutator Phenotype grants free upgrades, not spendable points – exclude from Free Points summary */ }
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }
         public void RecordAdaptiveExpressionBonus(int playerId, int bonus) { if (bonus > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Adaptive Expression", bonus); }
         public void RecordAnabolicInversionBonus(int playerId, int bonus) { if (bonus > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Anabolic Inversion", bonus); }

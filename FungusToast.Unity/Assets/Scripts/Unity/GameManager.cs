@@ -121,9 +121,17 @@ namespace FungusToast.Unity
         public void StartDecayPhase() { if (gameEnded) return; gameUIManager.GameLogRouter?.OnPhaseStart("Decay"); gameUIManager.GameLogManager?.OnLogSegmentStart("DecayPhase"); decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer); gameUIManager.PhaseBanner.Show("Decay Phase Begins!", 2f); phaseProgressTracker?.HighlightDecayPhase(); decayPhaseRunner.StartDecayPhase(growthPhaseRunner.FailedGrowthsByPlayerId, rng, gameUIManager.GameLogRouter); }
         public void OnRoundComplete() { if (gameEnded) return; gameUIManager.GameLogRouter?.OnRoundComplete(Board.CurrentRound, Board); foreach (var p in Board.Players) p.TickDownActiveSurges(); CheckForEndgameCondition(); if (gameEnded) return; Board.IncrementRound(); if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound)) { StartCoroutine(DelayedStartDraft()); return; } StartNextRound(); int round = Board.CurrentRound; float occ = Board.GetOccupiedTileRatio() * 100f; gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ); gameUIManager.RightSidebar.UpdateRandomDecayChance(round); TrackFirstUpgradeRounds(); }
         private void TrackFirstUpgradeRounds() { foreach (var player in Board.Players) foreach (var pm in player.PlayerMutations.Values) { if (!pm.FirstUpgradeRound.HasValue) continue; var key = (player.PlayerId, pm.MutationId); if (!FirstUpgradeRounds.ContainsKey(key)) FirstUpgradeRounds[key] = new List<int>(); FirstUpgradeRounds[key].Add(pm.FirstUpgradeRound.Value); } }
-        public void StartNextRound() { if (gameEnded) return; gameUIManager.GameLogRouter?.OnRoundStart(Board.CurrentRound); if (!(Board.CurrentRound == 1 && initialMutationPointsAssigned)) AssignMutationPoints(); // Mutation auto effects fire -> mark segment boundary AFTER awarding
-            Board.OnMutationPhaseStart(); // ensure mutation phase start event consumers fire
+        public void StartNextRound() { if (gameEnded) return; gameUIManager.GameLogRouter?.OnRoundStart(Board.CurrentRound); 
+            // Start the MutationPhaseStart segment BEFORE awarding points/upgrades so they are captured.
             gameUIManager.GameLogManager?.OnLogSegmentStart("MutationPhaseStart");
+            
+            // Award base + auto-upgrades (TurnEngine fires Board.OnMutationPhaseStart internally).
+            if (!(Board.CurrentRound == 1 && initialMutationPointsAssigned)) AssignMutationPoints();
+            else {
+                // For very first round we still need to fire the board mutation phase start event once so auto effects (if any) trigger.
+                Board.OnMutationPhaseStart();
+            }
+            
             if (humanPlayers.Count > 0) SetActiveHumanPlayer(humanPlayers[0]);
             if (humanPlayers.Count > 0) gameUIManager.GameLogManager?.EmitPendingSegmentSummariesFor(humanPlayers[0].PlayerId);
             hotseatTurnManager.BeginHumanMutationPhase(); gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players); gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound); gameUIManager.GameLogRouter?.OnPhaseStart("Mutation"); gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f); UpdatePhaseProgressTrackerLabel(); phaseProgressTracker?.HighlightMutationPhase(); }
