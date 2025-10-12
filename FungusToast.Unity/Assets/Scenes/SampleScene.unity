@@ -116284,6 +116284,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: UI_PlayerActivityLogPanel
       objectReference: {fileID: 0}
+    - target: {fileID: 4190163669605272399, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4190163669605272399, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 4190307805997451328, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -116383,6 +116391,10 @@ PrefabInstance:
     - target: {fileID: 7223527270631041980, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
       propertyPath: m_text
       value: Player Activity Log
+      objectReference: {fileID: 0}
+    - target: {fileID: 7223527270631041980, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
+      propertyPath: m_HorizontalAlignment
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7438556168572089636, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
       propertyPath: m_AnchorMax.x

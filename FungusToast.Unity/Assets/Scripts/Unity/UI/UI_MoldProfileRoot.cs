@@ -19,15 +19,9 @@ namespace FungusToast.Unity.UI
         [SerializeField] private GrowthDirectionCell[] directionCells = Array.Empty<GrowthDirectionCell>();
         [SerializeField] private Image centerPlayerIcon;
 
-        [Header("Stat Text References")]
-        [SerializeField] private TextMeshProUGUI statsAgeThresholdText; // UI_StatsRootStartDecayAge
-
         [Header("Formatting / Visuals")]
         [SerializeField] private Color zeroChanceColor = new Color(1f,1f,1f,0.35f);
         [SerializeField] private Color finalZeroGreen = new Color(0.4f, 1f, 0.4f, 1f);
-
-        [Header("Help Icons")]
-        [SerializeField] private AgeDelayThresholdTooltipProvider ageDelayThresholdTooltipProvider;
 
         private Player trackedPlayer;
         private List<Player> allPlayers;
@@ -45,7 +39,6 @@ namespace FungusToast.Unity.UI
             allPlayers = players;
             EnsureCellsResolved();
             Refresh();
-            ageDelayThresholdTooltipProvider.Initialize(trackedPlayer);
 
             // Center Player Icon
             if (centerPlayerIcon != null)
@@ -73,7 +66,6 @@ namespace FungusToast.Unity.UI
 
             EnsureCellsResolved();
             UpdateGrowthChances();
-            UpdateStats();
             deferredRefreshRequested = false;
         }
 
@@ -91,11 +83,6 @@ namespace FungusToast.Unity.UI
             if (player == null) { Debug.LogError("UI_MoldProfileRoot.SwitchPlayer called with null player"); return; }
             trackedPlayer = player;
             allPlayers = players;
-            // Re-init tooltip provider if present
-            if (ageDelayThresholdTooltipProvider != null)
-            {
-                ageDelayThresholdTooltipProvider.Initialize(trackedPlayer);
-            }
 
             // Center Player Icon
             if (centerPlayerIcon != null)
@@ -170,21 +157,6 @@ namespace FungusToast.Unity.UI
                 baseChance = raw * multiplier;
                 surgeBonus = 0f;
             }
-        }
-
-        private void UpdateStats()
-        {
-            if (allPlayers == null || trackedPlayer == null) return;
-            int harmonyLevel = trackedPlayer.GetMutationLevel(MutationIds.HomeostaticHarmony);
-            float harmony = harmonyLevel * GameBalance.HomeostaticHarmonyEffectPerLevel;
-            float rawRandom = GameBalance.BaseRandomDecayChance;
-            float finalRandom = Mathf.Max(0f, rawRandom - harmony); // currently unused but retained for future UI
-            int chronoLevel = trackedPlayer.GetMutationLevel(MutationIds.ChronoresilientCytoplasm);
-            float addedThreshold = chronoLevel * GameBalance.ChronoresilientCytoplasmEffectPerLevel;
-            float ageThreshold = GameBalance.AgeAtWhichDecayChanceIncreases + addedThreshold;
-
-            if (statsAgeThresholdText)
-                statsAgeThresholdText.text = $"Age Risk Threshold: {GameBalance.ChronoresilientCytoplasmEffectPerLevel:F0} - {addedThreshold:F0}  = {ageThreshold:F0}";
         }
     }
 }

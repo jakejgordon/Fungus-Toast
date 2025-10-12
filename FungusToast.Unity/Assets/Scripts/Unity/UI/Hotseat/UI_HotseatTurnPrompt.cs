@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Core.Players;
+using System.Linq; // added for counting human players
 
 namespace FungusToast.Unity.UI.Hotseat
 {
@@ -64,16 +65,39 @@ namespace FungusToast.Unity.UI.Hotseat
         // Backward-compatible string-based Show (unused now, but retained to avoid null ref if something else still calls it)
         public void Show(string playerName, Action confirmedCallback)
         {
+            if (ShouldSkipPrompt())
+            {
+                confirmedCallback?.Invoke();
+                return;
+            }
             ShowInternal(playerName, null, confirmedCallback);
         }
 
         public void Show(Player player, Action confirmedCallback)
         {
-            if (player == null) { ShowInternal("(Unknown)", null, confirmedCallback); return; }
+            if (player == null)
+            {
+                if (ShouldSkipPrompt()) { confirmedCallback?.Invoke(); return; }
+                ShowInternal("(Unknown)", null, confirmedCallback); return; }
             // Attempt to fetch icon sprite from grid visualizer (if available)
+            if (ShouldSkipPrompt())
+            {
+                confirmedCallback?.Invoke();
+                return;
+            }
             Sprite iconSprite = null;
             try { iconSprite = GameManager.Instance?.gridVisualizer?.GetTileForPlayer(player.PlayerId)?.sprite; } catch { }
             ShowInternal(player.PlayerName, iconSprite, confirmedCallback);
+        }
+
+        private bool ShouldSkipPrompt()
+        {
+            try
+            {
+                var humans = GameManager.Instance?.Board?.Players?.Count(p => p.PlayerType == PlayerTypeEnum.Human) ?? 0;
+                return humans <= 1; // skip popup in single-human games
+            }
+            catch { return false; } // be safe; if we cannot determine, do not skip
         }
 
         private void ShowInternal(string playerName, Sprite icon, Action confirmedCallback)
@@ -93,7 +117,7 @@ namespace FungusToast.Unity.UI.Hotseat
             }
 
             if (titleText != null)
-                titleText.text = $"Human Player {playerName}'s Turn";
+                titleText.text = $"{playerName}'s Turn"; // updated formatting
 
             if (playerIconImage != null)
             {

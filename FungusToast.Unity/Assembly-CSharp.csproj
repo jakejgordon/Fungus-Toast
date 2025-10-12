@@ -67,7 +67,6 @@
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_MutationManager.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipRequest.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\ITooltipContentProvider.cs" />
-    <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipProviders\AgeDelayThresholdTooltipProvider.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\Animation\StartingSporeArrivalAnimator.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_RightSideBar.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\SidebarResizer.cs" />
