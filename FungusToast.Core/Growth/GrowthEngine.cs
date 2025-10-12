@@ -227,8 +227,13 @@ namespace FungusToast.Core.Growth
             var targetTile = board.GetTileById(targetTileId);
             if (targetTile == null || targetTile.IsOccupied || targetTile.IsResistant)
                 return false;
+
+            // Create new cell but DO NOT place directly on the tile here.
+            // Let GameBoard.PlaceFungalCell perform authoritative placement so
+            // it can correctly detect isNew == true and raise OnCellColonized.
             var newCell = new FungalCell(ownerPlayerId: playerId, tileId: targetTileId, source: growthSource, lastOwnerPlayerId: null);
-            targetTile.PlaceFungalCell(newCell);
+
+            // Removed: targetTile.PlaceFungalCell(newCell); (caused isNew=false in GameBoard.PlaceFungalCell)
             board.PlaceFungalCell(newCell);
             return true;
         }

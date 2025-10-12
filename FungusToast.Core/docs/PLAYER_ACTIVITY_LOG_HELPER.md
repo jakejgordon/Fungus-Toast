@@ -1,12 +1,12 @@
 # Player Activity Log Helper
 
-This document summarizes how the **Player Activity Log** (human player–focused log) aggregates and displays gameplay events. It is intentionally concise and implementation?oriented.
+This document summarizes how the **Player Activity Log** (human player–focused log) aggregates and displays gameplay events. It is intentionally concise and implementation-oriented.
 
 ---
 ## Purpose
-The Player Activity Log shows per?human player summaries of what *changed* for them, grouped at meaningful gameplay checkpoints ("Log Segments"). It reduces spam while preserving important tactical feedback.
+The Player Activity Log shows per-human player summaries of what *changed* for them, grouped at meaningful gameplay checkpoints ("Log Segments"). It reduces spam while preserving important tactical feedback.
 
-The Global Game Log (separate file/panel) continues to show round/phase/game system messages for everyone. This helper covers only the player?centric activity log.
+The Global Game Log (separate file/panel) continues to show round/phase/game system messages for everyone. This helper covers only the player-centric activity log.
 
 ---
 ## Core Concepts
@@ -26,10 +26,10 @@ Per human player we maintain a `PlayerLogAggregation` object that tracks:
 - Cell acquisition / transformation events (colonize, reclaim, infest, overgrow, toxify, poison) by total and by `GrowthSource`
 - Deaths by `DeathReason`
 - Free mutation points earned by source (e.g. Mutator Phenotype, Hyperadaptive Drift)
-- Free/automatic upgrades: source ? mutation name ? levels gained
+- Free/automatic upgrades: source - mutation name - levels gained
 - (Draft only) A snapshot of living / dead / toxin counts to report deltas
 
-All of these are *phase?agnostic*; they accumulate regardless of when events fire. The segment boundary simply defines when they are summarized and reset.
+All of these are *phase-agnostic*; they accumulate regardless of when events fire. The segment boundary simply defines when they are summarized and reset.
 
 ### Flush Timing
 A segment is *flushed* (summarized) only when a **new** segment begins. (Round Summary is separate; see below.) No "No changes" summary lines are emitted—silence means nothing notable happened.
@@ -47,7 +47,7 @@ Prefix: `Mutation Phase Start:`
 
 ### Growth / Decay / Draft Summaries
 Prefix matches segment name (`Growth Phase:`, `Decay Phase:`, `Draft Phase:`)
-Order of event categories (only those with non?zero totals are shown):
+Order of event categories (only those with non-zero totals are shown):
 1. Colonized
 2. Infested
 3. Reclaimed
@@ -56,7 +56,7 @@ Order of event categories (only those with non?zero totals are shown):
 6. Poisoned
 7. Deaths (always last, if any)
 
-Per category with per?source breakdown:
+Per category with per-source breakdown:
 `Colonized 5 (3 from Hyphal Outgrowth, 2 from Manual placement)`
 
 Deaths:
@@ -68,7 +68,7 @@ Draft Phase delta example:
 ### Round Summary (special case)
 Always emitted at round end:
 - If changes: `Round X Summary: Added 3 living cells, removed 1 dead cell` (wording handled by existing formatter)
-- If no changes: `Round X Summary: no changes`
+- If no changes: `Round X Summary: No changes`
 
 ### Categories / Colors
 All segment summaries use `GameLogCategory.Normal` (neutral). Individual instantaneous events (e.g. a free upgrade line) may still use Lucky/Unlucky.
@@ -85,19 +85,19 @@ PlayerLogAggregation
   Dictionary<DeathReason,int> Deaths
   Dictionary<string,int> FreePointsBySource
   Dictionary<string, Dictionary<string,int>> FreeUpgradesBySource
-  DraftStartSnapshot? (living, dead, toxins)  // optional during draft
+  DraftStartSnapshot- (living, dead, toxins)  // optional during draft
 ```
 `CellEventKind` lives in Core for reuse. Deaths are kept separate to mirror existing `DeathReason` taxonomy.
 
 ---
 ## Lifecycle Summary
-1. Game starts ? initial segment implicitly empty.
+1. Game starts - initial segment implicitly empty.
 2. Segment boundary method called (e.g. `OnLogSegmentStart(GrowthPhase)`):
-   - Flush previous aggregation (if non?empty) into queue.
+   - Flush previous aggregation (if non-empty) into queue.
    - Reset aggregation.
    - Set current segment type.
-3. Events fire ? handlers update aggregation immediately.
-4. Human turn begins ? queued summaries for that player emitted to UI.
+3. Events fire - handlers update aggregation immediately.
+4. Human turn begins - queued summaries for that player emitted to UI.
 5. Repeat for each boundary.
 
 ---
@@ -154,8 +154,8 @@ Keep the aggregation *phase agnostic* and let segment boundaries decide presenta
 
 ---
 ## When NOT to Use the Activity Log
-- Global announcements (endgame, round start) ? Global log
-- Debug or analytics traces ? Core logging / simulation output
+- Global announcements (endgame, round start) - Global log
+- Debug or analytics traces - Core logging / simulation output
 
 ---
 ## Future Ideas (Optional)

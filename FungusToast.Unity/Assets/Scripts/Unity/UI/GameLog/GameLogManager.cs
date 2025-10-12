@@ -21,21 +21,54 @@ namespace FungusToast.Unity.UI.GameLog
             public const string Overgrown = "Overgrown";
             public const string Toxified = "Toxified";
             public const string Poisoned = "Poisoned";
+
             public static readonly string[] Ordered = { Colonized, Infested, Reclaimed, Overgrown, Toxified, Poisoned };
         }
 
-        private class PlayerLogEvent { public string Message; public GameLogCategory Category; public int Round; public DateTime Timestamp; public bool IsClearMarker; }
+        private class PlayerLogEvent
+        {
+            public string Message;
+            public GameLogCategory Category;
+            public int Round;
+            public DateTime Timestamp;
+            public bool IsClearMarker;
+        }
+
         private class PlayerLogSummary
         {
             public int PlayerId { get; }
             private readonly List<PlayerLogEvent> _events = new();
-            public PlayerLogSummary(int id) { PlayerId = id; }
+
+            public PlayerLogSummary(int id)
+            {
+                PlayerId = id;
+            }
+
             public void Add(PlayerLogEvent e) => _events.Add(e);
+
             public IEnumerable<PlayerLogEvent> GetLast(int count) => _events.TakeLast(count);
+
             public void Clear(int round)
-            { _events.Clear(); _events.Add(new PlayerLogEvent { Message = "Log cleared", Category = GameLogCategory.Normal, Round = round, Timestamp = DateTime.Now, IsClearMarker = true }); }
+            {
+                _events.Clear();
+                _events.Add(new PlayerLogEvent
+                {
+                    Message = "Log cleared",
+                    Category = GameLogCategory.Normal,
+                    Round = round,
+                    Timestamp = DateTime.Now,
+                    IsClearMarker = true
+                });
+            }
         }
-        private struct PlayerSnapshot { public int Living; public int Dead; public int Toxins; }
+
+        private struct PlayerSnapshot
+        {
+            public int Living;
+            public int Dead;
+            public int Toxins;
+        }
+
         private class PlayerLogAggregation
         {
             public Dictionary<string, int> Totals = new();
@@ -44,51 +77,93 @@ namespace FungusToast.Unity.UI.GameLog
             public Dictionary<string, int> FreePointsBySource = new();
             public Dictionary<string, Dictionary<string, int>> FreeUpgradesBySource = new();
             public PlayerSnapshot? DraftStartSnapshot;
-            public void ResetCellEvents() { Totals.Clear(); PerSource.Clear(); Deaths.Clear(); }
-            public void ResetAll() { ResetCellEvents(); FreePointsBySource.Clear(); FreeUpgradesBySource.Clear(); DraftStartSnapshot = null; }
-        }
-        private enum LogSegmentType { None, MutationPhaseStart, GrowthPhase, DecayPhase, DraftPhase }
 
-        // NEW: encapsulate pending segment summaries with correct round number
-        private class SegmentSummary { public string Message; public int Round; }
+            public void ResetCellEvents()
+            {
+                Totals.Clear();
+                PerSource.Clear();
+                Deaths.Clear();
+            }
+
+            public void ResetAll()
+            {
+                ResetCellEvents();
+                FreePointsBySource.Clear();
+                FreeUpgradesBySource.Clear();
+                DraftStartSnapshot = null;
+            }
+        }
+
+        private enum LogSegmentType
+        {
+            None,
+            MutationPhaseStart,
+            GrowthPhase,
+            DecayPhase,
+            DraftPhase
+        }
+
+        // Encapsulates pending segment summaries with correct round number
+        private class SegmentSummary
+        {
+            public string Message;
+            public int Round;
+        }
 
         public event Action<GameLogEntry> OnNewLogEntry;
-        private GameBoard board; private GameLogRouter router;
+
+        private GameBoard board;
+        private GameLogRouter router;
+
         private readonly Dictionary<int, PlayerLogSummary> summaries = new();
         private readonly Dictionary<int, PlayerSnapshot> roundStartSnapshots = new();
         private readonly Dictionary<int, PlayerLogAggregation> aggregations = new();
-        private readonly Dictionary<int, Queue<SegmentSummary>> pendingSegmentSummaries = new(); // changed to store round
+        private readonly Dictionary<int, Queue<SegmentSummary>> pendingSegmentSummaries = new();
         private readonly Dictionary<int, string> pendingRoundSummaries = new();
         private readonly Dictionary<int, int> pendingRoundNumber = new();
+
         private int activePlayerId = -1;
         private bool initialized = false;
         private LogSegmentType currentSegment = LogSegmentType.None;
+
         private const int MAX_RETURN = 50;
         private bool IsSilentMode => router?.IsSilentMode ?? false;
-        private int lastRoundCompletedRound = -1; // last round number processed in OnRoundComplete
+        private int lastRoundCompletedRound = -1;
+
+        // Baseline snapshot for Growth Phase fallback summary
+        private readonly Dictionary<int, PlayerSnapshot> growthPhaseStartSnapshots = new();
+
+        #region Initialization / Lifecycle
 
         public void Initialize(GameBoard gameBoard)
         {
             if (initialized) return;
-            board = gameBoard; if (board == null) return;
+            board = gameBoard;
+            if (board == null) return;
+
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
             {
                 roundStartSnapshots[hp.PlayerId] = TakeSnapshot(hp.PlayerId);
                 aggregations[hp.PlayerId] = new PlayerLogAggregation();
                 pendingSegmentSummaries[hp.PlayerId] = new Queue<SegmentSummary>();
             }
+
             board.CellPoisoned += OnCellPoisoned;
             board.CellColonized += OnCellColonized;
             board.CellInfested += OnCellInfested;
             board.CellReclaimed += OnCellReclaimed;
             board.CellToxified += OnCellToxified;
             board.CellOvergrown += OnCellOvergrown;
+
             initialized = true;
         }
+
         public void SetGameLogRouter(GameLogRouter r) => router = r;
+
         private void OnDestroy()
         {
             if (board == null) return;
+
             board.CellPoisoned -= OnCellPoisoned;
             board.CellColonized -= OnCellColonized;
             board.CellInfested -= OnCellInfested;
@@ -97,16 +172,31 @@ namespace FungusToast.Unity.UI.GameLog
             board.CellOvergrown -= OnCellOvergrown;
         }
 
+        #endregion
+
+        #region Segment Handling
+
         public void OnLogSegmentStart(string segmentName)
         {
-            if (IsSilentMode || board == null) return;
+            if (board == null) return; // removed IsSilentMode early return so we still track segment boundaries while silent
+
             var newType = ParseSegment(segmentName);
             FlushPreviousSegmentIntoQueues();
             currentSegment = newType;
+
             if (newType == LogSegmentType.DraftPhase)
+            {
                 foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
                     aggregations[hp.PlayerId].DraftStartSnapshot = TakeSnapshot(hp.PlayerId);
+            }
+
+            if (newType == LogSegmentType.GrowthPhase)
+            {
+                foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
+                    growthPhaseStartSnapshots[hp.PlayerId] = TakeSnapshot(hp.PlayerId);
+            }
         }
+
         private LogSegmentType ParseSegment(string name) => name switch
         {
             "MutationPhaseStart" => LogSegmentType.MutationPhaseStart,
@@ -119,25 +209,47 @@ namespace FungusToast.Unity.UI.GameLog
         private void FlushPreviousSegmentIntoQueues()
         {
             if (board == null) return;
+
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
             {
                 if (!aggregations.TryGetValue(hp.PlayerId, out var agg)) continue;
+
                 var summaryText = BuildSegmentSummary(agg, currentSegment, hp.PlayerId);
+
+                // Fallback Growth Phase summary when no per-source events recorded
+                if (string.IsNullOrEmpty(summaryText) && currentSegment == LogSegmentType.GrowthPhase)
+                {
+                    if (growthPhaseStartSnapshots.TryGetValue(hp.PlayerId, out var gStart))
+                    {
+                        var gEnd = TakeSnapshot(hp.PlayerId);
+                        int dl = gEnd.Living - gStart.Living;
+                        int dd = gEnd.Dead - gStart.Dead;
+                        int dt = gEnd.Toxins - gStart.Toxins;
+
+                        if (dl != 0 || dd != 0 || dt != 0)
+                        {
+                            var parts = new List<string>();
+                            if (dl != 0) parts.Add($"Living {(dl > 0 ? "+" + dl : dl.ToString())}");
+                            if (dd != 0) parts.Add($"Dead {(dd > 0 ? "+" + dd : dd.ToString())}");
+                            if (dt != 0) parts.Add($"Toxins {(dt > 0 ? "+" + dt : dt.ToString())}");
+                            summaryText = "Growth Phase: " + string.Join(", ", parts);
+                        }
+                    }
+                }
+
                 if (!string.IsNullOrEmpty(summaryText))
                 {
-                    int roundForSummary;
-                    if (currentSegment == LogSegmentType.DecayPhase)
+                    int roundForSummary = currentSegment == LogSegmentType.DecayPhase
+                        ? (lastRoundCompletedRound >= 0 ? lastRoundCompletedRound : (board.CurrentRound - 1))
+                        : board.CurrentRound;
+
+                    pendingSegmentSummaries[hp.PlayerId].Enqueue(new SegmentSummary
                     {
-                        // Decay segment belongs to the round that just completed (stored in lastRoundCompletedRound)
-                        roundForSummary = lastRoundCompletedRound >= 0 ? lastRoundCompletedRound : (board.CurrentRound - 1);
-                    }
-                    else
-                    {
-                        // Other segments occur inside the current round
-                        roundForSummary = board.CurrentRound;
-                    }
-                    pendingSegmentSummaries[hp.PlayerId].Enqueue(new SegmentSummary { Message = summaryText, Round = roundForSummary });
+                        Message = summaryText,
+                        Round = roundForSummary
+                    });
                 }
+
                 agg.ResetAll();
             }
         }
@@ -145,6 +257,7 @@ namespace FungusToast.Unity.UI.GameLog
         public void EmitPendingSegmentSummariesFor(int playerId)
         {
             if (playerId < 0) return;
+
             if (pendingSegmentSummaries.TryGetValue(playerId, out var q))
             {
                 while (q.Count > 0)
@@ -153,15 +266,26 @@ namespace FungusToast.Unity.UI.GameLog
                     AddPlayerEvent(playerId, seg.Message, GameLogCategory.Normal, explicitRound: seg.Round);
                 }
             }
+
             if (pendingRoundSummaries.TryGetValue(playerId, out var roundMsg))
             {
-                int roundNumber = pendingRoundNumber.TryGetValue(playerId, out var rn) ? rn : (board?.CurrentRound ?? 0) - 1;
+                int roundNumber = pendingRoundNumber.TryGetValue(playerId, out var rn)
+                    ? rn
+                    : (board?.CurrentRound ?? 0) - 1;
+
                 AddPlayerEvent(playerId, roundMsg, GameLogCategory.Normal, explicitRound: roundNumber);
                 pendingRoundSummaries.Remove(playerId);
                 pendingRoundNumber.Remove(playerId);
             }
         }
-        public bool HasPendingSummaries(int playerId) => (pendingSegmentSummaries.TryGetValue(playerId, out var q) && q.Count > 0) || pendingRoundSummaries.ContainsKey(playerId);
+
+        public bool HasPendingSummaries(int playerId) =>
+            (pendingSegmentSummaries.TryGetValue(playerId, out var q) && q.Count > 0) ||
+            pendingRoundSummaries.ContainsKey(playerId);
+
+        #endregion
+
+        #region Summary Formatting
 
         private string BuildSegmentSummary(PlayerLogAggregation agg, LogSegmentType type, int playerId) => type switch
         {
@@ -171,58 +295,97 @@ namespace FungusToast.Unity.UI.GameLog
             LogSegmentType.DraftPhase => FormatDraftPhase(agg, playerId),
             _ => string.Empty
         };
+
         private string FormatMutationPhaseStart(PlayerLogAggregation agg)
         {
             bool anyPoints = agg.FreePointsBySource.Values.Any(v => v > 0);
             bool anyUpgrades = agg.FreeUpgradesBySource.Values.Any(d => d.Values.Any(v => v > 0));
             if (!anyPoints && !anyUpgrades) return string.Empty;
+
             var clauses = new List<string>();
+
             if (anyPoints)
             {
-                var parts = agg.FreePointsBySource.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Select(kv => kv.Value + " from " + kv.Key).ToList();
+                var parts = agg.FreePointsBySource
+                    .Where(kv => kv.Value > 0)
+                    .OrderByDescending(kv => kv.Value)
+                    .Select(kv => kv.Value + " from " + kv.Key)
+                    .ToList();
                 clauses.Add("Free Points: " + string.Join(", ", parts));
             }
+
             if (anyUpgrades)
             {
                 var upParts = new List<string>();
                 foreach (var src in agg.FreeUpgradesBySource.OrderBy(x => x.Key))
+                {
                     foreach (var mut in src.Value.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value))
                         upParts.Add(src.Key + " upgraded " + mut.Value + " level(s) of " + mut.Key);
-                if (upParts.Count > 0) clauses.Add("Upgrades: " + string.Join(", ", upParts));
+                }
+                if (upParts.Count > 0)
+                    clauses.Add("Upgrades: " + string.Join(", ", upParts));
             }
+
             return "Mutation Phase Start: " + string.Join("; ", clauses);
         }
+
         private string FormatGrowthOrDecay(string prefix, PlayerLogAggregation agg)
         {
             var blocks = new List<string>();
+
             foreach (var kind in EventKinds.Ordered)
             {
                 if (!agg.Totals.TryGetValue(kind, out int total) || total <= 0) continue;
                 if (!agg.PerSource.TryGetValue(kind, out var sourceDict)) continue;
-                var perSource = sourceDict.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Select(kv => kv.Value + " from " + AbilityName(kv.Key)).ToList();
-                if (perSource.Count > 0) blocks.Add(kind + " " + total + " (" + string.Join(", ", perSource) + ")");
+
+                var perSource = sourceDict
+                    .Where(kv => kv.Value > 0)
+                    .OrderByDescending(kv => kv.Value)
+                    .Select(kv => kv.Value + " from " + AbilityName(kv.Key))
+                    .ToList();
+
+                if (perSource.Count > 0)
+                    blocks.Add(kind + " " + total + " (" + string.Join(", ", perSource) + ")");
             }
+
             if (agg.Deaths.Values.Any(v => v > 0))
             {
                 int totalDeaths = agg.Deaths.Values.Sum();
-                var reasons = agg.Deaths.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Select(kv => kv.Key + " " + kv.Value).ToList();
+                var reasons = agg.Deaths
+                    .Where(kv => kv.Value > 0)
+                    .OrderByDescending(kv => kv.Value)
+                    .Select(kv => kv.Key + " " + kv.Value)
+                    .ToList();
                 blocks.Add("Deaths " + totalDeaths + " (" + string.Join(", ", reasons) + ")");
             }
+
             if (blocks.Count == 0) return string.Empty;
             return prefix + ": " + string.Join(", ", blocks);
         }
+
         private string FormatDraftPhase(PlayerLogAggregation agg, int playerId)
         {
             if (!agg.DraftStartSnapshot.HasValue || board == null) return string.Empty;
-            var start = agg.DraftStartSnapshot.Value; var end = TakeSnapshot(playerId);
-            int dl = end.Living - start.Living; int dd = end.Dead - start.Dead; int dt = end.Toxins - start.Toxins;
+
+            var start = agg.DraftStartSnapshot.Value;
+            var end = TakeSnapshot(playerId);
+
+            int dl = end.Living - start.Living;
+            int dd = end.Dead - start.Dead;
+            int dt = end.Toxins - start.Toxins;
+
             var deltas = new List<string>();
             if (dl != 0) deltas.Add("Living " + (dl > 0 ? "+" + dl : dl.ToString()));
             if (dd != 0) deltas.Add("Dead " + (dd > 0 ? "+" + dd : dd.ToString()));
             if (dt != 0) deltas.Add("Toxins " + (dt > 0 ? "+" + dt : dt.ToString()));
+
             if (deltas.Count == 0) return string.Empty;
             return "Draft Phase: " + string.Join(", ", deltas);
         }
+
+        #endregion
+
+        #region Round Handling
 
         public void OnRoundStart(int round)
         {
@@ -230,40 +393,85 @@ namespace FungusToast.Unity.UI.GameLog
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
                 roundStartSnapshots[hp.PlayerId] = TakeSnapshot(hp.PlayerId);
         }
+
         public void OnRoundComplete(int round)
         {
             if (board == null) return;
             if (round == lastRoundCompletedRound) return;
             lastRoundCompletedRound = round;
+
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
             {
                 if (!roundStartSnapshots.TryGetValue(hp.PlayerId, out var start)) continue;
                 var end = TakeSnapshot(hp.PlayerId);
-                int dl = end.Living - start.Living; int dd = end.Dead - start.Dead; int dt = end.Toxins - start.Toxins;
+
+                int dl = end.Living - start.Living;
+                int dd = end.Dead - start.Dead;
+                int dt = end.Toxins - start.Toxins;
+
                 string msg = (dl != 0 || dd != 0 || dt != 0)
-                    ? RoundSummaryFormatter.FormatRoundSummary(round, dl, dd, dt, end.Living, end.Dead, end.Toxins, 0f, true).Replace("summary:", "Summary:")
+                    ? RoundSummaryFormatter
+                        .FormatRoundSummary(round, dl, dd, dt, end.Living, end.Dead, end.Toxins, 0f, true)
+                        .Replace("summary:", "Summary:")
                     : $"Round {round} Summary: no changes";
+
                 pendingRoundSummaries[hp.PlayerId] = msg;
                 pendingRoundNumber[hp.PlayerId] = round;
             }
         }
 
+        #endregion
+
+        #region Helpers / Aggregation
+
         private PlayerSnapshot TakeSnapshot(int playerId)
         {
             var cells = board.GetAllCellsOwnedBy(playerId);
-            return new PlayerSnapshot { Living = cells.Count(c => c.IsAlive), Dead = cells.Count(c => c.IsDead), Toxins = cells.Count(c => c.IsToxin) };
+            return new PlayerSnapshot
+            {
+                Living = cells.Count(c => c.IsAlive),
+                Dead = cells.Count(c => c.IsDead),
+                Toxins = cells.Count(c => c.IsToxin)
+            };
         }
+
         private PlayerLogSummary GetSummary(int playerId)
-        { if (!summaries.TryGetValue(playerId, out var s)) { s = new PlayerLogSummary(playerId); summaries[playerId] = s; } return s; }
-        private void AddPlayerEvent(int playerId, String message, GameLogCategory cat, int? explicitRound = null)
+        {
+            if (!summaries.TryGetValue(playerId, out var s))
+            {
+                s = new PlayerLogSummary(playerId);
+                summaries[playerId] = s;
+            }
+            return s;
+        }
+
+        private void AddPlayerEvent(int playerId, string message, GameLogCategory cat, int? explicitRound = null)
         {
             if (IsSilentMode || playerId < 0) return;
+
             var s = GetSummary(playerId);
-            s.Add(new PlayerLogEvent { Message = message, Category = cat, Round = explicitRound ?? (board?.CurrentRound ?? 0), Timestamp = DateTime.Now, IsClearMarker = false });
-            if (playerId == activePlayerId) OnNewLogEntry?.Invoke(new GameLogEntry(message, cat, null, playerId, explicitRound));
+            s.Add(new PlayerLogEvent
+            {
+                Message = message,
+                Category = cat,
+                Round = explicitRound ?? (board?.CurrentRound ?? 0),
+                Timestamp = DateTime.Now,
+                IsClearMarker = false
+            });
+
+            if (playerId == activePlayerId)
+            {
+                OnNewLogEntry?.Invoke(new GameLogEntry(message, cat, null, playerId, explicitRound));
+            }
         }
+
         private bool IsHuman(int playerId)
-        { if (board == null) return false; var p = board.Players.FirstOrDefault(pl => pl.PlayerId == playerId); return p != null && p.PlayerType == PlayerTypeEnum.Human; }
+        {
+            if (board == null) return false;
+            var p = board.Players.FirstOrDefault(pl => pl.PlayerId == playerId);
+            return p != null && p.PlayerType == PlayerTypeEnum.Human;
+        }
+
         private string AbilityName(GrowthSource src) => src switch
         {
             GrowthSource.JettingMycelium => "Jetting Mycelium",
@@ -287,36 +495,106 @@ namespace FungusToast.Unity.UI.GameLog
         public void SetActiveHumanPlayer(int newHumanPlayerId, GameBoard currentBoard)
         {
             if (newHumanPlayerId == activePlayerId) return;
+
             activePlayerId = newHumanPlayerId;
+
             if (currentBoard != null && !roundStartSnapshots.ContainsKey(activePlayerId))
                 roundStartSnapshots[activePlayerId] = TakeSnapshot(activePlayerId);
+
             Debug.Log($"[GameLogManager] Active player context switched -> PlayerId={activePlayerId}");
         }
 
         private PlayerLogAggregation Agg(int playerId)
-        { if (!aggregations.TryGetValue(playerId, out var agg)) { agg = new PlayerLogAggregation(); aggregations[playerId] = agg; } return agg; }
+        {
+            if (!aggregations.TryGetValue(playerId, out var agg))
+            {
+                agg = new PlayerLogAggregation();
+                aggregations[playerId] = agg;
+            }
+            return agg;
+        }
+
         private void Inc(string kind, int playerId, GrowthSource src, int amount = 1)
         {
             var agg = Agg(playerId);
-            if (!agg.Totals.ContainsKey(kind)) agg.Totals[kind] = 0; agg.Totals[kind] += amount;
-            if (!agg.PerSource.TryGetValue(kind, out var dict)) { dict = new Dictionary<GrowthSource, int>(); agg.PerSource[kind] = dict; }
-            if (!dict.ContainsKey(src)) dict[src] = 0; dict[src] += amount;
+            if (!agg.Totals.ContainsKey(kind)) agg.Totals[kind] = 0;
+            agg.Totals[kind] += amount;
+
+            if (!agg.PerSource.TryGetValue(kind, out var dict))
+            {
+                dict = new Dictionary<GrowthSource, int>();
+                agg.PerSource[kind] = dict;
+            }
+            if (!dict.ContainsKey(src)) dict[src] = 0;
+            dict[src] += amount;
         }
+
         private void IncDeath(int playerId, DeathReason reason, int count)
-        { var agg = Agg(playerId); if (!agg.Deaths.ContainsKey(reason)) agg.Deaths[reason] = 0; agg.Deaths[reason] += count; }
+        {
+            var agg = Agg(playerId);
+            if (!agg.Deaths.ContainsKey(reason)) agg.Deaths[reason] = 0;
+            agg.Deaths[reason] += count;
+        }
+
         private void AddFreePoints(int playerId, string source, int points)
-        { var agg = Agg(playerId); if (!agg.FreePointsBySource.ContainsKey(source)) agg.FreePointsBySource[source] = 0; agg.FreePointsBySource[source] += points; }
+        {
+            var agg = Agg(playerId);
+            if (!agg.FreePointsBySource.ContainsKey(source)) agg.FreePointsBySource[source] = 0;
+            agg.FreePointsBySource[source] += points;
+        }
+
         private void AddFreeUpgrade(int playerId, string source, string mutationName, int levels)
-        { var agg = Agg(playerId); if (!agg.FreeUpgradesBySource.TryGetValue(source, out var dict)) { dict = new Dictionary<string, int>(); agg.FreeUpgradesBySource[source] = dict; } if (!dict.ContainsKey(mutationName)) dict[mutationName] = 0; dict[mutationName] += levels; }
+        {
+            var agg = Agg(playerId);
+            if (!agg.FreeUpgradesBySource.TryGetValue(source, out var dict))
+            {
+                dict = new Dictionary<string, int>();
+                agg.FreeUpgradesBySource[source] = dict;
+            }
+            if (!dict.ContainsKey(mutationName)) dict[mutationName] = 0;
+            dict[mutationName] += levels;
+        }
 
-        private void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource src) { if (IsSilentMode) return; if (IsHuman(playerId)) Inc(EventKinds.Poisoned, playerId, src); if (IsHuman(oldOwnerId)) IncDeath(oldOwnerId, DeathReason.Poisoned, 1); }
-        private void OnCellColonized(int playerId, int tileId, GrowthSource src) { if (!IsSilentMode && IsHuman(playerId)) Inc(EventKinds.Colonized, playerId, src); }
-        private void OnCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource src) { if (IsSilentMode) return; if (IsHuman(playerId)) Inc(EventKinds.Infested, playerId, src); if (IsHuman(oldOwnerId)) IncDeath(oldOwnerId, DeathReason.Infested, 1); }
-        private void OnCellOvergrown(int playerId, int tileId, int oldOwnerId, GrowthSource src) { if (!IsSilentMode && IsHuman(playerId)) Inc(EventKinds.Overgrown, playerId, src); }
-        private void OnCellReclaimed(int playerId, int tileId, GrowthSource src) { if (!IsSilentMode && IsHuman(playerId)) Inc(EventKinds.Reclaimed, playerId, src); }
-        private void OnCellToxified(int playerId, int tileId, GrowthSource src) { if (!IsSilentMode && IsHuman(playerId)) Inc(EventKinds.Toxified, playerId, src); }
+        #endregion
 
-        // === ISimulationObserver Implementation (restored) ===
+        #region Board Event Handlers
+
+        private void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource src)
+        {
+            if (IsHuman(playerId)) Inc(EventKinds.Poisoned, playerId, src);
+            if (IsHuman(oldOwnerId)) IncDeath(oldOwnerId, DeathReason.Poisoned, 1);
+        }
+
+        private void OnCellColonized(int playerId, int tileId, GrowthSource src)
+        {
+            if (IsHuman(playerId)) Inc(EventKinds.Colonized, playerId, src);
+        }
+
+        private void OnCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource src)
+        {
+            if (IsHuman(playerId)) Inc(EventKinds.Infested, playerId, src);
+            if (IsHuman(oldOwnerId)) IncDeath(oldOwnerId, DeathReason.Infested, 1);
+        }
+
+        private void OnCellOvergrown(int playerId, int tileId, int oldOwnerId, GrowthSource src)
+        {
+            if (IsHuman(playerId)) Inc(EventKinds.Overgrown, playerId, src);
+        }
+
+        private void OnCellReclaimed(int playerId, int tileId, GrowthSource src)
+        {
+            if (IsHuman(playerId)) Inc(EventKinds.Reclaimed, playerId, src);
+        }
+
+        private void OnCellToxified(int playerId, int tileId, GrowthSource src)
+        {
+            if (IsHuman(playerId)) Inc(EventKinds.Toxified, playerId, src);
+        }
+
+        #endregion
+
+        #region ISimulationObserver (Implemented / Routed)
+
         public void RecordMutationPointIncome(int playerId, int totalMutationPoints) { }
         public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Mutator Phenotype", freePointsEarned); }
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }
@@ -384,18 +662,30 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected) { }
         public void RecordHypersystemicRegenerationResistance(int playerId) { }
         public void RecordHypersystemicDiagonalReclaim(int playerId) { }
-        // === End ISimulationObserver implementation ===
+
+        #endregion
+
+        #region Public API
 
         public IEnumerable<GameLogEntry> GetRecentEntries(int count = 20)
         {
-            if (activePlayerId < 0) return System.Linq.Enumerable.Empty<GameLogEntry>();
-            if (!summaries.TryGetValue(activePlayerId, out var s)) return System.Linq.Enumerable.Empty<GameLogEntry>();
-            return s.GetLast(System.Math.Min(count, MAX_RETURN)).Select(e => new GameLogEntry(e.Message, e.Category, null, activePlayerId, e.Round));
+            if (activePlayerId < 0) return Enumerable.Empty<GameLogEntry>();
+            if (!summaries.TryGetValue(activePlayerId, out var s)) return Enumerable.Empty<GameLogEntry>();
+            return s.GetLast(Math.Min(count, MAX_RETURN)).Select(e => new GameLogEntry(e.Message, e.Category, null, activePlayerId, e.Round));
         }
+
         public void ClearLog()
-        { if (activePlayerId < 0) return; int round = board?.CurrentRound ?? 0; GetSummary(activePlayerId).Clear(round); OnNewLogEntry?.Invoke(new GameLogEntry("Log cleared", GameLogCategory.Normal, null, activePlayerId)); }
+        {
+            if (activePlayerId < 0) return;
+            int round = board?.CurrentRound ?? 0;
+            GetSummary(activePlayerId).Clear(round);
+            OnNewLogEntry?.Invoke(new GameLogEntry("Log cleared", GameLogCategory.Normal, null, activePlayerId));
+        }
+
         public void AddNormalEntry(string message, int? playerId = null) => AddPlayerEvent(playerId ?? activePlayerId, message, GameLogCategory.Normal);
         public void AddLuckyEntry(string message, int? playerId = null) => AddPlayerEvent(playerId ?? activePlayerId, message, GameLogCategory.Lucky);
         public void AddUnluckyEntry(string message, int? playerId = null) => AddPlayerEvent(playerId ?? activePlayerId, message, GameLogCategory.Unlucky);
+
+        #endregion
     }
 }
