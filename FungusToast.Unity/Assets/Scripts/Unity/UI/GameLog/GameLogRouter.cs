@@ -15,18 +15,19 @@ namespace FungusToast.Unity.UI.GameLog
     {
         private readonly GameLogManager playerActivityLogManager;
         private readonly GlobalGameLogManager globalEventsLogManager;
-        
+
         /// <summary>
-        /// When true, all logging calls are ignored. Used during fast-forward mode.
+        /// When true, UI emission is suppressed. Some aggregation still occurs.
         /// </summary>
-        public bool IsSilentMode { get; set; } = false;
-        
+        public bool IsSilentMode { get; private set; } = false;
+
         public GameLogRouter(GameLogManager playerLog, GlobalGameLogManager globalLog)
         {
             playerActivityLogManager = playerLog;
             globalEventsLogManager = globalLog;
         }
-        
+
+        #region Silent Mode
         /// <summary>
         /// Enables silent mode to suppress all logging during fast-forward operations.
         /// </summary>
@@ -35,7 +36,7 @@ namespace FungusToast.Unity.UI.GameLog
             IsSilentMode = true;
             UnityEngine.Debug.Log("[GameLogRouter] Silent mode ENABLED - logging suppressed during fast-forward");
         }
-        
+
         /// <summary>
         /// Disables silent mode to resume normal logging after fast-forward operations.
         /// </summary>
@@ -44,109 +45,110 @@ namespace FungusToast.Unity.UI.GameLog
             IsSilentMode = false;
             UnityEngine.Debug.Log("[GameLogRouter] Silent mode DISABLED - logging resumed");
         }
-        
-        // === AUTOMATIC ROUTING METHODS ===
-        
-        // Player-specific events (mutation points, abilities, etc.) → Player Log
+        #endregion
+
+        #region Free Point / Upgrade Routing (always aggregate)
+        public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned)
+            => playerActivityLogManager?.RecordMutatorPhenotypeMutationPointsEarned(playerId, freePointsEarned);
+
+        public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned)
+            => playerActivityLogManager?.RecordHyperadaptiveDriftMutationPointsEarned(playerId, freePointsEarned);
+
+        public void RecordAdaptiveExpressionBonus(int playerId, int bonus)
+            => playerActivityLogManager?.RecordAdaptiveExpressionBonus(playerId, bonus);
+
+        public void RecordAnabolicInversionBonus(int playerId, int bonus)
+            => playerActivityLogManager?.RecordAnabolicInversionBonus(playerId, bonus);
+
+        public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints)
+            => playerActivityLogManager?.RecordOntogenicRegressionFailureBonus(playerId, bonusPoints);
+
+        public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained)
+            => playerActivityLogManager?.RecordOntogenicRegressionEffect(playerId, sourceMutationName, sourceLevelsLost, targetMutationName, targetLevelsGained);
+
+        public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName)
+            => playerActivityLogManager?.RecordMutatorPhenotypeUpgrade(playerId, mutationName);
+
+        public void RecordSpecificMutationUpgrade(int playerId, string mutationName)
+            => playerActivityLogManager?.RecordSpecificMutationUpgrade(playerId, mutationName);
+
+        public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset)
+            => playerActivityLogManager?.RecordOntogenicRegressionSacrifices(playerId, cellsKilled, levelsOffset);
+        #endregion
+
+        #region Routed Only When Not Silent (UI oriented)
         public void RecordMutationPointIncome(int playerId, int newMutationPoints)
         {
             if (IsSilentMode) return;
             playerActivityLogManager?.RecordMutationPointIncome(playerId, newMutationPoints);
         }
-            
-        public void RecordAdaptiveExpressionBonus(int playerId, int bonus)
-        {
-            if (IsSilentMode) return;
-            playerActivityLogManager?.RecordAdaptiveExpressionBonus(playerId, bonus);
-        }
-            
-        public void RecordAnabolicInversionBonus(int playerId, int bonus)
-        {
-            if (IsSilentMode) return;
-            playerActivityLogManager?.RecordAnabolicInversionBonus(playerId, bonus);
-        }
-            
+
         public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints)
         {
             if (IsSilentMode) return;
             playerActivityLogManager?.RecordToxinCatabolism(playerId, toxinsCatabolized, catabolizedMutationPoints);
         }
-            
-        public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned)
-        {
-            if (IsSilentMode) return;
-            playerActivityLogManager?.RecordMutatorPhenotypeMutationPointsEarned(playerId, freePointsEarned);
-        }
-            
-        public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned)
-        {
-            if (IsSilentMode) return;
-            playerActivityLogManager?.RecordHyperadaptiveDriftMutationPointsEarned(playerId, freePointsEarned);
-        }
-        
-        // === MANUAL ROUTING METHODS ===
-        // These provide explicit control for events that need custom routing logic
-        
-        public void OnRoundStart(int roundNumber)
-        {
-            if (IsSilentMode) return;
-            // Player gets notified for round summary tracking
-            playerActivityLogManager?.OnRoundStart(roundNumber);
-            // Global gets the main round start message
-            globalEventsLogManager?.OnRoundStart(roundNumber);
-        }
-        
-        public void OnRoundComplete(int roundNumber, GameBoard board)
-        {
-            if (IsSilentMode) return;
-            // Both logs get round completion for their respective summaries
-            playerActivityLogManager?.OnRoundComplete(roundNumber);
-            globalEventsLogManager?.OnRoundComplete(roundNumber, board);
-        }
-        
-        public void OnPhaseStart(string phaseName)
-        {
-            if (IsSilentMode) return;
-            // Only global log shows phase transitions
-            globalEventsLogManager?.OnPhaseStart(phaseName);
-        }
-        
-        public void OnDraftPhaseStart(string mycovariantName = null)
-        {
-            if (IsSilentMode) return;
-            // Only global log shows draft phase start
-            globalEventsLogManager?.OnDraftPhaseStart(mycovariantName);
-        }
-        
-        public void OnEndgameTriggered(int roundsRemaining)
-        {
-            if (IsSilentMode) return;
-            // Only global log shows endgame countdown
-            globalEventsLogManager?.OnEndgameTriggered(roundsRemaining);
-        }
-        
-        public void OnGameEnd(string winnerName)
-        {
-            if (IsSilentMode) return;
-            // Only global log shows game end
-            globalEventsLogManager?.OnGameEnd(winnerName);
-        }
-        
-        public void OnDraftPick(string playerName, string mycovariantName)
-        {
-            if (IsSilentMode) return;
-            // Only global log shows draft picks
-            globalEventsLogManager?.OnDraftPick(playerName, mycovariantName);
-        }
-        
-        // === STUB IMPLEMENTATIONS ===
-        // All other ISimulationObserver methods that we don't need in Unity
-        // Silent mode still applies to prevent any potential future implementations from logging
-        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1) 
+
+        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
         {
             if (IsSilentMode) return;
             playerActivityLogManager?.RecordCellDeath(playerId, reason, deathCount);
         }
+
+        public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordChemotacticMycotoxinsRelocations(playerId, relocations);
+        }
+        #endregion
+
+        #region Phase / Round Routing (suppressed in silent mode)
+        public void OnRoundStart(int roundNumber)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.OnRoundStart(roundNumber);
+            globalEventsLogManager?.OnRoundStart(roundNumber);
+        }
+
+        public void OnRoundComplete(int roundNumber, GameBoard board)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.OnRoundComplete(roundNumber);
+            globalEventsLogManager?.OnRoundComplete(roundNumber, board);
+        }
+
+        public void OnPhaseStart(string phaseName)
+        {
+            if (IsSilentMode) return;
+            globalEventsLogManager?.OnPhaseStart(phaseName);
+        }
+
+        public void OnDraftPhaseStart(string mycovariantName = null)
+        {
+            if (IsSilentMode) return;
+            globalEventsLogManager?.OnDraftPhaseStart(mycovariantName);
+        }
+
+        public void OnEndgameTriggered(int roundsRemaining)
+        {
+            if (IsSilentMode) return;
+            globalEventsLogManager?.OnEndgameTriggered(roundsRemaining);
+        }
+
+        public void OnGameEnd(string winnerName)
+        {
+            if (IsSilentMode) return;
+            globalEventsLogManager?.OnGameEnd(winnerName);
+        }
+
+        public void OnDraftPick(string playerName, string mycovariantName)
+        {
+            if (IsSilentMode) return;
+            globalEventsLogManager?.OnDraftPick(playerName, mycovariantName);
+        }
+        #endregion
+
+        #region Ignored / Simulation-only (no-op in Unity)
         public void RecordCreepingMoldMove(int playerId) { }
         public void RecordCreepingMoldToxinJump(int playerId) { }
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }
@@ -154,11 +156,7 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordTendrilGrowth(int playerId, DiagonalDirection value) { }
         public void RecordNecrotoxicConversionReclaim(int playerId, int necrotoxicConversions) { }
         public void RecordCatabolicRebirthResurrection(int playerId, int resurrectedCells) { }
-        public void RecordRegenerativeHyphaeReclaim(int playerId) 
-        {
-            // Regenerative hyphae reclaims are now tracked via GameBoard.CellReclaimed event
-            // No longer routed through ISimulationObserver - keeping for compatibility
-        }
+        public void RecordRegenerativeHyphaeReclaim(int playerId) { }
         public void ReportSporicidalSporeDrop(int playerId, int count) { }
         public void ReportNecrosporeDrop(int playerId, int count) { }
         public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims) { }
@@ -203,46 +201,7 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordCytolyticBurstKills(int playerId, int cellsKilled) { }
         public void RecordHypersystemicRegenerationResistance(int playerId) { }
         public void RecordHypersystemicDiagonalReclaim(int playerId) { }
-        public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName)
-        {
-            if (IsSilentMode) return;
-            playerActivityLogManager?.RecordMutatorPhenotypeUpgrade(playerId, mutationName);
-        }
-        public void RecordSpecificMutationUpgrade(int playerId, string mutationName)
-        {
-            if (IsSilentMode) return;
-            playerActivityLogManager?.RecordSpecificMutationUpgrade(playerId, mutationName);
-        }
-        
-        public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations)
-        {
-            if (IsSilentMode) return;
-            playerActivityLogManager?.RecordChemotacticMycotoxinsRelocations(playerId, relocations);
-        }
-
-        public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained)
-        {
-            if (IsSilentMode) return;
-            playerActivityLogManager?.RecordOntogenicRegressionEffect(playerId, sourceMutationName, sourceLevelsLost, targetMutationName, targetLevelsGained);
-        }
-
-        public void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected)
-        {
-            // Stub implementation - Competitive Antagonism targeting effects are not shown in Unity UI
-            // This is tracked in simulations but not displayed to avoid log spam
-        }
-
-        public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints)
-        {
-            if (IsSilentMode) return;
-            playerActivityLogManager?.RecordOntogenicRegressionFailureBonus(playerId, bonusPoints);
-        }
-
-        public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset)
-        {
-            // Unity log suppression by default to avoid spam; could be hooked for UI later.
-            if (IsSilentMode) return;
-            playerActivityLogManager?.RecordOntogenicRegressionSacrifices(playerId, cellsKilled, levelsOffset);
-        }
+        public void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected) { }
+        #endregion
     }
 }

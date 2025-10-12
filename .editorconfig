@@ -1,0 +1,219 @@
+# Root EditorConfig for Fungus Toast
+# Place at repository root so it flows into Core, Simulation, and Unity projects
+root = true
+
+#------------------------------
+# GLOBAL SETTINGS
+#------------------------------
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+max_line_length = 140
+
+# Keep Markdown & text more lenient
+[*.{md,MD,txt}]
+trim_trailing_whitespace = false
+max_line_length = off
+
+#------------------------------
+# C# CODE STYLE (applies to all .cs files)
+#------------------------------
+[*.cs]
+# Language version (advisory for some IDEs)
+dotnet_language_version = 10.0
+
+# Organize usings
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+# Community / Unity recommendation: place usings outside namespace
+csharp_using_directive_placement = outside_namespace:warning
+
+# New line preferences
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_members_in_anonymous_types = true
+csharp_new_line_between_query_expression_clauses = true
+
+# Wrapping
+csharp_preserve_single_line_statements = false
+csharp_preserve_single_line_blocks = false
+
+# Var usage (elevated to warnings per preference for stronger guidance)
+csharp_style_var_for_built_in_types = true:warning
+csharp_style_var_when_type_is_apparent = true:warning
+csharp_style_var_elsewhere = true:silent
+
+# Expression-bodied members (keep idiomatic: only simple members)
+csharp_style_expression_bodied_methods = false:warning
+csharp_style_expression_bodied_constructors = false:warning
+csharp_style_expression_bodied_operators = false:warning
+csharp_style_expression_bodied_properties = true:warning
+csharp_style_expression_bodied_indexers = true:warning
+csharp_style_expression_bodied_accessors = true:warning
+csharp_style_expression_bodied_lambdas = true:silent
+
+# Pattern matching / modern syntax (encourage via warnings)
+csharp_style_pattern_matching_over_is_with_cast_check = true:warning
+csharp_style_pattern_matching_over_as_with_null_check = true:warning
+csharp_style_prefer_switch_expression = true:warning
+csharp_style_prefer_pattern_matching = true:warning
+csharp_style_prefer_tuple_swap = true:warning
+csharp_style_prefer_conditional_expression_over_return = false:silent
+csharp_style_prefer_conditional_expression_over_assignment = false:silent
+
+# Qualification (idiomatic C# keeps these off)
+dotnet_style_qualification_for_field = false:silent
+dotnet_style_qualification_for_property = false:silent
+dotnet_style_qualification_for_method = false:silent
+dotnet_style_qualification_for_event = false:silent
+
+# Prefer simplified code forms
+dotnet_style_prefer_auto_properties = true:warning
+dotnet_style_prefer_inferred_tuple_names = true:warning
+dotnet_style_prefer_inferred_anonymous_type_member_names = true:warning
+dotnet_style_prefer_compound_assignment = true:warning
+dotnet_style_prefer_simplified_boolean_expressions = true:warning
+dotnet_style_prefer_simplified_interpolation = true:warning
+
+# Null / nullable
+dotnet_style_coalesce_expression = true:warning
+dotnet_style_null_propagation = true:warning
+csharp_style_prefer_null_check_over_type_check = true:warning
+
+# Parentheses (clarity for arithmetic / relational)
+dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:silent
+dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:silent
+dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:silent
+dotnet_style_parentheses_in_other_operators = never_if_unnecessary:silent
+
+# Formatting
+csharp_indent_case_contents = true
+csharp_indent_case_contents_when_block = true
+csharp_indent_labels = one_less_than_current
+csharp_space_after_cast = false
+csharp_space_before_colon_in_inheritance_clause = true
+csharp_space_after_colon_in_inheritance_clause = true
+csharp_space_around_binary_operators = before_and_after
+csharp_space_between_method_call_parameter_list_parentheses = false
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+csharp_space_between_parentheses = false
+csharp_space_before_open_square_brackets = false
+csharp_space_between_empty_square_brackets = false
+csharp_space_between_method_declaration_empty_parameter_list_parentheses = false
+csharp_space_between_method_call_empty_parameter_list_parentheses = false
+
+# File header (unused)
+file_header_template = unset
+
+# Analyzer severities (promote selected items to warnings per request)
+dotnet_diagnostic.IDE0060.severity = warning   # Unused parameter (surface to clean APIs)
+dotnet_diagnostic.IDE0051.severity = silent    # Unused private member (keep noise low)
+dotnet_diagnostic.IDE0058.severity = warning   # Unused expression value
+# CA performance / correctness samples (enable as warnings; expand later as needed)
+dotnet_diagnostic.CA1822.severity = warning    # Mark members as static
+dotnet_diagnostic.CA1802.severity = warning    # Use const instead of static readonly
+
+# Treat warnings as suggestions unless critical (explicitly leave off)
+warn_as_error = false
+
+# Trailing comma preference (left idiomatic / unspecified)
+# (If later desired: dotnet_style_prefer_trailing_commas = true:warning)
+
+# Tuple vs out var note: Prefer out vars for clarity; no direct analyzer toggle.
+# Avoid introducing tuple return types for new APIs unless they represent lightweight unnamed pairs.
+
+#------------------------------
+# NAMING CONVENTIONS (idiomatic C#)
+#------------------------------
+# Symbols
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+# Rules
+# Private fields: _camelCase
+dotnet_naming_style.private_field_style.capitalization = camel_case
+dotnet_naming_style.private_field_style.required_prefix = _
+
+dotnet_naming_rule.private_fields_should_be_camel_case.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_camel_case.style = private_field_style
+dotnet_naming_rule.private_fields_should_be_camel_case.severity = warning
+
+# Interfaces: I prefix PascalCase
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+
+dotnet_naming_style.interface_style.capitalization = pascal_case
+dotnet_naming_style.interface_style.required_prefix = I
+
+dotnet_naming_rule.interfaces_should_be_prefixed.symbols = interfaces
+dotnet_naming_rule.interfaces_should_be_prefixed.style = interface_style
+dotnet_naming_rule.interfaces_should_be_prefixed.severity = warning
+
+# Constants: PascalCase
+dotnet_naming_symbols.constants.applicable_kinds = field
+dotnet_naming_symbols.constants.applicable_accessibilities = *
+dotnet_naming_symbols.constants.required_modifiers = const
+
+dotnet_naming_style.constant_style.capitalization = pascal_case
+
+dotnet_naming_rule.constants_should_be_pascal.symbols = constants
+dotnet_naming_rule.constants_should_be_pascal.style = constant_style
+dotnet_naming_rule.constants_should_be_pascal.severity = warning
+
+# Types (classes / structs / enums / delegates): PascalCase
+dotnet_naming_symbols.types.applicable_kinds = class, struct, enum, delegate
+
+dotnet_naming_style.type_style.capitalization = pascal_case
+
+dotnet_naming_rule.types_should_be_pascal.symbols = types
+dotnet_naming_rule.types_should_be_pascal.style = type_style
+dotnet_naming_rule.types_should_be_pascal.severity = warning
+
+# Members (methods, properties, events): PascalCase
+dotnet_naming_symbols.members.applicable_kinds = method, property, event
+
+dotnet_naming_style.member_style.capitalization = pascal_case
+
+dotnet_naming_rule.members_should_be_pascal.symbols = members
+dotnet_naming_rule.members_should_be_pascal.style = member_style
+dotnet_naming_rule.members_should_be_pascal.severity = warning
+
+# Local functions: PascalCase (optional; many teams use PascalCase for clarity)
+dotnet_naming_symbols.local_functions.applicable_kinds = local_function
+
+# Keep local functions PascalCase for consistency with methods
+# (If you prefer camelCase, change capitalization to camel_case)
+dotnet_naming_style.local_function_style.capitalization = pascal_case
+
+dotnet_naming_rule.local_functions_should_be_pascal.symbols = local_functions
+dotnet_naming_rule.local_functions_should_be_pascal.style = local_function_style
+dotnet_naming_rule.local_functions_should_be_pascal.severity = silent
+
+#------------------------------
+# UNITY SPECIFIC OVERRIDES
+# Generated code more permissive
+#------------------------------
+[Assets/**/Generated/*.cs]
+csharp_using_directive_placement = outside_namespace:silent
+
+[**/Generated/*.cs]
+dotnet_analyzer_diagnostic.severity = silent
+
+#------------------------------
+# SIMULATION PROJECT (allow longer methods for performance loops)
+#------------------------------
+[FungusToast.Simulation/**/*.cs]
+dotnet_diagnostic.IDE0061.severity = silent   # Convert to expression body (avoid churn)
+
+#------------------------------
+# CORE PERFORMANCE CRITICAL AREAS (suppress some style noise)
+#------------------------------
+[FungusToast.Core/Growth/**/*.cs]
+dotnet_diagnostic.IDE0042.severity = silent   # Deconstruct suggestions
+
