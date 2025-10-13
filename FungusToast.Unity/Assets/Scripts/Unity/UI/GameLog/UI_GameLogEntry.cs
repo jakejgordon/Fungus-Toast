@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections;
 
 namespace FungusToast.Unity.UI.GameLog
 {
@@ -9,7 +10,13 @@ namespace FungusToast.Unity.UI.GameLog
         [SerializeField] private TextMeshProUGUI messageText;
         [SerializeField] private TextMeshProUGUI timestampText;
         [SerializeField] private Image backgroundImage;
-        
+        [Header("Auto Height Settings")] 
+        [SerializeField] private LayoutElement layoutElement; // optional, assign on prefab root
+        [SerializeField] private float verticalPadding = 4f; // extra padding added to calculated height
+        [SerializeField] private float minHeight = 24f; // baseline single-line height
+        [SerializeField] private float extraSafetyPadding = 2f; // prevents last line clipping
+        private bool deferredScheduled = false;
+
         public void SetEntry(GameLogEntry entry)
         {
             if (messageText != null)
@@ -29,35 +36,74 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 Color bgColor = entry.Category switch
                 {
-                    GameLogCategory.Normal => new Color(0.1f, 0.1f, 0.1f, 0.2f), // Subtle dark gray
-                    // Enhanced background contrast for better readability
-                    GameLogCategory.Lucky => new Color(0.1f, 0.6f, 0.1f, 0.5f), // More visible green tint
-                    GameLogCategory.Unlucky => new Color(0.6f, 0.1f, 0.1f, 0.5f), // More visible red tint
-                    _ => new Color(0.1f, 0.1f, 0.1f, 0.2f) // Default to normal
+                    GameLogCategory.Normal => new Color(0.1f, 0.1f, 0.1f, 0.2f),
+                    GameLogCategory.Lucky => new Color(0.1f, 0.6f, 0.1f, 0.5f),
+                    GameLogCategory.Unlucky => new Color(0.6f, 0.1f, 0.1f, 0.5f),
+                    _ => new Color(0.1f, 0.1f, 0.1f, 0.2f)
                 };
                 backgroundImage.color = bgColor;
             }
+
+            UpdateDynamicHeightImmediate();
+            // Schedule a deferred recalculation (width can finalize after first layout pass)
+            if (!deferredScheduled && gameObject.activeInHierarchy)
+                StartCoroutine(DeferredHeightRecalc());
+        }
+        
+        private void UpdateDynamicHeightImmediate()
+        {
+            if (messageText == null) return;
+            if (layoutElement == null) layoutElement = GetComponent<LayoutElement>();
+            if (layoutElement == null) return; // still optional
+
+            // Ensure TMP has generated geometry for current text
+            messageText.ForceMeshUpdate();
+
+            // Determine available width for text (current rect width may still be 0 first frame)
+            float availableWidth = messageText.rectTransform.rect.width;
+            if (availableWidth <= 0f)
+            {
+                // Try parent width as fallback
+                var parentRT = messageText.rectTransform.parent as RectTransform;
+                if (parentRT != null) availableWidth = parentRT.rect.width;
+            }
+            if (availableWidth <= 0f) availableWidth = 500f; // sane fallback
+
+            // Constrained preferred size (height) for current width
+            var preferredValues = messageText.GetPreferredValues(messageText.text, availableWidth, 0f);
+            float preferredHeight = preferredValues.y;
+
+            float target = Mathf.Max(minHeight, Mathf.Ceil(preferredHeight) + verticalPadding + extraSafetyPadding);
+
+            if (Mathf.Abs(layoutElement.preferredHeight - target) > 0.5f)
+            {
+                layoutElement.preferredHeight = target;
+                LayoutRebuilder.MarkLayoutForRebuild(transform as RectTransform);
+            }
+        }
+
+        private IEnumerator DeferredHeightRecalc()
+        {
+            deferredScheduled = true;
+            // Wait one frame so parent layout / horizontal groups settle widths
+            yield return null;
+            UpdateDynamicHeightImmediate();
+            deferredScheduled = false;
         }
         
         public void FadeIn()
         {
-            // Get or create canvas group once
             var canvasGroup = GetComponent<CanvasGroup>();
             if (canvasGroup == null)
                 canvasGroup = gameObject.AddComponent<CanvasGroup>();
             
-            // Don't try to start coroutines on inactive GameObjects
             if (!gameObject.activeInHierarchy)
             {
-                // If we're not active, just set alpha to 1 immediately for when we become active later
                 canvasGroup.alpha = 1f;
                 return;
             }
             
-            // Simple fade-in animation using Unity's built-in CanvasGroup
             canvasGroup.alpha = 0f;
-            
-            // Simple coroutine-based fade instead of LeanTween
             StartCoroutine(FadeInCoroutine(canvasGroup));
         }
         

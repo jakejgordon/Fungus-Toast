@@ -10,8 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 722694778534784792}
   - component: {fileID: 7082824512406376064}
-  - component: {fileID: 3089580429858062307}
-  - component: {fileID: 2430327675465827805}
+  - component: {fileID: 6765716403148729869}
   m_Layer: 5
   m_Name: UI_GameLogEntry
   m_TagString: Untagged
@@ -39,8 +38,8 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_SizeDelta: {x: 0, y: 24}
+  m_Pivot: {x: 0, y: 1}
 --- !u!114 &7082824512406376064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -56,21 +55,11 @@ MonoBehaviour:
   messageText: {fileID: 2631231347190844264}
   timestampText: {fileID: 183622400968247713}
   backgroundImage: {fileID: 2677167690546795949}
---- !u!114 &3089580429858062307
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 856620890590642470}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_HorizontalFit: 0
-  m_VerticalFit: 2
---- !u!114 &2430327675465827805
+  layoutElement: {fileID: 6765716403148729869}
+  verticalPadding: 10
+  minHeight: 24
+  extraSafetyPadding: 2
+--- !u!114 &6765716403148729869
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -124,7 +113,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -20, y: -8}
+  m_AnchoredPosition: {x: -16, y: -8}
   m_SizeDelta: {x: 25, y: 15}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4328234265117019638
@@ -188,7 +177,7 @@ MonoBehaviour:
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 4
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -237,7 +226,6 @@ GameObject:
   - component: {fileID: 2269543765064694008}
   - component: {fileID: 1172203475804358580}
   - component: {fileID: 2631231347190844264}
-  - component: {fileID: 7398940380684133041}
   m_Layer: 5
   m_Name: UI_GameLogEntryMessageText
   m_TagString: Untagged
@@ -261,8 +249,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 2.5, y: 0}
-  m_SizeDelta: {x: -5, y: 0}
+  m_AnchoredPosition: {x: -9, y: 0}
+  m_SizeDelta: {x: -28, y: -8.35}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1172203475804358580
 CanvasRenderer:
@@ -363,20 +351,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &7398940380684133041
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3546571503882081835}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_HorizontalFit: 0
-  m_VerticalFit: 2
 --- !u!1 &6814216779511141656
 GameObject:
   m_ObjectHideFlags: 0

@@ -25,6 +25,7 @@ namespace FungusToast.Unity.UI.GameLog
         private IGameLogManager logManager;
         private int activePlayerId = -1; // for player-specific filtering
         private bool subscribed = false; // prevent double subscription
+        private bool pendingLayoutRebuild = false; // coalesce multiple adds per frame
 
         private void Awake()
         {
@@ -33,6 +34,15 @@ namespace FungusToast.Unity.UI.GameLog
 
             if (headerText != null && string.IsNullOrEmpty(headerText.text))
                 headerText.text = defaultHeaderText;
+        }
+
+        private void LateUpdate()
+        {
+            if (pendingLayoutRebuild)
+            {
+                ForceLayoutRefreshImmediate();
+                pendingLayoutRebuild = false;
+            }
         }
 
         public void Initialize(IGameLogManager gameLogManager)
@@ -67,6 +77,7 @@ namespace FungusToast.Unity.UI.GameLog
                 {
                     AddLogEntry(entry);
                 }
+                QueueLayoutRefresh();
             }
         }
 
@@ -146,11 +157,7 @@ namespace FungusToast.Unity.UI.GameLog
                     Destroy(oldEntry.gameObject);
             }
 
-            if (autoScrollToBottom && scrollRect != null)
-            {
-                Canvas.ForceUpdateCanvases();
-                scrollRect.verticalNormalizedPosition = 0f;
-            }
+            QueueLayoutRefresh();
         }
 
         private void ClearLog()
@@ -164,6 +171,8 @@ namespace FungusToast.Unity.UI.GameLog
 
             if (!isPlayerSpecificPanel && logManager != null)
                 logManager.ClearLog();
+
+            QueueLayoutRefresh();
         }
 
         private void RebuildForPlayerEntries(IEnumerable<GameLogEntry> entries)
@@ -174,6 +183,26 @@ namespace FungusToast.Unity.UI.GameLog
             if (entries == null) return;
             foreach (var entry in entries.Where(e => !e.PlayerId.HasValue || e.PlayerId == activePlayerId).TakeLast(maxVisibleEntries))
                 CreateVisualEntry(entry);
+            QueueLayoutRefresh();
+        }
+
+        private void QueueLayoutRefresh() => pendingLayoutRebuild = true;
+
+        private void ForceLayoutRefreshImmediate()
+        {
+            if (contentParent == null) return;
+
+            Canvas.ForceUpdateCanvases();
+
+            var contentRT = contentParent as RectTransform;
+            if (contentRT != null)
+                LayoutRebuilder.ForceRebuildLayoutImmediate(contentRT);
+
+            if (scrollRect != null && scrollRect.content != null)
+                LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect.content);
+
+            if (autoScrollToBottom && scrollRect != null)
+                scrollRect.verticalNormalizedPosition = 0f;
         }
 
         public void SetAutoScroll(bool enabled) => autoScrollToBottom = enabled;

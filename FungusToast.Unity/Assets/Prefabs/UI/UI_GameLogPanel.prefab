@@ -121,7 +121,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 4190307805997451328}
   m_Direction: 2
   m_Value: 1
-  m_Size: 1
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -187,6 +187,7 @@ MonoBehaviour:
   maxVisibleEntries: 30
   autoScrollToBottom: 1
   defaultHeaderText: Game Log
+  isPlayerSpecificPanel: 0
 --- !u!222 &2957040615394577706
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1216,10 +1217,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 0
-    m_Right: 0
-    m_Top: 0
-    m_Bottom: 0
+    m_Left: 5
+    m_Right: 10
+    m_Top: 5
+    m_Bottom: 5
   m_ChildAlignment: 1
   m_Spacing: 2
   m_ChildForceExpandWidth: 1
