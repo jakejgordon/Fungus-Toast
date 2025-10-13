@@ -53,8 +53,8 @@ namespace FungusToast.Unity
                 return;
             }
             var hp = humanPlayers[currentIndex];
-            // Show prompt only for players AFTER the first turn (prevents prompt while parents still activating & unnecessary first-player pause)
-            bool showPrompt = humanPlayers.Count >= 1 && prompt != null && !isFastForwarding() && !isTesting();
+            // Show prompt only if more than one human player
+            bool showPrompt = humanPlayers.Count > 1 && prompt != null && !isFastForwarding() && !isTesting();
             Debug.Log($"[HotseatTurnManager] Human turn index={currentIndex} player={hp.PlayerName} showPrompt={showPrompt} promptAssigned={(prompt!=null)}");
             if (showPrompt)
             {
