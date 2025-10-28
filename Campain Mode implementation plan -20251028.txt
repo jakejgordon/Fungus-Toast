@@ -1,0 +1,27 @@
+Here is the current implementation plan for introducing a single-player Campaign mode (“Genetic Traits”) to Fungus Toast. We have completed Iteration X and will begin Iteration X+1 now.
+Context:
+•	Campaign adds fixed-length multi-game run (up to ~15 levels) with escalating board presets, AI count, and mutation tier unlocks.
+•	Player drafts permanent, stacking passive Genetic Traits after each victory (loss resets run).
+•	Progress saved to JSON at Application.persistentDataPath (single active campaign; upgrades can invalidate saves).
+Implementation Plan (Iterations):
+1.	Campaign Mode Skeleton: Mode select UI (Solo vs Campaign), CampaignState (runId, levelIndex, traitStacks, unlockedMutationTierMax, boardPresetId, seed), LevelSpec progression (ScriptableObject), New/Resume/Delete, JSON save service.
+2.	Victory/Defeat Flow Integration: Hook game end, advance level, reset on loss, continue loop without rewards.
+3.	Genetic Trait Framework: TraitDefinition (id, name, maxStack, descriptionTemplate, rarity, effectTags), draft UI (choose 1 of 3), stacking logic, immediate save.
+4.	Trait Effect Hook System: TraitEffectService listening to lifecycle events (GameStart, GrowthCycle, ToxinDropped, MutationPointAward), scaling formulas (baseValue + perStackDelta), UI display of active traits.
+5.	Mutation Tier Unlock Enforcement: Apply mutationTierMax gating in mutation UI & logic; show locked indicators.
+6.	Board Presets & AI Scaling: ScriptableObject board presets, AI archetype escalation, level preview panel.
+7.	Save Robustness: Atomic writes, rotating backups, integrity hash, editor-only export/import debug tools.
+8.	Telemetry & Balancing: Local analytics log for chosen traits and outcomes, simple aggregator for tuning.
+9.	Advanced Trait Types: Conditional first-use triggers, round-timed spikes, internal cooldown system.
+10.	Draft Quality Improvements: Synergy/duplication suppression, upgrade slot bias, reroll token groundwork.
+11.	Run Completion & Archiving: Final summary screen, archive finished CampaignStates for history.
+12.	Polish & UX: Animations, scaling tooltips, “next unlock” panel, refined copy.
+Key Data Structures:
+•	CampaignState
+•	LevelSpec (array in CampaignProgression ScriptableObject)
+•	TraitDefinition
+•	TraitRuntime (computed values per stack)
+Event Hooks Needed: GameStart, RoundStart, RoundEnd, GrowthCycleTick, ToxinDropped, MutationPointsAward (modifiable), GameVictory, GameDefeat.
+Save Path: persistentDataPath/campaign_save.json (+ backups).
+Next Step (Iteration X+1): [Describe concrete goals for this session here]
+Please proceed implementing Iteration X+1 according to the above; request any missing existing file paths before changes if needed.
