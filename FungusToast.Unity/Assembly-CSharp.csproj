@@ -65,12 +65,14 @@
     <Compile Include="Assets\Scripts\Unity\UI\UIEffectConstants.cs" />
     <Compile Include="Assets\Scripts\Unity\ForceRecompile.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_MutationManager.cs" />
+    <Compile Include="Assets\Scripts\Unity\Campaign\GameMode.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipRequest.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\ITooltipContentProvider.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\Animation\StartingSporeArrivalAnimator.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_RightSideBar.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\SidebarResizer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipManager.cs" />
+    <Compile Include="Assets\Scripts\Unity\Campaign\CampaignSaveService.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantIcon.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameStart\UI_HotseatHumanCountButton.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\UI_GameLogPanel.cs" />
@@ -78,6 +80,8 @@
     <Compile Include="Assets\Scripts\Unity\Phases\DecayPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationNodeUI.cs" />
     <Compile Include="Assets\Scripts\Unity\Services\PlayerInitializer.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\Campaign\UI_CampaignPanelController.cs" />
+    <Compile Include="Assets\Scripts\Unity\Campaign\CampaignState.cs" />
     <Compile Include="Assets\Scripts\Unity\Cameras\CameraControls.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.SurgicalInoculation.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantTooltipPanel.cs" />
@@ -92,6 +96,7 @@
     <Compile Include="Assets\Scripts\Unity\Grid\Helpers\SelectionHighlightHelper.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridFiller.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationManager.cs" />
+    <Compile Include="Assets\Scripts\Unity\Campaign\CampaignController.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.Reclaim.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_PhaseBanner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantArtRepository.cs" />
@@ -99,6 +104,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantTooltipTrigger.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GrowthPreviewDirection.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MultiTileSelectionController.cs" />
+    <Compile Include="Assets\Scripts\Unity\Campaign\CampaignProgression.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_MoldProfileRoot.cs" />
     <Compile Include="Assets\Scripts\Unity\Services\FastForwardService.cs" />
@@ -125,6 +131,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\UI_GameLogEntry.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\TileSelectionController.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipPlacement.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\Campaign\UI_ModeSelectPanelController.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_RemainingPointsPanel.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\GameLogRouter.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\TileHoverHighlighter.cs" />

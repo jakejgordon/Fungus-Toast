@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using FungusToast.Unity.Campaign; // NEW: campaign namespace
 
 namespace FungusToast.Unity
 {
@@ -34,8 +35,13 @@ namespace FungusToast.Unity
         #region Inspector Fields
         [Header("Board Settings")] public int boardWidth = 160; public int boardHeight = 160; public int playerCount = 2;
         [Header("Testing Mode")] public bool testingModeEnabled = false; public int? testingMycovariantId = null; public bool testingModeForceHumanFirst = true; public int fastForwardRounds = 0; public bool testingSkipToEndgameAfterFastForward = false;
-        [Header("References")] public GridVisualizer gridVisualizer; public CameraCenterer cameraCenterer; [SerializeField] private MutationManager mutationManager; [SerializeField] private GrowthPhaseRunner growthPhaseRunner; [SerializeField] private GameUIManager gameUIManager; [SerializeField] private DecayPhaseRunner decayPhaseRunner; [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker; [SerializeField] private MycovariantDraftController mycovariantDraftController; [SerializeField] private UI_StartGamePanel startGamePanel; [SerializeField] private UI_HotseatTurnPrompt hotseatTurnPrompt; public GameObject SelectionPromptPanel; public TextMeshProUGUI SelectionPromptText;
+        [Header("References")] public GridVisualizer gridVisualizer; public CameraCenterer cameraCenterer; [SerializeField] private MutationManager mutationManager; [SerializeField] private GrowthPhaseRunner growthPhaseRunner; [SerializeField] private GameUIManager gameUIManager; [SerializeField] private DecayPhaseRunner decayPhaseRunner; [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker; [SerializeField] private MycovariantDraftController mycovariantDraftController; [SerializeField] private UI_StartGamePanel startGamePanel; [SerializeField] private UI_HotseatTurnPrompt hotseatTurnPrompt; public GameObject SelectionPromptPanel; public TextMeshProUGUI SelectionPromptText; [SerializeField] private GameObject modeSelectPanel; // NEW: root of mode select UI
         [Header("Hotseat Config")] public int configuredHumanPlayerCount = 1; public int ConfiguredHumanPlayerCount => configuredHumanPlayerCount; public void SetHotseatConfig(int humanCount) { configuredHumanPlayerCount = Mathf.Max(1, humanCount); }
+        [Header("Campaign Config")] public CampaignProgression campaignProgression; // assign ScriptableObject in inspector
+
+        // NEW: current mode
+        public GameMode CurrentGameMode { get; private set; } = GameMode.Hotseat;
+        private CampaignController campaignController; // lazy created
         #endregion
 
         #region State Fields / Services
@@ -60,6 +66,9 @@ namespace FungusToast.Unity
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
             rng = new System.Random();
             BootstrapServices();
+            // Create campaign controller if progression present
+            if (campaignProgression != null)
+                campaignController = new CampaignController(campaignProgression);
         }
         private void Start() { if (Application.isPlaying) ShowStartGamePanel(); }
         #endregion
@@ -75,6 +84,47 @@ namespace FungusToast.Unity
         #endregion
 
         #region Initialization
+        // PUBLIC API to start modes (called by future UI panels)
+        public void StartHotseatGame(int numberOfPlayers)
+        {
+            CurrentGameMode = GameMode.Hotseat;
+            InitializeGame(numberOfPlayers);
+        }
+
+        public void StartCampaignNew()
+        {
+            if (campaignController == null)
+            {
+                Debug.LogError("[GameManager] Cannot start campaign: CampaignProgression not assigned.");
+                return;
+            }
+            campaignController.StartNew();
+            CurrentGameMode = GameMode.Campaign;
+            // For now: one human + aiCount from level spec
+            var spec = campaignController.CurrentLevelSpec;
+            int totalPlayers = 1 + (spec?.aiCount ?? 0);
+            SetHotseatConfig(1); // single human initially
+            InitializeGame(totalPlayers);
+        }
+
+        public void StartCampaignResume()
+        {
+            if (campaignController == null)
+            {
+                Debug.LogError("[GameManager] Cannot resume campaign: CampaignProgression not assigned.");
+                return;
+            }
+            campaignController.Resume();
+            CurrentGameMode = GameMode.Campaign;
+            var spec = campaignController.CurrentLevelSpec;
+            int totalPlayers = 1 + (spec?.aiCount ?? 0);
+            SetHotseatConfig(1);
+            InitializeGame(totalPlayers);
+        }
+
+        // Accessor for external panels
+        public bool HasCampaignSave() => campaignController != null && CampaignSaveService.Exists();
+
         public void InitializeGame(int numberOfPlayers)
         {
             gameEnded = false; isCountdownActive = false; roundsRemainingUntilGameEnd = 0; playerCount = numberOfPlayers; gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
@@ -84,7 +134,7 @@ namespace FungusToast.Unity
 
             GameRulesEventSubscriber.SubscribeAll(Board, players, rng, gameUIManager.GameLogRouter); GameUIEventSubscriber.Subscribe(Board, gameUIManager); AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
 
-            // Player init
+            // Player init (Hotseat config governs number of human players; campaign currently forces1)
             playerInitializer.InitializePlayers(Board, players, humanPlayers, out humanPlayer, playerCount);
             SubscribeToPlayerMutationEvents();
 
@@ -102,7 +152,7 @@ namespace FungusToast.Unity
             {
                 if (fastForwardRounds <= 0 && testingMycovariantId.HasValue) StartMycovariantDraftPhase(); else if (fastForwardRounds <= 0) gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
             }
-            else gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
+            else gameUIManager.PhaseBanner.Show(CurrentGameMode == GameMode.Campaign ? "Campaign Level" : "New Game Settings", 2f);
 
             phaseProgressTracker?.ResetTracker(); UpdatePhaseProgressTrackerLabel(); phaseProgressTracker?.HighlightMutationPhase(); gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer); gameUIManager.RightSidebar?.InitializePlayerSummaries(players); gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer); gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
         }
@@ -181,7 +231,15 @@ namespace FungusToast.Unity
         #endregion
 
         #region UI Helpers
-        public void ShowStartGamePanel() { if (gameUIManager != null) { gameUIManager.LeftSidebar?.gameObject.SetActive(false); gameUIManager.RightSidebar?.gameObject.SetActive(false); gameUIManager.MutationUIManager?.gameObject.SetActive(false); gameUIManager.EndGamePanel?.gameObject.SetActive(false); } if (startGamePanel != null) startGamePanel.gameObject.SetActive(true); }
+        public void ShowStartGamePanel() { if (gameUIManager != null) { gameUIManager.LeftSidebar?.gameObject.SetActive(false); gameUIManager.RightSidebar?.gameObject.SetActive(false); gameUIManager.MutationUIManager?.gameObject.SetActive(false); gameUIManager.EndGamePanel?.gameObject.SetActive(false); }
+            // Prefer showing mode select panel if present; fallback to legacy start panel
+            if (modeSelectPanel != null)
+            {
+                modeSelectPanel.SetActive(true);
+                if (startGamePanel != null) startGamePanel.gameObject.SetActive(false);
+            }
+            else if (startGamePanel != null) startGamePanel.gameObject.SetActive(true);
+        }
         public void ShowSelectionPrompt(string message) { SelectionPromptPanel.SetActive(true); SelectionPromptText.text = message; }
         public void HideSelectionPrompt() => SelectionPromptPanel.SetActive(false);
         public void SetActiveHumanPlayer(Player player)
