@@ -100,10 +100,15 @@ namespace FungusToast.Unity
             }
             campaignController.StartNew();
             CurrentGameMode = GameMode.Campaign;
-            // For now: one human + aiCount from level spec
-            var spec = campaignController.CurrentLevelSpec;
-            int totalPlayers = 1 + (spec?.aiCount ?? 0);
-            SetHotseatConfig(1); // single human initially
+            var preset = campaignController.CurrentBoardPreset;
+            if (preset != null)
+            {
+                boardWidth = preset.boardWidth;
+                boardHeight = preset.boardHeight;
+            }
+            // AI count derived from preset list length
+            int totalPlayers =1 + (preset?.aiPlayers?.Count ??0);
+            SetHotseatConfig(1);
             InitializeGame(totalPlayers);
         }
 
@@ -116,8 +121,13 @@ namespace FungusToast.Unity
             }
             campaignController.Resume();
             CurrentGameMode = GameMode.Campaign;
-            var spec = campaignController.CurrentLevelSpec;
-            int totalPlayers = 1 + (spec?.aiCount ?? 0);
+            var preset = campaignController.CurrentBoardPreset;
+            if (preset != null)
+            {
+                boardWidth = preset.boardWidth;
+                boardHeight = preset.boardHeight;
+            }
+            int totalPlayers =1 + (preset?.aiPlayers?.Count ??0);
             SetHotseatConfig(1);
             InitializeGame(totalPlayers);
         }

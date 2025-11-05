@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.Config;
@@ -25,7 +25,12 @@ namespace FungusToast.Core.AI
         /// <summary>
         /// Mycovariant permutation strategies focusing on different mycovariant themes.
         /// </summary>
-        Mycovariants
+        Mycovariants,
+        
+        /// <summary>
+        /// Campaign strategies (simple naming) mirroring ProvenStrategies.
+        /// </summary>
+        Campaign
     }
 
     public static class AIRoster
@@ -179,6 +184,163 @@ namespace FungusToast.Core.AI
         };
 
         /// <summary>
+        /// Campaign strategies: mirror ProvenStrategies but with simple names AI1..AI N for UI draft/select purposes.
+        /// </summary>
+        public static readonly List<IMutationSpendingStrategy> CampaignStrategies = new List<IMutationSpendingStrategy>
+        {
+            // AI1
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI1",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            // AI2
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI2",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Reclamation)
+            ),
+            // AI3
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI3",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            // AI4
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI4",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                }
+            ),
+            // AI5
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI5",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation)
+                }
+            ),
+            // AI6
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI6",
+                prioritizeHighTier: true,
+                maxTier: MutationTier.Tier3,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.CellularResilience
+                }
+            ),
+            // AI7
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI7",
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.HyphalVectoring)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
+                surgeAttemptTurnFrequency: 10,
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy),
+            // AI8
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI8",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                   new TargetMutationGoal(MutationIds.AnabolicInversion),
+                   new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                   new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                   new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
+                }
+            ),
+            // AI9
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI9",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                   new TargetMutationGoal(MutationIds.TendrilNortheast, 2),
+                   new TargetMutationGoal(MutationIds.TendrilNorthwest, 2),
+                   new TargetMutationGoal(MutationIds.TendrilSoutheast, 2),
+                   new TargetMutationGoal(MutationIds.TendrilSouthwest, 2),
+                   new TargetMutationGoal(MutationIds.AnabolicInversion, 2),
+                   new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                   new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel),
+                   new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                }
+            ),
+            // AI10
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI10",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            // AI11
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI11",
+                prioritizeHighTier: true,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.MycelialSurges,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
+                surgeAttemptTurnFrequency: 7,
+                economyBias: EconomyBias.MaxEconomy,
+                maxTier: MutationTier.Tier4
+            )
+        };
+
+        /// <summary>
         /// Testing strategies for specific scenarios (not included in proven strategies)
         /// </summary>
         public static readonly List<IMutationSpendingStrategy> TestingStrategies = new List<IMutationSpendingStrategy>
@@ -299,6 +461,9 @@ namespace FungusToast.Core.AI
         public static readonly Dictionary<string, IMutationSpendingStrategy> TestingStrategiesByName =
             TestingStrategies.ToDictionary(s => s.StrategyName, s => s);
 
+        public static readonly Dictionary<string, IMutationSpendingStrategy> CampaignStrategiesByName =
+            CampaignStrategies.ToDictionary(s => s.StrategyName, s => s);
+
         /// <summary>
         /// Returns the specified number of random strategies from the chosen strategy set.
         /// If the requested count exceeds available strategies, fills the remainder with 
@@ -322,6 +487,7 @@ namespace FungusToast.Core.AI
                 StrategySetEnum.Proven => ProvenStrategies,
                 StrategySetEnum.Testing => TestingStrategies,
                 StrategySetEnum.Mycovariants => MycovariantPermutations(),
+                StrategySetEnum.Campaign => CampaignStrategies,
                 _ => throw new ArgumentException($"Unknown strategy set: {strategySet}", nameof(strategySet))
             };
 

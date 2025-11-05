@@ -67,6 +67,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_MutationManager.cs" />
     <Compile Include="Assets\Scripts\Unity\Campaign\GameMode.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipRequest.cs" />
+    <Compile Include="Assets\Scripts\Unity\Campaign\BoardPreset.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\ITooltipContentProvider.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\Animation\StartingSporeArrivalAnimator.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_RightSideBar.cs" />

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace FungusToast.Unity.Campaign
 {
     /// <summary>
-    /// Data driven progression settings for each campaign level.
+    /// Data driven progression settings for each campaign level (preset authoritative for board + AI layout).
     /// </summary>
     [CreateAssetMenu(menuName = "Configs/CampaignProgression", fileName = "CampaignProgression")]
     public class CampaignProgression : ScriptableObject
@@ -22,13 +22,9 @@ namespace FungusToast.Unity.Campaign
         public class LevelSpec
         {
             /// <summary>Zero-based index for clarity / debugging (optional; may mirror list index).</summary>
-            public int levelIndex; //0-based
-            /// <summary>Identifier for the board preset (size/layout) used at this level.</summary>
-            public string boardPresetId; // maps to board size/layout later
-            /// <summary>Number of AI opponents (total players = aiCount +1 human currently).</summary>
-            public int aiCount; // number of AI opponents
-            /// <summary>Maximum mutation tier unlocked at this level.</summary>
-            public int mutationTierMax; // maximum mutation tier unlocked at this level
+            public int levelIndex;
+            /// <summary>Board preset containing authoritative board size, AI roster, mutation tier cap.</summary>
+            public BoardPreset boardPreset;
         }
 
         /// <summary>

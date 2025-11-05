@@ -18,21 +18,26 @@ namespace FungusToast.Unity.Campaign
 
         public bool HasActiveRun => State != null;
         public CampaignProgression.LevelSpec CurrentLevelSpec => (State != null && State.levelIndex < progression.MaxLevels) ? progression.Get(State.levelIndex) : null;
+        public BoardPreset CurrentBoardPreset => CurrentLevelSpec?.boardPreset;
 
         public void StartNew()
         {
             if (progression.MaxLevels == 0) throw new InvalidOperationException("CampaignProgression has no levels defined.");
-            var first = progression.Get(0);
+            var firstSpec = progression.Get(0);
+            var preset = firstSpec.boardPreset;
+            if (preset == null) throw new InvalidOperationException("Level0 has no BoardPreset assigned.");
             State = new CampaignState
             {
                 runId = Guid.NewGuid().ToString(),
                 levelIndex = 0,
-                unlockedMutationTierMax = first.mutationTierMax,
-                boardPresetId = first.boardPresetId,
-                seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue)
+                unlockedMutationTierMax = preset.mutationTierMax,
+                boardPresetId = preset.presetId,
+                seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue),
+                boardWidth = preset.boardWidth,
+                boardHeight = preset.boardHeight
             };
             CampaignSaveService.Save(State);
-            Debug.Log($"[CampaignController] New campaign started. RunId={State.runId}");
+            Debug.Log($"[CampaignController] New campaign started. RunId={State.runId} Preset={preset.presetId}");
         }
 
         public void Resume()
@@ -45,7 +50,7 @@ namespace FungusToast.Unity.Campaign
                 return;
             }
             State = loaded;
-            Debug.Log($"[CampaignController] Resumed campaign RunId={State.runId} Level={State.levelIndex}");
+            Debug.Log($"[CampaignController] Resumed campaign RunId={State.runId} Level={State.levelIndex} PresetId={State.boardPresetId}");
         }
 
         public void Delete()

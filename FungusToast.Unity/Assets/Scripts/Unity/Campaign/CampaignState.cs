@@ -15,6 +15,8 @@ namespace FungusToast.Unity.Campaign
         public int unlockedMutationTierMax; // enforced ceiling on mutation tiers
         public string boardPresetId; // preset identifier for board size/layout
         public int seed; // RNG seed for reproducibility
+        public int boardWidth; // persisted board width for current level
+        public int boardHeight; // persisted board height for current level
 
         [Serializable]
         public class TraitStack
