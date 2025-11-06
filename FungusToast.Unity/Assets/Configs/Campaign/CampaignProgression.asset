@@ -14,26 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   levels:
   - levelIndex: 0
-    boardPresetId: 10x10
-    boardWidth: 10
-    boardHeight: 10
-    aiCount: 1
-    mutationTierMax: 2
+    boardPreset: {fileID: 11400000, guid: 5114a4d75eb357d49966358cf2eb3d5e, type: 2}
   - levelIndex: 1
-    boardPresetId: 15x15
-    boardWidth: 15
-    boardHeight: 15
-    aiCount: 1
-    mutationTierMax: 3
+    boardPreset: {fileID: 0}
   - levelIndex: 1
-    boardPresetId: 20x20
-    boardWidth: 20
-    boardHeight: 20
-    aiCount: 2
-    mutationTierMax: 3
+    boardPreset: {fileID: 0}
   - levelIndex: 1
-    boardPresetId: 50x50
-    boardWidth: 50
-    boardHeight: 50
-    aiCount: 3
-    mutationTierMax: 4
+    boardPreset: {fileID: 0}

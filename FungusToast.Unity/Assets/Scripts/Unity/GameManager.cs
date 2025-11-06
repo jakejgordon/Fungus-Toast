@@ -63,7 +63,6 @@ namespace FungusToast.Unity
             FungusToast.Core.Logging.CoreLogger.Log = Debug.Log;
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
-            Board = new GameBoard(boardWidth, boardHeight, playerCount);
             rng = new System.Random();
             BootstrapServices();
             // Create campaign controller if progression present
@@ -106,7 +105,6 @@ namespace FungusToast.Unity
                 boardWidth = preset.boardWidth;
                 boardHeight = preset.boardHeight;
             }
-            // AI count derived from preset list length
             int totalPlayers =1 + (preset?.aiPlayers?.Count ??0);
             SetHotseatConfig(1);
             InitializeGame(totalPlayers);
@@ -137,18 +135,16 @@ namespace FungusToast.Unity
 
         public void InitializeGame(int numberOfPlayers)
         {
-            gameEnded = false; isCountdownActive = false; roundsRemainingUntilGameEnd = 0; playerCount = numberOfPlayers; gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
+            gameEnded = false; isCountdownActive = false; roundsRemainingUntilGameEnd =0; playerCount = numberOfPlayers; gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
             rng = new System.Random();
             postGrowthVisualSequence.Register(Board); // board post-growth events
 
             GameRulesEventSubscriber.SubscribeAll(Board, players, rng, gameUIManager.GameLogRouter); GameUIEventSubscriber.Subscribe(Board, gameUIManager); AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
 
-            // Player init (Hotseat config governs number of human players; campaign currently forces1)
             playerInitializer.InitializePlayers(Board, players, humanPlayers, out humanPlayer, playerCount);
             SubscribeToPlayerMutationEvents();
 
-            // Draft pool
             persistentPoolManager = new MycovariantPoolManager(); persistentPoolManager.InitializePool(MycovariantRepository.All.ToList(), rng);
 
             gridVisualizer.Initialize(Board); PlaceStartingSpores(); gridVisualizer.RenderBoard(Board);
@@ -160,11 +156,18 @@ namespace FungusToast.Unity
 
             if (testingModeEnabled)
             {
-                if (fastForwardRounds <= 0 && testingMycovariantId.HasValue) StartMycovariantDraftPhase(); else if (fastForwardRounds <= 0) gameUIManager.PhaseBanner.Show("New Game Settings", 2f);
+                if (fastForwardRounds <=0 && testingMycovariantId.HasValue) StartMycovariantDraftPhase(); else if (fastForwardRounds <=0) gameUIManager.PhaseBanner.Show("New Game Settings",2f);
             }
-            else gameUIManager.PhaseBanner.Show(CurrentGameMode == GameMode.Campaign ? "Campaign Level" : "New Game Settings", 2f);
+            else gameUIManager.PhaseBanner.Show(CurrentGameMode == GameMode.Campaign ? "Campaign Level" : "New Game Settings",2f);
 
             phaseProgressTracker?.ResetTracker(); UpdatePhaseProgressTrackerLabel(); phaseProgressTracker?.HighlightMutationPhase(); gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer); gameUIManager.RightSidebar?.InitializePlayerSummaries(players); gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer); gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
+
+            // NEW: always recenter camera after board created (handles small campaign boards)
+            if (cameraCenterer != null)
+            {
+                cameraCenterer.CenterCameraInstant();
+                cameraCenterer.CaptureInitialFraming();
+            }
         }
         private void InitGameLogs()
         {
