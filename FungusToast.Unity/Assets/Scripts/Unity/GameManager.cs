@@ -284,26 +284,9 @@ namespace FungusToast.Unity
 
             // Magnifier control
             MagnifyingGlassFollowMouse.gameStarted = true; // ensure enabled for all modes
-            const int MagnifierMinBoardSize =30;
             if (magnifyingGlass != null)
             {
-                bool tooSmall = Board.Width < MagnifierMinBoardSize || Board.Height < MagnifierMinBoardSize;
-                if (tooSmall)
-                {
-                    if (magnifyingGlass.visualRoot != null)
-                    {
-                        magnifyingGlass.visualRoot.SetActive(false);
-                    }
-                    magnifyingGlass.gameObject.SetActive(false);
-                }
-                else
-                {
-                    magnifyingGlass.gameObject.SetActive(true);
-                    if (magnifyingGlass.visualRoot != null)
-                    {
-                        magnifyingGlass.visualRoot.SetActive(true);
-                    }
-                }
+                magnifyingGlass.ApplyBoardSizeGate(Board.Width, Board.Height);
             }
         }
 

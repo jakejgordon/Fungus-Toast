@@ -3753,6 +3753,7 @@ MonoBehaviour:
   autoDetectRadius: 1
   manualRadius: 128
   enableDebugLogs: 0
+  minBoardSizeForMagnifier: 30
 --- !u!225 &325918931
 CanvasGroup:
   m_ObjectHideFlags: 0

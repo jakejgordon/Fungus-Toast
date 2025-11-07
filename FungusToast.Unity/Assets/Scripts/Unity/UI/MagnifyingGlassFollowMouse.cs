@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Tilemaps;
 using UnityEngine.EventSystems;
@@ -49,6 +49,8 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     private RectTransform tooltipRectTransform;
     private CanvasGroup tooltipCanvasGroup;
     private CellTooltipUI tooltipUI;
+
+    [Header("Board Size Gate")] [SerializeField] private int minBoardSizeForMagnifier =30; // minimum width/height required
 
     void Start()
     {
@@ -703,6 +705,21 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         if (tooltipInstance != null)
         {
             Destroy(tooltipInstance);
+        }
+    }
+
+    public void ApplyBoardSizeGate(int boardWidth, int boardHeight)
+    {
+        bool enable = boardWidth >= minBoardSizeForMagnifier && boardHeight >= minBoardSizeForMagnifier;
+        if (enable)
+        {
+            if (!gameObject.activeSelf) gameObject.SetActive(true);
+            if (visualRoot != null && !visualRoot.activeSelf) visualRoot.SetActive(true);
+        }
+        else
+        {
+            if (visualRoot != null && visualRoot.activeSelf) visualRoot.SetActive(false);
+            if (gameObject.activeSelf) gameObject.SetActive(false);
         }
     }
 }
