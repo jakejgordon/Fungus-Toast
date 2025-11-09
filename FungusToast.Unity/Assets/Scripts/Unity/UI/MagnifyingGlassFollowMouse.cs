@@ -51,6 +51,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     private CellTooltipUI tooltipUI;
 
     [Header("Board Size Gate")] [SerializeField] private int minBoardSizeForMagnifier =30; // minimum width/height required
+    private bool visualsAllowed = true; // NEW: whether magnifier visuals may appear (tooltips ignore this)
 
     void Start()
     {
@@ -135,36 +136,43 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 
     void Update()
     {
-        // Always move the magnifying glass to the mouse position (screen space)
+        // Always move the magnifying glass root to mouse position (for potential future use)
         transform.position = Input.mousePosition;
 
-        // Only show visuals if the game has started, mouse is over the bread, and NOT over UI
-        bool shouldShowMagnifier = gameStarted && IsMouseOverBread() && !EventSystem.current.IsPointerOverGameObject();
-        
-        if (shouldShowMagnifier)
+        bool overBread = gameStarted && IsMouseOverBread();
+        bool pointerOverUI = EventSystem.current.IsPointerOverGameObject();
+
+        // Decide if we show magnifier visuals (independent from tooltip logic)
+        bool showVisuals = visualsAllowed && overBread && !pointerOverUI;
+
+        if (showVisuals)
         {
             if (visualRoot != null && !visualRoot.activeSelf)
                 visualRoot.SetActive(true);
-            
-            // Handle tooltip logic
+        }
+        else
+        {
+            if (visualRoot != null && visualRoot.activeSelf)
+                visualRoot.SetActive(false);
+        }
+
+        // Tooltip logic: show when hovering valid cell regardless of visualsAllowed (still suppress if over UI to avoid conflicts)
+        bool processTooltip = overBread && !pointerOverUI;
+
+        if (processTooltip)
+        {
             Vector3Int currentCellPos = GetCurrentCellPosition();
             if (currentCellPos != lastHoveredCellPos)
             {
-                // Moved to a different cell - reset hover state
                 OnCellHoverChanged(currentCellPos);
                 lastHoveredCellPos = currentCellPos;
             }
         }
         else
         {
-            if (visualRoot != null && visualRoot.activeSelf)
-                visualRoot.SetActive(false);
-            
-            // Hide tooltip when magnifier is not visible
+            // Hide tooltip when not processing hover (left bread or over UI)
             if (isTooltipVisible)
                 HideTooltip();
-            
-            // Reset hover state
             if (isHoveringOverValidCell)
             {
                 isHoveringOverValidCell = false;
@@ -710,16 +718,9 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 
     public void ApplyBoardSizeGate(int boardWidth, int boardHeight)
     {
-        bool enable = boardWidth >= minBoardSizeForMagnifier && boardHeight >= minBoardSizeForMagnifier;
-        if (enable)
-        {
-            if (!gameObject.activeSelf) gameObject.SetActive(true);
-            if (visualRoot != null && !visualRoot.activeSelf) visualRoot.SetActive(true);
-        }
-        else
-        {
-            if (visualRoot != null && visualRoot.activeSelf) visualRoot.SetActive(false);
-            if (gameObject.activeSelf) gameObject.SetActive(false);
-        }
+        visualsAllowed = boardWidth >= minBoardSizeForMagnifier && boardHeight >= minBoardSizeForMagnifier;
+        // If visuals not allowed, ensure they are hidden (but keep script active for tooltips)
+        if (!visualsAllowed && visualRoot != null && visualRoot.activeSelf)
+            visualRoot.SetActive(false);
     }
 }
