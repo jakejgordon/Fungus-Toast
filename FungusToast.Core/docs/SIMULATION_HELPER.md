@@ -255,7 +255,17 @@ dotnet run --games 1 --players 2 --no-keyboard
 - `FungusToast.Core/Events/` - Event definitions
 
 ### Simulation Tracking
-- `FungusToast.Simulation/Models/SimulationTrackingContext.cs` - Event tracking
+- `FungusToast.Simulation/Models/SimulationTrackingContext.cs` - Partial class shell (`ISimulationObserver` type)
+- `FungusToast.Simulation/Models/SimulationTrackingContext.CoreStatMetrics.cs` - Mutation points, income, banked points, death-reason totals
+- `FungusToast.Simulation/Models/SimulationTrackingContext.FirstUpgradeRoundMetrics.cs` - First-acquired round tracking and summary stats
+- `FungusToast.Simulation/Models/SimulationTrackingContext.SupportEconomyMetrics.cs` - Surgical inoculation and rejuvenation cycle reduction
+- `FungusToast.Simulation/Models/SimulationTrackingContext.DefenseMobilityMetrics.cs` - Neutralization, bastion counts, creeping mold toxin jumps
+- `FungusToast.Simulation/Models/SimulationTrackingContext.GrowthTransferMetrics.cs` - Perimeter proliferator, resistance transfers, enduring toxaphore extensions
+- `FungusToast.Simulation/Models/SimulationTrackingContext.ReclaimFortifyMetrics.cs` - Reclamation rhizomorphs, necrophoric adaptation, ballistospore, chitin fortification
+- `FungusToast.Simulation/Models/SimulationTrackingContext.CombatEffectMetrics.cs` - Putrefactive cascade, mimetic resilience, cytolytic burst
+- `FungusToast.Simulation/Models/SimulationTrackingContext.RelocationRegenerationMetrics.cs` - Chemotactic relocations and hypersystemic regeneration effects
+- `FungusToast.Simulation/Models/SimulationTrackingContext.RegressionMetrics.cs` - Ontogenic regression and competitive antagonism tracking
+- `FungusToast.Simulation/Models/SimulationTrackingContext.GameplayMetrics.cs` - Remaining gameplay/event metrics and observer stubs
 - `FungusToast.Simulation/Models/PlayerResult.cs` - Result fields
 - `FungusToast.Simulation/Models/GameResult.cs` - Result population
 
@@ -272,7 +282,7 @@ When adding new mutation effects:
 3. ✅ Add `OnEventName` method to `GameBoard.cs`
 4. ✅ Fire event in `MutationEffectProcessor.cs`
 5. ✅ Add tracking method to `ISimulationObserver.cs`
-6. ✅ Implement tracking in `SimulationTrackingContext.cs`
+6. ✅ Implement tracking in `SimulationTrackingContext` partials (place in the most relevant `SimulationTrackingContext.*.cs` file)
 7. ✅ Add field to `PlayerResult.cs`
 8. ✅ Populate field in `GameResult.From()`
 9. ✅ Add display case in `PlayerMutationUsageTracker.cs`
