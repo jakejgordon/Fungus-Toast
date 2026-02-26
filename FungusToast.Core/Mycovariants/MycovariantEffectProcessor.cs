@@ -204,9 +204,16 @@ public static class MycovariantEffectProcessor
         var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
         if (player == null) return;
 
-        var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
-            .Where(c => c.IsAlive && !c.IsResistant)
-            .ToList();
+        var livingCells = new List<FungalCell>();
+        foreach (var tileId in player.ControlledTileIds)
+        {
+            var tile = board.GetTileById(tileId);
+            var cell = tile?.FungalCell;
+            if (cell != null && cell.IsAlive && !cell.IsResistant && cell.OwnerPlayerId == player.PlayerId)
+            {
+                livingCells.Add(cell);
+            }
+        }
 
         // Determine max cells based on which Mycelial Bastion tier this is
         int maxCellsAllowed = playerMyco.MycovariantId switch
@@ -220,10 +227,12 @@ public static class MycovariantEffectProcessor
         int maxCells = Math.Min(maxCellsAllowed, livingCells.Count);
         if (maxCells == 0) return;
 
-        // Randomly select up to maxCells
-        var selected = livingCells.OrderBy(_ => rng.Next()).Take(maxCells).ToList();
-        foreach (var cell in selected)
+        // Randomly select up to maxCells via partial Fisher-Yates (avoids full sort allocation)
+        for (int i = 0; i < maxCells; i++)
         {
+            int j = rng.Next(i, livingCells.Count);
+            (livingCells[i], livingCells[j]) = (livingCells[j], livingCells[i]);
+            var cell = livingCells[i];
             cell.MakeResistant();
             
             playerMyco.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);
@@ -686,9 +695,19 @@ public static class MycovariantEffectProcessor
             float relocationChance = MycovariantGameBalance.ChemotacticMycotoxinsMycotoxinTracerMultiplier * mycotoxinTracerLevel / 100f;
 
             // Find all player's toxin tiles that are NOT adjacent to living enemy cells
-            var isolatedToxins = board.GetAllCellsOwnedBy(player.PlayerId)
-                .Where(cell => cell.IsToxin && !IsAdjacentToLivingEnemyCells(board, cell, player.PlayerId))
-                .ToList();
+            var isolatedToxins = new List<FungalCell>();
+            foreach (var tileId in player.ControlledTileIds)
+            {
+                var tile = board.GetTileById(tileId);
+                var cell = tile?.FungalCell;
+                if (cell == null || !cell.IsToxin || cell.OwnerPlayerId != player.PlayerId)
+                    continue;
+
+                if (!IsAdjacentToLivingEnemyCells(board, cell, player.PlayerId))
+                {
+                    isolatedToxins.Add(cell);
+                }
+            }
 
             if (isolatedToxins.Count == 0) continue; // No isolated toxins to relocate
 
@@ -944,9 +963,14 @@ public static class MycovariantEffectProcessor
         if (!player.StartingTileId.HasValue) return;
 
         // Determine target enemy (same logic as before)
+        var boardSummaries = BoardUtilities.GetPlayerBoardSummaries(allPlayers, board);
         var enemyLivingCounts = allPlayers
             .Where(p => p.PlayerId != player.PlayerId)
-            .Select(p => new { Enemy = p, Living = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive) })
+            .Select(p => new
+            {
+                Enemy = p,
+                Living = boardSummaries.TryGetValue(p.PlayerId, out var summary) ? summary.LivingCells : 0
+            })
             .Where(x => x.Living > 0)
             .ToList();
         if (enemyLivingCounts.Count == 0) return;
