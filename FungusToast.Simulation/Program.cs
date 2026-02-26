@@ -27,7 +27,13 @@ namespace FungusToast.Simulation
 
             try
             {
-                SimulationRunner.RunStandardSimulation(config.NumberOfPlayers, config.NumberOfGames, strategies, config.BoardWidth, config.BoardHeight);
+                SimulationRunner.RunStandardSimulation(
+                    config.NumberOfPlayers,
+                    config.NumberOfGames,
+                    strategies,
+                    config.BoardWidth,
+                    config.BoardHeight,
+                    enableKeyboardInterrupt: !config.DisableKeyboardInterrupt);
             }
             finally
             {
@@ -44,7 +50,8 @@ namespace FungusToast.Simulation
                 NumberOfPlayers = DefaultNumberOfPlayers,
                 BoardWidth = GameBalance.BoardWidth,
                 BoardHeight = GameBalance.BoardHeight,
-                OutputFileName = "" // Default to empty string for auto-generated filename
+                OutputFileName = "", // Default to empty string for auto-generated filename
+                DisableKeyboardInterrupt = false
             };
 
             for (int i = 0; i < args.Length; i++)
@@ -94,6 +101,10 @@ namespace FungusToast.Simulation
                     case "--help":
                         PrintUsage();
                         return null; // Return null to indicate help was displayed
+                    case "--no-keyboard":
+                    case "--non-interactive":
+                        config.DisableKeyboardInterrupt = true;
+                        break;
                 }
             }
 
@@ -107,11 +118,13 @@ namespace FungusToast.Simulation
             Console.WriteLine("Usage: dotnet run [options]");
             Console.WriteLine();
             Console.WriteLine("Options:");
-            Console.WriteLine("  -g, --games <number>     Number of games to play per matchup (default: 500)");
-            Console.WriteLine("  -p, --players <number>   Number of players/strategies to use (default: 8)");
-            Console.WriteLine("  -w, --width <number>     Board width (default: 100)");
-            Console.WriteLine("  --height <number>        Board height (default: 100)");
+            Console.WriteLine($"  -g, --games <number>     Number of games to play per matchup (default: {DefaultNumberOfSimulationGames})");
+            Console.WriteLine($"  -p, --players <number>   Number of players/strategies to use (default: {DefaultNumberOfPlayers})");
+            Console.WriteLine($"  -w, --width <number>     Board width (default: {GameBalance.BoardWidth})");
+            Console.WriteLine($"  --height <number>        Board height (default: {GameBalance.BoardHeight})");
             Console.WriteLine("  -o, --output <filename>  Specify output filename (default: auto-generated with timestamp)");
+            Console.WriteLine("  --no-keyboard            Disable keyboard interruption (Q/Escape), useful for automation");
+            Console.WriteLine("  --non-interactive        Alias for --no-keyboard");
             Console.WriteLine("  --help                   Show this help message");
             Console.WriteLine();
             Console.WriteLine("Note: All simulation output is automatically saved to the SimulationOutput folder.");
@@ -125,6 +138,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  dotnet run --width 50 --height 75   # Run with 50x75 board");
             Console.WriteLine("  dotnet run -w 200 -p 4              # Run 4 players on 200x100 board");
             Console.WriteLine("  dotnet run -o my_test.txt           # Run with custom output filename");
+            Console.WriteLine("  dotnet run --games 1 --no-keyboard  # Run non-interactive (no Q/Escape listener)");
         }
 
         private class SimulationConfig
@@ -134,6 +148,7 @@ namespace FungusToast.Simulation
             public int BoardWidth { get; set; }
             public int BoardHeight { get; set; }
             public string OutputFileName { get; set; } = "";
+            public bool DisableKeyboardInterrupt { get; set; }
         }
     }
 }

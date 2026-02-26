@@ -8,7 +8,13 @@ namespace FungusToast.Simulation
 {
     public static class SimulationRunner
     {
-        public static void RunStandardSimulation(int numberOfPlayers, int numberOfGames, List<IMutationSpendingStrategy>? strategies = null, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight)
+        public static void RunStandardSimulation(
+            int numberOfPlayers,
+            int numberOfGames,
+            List<IMutationSpendingStrategy>? strategies = null,
+            int boardWidth = GameBalance.BoardWidth,
+            int boardHeight = GameBalance.BoardHeight,
+            bool enableKeyboardInterrupt = true)
         {
             var rnd = new Random(); // Or any deterministic seed you want
 
@@ -19,7 +25,12 @@ namespace FungusToast.Simulation
 
             // Run simulation
             var runner = new MatchupRunner();
-            var results = runner.RunMatchups(strategies, gamesToPlay: numberOfGames, boardWidth: boardWidth, boardHeight: boardHeight);
+            var results = runner.RunMatchups(
+                strategies,
+                gamesToPlay: numberOfGames,
+                boardWidth: boardWidth,
+                boardHeight: boardHeight,
+                enableKeyboardInterrupt: enableKeyboardInterrupt);
 
             // Print strategy summary
             var aggregator = new MatchupStatsAggregator();

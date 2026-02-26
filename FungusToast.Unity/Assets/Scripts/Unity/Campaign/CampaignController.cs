@@ -58,5 +58,89 @@ namespace FungusToast.Unity.Campaign
             CampaignSaveService.Delete();
             State = null;
         }
+
+        /// <summary>
+        /// Called by GameManager when a campaign level ends. Handles victory progression or defeat reset.
+        /// </summary>
+        public void OnGameFinished(bool victory)
+        {
+            if (State == null)
+            {
+                return;
+            }
+            if (!victory)
+            {
+                ResetRunAfterDefeat();
+                return;
+            }
+
+            // Victory path
+            int nextIndex = State.levelIndex + 1;
+            if (nextIndex >= progression.MaxLevels)
+            {
+                // Final victory – leave state as is (completed flag deferred to later iteration)
+                CampaignSaveService.Save(State);
+                Debug.Log($"[CampaignController] Campaign completed! RunId={State.runId} Levels={progression.MaxLevels}");
+                return;
+            }
+            AdvanceToNextLevel();
+        }
+
+        /// <summary>
+        /// Advance to the next level (mid-run victory).
+        /// </summary>
+        private void AdvanceToNextLevel()
+        {
+            int targetIndex = State.levelIndex + 1;
+            if (targetIndex >= progression.MaxLevels)
+            {
+                Debug.LogWarning("[CampaignController] AdvanceToNextLevel called but already at final level.");
+                return;
+            }
+            var spec = progression.Get(targetIndex);
+            if (spec.boardPreset == null)
+            {
+                Debug.LogError($"[CampaignController] Level {targetIndex} has no BoardPreset – aborting advance.");
+                return;
+            }
+            var preset = spec.boardPreset;
+            State.levelIndex = targetIndex;
+            State.boardPresetId = preset.presetId;
+            State.unlockedMutationTierMax = preset.mutationTierMax;
+            State.boardWidth = preset.boardWidth;
+            State.boardHeight = preset.boardHeight;
+            // Seed retained across victories for reproducibility
+            CampaignSaveService.Save(State);
+            Debug.Log($"[CampaignController] Advanced to level {State.levelIndex}. Preset={preset.presetId}");
+        }
+
+        /// <summary>
+        /// Reset the run after defeat (player returns to mode select with fresh level0 state).
+        /// </summary>
+        private void ResetRunAfterDefeat()
+        {
+            if (progression.MaxLevels == 0)
+            {
+                Debug.LogError("[CampaignController] Cannot reset campaign – no levels defined.");
+                return;
+            }
+            var firstSpec = progression.Get(0);
+            if (firstSpec.boardPreset == null)
+            {
+                Debug.LogError("[CampaignController] Cannot reset campaign – Level0 preset missing.");
+                return;
+            }
+            var preset = firstSpec.boardPreset;
+            State.runId = Guid.NewGuid().ToString();
+            State.levelIndex = 0;
+            State.traitStacks.Clear(); // Future trait persistence – cleared on defeat
+            State.seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+            State.boardPresetId = preset.presetId;
+            State.unlockedMutationTierMax = preset.mutationTierMax;
+            State.boardWidth = preset.boardWidth;
+            State.boardHeight = preset.boardHeight;
+            CampaignSaveService.Save(State);
+            Debug.Log($"[CampaignController] Run reset after defeat. New RunId={State.runId} Preset={preset.presetId}");
+        }
     }
 }

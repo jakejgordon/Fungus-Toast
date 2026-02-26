@@ -69,18 +69,26 @@ namespace FungusToast.Simulation.Analysis
         /// Run games using a fixed list of strategies per match.
         /// Useful for 1–8 player simulation loops.
         /// </summary>
-        public SimulationBatchResult RunMatchups(List<IMutationSpendingStrategy> strategies, int gamesToPlay, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight)
+        public SimulationBatchResult RunMatchups(
+            List<IMutationSpendingStrategy> strategies,
+            int gamesToPlay,
+            int boardWidth = GameBalance.BoardWidth,
+            int boardHeight = GameBalance.BoardHeight,
+            bool enableKeyboardInterrupt = true)
         {
             var results = new List<GameResult>();
             var startTime = DateTime.UtcNow;
             var cumulativeDeathReasons = new Dictionary<DeathReason, int>();
 
-            Console.WriteLine("Press 'Q' at any time to stop the simulation and see results.");
+            if (enableKeyboardInterrupt)
+            {
+                Console.WriteLine("Press 'Q' at any time to stop the simulation and see results.");
+            }
 
             for (int i = 0; i < gamesToPlay; i++)
             {
-                // Check for user interrupt every loop
-                if (Console.KeyAvailable)
+                // Check for user interrupt every loop when keyboard interruption is enabled
+                if (enableKeyboardInterrupt && Console.KeyAvailable)
                 {
                     var key = Console.ReadKey(intercept: true);
                     if (key.Key == ConsoleKey.Q || key.Key == ConsoleKey.Escape)

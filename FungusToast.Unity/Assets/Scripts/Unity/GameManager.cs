@@ -518,11 +518,33 @@ namespace FungusToast.Unity
             {
                 gameUIManager.GameLogRouter?.OnGameEnd(winner.PlayerName);
             }
+
+            bool isCampaign = CurrentGameMode == GameMode.Campaign && campaignController != null && campaignController.HasActiveRun;
+            int lostLevelDisplay = isCampaign ? (campaignController.State.levelIndex +1) :0; // capture before potential changes
+            bool humanWon = isCampaign && humanPlayer != null && winner != null && winner.PlayerId == humanPlayer.PlayerId;
+            bool finalLevelPreAdvance = isCampaign && campaignController.State.levelIndex >= (campaignProgression.MaxLevels -1);
+
+            if (isCampaign)
+            {
+                campaignController.OnGameFinished(humanWon);
+            }
+
+            // After controller update determine post-advance state for button logic
+            bool finalLevelNow = isCampaign && campaignController.State.levelIndex >= (campaignProgression.MaxLevels -1);
+            bool hasNextLevel = isCampaign && humanWon && !finalLevelPreAdvance && campaignController.State.levelIndex < campaignProgression.MaxLevels;
+
             gameUIManager.MutationUIManager.gameObject.SetActive(false);
             gameUIManager.RightSidebar.gameObject.SetActive(true);
             gameUIManager.LeftSidebar.gameObject.SetActive(false);
             gameUIManager.EndGamePanel.gameObject.SetActive(true);
-            gameUIManager.EndGamePanel.ShowResults(ranked, Board);
+            if (isCampaign)
+            {
+                gameUIManager.EndGamePanel.ShowResultsWithOutcome(ranked, Board, true, humanWon, finalLevelPreAdvance && humanWon, hasNextLevel, humanWon ? campaignController.State.levelIndex +1 : lostLevelDisplay);
+            }
+            else
+            {
+                gameUIManager.EndGamePanel.ShowResults(ranked, Board);
+            }
             foreach (var ((pid, mid), rounds) in FirstUpgradeRounds)
             {
                 double avg = rounds.Average();

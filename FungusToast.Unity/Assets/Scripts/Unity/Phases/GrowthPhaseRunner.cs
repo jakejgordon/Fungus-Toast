@@ -76,7 +76,6 @@ namespace FungusToast.Unity.Phases
             }
 
             phaseCycle++;
-            board.IncrementGrowthCycle(); // GLOBAL counter
 
             var failedThisCycle = processor.ExecuteSingleCycle(roundContext);
             MergeFailedGrowths(failedThisCycle);

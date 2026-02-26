@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Players;
 using System.Linq;
+using TMPro;
 
 namespace FungusToast.Unity.UI
 {
@@ -15,7 +16,9 @@ namespace FungusToast.Unity.UI
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private Transform resultsContainer;
         [SerializeField] private UI_GameEndPlayerResultsRow playerResultRowPrefab;
-        [SerializeField] private Button closeButton;
+        [SerializeField] private Button continueButton; // campaign mid-run victory only
+        [SerializeField] private Button exitButton; // always available to return to mode select
+        [SerializeField] private TextMeshProUGUI outcomeLabel; // dynamic outcome messaging
 
         /* ─────────── Unity ─────────── */
         private void Awake()
@@ -23,17 +26,72 @@ namespace FungusToast.Unity.UI
             if (playerResultRowPrefab == null)
                 Debug.LogError("UI_EndGamePanel: PlayerResultRowPrefab reference is missing!");
 
-            // Safeguard: only add listener if closeButton is assigned
-            if (closeButton != null)
-                closeButton.onClick.AddListener(OnClose);
+            if (continueButton != null)
+                continueButton.onClick.AddListener(OnContinueCampaign);
             else
-                Debug.LogWarning("UI_EndGamePanel: CloseButton reference is missing!");
+                Debug.LogWarning("UI_EndGamePanel: ContinueButton reference is missing (campaign mid-run victories will have no continue).");
+
+            if (exitButton != null)
+                exitButton.onClick.AddListener(OnExitToModeSelect);
+            else
+                Debug.LogWarning("UI_EndGamePanel: ExitButton reference is missing (player cannot exit results).");
 
             HideInstant();
         }
 
-        /* ─────────── Public API ─────────── */
+        /* ─────────── Public API (generic solo / hotseat) ─────────── */
         public void ShowResults(List<Player> ranked, GameBoard board)
+        {
+            ShowResultsInternal(ranked, board);
+            // Solo / hotseat baseline: only exit button (continue hidden)
+            if (continueButton != null) continueButton.gameObject.SetActive(false);
+            if (exitButton != null) exitButton.gameObject.SetActive(true);
+            if (outcomeLabel != null) outcomeLabel.text = ""; // no special messaging
+        }
+
+        /// <summary>
+        /// Extended results display including campaign outcome context.
+        /// </summary>
+        public void ShowResultsWithOutcome(List<Player> ranked, GameBoard board, bool isCampaign, bool victory, bool finalLevel, bool hasNextLevel, int lostLevelDisplay)
+        {
+            ShowResultsInternal(ranked, board);
+            if (!isCampaign)
+            {
+                // fallback to base behavior
+                if (continueButton != null) continueButton.gameObject.SetActive(false);
+                if (exitButton != null) exitButton.gameObject.SetActive(true);
+                if (outcomeLabel != null) outcomeLabel.text = "";
+                return;
+            }
+
+            // Campaign messaging
+            if (outcomeLabel != null)
+            {
+                if (!victory)
+                {
+                    // defeat – show lost level index (1-based)
+                    outcomeLabel.text = $"<color=#D63A3A><b>You aren't moldy enough! Campaign lost at level {lostLevelDisplay}.</b></color>";
+                }
+                else if (finalLevel)
+                {
+                    outcomeLabel.text = "<color=#32C832><b>You have won the campaign!</b></color>";
+                }
+                else
+                {
+                    // mid-run victory
+                    outcomeLabel.text = "<color=#32C832><b>Your mold wins! Advance to the next level.</b></color>";
+                }
+            }
+
+            // Buttons
+            if (continueButton != null)
+                continueButton.gameObject.SetActive(victory && !finalLevel && hasNextLevel);
+            if (exitButton != null)
+                exitButton.gameObject.SetActive(true);
+        }
+
+        /* ─────────── Internal Row Builder ─────────── */
+        private void ShowResultsInternal(List<Player> ranked, GameBoard board)
         {
             /* clear previous rows */
             foreach (Transform child in resultsContainer)
@@ -52,15 +110,10 @@ namespace FungusToast.Unity.UI
                 rank++;
             }
 
-            //Debug.Log($"IsPrefabAsset={UnityEditor.PrefabUtility.IsPartOfPrefabAsset(gameObject)}");
-
-            /* activate first */
             gameObject.SetActive(true);
             canvasGroup.alpha = 0f;
             canvasGroup.interactable = true;
             canvasGroup.blocksRaycasts = true;
-
-            //Debug.Log($"[EndGamePanel] after SetActive: activeSelf={gameObject.activeSelf}, inHierarchy={gameObject.activeInHierarchy}");
 
             if (!gameObject.activeInHierarchy)
             {
@@ -76,7 +129,7 @@ namespace FungusToast.Unity.UI
         /* ─────────── Buttons / Helpers ─────────── */
         private void OnClose()
         {
-            // Just hide the panel so the player can continue to view and zoom the board
+            // legacy close (non-campaign) – keep ability to just hide panel
             HideInstant();
 
             // Re-enable the right sidebar so players can see summaries after closing results
@@ -84,6 +137,20 @@ namespace FungusToast.Unity.UI
             {
                 GameManager.Instance.GameUI.RightSidebar.gameObject.SetActive(true);
             }
+        }
+
+        private void OnContinueCampaign()
+        {
+            // Mid-run victory continue path
+            HideInstant();
+            // Reinitialize next level
+            GameManager.Instance?.StartCampaignResume();
+        }
+
+        private void OnExitToModeSelect()
+        {
+            HideInstant();
+            GameManager.Instance?.ShowStartGamePanel();
         }
 
         private void HideInstant()

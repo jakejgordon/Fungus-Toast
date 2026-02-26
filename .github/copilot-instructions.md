@@ -56,19 +56,19 @@ The simulation includes a comprehensive PowerShell script that builds the projec
 cd FungusToast.Simulation
 
 # Run simulation with automatic building
-.\run_simulation.ps1 --games 100 --players 8
+.\run_simulation.ps1 --games 100 --players 8 --no-keyboard
 
 # Custom output filename
-.\run_simulation.ps1 --games 50 --players 4 --output "my_test.txt"
+.\run_simulation.ps1 --games 50 --players 4 --output "my_test.txt" --no-keyboard
 
 # Quick test run
-.\run_simulation.ps1 --games 1 --players 2
+.\run_simulation.ps1 --games 1 --players 2 --no-keyboard
 ```
 
 ### Direct dotnet Execution
 ```bash
 cd FungusToast.Simulation
-dotnet run -- --games 100 --players 8 --output simulation_results.txt
+dotnet run -- --games 100 --players 8 --output simulation_results.txt --no-keyboard
 ```
 
 ### Simulation Output Location
@@ -86,13 +86,14 @@ FungusToast.Simulation/bin/Debug/net8.0/SimulationOutput/
 ```
 -g, --games <number>     Number of games to play per matchup (default: 500)
 -p, --players <number>   Number of players/strategies to use (default: 8)  
--w, --width <number>     Board width (default: 100)
---height <number>        Board height (default: 100)  
+-w, --width <number>     Board width (default: 160)
+--height <number>        Board height (default: 160)  
 -o, --output <filename>  Custom output filename (default: auto-generated)
+--no-keyboard            Disable keyboard interruption (Q/Escape), useful for automation
 --help                   Show help message
 ```
 
-**Note:** Default game count is 500 for statistical significance, but use `--games 1` for quick testing.
+**Note:** Default game count is 1 for fast feedback. Increase `--games` (for example 100+) when doing balance/statistical analysis.
 
 ### Simulation Troubleshooting
 
@@ -264,6 +265,15 @@ FungusToast.Unity/
 
 ## Important Notes for Coding Agents
 
+### Copilot Productivity Rules (Read First)
+- Prefer working in `FungusToast.Core` for game rules, data models, and deterministic logic. Only use `FungusToast.Unity` for view/controllers and input.
+- Avoid adding new `MonoBehaviour` singletons or `GameManager.Instance` reach-ins. Prefer passing references or adding lightweight facades in `GameUIManager`.
+- Keep core logic Unity-free (no `UnityEngine` types in `FungusToast.Core`).
+- For per-turn/per-cycle logic, avoid repeated LINQ over board state. Use `BoardUtilities.GetPlayerBoardSummaries` or cache counts.
+- When adding new mutations or mycovariants, follow the helper docs exactly and update all required integration points.
+- Do not edit Unity-generated project files: `Assembly-CSharp.csproj`, `Assembly-CSharp-Editor.csproj`, `FungusToast.Unity.csproj`.
+- Keep changes minimal and scoped to the requested feature; avoid refactors unless explicitly requested.
+
 ### What to Trust and Verify
 1. **Trust these instructions** for build processes and project structure
 2. **Verify simulation output** by examining generated files
@@ -286,6 +296,12 @@ FungusToast.Unity/
 - **Architecture:** Clean domain separation between Core, Simulation, and Unity layers
 - **Error handling:** Comprehensive logging and event systems for debugging
 - **Testing strategy:** Simulation-based validation rather than unit tests
+
+### AI-Friendly Change Patterns
+- Prefer small, composable helper methods over large monolithic methods.
+- When touching `GameManager`, consider moving logic into a service class and call that service from `GameManager`.
+- Add new events through `GameBoard` + `GameRulesEventSubscriber` so Unity and Simulation stay consistent.
+- Use `ISimulationObserver` for any effect tracking that should appear in simulation output.
 
 **When in doubt:** Consult the existing documentation in `FungusToast.Core/docs/` which contains domain-specific implementation guidance written by the project maintainers.
 

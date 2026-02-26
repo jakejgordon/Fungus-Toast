@@ -51,11 +51,19 @@ if ($Args.IndexOf('--output') -lt 0) {
 }
 
 # Check if we're running from GitHub Copilot tools
-$isAutomated = $env:COPILOT_AUTOMATED -eq "true" -or $args -contains "--automated"
+$isAutomated = $env:COPILOT_AUTOMATED -eq "true" -or $Args -contains "--automated"
+
+if ($isAutomated -and -not ($Args -contains "--no-keyboard")) {
+    $Args += "--no-keyboard"
+    Write-Host "Automated mode detected: appended --no-keyboard to disable Q/Escape interruption."
+}
+
+# Rebuild argument string in case automated mode appended flags
+$argString = $Args -join ' '
 
 if ($isAutomated) {
     # For automated execution: run directly in current console (no new window)
-    Write-Host "Running simulation in current console (automated mode)..."
+    Write-Host "Running simulation in current console (automated mode, non-interactive keyboard)..."
     dotnet run -- $argString
     Write-Host "Simulation process has completed."
 } else {

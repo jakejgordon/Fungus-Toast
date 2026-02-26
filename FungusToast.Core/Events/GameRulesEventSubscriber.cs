@@ -33,6 +33,8 @@ namespace FungusToast.Core.Events
             Random rng,
             ISimulationObserver observer)
         {
+            var allMutations = MutationRegistry.GetAll().ToList();
+
             // All mutation-based cell death effects (consolidated)
             board.CellDeath += (sender, args) =>
             {
@@ -76,7 +78,6 @@ namespace FungusToast.Core.Events
             // Mutator Phenotype (mutation phase start auto-upgrade effect)
             board.MutationPhaseStart += () =>
             {
-                var allMutations = MutationRepository.BuildFullMutationSet().Item1.Values.ToList();
                 MutationEffectCoordinator.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, observer);
                 MutationEffectCoordinator.OnMutationPhaseStart_OntogenicRegression(board, players, allMutations, rng, observer);
                 MutationEffectCoordinator.OnMutationPhaseStart_AdaptiveExpression(board, players, rng, observer);

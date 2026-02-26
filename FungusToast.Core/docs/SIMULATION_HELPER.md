@@ -51,14 +51,12 @@ dotnet run -- --games 100 --players 8
    cd FungusToast.Simulation
    ```
 
-3. **Run Using Simple Script:**
+3. **Run Using PowerShell Script:**
    ```powershell
-   .\run_simulation_simple.ps1 -Games 1 -Players 8
+   .\run_simulation.ps1 --games 1 --players 8 --no-keyboard
    ```
    
-   **Alternative scripts available:**
-   - `.\run_simulation_simple.ps1` - User-friendly with clear feedback
-   - `.\run_simulation.ps1` - Original script (manual mode)
+   **Tip:** Add `--no-keyboard` for non-interactive runs to avoid accidental `Q`/`Escape` interruption.
 
 4. **Direct dotnet run (if scripts fail):**
    ```powershell
@@ -67,8 +65,20 @@ dotnet run -- --games 100 --players 8
    dotnet build "FungusToast.Simulation.csproj"
 
    # Run simulation
-   dotnet run -- --games 1 --players 8
+   dotnet run -- --games 1 --players 8 --no-keyboard
    ```
+
+## Automation-Safe Commands
+
+Use these for CI/agents or unattended runs:
+
+```powershell
+# Fast non-interactive smoke test
+dotnet run -- --games 1 --players 2 --width 40 --height 40 --no-keyboard
+
+# Equivalent alias
+dotnet run -- --games 1 --players 2 --width 40 --height 40 --non-interactive
+```
 
 ### For AI Assistants:
 
@@ -179,11 +189,13 @@ The simulation supports the following command-line parameters:
 
 | Parameter | Short | Description | Default |
 |-----------|-------|-------------|---------|
-| `--games` | `-g` | Number of games to play per matchup | 500 |
+| `--games` | `-g` | Number of games to play per matchup | 1 |
 | `--players` | `-p` | Number of players/strategies to use | 8 |
-| `--width` | `-w` | Board width (number of tiles) | 100 |
-| `--height` | | Board height (number of tiles) | 100 |
+| `--width` | `-w` | Board width (number of tiles) | 160 |
+| `--height` | | Board height (number of tiles) | 160 |
 | `--output` | `-o` | Specify output filename (optional) | Auto-generated timestamp |
+| `--no-keyboard` | | Disable keyboard interruption (`Q`/`Escape`) | Off |
+| `--non-interactive` | | Alias for `--no-keyboard` | Off |
 | `--help` | | Show help message | |
 
 ### Examples:
@@ -208,6 +220,9 @@ dotnet run -w 200 -p 4
 
 # Combine multiple options with custom output filename
 dotnet run --width 150 --height 120 --players 6 --games 25 --output large_board_test.txt
+
+# Non-interactive run for automation (ignores Q/Escape key interruption)
+dotnet run --games 1 --players 2 --no-keyboard
 ```
 
 ## Common Issues & Solutions
