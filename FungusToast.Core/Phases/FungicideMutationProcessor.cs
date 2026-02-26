@@ -34,6 +34,7 @@ namespace FungusToast.Core.Phases
             chance = 0f;
             killerPlayerId = null;
             attackerTileId = null;
+            var playersById = players.ToDictionary(p => p.PlayerId);
 
             // Build list of (playerId, effect, tileId) tuples for each orthogonally adjacent enemy with effect > 0
             var effects = new List<(int playerId, float effect, int tileId)>();
@@ -43,9 +44,9 @@ namespace FungusToast.Core.Phases
                 var neighbor = neighborTile.FungalCell;
                 if (neighbor is null || !neighbor.IsAlive) continue; // Only living cells can apply Putrefactive Mycotoxin
                 if (neighbor.OwnerPlayerId == target.OwnerPlayerId) continue;
+                if (!neighbor.OwnerPlayerId.HasValue) continue;
 
-                Player? enemy = players.FirstOrDefault(p => p.PlayerId == neighbor.OwnerPlayerId);
-                if (enemy == null) continue;
+                if (!playersById.TryGetValue(neighbor.OwnerPlayerId.Value, out var enemy)) continue;
 
                 float baseEffect = enemy.GetMutationEffect(MutationType.AdjacentFungicide);
                 
@@ -253,19 +254,35 @@ namespace FungusToast.Core.Phases
             // Use DecayPhaseContext for optimized colony size categorization
             var (largerColonies, smallerColonies) = decayPhaseContext.GetColonySizeCategorization(currentPlayer);
             var smallerColonyPlayerIds = smallerColonies.Select(p => p.PlayerId).ToHashSet();
+            var largerColonyPlayerIds = largerColonies.Select(p => p.PlayerId).ToHashSet();
 
             // Separate tiles by type
-            var emptyTiles = availableTiles.Where(t => t.FungalCell == null).ToList();
-            var largerColonyTiles = availableTiles.Where(t =>
-                t.FungalCell != null &&
-                t.FungalCell.OwnerPlayerId.HasValue &&
-                largerColonies.Any(p => p.PlayerId == t.FungalCell.OwnerPlayerId.Value)
-            ).ToList();
-            var smallerColonyTiles = availableTiles.Where(t =>
-                t.FungalCell != null &&
-                t.FungalCell.OwnerPlayerId.HasValue &&
-                smallerColonyPlayerIds.Contains(t.FungalCell.OwnerPlayerId.Value)
-            ).ToList();
+            var emptyTiles = new List<BoardTile>();
+            var largerColonyTiles = new List<BoardTile>();
+            var smallerColonyTiles = new List<BoardTile>();
+
+            foreach (var tile in availableTiles)
+            {
+                var cell = tile.FungalCell;
+                if (cell == null)
+                {
+                    emptyTiles.Add(tile);
+                    continue;
+                }
+
+                if (!cell.OwnerPlayerId.HasValue)
+                    continue;
+
+                int ownerId = cell.OwnerPlayerId.Value;
+                if (largerColonyPlayerIds.Contains(ownerId))
+                {
+                    largerColonyTiles.Add(tile);
+                }
+                else if (smallerColonyPlayerIds.Contains(ownerId))
+                {
+                    smallerColonyTiles.Add(tile);
+                }
+            }
 
             // 1. Remove additional 25% of empty tiles (stacks with max level bonus)
             int emptyTilesToRemove = (int)Math.Floor(emptyTiles.Count * GameBalance.CompetitiveAntagonismSporicidalBloomEmptyTileReduction);
@@ -442,6 +459,8 @@ namespace FungusToast.Core.Phases
             Player player,
             GameBoard board,
             int failedGrowthsThisRound,
+            int livingCells,
+            int opponentCount,
             List<Player> allPlayers,
             Random rng,
             ISimulationObserver observer,
@@ -452,7 +471,7 @@ namespace FungusToast.Core.Phases
 
             // Calculate total toxins this player can drop
             int totalToxins = CalculateMycotoxinTracerToxinCount(
-                player, board, level, failedGrowthsThisRound, allPlayers, rng);
+                player, board, level, failedGrowthsThisRound, opponentCount, livingCells, rng);
 
             if (totalToxins == 0) return 0;
 
@@ -506,7 +525,8 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             int level,
             int failedGrowthsThisRound,
-            List<Player> allPlayers,
+            int opponentCount,
+            int livingCells,
             Random rng)
         {
             // Convert accumulated failed growths to average per growth cycle
@@ -516,7 +536,6 @@ namespace FungusToast.Core.Phases
 
             int totalTiles = board.TotalTiles;
             int maxToxinsThisRound = totalTiles / GameBalance.MycotoxinTracerMaxToxinsDivisor;
-            int livingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive);
 
             // 1. Base toxin count with diminishing returns (square root scaling)
             int baseToxins = (int)Math.Floor(Math.Sqrt(level));
@@ -537,7 +556,6 @@ namespace FungusToast.Core.Phases
                 failureRate = Math.Clamp(failureRate, 0f, 1f);
 
                 // Establish maximum possible bonus toxins: MIN(opponents, failed growths)
-                int opponentCount = allPlayers.Count - 1; // Subtract 1 for this player
                 int maxBonusToxins = Math.Min(opponentCount, failedGrowthsThisRoundAdjusted);
 
                 // Calculate level multiplier: 10% per level, capped at 100% (level 10+)
@@ -565,45 +583,62 @@ namespace FungusToast.Core.Phases
         {
             // Use DecayPhaseContext for optimized colony size categorization
             var (largerColonies, smallerColonies) = decayPhaseContext.GetColonySizeCategorization(player);
+            var summaries = BoardUtilities.GetPlayerBoardSummaries(allPlayers, board);
+            int GetLivingCount(Player p) => summaries.TryGetValue(p.PlayerId, out var summary) ? summary.LivingCells : 0;
 
             // Sort players with larger colonies by descending colony size (target largest first)
             var sortedLargerColonies = largerColonies
-                .OrderByDescending(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
+                .OrderByDescending(GetLivingCount)
                 .ToList();
 
             // Sort players with smaller colonies by ascending colony size (target weakest last)
             var sortedSmallerColonies = smallerColonies
-                .OrderBy(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
+                .OrderBy(GetLivingCount)
                 .ToList();
 
             // Build prioritized target list: larger colonies first, then smaller colonies
             var prioritizedTargetPlayers = sortedLargerColonies.Concat(sortedSmallerColonies).ToList();
-
-            // Find candidate tiles adjacent to living cells of each player in priority order
-            var candidateTiles = new List<BoardTile>();
-
-            foreach (var targetPlayer in prioritizedTargetPlayers)
+            var playerPriority = new Dictionary<int, int>();
+            for (int i = 0; i < prioritizedTargetPlayers.Count; i++)
             {
-                var tilesAdjacentToPlayer = board.AllTiles()
-                    .Where(tile => !tile.IsOccupied && // Empty tiles only
-                        board.GetOrthogonalNeighbors(tile.TileId)
-                            .Any(neighbor => neighbor.FungalCell?.IsAlive == true &&
-                                           neighbor.FungalCell.OwnerPlayerId == targetPlayer.PlayerId))
-                    .ToList();
-
-                candidateTiles.AddRange(tilesAdjacentToPlayer);
+                playerPriority[prioritizedTargetPlayers[i].PlayerId] = i;
             }
 
-            // Remove duplicates while preserving priority order
-            var uniqueCandidates = new List<BoardTile>();
-            var seenTileIds = new HashSet<int>();
-
-            foreach (var candidate in candidateTiles)
+            var prioritizedBuckets = new List<BoardTile>[prioritizedTargetPlayers.Count];
+            for (int i = 0; i < prioritizedBuckets.Length; i++)
             {
-                if (seenTileIds.Add(candidate.TileId))
+                prioritizedBuckets[i] = new List<BoardTile>();
+            }
+
+            // Single pass over empty tiles: assign each tile to the highest-priority adjacent target player.
+            foreach (var tile in board.AllTiles())
+            {
+                if (tile.IsOccupied)
+                    continue;
+
+                int bestPriority = int.MaxValue;
+                foreach (var neighbor in board.GetOrthogonalNeighbors(tile.TileId))
                 {
-                    uniqueCandidates.Add(candidate);
+                    var neighborCell = neighbor.FungalCell;
+                    if (neighborCell == null || !neighborCell.IsAlive || !neighborCell.OwnerPlayerId.HasValue)
+                        continue;
+
+                    if (playerPriority.TryGetValue(neighborCell.OwnerPlayerId.Value, out int priority) && priority < bestPriority)
+                    {
+                        bestPriority = priority;
+                    }
                 }
+
+                if (bestPriority != int.MaxValue)
+                {
+                    prioritizedBuckets[bestPriority].Add(tile);
+                }
+            }
+
+            var uniqueCandidates = new List<BoardTile>();
+            foreach (var bucket in prioritizedBuckets)
+            {
+                uniqueCandidates.AddRange(bucket);
             }
 
             return uniqueCandidates;
@@ -694,8 +729,11 @@ namespace FungusToast.Core.Phases
             ISimulationObserver observer,
             DecayPhaseContext decayPhaseContext)
         {
-            // Count living cells for each player
-            var playerLivingCellCounts = players.ToDictionary(p => p.PlayerId, p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive));
+            // Count living cells for each player in one board pass
+            var playerSummaries = BoardUtilities.GetPlayerBoardSummaries(players, board);
+            var playerLivingCellCounts = players.ToDictionary(
+                p => p.PlayerId,
+                p => playerSummaries.TryGetValue(p.PlayerId, out var summary) ? summary.LivingCells : 0);
             
             // Order players by living cell count (fewest first, most last)
             var playersOrderedByLivingCells = players.OrderBy(p => playerLivingCellCounts[p.PlayerId]).ToList();
@@ -703,7 +741,9 @@ namespace FungusToast.Core.Phases
             foreach (var player in playersOrderedByLivingCells)
             {
                 int failedGrowths = failedGrowthsByPlayerId.TryGetValue(player.PlayerId, out var v) ? v : 0;
-                ApplyMycotoxinTracer(player, board, failedGrowths, players, rng, observer, decayPhaseContext);
+                int livingCells = playerLivingCellCounts[player.PlayerId];
+                int opponentCount = players.Count - 1;
+                ApplyMycotoxinTracer(player, board, failedGrowths, livingCells, opponentCount, players, rng, observer, decayPhaseContext);
             }
         }
 
