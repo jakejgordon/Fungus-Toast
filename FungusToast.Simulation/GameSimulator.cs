@@ -36,6 +36,22 @@ namespace FungusToast.Simulation.GameSimulation
 
             var simTracking = context ?? new SimulationTrackingContext();
 
+            int mutationPhaseStartCount = 0;
+            int preGrowthPhaseCount = 0;
+            int preGrowthCycleCount = 0;
+            int postGrowthPhaseCount = 0;
+            int postGrowthPhaseCompletedCount = 0;
+            int decayPhaseCount = 0;
+            int postDecayPhaseCount = 0;
+
+            board.MutationPhaseStart += () => mutationPhaseStartCount++;
+            board.PreGrowthPhase += () => preGrowthPhaseCount++;
+            board.PreGrowthCycle += () => preGrowthCycleCount++;
+            board.PostGrowthPhase += () => postGrowthPhaseCount++;
+            board.PostGrowthPhaseCompleted += () => postGrowthPhaseCompletedCount++;
+            board.DecayPhase += _ => decayPhaseCount++;
+            board.PostDecayPhase += () => postDecayPhaseCount++;
+
             bool gameEnded = false;
             bool isCountdownActive = false;
             int roundsRemainingUntilGameEnd = 0;
@@ -88,6 +104,15 @@ namespace FungusToast.Simulation.GameSimulation
             simTracking.RecordFirstUpgradeRounds(players);
 
             var result = GameResult.From(board, players, board.CurrentRound, simTracking);
+            result.ParityInvariantReport = BuildParityInvariantReport(
+                board,
+                mutationPhaseStartCount,
+                preGrowthPhaseCount,
+                preGrowthCycleCount,
+                postGrowthPhaseCount,
+                postGrowthPhaseCompletedCount,
+                decayPhaseCount,
+                postDecayPhaseCount);
 
             if (gameIndex > 0 && totalGames > 0)
             {
@@ -114,6 +139,39 @@ namespace FungusToast.Simulation.GameSimulation
             }
 
             return result;
+        }
+
+        private static ParityInvariantReport BuildParityInvariantReport(
+            GameBoard board,
+            int mutationPhaseStartCount,
+            int preGrowthPhaseCount,
+            int preGrowthCycleCount,
+            int postGrowthPhaseCount,
+            int postGrowthPhaseCompletedCount,
+            int decayPhaseCount,
+            int postDecayPhaseCount)
+        {
+            int completedRounds = Math.Max(0, board.CurrentRound - 1);
+            int expectedGrowthCycles = completedRounds * GameBalance.TotalGrowthCycles;
+
+            var checks = new List<InvariantCheckResult>
+            {
+                new() { Name = "MutationPhaseStart events", Expected = completedRounds, Actual = mutationPhaseStartCount },
+                new() { Name = "PreGrowthPhase events", Expected = completedRounds, Actual = preGrowthPhaseCount },
+                new() { Name = "PreGrowthCycle events", Expected = expectedGrowthCycles, Actual = preGrowthCycleCount },
+                new() { Name = "PostGrowthPhase events", Expected = completedRounds, Actual = postGrowthPhaseCount },
+                new() { Name = "PostGrowthPhaseCompleted events", Expected = completedRounds, Actual = postGrowthPhaseCompletedCount },
+                new() { Name = "DecayPhase events", Expected = completedRounds, Actual = decayPhaseCount },
+                new() { Name = "PostDecayPhase events", Expected = completedRounds, Actual = postDecayPhaseCount },
+                new() { Name = "CurrentGrowthCycle counter", Expected = expectedGrowthCycles, Actual = board.CurrentGrowthCycle }
+            };
+
+            return new ParityInvariantReport
+            {
+                CompletedRounds = completedRounds,
+                TotalGrowthCyclesPerRound = GameBalance.TotalGrowthCycles,
+                Checks = checks
+            };
         }
 
 

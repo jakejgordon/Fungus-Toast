@@ -19,6 +19,7 @@ namespace FungusToast.Simulation.Models
         public int TurnsPlayed { get; set; }
         public int ToxicTileCount { get; set; }
         public SimulationTrackingContext TrackingContext { get; set; } = null!;
+        public ParityInvariantReport? ParityInvariantReport { get; set; }
 
         // ──────────────
         // PLAYER RESULTS

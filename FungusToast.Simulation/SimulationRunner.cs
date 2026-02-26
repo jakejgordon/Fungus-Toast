@@ -32,6 +32,8 @@ namespace FungusToast.Simulation
                 boardHeight: boardHeight,
                 enableKeyboardInterrupt: enableKeyboardInterrupt);
 
+            PrintParityInvariantSummary(results.GameResults);
+
             // Print strategy summary
             var aggregator = new MatchupStatsAggregator();
             aggregator.PrintSummary(results.GameResults, results.CumulativeDeathReasons);
@@ -67,6 +69,44 @@ namespace FungusToast.Simulation
             mycoTracker.PrintReport(rankedPlayers);
 
             Console.WriteLine("\nSimulation complete.");
+        }
+
+        private static void PrintParityInvariantSummary(List<GameResult> gameResults)
+        {
+            if (gameResults.Count == 0)
+                return;
+
+            int failedGames = 0;
+            var failedDetails = new List<string>();
+
+            for (int i = 0; i < gameResults.Count; i++)
+            {
+                var report = gameResults[i].ParityInvariantReport;
+                if (report == null || report.AllPassed)
+                    continue;
+
+                failedGames++;
+                var mismatches = report.Checks
+                    .Where(c => !c.IsMatch)
+                    .Select(c => $"{c.Name} expected={c.Expected}, actual={c.Actual}")
+                    .ToList();
+                failedDetails.Add($"Game {i + 1}: {string.Join("; ", mismatches)}");
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("=== Parity Invariant Summary ===");
+            Console.WriteLine($"Games evaluated: {gameResults.Count}");
+            Console.WriteLine($"Games with invariant mismatches: {failedGames}");
+
+            foreach (var detail in failedDetails.Take(5))
+            {
+                Console.WriteLine($"- {detail}");
+            }
+
+            if (failedDetails.Count > 5)
+            {
+                Console.WriteLine($"- ...and {failedDetails.Count - 5} more games with mismatches.");
+            }
         }
 
         private static SimulationTrackingContext CreateCombinedTrackingContext(List<GameResult> gameResults)
