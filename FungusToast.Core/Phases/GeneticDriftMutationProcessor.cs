@@ -388,14 +388,22 @@ namespace FungusToast.Core.Phases
             }
             else
             {
-                // Use normal targeting logic - all tiles on the board
-                targetTileIds = board.AllTiles().Select(t => t.TileId).ToList();
+                // Use null marker for normal targeting logic (uniform random tile id across whole board)
+                targetTileIds = null;
+            }
+
+            if (targetTileIds != null && targetTileIds.Count == 0)
+            {
+                observer.ReportNecrophyticBloomSporeDrop(owner.PlayerId, spores, 0);
+                return;
             }
 
             int reclaims = 0;
             for (int i = 0; i < spores; i++)
             {
-                int randomTileId = targetTileIds[rng.Next(targetTileIds.Count)];
+                int randomTileId = targetTileIds == null
+                    ? rng.Next(board.TotalTiles)
+                    : targetTileIds[rng.Next(targetTileIds.Count)];
                 bool success = board.TryReclaimDeadCell(owner.PlayerId, randomTileId, Growth.GrowthSource.NecrophyticBloom);
                 if (success) reclaims++;
             }
@@ -416,6 +424,7 @@ namespace FungusToast.Core.Phases
         {
             // Use DecayPhaseContext for optimized colony size categorization
             var (largerColonies, smallerColonies) = decayPhaseContext.GetColonySizeCategorization(currentPlayer);
+            var largerColonyPlayerIds = largerColonies.Select(p => p.PlayerId).ToHashSet();
             var smallerColonyPlayerIds = smallerColonies.Select(p => p.PlayerId).ToHashSet();
 
             // Separate tiles by category
@@ -441,7 +450,7 @@ namespace FungusToast.Core.Phases
                         // Current player's dead cell - treat as "other" since they can't reclaim their own dead cells
                         otherTiles.Add(tile.TileId);
                     }
-                    else if (largerColonies.Any(p => p.PlayerId == cell.OwnerPlayerId.Value))
+                    else if (largerColonyPlayerIds.Contains(cell.OwnerPlayerId.Value))
                     {
                         // Dead cell from larger colony player - high priority
                         largerColonyDeadCells.Add(tile.TileId);
@@ -529,12 +538,10 @@ namespace FungusToast.Core.Phases
             ISimulationObserver observer)
         {
             // Precompute living cell counts once for Anabolic Inversion max-level boost logic
-            var livingCounts = new Dictionary<int,int>(players.Count);
-            foreach (var p in players)
-            {
-                int count = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive);
-                livingCounts[p.PlayerId] = count;
-            }
+            var summaries = BoardUtilities.GetPlayerBoardSummaries(players, board);
+            var livingCounts = players.ToDictionary(
+                p => p.PlayerId,
+                p => summaries.TryGetValue(p.PlayerId, out var summary) ? summary.LivingCells : 0);
 
             foreach (var player in players)
             {
@@ -589,12 +596,10 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver observer)
         {
-            var livingCounts = new Dictionary<int,int>(players.Count);
-            foreach (var p in players)
-            {
-                int count = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive);
-                livingCounts[p.PlayerId] = count;
-            }
+            var summaries = BoardUtilities.GetPlayerBoardSummaries(players, board);
+            var livingCounts = players.ToDictionary(
+                p => p.PlayerId,
+                p => summaries.TryGetValue(p.PlayerId, out var summary) ? summary.LivingCells : 0);
             foreach (var player in players)
             {
                 TryApplyAnabolicInversion(player, players, board, rng, observer, livingCounts);
