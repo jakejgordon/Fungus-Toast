@@ -130,7 +130,7 @@ void RecordNewMutationEffect(int playerId, int effectCount);
 
 #### **B. Implement Tracking**
 ```csharp
-// File: FungusToast.Simulation/Models/SimulationTrackingContext.cs
+// File: FungusToast.Simulation/Models/SimulationTrackingContext.*.cs (choose the most relevant partial)
 private readonly Dictionary<int, int> newMutationEffects = new();
 
 public void RecordNewMutationEffect(int playerId, int effectCount)
@@ -143,6 +143,8 @@ public void RecordNewMutationEffect(int playerId, int effectCount)
 public int GetNewMutationEffects(int playerId)
     => newMutationEffects.TryGetValue(playerId, out var val) ? val : 0;
 ```
+
+> Note: `SimulationTrackingContext` is split across multiple partial files. Use the domain-appropriate partial file (or add a new `SimulationTrackingContext.*.cs` partial). For the current file map, see `FungusToast.Core/docs/SIMULATION_HELPER.md`.
 
 #### **C. Add to PlayerResult**
 ```csharp
@@ -246,7 +248,7 @@ NewMutationGrowth,
 | Effect Coordination | `FungusToast.Core/Phases/MutationEffectCoordinator.cs` |
 | Growth Sources | `FungusToast.Core/Growth/GrowthSource.cs` |
 | Observer Interface | `FungusToast.Core/Metrics/ISimulationObserver.cs` |
-| Tracking Implementation | `FungusToast.Simulation/Models/SimulationTrackingContext.cs` |
+| Tracking Implementation | `FungusToast.Simulation/Models/SimulationTrackingContext.*.cs` (partial files; see `docs/SIMULATION_HELPER.md`) |
 | Result Data | `FungusToast.Simulation/Models/PlayerResult.cs` |
 | Result Population | `FungusToast.Simulation/Models/GameResult.cs` |
 | Usage Display | `FungusToast.Simulation/Analysis/PlayerMutationUsageTracker.cs` |
