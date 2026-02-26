@@ -272,6 +272,7 @@ namespace FungusToast.Unity
             UpdatePhaseProgressTrackerLabel();
             phaseProgressTracker?.HighlightMutationPhase();
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
+            gameUIManager.RightSidebar?.SetBoard(Board);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
             gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);

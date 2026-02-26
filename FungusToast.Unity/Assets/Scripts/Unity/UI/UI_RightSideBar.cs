@@ -22,6 +22,7 @@ namespace FungusToast.Unity.UI
 
         // Add a GridVisualizer field and setter
         private GridVisualizer gridVisualizer;
+        private GameBoard board;
 
         private Dictionary<int, PlayerSummaryRow> playerSummaryRows = new();
 
@@ -29,6 +30,11 @@ namespace FungusToast.Unity.UI
         public void SetGridVisualizer(GridVisualizer visualizer)
         {
             gridVisualizer = visualizer;
+        }
+
+        public void SetBoard(GameBoard gameBoard)
+        {
+            board = gameBoard;
         }
 
         public void InitializePlayerSummaries(List<Player> players)
@@ -70,8 +76,14 @@ namespace FungusToast.Unity.UI
 
         public void UpdatePlayerSummaries(List<Player> players)
         {
+            if (board == null)
+            {
+                Debug.LogWarning("UI_RightSidebar board reference not set; cannot update player summaries.");
+                return;
+            }
+
             // Use optimized single-pass board summary calculation
-            var boardSummaries = FungusToast.Core.Board.BoardUtilities.GetPlayerBoardSummaries(players, GameManager.Instance.Board);
+            var boardSummaries = FungusToast.Core.Board.BoardUtilities.GetPlayerBoardSummaries(players, board);
             
             foreach (Player player in players)
             {
@@ -95,8 +107,14 @@ namespace FungusToast.Unity.UI
         // Add this method to sort and animate the rows
         private void SortAndAnimatePlayerSummaryRows(List<Player> players)
         {
+            if (board == null)
+            {
+                Debug.LogWarning("UI_RightSidebar board reference not set; cannot sort player summaries.");
+                return;
+            }
+
             // Use optimized single-pass board summary calculation (same as UpdatePlayerSummaries)
-            var boardSummaries = FungusToast.Core.Board.BoardUtilities.GetPlayerBoardSummaries(players, GameManager.Instance.Board);
+            var boardSummaries = FungusToast.Core.Board.BoardUtilities.GetPlayerBoardSummaries(players, board);
             
             // Build a list of rows with their player data
             var rowPlayerPairs = new List<(PlayerSummaryRow row, Player player, int alive, int dead)>();

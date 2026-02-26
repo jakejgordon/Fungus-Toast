@@ -22,9 +22,18 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             Mycovariant picked,
             Action onComplete,
             GameObject draftPanel,
-            GridVisualizer gridVisualizer)
+            GridVisualizer gridVisualizer,
+            GameManager gameManager)
         {
+            if (gameManager == null)
+            {
+                onComplete?.Invoke();
+                yield break;
+            }
+
             var direction = DirectionFromMycovariantId(picked.Id);
+            var board = gameManager.Board;
+            var gameLogRouter = gameManager.GameUI.GameLogRouter;
 
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
@@ -32,7 +41,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 // Pre-animation stagger
                 yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
 
-                var livingCells = GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId)
+                var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
                     .Where(c => c.IsAlive)
                     .ToList();
                 
@@ -46,13 +55,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         MycovariantEffectProcessor.ResolveJettingMycelium(
                             playerMyco,
                             player,
-                            GameManager.Instance.Board,
+                            board,
                             sourceCell.TileId,
                             direction,
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                            GameManager.Instance.GameUI.GameLogRouter
+                            gameLogRouter
                         );
-                        gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                        gridVisualizer.RenderBoard(board);
                         yield return gridVisualizer.WaitForAllAnimations();
                     }
                 }
@@ -64,7 +73,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             {
                 draftPanel?.SetActive(false);
 
-                var validCells = GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId)
+                var validCells = board.GetAllCellsOwnedBy(player.PlayerId)
                     .Where(c => c.IsAlive)
                     .ToList();
                 var validTileIds = validCells.Select(c => c.TileId).ToList();
@@ -74,7 +83,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     new Color(1f, 0.2f, 0.8f, 1f),
                     new Color(1f, 0.7f, 1f, 1f)
                 );
-                GameManager.Instance.ShowSelectionPrompt("Select one of your living fungal cells to project mycelium from.");
+                gameManager.ShowSelectionPrompt("Select one of your living fungal cells to project mycelium from.");
 
                 bool done = false;
                 bool selectionResolved = false;
@@ -90,15 +99,15 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         MycovariantEffectProcessor.ResolveJettingMycelium(
                             playerMyco,
                             player,
-                            GameManager.Instance.Board,
+                            board,
                             cell.TileId,
                             direction,
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                            GameManager.Instance.GameUI.GameLogRouter
+                            gameLogRouter
                         );
-                        gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                        gridVisualizer.RenderBoard(board);
                         gridVisualizer.ClearHighlights();
-                        GameManager.Instance.HideSelectionPrompt();
+                        gameManager.HideSelectionPrompt();
                         done = true;
                         executed = true;
                         selectionResolved = true;
@@ -106,7 +115,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     () =>
                     {
                         gridVisualizer.ClearHighlights();
-                        GameManager.Instance.HideSelectionPrompt();
+                        gameManager.HideSelectionPrompt();
                         done = true;
                         selectionResolved = true;
                     },
@@ -145,8 +154,18 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             Mycovariant picked,
             Action onComplete,
             GameObject draftPanel,
-            GridVisualizer gridVisualizer)
+            GridVisualizer gridVisualizer,
+            GameManager gameManager)
         {
+            if (gameManager == null)
+            {
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            var board = gameManager.Board;
+            var gameLogRouter = gameManager.GameUI.GameLogRouter;
+
             int maxCellsAllowed = picked.Id switch
             {
                 MycovariantIds.MycelialBastionIId => MycovariantGameBalance.MycelialBastionIMaxResistantCells,
@@ -165,7 +184,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 
                 if (playerMyco != null)
                 {
-                    var board = GameManager.Instance.Board;
                     var preResistant = board.AllTiles()
                         .Where(t => t.FungalCell != null && t.FungalCell.IsResistant)
                         .Select(t => t.TileId)
@@ -175,7 +193,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         playerMyco,
                         board,
                         new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                        GameManager.Instance.GameUI.GameLogRouter
+                        gameLogRouter
                     );
 
                     gridVisualizer.RenderBoard(board);
@@ -188,7 +206,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     // Start all pulses in parallel
                     foreach (var tileId in newResistant)
                     {
-                        GameManager.Instance.StartCoroutine(gridVisualizer.BastionResistantPulseAnimation(tileId));
+                        gameManager.StartCoroutine(gridVisualizer.BastionResistantPulseAnimation(tileId));
                     }
 
                     yield return gridVisualizer.WaitForAllAnimations();
@@ -200,7 +218,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             {
                 draftPanel?.SetActive(false);
                 // Show selection prompt banner
-                GameManager.Instance.ShowSelectionPrompt(
+                gameManager.ShowSelectionPrompt(
                     $"Select up to {maxCellsAllowed} of your living cells to become Resistant."
                 );
 
@@ -214,7 +232,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     maxCellsAllowed,
                     (selectedCells) =>
                     {
-                        var board = GameManager.Instance.Board;
                         var playerMyco = player.PlayerMycovariants
                             .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
 
@@ -227,12 +244,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                                 board,
                                 player.PlayerId,
                                 cell.TileId,
-                                GameManager.Instance.GameUI.GameLogRouter
+                                gameLogRouter
                             );
                             playerMyco?.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);
                         }
 
-                        GameManager.Instance.HideSelectionPrompt();
+                        gameManager.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
                         gridVisualizer.RenderBoard(board);
                         executed = true;
@@ -240,7 +257,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     },
                     () =>
                     {
-                        GameManager.Instance.HideSelectionPrompt();
+                        gameManager.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
                         selectionResolved = true;
                     },
@@ -254,7 +271,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     // Start all pulses in parallel
                     foreach (var tileId in selectedTileIds)
                     {
-                        GameManager.Instance.StartCoroutine(gridVisualizer.BastionResistantPulseAnimation(tileId));
+                        gameManager.StartCoroutine(gridVisualizer.BastionResistantPulseAnimation(tileId));
                     }
                     yield return gridVisualizer.WaitForAllAnimations();
                 }
@@ -271,8 +288,18 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             Mycovariant picked,
             Action onComplete,
             GameObject draftPanel,
-            GridVisualizer gridVisualizer)
+            GridVisualizer gridVisualizer,
+            GameManager gameManager)
         {
+            if (gameManager == null)
+            {
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            var board = gameManager.Board;
+            var gameLogRouter = gameManager.GameUI.GameLogRouter;
+
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
                 draftPanel?.SetActive(false);
@@ -284,7 +311,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 if (playerMyco != null)
                 {
                     // Capture pre-state to detect placement
-                    var board = GameManager.Instance.Board;
                     var preTiles = board.AllTiles()
                         .Where(t => t.FungalCell != null && t.FungalCell.IsResistant)
                         .Select(t => t.TileId)
@@ -294,7 +320,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         playerMyco,
                         board,
                         new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                        GameManager.Instance.GameUI.GameLogRouter
+                        gameLogRouter
                     );
                     gridVisualizer.RenderBoard(board);
 
@@ -321,7 +347,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             else
             {
                 draftPanel?.SetActive(false);
-                GameManager.Instance.ShowSelectionPrompt(
+                gameManager.ShowSelectionPrompt(
                     "Select any tile to place your invincible (Resistant) cell.");
 
                 bool done = false;
@@ -329,7 +355,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 bool executed = false;
 
                 Func<BoardTile, bool> isValidTile = tile => tile.FungalCell == null || (!tile.FungalCell.IsResistant);
-                var validTileIds = GameManager.Instance.Board.AllTiles()
+                var validTileIds = board.AllTiles()
                     .Where(isValidTile)
                     .Select(tile => tile.TileId)
                     .ToList();
@@ -344,7 +370,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         done = true;
                         if (!isValidTile(tile))
                         {
-                            GameManager.Instance.HideSelectionPrompt();
+                            gameManager.HideSelectionPrompt();
                             gridVisualizer.ClearHighlights();
                             selectionResolved = true;
                             return;
@@ -354,14 +380,14 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         placedTileId = tile.TileId;
                         MycovariantEffectProcessor.ResolveSurgicalInoculationHuman(
                             playerMyco,
-                            GameManager.Instance.Board,
+                            board,
                             player.PlayerId,
                             placedTileId,
-                            GameManager.Instance.GameUI.GameLogRouter
+                            gameLogRouter
                         );
-                        GameManager.Instance.HideSelectionPrompt();
+                        gameManager.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
-                        gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                        gridVisualizer.RenderBoard(board);
                         executed = true;
                         selectionResolved = true;
                     },
@@ -369,7 +395,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     {
                         if (done) return;
                         done = true;
-                        GameManager.Instance.HideSelectionPrompt();
+                        gameManager.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
                         selectionResolved = true;
                     },
@@ -398,8 +424,18 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             Mycovariant picked,
             Action onComplete,
             GameObject draftPanel,
-            GridVisualizer gridVisualizer)
+            GridVisualizer gridVisualizer,
+            GameManager gameManager)
         {
+            if (gameManager == null)
+            {
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            var board = gameManager.Board;
+            var gameLogRouter = gameManager.GameUI.GameLogRouter;
+
             int maxSporesAllowed = picked.Id switch
             {
                 MycovariantIds.BallistosporeDischargeIId => MycovariantGameBalance.BallistosporeDischargeISpores,
@@ -418,12 +454,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 {
                     BallistosporeDischargeHelper.ResolveBallistosporeDischarge(
                         playerMyco,
-                        GameManager.Instance.Board,
+                        board,
                         maxSporesAllowed,
                         new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                        GameManager.Instance.GameUI.GameLogRouter
+                        gameLogRouter
                     );
-                    gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                    gridVisualizer.RenderBoard(board);
                     yield return gridVisualizer.WaitForAllAnimations();
                 }
                 yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
@@ -433,13 +469,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             {
                 draftPanel?.SetActive(false);
                 Func<BoardTile, bool> isValidTile = tile => tile.FungalCell == null;
-                var validTileIds = GameManager.Instance.Board.AllTiles()
+                var validTileIds = board.AllTiles()
                     .Where(isValidTile)
                     .Select(tile => tile.TileId)
                     .ToList();
                 int emptyTileCount = validTileIds.Count;
                 int maxSpores = Math.Min(emptyTileCount, maxSporesAllowed);
-                GameManager.Instance.ShowSelectionPrompt(
+                gameManager.ShowSelectionPrompt(
                     $"Select up to {maxSpores} empty tiles to drop toxin spores."
                 );
 
@@ -457,13 +493,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         {
                             BallistosporeDischargeHelper.ResolveBallistosporeDischargeHuman(
                                 playerMyco,
-                                GameManager.Instance.Board,
+                                board,
                                 tile.TileId,
-                                GameManager.Instance.GameUI.GameLogRouter
+                                gameLogRouter
                             );
                         }
-                        gridVisualizer.RenderBoard(GameManager.Instance.Board);
-                        GameManager.Instance.HideSelectionPrompt();
+                        gridVisualizer.RenderBoard(board);
+                        gameManager.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
                         done = true;
                         executed = true;
@@ -471,7 +507,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     },
                     () =>
                     {
-                        GameManager.Instance.HideSelectionPrompt();
+                        gameManager.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
                         done = true;
                         selectionResolved = true;
@@ -499,8 +535,18 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             Mycovariant picked,
             Action onComplete,
             GameObject draftPanel,
-            GridVisualizer gridVisualizer)
+            GridVisualizer gridVisualizer,
+            GameManager gameManager)
         {
+            if (gameManager == null)
+            {
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            var board = gameManager.Board;
+            var gameLogRouter = gameManager.GameUI.GameLogRouter;
+
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
                 draftPanel?.SetActive(false);
@@ -510,18 +556,18 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 
                 if (playerMyco != null)
                 {
-                    var bestToxin = CytolyticBurstHelper.FindBestToxinToExplode(player, GameManager.Instance.Board);
+                    var bestToxin = CytolyticBurstHelper.FindBestToxinToExplode(player, board);
                     
                     if (bestToxin.HasValue)
                     {
                         MycovariantEffectProcessor.ResolveCytolyticBurst(
                             playerMyco,
-                            GameManager.Instance.Board,
+                            board,
                             bestToxin.Value.tileId,
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                            GameManager.Instance.GameUI.GameLogRouter
+                            gameLogRouter
                         );
-                        gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                        gridVisualizer.RenderBoard(board);
                         yield return gridVisualizer.WaitForAllAnimations();
                     }
                 }
@@ -532,20 +578,20 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             {
                 draftPanel?.SetActive(false);
                 
-                var playerToxins = GameManager.Instance.Board.GetAllCellsOwnedBy(player.PlayerId)
+                var playerToxins = board.GetAllCellsOwnedBy(player.PlayerId)
                     .Where(c => c.IsToxin)
                     .ToList();
                 
                 if (playerToxins.Count == 0)
                 {
-                    GameManager.Instance.ShowSelectionPrompt("No toxins available to explode!");
+                    gameManager.ShowSelectionPrompt("No toxins available to explode!");
                     yield return new WaitForSeconds(2f);
-                    GameManager.Instance.HideSelectionPrompt();
+                    gameManager.HideSelectionPrompt();
                     onComplete?.Invoke();
                     yield break;
                 }
 
-                GameManager.Instance.ShowSelectionPrompt(
+                gameManager.ShowSelectionPrompt(
                     $"Select one of your toxins to explode in a {MycovariantGameBalance.CytolyticBurstRadius}-tile radius."
                 );
 
@@ -575,16 +621,16 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         {
                             MycovariantEffectProcessor.ResolveCytolyticBurst(
                                 playerMyco,
-                                GameManager.Instance.Board,
+                                board,
                                 tile.TileId,
                                 new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
-                                GameManager.Instance.GameUI.GameLogRouter
+                                gameLogRouter
                             );
                         }
 
-                        GameManager.Instance.HideSelectionPrompt();
+                        gameManager.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
-                        gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                        gridVisualizer.RenderBoard(board);
                         executed = true;
                         selectionResolved = true;
                     },
@@ -592,7 +638,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     {
                         if (done) return;
                         done = true;
-                        GameManager.Instance.HideSelectionPrompt();
+                        gameManager.HideSelectionPrompt();
                         gridVisualizer.ClearHighlights();
                         selectionResolved = true;
                     },

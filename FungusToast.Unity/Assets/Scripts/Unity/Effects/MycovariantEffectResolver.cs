@@ -58,7 +58,8 @@ namespace FungusToast.Unity.Effects
                         mycovariant,
                         onComplete,
                         draftPanel,
-                        gridVisualizer
+                        gridVisualizer,
+                        GameManager.Instance
                     )
                 );
             }
@@ -78,7 +79,8 @@ namespace FungusToast.Unity.Effects
                         mycovariant,
                         onComplete,
                         draftPanel,
-                        gridVisualizer
+                        gridVisualizer,
+                        GameManager.Instance
                     )
                 );
             }
@@ -90,7 +92,8 @@ namespace FungusToast.Unity.Effects
                         mycovariant,
                         onComplete,
                         draftPanel,
-                        gridVisualizer
+                        gridVisualizer,
+                        GameManager.Instance
                     )
                 );
             }
@@ -104,7 +107,8 @@ namespace FungusToast.Unity.Effects
                         mycovariant,
                         onComplete,
                         draftPanel,
-                        gridVisualizer
+                        gridVisualizer,
+                        GameManager.Instance
                     )
                 );
             }
@@ -116,7 +120,8 @@ namespace FungusToast.Unity.Effects
                         mycovariant,
                         onComplete,
                         draftPanel,
-                        gridVisualizer
+                        gridVisualizer,
+                        GameManager.Instance
                     )
                 );
             }
