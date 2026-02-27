@@ -54,6 +54,8 @@ namespace FungusToast.Unity
             }
             try
             {
+                // Show progress overlay so user sees forward progress
+                ui.LoadingScreen?.Show($"Fast-forwarding\u2026 Round {board.CurrentRound} / {targetRound}");
                 while (board.CurrentRound < targetRound && iterations < desiredRounds && !gameEndedFunc())
                 {
                     yield return RunSilentGrowthPhase(board);
@@ -61,7 +63,9 @@ namespace FungusToast.Unity
                     yield return RunSilentMutationPhase(board, mutationMgr, ui);
                     foreach (var p in board.Players) p.TickDownActiveSurges(); board.IncrementRound(); iterations++;
                     if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(board.CurrentRound)) RunSilentDraft(board, ui, testingMycoId);
+                    ui.LoadingScreen?.SetStatus($"Fast-forwarding\u2026 Round {board.CurrentRound} / {targetRound}");
                 }
+                ui.LoadingScreen?.FadeOut();
                 // Restore original player types and strategies before UI updates
                 foreach (var state in originalStates)
                 {
@@ -69,7 +73,7 @@ namespace FungusToast.Unity
                     state.player.SetMutationStrategy(state.strategy);
                 }
                 setFastForwardFlag(false);
-                gameManager.gridVisualizer.RenderBoard(board, true); ui.RightSidebar?.UpdatePlayerSummaries(board.Players); float occupancy = board.GetOccupiedTileRatio() * 100f; ui.RightSidebar?.SetRoundAndOccupancy(board.CurrentRound, occupancy); ui.MoldProfileRoot?.ApplyDeferredRefreshIfNeeded();
+                gameManager.gridVisualizer.RenderBoard(board, true); ui.RightSidebar?.UpdatePlayerSummaries(board.Players); ui.RightSidebar?.SortPlayerSummaryRows(board.Players); float occupancy = board.GetOccupiedTileRatio() * 100f; ui.RightSidebar?.SetRoundAndOccupancy(board.CurrentRound, occupancy); ui.MoldProfileRoot?.ApplyDeferredRefreshIfNeeded();
                 if (skipToEnd) { ui.GameLogRouter.DisableSilentMode(); gameManager.TriggerEndGameFromFastForward(); yield break; }
                 if (testingMycoId.HasValue) gameManager.StartMycovariantDraftPhase(); else { string msg = treatAsTargetRound ? $"Reached Round {board.CurrentRound}" : $"Fast-forwarded {board.CurrentRound - startingRound} rounds"; ui.PhaseBanner.Show(msg, 2f); gameManager.StartNextRound(); }
             }
