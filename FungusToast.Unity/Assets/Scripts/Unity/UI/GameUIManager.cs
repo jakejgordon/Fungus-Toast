@@ -1,4 +1,5 @@
 using UnityEngine;
+using FungusToast.Core.Board;
 using FungusToast.Unity.UI.MutationTree;
 using FungusToast.Unity.UI.GameLog;
 
@@ -34,13 +35,25 @@ namespace FungusToast.Unity.UI
 
         public UI_PhaseProgressTracker PhaseProgressTracker => phaseProgressTracker;
 
+        // ── Core accessors ──
         public UI_MutationManager MutationUIManager => mutationUIManager;
         public UI_PlayerBinder PlayerUIBinder => playerUIBinder;
         public GameObject LeftSidebar => leftSidebar;
         public UI_RightSidebar RightSidebar => rightSidebar;
         public UI_EndGamePanel EndGamePanel => endGamePanel;
         public UI_PhaseBanner PhaseBanner => phaseBanner;
-        public UI_MoldProfileRoot MoldProfileRoot => moldProfileRoot; // Accessor
+        public UI_MoldProfileRoot MoldProfileRoot => moldProfileRoot;
+
+        // ── Board accessor ──
+        // Set by GameManager after board creation so UI components can access it
+        // without reaching into GameManager.Instance.
+        public GameBoard Board { get; private set; }
+
+        /// <summary>
+        /// Called by GameManager after board creation. Allows UI components to
+        /// reference the board via GameUIManager instead of GameManager.Instance.
+        /// </summary>
+        public void SetBoard(GameBoard board) => Board = board;
         
         // Player Activity Log (Left Sidebar)
         public UI_GameLogPanel PlayerActivityLogPanel => playerActivityLogPanel;

@@ -37,11 +37,9 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.HyphalVectoring,
                 name: "Hyphal Vectoring",
                 description:
-                    $"At the end of the Growth Phase (for {GameBalance.HyphalVectoringSurgeDuration} turns after activation), this mutation projects a straight line of living fungal cells toward the center of the toast. " +
-                    $"It spawns {GameBalance.HyphalVectoringBaseTiles} cells at level 0, plus {GameBalance.HyphalVectoringTilesPerLevel} per level.\n\n" +
-                    $"The origin is intelligently selected to prioritize: paths with fewest friendly cells, maximum enemy cells to infest, and proximity to center. " +
-                    $"Cells replace anything in their path (toxins, dead mold, enemy mold, empty space) and **skip over friendly living mold** without interruption. " +
-                    $"Each activation costs {GameBalance.HyphalVectoringPointsPerActivation} mutation points plus {GameBalance.HyphalVectoringSurgePointIncreasePerLevel} per level already gained.",
+                    $"For {GameBalance.HyphalVectoringSurgeDuration} turns after activation, projects a line of {GameBalance.HyphalVectoringBaseTiles} + {GameBalance.HyphalVectoringTilesPerLevel}/level living cells toward the toast center at Growth Phase end. " +
+                    $"Replaces toxins, dead cells, enemy cells, and empty tiles in its path; skips over friendly living cells. " +
+                    $"Each activation costs {GameBalance.HyphalVectoringPointsPerActivation} mutation points plus {GameBalance.HyphalVectoringSurgePointIncreasePerLevel} per level.",
                 flavorText: "Hyphal networks realign toward the center of the substrate, bulldozing through opposition with deliberate, uncompromising purpose.",
                 type: MutationType.HyphalVectoring,
                 effectPerLevel: GameBalance.HyphalVectoringTilesPerLevel,
@@ -62,10 +60,9 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.MimeticResilience,
                 name: "Mimetic Resilience",
                 description:
-                    $"At the end of the Growth Phase (for {GameBalance.MimeticResilienceSurgeDuration} rounds), strategically places resistant fungal cells near rival resistant cells of " +
-                    $"players with {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold, 1)} more living cells than you, and who control at least {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold, 1)} of the board. " +
-                    $"Cells will be placed within X + 1 tiles of target enemy cells, where X is the mutation level. Targeting prioritizes infesting enemy cells over empty placement. " +
-                    $"Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} mutation points plus {GameBalance.MimeticResiliencePointIncreasePerLevel} per level already gained.",
+                    $"For {GameBalance.MimeticResilienceSurgeDuration} rounds after activation, places resistant cells near rival resistant cells of players with {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold, 1)}+ more living cells and {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold, 1)}+ board control. " +
+                    $"Placement range: level + 1 tiles from target. Prefers infesting enemy cells over empty placement. " +
+                    $"Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} mutation points plus {GameBalance.MimeticResiliencePointIncreasePerLevel} per level.",
                 flavorText: "The colony analyzes and replicates the defensive adaptations of more successful rivals, establishing resistant footholds in their territories through biomimetic infiltration.",
                 type: MutationType.MimeticResilience,
                 effectPerLevel: 1.0f, // Static effect: always 1 placement per qualifying target player
@@ -86,11 +83,9 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.CompetitiveAntagonism,
                 name: "Competitive Antagonism",
                 description:
-                    $"Enhances your Mycotoxin Tracers, Sporicidal Bloom, and Necrophytic Bloom abilities to target players who have larger colonies for {GameBalance.CompetitiveAntagonismSurgeDuration} rounds. " +
-                    $"During the surge, Sporicidal Bloom decreases the likelihood of landing on empty tiles and significantly increases the chance of landing on stronger colonies. " +
-                    $"Likewise, Necrophytic Bloom eliminates friendly cells and weaker colony cells as potential targets, significantly increasing the chance of taking over a stronger colony's dead cells. " +
-                    $"Mycotoxin Tracers will also preferentially target stronger players' borders. " +
-                    $"Each activation costs {GameBalance.CompetitiveAntagonismPointsPerActivation} mutation points plus {GameBalance.CompetitiveAntagonismPointIncreasePerLevel} per level already gained.",
+                    $"For {GameBalance.CompetitiveAntagonismSurgeDuration} rounds, biases Mycotoxin Tracers, Sporicidal Bloom, and Necrophytic Bloom toward stronger colonies. " +
+                    $"Sporicidal Bloom favors enemy cells over empty tiles; Necrophytic Bloom skips friendly and weaker targets; Tracers prioritize stronger borders. " +
+                    $"Each activation costs {GameBalance.CompetitiveAntagonismPointsPerActivation} mutation points plus {GameBalance.CompetitiveAntagonismPointIncreasePerLevel} per level.",
                 flavorText: "Evolved chemoreceptors identify and aggressively target thriving competitors, directing toxin production and necrophytic expansion toward the most successful rival colonies with lethal precision.",
                 type: MutationType.CompetitiveAntagonism,
                 effectPerLevel: 1.0f, // Effect strength per level
@@ -110,9 +105,9 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.ChitinFortification,
                 name: "Chitin Fortification",
                 description:
-                    $"When activated, immediately grants resistance to {GameBalance.ChitinFortificationCellsPerLevel} random living fungal cell(s) per level for {GameBalance.ChitinFortificationDurationRounds} rounds. " +
-                    $"Resistant cells cannot be killed or replaced by any means. The resistance effect lasts until the surge expires. " +
-                    $"Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points plus {GameBalance.ChitinFortificationPointIncreasePerLevel} per level already gained.",
+                    $"On activation, grants resistance to {GameBalance.ChitinFortificationCellsPerLevel} random living cell(s) per level for {GameBalance.ChitinFortificationDurationRounds} rounds. " +
+                    $"Resistant cells cannot be killed or replaced until the surge expires. " +
+                    $"Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points plus {GameBalance.ChitinFortificationPointIncreasePerLevel} per level.",
                 flavorText: "Rapid chitin synthesis creates an impenetrable exoskeleton around select cells, rendering them invulnerable to all forms of destruction for a limited time.",
                 type: MutationType.ChitinFortification,
                 effectPerLevel: GameBalance.ChitinFortificationCellsPerLevel,

@@ -17,7 +17,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeRoot(new Mutation(
                 id: MutationIds.MycotoxinTracer,
                 name: "Mycotoxin Tracer",
-                description: "At the start of each decay phase, you release toxin spores based on this mutation's level and your number of failed growth attempts. The number of toxins scales with your mutation level (with diminishing returns) and failed growths, but is capped based on board size. Toxins are placed on unoccupied tiles orthogonally adjacent to enemy cells, creating temporary toxin zones that block enemy growth and reclamation.",
+                description: "At the start of each decay phase, release toxin spores scaling with mutation level and failed growth attempts (with diminishing returns, capped by board size). Spores place toxins on empty tiles adjacent to enemy cells, blocking their growth and reclamation.",
                 flavorText: "Microscopic chemical trails seep outward, clouding enemy borders in dormant inhibition fields.",
                 type: MutationType.FungicideToxinSpores,
                 effectPerLevel: GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel,
@@ -60,17 +60,11 @@ namespace FungusToast.Core.Mutations.Factories
             // Tier-4
             helper.MakeChild(new Mutation(
                 id: MutationIds.SporicidalBloom,
-                name: "Sporocidal Bloom",
+                name: "Sporicidal Bloom",
                 description:
-                    "At the end of each round, your colony vents toxic spores that disperse across the board, avoiding your own territory. " +
-                    "Each level of this mutation releases spores at approximately " + helper.FormatPercent(0.07f) + " per living fungal cell, scaling with your colony's size and mutation level.\n" +
-                    "\n" +
-                    "Each spore targets tiles that do not contain your living or dead cells:\n" +
-                    "• If it lands on an enemy fungal cell, it kills that cell and leaves a toxin in its place.\n" +
-                    "• If it lands on an empty tile or existing toxin, it becomes a toxin (or refreshes the existing one).\n" +
-                    "• Spores cannot target tiles containing your own living or dead cells.\n" +
-                    "\n" +
-                    "<b>Max Level Bonus:</b> Removes 25% of empty tiles from the target pool, greatly increasing the likelihood of hitting enemy cells.",
+                    "At the end of each round, vent toxic spores scaling with colony size and level (approximately " + helper.FormatPercent(0.07f) + " of living cells per level). " +
+                    "Spores target tiles outside your territory: hits on enemy cells kill and leave toxins; empty or existing toxin tiles become toxins.\n" +
+                    "<b>Max Level Bonus:</b> Removes 25% of empty tiles from the target pool, greatly increasing enemy hit chance.",
                 flavorText:
                     "Once mature, the colony begins venting spores laced with cytotoxic compounds, intelligently avoiding friendly territory while poisoning competitors and sterilizing contested ground. At peak evolution, the spores develop enhanced targeting, seeking out living enemies with lethal precision.",
                 type: MutationType.FungicideSporeDrop,
@@ -88,9 +82,8 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.NecrotoxicConversion,
                 name: "Necrotoxic Conversion",
-                description: $"Each level grants a {helper.FormatPercent(GameBalance.NecrotoxicConversionReclaimChancePerLevel)} chance to immediately reclaim any cell that dies to your toxin effects. " +
-                             $"This applies to deaths from Putrefactive Mycotoxin, Mycotoxin Potentiation, Sporocidal Bloom, and Putrefactive Cascade effects. " +
-                             $"When triggered, the dead cell is instantly converted to a living cell under your control, creating aggressive territorial expansion through chemical warfare.",
+                description: $"Each level grants a {helper.FormatPercent(GameBalance.NecrotoxicConversionReclaimChancePerLevel)} chance to instantly reclaim any cell killed by your toxin effects " +
+                             $"(Putrefactive Mycotoxin, Mycotoxin Potentiation, Sporicidal Bloom, or Putrefactive Cascade), converting it to a living cell under your control.",
                 flavorText: "Advanced necrotoxin synthesis converts cellular death into immediate colonization, hijacking enemy metabolism to fuel instantaneous territorial conversion through toxic alchemy.",
                 type: MutationType.NecrotoxicConversion,
                 effectPerLevel: GameBalance.NecrotoxicConversionReclaimChancePerLevel,
@@ -105,9 +98,10 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.PutrefactiveRejuvenation,
                 name: "Putrefactive Rejuvenation",
-                description: $"Whenever your mold kills an orthogonally adjacent living enemy cell (e.g., via Putrefactive Mycotoxin), it saps the nutrients and removes <b>{GameBalance.PutrefactiveRejuvenationAgeReductionPerLevel}</b> growth cycles per mutation level from the age of any friendly living cells within <b>{GameBalance.PutrefactiveRejuvenationEffectRadius}</b> tiles of the poisoned cell. At max level, the distance is doubled.\n" +
-                $"Additionally, each level increases the effectiveness of Putrefactive Mycotoxin by <b>{helper.FormatPercent(GameBalance.PutrefactiveRejuvenationMycotoxinBonusPerLevel)}</b>.",
-                flavorText: "The colony's most advanced toxins not only destroy rivals, but catalyze a surge of rejuvenation—siphoning the essence of the fallen to extend its own life.",
+                description: $"When your mold kills an adjacent enemy cell, friendly living cells within <b>{GameBalance.PutrefactiveRejuvenationEffectRadius}</b> tiles lose <b>{GameBalance.PutrefactiveRejuvenationAgeReductionPerLevel}</b> age per level. " +
+                             $"Each level also boosts Putrefactive Mycotoxin effectiveness by <b>{helper.FormatPercent(GameBalance.PutrefactiveRejuvenationMycotoxinBonusPerLevel)}</b>.\n" +
+                             $"<b>Max Level Bonus:</b> Rejuvenation radius is doubled.",
+                flavorText: "The colony's most advanced toxins not only destroy rivals, but catalyze a surge of rejuvenationï¿½siphoning the essence of the fallen to extend its own life.",
                 type: MutationType.PutrefactiveRejuvenation,
                 effectPerLevel: GameBalance.PutrefactiveRejuvenationAgeReductionPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
@@ -122,10 +116,10 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.PutrefactiveCascade,
                 name: "Putrefactive Cascade",
-                description: $"Each level increases the effectiveness of Putrefactive Mycotoxin by {helper.FormatPercent(GameBalance.PutrefactiveCascadeEffectivenessBonus)} " +
-                             $"and grants a {helper.FormatPercent(GameBalance.PutrefactiveCascadeCascadeChance)} chance for each putrefactive kill to cascade " +
-                             $"to the next enemy living cell in the same orthogonal direction. Cascades can chain indefinitely until they fail or run out of targets.\n\n" +
-                             $"<b>Max Level Bonus:</b> Cascaded kills leave toxin tiles instead of dead cells, creating a trail of contamination.",
+                description: $"Each level boosts Putrefactive Mycotoxin by {helper.FormatPercent(GameBalance.PutrefactiveCascadeEffectivenessBonus)} " +
+                             $"and grants a {helper.FormatPercent(GameBalance.PutrefactiveCascadeCascadeChance)} chance for each putrefactive kill to chain to the next enemy cell in the same direction. " +
+                             $"Chains continue until they miss or run out of targets.\n" +
+                             $"<b>Max Level Bonus:</b> Cascaded kills leave toxin tiles instead of dead cells.",
                 flavorText: "Advanced mycotoxin synthesis enables directional propagation through cellular membranes, creating cascading waves of putrefaction that surge through enemy ranks like dominoes of death.",
                 type: MutationType.PutrefactiveCascade,
                 effectPerLevel: GameBalance.PutrefactiveCascadeCascadeChance,

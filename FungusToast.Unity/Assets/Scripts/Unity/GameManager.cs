@@ -111,6 +111,8 @@ namespace FungusToast.Unity
         private HotseatTurnManager hotseatTurnManager; 
         private FastForwardService fastForwardService; 
         private PostGrowthVisualSequence postGrowthVisualSequence;
+        private EndgameService endgameService;
+        private MutationPointService mutationPointService;
 
         #endregion
 
@@ -157,8 +159,25 @@ namespace FungusToast.Unity
                 () => isFastForwarding,
                 () => testingModeEnabled,
                 OnAllHumansFinishedMutationTurn);
-            fastForwardService = new FastForwardService(this, () => isFastForwarding, v => isFastForwarding = v, () => gameEnded);
+            fastForwardService = new FastForwardService(this, () => isFastForwarding, v => isFastForwarding = v, () => endgameService.GameEnded);
             postGrowthVisualSequence = new PostGrowthVisualSequence(this, gridVisualizer, () => isFastForwarding, StartDecayPhase);
+            endgameService = new EndgameService(
+                gameUIManager,
+                () => Board,
+                () => humanPlayer,
+                () => CurrentGameMode,
+                () => campaignController,
+                () => campaignProgression,
+                () => FirstUpgradeRounds);
+            mutationPointService = new MutationPointService(
+                gameUIManager,
+                () => Board,
+                () => mutationManager,
+                () => rng,
+                () => isFastForwarding,
+                () => testingModeEnabled,
+                () => fastForwardRounds,
+                StartGrowthPhase);
         }
 
         #endregion
@@ -220,10 +239,12 @@ namespace FungusToast.Unity
             gameEnded = false;
             isCountdownActive = false;
             roundsRemainingUntilGameEnd =0;
+            endgameService.Reset();
             playerCount = numberOfPlayers;
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
 
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
+            gameUIManager.SetBoard(Board); // expose board to UI components via façade
             rng = new System.Random();
             postGrowthVisualSequence.Register(Board); // board post-growth events
 
@@ -371,7 +392,7 @@ namespace FungusToast.Unity
                 p.TickDownActiveSurges();
             }
             CheckForEndgameCondition();
-            if (gameEnded)
+            if (endgameService.GameEnded)
             {
                 return;
             }
@@ -462,97 +483,15 @@ namespace FungusToast.Unity
 
         private void CheckForEndgameCondition()
         {
-            if (!isCountdownActive && Board.ShouldTriggerEndgame())
-            {
-                isCountdownActive = true;
-                roundsRemainingUntilGameEnd = GameBalance.TurnsAfterEndGameTileOccupancyThresholdMet;
-                UpdateCountdownUI();
-            }
-            else if (isCountdownActive)
-            {
-                roundsRemainingUntilGameEnd--;
-                if (roundsRemainingUntilGameEnd <=0)
-                {
-                    EndGame();
-                }
-                else
-                {
-                    UpdateCountdownUI();
-                }
-            }
-        }
-
-        private void UpdateCountdownUI()
-        {
-            if (!isCountdownActive)
-            {
-                gameUIManager.RightSidebar?.SetEndgameCountdownText(null);
-                return;
-            }
-            if (roundsRemainingUntilGameEnd ==1)
-            {
-                gameUIManager.RightSidebar?.SetEndgameCountdownText("<b><color=#FF0000>Final Round!</color></b>");
-                gameUIManager.GameLogRouter?.OnEndgameTriggered(1);
-            }
-            else
-            {
-                gameUIManager.RightSidebar?.SetEndgameCountdownText($"<b><color=#FFA500>Endgame in {roundsRemainingUntilGameEnd} rounds</color></b>");
-                gameUIManager.GameLogRouter?.OnEndgameTriggered(roundsRemainingUntilGameEnd);
-            }
+            endgameService.CheckForEndgameCondition();
+            // Sync local flag for backward compatibility with existing checks
+            gameEnded = endgameService.GameEnded;
         }
 
         private void EndGame()
         {
-            if (gameEnded)
-            {
-                return;
-            }
-            gameEnded = true;
-            gameUIManager.GameLogManager?.OnLogSegmentStart("None");
-            gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
-            var ranked = Board.Players
-                .OrderByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
-                .ThenByDescending(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => !c.IsAlive))
-                .ToList();
-            var winner = ranked.FirstOrDefault();
-            if (winner != null)
-            {
-                gameUIManager.GameLogRouter?.OnGameEnd(winner.PlayerName);
-            }
-
-            bool isCampaign = CurrentGameMode == GameMode.Campaign && campaignController != null && campaignController.HasActiveRun;
-            int lostLevelDisplay = isCampaign ? (campaignController.State.levelIndex +1) :0; // capture before potential changes
-            bool humanWon = isCampaign && humanPlayer != null && winner != null && winner.PlayerId == humanPlayer.PlayerId;
-            bool finalLevelPreAdvance = isCampaign && campaignController.State.levelIndex >= (campaignProgression.MaxLevels -1);
-
-            if (isCampaign)
-            {
-                campaignController.OnGameFinished(humanWon);
-            }
-
-            // After controller update determine post-advance state for button logic
-            bool finalLevelNow = isCampaign && campaignController.State.levelIndex >= (campaignProgression.MaxLevels -1);
-            bool hasNextLevel = isCampaign && humanWon && !finalLevelPreAdvance && campaignController.State.levelIndex < campaignProgression.MaxLevels;
-
-            gameUIManager.MutationUIManager.gameObject.SetActive(false);
-            gameUIManager.RightSidebar.gameObject.SetActive(true);
-            gameUIManager.LeftSidebar.gameObject.SetActive(false);
-            gameUIManager.EndGamePanel.gameObject.SetActive(true);
-            if (isCampaign)
-            {
-                gameUIManager.EndGamePanel.ShowResultsWithOutcome(ranked, Board, true, humanWon, finalLevelPreAdvance && humanWon, hasNextLevel, humanWon ? campaignController.State.levelIndex +1 : lostLevelDisplay);
-            }
-            else
-            {
-                gameUIManager.EndGamePanel.ShowResults(ranked, Board);
-            }
-            foreach (var ((pid, mid), rounds) in FirstUpgradeRounds)
-            {
-                double avg = rounds.Average();
-                int min = rounds.Min();
-                int max = rounds.Max();
-                Console.WriteLine($"Player {pid} | Mutation {mid} | Avg First Acquired: {avg:F1} | Min: {min} | Max: {max}");
-            }
+            endgameService.EndGame();
+            gameEnded = endgameService.GameEnded;
         }
 
         #endregion
@@ -561,26 +500,12 @@ namespace FungusToast.Unity
 
         private void AssignMutationPoints()
         {
-            var all = mutationManager.AllMutations.Values.ToList();
-            var localRng = new System.Random();
-            TurnEngine.AssignMutationPoints(Board, Board.Players, all, localRng, gameUIManager.GameLogRouter);
-            gameUIManager.MutationUIManager?.RefreshAllMutationButtons();
-            gameUIManager.MoldProfileRoot?.Refresh();
+            mutationPointService.AssignMutationPoints();
         }
 
         public void SpendAllMutationPointsForAIPlayers()
         {
-            var all = mutationManager.GetAllMutations().ToList();
-            // If fast forwarding and multiple humans, auto-spend for all humans after first as well
-            bool includeHumans = isFastForwarding || (testingModeEnabled && fastForwardRounds >0);
-            foreach (var p in Board.Players)
-            {
-                if (p.PlayerType == PlayerTypeEnum.AI || (includeHumans && p.PlayerType == PlayerTypeEnum.Human))
-                {
-                    p.MutationStrategy?.SpendMutationPoints(p, all, Board, rng, gameUIManager.GameLogRouter);
-                }
-            }
-            StartGrowthPhase();
+            mutationPointService.SpendAllMutationPointsForAIPlayers();
         }
 
         #endregion
@@ -836,7 +761,11 @@ namespace FungusToast.Unity
         internal Player GetPrimaryHumanInternal() => humanPlayer;
         internal System.Random GetRngInternal() => rng;
         internal MycovariantPoolManager GetPersistentPoolInternal() => persistentPoolManager;
-        internal void TriggerEndGameInternal() => EndGame();
+        internal void TriggerEndGameInternal()
+        {
+            endgameService.EndGame();
+            gameEnded = endgameService.GameEnded;
+        }
 
         #endregion
     }

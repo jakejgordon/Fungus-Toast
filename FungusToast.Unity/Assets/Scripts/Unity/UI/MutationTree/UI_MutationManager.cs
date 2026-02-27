@@ -29,11 +29,8 @@ namespace FungusToast.Unity.UI.MutationTree
         [Header("Mutation Tree Dynamic UI")]
         [SerializeField] private MutationTreeBuilder mutationTreeBuilder;
 
-        [Header("Tooltip and Dock")]
+        [Header("Dock")]
         [SerializeField] private TextMeshProUGUI dockButtonText;
-        [SerializeField] private TextMeshProUGUI mutationDescriptionText;
-        [SerializeField] private GameObject mutationDescriptionBackground;
-        [SerializeField] private TooltipPositioner tooltipPositioner;
 
         [Header("UI Wiring")]
         [SerializeField] private TextMeshProUGUI mutationPointsCounterText;
@@ -56,8 +53,6 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private Player humanPlayer;
         private bool humanTurnEnded = false;
-        private Coroutine tooltipFadeCoroutine;
-
         private List<MutationNodeUI> mutationButtons = new();
 
         private void Awake()
@@ -263,76 +258,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 StartCoroutine(SlideInTree());
         }
 
-        public void ShowMutationDescription(string description, Vector2 screenPosition)
-        {
-            if (mutationDescriptionBackground == null || tooltipPositioner == null)
-                return;
 
-            if (!mutationDescriptionBackground.activeSelf)
-                mutationDescriptionBackground.SetActive(true);
-
-            mutationDescriptionBackground.transform.SetAsLastSibling();
-
-            if (mutationDescriptionText != null)
-            {
-                mutationDescriptionText.gameObject.SetActive(true);
-                mutationDescriptionText.text = description;
-            }
-
-            // Force Unity to recalculate layout so tooltip size is up to date
-            RectTransform descRect = mutationDescriptionBackground.GetComponent<RectTransform>();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(descRect);
-
-            // Position tooltip AFTER size is correct
-            tooltipPositioner.SetPosition(screenPosition);
-
-            CanvasGroup cg = mutationDescriptionBackground.GetComponent<CanvasGroup>();
-            if (cg != null)
-            {
-                if (tooltipFadeCoroutine != null)
-                    StopCoroutine(tooltipFadeCoroutine);
-
-                tooltipFadeCoroutine = StartCoroutine(FadeTooltip(cg, 1f, 0.2f));
-                cg.interactable = true;
-                cg.blocksRaycasts = true;
-            }
-        }
-
-
-        public void ClearMutationDescription()
-        {
-            if (mutationDescriptionBackground != null)
-            {
-                CanvasGroup cg = mutationDescriptionBackground.GetComponent<CanvasGroup>();
-                if (cg != null)
-                {
-                    if (tooltipFadeCoroutine != null)
-                        StopCoroutine(tooltipFadeCoroutine);
-
-                    tooltipFadeCoroutine = StartCoroutine(FadeTooltip(cg, 0f, 0.2f));
-                    cg.interactable = false;
-                    cg.blocksRaycasts = false;
-                }
-            }
-
-            if (mutationDescriptionText != null)
-                mutationDescriptionText.text = "";
-        }
-
-        private IEnumerator FadeTooltip(CanvasGroup cg, float targetAlpha, float duration)
-        {
-            float startAlpha = cg.alpha;
-            float elapsed = 0f;
-
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                cg.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration);
-                yield return null;
-            }
-
-            cg.alpha = targetAlpha;
-        }
 
         private IEnumerator SlideInTree()
         {

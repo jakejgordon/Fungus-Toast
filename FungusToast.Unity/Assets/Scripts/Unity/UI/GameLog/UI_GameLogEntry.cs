@@ -106,6 +106,25 @@ namespace FungusToast.Unity.UI.GameLog
             canvasGroup.alpha = 0f;
             StartCoroutine(FadeInCoroutine(canvasGroup));
         }
+
+        /// <summary>
+        /// Prepares this entry for return to the pool. Stops running coroutines
+        /// and resets visual state so it is clean for the next use.
+        /// </summary>
+        public void ResetForReuse()
+        {
+            StopAllCoroutines();
+            deferredScheduled = false;
+
+            if (messageText != null)
+                messageText.text = string.Empty;
+            if (timestampText != null)
+                timestampText.text = string.Empty;
+
+            var canvasGroup = GetComponent<CanvasGroup>();
+            if (canvasGroup != null)
+                canvasGroup.alpha = 1f;
+        }
         
         private System.Collections.IEnumerator FadeInCoroutine(CanvasGroup canvasGroup)
         {

@@ -150,7 +150,9 @@ FungusToast.Core/
     ├── SIMULATION_HELPER.md    # Detailed simulation commands and debugging
     ├── ANIMATION_HELPER.md     # Animation system guidance
     ├── MYCOVARIANT_HELPER.md   # Mycovariant system guide
-    └── NEW_MUTATION_HELPER.md  # Adding new mutations guide
+    ├── NEW_MUTATION_HELPER.md  # Adding new mutations guide
+    ├── UI_ARCHITECTURE_HELPER.md # Unity UI patterns, services, tooltips, pooling
+    └── PLAYER_ACTIVITY_LOG_HELPER.md # Player activity log system
 ```
 
 ### FungusToast.Simulation Structure
@@ -177,6 +179,17 @@ FungusToast.Unity/
 ├── Assets/                          # Unity assets and scripts
 │   ├── Plugins/                     # Contains FungusToast.Core.dll (auto-copied)
 │   ├── Scripts/Unity/               # Unity-specific C# scripts
+│   │   ├── GameManager.cs           # Central game orchestrator (delegates to services)
+│   │   ├── Services/                # Extracted service classes
+│   │   │   ├── EndgameService.cs    # Endgame detection, countdown, final results
+│   │   │   └── MutationPointService.cs # Mutation point assignment, AI spending
+│   │   ├── UI/                      # UI panels, sidebars, and widgets
+│   │   │   ├── GameUIManager.cs     # Lightweight UI façade (avoids GameManager.Instance)
+│   │   │   ├── Tooltips/            # Unified tooltip system
+│   │   │   ├── GameLog/             # Object-pooled game log entries
+│   │   │   ├── MutationTree/        # Mutation tree panel and nodes
+│   │   │   └── ...                  # Other UI panels
+│   │   └── ...                      # Phases, Grid, Cameras, etc.
 │   ├── Scenes/                      # Unity scene files
 │   └── ...                          # Other Unity assets
 ├── Packages/                        # Unity package manager files
@@ -231,6 +244,7 @@ FungusToast.Unity/
 - Location: `FungusToast.Unity/Assets/Scripts/Unity/`
 - Build: Use Unity Editor (not dotnet CLI)
 - Testing: Play mode in Unity Editor
+- Reference: `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`
 
 ## Validation and Verification
 
@@ -268,6 +282,9 @@ FungusToast.Unity/
 ### Copilot Productivity Rules (Read First)
 - Prefer working in `FungusToast.Core` for game rules, data models, and deterministic logic. Only use `FungusToast.Unity` for view/controllers and input.
 - Avoid adding new `MonoBehaviour` singletons or `GameManager.Instance` reach-ins. Prefer passing references or adding lightweight facades in `GameUIManager`.
+- **Service extraction pattern:** When `GameManager` grows, extract cohesive clusters into service classes under `Services/` (see `EndgameService`, `MutationPointService`). Services receive dependencies via `Func<>` delegates, not direct `GameManager` references.
+- **Tooltip system:** Use `ITooltipContentProvider` + `TooltipTrigger` for all tooltips. Do not create new standalone tooltip implementations. See `UI_ARCHITECTURE_HELPER.md`.
+- **Object pooling:** Use `UnityEngine.Pool.ObjectPool<T>` for frequently instantiated UI elements (e.g., game log entries). Add a `ResetForReuse()` method to pooled components.
 - Keep core logic Unity-free (no `UnityEngine` types in `FungusToast.Core`).
 - For per-turn/per-cycle logic, avoid repeated LINQ over board state. Use `BoardUtilities.GetPlayerBoardSummaries` or cache counts.
 - When adding new mutations or mycovariants, follow the helper docs exactly and update all required integration points.
@@ -290,6 +307,7 @@ FungusToast.Unity/
 - **For AI/strategy:** Examine `FungusToast.Core/AI/` and existing strategy implementations
 - **For simulation:** Reference `SIMULATION_HELPER.md` for comprehensive command examples
 - **For Unity integration:** Check `FungusToast.Unity/Assets/Scripts/Unity/`
+- **For UI patterns (tooltips, pooling, services):** See `UI_ARCHITECTURE_HELPER.md`
 
 ### Code Quality and Conventions
 - **Nullable reference types:** Enabled
@@ -299,7 +317,10 @@ FungusToast.Unity/
 
 ### AI-Friendly Change Patterns
 - Prefer small, composable helper methods over large monolithic methods.
-- When touching `GameManager`, consider moving logic into a service class and call that service from `GameManager`.
+- When touching `GameManager`, consider moving logic into a service class under `Services/` and call that service from `GameManager`. Use `Func<>` delegates for dependencies instead of passing `GameManager` directly.
+- For new UI that shows/hides frequently, follow the object pool pattern in `UI_GameLogPanel` — use `ObjectPool<T>` and add `ResetForReuse()` to the component.
+- For new tooltips, implement `ITooltipContentProvider` on the target component and attach a `TooltipTrigger` — don't build custom hover/tooltip code.
+- Expand `GameUIManager` instead of reaching into `GameManager.Instance` from UI scripts. Use `SetDependencies()` pattern (see `UI_EndGamePanel`) for panels that need callbacks.
 - Add new events through `GameBoard` + `GameRulesEventSubscriber` so Unity and Simulation stay consistent.
 - Use `ISimulationObserver` for any effect tracking that should appear in simulation output.
 

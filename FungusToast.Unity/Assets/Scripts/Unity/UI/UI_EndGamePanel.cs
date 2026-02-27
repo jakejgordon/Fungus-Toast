@@ -20,6 +20,22 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Button exitButton; // always available to return to mode select
         [SerializeField] private TextMeshProUGUI outcomeLabel; // dynamic outcome messaging
 
+        // Façade reference — set by GameManager so we don't need GameManager.Instance
+        private GameUIManager gameUI;
+        private System.Action onCampaignResume;
+        private System.Action onExitToModeSelect;
+
+        /// <summary>
+        /// Call once after the panel is created to wire up dependencies without reaching
+        /// into GameManager.Instance.
+        /// </summary>
+        public void SetDependencies(GameUIManager ui, System.Action campaignResume, System.Action exitToModeSelect)
+        {
+            gameUI = ui;
+            onCampaignResume = campaignResume;
+            onExitToModeSelect = exitToModeSelect;
+        }
+
         /* ─────────── Unity ─────────── */
         private void Awake()
         {
@@ -104,7 +120,9 @@ namespace FungusToast.Unity.UI
                 var row = Instantiate(playerResultRowPrefab, resultsContainer);
                 int living = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive);
                 int dead = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => !c.IsAlive);
-                Sprite icon = GameManager.Instance.GameUI.PlayerUIBinder.GetIcon(p);
+                Sprite icon = gameUI != null
+                    ? gameUI.PlayerUIBinder.GetIcon(p)
+                    : GameManager.Instance.GameUI.PlayerUIBinder.GetIcon(p);
 
                 row.Populate(rank, icon, p.PlayerName, living, dead);
                 rank++;
@@ -133,9 +151,10 @@ namespace FungusToast.Unity.UI
             HideInstant();
 
             // Re-enable the right sidebar so players can see summaries after closing results
-            if (GameManager.Instance != null && GameManager.Instance.GameUI != null && GameManager.Instance.GameUI.RightSidebar != null)
+            var sidebar = gameUI?.RightSidebar ?? GameManager.Instance?.GameUI?.RightSidebar;
+            if (sidebar != null)
             {
-                GameManager.Instance.GameUI.RightSidebar.gameObject.SetActive(true);
+                sidebar.gameObject.SetActive(true);
             }
         }
 
@@ -143,14 +162,19 @@ namespace FungusToast.Unity.UI
         {
             // Mid-run victory continue path
             HideInstant();
-            // Reinitialize next level
-            GameManager.Instance?.StartCampaignResume();
+            if (onCampaignResume != null)
+                onCampaignResume();
+            else
+                GameManager.Instance?.StartCampaignResume();
         }
 
         private void OnExitToModeSelect()
         {
             HideInstant();
-            GameManager.Instance?.ShowStartGamePanel();
+            if (onExitToModeSelect != null)
+                onExitToModeSelect();
+            else
+                GameManager.Instance?.ShowStartGamePanel();
         }
 
         private void HideInstant()

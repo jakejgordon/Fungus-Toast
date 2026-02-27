@@ -8,6 +8,52 @@ This guide provides a systematic approach for adding new mutations to Fungus Toa
 
 ---
 
+## Naming & Description Convention
+
+All mutation copy (name, description, flavor text) must follow these rules to keep the UI readable in tooltips and simulation reports.
+
+### **Name Rules**
+
+| Rule | Detail |
+|------|--------|
+| **Length** | 2–3 words, **≤ 28 characters** |
+| **Uniqueness** | First word should be unique within its category; avoid reusing a keyword for unrelated mechanics across categories |
+| **Tone** | Balanced scientific flavor + plain language — at most **one** advanced biological term per name |
+| **Pronounceability** | A new player should be able to say it out loud without stumbling |
+| **Structure** | Noun phrase that hints at the mechanic (e.g., *Regenerative Hyphae*, *Adaptive Expression*) |
+
+### **Description Rules**
+
+| Rule | Detail |
+|------|--------|
+| **Length** | 1–3 sentences, **≤ 220 rendered characters** (interpolated values count toward the cap) |
+| **Sentence order** | **Trigger / timing → Effect / scaling → Max-level bonus** |
+| **Max-level clause** | Use `<b>Max Level Bonus:</b>` on a new line when the max-level effect is mechanically distinct |
+| **Jargon** | No unexplained scientific terms — if a bio word appears in the Name, restate the mechanic in plain language in the Description |
+| **Formatting** | Use `<b>…</b>` for emphasis on key numbers/bonuses; use `\n` for line breaks before Max Level Bonus; avoid bullet lists and multi-paragraph blocks |
+| **Encoding** | No special Unicode bullets or en-dashes that can corrupt — use plain hyphens and standard ASCII punctuation |
+
+### **FlavorText Rules** *(separate policy)*
+
+| Rule | Detail |
+|------|--------|
+| **Purpose** | Thematic / lore-only — evoke the mutation's fantasy, not restate mechanics |
+| **Tone** | Can be more technical and expressive than Description |
+| **Constraint** | Must not contradict the Description mechanics |
+| **Length** | No hard cap, but aim for 1–2 sentences |
+
+### **Copy Review Checklist** *(run before every PR that adds or changes mutation text)*
+
+1. Name ≤ 28 chars and 2–3 words?
+2. Description ≤ 220 rendered chars?
+3. Description follows Trigger → Effect → Max-Level order?
+4. No unexplained jargon in Description?
+5. `<b>Max Level Bonus:</b>` used for distinct max-level effects?
+6. No encoding artifacts (replacement chars, smart quotes, Unicode bullets)?
+7. FlavorText does not restate or contradict mechanics?
+
+---
+
 ## Implementation Checklist
 
 ### **1. Core Infrastructure (Required)**

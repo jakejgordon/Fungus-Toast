@@ -41,7 +41,7 @@ namespace FungusToast.Core.Phases
             // Dynamic random decay scaling based on round (starts adding after configured start round)
             float additionalRandom = GameBalance.GetAdditionalRandomDecayChance(board.CurrentRound);
 
-            // Random component (cannot go below zero) – includes dynamic scaling, then subtracts harmony reduction
+            // Random component (cannot go below zero) ï¿½ includes dynamic scaling, then subtracts harmony reduction
             float basePlusScaling = GameBalance.BaseRandomDecayChance + additionalRandom;
             float randomChance = Math.Max(0f, basePlusScaling - harmonyReduction);
 
@@ -221,7 +221,7 @@ namespace FungusToast.Core.Phases
             
             // Order matters here - some effects may interact with others
             
-            // 1. Sporocidal Bloom (spore effects - should happen first to place spores before other effects)
+            // 1. Sporicidal Bloom (spore effects - should happen first to place spores before other effects)
             FungicideMutationProcessor.OnDecayPhase_SporicidalBloom(board, players, rng, observer, decayPhaseContext);
             
             // 2. Mycotoxin Tracer (spore effects based on failed growths - should happen after other spore effects)

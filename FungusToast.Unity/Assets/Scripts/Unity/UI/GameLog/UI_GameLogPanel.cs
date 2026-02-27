@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.UI;
 using TMPro;
 
@@ -22,6 +23,7 @@ namespace FungusToast.Unity.UI.GameLog
         [SerializeField] private bool isPlayerSpecificPanel = false; // set true for per-player log (can be forced at runtime)
 
         private readonly List<UI_GameLogEntry> entryUIs = new();
+        private ObjectPool<UI_GameLogEntry> entryPool;
         private IGameLogManager logManager;
         private int activePlayerId = -1; // for player-specific filtering
         private bool subscribed = false; // prevent double subscription
@@ -34,6 +36,33 @@ namespace FungusToast.Unity.UI.GameLog
 
             if (headerText != null && string.IsNullOrEmpty(headerText.text))
                 headerText.text = defaultHeaderText;
+
+            // Initialize the object pool for log entries.
+            // defaultCapacity matches maxVisibleEntries; max is a safety cap.
+            entryPool = new ObjectPool<UI_GameLogEntry>(
+                createFunc: () =>
+                {
+                    var entry = Instantiate(entryPrefab, contentParent);
+                    return entry;
+                },
+                actionOnGet: entry =>
+                {
+                    entry.transform.SetParent(contentParent, false);
+                    entry.gameObject.SetActive(true);
+                },
+                actionOnRelease: entry =>
+                {
+                    entry.ResetForReuse();
+                    entry.gameObject.SetActive(false);
+                },
+                actionOnDestroy: entry =>
+                {
+                    if (entry != null) Destroy(entry.gameObject);
+                },
+                collectionCheck: false,
+                defaultCapacity: maxVisibleEntries,
+                maxSize: maxVisibleEntries * 2
+            );
         }
 
         private void LateUpdate()
@@ -69,7 +98,7 @@ namespace FungusToast.Unity.UI.GameLog
 
                 // Clear existing visual list to avoid duplicates when re-initializing
                 foreach (var e in entryUIs)
-                    if (e != null) Destroy(e.gameObject);
+                    if (e != null) entryPool.Release(e);
                 entryUIs.Clear();
 
                 // Populate with current history once
@@ -144,7 +173,7 @@ namespace FungusToast.Unity.UI.GameLog
 
         private void CreateVisualEntry(GameLogEntry entry)
         {
-            var entryUI = Instantiate(entryPrefab, contentParent);
+            var entryUI = entryPool.Get();
             entryUI.SetEntry(entry);
             entryUIs.Add(entryUI);
             entryUI.FadeIn();
@@ -154,7 +183,7 @@ namespace FungusToast.Unity.UI.GameLog
                 var oldEntry = entryUIs[0];
                 entryUIs.RemoveAt(0);
                 if (oldEntry != null)
-                    Destroy(oldEntry.gameObject);
+                    entryPool.Release(oldEntry);
             }
 
             QueueLayoutRefresh();
@@ -165,7 +194,7 @@ namespace FungusToast.Unity.UI.GameLog
             foreach (var entryUI in entryUIs)
             {
                 if (entryUI != null)
-                    Destroy(entryUI.gameObject);
+                    entryPool.Release(entryUI);
             }
             entryUIs.Clear();
 
@@ -178,7 +207,7 @@ namespace FungusToast.Unity.UI.GameLog
         private void RebuildForPlayerEntries(IEnumerable<GameLogEntry> entries)
         {
             foreach (var e in entryUIs)
-                if (e != null) Destroy(e.gameObject);
+                if (e != null) entryPool.Release(e);
             entryUIs.Clear();
             if (entries == null) return;
             foreach (var entry in entries.Where(e => !e.PlayerId.HasValue || e.PlayerId == activePlayerId).TakeLast(maxVisibleEntries))

@@ -6,10 +6,11 @@ using FungusToast.Core.Players;
 using UnityEngine.EventSystems;
 using System.Text;
 using FungusToast.Unity;
+using FungusToast.Unity.UI.Tooltips;
 
 namespace FungusToast.Unity.UI.MutationTree
 {
-    public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ITooltipContentProvider
     {
         [Header("UI References")]
         [SerializeField] private Button upgradeButton;
@@ -57,7 +58,20 @@ namespace FungusToast.Unity.UI.MutationTree
 
             upgradeButton.onClick.RemoveAllListeners();
             upgradeButton.onClick.AddListener(OnUpgradeClicked);
+
+            // Wire up the new unified tooltip system via TooltipTrigger.
+            // TooltipTrigger auto-resolves ITooltipContentProvider from this component.
+            var trigger = GetComponent<TooltipTrigger>();
+            if (trigger == null)
+                trigger = gameObject.AddComponent<TooltipTrigger>();
+            trigger.SetDynamicProvider(this);
         }
+
+        /// <summary>
+        /// ITooltipContentProvider implementation — supplies rich-text tooltip
+        /// content to the unified TooltipManager system.
+        /// </summary>
+        public string GetTooltipText() => BuildTooltip();
   
         private void OnUpgradeClicked()
         {
@@ -154,15 +168,14 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            var tooltipText = BuildTooltip();
-            Vector2 screenPosition = Input.mousePosition;
-            uiManager.ShowMutationDescription(tooltipText, screenPosition);
+            // Tooltip display is now handled by TooltipTrigger + ITooltipContentProvider.
+            // We only keep prerequisite highlighting here.
             uiManager.HighlightUnmetPrerequisites(mutation, player);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            uiManager.ClearMutationDescription();
+            // Tooltip hiding is handled by TooltipTrigger.OnPointerExit.
             uiManager.ClearAllHighlights();
         }
 

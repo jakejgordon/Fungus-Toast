@@ -164,12 +164,7 @@ namespace FungusToast.Unity.UI
         {
             if (randomDecayChanceText == null) return; // optional safety
             float baseChance = GameBalance.BaseRandomDecayChance;
-            // Fallback/local duplicates of core constants to avoid version skew
-            const int ScalingStartRoundLocal = 10; // must match GameBalance.RandomDecayScalingStartRound
-            const float AdditionalPerRoundLocal = 0.001f; // must match GameBalance.RandomDecayAdditionalChancePerRound
-            float additional = currentRound >= ScalingStartRoundLocal
-                ? (currentRound - ScalingStartRoundLocal + 1) * AdditionalPerRoundLocal
-                : 0f;
+            float additional = GameBalance.GetAdditionalRandomDecayChance(currentRound);
             randomDecayChanceText.text = $"<b>Random Decay Chance:</b> {(baseChance * 100f):0.0}% (+{(additional * 100f):0.0}%)";
         }
 
