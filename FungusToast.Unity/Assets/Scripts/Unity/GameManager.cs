@@ -236,6 +236,7 @@ namespace FungusToast.Unity
 
         public void InitializeGame(int numberOfPlayers)
         {
+            gameUIManager.LoadingScreen?.Show("Preparing the toast…");
             gameEnded = false;
             isCountdownActive = false;
             roundsRemainingUntilGameEnd =0;
@@ -610,6 +611,7 @@ namespace FungusToast.Unity
         {
             if (gameUIManager != null)
             {
+                gameUIManager.LoadingScreen?.gameObject.SetActive(false);
                 gameUIManager.LeftSidebar?.gameObject.SetActive(false);
                 gameUIManager.RightSidebar?.gameObject.SetActive(false);
                 gameUIManager.MutationUIManager?.gameObject.SetActive(false);
@@ -707,10 +709,12 @@ namespace FungusToast.Unity
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
                 .ToList();
+            gameUIManager.LoadingScreen?.SetStatus("Spores are landing…");
             if (startingIds.Count >0 && !testingModeEnabled)
             {
                 yield return gridVisualizer.PlayStartingSporeArrivalAnimation(startingIds);
             }
+            gameUIManager.LoadingScreen?.FadeOut();
             gameUIManager.LeftSidebar?.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.MutationUIManager.gameObject.SetActive(true);

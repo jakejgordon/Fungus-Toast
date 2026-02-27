@@ -24,6 +24,9 @@ namespace FungusToast.Unity.UI
         [SerializeField] private UI_GameLogPanel globalEventsLogPanel;
         [SerializeField] private GlobalGameLogManager globalEventsLogManager;
 
+        [Header("Loading / Transitions")]
+        [SerializeField] private UI_LoadingScreen loadingScreen;
+
         [Header("End-game")]
         [SerializeField] private UI_EndGamePanel endGamePanel;
 
@@ -40,6 +43,7 @@ namespace FungusToast.Unity.UI
         public UI_PlayerBinder PlayerUIBinder => playerUIBinder;
         public GameObject LeftSidebar => leftSidebar;
         public UI_RightSidebar RightSidebar => rightSidebar;
+        public UI_LoadingScreen LoadingScreen => loadingScreen;
         public UI_EndGamePanel EndGamePanel => endGamePanel;
         public UI_PhaseBanner PhaseBanner => phaseBanner;
         public UI_MoldProfileRoot MoldProfileRoot => moldProfileRoot;
