@@ -50,7 +50,8 @@ namespace FungusToast.Unity.UI
             canvasGroup.alpha = 1f;
             canvasGroup.blocksRaycasts = true;
             gameObject.SetActive(true);
-        }
+            // Ensure loading screen renders on top of all sibling panels
+            transform.SetAsLastSibling();        }
 
         /// <summary>Fade out and deactivate. Safe to call when already hidden.</summary>
         public void FadeOut()

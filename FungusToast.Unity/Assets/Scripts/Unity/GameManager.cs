@@ -718,7 +718,11 @@ namespace FungusToast.Unity
             {
                 yield return gridVisualizer.PlayStartingSporeArrivalAnimation(startingIds);
             }
-            gameUIManager.LoadingScreen?.FadeOut();
+            // Only fade out loading screen if we are NOT about to fast-forward;
+            // fast-forward will take over the loading screen with progress text.
+            bool willFastForward = testingModeEnabled && fastForwardRounds > 0 && !_fastForwardStarted;
+            if (!willFastForward)
+                gameUIManager.LoadingScreen?.FadeOut();
             gameUIManager.LeftSidebar?.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
