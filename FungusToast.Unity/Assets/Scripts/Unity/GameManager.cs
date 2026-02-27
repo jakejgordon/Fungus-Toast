@@ -616,6 +616,10 @@ namespace FungusToast.Unity
                 gameUIManager.RightSidebar?.gameObject.SetActive(false);
                 gameUIManager.MutationUIManager?.gameObject.SetActive(false);
                 gameUIManager.EndGamePanel?.gameObject.SetActive(false);
+
+                // Clear log data so stale entries don't persist into the next game
+                gameUIManager.GlobalGameLogManager?.ClearLog();
+                gameUIManager.GameLogManager?.ClearLog();
             }
             // Prefer showing mode select panel if present; fallback to legacy start panel
             if (modeSelectPanel != null)
