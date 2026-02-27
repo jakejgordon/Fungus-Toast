@@ -31,7 +31,13 @@ namespace FungusToast.Unity
     {
         private readonly GameManager gameManager;
         private readonly Func<bool> getFastForwardFlag; private readonly Action<bool> setFastForwardFlag; private readonly Func<bool> gameEndedFunc;
+        /// <summary>Optional callback invoked with progress text each iteration (e.g., to update a loading screen).</summary>
+        private Action<string> onProgress;
+        /// <summary>Optional callback invoked when fast-forward finishes (e.g., to fade out a loading screen).</summary>
+        private Action onComplete;
         public FastForwardService(GameManager gm, Func<bool> getter, Action<bool> setter, Func<bool> gameEnded) { gameManager = gm; getFastForwardFlag = getter; setFastForwardFlag = setter; gameEndedFunc = gameEnded; }
+        /// <summary>Wire optional progress/completion callbacks (call once after construction).</summary>
+        public void SetProgressCallbacks(Action<string> progress, Action complete) { onProgress = progress; onComplete = complete; }
         public void StartFastForward(int target, bool skipToEnd, int? testingMycoId) { gameManager.StartCoroutine(FastForwardRoutine(target, skipToEnd, testingMycoId)); }
 
         private IEnumerator FastForwardRoutine(int fastForwardRounds, bool skipToEnd, int? testingMycoId)
@@ -54,14 +60,13 @@ namespace FungusToast.Unity
             }
             try
             {
-                // Show progress overlay so user sees forward progress.
-                // Yield a frame AFTER setting text and BEFORE heavy computation so
-                // Unity gets a chance to render the updated status on screen.
-                ui.LoadingScreen?.Show($"Fast-forwarding\u2026 Round {board.CurrentRound} / {targetRound}");
+                // Report progress via callback so GameManager can update its loading screen directly.
+                // Yield a frame AFTER reporting and BEFORE heavy computation so Unity renders the text.
+                onProgress?.Invoke($"Fast-forwarding\u2026 Round {board.CurrentRound} / {targetRound}");
                 yield return null; // let Unity render the initial status text
                 while (board.CurrentRound < targetRound && iterations < desiredRounds && !gameEndedFunc())
                 {
-                    ui.LoadingScreen?.SetStatus($"Fast-forwarding\u2026 Round {board.CurrentRound} / {targetRound}");
+                    onProgress?.Invoke($"Fast-forwarding\u2026 Round {board.CurrentRound} / {targetRound}");
                     yield return null; // render status before heavy computation
                     yield return RunSilentGrowthPhase(board);
                     yield return RunSilentDecayPhase(board);
@@ -69,7 +74,7 @@ namespace FungusToast.Unity
                     foreach (var p in board.Players) p.TickDownActiveSurges(); board.IncrementRound(); iterations++;
                     if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(board.CurrentRound)) RunSilentDraft(board, ui, testingMycoId);
                 }
-                ui.LoadingScreen?.FadeOut();
+                onComplete?.Invoke();
                 // Restore original player types and strategies before UI updates
                 foreach (var state in originalStates)
                 {

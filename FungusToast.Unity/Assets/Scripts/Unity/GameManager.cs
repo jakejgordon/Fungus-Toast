@@ -160,6 +160,9 @@ namespace FungusToast.Unity
                 () => testingModeEnabled,
                 OnAllHumansFinishedMutationTurn);
             fastForwardService = new FastForwardService(this, () => isFastForwarding, v => isFastForwarding = v, () => endgameService.GameEnded);
+            fastForwardService.SetProgressCallbacks(
+                progress => { gameUIManager.LoadingScreen?.Show(progress); },
+                () => { gameUIManager.LoadingScreen?.FadeOut(); });
             postGrowthVisualSequence = new PostGrowthVisualSequence(this, gridVisualizer, () => isFastForwarding, StartDecayPhase);
             endgameService = new EndgameService(
                 gameUIManager,
