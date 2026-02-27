@@ -224,7 +224,7 @@ namespace FungusToast.Unity.UI.Tooltips
                 }
                 if (overflowTop)
                 {
-                    pivot.y = 0f; appliedOffset.y = Mathf.Abs(offset.y);
+                    pivot.y = 0f; appliedOffset.y = -Mathf.Abs(offset.y);
                     if (wc != null)
                     {
                         targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, pivot.x < 0.5f ? wc[3] : wc[0]);
