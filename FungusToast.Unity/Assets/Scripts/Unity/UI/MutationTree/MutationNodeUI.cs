@@ -37,12 +37,11 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private TextMeshProUGUI pendingUnlockText;
 
         // ── New UX enhancement fields (created at runtime if not wired in prefab) ──
-        [Header("Enhanced UX — Progress Bar")]
-        [SerializeField] private Image progressBarFill;   // Filled Image (Horizontal), child of ProgressBarBG
-        [SerializeField] private Image progressBarBG;     // Dark background strip at bottom
+        [Header("Enhanced UX — Level Progress Fill")]
+        private Image levelProgressFill;                  // Faint category-colored fill behind level text
 
-        [Header("Enhanced UX — Tier Stripe")]
-        [SerializeField] private Image tierStripe;        // Thin vertical bar on left edge
+        [Header("Enhanced UX — Tier Stripe (disabled)")]
+        [SerializeField] private Image tierStripe;        // Kept for prefab reference; hidden at runtime
 
         [Header("Enhanced UX — Node Background")]
         [SerializeField] private Image nodeBackground;    // The main background Image of the node
@@ -73,15 +72,12 @@ namespace FungusToast.Unity.UI.MutationTree
 
             mutationNameText.text = mutation.Name;
 
-            // ── Tier stripe color ──
+            // ── Tier stripe — disabled; visual hierarchy handled by progress fill ──
             if (tierStripe != null)
-            {
-                tierStripe.color = MutationTreeColors.GetTierColor(mutation.Category, mutation.TierNumber);
-                tierStripe.gameObject.SetActive(true);
-            }
+                tierStripe.gameObject.SetActive(false);
 
-            // ── Runtime-create progress bar if not wired in prefab ──
-            EnsureProgressBar();
+            // ── Runtime-create level-text progress BG if not wired ──
+            EnsureLevelProgressBG();
 
             // ── Runtime-create MAX badge if not wired in prefab ──
             EnsureMaxBadge();
@@ -93,8 +89,8 @@ namespace FungusToast.Unity.UI.MutationTree
             int currentLevel = player.GetMutationLevel(mutation.Id);
             targetProgressFill = mutation.MaxLevel > 0 ? currentLevel / (float)mutation.MaxLevel : 0f;
             currentProgressFill = targetProgressFill;
-            if (progressBarFill != null)
-                progressBarFill.rectTransform.anchorMax = new Vector2(currentProgressFill, 1);
+            if (levelProgressFill != null)
+                levelProgressFill.rectTransform.anchorMax = new Vector2(currentProgressFill, 1);
 
             UpdateDisplay();
 
@@ -222,16 +218,16 @@ namespace FungusToast.Unity.UI.MutationTree
             if (maxBadge != null)
                 maxBadge.SetActive(isMaxed);
 
-            // ── Progress bar: hide until player has invested at least 1 level ──
-            if (progressBarBG != null)
-                progressBarBG.gameObject.SetActive(currentLevel > 0);
+            // ── Level progress BG: hide until player has invested at least 1 level ──
+            if (levelProgressFill != null)
+                levelProgressFill.gameObject.SetActive(currentLevel > 0);
 
-            // ── Progress bar fill target (lerped in Update) ──
+            // ── Progress fill target (lerped in Update) ──
             targetProgressFill = mutation.MaxLevel > 0 ? currentLevel / (float)mutation.MaxLevel : 0f;
 
-            // ── Progress bar color ──
-            if (progressBarFill != null)
-                progressBarFill.color = MutationTreeColors.GetProgressBarColor(mutation.Category);
+            // ── Progress fill color ──
+            if (levelProgressFill != null)
+                levelProgressFill.color = MutationTreeColors.GetProgressBarColor(mutation.Category);
 
             // ── Affordability background tinting ──
             ApplyNodeBackgroundTint(isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock);
@@ -241,11 +237,11 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void Update()
         {
-            // Smoothly animate progress bar fill via anchor-based width
-            if (progressBarFill != null && !Mathf.Approximately(currentProgressFill, targetProgressFill))
+            // Smoothly animate level-text progress fill via anchor-based width
+            if (levelProgressFill != null && !Mathf.Approximately(currentProgressFill, targetProgressFill))
             {
                 currentProgressFill = Mathf.MoveTowards(currentProgressFill, targetProgressFill, ProgressLerpSpeed * Time.deltaTime);
-                var fillRect = progressBarFill.rectTransform;
+                var fillRect = levelProgressFill.rectTransform;
                 fillRect.anchorMax = new Vector2(currentProgressFill, 1);
             }
         }
@@ -545,48 +541,39 @@ namespace FungusToast.Unity.UI.MutationTree
         // Creates UI children if they weren't wired in the prefab,
         // so the feature works even before you update the prefab.
 
-        private void EnsureProgressBar()
+        /// <summary>
+        /// Creates a faint category-colored fill image behind the level text to
+        /// show upgrade progress.  Replaces the old standalone progress bar.
+        /// </summary>
+        private void EnsureLevelProgressBG()
         {
-            if (progressBarBG != null && progressBarFill != null) return;
+            if (levelProgressFill != null) return;
+            if (levelText == null) return;
 
-            // Create background strip — parent to the node root.
-            // Must use ignoreLayout so the VerticalLayoutGroup on the node
-            // doesn't treat this as a layout child (which distorts it into a vertical bar).
-            if (progressBarBG == null)
-            {
-                var bgGO = new GameObject("ProgressBarBG");
-                bgGO.transform.SetParent(transform, false);
-                progressBarBG = bgGO.AddComponent<Image>();
-                progressBarBG.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+            // Parent to the same container that holds levelText so it overlays
+            // exactly behind the text.  Insert just before levelText in sibling
+            // order so it renders behind it.
+            Transform parent = levelText.transform.parent;
+            var fillGO = new GameObject("LevelProgressFill");
+            fillGO.transform.SetParent(parent, false);
+            fillGO.transform.SetSiblingIndex(levelText.transform.GetSiblingIndex());
 
-                // Exclude from any parent LayoutGroup
-                var layoutElem = bgGO.AddComponent<LayoutElement>();
-                layoutElem.ignoreLayout = true;
+            levelProgressFill = fillGO.AddComponent<Image>();
+            levelProgressFill.color = Color.white; // tinted per-category in UpdateDisplay
+            levelProgressFill.raycastTarget = false;
 
-                var bgRect = bgGO.GetComponent<RectTransform>();
-                // Stretch across the full width at the very bottom of the node
-                bgRect.anchorMin = new Vector2(0, 0);
-                bgRect.anchorMax = new Vector2(1, 0);
-                bgRect.pivot = new Vector2(0, 0);
-                bgRect.anchoredPosition = Vector2.zero;
-                bgRect.sizeDelta = new Vector2(0, 5);
-            }
+            // Exclude from VerticalLayoutGroup on the node
+            var layoutElem = fillGO.AddComponent<LayoutElement>();
+            layoutElem.ignoreLayout = true;
 
-            // Create fill child — use anchor-based width scaling (not Image.Type.Filled,
-            // which doesn't respect fillAmount on sprite-less Images)
-            if (progressBarFill == null)
-            {
-                var fillGO = new GameObject("ProgressBarFill");
-                fillGO.transform.SetParent(progressBarBG.transform, false);
-                progressBarFill = fillGO.AddComponent<Image>();
-                progressBarFill.color = Color.white;
-                var fillRect = fillGO.GetComponent<RectTransform>();
-                fillRect.anchorMin = Vector2.zero;
-                fillRect.anchorMax = new Vector2(0, 1); // starts at zero width
-                fillRect.pivot = new Vector2(0, 0.5f);
-                fillRect.offsetMin = Vector2.zero;
-                fillRect.offsetMax = Vector2.zero;
-            }
+            // Stretch to match the level-text area exactly.
+            // Anchors span the full parent; anchorMax.x will be driven by fill ratio.
+            var fillRect = fillGO.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = new Vector2(0, 1);  // starts at zero width
+            fillRect.pivot = new Vector2(0, 0.5f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
         }
 
         private void EnsureNodeBorder()
