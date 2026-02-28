@@ -32,6 +32,25 @@ namespace FungusToast.Unity.UI.MutationTree
             lastDisplayedPoints = points;
         }
 
+        /// <summary>
+        /// Shows a projected cost preview: "Mutation Points: X → Y"
+        /// </summary>
+        public void ShowProjectedCost(int currentPoints, int cost)
+        {
+            if (mutationPointsText == null) return;
+            int projected = Mathf.Max(0, currentPoints - cost);
+            mutationPointsText.text = $"Mutation Points: {currentPoints}  <color=#AAAAAA>→ {projected}</color>";
+        }
+
+        /// <summary>
+        /// Restores the normal display text.
+        /// </summary>
+        public void ClearProjectedCost(int currentPoints)
+        {
+            if (mutationPointsText == null) return;
+            mutationPointsText.text = $"Mutation Points: {currentPoints}";
+        }
+
         private void TriggerPulse()
         {
             if (pulseAnimator != null)

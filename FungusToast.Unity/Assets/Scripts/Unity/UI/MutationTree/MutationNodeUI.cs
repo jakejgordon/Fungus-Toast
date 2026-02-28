@@ -4,6 +4,7 @@ using TMPro;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using UnityEngine.EventSystems;
+using System.Collections;
 using System.Text;
 using FungusToast.Unity;
 using FungusToast.Unity.UI.Tooltips;
@@ -35,11 +36,34 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private GameObject pendingUnlockOverlay; // Hourglass overlay for pending unlock
         [SerializeField] private TextMeshProUGUI pendingUnlockText;
 
+        // ── New UX enhancement fields (created at runtime if not wired in prefab) ──
+        [Header("Enhanced UX — Progress Bar")]
+        [SerializeField] private Image progressBarFill;   // Filled Image (Horizontal), child of ProgressBarBG
+        [SerializeField] private Image progressBarBG;     // Dark background strip at bottom
+
+        [Header("Enhanced UX — Tier Stripe")]
+        [SerializeField] private Image tierStripe;        // Thin vertical bar on left edge
+
+        [Header("Enhanced UX — Node Background")]
+        [SerializeField] private Image nodeBackground;    // The main background Image of the node
+
+        [Header("Enhanced UX — MAX Badge")]
+        [SerializeField] private GameObject maxBadge;     // Small "MAX" label, top-right
+
         private Mutation mutation;
         private UI_MutationManager uiManager;
         private Player player;
 
+        // Animation state
+        private Coroutine upgradeEffectCoroutine;
+        private float targetProgressFill;
+        private float currentProgressFill;
+        private static readonly float ProgressLerpSpeed = 6f;
+
         public int MutationId => mutation.Id;
+
+        /// <summary>Exposes the underlying Mutation for external queries (e.g. investment summaries).</summary>
+        public Mutation GetMutation() => mutation;
 
         public void Initialize(Mutation mutation, Player player, UI_MutationManager uiManager)
         {
@@ -48,6 +72,30 @@ namespace FungusToast.Unity.UI.MutationTree
             this.uiManager = uiManager;
 
             mutationNameText.text = mutation.Name;
+
+            // ── Tier stripe color ──
+            if (tierStripe != null)
+            {
+                tierStripe.color = MutationTreeColors.GetTierColor(mutation.Category, mutation.TierNumber);
+                tierStripe.gameObject.SetActive(true);
+            }
+
+            // ── Runtime-create progress bar if not wired in prefab ──
+            EnsureProgressBar();
+
+            // ── Runtime-create MAX badge if not wired in prefab ──
+            EnsureMaxBadge();
+
+            // ── Subtle border outline for visual node separation ──
+            EnsureNodeBorder();
+
+            // Initialise progress fill to current level immediately (no lerp on first draw)
+            int currentLevel = player.GetMutationLevel(mutation.Id);
+            targetProgressFill = mutation.MaxLevel > 0 ? currentLevel / (float)mutation.MaxLevel : 0f;
+            currentProgressFill = targetProgressFill;
+            if (progressBarFill != null)
+                progressBarFill.fillAmount = currentProgressFill;
+
             UpdateDisplay();
 
             // Ensure highlights are off by default
@@ -86,6 +134,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (success)
             {
                 UpdateDisplay();
+                PlayUpgradeEffect();
             }
             else
             {
@@ -96,7 +145,12 @@ namespace FungusToast.Unity.UI.MutationTree
         public void UpdateDisplay()
         {
             int currentLevel = player.GetMutationLevel(mutation.Id);
-            levelText.text = $"Level {currentLevel}/{mutation.MaxLevel}";
+            bool isMaxed = currentLevel >= mutation.MaxLevel;
+
+            // Level text — show "MAX" suffix when maxed
+            levelText.text = isMaxed
+                ? $"Level {currentLevel}/{mutation.MaxLevel} <color=#FFD700>✦</color>"
+                : $"Level {currentLevel}/{mutation.MaxLevel}";
 
             // SURGE LOGIC
             bool isSurge = mutation.IsSurge;
@@ -113,7 +167,6 @@ namespace FungusToast.Unity.UI.MutationTree
                     break;
                 }
             }
-            bool isMaxed = currentLevel >= mutation.MaxLevel;
 
             // COST CALC
             int upgradeCost = isSurge
@@ -149,10 +202,14 @@ namespace FungusToast.Unity.UI.MutationTree
                 }
             }
 
-            // Show cost (top right)
+            // Show cost (top right) — hide when maxed
             if (upgradeCostGroup != null && upgradeCostText != null)
             {
-                if (upgradeCost > 1)
+                if (isMaxed)
+                {
+                    upgradeCostGroup.SetActive(false);
+                }
+                else if (upgradeCost > 1)
                 {
                     upgradeCostGroup.SetActive(true);
                     upgradeCostText.text = $"x{upgradeCost}";
@@ -163,20 +220,180 @@ namespace FungusToast.Unity.UI.MutationTree
                 }
             }
 
+            // ── MAX badge ──
+            if (maxBadge != null)
+                maxBadge.SetActive(isMaxed);
+
+            // ── Progress bar fill target (lerped in Update) ──
+            targetProgressFill = mutation.MaxLevel > 0 ? currentLevel / (float)mutation.MaxLevel : 0f;
+
+            // ── Progress bar color ──
+            if (progressBarFill != null)
+                progressBarFill.color = MutationTreeColors.GetProgressBarColor(mutation.Category);
+
+            // ── Affordability background tinting ──
+            ApplyNodeBackgroundTint(isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock);
+
             UpdateInteractable();
         }
+
+        private void Update()
+        {
+            // Smoothly animate progress bar fill
+            if (progressBarFill != null && !Mathf.Approximately(currentProgressFill, targetProgressFill))
+            {
+                currentProgressFill = Mathf.MoveTowards(currentProgressFill, targetProgressFill, ProgressLerpSpeed * Time.deltaTime);
+                progressBarFill.fillAmount = currentProgressFill;
+            }
+        }
+
+        // ── Affordability / state background tinting ──────────────────────
+
+        private void ApplyNodeBackgroundTint(bool isLocked, bool isMaxed, bool canAfford, bool isSurgeActive, bool showPendingUnlock)
+        {
+            if (nodeBackground == null) return;
+
+            if (isMaxed)
+            {
+                // Gold-tinted background for maxed nodes
+                Color gold = MutationTreeColors.MaxedGold;
+                nodeBackground.color = new Color(gold.r * 0.3f, gold.g * 0.3f, gold.b * 0.15f, 1f);
+            }
+            else if (isLocked || isSurgeActive || showPendingUnlock)
+            {
+                nodeBackground.color = MutationTreeColors.DefaultNodeBG;
+            }
+            else if (canAfford)
+            {
+                // Subtle category-tinted glow when affordable (proper lerp, not additive)
+                nodeBackground.color = MutationTreeColors.GetAffordableNodeBG(mutation.Category, 0.15f);
+            }
+            else
+            {
+                nodeBackground.color = MutationTreeColors.DefaultNodeBG;
+            }
+        }
+
+        // ── Hover: prerequisite highlighting + projected cost ────────────
 
         public void OnPointerEnter(PointerEventData eventData)
         {
             // Tooltip display is now handled by TooltipTrigger + ITooltipContentProvider.
             // We only keep prerequisite highlighting here.
             uiManager.HighlightUnmetPrerequisites(mutation, player);
+
+            // Show projected cost in the points panel
+            if (mutation != null && player != null)
+            {
+                int currentLevel = player.GetMutationLevel(mutation.Id);
+                bool isMaxed = currentLevel >= mutation.MaxLevel;
+                if (!isMaxed)
+                {
+                    int cost = mutation.IsSurge
+                        ? mutation.GetSurgeActivationCost(currentLevel)
+                        : mutation.PointsPerUpgrade;
+                    uiManager.ShowProjectedCost(cost);
+                }
+            }
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             // Tooltip hiding is handled by TooltipTrigger.OnPointerExit.
             uiManager.ClearAllHighlights();
+            uiManager.ClearProjectedCost();
+        }
+
+        // ── Upgrade feedback animation ───────────────────────────────────
+
+        private void PlayUpgradeEffect()
+        {
+            if (upgradeEffectCoroutine != null)
+                StopCoroutine(upgradeEffectCoroutine);
+            upgradeEffectCoroutine = StartCoroutine(UpgradeEffectCoroutine());
+        }
+
+        private IEnumerator UpgradeEffectCoroutine()
+        {
+            float duration = 0.3f;
+            float elapsed = 0f;
+            float maxScale = 1.12f;
+            Vector3 originalScale = Vector3.one;
+            Color originalBG = nodeBackground != null ? nodeBackground.color : Color.clear;
+            Color flashColor = MutationTreeColors.UpgradeFlashWhite;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / duration;
+
+                // Ease-out-back scale punch: overshoot then settle
+                float scaleT;
+                if (t < 0.4f)
+                {
+                    // Rise to peak
+                    scaleT = Mathf.Lerp(1f, maxScale, t / 0.4f);
+                }
+                else
+                {
+                    // Settle back with slight overshoot
+                    float settleT = (t - 0.4f) / 0.6f;
+                    scaleT = Mathf.Lerp(maxScale, 1f, settleT * settleT); // ease-in settle
+                }
+                transform.localScale = originalScale * scaleT;
+
+                // Flash the background
+                if (nodeBackground != null)
+                {
+                    float flashT = 1f - t; // bright at start, fades
+                    nodeBackground.color = Color.Lerp(originalBG, flashColor, flashT * 0.6f);
+                }
+
+                yield return null;
+            }
+
+            transform.localScale = originalScale;
+            // Restore proper background tint
+            UpdateDisplay();
+            upgradeEffectCoroutine = null;
+        }
+
+        // ── Shimmer (called by UI_MutationManager on panel open) ─────────
+
+        /// <summary>
+        /// Plays a brief alpha flash to draw attention to affordable nodes.
+        /// </summary>
+        public IEnumerator PlayShimmer()
+        {
+            if (canvasGroup == null) yield break;
+            float originalAlpha = canvasGroup.alpha;
+            float flashAlpha = Mathf.Min(originalAlpha + 0.35f, 1f);
+
+            canvasGroup.alpha = flashAlpha;
+            yield return new WaitForSeconds(0.12f);
+            canvasGroup.alpha = originalAlpha;
+        }
+
+        /// <summary>
+        /// Returns true if this node is currently affordable and not locked/maxed.
+        /// Used by the shimmer system.
+        /// </summary>
+        public bool IsAffordableAndAvailable()
+        {
+            if (mutation == null || player == null) return false;
+            int currentLevel = player.GetMutationLevel(mutation.Id);
+            if (currentLevel >= mutation.MaxLevel) return false;
+
+            foreach (var prereq in mutation.Prerequisites)
+            {
+                if (player.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel)
+                    return false;
+            }
+
+            int cost = mutation.IsSurge
+                ? mutation.GetSurgeActivationCost(currentLevel)
+                : mutation.PointsPerUpgrade;
+            return player.MutationPoints >= cost;
         }
 
         private string BuildTooltip()
@@ -189,6 +406,13 @@ namespace FungusToast.Unity.UI.MutationTree
 
             int currentLevel = player.GetMutationLevel(mutation.Id);
 
+            // Show maxed state prominently
+            if (currentLevel >= mutation.MaxLevel)
+            {
+                sb.AppendLine("<color=#FFD700><b>✦ FULLY UPGRADED ✦</b></color>");
+                sb.AppendLine();
+            }
+
             // Show surge state if relevant
             if (mutation.IsSurge && player.IsSurgeActive(mutation.Id))
             {
@@ -197,12 +421,15 @@ namespace FungusToast.Unity.UI.MutationTree
                 sb.AppendLine();
             }
 
-            int cost = mutation.IsSurge
-                ? mutation.GetSurgeActivationCost(currentLevel)
-                : mutation.PointsPerUpgrade;
+            if (currentLevel < mutation.MaxLevel)
+            {
+                int cost = mutation.IsSurge
+                    ? mutation.GetSurgeActivationCost(currentLevel)
+                    : mutation.PointsPerUpgrade;
 
-            sb.AppendLine($"<b>Cost:</b> {cost} mutation point{(cost == 1 ? "" : "s")}");
-            sb.AppendLine();
+                sb.AppendLine($"<b>Cost:</b> {cost} mutation point{(cost == 1 ? "" : "s")}");
+                sb.AppendLine();
+            }
 
             if (mutation.Prerequisites.Count > 0)
             {
@@ -309,6 +536,99 @@ namespace FungusToast.Unity.UI.MutationTree
             if (isSurge && isSurgeActive)
                 interactable = false;
             upgradeButton.interactable = interactable;
+        }
+
+        // ── Runtime prefab augmentation ──────────────────────────────────
+        // Creates UI children if they weren't wired in the prefab,
+        // so the feature works even before you update the prefab.
+
+        private void EnsureProgressBar()
+        {
+            if (progressBarBG != null && progressBarFill != null) return;
+
+            // Create background strip
+            if (progressBarBG == null)
+            {
+                var bgGO = new GameObject("ProgressBarBG");
+                bgGO.transform.SetParent(transform, false);
+                progressBarBG = bgGO.AddComponent<Image>();
+                progressBarBG.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+                var bgRect = bgGO.GetComponent<RectTransform>();
+                bgRect.anchorMin = new Vector2(0, 0);
+                bgRect.anchorMax = new Vector2(1, 0);
+                bgRect.pivot = new Vector2(0.5f, 0);
+                bgRect.anchoredPosition = Vector2.zero;
+                bgRect.sizeDelta = new Vector2(0, 6);
+            }
+
+            // Create fill child
+            if (progressBarFill == null)
+            {
+                var fillGO = new GameObject("ProgressBarFill");
+                fillGO.transform.SetParent(progressBarBG.transform, false);
+                progressBarFill = fillGO.AddComponent<Image>();
+                progressBarFill.type = Image.Type.Filled;
+                progressBarFill.fillMethod = Image.FillMethod.Horizontal;
+                progressBarFill.fillOrigin = 0;
+                progressBarFill.color = Color.white;
+                var fillRect = fillGO.GetComponent<RectTransform>();
+                fillRect.anchorMin = Vector2.zero;
+                fillRect.anchorMax = Vector2.one;
+                fillRect.offsetMin = Vector2.zero;
+                fillRect.offsetMax = Vector2.zero;
+            }
+        }
+
+        private void EnsureNodeBorder()
+        {
+            // Add a thin, always-visible outline so each node has a distinct box,
+            // even on a dark background.  Uses the upgrade button's Image as the target Graphic.
+            var target = upgradeButton != null ? upgradeButton.gameObject : gameObject;
+
+            // Don't duplicate if one already exists (beyond the highlight outline)
+            foreach (var existing in target.GetComponents<Outline>())
+            {
+                if (existing != highlightOutline) return; // border already present
+            }
+
+            var border = target.AddComponent<Outline>();
+            border.effectColor = new Color(0.4f, 0.4f, 0.45f, 0.45f); // faint cool-gray
+            border.effectDistance = new Vector2(1.2f, -1.2f);
+        }
+
+        private void EnsureMaxBadge()
+        {
+            if (maxBadge != null) return;
+
+            var badgeGO = new GameObject("MaxBadge");
+            badgeGO.transform.SetParent(transform, false);
+
+            var badgeBG = badgeGO.AddComponent<Image>();
+            badgeBG.color = new Color(MutationTreeColors.MaxedGold.r, MutationTreeColors.MaxedGold.g, MutationTreeColors.MaxedGold.b, 0.9f);
+
+            var badgeRect = badgeGO.GetComponent<RectTransform>();
+            badgeRect.anchorMin = new Vector2(1, 1);
+            badgeRect.anchorMax = new Vector2(1, 1);
+            badgeRect.pivot = new Vector2(1, 1);
+            badgeRect.anchoredPosition = new Vector2(-2, -2);
+            badgeRect.sizeDelta = new Vector2(34, 16);
+
+            var textGO = new GameObject("MaxText");
+            textGO.transform.SetParent(badgeGO.transform, false);
+            var maxText = textGO.AddComponent<TextMeshProUGUI>();
+            maxText.text = "MAX";
+            maxText.fontSize = 10;
+            maxText.fontStyle = FontStyles.Bold;
+            maxText.color = new Color(0.15f, 0.1f, 0f, 1f);
+            maxText.alignment = TextAlignmentOptions.Center;
+            var textRect = textGO.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = Vector2.zero;
+            textRect.offsetMax = Vector2.zero;
+
+            maxBadge = badgeGO;
+            maxBadge.SetActive(false);
         }
     }
 }

@@ -8,6 +8,7 @@ using FungusToast.Core.Players;
 using UnityEngine.Tilemaps;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI.MutationTree;
+using FungusToast.Unity.UI.Tooltips;
 using System.Linq;
 using FungusToast.Core.Metrics;
 
@@ -45,6 +46,10 @@ namespace FungusToast.Unity.UI.MutationTree
         public float pulseStrength = 0.05f;
         public float pulseSpeed = 2f;
 
+        [Header("Shimmer Settings")]
+        [Tooltip("Stagger delay between each node shimmer when panel opens")]
+        public float shimmerStaggerDelay = 0.03f;
+
         private RectTransform mutationTreeRect;
         private Vector3 originalButtonScale;
         private Vector3 originalCounterScale;
@@ -72,6 +77,12 @@ namespace FungusToast.Unity.UI.MutationTree
                 originalCounterScale = mutationPointsCounterText.transform.localScale;
 
             spendPointsButton.onClick.AddListener(OnSpendPointsClicked);
+
+            // ── Apply the dark panel theme to all backgrounds ──
+            ApplyPanelTheme();
+
+            // ── Store Points button tooltip ──
+            WireStorePointsTooltip();
         }
 
         private void Update()
@@ -234,7 +245,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (buttonOutline != null)
             {
-                Color baseColor = new Color(1f, 1f, 0.7f, 1f);
+                Color baseColor = MutationTreeColors.PulseOutline;
                 float normalizedPulse = (pulse + 1f) / 2f;
                 float alpha = Mathf.Lerp(0.5f, 1f, normalizedPulse);
                 buttonOutline.effectColor = new Color(baseColor.r, baseColor.g, baseColor.b, alpha);
@@ -283,6 +294,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 dockButtonText.text = "<";
 
             isSliding = false;
+
+            // ── Play shimmer on affordable nodes after panel opens ──
+            if (humanPlayer != null && humanPlayer.MutationPoints > 0)
+                StartCoroutine(PlayAffordableShimmer());
         }
 
         private IEnumerator SlideOutTree()
@@ -338,6 +353,10 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 button.UpdateDisplay();
             }
+
+            // Also refresh category investment summaries
+            if (mutationTreeBuilder != null && humanPlayer != null)
+                mutationTreeBuilder.UpdateCategoryInvestmentSummaries(mutationButtons, humanPlayer);
         }
 
         public Mutation GetMutationById(int id)
@@ -457,6 +476,174 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 StartCoroutine(SlideOutTree()); // maintain original closed presentation
             }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  Projected cost display on hover
+        // ═══════════════════════════════════════════════════════════════
+
+        private string basePointsText;
+
+        /// <summary>
+        /// Shows a projected "→ N" next to the mutation points counter when hovering a node.
+        /// </summary>
+        public void ShowProjectedCost(int cost)
+        {
+            if (mutationPointsCounterText == null || humanPlayer == null) return;
+            int current = humanPlayer.MutationPoints;
+            int projected = Mathf.Max(0, current - cost);
+            basePointsText ??= mutationPointsCounterText.text;
+            mutationPointsCounterText.text = $"Mutation Points: {current}  <color=#AAAAAA>→ {projected}</color>";
+        }
+
+        /// <summary>Restores normal points counter text.</summary>
+        public void ClearProjectedCost()
+        {
+            if (mutationPointsCounterText == null || humanPlayer == null) return;
+            mutationPointsCounterText.text = $"Mutation Points: {humanPlayer.MutationPoints}";
+            basePointsText = null;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  Affordable node shimmer on panel open
+        // ═══════════════════════════════════════════════════════════════
+
+        private IEnumerator PlayAffordableShimmer()
+        {
+            foreach (var node in mutationButtons)
+            {
+                if (node.IsAffordableAndAvailable())
+                {
+                    StartCoroutine(node.PlayShimmer());
+                    yield return new WaitForSeconds(shimmerStaggerDelay);
+                }
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  Store Points button tooltip
+        // ═══════════════════════════════════════════════════════════════
+
+        private void WireStorePointsTooltip()
+        {
+            if (storePointsButton == null) return;
+
+            var trigger = storePointsButton.GetComponent<TooltipTrigger>();
+            if (trigger == null)
+                trigger = storePointsButton.gameObject.AddComponent<TooltipTrigger>();
+
+            trigger.SetStaticText("Store your unspent mutation points.\nThey will carry over to the next turn,\nallowing you to save up for expensive upgrades.");
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  Panel-wide dark theme
+        // ═══════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Walks the mutation tree panel hierarchy and recolors backgrounds,
+        /// buttons, and text to match the MutationTreeColors dark theme.
+        /// Called once in Start().
+        /// </summary>
+        private void ApplyPanelTheme()
+        {
+            if (mutationTreePanel == null) return;
+
+            // Root panel background
+            SetImageColor(mutationTreePanel, MutationTreeColors.PanelBG);
+
+            // Walk everything and apply context-aware colors
+            ApplyThemeRecursive(mutationTreePanel.transform);
+        }
+
+        private void ApplyThemeRecursive(Transform root)
+        {
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                string nameLower = child.name.ToLowerInvariant();
+
+                // ── Skip dynamically-created mutation nodes; they theme themselves ──
+                if (child.GetComponent<MutationNodeUI>() != null)
+                    continue;
+
+                // ── Scroll views / viewports ──
+                if (nameLower.Contains("scroll") || nameLower.Contains("viewport"))
+                {
+                    SetImageColor(child.gameObject, MutationTreeColors.ScrollAreaBG);
+                }
+                // ── Column containers should be transparent so scroll BG shows ──
+                else if (nameLower.Contains("column") || nameLower.Contains("content"))
+                {
+                    SetImageColor(child.gameObject, Color.clear);
+                }
+                // ── Dock / side bar ──
+                else if (nameLower.Contains("dock"))
+                {
+                    SetImageColor(child.gameObject, MutationTreeColors.DockBG);
+                }
+                // ── Top bar / header bar ──
+                else if (nameLower.Contains("topbar") || nameLower.Contains("headerbar") || nameLower.Contains("top_bar") || nameLower.Contains("header_bar"))
+                {
+                    SetImageColor(child.gameObject, MutationTreeColors.TopBarBG);
+                }
+                // ── Generic panels that look too bright ──
+                else
+                {
+                    var img = child.GetComponent<Image>();
+                    if (img != null && IsDefaultOrBrightColor(img.color))
+                        img.color = MutationTreeColors.TopBarBG;
+                }
+
+                // ── Theme any buttons on this child ──
+                var btn = child.GetComponent<Button>();
+                if (btn != null)
+                    ThemeButton(btn);
+
+                // ── Soften text colors ──
+                var tmp = child.GetComponent<TextMeshProUGUI>();
+                if (tmp != null && IsDefaultOrBrightColor(tmp.color))
+                    tmp.color = MutationTreeColors.PrimaryText;
+
+                // Recurse (but skip mutation nodes handled above)
+                ApplyThemeRecursive(child);
+            }
+        }
+
+        private static void ThemeButton(Button btn)
+        {
+            var colors = btn.colors;
+            colors.normalColor      = MutationTreeColors.ButtonNormal;
+            colors.highlightedColor = MutationTreeColors.ButtonHighlight;
+            colors.pressedColor     = MutationTreeColors.ButtonPressed;
+            colors.selectedColor    = MutationTreeColors.ButtonHighlight;
+            colors.disabledColor    = new Color(
+                MutationTreeColors.ButtonNormal.r * 0.6f,
+                MutationTreeColors.ButtonNormal.g * 0.6f,
+                MutationTreeColors.ButtonNormal.b * 0.6f, 1f);
+            btn.colors = colors;
+
+            // Also theme the button's Image if it's bright
+            var img = btn.GetComponent<Image>();
+            if (img != null && IsDefaultOrBrightColor(img.color))
+                img.color = MutationTreeColors.ButtonNormal;
+        }
+
+        private static void SetImageColor(GameObject go, Color color)
+        {
+            var img = go.GetComponent<Image>();
+            if (img != null)
+                img.color = color;
+        }
+
+        /// <summary>
+        /// Returns true when a color looks like Unity's default white/light-gray
+        /// or any bright panel background that should be darkened.
+        /// </summary>
+        private static bool IsDefaultOrBrightColor(Color c)
+        {
+            // Consider anything with average RGB > 0.55 and meaningful alpha as "bright"
+            float avg = (c.r + c.g + c.b) / 3f;
+            return avg > 0.55f && c.a > 0.3f;
         }
     }
 }

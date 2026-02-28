@@ -4,6 +4,7 @@ using UnityEngine;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using UnityEngine.UI;
+using TMPro;
 
 namespace FungusToast.Unity.UI.MutationTree
 {
@@ -19,6 +20,9 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private RectTransform fungicideColumn;
         [SerializeField] private RectTransform driftColumn;
         [SerializeField] private RectTransform mycelialSurgesColumn;
+
+        // Cached header summary text references for investment display
+        private readonly Dictionary<MutationCategory, TextMeshProUGUI> headerSummaryTexts = new();
 
         public List<MutationNodeUI> BuildTree(
             IEnumerable<Mutation> mutations,
@@ -37,6 +41,7 @@ namespace FungusToast.Unity.UI.MutationTree
             ClearColumn(fungicideColumn);
             ClearColumn(driftColumn);
             ClearColumn(mycelialSurgesColumn);
+            headerSummaryTexts.Clear();
 
             // Instantiate headers at index 0 in each column
             var headerGOs = new Dictionary<MutationCategory, GameObject>();
@@ -52,9 +57,55 @@ namespace FungusToast.Unity.UI.MutationTree
                 headerGO.name = $"Header_{category}";
                 headerGO.transform.localScale = Vector3.one;
 
-                var text = headerGO.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-                if (text != null)
-                    text.text = SplitCamelCase(category.ToString());
+                // ── Category accent colors on header ──
+                Color accent = MutationTreeColors.GetCategoryAccent(category);
+
+                var headerText = headerGO.GetComponentInChildren<TextMeshProUGUI>();
+                if (headerText != null)
+                {
+                    headerText.text = SplitCamelCase(category.ToString());
+                    // Pure white text for maximum contrast; the tinted BG already conveys category color
+                    headerText.color = Color.white;
+                }
+
+                var headerBG = headerGO.GetComponent<Image>();
+                if (headerBG == null)
+                {
+                    // No Image on the header prefab root — create a background behind the text.
+                    // Wrap existing content: insert a background Image at sibling index 0
+                    // so it renders behind the TMP text.
+                    var bgGO = new GameObject("HeaderBG");
+                    bgGO.transform.SetParent(headerGO.transform, false);
+                    bgGO.transform.SetAsFirstSibling();
+                    headerBG = bgGO.AddComponent<Image>();
+                    var bgRect = bgGO.GetComponent<RectTransform>();
+                    bgRect.anchorMin = Vector2.zero;
+                    bgRect.anchorMax = Vector2.one;
+                    bgRect.offsetMin = Vector2.zero;
+                    bgRect.offsetMax = Vector2.zero;
+                }
+                headerBG.color = MutationTreeColors.GetCategoryHeaderBG(category, 0.95f);
+
+                // ── Investment summary label (child text, created dynamically) ──
+                var summaryGO = new GameObject("InvestmentSummary");
+                summaryGO.transform.SetParent(headerGO.transform, false);
+                var summaryText = summaryGO.AddComponent<TextMeshProUGUI>();
+                summaryText.fontSize = 10;
+                summaryText.alignment = TextAlignmentOptions.Center;
+                summaryText.color = new Color(
+                    Mathf.Min(accent.r + 0.2f, 1f),
+                    Mathf.Min(accent.g + 0.2f, 1f),
+                    Mathf.Min(accent.b + 0.2f, 1f),
+                    0.85f);
+                summaryText.enableAutoSizing = false;
+                summaryText.overflowMode = TextOverflowModes.Ellipsis;
+                var summaryRect = summaryGO.GetComponent<RectTransform>();
+                summaryRect.anchorMin = new Vector2(0, 0);
+                summaryRect.anchorMax = new Vector2(1, 0);
+                summaryRect.pivot = new Vector2(0.5f, 1f);
+                summaryRect.anchoredPosition = new Vector2(0, 0);
+                summaryRect.sizeDelta = new Vector2(0, 16);
+                headerSummaryTexts[category] = summaryText;
 
                 headerGO.transform.SetSiblingIndex(0); // Ensure header is always first
                 headerGOs[category] = headerGO;
@@ -108,7 +159,46 @@ namespace FungusToast.Unity.UI.MutationTree
                 }
             }
 
+            // Update investment summaries now that all nodes exist
+            UpdateCategoryInvestmentSummaries(createdNodes, player);
+
             return createdNodes;
+        }
+
+        /// <summary>
+        /// Recalculates "X / Y invested" text for each category header.
+        /// Call after mutations are built or after any upgrade.
+        /// </summary>
+        public void UpdateCategoryInvestmentSummaries(List<MutationNodeUI> nodes, Player player)
+        {
+            if (nodes == null || player == null) return;
+
+            // Aggregate levels per category
+            var categoryTotals = new Dictionary<MutationCategory, (int current, int max)>();
+
+            foreach (var node in nodes)
+            {
+                var mutation = node.GetMutation();
+                if (mutation == null) continue;
+
+                var cat = mutation.Category;
+                int level = player.GetMutationLevel(mutation.Id);
+                int maxLevel = mutation.MaxLevel;
+
+                if (!categoryTotals.ContainsKey(cat))
+                    categoryTotals[cat] = (0, 0);
+
+                var (c, m) = categoryTotals[cat];
+                categoryTotals[cat] = (c + level, m + maxLevel);
+            }
+
+            foreach (var kvp in headerSummaryTexts)
+            {
+                if (categoryTotals.TryGetValue(kvp.Key, out var totals))
+                    kvp.Value.text = $"{totals.current} / {totals.max} invested";
+                else
+                    kvp.Value.text = "";
+            }
         }
 
         private RectTransform GetColumnForCategory(MutationCategory category)
