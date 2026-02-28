@@ -71,18 +71,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 var headerBG = headerGO.GetComponent<Image>();
                 if (headerBG == null)
                 {
-                    // No Image on the header prefab root — create a background behind the text.
-                    // Wrap existing content: insert a background Image at sibling index 0
-                    // so it renders behind the TMP text.
-                    var bgGO = new GameObject("HeaderBG");
-                    bgGO.transform.SetParent(headerGO.transform, false);
-                    bgGO.transform.SetAsFirstSibling();
-                    headerBG = bgGO.AddComponent<Image>();
-                    var bgRect = bgGO.GetComponent<RectTransform>();
-                    bgRect.anchorMin = Vector2.zero;
-                    bgRect.anchorMax = Vector2.one;
-                    bgRect.offsetMin = Vector2.zero;
-                    bgRect.offsetMax = Vector2.zero;
+                    // Add Image directly to the header root GO so it renders as
+                    // a background BEHIND the TMP text on the same GameObject.
+                    // (Creating a child Image would render ON TOP of the parent's TMP.)
+                    headerBG = headerGO.AddComponent<Image>();
                 }
                 headerBG.color = MutationTreeColors.GetCategoryHeaderBG(category, 0.95f);
 

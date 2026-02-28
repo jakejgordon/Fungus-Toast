@@ -600,6 +600,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 if (child.GetComponent<MutationNodeUI>() != null)
                     continue;
 
+                // ── Skip category headers; they have explicit styling set in MutationTreeBuilder ──
+                if (nameLower.StartsWith("header_"))
+                    continue;
+
                 // ── Scroll views / viewports ──
                 if (nameLower.Contains("scroll") || nameLower.Contains("viewport"))
                 {
