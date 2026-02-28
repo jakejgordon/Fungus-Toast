@@ -549,14 +549,20 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (progressBarBG != null && progressBarFill != null) return;
 
-            // Create background strip — parent to the node root, NOT the button
-            // (buttons may have LayoutGroups that distort child placement)
+            // Create background strip — parent to the node root.
+            // Must use ignoreLayout so the VerticalLayoutGroup on the node
+            // doesn't treat this as a layout child (which distorts it into a vertical bar).
             if (progressBarBG == null)
             {
                 var bgGO = new GameObject("ProgressBarBG");
                 bgGO.transform.SetParent(transform, false);
                 progressBarBG = bgGO.AddComponent<Image>();
                 progressBarBG.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+
+                // Exclude from any parent LayoutGroup
+                var layoutElem = bgGO.AddComponent<LayoutElement>();
+                layoutElem.ignoreLayout = true;
+
                 var bgRect = bgGO.GetComponent<RectTransform>();
                 // Stretch across the full width at the very bottom of the node
                 bgRect.anchorMin = new Vector2(0, 0);
