@@ -315,7 +315,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             float duration = 0.3f;
             float elapsed = 0f;
-            float maxScale = 1.12f;
+            float maxScale = 1.06f; // subtle bounce — halved from original 1.12
             Vector3 originalScale = Vector3.one;
             Color originalBG = nodeBackground != null ? nodeBackground.color : Color.clear;
             Color flashColor = MutationTreeColors.UpgradeFlashWhite;
