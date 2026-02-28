@@ -528,11 +528,45 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (storePointsButton == null) return;
 
+            // ── Make the button clearly visible against the dark panel ──
+            StyleStorePointsButton();
+
             var trigger = storePointsButton.GetComponent<TooltipTrigger>();
             if (trigger == null)
                 trigger = storePointsButton.gameObject.AddComponent<TooltipTrigger>();
 
             trigger.SetStaticText("Store your unspent mutation points.\nThey will carry over to the next turn,\nallowing you to save up for expensive upgrades.");
+        }
+
+        /// <summary>
+        /// Styles the Store Points button with explicit colors and a storage icon
+        /// so it stands out against the dark panel header.
+        /// </summary>
+        private void StyleStorePointsButton()
+        {
+            // Button background — use a visible, slightly highlighted surface
+            var btnImage = storePointsButton.GetComponent<Image>();
+            if (btnImage != null)
+                btnImage.color = MutationTreeColors.ButtonHighlight;
+
+            // Button color block for hover / press states
+            var colors = storePointsButton.colors;
+            colors.normalColor      = MutationTreeColors.ButtonHighlight;
+            colors.highlightedColor = new Color(0.32f, 0.32f, 0.42f, 1f); // brighter on hover
+            colors.pressedColor     = MutationTreeColors.ButtonPressed;
+            colors.selectedColor    = MutationTreeColors.ButtonHighlight;
+            colors.disabledColor    = new Color(0.22f, 0.22f, 0.28f, 0.6f);
+            storePointsButton.colors = colors;
+
+            // Text — bright with a simple storage-suggestive icon prefix
+            var btnText = storePointsButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (btnText != null)
+            {
+                btnText.color = MutationTreeColors.PrimaryText;
+                // Prepend a bank/save icon using TMP rich text (downward arrow into tray)
+                if (!btnText.text.StartsWith("<"))
+                    btnText.text = "<b>[</b><size=80%>\u2193</size><b>]</b> " + btnText.text;
+            }
         }
 
         // ═══════════════════════════════════════════════════════════════
