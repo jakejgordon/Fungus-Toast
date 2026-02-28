@@ -60,23 +60,64 @@ namespace FungusToast.Unity.UI.MutationTree
                 // ── Category accent colors on header ──
                 Color accent = MutationTreeColors.GetCategoryAccent(category);
 
-                var headerText = headerGO.GetComponentInChildren<TextMeshProUGUI>();
+                // ── Ensure header has a background Image + readable label ──
+                // The prefab root only has TMP (a Graphic). We can't add Image
+                // to the same GO (Unity allows one Graphic per GO). Instead:
+                //   1. Disable the root TMP
+                //   2. Create child "HeaderBG" with Image  (renders first)
+                //   3. Create child "HeaderLabel" with TMP  (renders on top)
+                var headerBG = headerGO.GetComponent<Image>();
+                TextMeshProUGUI headerText;
+
+                if (headerBG != null)
+                {
+                    // Prefab already has an Image on root — just use existing TMP
+                    headerText = headerGO.GetComponentInChildren<TextMeshProUGUI>();
+                }
+                else
+                {
+                    // Disable root TMP (can't coexist with Image)
+                    var rootTMP = headerGO.GetComponent<TextMeshProUGUI>();
+                    if (rootTMP != null) rootTMP.enabled = false;
+
+                    // Background child (sibling index 0 → draws first)
+                    var bgGO = new GameObject("HeaderBG");
+                    bgGO.transform.SetParent(headerGO.transform, false);
+                    headerBG = bgGO.AddComponent<Image>();
+                    var bgRect = bgGO.GetComponent<RectTransform>();
+                    bgRect.anchorMin = Vector2.zero;
+                    bgRect.anchorMax = Vector2.one;
+                    bgRect.offsetMin = Vector2.zero;
+                    bgRect.offsetMax = Vector2.zero;
+
+                    // Label child (sibling index 1 → draws on top of BG)
+                    var labelGO = new GameObject("HeaderLabel");
+                    labelGO.transform.SetParent(headerGO.transform, false);
+                    headerText = labelGO.AddComponent<TextMeshProUGUI>();
+                    if (rootTMP != null)
+                    {
+                        headerText.font = rootTMP.font;
+                        headerText.fontSize = rootTMP.fontSize;
+                        headerText.fontStyle = rootTMP.fontStyle;
+                        headerText.alignment = rootTMP.alignment;
+                        headerText.enableAutoSizing = rootTMP.enableAutoSizing;
+                        headerText.fontSizeMin = rootTMP.fontSizeMin;
+                        headerText.fontSizeMax = rootTMP.fontSizeMax;
+                    }
+                    var labelRect = labelGO.GetComponent<RectTransform>();
+                    labelRect.anchorMin = Vector2.zero;
+                    labelRect.anchorMax = Vector2.one;
+                    labelRect.offsetMin = Vector2.zero;
+                    labelRect.offsetMax = Vector2.zero;
+                }
+
+                headerBG.color = MutationTreeColors.GetCategoryHeaderBG(category, 0.95f);
+
                 if (headerText != null)
                 {
                     headerText.text = SplitCamelCase(category.ToString());
-                    // Pure white text for maximum contrast; the tinted BG already conveys category color
                     headerText.color = Color.white;
                 }
-
-                var headerBG = headerGO.GetComponent<Image>();
-                if (headerBG == null)
-                {
-                    // Add Image directly to the header root GO so it renders as
-                    // a background BEHIND the TMP text on the same GameObject.
-                    // (Creating a child Image would render ON TOP of the parent's TMP.)
-                    headerBG = headerGO.AddComponent<Image>();
-                }
-                headerBG.color = MutationTreeColors.GetCategoryHeaderBG(category, 0.95f);
 
                 // ── Investment summary label (child text, created dynamically) ──
                 var summaryGO = new GameObject("InvestmentSummary");
