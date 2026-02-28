@@ -598,18 +598,22 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (maxBadge != null) return;
 
+            // Parent to the upgrade button so the badge sits inside the visual card
+            Transform badgeParent = upgradeButton != null ? upgradeButton.transform : transform;
+
             var badgeGO = new GameObject("MaxBadge");
-            badgeGO.transform.SetParent(transform, false);
+            badgeGO.transform.SetParent(badgeParent, false);
 
             var badgeBG = badgeGO.AddComponent<Image>();
             badgeBG.color = new Color(MutationTreeColors.MaxedGold.r, MutationTreeColors.MaxedGold.g, MutationTreeColors.MaxedGold.b, 0.9f);
 
             var badgeRect = badgeGO.GetComponent<RectTransform>();
-            badgeRect.anchorMin = new Vector2(1, 1);
-            badgeRect.anchorMax = new Vector2(1, 1);
-            badgeRect.pivot = new Vector2(1, 1);
-            badgeRect.anchoredPosition = new Vector2(-2, -2);
-            badgeRect.sizeDelta = new Vector2(34, 16);
+            // Bottom-center of the card, just above the progress bar
+            badgeRect.anchorMin = new Vector2(0.5f, 0);
+            badgeRect.anchorMax = new Vector2(0.5f, 0);
+            badgeRect.pivot = new Vector2(0.5f, 0);
+            badgeRect.anchoredPosition = new Vector2(0, 8);
+            badgeRect.sizeDelta = new Vector2(36, 16);
 
             var textGO = new GameObject("MaxText");
             textGO.transform.SetParent(badgeGO.transform, false);
