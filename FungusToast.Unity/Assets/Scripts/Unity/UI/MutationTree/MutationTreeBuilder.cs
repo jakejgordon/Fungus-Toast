@@ -61,11 +61,12 @@ namespace FungusToast.Unity.UI.MutationTree
                 Color accent = MutationTreeColors.GetCategoryAccent(category);
 
                 // ── Ensure header has a background Image + readable label ──
-                // The prefab root only has TMP (a Graphic). We can't add Image
-                // to the same GO (Unity allows one Graphic per GO). Instead:
-                //   1. Disable the root TMP
-                //   2. Create child "HeaderBG" with Image  (renders first)
-                //   3. Create child "HeaderLabel" with TMP  (renders on top)
+                // The prefab root has TMP (a Graphic). Unity allows only one Graphic
+                // per GO, so we can't add Image to the root. Strategy:
+                //   - Keep root TMP enabled + set text (provides layout preferred-width)
+                //     but make it invisible (Color.clear).
+                //   - Child 0: "HeaderBG"    — Image (draws first)
+                //   - Child 1: "HeaderLabel" — TMP   (draws on top, white text)
                 var headerBG = headerGO.GetComponent<Image>();
                 TextMeshProUGUI headerText;
 
@@ -76,9 +77,13 @@ namespace FungusToast.Unity.UI.MutationTree
                 }
                 else
                 {
-                    // Disable root TMP (can't coexist with Image)
+                    // Keep root TMP for layout sizing, but make it invisible
                     var rootTMP = headerGO.GetComponent<TextMeshProUGUI>();
-                    if (rootTMP != null) rootTMP.enabled = false;
+                    if (rootTMP != null)
+                    {
+                        rootTMP.text = SplitCamelCase(category.ToString());
+                        rootTMP.color = Color.clear; // invisible but drives preferred width
+                    }
 
                     // Background child (sibling index 0 → draws first)
                     var bgGO = new GameObject("HeaderBG");
