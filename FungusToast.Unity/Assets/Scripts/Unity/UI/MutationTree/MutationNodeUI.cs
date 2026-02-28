@@ -222,6 +222,10 @@ namespace FungusToast.Unity.UI.MutationTree
             if (maxBadge != null)
                 maxBadge.SetActive(isMaxed);
 
+            // ── Progress bar: hide until player has invested at least 1 level ──
+            if (progressBarBG != null)
+                progressBarBG.gameObject.SetActive(currentLevel > 0);
+
             // ── Progress bar fill target (lerped in Update) ──
             targetProgressFill = mutation.MaxLevel > 0 ? currentLevel / (float)mutation.MaxLevel : 0f;
 
@@ -544,11 +548,12 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (progressBarBG != null && progressBarFill != null) return;
 
-            // Create background strip
+            // Create background strip — parent to upgradeButton so it sits flush inside the card
             if (progressBarBG == null)
             {
+                Transform barParent = upgradeButton != null ? upgradeButton.transform : transform;
                 var bgGO = new GameObject("ProgressBarBG");
-                bgGO.transform.SetParent(transform, false);
+                bgGO.transform.SetParent(barParent, false);
                 progressBarBG = bgGO.AddComponent<Image>();
                 progressBarBG.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
                 var bgRect = bgGO.GetComponent<RectTransform>();
