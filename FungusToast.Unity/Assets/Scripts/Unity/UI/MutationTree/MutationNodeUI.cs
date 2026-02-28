@@ -147,10 +147,8 @@ namespace FungusToast.Unity.UI.MutationTree
             int currentLevel = player.GetMutationLevel(mutation.Id);
             bool isMaxed = currentLevel >= mutation.MaxLevel;
 
-            // Level text — show "MAX" suffix when maxed
-            levelText.text = isMaxed
-                ? $"Level {currentLevel}/{mutation.MaxLevel} <color=#FFD700>✦</color>"
-                : $"Level {currentLevel}/{mutation.MaxLevel}";
+            // Level text — clean display (MAX badge handles maxed state separately)
+            levelText.text = $"Level {currentLevel}/{mutation.MaxLevel}";
 
             // SURGE LOGIC
             bool isSurge = mutation.IsSurge;
