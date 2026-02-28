@@ -94,7 +94,7 @@ namespace FungusToast.Unity.UI.MutationTree
             targetProgressFill = mutation.MaxLevel > 0 ? currentLevel / (float)mutation.MaxLevel : 0f;
             currentProgressFill = targetProgressFill;
             if (progressBarFill != null)
-                progressBarFill.fillAmount = currentProgressFill;
+                progressBarFill.rectTransform.anchorMax = new Vector2(currentProgressFill, 1);
 
             UpdateDisplay();
 
@@ -241,11 +241,12 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void Update()
         {
-            // Smoothly animate progress bar fill
+            // Smoothly animate progress bar fill via anchor-based width
             if (progressBarFill != null && !Mathf.Approximately(currentProgressFill, targetProgressFill))
             {
                 currentProgressFill = Mathf.MoveTowards(currentProgressFill, targetProgressFill, ProgressLerpSpeed * Time.deltaTime);
-                progressBarFill.fillAmount = currentProgressFill;
+                var fillRect = progressBarFill.rectTransform;
+                fillRect.anchorMax = new Vector2(currentProgressFill, 1);
             }
         }
 
@@ -548,35 +549,35 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (progressBarBG != null && progressBarFill != null) return;
 
-            // Create background strip — parent to upgradeButton so it sits flush inside the card
+            // Create background strip — parent to the node root, NOT the button
+            // (buttons may have LayoutGroups that distort child placement)
             if (progressBarBG == null)
             {
-                Transform barParent = upgradeButton != null ? upgradeButton.transform : transform;
                 var bgGO = new GameObject("ProgressBarBG");
-                bgGO.transform.SetParent(barParent, false);
+                bgGO.transform.SetParent(transform, false);
                 progressBarBG = bgGO.AddComponent<Image>();
                 progressBarBG.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
                 var bgRect = bgGO.GetComponent<RectTransform>();
+                // Stretch across the full width at the very bottom of the node
                 bgRect.anchorMin = new Vector2(0, 0);
                 bgRect.anchorMax = new Vector2(1, 0);
-                bgRect.pivot = new Vector2(0.5f, 0);
+                bgRect.pivot = new Vector2(0, 0);
                 bgRect.anchoredPosition = Vector2.zero;
-                bgRect.sizeDelta = new Vector2(0, 6);
+                bgRect.sizeDelta = new Vector2(0, 5);
             }
 
-            // Create fill child
+            // Create fill child — use anchor-based width scaling (not Image.Type.Filled,
+            // which doesn't respect fillAmount on sprite-less Images)
             if (progressBarFill == null)
             {
                 var fillGO = new GameObject("ProgressBarFill");
                 fillGO.transform.SetParent(progressBarBG.transform, false);
                 progressBarFill = fillGO.AddComponent<Image>();
-                progressBarFill.type = Image.Type.Filled;
-                progressBarFill.fillMethod = Image.FillMethod.Horizontal;
-                progressBarFill.fillOrigin = 0;
                 progressBarFill.color = Color.white;
                 var fillRect = fillGO.GetComponent<RectTransform>();
                 fillRect.anchorMin = Vector2.zero;
-                fillRect.anchorMax = Vector2.one;
+                fillRect.anchorMax = new Vector2(0, 1); // starts at zero width
+                fillRect.pivot = new Vector2(0, 0.5f);
                 fillRect.offsetMin = Vector2.zero;
                 fillRect.offsetMax = Vector2.zero;
             }
