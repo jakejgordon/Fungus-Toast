@@ -544,25 +544,58 @@ namespace FungusToast.Unity.UI.MutationTree
         /// </summary>
         private void StyleStorePointsButton()
         {
-            // Button background — use a visible, slightly highlighted surface
+            // Button background — high contrast against top bar so it reads as interactive
             var btnImage = storePointsButton.GetComponent<Image>();
             if (btnImage != null)
-                btnImage.color = MutationTreeColors.ButtonHighlight;
+            {
+                Color ctaBase = Color.Lerp(MutationTreeColors.ButtonHighlight, MutationTreeColors.PulseOutline, 0.18f);
+                btnImage.color = ctaBase;
+                btnImage.raycastTarget = true;
+
+                var border = storePointsButton.GetComponent<Outline>();
+                if (border == null)
+                    border = storePointsButton.gameObject.AddComponent<Outline>();
+                border.effectColor = new Color(
+                    MutationTreeColors.PulseOutline.r,
+                    MutationTreeColors.PulseOutline.g,
+                    MutationTreeColors.PulseOutline.b,
+                    0.65f);
+                border.effectDistance = new Vector2(1f, -1f);
+            }
+
+            // Ensure minimum clickable footprint (44px+ recommended touch target)
+            var layout = storePointsButton.GetComponent<LayoutElement>();
+            if (layout == null)
+                layout = storePointsButton.gameObject.AddComponent<LayoutElement>();
+            layout.minHeight = Mathf.Max(layout.minHeight, 36f);
+            layout.minWidth = Mathf.Max(layout.minWidth, 220f);
 
             // Button color block for hover / press states
             var colors = storePointsButton.colors;
-            colors.normalColor      = MutationTreeColors.ButtonHighlight;
-            colors.highlightedColor = new Color(0.32f, 0.32f, 0.42f, 1f); // brighter on hover
+            Color normal = Color.Lerp(MutationTreeColors.ButtonHighlight, MutationTreeColors.PulseOutline, 0.18f);
+            colors.normalColor      = normal;
+            colors.highlightedColor = Color.Lerp(normal, MutationTreeColors.PrimaryText, 0.30f);
             colors.pressedColor     = MutationTreeColors.ButtonPressed;
-            colors.selectedColor    = MutationTreeColors.ButtonHighlight;
-            colors.disabledColor    = new Color(0.22f, 0.22f, 0.28f, 0.6f);
+            colors.selectedColor    = colors.highlightedColor;
+            colors.disabledColor    = new Color(
+                MutationTreeColors.SecondaryText.r,
+                MutationTreeColors.SecondaryText.g,
+                MutationTreeColors.SecondaryText.b,
+                0.45f);
+            colors.colorMultiplier  = 1.05f;
+            colors.fadeDuration     = 0.08f;
+            storePointsButton.transition = Selectable.Transition.ColorTint;
             storePointsButton.colors = colors;
 
-            // Text — bright with a simple storage-suggestive icon prefix
+            // Text — bold, bright, and action-oriented
             var btnText = storePointsButton.GetComponentInChildren<TextMeshProUGUI>();
             if (btnText != null)
             {
                 btnText.color = MutationTreeColors.PrimaryText;
+                btnText.fontStyle = FontStyles.Bold;
+                btnText.characterSpacing = 1.2f;
+                btnText.margin = new Vector4(10f, 3f, 10f, 3f);
+
                 // Prepend a bank/save icon using TMP rich text (downward arrow into tray)
                 if (!btnText.text.StartsWith("<"))
                     btnText.text = "<b>[</b><size=80%>\u2193</size><b>]</b> " + btnText.text;

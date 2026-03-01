@@ -279,6 +279,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 6
+  autoPlacementOffsetX: 0
 --- !u!1 &9829475
 GameObject:
   m_ObjectHideFlags: 0
@@ -1187,6 +1188,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 4
+  autoPlacementOffsetX: 0
 --- !u!114 &123252513
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3355,6 +3357,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 5
+  autoPlacementOffsetX: 0
 --- !u!1 &291473328 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 200007940375941483, guid: 6bfae62bd7629fe46a110eb496737e9c, type: 3}
@@ -4211,6 +4214,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 0
+  autoPlacementOffsetX: 0
 --- !u!1 &354172057
 GameObject:
   m_ObjectHideFlags: 0
@@ -105997,6 +106001,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 0
+  autoPlacementOffsetX: 0
 --- !u!1 &456577069
 GameObject:
   m_ObjectHideFlags: 0
@@ -106604,6 +106609,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 6
+  autoPlacementOffsetX: 0
 --- !u!1 &476987854
 GameObject:
   m_ObjectHideFlags: 0
@@ -106916,8 +106922,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 22
+  m_fontSizeBase: 22
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -107656,7 +107662,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -20}
+  m_AnchoredPosition: {x: -50, y: -20}
   m_SizeDelta: {x: 900, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &541730892
@@ -109492,6 +109498,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 0
+  autoPlacementOffsetX: 0
 --- !u!1 &663369134
 GameObject:
   m_ObjectHideFlags: 0
@@ -109592,6 +109599,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 0
+  autoPlacementOffsetX: 0
 --- !u!1 &674020807 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 200007940375941483, guid: 6bfae62bd7629fe46a110eb496737e9c, type: 3}
@@ -111295,6 +111303,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 4
+  autoPlacementOffsetX: 0
 --- !u!1 &843860850
 GameObject:
   m_ObjectHideFlags: 0
@@ -113662,6 +113671,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 0
+  autoPlacementOffsetX: 0
 --- !u!1001 &1054936763
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -114049,6 +114059,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 7
+  autoPlacementOffsetX: 0
 --- !u!114 &1060487507
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -117536,6 +117547,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 7
+  autoPlacementOffsetX: 0
 --- !u!1001 &1346197130
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -118045,7 +118057,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 300, y: -20}
-  m_SizeDelta: {x: 270, y: 30}
+  m_SizeDelta: {x: 320, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1388654716
 MonoBehaviour:
@@ -122881,6 +122893,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 0
+  autoPlacementOffsetX: 0
 --- !u!1 &1790918258
 GameObject:
   m_ObjectHideFlags: 0
@@ -124085,6 +124098,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 4
+  autoPlacementOffsetX: 0
 --- !u!1 &1927571114
 GameObject:
   m_ObjectHideFlags: 0
@@ -124247,6 +124261,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 0
+  autoPlacementOffsetX: 0
 --- !u!1 &1950176974
 GameObject:
   m_ObjectHideFlags: 0
@@ -126227,6 +126242,7 @@ MonoBehaviour:
   isHelpIcon: 0
   followPointer: 0
   placement: 0
+  autoPlacementOffsetX: 0
 --- !u!1 &2109980232
 GameObject:
   m_ObjectHideFlags: 0

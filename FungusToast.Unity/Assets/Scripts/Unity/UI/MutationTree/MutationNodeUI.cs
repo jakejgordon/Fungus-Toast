@@ -276,11 +276,22 @@ namespace FungusToast.Unity.UI.MutationTree
 
         // ── Hover: prerequisite highlighting + projected cost ────────────
 
+        private void ApplyInteractableHoverVisual()
+        {
+            if (nodeBackground == null || upgradeButton == null) return;
+            if (!upgradeButton.interactable) return;
+
+            nodeBackground.color = Color.Lerp(nodeBackground.color, MutationTreeColors.PrimaryText, 0.30f);
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             // Tooltip display is now handled by TooltipTrigger + ITooltipContentProvider.
             // We only keep prerequisite highlighting here.
             uiManager.HighlightUnmetPrerequisites(mutation, player);
+
+            // Stronger hover affordance for clickable/upgradeable nodes.
+            ApplyInteractableHoverVisual();
 
             // Show projected cost in the points panel
             if (mutation != null && player != null)
@@ -302,6 +313,9 @@ namespace FungusToast.Unity.UI.MutationTree
             // Tooltip hiding is handled by TooltipTrigger.OnPointerExit.
             uiManager.ClearAllHighlights();
             uiManager.ClearProjectedCost();
+
+            // Restore correct base state tint after hover.
+            UpdateDisplay();
         }
 
         // ── Upgrade feedback animation ───────────────────────────────────
@@ -573,7 +587,7 @@ namespace FungusToast.Unity.UI.MutationTree
             fillRect.anchorMin = Vector2.zero;                    // bottom-left
             fillRect.anchorMax = new Vector2(0, 0);               // starts at zero width, bottom edge
             fillRect.pivot = new Vector2(0, 0);                   // grow rightward from bottom-left
-            fillRect.anchoredPosition = Vector2.zero;
+            fillRect.anchoredPosition = new Vector2(0, 5);
             fillRect.sizeDelta = new Vector2(0, 18);              // fixed height matching text line
         }
 
