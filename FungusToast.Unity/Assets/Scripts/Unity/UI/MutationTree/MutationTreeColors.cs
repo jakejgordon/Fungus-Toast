@@ -100,12 +100,12 @@ namespace FungusToast.Unity.UI.MutationTree
         }
 
         /// <summary>
-        /// Returns the progress bar fill color for a category (full accent at 85% alpha).
+        /// Returns the level-progress fill color for a category (faint tint behind white text).
         /// </summary>
         public static Color GetProgressBarColor(MutationCategory category)
         {
             Color c = GetCategoryAccent(category);
-            return new Color(c.r, c.g, c.b, 0.85f);
+            return new Color(c.r, c.g, c.b, 0.18f);
         }
 
         // ── Helpers ─────────────────────────────────────────────────────
