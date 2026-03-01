@@ -20,6 +20,7 @@ namespace FungusToast.Unity.UI.Tooltips
         [SerializeField] private bool isHelpIcon = false; // tap toggles on touch
         [SerializeField] private bool followPointer = false; // reserved for future use
         [SerializeField] private TooltipPlacement placement = TooltipPlacement.Auto; // NEW: developer-selected placement
+        [SerializeField] private float autoPlacementOffsetX = 0f;
 
         private bool touchMode;
         private bool tooltipVisible;
@@ -74,6 +75,11 @@ namespace FungusToast.Unity.UI.Tooltips
             }
 
             dynamicProvider = provider;
+        }
+
+        public void SetAutoPlacementOffsetX(float value)
+        {
+            autoPlacementOffsetX = value;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -169,7 +175,8 @@ namespace FungusToast.Unity.UI.Tooltips
                 MaxWidth = maxWidth > 0 ? maxWidth : (int?)null,
                 FollowPointer = followPointer,
                 PivotPreference = new Vector2(0f, 1f),
-                Placement = placement
+                Placement = placement,
+                AutoPlacementOffsetX = autoPlacementOffsetX
             };
         }
 

@@ -109,6 +109,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (trigger == null)
                 trigger = gameObject.AddComponent<TooltipTrigger>();
             trigger.SetDynamicProvider(this);
+            trigger.SetAutoPlacementOffsetX(60f);
         }
 
         /// <summary>

@@ -22,6 +22,18 @@ namespace FungusToast.Unity.UI.Tooltips
 
         public RectTransform RectTransform => transform as RectTransform;
 
+        public void PrepareForLayout()
+        {
+            if (!gameObject.activeSelf)
+                gameObject.SetActive(true);
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+                canvasGroup.blocksRaycasts = false;
+            }
+        }
+
         public void SetText(string value, int? maxWidth)
         {
             if (text == null) return;

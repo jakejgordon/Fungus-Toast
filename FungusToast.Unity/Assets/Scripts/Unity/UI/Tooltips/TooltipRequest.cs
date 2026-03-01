@@ -13,6 +13,7 @@ namespace FungusToast.Unity.UI.Tooltips
         public int? MaxWidth;
         public bool FollowPointer;
         public TooltipPlacement Placement; // new: preferred placement around anchor
+        public float AutoPlacementOffsetX;
 
         public string ResolveText() => DynamicTextFunc != null ? DynamicTextFunc() : StaticText;
     }

@@ -46,7 +46,8 @@ namespace FungusToast.Unity.UI.Tooltips
                 Debug.LogWarning("TooltipManager missing tooltipPrefab");
                 return;
             }
-            var go = Instantiate(tooltipPrefab, transform);
+            Transform parent = canvasRect != null ? canvasRect : transform;
+            var go = Instantiate(tooltipPrefab, parent, false);
             view = go.GetComponent<TooltipView>();
             go.SetActive(false);
         }
@@ -94,6 +95,7 @@ namespace FungusToast.Unity.UI.Tooltips
         private void InternalShow()
         {
             if (view == null) return;
+            view.PrepareForLayout();
             string text = currentRequest.ResolveText();
             view.SetText(text, currentRequest.MaxWidth);
             Position(view.RectTransform, currentRequest);
@@ -104,200 +106,196 @@ namespace FungusToast.Unity.UI.Tooltips
         {
             if (canvasRect == null) return;
 
-            Vector2 ToLocal(Vector2 screenPt)
+            Camera cam = rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : rootCanvas.worldCamera;
+
+            // ── Force layout rebuild to get correct tooltip size ──
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(tooltipRect);
+
+            // ── Tooltip screen-space size from world corners (accurate regardless of canvas setup) ──
+            Vector3[] ttWc = new Vector3[4];
+            tooltipRect.GetWorldCorners(ttWc);
+            Vector2 ttS0 = RectTransformUtility.WorldToScreenPoint(cam, ttWc[0]); // BL
+            Vector2 ttS2 = RectTransformUtility.WorldToScreenPoint(cam, ttWc[2]); // TR
+            float ttW = Mathf.Abs(ttS2.x - ttS0.x);
+            float ttH = Mathf.Abs(ttS2.y - ttS0.y);
+
+            // ── Screen safe bounds (in screen pixels) ──
+            float sL = screenPadding.x;
+            float sR = Screen.width - screenPadding.x;
+            float sB = screenPadding.y;
+            float sT = Screen.height - screenPadding.y;
+
+            // ── Helpers (all work in screen pixel space) ──
+
+            // Clamp a screen-space tooltip pivot position so the tooltip stays fully on-screen
+            Vector2 ClampScreen(Vector2 pos, Vector2 piv)
             {
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    canvasRect,
-                    screenPt,
-                    rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : rootCanvas.worldCamera,
-                    out var localPoint);
-                return localPoint;
+                float minX = sL + piv.x * ttW;
+                float maxX = sR - (1f - piv.x) * ttW;
+                float minY = sB + piv.y * ttH;
+                float maxY = sT - (1f - piv.y) * ttH;
+                return new Vector2(
+                    maxX >= minX ? Mathf.Clamp(pos.x, minX, maxX) : (minX + maxX) * 0.5f,
+                    maxY >= minY ? Mathf.Clamp(pos.y, minY, maxY) : (minY + maxY) * 0.5f);
             }
 
-            // Resolve anchor screen position (default top-right) and its corners
-            Vector2 targetScreenPos;
+            // Overlap area between tooltip (at screen pos with pivot) and a screen-space rect
+            float Overlap(Vector2 pos, Vector2 piv, float rL, float rR, float rB, float rT)
+            {
+                float tL = pos.x - piv.x * ttW;
+                float tR = tL + ttW;
+                float tB = pos.y - piv.y * ttH;
+                float tT = tB + ttH;
+                return Mathf.Max(0f, Mathf.Min(tR, rR) - Mathf.Max(tL, rL))
+                     * Mathf.Max(0f, Mathf.Min(tT, rT) - Mathf.Max(tB, rB));
+            }
+
+            // Place the tooltip at a screen-pixel position with a given pivot
+            void PlaceAtScreen(Vector2 screenPos, Vector2 piv)
+            {
+                tooltipRect.pivot = piv;
+                if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
+                        canvasRect, screenPos, cam, out Vector3 worldPos))
+                {
+                    tooltipRect.position = worldPos;
+                }
+            }
+
+            // Screen position from a world-space point
+            Vector2 WTS(Vector3 worldPt) => RectTransformUtility.WorldToScreenPoint(cam, worldPt);
+
+            // ── Anchor world corners ──
             Vector3[] wc = null;
             if (request.Anchor != null)
             {
                 wc = new Vector3[4];
-                request.Anchor.GetWorldCorners(wc); // 0=BL,1=TL,2=TR,3=BR
-                targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, wc[2]);
+                request.Anchor.GetWorldCorners(wc); // 0=BL, 1=TL, 2=TR, 3=BR
             }
-            else
+
+            // ══════════════════════════════════════════════
+            //  AUTO PLACEMENT — all math in screen pixels
+            //  Tries 6 positions, picks first with zero overlap.
+            //  Priority: right of node → left → below → above
+            // ══════════════════════════════════════════════
+            if (request.Placement == TooltipPlacement.Auto)
             {
-                targetScreenPos = (Vector2)Input.mousePosition;
+                if (wc != null)
+                {
+                    // Node screen bounds
+                    Vector2 ns0 = WTS(wc[0]), ns1 = WTS(wc[1]), ns2 = WTS(wc[2]), ns3 = WTS(wc[3]);
+                    float nL = Mathf.Min(ns0.x, ns1.x, ns2.x, ns3.x);
+                    float nR = Mathf.Max(ns0.x, ns1.x, ns2.x, ns3.x);
+                    float nB = Mathf.Min(ns0.y, ns1.y, ns2.y, ns3.y);
+                    float nT = Mathf.Max(ns0.y, ns1.y, ns2.y, ns3.y);
+
+                    const float gap = 12f;
+
+                    // Each candidate: (pivot of tooltip, screen position of that pivot)
+                    var candidates = new (Vector2 piv, Vector2 pos)[]
+                    {
+                        // Right of node, top-aligned:  tooltip left edge at nR+gap, top at nT
+                        (new Vector2(0f, 1f), new Vector2(nR + gap, nT)),
+                        // Right of node, bottom-aligned
+                        (new Vector2(0f, 0f), new Vector2(nR + gap, nB)),
+                        // Left of node, top-aligned:  tooltip right edge at nL-gap, top at nT
+                        (new Vector2(1f, 1f), new Vector2(nL - gap, nT)),
+                        // Left of node, bottom-aligned
+                        (new Vector2(1f, 0f), new Vector2(nL - gap, nB)),
+                        // Below node, left-aligned
+                        (new Vector2(0f, 1f), new Vector2(nL, nB - gap)),
+                        // Above node, left-aligned
+                        (new Vector2(0f, 0f), new Vector2(nL, nT + gap)),
+                    };
+
+                    int bestIdx = 0;
+                    float bestOv = float.MaxValue;
+
+                    for (int i = 0; i < candidates.Length; i++)
+                    {
+                        var (cpiv, craw) = candidates[i];
+                        Vector2 clamped = ClampScreen(craw, cpiv);
+                        float ov = Overlap(clamped, cpiv, nL, nR, nB, nT);
+                        if (ov < bestOv)
+                        {
+                            bestOv = ov;
+                            bestIdx = i;
+                            if (ov <= 0f) break;
+                        }
+                    }
+
+                    var (fPiv, fRaw) = candidates[bestIdx];
+                    Vector2 finalPos = ClampScreen(fRaw, fPiv);
+                    finalPos.x += request.AutoPlacementOffsetX;
+                    finalPos = ClampScreen(finalPos, fPiv);
+                    PlaceAtScreen(finalPos, fPiv);
+                    return;
+                }
+
+                // No anchor — follow mouse
+                Vector2 mp = (Vector2)Input.mousePosition + new Vector2(16f, -16f);
+                Vector2 mPiv = new Vector2(0f, 1f);
+                PlaceAtScreen(ClampScreen(mp, mPiv), mPiv);
+                return;
             }
 
-            // Compute edge midpoints if we have corners
-            Vector3 midTop = wc != null ? (wc[1] + wc[2]) * 0.5f : (Vector3)targetScreenPos;
-            Vector3 midBottom = wc != null ? (wc[0] + wc[3]) * 0.5f : (Vector3)targetScreenPos;
-            Vector3 midLeft = wc != null ? (wc[0] + wc[1]) * 0.5f : (Vector3)targetScreenPos;
-            Vector3 midRight = wc != null ? (wc[2] + wc[3]) * 0.5f : (Vector3)targetScreenPos;
+            // ══════════════════════════════════════════════
+            //  EXPLICIT PLACEMENT  (N / NE / E / SE / S / SW / W / NW)
+            // ══════════════════════════════════════════════
+            Vector2 targetScreen = wc != null ? WTS(wc[2]) : (Vector2)Input.mousePosition;
+            Vector3 MidOf(int a, int b) => (wc[a] + wc[b]) * 0.5f;
 
-            // Choose pivot/corner based on placement (explicit) or default NE-like
-            Vector2 pivot = new Vector2(0f, 1f); // top-left by default
+            Vector2 pivot = new Vector2(0f, 1f);
             Vector2 appliedOffset = offset;
-            if (request.Placement != TooltipPlacement.Auto && wc != null)
+
+            if (wc != null)
             {
                 switch (request.Placement)
                 {
                     case TooltipPlacement.N:
-                        pivot = new Vector2(0.5f, 0f); // bottom-center touches top edge
-                        targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, midTop);
+                        pivot = new Vector2(0.5f, 0f);
+                        targetScreen = WTS(MidOf(1, 2));
                         appliedOffset = new Vector2(0f, Mathf.Abs(offset.y));
                         break;
                     case TooltipPlacement.NE:
-                        pivot = new Vector2(0f, 0f); // bottom-left touches top-right
-                        targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, wc[2]);
+                        pivot = new Vector2(0f, 0f);
+                        targetScreen = WTS(wc[2]);
                         appliedOffset = new Vector2(Mathf.Abs(offset.x), Mathf.Abs(offset.y));
                         break;
                     case TooltipPlacement.E:
-                        pivot = new Vector2(0f, 0.5f); // left-center touches right edge mid
-                        targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, midRight);
+                        pivot = new Vector2(0f, 0.5f);
+                        targetScreen = WTS(MidOf(2, 3));
                         appliedOffset = new Vector2(Mathf.Abs(offset.x), 0f);
                         break;
                     case TooltipPlacement.SE:
-                        pivot = new Vector2(0f, 1f); // top-left touches bottom-right
-                        targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, wc[3]);
+                        pivot = new Vector2(0f, 1f);
+                        targetScreen = WTS(wc[3]);
                         appliedOffset = new Vector2(Mathf.Abs(offset.x), -Mathf.Abs(offset.y));
                         break;
                     case TooltipPlacement.S:
-                        pivot = new Vector2(0.5f, 1f); // top-center touches bottom edge
-                        targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, midBottom);
+                        pivot = new Vector2(0.5f, 1f);
+                        targetScreen = WTS(MidOf(0, 3));
                         appliedOffset = new Vector2(0f, -Mathf.Abs(offset.y));
                         break;
                     case TooltipPlacement.SW:
-                        pivot = new Vector2(1f, 1f); // top-right touches bottom-left
-                        targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, wc[0]);
+                        pivot = new Vector2(1f, 1f);
+                        targetScreen = WTS(wc[0]);
                         appliedOffset = new Vector2(-Mathf.Abs(offset.x), -Mathf.Abs(offset.y));
                         break;
                     case TooltipPlacement.W:
-                        pivot = new Vector2(1f, 0.5f); // right-center touches left edge mid
-                        targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, midLeft);
+                        pivot = new Vector2(1f, 0.5f);
+                        targetScreen = WTS(MidOf(0, 1));
                         appliedOffset = new Vector2(-Mathf.Abs(offset.x), 0f);
                         break;
                     case TooltipPlacement.NW:
-                        pivot = new Vector2(1f, 0f); // bottom-right touches top-left
-                        targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, wc[1]);
+                        pivot = new Vector2(1f, 0f);
+                        targetScreen = WTS(wc[1]);
                         appliedOffset = new Vector2(-Mathf.Abs(offset.x), Mathf.Abs(offset.y));
                         break;
                 }
             }
-            else if (wc != null)
-            {
-                // Default: NE-like (top-right anchor, bottom-left pivot)
-                pivot = new Vector2(0f, 0f);
-                targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, wc[2]);
-                appliedOffset = new Vector2(Mathf.Abs(offset.x), Mathf.Abs(offset.y));
-            }
 
-            // Place once with chosen pivot
-            tooltipRect.pivot = pivot;
-            Vector2 screenWithOffset = new Vector2(targetScreenPos.x + appliedOffset.x, targetScreenPos.y + appliedOffset.y);
-            Vector2 localPoint = ToLocal(screenWithOffset);
-            tooltipRect.anchoredPosition = localPoint;
-
-            // Build and measure
-            Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(tooltipRect);
-            var size = tooltipRect.sizeDelta;
-            var canvasSize = canvasRect.rect.size;
-            var pos = tooltipRect.anchoredPosition;
-
-            // Auto-flip only when placement is Auto
-            if (request.Placement == TooltipPlacement.Auto)
-            {
-                bool overflowRight = pos.x + size.x + screenPadding.x > canvasSize.x * 0.5f;
-                bool overflowLeft = pos.x < -canvasSize.x * 0.5f + screenPadding.x;
-                bool overflowTop = pos.y > canvasSize.y * 0.5f - screenPadding.y;
-                bool overflowBottom = pos.y - size.y - screenPadding.y < -canvasSize.y * 0.5f;
-
-                if (overflowRight)
-                {
-                    pivot.x = 1f; appliedOffset.x = -Mathf.Abs(offset.x);
-                    if (wc != null) targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, wc[1]);
-                }
-                else if (overflowLeft)
-                {
-                    pivot.x = 0f; appliedOffset.x = Mathf.Abs(offset.x);
-                    if (wc != null) targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, wc[2]);
-                }
-                if (overflowTop)
-                {
-                    pivot.y = 0f; appliedOffset.y = -Mathf.Abs(offset.y);
-                    if (wc != null)
-                    {
-                        targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, pivot.x < 0.5f ? wc[3] : wc[0]);
-                    }
-                }
-                else if (overflowBottom)
-                {
-                    pivot.y = 1f; appliedOffset.y = -Mathf.Abs(offset.y);
-                    if (wc != null)
-                    {
-                        targetScreenPos = RectTransformUtility.WorldToScreenPoint(null, pivot.x < 0.5f ? wc[1] : wc[2]);
-                    }
-                }
-
-                screenWithOffset = new Vector2(targetScreenPos.x + appliedOffset.x, targetScreenPos.y + appliedOffset.y);
-                localPoint = ToLocal(screenWithOffset);
-                tooltipRect.pivot = pivot;
-                tooltipRect.anchoredPosition = localPoint;
-
-                Canvas.ForceUpdateCanvases();
-                LayoutRebuilder.ForceRebuildLayoutImmediate(tooltipRect);
-                size = tooltipRect.sizeDelta;
-                pos = tooltipRect.anchoredPosition;
-            }
-
-            // Final clamping to keep fully inside canvas
-            if (pos.x + size.x + screenPadding.x > canvasSize.x * 0.5f)
-                pos.x = canvasSize.x * 0.5f - size.x - screenPadding.x;
-            if (pos.y - size.y - screenPadding.y < -canvasSize.y * 0.5f)
-                pos.y = -canvasSize.y * 0.5f + size.y + screenPadding.y;
-            if (pos.x < -canvasSize.x * 0.5f + screenPadding.x)
-                pos.x = -canvasSize.x * 0.5f + screenPadding.x;
-            if (pos.y > canvasSize.y * 0.5f - screenPadding.y)
-                pos.y = canvasSize.y * 0.5f - screenPadding.y;
-
-            // Enforce directional constraints for explicit placements (prevent clamping from crossing anchor)
-            if (request.Placement != TooltipPlacement.Auto && wc != null)
-            {
-                // local position of chosen anchor point (without offset)
-                Vector2 anchorLocal = ToLocal(RectTransformUtility.WorldToScreenPoint(null, targetScreenPos));
-                switch (request.Placement)
-                {
-                    case TooltipPlacement.S:
-                    case TooltipPlacement.SE:
-                    case TooltipPlacement.SW:
-                        // keep tooltip top at or below anchor bottom
-                        pos.y = Mathf.Min(pos.y, anchorLocal.y);
-                        break;
-                    case TooltipPlacement.N:
-                    case TooltipPlacement.NE:
-                    case TooltipPlacement.NW:
-                        // keep tooltip bottom at or above anchor top
-                        pos.y = Mathf.Max(pos.y, anchorLocal.y);
-                        break;
-                }
-                switch (request.Placement)
-                {
-                    case TooltipPlacement.W:
-                    case TooltipPlacement.NW:
-                    case TooltipPlacement.SW:
-                        // keep tooltip right at or left of anchor left
-                        pos.x = Mathf.Min(pos.x, anchorLocal.x);
-                        break;
-                    case TooltipPlacement.E:
-                    case TooltipPlacement.NE:
-                    case TooltipPlacement.SE:
-                        // keep tooltip left at or right of anchor right
-                        pos.x = Mathf.Max(pos.x, anchorLocal.x);
-                        break;
-                }
-            }
-
-            tooltipRect.anchoredPosition = pos;
+            PlaceAtScreen(ClampScreen(targetScreen + appliedOffset, pivot), pivot);
         }
     }
 }
