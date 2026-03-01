@@ -1,0 +1,96 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace FungusToast.Unity.UI
+{
+    /// <summary>
+    /// Canonical UI style tokens for Fungus Toast.
+    ///
+    /// This class is intentionally infrastructure-only in its initial rollout:
+    /// adding tokens does not change visuals until consumers adopt them.
+    /// </summary>
+    public static class UIStyleTokens
+    {
+        public static class Surface
+        {
+            public static readonly Color Canvas = Hex("#2C3140");
+            public static readonly Color PanelPrimary = Hex("#3A4350");
+            public static readonly Color PanelSecondary = Hex("#465164");
+            public static readonly Color PanelElevated = Hex("#576277");
+            public static readonly Color OverlayDim = Hex("#12161DCC");
+        }
+
+        public static class Accent
+        {
+            public static readonly Color Moss = Hex("#6D8F3A");
+            public static readonly Color Lichen = Hex("#8FAF52");
+            public static readonly Color Spore = Hex("#B3C77A");
+            public static readonly Color Hyphae = Hex("#D5DDB0");
+            public static readonly Color Putrefaction = Hex("#7A5B3A");
+        }
+
+        public static class Text
+        {
+            public static readonly Color Primary = Hex("#F1F3EE");
+            public static readonly Color Secondary = Hex("#C9D0C2");
+            public static readonly Color Muted = Hex("#9BA392");
+            public static readonly Color Disabled = Hex("#7A8174");
+            public static readonly Color OnAccent = Hex("#1B2117");
+        }
+
+        public static class State
+        {
+            public static readonly Color Success = Hex("#8FAF52");
+            public static readonly Color Info = Hex("#7EA4A6");
+            public static readonly Color Warning = Hex("#B8924A");
+            public static readonly Color Danger = Hex("#B45E5E");
+            public static readonly Color Focus = Hex("#B3C77A");
+        }
+
+        public static class Category
+        {
+            public static readonly Color Growth = Hex("#5F8F61");
+            public static readonly Color CellularResilience = Hex("#5A7289");
+            public static readonly Color Fungicide = Hex("#6E5A86");
+            public static readonly Color GeneticDrift = Hex("#7D6B4E");
+            public static readonly Color MycelialSurges = Hex("#80607A");
+        }
+
+        public static class Button
+        {
+            public static readonly Color BackgroundDefault = Hex("#E7E8E5");
+            public static readonly Color BackgroundHover = Hex("#F4F5F2");
+            public static readonly Color BackgroundPressed = Hex("#D3D7C9");
+            public static readonly Color BackgroundSelected = Hex("#8FD28A");
+            public static readonly Color BackgroundDisabled = Hex("#B7BBB2");
+
+            public static readonly Color TextDefault = Hex("#34392E");
+            public static readonly Color TextDisabled = Hex("#747A71");
+
+            public static ColorBlock BuildColorBlock(float colorMultiplier = 1f, float fadeDuration = 0.1f)
+            {
+                return new ColorBlock
+                {
+                    normalColor = BackgroundDefault,
+                    highlightedColor = BackgroundHover,
+                    pressedColor = BackgroundPressed,
+                    selectedColor = BackgroundSelected,
+                    disabledColor = BackgroundDisabled,
+                    colorMultiplier = colorMultiplier,
+                    fadeDuration = fadeDuration
+                };
+            }
+        }
+
+        private static Color Hex(string html)
+        {
+            if (ColorUtility.TryParseHtmlString(html, out var color))
+            {
+                return color;
+            }
+
+            Debug.LogWarning($"UIStyleTokens could not parse color '{html}'. Falling back to magenta.");
+            return Color.magenta;
+        }
+    }
+}

@@ -1,6 +1,6 @@
 # Fungus Toast – Technical Overview
 
-> **📚 Related Documentation**: For practical simulation commands and debugging, see [SIMULATION_HELPER.md](SIMULATION_HELPER.md)
+> **📚 Related Documentation**: For practical simulation commands and debugging, see [SIMULATION_HELPER.md](SIMULATION_HELPER.md). For UI theming and polish standards, see [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md).
 
 ## Project Description
 

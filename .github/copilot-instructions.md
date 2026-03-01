@@ -308,6 +308,7 @@ FungusToast.Unity/
 - **For simulation:** Reference `SIMULATION_HELPER.md` for comprehensive command examples
 - **For Unity integration:** Check `FungusToast.Unity/Assets/Scripts/Unity/`
 - **For UI patterns (tooltips, pooling, services):** See `UI_ARCHITECTURE_HELPER.md`
+- **For UI styling and motif consistency:** See `UI_STYLE_GUIDE.md`
 
 ### Code Quality and Conventions
 - **Nullable reference types:** Enabled
@@ -323,6 +324,13 @@ FungusToast.Unity/
 - Expand `GameUIManager` instead of reaching into `GameManager.Instance` from UI scripts. Use `SetDependencies()` pattern (see `UI_EndGamePanel`) for panels that need callbacks.
 - Add new events through `GameBoard` + `GameRulesEventSubscriber` so Unity and Simulation stay consistent.
 - Use `ISimulationObserver` for any effect tracking that should appear in simulation output.
+
+### UI Style Guide Rules (Copilot)
+- Follow `FungusToast.Core/docs/UI_STYLE_GUIDE.md` for all Unity UI polish and new UI authoring.
+- Prefer semantic style tokens and shared component recipes over ad hoc color/font/button values.
+- Reuse existing prefabs and UI systems before introducing one-off visuals.
+- Avoid new raw color literals in UI scripts unless unavoidable; if needed, keep usage local and add a migration TODO.
+- Keep style-only changes isolated from gameplay logic changes whenever feasible.
 
 **When in doubt:** Consult the existing documentation in `FungusToast.Core/docs/` which contains domain-specific implementation guidance written by the project maintainers.
 
