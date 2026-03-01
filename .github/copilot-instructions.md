@@ -274,7 +274,7 @@ FungusToast.Unity/
 ### Performance Considerations
 - **Core logic:** Optimized for simulation speed (thousands of games)
 - **Memory usage:** Designed for batch processing of multiple games
-- **Simulation runtime:** 1-2 minutes per game typical; varies by strategy complexity and board size
+- **Simulation runtime:** less than 1 minute per game typical; varies by strategy complexity and board size
 - **Output files:** Can be 20KB+ for detailed single-game results
 
 ## Important Notes for Coding Agents
