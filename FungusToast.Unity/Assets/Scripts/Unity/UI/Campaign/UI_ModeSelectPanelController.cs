@@ -27,6 +27,9 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void ApplyStyle()
         {
+            UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.Canvas);
+            UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
+
             UIStyleTokens.Button.ApplyStyle(hotseatButton);
             UIStyleTokens.Button.ApplyStyle(campaignButton);
         }

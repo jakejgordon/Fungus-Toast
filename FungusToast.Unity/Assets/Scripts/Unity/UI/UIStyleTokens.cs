@@ -120,6 +120,55 @@ namespace FungusToast.Unity.UI
             }
         }
 
+        public static void ApplyPanelSurface(GameObject panelRoot, Color color)
+        {
+            if (panelRoot == null)
+            {
+                return;
+            }
+
+            var image = panelRoot.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = color;
+            }
+        }
+
+        public static void ApplyNonButtonTextPalette(GameObject root, float headingSizeThreshold = 34f)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var tmpLabels = root.GetComponentsInChildren<TextMeshProUGUI>(true);
+            for (int i = 0; i < tmpLabels.Length; i++)
+            {
+                if (IsInsideButton(tmpLabels[i].transform))
+                {
+                    continue;
+                }
+
+                tmpLabels[i].color = tmpLabels[i].fontSize >= headingSizeThreshold ? Text.Primary : Text.Secondary;
+            }
+
+            var labels = root.GetComponentsInChildren<UnityEngine.UI.Text>(true);
+            for (int i = 0; i < labels.Length; i++)
+            {
+                if (IsInsideButton(labels[i].transform))
+                {
+                    continue;
+                }
+
+                labels[i].color = Text.Secondary;
+            }
+        }
+
+        private static bool IsInsideButton(Transform target)
+        {
+            return target.GetComponentInParent<UnityEngine.UI.Button>() != null;
+        }
+
         private static Color Hex(string html)
         {
             if (ColorUtility.TryParseHtmlString(html, out var color))

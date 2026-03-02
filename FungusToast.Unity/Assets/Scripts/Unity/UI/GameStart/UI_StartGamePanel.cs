@@ -88,6 +88,20 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void ApplyStyle()
         {
+            UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.Canvas);
+
+            if (humanPlayerSectionRoot != null)
+            {
+                UIStyleTokens.ApplyPanelSurface(humanPlayerSectionRoot, UIStyleTokens.Surface.PanelPrimary);
+            }
+
+            if (testingModePanel != null)
+            {
+                UIStyleTokens.ApplyPanelSurface(testingModePanel, UIStyleTokens.Surface.PanelPrimary);
+            }
+
+            UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
+
             UIStyleTokens.Button.ApplyStyle(startGameButton, useSelectedAsNormal: true);
 
             if (playerSummaryLabel != null)
