@@ -11,8 +11,15 @@ namespace FungusToast.Unity.UI
         [SerializeField] private List<TextMeshProUGUI> growthCycleLabels; // Should be exactly 5
         [SerializeField] private TextMeshProUGUI decayPhaseLabel;
 
-        private Color normalColor = new Color(1f, 1f, 1f, 0.6f);
-        private Color highlightColor = new Color(1f, 1f, 1f, 1f);
+        private Color normalColor;
+        private Color highlightColor;
+
+        private void Awake()
+        {
+            normalColor = UIStyleTokens.Text.Muted;
+            highlightColor = UIStyleTokens.Text.Primary;
+            ResetAllStyles();
+        }
 
         public void ResetTracker()
         {

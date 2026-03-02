@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections;
+using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI
 {
@@ -8,6 +9,37 @@ namespace FungusToast.Unity.UI
     {
         public TextMeshProUGUI bannerText;
         public CanvasGroup canvasGroup;
+        [SerializeField] private Image bannerBackground;
+
+        private void Awake()
+        {
+            ApplyStyle();
+        }
+
+        private void OnEnable()
+        {
+            ApplyStyle();
+        }
+
+        private void ApplyStyle()
+        {
+            if (bannerText != null)
+            {
+                bannerText.color = UIStyleTokens.Text.Primary;
+            }
+
+            if (bannerBackground == null)
+            {
+                bannerBackground = GetComponentInChildren<Image>(true);
+            }
+
+            if (bannerBackground != null)
+            {
+                var bg = UIStyleTokens.Surface.PanelSecondary;
+                bg.a = 0.85f;
+                bannerBackground.color = bg;
+            }
+        }
 
         public void Show(string text, float duration = 2f)
         {

@@ -7,6 +7,7 @@ using FungusToast.Unity.Grid; // Needed for GridVisualizer
 using FungusToast.Core.Config;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders; // ensure provider namespace is imported
+using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI
 {
@@ -25,6 +26,33 @@ namespace FungusToast.Unity.UI
         private GameBoard board;
 
         private Dictionary<int, PlayerSummaryRow> playerSummaryRows = new();
+
+        private void Awake()
+        {
+            ApplyStyle();
+        }
+
+        private void ApplyStyle()
+        {
+            UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.PanelPrimary);
+            UIStyleTokens.ApplyPanelSurface(playerSummaryContainer != null ? playerSummaryContainer.gameObject : null, UIStyleTokens.Surface.PanelSecondary);
+            UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 30f);
+
+            if (roundAndOccupancyText != null)
+            {
+                roundAndOccupancyText.color = UIStyleTokens.Text.Primary;
+            }
+
+            if (randomDecayChanceText != null)
+            {
+                randomDecayChanceText.color = UIStyleTokens.Text.Secondary;
+            }
+
+            if (endgameCountdownText != null)
+            {
+                endgameCountdownText.color = UIStyleTokens.State.Warning;
+            }
+        }
 
         // Add a way to provide GridVisualizer (call this in your GameManager or wherever you wire things up)
         public void SetGridVisualizer(GridVisualizer visualizer)

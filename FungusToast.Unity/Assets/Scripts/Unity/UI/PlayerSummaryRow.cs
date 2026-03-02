@@ -24,6 +24,21 @@ namespace FungusToast.Unity.UI
 
         public int PlayerId { get; set; } // <-- Add this property
 
+        private void Awake()
+        {
+            ApplyStyle();
+        }
+
+        private void ApplyStyle()
+        {
+            if (livingCellsText != null)
+                livingCellsText.color = UIStyleTokens.Text.Primary;
+            if (deadCellsText != null)
+                deadCellsText.color = UIStyleTokens.Text.Secondary;
+            if (toxinCellsText != null)
+                toxinCellsText.color = UIStyleTokens.Text.Secondary;
+        }
+
         /// <summary>
         /// Sets the mold icon sprite.
         /// </summary>

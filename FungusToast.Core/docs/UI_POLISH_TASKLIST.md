@@ -9,7 +9,7 @@ Source of truth for style decisions: [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md).
 - [x] Chunk 2: Adopt tokenized button styles in pre-game flow
 - [x] Chunk 2b: Apply visible pre-game panel/text surfaces
 - [x] Chunk 3: Tooltip + help affordance styling (implementation complete)
-- [ ] Chunk 4: In-game sidebars + HUD hierarchy
+- [x] Chunk 4: In-game sidebars + HUD hierarchy (implementation complete)
 - [ ] Chunk 5: Game logs (global + human)
 - [ ] Chunk 6: Mutation tree alignment
 - [ ] Chunk 7: Overlays/endgame/hotseat/loading
@@ -21,14 +21,15 @@ Source of truth for style decisions: [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md).
 - Added pre-game button styling and fixed selected-number readability.
 - Added visible pre-game surface/text theming for mode select, campaign, and start panel.
 - Added tooltip runtime theming for tooltip background/text and mycovariant tooltip panel.
+- Added sidebar/HUD theming for right sidebar, phase tracker, phase banner, and player summary row text hierarchy.
 - Verified C# compile after each chunk.
 
 ### Next Chunk (start here)
-- Chunk 4: In-game sidebars + HUD hierarchy (style-only, no behavior change).
+- Chunk 5: Game logs (style-only, no behavior change).
 - Target files:
-  - FungusToast.Unity/Assets/Scripts/Unity/UI/UI_RightSideBar.cs
-  - FungusToast.Unity/Assets/Scripts/Unity/UI/UI_MoldProfileRoot.cs
-  - FungusToast.Unity/Assets/Scripts/Unity/UI/UI_PhaseProgressTracker.cs
+  - FungusToast.Unity/Assets/Scripts/Unity/UI/GameLog/UI_GameLogPanel.cs
+  - FungusToast.Unity/Assets/Scripts/Unity/UI/GameLog/UI_GameLogEntry.cs
+  - FungusToast.Unity/Assets/Scripts/Unity/UI/GameLog/GameLogColorSchemes.cs
 
 ## Verification Checklist (run after each chunk)
 
@@ -41,6 +42,7 @@ Source of truth for style decisions: [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md).
 ## Pending Visual Verification
 
 - Chunk 3 requires Unity Play Mode verification for tooltip readability/contrast on mutation and help surfaces.
+- Chunk 4 requires Unity Play Mode verification for sidebar/HUD contrast and text hierarchy.
 
 ## Working Rules
 
