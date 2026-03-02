@@ -423,7 +423,7 @@ namespace FungusToast.Unity.UI.MutationTree
             // Show maxed state prominently
             if (currentLevel >= mutation.MaxLevel)
             {
-                sb.AppendLine("<color=#FFD700><b>✦ FULLY UPGRADED ✦</b></color>");
+                sb.AppendLine($"<color=#{ToHex(MutationTreeColors.MaxedGold)}><b>✦ FULLY UPGRADED ✦</b></color>");
                 sb.AppendLine();
             }
 
@@ -431,7 +431,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (mutation.IsSurge && player.IsSurgeActive(mutation.Id))
             {
                 int turns = player.GetSurgeTurnsRemaining(mutation.Id);
-                sb.AppendLine($"<color=#90f>Currently Active ({turns} turn{(turns == 1 ? "" : "s")} left)</color>");
+                sb.AppendLine($"<color=#{ToHex(MutationTreeColors.GetCategoryAccent(mutation.Category))}>Currently Active ({turns} turn{(turns == 1 ? "" : "s")} left)</color>");
                 sb.AppendLine();
             }
 
@@ -455,7 +455,7 @@ namespace FungusToast.Unity.UI.MutationTree
                     string prereqText = $"- {prereqMutation?.Name ?? "Unknown"} (Level {ownedLevel}/{prereq.RequiredLevel})";
                     if (ownedLevel < prereq.RequiredLevel)
                     {
-                        sb.AppendLine($"<color=#CFFF04>{prereqText}</color>"); // Yellow-green for unmet
+                        sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}>{prereqText}</color>");
                     }
                     else
                     {
@@ -604,7 +604,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             var border = target.AddComponent<Outline>();
-            border.effectColor = new Color(0.4f, 0.4f, 0.45f, 0.45f); // faint cool-gray
+            border.effectColor = new Color(MutationTreeColors.SecondaryText.r, MutationTreeColors.SecondaryText.g, MutationTreeColors.SecondaryText.b, 0.45f);
             border.effectDistance = new Vector2(1.2f, -1.2f);
         }
 
@@ -635,7 +635,7 @@ namespace FungusToast.Unity.UI.MutationTree
             maxText.text = "MAX";
             maxText.fontSize = 10;
             maxText.fontStyle = FontStyles.Bold;
-            maxText.color = new Color(0.15f, 0.1f, 0f, 1f);
+            maxText.color = UIStyleTokens.Text.OnAccent;
             maxText.alignment = TextAlignmentOptions.Center;
             var textRect = textGO.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
@@ -645,6 +645,11 @@ namespace FungusToast.Unity.UI.MutationTree
 
             maxBadge = badgeGO;
             maxBadge.SetActive(false);
+        }
+
+        private static string ToHex(Color color)
+        {
+            return ColorUtility.ToHtmlStringRGB(color);
         }
     }
 }

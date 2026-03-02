@@ -11,29 +11,29 @@ namespace FungusToast.Unity.UI.MutationTree
     public static class MutationTreeColors
     {
         // ── Category accent colors (lighter pastels for dark-background readability) ──
-        private static readonly Color GrowthAccent           = HexColor("#8EDC6A");  // soft lime
-        private static readonly Color CellularResilienceAccent = HexColor("#6DC8E0");  // soft cyan
-        private static readonly Color FungicideAccent        = HexColor("#C084E0");  // soft lavender
-        private static readonly Color GeneticDriftAccent     = HexColor("#F0C850");  // warm gold
-        private static readonly Color MycelialSurgesAccent   = HexColor("#F076A8");  // soft rose
+        private static readonly Color GrowthAccent             = UIStyleTokens.Category.Growth;
+        private static readonly Color CellularResilienceAccent = UIStyleTokens.Category.CellularResilience;
+        private static readonly Color FungicideAccent          = UIStyleTokens.Category.Fungicide;
+        private static readonly Color GeneticDriftAccent       = UIStyleTokens.Category.GeneticDrift;
+        private static readonly Color MycelialSurgesAccent     = UIStyleTokens.Category.MycelialSurges;
 
         // ── Universal state colors ──────────────────────────────────────
-        public static readonly Color MaxedGold       = HexColor("#FFD700");
-        public static readonly Color AffordableGlow  = new Color(1f, 1f, 1f, 0.08f);
-        public static readonly Color LockedTint      = new Color(0.3f, 0.3f, 0.3f, 1f);
-        public static readonly Color DefaultNodeBG   = new Color(0.165f, 0.165f, 0.18f, 1f); // #2A2A2E — darker, slightly warm
+        public static readonly Color MaxedGold     = UIStyleTokens.Accent.Spore;
+        public static readonly Color AffordableGlow = new Color(UIStyleTokens.Text.Primary.r, UIStyleTokens.Text.Primary.g, UIStyleTokens.Text.Primary.b, 0.08f);
+        public static readonly Color LockedTint    = UIStyleTokens.Text.Disabled;
+        public static readonly Color DefaultNodeBG = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Surface.Canvas, 0.34f);
 
         // ── Panel-wide dark theme ───────────────────────────────────────
-        public static readonly Color PanelBG         = HexColor("#1A1A1F");   // deepest background
-        public static readonly Color TopBarBG        = HexColor("#222228");   // top bar / header strip
-        public static readonly Color ScrollAreaBG    = HexColor("#1E1E24");   // scroll view viewport
-        public static readonly Color DockBG          = HexColor("#252530");   // dock bar along the edge
-        public static readonly Color ButtonNormal    = HexColor("#2E2E38");   // default button face
-        public static readonly Color ButtonHighlight = HexColor("#3A3A48");   // button hover
-        public static readonly Color ButtonPressed   = HexColor("#44445A");   // button pressed
-        public static readonly Color PrimaryText     = HexColor("#E0E0E6");   // primary text color
-        public static readonly Color SecondaryText   = HexColor("#B0B0B8");   // secondary / dimmed text
-        public static readonly Color PulseOutline    = HexColor("#F0C850");   // warm gold pulse outline
+        public static readonly Color PanelBG         = UIStyleTokens.Surface.Canvas;
+        public static readonly Color TopBarBG        = UIStyleTokens.Surface.PanelPrimary;
+        public static readonly Color ScrollAreaBG    = UIStyleTokens.Surface.PanelSecondary;
+        public static readonly Color DockBG          = UIStyleTokens.Surface.PanelElevated;
+        public static readonly Color ButtonNormal    = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Surface.Canvas, 0.22f);
+        public static readonly Color ButtonHighlight = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Accent.Spore, 0.12f);
+        public static readonly Color ButtonPressed   = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Surface.Canvas, 0.20f);
+        public static readonly Color PrimaryText     = UIStyleTokens.Text.Primary;
+        public static readonly Color SecondaryText   = UIStyleTokens.Text.Secondary;
+        public static readonly Color PulseOutline    = UIStyleTokens.State.Focus;
 
         // ── Flash / feedback ────────────────────────────────────────────
         public static readonly Color UpgradeFlashWhite = new Color(1f, 1f, 1f, 0.45f);

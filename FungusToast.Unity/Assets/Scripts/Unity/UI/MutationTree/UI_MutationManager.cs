@@ -81,8 +81,21 @@ namespace FungusToast.Unity.UI.MutationTree
             // ── Apply the dark panel theme to all backgrounds ──
             ApplyPanelTheme();
 
+            ApplyActionStyles();
+
             // ── Store Points button tooltip ──
             WireStorePointsTooltip();
+        }
+
+        private void ApplyActionStyles()
+        {
+            UIStyleTokens.Button.ApplyStyle(spendPointsButton, useSelectedAsNormal: true);
+            UIStyleTokens.Button.SetButtonLabelColor(spendPointsButton, UIStyleTokens.Button.TextDefault);
+
+            if (mutationPointsCounterText != null)
+            {
+                mutationPointsCounterText.color = MutationTreeColors.PrimaryText;
+            }
         }
 
         private void Update()
@@ -544,6 +557,9 @@ namespace FungusToast.Unity.UI.MutationTree
         /// </summary>
         private void StyleStorePointsButton()
         {
+            UIStyleTokens.Button.ApplyStyle(storePointsButton);
+            UIStyleTokens.Button.SetButtonLabelColor(storePointsButton, UIStyleTokens.Button.TextDefault);
+
             // Button background — high contrast against top bar so it reads as interactive
             var btnImage = storePointsButton.GetComponent<Image>();
             if (btnImage != null)
