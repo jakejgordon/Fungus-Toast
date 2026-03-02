@@ -7,24 +7,24 @@ namespace FungusToast.Unity.UI.GameLog
     /// </summary>
     public static class GameLogColorSchemes
     {
-        // Current improved scheme (already implemented)
+        // Current default scheme aligned with global UI style tokens.
         public static readonly GameLogColorScheme Current = new GameLogColorScheme
         {
-            NormalText = Color.white,
-            LuckyText = new Color(0.6f, 1f, 0.6f),    // Brighter green
-            UnluckyText = new Color(1f, 0.6f, 0.6f),  // Softer red
-            NormalBackground = new Color(0.1f, 0.1f, 0.1f, 0.2f),
-            LuckyBackground = new Color(0.1f, 0.6f, 0.1f, 0.5f),
-            UnluckyBackground = new Color(0.6f, 0.1f, 0.1f, 0.5f)
+            NormalText = UIStyleTokens.Text.Secondary,
+            LuckyText = UIStyleTokens.State.Success,
+            UnluckyText = UIStyleTokens.State.Danger,
+            NormalBackground = WithAlpha(UIStyleTokens.Surface.PanelSecondary, 0.35f),
+            LuckyBackground = WithAlpha(UIStyleTokens.State.Success, 0.26f),
+            UnluckyBackground = WithAlpha(UIStyleTokens.State.Danger, 0.26f)
         };
         
         // High contrast scheme for better accessibility
         public static readonly GameLogColorScheme HighContrast = new GameLogColorScheme
         {
-            NormalText = Color.white,
+            NormalText = UIStyleTokens.Text.Primary,
             LuckyText = new Color(0.3f, 1f, 0.3f),    // Very bright green
             UnluckyText = new Color(1f, 0.3f, 0.3f),  // Very bright red
-            NormalBackground = new Color(0.05f, 0.05f, 0.05f, 0.3f),
+            NormalBackground = WithAlpha(UIStyleTokens.Surface.PanelSecondary, 0.45f),
             LuckyBackground = new Color(0.0f, 0.4f, 0.0f, 0.4f),
             UnluckyBackground = new Color(0.4f, 0.0f, 0.0f, 0.4f)
         };
@@ -32,10 +32,10 @@ namespace FungusToast.Unity.UI.GameLog
         // Colorblind-friendly scheme using blue/yellow instead of green/red
         public static readonly GameLogColorScheme ColorblindFriendly = new GameLogColorScheme
         {
-            NormalText = Color.white,
+            NormalText = UIStyleTokens.Text.Primary,
             LuckyText = new Color(0.4f, 0.8f, 1f),    // Light blue for positive
             UnluckyText = new Color(1f, 0.8f, 0.2f),  // Orange/yellow for negative
-            NormalBackground = new Color(0.1f, 0.1f, 0.1f, 0.2f),
+            NormalBackground = WithAlpha(UIStyleTokens.Surface.PanelSecondary, 0.35f),
             LuckyBackground = new Color(0.1f, 0.3f, 0.5f, 0.3f),   // Blue tint
             UnluckyBackground = new Color(0.5f, 0.4f, 0.1f, 0.3f)  // Orange tint
         };
@@ -43,13 +43,43 @@ namespace FungusToast.Unity.UI.GameLog
         // Subtle scheme with less saturated colors
         public static readonly GameLogColorScheme Subtle = new GameLogColorScheme
         {
-            NormalText = Color.white,
-            LuckyText = new Color(0.7f, 1f, 0.7f),    // Very light green
-            UnluckyText = new Color(1f, 0.8f, 0.8f),  // Very light red
-            NormalBackground = new Color(0.1f, 0.1f, 0.1f, 0.15f),
-            LuckyBackground = new Color(0.15f, 0.25f, 0.15f, 0.2f),
-            UnluckyBackground = new Color(0.25f, 0.15f, 0.15f, 0.2f)
+            NormalText = UIStyleTokens.Text.Muted,
+            LuckyText = WithAlpha(UIStyleTokens.State.Success, 0.9f),
+            UnluckyText = WithAlpha(UIStyleTokens.State.Danger, 0.9f),
+            NormalBackground = WithAlpha(UIStyleTokens.Surface.PanelSecondary, 0.22f),
+            LuckyBackground = WithAlpha(UIStyleTokens.State.Success, 0.2f),
+            UnluckyBackground = WithAlpha(UIStyleTokens.State.Danger, 0.2f)
         };
+
+        public static Color GetTextColor(GameLogCategory category, GameLogColorScheme? schemeOverride = null)
+        {
+            var scheme = schemeOverride ?? Current;
+            return category switch
+            {
+                GameLogCategory.Normal => scheme.NormalText,
+                GameLogCategory.Lucky => scheme.LuckyText,
+                GameLogCategory.Unlucky => scheme.UnluckyText,
+                _ => scheme.NormalText
+            };
+        }
+
+        public static Color GetBackgroundColor(GameLogCategory category, GameLogColorScheme? schemeOverride = null)
+        {
+            var scheme = schemeOverride ?? Current;
+            return category switch
+            {
+                GameLogCategory.Normal => scheme.NormalBackground,
+                GameLogCategory.Lucky => scheme.LuckyBackground,
+                GameLogCategory.Unlucky => scheme.UnluckyBackground,
+                _ => scheme.NormalBackground
+            };
+        }
+
+        private static Color WithAlpha(Color color, float alpha)
+        {
+            color.a = alpha;
+            return color;
+        }
     }
     
     [System.Serializable]

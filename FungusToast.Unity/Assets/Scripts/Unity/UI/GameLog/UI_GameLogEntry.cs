@@ -22,26 +22,19 @@ namespace FungusToast.Unity.UI.GameLog
             if (messageText != null)
             {
                 messageText.text = entry.Message;
-                messageText.color = entry.TextColor;
+                messageText.color = GameLogColorSchemes.GetTextColor(entry.Category);
             }
             
             if (timestampText != null)
             {
                 timestampText.text = $"R{entry.Round}";
-                timestampText.color = Color.black;
+                timestampText.color = UIStyleTokens.Text.Muted;
             }
             
             // Set background color based on category
             if (backgroundImage != null)
             {
-                Color bgColor = entry.Category switch
-                {
-                    GameLogCategory.Normal => new Color(0.1f, 0.1f, 0.1f, 0.2f),
-                    GameLogCategory.Lucky => new Color(0.1f, 0.6f, 0.1f, 0.5f),
-                    GameLogCategory.Unlucky => new Color(0.6f, 0.1f, 0.1f, 0.5f),
-                    _ => new Color(0.1f, 0.1f, 0.1f, 0.2f)
-                };
-                backgroundImage.color = bgColor;
+                backgroundImage.color = GameLogColorSchemes.GetBackgroundColor(entry.Category);
             }
 
             UpdateDynamicHeightImmediate();

@@ -10,7 +10,7 @@ Source of truth for style decisions: [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md).
 - [x] Chunk 2b: Apply visible pre-game panel/text surfaces
 - [x] Chunk 3: Tooltip + help affordance styling (implementation complete)
 - [x] Chunk 4: In-game sidebars + HUD hierarchy (implementation complete)
-- [ ] Chunk 5: Game logs (global + human)
+- [x] Chunk 5: Game logs (global + human) (implementation complete)
 - [ ] Chunk 6: Mutation tree alignment
 - [ ] Chunk 7: Overlays/endgame/hotseat/loading
 
@@ -22,14 +22,15 @@ Source of truth for style decisions: [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md).
 - Added visible pre-game surface/text theming for mode select, campaign, and start panel.
 - Added tooltip runtime theming for tooltip background/text and mycovariant tooltip panel.
 - Added sidebar/HUD theming for right sidebar, phase tracker, phase banner, and player summary row text hierarchy.
+- Added game log theming: panel surfaces, header/clear button styling, and unified per-category text/background colors.
 - Verified C# compile after each chunk.
 
 ### Next Chunk (start here)
-- Chunk 5: Game logs (style-only, no behavior change).
+- Chunk 6: Mutation tree alignment (style-only, no behavior change).
 - Target files:
-  - FungusToast.Unity/Assets/Scripts/Unity/UI/GameLog/UI_GameLogPanel.cs
-  - FungusToast.Unity/Assets/Scripts/Unity/UI/GameLog/UI_GameLogEntry.cs
-  - FungusToast.Unity/Assets/Scripts/Unity/UI/GameLog/GameLogColorSchemes.cs
+  - FungusToast.Unity/Assets/Scripts/Unity/UI/MutationTree/MutationTreeColors.cs
+  - FungusToast.Unity/Assets/Scripts/Unity/UI/MutationTree/UI_MutationManager.cs
+  - FungusToast.Unity/Assets/Scripts/Unity/UI/MutationTree/MutationNodeUI.cs
 
 ## Verification Checklist (run after each chunk)
 
@@ -43,6 +44,7 @@ Source of truth for style decisions: [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md).
 
 - Chunk 3 requires Unity Play Mode verification for tooltip readability/contrast on mutation and help surfaces.
 - Chunk 4 requires Unity Play Mode verification for sidebar/HUD contrast and text hierarchy.
+- Chunk 5 requires Unity Play Mode verification for log readability and category contrast consistency.
 
 ## Working Rules
 

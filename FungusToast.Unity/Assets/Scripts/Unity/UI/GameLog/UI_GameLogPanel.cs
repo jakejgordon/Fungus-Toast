@@ -31,6 +31,8 @@ namespace FungusToast.Unity.UI.GameLog
 
         private void Awake()
         {
+            ApplyStyle();
+
             if (clearButton != null)
                 clearButton.onClick.AddListener(ClearLog);
 
@@ -63,6 +65,50 @@ namespace FungusToast.Unity.UI.GameLog
                 defaultCapacity: maxVisibleEntries,
                 maxSize: maxVisibleEntries * 2
             );
+        }
+
+        private void ApplyStyle()
+        {
+            UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.PanelPrimary);
+
+            if (contentParent != null)
+            {
+                UIStyleTokens.ApplyPanelSurface(contentParent.gameObject, UIStyleTokens.Surface.PanelSecondary);
+            }
+
+            if (scrollRect != null)
+            {
+                ApplyImageColor(scrollRect.GetComponent<Image>(), UIStyleTokens.Surface.PanelPrimary);
+                if (scrollRect.viewport != null)
+                {
+                    ApplyImageColor(scrollRect.viewport.GetComponent<Image>(), UIStyleTokens.Surface.PanelSecondary);
+                }
+
+                if (scrollRect.content != null)
+                {
+                    ApplyImageColor(scrollRect.content.GetComponent<Image>(), UIStyleTokens.Surface.PanelSecondary);
+                }
+            }
+
+            if (headerText != null)
+            {
+                headerText.color = UIStyleTokens.Text.Primary;
+            }
+
+            if (clearButton != null)
+            {
+                UIStyleTokens.Button.ApplyStyle(clearButton);
+            }
+
+            UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 22f);
+        }
+
+        private static void ApplyImageColor(Image image, Color color)
+        {
+            if (image != null)
+            {
+                image.color = color;
+            }
         }
 
         private void LateUpdate()

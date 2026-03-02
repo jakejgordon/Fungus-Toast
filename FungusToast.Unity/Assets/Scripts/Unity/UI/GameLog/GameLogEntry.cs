@@ -23,13 +23,7 @@ namespace FungusToast.Unity.UI.GameLog
             }
             else
             {
-                TextColor = category switch
-                {
-                    GameLogCategory.Normal => Color.white,
-                    GameLogCategory.Lucky => new Color(0.6f, 1f, 0.6f),
-                    GameLogCategory.Unlucky => new Color(1f, 0.6f, 0.6f),
-                    _ => Color.white
-                };
+                TextColor = GameLogColorSchemes.GetTextColor(category);
             }
             PlayerId = playerId;
             Timestamp = DateTime.Now;
