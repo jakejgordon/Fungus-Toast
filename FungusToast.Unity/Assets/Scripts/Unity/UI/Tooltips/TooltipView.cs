@@ -12,6 +12,7 @@ namespace FungusToast.Unity.UI.Tooltips
     {
         [SerializeField] private TextMeshProUGUI text;
         [SerializeField] private RectTransform background;
+        [SerializeField] private Image backgroundImage;
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private LayoutElement layoutElement;
 
@@ -21,6 +22,42 @@ namespace FungusToast.Unity.UI.Tooltips
         private Coroutine fadeCoroutine;
 
         public RectTransform RectTransform => transform as RectTransform;
+
+        private void Awake()
+        {
+            ApplyStyle();
+        }
+
+        private void OnEnable()
+        {
+            ApplyStyle();
+        }
+
+        private void ApplyStyle()
+        {
+            if (backgroundImage == null)
+            {
+                if (background != null)
+                {
+                    backgroundImage = background.GetComponent<Image>();
+                }
+
+                if (backgroundImage == null)
+                {
+                    backgroundImage = GetComponentInChildren<Image>(true);
+                }
+            }
+
+            if (backgroundImage != null)
+            {
+                backgroundImage.color = UIStyleTokens.Surface.PanelSecondary;
+            }
+
+            if (text != null)
+            {
+                text.color = UIStyleTokens.Text.Primary;
+            }
+        }
 
         public void PrepareForLayout()
         {

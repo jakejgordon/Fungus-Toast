@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using TMPro; // If using TextMeshPro for text fields
+using UnityEngine.UI;
 
 namespace Assets.Scripts.Unity.UI
 {
@@ -14,6 +15,7 @@ namespace Assets.Scripts.Unity.UI
         [SerializeField] private GameObject panelRoot; // The panel object to enable/disable
         [SerializeField] private TextMeshProUGUI headerText;
         [SerializeField] private TextMeshProUGUI bodyText;
+        [SerializeField] private Image panelBackground;
 
         private void Awake()
         {
@@ -23,7 +25,36 @@ namespace Assets.Scripts.Unity.UI
                 return;
             }
             Instance = this;
+            ApplyStyle();
             HideTooltip();
+        }
+
+        private void ApplyStyle()
+        {
+            if (panelRoot != null)
+            {
+                FungusToast.Unity.UI.UIStyleTokens.ApplyPanelSurface(panelRoot, FungusToast.Unity.UI.UIStyleTokens.Surface.PanelSecondary);
+            }
+
+            if (panelBackground == null && panelRoot != null)
+            {
+                panelBackground = panelRoot.GetComponent<Image>();
+            }
+
+            if (panelBackground != null)
+            {
+                panelBackground.color = FungusToast.Unity.UI.UIStyleTokens.Surface.PanelSecondary;
+            }
+
+            if (headerText != null)
+            {
+                headerText.color = FungusToast.Unity.UI.UIStyleTokens.Text.Primary;
+            }
+
+            if (bodyText != null)
+            {
+                bodyText.color = FungusToast.Unity.UI.UIStyleTokens.Text.Secondary;
+            }
         }
 
         /// <summary>
@@ -31,6 +62,7 @@ namespace Assets.Scripts.Unity.UI
         /// </summary>
         public void ShowTooltip(string header, string body, RectTransform anchor = null)
         {
+            ApplyStyle();
             headerText.text = header;
             bodyText.text = body;
             panelRoot.SetActive(true);
