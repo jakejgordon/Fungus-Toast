@@ -20,6 +20,8 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void Awake()
         {
+            ApplyStyle();
+
             if (resumeButton != null) resumeButton.onClick.AddListener(OnResumeClicked);
             if (newButton != null) newButton.onClick.AddListener(OnNewClicked);
             if (deleteButton != null) deleteButton.onClick.AddListener(OnDeleteClicked);
@@ -36,6 +38,17 @@ namespace FungusToast.Unity.UI.Campaign
             bool has = GameManager.Instance != null && GameManager.Instance.HasCampaignSave();
             if (resumeButton != null) resumeButton.interactable = has;
             if (deleteButton != null) deleteButton.interactable = has;
+
+            UIStyleTokens.Button.SetButtonLabelColor(resumeButton, has ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled);
+            UIStyleTokens.Button.SetButtonLabelColor(deleteButton, has ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled);
+        }
+
+        private void ApplyStyle()
+        {
+            UIStyleTokens.Button.ApplyStyle(resumeButton);
+            UIStyleTokens.Button.ApplyStyle(newButton);
+            UIStyleTokens.Button.ApplyStyle(deleteButton);
+            UIStyleTokens.Button.ApplyStyle(backButton);
         }
 
         private void OnResumeClicked()

@@ -15,6 +15,7 @@ namespace FungusToast.Unity.UI.GameStart
             _button = GetComponent<Button>();
             if (_button != null)
             {
+                UIStyleTokens.Button.ApplyStyle(_button);
                 _button.onClick.AddListener(OnClick);
             }
         }
@@ -31,6 +32,9 @@ namespace FungusToast.Unity.UI.GameStart
         {
             if (highlightImage != null)
             {
+                var selectedTint = UIStyleTokens.Button.BackgroundSelected;
+                selectedTint.a = 0.55f;
+                highlightImage.color = selectedTint;
                 highlightImage.enabled = isSelected;
                 highlightImage.gameObject.SetActive(isSelected);
             }

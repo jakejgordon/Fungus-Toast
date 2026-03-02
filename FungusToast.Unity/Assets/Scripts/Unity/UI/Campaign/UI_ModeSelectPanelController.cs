@@ -19,8 +19,16 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void Awake()
         {
+            ApplyStyle();
+
             if (hotseatButton != null) hotseatButton.onClick.AddListener(OnHotseatClicked);
             if (campaignButton != null) campaignButton.onClick.AddListener(OnCampaignClicked);
+        }
+
+        private void ApplyStyle()
+        {
+            UIStyleTokens.Button.ApplyStyle(hotseatButton);
+            UIStyleTokens.Button.ApplyStyle(campaignButton);
         }
 
         private void OnEnable()

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 namespace FungusToast.Unity.UI
 {
@@ -79,6 +80,43 @@ namespace FungusToast.Unity.UI
                     colorMultiplier = colorMultiplier,
                     fadeDuration = fadeDuration
                 };
+            }
+
+            public static void ApplyStyle(UnityEngine.UI.Button button, bool useSelectedAsNormal = false)
+            {
+                if (button == null)
+                {
+                    return;
+                }
+
+                var colors = BuildColorBlock();
+                if (useSelectedAsNormal)
+                {
+                    colors.normalColor = BackgroundSelected;
+                }
+
+                button.colors = colors;
+                SetButtonLabelColor(button, TextDefault);
+            }
+
+            public static void SetButtonLabelColor(UnityEngine.UI.Button button, Color color)
+            {
+                if (button == null)
+                {
+                    return;
+                }
+
+                var tmpLabels = button.GetComponentsInChildren<TextMeshProUGUI>(true);
+                for (int i = 0; i < tmpLabels.Length; i++)
+                {
+                    tmpLabels[i].color = color;
+                }
+
+                var labels = button.GetComponentsInChildren<UnityEngine.UI.Text>(true);
+                for (int i = 0; i < labels.Length; i++)
+                {
+                    labels[i].color = color;
+                }
             }
         }
 

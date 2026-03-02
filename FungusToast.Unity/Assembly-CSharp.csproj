@@ -155,6 +155,7 @@
     <Compile Include="Assets\Scripts\Unity\Services\HotseatTurnManager.cs" />
     <Compile Include="Assets\Scripts\Unity\Services\PostGrowthVisualSequence.cs" />
     <Compile Include="Assets\Scripts\Unity\Cameras\MagnifierCameraFollowMouse.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\UIStyleTokens.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameStart\UI_StartGamePanel.cs" />
   </ItemGroup>
   <ItemGroup>

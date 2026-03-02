@@ -44,6 +44,8 @@ namespace FungusToast.Unity.UI.GameStart
             // Strict validation: all required refs must be assigned in Inspector
             ValidateSerializedRefs();
 
+            ApplyStyle();
+
             startGameButton.interactable = false;
             InitializeTestingModeUI();
             InitializeHumanPlayerUI();
@@ -82,6 +84,21 @@ namespace FungusToast.Unity.UI.GameStart
                 }
             }
             UpdatePlayerSummaryLabel();
+        }
+
+        private void ApplyStyle()
+        {
+            UIStyleTokens.Button.ApplyStyle(startGameButton, useSelectedAsNormal: true);
+
+            if (playerSummaryLabel != null)
+            {
+                playerSummaryLabel.color = UIStyleTokens.Text.Secondary;
+            }
+
+            if (fastForwardLabel != null)
+            {
+                fastForwardLabel.color = UIStyleTokens.Text.Secondary;
+            }
         }
 
         private void InitializeTestingModeUI()
