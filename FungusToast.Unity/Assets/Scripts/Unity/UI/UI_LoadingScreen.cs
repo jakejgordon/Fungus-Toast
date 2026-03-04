@@ -1,6 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI
 {
@@ -24,6 +25,7 @@ namespace FungusToast.Unity.UI
 
         [Header("Optional UI")]
         [SerializeField] private TextMeshProUGUI statusLabel;
+        [SerializeField] private Image backgroundImage;
 
         private CanvasGroup canvasGroup;
         private Coroutine fadeCoroutine;
@@ -31,6 +33,27 @@ namespace FungusToast.Unity.UI
         private void Awake()
         {
             canvasGroup = GetComponent<CanvasGroup>();
+            ApplyStyle();
+        }
+
+        private void ApplyStyle()
+        {
+            if (backgroundImage == null)
+            {
+                backgroundImage = GetComponent<Image>();
+            }
+
+            if (backgroundImage != null)
+            {
+                backgroundImage.color = UIStyleTokens.Surface.OverlayDim;
+            }
+
+            if (statusLabel != null)
+            {
+                statusLabel.color = UIStyleTokens.Text.Primary;
+            }
+
+            UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 28f);
         }
 
         /// <summary>Show the overlay instantly at full opacity.</summary>

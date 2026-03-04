@@ -12,6 +12,8 @@ namespace FungusToast.Unity.UI
 {
     public class PlayerSummaryRow : MonoBehaviour
     {
+        private const float StatTextScale = 1.18f;
+
         [SerializeField] private Image moldIconImage;
         [SerializeField] private TextMeshProUGUI livingCellsText;
         [SerializeField] private TextMeshProUGUI deadCellsText;
@@ -32,11 +34,50 @@ namespace FungusToast.Unity.UI
         private void ApplyStyle()
         {
             if (livingCellsText != null)
+            {
                 livingCellsText.color = UIStyleTokens.Text.Primary;
+                livingCellsText.fontStyle = FontStyles.Bold;
+                ApplyTextScale(livingCellsText, StatTextScale);
+                ConfigureNumericColumn(livingCellsText);
+            }
             if (deadCellsText != null)
+            {
                 deadCellsText.color = UIStyleTokens.Text.Secondary;
+                deadCellsText.fontStyle = FontStyles.Bold;
+                ApplyTextScale(deadCellsText, StatTextScale);
+                ConfigureNumericColumn(deadCellsText);
+            }
             if (toxinCellsText != null)
+            {
                 toxinCellsText.color = UIStyleTokens.Text.Secondary;
+                toxinCellsText.fontStyle = FontStyles.Bold;
+                ApplyTextScale(toxinCellsText, StatTextScale);
+                ConfigureNumericColumn(toxinCellsText);
+            }
+        }
+
+        private static void ConfigureNumericColumn(TextMeshProUGUI label)
+        {
+            if (label == null) return;
+
+            label.alignment = TextAlignmentOptions.MidlineRight;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.overflowMode = TextOverflowModes.Ellipsis;
+        }
+
+        private static void ApplyTextScale(TextMeshProUGUI label, float scale)
+        {
+            if (label == null || scale <= 1f) return;
+
+            if (label.enableAutoSizing)
+            {
+                label.fontSizeMin *= scale;
+                label.fontSizeMax *= scale;
+            }
+            else
+            {
+                label.fontSize *= scale;
+            }
         }
 
         /// <summary>

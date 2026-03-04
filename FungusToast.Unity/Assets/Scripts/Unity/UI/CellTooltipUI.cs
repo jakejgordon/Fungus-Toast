@@ -201,15 +201,15 @@ namespace FungusToast.Unity.UI
             {
                 if (cell.IsAlive)
                 {
-                    statusText.text = "<color=#00FF00><b>Status: Alive</b></color>";
+                    statusText.text = $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Status: Alive</b></color>";
                 }
                 else if (cell.IsDead)
                 {
-                    statusText.text = "<color=#fbe9e5><b>Status: Dead</b></color>";
+                    statusText.text = $"<color=#{ToHex(UIStyleTokens.Text.Secondary)}><b>Status: Dead</b></color>";
                 }
                 else if (cell.IsToxin)
                 {
-                    statusText.text = "<color=#FF00FF><b>Status: Toxin</b></color>";
+                    statusText.text = $"<color=#{ToHex(UIStyleTokens.Category.Fungicide)}><b>Status: Toxin</b></color>";
                 }
             }
         }
@@ -293,7 +293,7 @@ namespace FungusToast.Unity.UI
 
                 if (highlightYoung)
                 {
-                    growthAgeText.text = $"Growth Cycle Age: <color=#90EE90>{cell.GrowthCycleAge}</color>";
+                    growthAgeText.text = $"Growth Cycle Age: <color=#{ToHex(UIStyleTokens.State.Success)}>{cell.GrowthCycleAge}</color>";
                 }
                 else
                 {
@@ -315,7 +315,7 @@ namespace FungusToast.Unity.UI
                     if (cyclesRemaining > 0)
                         expirationText.text = $"Cycles Until Expiration: {cyclesRemaining}";
                     else
-                        expirationText.text = "<color=#FF0000>Expires this cycle</color>";
+                        expirationText.text = $"<color=#{ToHex(UIStyleTokens.State.Danger)}>Expires this cycle</color>";
                 }
                 else
                 {
@@ -444,7 +444,7 @@ namespace FungusToast.Unity.UI
             {
                 if (showGrowthSource)
                 {
-                    growthSourceText.text = $"<color=#90EE90>Source: {GetGrowthSourceDisplayName(cell.SourceOfGrowth.Value)}</color>";
+                    growthSourceText.text = $"<color=#{ToHex(UIStyleTokens.State.Info)}>Source: {GetGrowthSourceDisplayName(cell.SourceOfGrowth.Value)}</color>";
                 }
                 else
                 {
@@ -466,7 +466,7 @@ namespace FungusToast.Unity.UI
             {
                 if (isResistant)
                 {
-                    resistantText.text = "<color=#FFD700><b>Resistant</b></color>";
+                    resistantText.text = $"<color=#{ToHex(UIStyleTokens.Accent.Spore)}><b>Resistant</b></color>";
                 }
                 else
                 {
@@ -501,11 +501,11 @@ namespace FungusToast.Unity.UI
 
                 // Animation states (for visual feedback)
                 if (cell.IsNewlyGrown)
-                    additionalInfo.AppendLine("<color=#FFFF00>● Newly Grown</color>");
+                    additionalInfo.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}>● Newly Grown</color>");
                 if (cell.IsDying)
-                    additionalInfo.AppendLine("<color=#FF0000>● Dying</color>");
+                    additionalInfo.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Danger)}>● Dying</color>");
                 if (cell.IsReceivingToxinDrop)
-                    additionalInfo.AppendLine("<color=#FF00FF>● Receiving Toxin</color>");
+                    additionalInfo.AppendLine($"<color=#{ToHex(UIStyleTokens.Category.Fungicide)}>● Receiving Toxin</color>");
 
                 string infoText = additionalInfo.ToString().Trim();
                 bool hasAdditionalInfo = !string.IsNullOrEmpty(infoText);
@@ -668,6 +668,11 @@ namespace FungusToast.Unity.UI
             
             UnityEngine.Debug.Log($"SUMMARY: {visibleCount} visible groups, {hiddenCount} hidden groups. Expected spacing gaps: {Mathf.Max(0, visibleCount - 1)}");
             UnityEngine.Debug.Log("=== END PREFAB STRUCTURE DIAGNOSTIC ===");
+        }
+
+        private static string ToHex(Color color)
+        {
+            return ColorUtility.ToHtmlStringRGB(color);
         }
     }
 }

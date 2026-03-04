@@ -39,8 +39,30 @@ namespace FungusToast.Unity.UI.Hotseat
                 canvasGroup = root.GetComponent<CanvasGroup>();
                 if (canvasGroup == null) canvasGroup = root.AddComponent<CanvasGroup>();
             }
+
+            ApplyStyle();
+
             WireOkButton();
             HideImmediate(preserveCallback: true); // ensure hidden but do not clear future callback placeholder
+        }
+
+        private void ApplyStyle()
+        {
+            UIStyleTokens.ApplyPanelSurface(root, UIStyleTokens.Surface.OverlayDim);
+
+            if (titleText != null)
+            {
+                titleText.color = UIStyleTokens.Text.Primary;
+            }
+
+            UIStyleTokens.Button.ApplyStyle(okButton, useSelectedAsNormal: true);
+
+            if (playerIconImage != null)
+            {
+                playerIconImage.color = UIStyleTokens.Text.Primary;
+            }
+
+            UIStyleTokens.ApplyNonButtonTextPalette(root, headingSizeThreshold: 30f);
         }
 
         private static string GetHierarchyPath(Transform t)

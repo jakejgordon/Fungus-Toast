@@ -13,6 +13,9 @@ namespace FungusToast.Unity.UI
 {
     public class UI_RightSidebar : MonoBehaviour
     {
+        private const float TopStatsScale = 1.18f;
+        private const float SummaryHeaderScale = 1.10f;
+
         [Header("Player Summary Panel")]
         [SerializeField] private Transform playerSummaryContainer;
         [SerializeField] private GameObject playerSummaryPrefab;
@@ -41,17 +44,77 @@ namespace FungusToast.Unity.UI
             if (roundAndOccupancyText != null)
             {
                 roundAndOccupancyText.color = UIStyleTokens.Text.Primary;
+                ApplyTextScale(roundAndOccupancyText, TopStatsScale);
+                roundAndOccupancyText.fontStyle = FontStyles.Bold;
+                ConfigureSingleLineAutosize(roundAndOccupancyText);
             }
 
             if (randomDecayChanceText != null)
             {
                 randomDecayChanceText.color = UIStyleTokens.Text.Secondary;
+                ApplyTextScale(randomDecayChanceText, TopStatsScale);
+                ConfigureSingleLineAutosize(randomDecayChanceText);
             }
 
             if (endgameCountdownText != null)
             {
                 endgameCountdownText.color = UIStyleTokens.State.Warning;
+                ApplyTextScale(endgameCountdownText, TopStatsScale);
+                endgameCountdownText.fontStyle = FontStyles.Bold;
             }
+
+            ApplyPlayerSummaryHeaderReadability();
+        }
+
+        private void ApplyPlayerSummaryHeaderReadability()
+        {
+            if (playerSummaryContainer == null) return;
+
+            Transform headerRow = playerSummaryContainer.Find("UI_PlayerSummariesPanelHeaderRow");
+            if (headerRow == null) return;
+
+            var headerLabels = headerRow.GetComponentsInChildren<TextMeshProUGUI>(true);
+            foreach (var label in headerLabels)
+            {
+                if (label == null) continue;
+                label.color = UIStyleTokens.Text.Primary;
+                label.fontStyle = FontStyles.Bold;
+                ApplyTextScale(label, SummaryHeaderScale);
+                ConfigureSingleLineAutosize(label);
+
+                string normalized = label.text?.Trim().ToLowerInvariant() ?? string.Empty;
+                if (normalized.StartsWith("alive") || normalized.StartsWith("dead") || normalized.StartsWith("toxin"))
+                {
+                    label.alignment = TextAlignmentOptions.MidlineRight;
+                }
+            }
+        }
+
+        private static void ApplyTextScale(TextMeshProUGUI label, float scale)
+        {
+            if (label == null || scale <= 1f) return;
+
+            if (label.enableAutoSizing)
+            {
+                label.fontSizeMin *= scale;
+                label.fontSizeMax *= scale;
+            }
+            else
+            {
+                label.fontSize *= scale;
+            }
+        }
+
+        private static void ConfigureSingleLineAutosize(TextMeshProUGUI label)
+        {
+            if (label == null) return;
+
+            float targetSize = label.enableAutoSizing ? label.fontSizeMax : label.fontSize;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.overflowMode = TextOverflowModes.Ellipsis;
+            label.enableAutoSizing = true;
+            label.fontSizeMax = targetSize;
+            label.fontSizeMin = Mathf.Max(10f, targetSize * 0.70f);
         }
 
         // Add a way to provide GridVisualizer (call this in your GameManager or wherever you wire things up)
@@ -182,8 +245,7 @@ namespace FungusToast.Unity.UI
 
         public void SetRoundAndOccupancy(int round, float occupancy)
         {
-            // Show as: "Round: 7 | Occupancy: 32.7%"
-            roundAndOccupancyText.text = $"<b>Round:</b> {round}   <b>Occupancy:</b> {occupancy:F2}%";
+            roundAndOccupancyText.text = $"<b>Round:</b> {round}\n<b>Occupancy:</b> {occupancy:F2}%";
             UpdateRandomDecayChance(round); // update dynamic label each round update
         }
 

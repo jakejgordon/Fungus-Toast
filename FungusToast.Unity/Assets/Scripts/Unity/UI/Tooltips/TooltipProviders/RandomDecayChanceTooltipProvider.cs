@@ -43,7 +43,8 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             if (effective < 0f) effective = 0f;
 
             var sb = new StringBuilder();
-            sb.AppendLine("<b><color=#ffc861>Random Decay Chance</color></b>");
+            string warningHex = ColorUtility.ToHtmlStringRGB(UIStyleTokens.State.Warning);
+            sb.AppendLine($"<b><color=#{warningHex}>Random Decay Chance</color></b>");
             sb.AppendLine("Chance that a living, non-resistant cell dies randomly during each decay phase.");
             sb.AppendLine();
 

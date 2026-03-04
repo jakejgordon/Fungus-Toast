@@ -12,7 +12,7 @@ Source of truth for style decisions: [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md).
 - [x] Chunk 4: In-game sidebars + HUD hierarchy (implementation complete)
 - [x] Chunk 5: Game logs (global + human) (implementation complete)
 - [x] Chunk 6: Mutation tree alignment (implementation complete)
-- [ ] Chunk 7: Overlays/endgame/hotseat/loading
+- [x] Chunk 7: Overlays/endgame/hotseat/loading (implementation complete)
 
 ## Session Handoff Notes
 
@@ -24,14 +24,17 @@ Source of truth for style decisions: [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md).
 - Added sidebar/HUD theming for right sidebar, phase tracker, phase banner, and player summary row text hierarchy.
 - Added game log theming: panel surfaces, header/clear button styling, and unified per-category text/background colors.
 - Aligned mutation tree palette and action controls with global style tokens; removed hardcoded node tooltip/badge/border colors.
+- Added overlay/endgame theming for endgame panel, hotseat turn prompt, loading screen, and endgame result rows.
+- Verification/tuning pass started: replaced remaining high-visibility hardcoded rich-text colors in mutation points preview, random decay tooltip title, and growth surge bonus text.
 - Verified C# compile after each chunk.
 
 ### Next Chunk (start here)
-- Chunk 7: Overlays/endgame/hotseat/loading (style-only, no behavior change).
-- Target files:
-  - FungusToast.Unity/Assets/Scripts/Unity/UI/UI_EndGamePanel.cs
-  - FungusToast.Unity/Assets/Scripts/Unity/UI/Hotseat/UI_HotseatTurnPrompt.cs
-  - FungusToast.Unity/Assets/Scripts/Unity/UI/UI_LoadingScreen.cs
+- Full-playthrough visual verification + token tuning pass.
+- Target areas:
+  - Pre-game + campaign flow
+  - Tooltips + logs
+  - Right sidebar + mutation tree
+  - Endgame/hotseat/loading overlays
 
 ## Verification Checklist (run after each chunk)
 
@@ -47,6 +50,7 @@ Source of truth for style decisions: [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md).
 - Chunk 4 requires Unity Play Mode verification for sidebar/HUD contrast and text hierarchy.
 - Chunk 5 requires Unity Play Mode verification for log readability and category contrast consistency.
 - Chunk 6 requires Unity Play Mode verification for mutation tree contrast, category accents, and node tooltip readability.
+- Chunk 7 requires Unity Play Mode verification for overlay readability and button prominence in endgame/hotseat/loading prompts.
 
 ## Working Rules
 

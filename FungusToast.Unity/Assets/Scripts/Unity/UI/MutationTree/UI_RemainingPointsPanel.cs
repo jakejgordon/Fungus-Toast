@@ -39,7 +39,8 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (mutationPointsText == null) return;
             int projected = Mathf.Max(0, currentPoints - cost);
-            mutationPointsText.text = $"Mutation Points: {currentPoints}  <color=#AAAAAA>→ {projected}</color>";
+            string mutedHex = ColorUtility.ToHtmlStringRGB(UIStyleTokens.Text.Muted);
+            mutationPointsText.text = $"Mutation Points: {currentPoints}  <color=#{mutedHex}>→ {projected}</color>";
         }
 
         /// <summary>

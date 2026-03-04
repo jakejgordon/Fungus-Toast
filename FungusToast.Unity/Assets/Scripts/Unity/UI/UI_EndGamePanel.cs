@@ -19,6 +19,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Button continueButton; // campaign mid-run victory only
         [SerializeField] private Button exitButton; // always available to return to mode select
         [SerializeField] private TextMeshProUGUI outcomeLabel; // dynamic outcome messaging
+        [SerializeField] private Image panelBackground;
 
         // Façade reference — set by GameManager so we don't need GameManager.Instance
         private GameUIManager gameUI;
@@ -42,6 +43,8 @@ namespace FungusToast.Unity.UI
             if (playerResultRowPrefab == null)
                 Debug.LogError("UI_EndGamePanel: PlayerResultRowPrefab reference is missing!");
 
+            ApplyStyle();
+
             if (continueButton != null)
                 continueButton.onClick.AddListener(OnContinueCampaign);
             else
@@ -53,6 +56,31 @@ namespace FungusToast.Unity.UI
                 Debug.LogWarning("UI_EndGamePanel: ExitButton reference is missing (player cannot exit results).");
 
             HideInstant();
+        }
+
+        private void ApplyStyle()
+        {
+            if (panelBackground == null)
+            {
+                panelBackground = GetComponent<Image>();
+            }
+
+            if (panelBackground != null)
+            {
+                panelBackground.color = UIStyleTokens.Surface.OverlayDim;
+            }
+
+            UIStyleTokens.ApplyPanelSurface(resultsContainer != null ? resultsContainer.gameObject : null, UIStyleTokens.Surface.PanelPrimary);
+
+            UIStyleTokens.Button.ApplyStyle(continueButton, useSelectedAsNormal: true);
+            UIStyleTokens.Button.ApplyStyle(exitButton);
+
+            if (outcomeLabel != null)
+            {
+                outcomeLabel.color = UIStyleTokens.Text.Primary;
+            }
+
+            UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 30f);
         }
 
         /* ─────────── Public API (generic solo / hotseat) ─────────── */
@@ -86,16 +114,16 @@ namespace FungusToast.Unity.UI
                 if (!victory)
                 {
                     // defeat – show lost level index (1-based)
-                    outcomeLabel.text = $"<color=#D63A3A><b>You aren't moldy enough! Campaign lost at level {lostLevelDisplay}.</b></color>";
+                    outcomeLabel.text = $"<color=#{ToHex(UIStyleTokens.State.Danger)}><b>You aren't moldy enough! Campaign lost at level {lostLevelDisplay}.</b></color>";
                 }
                 else if (finalLevel)
                 {
-                    outcomeLabel.text = "<color=#32C832><b>You have won the campaign!</b></color>";
+                    outcomeLabel.text = $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>You have won the campaign!</b></color>";
                 }
                 else
                 {
                     // mid-run victory
-                    outcomeLabel.text = "<color=#32C832><b>Your mold wins! Advance to the next level.</b></color>";
+                    outcomeLabel.text = $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Your mold wins! Advance to the next level.</b></color>";
                 }
             }
 
@@ -197,6 +225,11 @@ namespace FungusToast.Unity.UI
                 yield return null;
             }
             canvasGroup.alpha = targetAlpha;
+        }
+
+        private static string ToHex(Color color)
+        {
+            return ColorUtility.ToHtmlStringRGB(color);
         }
     }
 }

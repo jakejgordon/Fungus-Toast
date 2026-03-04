@@ -14,14 +14,18 @@ namespace FungusToast.Unity.UI
 {
     public class UI_MoldProfileRoot : MonoBehaviour
     {
+        private const float HeaderTextScale = 1.18f;
+
         [Header("Growth Preview (All 8 Directions)")]
         [Tooltip("Parent containers for the 8 growth preview cells (N,NE,E,SE,S,SW,W,NW). Assign the parent objects; children auto-located by name.")]
         [SerializeField] private GrowthDirectionCell[] directionCells = Array.Empty<GrowthDirectionCell>();
         [SerializeField] private Image centerPlayerIcon;
+        [SerializeField] private TextMeshProUGUI growthPreviewHeaderText;
 
         [Header("Formatting / Visuals")]
         [SerializeField] private Color zeroChanceColor = new Color(1f,1f,1f,0.35f);
         [SerializeField] private Color finalZeroGreen = new Color(0.4f, 1f, 0.4f, 1f);
+        [SerializeField] private string growthPreviewHeaderLabel = "Growth Chance Per Living Cell";
 
         private Player trackedPlayer;
         private List<Player> allPlayers;
@@ -32,6 +36,103 @@ namespace FungusToast.Unity.UI
 
         private bool cellsResolved = false;
         private bool deferredRefreshRequested = false;
+
+        private void Awake()
+        {
+            ApplyStyle();
+        }
+
+        private void OnEnable()
+        {
+            ApplyStyle();
+        }
+
+        private void ApplyStyle()
+        {
+            UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.PanelPrimary);
+            UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 20f);
+
+            zeroChanceColor = new Color(UIStyleTokens.Text.Primary.r, UIStyleTokens.Text.Primary.g, UIStyleTokens.Text.Primary.b, 0.35f);
+            finalZeroGreen = UIStyleTokens.State.Success;
+
+            var images = GetComponentsInChildren<Image>(true);
+            for (int i = 0; i < images.Length; i++)
+            {
+                var image = images[i];
+                if (image == null || image == centerPlayerIcon)
+                {
+                    continue;
+                }
+
+                if (image.sprite != null)
+                {
+                    continue;
+                }
+
+                if (IsBrightNeutral(image.color))
+                {
+                    image.color = UIStyleTokens.Surface.PanelSecondary;
+                }
+            }
+
+            ApplyGrowthPreviewHeaderText();
+        }
+
+        private void ApplyGrowthPreviewHeaderText()
+        {
+            if (growthPreviewHeaderText == null)
+                growthPreviewHeaderText = TryFindGrowthHeaderLabel();
+
+            if (growthPreviewHeaderText == null)
+                return;
+
+            growthPreviewHeaderText.text = growthPreviewHeaderLabel;
+            growthPreviewHeaderText.color = UIStyleTokens.Text.Primary;
+            growthPreviewHeaderText.fontStyle = FontStyles.Bold;
+            ApplyTextScale(growthPreviewHeaderText, HeaderTextScale);
+        }
+
+        private TextMeshProUGUI TryFindGrowthHeaderLabel()
+        {
+            var labels = GetComponentsInChildren<TextMeshProUGUI>(true);
+            foreach (var label in labels)
+            {
+                if (label == null) continue;
+
+                string value = label.text;
+                if (string.IsNullOrWhiteSpace(value)) continue;
+
+                string normalized = value.ToLowerInvariant();
+                if (normalized.Contains("growth") && !normalized.Contains("%"))
+                    return label;
+            }
+
+            return null;
+        }
+
+        private static void ApplyTextScale(TextMeshProUGUI label, float scale)
+        {
+            if (label == null || scale <= 1f) return;
+
+            if (label.enableAutoSizing)
+            {
+                label.fontSizeMin *= scale;
+                label.fontSizeMax *= scale;
+            }
+            else
+            {
+                label.fontSize *= scale;
+            }
+        }
+
+        private static bool IsBrightNeutral(Color color)
+        {
+            float max = Mathf.Max(color.r, Mathf.Max(color.g, color.b));
+            float min = Mathf.Min(color.r, Mathf.Min(color.g, color.b));
+            float avg = (color.r + color.g + color.b) / 3f;
+            bool lowSaturation = (max - min) < 0.10f;
+            return color.a > 0.3f && avg > 0.70f && lowSaturation;
+        }
 
         public void Initialize(Player player, List<Player> players)
         {

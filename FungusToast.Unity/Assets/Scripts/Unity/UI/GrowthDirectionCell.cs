@@ -12,6 +12,9 @@ namespace FungusToast.Unity.UI
     [Serializable]
     public class GrowthDirectionCell
     {
+        private const float PercentTextScale = 1.18f;
+        private const float SurgeTextScale = 1.12f;
+
         [Tooltip("Which direction this cell represents.")] public GrowthPreviewDirection direction;
         [Tooltip("Assign only the parent container GameObject. Children are auto-resolved by fixed names.")]
         public GameObject parent;
@@ -43,6 +46,12 @@ namespace FungusToast.Unity.UI
 
             // Ensure rich text for surge
             surgeText.richText = true;
+
+            ApplyTextScale(percentText, PercentTextScale);
+            percentText.fontStyle = FontStyles.Bold;
+            percentText.color = UIStyleTokens.Text.Primary;
+
+            ApplyTextScale(surgeText, SurgeTextScale);
             resolved = true;
         }
 
@@ -50,14 +59,18 @@ namespace FungusToast.Unity.UI
         {
             if (!resolved) return; // safety
             if (percentText)
-                percentText.text = $"{(baseChance * 100f):F3}%";
+            {
+                percentText.text = $"{(baseChance * 100f):F2}%";
+                percentText.color = baseChance <= SurgeDisplayEpsilon ? zeroChanceColor : UIStyleTokens.Text.Primary;
+            }
 
             if (surgeText)
             {
                 if (surgeBonus > SurgeDisplayEpsilon)
                 {
                     if (!surgeText.gameObject.activeSelf) surgeText.gameObject.SetActive(true);
-                    surgeText.text = $"<b><color=#32CD32>+{(surgeBonus * 100f):F3}%</color></b>";
+                    string successHex = ColorUtility.ToHtmlStringRGB(UIStyleTokens.State.Success);
+                    surgeText.text = $"<b><color=#{successHex}>+{(surgeBonus * 100f):F3}%</color></b>";
                 }
                 else if (surgeText.gameObject.activeSelf)
                     surgeText.gameObject.SetActive(false);
@@ -66,6 +79,21 @@ namespace FungusToast.Unity.UI
             // Keep arrow color constant for readability (no dimming / whitening)
             if (arrowImage && arrowImage.color != originalArrowColor)
                 arrowImage.color = originalArrowColor;
+        }
+
+        private static void ApplyTextScale(TextMeshProUGUI label, float scale)
+        {
+            if (label == null || scale <= 1f) return;
+
+            if (label.enableAutoSizing)
+            {
+                label.fontSizeMin *= scale;
+                label.fontSizeMax *= scale;
+            }
+            else
+            {
+                label.fontSize *= scale;
+            }
         }
     }
 }

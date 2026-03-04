@@ -6,6 +6,9 @@ namespace FungusToast.Unity.UI
 {
     public class UI_PhaseProgressTracker : MonoBehaviour
     {
+        private const float PhaseLabelScale = 1.10f;
+        private const float CycleLabelScale = 1.12f;
+
         [SerializeField] private TextMeshProUGUI mutationPhaseLabel;
         [SerializeField] private TextMeshProUGUI growthPhaseLabel;
         [SerializeField] private List<TextMeshProUGUI> growthCycleLabels; // Should be exactly 5
@@ -18,7 +21,49 @@ namespace FungusToast.Unity.UI
         {
             normalColor = UIStyleTokens.Text.Muted;
             highlightColor = UIStyleTokens.Text.Primary;
+            ApplyReadabilityScale();
             ResetAllStyles();
+        }
+
+        private void ApplyReadabilityScale()
+        {
+            ApplyTextScale(mutationPhaseLabel, PhaseLabelScale);
+            ApplyTextScale(growthPhaseLabel, PhaseLabelScale);
+            ApplyTextScale(decayPhaseLabel, PhaseLabelScale);
+
+            ConfigureSingleLineFit(mutationPhaseLabel);
+            ConfigureSingleLineFit(growthPhaseLabel);
+            ConfigureSingleLineFit(decayPhaseLabel);
+
+            foreach (var cycleLabel in growthCycleLabels)
+                ApplyTextScale(cycleLabel, CycleLabelScale);
+        }
+
+        private static void ApplyTextScale(TextMeshProUGUI label, float scale)
+        {
+            if (label == null || scale <= 1f) return;
+
+            if (label.enableAutoSizing)
+            {
+                label.fontSizeMin *= scale;
+                label.fontSizeMax *= scale;
+            }
+            else
+            {
+                label.fontSize *= scale;
+            }
+        }
+
+        private static void ConfigureSingleLineFit(TextMeshProUGUI label)
+        {
+            if (label == null) return;
+
+            float targetSize = label.enableAutoSizing ? label.fontSizeMax : label.fontSize;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.overflowMode = TextOverflowModes.Ellipsis;
+            label.enableAutoSizing = true;
+            label.fontSizeMax = targetSize;
+            label.fontSizeMin = Mathf.Max(10f, targetSize * 0.70f);
         }
 
         public void ResetTracker()
