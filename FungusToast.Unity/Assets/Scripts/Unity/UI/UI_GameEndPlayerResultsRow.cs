@@ -41,10 +41,10 @@ namespace FungusToast.Unity.UI
             if (deadText != null) deadText.color = UIStyleTokens.Text.Muted;
             if (toxinText != null) toxinText.color = UIStyleTokens.Text.Muted;
 
-            ConfigureText(rankText, TextAlignmentOptions.Center, 26f, allowAutoSize: false);
-            ConfigureText(nameText, TextAlignmentOptions.Left, 26f, allowAutoSize: true);
-            ConfigureText(livingText, TextAlignmentOptions.Right, 24f, allowAutoSize: false);
-            ConfigureText(deadText, TextAlignmentOptions.Right, 24f, allowAutoSize: false);
+            ConfigureText(rankText, TextAlignmentOptions.Center, 23f, allowAutoSize: false);
+            ConfigureText(nameText, TextAlignmentOptions.Left, 23f, allowAutoSize: true);
+            ConfigureText(livingText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
+            ConfigureText(deadText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
             EnsureToxinText();
         }
 
@@ -77,7 +77,7 @@ namespace FungusToast.Unity.UI
             if (toxinText != null)
             {
                 toxinText.color = UIStyleTokens.Text.Muted;
-                ConfigureText(toxinText, TextAlignmentOptions.Right, 24f, allowAutoSize: false);
+                ConfigureText(toxinText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
                 toxinText.text = "";
             }
 

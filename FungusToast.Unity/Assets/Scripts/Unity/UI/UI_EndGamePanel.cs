@@ -282,15 +282,15 @@ namespace FungusToast.Unity.UI
 
             var layout = header.GetComponent<HorizontalLayoutGroup>();
             layout.childAlignment = TextAnchor.MiddleLeft;
-            layout.spacing = 18f;
-            layout.padding = new RectOffset(18, 18, 6, 6);
+            layout.spacing = 14f;
+            layout.padding = new RectOffset(10, 10, 2, 2);
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = false;
 
             var headerLayout = header.GetComponent<LayoutElement>();
-            headerLayout.preferredHeight = 36f;
+            headerLayout.preferredHeight = 30f;
 
             CreateHeaderCell(header.transform, string.Empty, 60f, TextAlignmentOptions.Center, false);
             CreateHeaderCell(header.transform, string.Empty, 60f, TextAlignmentOptions.Center, false);
@@ -313,10 +313,10 @@ namespace FungusToast.Unity.UI
             label.text = text;
             label.color = UIStyleTokens.Text.Secondary;
             label.fontStyle = FontStyles.Bold;
-            label.fontSize = 22f;
+            label.fontSize = 20f;
             label.alignment = alignment;
             label.enableAutoSizing = true;
-            label.fontSizeMax = 22f;
+            label.fontSizeMax = 20f;
             label.fontSizeMin = 14f;
             label.textWrappingMode = TextWrappingModes.NoWrap;
             label.overflowMode = TextOverflowModes.Ellipsis;

@@ -15,6 +15,8 @@ namespace FungusToast.Unity.UI.GameStart
 
         [SerializeField] private List<UI_PlayerCountButton> playerButtons;
         [SerializeField] private Button startGameButton;
+        [SerializeField] private Button backButton;
+        [SerializeField] private GameObject modeSelectPanel;
 
         [Header("Human Players (Hotseat)")]
         [SerializeField] private GameObject humanPlayerSectionRoot; // container for human player selector (hidden until total picked)
@@ -46,6 +48,9 @@ namespace FungusToast.Unity.UI.GameStart
 
             ApplyStyle();
 
+            if (backButton != null)
+                backButton.onClick.AddListener(OnBackPressed);
+
             startGameButton.interactable = false;
             InitializeTestingModeUI();
             InitializeHumanPlayerUI();
@@ -64,6 +69,8 @@ namespace FungusToast.Unity.UI.GameStart
             if (fastForwardRoundsInput == null) throw new InvalidOperationException("UI_StartGamePanel: fastForwardRoundsInput is not assigned.");
             if (fastForwardLabel == null) throw new InvalidOperationException("UI_StartGamePanel: fastForwardLabel is not assigned.");
             if (skipToEndgameToggle == null) throw new InvalidOperationException("UI_StartGamePanel: skipToEndgameToggle is not assigned.");
+            if (backButton == null) Debug.LogWarning("UI_StartGamePanel: backButton not assigned (menu back navigation disabled).");
+            if (modeSelectPanel == null) Debug.LogWarning("UI_StartGamePanel: modeSelectPanel not assigned (menu back navigation disabled).");
             // Human player selection (soft validation: allow scene to run if not yet wired to avoid editor breakage)
             if (humanPlayerSectionRoot == null) Debug.LogWarning("UI_StartGamePanel: humanPlayerSectionRoot not assigned (hotseat selector will not show).");
             if (playerSummaryLabel == null) Debug.LogWarning("UI_StartGamePanel: playerSummaryLabel not assigned.");
@@ -103,6 +110,7 @@ namespace FungusToast.Unity.UI.GameStart
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
 
             UIStyleTokens.Button.ApplyStyle(startGameButton, useSelectedAsNormal: true);
+            UIStyleTokens.Button.ApplyStyle(backButton);
 
             if (playerSummaryLabel != null)
             {
@@ -112,6 +120,72 @@ namespace FungusToast.Unity.UI.GameStart
             if (fastForwardLabel != null)
             {
                 fastForwardLabel.color = UIStyleTokens.Text.Secondary;
+            }
+
+            ApplyTestingInputReadability();
+        }
+
+        private void ApplyTestingInputReadability()
+        {
+            ApplyDropdownReadability(mycovariantDropdown);
+            ApplyInputReadability(fastForwardRoundsInput);
+        }
+
+        private static void ApplyDropdownReadability(TMP_Dropdown dropdown)
+        {
+            if (dropdown == null)
+            {
+                return;
+            }
+
+            if (dropdown.captionText != null)
+            {
+                dropdown.captionText.color = UIStyleTokens.Button.TextDefault;
+            }
+
+            if (dropdown.itemText != null)
+            {
+                dropdown.itemText.color = UIStyleTokens.Button.TextDefault;
+            }
+
+            var allLabels = dropdown.GetComponentsInChildren<TextMeshProUGUI>(true);
+            for (int i = 0; i < allLabels.Length; i++)
+            {
+                if (allLabels[i] == null)
+                {
+                    continue;
+                }
+
+                if (allLabels[i].name.IndexOf("Placeholder", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    allLabels[i].color = UIStyleTokens.Text.Disabled;
+                }
+                else
+                {
+                    allLabels[i].color = UIStyleTokens.Button.TextDefault;
+                }
+            }
+        }
+
+        private static void ApplyInputReadability(TMP_InputField input)
+        {
+            if (input == null)
+            {
+                return;
+            }
+
+            if (input.textComponent != null)
+            {
+                input.textComponent.color = UIStyleTokens.Button.TextDefault;
+            }
+
+            if (input.placeholder is TextMeshProUGUI placeholderLabel)
+            {
+                placeholderLabel.color = UIStyleTokens.Text.Disabled;
+            }
+            else if (input.placeholder is Graphic placeholderGraphic)
+            {
+                placeholderGraphic.color = UIStyleTokens.Text.Disabled;
             }
         }
 
@@ -274,6 +348,13 @@ namespace FungusToast.Unity.UI.GameStart
                     magnifierVisualRoot.SetActive(true);
                 MagnifyingGlassFollowMouse.gameStarted = true;
             }
+        }
+
+        public void OnBackPressed()
+        {
+            gameObject.SetActive(false);
+            if (modeSelectPanel != null)
+                modeSelectPanel.SetActive(true);
         }
     }
 }
