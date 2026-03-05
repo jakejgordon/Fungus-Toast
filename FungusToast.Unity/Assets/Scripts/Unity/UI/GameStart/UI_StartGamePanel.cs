@@ -24,6 +24,7 @@ namespace FungusToast.Unity.UI.GameStart
         [SerializeField] private TextMeshProUGUI playerSummaryLabel; // "X Players (Y Human / Z AI)"
 
         [Header("Testing Mode")]
+        [SerializeField] private GameObject testingOptionsSectionRoot;
         [SerializeField] private Toggle testingModeToggle;
         [SerializeField] private TMP_Dropdown mycovariantDropdown;
         [SerializeField] private GameObject testingModePanel;
@@ -43,6 +44,7 @@ namespace FungusToast.Unity.UI.GameStart
         private void Awake()
         {
             Instance = this;
+            ResolveTestingModeReferences();
             // Strict validation: all required refs must be assigned in Inspector
             ValidateSerializedRefs();
 
@@ -69,11 +71,271 @@ namespace FungusToast.Unity.UI.GameStart
             if (fastForwardRoundsInput == null) throw new InvalidOperationException("UI_StartGamePanel: fastForwardRoundsInput is not assigned.");
             if (fastForwardLabel == null) throw new InvalidOperationException("UI_StartGamePanel: fastForwardLabel is not assigned.");
             if (skipToEndgameToggle == null) throw new InvalidOperationException("UI_StartGamePanel: skipToEndgameToggle is not assigned.");
+            if (testingOptionsSectionRoot == null) Debug.LogWarning("UI_StartGamePanel: testingOptionsSectionRoot not assigned (will use legacy direct testing refs).");
             if (backButton == null) Debug.LogWarning("UI_StartGamePanel: backButton not assigned (menu back navigation disabled).");
             if (modeSelectPanel == null) Debug.LogWarning("UI_StartGamePanel: modeSelectPanel not assigned (menu back navigation disabled).");
             // Human player selection (soft validation: allow scene to run if not yet wired to avoid editor breakage)
             if (humanPlayerSectionRoot == null) Debug.LogWarning("UI_StartGamePanel: humanPlayerSectionRoot not assigned (hotseat selector will not show).");
             if (playerSummaryLabel == null) Debug.LogWarning("UI_StartGamePanel: playerSummaryLabel not assigned.");
+        }
+
+        private void ResolveTestingModeReferences()
+        {
+            var sectionRoot = testingOptionsSectionRoot;
+            if (sectionRoot == null)
+            {
+                var found = transform.Find("UI_TestingOptionsSection");
+                if (found != null)
+                {
+                    sectionRoot = found.gameObject;
+                    testingOptionsSectionRoot = sectionRoot;
+                }
+            }
+
+            if (sectionRoot == null)
+            {
+                return;
+            }
+
+            EnsureTestingSectionLayout(sectionRoot);
+
+            if (testingModeToggle == null)
+            {
+                testingModeToggle = FindToggleByName(sectionRoot.transform, "TestingModeToggle", "Skip");
+                if (testingModeToggle == null)
+                {
+                    testingModeToggle = sectionRoot.GetComponentInChildren<Toggle>(true);
+                }
+            }
+
+            if (mycovariantDropdown == null)
+            {
+                mycovariantDropdown = sectionRoot.GetComponentInChildren<TMP_Dropdown>(true);
+            }
+
+            if (fastForwardRoundsInput == null)
+            {
+                fastForwardRoundsInput = sectionRoot.GetComponentInChildren<TMP_InputField>(true);
+            }
+
+            if (skipToEndgameToggle == null)
+            {
+                skipToEndgameToggle = FindToggleByName(sectionRoot.transform, "Skip", null);
+            }
+
+            if (testingModePanel == null)
+            {
+                var panelTransform = FindTransformByName(sectionRoot.transform, "TestingModePanel");
+                if (panelTransform != null)
+                {
+                    testingModePanel = panelTransform.gameObject;
+                }
+            }
+
+            if (fastForwardLabel == null)
+            {
+                var labelTransform = FindTransformByName(sectionRoot.transform, "FastForwardRoundsLabel");
+                if (labelTransform != null)
+                {
+                    fastForwardLabel = labelTransform.GetComponent<TextMeshProUGUI>();
+                }
+            }
+        }
+
+        private static Transform FindTransformByName(Transform root, string contains)
+        {
+            var allChildren = root.GetComponentsInChildren<Transform>(true);
+            for (int index = 0; index < allChildren.Length; index++)
+            {
+                var child = allChildren[index];
+                if (child == null)
+                {
+                    continue;
+                }
+
+                if (child.name.IndexOf(contains, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
+        private static Toggle FindToggleByName(Transform root, string include, string exclude)
+        {
+            var toggles = root.GetComponentsInChildren<Toggle>(true);
+            for (int index = 0; index < toggles.Length; index++)
+            {
+                var toggle = toggles[index];
+                if (toggle == null)
+                {
+                    continue;
+                }
+
+                string name = toggle.gameObject.name;
+                bool includes = string.IsNullOrEmpty(include) || name.IndexOf(include, StringComparison.OrdinalIgnoreCase) >= 0;
+                bool excludes = !string.IsNullOrEmpty(exclude) && name.IndexOf(exclude, StringComparison.OrdinalIgnoreCase) >= 0;
+                if (includes && !excludes)
+                {
+                    return toggle;
+                }
+            }
+
+            return null;
+        }
+
+        private static void EnsureTestingSectionLayout(GameObject sectionRoot)
+        {
+            var rectTransform = sectionRoot.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                rectTransform.anchorMin = new Vector2(0f, rectTransform.anchorMin.y);
+                rectTransform.anchorMax = new Vector2(1f, rectTransform.anchorMax.y);
+                rectTransform.anchoredPosition = new Vector2(0f, rectTransform.anchoredPosition.y);
+                rectTransform.sizeDelta = new Vector2(0f, rectTransform.sizeDelta.y);
+            }
+
+            var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
+            if (layoutGroup == null)
+            {
+                layoutGroup = sectionRoot.AddComponent<VerticalLayoutGroup>();
+            }
+
+            layoutGroup.padding = new RectOffset(0, 0, 0, 0);
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+            layoutGroup.spacing = 8f;
+            layoutGroup.childForceExpandWidth = false;
+            layoutGroup.childForceExpandHeight = false;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = false;
+
+            var fitter = sectionRoot.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                fitter = sectionRoot.AddComponent<ContentSizeFitter>();
+            }
+
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var layoutElement = sectionRoot.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = sectionRoot.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.preferredHeight = -1f;
+            layoutElement.minHeight = 40f;
+            layoutElement.minWidth = 300f;
+            layoutElement.preferredWidth = -1f;
+            layoutElement.preferredHeight = 40f;
+
+            EnsureTestingToggleRowLayout(sectionRoot.transform);
+        }
+
+        private static void EnsureTestingToggleRowLayout(Transform sectionRoot)
+        {
+            var toggleRow = sectionRoot.Find("UI_TestingModeToggle") ?? FindTransformByName(sectionRoot, "TestingModeToggle");
+            if (toggleRow == null)
+            {
+                return;
+            }
+
+            if (toggleRow.name.IndexOf("Background", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                toggleRow.name.IndexOf("Label", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                toggleRow = toggleRow.parent;
+            }
+
+            if (toggleRow == null)
+            {
+                return;
+            }
+
+            var accidentalLayouts = toggleRow.GetComponents<LayoutGroup>();
+            for (int index = 0; index < accidentalLayouts.Length; index++)
+            {
+                if (accidentalLayouts[index] != null)
+                {
+                    Destroy(accidentalLayouts[index]);
+                }
+            }
+
+            var accidentalFitter = toggleRow.GetComponent<ContentSizeFitter>();
+            if (accidentalFitter != null)
+            {
+                Destroy(accidentalFitter);
+            }
+
+            var toggleRect = toggleRow.GetComponent<RectTransform>();
+            if (toggleRect != null)
+            {
+                toggleRect.anchorMin = new Vector2(0f, toggleRect.anchorMin.y);
+                toggleRect.anchorMax = new Vector2(1f, toggleRect.anchorMax.y);
+                toggleRect.anchoredPosition = new Vector2(0f, toggleRect.anchoredPosition.y);
+                toggleRect.sizeDelta = new Vector2(0f, Mathf.Max(30f, toggleRect.sizeDelta.y));
+            }
+
+            var toggleLayoutElement = toggleRow.GetComponent<LayoutElement>();
+            if (toggleLayoutElement == null)
+            {
+                toggleLayoutElement = toggleRow.gameObject.AddComponent<LayoutElement>();
+            }
+
+            toggleLayoutElement.minWidth = 300f;
+            toggleLayoutElement.preferredWidth = 300f;
+            toggleLayoutElement.minHeight = 30f;
+            toggleLayoutElement.preferredHeight = 30f;
+
+            var toggleBackground = FindTransformByName(toggleRow, "ToggleBackground");
+            if (toggleBackground is RectTransform backgroundRect)
+            {
+                backgroundRect.anchorMin = new Vector2(0f, 0.5f);
+                backgroundRect.anchorMax = new Vector2(0f, 0.5f);
+                backgroundRect.pivot = new Vector2(0.5f, 0.5f);
+                backgroundRect.anchoredPosition = new Vector2(10f, 0f);
+                backgroundRect.sizeDelta = new Vector2(20f, 20f);
+            }
+
+            var toggleLabel = FindTransformByName(toggleRow, "ToggleLabel");
+            if (toggleLabel is RectTransform labelRect)
+            {
+                if (labelRect.parent != toggleRow)
+                {
+                    labelRect.SetParent(toggleRow, false);
+                }
+
+                labelRect.anchorMin = new Vector2(0f, 0.5f);
+                labelRect.anchorMax = new Vector2(0f, 0.5f);
+                labelRect.pivot = new Vector2(0f, 0.5f);
+                labelRect.anchoredPosition = new Vector2(30f, 0f);
+                labelRect.sizeDelta = new Vector2(260f, 30f);
+
+                var labelLayoutElement = labelRect.GetComponent<LayoutElement>();
+                if (labelLayoutElement == null)
+                {
+                    labelLayoutElement = labelRect.gameObject.AddComponent<LayoutElement>();
+                }
+
+                labelLayoutElement.ignoreLayout = true;
+                labelLayoutElement.preferredWidth = -1f;
+                labelLayoutElement.preferredHeight = -1f;
+            }
+
+            var legacyLabel = toggleLabel != null ? toggleLabel.GetComponent<Text>() : null;
+            if (legacyLabel != null)
+            {
+                legacyLabel.color = UIStyleTokens.Button.TextDefault;
+                legacyLabel.alignment = TextAnchor.MiddleLeft;
+            }
+
+            var tmpLabel = toggleLabel != null ? toggleLabel.GetComponent<TextMeshProUGUI>() : null;
+            if (tmpLabel != null)
+            {
+                tmpLabel.color = UIStyleTokens.Button.TextDefault;
+                tmpLabel.alignment = TextAlignmentOptions.MidlineLeft;
+            }
         }
 
         private void InitializeHumanPlayerUI()
@@ -203,6 +465,7 @@ namespace FungusToast.Unity.UI.GameStart
             // Set up testing mode toggle
             testingModeToggle.onValueChanged.AddListener(OnTestingModeToggled);
             testingModePanel.SetActive(false);
+            RefreshTestingSectionLayout(false);
 
             // Initialize fast-forward input
             fastForwardRoundsInput.contentType = TMP_InputField.ContentType.IntegerNumber;
@@ -225,6 +488,54 @@ namespace FungusToast.Unity.UI.GameStart
             {
                 // Reset when turning testing mode off
                 skipToEndgameToggle.isOn = false;
+            }
+
+            RefreshTestingSectionLayout(isEnabled);
+        }
+
+        private void RefreshTestingSectionLayout(bool isExpanded)
+        {
+            if (testingOptionsSectionRoot == null)
+            {
+                return;
+            }
+
+            const float collapsedHeight = 40f;
+            float expandedHeight = collapsedHeight;
+
+            if (isExpanded && testingModePanel != null)
+            {
+                float panelHeight = 220f;
+                var panelLayoutElement = testingModePanel.GetComponent<LayoutElement>();
+                if (panelLayoutElement != null && panelLayoutElement.preferredHeight > 0f)
+                {
+                    panelHeight = panelLayoutElement.preferredHeight;
+                }
+
+                expandedHeight += 8f + panelHeight;
+            }
+
+            var sectionLayoutElement = testingOptionsSectionRoot.GetComponent<LayoutElement>();
+            if (sectionLayoutElement != null)
+            {
+                sectionLayoutElement.minHeight = isExpanded ? expandedHeight : collapsedHeight;
+                sectionLayoutElement.preferredHeight = isExpanded ? expandedHeight : collapsedHeight;
+            }
+
+            var sectionRect = testingOptionsSectionRoot.GetComponent<RectTransform>();
+            if (sectionRect != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(sectionRect);
+
+                if (sectionRect.parent is RectTransform parentRect)
+                {
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(parentRect);
+
+                    if (parentRect.parent is RectTransform grandparentRect)
+                    {
+                        LayoutRebuilder.ForceRebuildLayoutImmediate(grandparentRect);
+                    }
+                }
             }
         }
 
