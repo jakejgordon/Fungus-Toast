@@ -16,17 +16,32 @@ namespace FungusToast.Unity.UI
 
         private void Awake()
         {
+            if (rowBackground == null)
+            {
+                rowBackground = GetComponent<Image>();
+                if (rowBackground == null)
+                {
+                    rowBackground = gameObject.AddComponent<Image>();
+                }
+            }
+
             if (rowBackground != null)
             {
                 var c = UIStyleTokens.Surface.PanelSecondary;
-                c.a = 0.45f;
+                c.a = 0.6f;
                 rowBackground.color = c;
+                rowBackground.raycastTarget = false;
             }
 
             if (rankText != null) rankText.color = UIStyleTokens.Text.Primary;
             if (nameText != null) nameText.color = UIStyleTokens.Text.Primary;
             if (livingText != null) livingText.color = UIStyleTokens.Text.Secondary;
             if (deadText != null) deadText.color = UIStyleTokens.Text.Muted;
+
+            ConfigureText(rankText, TextAlignmentOptions.Center, 26f, allowAutoSize: false);
+            ConfigureText(nameText, TextAlignmentOptions.Left, 26f, allowAutoSize: true);
+            ConfigureText(livingText, TextAlignmentOptions.Right, 24f, allowAutoSize: false);
+            ConfigureText(deadText, TextAlignmentOptions.Right, 24f, allowAutoSize: false);
         }
 
         /* -------- public API -------- */
@@ -35,8 +50,25 @@ namespace FungusToast.Unity.UI
             rankText.text = rank.ToString();
             iconImage.sprite = icon;
             nameText.text = playerName;
-            livingText.text = $"Alive: {living}";
-            deadText.text = $"Dead:  {dead}";
+            livingText.text = $"Alive {living}";
+            deadText.text = $"Dead {dead}";
+        }
+
+        private static void ConfigureText(TextMeshProUGUI label, TextAlignmentOptions alignment, float fontSize, bool allowAutoSize)
+        {
+            if (label == null)
+            {
+                return;
+            }
+
+            label.alignment = alignment;
+            label.enableAutoSizing = allowAutoSize;
+            if (!allowAutoSize)
+            {
+                label.fontSize = fontSize;
+                label.enableWordWrapping = false;
+                label.overflowMode = TextOverflowModes.Ellipsis;
+            }
         }
     }
 }

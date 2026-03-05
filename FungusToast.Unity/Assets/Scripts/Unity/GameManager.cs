@@ -639,6 +639,41 @@ namespace FungusToast.Unity
             }
         }
 
+        public void ReturnToMainMenu()
+        {
+            StopAllCoroutines();
+            TooltipManager.Instance?.CancelAll();
+
+            gameEnded = false;
+            isCountdownActive = false;
+            roundsRemainingUntilGameEnd = 0;
+            isInDraftPhase = false;
+            isFastForwarding = false;
+            _fastForwardStarted = false;
+            initialMutationPointsAssigned = false;
+            endgameService?.Reset();
+
+            FirstUpgradeRounds?.Clear();
+            players.Clear();
+            humanPlayers.Clear();
+            humanPlayer = null;
+            Board = null;
+
+            gridVisualizer?.ClearAllHighlights();
+            gridVisualizer?.ClearHoverEffect();
+
+            ShowStartGamePanel();
+        }
+
+        public void QuitGame()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
+
         public void ShowSelectionPrompt(string message)
         {
             SelectionPromptPanel.SetActive(true);

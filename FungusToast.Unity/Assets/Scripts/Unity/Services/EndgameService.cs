@@ -93,12 +93,14 @@ namespace FungusToast.Unity
             }
             if (roundsRemainingUntilGameEnd == 1)
             {
-                ui.RightSidebar?.SetEndgameCountdownText("<b><color=#FF0000>Final Round!</color></b>");
+                string dangerHex = ToHex(UIStyleTokens.State.Danger);
+                ui.RightSidebar?.SetEndgameCountdownText($"<b><color=#{dangerHex}>Final round!</color></b>");
                 ui.GameLogRouter?.OnEndgameTriggered(1);
             }
             else
             {
-                ui.RightSidebar?.SetEndgameCountdownText($"<b><color=#FFA500>Endgame in {roundsRemainingUntilGameEnd} rounds</color></b>");
+                string warningHex = ToHex(UIStyleTokens.State.Warning);
+                ui.RightSidebar?.SetEndgameCountdownText($"<b><color=#{warningHex}>Endgame in {roundsRemainingUntilGameEnd} rounds</color></b>");
                 ui.GameLogRouter?.OnEndgameTriggered(roundsRemainingUntilGameEnd);
             }
         }
@@ -172,6 +174,11 @@ namespace FungusToast.Unity
                 int max = rounds.Max();
                 Console.WriteLine($"Player {pid} | Mutation {mid} | Avg First Acquired: {avg:F1} | Min: {min} | Max: {max}");
             }
+        }
+
+        private static string ToHex(Color color)
+        {
+            return ColorUtility.ToHtmlStringRGB(color);
         }
     }
 }

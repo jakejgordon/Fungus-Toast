@@ -6,6 +6,7 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Players;
 using System.Linq;
 using TMPro;
+using FungusToast.Unity.UI.Tooltips;
 
 namespace FungusToast.Unity.UI
 {
@@ -18,8 +19,10 @@ namespace FungusToast.Unity.UI
         [SerializeField] private UI_GameEndPlayerResultsRow playerResultRowPrefab;
         [SerializeField] private Button continueButton; // campaign mid-run victory only
         [SerializeField] private Button exitButton; // always available to return to mode select
+        [SerializeField] private Button playAgainButton; // solo / hotseat replay
         [SerializeField] private TextMeshProUGUI outcomeLabel; // dynamic outcome messaging
         [SerializeField] private Image panelBackground;
+        [SerializeField] private Image resultsCardBackground;
 
         // Façade reference — set by GameManager so we don't need GameManager.Instance
         private GameUIManager gameUI;
@@ -44,14 +47,20 @@ namespace FungusToast.Unity.UI
                 Debug.LogError("UI_EndGamePanel: PlayerResultRowPrefab reference is missing!");
 
             ApplyStyle();
+            ApplyTooltips();
 
             if (continueButton != null)
                 continueButton.onClick.AddListener(OnContinueCampaign);
             else
                 Debug.LogWarning("UI_EndGamePanel: ContinueButton reference is missing (campaign mid-run victories will have no continue).");
 
+            if (playAgainButton != null)
+                playAgainButton.onClick.AddListener(OnReturnToMainMenu);
+            else
+                Debug.LogWarning("UI_EndGamePanel: PlayAgainButton reference is missing (player cannot return to main menu).");
+
             if (exitButton != null)
-                exitButton.onClick.AddListener(OnExitToModeSelect);
+                exitButton.onClick.AddListener(OnExitGame);
             else
                 Debug.LogWarning("UI_EndGamePanel: ExitButton reference is missing (player cannot exit results).");
 
@@ -70,10 +79,18 @@ namespace FungusToast.Unity.UI
                 panelBackground.color = UIStyleTokens.Surface.OverlayDim;
             }
 
-            UIStyleTokens.ApplyPanelSurface(resultsContainer != null ? resultsContainer.gameObject : null, UIStyleTokens.Surface.PanelPrimary);
+            if (resultsCardBackground != null)
+            {
+                resultsCardBackground.color = UIStyleTokens.Surface.PanelPrimary;
+            }
 
             UIStyleTokens.Button.ApplyStyle(continueButton, useSelectedAsNormal: true);
             UIStyleTokens.Button.ApplyStyle(exitButton);
+            UIStyleTokens.Button.ApplyStyle(playAgainButton, useSelectedAsNormal: true);
+
+            EnsureButtonLayout(continueButton);
+            EnsureButtonLayout(exitButton);
+            EnsureButtonLayout(playAgainButton);
 
             if (outcomeLabel != null)
             {
@@ -83,6 +100,13 @@ namespace FungusToast.Unity.UI
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 30f);
         }
 
+        private void ApplyTooltips()
+        {
+            EnsureTooltip(playAgainButton, "Return to the main menu to start a new game.");
+            EnsureTooltip(exitButton, "Close the game.");
+            EnsureTooltip(continueButton, "Advance to the next campaign level.");
+        }
+
         /* ─────────── Public API (generic solo / hotseat) ─────────── */
         public void ShowResults(List<Player> ranked, GameBoard board)
         {
@@ -90,6 +114,7 @@ namespace FungusToast.Unity.UI
             // Solo / hotseat baseline: only exit button (continue hidden)
             if (continueButton != null) continueButton.gameObject.SetActive(false);
             if (exitButton != null) exitButton.gameObject.SetActive(true);
+            if (playAgainButton != null) playAgainButton.gameObject.SetActive(true);
             if (outcomeLabel != null) outcomeLabel.text = ""; // no special messaging
         }
 
@@ -114,16 +139,22 @@ namespace FungusToast.Unity.UI
                 if (!victory)
                 {
                     // defeat – show lost level index (1-based)
-                    outcomeLabel.text = $"<color=#{ToHex(UIStyleTokens.State.Danger)}><b>You aren't moldy enough! Campaign lost at level {lostLevelDisplay}.</b></color>";
+                    outcomeLabel.text =
+                        $"<color=#{ToHex(UIStyleTokens.State.Danger)}><b>Campaign lost</b></color>\n" +
+                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Level {lostLevelDisplay}</color></size>";
                 }
                 else if (finalLevel)
                 {
-                    outcomeLabel.text = $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>You have won the campaign!</b></color>";
+                    outcomeLabel.text =
+                        $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Campaign complete</b></color>\n" +
+                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>All levels conquered</color></size>";
                 }
                 else
                 {
                     // mid-run victory
-                    outcomeLabel.text = $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Your mold wins! Advance to the next level.</b></color>";
+                    outcomeLabel.text =
+                        $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Level cleared</b></color>\n" +
+                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Advance to the next level</color></size>";
                 }
             }
 
@@ -132,6 +163,8 @@ namespace FungusToast.Unity.UI
                 continueButton.gameObject.SetActive(victory && !finalLevel && hasNextLevel);
             if (exitButton != null)
                 exitButton.gameObject.SetActive(true);
+            if (playAgainButton != null)
+                playAgainButton.gameObject.SetActive(true);
         }
 
         /* ─────────── Internal Row Builder ─────────── */
@@ -196,13 +229,19 @@ namespace FungusToast.Unity.UI
                 GameManager.Instance?.StartCampaignResume();
         }
 
-        private void OnExitToModeSelect()
+        private void OnReturnToMainMenu()
         {
             HideInstant();
             if (onExitToModeSelect != null)
                 onExitToModeSelect();
             else
-                GameManager.Instance?.ShowStartGamePanel();
+                GameManager.Instance?.ReturnToMainMenu();
+        }
+
+        private void OnExitGame()
+        {
+            HideInstant();
+            GameManager.Instance?.QuitGame();
         }
 
         private void HideInstant()
@@ -225,6 +264,40 @@ namespace FungusToast.Unity.UI
                 yield return null;
             }
             canvasGroup.alpha = targetAlpha;
+        }
+
+        private static void EnsureButtonLayout(Button button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var layout = button.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = button.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layout.preferredHeight = 56f;
+            layout.minHeight = 52f;
+            layout.preferredWidth = 240f;
+        }
+
+        private static void EnsureTooltip(Button button, string text)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var trigger = button.GetComponent<TooltipTrigger>();
+            if (trigger == null)
+            {
+                trigger = button.gameObject.AddComponent<TooltipTrigger>();
+            }
+
+            trigger.SetStaticText(text);
         }
 
         private static string ToHex(Color color)
