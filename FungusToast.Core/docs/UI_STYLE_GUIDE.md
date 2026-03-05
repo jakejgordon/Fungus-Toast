@@ -93,6 +93,7 @@ Notes:
 - Use sentence case for instructional labels.
 - Keep button labels short and verb-oriented.
 - Avoid all-caps except tiny overline/meta labels.
+- Avoid abbreviations when the full word fits in the available UI space; prefer full wording to reduce ambiguity (especially for non-native English readers).
 
 ---
 
@@ -204,6 +205,7 @@ When Copilot edits Unity UI code/prefabs:
 4. **No one-off button styles** if an existing style/prefab can be reused.
 5. **Prefer prefab-level consistency** over scene-only overrides.
 6. **Keep style changes separate from gameplay logic changes** whenever possible.
+7. **Call out required Unity Editor steps** whenever script changes depend on prefab/scene/inspector updates (for example, LayoutGroup, ContentSizeFitter, anchors, or serialized references). Provide concrete follow-up instructions so UI architecture remains scalable and avoids fragile runtime-only hacks.
 
 Soft guidance note:
 - Existing legacy styles may remain temporarily, but all new UI work should move toward this guide.

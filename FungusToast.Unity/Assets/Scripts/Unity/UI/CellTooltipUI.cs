@@ -4,30 +4,22 @@ using TMPro;
 using FungusToast.Core.Board;
 using FungusToast.Core.Death;
 using FungusToast.Core.Growth;
+using System.Text;
 
 namespace FungusToast.Unity.UI
 {
     /// <summary>
-    /// Component for the Cell Tooltip prefab that handles displaying cell information
-    /// with proper layout and icons.
-    /// 
-    /// Expected Prefab Structure (in this exact order):
-    /// CellTooltip (this component)
-    /// ? StatusGroup (GameObject) - Contains status text and icon
-    /// ? GrowthSourceGroup (GameObject) - Contains growth source text
-    /// ? DeathReasonGroup (GameObject) - Contains death reason text
-    /// ? OwnerGroup (GameObject) - Contains owner text and icon
-    /// ? AgeGroup (GameObject) - Contains growth age text
-    /// ? ExpirationGroup (GameObject) - Contains expiration text
-    /// ? ResistantGroup (GameObject) - Contains resistant status with shield icon and text
-    /// ? LastOwnerGroup (GameObject) - Contains last owner text and icon
-    /// ? AdditionalInfoGroup (GameObject) - Contains additional status info (reclaim count, animation states)
-    /// 
-    /// All layout groups must be assigned in the Inspector - no fallback discovery.
-    /// Icons (StatusIcon, OwnerIcon, LastOwnerIcon, ToxinIcon, ResistantIcon) must also be assigned.
+    /// Cell hover-tooltip that renders ALL content in a single TextMeshProUGUI.
+    ///
+    /// v2 "nuclear" layout: previous versions used 9 row-group GameObjects managed by
+    /// VerticalLayoutGroup + LayoutElement, which caused persistent text-overlap bugs.
+    /// This version hides every prefab row group, re-parents one TMP directly under
+    /// the root, builds all content as rich text, and imperatively sizes the
+    /// RectTransform.  No layout groups, no ContentSizeFitters, no LayoutElements.
     /// </summary>
     public class CellTooltipUI : MonoBehaviour
     {
+        // ── Serialized prefab references (kept for backward-compat) ────────
         [Header("Text Components")]
         [SerializeField] private TextMeshProUGUI statusText;
         [SerializeField] private TextMeshProUGUI deathReasonText;
@@ -46,7 +38,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image toxinIcon;
         [SerializeField] private Image resistantIcon;
 
-        [Header("Layout Groups (optional - for showing/hiding sections)")]
+        [Header("Layout Groups (hidden at runtime – kept for prefab stability)")]
         [SerializeField] private GameObject statusGroup;
         [SerializeField] private GameObject ownerGroup;
         [SerializeField] private GameObject deathReasonGroup;
@@ -57,712 +49,385 @@ namespace FungusToast.Unity.UI
         [SerializeField] private GameObject growthSourceGroup;
         [SerializeField] private GameObject additionalInfoGroup;
 
-        [Header("Style (optional)")]
+        [Header("Style")]
         [SerializeField] private Image tooltipBackgroundImage;
         [SerializeField, Range(0.5f, 1f)] private float tooltipBackgroundAlpha = 0.96f;
-        [SerializeField, Range(0f, 1f)] private float rowBackgroundAlpha = 0.35f;
 
-        // Runtime dependency - injected via SetPlayerBinder()
+        // Kept so prefab fields are not orphaned; no longer used at runtime.
+        [HideInInspector, SerializeField] private float rowBackgroundAlpha = 0.35f;
+        [HideInInspector, SerializeField] private bool normalizeTooltipStructureOnAwake = true;
+
+        // ── Constants ──────────────────────────────────────────────────────
+        private const float TooltipWidth = 300f;
+        private const float Padding = 14f;
+        private const float ContentWidth = TooltipWidth - Padding * 2f;
+
+        // ── Runtime state ──────────────────────────────────────────────────
         private UI_PlayerBinder playerBinder;
+        private TextMeshProUGUI bodyText;
+        private RectTransform rootRect;
+        private bool initialized;
+        private readonly StringBuilder sb = new();
 
-        /// <summary>
-        /// Sets the UI_PlayerBinder dependency. Call this when creating tooltip instances dynamically.
-        /// </summary>
-        public void SetPlayerBinder(UI_PlayerBinder binder)
+        // ═══════════════════════════════════════════════════════════════════
+        //  Public API
+        // ═══════════════════════════════════════════════════════════════════
+
+        public void SetPlayerBinder(UI_PlayerBinder binder) => playerBinder = binder;
+
+        public void UpdateTooltip(
+            FungalCell cell,
+            GameBoard board,
+            FungusToast.Unity.Grid.GridVisualizer gridVisualizer)
         {
-            playerBinder = binder;
+            EnsureInitialized();
+
+            if (bodyText == null) return;
+
+            // ── Build every line into one rich-text string ──
+            sb.Clear();
+            AppendStatus(cell);
+            AppendGrowthSource(cell);
+            AppendDeathReason(cell);
+            AppendOwnership(cell);
+            AppendAge(cell);
+            AppendExpiration(cell);
+            AppendResistance(cell);
+            AppendTacticalInfo(cell, board);
+            AppendAnimationFlags(cell);
+
+            bodyText.text = sb.ToString().TrimEnd('\n', '\r');
+
+            // ── Size root to fit ──
+            SizeToContent();
         }
 
-        /// <summary>
-        /// Updates the tooltip with cell information and appropriate icons.
-        /// </summary>
-        public void UpdateTooltip(FungalCell cell, GameBoard board, FungusToast.Unity.Grid.GridVisualizer gridVisualizer)
+        // ═══════════════════════════════════════════════════════════════════
+        //  Initialisation (runs once)
+        // ═══════════════════════════════════════════════════════════════════
+
+        private void Awake() => EnsureInitialized();
+
+        private void EnsureInitialized()
         {
-            ApplyTooltipStyle();
-            UpdateStatusInfo(cell);
-            UpdateDeathReason(cell);
-            UpdateOwnershipInfo(cell);
-            UpdateAgeAndExpiration(cell, board);
-            UpdateGrowthSource(cell);
-            UpdateIcons(cell, gridVisualizer);
-            UpdateResistantStatus(cell, gridVisualizer);
-            UpdateAdditionalInfo(cell);
-            
-            // Force correct sibling order in case Unity's layout system is misbehaving
-            ForceCorrectOrder();
-            
-            // Since manual positioning has been fixed in Unity, we don't need to reset positions
-            // ResetAllGroupPositions(); // DISABLED - Unity prefab positioning is now correct
-            
-            // AGGRESSIVE FIX: Force Unity to properly recalculate layout multiple times
-            StartCoroutine(ForceLayoutRebuildCoroutine());
+            if (initialized) return;
+            initialized = true;
+
+            rootRect = GetComponent<RectTransform>();
+
+            // 1. Disable every layout-automation component on the root
+            var vlg = GetComponent<VerticalLayoutGroup>();
+            if (vlg != null) vlg.enabled = false;
+
+            var hlg = GetComponent<HorizontalLayoutGroup>();
+            if (hlg != null) hlg.enabled = false;
+
+            var csf = GetComponent<ContentSizeFitter>();
+            if (csf != null) Destroy(csf);
+
+            // 2. Hide every prefab row group
+            HideGroup(statusGroup);
+            HideGroup(growthSourceGroup);
+            HideGroup(deathReasonGroup);
+            HideGroup(ownerGroup);
+            HideGroup(ageGroup);
+            HideGroup(expirationGroup);
+            HideGroup(resistantGroup);
+            HideGroup(lastOwnerGroup);
+            HideGroup(additionalInfoGroup);
+
+            // 3. Pick a TMP to use as the single body renderer
+            bodyText = additionalInfoText
+                       ?? statusText
+                       ?? ownerText
+                       ?? growthAgeText;
+
+            if (bodyText == null)
+            {
+                Debug.LogError("[CellTooltipUI] No TextMeshProUGUI assigned – tooltip will be blank.");
+                return;
+            }
+
+            // Re-parent directly under root so it stays visible
+            bodyText.transform.SetParent(transform, false);
+            bodyText.gameObject.SetActive(true);
+            bodyText.transform.SetAsLastSibling();
+            ConfigureBodyText(bodyText);
+
+            // 4. Style the background
+            ApplyBackground();
         }
 
-        /// <summary>
-        /// Aggressively forces Unity's layout system to properly recalculate by doing multiple rebuilds.
-        /// This works around Unity's layout timing issues with LayoutElement.ignoreLayout.
-        /// </summary>
-        private System.Collections.IEnumerator ForceLayoutRebuildCoroutine()
+        // ═══════════════════════════════════════════════════════════════════
+        //  Layout helpers
+        // ═══════════════════════════════════════════════════════════════════
+
+        private static void HideGroup(GameObject g)
         {
-            var rectTransform = GetComponent<RectTransform>();
-            
-            // Force immediate rebuild
-            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
-            
-            // Force canvas update
-            Canvas.ForceUpdateCanvases();
-            
-            // Wait one frame for Unity to process
-            yield return null;
-            
-            // Force another rebuild after Unity has processed
-            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
-            
-            // Force canvas update again
-            Canvas.ForceUpdateCanvases();
-            
-            // Wait another frame
-            yield return null;
-            
-            // Final rebuild to ensure everything is properly laid out
-            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+            if (g != null) g.SetActive(false);
         }
 
-        /// <summary>
-        /// Forces the tooltip sections to appear in the correct order by manually setting sibling indices.
-        /// Only call this if Unity's VerticalLayoutGroup is not respecting the prefab hierarchy order.
-        /// </summary>
-        private void ForceCorrectOrder()
+        private static void ConfigureBodyText(TextMeshProUGUI tmp)
         {
-            // Set explicit sibling indices to force correct order
-            if (statusGroup != null) statusGroup.transform.SetSiblingIndex(0);
-            if (growthSourceGroup != null) growthSourceGroup.transform.SetSiblingIndex(1);
-            if (deathReasonGroup != null) deathReasonGroup.transform.SetSiblingIndex(2);
-            if (ownerGroup != null) ownerGroup.transform.SetSiblingIndex(3);
-            if (ageGroup != null) ageGroup.transform.SetSiblingIndex(4);
-            if (expirationGroup != null) expirationGroup.transform.SetSiblingIndex(5);
-            if (resistantGroup != null) resistantGroup.transform.SetSiblingIndex(6);
-            if (lastOwnerGroup != null) lastOwnerGroup.transform.SetSiblingIndex(7); // 2nd to last
-            if (additionalInfoGroup != null) additionalInfoGroup.transform.SetSiblingIndex(8); // Last
+            // Text style
+            tmp.enableAutoSizing = false;
+            tmp.fontSize = 15f;
+            tmp.overflowMode = TextOverflowModes.Overflow;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
+            tmp.richText = true;
+            tmp.color = UIStyleTokens.Text.Primary;
+            tmp.fontStyle = FontStyles.Normal;
+            tmp.alignment = TextAlignmentOptions.TopLeft;
+            tmp.lineSpacing = 4f;
+            tmp.paragraphSpacing = 0f;
+            tmp.margin = Vector4.zero;
+
+            // Stretch to fill root with padding on all sides
+            var rt = tmp.rectTransform;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = new Vector2(Padding, Padding);
+            rt.offsetMax = new Vector2(-Padding, -Padding);
+
+            // Remove components that might interfere
+            var le = tmp.GetComponent<LayoutElement>();
+            if (le != null) Destroy(le);
+
+            var fit = tmp.GetComponent<ContentSizeFitter>();
+            if (fit != null) Destroy(fit);
         }
 
-        /// <summary>
-        /// Resets all group positions to let VerticalLayoutGroup handle positioning.
-        /// This fixes conflicts between manual positioning and automatic layout.
-        /// </summary>
-        private void ResetAllGroupPositions()
+        private void SizeToContent()
         {
-            ResetGroupPosition(statusGroup);
-            ResetGroupPosition(deathReasonGroup);
-            ResetGroupPosition(ownerGroup);
-            ResetGroupPosition(lastOwnerGroup);
-            ResetGroupPosition(ageGroup);
-            ResetGroupPosition(expirationGroup);
-            ResetGroupPosition(resistantGroup);
-            ResetGroupPosition(growthSourceGroup);
-            ResetGroupPosition(additionalInfoGroup);
+            if (bodyText == null || rootRect == null) return;
+
+            // TMP can report preferred height for a given width
+            float textHeight = bodyText.GetPreferredValues(bodyText.text, ContentWidth, 0f).y;
+            float totalHeight = textHeight + Padding * 2f;
+
+            rootRect.sizeDelta = new Vector2(TooltipWidth, totalHeight);
         }
 
-        /// <summary>
-        /// Resets a single group's position to work properly with VerticalLayoutGroup.
-        /// </summary>
-        private void ResetGroupPosition(GameObject group)
-        {
-            if (group == null) return;
-
-            RectTransform rectTransform = group.GetComponent<RectTransform>();
-            if (rectTransform == null) return;
-
-            // Store original for debugging
-            Vector2 originalPos = rectTransform.anchoredPosition;
-
-            // For VerticalLayoutGroup children, we want to let the layout system control everything
-            // DON'T set anchors - let them stay as they are in the prefab
-            // DON'T force position to zero - let VerticalLayoutGroup position them
-            
-            // Only reset if there are problematic manual offsets
-            if (rectTransform.offsetMin != Vector2.zero || rectTransform.offsetMax != Vector2.zero)
-            {
-                rectTransform.offsetMin = Vector2.zero;
-                rectTransform.offsetMax = Vector2.zero;
-            }
-            
-            // Only reset anchored position if it's obviously wrong (large values that would conflict)
-            if (Mathf.Abs(rectTransform.anchoredPosition.x) > 50f || Mathf.Abs(rectTransform.anchoredPosition.y) > 50f)
-            {
-                rectTransform.anchoredPosition = Vector2.zero;
-            }
-        }
-
-        /// <summary>
-        /// Updates the status information display
-        /// </summary>
-        private void UpdateStatusInfo(FungalCell cell)
-        {
-            bool hasStatus = true; // Status is always shown for any cell
-            
-            SetGroupVisibility(statusGroup, hasStatus);
-            
-            if (statusText != null)
-            {
-                if (cell.IsAlive)
-                {
-                    statusText.text = FormatHeaderStatus("Alive", UIStyleTokens.State.Success);
-                }
-                else if (cell.IsDead)
-                {
-                    statusText.text = FormatHeaderStatus("Dead", UIStyleTokens.Text.Muted);
-                }
-                else if (cell.IsToxin)
-                {
-                    statusText.text = FormatHeaderStatus("Toxin", UIStyleTokens.Category.Fungicide);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Updates the death reason information display
-        /// </summary>
-        private void UpdateDeathReason(FungalCell cell)
-        {
-            bool showDeathReason = cell.IsDead && cell.CauseOfDeath.HasValue;
-            
-            SetGroupVisibility(deathReasonGroup, showDeathReason);
-            
-            if (deathReasonText != null)
-            {
-                if (showDeathReason)
-                {
-                    deathReasonText.text = FormatLabelValue("Death", GetDeathReasonDisplayName(cell.CauseOfDeath.Value), UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger);
-                }
-                else
-                {
-                    deathReasonText.text = "";
-                }
-            }
-        }
-
-        /// <summary>
-        /// Updates the ownership information display (current and last owner)
-        /// </summary>
-        private void UpdateOwnershipInfo(FungalCell cell)
-        {
-            // Current Owner
-            bool hasOwner = cell.OwnerPlayerId.HasValue;
-            
-            SetGroupVisibility(ownerGroup, hasOwner);
-            
-            if (ownerText != null)
-            {
-                if (hasOwner)
-                {
-                    ownerText.text = FormatLabelValue("Owner", $"Player {cell.OwnerPlayerId.Value + 1}", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary);
-                }
-                else
-                {
-                    ownerText.text = "";
-                }
-            }
-
-            // Last Owner
-            bool showLastOwner = cell.LastOwnerPlayerId.HasValue;
-            
-            SetGroupVisibility(lastOwnerGroup, showLastOwner);
-            
-            if (lastOwnerText != null)
-            {
-                if (showLastOwner)
-                {
-                    lastOwnerText.text = FormatLabelValue("Last Owner", $"Player {cell.LastOwnerPlayerId.Value + 1}", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Secondary);
-                }
-                else
-                {
-                    lastOwnerText.text = "";
-                }
-            }
-        }
-
-        /// <summary>
-        /// Updates the age and expiration information display
-        /// </summary>
-        private void UpdateAgeAndExpiration(FungalCell cell, GameBoard board)
-        {
-            // Growth Cycle Age - always show for any cell
-            bool hasAge = true;
-            
-            SetGroupVisibility(ageGroup, hasAge);
-            
-            if (growthAgeText != null)
-            {
-                // Make growth age green for young, living cells to draw attention regardless of phase
-                bool highlightYoung = cell.IsAlive && cell.GrowthCycleAge < UIEffectConstants.GrowthCycleAgeHighlightTextThreshold;
-
-                if (highlightYoung)
-                {
-                    growthAgeText.text = FormatLabelValue("Growth Cycle Age", cell.GrowthCycleAge.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success);
-                }
-                else
-                {
-                    growthAgeText.text = FormatLabelValue("Growth Cycle Age", cell.GrowthCycleAge.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary);
-                }
-            }
-
-            // Toxin Expiration - only show for toxins
-            bool showExpiration = cell.IsToxin;
-            
-            SetGroupVisibility(expirationGroup, showExpiration);
-            
-            if (expirationText != null)
-            {
-                if (showExpiration)
-                {
-                    // Use the new age-based expiration system instead of the old cycle-based system
-                    int cyclesRemaining = cell.ToxinExpirationAge - cell.GrowthCycleAge;
-                    if (cyclesRemaining > 0)
-                        expirationText.text = FormatLabelValue("Cycles Until Expiration", cyclesRemaining.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary);
-                    else
-                        expirationText.text = FormatLabelValue("Expiration", "Expires this cycle", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger);
-                }
-                else
-                {
-                    expirationText.text = "";
-                }
-            }
-        }
-
-        /// <summary>
-        /// Updates the icon displays for the cell (status, owner, toxin)
-        /// </summary>
-        private void UpdateIcons(FungalCell cell, FungusToast.Unity.Grid.GridVisualizer gridVisualizer)
-        {
-            if (gridVisualizer == null) return;
-
-            // Status Icon (Dead/Toxin)
-            if (statusIcon != null)
-            {
-                if (cell.IsDead && gridVisualizer.deadTile != null)
-                {
-                    statusIcon.sprite = gridVisualizer.deadTile.sprite;
-                    statusIcon.gameObject.SetActive(true);
-                }
-                else if (cell.IsToxin && gridVisualizer.toxinOverlayTile != null)
-                {
-                    statusIcon.sprite = gridVisualizer.toxinOverlayTile.sprite;
-                    statusIcon.gameObject.SetActive(true);
-                }
-                else
-                {
-                    statusIcon.gameObject.SetActive(false);
-                }
-            }
-
-            // Owner Icon - Use PlayerBinder for player mold icons
-            if (ownerIcon != null)
-            {
-                if (cell.OwnerPlayerId.HasValue)
-                {
-                    Sprite playerSprite = playerBinder?.GetPlayerIcon(cell.OwnerPlayerId.Value);
-                    
-                    if (playerSprite != null)
-                    {
-                        ownerIcon.sprite = playerSprite;
-                        ownerIcon.gameObject.SetActive(true);
-                    }
-                    else
-                    {
-                        // Fallback to GridVisualizer tile if PlayerBinder doesn't have the icon
-                        var tile = gridVisualizer.GetTileForPlayer(cell.OwnerPlayerId.Value);
-                        
-                        if (tile != null && tile.sprite != null)
-                        {
-                            ownerIcon.sprite = tile.sprite;
-                            ownerIcon.gameObject.SetActive(true);
-                        }
-                        else
-                        {
-                            ownerIcon.gameObject.SetActive(false);
-                        }
-                    }
-                }
-                else
-                {
-                    ownerIcon.gameObject.SetActive(false);
-                }
-            }
-
-            // Last Owner Icon - Use PlayerBinder for player mold icons
-            if (lastOwnerIcon != null)
-            {
-                if (cell.LastOwnerPlayerId.HasValue)
-                {
-                    Sprite playerSprite = playerBinder?.GetPlayerIcon(cell.LastOwnerPlayerId.Value);
-                    if (playerSprite != null)
-                    {
-                        lastOwnerIcon.sprite = playerSprite;
-                        lastOwnerIcon.gameObject.SetActive(true);
-                    }
-                    else
-                    {
-                        // Fallback to GridVisualizer tile if PlayerBinder doesn't have the icon
-                        var tile = gridVisualizer.GetTileForPlayer(cell.LastOwnerPlayerId.Value);
-                        if (tile != null && tile.sprite != null)
-                        {
-                            lastOwnerIcon.sprite = tile.sprite;
-                            lastOwnerIcon.gameObject.SetActive(true);
-                        }
-                        else
-                        {
-                            lastOwnerIcon.gameObject.SetActive(false);
-                        }
-                    }
-                }
-                else
-                {
-                    lastOwnerIcon.gameObject.SetActive(false);
-                }
-            }
-
-            // Toxin Icon (separate from status icon for layout purposes)
-            if (toxinIcon != null)
-            {
-                if (cell.IsToxin && gridVisualizer.toxinOverlayTile != null)
-                {
-                    toxinIcon.sprite = gridVisualizer.toxinOverlayTile.sprite;
-                    toxinIcon.gameObject.SetActive(true);
-                }
-                else
-                {
-                    toxinIcon.gameObject.SetActive(false);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Updates the growth source information display
-        /// </summary>
-        private void UpdateGrowthSource(FungalCell cell)
-        {
-            bool showGrowthSource = cell.SourceOfGrowth.HasValue;
-            
-            SetGroupVisibility(growthSourceGroup, showGrowthSource);
-            
-            if (growthSourceText != null)
-            {
-                if (showGrowthSource)
-                {
-                    growthSourceText.text = FormatLabelValue("Source", GetGrowthSourceDisplayName(cell.SourceOfGrowth.Value), UIStyleTokens.Text.Secondary, UIStyleTokens.State.Info);
-                }
-                else
-                {
-                    growthSourceText.text = "";
-                }
-            }
-        }
-
-        /// <summary>
-        /// Updates the resistant status display with shield icon
-        /// </summary>
-        private void UpdateResistantStatus(FungalCell cell, FungusToast.Unity.Grid.GridVisualizer gridVisualizer)
-        {
-            bool isResistant = cell.IsResistant;
-            
-            SetGroupVisibility(resistantGroup, isResistant);
-            
-            if (resistantText != null)
-            {
-                if (isResistant)
-                {
-                    resistantText.text = FormatLabelValue("Resistance", "Active", UIStyleTokens.Text.Secondary, UIStyleTokens.Accent.Spore);
-                }
-                else
-                {
-                    resistantText.text = "";
-                }
-            }
-
-            // Set resistant shield icon
-            if (resistantIcon != null)
-            {
-                if (isResistant && gridVisualizer?.goldShieldOverlayTile != null)
-                {
-                    resistantIcon.sprite = gridVisualizer.goldShieldOverlayTile.sprite;
-                    resistantIcon.gameObject.SetActive(true);
-                }
-                else
-                {
-                    resistantIcon.gameObject.SetActive(false);
-                }
-            }
-        }
-
-        private void UpdateAdditionalInfo(FungalCell cell)
-        {
-            if (additionalInfoText != null)
-            {
-                var additionalInfo = new System.Text.StringBuilder();
-
-                // Reclaim count
-                if (cell.ReclaimCount > 0)
-                    additionalInfo.AppendLine(FormatLabelValue("Reclaimed", $"{cell.ReclaimCount}x", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
-
-                // Animation states (for visual feedback)
-                if (cell.IsNewlyGrown)
-                    additionalInfo.AppendLine($"<color=#{ToHex(EnsureTooltipContrast(UIStyleTokens.State.Warning))}>• Newly Grown</color>");
-                if (cell.IsDying)
-                    additionalInfo.AppendLine($"<color=#{ToHex(EnsureTooltipContrast(UIStyleTokens.State.Danger))}>• Dying</color>");
-                if (cell.IsReceivingToxinDrop)
-                    additionalInfo.AppendLine($"<color=#{ToHex(EnsureTooltipContrast(UIStyleTokens.Category.Fungicide))}>• Receiving Toxin</color>");
-
-                string infoText = additionalInfo.ToString().Trim();
-                bool hasAdditionalInfo = !string.IsNullOrEmpty(infoText);
-                
-                SetGroupVisibility(additionalInfoGroup, hasAdditionalInfo);
-                
-                additionalInfoText.text = infoText;
-            }
-            else
-            {
-                SetGroupVisibility(additionalInfoGroup, false);
-            }
-        }
-
-        private void ApplyTooltipStyle()
+        private void ApplyBackground()
         {
             if (tooltipBackgroundImage == null)
-            {
                 tooltipBackgroundImage = GetComponent<Image>();
-            }
 
             if (tooltipBackgroundImage != null)
             {
-                var panelColor = UIStyleTokens.Surface.PanelSecondary;
-                panelColor.a = tooltipBackgroundAlpha;
-                tooltipBackgroundImage.color = panelColor;
+                var c = UIStyleTokens.Surface.PanelSecondary;
+                c.a = tooltipBackgroundAlpha;
+                tooltipBackgroundImage.color = c;
             }
-
-            ApplyTextDefaults(statusText, UIStyleTokens.Text.Primary, true);
-            ApplyTextDefaults(deathReasonText, UIStyleTokens.Text.Secondary, false);
-            ApplyTextDefaults(ownerText, UIStyleTokens.Text.Secondary, false);
-            ApplyTextDefaults(lastOwnerText, UIStyleTokens.Text.Secondary, false);
-            ApplyTextDefaults(growthAgeText, UIStyleTokens.Text.Secondary, false);
-            ApplyTextDefaults(expirationText, UIStyleTokens.Text.Secondary, false);
-            ApplyTextDefaults(resistantText, UIStyleTokens.Text.Secondary, false);
-            ApplyTextDefaults(growthSourceText, UIStyleTokens.Text.Secondary, false);
-            ApplyTextDefaults(additionalInfoText, UIStyleTokens.Text.Secondary, false);
-
-            ApplyGroupSurface(statusGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
-            ApplyGroupSurface(growthSourceGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
-            ApplyGroupSurface(deathReasonGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
-            ApplyGroupSurface(ownerGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
-            ApplyGroupSurface(ageGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
-            ApplyGroupSurface(expirationGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
-            ApplyGroupSurface(resistantGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
-            ApplyGroupSurface(lastOwnerGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
-            ApplyGroupSurface(additionalInfoGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
         }
 
-        private static void ApplyTextDefaults(TextMeshProUGUI textComponent, Color color, bool isHeader)
-        {
-            if (textComponent == null)
-            {
-                return;
-            }
+        // ═══════════════════════════════════════════════════════════════════
+        //  Content builders (each appends to shared StringBuilder)
+        // ═══════════════════════════════════════════════════════════════════
 
-            textComponent.color = color;
-            textComponent.fontStyle = isHeader ? FontStyles.Bold : FontStyles.Normal;
-            textComponent.textWrappingMode = TextWrappingModes.Normal;
-            textComponent.overflowMode = TextOverflowModes.Overflow;
-            textComponent.richText = true;
+        private void AppendStatus(FungalCell cell)
+        {
+            if (cell.IsAlive)
+                sb.AppendLine(HeaderLine("Alive", UIStyleTokens.State.Success));
+            else if (cell.IsDead)
+                sb.AppendLine(HeaderLine("Dead", UIStyleTokens.Text.Muted));
+            else if (cell.IsToxin)
+                sb.AppendLine(HeaderLine("Toxin", UIStyleTokens.Category.Fungicide));
         }
 
-        private static void ApplyGroupSurface(GameObject group, Color baseColor, float alpha)
+        private void AppendGrowthSource(FungalCell cell)
         {
-            if (group == null)
-            {
-                return;
-            }
-
-            var image = group.GetComponent<Image>();
-            if (image == null)
-            {
-                return;
-            }
-
-            var c = baseColor;
-            c.a = alpha;
-            image.color = c;
+            if (cell.SourceOfGrowth.HasValue)
+                sb.AppendLine(LabelValue("Source",
+                    GrowthSourceName(cell.SourceOfGrowth.Value),
+                    UIStyleTokens.Text.Secondary, UIStyleTokens.State.Info));
         }
 
-        private static string FormatHeaderStatus(string status, Color statusColor)
+        private void AppendDeathReason(FungalCell cell)
         {
-            Color readableStatusColor = EnsureTooltipContrast(statusColor);
-            return $"<color=#{ToHex(UIStyleTokens.Text.Primary)}><b>Status</b></color>: <color=#{ToHex(readableStatusColor)}><b>{status}</b></color>";
+            if (cell.IsDead && cell.CauseOfDeath.HasValue)
+                sb.AppendLine(LabelValue("Death",
+                    DeathReasonName(cell.CauseOfDeath.Value),
+                    UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger));
         }
 
-        private static string FormatLabelValue(string label, string value, Color labelColor, Color valueColor)
+        private void AppendOwnership(FungalCell cell)
         {
-            Color readableValueColor = EnsureTooltipContrast(valueColor);
-            return $"<color=#{ToHex(labelColor)}>{label}:</color> <color=#{ToHex(readableValueColor)}>{value}</color>";
+            if (cell.OwnerPlayerId.HasValue)
+                sb.AppendLine(LabelValue("Owner",
+                    $"Player {cell.OwnerPlayerId.Value + 1}",
+                    UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+
+            if (cell.LastOwnerPlayerId.HasValue)
+                sb.AppendLine(LabelValue("Last Owner",
+                    $"Player {cell.LastOwnerPlayerId.Value + 1}",
+                    UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Secondary));
         }
 
-        private static Color EnsureTooltipContrast(Color color)
+        private void AppendAge(FungalCell cell)
         {
-            return Color.Lerp(color, UIStyleTokens.Text.Primary, 0.5f);
+            bool young = cell.IsAlive
+                         && cell.GrowthCycleAge < UIEffectConstants.GrowthCycleAgeHighlightTextThreshold;
+            Color ageColor = young ? UIStyleTokens.State.Success : UIStyleTokens.Text.Primary;
+            sb.AppendLine(LabelValue("Growth Cycle Age",
+                cell.GrowthCycleAge.ToString(),
+                UIStyleTokens.Text.Secondary, ageColor));
         }
 
-        /// <summary>
-        /// Properly hides/shows a group by using SetActive instead of LayoutElement.ignoreLayout.
-        /// This is the only way to prevent Unity's VerticalLayoutGroup from adding spacing between elements.
-        /// </summary>
-        private void SetGroupVisibility(GameObject group, bool visible)
+        private void AppendExpiration(FungalCell cell)
         {
-            if (group == null) return;
+            if (!cell.IsToxin) return;
 
-            if (visible)
-            {
-                // Show the group
-                group.SetActive(true);
-                
-                // Get or add LayoutElement component
-                LayoutElement layoutElement = group.GetComponent<LayoutElement>();
-                if (layoutElement == null)
-                {
-                    layoutElement = group.AddComponent<LayoutElement>();
-                }
-                
-                // Participate in layout
-                layoutElement.ignoreLayout = false;
-                layoutElement.preferredHeight = -1f;
-                layoutElement.minHeight = -1f;
-                layoutElement.flexibleHeight = 1f;
-                
-                // Make visible
-                CanvasGroup canvasGroup = group.GetComponent<CanvasGroup>();
-                if (canvasGroup == null)
-                {
-                    canvasGroup = group.AddComponent<CanvasGroup>();
-                }
-                
-                canvasGroup.alpha = 1f;
-                canvasGroup.blocksRaycasts = true;
-                canvasGroup.interactable = true;
-            }
+            int remaining = cell.ToxinExpirationAge - cell.GrowthCycleAge;
+            if (remaining > 0)
+                sb.AppendLine(LabelValue("Cycles Until Expiration",
+                    remaining.ToString(),
+                    UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             else
-            {
-                // Hide the group completely - SetActive(false) is the only way to prevent VerticalLayoutGroup spacing
-                group.SetActive(false);
-            }
+                sb.AppendLine(LabelValue("Expiration",
+                    "Expires this cycle",
+                    UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger));
         }
 
-        private string GetDeathReasonDisplayName(DeathReason reason)
+        private void AppendResistance(FungalCell cell)
         {
-            return reason switch
-            {
-                DeathReason.Age => "Old Age",
-                DeathReason.Randomness => "Random Death",
-                DeathReason.PutrefactiveMycotoxin => "Putrefactive Mycotoxin",
-                DeathReason.SporicidalBloom => "Sporicidal Bloom",
-                DeathReason.MycotoxinPotentiation => "Mycotoxin Potentiation",
-                DeathReason.HyphalVectoring => "Hyphal Vectoring",
-                DeathReason.JettingMycelium => "Jetting Mycelium",
-                DeathReason.Infested => "Infested",
-                DeathReason.Poisoned => "Poisoned",
-                DeathReason.PutrefactiveCascade => "Putrefactive Cascade",
-                DeathReason.PutrefactiveCascadePoison => "Putrefactive Cascade Poison",
-                DeathReason.Unknown => "Unknown",
-                _ => reason.ToString()
-            };
+            if (cell.IsResistant)
+                sb.AppendLine(LabelValue("Resistance", "Active",
+                    UIStyleTokens.Text.Secondary, UIStyleTokens.Accent.Spore));
         }
 
-        private string GetGrowthSourceDisplayName(GrowthSource source)
+        private void AppendTacticalInfo(FungalCell cell, GameBoard board)
         {
-            return source switch
+            // Blank line separator between core info and tactical section
+            sb.AppendLine();
+
+            var (x, y) = board.GetXYFromTileId(cell.TileId);
+            sb.AppendLine(LabelValue("Tile", $"({x}, {y})",
+                UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+
+            bool isBorder = x == 0 || y == 0 || x == board.Width - 1 || y == board.Height - 1;
+            bool nearEdge = !isBorder && (x <= 1 || y <= 1 || x >= board.Width - 2 || y >= board.Height - 2);
+            string posLabel = isBorder ? "Border" : nearEdge ? "Near Edge" : "Interior";
+            Color posColor = isBorder ? UIStyleTokens.State.Warning : UIStyleTokens.Text.Primary;
+            sb.AppendLine(LabelValue("Position", posLabel,
+                UIStyleTokens.Text.Secondary, posColor));
+
+            int allies = 0, enemies = 0, toxins = 0, empty = 0;
+            foreach (var adj in board.GetAdjacentTiles(cell.TileId))
             {
-                GrowthSource.InitialSpore => "Initial Spore",
-                GrowthSource.HyphalOutgrowth => "Hyphal Outgrowth",
-                GrowthSource.TendrilOutgrowth => "Tendril Outgrowth",
-                GrowthSource.RegenerativeHyphae => "Regenerative Hyphae",
-                GrowthSource.NecrotoxicConversion => "Necrotoxic Conversion",
-                GrowthSource.HyphalSurge => "Hyphal Surge",
-                GrowthSource.JettingMycelium => "Jetting Mycelium",
-                GrowthSource.HyphalVectoring => "Hyphal Vectoring",
-                GrowthSource.SurgicalInoculation => "Surgical Inoculation",
-                GrowthSource.Necrosporulation => "Necrosporulation",
-                GrowthSource.NecrophyticBloom => "Necrophytic Bloom",
-                GrowthSource.NecrohyphalInfiltration => "Necrohyphal Infiltration",
-                GrowthSource.CreepingMold => "Creeping Mold",
-                GrowthSource.CatabolicRebirth => "Catabolic Rebirth",
-                GrowthSource.Ballistospore => "Ballistospore",
-                GrowthSource.MycotoxinTracer => "Mycotoxin Tracers",
-                GrowthSource.SporicidalBloom => "Sporicidal Bloom",
-                GrowthSource.MimeticResilience => "Mimetic Resilience",
-                GrowthSource.CornerConduit => "Corner Conduit",
-                GrowthSource.AggressotropicConduit => "Aggressotropic Conduit",
-                GrowthSource.Manual => "Manual",
-                GrowthSource.Unknown => "Unknown",
-                _ => source.ToString()
-            };
+                var ac = adj.FungalCell;
+                if (ac == null) { empty++; continue; }
+                if (ac.IsToxin) toxins++;
+                if (cell.OwnerPlayerId.HasValue && ac.OwnerPlayerId == cell.OwnerPlayerId)
+                    allies++;
+                else if (ac.OwnerPlayerId.HasValue)
+                    enemies++;
+            }
+
+            sb.AppendLine(LabelValue("Adjacent Allies", allies.ToString(),
+                UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
+            sb.AppendLine(LabelValue("Adjacent Enemies", enemies.ToString(),
+                UIStyleTokens.Text.Secondary,
+                enemies > 0 ? UIStyleTokens.State.Danger : UIStyleTokens.Text.Primary));
+            sb.AppendLine(LabelValue("Adjacent Toxins", toxins.ToString(),
+                UIStyleTokens.Text.Secondary,
+                toxins > 0 ? UIStyleTokens.Category.Fungicide : UIStyleTokens.Text.Primary));
+            sb.AppendLine(LabelValue("Adjacent Empty", empty.ToString(),
+                UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+
+            bool contested = enemies > 0 && cell.IsAlive;
+            if (contested)
+                sb.AppendLine(LabelValue("Local State", "Contested",
+                    UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger));
+            else if (cell.IsAlive)
+                sb.AppendLine(LabelValue("Local State", "Stable",
+                    UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
+
+            if (cell.ReclaimCount > 0)
+                sb.AppendLine(LabelValue("Reclaimed", $"{cell.ReclaimCount}x",
+                    UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
         }
 
-        /// <summary>
-        /// Logs the actual prefab structure to help diagnose layout issues.
-        /// </summary>
-        private void LogPrefabStructure()
+        private void AppendAnimationFlags(FungalCell cell)
         {
-            UnityEngine.Debug.Log("=== TOOLTIP PREFAB STRUCTURE DIAGNOSTIC ===");
-            
-            // Log parent layout component
-            var parentLayoutGroup = GetComponent<VerticalLayoutGroup>();
-            if (parentLayoutGroup != null)
-            {
-                UnityEngine.Debug.Log($"Parent VerticalLayoutGroup: " +
-                    $"spacing={parentLayoutGroup.spacing}, " +
-                    $"padding=({parentLayoutGroup.padding.left},{parentLayoutGroup.padding.top},{parentLayoutGroup.padding.right},{parentLayoutGroup.padding.bottom}), " +
-                    $"childControlWidth={parentLayoutGroup.childControlWidth}, " +
-                    $"childControlHeight={parentLayoutGroup.childControlHeight}");
-            }
-            else
-            {
-                UnityEngine.Debug.Log("No VerticalLayoutGroup found on tooltip root!");
-            }
-            
-            // Log all child GameObjects and their components (with null checks)
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                var child = transform.GetChild(i);
-                var layoutElement = child.GetComponent<LayoutElement>();
-                var canvasGroup = child.GetComponent<CanvasGroup>();
-                var horizontalLayoutGroup = child.GetComponent<HorizontalLayoutGroup>();
-                
-                // Safe alpha access with null check
-                float alpha = canvasGroup != null ? canvasGroup.alpha : -1f;
-                
-                UnityEngine.Debug.Log($"Child[{i}]: {child.name} " +
-                    $"active={child.gameObject.activeSelf}, " +
-                    $"layoutIgnored={layoutElement?.ignoreLayout ?? false}, " +
-                    $"preferredHeight={layoutElement?.preferredHeight ?? -999}, " +
-                    $"alpha={alpha}, " +
-                    $"hasHorizontalLayout={horizontalLayoutGroup != null}");
-            }
-            
-            // Count visible vs hidden groups
-            int visibleCount = 0;
-            int hiddenCount = 0;
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                if (transform.GetChild(i).gameObject.activeSelf)
-                    visibleCount++;
-                else
-                    hiddenCount++;
-            }
-            
-            UnityEngine.Debug.Log($"SUMMARY: {visibleCount} visible groups, {hiddenCount} hidden groups. Expected spacing gaps: {Mathf.Max(0, visibleCount - 1)}");
-            UnityEngine.Debug.Log("=== END PREFAB STRUCTURE DIAGNOSTIC ===");
+            if (cell.IsNewlyGrown)
+                sb.AppendLine($"<color=#{Hex(Contrast(UIStyleTokens.State.Warning))}>• Newly Grown</color>");
+            if (cell.IsDying)
+                sb.AppendLine($"<color=#{Hex(Contrast(UIStyleTokens.State.Danger))}>• Dying</color>");
+            if (cell.IsReceivingToxinDrop)
+                sb.AppendLine($"<color=#{Hex(Contrast(UIStyleTokens.Category.Fungicide))}>• Receiving Toxin</color>");
         }
 
-        private static string ToHex(Color color)
+        // ═══════════════════════════════════════════════════════════════════
+        //  Formatting helpers
+        // ═══════════════════════════════════════════════════════════════════
+
+        private static string HeaderLine(string status, Color statusColor)
         {
-            return ColorUtility.ToHtmlStringRGB(color);
+            Color sc = Contrast(statusColor);
+            return $"<color=#{Hex(UIStyleTokens.Text.Primary)}><b>Status</b></color>: " +
+                   $"<color=#{Hex(sc)}><b>{status}</b></color>";
         }
+
+        private static string LabelValue(string label, string value,
+            Color labelColor, Color valueColor)
+        {
+            Color vc = Contrast(valueColor);
+            return $"<color=#{Hex(labelColor)}>{label}:</color> <color=#{Hex(vc)}>{value}</color>";
+        }
+
+        private static Color Contrast(Color c)
+            => Color.Lerp(c, UIStyleTokens.Text.Primary, 0.5f);
+
+        private static string Hex(Color c)
+            => ColorUtility.ToHtmlStringRGB(c);
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  Display-name look-ups
+        // ═══════════════════════════════════════════════════════════════════
+
+        private static string DeathReasonName(DeathReason r) => r switch
+        {
+            DeathReason.Age                       => "Old Age",
+            DeathReason.Randomness                => "Random Death",
+            DeathReason.PutrefactiveMycotoxin     => "Putrefactive Mycotoxin",
+            DeathReason.SporicidalBloom           => "Sporicidal Bloom",
+            DeathReason.MycotoxinPotentiation     => "Mycotoxin Potentiation",
+            DeathReason.HyphalVectoring           => "Hyphal Vectoring",
+            DeathReason.JettingMycelium           => "Jetting Mycelium",
+            DeathReason.Infested                  => "Infested",
+            DeathReason.Poisoned                  => "Poisoned",
+            DeathReason.PutrefactiveCascade       => "Putrefactive Cascade",
+            DeathReason.PutrefactiveCascadePoison => "Putrefactive Cascade Poison",
+            DeathReason.Unknown                   => "Unknown",
+            _                                     => r.ToString()
+        };
+
+        private static string GrowthSourceName(GrowthSource s) => s switch
+        {
+            GrowthSource.InitialSpore             => "Initial Spore",
+            GrowthSource.HyphalOutgrowth          => "Hyphal Outgrowth",
+            GrowthSource.TendrilOutgrowth         => "Tendril Outgrowth",
+            GrowthSource.RegenerativeHyphae       => "Regenerative Hyphae",
+            GrowthSource.NecrotoxicConversion     => "Necrotoxic Conversion",
+            GrowthSource.HyphalSurge              => "Hyphal Surge",
+            GrowthSource.JettingMycelium          => "Jetting Mycelium",
+            GrowthSource.HyphalVectoring          => "Hyphal Vectoring",
+            GrowthSource.SurgicalInoculation      => "Surgical Inoculation",
+            GrowthSource.Necrosporulation         => "Necrosporulation",
+            GrowthSource.NecrophyticBloom         => "Necrophytic Bloom",
+            GrowthSource.NecrohyphalInfiltration  => "Necrohyphal Infiltration",
+            GrowthSource.CreepingMold             => "Creeping Mold",
+            GrowthSource.CatabolicRebirth         => "Catabolic Rebirth",
+            GrowthSource.Ballistospore            => "Ballistospore",
+            GrowthSource.MycotoxinTracer          => "Mycotoxin Tracers",
+            GrowthSource.SporicidalBloom          => "Sporicidal Bloom",
+            GrowthSource.MimeticResilience        => "Mimetic Resilience",
+            GrowthSource.CornerConduit            => "Corner Conduit",
+            GrowthSource.AggressotropicConduit    => "Aggressotropic Conduit",
+            GrowthSource.Manual                   => "Manual",
+            GrowthSource.Unknown                  => "Unknown",
+            _                                     => s.ToString()
+        };
     }
 }

@@ -26,6 +26,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     [Header("Tooltip Settings")]
     public float hoverDelaySeconds = 0.2f;
     public Vector2 tooltipOffset = new Vector2(75f, 15f); // Reduced from 150f, 30f
+    [SerializeField] private bool enableLegacyTooltipLayoutFixes = false;
     
     [Header("Magnifying Glass Settings")]
     [SerializeField] private bool autoDetectRadius = true; // Automatically detect radius from visual root
@@ -303,8 +304,10 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
             return;
         }
 
-        // CRITICAL: Fix layout components every time tooltip is shown (not just when created)
-        FixAllLayoutComponents();
+        if (enableLegacyTooltipLayoutFixes)
+        {
+            FixAllLayoutComponents();
+        }
 
         // Position the tooltip
         PositionTooltip();
@@ -382,8 +385,11 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
                 Debug.Log($"[Tooltip] Configured RectTransform: anchors=(0,0), pivot=(0,0), size={tooltipRectTransform.sizeDelta}");
         }
 
-        // CRITICAL: Configure all TextMeshPro components to prevent ellipsis truncation
-        ConfigureTextMeshProComponents();
+        // CellTooltipUI v2 handles its own text configuration; legacy path kept behind flag
+        if (enableLegacyTooltipLayoutFixes)
+        {
+            ConfigureTextMeshProComponents();
+        }
 
         // Ensure tooltip has a visible background (fallback only)
         Image backgroundImage = tooltipInstance.GetComponent<Image>();
