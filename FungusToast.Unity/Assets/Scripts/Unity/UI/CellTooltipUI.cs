@@ -57,6 +57,11 @@ namespace FungusToast.Unity.UI
         [SerializeField] private GameObject growthSourceGroup;
         [SerializeField] private GameObject additionalInfoGroup;
 
+        [Header("Style (optional)")]
+        [SerializeField] private Image tooltipBackgroundImage;
+        [SerializeField, Range(0.5f, 1f)] private float tooltipBackgroundAlpha = 0.96f;
+        [SerializeField, Range(0f, 1f)] private float rowBackgroundAlpha = 0.35f;
+
         // Runtime dependency - injected via SetPlayerBinder()
         private UI_PlayerBinder playerBinder;
 
@@ -73,6 +78,7 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public void UpdateTooltip(FungalCell cell, GameBoard board, FungusToast.Unity.Grid.GridVisualizer gridVisualizer)
         {
+            ApplyTooltipStyle();
             UpdateStatusInfo(cell);
             UpdateDeathReason(cell);
             UpdateOwnershipInfo(cell);
@@ -201,15 +207,15 @@ namespace FungusToast.Unity.UI
             {
                 if (cell.IsAlive)
                 {
-                    statusText.text = $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Status: Alive</b></color>";
+                    statusText.text = FormatHeaderStatus("Alive", UIStyleTokens.State.Success);
                 }
                 else if (cell.IsDead)
                 {
-                    statusText.text = $"<color=#{ToHex(UIStyleTokens.Text.Secondary)}><b>Status: Dead</b></color>";
+                    statusText.text = FormatHeaderStatus("Dead", UIStyleTokens.Text.Muted);
                 }
                 else if (cell.IsToxin)
                 {
-                    statusText.text = $"<color=#{ToHex(UIStyleTokens.Category.Fungicide)}><b>Status: Toxin</b></color>";
+                    statusText.text = FormatHeaderStatus("Toxin", UIStyleTokens.Category.Fungicide);
                 }
             }
         }
@@ -227,7 +233,7 @@ namespace FungusToast.Unity.UI
             {
                 if (showDeathReason)
                 {
-                    deathReasonText.text = $"Death Reason: {GetDeathReasonDisplayName(cell.CauseOfDeath.Value)}";
+                    deathReasonText.text = FormatLabelValue("Death", GetDeathReasonDisplayName(cell.CauseOfDeath.Value), UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger);
                 }
                 else
                 {
@@ -250,7 +256,7 @@ namespace FungusToast.Unity.UI
             {
                 if (hasOwner)
                 {
-                    ownerText.text = $"Owner: Player {cell.OwnerPlayerId.Value + 1}";
+                    ownerText.text = FormatLabelValue("Owner", $"Player {cell.OwnerPlayerId.Value + 1}", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary);
                 }
                 else
                 {
@@ -267,7 +273,7 @@ namespace FungusToast.Unity.UI
             {
                 if (showLastOwner)
                 {
-                    lastOwnerText.text = $"Last Owner: Player {cell.LastOwnerPlayerId.Value + 1}";
+                    lastOwnerText.text = FormatLabelValue("Last Owner", $"Player {cell.LastOwnerPlayerId.Value + 1}", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Secondary);
                 }
                 else
                 {
@@ -293,11 +299,11 @@ namespace FungusToast.Unity.UI
 
                 if (highlightYoung)
                 {
-                    growthAgeText.text = $"Growth Cycle Age: <color=#{ToHex(UIStyleTokens.State.Success)}>{cell.GrowthCycleAge}</color>";
+                    growthAgeText.text = FormatLabelValue("Growth Cycle Age", cell.GrowthCycleAge.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success);
                 }
                 else
                 {
-                    growthAgeText.text = $"Growth Cycle Age: {cell.GrowthCycleAge}";
+                    growthAgeText.text = FormatLabelValue("Growth Cycle Age", cell.GrowthCycleAge.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary);
                 }
             }
 
@@ -313,9 +319,9 @@ namespace FungusToast.Unity.UI
                     // Use the new age-based expiration system instead of the old cycle-based system
                     int cyclesRemaining = cell.ToxinExpirationAge - cell.GrowthCycleAge;
                     if (cyclesRemaining > 0)
-                        expirationText.text = $"Cycles Until Expiration: {cyclesRemaining}";
+                        expirationText.text = FormatLabelValue("Cycles Until Expiration", cyclesRemaining.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary);
                     else
-                        expirationText.text = $"<color=#{ToHex(UIStyleTokens.State.Danger)}>Expires this cycle</color>";
+                        expirationText.text = FormatLabelValue("Expiration", "Expires this cycle", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger);
                 }
                 else
                 {
@@ -444,7 +450,7 @@ namespace FungusToast.Unity.UI
             {
                 if (showGrowthSource)
                 {
-                    growthSourceText.text = $"<color=#{ToHex(UIStyleTokens.State.Info)}>Source: {GetGrowthSourceDisplayName(cell.SourceOfGrowth.Value)}</color>";
+                    growthSourceText.text = FormatLabelValue("Source", GetGrowthSourceDisplayName(cell.SourceOfGrowth.Value), UIStyleTokens.Text.Secondary, UIStyleTokens.State.Info);
                 }
                 else
                 {
@@ -466,7 +472,7 @@ namespace FungusToast.Unity.UI
             {
                 if (isResistant)
                 {
-                    resistantText.text = $"<color=#{ToHex(UIStyleTokens.Accent.Spore)}><b>Resistant</b></color>";
+                    resistantText.text = FormatLabelValue("Resistance", "Active", UIStyleTokens.Text.Secondary, UIStyleTokens.Accent.Spore);
                 }
                 else
                 {
@@ -497,15 +503,15 @@ namespace FungusToast.Unity.UI
 
                 // Reclaim count
                 if (cell.ReclaimCount > 0)
-                    additionalInfo.AppendLine($"Reclaimed: {cell.ReclaimCount}x");
+                    additionalInfo.AppendLine(FormatLabelValue("Reclaimed", $"{cell.ReclaimCount}x", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
 
                 // Animation states (for visual feedback)
                 if (cell.IsNewlyGrown)
-                    additionalInfo.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}>● Newly Grown</color>");
+                    additionalInfo.AppendLine($"<color=#{ToHex(EnsureTooltipContrast(UIStyleTokens.State.Warning))}>• Newly Grown</color>");
                 if (cell.IsDying)
-                    additionalInfo.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Danger)}>● Dying</color>");
+                    additionalInfo.AppendLine($"<color=#{ToHex(EnsureTooltipContrast(UIStyleTokens.State.Danger))}>• Dying</color>");
                 if (cell.IsReceivingToxinDrop)
-                    additionalInfo.AppendLine($"<color=#{ToHex(UIStyleTokens.Category.Fungicide)}>● Receiving Toxin</color>");
+                    additionalInfo.AppendLine($"<color=#{ToHex(EnsureTooltipContrast(UIStyleTokens.Category.Fungicide))}>• Receiving Toxin</color>");
 
                 string infoText = additionalInfo.ToString().Trim();
                 bool hasAdditionalInfo = !string.IsNullOrEmpty(infoText);
@@ -518,6 +524,90 @@ namespace FungusToast.Unity.UI
             {
                 SetGroupVisibility(additionalInfoGroup, false);
             }
+        }
+
+        private void ApplyTooltipStyle()
+        {
+            if (tooltipBackgroundImage == null)
+            {
+                tooltipBackgroundImage = GetComponent<Image>();
+            }
+
+            if (tooltipBackgroundImage != null)
+            {
+                var panelColor = UIStyleTokens.Surface.PanelSecondary;
+                panelColor.a = tooltipBackgroundAlpha;
+                tooltipBackgroundImage.color = panelColor;
+            }
+
+            ApplyTextDefaults(statusText, UIStyleTokens.Text.Primary, true);
+            ApplyTextDefaults(deathReasonText, UIStyleTokens.Text.Secondary, false);
+            ApplyTextDefaults(ownerText, UIStyleTokens.Text.Secondary, false);
+            ApplyTextDefaults(lastOwnerText, UIStyleTokens.Text.Secondary, false);
+            ApplyTextDefaults(growthAgeText, UIStyleTokens.Text.Secondary, false);
+            ApplyTextDefaults(expirationText, UIStyleTokens.Text.Secondary, false);
+            ApplyTextDefaults(resistantText, UIStyleTokens.Text.Secondary, false);
+            ApplyTextDefaults(growthSourceText, UIStyleTokens.Text.Secondary, false);
+            ApplyTextDefaults(additionalInfoText, UIStyleTokens.Text.Secondary, false);
+
+            ApplyGroupSurface(statusGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
+            ApplyGroupSurface(growthSourceGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
+            ApplyGroupSurface(deathReasonGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
+            ApplyGroupSurface(ownerGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
+            ApplyGroupSurface(ageGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
+            ApplyGroupSurface(expirationGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
+            ApplyGroupSurface(resistantGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
+            ApplyGroupSurface(lastOwnerGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
+            ApplyGroupSurface(additionalInfoGroup, UIStyleTokens.Surface.PanelElevated, rowBackgroundAlpha);
+        }
+
+        private static void ApplyTextDefaults(TextMeshProUGUI textComponent, Color color, bool isHeader)
+        {
+            if (textComponent == null)
+            {
+                return;
+            }
+
+            textComponent.color = color;
+            textComponent.fontStyle = isHeader ? FontStyles.Bold : FontStyles.Normal;
+            textComponent.textWrappingMode = TextWrappingModes.Normal;
+            textComponent.overflowMode = TextOverflowModes.Overflow;
+            textComponent.richText = true;
+        }
+
+        private static void ApplyGroupSurface(GameObject group, Color baseColor, float alpha)
+        {
+            if (group == null)
+            {
+                return;
+            }
+
+            var image = group.GetComponent<Image>();
+            if (image == null)
+            {
+                return;
+            }
+
+            var c = baseColor;
+            c.a = alpha;
+            image.color = c;
+        }
+
+        private static string FormatHeaderStatus(string status, Color statusColor)
+        {
+            Color readableStatusColor = EnsureTooltipContrast(statusColor);
+            return $"<color=#{ToHex(UIStyleTokens.Text.Primary)}><b>Status</b></color>: <color=#{ToHex(readableStatusColor)}><b>{status}</b></color>";
+        }
+
+        private static string FormatLabelValue(string label, string value, Color labelColor, Color valueColor)
+        {
+            Color readableValueColor = EnsureTooltipContrast(valueColor);
+            return $"<color=#{ToHex(labelColor)}>{label}:</color> <color=#{ToHex(readableValueColor)}>{value}</color>";
+        }
+
+        private static Color EnsureTooltipContrast(Color color)
+        {
+            return Color.Lerp(color, UIStyleTokens.Text.Primary, 0.5f);
         }
 
         /// <summary>

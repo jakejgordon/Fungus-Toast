@@ -81,7 +81,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// The persistent alpha for cells that grew this round (until the next round begins).
         /// </summary>
-        public const float NewGrowthFinalAlpha = 0.9f;
+        public const float NewGrowthFinalAlpha = 0.78f;
 
         // ==================== TOOLTIP HIGHLIGHTING ====================
         /// <summary>

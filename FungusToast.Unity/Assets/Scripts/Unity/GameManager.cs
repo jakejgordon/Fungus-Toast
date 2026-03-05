@@ -364,6 +364,7 @@ namespace FungusToast.Unity
             gameUIManager.GameLogRouter?.OnPhaseStart("Growth");
             gameUIManager.GameLogManager?.OnLogSegmentStart("GrowthPhase");
             growthPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
+            gridVisualizer.ClearNewlyGrownFlagsForNextGrowthPhase();
             gameUIManager.PhaseBanner.Show("Growth Phase Begins!",2f);
             phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
             Board.OnPreGrowthPhase();

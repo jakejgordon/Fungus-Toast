@@ -53,6 +53,7 @@ namespace FungusToast.Unity.Grid
 
         // Animation effect tracking
         private readonly HashSet<int> newlyGrownTileIds = new();
+        private readonly HashSet<int> newlyGrownAnimationPlayedTileIds = new();
         private readonly Dictionary<int, Coroutine> fadeInCoroutines = new();
         private readonly HashSet<int> dyingTileIds = new();
         private readonly Dictionary<int, Coroutine> deathAnimationCoroutines = new();
@@ -119,7 +120,7 @@ namespace FungusToast.Unity.Grid
                         moldTile = playerMoldTiles[idA];
                         if (cell.IsNewlyGrown)
                         {
-                            moldColor = new Color(1f, 1f, 1f, 0.1f);
+                            moldColor = new Color(1f, 1f, 1f, UIEffectConstants.NewGrowthFinalAlpha);
                         }
                         else
                         {
@@ -213,12 +214,18 @@ namespace FungusToast.Unity.Grid
             foreach (int tileId in newlyGrownTileIds
         )
             {
+                if (newlyGrownAnimationPlayedTileIds.Contains(tileId))
+                {
+                    continue;
+                }
+
                 if (fadeInCoroutines.ContainsKey(tileId))
                 {
                     StopCoroutine(fadeInCoroutines[tileId]);
                     EndAnimation();
                 }
                 fadeInCoroutines[tileId] = StartCoroutine(FadeInCell(tileId));
+                newlyGrownAnimationPlayedTileIds.Add(tileId);
             }
         }
 
@@ -277,17 +284,32 @@ namespace FungusToast.Unity.Grid
                     moldTilemap.SetColor(pos, settleColor);
                 }
 
-                var tile = board.GetTileById(tileId);
-                if (tile?.FungalCell != null)
-                {
-                    tile.FungalCell.ClearNewlyGrownFlag();
-                }
             }
             finally
             {
                 fadeInCoroutines.Remove(tileId);
                 EndAnimation();
             }
+        }
+
+        public void ClearNewlyGrownFlagsForNextGrowthPhase()
+        {
+            if (board == null)
+            {
+                return;
+            }
+
+            foreach (var tile in board.AllTiles())
+            {
+                var cell = tile.FungalCell;
+                if (cell?.IsNewlyGrown == true)
+                {
+                    cell.ClearNewlyGrownFlag();
+                }
+            }
+
+            newlyGrownTileIds.Clear();
+            newlyGrownAnimationPlayedTileIds.Clear();
         }
 
         private void StartDeathAnimations()
@@ -769,6 +791,7 @@ namespace FungusToast.Unity.Grid
             toxinDropCoroutines.Clear();
 
             newlyGrownTileIds.Clear();
+            newlyGrownAnimationPlayedTileIds.Clear();
             dyingTileIds.Clear();
             toxinDropTileIds.Clear();
 
