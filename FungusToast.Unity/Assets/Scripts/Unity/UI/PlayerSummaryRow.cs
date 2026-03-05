@@ -7,12 +7,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
+using System.Globalization;
 
 namespace FungusToast.Unity.UI
 {
     public class PlayerSummaryRow : MonoBehaviour
     {
-        private const float StatTextScale = 1.18f;
+        private const float StatTextScale = 1.05f;
 
         [SerializeField] private Image moldIconImage;
         [SerializeField] private TextMeshProUGUI livingCellsText;
@@ -63,6 +64,10 @@ namespace FungusToast.Unity.UI
             label.alignment = TextAlignmentOptions.MidlineRight;
             label.textWrappingMode = TextWrappingModes.NoWrap;
             label.overflowMode = TextOverflowModes.Ellipsis;
+            float maxSize = label.enableAutoSizing ? label.fontSizeMax : label.fontSize;
+            label.enableAutoSizing = true;
+            label.fontSizeMax = maxSize;
+            label.fontSizeMin = Mathf.Max(10f, maxSize * 0.70f);
         }
 
         private static void ApplyTextScale(TextMeshProUGUI label, float scale)
@@ -89,14 +94,19 @@ namespace FungusToast.Unity.UI
                 moldIconImage.sprite = sprite;
         }
 
-        public void SetCounts(string living, string dead, string toxins)
+        public void SetCounts(int living, int dead, int toxins)
         {
             if (livingCellsText != null)
-                livingCellsText.text = living; // No label, just the number
+                livingCellsText.text = FormatCount(living); // No label, just the number
             if (deadCellsText != null)
-                deadCellsText.text = dead;     // No label, just the number
+                deadCellsText.text = FormatCount(dead);     // No label, just the number
             if (toxinCellsText != null)
-                toxinCellsText.text = toxins;
+                toxinCellsText.text = FormatCount(toxins);
+        }
+
+        private static string FormatCount(int value)
+        {
+            return value.ToString("N0", CultureInfo.CurrentCulture);
         }
 
 

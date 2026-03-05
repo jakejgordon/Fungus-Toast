@@ -73,6 +73,8 @@ namespace FungusToast.Unity.UI
             Transform headerRow = playerSummaryContainer.Find("UI_PlayerSummariesPanelHeaderRow");
             if (headerRow == null) return;
 
+            AlignPlayerSummaryHeaderColumns(headerRow);
+
             var headerLabels = headerRow.GetComponentsInChildren<TextMeshProUGUI>(true);
             foreach (var label in headerLabels)
             {
@@ -85,9 +87,50 @@ namespace FungusToast.Unity.UI
                 string normalized = label.text?.Trim().ToLowerInvariant() ?? string.Empty;
                 if (normalized.StartsWith("alive") || normalized.StartsWith("dead") || normalized.StartsWith("toxin"))
                 {
-                    label.alignment = TextAlignmentOptions.MidlineRight;
+                    label.alignment = TextAlignmentOptions.Midline;
                 }
             }
+        }
+
+        private static void AlignPlayerSummaryHeaderColumns(Transform headerRow)
+        {
+            if (headerRow == null)
+            {
+                return;
+            }
+
+            var headerLayout = headerRow.GetComponent<HorizontalLayoutGroup>();
+            if (headerLayout != null)
+            {
+                headerLayout.spacing = 10f;
+                headerLayout.childControlWidth = true;
+                headerLayout.childForceExpandWidth = false;
+                headerLayout.childControlHeight = true;
+                headerLayout.childForceExpandHeight = false;
+            }
+
+            ApplyColumnWidth(headerRow.Find("UI_BlankPlayerMoldIconHeaderText"), 50f);
+            ApplyColumnWidth(headerRow.Find("UI_AliveHeaderText"), 70f);
+            ApplyColumnWidth(headerRow.Find("UI_DeadHeaderText"), 70f);
+            ApplyColumnWidth(headerRow.Find("UI_ToxinHeaderText"), 70f);
+        }
+
+        private static void ApplyColumnWidth(Transform cell, float width)
+        {
+            if (cell == null)
+            {
+                return;
+            }
+
+            var layout = cell.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = cell.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layout.preferredWidth = width;
+            layout.minWidth = width;
+            layout.flexibleWidth = -1f;
         }
 
         private static void ApplyTextScale(TextMeshProUGUI label, float scale)
@@ -153,7 +196,7 @@ namespace FungusToast.Unity.UI
 
                 row.PlayerId = player.PlayerId; // <-- Set PlayerId
                 row.SetIcon(GameManager.Instance.GameUI.PlayerUIBinder.GetPlayerIcon(player.PlayerId));
-                row.SetCounts("1", "0", "0");
+                row.SetCounts(1, 0, 0);
                 playerSummaryRows[player.PlayerId] = row;
 
                 // --- Wire up the hover handler on the icon ---
@@ -182,9 +225,9 @@ namespace FungusToast.Unity.UI
                 {
                     var summary = boardSummaries[player.PlayerId];
                     row.SetCounts(
-                        summary.LivingCells.ToString(), 
-                        summary.DeadCells.ToString(), 
-                        summary.ToxinCells.ToString()
+                        summary.LivingCells, 
+                        summary.DeadCells, 
+                        summary.ToxinCells
                     );
                 }
             }

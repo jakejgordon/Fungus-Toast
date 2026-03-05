@@ -7,6 +7,7 @@ using FungusToast.Core.Players;
 using System.Linq;
 using TMPro;
 using FungusToast.Unity.UI.Tooltips;
+using System.Globalization;
 
 namespace FungusToast.Unity.UI
 {
@@ -174,18 +175,21 @@ namespace FungusToast.Unity.UI
             foreach (Transform child in resultsContainer)
                 Destroy(child.gameObject);
 
+            BuildResultsHeader();
+
+            var summaries = BoardUtilities.GetPlayerBoardSummaries(ranked, board);
+
             /* build rows */
             int rank = 1;
             foreach (var p in ranked)
             {
                 var row = Instantiate(playerResultRowPrefab, resultsContainer);
-                int living = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive);
-                int dead = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => !c.IsAlive);
+                var summary = summaries[p.PlayerId];
                 Sprite icon = gameUI != null
                     ? gameUI.PlayerUIBinder.GetIcon(p)
                     : GameManager.Instance.GameUI.PlayerUIBinder.GetIcon(p);
 
-                row.Populate(rank, icon, p.PlayerName, living, dead);
+                row.Populate(rank, icon, p.PlayerName, summary.LivingCells, summary.DeadCells, summary.ToxinCells);
                 rank++;
             }
 
@@ -264,6 +268,58 @@ namespace FungusToast.Unity.UI
                 yield return null;
             }
             canvasGroup.alpha = targetAlpha;
+        }
+
+        private void BuildResultsHeader()
+        {
+            if (resultsContainer == null)
+            {
+                return;
+            }
+
+            var header = new GameObject("UI_GameEndResultsHeaderRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            header.transform.SetParent(resultsContainer, false);
+
+            var layout = header.GetComponent<HorizontalLayoutGroup>();
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.spacing = 18f;
+            layout.padding = new RectOffset(18, 18, 6, 6);
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+
+            var headerLayout = header.GetComponent<LayoutElement>();
+            headerLayout.preferredHeight = 36f;
+
+            CreateHeaderCell(header.transform, string.Empty, 60f, TextAlignmentOptions.Center, false);
+            CreateHeaderCell(header.transform, string.Empty, 60f, TextAlignmentOptions.Center, false);
+            CreateHeaderCell(header.transform, "Player", 260f, TextAlignmentOptions.Left, true);
+            CreateHeaderCell(header.transform, "Alive", 140f, TextAlignmentOptions.Right, false);
+            CreateHeaderCell(header.transform, "Dead", 140f, TextAlignmentOptions.Right, false);
+            CreateHeaderCell(header.transform, "Toxins", 140f, TextAlignmentOptions.Right, false);
+        }
+
+        private void CreateHeaderCell(Transform parent, string text, float preferredWidth, TextAlignmentOptions alignment, bool flexible)
+        {
+            var cell = new GameObject($"UI_GameEndHeader_{text}", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            cell.transform.SetParent(parent, false);
+
+            var layout = cell.GetComponent<LayoutElement>();
+            layout.preferredWidth = preferredWidth;
+            layout.flexibleWidth = flexible ? 1f : -1f;
+
+            var label = cell.GetComponent<TextMeshProUGUI>();
+            label.text = text;
+            label.color = UIStyleTokens.Text.Secondary;
+            label.fontStyle = FontStyles.Bold;
+            label.fontSize = 22f;
+            label.alignment = alignment;
+            label.enableAutoSizing = true;
+            label.fontSizeMax = 22f;
+            label.fontSizeMin = 14f;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.overflowMode = TextOverflowModes.Ellipsis;
         }
 
         private static void EnsureButtonLayout(Button button)
