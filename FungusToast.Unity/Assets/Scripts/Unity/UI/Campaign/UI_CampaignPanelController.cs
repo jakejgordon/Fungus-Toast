@@ -64,12 +64,83 @@ namespace FungusToast.Unity.UI.Campaign
         private void ApplyStyle()
         {
             UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.Canvas);
+            if (testingModePanel != null)
+            {
+                UIStyleTokens.ApplyPanelSurface(testingModePanel, UIStyleTokens.Surface.PanelPrimary);
+            }
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
 
             UIStyleTokens.Button.ApplyStyle(resumeButton);
             UIStyleTokens.Button.ApplyStyle(newButton);
             UIStyleTokens.Button.ApplyStyle(deleteButton);
             UIStyleTokens.Button.ApplyStyle(backButton);
+
+            ApplyTestingInputReadability();
+        }
+
+        private void ApplyTestingInputReadability()
+        {
+            ApplyDropdownReadability(mycovariantDropdown);
+            ApplyInputReadability(fastForwardRoundsInput);
+        }
+
+        private static void ApplyDropdownReadability(TMP_Dropdown dropdown)
+        {
+            if (dropdown == null)
+            {
+                return;
+            }
+
+            if (dropdown.captionText != null)
+            {
+                dropdown.captionText.color = UIStyleTokens.Button.TextDefault;
+            }
+
+            if (dropdown.itemText != null)
+            {
+                dropdown.itemText.color = UIStyleTokens.Button.TextDefault;
+            }
+
+            var allLabels = dropdown.GetComponentsInChildren<TextMeshProUGUI>(true);
+            for (int index = 0; index < allLabels.Length; index++)
+            {
+                var label = allLabels[index];
+                if (label == null)
+                {
+                    continue;
+                }
+
+                if (label.name.IndexOf("Placeholder", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    label.color = UIStyleTokens.Text.Disabled;
+                }
+                else
+                {
+                    label.color = UIStyleTokens.Button.TextDefault;
+                }
+            }
+        }
+
+        private static void ApplyInputReadability(TMP_InputField input)
+        {
+            if (input == null)
+            {
+                return;
+            }
+
+            if (input.textComponent != null)
+            {
+                input.textComponent.color = UIStyleTokens.Button.TextDefault;
+            }
+
+            if (input.placeholder is TextMeshProUGUI placeholderLabel)
+            {
+                placeholderLabel.color = UIStyleTokens.Text.Disabled;
+            }
+            else if (input.placeholder is Graphic placeholderGraphic)
+            {
+                placeholderGraphic.color = UIStyleTokens.Text.Disabled;
+            }
         }
 
         private void InitializeTestingModeUI()
