@@ -1,10 +1,22 @@
 fileFormatVersion: 2
-guid: 1dec0e0a95cc2284883bb7b5d49925a6
+guid: 4ac007c049fe1b04a9f325c637e04f53
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4317639862244366185
-    second: pink_mold_64x64_0
+      213: 7129757207374289583
+    second: cyan_mold_64x64_0
+  - first:
+      213: -5220836128092557931
+    second: cyan_mold_64x64_1
+  - first:
+      213: 8968073287936477993
+    second: cyan_mold_64x64_2
+  - first:
+      213: 583200093006139022
+    second: cyan_mold_64x64_3
+  - first:
+      213: 7119496616673922704
+    second: cyan_mold_64x64_4
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -96,29 +108,38 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: WebGL
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: pink_mold_64x64_0
+      name: cyan_mold_64x64_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 1
+        y: 51
+        width: 10
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: faa5350b76cf1f260800000000000000
+      internalID: 7129757207374289583
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: cyan_mold_64x64_1
+      rect:
+        serializedVersion: 2
+        x: 6
         y: 0
-        width: 64
+        width: 58
         height: 64
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -128,8 +149,74 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 967542134965beb30800000000000000
-      internalID: 4317639862244366185
+      spriteID: 59d6482e33ddb87b0800000000000000
+      internalID: -5220836128092557931
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: cyan_mold_64x64_2
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 18
+        width: 23
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92b8f17f32ff47c70800000000000000
+      internalID: 8968073287936477993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: cyan_mold_64x64_3
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 13
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e8e0b980561f71800800000000000000
+      internalID: 583200093006139022
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: cyan_mold_64x64_4
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 8
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 09ec170c3788dc260800000000000000
+      internalID: 7119496616673922704
       vertices: []
       indices: 
       edges: []
@@ -148,7 +235,11 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      pink_mold_64x64_0: 4317639862244366185
+      cyan_mold_64x64_0: 7129757207374289583
+      cyan_mold_64x64_1: -5220836128092557931
+      cyan_mold_64x64_2: 8968073287936477993
+      cyan_mold_64x64_3: 583200093006139022
+      cyan_mold_64x64_4: 7119496616673922704
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

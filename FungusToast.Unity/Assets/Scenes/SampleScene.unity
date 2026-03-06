@@ -3371,6 +3371,7 @@ MonoBehaviour:
   tooltipPrefab: {fileID: 4338957270057087183, guid: 8f5ea29fe34d6cb459bbe4dcf1aa9cdb, type: 3}
   hoverDelaySeconds: 0.2
   tooltipOffset: {x: 150, y: 30}
+  enableLegacyTooltipLayoutFixes: 0
   autoDetectRadius: 1
   manualRadius: 128
   enableDebugLogs: 0
@@ -4194,6 +4195,10 @@ MonoBehaviour:
   resistantGroup: {fileID: 0}
   growthSourceGroup: {fileID: 0}
   additionalInfoGroup: {fileID: 0}
+  tooltipBackgroundImage: {fileID: 0}
+  tooltipBackgroundAlpha: 0.96
+  rowBackgroundAlpha: 0.35
+  normalizeTooltipStructureOnAwake: 1
 --- !u!1 &356102964
 GameObject:
   m_ObjectHideFlags: 0
@@ -120058,6 +120063,11 @@ MonoBehaviour:
   choiceContainer: {fileID: 1610402562}
   cardPrefab: {fileID: 8528227567745809826, guid: 7dede3b59e08fd54e953ba71f543bf16, type: 3}
   gridVisualizer: {fileID: 989759029}
+  draftMessagePanel: {fileID: 0}
+  draftMessageTitleText: {fileID: 0}
+  draftMessageBodyText: {fileID: 0}
+  draftMessageMaxLines: 14
+  draftCompletionHoldSeconds: 2
 --- !u!1 &1737927982
 GameObject:
   m_ObjectHideFlags: 0
