@@ -70,6 +70,26 @@ Do not introduce ad hoc color names in new UI work.
 - `Category.GeneticDrift`: `#7D6B4E`
 - `Category.MycelialSurges`: `#80607A`
 
+### 2.7 Player Mold Icon Palette (Color-vision-safe)
+- `Player.Blue`: `#0072B2`
+- `Player.Orange`: `#E69F00`
+- `Player.Sky`: `#56B4E9`
+- `Player.Purple`: `#CC79A7`
+- `Player.Yellow`: `#F0E442`
+- `Player.Teal`: `#009E73`
+- `Player.Vermillion`: `#D55E00`
+- `Player.NeutralDead`: `#7F7F7F`
+
+Current sprite mapping (64x64 mold set):
+- `purple_mold_new_64x64.png` -> `Player.Blue`
+- `orange_red_mold_64x64.png` -> `Player.Orange`
+- `aqua_mold_64x64.png` -> `Player.Sky`
+- `pink_mold_64x64.png` -> `Player.Purple`
+- `yellow_mold_64x64.png` -> `Player.Yellow`
+- `green_mold_64x64.png` -> `Player.Teal`
+- `red_mold_64x64.png` -> `Player.Vermillion`
+- `mold_dead_64x64.png` -> `Player.NeutralDead`
+
 Notes:
 - Category accents are for headers, chips, and small emphasis areas.
 - Do not use category colors for body text contrast-critical content.
