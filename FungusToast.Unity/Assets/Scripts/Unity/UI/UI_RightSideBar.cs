@@ -27,6 +27,7 @@ namespace FungusToast.Unity.UI
         // Add a GridVisualizer field and setter
         private GridVisualizer gridVisualizer;
         private GameBoard board;
+        private int? perspectivePlayerId;
 
         private Dictionary<int, PlayerSummaryRow> playerSummaryRows = new();
 
@@ -205,6 +206,23 @@ namespace FungusToast.Unity.UI
                     row.SetHoverHighlight(player.PlayerId, gridVisualizer);
                 else
                     Debug.LogWarning("GridVisualizer not set on UI_RightSidebar; hover highlights will not work!");
+
+                row.SetPerspectivePlayer(perspectivePlayerId.HasValue && player.PlayerId == perspectivePlayerId.Value);
+            }
+        }
+
+        public void SetPerspectivePlayer(Player perspectivePlayer)
+        {
+            perspectivePlayerId = perspectivePlayer?.PlayerId;
+            ApplyPerspectiveHighlightState();
+        }
+
+        private void ApplyPerspectiveHighlightState()
+        {
+            foreach (var pair in playerSummaryRows)
+            {
+                bool isPerspective = perspectivePlayerId.HasValue && pair.Key == perspectivePlayerId.Value;
+                pair.Value?.SetPerspectivePlayer(isPerspective);
             }
         }
 

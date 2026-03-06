@@ -18,7 +18,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.PlasmidBountyId,
                 Name = "Plasmid Bounty I",
-                Description = $"Instantly gain {MycovariantGameBalance.PlasmidBountyMutationPointAward} mutation points as foreign DNA infuses the colony.",
+                Description = $"One-time on draft: absorb foreign plasmids and gain {MycovariantGameBalance.PlasmidBountyMutationPointAward} mutation points.",
                 FlavorText = "Horizontal gene transfer introduces novel genetic material, accelerating the colony's evolutionary potential.",
                 Type = MycovariantType.Economy,
                 Category = MycovariantCategory.Economy,
@@ -39,7 +39,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.PlasmidBountyIIId,
                 Name = "Plasmid Bounty II",
-                Description = $"Instantly gain {MycovariantGameBalance.PlasmidBountyIIMutationPointAward} mutation points as foreign DNA infuses the colony.",
+                Description = $"One-time on draft: absorb foreign plasmids and gain {MycovariantGameBalance.PlasmidBountyIIMutationPointAward} mutation points.",
                 FlavorText = "Multiple plasmid integrations trigger a cascade of genetic recombination events across the mycelial network.",
                 Type = MycovariantType.Economy,
                 Category = MycovariantCategory.Economy,
@@ -60,7 +60,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.PlasmidBountyIIIId,
                 Name = "Plasmid Bounty III",
-                Description = $"Instantly gain {MycovariantGameBalance.PlasmidBountyIIIMutationPointAward} mutation points as foreign DNA infuses the colony.",
+                Description = $"One-time on draft: absorb foreign plasmids and gain {MycovariantGameBalance.PlasmidBountyIIIMutationPointAward} mutation points.",
                 FlavorText = "Massive genetic influx overwhelms cellular repair mechanisms, creating unprecedented mutation rates throughout the colony.",
                 Type = MycovariantType.Economy,
                 Category = MycovariantCategory.Economy,

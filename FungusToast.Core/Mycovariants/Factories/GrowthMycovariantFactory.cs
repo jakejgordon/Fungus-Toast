@@ -18,7 +18,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.PerimeterProliferatorId,
             Name = "Perimeter Proliferator",
-            Description = $"Multiplies the growth rate of your mold by {MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier}x when it is within {MycovariantGameBalance.PerimeterProliferatorEdgeDistance} tiles of the edge of the board (the crust).",
+            Description = $"For the rest of the game, your growth gets a {MycovariantGameBalance.PerimeterProliferatorEdgeMultiplier}x multiplier within {MycovariantGameBalance.PerimeterProliferatorEdgeDistance} tiles of the board edge (the crust).",
             FlavorText = "At the bread's edge, the colony finds untapped vigor, racing along the crust in a surge of expansion.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
@@ -45,7 +45,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.CornerConduitIId,
             Name = "Corner Conduit I",
-            Description = $"Pre-growth: path to nearest corner. Replace up to {MycovariantGameBalance.CornerConduitIReplacementsPerPhase} actionable tile (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skips friendly living & enemy Resistant.",
+            Description = $"For the rest of the game, before each growth phase, trace a path to the nearest corner and resolve up to {MycovariantGameBalance.CornerConduitIReplacementsPerPhase} actionable tiles (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skip friendly living and enemy Resistant cells.",
             FlavorText = "Hyphae prioritize a direct arterial route to a strategic corner, exploiting vulnerabilities along the corridor.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
@@ -58,7 +58,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.CornerConduitIIId,
             Name = "Corner Conduit II",
-            Description = $"Pre-growth: corner path. Replace up to {MycovariantGameBalance.CornerConduitIIReplacementsPerPhase} actionable tiles (same rules as I).",
+            Description = $"For the rest of the game, before each growth phase, trace a path to the nearest corner and resolve up to {MycovariantGameBalance.CornerConduitIIReplacementsPerPhase} actionable tiles (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skip friendly living and enemy Resistant cells.",
             FlavorText = "Hyphal arterial routing intensifies, widening strategic throughput toward a dominant corner nexus.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
@@ -71,7 +71,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.CornerConduitIIIId,
             Name = "Corner Conduit III",
-            Description = $"Pre-growth: corner path. Replace up to {MycovariantGameBalance.CornerConduitIIIReplacementsPerPhase} actionable tiles (same rules as I).",
+            Description = $"For the rest of the game, before each growth phase, trace a path to the nearest corner and resolve up to {MycovariantGameBalance.CornerConduitIIIReplacementsPerPhase} actionable tiles (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skip friendly living and enemy Resistant cells.",
             FlavorText = "A fully vascularized hyphal highway surges toward strategic dominance, overwhelming resistance in a focused advance.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,

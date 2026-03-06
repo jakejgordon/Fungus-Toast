@@ -21,7 +21,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = id,
                 Name = $"Jetting Mycelium ({directionLabel})",
-                Description = $"Immediately grow {Config.MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles} mold tiles {directionLabel.ToLower()} from a chosen cell, followed by a spreading cone of toxins that starts {Config.MycovariantGameBalance.JettingMyceliumConeNarrowWidth} tile wide and expands to {Config.MycovariantGameBalance.JettingMyceliumConeWideWidth} tiles wide.",
+                Description = $"One-time on draft: choose a living source cell and launch a spore-jet {directionLabel.ToLower()}: grow {Config.MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles} living tiles, then place a toxin cone widening from {Config.MycovariantGameBalance.JettingMyceliumConeNarrowWidth} to {Config.MycovariantGameBalance.JettingMyceliumConeWideWidth} tiles.",
                 FlavorText = $"The cap ruptures violently. The colony explodes {directionLabel.ToLower()}ward in a widening cloud of toxic spores.",
                 Type = MycovariantType.Directional,
                 Category = MycovariantCategory.Fungicide,

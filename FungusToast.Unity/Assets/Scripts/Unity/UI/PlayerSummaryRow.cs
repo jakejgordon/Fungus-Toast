@@ -14,6 +14,7 @@ namespace FungusToast.Unity.UI
     public class PlayerSummaryRow : MonoBehaviour
     {
         private const float StatTextScale = 1.05f;
+        private static readonly Color InactiveRowBackground = new Color(0f, 0f, 0f, 0f);
 
         [SerializeField] private Image moldIconImage;
         [SerializeField] private TextMeshProUGUI livingCellsText;
@@ -24,12 +25,17 @@ namespace FungusToast.Unity.UI
 
         // Add this field to keep reference if needed
         private PlayerMoldIconHoverHandler hoverHandler;
+        private Image rowBackground;
+        private Image leftAccentStrip;
+        private GameObject youBadgeRoot;
 
         public int PlayerId { get; set; } // <-- Add this property
 
         private void Awake()
         {
             ApplyStyle();
+            EnsurePerspectiveIndicatorVisuals();
+            SetPerspectivePlayer(false);
         }
 
         private void ApplyStyle()
@@ -82,6 +88,107 @@ namespace FungusToast.Unity.UI
             else
             {
                 label.fontSize *= scale;
+            }
+        }
+
+        private void EnsurePerspectiveIndicatorVisuals()
+        {
+            rowBackground = GetComponent<Image>();
+            if (rowBackground == null)
+            {
+                rowBackground = gameObject.AddComponent<Image>();
+            }
+
+            rowBackground.raycastTarget = false;
+
+            var rowRect = transform as RectTransform;
+            if (rowRect != null)
+            {
+                var stripObject = new GameObject("UI_YouAccentStrip", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
+                stripObject.transform.SetParent(rowRect, false);
+
+                var stripRect = stripObject.GetComponent<RectTransform>();
+                stripRect.anchorMin = new Vector2(0f, 0f);
+                stripRect.anchorMax = new Vector2(0f, 1f);
+                stripRect.pivot = new Vector2(0f, 0.5f);
+                stripRect.anchoredPosition = Vector2.zero;
+                stripRect.sizeDelta = new Vector2(4f, 0f);
+
+                var stripLayout = stripObject.GetComponent<LayoutElement>();
+                stripLayout.ignoreLayout = true;
+
+                leftAccentStrip = stripObject.GetComponent<Image>();
+                leftAccentStrip.raycastTarget = false;
+                leftAccentStrip.color = UIStyleTokens.Accent.Lichen;
+            }
+
+            if (moldIconImage == null)
+            {
+                return;
+            }
+
+            var badgeObject = new GameObject("UI_YouBadge", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
+            badgeObject.transform.SetParent(moldIconImage.transform, false);
+
+            var badgeRect = badgeObject.GetComponent<RectTransform>();
+            badgeRect.anchorMin = new Vector2(1f, 1f);
+            badgeRect.anchorMax = new Vector2(1f, 1f);
+            badgeRect.pivot = new Vector2(1f, 1f);
+            badgeRect.anchoredPosition = new Vector2(2f, -2f);
+            badgeRect.sizeDelta = new Vector2(30f, 14f);
+
+            var badgeLayout = badgeObject.GetComponent<LayoutElement>();
+            badgeLayout.ignoreLayout = true;
+
+            var badgeBackground = badgeObject.GetComponent<Image>();
+            badgeBackground.raycastTarget = false;
+            badgeBackground.color = UIStyleTokens.Accent.Lichen;
+
+            var badgeTextObject = new GameObject("UI_YouBadgeText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            badgeTextObject.transform.SetParent(badgeObject.transform, false);
+
+            var badgeTextRect = badgeTextObject.GetComponent<RectTransform>();
+            badgeTextRect.anchorMin = Vector2.zero;
+            badgeTextRect.anchorMax = Vector2.one;
+            badgeTextRect.offsetMin = Vector2.zero;
+            badgeTextRect.offsetMax = Vector2.zero;
+
+            var badgeText = badgeTextObject.GetComponent<TextMeshProUGUI>();
+            badgeText.text = "YOU";
+            badgeText.color = UIStyleTokens.Text.OnAccent;
+            badgeText.alignment = TextAlignmentOptions.Center;
+            badgeText.fontStyle = FontStyles.Bold;
+            badgeText.enableAutoSizing = true;
+            badgeText.fontSizeMin = 7f;
+            badgeText.fontSizeMax = 11f;
+            badgeText.textWrappingMode = TextWrappingModes.NoWrap;
+            badgeText.overflowMode = TextOverflowModes.Ellipsis;
+
+            if (livingCellsText != null)
+            {
+                badgeText.font = livingCellsText.font;
+            }
+
+            youBadgeRoot = badgeObject;
+        }
+
+        public void SetPerspectivePlayer(bool isPerspectivePlayer)
+        {
+            if (rowBackground != null)
+            {
+                rowBackground.color = isPerspectivePlayer
+                    ? new Color(UIStyleTokens.Accent.Moss.r, UIStyleTokens.Accent.Moss.g, UIStyleTokens.Accent.Moss.b, 0.22f)
+                    : InactiveRowBackground;
+            }
+
+            if (leftAccentStrip != null)
+            {
+                leftAccentStrip.gameObject.SetActive(isPerspectivePlayer);
+            }
+
+            if (youBadgeRoot != null)
+            {
+                youBadgeRoot.SetActive(isPerspectivePlayer);
             }
         }
 

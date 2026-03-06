@@ -24,7 +24,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.MycelialBastionIId,
             Name = "Mycelial Bastion I",
-            Description = $"Immediately select up to {MycovariantGameBalance.MycelialBastionIMaxResistantCells} of your living cells to become Resistant (invincible). These cells cannot be killed, replaced, or converted for the rest of the game.",
+            Description = $"One-time on draft: select up to {MycovariantGameBalance.MycelialBastionIMaxResistantCells} living cells to become Resistant. Resistant cells cannot be killed, replaced, or converted for the rest of the game.",
             FlavorText = "A fortified network of hyphae, woven to withstand any threat.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Resistance,
@@ -43,7 +43,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.MycelialBastionIIId,
             Name = "Mycelial Bastion II",
-            Description = $"Immediately select up to {MycovariantGameBalance.MycelialBastionIIMaxResistantCells} of your living cells to become Resistant (invincible). These cells cannot be killed, replaced, or converted for the rest of the game.",
+            Description = $"One-time on draft: select up to {MycovariantGameBalance.MycelialBastionIIMaxResistantCells} living cells to become Resistant. Resistant cells cannot be killed, replaced, or converted for the rest of the game.",
             FlavorText = "Advanced fortification techniques create an impenetrable mycelial bulwark.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Resistance,
@@ -62,7 +62,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.MycelialBastionIIIId,
             Name = "Mycelial Bastion III",
-            Description = $"Immediately select up to {MycovariantGameBalance.MycelialBastionIIIMaxResistantCells} of your living cells to become Resistant (invincible). These cells cannot be killed, replaced, or converted for the rest of the game.",
+            Description = $"One-time on draft: select up to {MycovariantGameBalance.MycelialBastionIIIMaxResistantCells} living cells to become Resistant. Resistant cells cannot be killed, replaced, or converted for the rest of the game.",
             FlavorText = "Master-level mycelial engineering creates an unassailable fortress of living tissue.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Resistance,
@@ -81,7 +81,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.SurgicalInoculationId,
             Name = "Surgical Inoculation",
-            Description = "Place a single Resistant (invincible) fungal cell anywhere on the board, except on top of another Resistant cell.",
+            Description = "One-time on draft: place one Resistant cell on any valid tile except a tile already occupied by a Resistant cell.",
             FlavorText = "A single spore, delivered with surgical precision, takes root where none could before.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Resistance,
@@ -101,7 +101,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.HyphalResistanceTransferId,
             Name = "Hyphal Resistance Transfer",
-            Description = $"After each growth phase, your living cells adjacent to Resistant cells (including diagonally) have a {MycovariantGameBalance.HyphalResistanceTransferChance * 100f:0}% chance to become Resistant.",
+            Description = $"For the rest of the game, after each growth phase, each of your living cells adjacent (including diagonally) to a Resistant cell becomes Resistant with {MycovariantGameBalance.HyphalResistanceTransferChance * 100f:0}% chance.",
             FlavorText = "The protective genetic material flows through the mycelial network, sharing resilience with neighboring cells.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Resistance,
@@ -115,9 +115,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.AggressotropicConduitIId,
             Name = "Aggressotropic Conduit I",
-            Description = $"Before each growth phase, trace a path from your starting spore toward the enemy starting spore with the most living cells." +
-                $"Replace up to {MycovariantGameBalance.AggressotropicConduitIReplacementsPerPhase} tiles along that path. The final replaced tile becomes Resistant. " +
-                "Skips friendly living and enemy Resistant cells. Stacks with other Aggressotropic Conduit upgrades.",
+            Description = $"For the rest of the game, before each growth phase, trace from your starting spore toward the enemy start with the most living cells. Resolve up to {MycovariantGameBalance.AggressotropicConduitIReplacementsPerPhase} actionable tiles on that path; the last resolved tile becomes Resistant. Skips friendly living and enemy Resistant cells. Stacks with Aggressotropic Conduit II/III.",
             FlavorText = "A probing arterial strand advances toward dominant rival biomass, crystallizing a hardened foothold at its leading edge.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
@@ -131,9 +129,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.AggressotropicConduitIIId,
             Name = "Aggressotropic Conduit II",
-            Description = $"Before each growth phase, trace a path from your starting spore toward the enemy starting spore with the most living cells (random tie-break)." +
-                $"Replace up to {MycovariantGameBalance.AggressotropicConduitIIReplacementsPerPhase} tiles along that path. The final replaced tile becomes Resistant. " +
-                "Skips friendly living and enemy Resistant cells. Stacks with other Aggressotropic Conduit upgrades.",
+            Description = $"For the rest of the game, before each growth phase, trace from your starting spore toward the enemy start with the most living cells (random tie-break). Resolve up to {MycovariantGameBalance.AggressotropicConduitIIReplacementsPerPhase} actionable tiles on that path; the last resolved tile becomes Resistant. Skips friendly living and enemy Resistant cells. Stacks with Aggressotropic Conduit I/III.",
             FlavorText = "The invasive corridor thickens, boring deeper toward hostile dominance while fortifying its terminal node.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
@@ -147,9 +143,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.AggressotropicConduitIIIId,
             Name = "Aggressotropic Conduit III",
-            Description = $"Before each growth phase, trace a path from your starting spore toward the enemy starting spore with the most living cells (random tie-break)." +
-                $"Replace up to {MycovariantGameBalance.AggressotropicConduitIIIReplacementsPerPhase} tiles along that path. The final replaced tile becomes Resistant. " +
-                "Skips friendly living and enemy Resistant cells. Stacks with other Aggressotropic Conduit upgrades.",
+            Description = $"For the rest of the game, before each growth phase, trace from your starting spore toward the enemy start with the most living cells (random tie-break). Resolve up to {MycovariantGameBalance.AggressotropicConduitIIIReplacementsPerPhase} actionable tiles on that path; the last resolved tile becomes Resistant. Skips friendly living and enemy Resistant cells. Stacks with Aggressotropic Conduit I/II.",
             FlavorText = "A fully committed invasive artery, tunneling decisively toward the heart of rival dominance and sealing its spearpoint in impervious tissue.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,

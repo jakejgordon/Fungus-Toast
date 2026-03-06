@@ -299,6 +299,7 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.SetBoard(Board);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
+            gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
             gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
 
@@ -708,6 +709,7 @@ namespace FungusToast.Unity
 
             // 4. Update primary human reference
             humanPlayer = player;
+            gameUIManager?.RightSidebar?.SetPerspectivePlayer(player);
         }
 
         #endregion
@@ -795,6 +797,7 @@ namespace FungusToast.Unity
             phaseProgressTracker?.HighlightMutationPhase();
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
+            gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
             gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
             if (!(testingModeEnabled && (fastForwardRounds >0 || testingMycovariantId.HasValue)))

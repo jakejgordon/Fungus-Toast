@@ -23,7 +23,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.NeutralizingMantleId,
             Name = "Neutralizing Mantle",
-            Description = $"Whenever an enemy toxin is placed orthogonally adjacent to your living cells, you have a {MycovariantGameBalance.NeutralizingMantleNeutralizeChance * 100f:0}% chance to neutralize (remove) it instantly.",
+            Description = $"For the rest of the game, whenever an enemy toxin appears orthogonally adjacent to your living cell, neutralize it immediately with {MycovariantGameBalance.NeutralizingMantleNeutralizeChance * 100f:0}% chance.",
             FlavorText = "A protective sheath of hyphae, secreting enzymes to break down hostile compounds.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Defense,
@@ -36,7 +36,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.EnduringToxaphoresId,
             Name = "Enduring Toxaphores",
-            Description = $"Immediately adds {MycovariantGameBalance.EnduringToxaphoresExistingToxinExtension} growth cycles to all your existing toxins. Additionally, all toxins you place after acquiring this will last {MycovariantGameBalance.EnduringToxaphoresNewToxinExtension} cycles longer than normal.",
+            Description = $"One-time on draft: extend all current toxins by {MycovariantGameBalance.EnduringToxaphoresExistingToxinExtension} cycles. For the rest of the game, new toxins you place persist {MycovariantGameBalance.EnduringToxaphoresNewToxinExtension} extra cycles.",
             FlavorText = "Through secreted compounds, the colony's toxins linger long after their release, defying the march of time.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Fungicide,
@@ -80,7 +80,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.BallistosporeDischargeIId,
             Name = "Ballistospore Discharge I",
-            Description = $"Immediately drop up to {MycovariantGameBalance.BallistosporeDischargeISpores} toxin spores on any empty space (or less, if fewer than that are available).",
+            Description = $"One-time on draft: launch up to {MycovariantGameBalance.BallistosporeDischargeISpores} toxin spores onto empty tiles (fewer if not enough valid tiles exist).",
             FlavorText = "The colony's fruiting bodies tense, launching a volley of toxin-laden spores across the substrate.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
@@ -102,7 +102,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.BallistosporeDischargeIIId,
             Name = "Ballistospore Discharge II",
-            Description = $"Immediately drop up to {MycovariantGameBalance.BallistosporeDischargeIISpores} toxin spores on any empty space (or less, if fewer than that are available).",
+            Description = $"One-time on draft: launch up to {MycovariantGameBalance.BallistosporeDischargeIISpores} toxin spores onto empty tiles (fewer if not enough valid tiles exist).",
             FlavorText = "A thunderous burst of spores erupts, blanketing the battlefield in a toxic haze.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
@@ -124,7 +124,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.BallistosporeDischargeIIIId,
             Name = "Ballistospore Discharge III",
-            Description = $"Immediately drop up to {MycovariantGameBalance.BallistosporeDischargeIIISpores} toxin spores on any empty space (or less, if fewer than that are available).",
+            Description = $"One-time on draft: launch up to {MycovariantGameBalance.BallistosporeDischargeIIISpores} toxin spores onto empty tiles (fewer if not enough valid tiles exist).",
             FlavorText = "The ultimate actinic volley: a storm of spores rains down, saturating the terrain with lethal intent.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
@@ -146,7 +146,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.CytolyticBurstId,
             Name = "Cytolytic Burst",
-            Description = $"Select one of your toxins to explode in a {MycovariantGameBalance.CytolyticBurstRadius}-tile radius. Each tile in the area has a {MycovariantGameBalance.CytolyticBurstToxinChance * 100f:0}% chance to receive a toxin, killing anything in its path.",
+            Description = $"One-time on draft: choose one of your toxins to burst in a {MycovariantGameBalance.CytolyticBurstRadius}-tile radius. Each tile in range has {MycovariantGameBalance.CytolyticBurstToxinChance * 100f:0}% chance to gain toxin, killing any cell there.",
             FlavorText = "The toxin's cellular membrane ruptures catastrophically, releasing cytolytic enzymes in a violent cascade that spreads destruction through the surrounding substrate.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
@@ -182,7 +182,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.ChemotacticMycotoxinsId,
             Name = "Chemotactic Mycotoxins",
-            Description = $"End of decay: isolated toxins each have X% chance to relocate to a living enemy (X = {MycovariantGameBalance.ChemotacticMycotoxinsMycotoxinTracerMultiplier} × Mycotoxin Tracer level; same targeting rules).",
+            Description = $"For the rest of the game, at the end of each decay phase, each isolated toxin may drift to a living enemy with X% chance (X = {MycovariantGameBalance.ChemotacticMycotoxinsMycotoxinTracerMultiplier} Ã— Mycotoxin Tracer level; standard targeting rules).",
             FlavorText = "Sensing the absence of targets, the colony's toxic spores drift through microscopic gradients, seeking new hosts to poison.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Fungicide,

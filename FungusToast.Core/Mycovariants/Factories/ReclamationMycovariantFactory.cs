@@ -18,7 +18,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.NecrophoricAdaptation,
                 Name = "Necrophoric Adaptation",
-                Description = $"When a mold cell dies, there is a {MycovariantGameBalance.NecrophoricAdaptationReclamationChance * 100f:0}% chance to reclaim an orthogonally adjacent dead tile.",
+                Description = $"For the rest of the game, whenever one of your living cells dies, reclaim one orthogonally adjacent dead tile with {MycovariantGameBalance.NecrophoricAdaptationReclamationChance * 100f:0}% chance.",
                 FlavorText = "Even in death, the colony endures.",
                 Type = MycovariantType.Passive,
                 Category = MycovariantCategory.Reclamation,
@@ -37,7 +37,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.ReclamationRhizomorphsId,
                 Name = "Reclamation Rhizomorphs",
-                Description = $"When your reclamation attempts fail, you have a {MycovariantGameBalance.ReclamationRhizomorphsSecondAttemptChance * 100f:0}% chance to immediately try again.",
+                Description = $"For the rest of the game, whenever your reclaim attempt fails, immediately make one extra reclaim attempt with {MycovariantGameBalance.ReclamationRhizomorphsSecondAttemptChance * 100f:0}% chance.",
                 FlavorText = "Specialized hyphal networks persist even after setbacks, allowing the colony to recover and try again with renewed vigor.",
                 Type = MycovariantType.Passive,
                 Category = MycovariantCategory.Reclamation,

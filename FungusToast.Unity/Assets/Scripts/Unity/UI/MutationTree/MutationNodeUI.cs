@@ -58,6 +58,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private float targetProgressFill;
         private float currentProgressFill;
         private static readonly float ProgressLerpSpeed = 6f;
+        private const float ProgressFillVisibilityBoost = 1.15f;
 
         public int MutationId => mutation.Id;
 
@@ -228,7 +229,11 @@ namespace FungusToast.Unity.UI.MutationTree
 
             // ── Progress fill color ──
             if (levelProgressFill != null)
-                levelProgressFill.color = MutationTreeColors.GetProgressBarColor(mutation.Category);
+            {
+                Color progressColor = MutationTreeColors.GetProgressBarColor(mutation.Category);
+                progressColor.a = Mathf.Clamp01(progressColor.a * ProgressFillVisibilityBoost);
+                levelProgressFill.color = progressColor;
+            }
 
             // ── Affordability background tinting ──
             ApplyNodeBackgroundTint(isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock);
