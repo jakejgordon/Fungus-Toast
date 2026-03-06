@@ -41,6 +41,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         [SerializeField] private TextMeshProUGUI draftMessageTitleText;
         [SerializeField] private TextMeshProUGUI draftMessageBodyText;
         [SerializeField] private int draftMessageMaxLines = 14;
+        [SerializeField] private float draftCompletionHoldSeconds = 2f;
 
         private List<Mycovariant> draftChoices;
         private Player currentPlayer;
@@ -53,6 +54,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private DraftUIState uiState = DraftUIState.Idle;
         private readonly Queue<string> draftMessageLines = new();
+        private bool isFinishingDraftPhase;
 
         private bool _cameraRecenteredThisDraftPhase = false;
 
@@ -69,6 +71,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             this.draftOrder = draftOrder;
             draftIndex = 0;
             this.draftChoicesCount = draftChoicesCount;
+            isFinishingDraftPhase = false;
 
             EnsureDraftMessageUI();
             ClearDraftMessages();
@@ -84,18 +87,14 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             {
                 var allMycovariants = MycovariantRepository.All;
                 poolManager.ReturnUndraftedToPool(allMycovariants, rng);
-                
-                HideDraftUI();
-                uiState = DraftUIState.Complete;
-                GameManager.Instance.OnMycovariantDraftComplete();
+                AddDraftMessage("Draft complete. Spores settle while the colonies prepare for the next round...");
+                BeginDraftCompletionSequence();
                 return;
             }
             currentPlayer = draftOrder[draftIndex];
             UpdateDraftBanner();
 
-            AddDraftMessage(currentPlayer.PlayerType == PlayerTypeEnum.AI
-                ? $"{currentPlayer.PlayerName} is deciding..."
-                : "Your turn: choose a Mycovariant.");
+            AddDraftMessage(BuildTurnAnnouncement(currentPlayer));
 
             draftOrderRow?.SetDraftOrder(draftOrder, draftIndex);
 
@@ -190,7 +189,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             GameManager.Instance.GameUI.GameLogRouter?.OnDraftPick(currentPlayer.PlayerName, picked.Name);
 
-            AddDraftMessage($"{currentPlayer.PlayerName} drafted {picked.Name}.");
+            AddDraftMessage(BuildPickAnnouncement(currentPlayer, picked));
 
             GameManager.Instance.ResolveMycovariantDraftPick(currentPlayer, picked);
 
@@ -265,11 +264,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             {
                 var allMycovariants = MycovariantRepository.All;
                 poolManager.ReturnUndraftedToPool(allMycovariants, rng);
-                
-                HideDraftUI();
-                uiState = DraftUIState.Complete;
-                AddDraftMessage("Draft complete. Returning to Mutation phase.");
-                GameManager.Instance.OnMycovariantDraftComplete();
+
+                AddDraftMessage("Draft complete. Spores settle while the colonies prepare for the next round...");
+                BeginDraftCompletionSequence();
                 return;
             }
             
@@ -417,6 +414,29 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
         }
 
+        private void BeginDraftCompletionSequence()
+        {
+            if (isFinishingDraftPhase)
+                return;
+
+            isFinishingDraftPhase = true;
+            interactionBlocker.blocksRaycasts = true;
+            interactionBlocker.alpha = 0.25f;
+            SetAllPickButtonsInteractable(false);
+            StartCoroutine(FinishDraftAfterDelayRoutine());
+        }
+
+        private IEnumerator FinishDraftAfterDelayRoutine()
+        {
+            float holdDuration = Mathf.Max(0f, draftCompletionHoldSeconds);
+            if (holdDuration > 0f)
+                yield return new WaitForSeconds(holdDuration);
+
+            HideDraftUI();
+            uiState = DraftUIState.Complete;
+            GameManager.Instance.OnMycovariantDraftComplete();
+        }
+
         private void HideDraftUI()
         {
             draftPanel.SetActive(false);
@@ -525,37 +545,69 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             if (playerMyco == null)
             {
-                AddDraftMessage($"{picked.Name} resolved.");
+                AddDraftMessage($"Mycelial pulse: {picked.Name} resolved.");
                 return;
             }
 
             string countSummary = BuildEffectCountSummary(playerMyco);
             if (!string.IsNullOrEmpty(countSummary))
             {
-                AddDraftMessage($"Result: {countSummary}.");
+                AddDraftMessage($"Impact: {countSummary}.");
                 return;
             }
 
             if (picked.Id == MycovariantIds.PlasmidBountyId)
             {
-                AddDraftMessage($"Result: gained {MycovariantGameBalance.PlasmidBountyMutationPointAward} mutation points.");
+                AddDraftMessage($"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyMutationPointAward} mutation points.");
             }
             else if (picked.Id == MycovariantIds.PlasmidBountyIIId)
             {
-                AddDraftMessage($"Result: gained {MycovariantGameBalance.PlasmidBountyIIMutationPointAward} mutation points.");
+                AddDraftMessage($"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyIIMutationPointAward} mutation points.");
             }
             else if (picked.Id == MycovariantIds.PlasmidBountyIIIId)
             {
-                AddDraftMessage($"Result: gained {MycovariantGameBalance.PlasmidBountyIIIMutationPointAward} mutation points.");
+                AddDraftMessage($"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyIIIMutationPointAward} mutation points.");
             }
             else if (picked.Type == MycovariantType.Passive)
             {
-                AddDraftMessage("Result: passive effect enabled for the rest of the game.");
+                AddDraftMessage("Passive trait established for the rest of the game.");
             }
             else
             {
-                AddDraftMessage($"Result: {picked.Name} resolved.");
+                AddDraftMessage($"Effect resolved: {picked.Name}.");
             }
+        }
+
+        private static string BuildTurnAnnouncement(Player player)
+        {
+            if (player.PlayerType == PlayerTypeEnum.AI)
+            {
+                string[] aiLines =
+                {
+                    $"{player.PlayerName} is scanning the mycelial options...",
+                    $"{player.PlayerName} is plotting a fungal gambit...",
+                    $"{player.PlayerName} is weighing spore-risk and reward..."
+                };
+                return aiLines[UnityEngine.Random.Range(0, aiLines.Length)];
+            }
+
+            return "Your turn: choose a Mycovariant and shape the colony's fate.";
+        }
+
+        private static string BuildPickAnnouncement(Player player, Mycovariant picked)
+        {
+            string categoryFlavor = picked.Category switch
+            {
+                MycovariantCategory.Growth => "growth lines are expanding",
+                MycovariantCategory.Fungicide => "toxin pressure is rising",
+                MycovariantCategory.Resistance => "defenses are hardening",
+                MycovariantCategory.Reclamation => "the dead are being recycled",
+                MycovariantCategory.Economy => "evolution economy just accelerated",
+                MycovariantCategory.Defense => "defensive chemistry is online",
+                _ => "the colony strategy just shifted"
+            };
+
+            return $"{player.PlayerName} drafted {picked.Name} — {categoryFlavor}.";
         }
 
         private static string BuildEffectCountSummary(PlayerMycovariant playerMyco)
