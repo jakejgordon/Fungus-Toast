@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 using FungusToast.Core.Players;
 using FungusToast.Core.Board;
 using FungusToast.Unity.Grid; // Needed for GridVisualizer
@@ -306,8 +307,35 @@ namespace FungusToast.Unity.UI
 
         public void SetRoundAndOccupancy(int round, float occupancy)
         {
-            roundAndOccupancyText.text = $"<b>Round:</b> {round}\n<b>Occupancy:</b> {occupancy:F2}%";
+            string mycovariantDraftTiming = BuildMycovariantDraftTimingText(round);
+            roundAndOccupancyText.text = $"<b>Round:</b> {round}\n<b>Occupancy:</b> {occupancy:F2}%\n<b>Mycovariant Draft:</b> {mycovariantDraftTiming}";
             UpdateRandomDecayChance(round); // update dynamic label each round update
+        }
+
+        private static string BuildMycovariantDraftTimingText(int currentRound)
+        {
+            var gameManager = GameManager.Instance;
+            bool isDraftPhaseActive = gameManager != null && gameManager.IsDraftPhaseActive;
+            bool draftCompletedThisRound = gameManager != null && gameManager.LastCompletedMycovariantDraftRound == currentRound;
+
+            if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(currentRound) && (isDraftPhaseActive || !draftCompletedThisRound))
+            {
+                return "Now";
+            }
+
+            int? nextDraftRound = MycovariantGameBalance.MycovariantSelectionTriggerRounds
+                .Where(triggerRound => triggerRound > currentRound)
+                .OrderBy(triggerRound => triggerRound)
+                .Select(triggerRound => (int?)triggerRound)
+                .FirstOrDefault();
+
+            if (!nextDraftRound.HasValue)
+            {
+                return "No upcoming draft";
+            }
+
+            int roundsRemaining = nextDraftRound.Value - currentRound;
+            return $"Round {nextDraftRound.Value} (in {roundsRemaining})";
         }
 
         // NEW: update random decay chance label

@@ -96,6 +96,8 @@ namespace FungusToast.Unity
 
         private bool isInDraftPhase = false; 
         public bool IsDraftPhaseActive => isInDraftPhase; 
+        private int lastCompletedMycovariantDraftRound = -1;
+        public int LastCompletedMycovariantDraftRound => lastCompletedMycovariantDraftRound;
         private Dictionary<(int playerId, int mutationId), List<int>> FirstUpgradeRounds = new();
 
         public bool IsTestingModeEnabled => testingModeEnabled; 
@@ -243,6 +245,7 @@ namespace FungusToast.Unity
             gameEnded = false;
             isCountdownActive = false;
             roundsRemainingUntilGameEnd =0;
+            lastCompletedMycovariantDraftRound = -1;
             endgameService.Reset();
             playerCount = numberOfPlayers;
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
@@ -403,14 +406,15 @@ namespace FungusToast.Unity
                 return;
             }
             Board.IncrementRound();
+            int round = Board.CurrentRound;
+            float occ = Board.GetOccupiedTileRatio() *100f;
+            gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ);
             if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
             {
                 StartCoroutine(DelayedStartDraft());
                 return;
             }
             StartNextRound();
-            int round = Board.CurrentRound;
-            float occ = Board.GetOccupiedTileRatio() *100f;
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ);
             gameUIManager.RightSidebar.UpdateRandomDecayChance(round);
             TrackFirstUpgradeRounds();
@@ -526,6 +530,7 @@ namespace FungusToast.Unity
         public void StartMycovariantDraftPhase()
         {
             isInDraftPhase = true;
+            RefreshRightSidebarTopStats();
             TooltipManager.Instance?.CancelAll();
             // Mark draft phase segment boundary so prior aggregation (e.g., decay phase) is queued
             gameUIManager.GameLogManager?.OnLogSegmentStart("DraftPhase");
@@ -569,6 +574,8 @@ namespace FungusToast.Unity
         public void OnMycovariantDraftComplete()
         {
             isInDraftPhase = false;
+            lastCompletedMycovariantDraftRound = Board?.CurrentRound ?? -1;
+            RefreshRightSidebarTopStats();
             TooltipManager.Instance?.CancelAll();
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
@@ -606,6 +613,24 @@ namespace FungusToast.Unity
                 picked.ApplyEffect?.Invoke(pm, Board, rng, gameUIManager.GameLogRouter);
             }
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
+        }
+
+        public void MarkMycovariantDraftCompleteForRound(int round)
+        {
+            lastCompletedMycovariantDraftRound = round;
+        }
+
+        private void RefreshRightSidebarTopStats()
+        {
+            if (Board == null || gameUIManager?.RightSidebar == null)
+            {
+                return;
+            }
+
+            int round = Board.CurrentRound;
+            float occ = Board.GetOccupiedTileRatio() * 100f;
+            gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ);
+            gameUIManager.RightSidebar.UpdateRandomDecayChance(round);
         }
 
         #endregion
