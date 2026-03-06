@@ -14,7 +14,11 @@ namespace FungusToast.Unity.UI
     public class PlayerSummaryRow : MonoBehaviour
     {
         private const float StatTextScale = 1.05f;
-        private static readonly Color InactiveRowBackground = new Color(0f, 0f, 0f, 0f);
+        private static readonly Color InactiveRowBackground = new Color(
+            UIStyleTokens.Surface.PanelPrimary.r,
+            UIStyleTokens.Surface.PanelPrimary.g,
+            UIStyleTokens.Surface.PanelPrimary.b,
+            0.52f);
 
         [SerializeField] private Image moldIconImage;
         [SerializeField] private TextMeshProUGUI livingCellsText;
@@ -177,7 +181,7 @@ namespace FungusToast.Unity.UI
             if (rowBackground != null)
             {
                 rowBackground.color = isPerspectivePlayer
-                    ? new Color(UIStyleTokens.Accent.Moss.r, UIStyleTokens.Accent.Moss.g, UIStyleTokens.Accent.Moss.b, 0.22f)
+                    ? new Color(UIStyleTokens.Accent.Moss.r, UIStyleTokens.Accent.Moss.g, UIStyleTokens.Accent.Moss.b, 0.38f)
                     : InactiveRowBackground;
             }
 

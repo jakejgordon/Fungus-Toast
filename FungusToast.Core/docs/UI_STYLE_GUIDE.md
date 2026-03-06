@@ -71,14 +71,14 @@ Do not introduce ad hoc color names in new UI work.
 - `Category.MycelialSurges`: `#80607A`
 
 ### 2.7 Player Mold Icon Palette (Color-vision-safe)
-- `Player.Blue`: `#0072B2`
-- `Player.Orange`: `#E69F00`
-- `Player.Sky`: `#56B4E9`
-- `Player.Purple`: `#CC79A7`
-- `Player.Yellow`: `#F0E442`
-- `Player.Teal`: `#009E73`
-- `Player.Vermillion`: `#D55E00`
-- `Player.NeutralDead`: `#7F7F7F`
+- `Player.Blue`: `#0072D1`
+- `Player.Orange`: `#FF8A00`
+- `Player.Sky`: `#00AEEF`
+- `Player.Purple`: `#8E5DFF`
+- `Player.Yellow`: `#7EA000`
+- `Player.Teal`: `#008F7A`
+- `Player.Vermillion`: `#C73E1D`
+- `Player.NeutralDead`: `#6F7680`
 
 Current sprite mapping (64x64 mold set):
 - `purple_mold_new_64x64.png` -> `Player.Blue`
