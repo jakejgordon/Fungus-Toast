@@ -22,6 +22,7 @@ namespace FungusToast.Unity.UI.MutationTree
         public static readonly Color AffordableGlow = new Color(UIStyleTokens.Text.Primary.r, UIStyleTokens.Text.Primary.g, UIStyleTokens.Text.Primary.b, 0.08f);
         public static readonly Color LockedTint    = UIStyleTokens.Text.Disabled;
         public static readonly Color DefaultNodeBG = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Surface.Canvas, 0.34f);
+        public static readonly Color DependentHover = new Color(UIStyleTokens.State.Info.r, UIStyleTokens.State.Info.g, UIStyleTokens.State.Info.b, 0.32f);
 
         // ── Panel-wide dark theme ───────────────────────────────────────
         public static readonly Color PanelBG         = UIStyleTokens.Surface.Canvas;

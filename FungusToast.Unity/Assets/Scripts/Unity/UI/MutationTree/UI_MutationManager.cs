@@ -59,6 +59,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private Player humanPlayer;
         private bool humanTurnEnded = false;
         private List<MutationNodeUI> mutationButtons = new();
+        private Dictionary<int, List<int>> directDependentsByMutationId = new();
 
         private void Awake()
         {
@@ -197,6 +198,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             var mutations = mutationManager.GetAllMutations().ToList();
+            BuildDirectDependentLookup(mutations);
             var layout = UI_MutationLayoutProvider.GetDefaultLayout();
 
             mutationButtons.Clear(); // reset in case we're rebuilding
@@ -418,8 +420,25 @@ namespace FungusToast.Unity.UI.MutationTree
                 {
                     var node = mutationButtons.FirstOrDefault(n => n.MutationId == prereq.MutationId);
                     if (node != null)
-                        node.SetHighlight(true);
+                        node.SetPrerequisiteHighlight(true);
                 }
+            }
+        }
+
+        // Highlights direct dependent nodes for a hovered, currently unlocked mutation.
+        public void HighlightDirectDependents(Mutation mutation)
+        {
+            ClearAllHighlights();
+            if (mutation == null) return;
+
+            if (!directDependentsByMutationId.TryGetValue(mutation.Id, out var dependentIds))
+                return;
+
+            foreach (var dependentId in dependentIds)
+            {
+                var node = mutationButtons.FirstOrDefault(n => n.MutationId == dependentId);
+                if (node != null)
+                    node.SetDependentHighlight(true);
             }
         }
 
@@ -427,7 +446,28 @@ namespace FungusToast.Unity.UI.MutationTree
         public void ClearAllHighlights()
         {
             foreach (var node in mutationButtons)
-                node.SetHighlight(false);
+                node.ClearHighlights();
+        }
+
+        private void BuildDirectDependentLookup(List<Mutation> mutations)
+        {
+            directDependentsByMutationId = new Dictionary<int, List<int>>();
+            if (mutations == null) return;
+
+            foreach (var mutation in mutations)
+            {
+                foreach (var prereq in mutation.Prerequisites)
+                {
+                    if (!directDependentsByMutationId.TryGetValue(prereq.MutationId, out var dependents))
+                    {
+                        dependents = new List<int>();
+                        directDependentsByMutationId[prereq.MutationId] = dependents;
+                    }
+
+                    if (!dependents.Contains(mutation.Id))
+                        dependents.Add(mutation.Id);
+                }
+            }
         }
 
         public void UpdateAllMutationNodeInteractables()

@@ -6,6 +6,7 @@ using FungusToast.Core.Players;
 using UnityEngine.EventSystems;
 using System.Collections;
 using System.Text;
+using System.Linq;
 using FungusToast.Unity;
 using FungusToast.Unity.UI.Tooltips;
 
@@ -31,6 +32,7 @@ namespace FungusToast.Unity.UI.MutationTree
         [Header("Highlight")]
         [SerializeField] private Outline highlightOutline;
         [SerializeField] private GameObject prerequisiteHighlightOverlay; // New field for prerequisite highlighting
+        [SerializeField] private GameObject dependentHighlightOverlay;
 
         [Header("Unlock UI")]
         [SerializeField] private GameObject pendingUnlockOverlay; // Hourglass overlay for pending unlock
@@ -100,6 +102,9 @@ namespace FungusToast.Unity.UI.MutationTree
                 highlightOutline.enabled = false;
             if (prerequisiteHighlightOverlay != null)
                 prerequisiteHighlightOverlay.SetActive(false);
+            EnsureDependentHighlightOverlay();
+            if (dependentHighlightOverlay != null)
+                dependentHighlightOverlay.SetActive(false);
 
             upgradeButton.onClick.RemoveAllListeners();
             upgradeButton.onClick.AddListener(OnUpgradeClicked);
@@ -293,7 +298,11 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             // Tooltip display is now handled by TooltipTrigger + ITooltipContentProvider.
             // We only keep prerequisite highlighting here.
-            uiManager.HighlightUnmetPrerequisites(mutation, player);
+            bool isLocked = mutation.Prerequisites.Any(prereq => player.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel);
+            if (isLocked)
+                uiManager.HighlightUnmetPrerequisites(mutation, player);
+            else
+                uiManager.HighlightDirectDependents(mutation);
 
             // Stronger hover affordance for clickable/upgradeable nodes.
             ApplyInteractableHoverVisual();
@@ -487,36 +496,24 @@ namespace FungusToast.Unity.UI.MutationTree
                 upgradeButton.interactable = false;
         }
 
-        public void SetHighlight(bool on)
+        public void SetPrerequisiteHighlight(bool on)
         {
             // Use the new prerequisite highlight overlay for full square highlighting
             if (prerequisiteHighlightOverlay != null)
             {
+                if (on)
+                    SyncOverlayRectToButton(prerequisiteHighlightOverlay);
+
                 prerequisiteHighlightOverlay.SetActive(on);
-                
+
                 if (on)
                 {
                     var rectTransform = prerequisiteHighlightOverlay.GetComponent<RectTransform>();
                     if (rectTransform != null)
                     {
-                        // Fix the size issue by copying the size from the button
-                        var buttonRect = upgradeButton.GetComponent<RectTransform>();
-                        if (buttonRect != null)
-                        {
-                            // If the size is zero, copy from the button
-                            if (rectTransform.sizeDelta == Vector2.zero)
-                            {
-                                rectTransform.sizeDelta = buttonRect.sizeDelta;
-                            }
-                            
-                            // Ensure it matches the button's anchored position
-                            rectTransform.anchoredPosition = buttonRect.anchoredPosition;
-                        }
+                        Canvas.ForceUpdateCanvases();
+                        LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
                     }
-                    
-                    // Force a layout rebuild and canvas update
-                    Canvas.ForceUpdateCanvases();
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
                 }
             }
             else
@@ -525,6 +522,36 @@ namespace FungusToast.Unity.UI.MutationTree
                 if (highlightOutline != null)
                     highlightOutline.enabled = on;
             }
+        }
+
+        public void SetDependentHighlight(bool on)
+        {
+            if (dependentHighlightOverlay != null)
+            {
+                if (on)
+                    SyncOverlayRectToButton(dependentHighlightOverlay);
+                dependentHighlightOverlay.SetActive(on);
+                return;
+            }
+
+            if (highlightOutline != null)
+            {
+                highlightOutline.enabled = on;
+                if (on)
+                {
+                    var c = MutationTreeColors.DependentHover;
+                    c.a = 0.8f;
+                    highlightOutline.effectColor = c;
+                }
+            }
+        }
+
+        public void ClearHighlights()
+        {
+            SetPrerequisiteHighlight(false);
+            SetDependentHighlight(false);
+            if (highlightOutline != null)
+                highlightOutline.enabled = false;
         }
 
         public void UpdateInteractable()
@@ -611,6 +638,49 @@ namespace FungusToast.Unity.UI.MutationTree
             var border = target.AddComponent<Outline>();
             border.effectColor = new Color(MutationTreeColors.SecondaryText.r, MutationTreeColors.SecondaryText.g, MutationTreeColors.SecondaryText.b, 0.45f);
             border.effectDistance = new Vector2(1.2f, -1.2f);
+        }
+
+        private void EnsureDependentHighlightOverlay()
+        {
+            if (dependentHighlightOverlay != null) return;
+            if (prerequisiteHighlightOverlay == null) return;
+
+            dependentHighlightOverlay = Instantiate(prerequisiteHighlightOverlay, prerequisiteHighlightOverlay.transform.parent);
+            dependentHighlightOverlay.name = "UI_DependentHighlightOverlay";
+            dependentHighlightOverlay.SetActive(false);
+
+            var dependentImage = dependentHighlightOverlay.GetComponent<Image>();
+            if (dependentImage != null)
+                dependentImage.color = MutationTreeColors.DependentHover;
+
+            var prereqRect = prerequisiteHighlightOverlay.GetComponent<RectTransform>();
+            var dependentRect = dependentHighlightOverlay.GetComponent<RectTransform>();
+            if (prereqRect != null && dependentRect != null)
+            {
+                dependentRect.anchorMin = prereqRect.anchorMin;
+                dependentRect.anchorMax = prereqRect.anchorMax;
+                dependentRect.pivot = prereqRect.pivot;
+                dependentRect.anchoredPosition = prereqRect.anchoredPosition;
+                dependentRect.sizeDelta = prereqRect.sizeDelta;
+            }
+
+            SyncOverlayRectToButton(dependentHighlightOverlay);
+        }
+
+        private void SyncOverlayRectToButton(GameObject overlay)
+        {
+            if (overlay == null || upgradeButton == null) return;
+
+            var overlayRect = overlay.GetComponent<RectTransform>();
+            var buttonRect = upgradeButton.GetComponent<RectTransform>();
+            if (overlayRect == null || buttonRect == null) return;
+
+            overlayRect.anchorMin = buttonRect.anchorMin;
+            overlayRect.anchorMax = buttonRect.anchorMax;
+            overlayRect.pivot = buttonRect.pivot;
+            overlayRect.anchoredPosition = Vector2.zero;
+            overlayRect.sizeDelta = buttonRect.sizeDelta;
+            overlayRect.localScale = Vector3.one;
         }
 
         private void EnsureMaxBadge()
