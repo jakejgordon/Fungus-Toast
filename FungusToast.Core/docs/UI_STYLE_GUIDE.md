@@ -216,7 +216,27 @@ Notes:
 
 ---
 
-## 8) Copilot Authoring Rules (Important)
+## 8) Recommended Asset File Sizes (UI)
+
+Use these as default targets for PNG UI art to balance visual quality, memory, and load time.
+
+- **Small icons (inline, badges, helper icons):** source at `64x64` or `128x128`.
+- **Standard UI icons/buttons (most HUD/menu icon use):** source at `256x256`.
+- **Primary menu logo (typical start-screen display):** source at `256x256`.
+- **Large hero/promo logo (full-width splash, zoomed usage, high-res capture):** source at `1024x1024`.
+
+Practical rule:
+- If the on-screen display is roughly `<= 300px` wide/tall, prefer `256x256`.
+- If the on-screen display is frequently much larger than `300px`, use `1024x1024`.
+
+Authoring/export notes:
+- Keep UI textures to the smallest resolution that still looks crisp at target display size.
+- Prefer a single canonical source file per use-case and avoid duplicate near-identical large files.
+- Keep transparency clean (tight alpha edges) and avoid unnecessary empty transparent borders.
+
+---
+
+## 9) Copilot Authoring Rules (Important)
 
 When Copilot edits Unity UI code/prefabs:
 1. **Reuse existing UI systems first** (`GameUIManager`, tooltip stack, pooled log entries).
@@ -232,7 +252,7 @@ Soft guidance note:
 
 ---
 
-## 9) Migration Playbook (Low Risk)
+## 10) Migration Playbook (Low Risk)
 
 ### Stage 1: Shared Reusables
 - Normalize: common buttons, tooltip prefab, game log entry/panel, mutation node shells, endgame panel shell.
@@ -251,7 +271,7 @@ Soft guidance note:
 
 ---
 
-## 10) Definition of Done for “Style Guide Adopted”
+## 11) Definition of Done for “Style Guide Adopted”
 
 - All major UI surfaces are explicitly covered by this guide.
 - New UI PRs reference semantic tokens and shared component recipes.
@@ -260,7 +280,7 @@ Soft guidance note:
 
 ---
 
-## 11) Implementation Targets (Current Codebase Anchors)
+## 12) Implementation Targets (Current Codebase Anchors)
 
 Use these files as first-pass integration points:
 - `FungusToast.Unity/Assets/Scripts/Unity/UI/MutationTree/MutationTreeColors.cs`
