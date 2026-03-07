@@ -74,7 +74,9 @@ namespace FungusToast.Simulation.Analysis
             int gamesToPlay,
             int boardWidth = GameBalance.BoardWidth,
             int boardHeight = GameBalance.BoardHeight,
-            bool enableKeyboardInterrupt = true)
+            bool enableKeyboardInterrupt = true,
+            int baseSeed = 0,
+            SlotAssignmentPolicy slotAssignmentPolicy = SlotAssignmentPolicy.Fixed)
         {
             var results = new List<GameResult>();
             var startTime = DateTime.UtcNow;
@@ -98,13 +100,14 @@ namespace FungusToast.Simulation.Analysis
                     }
                 }
 
-                var assigned = strategies;
+                var assigned = BuildAssignedStrategies(strategies, i, slotAssignmentPolicy);
 
                 var context = new SimulationTrackingContext();
+                int gameSeed = unchecked(baseSeed + i);
 
                 var result = simulator.RunSimulation(
                     assigned,
-                    seed: i,
+                    seed: gameSeed,
                     gameIndex: i + 1,
                     totalGames: gamesToPlay,
                     startTime: startTime,
@@ -138,6 +141,37 @@ namespace FungusToast.Simulation.Analysis
                 GameResults = results,
                 CumulativeDeathReasons = cumulativeDeathReasons
             };
+        }
+
+        private static List<IMutationSpendingStrategy> BuildAssignedStrategies(
+            List<IMutationSpendingStrategy> strategies,
+            int gameIndex,
+            SlotAssignmentPolicy slotAssignmentPolicy)
+        {
+            if (strategies.Count == 0 || slotAssignmentPolicy == SlotAssignmentPolicy.Fixed)
+            {
+                return strategies;
+            }
+
+            if (slotAssignmentPolicy == SlotAssignmentPolicy.RotateByGame)
+            {
+                int offset = gameIndex % strategies.Count;
+                if (offset == 0)
+                {
+                    return strategies;
+                }
+
+                var rotated = new List<IMutationSpendingStrategy>(strategies.Count);
+                for (int slot = 0; slot < strategies.Count; slot++)
+                {
+                    int sourceIndex = (slot + offset) % strategies.Count;
+                    rotated.Add(strategies[sourceIndex]);
+                }
+
+                return rotated;
+            }
+
+            return strategies;
         }
 
 

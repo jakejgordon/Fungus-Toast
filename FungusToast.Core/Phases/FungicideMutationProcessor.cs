@@ -119,7 +119,7 @@ namespace FungusToast.Core.Phases
 
                 if (killCount > 0)
                 {
-                    simulationObserver.RecordCellDeath(owner.PlayerId, DeathReason.MycotoxinPotentiation, killCount);
+                    simulationObserver.RecordAttributedKill(owner.PlayerId, DeathReason.MycotoxinPotentiation, killCount);
                 }
             }
         }

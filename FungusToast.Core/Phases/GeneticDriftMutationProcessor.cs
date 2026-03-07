@@ -54,12 +54,12 @@ namespace FungusToast.Core.Phases
             int upgradeAttempts = DetermineUpgradeCount(hasHyperadaptive, targetTier, bonusTierOneChance, rng);
 
             // Execute core upgrades
-            var (mutatorPoints, hyperadaptivePoints, upgradedNames) = ExecuteUpgrades(player, pick, upgradeAttempts, targetTier, currentRound);
+            var (mutatorPoints, hyperadaptivePoints, upgradedNames) = ExecuteUpgrades(player, pick, upgradeAttempts, targetTier, currentRound, observer);
 
             // Max-level Hyperadaptive bonus (extra tier1 attempt using original tier1 snapshot)
             if (ShouldApplyMaxLevelBonus(hasHyperadaptive, hyperadaptiveLevel) && pools.Tier1.Count > 0)
             {
-                ApplyMaxLevelBonus(player, rng, currentRound, pools.Tier1, ref hyperadaptivePoints, upgradedNames);
+                ApplyMaxLevelBonus(player, rng, currentRound, pools.Tier1, ref hyperadaptivePoints, upgradedNames, observer);
             }
 
             // Observer notifications
@@ -154,7 +154,8 @@ namespace FungusToast.Core.Phases
             Mutation pick,
             int attempts,
             MutationTier targetTier,
-            int currentRound)
+            int currentRound,
+            ISimulationObserver observer)
         {
             int mutatorPoints = 0;
             int hyperadaptivePoints = 0;
@@ -162,7 +163,7 @@ namespace FungusToast.Core.Phases
 
             for (int i = 0; i < attempts; i++)
             {
-                if (!player.TryAutoUpgrade(pick, currentRound)) break;
+                if (!player.TryAutoUpgrade(pick, currentRound, observer)) break;
                 upgradedNames.Add(pick.Name);
                 if (targetTier == MutationTier.Tier1)
                 {
@@ -188,10 +189,11 @@ namespace FungusToast.Core.Phases
             int currentRound,
             List<Mutation> tier1Pool,
             ref int hyperadaptivePoints,
-            List<string> upgradedNames)
+            List<string> upgradedNames,
+            ISimulationObserver observer)
         {
             var addPick = tier1Pool[rng.Next(tier1Pool.Count)];
-            if (player.TryAutoUpgrade(addPick, currentRound))
+            if (player.TryAutoUpgrade(addPick, currentRound, observer))
             {
                 hyperadaptivePoints += addPick.PointsPerUpgrade;
                 upgradedNames.Add(addPick.Name);

@@ -104,12 +104,6 @@ namespace FungusToast.Core.Death
                     board.KillFungalCell(cell, deathResult.Reason!.Value, deathResult.KillerPlayerId, deathResult.AttackerTileId);
                     livingCellCounts[owner.PlayerId]--;
 
-                    // Attribute Age/Randomness deaths to observer
-                    if (deathResult.Reason == DeathReason.Age || deathResult.Reason == DeathReason.Randomness)
-                    {
-                        simulationObserver.RecordCellDeath(owner.PlayerId, deathResult.Reason.Value, 1);
-                    }
-
                     // Putrefactive Mycotoxin: attribute in observer if needed
                     if (deathResult.Reason == DeathReason.PutrefactiveMycotoxin)
                     {
@@ -155,7 +149,7 @@ namespace FungusToast.Core.Death
 
                 if (enemyPlayer.GetMutationEffect(MutationType.AdjacentFungicide) > 0f)
                 {
-                    observer.RecordCellDeath(neighborOwnerId, DeathReason.PutrefactiveMycotoxin, 1);
+                    observer.RecordAttributedKill(neighborOwnerId, DeathReason.PutrefactiveMycotoxin, 1);
                 }
             }
         }

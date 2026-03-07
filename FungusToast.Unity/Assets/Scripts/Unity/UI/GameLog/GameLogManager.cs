@@ -603,9 +603,11 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints) { if (bonusPoints > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Ontogenic Regression", bonusPoints); }
         public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset) { }
         public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1) { if (IsHuman(playerId)) IncDeath(playerId, reason, deathCount); }
+        public void RecordAttributedKill(int playerId, DeathReason reason, int killCount = 1) { }
         public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints) { if (catabolizedMutationPoints > 0 && IsHuman(playerId)) AddPlayerEvent(playerId, catabolizedMutationPoints == 1 ? "Earned 1 mutation point from Mycotoxin Catabolism" : $"Earned {catabolizedMutationPoints} mutation points from Mycotoxin Catabolism", GameLogCategory.Lucky); }
         public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName) { if (IsHuman(playerId) && !string.IsNullOrEmpty(mutationName)) AddFreeUpgrade(playerId, "Mutator Phenotype", mutationName, 1); }
         public void RecordSpecificMutationUpgrade(int playerId, string mutationName) { if (IsHuman(playerId) && !string.IsNullOrEmpty(mutationName)) AddFreeUpgrade(playerId, "Mutator Phenotype", mutationName, 1); }
+        public void RecordMutationUpgradeEvent(int playerId, int mutationId, string mutationName, MutationTier mutationTier, int oldLevel, int newLevel, int round, int mutationPointsBefore, int mutationPointsAfter, int pointsSpent, string upgradeSource) { }
         public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained) { if (IsHuman(playerId) && targetLevelsGained > 0 && !string.IsNullOrEmpty(targetMutationName)) AddFreeUpgrade(playerId, "Ontogenic Regression", targetMutationName, targetLevelsGained); }
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned, bool deprecated = true) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }
         public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations) { }

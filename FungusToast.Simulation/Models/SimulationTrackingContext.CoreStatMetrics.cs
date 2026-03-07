@@ -84,5 +84,23 @@ namespace FungusToast.Simulation.Models
                     result[kvp.Key] = result.TryGetValue(kvp.Key, out var v) ? v + kvp.Value : kvp.Value;
             return result;
         }
+
+        // ────────────────
+        // Attributed Kills by Reason (attacker-caused)
+        // ────────────────
+
+        private readonly Dictionary<int, Dictionary<DeathReason, int>> attributedKillsByPlayerAndReason = new();
+        public void RecordAttributedKill(int playerId, DeathReason reason, int killCount = 1)
+        {
+            if (!attributedKillsByPlayerAndReason.TryGetValue(playerId, out var reasonDict))
+                attributedKillsByPlayerAndReason[playerId] = reasonDict = new Dictionary<DeathReason, int>();
+            if (!reasonDict.ContainsKey(reason))
+                reasonDict[reason] = 0;
+            reasonDict[reason] += killCount;
+        }
+        public int GetAttributedKillCount(int playerId, DeathReason reason)
+            => attributedKillsByPlayerAndReason.TryGetValue(playerId, out var reasonDict) && reasonDict.TryGetValue(reason, out var val) ? val : 0;
+        public Dictionary<int, Dictionary<DeathReason, int>> GetAllAttributedKillsByPlayerAndReason()
+            => attributedKillsByPlayerAndReason.ToDictionary(kvp => kvp.Key, kvp => new Dictionary<DeathReason, int>(kvp.Value));
     }
 }

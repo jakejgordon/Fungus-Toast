@@ -17,6 +17,10 @@ namespace FungusToast.Simulation.Models
         // ──────────────
         public int WinnerId { get; set; }
         public int TurnsPlayed { get; set; }
+        public int GameIndex { get; set; }
+        public int GameSeed { get; set; }
+        public int BoardWidth { get; set; }
+        public int BoardHeight { get; set; }
         public int ToxicTileCount { get; set; }
         public SimulationTrackingContext TrackingContext { get; set; } = null!;
         public ParityInvariantReport? ParityInvariantReport { get; set; }
@@ -62,8 +66,8 @@ namespace FungusToast.Simulation.Models
 
                     // --- Death reason statistics ---
                     DeadCellDeathReasons = new List<DeathReason>(), // Populated below!
-                    DeathsByReason = tracking.GetAllCellDeathsByPlayerAndReason().ContainsKey(player.PlayerId)
-                        ? tracking.GetAllCellDeathsByPlayerAndReason()[player.PlayerId]
+                    DeathsByReason = deathsByPlayerAndReason.ContainsKey(player.PlayerId)
+                        ? deathsByPlayerAndReason[player.PlayerId]
                         : new Dictionary<DeathReason, int>(),
                     DeathsFromRandomness = tracking.GetCellDeathCount(player.PlayerId, DeathReason.Randomness),
                     DeathsFromAge = tracking.GetCellDeathCount(player.PlayerId, DeathReason.Age),
@@ -94,10 +98,10 @@ namespace FungusToast.Simulation.Models
                     MycotoxinTracerSpores = tracking.GetMycotoxinSporeDropCount(player.PlayerId),
                     MycotoxinCatabolisms = tracking.GetToxinCatabolismCount(player.PlayerId),
                     CatabolizedMutationPoints = tracking.GetCatabolizedMutationPoints(player.PlayerId),
-                    ToxinAuraKills = tracking.GetCellDeathCount(player.PlayerId, DeathReason.MycotoxinPotentiation),
+                    ToxinAuraKills = tracking.GetAttributedKillCount(player.PlayerId, DeathReason.MycotoxinPotentiation),
                     NecrohyphalInfiltrations = tracking.GetNecrohyphalInfiltrationCount(player.PlayerId),
                     NecrohyphalCascades = tracking.GetNecrohyphalCascadeCount(player.PlayerId),
-                    PutrefactiveMycotoxinKills = tracking.GetCellDeathCount(player.PlayerId, DeathReason.PutrefactiveMycotoxin),
+                    PutrefactiveMycotoxinKills = tracking.GetAttributedKillCount(player.PlayerId, DeathReason.PutrefactiveMycotoxin),
                     NecrotoxicConversionReclaims = tracking.GetNecrotoxicConversionReclaims(player.PlayerId),
                     CatabolicRebirthResurrections = tracking.GetCatabolicRebirthResurrections(player.PlayerId),
                     CatabolicRebirthAgedToxins = tracking.GetCatabolicRebirthAgedToxins(player.PlayerId),

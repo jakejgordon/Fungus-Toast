@@ -13,6 +13,7 @@ namespace FungusToast.Core.Metrics
         void RecordAnabolicInversionBonus(int playerId, int bonus);
 
         void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1);
+        void RecordAttributedKill(int playerId, DeathReason reason, int killCount = 1);
         void RecordCreepingMoldMove(int playerId);
         void RecordCreepingMoldToxinJump(int playerId);
         void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount);
@@ -71,6 +72,18 @@ namespace FungusToast.Core.Metrics
         void RecordHypersystemicDiagonalReclaim(int playerId);
         void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName);
         void RecordSpecificMutationUpgrade(int playerId, string mutationName);
+        void RecordMutationUpgradeEvent(
+            int playerId,
+            int mutationId,
+            string mutationName,
+            MutationTier mutationTier,
+            int oldLevel,
+            int newLevel,
+            int round,
+            int mutationPointsBefore,
+            int mutationPointsAfter,
+            int pointsSpent,
+            string upgradeSource);
         void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained);
         void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints);
         void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected);

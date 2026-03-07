@@ -65,8 +65,8 @@ namespace FungusToast.Simulation.Analysis
             Dictionary<DeathReason, int> cumulativeDeathReasons // only for end-state legacy
         )
         {
-            int boardWidth = GameBalance.BoardWidth;
-            int boardHeight = GameBalance.BoardHeight;
+            int boardWidth = results.FirstOrDefault()?.BoardWidth ?? GameBalance.BoardWidth;
+            int boardHeight = results.FirstOrDefault()?.BoardHeight ?? GameBalance.BoardHeight;
             int totalCells = boardWidth * boardHeight;
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
 

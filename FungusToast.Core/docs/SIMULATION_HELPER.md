@@ -82,6 +82,12 @@ dotnet run -- --games 1 --players 2 --width 40 --height 40 --non-interactive
 
 ### For AI Assistants:
 
+Default workflow preference for this repository:
+
+1. **Run the simulation for the user when asked.**
+2. **Run analytics scripts for the user when asked.**
+3. Fall back to manual user-run instructions only if tool/terminal execution is blocked.
+
 When automated terminal execution fails:
 
 1. **Inform the user** to run the simulation manually using the steps above
@@ -193,6 +199,16 @@ The simulation supports the following command-line parameters:
 | `--players` | `-p` | Number of players/strategies to use | 8 |
 | `--width` | `-w` | Board width (number of tiles) | 160 |
 | `--height` | | Board height (number of tiles) | 160 |
+| `--strategy-set` | `-s` | Strategy pool to sample from (`Proven`, `Testing`, `Mycovariants`, `Campaign`) | `Testing` |
+| `--player-counts` | | Batch strata list for players (CSV), e.g. `2,4,8` | Off |
+| `--board-sizes` | | Batch strata list for board sizes (CSV), e.g. `80x80,160x160` | Off |
+| `--strategy-sets` | | Batch strata list for strategy sets (CSV) | Off |
+| `--seed` | | Base deterministic seed for strategy sampling and per-game seeds | 0 |
+| `--rotate-slots` | | Rotate strategy-to-player slot assignment every game | Off |
+| `--fixed-slots` | | Keep strategy-to-player slot assignment fixed | On |
+| `--experiment-id` | | Export tag for analytics artifacts | Auto timestamp ID |
+| `--parquet` | | Export canonical Parquet datasets | On |
+| `--no-parquet` | | Disable Parquet export | Off |
 | `--output` | `-o` | Specify output filename (optional) | Auto-generated timestamp |
 | `--no-keyboard` | | Disable keyboard interruption (`Q`/`Escape`) | Off |
 | `--non-interactive` | | Alias for `--no-keyboard` | Off |
@@ -221,9 +237,40 @@ dotnet run -w 200 -p 4
 # Combine multiple options with custom output filename
 dotnet run --width 150 --height 120 --players 6 --games 25 --output large_board_test.txt
 
+# Deterministic proven strategy experiment with slot rotation and Parquet export
+dotnet run --games 200 --players 8 --strategy-set Proven --seed 12345 --rotate-slots --experiment-id proven_seed12345 --no-keyboard
+
+# Stratified batch run across player counts, board sizes, and strategy sets
+dotnet run --games 50 --player-counts 2,4,8 --board-sizes 80x80,160x160 --strategy-sets Testing,Proven --seed 12345 --rotate-slots --experiment-id stratified_v1 --no-keyboard
+
 # Non-interactive run for automation (ignores Q/Escape key interruption)
 dotnet run --games 1 --players 2 --no-keyboard
 ```
+
+## Parquet Analytics Export
+
+When Parquet export is enabled, simulation writes analytics datasets to:
+
+```
+FungusToast.Simulation\bin\Debug\net8.0\SimulationParquet\<experiment-id>\
+```
+
+Files produced:
+
+- `games.parquet`
+- `players.parquet`
+- `mutations.parquet`
+- `mycovariants.parquet`
+- `upgrade_events.parquet`
+- `manifest.json`
+
+These files are designed for downstream AI/statistical analysis in `FungusToast.Analytics`.
+
+`upgrade_events.parquet` logs ordered mutation upgrades for each player with round, level change, mutation points before/after spend, and source (`manual`, `surge`, `auto`).
+
+In batch mode (`--player-counts` / `--board-sizes` / `--strategy-sets`), each stratum is exported to a separate folder with suffixes like:
+
+- `<experiment-id>__p8_w160_h160_sTesting`
 
 ## Common Issues & Solutions
 

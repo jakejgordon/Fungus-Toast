@@ -23,10 +23,6 @@ namespace FungusToast.Core.AI
 
             var selected = eligible[0];
             var success = player.TryUpgradeMutation(selected, simulationObserver, currentRound);
-            if (success)
-            {
-                simulationObserver.RecordMutationPointsSpent(player.PlayerId, selected.Tier, selected.PointsPerUpgrade);
-            }
             return success;
         }
     }

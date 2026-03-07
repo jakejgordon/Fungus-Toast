@@ -104,6 +104,10 @@ namespace FungusToast.Simulation.GameSimulation
             simTracking.RecordFirstUpgradeRounds(players);
 
             var result = GameResult.From(board, players, board.CurrentRound, simTracking);
+            result.GameIndex = gameIndex > 0 ? gameIndex : 0;
+            result.GameSeed = seed;
+            result.BoardWidth = boardWidth;
+            result.BoardHeight = boardHeight;
             result.ParityInvariantReport = BuildParityInvariantReport(
                 board,
                 mutationPhaseStartCount,

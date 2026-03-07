@@ -196,6 +196,8 @@ namespace FungusToast.Core.Players
                     return false;
 
                 // Deduct points and upgrade
+                int oldLevel = pm.CurrentLevel;
+                int mutationPointsBefore = MutationPoints;
                 MutationPoints -= activationCost;
                 pm.Upgrade(currentRound);
                 int newLevel = pm.CurrentLevel;
@@ -219,6 +221,18 @@ namespace FungusToast.Core.Players
                 }
 
                 simulationObserver.RecordMutationPointsSpent(PlayerId, mutation.Tier, activationCost);
+                simulationObserver.RecordMutationUpgradeEvent(
+                    playerId: PlayerId,
+                    mutationId: mutation.Id,
+                    mutationName: mutation.Name,
+                    mutationTier: mutation.Tier,
+                    oldLevel: oldLevel,
+                    newLevel: newLevel,
+                    round: currentRound,
+                    mutationPointsBefore: mutationPointsBefore,
+                    mutationPointsAfter: MutationPoints,
+                    pointsSpent: activationCost,
+                    upgradeSource: "surge");
                 MutationsChanged?.Invoke(this); // notify once per successful upgrade
                 return true;
             }
@@ -231,8 +245,11 @@ namespace FungusToast.Core.Players
                     if (mutation.Prerequisites.Count > 0 && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
                         return false;
 
+                    int oldLevel = pm.CurrentLevel;
+                    int mutationPointsBefore = MutationPoints;
                     MutationPoints -= mutation.PointsPerUpgrade;
                     pm.Upgrade(currentRound);
+                    int newLevel = pm.CurrentLevel;
 
                     // --- Set PrereqMetRound on dependents ---
                     foreach (var dependent in FungusToast.Core.Mutations.MutationRegistry.All.Values)
@@ -249,6 +266,18 @@ namespace FungusToast.Core.Players
                     }
 
                     simulationObserver.RecordMutationPointsSpent(PlayerId, mutation.Tier, mutation.PointsPerUpgrade);
+                    simulationObserver.RecordMutationUpgradeEvent(
+                        playerId: PlayerId,
+                        mutationId: mutation.Id,
+                        mutationName: mutation.Name,
+                        mutationTier: mutation.Tier,
+                        oldLevel: oldLevel,
+                        newLevel: newLevel,
+                        round: currentRound,
+                        mutationPointsBefore: mutationPointsBefore,
+                        mutationPointsAfter: MutationPoints,
+                        pointsSpent: mutation.PointsPerUpgrade,
+                        upgradeSource: "manual");
                     MutationsChanged?.Invoke(this);
                     return true;
                 }
@@ -302,7 +331,7 @@ namespace FungusToast.Core.Players
             return bonus;
         }
 
-        public bool TryAutoUpgrade(Mutation mut, int currentRound)
+        public bool TryAutoUpgrade(Mutation mut, int currentRound, ISimulationObserver? simulationObserver = null)
         {
             if (mut == null) return false;
 
@@ -312,7 +341,10 @@ namespace FungusToast.Core.Players
             var pm = PlayerMutations[mut.Id];
             if (pm.CurrentLevel < mut.MaxLevel)
             {
+                int oldLevel = pm.CurrentLevel;
+                int mutationPointsBefore = MutationPoints;
                 pm.Upgrade(currentRound);
+                int newLevel = pm.CurrentLevel;
                 MutationsChanged?.Invoke(this);
 
                 // --- Set PrereqMetRound on dependents ---
@@ -328,6 +360,19 @@ namespace FungusToast.Core.Players
                             depPlayerMutation.PrereqMetRound = currentRound;
                     }
                 }
+
+                simulationObserver?.RecordMutationUpgradeEvent(
+                    playerId: PlayerId,
+                    mutationId: mut.Id,
+                    mutationName: mut.Name,
+                    mutationTier: mut.Tier,
+                    oldLevel: oldLevel,
+                    newLevel: newLevel,
+                    round: currentRound,
+                    mutationPointsBefore: mutationPointsBefore,
+                    mutationPointsAfter: MutationPoints,
+                    pointsSpent: 0,
+                    upgradeSource: "auto");
 
                 return true;
             }

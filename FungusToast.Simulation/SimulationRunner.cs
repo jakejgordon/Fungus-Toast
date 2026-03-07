@@ -1,6 +1,7 @@
 using FungusToast.Core.AI;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mycovariants;
+using FungusToast.Simulation.Export;
 using FungusToast.Simulation.Analysis;
 using FungusToast.Simulation.Models;
 
@@ -14,14 +15,20 @@ namespace FungusToast.Simulation
             List<IMutationSpendingStrategy>? strategies = null,
             int boardWidth = GameBalance.BoardWidth,
             int boardHeight = GameBalance.BoardHeight,
-            bool enableKeyboardInterrupt = true)
+            bool enableKeyboardInterrupt = true,
+            int? baseSeed = null,
+            StrategySetEnum strategySet = StrategySetEnum.Testing,
+            SlotAssignmentPolicy slotAssignmentPolicy = SlotAssignmentPolicy.Fixed,
+            SimulationRunMetadata? runMetadata = null,
+            bool exportParquet = true)
         {
-            var rnd = new Random(); // Or any deterministic seed you want
-
             // Use TestingStrategies as default if none provided
             strategies ??= AIRoster.TestingStrategies;
 
+            var effectiveSeed = baseSeed ?? 0;
+
             Console.WriteLine($"Running simulation with {strategies.Count} players for {numberOfGames} games each...\n");
+            Console.WriteLine($"Strategy Set: {strategySet} | Base Seed: {effectiveSeed} | Slot Policy: {slotAssignmentPolicy}\n");
 
             // Run simulation
             var runner = new MatchupRunner();
@@ -30,7 +37,9 @@ namespace FungusToast.Simulation
                 gamesToPlay: numberOfGames,
                 boardWidth: boardWidth,
                 boardHeight: boardHeight,
-                enableKeyboardInterrupt: enableKeyboardInterrupt);
+                enableKeyboardInterrupt: enableKeyboardInterrupt,
+                baseSeed: effectiveSeed,
+                slotAssignmentPolicy: slotAssignmentPolicy);
 
             PrintParityInvariantSummary(results.GameResults);
 
@@ -67,6 +76,13 @@ namespace FungusToast.Simulation
                 mycoTracker.TrackGameResult(result);
             }
             mycoTracker.PrintReport(rankedPlayers);
+
+            if (exportParquet && runMetadata != null)
+            {
+                var parquetExporter = new SimulationParquetExporter();
+                var exportFolder = parquetExporter.Export(results, runMetadata);
+                Console.WriteLine($"Parquet export complete: {exportFolder}");
+            }
 
             Console.WriteLine("\nSimulation complete.");
         }
@@ -112,29 +128,16 @@ namespace FungusToast.Simulation
         private static SimulationTrackingContext CreateCombinedTrackingContext(List<GameResult> gameResults)
         {
             var combined = new SimulationTrackingContext();
-            
-            // Aggregate first upgrade rounds from all games
+
             foreach (var result in gameResults)
             {
                 if (result.TrackingContext != null)
                 {
-                    var allFirstUpgradeRounds = result.TrackingContext.GetAllFirstUpgradeRounds();
-                    foreach (var kvp in allFirstUpgradeRounds)
-                    {
-                        foreach (var round in kvp.Value)
-                        {
-                            // We need to record the first upgrade rounds for each player/mutation combination
-                            // Since SimulationTrackingContext doesn't have a method to add individual records,
-                            // we'll need to work with what we have
-                            // For now, we'll use the last game's tracking context as it should have the most complete data
-                        }
-                    }
+                    combined.MergeFirstUpgradeRoundsFrom(result.TrackingContext);
                 }
             }
-            
-            // For simplicity, use the tracking context from the last game
-            // This should have the most complete first upgrade data
-            return gameResults.LastOrDefault()?.TrackingContext ?? new SimulationTrackingContext();
+
+            return combined;
         }
     }
 }

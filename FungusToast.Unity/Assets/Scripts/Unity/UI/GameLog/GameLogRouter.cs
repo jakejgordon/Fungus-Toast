@@ -72,6 +72,23 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordSpecificMutationUpgrade(int playerId, string mutationName)
             => playerActivityLogManager?.RecordSpecificMutationUpgrade(playerId, mutationName);
 
+        public void RecordMutationUpgradeEvent(
+            int playerId,
+            int mutationId,
+            string mutationName,
+            MutationTier mutationTier,
+            int oldLevel,
+            int newLevel,
+            int round,
+            int mutationPointsBefore,
+            int mutationPointsAfter,
+            int pointsSpent,
+            string upgradeSource)
+        {
+            // Intentionally no-op for now. This hook exists so gameplay telemetry
+            // can consume ordered upgrade events in future iterations.
+        }
+
         public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset)
             => playerActivityLogManager?.RecordOntogenicRegressionSacrifices(playerId, cellsKilled, levelsOffset);
         #endregion
@@ -93,6 +110,11 @@ namespace FungusToast.Unity.UI.GameLog
         {
             if (IsSilentMode) return;
             playerActivityLogManager?.RecordCellDeath(playerId, reason, deathCount);
+        }
+
+        public void RecordAttributedKill(int playerId, DeathReason reason, int killCount = 1)
+        {
+            if (IsSilentMode) return;
         }
 
         public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations)
