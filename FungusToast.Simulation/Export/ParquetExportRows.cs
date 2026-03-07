@@ -25,6 +25,10 @@ namespace FungusToast.Simulation.Export
         public int PlayerId { get; set; }
         public int AssignedSlot { get; set; }
         public string StrategyName { get; set; } = string.Empty;
+        public string StrategyTheme { get; set; } = string.Empty;
+        public string DominantOpponentTheme { get; set; } = string.Empty;
+        public string OpponentThemeSet { get; set; } = string.Empty;
+        public int UniqueOpponentThemes { get; set; }
         public bool IsWinner { get; set; }
         public int LivingCells { get; set; }
         public int DeadCells { get; set; }
@@ -44,6 +48,7 @@ namespace FungusToast.Simulation.Export
         public int GameSeed { get; set; }
         public int PlayerId { get; set; }
         public string StrategyName { get; set; } = string.Empty;
+        public string StrategyTheme { get; set; } = string.Empty;
         public int MutationId { get; set; }
         public string MutationName { get; set; } = string.Empty;
         public string MutationTier { get; set; } = string.Empty;
@@ -59,9 +64,11 @@ namespace FungusToast.Simulation.Export
         public int GameSeed { get; set; }
         public int PlayerId { get; set; }
         public string StrategyName { get; set; } = string.Empty;
+        public string StrategyTheme { get; set; } = string.Empty;
         public int MycovariantId { get; set; }
         public string MycovariantName { get; set; } = string.Empty;
         public string MycovariantType { get; set; } = string.Empty;
+        public bool IsUniversal { get; set; }
         public bool Triggered { get; set; }
         public float? AIScoreAtDraft { get; set; }
         public string EffectType { get; set; } = string.Empty;
@@ -75,6 +82,7 @@ namespace FungusToast.Simulation.Export
         public int GameSeed { get; set; }
         public int PlayerId { get; set; }
         public string StrategyName { get; set; } = string.Empty;
+        public string StrategyTheme { get; set; } = string.Empty;
         public int Round { get; set; }
         public int MutationId { get; set; }
         public string MutationName { get; set; } = string.Empty;

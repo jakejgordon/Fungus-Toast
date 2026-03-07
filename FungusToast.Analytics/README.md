@@ -45,13 +45,22 @@ Optional output directory:
 python analyze_balance.py --run-folder "<path>" --output-dir "<path>"
 ```
 
+Optional confidence and interaction thresholds:
+
+```powershell
+python analyze_balance.py --run-folder "<path>" --min-confidence 0.5 --min-picks 20 --min-eligible-samples 100 --min-pair-samples 15 --min-combo-samples 15
+```
+
 ## Outputs
 
 - `mutation_recommendations.csv`
 - `mycovariant_recommendations.csv`
+- `mutation_by_opponent_theme.csv`
+- `mutation_synergies.csv`
+- `mycovariant_mutation_interactions.csv`
 - `balance_recommendations.md`
 
-The markdown report includes ranked OP/UP candidates and confidence-aware diagnostics.
+The markdown report includes ranked OP/UP candidates, matchup-theme sensitivity, mutation synergy candidates, and mycovariant-mutation interaction candidates.
 
 ## Upgrade Event Logging
 
@@ -64,3 +73,75 @@ Useful fields include:
 - `UpgradeSource` (`manual`, `surge`, `auto`)
 
 This enables build-order and timing analyses beyond end-state mutation levels.
+
+## Reliable Mutation Tuning Pattern
+
+Use this same pattern each balance pass so results are comparable over time.
+
+### 1) Run a stable baseline simulation
+
+- Use explicit strategy names so lineup composition is fixed across iterations.
+- Use enough games to reduce variance (`>= 300`, preferred `500+`).
+- Keep seed and slot policy fixed while comparing revisions.
+
+Example:
+
+```powershell
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- `
+	--games 500 `
+	--strategy-set Proven `
+	--strategy-names "<comma-separated strategy names>" `
+	--seed 20260307 --rotate-slots --no-keyboard `
+	--experiment-id run500_balance_pass
+```
+
+### 2) Generate filtered recommendations
+
+Use stricter thresholds for decision-grade calls:
+
+```powershell
+python analyze_balance.py `
+	--run-folder "<parquet run folder>" `
+	--min-confidence 0.6 `
+	--min-picks 150 `
+	--min-eligible-samples 600 `
+	--min-pair-samples 120 `
+	--min-combo-samples 120
+```
+
+### 3) Gate what is eligible for tuning
+
+- Ignore universal/always-picked foundation mutations as direct nerf targets unless independently validated by dedicated A/B tests.
+- Prefer candidates with both:
+	- recommendation label (`OP candidate` or `UP candidate`), and
+	- strong magnitude (`|balance_score| >= 0.8` or persistent rank across runs).
+- Cross-check with `mutation_by_opponent_theme.csv` to avoid overreacting to one matchup pocket.
+
+### 4) Apply small, targeted changes
+
+- Prefer one small nudge per mutation per pass.
+- Typical changes:
+	- `effect per level` by 5-10%
+	- activation/cascade chance by 2-4 percentage points
+	- surge utility knobs (duration, tiles, activation cost) by 1 step
+- Avoid multi-knob rewrites in the same pass unless a mechanic is clearly broken.
+
+### 5) Re-run and compare deltas
+
+- Re-run the same lineup and seed settings.
+- Compare:
+	- win rate distribution,
+	- average living cells by strategy,
+	- candidate mutation rank shifts.
+- Accept only if dominance narrows without creating a new runaway strategy.
+
+### 6) Record the pass
+
+For each pass, log:
+
+- experiment ID,
+- changed constants,
+- before/after top OP/UP candidates,
+- go/no-go decision.
+
+This makes future balancing incremental instead of ad hoc.

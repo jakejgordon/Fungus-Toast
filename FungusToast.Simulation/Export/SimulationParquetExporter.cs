@@ -1,3 +1,4 @@
+using FungusToast.Core.AI;
 using FungusToast.Core.Mutations;
 using FungusToast.Simulation.Models;
 using Parquet.Serialization;
@@ -118,8 +119,29 @@ namespace FungusToast.Simulation.Export
 
             foreach (var game in batchResult.GameResults)
             {
+                var playerThemeById = game.PlayerResults
+                    .ToDictionary(
+                        p => p.PlayerId,
+                        p => AIRoster.GetThemeForStrategy(p.Strategy).ToString());
+
                 foreach (var player in game.PlayerResults)
                 {
+                    var opponentThemes = game.PlayerResults
+                        .Where(p => p.PlayerId != player.PlayerId)
+                        .Select(p => playerThemeById[p.PlayerId])
+                        .ToList();
+
+                    var dominantOpponentTheme = opponentThemes
+                        .GroupBy(t => t, StringComparer.Ordinal)
+                        .OrderByDescending(g => g.Count())
+                        .ThenBy(g => g.Key, StringComparer.Ordinal)
+                        .Select(g => g.Key)
+                        .FirstOrDefault() ?? "None";
+
+                    var opponentThemeSet = string.Join("|", opponentThemes
+                        .Distinct(StringComparer.Ordinal)
+                        .OrderBy(t => t, StringComparer.Ordinal));
+
                     rows.Add(new PlayerExportRow
                     {
                         ExperimentId = metadata.ExperimentId,
@@ -128,6 +150,10 @@ namespace FungusToast.Simulation.Export
                         PlayerId = player.PlayerId,
                         AssignedSlot = player.PlayerId,
                         StrategyName = player.StrategyName,
+                        StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
+                        DominantOpponentTheme = dominantOpponentTheme,
+                        OpponentThemeSet = opponentThemeSet,
+                        UniqueOpponentThemes = opponentThemes.Distinct(StringComparer.Ordinal).Count(),
                         IsWinner = player.PlayerId == game.WinnerId,
                         LivingCells = player.LivingCells,
                         DeadCells = player.DeadCells,
@@ -180,6 +206,7 @@ namespace FungusToast.Simulation.Export
                             GameSeed = game.GameSeed,
                             PlayerId = player.PlayerId,
                             StrategyName = player.StrategyName,
+                            StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
                             MutationId = mutationId,
                             MutationName = mutation.Name,
                             MutationTier = mutation.Tier.ToString(),
@@ -213,9 +240,11 @@ namespace FungusToast.Simulation.Export
                                 GameSeed = game.GameSeed,
                                 PlayerId = player.PlayerId,
                                 StrategyName = player.StrategyName,
+                                StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
                                 MycovariantId = myco.MycovariantId,
                                 MycovariantName = myco.MycovariantName,
                                 MycovariantType = myco.MycovariantType,
+                                IsUniversal = myco.IsUniversal,
                                 Triggered = myco.Triggered,
                                 AIScoreAtDraft = myco.AIScoreAtDraft,
                                 EffectType = "-",
@@ -234,9 +263,11 @@ namespace FungusToast.Simulation.Export
                                 GameSeed = game.GameSeed,
                                 PlayerId = player.PlayerId,
                                 StrategyName = player.StrategyName,
+                                StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
                                 MycovariantId = myco.MycovariantId,
                                 MycovariantName = myco.MycovariantName,
                                 MycovariantType = myco.MycovariantType,
+                                IsUniversal = myco.IsUniversal,
                                 Triggered = myco.Triggered,
                                 AIScoreAtDraft = myco.AIScoreAtDraft,
                                 EffectType = effect.Key,
@@ -269,6 +300,7 @@ namespace FungusToast.Simulation.Export
                         GameSeed = game.GameSeed,
                         PlayerId = upgradeEvent.PlayerId,
                         StrategyName = strategyName,
+                        StrategyTheme = TryGetStrategyTheme(game, upgradeEvent.PlayerId),
                         Round = upgradeEvent.Round,
                         MutationId = upgradeEvent.MutationId,
                         MutationName = upgradeEvent.MutationName,
@@ -284,6 +316,17 @@ namespace FungusToast.Simulation.Export
             }
 
             return rows;
+        }
+
+        private static string TryGetStrategyTheme(GameResult game, int playerId)
+        {
+            var player = game.PlayerResults.FirstOrDefault(pr => pr.PlayerId == playerId);
+            if (player == null)
+            {
+                return "Unknown";
+            }
+
+            return AIRoster.GetThemeForStrategy(player.Strategy).ToString();
         }
     }
 }

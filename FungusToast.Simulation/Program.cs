@@ -11,6 +11,7 @@ namespace FungusToast.Simulation
     {
         private const int DefaultNumberOfSimulationGames = 1;
         private const int DefaultNumberOfPlayers = 8;
+        private const int MaxSupportedPlayers = 8;
 
         private readonly record struct BoardSize(int Width, int Height);
 
@@ -49,18 +50,25 @@ namespace FungusToast.Simulation
         private static void RunSingleSimulation(SimulationConfig config, string experimentId)
         {
             var strategyRng = config.BaseSeed.HasValue ? new Random(config.BaseSeed.Value) : null;
-            var strategies = AIRoster.GetStrategies(config.NumberOfPlayers, config.StrategySet, strategyRng);
+            var strategies = config.ExplicitStrategyNames is { Count: > 0 }
+                ? AIRoster.GetStrategiesByName(config.StrategySet, config.ExplicitStrategyNames, out _)
+                : AIRoster.GetStrategies(
+                    config.NumberOfPlayers,
+                    config.StrategySet,
+                    strategyRng,
+                    config.StrategySelectionPolicy,
+                    cycleIndex: 0);
             var runMetadata = BuildRunMetadata(
                 config,
                 experimentId,
-                config.NumberOfPlayers,
+                strategies.Count,
                 config.BoardWidth,
                 config.BoardHeight,
                 config.StrategySet,
                 config.BaseSeed ?? 0);
 
             SimulationRunner.RunStandardSimulation(
-                config.NumberOfPlayers,
+                strategies.Count,
                 config.NumberOfGames,
                 strategies,
                 config.BoardWidth,
@@ -107,7 +115,12 @@ namespace FungusToast.Simulation
                         int stratumSeed = DeriveStratumSeed(config.BaseSeed ?? 0, players, board.Width, board.Height, strategySet);
                         string stratumExperimentId = $"{experimentId}__p{players}_w{board.Width}_h{board.Height}_s{strategySet}";
                         var strategyRng = new Random(stratumSeed);
-                        var strategies = AIRoster.GetStrategies(players, strategySet, strategyRng);
+                        var strategies = AIRoster.GetStrategies(
+                            players,
+                            strategySet,
+                            strategyRng,
+                            config.StrategySelectionPolicy,
+                            cycleIndex: stratumIndex - 1);
                         var runMetadata = BuildRunMetadata(
                             config,
                             stratumExperimentId,
@@ -179,6 +192,7 @@ namespace FungusToast.Simulation
 
         private static SimulationConfig? ParseCommandLineArguments(string[] args)
         {
+            bool playersExplicitlySpecified = false;
             var config = new SimulationConfig
             {
                 NumberOfGames = DefaultNumberOfSimulationGames,
@@ -190,6 +204,7 @@ namespace FungusToast.Simulation
                 StrategySet = StrategySetEnum.Testing,
                 BaseSeed = 0,
                 SlotAssignmentPolicy = SlotAssignmentPolicy.Fixed,
+                StrategySelectionPolicy = StrategySelectionPolicy.CoverageBalanced,
                 ExportParquet = true,
                 ExperimentId = "",
                 PlayerCounts = null,
@@ -214,6 +229,7 @@ namespace FungusToast.Simulation
                         if (i + 1 < args.Length && int.TryParse(args[i + 1], out int players))
                         {
                             config.NumberOfPlayers = players;
+                            playersExplicitlySpecified = true;
                             i++; // Skip the next argument since we consumed it
                         }
                         break;
@@ -258,6 +274,27 @@ namespace FungusToast.Simulation
 
                             config.StrategySet = parsedSet;
                             i++; // Skip the next argument since we consumed it
+                        }
+                        break;
+                    case "--strategy-names":
+                    case "--strategies":
+                        if (i + 1 < args.Length)
+                        {
+                            var parsedNames = ParseCsvStrings(args[i + 1]);
+                            if (parsedNames.Count == 0)
+                            {
+                                Console.WriteLine($"Invalid --strategy-names value: {args[i + 1]}");
+                                return null;
+                            }
+
+                            if (parsedNames.Count > MaxSupportedPlayers)
+                            {
+                                Console.WriteLine($"--strategy-names contains {parsedNames.Count} entries, exceeding max supported players ({MaxSupportedPlayers}).");
+                                return null;
+                            }
+
+                            config.ExplicitStrategyNames = parsedNames;
+                            i++;
                         }
                         break;
                     case "--player-counts":
@@ -311,6 +348,21 @@ namespace FungusToast.Simulation
                             i++; // Skip the next argument since we consumed it
                         }
                         break;
+                    case "--selection-policy":
+                    case "--strategy-selection":
+                        if (i + 1 < args.Length)
+                        {
+                            if (!Enum.TryParse<StrategySelectionPolicy>(args[i + 1], ignoreCase: true, out var selectionPolicy))
+                            {
+                                Console.WriteLine($"Invalid selection policy: {args[i + 1]}");
+                                Console.WriteLine($"Valid values: {string.Join(", ", Enum.GetNames(typeof(StrategySelectionPolicy)))}");
+                                return null;
+                            }
+
+                            config.StrategySelectionPolicy = selectionPolicy;
+                            i++;
+                        }
+                        break;
                     case "--experiment-id":
                         if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
                         {
@@ -337,6 +389,57 @@ namespace FungusToast.Simulation
                 }
             }
 
+            if (config.NumberOfPlayers > MaxSupportedPlayers)
+            {
+                Console.WriteLine($"Requested players ({config.NumberOfPlayers}) exceeds supported maximum ({MaxSupportedPlayers}). Capping to {MaxSupportedPlayers}.");
+                config.NumberOfPlayers = MaxSupportedPlayers;
+            }
+
+            if (config.PlayerCounts != null && config.PlayerCounts.Count > 0)
+            {
+                var capped = config.PlayerCounts.Select(v => Math.Min(v, MaxSupportedPlayers)).Distinct().ToList();
+                if (capped.Count != config.PlayerCounts.Count || capped.Any(v => !config.PlayerCounts.Contains(v)))
+                {
+                    Console.WriteLine($"Some --player-counts entries exceeded {MaxSupportedPlayers} and were capped.");
+                }
+
+                config.PlayerCounts = capped;
+            }
+
+            if (config.ExplicitStrategyNames is { Count: > 0 })
+            {
+                if (config.IsBatchMode)
+                {
+                    Console.WriteLine("--strategy-names is currently supported only for single-run mode (not with --player-counts/--board-sizes/--strategy-sets).");
+                    return null;
+                }
+
+                var selectedByName = AIRoster.GetStrategiesByName(config.StrategySet, config.ExplicitStrategyNames, out var missingNames);
+                if (missingNames.Count > 0)
+                {
+                    var availableNames = AIRoster.GetStrategyProfiles(config.StrategySet)
+                        .Select(p => p.StrategyName)
+                        .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                    Console.WriteLine($"Unknown strategy name(s) for set {config.StrategySet}: {string.Join(", ", missingNames)}");
+                    Console.WriteLine($"Available strategies: {string.Join(", ", availableNames)}");
+                    return null;
+                }
+
+                if (selectedByName.Count == 0)
+                {
+                    Console.WriteLine("No valid strategy names were provided.");
+                    return null;
+                }
+
+                if (playersExplicitlySpecified && config.NumberOfPlayers != selectedByName.Count)
+                {
+                    Console.WriteLine($"Overriding --players with explicit strategy count: {selectedByName.Count}");
+                }
+
+                config.NumberOfPlayers = selectedByName.Count;
+            }
+
             return config;
         }
 
@@ -348,14 +451,16 @@ namespace FungusToast.Simulation
             Console.WriteLine();
             Console.WriteLine("Options:");
             Console.WriteLine($"  -g, --games <number>     Number of games to play per matchup (default: {DefaultNumberOfSimulationGames})");
-            Console.WriteLine($"  -p, --players <number>   Number of players/strategies to use (default: {DefaultNumberOfPlayers})");
+            Console.WriteLine($"  -p, --players <number>   Number of players/strategies to use (default: {DefaultNumberOfPlayers}, max: {MaxSupportedPlayers})");
             Console.WriteLine($"  -w, --width <number>     Board width (default: {GameBalance.BoardWidth})");
             Console.WriteLine($"  --height <number>        Board height (default: {GameBalance.BoardHeight})");
             Console.WriteLine("  -s, --strategy-set <set> Strategy set: Proven, Testing, Mycovariants, Campaign (default: Testing)");
             Console.WriteLine("  --player-counts <csv>    Batch mode list, e.g. 2,4,8");
             Console.WriteLine("  --board-sizes <csv>      Batch mode list, e.g. 80x80,160x160");
             Console.WriteLine("  --strategy-sets <csv>    Batch mode list, e.g. Testing,Proven,Mycovariants");
+            Console.WriteLine("  --strategy-names <csv>   Explicit strategy names for single-run mode (overrides --players)");
             Console.WriteLine("  --seed <number>          Base seed for deterministic strategy/order/game seeds (default: 0)");
+            Console.WriteLine("  --selection-policy <p>   Strategy sampler: RandomUnique, CoverageBalanced, StratifiedCycle (default: CoverageBalanced)");
             Console.WriteLine("  --experiment-id <id>     Identifier for this run's analytics artifacts");
             Console.WriteLine("  -o, --output <filename>  Specify output filename (default: auto-generated with timestamp)");
             Console.WriteLine("  --no-keyboard            Disable keyboard interruption (Q/Escape), useful for automation");
@@ -377,6 +482,8 @@ namespace FungusToast.Simulation
             Console.WriteLine("  dotnet run --strategy-set Proven    # Use proven strategy roster");
             Console.WriteLine("  dotnet run --player-counts 2,4,8 --board-sizes 80x80,160x160 --strategy-sets Testing,Proven --games 50 --no-keyboard");
             Console.WriteLine("  dotnet run --seed 12345             # Run with deterministic seed 12345");
+            Console.WriteLine("  dotnet run --selection-policy StratifiedCycle --games 200 --no-keyboard");
+            Console.WriteLine("  dotnet run --strategy-set Testing --strategy-names TST_BalancedGeneralistControl,TST_BalancedControl_MaxEconomy --games 20 --no-keyboard");
             Console.WriteLine("  dotnet run --experiment-id testA    # Tag outputs under experiment ID testA");
             Console.WriteLine("  dotnet run --width 50 --height 75   # Run with 50x75 board");
             Console.WriteLine("  dotnet run -w 200 -p 4              # Run 4 players on 200x100 board");
@@ -396,11 +503,13 @@ namespace FungusToast.Simulation
             public StrategySetEnum StrategySet { get; set; }
             public int? BaseSeed { get; set; }
             public SlotAssignmentPolicy SlotAssignmentPolicy { get; set; }
+            public StrategySelectionPolicy StrategySelectionPolicy { get; set; }
             public bool ExportParquet { get; set; }
             public string ExperimentId { get; set; } = "";
             public List<int>? PlayerCounts { get; set; }
             public List<BoardSize>? BoardSizes { get; set; }
             public List<StrategySetEnum>? StrategySets { get; set; }
+            public List<string>? ExplicitStrategyNames { get; set; }
 
             public bool IsBatchMode =>
                 (PlayerCounts != null && PlayerCounts.Count > 0) ||
@@ -463,6 +572,14 @@ namespace FungusToast.Simulation
             }
 
             return result.Distinct().ToList();
+        }
+
+        private static List<string> ParseCsvStrings(string csv)
+        {
+            return csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(part => part.Trim())
+                .Where(part => !string.IsNullOrWhiteSpace(part))
+                .ToList();
         }
     }
 }

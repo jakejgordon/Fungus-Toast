@@ -351,6 +351,7 @@ namespace FungusToast.Simulation.Models
                     MycovariantId = myco.MycovariantId,
                     MycovariantName = myco.Mycovariant.Name,
                     MycovariantType = myco.Mycovariant.Type.ToString(),
+                    IsUniversal = myco.Mycovariant.IsUniversal,
                     Triggered = myco.HasTriggered,
                     EffectCounts = effectCountsAsString,
                     AIScoreAtDraft = myco.AIScoreAtDraft

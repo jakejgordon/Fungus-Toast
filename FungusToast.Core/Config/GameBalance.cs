@@ -65,7 +65,7 @@ namespace FungusToast.Core.Config
 
         // Mycotoxin Potentiation (Tier 2 Fungicide)
         public const int MycotoxinPotentiationGrowthCycleExtensionPerLevel = 1;
-        public const float MycotoxinPotentiationKillChancePerLevel = 0.016f;
+        public const float MycotoxinPotentiationKillChancePerLevel = 0.017f;
         public const int MycotoxinPotentiationMaxLevel = 10;
 
         // Adaptive Expression (Tier 2 GeneticDrift)
@@ -74,8 +74,8 @@ namespace FungusToast.Core.Config
         public const int AdaptiveExpressionMaxLevel = 5;
 
         // Mycotoxin Catabolism (Tier 2 GeneticDrift)
-        public const float MycotoxinCatabolismCleanupChancePerLevel = 0.032f;
-        public const float MycotoxinCatabolismMutationPointChancePerLevel = 0.08f;
+        public const float MycotoxinCatabolismCleanupChancePerLevel = 0.03f;
+        public const float MycotoxinCatabolismMutationPointChancePerLevel = 0.075f;
         public const int MycotoxinCatabolismMaxMutationPointsPerRound = 3;
         public const int MycotoxinCatabolismMaxLevel = 8;
 
@@ -87,7 +87,7 @@ namespace FungusToast.Core.Config
         public const int HyphalSurgePointIncreasePerLevel = 1;
 
         // Hyphal Vectoring (Tier 2 MycelialSurges)
-        public const int HyphalVectoringBaseTiles = 3;
+        public const int HyphalVectoringBaseTiles = 4;
         public const int HyphalVectoringTilesPerLevel = 1;
         public const int HyphalVectoringCandidateCellsToCheck = 50; // Number of candidate cells to check for origin selection
         public const int HyphalVectoringMaxLevel = 5;
@@ -96,7 +96,7 @@ namespace FungusToast.Core.Config
         public const int HyphalVectoringSurgePointIncreasePerLevel = 1;
 
         // Chitin Fortification (Tier 2 MycelialSurges)
-        public const int ChitinFortificationCellsPerLevel = 1; // X: cells fortified per level
+        public const int ChitinFortificationCellsPerLevel = 2; // X: cells fortified per level
         public const int ChitinFortificationDurationRounds = 3; // Y: rounds of protection
         public const int ChitinFortificationMaxLevel = 10;
         public const int ChitinFortificationPointsPerActivation = 2;
@@ -108,11 +108,11 @@ namespace FungusToast.Core.Config
         public const int NecrosporulationMaxLevel = 5;
 
         // Putrefactive Mycotoxin (Tier 3 Fungicide)
-        public const float PutrefactiveMycotoxinEffectPerLevel = 0.015f;
+        public const float PutrefactiveMycotoxinEffectPerLevel = 0.016f;
         public const int PutrefactiveMycotoxinMaxLevel = 5;
 
         // Anabolic Inversion (Tier 3 GeneticDrift)
-        public const int AnabolicInversionPointsPerUpgrade = 1; // Reduced from 2 → 1
+        public const int AnabolicInversionPointsPerUpgrade = 1; 
         public const float AnabolicInversionGapBonusPerLevel = 0.30f;
         public const int AnabolicInversionMaxMutationPointsPerRound = 4; // Cap on Anabolic Inversion points per round
         public const int AnabolicInversionMaxLevel = 3;
@@ -130,16 +130,16 @@ namespace FungusToast.Core.Config
         public const float MimeticResilienceMinimumBoardControlThreshold = 0.01f; // 1%
         public const float MimeticResilienceMinimumCellAdvantageThreshold = 0.20f; // 20%
         public const int MimeticResilienceMaxLevel = 3;
-        public const int MimeticResiliencePointsPerActivation = 8;
-        public const int MimeticResilienceSurgeDuration = 4;
-        public const int MimeticResiliencePointIncreasePerLevel = 2;
+        public const int MimeticResiliencePointsPerActivation = 9;
+        public const int MimeticResilienceSurgeDuration = 5;
+        public const int MimeticResiliencePointIncreasePerLevel = 1;
 
         // Competitive Antagonism (Tier 3 MycelialSurge) 
-        public const int CompetitiveAntagonismPointsPerActivation = 7;
+        public const int CompetitiveAntagonismPointsPerActivation = 6;
         public const int CompetitiveAntagonismSurgeDuration = 4;
         public const int CompetitiveAntagonismPointIncreasePerLevel = 1;
         public const int CompetitiveAntagonismMaxLevel = 5;
-        public const float CompetitiveAntagonismSporicidalBloomEmptyTileReduction = 0.25f; // Additional 25% empty tile reduction
+        public const float CompetitiveAntagonismSporicidalBloomEmptyTileReduction = 0.3f; // Additional 30% empty tile reduction
         public const float CompetitiveAntagonismSporicidalBloomSmallerColonyReduction = 0.75f; // 75% smaller colony tile reduction
         public const float CompetitiveAntagonismNecrophyticBloomSmallerColonyReduction = 0.75f; // 75% smaller colony dead cell reduction
 
@@ -152,8 +152,8 @@ namespace FungusToast.Core.Config
         public const int CreepingMoldMaxLevel = 4;
 
         // Sporocidal Bloom (Tier 4 Fungicide)
-        public const float SporicialBloomEffectPerLevel = .08f;
-        public const int SporocidalToxinTileDuration = 12;
+        public const float SporicialBloomEffectPerLevel = .09f;
+        public const int SporocidalToxinTileDuration = 13;
         public const int SporicidalBloomMaxLevel = 5;
 
         // Necrophytic Bloom (Tier 4 GeneticDrift)
@@ -163,18 +163,18 @@ namespace FungusToast.Core.Config
         public const int NecrophyticBloomMaxLevel = 5;
 
         // Necrohyphal Infiltration (Tier 5 CellularResilience)
-        public const float NecrohyphalInfiltrationChancePerLevel = 0.004f;
-        public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.019f;
+        public const float NecrohyphalInfiltrationChancePerLevel = 0.005f;
+        public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.02f;
         public const int NecrohyphalInfiltrationMaxLevel = 5;
 
         // Necrotoxic Conversion (Tier 5 Fungicide)
-        public const float NecrotoxicConversionReclaimChancePerLevel = .04f;
+        public const float NecrotoxicConversionReclaimChancePerLevel = .05f;
         public const int NecrotoxicConversionMaxLevel = 5;
 
         // Putrefactive Rejuvenation (Tier 5 Fungicide)
-        public const int PutrefactiveRejuvenationAgeReductionPerLevel = 4; // growth cycles
+        public const int PutrefactiveRejuvenationAgeReductionPerLevel = 6; // growth cycles
         public const int PutrefactiveRejuvenationEffectRadius = 3;
-        public const float PutrefactiveRejuvenationMycotoxinBonusPerLevel = 0.003f;
+        public const float PutrefactiveRejuvenationMycotoxinBonusPerLevel = 0.004f;
         public const int PutrefactiveRejuvenationMaxLevel = 4;
         public const int PutrefactiveRejuvenationMaxLevelRangeRadiusMultiplier = 3;
 
@@ -189,21 +189,21 @@ namespace FungusToast.Core.Config
         public const int CatabolicRebirthMaxLevel = 3;
 
         // Putrefactive Cascade (Tier 6 Fungicide)
-        public const float PutrefactiveCascadeEffectivenessBonus = 0.004f; // X% per level boost to Putrefactive Mycotoxin
-        public const float PutrefactiveCascadeCascadeChance = 0.22f; // Y% per level chance for cascade
+        public const float PutrefactiveCascadeEffectivenessBonus = 0.0085f; // X% per level boost to Putrefactive Mycotoxin
+        public const float PutrefactiveCascadeCascadeChance = 0.28f; // Y% per level chance for cascade
         public const int PutrefactiveCascadeMaxCascadeDepth = 10; // Maximum cascade depth to prevent infinite recursion
         public const int PutrefactiveCascadeMaxLevel = 3;
 
         // Ontogenic Regression (Tier 6 GeneticDrift)
-        public const float OntogenicRegressionChancePerLevel = 0.30f;
+        public const float OntogenicRegressionChancePerLevel = 0.33f;
         public const int OntogenicRegressionTier1LevelsToConsume = 3;
         public const int OntogenicRegressionMaxLevel = 3;
-        public const int OntogenicRegressionFailureConsolationPoints = 2; // Points awarded when regression fails
+        public const int OntogenicRegressionFailureConsolationPoints = 3; // Points awarded when regression fails
         public const int OntogenicRegressionEnemyKillsPerLevelReduction = 5; // NEW: enemy living cells killed per tier1 level offset at max level
 
         // Hypersystemic Regeneration (Tier 7 CellularResilience)
-        public const float HypersystemicRegenerationEffectivenessBonus = 0.01f; // X% per level boost to Regenerative Hyphae
-        public const float HypersystemicRegenerationResistanceChance = 0.15f; // Y% per level chance for resistant cells
+        public const float HypersystemicRegenerationEffectivenessBonus = 0.015f; // X% per level boost to Regenerative Hyphae
+        public const float HypersystemicRegenerationResistanceChance = 0.16f; // Y% per level chance for resistant cells
         public const int HypersystemicRegenerationMaxLevel = 3;
 
         // Legacy constants (keeping for backward compatibility, can be removed later if not needed)
