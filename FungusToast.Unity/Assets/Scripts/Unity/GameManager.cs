@@ -291,6 +291,11 @@ namespace FungusToast.Unity
 
         public void InitializeGame(int numberOfPlayers)
         {
+            // Clear any lingering scene coroutines/UI overlays from the previous game before bootstrapping a new board.
+            StopAllCoroutines();
+            mycovariantDraftController?.StopAllCoroutines();
+            gameUIManager.EndGamePanel?.gameObject.SetActive(false);
+
             gameUIManager.LoadingScreen?.Show("Preparing the toast…");
             gameEnded = false;
             isCountdownActive = false;
@@ -515,6 +520,16 @@ namespace FungusToast.Unity
             }
 
             hotseatTurnManager.BeginHumanMutationPhase();
+
+            // Fail-safe: campaign continuation can traverse custom UI steps; ensure mutation controls are re-armed.
+            if (humanPlayers.Count > 0)
+            {
+                var activeHuman = humanPlayers[0];
+                gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+                gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
+                gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(activeHuman.MutationPoints > 0);
+            }
+
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
             gameUIManager.GameLogRouter?.OnPhaseStart("Mutation");

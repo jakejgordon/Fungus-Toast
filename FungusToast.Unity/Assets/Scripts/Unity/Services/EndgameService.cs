@@ -120,6 +120,7 @@ namespace FungusToast.Unity
 
             ui.GameLogManager?.OnLogSegmentStart("None");
             ui.MutationUIManager.SetSpendPointsButtonInteractable(false);
+            ui.PhaseBanner?.HideImmediate();
 
             var ranked = board.Players
                 .OrderByDescending(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))

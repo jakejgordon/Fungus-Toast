@@ -8,6 +8,7 @@ using System.Linq;
 using TMPro;
 using FungusToast.Unity.UI.Tooltips;
 using System.Globalization;
+using System;
 
 namespace FungusToast.Unity.UI
 {
@@ -24,12 +25,14 @@ namespace FungusToast.Unity.UI
         [SerializeField] private TextMeshProUGUI outcomeLabel; // dynamic outcome messaging
         [SerializeField] private Image panelBackground;
         [SerializeField] private Image resultsCardBackground;
+        [SerializeField] private Image outcomeBackdrop;
 
         // Façade reference — set by GameManager so we don't need GameManager.Instance
         private GameUIManager gameUI;
         private System.Action onCampaignResume;
         private System.Action onExitToModeSelect;
         private bool requiresAdaptationBeforeContinue;
+        private readonly List<Component> legacyResultsHeaderCandidates = new();
 
         /// <summary>
         /// Call once after the panel is created to wire up dependencies without reaching
@@ -93,10 +96,30 @@ namespace FungusToast.Unity.UI
             EnsureButtonLayout(continueButton);
             EnsureButtonLayout(exitButton);
             EnsureButtonLayout(playAgainButton);
+            EnsureActionButtonsShareContainer();
+            EnsureButtonContainerLayout();
 
             if (outcomeLabel != null)
             {
+                EnsureOutcomePlacement();
                 outcomeLabel.color = UIStyleTokens.Text.Primary;
+                outcomeLabel.enableAutoSizing = true;
+                outcomeLabel.fontSizeMax = 52f;
+                outcomeLabel.fontSizeMin = 24f;
+                outcomeLabel.textWrappingMode = TextWrappingModes.Normal;
+                outcomeLabel.overflowMode = TextOverflowModes.Overflow;
+                outcomeLabel.alignment = TextAlignmentOptions.Center;
+
+                if (outcomeLabel.rectTransform != null)
+                {
+                    var labelRect = outcomeLabel.rectTransform;
+                    labelRect.anchorMin = new Vector2(0.08f, 0.86f);
+                    labelRect.anchorMax = new Vector2(0.92f, 0.98f);
+                    labelRect.pivot = new Vector2(0.5f, 0.5f);
+                    labelRect.anchoredPosition = Vector2.zero;
+                    labelRect.offsetMin = Vector2.zero;
+                    labelRect.offsetMax = Vector2.zero;
+                }
             }
 
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 30f);
@@ -112,7 +135,8 @@ namespace FungusToast.Unity.UI
         /* ─────────── Public API (generic solo / hotseat) ─────────── */
         public void ShowResults(List<Player> ranked, GameBoard board)
         {
-            ShowResultsInternal(ranked, board);
+            ShowResultsInternal(ranked, board, useCampaignTopSpacer: false);
+            SetLegacyResultsHeaderVisibility(true);
             // Solo / hotseat baseline: only exit button (continue hidden)
             if (continueButton != null) continueButton.gameObject.SetActive(false);
             if (exitButton != null) exitButton.gameObject.SetActive(true);
@@ -133,7 +157,8 @@ namespace FungusToast.Unity.UI
             int lostLevelDisplay,
             bool adaptationPending)
         {
-            ShowResultsInternal(ranked, board);
+            ShowResultsInternal(ranked, board, useCampaignTopSpacer: true);
+            SetLegacyResultsHeaderVisibility(!isCampaign);
             requiresAdaptationBeforeContinue = false;
             if (!isCampaign)
             {
@@ -185,11 +210,16 @@ namespace FungusToast.Unity.UI
         }
 
         /* ─────────── Internal Row Builder ─────────── */
-        private void ShowResultsInternal(List<Player> ranked, GameBoard board)
+        private void ShowResultsInternal(List<Player> ranked, GameBoard board, bool useCampaignTopSpacer)
         {
             /* clear previous rows */
             foreach (Transform child in resultsContainer)
                 Destroy(child.gameObject);
+
+            if (useCampaignTopSpacer)
+            {
+                BuildCampaignTopSpacer();
+            }
 
             BuildResultsHeader();
 
@@ -387,6 +417,22 @@ namespace FungusToast.Unity.UI
             CreateHeaderCell(header.transform, "Toxins", 140f, TextAlignmentOptions.Right, false);
         }
 
+        private void BuildCampaignTopSpacer()
+        {
+            if (resultsContainer == null)
+            {
+                return;
+            }
+
+            var spacer = new GameObject("UI_CampaignOutcomeTopSpacer", typeof(RectTransform), typeof(LayoutElement));
+            spacer.transform.SetParent(resultsContainer, false);
+
+            var layout = spacer.GetComponent<LayoutElement>();
+            layout.preferredHeight = 62f;
+            layout.minHeight = 52f;
+            layout.flexibleHeight = 0f;
+        }
+
         private void CreateHeaderCell(Transform parent, string text, float preferredWidth, TextAlignmentOptions alignment, bool flexible)
         {
             var cell = new GameObject($"UI_GameEndHeader_{text}", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
@@ -424,7 +470,145 @@ namespace FungusToast.Unity.UI
 
             layout.preferredHeight = 56f;
             layout.minHeight = 52f;
-            layout.preferredWidth = 240f;
+            layout.preferredWidth = 380f;
+            layout.minWidth = 320f;
+            layout.flexibleWidth = 0f;
+
+            var rect = button.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(0.5f, rect.anchorMin.y);
+                rect.anchorMax = new Vector2(0.5f, rect.anchorMax.y);
+                rect.pivot = new Vector2(0.5f, rect.pivot.y);
+            }
+        }
+
+        private void EnsureActionButtonsShareContainer()
+        {
+            if (playAgainButton == null)
+            {
+                return;
+            }
+
+            var primaryParent = playAgainButton.transform.parent;
+            if (primaryParent == null)
+            {
+                return;
+            }
+
+            if (continueButton != null && continueButton.transform.parent != primaryParent)
+            {
+                continueButton.transform.SetParent(primaryParent, false);
+            }
+
+            if (exitButton != null && exitButton.transform.parent != primaryParent)
+            {
+                exitButton.transform.SetParent(primaryParent, false);
+            }
+
+            int nextIndex = playAgainButton.transform.GetSiblingIndex() + 1;
+            if (continueButton != null)
+            {
+                continueButton.transform.SetSiblingIndex(nextIndex);
+                nextIndex++;
+            }
+
+            if (exitButton != null)
+            {
+                exitButton.transform.SetSiblingIndex(nextIndex);
+            }
+        }
+
+        private void EnsureButtonContainerLayout()
+        {
+            var parent = playAgainButton != null ? playAgainButton.transform.parent : null;
+            if (parent == null)
+            {
+                return;
+            }
+
+            var vlg = parent.GetComponent<VerticalLayoutGroup>();
+            if (vlg != null)
+            {
+                vlg.childControlWidth = true;
+                vlg.childForceExpandWidth = false;
+                vlg.childForceExpandHeight = false;
+                vlg.childAlignment = TextAnchor.UpperCenter;
+            }
+        }
+
+        private void EnsureOutcomePlacement()
+        {
+            if (outcomeLabel == null || resultsCardBackground == null)
+            {
+                return;
+            }
+
+            var desiredParent = resultsCardBackground.transform;
+            if (outcomeLabel.transform.parent != desiredParent)
+            {
+                outcomeLabel.transform.SetParent(desiredParent, false);
+                outcomeLabel.transform.SetAsLastSibling();
+            }
+
+            if (outcomeBackdrop == null)
+            {
+                var existing = desiredParent.Find("UI_EndGameOutcomeBackdrop");
+                if (existing != null)
+                {
+                    outcomeBackdrop = existing.GetComponent<Image>();
+                }
+            }
+
+            if (outcomeBackdrop == null)
+            {
+                var backdropObject = new GameObject("UI_EndGameOutcomeBackdrop", typeof(RectTransform), typeof(Image));
+                backdropObject.transform.SetParent(desiredParent, false);
+                backdropObject.transform.SetSiblingIndex(outcomeLabel.transform.GetSiblingIndex());
+                outcomeBackdrop = backdropObject.GetComponent<Image>();
+            }
+
+            EnsureIgnoreParentLayout(outcomeLabel.gameObject);
+
+            if (outcomeBackdrop != null)
+            {
+                EnsureIgnoreParentLayout(outcomeBackdrop.gameObject);
+
+                var backdropColor = UIStyleTokens.Surface.PanelSecondary;
+                backdropColor.a = 0.92f;
+                outcomeBackdrop.color = backdropColor;
+
+                var backdropRect = outcomeBackdrop.rectTransform;
+                backdropRect.anchorMin = new Vector2(0.04f, 0.84f);
+                backdropRect.anchorMax = new Vector2(0.96f, 0.995f);
+                backdropRect.pivot = new Vector2(0.5f, 0.5f);
+                backdropRect.anchoredPosition = Vector2.zero;
+                backdropRect.offsetMin = Vector2.zero;
+                backdropRect.offsetMax = Vector2.zero;
+
+                // Keep backdrop behind label while staying above base card background.
+                if (outcomeLabel != null)
+                {
+                    outcomeBackdrop.transform.SetSiblingIndex(Mathf.Max(0, outcomeLabel.transform.GetSiblingIndex() - 1));
+                    outcomeLabel.transform.SetAsLastSibling();
+                }
+            }
+        }
+
+        private static void EnsureIgnoreParentLayout(GameObject gameObject)
+        {
+            if (gameObject == null)
+            {
+                return;
+            }
+
+            var layoutElement = gameObject.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.ignoreLayout = true;
         }
 
         private static void EnsureTooltip(Button button, string text)
@@ -446,6 +630,61 @@ namespace FungusToast.Unity.UI
         private static string ToHex(Color color)
         {
             return ColorUtility.ToHtmlStringRGB(color);
+        }
+
+        private void SetLegacyResultsHeaderVisibility(bool visible)
+        {
+            CacheLegacyResultsHeaderCandidates();
+            for (int i = 0; i < legacyResultsHeaderCandidates.Count; i++)
+            {
+                var candidate = legacyResultsHeaderCandidates[i];
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                candidate.gameObject.SetActive(visible);
+            }
+        }
+
+        private void CacheLegacyResultsHeaderCandidates()
+        {
+            if (legacyResultsHeaderCandidates.Count > 0)
+            {
+                return;
+            }
+
+            var tmpLabels = GetComponentsInChildren<TextMeshProUGUI>(true);
+            for (int i = 0; i < tmpLabels.Length; i++)
+            {
+                var label = tmpLabels[i];
+                if (label == null || label == outcomeLabel)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(label.text) &&
+                    label.text.IndexOf("Game Results", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    legacyResultsHeaderCandidates.Add(label);
+                }
+            }
+
+            var tmpLegacyLabels = GetComponentsInChildren<Text>(true);
+            for (int i = 0; i < tmpLegacyLabels.Length; i++)
+            {
+                var label = tmpLegacyLabels[i];
+                if (label == null)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(label.text) &&
+                    label.text.IndexOf("Game Results", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    legacyResultsHeaderCandidates.Add(label);
+                }
+            }
         }
     }
 }
