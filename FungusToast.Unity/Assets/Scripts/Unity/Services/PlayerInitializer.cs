@@ -8,6 +8,7 @@ using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI;
+using FungusToast.Unity.Campaign;
 
 namespace FungusToast.Unity
 {
@@ -16,12 +17,21 @@ namespace FungusToast.Unity
         private readonly GridVisualizer gridVisualizer;
         private readonly GameUIManager ui;
         private readonly Func<int> getConfiguredHumanCount;
+        private readonly Func<GameMode> getGameMode;
+        private readonly Func<BoardPreset> getCampaignBoardPreset;
 
-        public PlayerInitializer(GridVisualizer gridVisualizer, GameUIManager ui, Func<int> getConfiguredHumanCount)
+        public PlayerInitializer(
+            GridVisualizer gridVisualizer,
+            GameUIManager ui,
+            Func<int> getConfiguredHumanCount,
+            Func<GameMode> getGameMode,
+            Func<BoardPreset> getCampaignBoardPreset)
         {
             this.gridVisualizer = gridVisualizer;
             this.ui = ui;
             this.getConfiguredHumanCount = getConfiguredHumanCount;
+            this.getGameMode = getGameMode;
+            this.getCampaignBoardPreset = getCampaignBoardPreset;
         }
 
         // totalPlayers: authoritative total player count for this game (from GameManager)
@@ -59,8 +69,8 @@ namespace FungusToast.Unity
             int remaining = totalPlayers - humanPlayers.Count;
             if (remaining > 0)
             {
-                var aiStrats = AIRoster.GetStrategies(remaining, StrategySetEnum.Proven).OrderBy(_ => UnityEngine.Random.value).ToList();
-                for (int i = 0; i < aiStrats.Count; i++)
+                var aiStrats = ResolveAIStrategiesForCurrentMode(remaining);
+                for (int i = 0; i < aiStrats.Count && i < remaining; i++)
                 {
                     int id = humanPlayers.Count + i;
                     var ai = new Player(id, $"AI Player {id}", PlayerTypeEnum.AI, AITypeEnum.Random);
@@ -82,6 +92,60 @@ namespace FungusToast.Unity
 
             ui.RightSidebar?.SetGridVisualizer(gridVisualizer);
             ui.RightSidebar?.InitializePlayerSummaries(board.Players);
+        }
+
+        private List<IMutationSpendingStrategy> ResolveAIStrategiesForCurrentMode(int remaining)
+        {
+            if (remaining <= 0)
+            {
+                return new List<IMutationSpendingStrategy>();
+            }
+
+            if (getGameMode() == GameMode.Campaign)
+            {
+                var preset = getCampaignBoardPreset();
+                if (preset != null && preset.aiPlayers != null && preset.aiPlayers.Count > 0)
+                {
+                    var resolved = new List<IMutationSpendingStrategy>();
+                    for (int i = 0; i < preset.aiPlayers.Count && resolved.Count < remaining; i++)
+                    {
+                        var aiSpec = preset.aiPlayers[i];
+                        if (aiSpec == null || string.IsNullOrWhiteSpace(aiSpec.strategyName))
+                        {
+                            continue;
+                        }
+
+                        if (AIRoster.CampaignStrategiesByName.TryGetValue(aiSpec.strategyName, out var campaignStrategy))
+                        {
+                            resolved.Add(campaignStrategy);
+                            continue;
+                        }
+
+                        if (AIRoster.ProvenStrategiesByName.TryGetValue(aiSpec.strategyName, out var provenStrategy))
+                        {
+                            resolved.Add(provenStrategy);
+                            continue;
+                        }
+
+                        Debug.LogWarning($"[PlayerInitializer] Unknown campaign AI strategy '{aiSpec.strategyName}'.");
+                    }
+
+                    if (resolved.Count == remaining)
+                    {
+                        return resolved;
+                    }
+
+                    Debug.LogWarning("[PlayerInitializer] Campaign preset AI lineup was incomplete; filling with random campaign strategies.");
+                    var fallbackCampaign = AIRoster.GetStrategies(remaining, StrategySetEnum.Campaign)
+                        .OrderBy(_ => UnityEngine.Random.value)
+                        .ToList();
+                    return fallbackCampaign;
+                }
+            }
+
+            return AIRoster.GetStrategies(remaining, StrategySetEnum.Proven)
+                .OrderBy(_ => UnityEngine.Random.value)
+                .ToList();
         }
     }
 }

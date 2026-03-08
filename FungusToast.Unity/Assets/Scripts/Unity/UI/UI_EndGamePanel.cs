@@ -29,6 +29,7 @@ namespace FungusToast.Unity.UI
         private GameUIManager gameUI;
         private System.Action onCampaignResume;
         private System.Action onExitToModeSelect;
+        private bool requiresAdaptationBeforeContinue;
 
         /// <summary>
         /// Call once after the panel is created to wire up dependencies without reaching
@@ -122,9 +123,18 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Extended results display including campaign outcome context.
         /// </summary>
-        public void ShowResultsWithOutcome(List<Player> ranked, GameBoard board, bool isCampaign, bool victory, bool finalLevel, bool hasNextLevel, int lostLevelDisplay)
+        public void ShowResultsWithOutcome(
+            List<Player> ranked,
+            GameBoard board,
+            bool isCampaign,
+            bool victory,
+            bool finalLevel,
+            bool hasNextLevel,
+            int lostLevelDisplay,
+            bool adaptationPending)
         {
             ShowResultsInternal(ranked, board);
+            requiresAdaptationBeforeContinue = false;
             if (!isCampaign)
             {
                 // fallback to base behavior
@@ -148,24 +158,30 @@ namespace FungusToast.Unity.UI
                 {
                     outcomeLabel.text =
                         $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Campaign complete</b></color>\n" +
-                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>All levels conquered</color></size>";
+                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Congratulations you mycelial mastermind! You won the campaign!</color></size>";
                 }
                 else
                 {
                     // mid-run victory
                     outcomeLabel.text =
                         $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Level cleared</b></color>\n" +
-                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Advance to the next level</color></size>";
+                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Select an Adaptation to continue the campaign.</color></size>";
                 }
             }
 
             // Buttons
+            requiresAdaptationBeforeContinue = adaptationPending;
             if (continueButton != null)
                 continueButton.gameObject.SetActive(victory && !finalLevel && hasNextLevel);
             if (exitButton != null)
                 exitButton.gameObject.SetActive(true);
             if (playAgainButton != null)
-                playAgainButton.gameObject.SetActive(true);
+                playAgainButton.gameObject.SetActive(!requiresAdaptationBeforeContinue);
+
+            if (continueButton != null)
+            {
+                SetButtonLabel(continueButton, requiresAdaptationBeforeContinue ? "Select Adaptation" : "Continue Campaign");
+            }
         }
 
         /* ─────────── Internal Row Builder ─────────── */
@@ -225,12 +241,62 @@ namespace FungusToast.Unity.UI
 
         private void OnContinueCampaign()
         {
+            if (requiresAdaptationBeforeContinue)
+            {
+                var manager = GameManager.Instance;
+                HideInstant();
+
+                bool started = manager != null && manager.TryStartCampaignAdaptationDraft(OnCampaignAdaptationSelected);
+                if (!started)
+                {
+                    requiresAdaptationBeforeContinue = false;
+                    if (onCampaignResume != null)
+                        onCampaignResume();
+                    else
+                        manager?.StartCampaignResume();
+                }
+                return;
+            }
+
             // Mid-run victory continue path
             HideInstant();
             if (onCampaignResume != null)
                 onCampaignResume();
             else
                 GameManager.Instance?.StartCampaignResume();
+        }
+
+        private void OnCampaignAdaptationSelected()
+        {
+            requiresAdaptationBeforeContinue = false;
+
+            if (outcomeLabel != null)
+            {
+                outcomeLabel.text =
+                    $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Adaptation secured</b></color>\n" +
+                    $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Continue when you are ready for the next level.</color></size>";
+            }
+
+            if (continueButton != null)
+            {
+                continueButton.gameObject.SetActive(true);
+                SetButtonLabel(continueButton, "Continue Campaign");
+            }
+
+            if (exitButton != null)
+            {
+                exitButton.gameObject.SetActive(true);
+            }
+
+            if (playAgainButton != null)
+            {
+                playAgainButton.gameObject.SetActive(true);
+            }
+
+            gameObject.SetActive(true);
+            canvasGroup.alpha = 1f;
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
         }
 
         private void OnReturnToMainMenu()
@@ -255,6 +321,27 @@ namespace FungusToast.Unity.UI
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
             gameObject.SetActive(false);
+        }
+
+        private static void SetButtonLabel(Button button, string text)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var label = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (label != null)
+            {
+                label.text = text;
+                return;
+            }
+
+            var legacyLabel = button.GetComponentInChildren<Text>(true);
+            if (legacyLabel != null)
+            {
+                legacyLabel.text = text;
+            }
         }
 
         private IEnumerator FadeCanvasGroup(float targetAlpha, float duration)

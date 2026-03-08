@@ -11,18 +11,13 @@ namespace FungusToast.Unity.Campaign
     {
         public string runId; // GUID string
         public int levelIndex; // current level (0-based)
-        public List<TraitStack> traitStacks = new(); // placeholder for future Genetic Traits
+        public List<string> selectedAdaptationIds = new(); // unique adaptation ids picked during this run
         public int unlockedMutationTierMax; // enforced ceiling on mutation tiers
         public string boardPresetId; // preset identifier for board size/layout
         public int seed; // RNG seed for reproducibility
         public int boardWidth; // persisted board width for current level
         public int boardHeight; // persisted board height for current level
-
-        [Serializable]
-        public class TraitStack
-        {
-            public string id; // trait id
-            public int level; // stack level
-        }
+        public bool pendingAdaptationSelection; // true when player must pick adaptation before continuing
+        public bool campaignCompleted; // true after final victory
     }
 }

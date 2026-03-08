@@ -159,7 +159,8 @@ namespace FungusToast.Unity
                 ui.EndGamePanel.ShowResultsWithOutcome(
                     ranked, board, true, humanWon,
                     finalLevelPreAdvance && humanWon, hasNextLevel,
-                    humanWon ? campaignController.State.levelIndex + 1 : lostLevelDisplay);
+                    humanWon ? campaignController.State.levelIndex + 1 : lostLevelDisplay,
+                    campaignController.State.pendingAdaptationSelection);
             }
             else
             {

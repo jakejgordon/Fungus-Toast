@@ -10,11 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dac0b2d101f4c114d91c1aa9449bd5eb, type: 3}
-  m_Name: 10x10 1 AI
+  m_Name: 140x140 7 AI
   m_EditorClassIdentifier: 
-  presetId: Campaign0
-  boardWidth: 10
-  boardHeight: 10
-  mutationTierMax: 2
+  presetId: Campaign12
+  boardWidth: 140
+  boardHeight: 140
+  mutationTierMax: 6
   aiPlayers:
-  - strategyName: AI6
+  - strategyName: AI1
+  - strategyName: AI2
+  - strategyName: AI3
+  - strategyName: AI10
+  - strategyName: AI7
+  - strategyName: AI8
+  - strategyName: AI9

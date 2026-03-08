@@ -336,6 +336,7 @@ FungusToast.Unity/
 - `FungusToast.Core/docs/MYCOVARIANT_TECHNICAL_FLOW.md`: End-to-end technical flow for Core/Simulation/Unity draft integration.
 - `FungusToast.Core/docs/MYCOVARIANT_PR_CHECKLIST.md`: PR readiness checklist for Mycovariant work.
 - `FungusToast.Core/docs/PLAYER_ACTIVITY_LOG_HELPER.md`: Human activity log segment/aggregation semantics.
+- `FungusToast.Core/docs/CAMPAIGN_HELPER.md`: Campaign mode vision, progression/configuration touchpoints, and adaptation guidance.
 - `FungusToast.Core/docs/ANIMATION_HELPER.md`: Gameplay animation trigger order and timing constants.
 - `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`: `GameUIManager` facade, services, tooltips, pooling patterns.
 - `FungusToast.Core/docs/UI_STYLE_GUIDE.md`: UI semantic token dictionary and component recipes.

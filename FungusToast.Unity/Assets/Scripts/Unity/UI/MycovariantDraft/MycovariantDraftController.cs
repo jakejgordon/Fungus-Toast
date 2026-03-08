@@ -1,5 +1,6 @@
 using Assets.Scripts.Unity.UI.MycovariantDraft;
 using FungusToast.Core.Board;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
@@ -55,6 +56,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private DraftUIState uiState = DraftUIState.Idle;
         private readonly Queue<string> draftMessageLines = new();
         private bool isFinishingDraftPhase;
+        private bool isCampaignAdaptationDraft;
+        private Action<AdaptationDefinition> onAdaptationPicked;
 
         private bool _cameraRecenteredThisDraftPhase = false;
 
@@ -77,8 +80,41 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             ClearDraftMessages();
             AddDraftMessage($"Draft started. {draftOrder.Count} player{(draftOrder.Count == 1 ? "" : "s")} picking in order.");
 
+            isCampaignAdaptationDraft = false;
+            onAdaptationPicked = null;
             ShowDraftUI();
             BeginNextDraft();
+        }
+
+        public void StartCampaignAdaptationDraft(
+            IReadOnlyList<AdaptationDefinition> choices,
+            Action<AdaptationDefinition> onPicked)
+        {
+            if (choices == null || choices.Count == 0)
+            {
+                Debug.LogWarning("[MycovariantDraftController] Cannot start adaptation draft with no choices.");
+                return;
+            }
+
+            isCampaignAdaptationDraft = true;
+            onAdaptationPicked = onPicked;
+            isFinishingDraftPhase = false;
+
+            EnsureDraftMessageUI();
+            ClearDraftMessages();
+            AddDraftMessage("Victory secured. Choose an Adaptation to evolve your colony for the rest of this campaign.");
+            if (draftBannerText != null)
+            {
+                draftBannerText.text = "Choose an Adaptation";
+            }
+
+            ShowDraftUI();
+            if (draftOrderRow != null)
+            {
+                draftOrderRow.gameObject.SetActive(false);
+            }
+            PopulateAdaptationChoices(choices);
+            SetDraftState(DraftUIState.HumanTurn);
         }
 
         private void BeginNextDraft()
@@ -397,6 +433,41 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
         }
 
+        private void PopulateAdaptationChoices(IReadOnlyList<AdaptationDefinition> choices)
+        {
+            foreach (Transform child in choiceContainer)
+            {
+                Destroy(child.gameObject);
+            }
+
+            var fallbackIcon = MycovariantArtRepository.GetIcon(MycovariantType.Passive);
+            for (int i = 0; i < choices.Count; i++)
+            {
+                var adaptation = choices[i];
+                var card = Instantiate(cardPrefab, choiceContainer);
+                card.SetCardContent(adaptation.Name, adaptation.Description, fallbackIcon, () => OnAdaptationChoicePicked(adaptation));
+                card.SetActiveHighlight(true);
+            }
+        }
+
+        private void OnAdaptationChoicePicked(AdaptationDefinition picked)
+        {
+            if (!isCampaignAdaptationDraft || picked == null)
+            {
+                return;
+            }
+
+            SetDraftState(DraftUIState.AnimatingPick);
+            AddDraftMessage($"Adaptation acquired: {picked.Name}.");
+
+            var callback = onAdaptationPicked;
+            onAdaptationPicked = null;
+            isCampaignAdaptationDraft = false;
+
+            HideDraftUI();
+            callback?.Invoke(picked);
+        }
+
         private void ShowDraftUI()
         {
             draftPanel.SetActive(true);
@@ -444,6 +515,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 draftMessagePanel.SetActive(false);
             interactionBlocker.blocksRaycasts = false;
             interactionBlocker.alpha = 0f;
+            if (draftOrderRow != null)
+            {
+                draftOrderRow.gameObject.SetActive(true);
+            }
             uiState = DraftUIState.Idle;
         }
 

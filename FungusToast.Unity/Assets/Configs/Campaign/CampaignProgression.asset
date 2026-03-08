@@ -16,8 +16,30 @@ MonoBehaviour:
   - levelIndex: 0
     boardPreset: {fileID: 11400000, guid: 5114a4d75eb357d49966358cf2eb3d5e, type: 2}
   - levelIndex: 1
-    boardPreset: {fileID: 0}
-  - levelIndex: 1
-    boardPreset: {fileID: 0}
-  - levelIndex: 1
-    boardPreset: {fileID: 0}
+    boardPreset: {fileID: 11400000, guid: 55ff25ab2aa745d99ab8d35f0a4a0906, type: 2}
+  - levelIndex: 2
+    boardPreset: {fileID: 11400000, guid: 4649fe9908134e13a9834f8a4d3b059c, type: 2}
+  - levelIndex: 3
+    boardPreset: {fileID: 11400000, guid: a4b225dd806b42ebab821b9ccd0c36e7, type: 2}
+  - levelIndex: 4
+    boardPreset: {fileID: 11400000, guid: 5fa80eb3b8cb449c9ef9dc60194ac3c7, type: 2}
+  - levelIndex: 5
+    boardPreset: {fileID: 11400000, guid: a3c08098802a4a2ea57d89c4c546e94f, type: 2}
+  - levelIndex: 6
+    boardPreset: {fileID: 11400000, guid: 6aa884a2310d4b5692decc739b8d697e, type: 2}
+  - levelIndex: 7
+    boardPreset: {fileID: 11400000, guid: bdb637903fe045a8b63658b83eedfa0f, type: 2}
+  - levelIndex: 8
+    boardPreset: {fileID: 11400000, guid: b9249acd817248c6916fab398a7b771b, type: 2}
+  - levelIndex: 9
+    boardPreset: {fileID: 11400000, guid: 3710bb8757eb43448ae49f3755d894a9, type: 2}
+  - levelIndex: 10
+    boardPreset: {fileID: 11400000, guid: 0117a77f50594dfcb028754633c459de, type: 2}
+  - levelIndex: 11
+    boardPreset: {fileID: 11400000, guid: 8b80555a9b154cf5a38e69b28e4f6d78, type: 2}
+  - levelIndex: 12
+    boardPreset: {fileID: 11400000, guid: 17ebe9024af7422ea9f31221fc9c9653, type: 2}
+  - levelIndex: 13
+    boardPreset: {fileID: 11400000, guid: 1c408f78d70e4330bd0feff52af8f603, type: 2}
+  - levelIndex: 14
+    boardPreset: {fileID: 11400000, guid: 0c0526c277f3450d9ec7427fc28f38db, type: 2}

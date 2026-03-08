@@ -35,11 +35,23 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
         {
             this.mycovariant = mycovariant;
             this.onPicked = onPicked;
-            iconImage.sprite = MycovariantArtRepository.GetIcon(mycovariant.Type);
-            nameText.text = mycovariant.Name;
-            effectText.text = mycovariant.Description;
+
+            SetCardContent(
+                mycovariant.Name,
+                mycovariant.Description,
+                MycovariantArtRepository.GetIcon(mycovariant.Type),
+                () => this.onPicked?.Invoke(mycovariant));
+
+            SetActiveHighlight(false);
+        }
+
+        public void SetCardContent(string title, string description, Sprite icon, System.Action onClick)
+        {
+            iconImage.sprite = icon;
+            nameText.text = title;
+            effectText.text = description;
             pickButton.onClick.RemoveAllListeners();
-            pickButton.onClick.AddListener(() => this.onPicked?.Invoke(mycovariant));
+            pickButton.onClick.AddListener(() => onClick?.Invoke());
 
             SetActiveHighlight(false);
 

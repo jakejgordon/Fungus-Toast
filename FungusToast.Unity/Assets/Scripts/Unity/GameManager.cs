@@ -7,6 +7,7 @@ using FungusToast.Core.Events;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Core.Metrics;
@@ -152,7 +153,12 @@ namespace FungusToast.Unity
 
         private void BootstrapServices()
         {
-            playerInitializer = new PlayerInitializer(gridVisualizer, gameUIManager, () => configuredHumanPlayerCount);
+            playerInitializer = new PlayerInitializer(
+                gridVisualizer,
+                gameUIManager,
+                () => configuredHumanPlayerCount,
+                () => CurrentGameMode,
+                () => campaignController?.CurrentBoardPreset);
             hotseatTurnManager = new HotseatTurnManager(
                 gameUIManager,
                 hotseatTurnPrompt,
@@ -238,6 +244,50 @@ namespace FungusToast.Unity
 
         // Accessor for external panels
         public bool HasCampaignSave() => campaignController != null && CampaignSaveService.Exists();
+        public bool IsCampaignAwaitingAdaptationSelection() =>
+            CurrentGameMode == GameMode.Campaign && campaignController != null && campaignController.IsAwaitingAdaptationSelection;
+
+        public bool TryStartCampaignAdaptationDraft(Action onSelectionComplete)
+        {
+            if (CurrentGameMode != GameMode.Campaign || campaignController == null || !campaignController.IsAwaitingAdaptationSelection)
+            {
+                return false;
+            }
+
+            var choices = campaignController.GetAdaptationDraftChoices(rng, 3);
+            if (choices.Count == 0)
+            {
+                Debug.Log("[GameManager] No remaining adaptations; advancing campaign level without reward.");
+                bool advanced = campaignController.TryAdvanceWithoutAdaptationReward();
+                if (advanced)
+                {
+                    onSelectionComplete?.Invoke();
+                }
+                return advanced;
+            }
+
+            if (mycovariantDraftController == null)
+            {
+                Debug.LogError("[GameManager] Cannot start campaign adaptation draft: MycovariantDraftController is missing.");
+                return false;
+            }
+
+            mycovariantDraftController.StartCampaignAdaptationDraft(
+                choices,
+                selected =>
+                {
+                    bool applied = campaignController.TrySelectAdaptationAndAdvance(selected.Id);
+                    if (!applied)
+                    {
+                        Debug.LogError($"[GameManager] Failed to apply selected adaptation '{selected.Id}'.");
+                        return;
+                    }
+
+                    onSelectionComplete?.Invoke();
+                });
+
+            return true;
+        }
 
         public void InitializeGame(int numberOfPlayers)
         {
