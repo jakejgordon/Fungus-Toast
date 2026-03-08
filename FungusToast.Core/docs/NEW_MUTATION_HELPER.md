@@ -89,14 +89,33 @@ public const int NewSurgePointIncreasePerLevel = 2;
 public const int NewSurgeMaxLevel = 3;
 ```
 
+#### **D. Add AI Metadata (Optional but Recommended for Surges)**
+If the mutation should influence AI behavior (for example, catch-up surges), set `aiTags` in the mutation definition.
+
+```csharp
+// File: FungusToast.Core/Mutations/MutationAITags.cs
+// Existing tags include: None, CatchUp
+
+new Mutation(
+    // ...
+    isSurge: true,
+    surgeDuration: GameBalance.NewSurgeDuration,
+    pointsPerActivation: GameBalance.NewSurgePointsPerActivation,
+    pointIncreasePerLevel: GameBalance.NewSurgePointIncreasePerLevel,
+    aiTags: MutationAITags.CatchUp
+)
+```
+
+If the mutation is a surge, also consider adding backbone suggestions in `MutationSynergyCatalog.cs` for roster-audit quality checks.
+
 ### **2. Mutation Definition**
 
-#### **A. Add to MutationRepository**
+#### **A. Add to the Correct Category Factory**
 ```csharp
-// File: FungusToast.Core/Mutations/MutationRepository.cs
-// Add in appropriate tier section:
+// File: FungusToast.Core/Mutations/Factories/[Category]MutationFactory.cs
+// Add in the appropriate tier section using helper.MakeRoot/helper.MakeChild:
 
-MakeChild(new Mutation(
+helper.MakeChild(new Mutation(
     id: MutationIds.NewMutationName,
     name: "New Mutation Name",
     description: $"Each level grants...",
@@ -116,6 +135,8 @@ MakeChild(new Mutation(
 new MutationPrerequisite(MutationIds.PrereqMutation1, 1),
 new MutationPrerequisite(MutationIds.PrereqMutation2, 3)); // Cross-category recommended for Tier 3+
 ```
+
+`MutationRepository` is now the coordinator that invokes category factories; avoid manually adding one-off mutation definitions directly there.
 
 ### **3. UI Integration**
 
@@ -237,7 +258,9 @@ NewMutationGrowth,
 
 ## Verification Steps
 
-1. **Build Test**: Run `run_build` to ensure no compilation errors
+1. **Build Test**:
+    - `dotnet build FungusToast.Core/FungusToast.Core.csproj`
+    - `dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj`
 2. **UI Test**: Check mutation appears in tree with correct prerequisites
 3. **Simulation Test**: Run simulation to verify tracking works
 4. **Effect Test**: Activate mutation in-game to confirm logic works
@@ -431,7 +454,7 @@ public void RecordYourCustomEffect(int playerId, int count) { }
 - **Cross-category prerequisites**: Essential for Tier 3+ balance
 - **Observer pattern**: Required for all trackable effects
 - **UI Integration**: Most mutations work automatically; only add custom UI for special effects
-- **Build frequently**: Use `run_build` after each major step
+- **Build frequently**: Run the Core + Simulation `dotnet build` commands after each major step
 - **Test simulations**: Verify tracking works with simulation runs
 - **Reference existing**: Look at similar mutations in the same category factory for patterns
 

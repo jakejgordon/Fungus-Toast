@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.Config;
+using FungusToast.Core.Logging;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
 
@@ -186,7 +187,7 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.HyphalSurge),
                     new TargetMutationGoal(MutationIds.HyphalVectoring)
                 },
-                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.HyphalVectoring },
                 surgeAttemptTurnFrequency: 10,
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy),
@@ -339,7 +340,7 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.HyphalSurge),
                     new TargetMutationGoal(MutationIds.HyphalVectoring)
                 },
-                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.HyphalVectoring },
                 surgeAttemptTurnFrequency: 10,
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy),
@@ -404,6 +405,34 @@ namespace FungusToast.Core.AI
                 surgeAttemptTurnFrequency: 7,
                 economyBias: EconomyBias.MaxEconomy,
                 maxTier: MutationTier.Tier4
+            ),
+            // AI12
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI12",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+            ),
+            // AI13
+            new ParameterizedSpendingStrategy(
+                strategyName: "AI13",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
             )
         };
 
@@ -457,18 +486,27 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
             ),
 
-            // 4) Tempo surges and vectoring mobility
+            // 4) Tempo surges with growth/drift backbone
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_HyphalSurgeTempo",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.GeneticDrift,
+                    MutationCategory.MycelialSurges
+                },
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
                     new TargetMutationGoal(MutationIds.HyphalSurge),
                     new TargetMutationGoal(MutationIds.HyphalVectoring)
                 },
-                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.HyphalVectoring },
                 surgeAttemptTurnFrequency: 5,
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
             ),
@@ -624,26 +662,29 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Resistance)
             ),
 
-            // 14) Tier1/Tier2 surge-control skirmisher
+            // 14) Low-tier fungicide/genetic skirmisher with anti-leader surge
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_LowTierSurgeSkirmisher",
                 prioritizeHighTier: true,
-                economyBias: EconomyBias.Neutral,
+                economyBias: EconomyBias.MinorEconomy,
                 priorityMutationCategories: new List<MutationCategory>
                 {
-                    MutationCategory.MycelialSurges,
-                    MutationCategory.Fungicide
+                    MutationCategory.Fungicide,
+                    MutationCategory.GeneticDrift,
+                    MutationCategory.MycelialSurges
                 },
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.HyphalSurge),
-                    new TargetMutationGoal(MutationIds.HyphalVectoring),
                     new TargetMutationGoal(MutationIds.MycotoxinPotentiation),
-                    new TargetMutationGoal(MutationIds.ChitinFortification)
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression),
+                    new TargetMutationGoal(MutationIds.MycotoxinCatabolism),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.CompetitiveAntagonism),
+                    new TargetMutationGoal(MutationIds.NecrotoxicConversion)
                 },
-                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
-                surgeAttemptTurnFrequency: 4,
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Fungicide, MycovariantCategory.Growth)
+                surgePriorityIds: new List<int> { MutationIds.CompetitiveAntagonism },
+                surgeAttemptTurnFrequency: 5,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Fungicide, MycovariantCategory.Resistance)
             ),
 
             // 15) Balanced control variant: minor economy bias
@@ -651,6 +692,51 @@ namespace FungusToast.Core.AI
                 strategyName: "TST_BalancedControl_MinorEconomy",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+            ),
+
+            // 16) Campaign mirror: AI7 hyphal surge/vectoring line
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_CampaignMirror_AI7_Hyphal",
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.HyphalVectoring)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.HyphalVectoring },
+                surgeAttemptTurnFrequency: 10,
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy
+            ),
+
+            // 17) Campaign mirror: AI12 balanced control anabolic-first
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+            ),
+
+            // 18) Campaign mirror: AI13 balanced control max-economy
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_CampaignMirror_AI13_BalancedControl_MaxEconomy",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.CreepingMold),
@@ -678,7 +764,7 @@ namespace FungusToast.Core.AI
                 ["TST_RebirthAttrition"] = StrategyTheme.Attrition,
                 ["TST_BalancedControl_MaxEconomy"] = StrategyTheme.Control,
                 ["TST_LowTierEconomyGrinder"] = StrategyTheme.TierCap,
-                ["TST_LowTierSurgeSkirmisher"] = StrategyTheme.TierCap,
+                ["TST_LowTierSurgeSkirmisher"] = StrategyTheme.Counterplay,
                 ["TST_BalancedControl_MinorEconomy"] = StrategyTheme.Control,
                 ["Grow>Defend>Kill"] = StrategyTheme.Defense,
                 ["Grow>Kill>Reclaim(Econ)"] = StrategyTheme.EconomyRamp,
@@ -687,8 +773,6 @@ namespace FungusToast.Core.AI
                 ["Best_MaxEcon_Surge10_HyphalSurge"] = StrategyTheme.SurgeTempo,
                 ["Power Mutations Max Econ"] = StrategyTheme.LateGameSpike,
                 ["Growth/Resilience"] = StrategyTheme.TierCap,
-                ["TST_BalancedControl_AnabolicFirst"] = StrategyTheme.Control,
-                ["TST_BalancedControl_MaxEconomy"] = StrategyTheme.Control,
             };
 
         public static readonly Dictionary<string, IMutationSpendingStrategy> ProvenStrategiesByName;
@@ -700,6 +784,70 @@ namespace FungusToast.Core.AI
             ProvenStrategiesByName = BuildStrategyDictionary(ProvenStrategies, nameof(ProvenStrategies));
             TestingStrategiesByName = BuildStrategyDictionary(TestingStrategies, nameof(TestingStrategies));
             CampaignStrategiesByName = BuildStrategyDictionary(CampaignStrategies, nameof(CampaignStrategies));
+
+            AuditSurgeBackboneSynergy(TestingStrategies, nameof(TestingStrategies));
+        }
+
+        private static void AuditSurgeBackboneSynergy(IEnumerable<IMutationSpendingStrategy> strategies, string strategySetName)
+        {
+            foreach (var strategy in strategies.OfType<ParameterizedSpendingStrategy>())
+            {
+                if (strategy.SurgePriorityIds.Count == 0)
+                {
+                    continue;
+                }
+
+                var backboneCategories = GetBackboneCategories(strategy).ToHashSet();
+                if (backboneCategories.Count == 0)
+                {
+                    CoreLogger.Log?.Invoke($"[AIRosterAudit] {strategySetName}/{strategy.StrategyName}: surge-prioritizing strategy has no non-surge backbone category in target goals.");
+                    continue;
+                }
+
+                foreach (var surgeMutationId in strategy.SurgePriorityIds)
+                {
+                    var suggested = MutationSynergyCatalog.GetSuggestedBackboneCategories(surgeMutationId);
+                    if (suggested.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    bool hasOverlap = backboneCategories.Any(suggested.Contains);
+                    if (hasOverlap)
+                    {
+                        continue;
+                    }
+
+                    var surgeName = MutationRepository.All.TryGetValue(surgeMutationId, out var mutation)
+                        ? mutation.Name
+                        : $"UnknownSurge({surgeMutationId})";
+                    var actual = string.Join(", ", backboneCategories.OrderBy(c => c));
+                    var expected = MutationSynergyCatalog.DescribeBackboneCategories(surgeMutationId);
+                    CoreLogger.Log?.Invoke($"[AIRosterAudit] {strategySetName}/{strategy.StrategyName}: surge '{surgeName}' expects backbone [{expected}] but strategy backbone is [{actual}].");
+                }
+            }
+        }
+
+        private static IEnumerable<MutationCategory> GetBackboneCategories(ParameterizedSpendingStrategy strategy)
+        {
+            foreach (var goal in strategy.TargetMutationGoals)
+            {
+                if (!MutationRepository.All.TryGetValue(goal.MutationId, out var mutation))
+                {
+                    continue;
+                }
+
+                // Only non-surge mutation goals contribute to persistent backbone.
+                if (mutation.IsSurge || mutation.Category == MutationCategory.MycelialSurges)
+                {
+                    continue;
+                }
+
+                if (mutation.Category is MutationCategory.Growth or MutationCategory.CellularResilience or MutationCategory.Fungicide or MutationCategory.GeneticDrift)
+                {
+                    yield return mutation.Category;
+                }
+            }
         }
 
         private static Dictionary<string, IMutationSpendingStrategy> BuildStrategyDictionary(

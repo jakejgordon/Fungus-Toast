@@ -19,6 +19,7 @@ namespace FungusToast.Simulation.Models
         // ──────────────
         public int LivingCells { get; set; }
         public int DeadCells { get; set; }
+        public int EndGameToxinCells { get; set; }
 
         // ──────────────
         // DEATH REASONS (GAME END)

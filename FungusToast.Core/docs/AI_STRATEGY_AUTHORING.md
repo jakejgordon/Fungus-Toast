@@ -40,12 +40,27 @@ The `Testing` set includes a themed roster intended for robust balance analysis:
 | `TST_Tier3PlateauSpecialist` | TierCap | Maximize efficiency in lower/mid tiers |
 | `TST_LateGameSpike` | LateGameSpike | Bank and convert into late high-impact upgrades |
 | `TST_BalancedGeneralistControl` | Control | Broad and steady progression across game phases |
-| `TST_MutationDraftDenier` | Counterplay | Prioritize disruption-oriented mutation pathing |
+| `TST_BalancedControl_NoPreferredMyco` | Control | Control baseline without explicit mycovariant preferences |
 | `TST_RebirthAttrition` | Attrition | Win through repeated death/rebirth loops |
-| `TST_VectoringMobilityPressure` | Mobility | Use movement/vectoring to create angle pressure |
+| `TST_BalancedControl_MaxEconomy` | Control | Control path with stronger economy weighting |
 | `TST_LowTierEconomyGrinder` | TierCap | Prioritize Tier1/2 economy-resilience first, then escalate |
-| `TST_LowTierSurgeSkirmisher` | TierCap | Prioritize Tier1/2 surge-skirmish tools, then escalate |
-| `TST_LowTierTendrilControl` | TierCap | Prioritize Tier1/2 tendril control first, then escalate |
+| `TST_LowTierSurgeSkirmisher` | Counterplay | Low-tier fungicide/genetic skirmisher with anti-leader surge |
+| `TST_BalancedControl_MinorEconomy` | Control | Control variant with lighter economy bias |
+| `TST_CampaignMirror_AI7_Hyphal` | SurgeTempo | Testing mirror of campaign hyphal surge/vectoring line |
+| `TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst` | Control | Testing mirror of campaign AI12 progression |
+| `TST_CampaignMirror_AI13_BalancedControl_MaxEconomy` | Control | Testing mirror of campaign AI13 progression |
+
+## Surge Coherence Audit (Built-In)
+
+`AIRoster` runs a startup audit (`AuditSurgeBackboneSynergy`) for `Testing` strategies.
+
+- It checks surge-prioritizing strategies for at least one non-surge backbone category in goals.
+- It compares that backbone against `MutationSynergyCatalog` suggestions.
+- It emits warnings to `CoreLogger` when surge goals and backbone categories are incoherent.
+
+Authoring implication:
+
+- If you add `surgePriorityIds`, also include supporting non-surge goals in Growth/Resilience/Fungicide/GeneticDrift as appropriate.
 
 ## Authoring Checklist
 

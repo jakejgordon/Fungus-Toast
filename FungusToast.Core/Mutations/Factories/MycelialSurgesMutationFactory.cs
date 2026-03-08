@@ -73,7 +73,8 @@ namespace FungusToast.Core.Mutations.Factories
                 isSurge: true,
                 surgeDuration: GameBalance.MimeticResilienceSurgeDuration,
                 pointsPerActivation: GameBalance.MimeticResiliencePointsPerActivation,
-                pointIncreasePerLevel: GameBalance.MimeticResiliencePointIncreasePerLevel
+                pointIncreasePerLevel: GameBalance.MimeticResiliencePointIncreasePerLevel,
+                aiTags: MutationAITags.CatchUp
             ),
             new MutationPrerequisite(MutationIds.HomeostaticHarmony, 5),
             new MutationPrerequisite(MutationIds.MycotoxinTracer, 3)
@@ -96,7 +97,8 @@ namespace FungusToast.Core.Mutations.Factories
                 isSurge: true,
                 surgeDuration: GameBalance.CompetitiveAntagonismSurgeDuration,
                 pointsPerActivation: GameBalance.CompetitiveAntagonismPointsPerActivation,
-                pointIncreasePerLevel: GameBalance.CompetitiveAntagonismPointIncreasePerLevel
+                pointIncreasePerLevel: GameBalance.CompetitiveAntagonismPointIncreasePerLevel,
+                aiTags: MutationAITags.CatchUp
             ),
             new MutationPrerequisite(MutationIds.MycotoxinTracer, 15)
             );

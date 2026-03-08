@@ -135,8 +135,8 @@ namespace FungusToast.Core.Config
         public const int MimeticResiliencePointIncreasePerLevel = 1;
 
         // Competitive Antagonism (Tier 3 MycelialSurge) 
-        public const int CompetitiveAntagonismPointsPerActivation = 6;
-        public const int CompetitiveAntagonismSurgeDuration = 4;
+        public const int CompetitiveAntagonismPointsPerActivation = 4;
+        public const int CompetitiveAntagonismSurgeDuration = 5;
         public const int CompetitiveAntagonismPointIncreasePerLevel = 1;
         public const int CompetitiveAntagonismMaxLevel = 5;
         public const float CompetitiveAntagonismSporicidalBloomEmptyTileReduction = 0.3f; // Additional 30% empty tile reduction

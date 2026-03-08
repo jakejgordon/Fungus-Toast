@@ -66,6 +66,12 @@ namespace FungusToast.Core.AI
         private readonly EconomyBias economyBias;
         private readonly List<MycovariantPreference> mycovariantPreferences;
 
+        // Metadata exposure for validation/auditing tools.
+        public IReadOnlyList<TargetMutationGoal> TargetMutationGoals => targetMutationGoals;
+        public IReadOnlyList<int> SurgePriorityIds => surgePriorityIds;
+        public IReadOnlyList<MutationCategory>? PriorityMutationCategories => priorityMutationCategories;
+        public EconomyBias EconomyProfile => economyBias;
+
         // ==== NEW: Dynamic Timing Awareness ====
         private enum GamePhase
         {
@@ -399,6 +405,10 @@ namespace FungusToast.Core.AI
             if (TrySpendOnSurges(player, allMutations, board, simulationObserver, onlyOnNthRound: true))
                 return; // If a surge is triggered, stop spending for this turn
 
+            // Opportunistic catch-up surges: only if already unlockable and the player is in last place.
+            if (TrySpendCatchupSurgeIfBehind(player, allMutations, board, simulationObserver))
+                return;
+
             // Check if we should bank for surges
             if (ShouldBankForSurges(player, allMutations, board))
             {
@@ -448,6 +458,66 @@ namespace FungusToast.Core.AI
 
             // After ALL other spending, always try to activate surges as last resort (any turn)
             TrySpendOnSurges(player, allMutations, board, simulationObserver, onlyOnNthRound: false);
+
+            // Also try catch-up surges after fallback in case points became available this turn.
+            TrySpendCatchupSurgeIfBehind(player, allMutations, board, simulationObserver);
+        }
+
+        private bool TrySpendCatchupSurgeIfBehind(
+            Player player,
+            List<Mutation> allMutations,
+            GameBoard board,
+            ISimulationObserver simulationObserver)
+        {
+            if (!IsInLastPlace(player, board))
+            {
+                return false;
+            }
+
+            var catchupSurges = allMutations
+                .Where(m => m.IsSurge && m.AITags.HasFlag(MutationAITags.CatchUp))
+                .OrderBy(m => m.Tier)
+                .ThenBy(m => m.Id)
+                .ToList();
+
+            foreach (var surge in catchupSurges)
+            {
+                if (player.IsSurgeActive(surge.Id))
+                {
+                    continue;
+                }
+
+                if (!player.CanUpgrade(surge, board.CurrentRound))
+                {
+                    continue;
+                }
+
+                int currentLevel = player.GetMutationLevel(surge.Id);
+                int cost = surge.GetSurgeActivationCost(currentLevel);
+                if (player.MutationPoints < cost)
+                {
+                    continue;
+                }
+
+                if (player.TryUpgradeMutation(surge, simulationObserver, board.CurrentRound))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsInLastPlace(Player player, GameBoard board)
+        {
+            var summaries = BoardUtilities.GetPlayerBoardSummaries(board.Players, board);
+            if (!summaries.TryGetValue(player.PlayerId, out var currentSummary))
+            {
+                return false;
+            }
+
+            int minLivingCells = summaries.Values.Min(s => s.LivingCells);
+            return currentSummary.LivingCells == minLivingCells;
         }
 
         private bool ShouldBankForSurges(Player player, List<Mutation> allMutations, GameBoard board)

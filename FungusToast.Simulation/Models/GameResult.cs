@@ -63,6 +63,7 @@ namespace FungusToast.Simulation.Models
                     // --- End-state board stats ---
                     LivingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive),
                     DeadCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => !c.IsAlive),
+                    EndGameToxinCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsToxin),
 
                     // --- Death reason statistics ---
                     DeadCellDeathReasons = new List<DeathReason>(), // Populated below!

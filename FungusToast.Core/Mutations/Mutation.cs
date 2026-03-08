@@ -63,6 +63,11 @@ namespace FungusToast.Core.Mutations
         /// </summary>
         public int SurgeDuration { get; private set; }
 
+        /// <summary>
+        /// Optional AI metadata tags used for spending heuristics.
+        /// </summary>
+        public MutationAITags AITags { get; private set; }
+
         public Mutation(
             int id,
             string name,
@@ -77,7 +82,8 @@ namespace FungusToast.Core.Mutations
             bool isSurge = false,
             int surgeDuration = 0,
             int pointsPerActivation = 1,
-            int pointIncreasePerLevel = 0 // NEW FIELD for surges
+            int pointIncreasePerLevel = 0, // NEW FIELD for surges
+            MutationAITags aiTags = MutationAITags.None
         )
         {
             Id = id;
@@ -94,6 +100,7 @@ namespace FungusToast.Core.Mutations
             SurgeDuration = surgeDuration;
             PointsPerActivation = pointsPerActivation;
             PointIncreasePerLevel = pointIncreasePerLevel;
+            AITags = aiTags;
 
             Prerequisites = new List<MutationPrerequisite>();
             Children = new List<Mutation>();

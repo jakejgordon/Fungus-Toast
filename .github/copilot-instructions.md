@@ -84,12 +84,21 @@ FungusToast.Simulation/bin/Debug/net8.0/SimulationOutput/
 
 ### Command Line Options
 ```
--g, --games <number>     Number of games to play per matchup (default: 500)
+-g, --games <number>     Number of games to play per matchup (default: 1)
 -p, --players <number>   Number of players/strategies to use (default: 8)  
 -w, --width <number>     Board width (default: 160)
 --height <number>        Board height (default: 160)  
 -o, --output <filename>  Custom output filename (default: auto-generated)
 --no-keyboard            Disable keyboard interruption (Q/Escape), useful for automation
+--strategy-set <set>     Strategy pool: Proven, Testing, Mycovariants, Campaign
+--selection-policy <p>   Strategy sampler: RandomUnique, CoverageBalanced, StratifiedCycle
+--seed <number>          Deterministic base seed (default: 0)
+--rotate-slots           Rotate strategy-to-player slot assignment every game
+--player-counts <csv>    Batch mode player strata (example: 2,4,8)
+--board-sizes <csv>      Batch mode board strata (example: 80x80,160x160)
+--strategy-sets <csv>    Batch mode strategy-set strata
+--experiment-id <id>     Analytics export tag
+--parquet / --no-parquet Enable or disable parquet analytics export
 --help                   Show help message
 ```
 
@@ -145,14 +154,21 @@ FungusToast.Core/
 ├── Players/                    # Player management and state
 ├── TileState.cs                # Core tile state definitions
 └── docs/                       # Comprehensive documentation
-    ├── BUILD_INSTRUCTIONS.md   # Basic build commands
-    ├── DESIGN_PRINCIPLES.md    # Architecture and design philosophy
-    ├── SIMULATION_HELPER.md    # Detailed simulation commands and debugging
-    ├── ANIMATION_HELPER.md     # Animation system guidance
-    ├── MYCOVARIANT_HELPER.md   # Mycovariant system guide
-    ├── NEW_MUTATION_HELPER.md  # Adding new mutations guide
-    ├── UI_ARCHITECTURE_HELPER.md # Unity UI patterns, services, tooltips, pooling
-    └── PLAYER_ACTIVITY_LOG_HELPER.md # Player activity log system
+   ├── AI_STRATEGY_AUTHORING.md       # AI strategy sets, themes, and simulation patterns
+   ├── ANIMATION_HELPER.md            # Animation timing and trigger map
+   ├── BUILD_INSTRUCTIONS.md          # Basic build commands
+   ├── DESIGN_PRINCIPLES.md           # Architecture and design philosophy
+   ├── FUTURE_IMPROVEMENTS.md         # Backlog and future UX/architecture tasks
+   ├── MYCOVARIANT_AUTHORING_STYLE.md # Mycovariant copy/style standards
+   ├── MYCOVARIANT_HELPER.md          # Mycovariant system guide
+   ├── MYCOVARIANT_PR_CHECKLIST.md    # Mycovariant review checklist
+   ├── MYCOVARIANT_TECHNICAL_FLOW.md  # Mycovariant technical integration flow
+   ├── NEW_MUTATION_HELPER.md         # Adding new mutations guide
+   ├── PLAYER_ACTIVITY_LOG_HELPER.md  # Player activity log aggregation semantics
+   ├── SIMULATION_HELPER.md           # Detailed simulation commands and debugging
+   ├── UI_ARCHITECTURE_HELPER.md      # Unity UI patterns, services, tooltips, pooling
+   ├── UI_POLISH_TASKLIST.md          # Cross-session UI polish tracker
+   └── UI_STYLE_GUIDE.md              # Canonical UI style tokens and recipes
 ```
 
 ### FungusToast.Simulation Structure
@@ -309,6 +325,25 @@ FungusToast.Unity/
 - **For Unity integration:** Check `FungusToast.Unity/Assets/Scripts/Unity/`
 - **For UI patterns (tooltips, pooling, services):** See `UI_ARCHITECTURE_HELPER.md`
 - **For UI styling and motif consistency:** See `UI_STYLE_GUIDE.md`
+
+### Documentation Index (Use This First)
+- `FungusToast.Core/docs/BUILD_INSTRUCTIONS.md`: Canonical CLI build commands for Core and Simulation.
+- `FungusToast.Core/docs/SIMULATION_HELPER.md`: Simulation CLI options, output locations, parquet export, tracking checklist.
+- `FungusToast.Core/docs/AI_STRATEGY_AUTHORING.md`: Strategy sets/themes and reproducible balance-testing patterns.
+- `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`: Mutation authoring workflow with tracking and UI integration points.
+- `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`: Index page for Mycovariant authoring and implementation docs.
+- `FungusToast.Core/docs/MYCOVARIANT_AUTHORING_STYLE.md`: Style and clarity rules for Mycovariant Description/FlavorText.
+- `FungusToast.Core/docs/MYCOVARIANT_TECHNICAL_FLOW.md`: End-to-end technical flow for Core/Simulation/Unity draft integration.
+- `FungusToast.Core/docs/MYCOVARIANT_PR_CHECKLIST.md`: PR readiness checklist for Mycovariant work.
+- `FungusToast.Core/docs/PLAYER_ACTIVITY_LOG_HELPER.md`: Human activity log segment/aggregation semantics.
+- `FungusToast.Core/docs/ANIMATION_HELPER.md`: Gameplay animation trigger order and timing constants.
+- `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`: `GameUIManager` facade, services, tooltips, pooling patterns.
+- `FungusToast.Core/docs/UI_STYLE_GUIDE.md`: UI semantic token dictionary and component recipes.
+- `FungusToast.Core/docs/UI_POLISH_TASKLIST.md`: Current/pending UI polish verification tasks.
+- `FungusToast.Core/docs/FUTURE_IMPROVEMENTS.md`: Backlog items and longer-horizon architecture/UX tasks.
+- `FungusToast.Core/docs/DESIGN_PRINCIPLES.md`: Technical architecture context and terminology.
+- `FungusToast.Analytics/README.md`: Parquet analytics workflow and recurring balance-pass procedure.
+- `FungusToast.Unity/.github/instructions/project-overview.instructions.md`: Unity front-end project overview for Unity-only tasks.
 
 ### Code Quality and Conventions
 - **Nullable reference types:** Enabled

@@ -17,6 +17,23 @@ FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\
 ```
 Output files are generated with timestamped filenames even when no `--output` parameter is specified. The full path is displayed in the console after each simulation run, making it easy for AI assistants to locate and read the results.
 
+## Minimum Balance Reporting Standard
+
+For balance discussions, report these per-player metrics at minimum:
+
+1. `WinRate` (% of games won)
+2. `Avg Alive` (average living cells at game end)
+3. `Avg End Toxins` (average toxin cells owned at game end)
+
+Where to find them:
+
+- Console output: `=== Per-Player Summary ===`
+- Parquet export: `players.parquet`
+
+Fallback if older output files do not include per-player end-toxin values:
+
+- Use game-level `Avg Lingering Toxic Tiles` from `=== Game-Level Stats ===` and note that it is not per-player.
+
 ## Running Simulations
 
 ### Using the PowerShell Script (Recommended)
@@ -92,7 +109,7 @@ When automated terminal execution fails:
 
 1. **Inform the user** to run the simulation manually using the steps above
 2. **Ask for the output file path** once the simulation completes
-3. **Use `get_file` tool** to read and analyze the simulation results
+3. **Use a file-read tool** (for example `read_file`) to read and analyze simulation results
 4. **Expected output path format:** `FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\Simulation_output_YYYY-MM-DDTHH-mm-ss.txt`
 
 ### Common Manual Execution Issues:
@@ -297,15 +314,15 @@ In batch mode (`--player-counts` / `--board-sizes` / `--strategy-sets`), each st
 - Ensure PlayerResult fields are populated from tracking context
 
 ### Automated Tool Failures
-- **GitHub Copilot Terminal Issues:** If `run_command_in_terminal` hangs or fails, use manual execution
+- **GitHub Copilot Terminal Issues:** If terminal execution hangs or fails, use manual execution
 - **PowerShell Script Hanging:** Try the simplified scripts or direct `dotnet run`
 - **Build Path Errors:** Ensure you're running from the correct directory (`FungusToast.Simulation`)
 
 ## Key Files for Debugging
 
 ### Core Game Logic
-- `FungusToast.Core/Core/Phases/MutationEffectProcessor.cs` - Mutation effects
-- `FungusToast.Core/Core/Board/GameBoard.cs` - Game events
+- `FungusToast.Core/Phases/MutationEffectProcessor.cs` - Mutation effects
+- `FungusToast.Core/Board/GameBoard.cs` - Game events
 - `FungusToast.Core/Events/` - Event definitions
 
 ### Simulation Tracking

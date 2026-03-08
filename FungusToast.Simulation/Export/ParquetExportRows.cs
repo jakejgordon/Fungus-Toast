@@ -32,6 +32,7 @@ namespace FungusToast.Simulation.Export
         public bool IsWinner { get; set; }
         public int LivingCells { get; set; }
         public int DeadCells { get; set; }
+        public int EndGameToxinCells { get; set; }
         public int MutationPointIncome { get; set; }
         public int TotalMutationPointsSpent { get; set; }
         public int BankedPoints { get; set; }

@@ -157,6 +157,7 @@ namespace FungusToast.Simulation.Export
                         IsWinner = player.PlayerId == game.WinnerId,
                         LivingCells = player.LivingCells,
                         DeadCells = player.DeadCells,
+                        EndGameToxinCells = player.EndGameToxinCells,
                         MutationPointIncome = player.MutationPointIncome,
                         TotalMutationPointsSpent = player.TotalMutationPointsSpent,
                         BankedPoints = player.BankedPoints,
