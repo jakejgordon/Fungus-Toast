@@ -17,6 +17,7 @@ namespace FungusToast.Unity.Phases
     {
         private GameBoard board;
         private GridVisualizer gridVisualizer;
+        private SpecialEventPresentationService specialEventPresentationService;
 
         public void Initialize(GameBoard board, List<Player> players, GridVisualizer gridVisualizer)
         {
@@ -27,8 +28,10 @@ namespace FungusToast.Unity.Phases
         public void StartDecayPhase(
             Dictionary<int, int> failedGrowthsByPlayerId,
             System.Random rng,
-            ISimulationObserver simulationObserver)
+            ISimulationObserver simulationObserver,
+            SpecialEventPresentationService specialEventPresentationService)
         {
+            this.specialEventPresentationService = specialEventPresentationService;
             StartCoroutine(RunDecayPhase(
                 failedGrowthsByPlayerId,
                 rng,
@@ -53,7 +56,15 @@ namespace FungusToast.Unity.Phases
             GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(board.Players);
             GameManager.Instance.GameUI.RightSidebar?.SortPlayerSummaryRows(board.Players);
 
-            yield return new WaitForSeconds(UIEffectConstants.TimeAfterDecayRender);
+            bool hadSpecialEvents = specialEventPresentationService != null && specialEventPresentationService.HasPendingEvents;
+            if (hadSpecialEvents)
+            {
+                yield return specialEventPresentationService.PresentPendingAfterDecayRender();
+            }
+            else
+            {
+                yield return new WaitForSeconds(UIEffectConstants.TimeAfterDecayRender);
+            }
 
             GameManager.Instance.OnRoundComplete();
         }

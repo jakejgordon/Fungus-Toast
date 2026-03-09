@@ -1,6 +1,7 @@
 using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
+using FungusToast.Core.Events;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Players;
 using System;
@@ -44,6 +45,8 @@ namespace FungusToast.Core.Phases
                 return false;
             }
 
+            int sourceTileId = player.StartingTileId.Value;
+
             var candidates = board.AllTiles()
                 .Where(tile => !tile.IsOccupied)
                 .OrderBy(_ => rng.NextDouble())
@@ -53,6 +56,12 @@ namespace FungusToast.Core.Phases
             {
                 if (board.TryRelocateStartingSpore(player, candidate.TileId))
                 {
+                    board.OnSpecialBoardEventTriggered(
+                        new SpecialBoardEventArgs(
+                            SpecialBoardEventKind.ConidialRelayTriggered,
+                            player.PlayerId,
+                            sourceTileId,
+                            candidate.TileId));
                     return true;
                 }
             }

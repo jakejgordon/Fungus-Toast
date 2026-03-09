@@ -62,6 +62,96 @@ namespace FungusToast.Unity.UI
         public const float TimeAfterDecayRender = 0.5f;
 
         /// <summary>
+        /// Hold duration passed to the phase banner so the total Conidial Relay overlay reads for roughly 1.5 seconds including fade in/out.
+        /// </summary>
+        public const float ConidialRelayBannerHoldSeconds = 0.5f;
+
+        /// <summary>
+        /// Total duration for the Conidial Relay presentation animation.
+        /// </summary>
+        public const float ConidialRelayTotalDurationSeconds = 1.5f;
+
+        /// <summary>
+        /// Duration of the source emphasis before the relay launches.
+        /// </summary>
+        public const float ConidialRelaySourceEmphasisDurationSeconds = 0.15f;
+
+        /// <summary>
+        /// Duration of the Conidial Relay airborne arc.
+        /// </summary>
+        public const float ConidialRelayArcDurationSeconds = 0.9f;
+
+        /// <summary>
+        /// Duration of the landing squash and settle.
+        /// </summary>
+        public const float ConidialRelayLandingDurationSeconds = 0.45f;
+
+        /// <summary>
+        /// Starting scale for the source emphasis pose.
+        /// </summary>
+        public const float ConidialRelaySourceStartScale = 0.9f;
+
+        /// <summary>
+        /// Scale reached at the end of the source emphasis lift-off.
+        /// </summary>
+        public const float ConidialRelayLiftScale = 1.15f;
+
+        /// <summary>
+        /// Peak scale reached near the top of the relay arc.
+        /// </summary>
+        public const float ConidialRelayPeakScale = 1.8f;
+
+        /// <summary>
+        /// Scale used at the end of the descent, just before impact.
+        /// </summary>
+        public const float ConidialRelayDescentScale = 0.7f;
+
+        /// <summary>
+        /// Vertical lift applied during source emphasis.
+        /// </summary>
+        public const float ConidialRelayLiftYOffset = 0.3f;
+
+        /// <summary>
+        /// Base world-space arc height for Conidial Relay.
+        /// </summary>
+        public const float ConidialRelayArcBaseHeightWorld = 1.9f;
+
+        /// <summary>
+        /// Additional arc height per tile of travel distance.
+        /// </summary>
+        public const float ConidialRelayArcHeightPerTile = 0.11f;
+
+        /// <summary>
+        /// Rotation at the end of the source emphasis beat.
+        /// </summary>
+        public const float ConidialRelaySourceSpinDegrees = 24f;
+
+        /// <summary>
+        /// Total rotation during the airborne arc.
+        /// </summary>
+        public const float ConidialRelayArcSpinDegrees = 540f;
+
+        /// <summary>
+        /// Shield scale relative to the mold sprite for Conidial Relay.
+        /// </summary>
+        public const float ConidialRelayShieldScale = 0.52f;
+
+        /// <summary>
+        /// X scale used during the landing impact stretch.
+        /// </summary>
+        public const float ConidialRelayLandingStretchX = 1.25f;
+
+        /// <summary>
+        /// Y scale used during the landing impact squash.
+        /// </summary>
+        public const float ConidialRelayLandingStretchY = 0.78f;
+
+        /// <summary>
+        /// Portion of landing time used by the initial impact squash.
+        /// </summary>
+        public const float ConidialRelayLandingImpactPortion = 0.42f;
+
+        /// <summary>
         /// Duration (in seconds) between growth cycles during the growth phase.
         /// </summary>
         public const float TimeBetweenGrowthCycles = 1f;

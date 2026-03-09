@@ -119,6 +119,7 @@ namespace FungusToast.Unity
         private PostGrowthVisualSequence postGrowthVisualSequence;
         private EndgameService endgameService;
         private MutationPointService mutationPointService;
+        private SpecialEventPresentationService specialEventPresentationService;
 
         #endregion
 
@@ -206,6 +207,11 @@ namespace FungusToast.Unity
                 () => testingModeEnabled,
                 () => fastForwardRounds,
                 StartGrowthPhase);
+            specialEventPresentationService = new SpecialEventPresentationService(
+                () => gameUIManager,
+                () => gridVisualizer,
+                () => humanPlayer,
+                () => isFastForwarding);
         }
 
         #endregion
@@ -361,6 +367,7 @@ namespace FungusToast.Unity
             roundsRemainingUntilGameEnd =0;
             lastCompletedMycovariantDraftRound = -1;
             endgameService.Reset();
+            specialEventPresentationService?.Reset();
             playerCount = numberOfPlayers;
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
 
@@ -370,7 +377,7 @@ namespace FungusToast.Unity
             postGrowthVisualSequence.Register(Board); // board post-growth events
 
             GameRulesEventSubscriber.SubscribeAll(Board, players, rng, gameUIManager.GameLogRouter);
-            GameUIEventSubscriber.Subscribe(Board, gameUIManager);
+            GameUIEventSubscriber.Subscribe(Board, gameUIManager, specialEventPresentationService);
             AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
 
             playerInitializer.InitializePlayers(Board, players, humanPlayers, out humanPlayer, playerCount);
@@ -514,7 +521,11 @@ namespace FungusToast.Unity
             decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
             gameUIManager.PhaseBanner.Show("Decay Phase Begins!",2f);
             phaseProgressTracker?.HighlightDecayPhase();
-            decayPhaseRunner.StartDecayPhase(growthPhaseRunner.FailedGrowthsByPlayerId, rng, gameUIManager.GameLogRouter);
+            decayPhaseRunner.StartDecayPhase(
+                growthPhaseRunner.FailedGrowthsByPlayerId,
+                rng,
+                gameUIManager.GameLogRouter,
+                specialEventPresentationService);
         }
 
         public void OnRoundComplete()

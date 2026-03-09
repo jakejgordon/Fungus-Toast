@@ -72,6 +72,7 @@ namespace FungusToast.Unity.Grid
         private Animation.RegenerativeHyphaeReclaimAnimator _reclaimAnimator;
         private Animation.SurgicalInoculationAnimator _surgicalAnimator; // ensure correct reference
         private Animation.StartingSporeArrivalAnimator _startingSporeAnimator; // NEW: starting spores
+        private Animation.ConidialRelayAnimator _conidialRelayAnimator;
 
         // Animation tracking so external code can wait for all visual animations to finish
         private int _activeAnimationCount = 0;
@@ -89,6 +90,7 @@ namespace FungusToast.Unity.Grid
             _reclaimAnimator = new Animation.RegenerativeHyphaeReclaimAnimator(this);
             _surgicalAnimator = new Animation.SurgicalInoculationAnimator(this);
             _startingSporeAnimator = new Animation.StartingSporeArrivalAnimator(this); // NEW
+            _conidialRelayAnimator = new Animation.ConidialRelayAnimator(this);
         }
 
         public void Initialize(GameBoard board) => this.board = board;
@@ -100,6 +102,8 @@ namespace FungusToast.Unity.Grid
             => _surgicalAnimator.RunArcAndDrop(playerId, targetTileId, sprite);
         public IEnumerator PlayStartingSporeArrivalAnimation(IEnumerable<int> startingTileIds)
             => _startingSporeAnimator != null ? _startingSporeAnimator.Play(startingTileIds) : null;
+        public IEnumerator PlayConidialRelayAnimation(int playerId, int sourceTileId, int destinationTileId)
+            => _conidialRelayAnimator != null ? _conidialRelayAnimator.Play(playerId, sourceTileId, destinationTileId) : null;
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
         {

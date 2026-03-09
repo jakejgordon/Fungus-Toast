@@ -1,10 +1,8 @@
 ﻿using FungusToast.Core.Board;
+using FungusToast.Core.Events;
 using FungusToast.Unity.UI;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FungusToast.Unity.Events
 {
@@ -14,14 +12,28 @@ namespace FungusToast.Unity.Events
     /// </summary>
     public static class GameUIEventSubscriber
     {
+        private static readonly Dictionary<GameBoard, EventHandler<SpecialBoardEventArgs>> specialEventHandlers = new();
+
         /// <summary>
         /// Subscribes all UI event handlers to the GameBoard.
         /// Pass in references to required UI managers/components as needed.
         /// </summary>
-        public static void Subscribe(GameBoard board, GameUIManager uiManager)
+        public static void Subscribe(GameBoard board, GameUIManager uiManager, SpecialEventPresentationService specialEventPresentationService)
         {
-            // Example: board.CellColonized += (playerId, tileId) => uiManager.ShowColonizeAnimation(tileId, playerId);
-            // board.CellDeath += (sender, args) => uiManager.ShowDeathEffect(args.TileId, args.OwnerPlayerId);
+            if (board == null || specialEventPresentationService == null)
+            {
+                return;
+            }
+
+            Unsubscribe(board, uiManager);
+
+            EventHandler<SpecialBoardEventArgs> specialEventHandler = (_, args) =>
+            {
+                specialEventPresentationService.Enqueue(args);
+            };
+
+            board.SpecialBoardEventTriggered += specialEventHandler;
+            specialEventHandlers[board] = specialEventHandler;
         }
 
         /// <summary>
@@ -29,10 +41,16 @@ namespace FungusToast.Unity.Events
         /// </summary>
         public static void Unsubscribe(GameBoard board, GameUIManager uiManager)
         {
-            // Example: board.CellColonized -= (playerId, tileId) => uiManager.ShowColonizeAnimation(tileId, playerId);
-            // board.CellDeath -= (sender, args) => uiManager.ShowDeathEffect(args.TileId, args.OwnerPlayerId);
-        }
+            if (board == null)
+            {
+                return;
+            }
 
-        // Optionally, store actual delegate references if needed for unsubscribing.
+            if (specialEventHandlers.TryGetValue(board, out var specialEventHandler))
+            {
+                board.SpecialBoardEventTriggered -= specialEventHandler;
+                specialEventHandlers.Remove(board);
+            }
+        }
     }
 }

@@ -95,6 +95,7 @@ namespace FungusToast.Core.Board
         public event ResistanceAppliedBatchEventHandler? ResistanceAppliedBatch;
         public event RegenerativeHyphaeReclaimedEventHandler? RegenerativeHyphaeReclaimed;
         public event PostDecayPhaseEventHandler? PostDecayPhase; // NEW
+        public event EventHandler<SpecialBoardEventArgs>? SpecialBoardEventTriggered;
         // Growth attempt lifecycle events
         public event EventHandler<GrowthAttemptEventArgs>? BeforeGrowthAttempt;
         public event EventHandler<GrowthAttemptEventArgs>? AfterGrowthAttempt;
@@ -128,6 +129,7 @@ namespace FungusToast.Core.Board
         public virtual void OnPreGrowthCycle() => PreGrowthCycle?.Invoke();
         public virtual void OnDecayPhaseWithFailedGrowths(Dictionary<int, int> failedGrowthsByPlayerId) => DecayPhaseWithFailedGrowths?.Invoke(failedGrowthsByPlayerId);
         public virtual void OnPostDecayPhase() => PostDecayPhase?.Invoke(); // NEW
+        public virtual void OnSpecialBoardEventTriggered(SpecialBoardEventArgs e) => SpecialBoardEventTriggered?.Invoke(this, e);
         protected virtual void RaiseToxinExpired(ToxinExpiredEventArgs e) => ToxinExpired?.Invoke(this, e);
         protected virtual void OnRegenerativeHyphaeReclaimed(int playerId, int tileId) => RegenerativeHyphaeReclaimed?.Invoke(playerId, tileId);
         protected virtual void OnBeforeGrowthAttempt(GrowthAttemptEventArgs e) => BeforeGrowthAttempt?.Invoke(this, e);
