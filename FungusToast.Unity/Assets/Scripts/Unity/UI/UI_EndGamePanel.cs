@@ -532,8 +532,8 @@ namespace FungusToast.Unity.UI
             spacer.transform.SetParent(resultsContainer, false);
 
             var layout = spacer.GetComponent<LayoutElement>();
-            layout.preferredHeight = 92f;
-            layout.minHeight = 84f;
+            layout.preferredHeight = 118f;
+            layout.minHeight = 110f;
             layout.flexibleHeight = 0f;
         }
 
