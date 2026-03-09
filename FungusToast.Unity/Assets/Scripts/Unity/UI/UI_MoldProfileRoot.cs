@@ -1,8 +1,11 @@
 using FungusToast.Core; // for MutationType enum
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations; // keep if other mutation id helpers needed
 using FungusToast.Core.Phases; // GrowthMutationProcessor lives here
 using FungusToast.Core.Players;
+using FungusToast.Unity.UI.Campaign;
+using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using System;
 using System.Collections.Generic;
@@ -22,6 +25,12 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image centerPlayerIcon;
         [SerializeField] private TextMeshProUGUI growthPreviewHeaderText;
 
+        [Header("Campaign Adaptations")]
+        [SerializeField] private RectTransform adaptationSectionRoot;
+        [SerializeField] private TextMeshProUGUI adaptationHeaderText;
+        [SerializeField] private RectTransform adaptationIconGridRoot;
+        [SerializeField] private string adaptationHeaderLabel = "Adaptations";
+
         [Header("Formatting / Visuals")]
         [SerializeField] private Color zeroChanceColor = new Color(1f,1f,1f,0.35f);
         [SerializeField] private Color finalZeroGreen = new Color(0.4f, 1f, 0.4f, 1f);
@@ -33,6 +42,10 @@ namespace FungusToast.Unity.UI
         private const string ArrowName = "UI_GrowthPreviewCellArrowImage";
         private const string PercentName = "UI_GrowthPreviewCellPercentText";
         private const string SurgeName = "UI_GrowthPreviewCellSurgeText";
+        private const float AdaptationHeaderScale = 1.12f;
+        private const int AdaptationIconSize = 40;
+
+        private readonly List<GameObject> adaptationIconObjects = new();
 
         private bool cellsResolved = false;
         private bool deferredRefreshRequested = false;
@@ -76,6 +89,8 @@ namespace FungusToast.Unity.UI
             }
 
             ApplyGrowthPreviewHeaderText();
+            EnsureAdaptationSectionExists();
+            ApplyAdaptationSectionStyle();
         }
 
         private void ApplyGrowthPreviewHeaderText()
@@ -167,6 +182,7 @@ namespace FungusToast.Unity.UI
 
             EnsureCellsResolved();
             UpdateGrowthChances();
+            RefreshAdaptations();
             deferredRefreshRequested = false;
         }
 
@@ -226,6 +242,196 @@ namespace FungusToast.Unity.UI
                 GetDirectionalGrowthChance(trackedPlayer, cell.direction, out float baseChance, out float surgeBonus);
                 cell.SetChance(baseChance, surgeBonus, zeroChanceColor);
             }
+        }
+
+        private void RefreshAdaptations()
+        {
+            EnsureAdaptationSectionExists();
+
+            if (adaptationSectionRoot == null || adaptationIconGridRoot == null)
+            {
+                return;
+            }
+
+            ClearAdaptationIcons();
+
+            bool hasAdaptations = trackedPlayer != null
+                && trackedPlayer.PlayerAdaptations != null
+                && trackedPlayer.PlayerAdaptations.Count > 0;
+
+            adaptationSectionRoot.gameObject.SetActive(hasAdaptations);
+            if (!hasAdaptations)
+            {
+                return;
+            }
+
+            for (int i = 0; i < trackedPlayer.PlayerAdaptations.Count; i++)
+            {
+                CreateAdaptationIcon(trackedPlayer.PlayerAdaptations[i].Adaptation);
+            }
+        }
+
+        private void ClearAdaptationIcons()
+        {
+            for (int i = 0; i < adaptationIconObjects.Count; i++)
+            {
+                if (adaptationIconObjects[i] != null)
+                {
+                    Destroy(adaptationIconObjects[i]);
+                }
+            }
+
+            adaptationIconObjects.Clear();
+        }
+
+        private void EnsureAdaptationSectionExists()
+        {
+            if (adaptationSectionRoot != null && adaptationIconGridRoot != null && adaptationHeaderText != null)
+            {
+                return;
+            }
+
+            var rootTransform = transform as RectTransform;
+            if (rootTransform == null)
+            {
+                return;
+            }
+
+            adaptationSectionRoot = CreateSectionRoot(rootTransform);
+            adaptationHeaderText = CreateSectionHeader(adaptationSectionRoot, adaptationHeaderLabel);
+            adaptationIconGridRoot = CreateIconGrid(adaptationSectionRoot);
+
+            ApplyAdaptationSectionStyle();
+        }
+
+        private void ApplyAdaptationSectionStyle()
+        {
+            if (adaptationSectionRoot == null)
+            {
+                return;
+            }
+
+            UIStyleTokens.ApplyPanelSurface(adaptationSectionRoot.gameObject, UIStyleTokens.Surface.PanelSecondary);
+
+            var sectionImage = adaptationSectionRoot.GetComponent<Image>();
+            if (sectionImage != null)
+            {
+                sectionImage.color = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Surface.PanelElevated, 0.35f);
+            }
+
+            if (adaptationHeaderText != null)
+            {
+                adaptationHeaderText.text = adaptationHeaderLabel;
+                adaptationHeaderText.color = UIStyleTokens.Text.Primary;
+                adaptationHeaderText.fontStyle = FontStyles.Bold;
+                ApplyTextScale(adaptationHeaderText, AdaptationHeaderScale);
+            }
+        }
+
+        private void CreateAdaptationIcon(AdaptationDefinition adaptation)
+        {
+            if (adaptationIconGridRoot == null)
+            {
+                return;
+            }
+
+            var iconObject = new GameObject($"UI_Adaptation_{adaptation.Id}", typeof(RectTransform), typeof(LayoutElement), typeof(Image));
+            iconObject.transform.SetParent(adaptationIconGridRoot, false);
+            adaptationIconObjects.Add(iconObject);
+
+            var rect = iconObject.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(AdaptationIconSize, AdaptationIconSize);
+
+            var layout = iconObject.GetComponent<LayoutElement>();
+            layout.preferredWidth = AdaptationIconSize;
+            layout.preferredHeight = AdaptationIconSize;
+            layout.minWidth = AdaptationIconSize;
+            layout.minHeight = AdaptationIconSize;
+
+            var image = iconObject.GetComponent<Image>();
+            image.sprite = AdaptationArtRepository.GetIcon(adaptation);
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
+            image.color = Color.white;
+
+            var provider = iconObject.AddComponent<AdaptationTooltipProvider>();
+            provider.Initialize(adaptation);
+
+            var trigger = iconObject.AddComponent<TooltipTrigger>();
+            trigger.SetDynamicProvider(provider);
+            trigger.SetAutoPlacementOffsetX(20f);
+        }
+
+        private static RectTransform CreateSectionRoot(RectTransform parent)
+        {
+            var section = new GameObject("UI_AdaptationSection", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
+            section.transform.SetParent(parent, false);
+
+            var rect = section.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+
+            var layoutGroup = section.GetComponent<VerticalLayoutGroup>();
+            layoutGroup.padding = new RectOffset(10, 10, 8, 10);
+            layoutGroup.spacing = 8f;
+            layoutGroup.childAlignment = TextAnchor.UpperLeft;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = true;
+            layoutGroup.childForceExpandWidth = true;
+            layoutGroup.childForceExpandHeight = false;
+
+            var fitter = section.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var layout = section.GetComponent<LayoutElement>();
+            layout.preferredHeight = 84f;
+            layout.flexibleHeight = 0f;
+
+            return rect;
+        }
+
+        private static TextMeshProUGUI CreateSectionHeader(RectTransform parent, string label)
+        {
+            var headerObject = new GameObject("UI_AdaptationHeaderText", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            headerObject.transform.SetParent(parent, false);
+
+            var layout = headerObject.GetComponent<LayoutElement>();
+            layout.preferredHeight = 28f;
+
+            var text = headerObject.GetComponent<TextMeshProUGUI>();
+            text.text = label;
+            text.fontSize = 20f;
+            text.enableWordWrapping = false;
+            text.alignment = TextAlignmentOptions.Left;
+
+            return text;
+        }
+
+        private static RectTransform CreateIconGrid(RectTransform parent)
+        {
+            var gridObject = new GameObject("UI_AdaptationIconGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(LayoutElement));
+            gridObject.transform.SetParent(parent, false);
+
+            var rect = gridObject.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+
+            var grid = gridObject.GetComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(AdaptationIconSize, AdaptationIconSize);
+            grid.spacing = new Vector2(8f, 8f);
+            grid.childAlignment = TextAnchor.UpperLeft;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 4;
+            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
+
+            var layout = gridObject.GetComponent<LayoutElement>();
+            layout.preferredHeight = AdaptationIconSize;
+            layout.flexibleHeight = 0f;
+
+            return rect;
         }
 
         private static bool IsCardinal(GrowthPreviewDirection dir)
