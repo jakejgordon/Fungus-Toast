@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using FungusToast.Core.Config;
 
@@ -11,13 +12,28 @@ namespace FungusToast.Core.Campaign
     /// </summary>
     public static class AdaptationRepository
     {
+        private static readonly string mycotoxicHaloPercent =
+            (AdaptationGameBalance.MycotoxicHaloOrthogonalKillChanceBonus * 100f).ToString("0.0", CultureInfo.InvariantCulture);
+
         private static readonly ReadOnlyCollection<AdaptationDefinition> all =
             new ReadOnlyCollection<AdaptationDefinition>(
                 new List<AdaptationDefinition>
                 {
-                    new AdaptationDefinition("adaptation_1", "Conidial Relay", AdaptationGameBalance.GetConidialRelayDescription(), "conidial_relay"),
-                    new AdaptationDefinition("adaptation_2", "Hyphal Economy", AdaptationGameBalance.GetHyphalEconomyDescription(), "hyphal_economy"),
-                    new AdaptationDefinition("adaptation_3", "Mycotoxic Halo", AdaptationGameBalance.GetMycotoxicHaloDescription(), "mycotoxic_halo"),
+                    new AdaptationDefinition(
+                        "adaptation_1",
+                        "Conidial Relay",
+                        $"At the end of round {AdaptationGameBalance.ConidialRelayTriggerRound}, your starting spore takes flight and lands on a random unoccupied tile.",
+                        "conidial_relay"),
+                    new AdaptationDefinition(
+                        "adaptation_2",
+                        "Hyphal Economy",
+                        $"For the rest of the campaign, your Mycelial Surges cost {AdaptationGameBalance.HyphalEconomySurgeCostReduction} fewer mutation {(AdaptationGameBalance.HyphalEconomySurgeCostReduction == 1 ? "point" : "points")} to activate.",
+                        "hyphal_economy"),
+                    new AdaptationDefinition(
+                        "adaptation_3",
+                        "Mycotoxic Halo",
+                        $"For the rest of the campaign, your toxins gain +{mycotoxicHaloPercent}% chance to kill orthogonally adjacent living cells during decay. This stacks with Mycotoxin Potentiation.",
+                        "mycotoxic_halo"),
                     new AdaptationDefinition("adaptation_4", "Adaptation 4", "Placeholder adaptation with no gameplay effect yet."),
                     new AdaptationDefinition("adaptation_5", "Adaptation 5", "Placeholder adaptation with no gameplay effect yet."),
                     new AdaptationDefinition("adaptation_6", "Adaptation 6", "Placeholder adaptation with no gameplay effect yet."),

@@ -67,6 +67,7 @@
     <Compile Include="Assets\Scripts\Unity\ForceRecompile.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\UI_MutationManager.cs" />
     <Compile Include="Assets\Scripts\Unity\Campaign\GameMode.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipProviders\AdaptationTooltipProvider.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipRequest.cs" />
     <Compile Include="Assets\Scripts\Unity\Campaign\BoardPreset.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\ITooltipContentProvider.cs" />
@@ -110,6 +111,7 @@
     <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.cs" />
     <Compile Include="Assets\Scripts\Unity\Campaign\ForcedGameResultMode.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_MoldProfileRoot.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\Campaign\AdaptationArtRepository.cs" />
     <Compile Include="Assets\Scripts\Unity\Services\FastForwardService.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantCard.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Tooltips\TooltipView.cs" />
