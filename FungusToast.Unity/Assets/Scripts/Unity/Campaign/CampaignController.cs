@@ -24,6 +24,7 @@ namespace FungusToast.Unity.Campaign
         public BoardPreset CurrentBoardPreset => CurrentLevelSpec?.boardPreset;
         public bool IsAwaitingAdaptationSelection => State != null && State.pendingAdaptationSelection;
         public bool IsCompleted => State != null && State.campaignCompleted;
+        public CampaignVictorySnapshot PendingVictorySnapshot => State?.pendingVictorySnapshot;
 
         public void StartNew()
         {
@@ -41,7 +42,8 @@ namespace FungusToast.Unity.Campaign
                 boardWidth = preset.boardWidth,
                 boardHeight = preset.boardHeight,
                 pendingAdaptationSelection = false,
-                campaignCompleted = false
+                campaignCompleted = false,
+                pendingVictorySnapshot = null
             };
             CampaignSaveService.Save(State);
             Debug.Log($"[CampaignController] New campaign started. RunId={State.runId} Preset={preset.presetId}");
@@ -58,7 +60,34 @@ namespace FungusToast.Unity.Campaign
             }
             State = loaded;
             State.selectedAdaptationIds ??= new List<string>();
+            if (!State.pendingAdaptationSelection)
+            {
+                State.pendingVictorySnapshot = null;
+            }
             Debug.Log($"[CampaignController] Resumed campaign RunId={State.runId} Level={State.levelIndex} PresetId={State.boardPresetId}");
+        }
+
+        public bool TryGetPendingVictorySnapshot(out CampaignVictorySnapshot snapshot)
+        {
+            snapshot = null;
+            if (State == null || !State.pendingAdaptationSelection || State.pendingVictorySnapshot == null)
+            {
+                return false;
+            }
+
+            snapshot = State.pendingVictorySnapshot;
+            return true;
+        }
+
+        public void SetPendingVictorySnapshot(CampaignVictorySnapshot snapshot)
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            State.pendingVictorySnapshot = snapshot;
+            CampaignSaveService.Save(State);
         }
 
         public void Delete()
@@ -89,6 +118,7 @@ namespace FungusToast.Unity.Campaign
                 // Final victory.
                 State.pendingAdaptationSelection = false;
                 State.campaignCompleted = true;
+                State.pendingVictorySnapshot = null;
                 CampaignSaveService.Save(State);
                 Debug.Log($"[CampaignController] Campaign completed! RunId={State.runId} Levels={progression.MaxLevels}");
                 return;
@@ -152,6 +182,7 @@ namespace FungusToast.Unity.Campaign
 
             State.selectedAdaptationIds.Add(adaptationId);
             State.pendingAdaptationSelection = false;
+            State.pendingVictorySnapshot = null;
             AdvanceToNextLevel();
             return true;
         }
@@ -164,6 +195,7 @@ namespace FungusToast.Unity.Campaign
             }
 
             State.pendingAdaptationSelection = false;
+            State.pendingVictorySnapshot = null;
             AdvanceToNextLevel();
             return true;
         }
@@ -224,6 +256,7 @@ namespace FungusToast.Unity.Campaign
             State.boardHeight = preset.boardHeight;
             State.pendingAdaptationSelection = false;
             State.campaignCompleted = false;
+            State.pendingVictorySnapshot = null;
             CampaignSaveService.Save(State);
             Debug.Log($"[CampaignController] Run reset after defeat. New RunId={State.runId} Preset={preset.presetId}");
         }

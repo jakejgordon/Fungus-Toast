@@ -5,6 +5,7 @@ using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Config;
 using TMPro;
 using FungusToast.Unity;
+using FungusToast.Unity.Campaign;
 using System; // added for strict validation exceptions
 
 namespace FungusToast.Unity.UI.GameStart
@@ -27,6 +28,8 @@ namespace FungusToast.Unity.UI.GameStart
         [SerializeField] private GameObject testingOptionsSectionRoot;
         [SerializeField] private Toggle testingModeToggle;
         [SerializeField] private TMP_Dropdown mycovariantDropdown;
+        [SerializeField] private TMP_Dropdown forcedGameResultDropdown;
+        [SerializeField] private GameObject forcedGameResultRow;
         [SerializeField] private GameObject testingModePanel;
         [SerializeField] private TMP_InputField fastForwardRoundsInput;
         [SerializeField] private TextMeshProUGUI fastForwardLabel;
@@ -40,6 +43,8 @@ namespace FungusToast.Unity.UI.GameStart
         private int? selectedPlayerCount = null;
         private int selectedHumanPlayerCount = 1; // always defaults to 1 when total players picked
         public int SelectedHumanPlayerCount => selectedHumanPlayerCount; // expose for future game manager refactor
+        private TextMeshProUGUI testingModeToggleLabel;
+        private Text testingModeToggleLegacyLabel;
 
         private void Awake()
         {
@@ -110,7 +115,26 @@ namespace FungusToast.Unity.UI.GameStart
 
             if (mycovariantDropdown == null)
             {
-                mycovariantDropdown = sectionRoot.GetComponentInChildren<TMP_Dropdown>(true);
+                mycovariantDropdown = FindDropdownByName(sectionRoot.transform, "Mycovariant", "Forced");
+                if (mycovariantDropdown == null)
+                {
+                    mycovariantDropdown = sectionRoot.GetComponentInChildren<TMP_Dropdown>(true);
+                }
+            }
+
+            if (forcedGameResultDropdown == null)
+            {
+                forcedGameResultDropdown = FindDropdownByName(sectionRoot.transform, "ForcedGameResult", null);
+            }
+
+            if (testingModeToggleLabel == null && testingModeToggle != null)
+            {
+                var labelTransform = FindTransformByName(testingModeToggle.transform, "ToggleLabel");
+                if (labelTransform != null)
+                {
+                    testingModeToggleLabel = labelTransform.GetComponent<TextMeshProUGUI>();
+                    testingModeToggleLegacyLabel = labelTransform.GetComponent<Text>();
+                }
             }
 
             if (fastForwardRoundsInput == null)
@@ -179,6 +203,29 @@ namespace FungusToast.Unity.UI.GameStart
                 if (includes && !excludes)
                 {
                     return toggle;
+                }
+            }
+
+            return null;
+        }
+
+        private static TMP_Dropdown FindDropdownByName(Transform root, string include, string exclude)
+        {
+            var dropdowns = root.GetComponentsInChildren<TMP_Dropdown>(true);
+            for (int index = 0; index < dropdowns.Length; index++)
+            {
+                var dropdown = dropdowns[index];
+                if (dropdown == null)
+                {
+                    continue;
+                }
+
+                string name = dropdown.gameObject.name;
+                bool includes = string.IsNullOrEmpty(include) || name.IndexOf(include, StringComparison.OrdinalIgnoreCase) >= 0;
+                bool excludes = !string.IsNullOrEmpty(exclude) && name.IndexOf(exclude, StringComparison.OrdinalIgnoreCase) >= 0;
+                if (includes && !excludes)
+                {
+                    return dropdown;
                 }
             }
 
@@ -390,6 +437,7 @@ namespace FungusToast.Unity.UI.GameStart
         private void ApplyTestingInputReadability()
         {
             ApplyDropdownReadability(mycovariantDropdown);
+            ApplyDropdownReadability(forcedGameResultDropdown);
             ApplyInputReadability(fastForwardRoundsInput);
         }
 
@@ -453,6 +501,8 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void InitializeTestingModeUI()
         {
+            EnsureForcedGameResultDropdown();
+
             // Initialize mycovariant dropdown
             mycovariantDropdown.ClearOptions();
             var options = new List<string> { "Select Mycovariant..." };
@@ -462,10 +512,13 @@ namespace FungusToast.Unity.UI.GameStart
             mycovariantDropdown.AddOptions(options);
             mycovariantDropdown.value = 0;
 
+            InitializeForcedGameResultDropdownOptions();
+
             // Set up testing mode toggle
             testingModeToggle.onValueChanged.AddListener(OnTestingModeToggled);
             testingModePanel.SetActive(false);
             RefreshTestingSectionLayout(false);
+            UpdateTestingToggleLabel();
 
             // Initialize fast-forward input
             fastForwardRoundsInput.contentType = TMP_InputField.ContentType.IntegerNumber;
@@ -473,6 +526,9 @@ namespace FungusToast.Unity.UI.GameStart
             // Default state for skip-to-end toggle
             skipToEndgameToggle.isOn = false;
             skipToEndgameToggle.interactable = false; // disabled until testing mode is enabled
+            skipToEndgameToggle.onValueChanged.AddListener(_ => UpdateForcedGameResultVisibility());
+
+            UpdateForcedGameResultVisibility();
         }
 
         private void OnTestingModeToggled(bool isEnabled)
@@ -491,6 +547,25 @@ namespace FungusToast.Unity.UI.GameStart
             }
 
             RefreshTestingSectionLayout(isEnabled);
+            UpdateForcedGameResultVisibility();
+            UpdateTestingToggleLabel();
+        }
+
+        private void UpdateTestingToggleLabel()
+        {
+            if (testingModeToggleLabel != null)
+            {
+                testingModeToggleLabel.text = testingModeToggle != null && testingModeToggle.isOn
+                    ? "Development Testing: On"
+                    : "Development Testing: Off";
+            }
+
+            if (testingModeToggleLegacyLabel != null)
+            {
+                testingModeToggleLegacyLabel.text = testingModeToggle != null && testingModeToggle.isOn
+                    ? "Development Testing: On"
+                    : "Development Testing: Off";
+            }
         }
 
         private void RefreshTestingSectionLayout(bool isExpanded)
@@ -629,16 +704,17 @@ namespace FungusToast.Unity.UI.GameStart
                         fastForwardRounds = Mathf.Max(0, parsedRounds);
 
                     bool skipToEnd = skipToEndgameToggle.isOn;
+                    ForcedGameResultMode forcedResultMode = GetForcedGameResultSelection();
 
                     // Enable testing mode with or without a mycovariant selected
                     if (mycovariantDropdown.value > 0)
                     {
                         var selectedMycovariant = MycovariantRepository.All[mycovariantDropdown.value - 1];
-                        GameManager.Instance.EnableTestingMode(selectedMycovariant.Id, fastForwardRounds, skipToEnd);
+                        GameManager.Instance.EnableTestingMode(selectedMycovariant.Id, fastForwardRounds, skipToEnd, forcedResultMode);
                     }
                     else
                     {
-                        GameManager.Instance.EnableTestingMode(null, fastForwardRounds, skipToEnd);
+                        GameManager.Instance.EnableTestingMode(null, fastForwardRounds, skipToEnd, forcedResultMode);
                     }
                 }
                 else
@@ -666,6 +742,129 @@ namespace FungusToast.Unity.UI.GameStart
             gameObject.SetActive(false);
             if (modeSelectPanel != null)
                 modeSelectPanel.SetActive(true);
+        }
+
+        private void EnsureForcedGameResultDropdown()
+        {
+            if (testingModePanel == null || mycovariantDropdown == null)
+            {
+                return;
+            }
+
+            if (forcedGameResultDropdown == null)
+            {
+                forcedGameResultDropdown = FindDropdownByName(testingModePanel.transform, "ForcedGameResult", null);
+            }
+
+            if (forcedGameResultDropdown != null)
+            {
+                forcedGameResultRow = forcedGameResultDropdown.transform.parent != null
+                    ? forcedGameResultDropdown.transform.parent.gameObject
+                    : null;
+                return;
+            }
+
+            forcedGameResultRow = new GameObject("UI_ForcedGameResultRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            forcedGameResultRow.transform.SetParent(testingModePanel.transform, false);
+
+            var rowLayout = forcedGameResultRow.GetComponent<HorizontalLayoutGroup>();
+            rowLayout.childAlignment = TextAnchor.MiddleLeft;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = false;
+            rowLayout.spacing = 10f;
+
+            var rowElement = forcedGameResultRow.GetComponent<LayoutElement>();
+            rowElement.minHeight = 40f;
+            rowElement.preferredHeight = 42f;
+
+            var labelObject = new GameObject("UI_ForcedGameResultLabel", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(forcedGameResultRow.transform, false);
+            var labelElement = labelObject.GetComponent<LayoutElement>();
+            labelElement.preferredWidth = 170f;
+            labelElement.minWidth = 150f;
+
+            var label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = "Forced Game Result";
+            label.color = UIStyleTokens.Text.Secondary;
+            label.fontSize = 22f;
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+
+            var dropdownObject = Instantiate(mycovariantDropdown.gameObject, forcedGameResultRow.transform);
+            dropdownObject.name = "UI_ForcedGameResultDropdown";
+            forcedGameResultDropdown = dropdownObject.GetComponent<TMP_Dropdown>();
+
+            if (forcedGameResultDropdown == null)
+            {
+                Destroy(forcedGameResultRow);
+                forcedGameResultRow = null;
+                return;
+            }
+
+            var dropdownElement = dropdownObject.GetComponent<LayoutElement>();
+            if (dropdownElement == null)
+            {
+                dropdownElement = dropdownObject.AddComponent<LayoutElement>();
+            }
+            dropdownElement.flexibleWidth = 1f;
+            dropdownElement.preferredHeight = 38f;
+        }
+
+        private void InitializeForcedGameResultDropdownOptions()
+        {
+            if (forcedGameResultDropdown == null)
+            {
+                return;
+            }
+
+            forcedGameResultDropdown.ClearOptions();
+            forcedGameResultDropdown.AddOptions(new List<string>
+            {
+                "Natural",
+                "Forced Win",
+                "Forced Loss"
+            });
+            forcedGameResultDropdown.value = 0;
+            forcedGameResultDropdown.RefreshShownValue();
+        }
+
+        private ForcedGameResultMode GetForcedGameResultSelection()
+        {
+            if (forcedGameResultDropdown == null)
+            {
+                return ForcedGameResultMode.Natural;
+            }
+
+            return forcedGameResultDropdown.value switch
+            {
+                1 => ForcedGameResultMode.ForcedWin,
+                2 => ForcedGameResultMode.ForcedLoss,
+                _ => ForcedGameResultMode.Natural
+            };
+        }
+
+        private void UpdateForcedGameResultVisibility()
+        {
+            bool testingEnabled = testingModeToggle != null && testingModeToggle.isOn;
+            bool skipEnabled = skipToEndgameToggle != null && skipToEndgameToggle.isOn;
+            bool showForcedResult = testingEnabled && skipEnabled;
+
+            if (forcedGameResultRow != null)
+            {
+                forcedGameResultRow.SetActive(showForcedResult);
+            }
+
+            if (forcedGameResultDropdown != null)
+            {
+                forcedGameResultDropdown.interactable = showForcedResult;
+
+                if (!showForcedResult)
+                {
+                    forcedGameResultDropdown.value = 0;
+                    forcedGameResultDropdown.RefreshShownValue();
+                }
+            }
         }
     }
 }

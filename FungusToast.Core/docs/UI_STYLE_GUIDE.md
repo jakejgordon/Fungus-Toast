@@ -147,33 +147,40 @@ Notes:
 - Text from `Button.Text.*` tokens.
 - Hover and pressed states must be visibly distinct.
 - Selected state uses `Button.Bg.Selected`.
+- Readability rule: button labels on light or selected button backgrounds must use high-contrast dark text (`Button.Text.Default` or `Text.OnAccent`). Do not use `Text.Secondary` or `Text.Muted` for interactive button labels.
 
 ### 5.2 Secondary/Tertiary Buttons
 - Prefer lower contrast fill with clear border/label.
 - Reserve primary style for the main call to action only.
+- Disabled styling should never be used for active controls. If a control is clickable, label contrast must match active button text tokens.
 
-### 5.3 Panels and Sidebars
+### 5.3 Dropdown/Input Readability
+- Dropdown caption and option text must use `Button.Text.Default` on light dropdown surfaces.
+- Placeholder text may use `Text.Disabled`, but selected values must not use disabled/muted colors.
+- For TMP dropdowns, verify both caption text and template item text after runtime styling passes.
+
+### 5.4 Panels and Sidebars
 - Major sidebars: `Surface.PanelPrimary`.
 - Nested containers/cards: `Surface.PanelSecondary`.
 - Active/expanded subsections: `Surface.PanelElevated`.
 - Keep 1–2 panel surface levels per region (avoid rainbow surfaces).
 
-### 5.4 Tooltips
+### 5.5 Tooltips
 - Background: `Surface.PanelSecondary` with high text contrast.
 - Header text: `Text.Primary`; body text: `Text.Secondary`.
 - Semantic values may use `State.*` accents sparingly.
 
-### 5.5 Mutation Nodes
+### 5.6 Mutation Nodes
 - Keep category identity via `Category.*` accents.
 - Locked/inactive states must prioritize readability and clear affordance.
 - Upgradeable state should be obvious without relying only on hue.
 
-### 5.6 Logs (Human + Global)
+### 5.7 Logs (Human + Global)
 - Base rows on panel surfaces, not bright color blocks.
 - Category/state highlights should be small strips/icons/text accents.
 - Never reduce contrast in long-text rows for style reasons.
 
-### 5.7 Overlays / Endgame / Prompts
+### 5.8 Overlays / Endgame / Prompts
 - Use `Surface.OverlayDim` behind modal content.
 - Primary result text must be high-contrast and concise.
 - Reuse semantic tokens (`State.Success/Warning/Danger`) consistently.

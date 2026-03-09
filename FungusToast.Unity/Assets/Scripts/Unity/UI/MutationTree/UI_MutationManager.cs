@@ -107,6 +107,39 @@ namespace FungusToast.Unity.UI.MutationTree
                 ResetPulse();
         }
 
+        /// <summary>
+        /// Resets transient UI/runtime state between games so stale coroutines and flags
+        /// cannot lock spend-point interactions in the next level.
+        /// </summary>
+        public void ResetForNewGameState()
+        {
+            StopAllCoroutines();
+
+            isTreeOpen = false;
+            isSliding = false;
+            humanTurnEnded = false;
+
+            if (mutationTreePanel != null)
+            {
+                mutationTreePanel.SetActive(false);
+            }
+
+            if (mutationTreeRect != null)
+            {
+                mutationTreeRect.anchoredPosition = hiddenPosition;
+            }
+
+            if (dockButtonText != null)
+            {
+                dockButtonText.text = ">";
+            }
+
+            if (spendPointsButton != null)
+            {
+                spendPointsButton.interactable = false;
+            }
+        }
+
         public void Initialize(Player player)
         {
             if (mutationTreeRect == null && mutationTreePanel != null)

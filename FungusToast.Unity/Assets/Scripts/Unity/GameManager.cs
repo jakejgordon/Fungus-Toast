@@ -44,6 +44,7 @@ namespace FungusToast.Unity
         public bool testingModeEnabled = false; 
         public int? testingMycovariantId = null; 
         public bool testingModeForceHumanFirst = true; 
+        public ForcedGameResultMode testingForcedGameResult = ForcedGameResultMode.Natural;
         public int fastForwardRounds =0; 
         public bool testingSkipToEndgameAfterFastForward = false;
 
@@ -103,11 +104,13 @@ namespace FungusToast.Unity
 
         public bool IsTestingModeEnabled => testingModeEnabled; 
         public int? TestingMycovariantId => testingMycovariantId;
+        public ForcedGameResultMode TestingForcedGameResult => testingForcedGameResult;
 
         private bool isFastForwarding = false; 
         public bool IsFastForwarding => isFastForwarding; 
         private bool _fastForwardStarted = false;
         private bool initialMutationPointsAssigned = false;
+        private float nextUiStuckCheckTime;
 
         // Services
         private PlayerInitializer playerInitializer; 
@@ -147,6 +150,18 @@ namespace FungusToast.Unity
             }
         }
 
+        private void Update()
+        {
+            // Safety net: recover from rare transition bugs where all gameplay UI roots end up hidden.
+            if (Time.unscaledTime < nextUiStuckCheckTime)
+            {
+                return;
+            }
+
+            nextUiStuckCheckTime = Time.unscaledTime + 0.5f;
+            RecoverGameplayUiIfStuck();
+        }
+
         #endregion
 
         #region Bootstrap
@@ -179,7 +194,9 @@ namespace FungusToast.Unity
                 () => CurrentGameMode,
                 () => campaignController,
                 () => campaignProgression,
-                () => FirstUpgradeRounds);
+                () => FirstUpgradeRounds,
+                () => testingModeEnabled,
+                () => testingForcedGameResult);
             mutationPointService = new MutationPointService(
                 gameUIManager,
                 () => Board,
@@ -231,6 +248,15 @@ namespace FungusToast.Unity
             }
             campaignController.Resume();
             CurrentGameMode = GameMode.Campaign;
+
+            if (campaignController.IsAwaitingAdaptationSelection
+                && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot)
+                && pendingSnapshot != null)
+            {
+                ShowPendingCampaignVictoryScreen(pendingSnapshot);
+                return;
+            }
+
             var preset = campaignController.CurrentBoardPreset;
             if (preset != null)
             {
@@ -240,6 +266,38 @@ namespace FungusToast.Unity
             int totalPlayers =1 + (preset?.aiPlayers?.Count ??0);
             SetHotseatConfig(1);
             InitializeGame(totalPlayers);
+        }
+
+        private void ShowPendingCampaignVictoryScreen(CampaignVictorySnapshot snapshot)
+        {
+            if (snapshot == null || gameUIManager?.EndGamePanel == null)
+            {
+                Debug.LogWarning("[GameManager] Pending campaign victory snapshot missing; continuing directly into gameplay.");
+                var presetFallback = campaignController.CurrentBoardPreset;
+                if (presetFallback != null)
+                {
+                    boardWidth = presetFallback.boardWidth;
+                    boardHeight = presetFallback.boardHeight;
+                }
+
+                int totalPlayersFallback = 1 + (presetFallback?.aiPlayers?.Count ?? 0);
+                SetHotseatConfig(1);
+                InitializeGame(totalPlayersFallback);
+                return;
+            }
+
+            StopAllCoroutines();
+            mycovariantDraftController?.StopAllCoroutines();
+
+            modeSelectPanel?.SetActive(false);
+            startGamePanel?.gameObject.SetActive(false);
+
+            gameUIManager.LoadingScreen?.gameObject.SetActive(false);
+            gameUIManager.LeftSidebar?.gameObject.SetActive(false);
+            gameUIManager.RightSidebar?.gameObject.SetActive(true);
+            gameUIManager.MutationUIManager?.gameObject.SetActive(false);
+
+            gameUIManager.EndGamePanel.ShowCampaignPendingVictorySnapshot(snapshot);
         }
 
         // Accessor for external panels
@@ -294,6 +352,7 @@ namespace FungusToast.Unity
             // Clear any lingering scene coroutines/UI overlays from the previous game before bootstrapping a new board.
             StopAllCoroutines();
             mycovariantDraftController?.StopAllCoroutines();
+            gameUIManager?.MutationUIManager?.ResetForNewGameState();
             gameUIManager.EndGamePanel?.gameObject.SetActive(false);
 
             gameUIManager.LoadingScreen?.Show("Preparing the toast…");
@@ -501,6 +560,18 @@ namespace FungusToast.Unity
             {
                 return;
             }
+
+            // Safety net: if a transition bug ever leaves opening points at zero,
+            // reseed round-1 mutation points so the game can always progress.
+            if (Board != null
+                && Board.CurrentRound == 1
+                && Board.Players.Count > 0
+                && Board.Players.All(p => p.MutationPoints <= 0))
+            {
+                Debug.LogWarning("[GameManager] Round 1 started with zero mutation points for all players. Reapplying starting mutation points.");
+                mutationManager.ResetMutationPoints(Board.Players);
+            }
+
             gameUIManager.GameLogRouter?.OnRoundStart(Board.CurrentRound);
             gameUIManager.GameLogManager?.OnLogSegmentStart("MutationPhaseStart");
 
@@ -806,11 +877,16 @@ namespace FungusToast.Unity
 
         #region Testing Mode API / Fast Forward
 
-        public void EnableTestingMode(int? mycovariantId, int fastForwardRounds =0, bool skipToEndgameAfterFastForward = false)
+        public void EnableTestingMode(
+            int? mycovariantId,
+            int fastForwardRounds =0,
+            bool skipToEndgameAfterFastForward = false,
+            ForcedGameResultMode forcedGameResult = ForcedGameResultMode.Natural)
         {
             testingModeEnabled = true;
             testingMycovariantId = mycovariantId;
             testingModeForceHumanFirst = mycovariantId.HasValue;
+            testingForcedGameResult = forcedGameResult;
             this.fastForwardRounds = fastForwardRounds;
             testingSkipToEndgameAfterFastForward = skipToEndgameAfterFastForward;
         }
@@ -820,6 +896,7 @@ namespace FungusToast.Unity
             testingModeEnabled = false;
             testingMycovariantId = null;
             testingModeForceHumanFirst = false;
+            testingForcedGameResult = ForcedGameResultMode.Natural;
             fastForwardRounds =0;
             testingSkipToEndgameAfterFastForward = false;
         }
@@ -868,6 +945,12 @@ namespace FungusToast.Unity
                     _fastForwardStarted = true;
                     fastForwardService.StartFastForward(fastForwardRounds, testingSkipToEndgameAfterFastForward, testingMycovariantId);
                 }
+                else if (testingSkipToEndgameAfterFastForward)
+                {
+                    // Allow campaign menu testing to force immediate endgame even when fast-forward rounds are 0.
+                    TriggerEndGameInternal();
+                    yield break;
+                }
                 else if (testingMycovariantId.HasValue)
                 {
                     StartMycovariantDraftPhase();
@@ -909,6 +992,51 @@ namespace FungusToast.Unity
         {
             endgameService.EndGame();
             gameEnded = endgameService.GameEnded;
+        }
+
+        private void RecoverGameplayUiIfStuck()
+        {
+            if (Board == null || gameUIManager == null)
+            {
+                return;
+            }
+
+            bool inMenu = (modeSelectPanel != null && modeSelectPanel.activeInHierarchy)
+                          || (startGamePanel != null && startGamePanel.gameObject.activeInHierarchy);
+            if (inMenu)
+            {
+                return;
+            }
+
+            bool draftVisible = mycovariantDraftController != null && mycovariantDraftController.gameObject.activeInHierarchy;
+            bool endgameVisible = gameUIManager.EndGamePanel != null && gameUIManager.EndGamePanel.gameObject.activeInHierarchy;
+            if (draftVisible || endgameVisible)
+            {
+                return;
+            }
+
+            bool leftVisible = gameUIManager.LeftSidebar != null && gameUIManager.LeftSidebar.gameObject.activeInHierarchy;
+            bool rightVisible = gameUIManager.RightSidebar != null && gameUIManager.RightSidebar.gameObject.activeInHierarchy;
+            bool mutationVisible = gameUIManager.MutationUIManager != null && gameUIManager.MutationUIManager.gameObject.activeInHierarchy;
+
+            if (leftVisible || rightVisible || mutationVisible)
+            {
+                return;
+            }
+
+            Debug.LogWarning("[GameManager] UI recovery triggered: all gameplay UI roots were hidden unexpectedly.");
+            gameUIManager.LeftSidebar?.gameObject.SetActive(true);
+            gameUIManager.RightSidebar?.gameObject.SetActive(true);
+            if (gameUIManager.MutationUIManager != null)
+            {
+                gameUIManager.MutationUIManager.gameObject.SetActive(true);
+                gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+                gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
+                if (humanPlayer != null)
+                {
+                    gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(humanPlayer.MutationPoints > 0);
+                }
+            }
         }
 
         #endregion

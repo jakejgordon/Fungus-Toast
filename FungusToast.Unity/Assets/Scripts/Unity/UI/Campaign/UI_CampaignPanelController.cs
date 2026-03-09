@@ -1,14 +1,16 @@
+using System;
+using System.Collections.Generic;
+using FungusToast.Core.Mycovariants;
+using FungusToast.Unity.Campaign;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using FungusToast.Unity.Campaign; // for save service + GameManager extension
-using FungusToast.Core.Mycovariants;
-using TMPro;
-using System.Collections.Generic;
 
 namespace FungusToast.Unity.UI.Campaign
 {
     /// <summary>
-    /// Campaign selection panel: Resume / New / Delete / Back.
+    /// Campaign selection panel with a deterministic layout stack:
+    /// Testing card at top, action buttons beneath.
     /// </summary>
     public class UI_CampaignPanelController : MonoBehaviour
     {
@@ -19,24 +21,42 @@ namespace FungusToast.Unity.UI.Campaign
         [SerializeField] private Button backButton;
 
         [Header("Panels")]
-        [SerializeField] private GameObject modeSelectPanel; // reference back to UI_ModeSelectPanel
+        [SerializeField] private GameObject modeSelectPanel;
 
-        [Header("Testing Mode")]
+        [Header("Legacy Testing References")]
         [SerializeField] private GameObject testingOptionsSectionRoot;
-
-        [Header("Testing Mode Templates")]
         [SerializeField] private Toggle testingModeToggleTemplate;
         [SerializeField] private GameObject testingModePanelTemplate;
 
-        private Toggle testingModeToggle;
+        private RectTransform contentRoot;
+        private RectTransform mainStackRoot;
+        private GameObject testingCard;
+        private GameObject actionStack;
+
+        private Button testingToggleButton;
+        private GameObject mycovariantRow;
         private TMP_Dropdown mycovariantDropdown;
-        private TMP_InputField fastForwardRoundsInput;
-        private Toggle skipToEndgameToggle;
-        private GameObject testingModePanel;
+        private Button fastForwardButton;
+        private Button skipToEndButton;
+        private Button forcedResultButton;
+
+        private bool testingEnabled;
+        private bool skipToEnd;
+        private int fastForwardRounds;
+        private ForcedGameResultMode forcedResult = ForcedGameResultMode.Natural;
 
         private void Awake()
         {
-            InitializeTestingModeUI();
+            contentRoot = transform.Find("UI_CampaignContent") as RectTransform;
+            if (contentRoot == null)
+            {
+                Debug.LogWarning("UI_CampaignPanelController: UI_CampaignContent not found.");
+                return;
+            }
+
+            BuildLayoutScaffold();
+            BuildTestingCard();
+            BuildActionStack();
             ApplyStyle();
 
             if (resumeButton != null) resumeButton.onClick.AddListener(OnResumeClicked);
@@ -49,25 +69,380 @@ namespace FungusToast.Unity.UI.Campaign
         {
             RefreshButtonStates();
             RefreshTestingDropdownOptions();
+            RefreshTestingVisualState();
+            ForceLayoutNow();
         }
 
-        private void RefreshButtonStates()
+        private void BuildLayoutScaffold()
         {
-            bool has = GameManager.Instance != null && GameManager.Instance.HasCampaignSave();
-            if (resumeButton != null) resumeButton.interactable = has;
-            if (deleteButton != null) deleteButton.interactable = has;
+            var existing = contentRoot.Find("UI_CampaignMainStack") as RectTransform;
+            if (existing != null)
+            {
+                mainStackRoot = existing;
+            }
+            else
+            {
+                var root = new GameObject("UI_CampaignMainStack", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
+                root.transform.SetParent(contentRoot, false);
+                mainStackRoot = root.GetComponent<RectTransform>();
+            }
 
-            UIStyleTokens.Button.SetButtonLabelColor(resumeButton, has ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled);
-            UIStyleTokens.Button.SetButtonLabelColor(deleteButton, has ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled);
+            mainStackRoot.anchorMin = new Vector2(0.5f, 1f);
+            mainStackRoot.anchorMax = new Vector2(0.5f, 1f);
+            mainStackRoot.pivot = new Vector2(0.5f, 1f);
+            mainStackRoot.anchoredPosition = new Vector2(0f, -98f);
+            mainStackRoot.sizeDelta = new Vector2(500f, 0f);
+
+            var rootLayout = mainStackRoot.GetComponent<VerticalLayoutGroup>();
+            rootLayout.childAlignment = TextAnchor.UpperCenter;
+            rootLayout.childControlWidth = true;
+            rootLayout.childControlHeight = true;
+            rootLayout.childForceExpandWidth = false;
+            rootLayout.childForceExpandHeight = false;
+            rootLayout.spacing = 14f;
+            rootLayout.padding = new RectOffset(0, 0, 0, 0);
+
+            var rootFitter = mainStackRoot.GetComponent<ContentSizeFitter>();
+            rootFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            rootFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var rootElement = mainStackRoot.GetComponent<LayoutElement>();
+            rootElement.minWidth = 460f;
+            rootElement.preferredWidth = 500f;
+
+            if (testingOptionsSectionRoot != null)
+            {
+                testingOptionsSectionRoot.SetActive(false);
+            }
+
+            HideLegacyTestingBlocks();
+
+            if (testingModeToggleTemplate != null)
+            {
+                testingModeToggleTemplate.gameObject.SetActive(false);
+            }
+
+            if (testingModePanelTemplate != null)
+            {
+                testingModePanelTemplate.SetActive(false);
+            }
+        }
+
+        private void HideLegacyTestingBlocks()
+        {
+            if (contentRoot == null)
+            {
+                return;
+            }
+
+            var all = contentRoot.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < all.Length; i++)
+            {
+                var t = all[i];
+                if (t == null)
+                {
+                    continue;
+                }
+
+                if (mainStackRoot != null && t.IsChildOf(mainStackRoot))
+                {
+                    continue;
+                }
+
+                var name = t.name;
+                bool legacyTestingName =
+                    name.IndexOf("TestingOptionsSection", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    name.IndexOf("CampaignTestingOptionsSection", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    name.IndexOf("TestingModePanel", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    name.IndexOf("TestingModeToggle", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    name.IndexOf("FastForwardRounds", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    name.IndexOf("SkipToEnd", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    name.IndexOf("ForcedGameResult", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (!legacyTestingName)
+                {
+                    continue;
+                }
+
+                // Keep modern runtime controls enabled.
+                if (name.IndexOf("UI_Campaign", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    continue;
+                }
+
+                t.gameObject.SetActive(false);
+            }
+        }
+
+        private void BuildTestingCard()
+        {
+            var existing = mainStackRoot.Find("UI_CampaignTestingCard");
+            if (existing != null)
+            {
+                testingCard = existing.gameObject;
+            }
+            else
+            {
+                testingCard = new GameObject("UI_CampaignTestingCard", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+                testingCard.transform.SetParent(mainStackRoot, false);
+            }
+
+            var cardElement = testingCard.GetComponent<LayoutElement>();
+            cardElement.minWidth = 460f;
+            cardElement.preferredWidth = 500f;
+            cardElement.minHeight = 56f;
+
+            var cardBackground = testingCard.GetComponent<Image>();
+            var panelColor = UIStyleTokens.Surface.PanelPrimary;
+            panelColor.a = 0.92f;
+            cardBackground.color = panelColor;
+            cardBackground.raycastTarget = false;
+
+            var cardLayout = testingCard.GetComponent<VerticalLayoutGroup>();
+            cardLayout.childAlignment = TextAnchor.UpperCenter;
+            cardLayout.childControlWidth = true;
+            cardLayout.childControlHeight = true;
+            cardLayout.childForceExpandWidth = false;
+            cardLayout.childForceExpandHeight = false;
+            cardLayout.spacing = 6f;
+            cardLayout.padding = new RectOffset(12, 12, 8, 8);
+
+            testingToggleButton = EnsureSettingButton(testingCard.transform, "UI_TestingToggleButton", OnTestingToggleClicked);
+            mycovariantRow = EnsureMycovariantRow(testingCard.transform);
+            fastForwardButton = EnsureSettingButton(testingCard.transform, "UI_FastForwardButton", OnFastForwardClicked);
+            skipToEndButton = EnsureSettingButton(testingCard.transform, "UI_SkipToEndButton", OnSkipToEndClicked);
+            forcedResultButton = EnsureSettingButton(testingCard.transform, "UI_ForcedResultButton", OnForcedResultClicked);
+
+            if (testingToggleButton != null)
+            {
+                testingToggleButton.transform.SetSiblingIndex(0);
+            }
+            if (mycovariantRow != null)
+            {
+                mycovariantRow.transform.SetSiblingIndex(1);
+            }
+            if (fastForwardButton != null)
+            {
+                fastForwardButton.transform.SetSiblingIndex(2);
+            }
+            if (skipToEndButton != null)
+            {
+                skipToEndButton.transform.SetSiblingIndex(3);
+            }
+            if (forcedResultButton != null)
+            {
+                forcedResultButton.transform.SetSiblingIndex(4);
+            }
+        }
+
+        private void BuildActionStack()
+        {
+            var existing = mainStackRoot.Find("UI_CampaignActionStack");
+            if (existing != null)
+            {
+                actionStack = existing.gameObject;
+            }
+            else
+            {
+                actionStack = new GameObject("UI_CampaignActionStack", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
+                actionStack.transform.SetParent(mainStackRoot, false);
+            }
+
+            var actionLayout = actionStack.GetComponent<VerticalLayoutGroup>();
+            actionLayout.childAlignment = TextAnchor.UpperCenter;
+            actionLayout.childControlWidth = true;
+            actionLayout.childControlHeight = true;
+            actionLayout.childForceExpandWidth = false;
+            actionLayout.childForceExpandHeight = false;
+            actionLayout.spacing = 14f;
+            actionLayout.padding = new RectOffset(0, 0, 0, 0);
+
+            var actionFitter = actionStack.GetComponent<ContentSizeFitter>();
+            actionFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            actionFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var actionElement = actionStack.GetComponent<LayoutElement>();
+            actionElement.minWidth = 460f;
+            actionElement.preferredWidth = 500f;
+
+            ReparentActionButton(resumeButton, 0);
+            ReparentActionButton(newButton, 1);
+            ReparentActionButton(deleteButton, 2);
+            ReparentActionButton(backButton, 3);
+
+            if (deleteButton != null)
+            {
+                deleteButton.gameObject.SetActive(false);
+            }
+        }
+
+        private void ReparentActionButton(Button button, int index)
+        {
+            if (button == null || actionStack == null)
+            {
+                return;
+            }
+
+            button.transform.SetParent(actionStack.transform, false);
+            button.transform.SetSiblingIndex(index);
+            EnsureButtonLayout(button, button == backButton ? 330f : 500f);
+        }
+
+        private static void EnsureButtonLayout(Button button, float width)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var element = button.GetComponent<LayoutElement>();
+            if (element == null)
+            {
+                element = button.gameObject.AddComponent<LayoutElement>();
+            }
+
+            element.minHeight = 52f;
+            element.preferredHeight = 56f;
+            element.minWidth = width;
+            element.preferredWidth = width;
+            element.flexibleWidth = 0f;
+        }
+
+        private Button EnsureSettingButton(Transform parent, string name, UnityEngine.Events.UnityAction action)
+        {
+            var existing = parent.Find(name);
+            if (existing != null)
+            {
+                var existingButton = existing.GetComponent<Button>();
+                if (existingButton != null)
+                {
+                    existingButton.onClick.RemoveAllListeners();
+                    existingButton.onClick.AddListener(action);
+                    return existingButton;
+                }
+            }
+
+            var template = backButton != null ? backButton : resumeButton;
+            if (template == null)
+            {
+                return null;
+            }
+
+            var clone = Instantiate(template.gameObject, parent);
+            clone.name = name;
+            var button = clone.GetComponent<Button>();
+            if (button == null)
+            {
+                return null;
+            }
+
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(action);
+
+            UIStyleTokens.Button.ApplyStyle(button);
+            UIStyleTokens.Button.SetButtonLabelColor(button, UIStyleTokens.Button.TextDefault);
+            EnsureButtonLayout(button, 470f);
+
+            var label = clone.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (label != null)
+            {
+                label.enableAutoSizing = true;
+                label.fontSizeMin = 15f;
+                label.fontSizeMax = 24f;
+                label.alignment = TextAlignmentOptions.Center;
+                label.color = UIStyleTokens.Button.TextDefault;
+            }
+
+            return button;
+        }
+
+        private GameObject EnsureMycovariantRow(Transform parent)
+        {
+            var existing = parent.Find("UI_CampaignMycovariantRow");
+            if (existing != null)
+            {
+                var existingDropdown = existing.GetComponentInChildren<TMP_Dropdown>(true);
+                if (existingDropdown != null)
+                {
+                    mycovariantDropdown = existingDropdown;
+                }
+
+                return existing.gameObject;
+            }
+
+            var row = new GameObject("UI_CampaignMycovariantRow", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            row.transform.SetParent(parent, false);
+
+            var rowLayout = row.GetComponent<VerticalLayoutGroup>();
+            rowLayout.childAlignment = TextAnchor.UpperLeft;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = false;
+            rowLayout.spacing = 4f;
+            rowLayout.padding = new RectOffset(2, 2, 0, 0);
+
+            var rowElement = row.GetComponent<LayoutElement>();
+            rowElement.minHeight = 80f;
+            rowElement.preferredHeight = 86f;
+
+            var labelObj = new GameObject("UI_CampaignMycovariantLabel", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            labelObj.transform.SetParent(row.transform, false);
+            var label = labelObj.GetComponent<TextMeshProUGUI>();
+            label.text = "Forced Mycovariant";
+            label.color = UIStyleTokens.Text.Primary;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 15f;
+            label.fontSizeMax = 20f;
+            label.alignment = TextAlignmentOptions.Left;
+
+            var labelElement = labelObj.GetComponent<LayoutElement>();
+            labelElement.minHeight = 22f;
+            labelElement.preferredHeight = 26f;
+
+            var template = FindDropdownTemplate();
+            if (template != null)
+            {
+                var dropdownObj = Instantiate(template.gameObject, row.transform);
+                dropdownObj.name = "UI_CampaignMycovariantDropdown";
+                mycovariantDropdown = dropdownObj.GetComponent<TMP_Dropdown>();
+
+                var dropdownElement = dropdownObj.GetComponent<LayoutElement>();
+                if (dropdownElement == null)
+                {
+                    dropdownElement = dropdownObj.AddComponent<LayoutElement>();
+                }
+
+                dropdownElement.minHeight = 40f;
+                dropdownElement.preferredHeight = 44f;
+                dropdownElement.minWidth = 460f;
+                dropdownElement.preferredWidth = 470f;
+            }
+            else
+            {
+                Debug.LogWarning("UI_CampaignPanelController: No TMP_Dropdown template found; mycovariant selector unavailable.");
+            }
+
+            return row;
+        }
+
+        private TMP_Dropdown FindDropdownTemplate()
+        {
+            if (testingOptionsSectionRoot != null)
+            {
+                var fromLegacy = testingOptionsSectionRoot.GetComponentInChildren<TMP_Dropdown>(true);
+                if (fromLegacy != null)
+                {
+                    return fromLegacy;
+                }
+            }
+
+            return FindObjectOfType<TMP_Dropdown>(includeInactive: true);
         }
 
         private void ApplyStyle()
         {
             UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.Canvas);
-            if (testingModePanel != null)
-            {
-                UIStyleTokens.ApplyPanelSurface(testingModePanel, UIStyleTokens.Surface.PanelPrimary);
-            }
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
 
             UIStyleTokens.Button.ApplyStyle(resumeButton);
@@ -75,13 +450,16 @@ namespace FungusToast.Unity.UI.Campaign
             UIStyleTokens.Button.ApplyStyle(deleteButton);
             UIStyleTokens.Button.ApplyStyle(backButton);
 
-            ApplyTestingInputReadability();
-        }
+            UIStyleTokens.Button.SetButtonLabelColor(resumeButton, UIStyleTokens.Button.TextDefault);
+            UIStyleTokens.Button.SetButtonLabelColor(newButton, UIStyleTokens.Button.TextDefault);
+            UIStyleTokens.Button.SetButtonLabelColor(deleteButton, UIStyleTokens.Button.TextDefault);
+            UIStyleTokens.Button.SetButtonLabelColor(backButton, UIStyleTokens.Button.TextDefault);
+            UIStyleTokens.Button.SetButtonLabelColor(testingToggleButton, UIStyleTokens.Button.TextDefault);
+            UIStyleTokens.Button.SetButtonLabelColor(fastForwardButton, UIStyleTokens.Button.TextDefault);
+            UIStyleTokens.Button.SetButtonLabelColor(skipToEndButton, UIStyleTokens.Button.TextDefault);
+            UIStyleTokens.Button.SetButtonLabelColor(forcedResultButton, UIStyleTokens.Button.TextDefault);
 
-        private void ApplyTestingInputReadability()
-        {
             ApplyDropdownReadability(mycovariantDropdown);
-            ApplyInputReadability(fastForwardRoundsInput);
         }
 
         private static void ApplyDropdownReadability(TMP_Dropdown dropdown)
@@ -101,330 +479,42 @@ namespace FungusToast.Unity.UI.Campaign
                 dropdown.itemText.color = UIStyleTokens.Button.TextDefault;
             }
 
-            var allLabels = dropdown.GetComponentsInChildren<TextMeshProUGUI>(true);
-            for (int index = 0; index < allLabels.Length; index++)
+            var labels = dropdown.GetComponentsInChildren<TextMeshProUGUI>(true);
+            for (int i = 0; i < labels.Length; i++)
             {
-                var label = allLabels[index];
-                if (label == null)
+                var text = labels[i];
+                if (text == null)
                 {
                     continue;
                 }
 
-                if (label.name.IndexOf("Placeholder", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                if (text.name.IndexOf("Placeholder", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    label.color = UIStyleTokens.Text.Disabled;
+                    text.color = UIStyleTokens.Text.Disabled;
                 }
                 else
                 {
-                    label.color = UIStyleTokens.Button.TextDefault;
+                    text.color = UIStyleTokens.Button.TextDefault;
                 }
             }
         }
 
-        private static void ApplyInputReadability(TMP_InputField input)
+        private void RefreshButtonStates()
         {
-            if (input == null)
+            bool hasSave = GameManager.Instance != null && GameManager.Instance.HasCampaignSave();
+
+            if (resumeButton != null)
             {
-                return;
+                resumeButton.gameObject.SetActive(hasSave);
+                resumeButton.interactable = hasSave;
+                UIStyleTokens.Button.SetButtonLabelColor(resumeButton, hasSave ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled);
             }
 
-            if (input.textComponent != null)
+            if (deleteButton != null)
             {
-                input.textComponent.color = UIStyleTokens.Button.TextDefault;
-            }
-
-            if (input.placeholder is TextMeshProUGUI placeholderLabel)
-            {
-                placeholderLabel.color = UIStyleTokens.Text.Disabled;
-            }
-            else if (input.placeholder is Graphic placeholderGraphic)
-            {
-                placeholderGraphic.color = UIStyleTokens.Text.Disabled;
-            }
-        }
-
-        private void InitializeTestingModeUI()
-        {
-            var contentRoot = transform.Find("UI_CampaignContent") as RectTransform;
-            if (contentRoot == null)
-            {
-                Debug.LogWarning("UI_CampaignPanelController: UI_CampaignContent not found; campaign testing options disabled.");
-                return;
-            }
-
-            if (testingOptionsSectionRoot == null)
-            {
-                var found = contentRoot.Find("UI_TestingOptionsSection");
-                if (found == null)
-                {
-                    found = contentRoot.Find("UI_CampaignTestingOptionsSection");
-                }
-
-                if (found != null)
-                {
-                    testingOptionsSectionRoot = found.gameObject;
-                }
-            }
-
-            if (testingOptionsSectionRoot != null)
-            {
-                EnsureTestingSectionLayout(testingOptionsSectionRoot);
-                testingModeToggle = FindToggleByName(testingOptionsSectionRoot.transform, "TestingModeToggle", "Skip");
-                mycovariantDropdown = testingOptionsSectionRoot.GetComponentInChildren<TMP_Dropdown>(true);
-                fastForwardRoundsInput = testingOptionsSectionRoot.GetComponentInChildren<TMP_InputField>(true);
-                skipToEndgameToggle = FindToggleByName(testingOptionsSectionRoot.transform, "Skip", null);
-
-                var panelTransform = FindTransformByName(testingOptionsSectionRoot.transform, "TestingModePanel");
-                testingModePanel = panelTransform != null ? panelTransform.gameObject : testingOptionsSectionRoot;
-            }
-            else
-            {
-                if (testingModeToggleTemplate == null || testingModePanelTemplate == null)
-                {
-                    Debug.LogWarning("UI_CampaignPanelController: Testing mode templates are not assigned; campaign testing options disabled.");
-                    return;
-                }
-
-                var toggleObject = Instantiate(testingModeToggleTemplate.gameObject, contentRoot);
-                toggleObject.name = "UI_CampaignTestingModeToggle";
-                testingModeToggle = toggleObject.GetComponent<Toggle>();
-
-                testingModePanel = Instantiate(testingModePanelTemplate, contentRoot);
-                testingModePanel.name = "UI_CampaignTestingModePanel";
-
-                if (backButton != null)
-                {
-                    int backIndex = backButton.transform.GetSiblingIndex();
-                    toggleObject.transform.SetSiblingIndex(backIndex);
-                    testingModePanel.transform.SetSiblingIndex(backIndex + 1);
-                }
-
-                mycovariantDropdown = testingModePanel.GetComponentInChildren<TMP_Dropdown>(true);
-                fastForwardRoundsInput = testingModePanel.GetComponentInChildren<TMP_InputField>(true);
-                var panelToggles = testingModePanel.GetComponentsInChildren<Toggle>(true);
-                skipToEndgameToggle = panelToggles.Length > 0 ? panelToggles[0] : null;
-            }
-
-            if (testingModeToggle != null)
-            {
-                testingModeToggle.isOn = false;
-                testingModeToggle.onValueChanged.AddListener(OnTestingModeToggled);
-            }
-
-            if (fastForwardRoundsInput != null)
-            {
-                fastForwardRoundsInput.contentType = TMP_InputField.ContentType.IntegerNumber;
-            }
-
-            if (skipToEndgameToggle != null)
-            {
-                skipToEndgameToggle.isOn = false;
-                skipToEndgameToggle.interactable = false;
-            }
-
-            if (testingModePanel != null)
-            {
-                testingModePanel.SetActive(false);
-            }
-
-            RefreshTestingSectionLayout(false);
-
-            RefreshTestingDropdownOptions();
-        }
-
-        private static Transform FindTransformByName(Transform root, string contains)
-        {
-            var allChildren = root.GetComponentsInChildren<Transform>(true);
-            for (int index = 0; index < allChildren.Length; index++)
-            {
-                var child = allChildren[index];
-                if (child == null)
-                {
-                    continue;
-                }
-
-                if (child.name.IndexOf(contains, System.StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    return child;
-                }
-            }
-
-            return null;
-        }
-
-        private static Toggle FindToggleByName(Transform root, string include, string exclude)
-        {
-            var toggles = root.GetComponentsInChildren<Toggle>(true);
-            for (int index = 0; index < toggles.Length; index++)
-            {
-                var toggle = toggles[index];
-                if (toggle == null)
-                {
-                    continue;
-                }
-
-                string name = toggle.gameObject.name;
-                bool includes = string.IsNullOrEmpty(include) || name.IndexOf(include, System.StringComparison.OrdinalIgnoreCase) >= 0;
-                bool excludes = !string.IsNullOrEmpty(exclude) && name.IndexOf(exclude, System.StringComparison.OrdinalIgnoreCase) >= 0;
-                if (includes && !excludes)
-                {
-                    return toggle;
-                }
-            }
-
-            return null;
-        }
-
-        private static void EnsureTestingSectionLayout(GameObject sectionRoot)
-        {
-            var rectTransform = sectionRoot.GetComponent<RectTransform>();
-            if (rectTransform != null)
-            {
-                rectTransform.anchorMin = new Vector2(0f, rectTransform.anchorMin.y);
-                rectTransform.anchorMax = new Vector2(1f, rectTransform.anchorMax.y);
-                rectTransform.anchoredPosition = new Vector2(0f, rectTransform.anchoredPosition.y);
-                rectTransform.sizeDelta = new Vector2(0f, rectTransform.sizeDelta.y);
-            }
-
-            var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
-            if (layoutGroup == null)
-            {
-                layoutGroup = sectionRoot.AddComponent<VerticalLayoutGroup>();
-            }
-
-            layoutGroup.padding = new RectOffset(0, 0, 0, 0);
-            layoutGroup.childAlignment = TextAnchor.UpperCenter;
-            layoutGroup.spacing = 8f;
-            layoutGroup.childForceExpandWidth = false;
-            layoutGroup.childForceExpandHeight = false;
-            layoutGroup.childControlWidth = true;
-            layoutGroup.childControlHeight = false;
-
-            var fitter = sectionRoot.GetComponent<ContentSizeFitter>();
-            if (fitter == null)
-            {
-                fitter = sectionRoot.AddComponent<ContentSizeFitter>();
-            }
-
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            var layoutElement = sectionRoot.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = sectionRoot.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.preferredHeight = -1f;
-            layoutElement.minHeight = 40f;
-            layoutElement.minWidth = 300f;
-            layoutElement.preferredWidth = -1f;
-            layoutElement.preferredHeight = 40f;
-
-            EnsureTestingToggleRowLayout(sectionRoot.transform);
-        }
-
-        private static void EnsureTestingToggleRowLayout(Transform sectionRoot)
-        {
-            var toggleRow = sectionRoot.Find("UI_TestingModeToggle") ?? FindTransformByName(sectionRoot, "TestingModeToggle");
-            if (toggleRow == null)
-            {
-                return;
-            }
-
-            if (toggleRow.name.IndexOf("Background", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-                toggleRow.name.IndexOf("Label", System.StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                toggleRow = toggleRow.parent;
-            }
-
-            if (toggleRow == null)
-            {
-                return;
-            }
-
-            var accidentalLayouts = toggleRow.GetComponents<LayoutGroup>();
-            for (int index = 0; index < accidentalLayouts.Length; index++)
-            {
-                if (accidentalLayouts[index] != null)
-                {
-                    Destroy(accidentalLayouts[index]);
-                }
-            }
-
-            var accidentalFitter = toggleRow.GetComponent<ContentSizeFitter>();
-            if (accidentalFitter != null)
-            {
-                Destroy(accidentalFitter);
-            }
-
-            var toggleRect = toggleRow.GetComponent<RectTransform>();
-            if (toggleRect != null)
-            {
-                toggleRect.anchorMin = new Vector2(0f, toggleRect.anchorMin.y);
-                toggleRect.anchorMax = new Vector2(1f, toggleRect.anchorMax.y);
-                toggleRect.anchoredPosition = new Vector2(0f, toggleRect.anchoredPosition.y);
-                toggleRect.sizeDelta = new Vector2(0f, Mathf.Max(30f, toggleRect.sizeDelta.y));
-            }
-
-            var toggleLayoutElement = toggleRow.GetComponent<LayoutElement>();
-            if (toggleLayoutElement == null)
-            {
-                toggleLayoutElement = toggleRow.gameObject.AddComponent<LayoutElement>();
-            }
-
-            toggleLayoutElement.minWidth = 300f;
-            toggleLayoutElement.preferredWidth = 300f;
-            toggleLayoutElement.minHeight = 30f;
-            toggleLayoutElement.preferredHeight = 30f;
-
-            var toggleBackground = FindTransformByName(toggleRow, "ToggleBackground");
-            if (toggleBackground is RectTransform backgroundRect)
-            {
-                backgroundRect.anchorMin = new Vector2(0f, 0.5f);
-                backgroundRect.anchorMax = new Vector2(0f, 0.5f);
-                backgroundRect.pivot = new Vector2(0.5f, 0.5f);
-                backgroundRect.anchoredPosition = new Vector2(10f, 0f);
-                backgroundRect.sizeDelta = new Vector2(20f, 20f);
-            }
-
-            var toggleLabel = FindTransformByName(toggleRow, "ToggleLabel");
-            if (toggleLabel is RectTransform labelRect)
-            {
-                if (labelRect.parent != toggleRow)
-                {
-                    labelRect.SetParent(toggleRow, false);
-                }
-
-                labelRect.anchorMin = new Vector2(0f, 0.5f);
-                labelRect.anchorMax = new Vector2(0f, 0.5f);
-                labelRect.pivot = new Vector2(0f, 0.5f);
-                labelRect.anchoredPosition = new Vector2(30f, 0f);
-                labelRect.sizeDelta = new Vector2(260f, 30f);
-
-                var labelLayoutElement = labelRect.GetComponent<LayoutElement>();
-                if (labelLayoutElement == null)
-                {
-                    labelLayoutElement = labelRect.gameObject.AddComponent<LayoutElement>();
-                }
-
-                labelLayoutElement.ignoreLayout = true;
-                labelLayoutElement.preferredWidth = -1f;
-                labelLayoutElement.preferredHeight = -1f;
-            }
-
-            var legacyLabel = toggleLabel != null ? toggleLabel.GetComponent<Text>() : null;
-            if (legacyLabel != null)
-            {
-                legacyLabel.color = UIStyleTokens.Button.TextDefault;
-                legacyLabel.alignment = TextAnchor.MiddleLeft;
-            }
-
-            var tmpLabel = toggleLabel != null ? toggleLabel.GetComponent<TextMeshProUGUI>() : null;
-            if (tmpLabel != null)
-            {
-                tmpLabel.color = UIStyleTokens.Button.TextDefault;
-                tmpLabel.alignment = TextAlignmentOptions.MidlineLeft;
+                // Start New Campaign already replaces existing progress.
+                deleteButton.gameObject.SetActive(false);
+                deleteButton.interactable = false;
             }
         }
 
@@ -435,82 +525,112 @@ namespace FungusToast.Unity.UI.Campaign
                 return;
             }
 
-            mycovariantDropdown.ClearOptions();
             var options = new List<string> { "Select Mycovariant..." };
-            var mycovariants = MycovariantRepository.All;
-            foreach (var mycovariant in mycovariants)
-                options.Add($"{mycovariant.Name} (ID: {mycovariant.Id})");
+            for (int i = 0; i < MycovariantRepository.All.Count; i++)
+            {
+                var myco = MycovariantRepository.All[i];
+                options.Add($"{myco.Name} (ID: {myco.Id})");
+            }
 
+            mycovariantDropdown.ClearOptions();
             mycovariantDropdown.AddOptions(options);
             mycovariantDropdown.value = 0;
             mycovariantDropdown.RefreshShownValue();
+            ApplyDropdownReadability(mycovariantDropdown);
         }
 
-        private void OnTestingModeToggled(bool isEnabled)
+        private void RefreshTestingVisualState()
         {
-            if (testingModePanel != null)
-                testingModePanel.SetActive(isEnabled);
+            if (mycovariantRow != null)
+            {
+                mycovariantRow.SetActive(testingEnabled);
+            }
+
+            if (fastForwardButton != null)
+            {
+                fastForwardButton.gameObject.SetActive(testingEnabled);
+            }
+
+            if (skipToEndButton != null)
+            {
+                skipToEndButton.gameObject.SetActive(testingEnabled);
+            }
+
+            if (forcedResultButton != null)
+            {
+                forcedResultButton.gameObject.SetActive(testingEnabled && skipToEnd);
+            }
 
             if (mycovariantDropdown != null)
-                mycovariantDropdown.interactable = isEnabled;
-
-            if (fastForwardRoundsInput != null)
-                fastForwardRoundsInput.interactable = isEnabled;
-
-            if (skipToEndgameToggle != null)
             {
-                skipToEndgameToggle.interactable = isEnabled;
-                if (!isEnabled)
-                    skipToEndgameToggle.isOn = false;
+                mycovariantDropdown.interactable = testingEnabled;
             }
 
-            RefreshTestingSectionLayout(isEnabled);
+            SetButtonLabel(testingToggleButton, $"Development Testing: {(testingEnabled ? "On" : "Off")}");
+            SetButtonLabel(fastForwardButton, $"Fast Forward Rounds: {fastForwardRounds}");
+            SetButtonLabel(skipToEndButton, $"Skip to End Game: {(skipToEnd ? "On" : "Off")}");
+            SetButtonLabel(forcedResultButton, $"Forced Result: {FormatForcedResult(forcedResult)}");
+
+            if (!skipToEnd)
+            {
+                forcedResult = ForcedGameResultMode.Natural;
+                SetButtonLabel(forcedResultButton, "Forced Result: Natural");
+            }
         }
 
-        private void RefreshTestingSectionLayout(bool isExpanded)
+        private void OnTestingToggleClicked()
         {
-            if (testingOptionsSectionRoot == null)
+            testingEnabled = !testingEnabled;
+            if (!testingEnabled)
             {
-                return;
+                skipToEnd = false;
+                fastForwardRounds = 0;
+                forcedResult = ForcedGameResultMode.Natural;
             }
 
-            const float collapsedHeight = 40f;
-            float expandedHeight = collapsedHeight;
+            RefreshTestingVisualState();
+            ForceLayoutNow();
+        }
 
-            if (isExpanded && testingModePanel != null)
+        private void OnFastForwardClicked()
+        {
+            fastForwardRounds = fastForwardRounds switch
             {
-                float panelHeight = 220f;
-                var panelLayoutElement = testingModePanel.GetComponent<LayoutElement>();
-                if (panelLayoutElement != null && panelLayoutElement.preferredHeight > 0f)
-                {
-                    panelHeight = panelLayoutElement.preferredHeight;
-                }
+                0 => 5,
+                5 => 10,
+                10 => 25,
+                25 => 50,
+                50 => 100,
+                _ => 0
+            };
 
-                expandedHeight += 8f + panelHeight;
+            RefreshTestingVisualState();
+            ForceLayoutNow();
+        }
+
+        private void OnSkipToEndClicked()
+        {
+            skipToEnd = !skipToEnd;
+            if (!skipToEnd)
+            {
+                forcedResult = ForcedGameResultMode.Natural;
             }
 
-            var sectionLayoutElement = testingOptionsSectionRoot.GetComponent<LayoutElement>();
-            if (sectionLayoutElement != null)
+            RefreshTestingVisualState();
+            ForceLayoutNow();
+        }
+
+        private void OnForcedResultClicked()
+        {
+            forcedResult = forcedResult switch
             {
-                sectionLayoutElement.minHeight = isExpanded ? expandedHeight : collapsedHeight;
-                sectionLayoutElement.preferredHeight = isExpanded ? expandedHeight : collapsedHeight;
-            }
+                ForcedGameResultMode.Natural => ForcedGameResultMode.ForcedWin,
+                ForcedGameResultMode.ForcedWin => ForcedGameResultMode.ForcedLoss,
+                _ => ForcedGameResultMode.Natural
+            };
 
-            var sectionRect = testingOptionsSectionRoot.GetComponent<RectTransform>();
-            if (sectionRect != null)
-            {
-                LayoutRebuilder.ForceRebuildLayoutImmediate(sectionRect);
-
-                if (sectionRect.parent is RectTransform parentRect)
-                {
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(parentRect);
-
-                    if (parentRect.parent is RectTransform grandparentRect)
-                    {
-                        LayoutRebuilder.ForceRebuildLayoutImmediate(grandparentRect);
-                    }
-                }
-            }
+            RefreshTestingVisualState();
+            ForceLayoutNow();
         }
 
         private void ApplyTestingModeToGameManager()
@@ -520,55 +640,125 @@ namespace FungusToast.Unity.UI.Campaign
                 return;
             }
 
-            if (testingModeToggle == null || !testingModeToggle.isOn)
+            if (!testingEnabled)
             {
                 GameManager.Instance.DisableTestingMode();
                 return;
             }
 
-            int? mycovariantId = null;
+            int? selectedMycoId = null;
             if (mycovariantDropdown != null && mycovariantDropdown.value > 0)
             {
-                int selected = mycovariantDropdown.value - 1;
-                if (selected >= 0 && selected < MycovariantRepository.All.Count)
-                    mycovariantId = MycovariantRepository.All[selected].Id;
+                int index = mycovariantDropdown.value - 1;
+                if (index >= 0 && index < MycovariantRepository.All.Count)
+                {
+                    selectedMycoId = MycovariantRepository.All[index].Id;
+                }
             }
 
-            int fastForwardRounds = 0;
-            if (fastForwardRoundsInput != null && int.TryParse(fastForwardRoundsInput.text, out int parsedRounds))
-                fastForwardRounds = Mathf.Max(0, parsedRounds);
-
-            bool skipToEnd = skipToEndgameToggle != null && skipToEndgameToggle.isOn;
-            GameManager.Instance.EnableTestingMode(mycovariantId, fastForwardRounds, skipToEnd);
+            var forced = skipToEnd ? forcedResult : ForcedGameResultMode.Natural;
+            GameManager.Instance.EnableTestingMode(selectedMycoId, fastForwardRounds, skipToEnd, forced);
         }
 
         private void OnResumeClicked()
         {
             ApplyTestingModeToGameManager();
-            if (GameManager.Instance != null)
-                GameManager.Instance.StartCampaignResume();
-            gameObject.SetActive(false);
+            if (GameManager.Instance == null)
+            {
+                return;
+            }
+
+            GameManager.Instance.StartCampaignResume();
+            bool resumed = GameManager.Instance.CurrentGameMode == GameMode.Campaign
+                           && (GameManager.Instance.Board != null || GameManager.Instance.IsCampaignAwaitingAdaptationSelection());
+
+            if (resumed)
+            {
+                gameObject.SetActive(false);
+            }
+            else
+            {
+                Debug.LogError("UI_CampaignPanelController: Resume failed; keeping panel open.");
+            }
         }
 
         private void OnNewClicked()
         {
             ApplyTestingModeToGameManager();
-            if (GameManager.Instance != null)
-                GameManager.Instance.StartCampaignNew();
-            gameObject.SetActive(false);
+            if (GameManager.Instance == null)
+            {
+                return;
+            }
+
+            GameManager.Instance.StartCampaignNew();
+            if (GameManager.Instance.Board != null && GameManager.Instance.CurrentGameMode == GameMode.Campaign)
+            {
+                gameObject.SetActive(false);
+            }
+            else
+            {
+                Debug.LogError("UI_CampaignPanelController: New campaign failed; keeping panel open.");
+            }
         }
 
         private void OnDeleteClicked()
         {
             CampaignSaveService.Delete();
             RefreshButtonStates();
+            ForceLayoutNow();
         }
 
         private void OnBackClicked()
         {
             gameObject.SetActive(false);
             if (modeSelectPanel != null)
+            {
                 modeSelectPanel.SetActive(true);
+            }
+        }
+
+        private void ForceLayoutNow()
+        {
+            Canvas.ForceUpdateCanvases();
+            if (mainStackRoot != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(mainStackRoot);
+            }
+            if (contentRoot != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
+            }
+        }
+
+        private static string FormatForcedResult(ForcedGameResultMode mode)
+        {
+            return mode switch
+            {
+                ForcedGameResultMode.ForcedWin => "Forced Win",
+                ForcedGameResultMode.ForcedLoss => "Forced Loss",
+                _ => "Natural"
+            };
+        }
+
+        private static void SetButtonLabel(Button button, string text)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var tmp = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (tmp != null)
+            {
+                tmp.text = text;
+                return;
+            }
+
+            var legacy = button.GetComponentInChildren<Text>(true);
+            if (legacy != null)
+            {
+                legacy.text = text;
+            }
         }
     }
 }

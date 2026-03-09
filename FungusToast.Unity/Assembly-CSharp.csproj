@@ -108,6 +108,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\MultiTileSelectionController.cs" />
     <Compile Include="Assets\Scripts\Unity\Campaign\CampaignProgression.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.cs" />
+    <Compile Include="Assets\Scripts\Unity\Campaign\ForcedGameResultMode.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_MoldProfileRoot.cs" />
     <Compile Include="Assets\Scripts\Unity\Services\FastForwardService.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MycovariantDraft\MycovariantCard.cs" />

@@ -23,6 +23,8 @@ namespace FungusToast.Unity
         private readonly Func<CampaignController> getCampaignController;
         private readonly Func<CampaignProgression> getCampaignProgression;
         private readonly Func<Dictionary<(int playerId, int mutationId), List<int>>> getFirstUpgradeRounds;
+        private readonly Func<bool> getTestingModeEnabled;
+        private readonly Func<ForcedGameResultMode> getForcedGameResultMode;
 
         private bool isCountdownActive;
         private int roundsRemainingUntilGameEnd;
@@ -36,7 +38,9 @@ namespace FungusToast.Unity
             Func<GameMode> getGameMode,
             Func<CampaignController> getCampaignController,
             Func<CampaignProgression> getCampaignProgression,
-            Func<Dictionary<(int playerId, int mutationId), List<int>>> getFirstUpgradeRounds)
+            Func<Dictionary<(int playerId, int mutationId), List<int>>> getFirstUpgradeRounds,
+            Func<bool> getTestingModeEnabled,
+            Func<ForcedGameResultMode> getForcedGameResultMode)
         {
             this.ui = ui;
             this.getBoard = getBoard;
@@ -45,6 +49,8 @@ namespace FungusToast.Unity
             this.getCampaignController = getCampaignController;
             this.getCampaignProgression = getCampaignProgression;
             this.getFirstUpgradeRounds = getFirstUpgradeRounds;
+            this.getTestingModeEnabled = getTestingModeEnabled;
+            this.getForcedGameResultMode = getForcedGameResultMode;
         }
 
         /// <summary>
@@ -137,10 +143,38 @@ namespace FungusToast.Unity
                               && campaignController != null
                               && campaignController.HasActiveRun;
             int lostLevelDisplay = isCampaign ? (campaignController.State.levelIndex + 1) : 0;
-            bool humanWon = isCampaign && humanPlayer != null && winner != null
+            int completedLevelDisplay = isCampaign ? (campaignController.State.levelIndex + 1) : 0;
+            bool naturalHumanWon = isCampaign && humanPlayer != null && winner != null
                             && winner.PlayerId == humanPlayer.PlayerId;
+            bool humanWon = ApplyForcedCampaignResultOverride(naturalHumanWon, isCampaign);
             bool finalLevelPreAdvance = isCampaign
                                         && campaignController.State.levelIndex >= (campaignProgression.MaxLevels - 1);
+
+            if (isCampaign && humanWon && !finalLevelPreAdvance)
+            {
+                var summaries = BoardUtilities.GetPlayerBoardSummaries(ranked, board);
+                var snapshot = new CampaignVictorySnapshot
+                {
+                    clearedLevelDisplay = completedLevelDisplay
+                };
+
+                for (int i = 0; i < ranked.Count; i++)
+                {
+                    var player = ranked[i];
+                    var summary = summaries[player.PlayerId];
+                    snapshot.rows.Add(new CampaignVictoryPlayerRow
+                    {
+                        rank = i + 1,
+                        playerId = player.PlayerId,
+                        playerName = player.PlayerName,
+                        livingCells = summary.LivingCells,
+                        deadCells = summary.DeadCells,
+                        toxinCells = summary.ToxinCells
+                    });
+                }
+
+                campaignController.SetPendingVictorySnapshot(snapshot);
+            }
 
             if (isCampaign)
             {
@@ -160,7 +194,8 @@ namespace FungusToast.Unity
                 ui.EndGamePanel.ShowResultsWithOutcome(
                     ranked, board, true, humanWon,
                     finalLevelPreAdvance && humanWon, hasNextLevel,
-                    humanWon ? campaignController.State.levelIndex + 1 : lostLevelDisplay,
+                    humanWon ? completedLevelDisplay : lostLevelDisplay,
+                    completedLevelDisplay,
                     campaignController.State.pendingAdaptationSelection);
             }
             else
@@ -181,6 +216,21 @@ namespace FungusToast.Unity
         private static string ToHex(Color color)
         {
             return ColorUtility.ToHtmlStringRGB(color);
+        }
+
+        private bool ApplyForcedCampaignResultOverride(bool naturalHumanWon, bool isCampaign)
+        {
+            if (!isCampaign || !getTestingModeEnabled())
+            {
+                return naturalHumanWon;
+            }
+
+            return getForcedGameResultMode() switch
+            {
+                ForcedGameResultMode.ForcedWin => true,
+                ForcedGameResultMode.ForcedLoss => false,
+                _ => naturalHumanWon
+            };
         }
     }
 }

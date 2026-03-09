@@ -19,5 +19,24 @@ namespace FungusToast.Unity.Campaign
         public int boardHeight; // persisted board height for current level
         public bool pendingAdaptationSelection; // true when player must pick adaptation before continuing
         public bool campaignCompleted; // true after final victory
+        public CampaignVictorySnapshot pendingVictorySnapshot; // serialized scoreboard snapshot for pending adaptation resumes
+    }
+
+    [Serializable]
+    public class CampaignVictorySnapshot
+    {
+        public int clearedLevelDisplay;
+        public List<CampaignVictoryPlayerRow> rows = new();
+    }
+
+    [Serializable]
+    public class CampaignVictoryPlayerRow
+    {
+        public int rank;
+        public int playerId;
+        public string playerName;
+        public int livingCells;
+        public int deadCells;
+        public int toxinCells;
     }
 }
