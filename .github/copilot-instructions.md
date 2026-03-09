@@ -155,6 +155,7 @@ FungusToast.Core/
 ├── TileState.cs                # Core tile state definitions
 └── docs/                       # Comprehensive documentation
    ├── AI_STRATEGY_AUTHORING.md       # AI strategy sets, themes, and simulation patterns
+   ├── ADAPTATION_HELPER.md          # Adaptation system guide
    ├── ANIMATION_HELPER.md            # Animation timing and trigger map
    ├── BUILD_INSTRUCTIONS.md          # Basic build commands
    ├── DESIGN_PRINCIPLES.md           # Architecture and design philosophy
@@ -163,6 +164,7 @@ FungusToast.Core/
    ├── MYCOVARIANT_HELPER.md          # Mycovariant system guide
    ├── MYCOVARIANT_PR_CHECKLIST.md    # Mycovariant review checklist
    ├── MYCOVARIANT_TECHNICAL_FLOW.md  # Mycovariant technical integration flow
+   ├── MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md # Shared naming rules for abilities
    ├── NEW_MUTATION_HELPER.md         # Adding new mutations guide
    ├── PLAYER_ACTIVITY_LOG_HELPER.md  # Player activity log aggregation semantics
    ├── SIMULATION_HELPER.md           # Detailed simulation commands and debugging
@@ -251,6 +253,15 @@ FungusToast.Unity/
 - Reference: `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`
 - Integration: Update `MutationRepository.cs`
 
+**Adding New Mycovariants:**
+- Primary location: `FungusToast.Core/Mycovariants/Factories/`
+- Reference: `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`
+
+**Adding New Adaptations:**
+- Primary location: `FungusToast.Core/Campaign/`
+- Reference: `FungusToast.Core/docs/ADAPTATION_HELPER.md`
+- Naming: `FungusToast.Core/docs/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`
+
 **Adding New AI Strategies:**
 - Primary location: `FungusToast.Core/AI/`
 - Registration: Update `AIRoster.cs`
@@ -331,9 +342,11 @@ FungusToast.Unity/
 - `FungusToast.Core/docs/SIMULATION_HELPER.md`: Simulation CLI options, output locations, parquet export, tracking checklist.
 - `FungusToast.Core/docs/AI_STRATEGY_AUTHORING.md`: Strategy sets/themes and reproducible balance-testing patterns.
 - `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`: Mutation authoring workflow with tracking and UI integration points.
+- `FungusToast.Core/docs/ADAPTATION_HELPER.md`: Adaptation authoring workflow, campaign persistence touchpoints, and validation steps.
 - `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`: Index page for Mycovariant authoring and implementation docs.
 - `FungusToast.Core/docs/MYCOVARIANT_AUTHORING_STYLE.md`: Style and clarity rules for Mycovariant Description/FlavorText.
 - `FungusToast.Core/docs/MYCOVARIANT_TECHNICAL_FLOW.md`: End-to-end technical flow for Core/Simulation/Unity draft integration.
+- `FungusToast.Core/docs/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`: Shared naming constraints and naming patterns for Mutations, Mycovariants, and Adaptations.
 - `FungusToast.Core/docs/MYCOVARIANT_PR_CHECKLIST.md`: PR readiness checklist for Mycovariant work.
 - `FungusToast.Core/docs/PLAYER_ACTIVITY_LOG_HELPER.md`: Human activity log segment/aggregation semantics.
 - `FungusToast.Core/docs/CAMPAIGN_HELPER.md`: Campaign mode vision, progression/configuration touchpoints, and adaptation guidance.
@@ -345,6 +358,9 @@ FungusToast.Unity/
 - `FungusToast.Core/docs/DESIGN_PRINCIPLES.md`: Technical architecture context and terminology.
 - `FungusToast.Analytics/README.md`: Parquet analytics workflow and recurring balance-pass procedure.
 - `FungusToast.Unity/.github/instructions/project-overview.instructions.md`: Unity front-end project overview for Unity-only tasks.
+
+#### New Documentation
+Whenever generating new .md files, add a reference to the documentation in copilot-instructions.md so it is more easily discoverable.
 
 ### Code Quality and Conventions
 - **Nullable reference types:** Enabled
@@ -402,3 +418,4 @@ dotnet run -- --help
 - File size typically 20KB+ for single games
 - Console shows "Simulation complete." message
 - No error or exception messages
+
