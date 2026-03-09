@@ -44,6 +44,7 @@ namespace FungusToast.Unity.Phases
         {
 
             DeathEngine.ExecuteDeathCycle(board, failedGrowthsByPlayerId, rng, simulationObserver);
+            board.OnPostDecayPhase();
 
             yield return new WaitForSeconds(UIEffectConstants.TimeBeforeDecayRender);
 

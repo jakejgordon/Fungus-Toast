@@ -311,6 +311,47 @@ namespace FungusToast.Core.Board
             Players[playerId].ControlledTileIds.Add(tileId);
             Players[playerId].SetStartingTile(tileId);
         }
+        public bool TryRelocateStartingSpore(Player player, int targetTileId)
+        {
+            if (player == null || !player.StartingTileId.HasValue)
+            {
+                return false;
+            }
+
+            int currentTileId = player.StartingTileId.Value;
+            if (currentTileId == targetTileId)
+            {
+                return false;
+            }
+
+            var currentTile = GetTileById(currentTileId);
+            var targetTile = GetTileById(targetTileId);
+            if (currentTile == null || targetTile == null || targetTile.IsOccupied)
+            {
+                return false;
+            }
+
+            var currentCell = currentTile.FungalCell;
+            if (currentCell == null
+                || currentCell.OwnerPlayerId != player.PlayerId
+                || !currentCell.IsAlive
+                || !currentCell.IsResistant)
+            {
+                return false;
+            }
+
+            RemoveCellInternal(currentTileId, removeControl: true);
+
+            var cell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: targetTileId, source: GrowthSource.InitialSpore, lastOwnerPlayerId: null);
+            cell.MakeResistant();
+            cell.SetBirthRound(CurrentRound);
+            targetTile.PlaceFungalCell(cell);
+            tileIdToCell[targetTileId] = cell;
+            player.ControlledTileIds.Add(targetTileId);
+            player.RelocateStartingTile(targetTileId);
+
+            return true;
+        }
         public FungalCell? GetCell(int tileId) { tileIdToCell.TryGetValue(tileId, out var cell); return cell; }
         public bool SpawnSporeForPlayer(Player player, int tileId, GrowthSource source)
         {

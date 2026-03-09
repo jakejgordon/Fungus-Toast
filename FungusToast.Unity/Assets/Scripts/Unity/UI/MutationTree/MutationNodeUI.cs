@@ -170,9 +170,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             // COST CALC
-            int upgradeCost = isSurge
-                ? mutation.GetSurgeActivationCost(currentLevel)
-                : mutation.PointsPerUpgrade;
+            int upgradeCost = player.GetMutationPointCost(mutation);
 
             bool canAfford = player.MutationPoints >= upgradeCost;
 
@@ -314,9 +312,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 bool isMaxed = currentLevel >= mutation.MaxLevel;
                 if (!isMaxed)
                 {
-                    int cost = mutation.IsSurge
-                        ? mutation.GetSurgeActivationCost(currentLevel)
-                        : mutation.PointsPerUpgrade;
+                    int cost = player.GetMutationPointCost(mutation);
                     uiManager.ShowProjectedCost(cost);
                 }
             }
@@ -418,9 +414,7 @@ namespace FungusToast.Unity.UI.MutationTree
                     return false;
             }
 
-            int cost = mutation.IsSurge
-                ? mutation.GetSurgeActivationCost(currentLevel)
-                : mutation.PointsPerUpgrade;
+            int cost = player.GetMutationPointCost(mutation);
             return player.MutationPoints >= cost;
         }
 
@@ -451,9 +445,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (currentLevel < mutation.MaxLevel)
             {
-                int cost = mutation.IsSurge
-                    ? mutation.GetSurgeActivationCost(currentLevel)
-                    : mutation.PointsPerUpgrade;
+                int cost = player.GetMutationPointCost(mutation);
 
                 sb.AppendLine($"<b>Cost:</b> {cost} mutation point{(cost == 1 ? "" : "s")}");
                 sb.AppendLine();
@@ -559,9 +551,7 @@ namespace FungusToast.Unity.UI.MutationTree
             int currentLevel = player.GetMutationLevel(mutation.Id);
             bool isSurge = mutation.IsSurge;
             bool isSurgeActive = isSurge && player.IsSurgeActive(mutation.Id);
-            int upgradeCost = isSurge
-                ? mutation.GetSurgeActivationCost(currentLevel)
-                : mutation.PointsPerUpgrade;
+            int upgradeCost = player.GetMutationPointCost(mutation);
             bool canAfford = player.MutationPoints >= upgradeCost;
             bool isLocked = false;
             foreach (var prereq in mutation.Prerequisites)

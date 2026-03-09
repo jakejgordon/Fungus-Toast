@@ -492,8 +492,7 @@ namespace FungusToast.Core.AI
                     continue;
                 }
 
-                int currentLevel = player.GetMutationLevel(surge.Id);
-                int cost = surge.GetSurgeActivationCost(currentLevel);
+                int cost = player.GetMutationPointCost(surge);
                 if (player.MutationPoints < cost)
                 {
                     continue;
@@ -538,8 +537,7 @@ namespace FungusToast.Core.AI
                     var surge = allMutations.FirstOrDefault(m => m.Id == surgeId && m.IsSurge);
                     if (surge != null && player.GetMutationLevel(surge.Id) > 0)
                     {
-                        int currentLevel = player.GetMutationLevel(surge.Id);
-                        int cost = surge.GetSurgeActivationCost(currentLevel);
+                        int cost = player.GetMutationPointCost(surge);
                         
                         // Bank if we're close to affording the surge
                         if (player.MutationPoints + roundsUntilSurge * player.GetMutationPointIncome() >= cost &&
@@ -579,8 +577,7 @@ namespace FungusToast.Core.AI
                 {
                     if (!player.IsSurgeActive(surge.Id))
                     {
-                        int currentLevel = player.GetMutationLevel(surge.Id);
-                        int cost = surge.GetSurgeActivationCost(currentLevel);
+                        int cost = player.GetMutationPointCost(surge);
 
                         if (player.MutationPoints >= cost)
                         {
@@ -597,8 +594,7 @@ namespace FungusToast.Core.AI
                 {
                     if (!player.IsSurgeActive(surge.Id))
                     {
-                        int currentLevel = player.GetMutationLevel(surge.Id);
-                        int cost = surge.GetSurgeActivationCost(currentLevel);
+                        int cost = player.GetMutationPointCost(surge);
 
                         if (player.MutationPoints >= cost)
                         {

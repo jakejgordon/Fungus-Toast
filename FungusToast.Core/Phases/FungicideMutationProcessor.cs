@@ -1,4 +1,5 @@
 using FungusToast.Core.Board;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Events;
@@ -103,6 +104,12 @@ namespace FungusToast.Core.Phases
                     continue;
 
                 float killChance = owner.GetMutationEffect(MutationType.ToxinKillAura);
+                if (owner.HasAdaptation(AdaptationIds.MycotoxicHalo))
+                {
+                    killChance += AdaptationEffectProcessor.MycotoxicHaloKillAuraBonus;
+                }
+
+                killChance = Math.Clamp(killChance, 0f, 1f);
                 if (killChance <= 0f)
                     continue;
 

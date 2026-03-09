@@ -374,6 +374,7 @@ namespace FungusToast.Unity
             AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
 
             playerInitializer.InitializePlayers(Board, players, humanPlayers, out humanPlayer, playerCount);
+            ApplyCampaignAdaptations();
             SubscribeToPlayerMutationEvents();
 
             persistentPoolManager = new MycovariantPoolManager();
@@ -453,6 +454,19 @@ namespace FungusToast.Unity
             foreach (var p in Board.Players)
             {
                 p.MutationsChanged += OnPlayerMutationsChanged;
+            }
+        }
+
+        private void ApplyCampaignAdaptations()
+        {
+            if (CurrentGameMode != GameMode.Campaign || campaignController == null || humanPlayer == null)
+            {
+                return;
+            }
+
+            foreach (var adaptation in campaignController.GetSelectedAdaptations())
+            {
+                humanPlayer.TryAddAdaptation(adaptation);
             }
         }
 

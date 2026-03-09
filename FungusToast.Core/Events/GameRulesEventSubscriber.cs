@@ -69,6 +69,11 @@ namespace FungusToast.Core.Events
                 MutationEffectCoordinator.OnDecayPhase(board, players, failedGrowthsByPlayerId, rng, observer);
             };
 
+            board.PostDecayPhase += () =>
+            {
+                AdaptationEffectProcessor.OnPostDecayPhase(board, players, rng, observer);
+            };
+
             // Necrophytic Bloom (initial burst on activation)
             board.NecrophyticBloomActivatedEvent += () =>
             {

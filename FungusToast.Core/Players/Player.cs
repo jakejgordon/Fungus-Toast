@@ -1,5 +1,6 @@
 ﻿using FungusToast.Core.AI;
 using FungusToast.Core.Board;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Death;
@@ -30,6 +31,8 @@ namespace FungusToast.Core.Players
 
         public List<PlayerMycovariant> PlayerMycovariants { get; } = new();
 
+        public List<PlayerAdaptation> PlayerAdaptations { get; } = new();
+
         public List<int> ControlledTileIds { get; } = new();
 
         public bool IsActive { get; set; }
@@ -50,6 +53,11 @@ namespace FungusToast.Core.Players
         {
             if (!StartingTileId.HasValue) // Only set once
                 StartingTileId = tileId;
+        }
+
+        public void RelocateStartingTile(int tileId)
+        {
+            StartingTileId = tileId;
         }
 
         // ------------------- SURGE STATE TRACKING -------------------
@@ -158,6 +166,41 @@ namespace FungusToast.Core.Players
             PlayerMutations.Values.Where(pm => pm.Mutation.Type == type)
                                   .Sum(pm => pm.GetEffect());
 
+        public PlayerAdaptation? GetAdaptation(string adaptationId) =>
+            PlayerAdaptations.FirstOrDefault(x => string.Equals(x.Adaptation.Id, adaptationId, StringComparison.Ordinal));
+
+        public bool HasAdaptation(string adaptationId) => GetAdaptation(adaptationId) != null;
+
+        public bool TryAddAdaptation(AdaptationDefinition adaptation)
+        {
+            if (adaptation == null || HasAdaptation(adaptation.Id))
+            {
+                return false;
+            }
+
+            PlayerAdaptations.Add(new PlayerAdaptation(PlayerId, adaptation));
+            return true;
+        }
+
+        public int GetMutationPointCost(Mutation mutation)
+        {
+            if (!mutation.IsSurge)
+            {
+                return mutation.PointsPerUpgrade;
+            }
+
+            int currentLevel = GetMutationLevel(mutation.Id);
+            int activationCost = mutation.GetSurgeActivationCost(currentLevel);
+
+            if (HasAdaptation(AdaptationIds.HyphalEconomy)
+                && mutation.Category == MutationCategory.MycelialSurges)
+            {
+                activationCost -= 1;
+            }
+
+            return Math.Max(0, activationCost);
+        }
+
         /* ---------------- Upgrade API ------------------------- */
 
         public event Action<Player>? MutationsChanged; // Unified event for any mutation level change (manual, surge, auto, regression)
@@ -185,10 +228,9 @@ namespace FungusToast.Core.Players
                 // Surge logic
                 if (IsSurgeActive(mutation.Id)) return false; // Can't upgrade/activate if active
 
-                int currentLevel = pm.CurrentLevel;
-                int activationCost = mutation.GetSurgeActivationCost(currentLevel);
+                int activationCost = GetMutationPointCost(mutation);
 
-                if (MutationPoints < activationCost || currentLevel >= mutation.MaxLevel)
+                if (MutationPoints < activationCost || pm.CurrentLevel >= mutation.MaxLevel)
                     return false;
 
                 // Enforce one-round delay after prereqs met (only for non-root mutations)
@@ -299,7 +341,7 @@ namespace FungusToast.Core.Players
 
             int currentLevel = GetMutationLevel(mut.Id);
             int cost = mut.IsSurge
-                ? mut.GetSurgeActivationCost(currentLevel)
+                ? GetMutationPointCost(mut)
                 : mut.PointsPerUpgrade;
 
             // Enforce one-round delay after prereqs met (only for non-root mutations)
