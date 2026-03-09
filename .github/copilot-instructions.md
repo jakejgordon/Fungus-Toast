@@ -308,6 +308,7 @@ FungusToast.Unity/
 
 ### Copilot Productivity Rules (Read First)
 - Prefer working in `FungusToast.Core` for game rules, data models, and deterministic logic. Only use `FungusToast.Unity` for view/controllers and input.
+- No magic constants: balance values, durations, percentages, UI timings, and other tunable numbers must live in the appropriate constants file such as `GameBalance`, `MycovariantGameBalance`, `AdaptationGameBalance`, or `UIEffectConstants`. Reuse the same constant in both gameplay logic and user-facing copy/description text.
 - Avoid adding new `MonoBehaviour` singletons or `GameManager.Instance` reach-ins. Prefer passing references or adding lightweight facades in `GameUIManager`.
 - **Service extraction pattern:** When `GameManager` grows, extract cohesive clusters into service classes under `Services/` (see `EndgameService`, `MutationPointService`). Services receive dependencies via `Func<>` delegates, not direct `GameManager` references.
 - **Tooltip system:** Use `ITooltipContentProvider` + `TooltipTrigger` for all tooltips. Do not create new standalone tooltip implementations. See `UI_ARCHITECTURE_HELPER.md`.

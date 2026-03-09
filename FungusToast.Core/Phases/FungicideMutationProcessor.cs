@@ -106,7 +106,7 @@ namespace FungusToast.Core.Phases
                 float killChance = owner.GetMutationEffect(MutationType.ToxinKillAura);
                 if (owner.HasAdaptation(AdaptationIds.MycotoxicHalo))
                 {
-                    killChance += AdaptationEffectProcessor.MycotoxicHaloKillAuraBonus;
+                    killChance += AdaptationGameBalance.MycotoxicHaloOrthogonalKillChanceBonus;
                 }
 
                 killChance = Math.Clamp(killChance, 0f, 1f);

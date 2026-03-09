@@ -1,5 +1,6 @@
 using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
+using FungusToast.Core.Config;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Players;
 using System;
@@ -10,15 +11,13 @@ namespace FungusToast.Core.Phases
 {
     public static class AdaptationEffectProcessor
     {
-        public const float MycotoxicHaloKillAuraBonus = 0.02f;
-
         public static void OnPostDecayPhase(
             GameBoard board,
             List<Player> players,
             Random rng,
             ISimulationObserver observer)
         {
-            if (board.CurrentRound != 10)
+            if (board.CurrentRound != AdaptationGameBalance.ConidialRelayTriggerRound)
             {
                 return;
             }

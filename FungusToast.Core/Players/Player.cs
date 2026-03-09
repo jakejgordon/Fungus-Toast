@@ -195,7 +195,7 @@ namespace FungusToast.Core.Players
             if (HasAdaptation(AdaptationIds.HyphalEconomy)
                 && mutation.Category == MutationCategory.MycelialSurges)
             {
-                activationCost -= 1;
+                activationCost -= AdaptationGameBalance.HyphalEconomySurgeCostReduction;
             }
 
             return Math.Max(0, activationCost);
