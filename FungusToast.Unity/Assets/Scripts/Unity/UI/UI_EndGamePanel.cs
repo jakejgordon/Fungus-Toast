@@ -636,6 +636,7 @@ namespace FungusToast.Unity.UI
             postVictorySkipToEndButton = CreatePostVictorySettingButton(postVictoryTestingRoot.transform, "UI_PostVictorySkipToEnd", OnPostVictorySkipToEndToggled);
             postVictoryForcedResultButton = CreatePostVictorySettingButton(postVictoryTestingRoot.transform, "UI_PostVictoryForcedResult", OnPostVictoryForcedResultCycle);
 
+            EnsurePostVictoryControlOrder();
             UpdatePostVictoryTestingVisibility(false);
         }
 
@@ -816,11 +817,13 @@ namespace FungusToast.Unity.UI
             if (!visible)
             {
                 postVictoryTestingRoot.SetActive(false);
+                EnsurePostVictoryControlOrder();
                 return;
             }
 
             SyncPostVictoryTestingDefaultsFromGameManager();
             postVictoryTestingRoot.SetActive(true);
+            EnsurePostVictoryControlOrder();
 
             if (postVictoryFastForwardButton != null)
                 postVictoryFastForwardButton.gameObject.SetActive(postVictoryTestingEnabled);
@@ -840,6 +843,45 @@ namespace FungusToast.Unity.UI
             UpdatePostVictoryTestingLayoutHeight();
             UpdatePostVictoryTestingLabels();
             ApplyControlReadabilityOverrides();
+        }
+
+        private void EnsurePostVictoryControlOrder()
+        {
+            if (playAgainButton == null || postVictoryTestingRoot == null)
+            {
+                return;
+            }
+
+            var parent = playAgainButton.transform.parent;
+            if (parent == null)
+            {
+                return;
+            }
+
+            if (continueButton != null && continueButton.transform.parent != parent)
+            {
+                continueButton.transform.SetParent(parent, false);
+            }
+
+            if (exitButton != null && exitButton.transform.parent != parent)
+            {
+                exitButton.transform.SetParent(parent, false);
+            }
+
+            int nextIndex = playAgainButton.transform.GetSiblingIndex() + 1;
+            postVictoryTestingRoot.transform.SetSiblingIndex(nextIndex);
+            nextIndex++;
+
+            if (continueButton != null)
+            {
+                continueButton.transform.SetSiblingIndex(nextIndex);
+                nextIndex++;
+            }
+
+            if (exitButton != null)
+            {
+                exitButton.transform.SetSiblingIndex(nextIndex);
+            }
         }
 
         private void SyncPostVictoryTestingDefaultsFromGameManager()
