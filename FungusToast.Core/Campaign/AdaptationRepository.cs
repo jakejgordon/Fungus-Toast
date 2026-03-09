@@ -14,9 +14,9 @@ namespace FungusToast.Core.Campaign
             new ReadOnlyCollection<AdaptationDefinition>(
                 new List<AdaptationDefinition>
                 {
-                    new AdaptationDefinition("adaptation_1", "Adaptation 1", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_2", "Adaptation 2", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_3", "Adaptation 3", "Placeholder adaptation with no gameplay effect yet."),
+                    new AdaptationDefinition("adaptation_1", "Conidial Relay", "At the end of round 10, your starting spore takes flight and lands on a random unoccupied tile."),
+                    new AdaptationDefinition("adaptation_2", "Hyphal Economy", "For the rest of the campaign, your Mycelial Surges cost 1 fewer mutation point to activate."),
+                    new AdaptationDefinition("adaptation_3", "Mycotoxic Halo", "For the rest of the campaign, your toxins gain +2.0% chance to kill orthogonally adjacent living cells during decay. This stacks with Mycotoxin Potentiation."),
                     new AdaptationDefinition("adaptation_4", "Adaptation 4", "Placeholder adaptation with no gameplay effect yet."),
                     new AdaptationDefinition("adaptation_5", "Adaptation 5", "Placeholder adaptation with no gameplay effect yet."),
                     new AdaptationDefinition("adaptation_6", "Adaptation 6", "Placeholder adaptation with no gameplay effect yet."),
