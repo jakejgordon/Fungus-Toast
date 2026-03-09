@@ -10,8 +10,9 @@ namespace FungusToast.Core.Campaign
         public string Id { get; }
         public string Name { get; }
         public string Description { get; }
+        public string IconId { get; }
 
-        public AdaptationDefinition(string id, string name, string description)
+        public AdaptationDefinition(string id, string name, string description, string? iconId = null)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Adaptation id is required.", nameof(id));
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Adaptation name is required.", nameof(name));
@@ -19,6 +20,7 @@ namespace FungusToast.Core.Campaign
             Id = id;
             Name = name;
             Description = description ?? string.Empty;
+            IconId = string.IsNullOrWhiteSpace(iconId) ? id : iconId;
         }
     }
 }

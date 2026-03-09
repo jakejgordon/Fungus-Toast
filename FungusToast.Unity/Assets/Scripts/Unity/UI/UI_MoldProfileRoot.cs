@@ -29,6 +29,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private RectTransform adaptationSectionRoot;
         [SerializeField] private TextMeshProUGUI adaptationHeaderText;
         [SerializeField] private RectTransform adaptationIconGridRoot;
+        [SerializeField] private RectTransform adaptationSectionHostRoot;
         [SerializeField] private string adaptationHeaderLabel = "Adaptations";
 
         [Header("Formatting / Visuals")]
@@ -44,6 +45,8 @@ namespace FungusToast.Unity.UI
         private const string SurgeName = "UI_GrowthPreviewCellSurgeText";
         private const float AdaptationHeaderScale = 1.12f;
         private const int AdaptationIconSize = 40;
+        private const int AdaptationIconColumns = 4;
+        private const float AdaptationSectionSpacing = 8f;
 
         private readonly List<GameObject> adaptationIconObjects = new();
 
@@ -269,6 +272,14 @@ namespace FungusToast.Unity.UI
             {
                 CreateAdaptationIcon(trackedPlayer.PlayerAdaptations[i].Adaptation);
             }
+
+            UpdateAdaptationLayoutMetrics(trackedPlayer.PlayerAdaptations.Count);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(adaptationSectionRoot);
+
+            if (transform is RectTransform rootRect)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(rootRect);
+            }
         }
 
         private void ClearAdaptationIcons()
@@ -297,11 +308,36 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            var hostRoot = ResolveAdaptationSectionHostRoot(rootTransform);
             adaptationSectionRoot = CreateSectionRoot(rootTransform);
+            if (hostRoot != null)
+            {
+                adaptationSectionRoot.SetSiblingIndex(hostRoot.GetSiblingIndex() + 1);
+            }
+
             adaptationHeaderText = CreateSectionHeader(adaptationSectionRoot, adaptationHeaderLabel);
             adaptationIconGridRoot = CreateIconGrid(adaptationSectionRoot);
 
             ApplyAdaptationSectionStyle();
+        }
+
+        private RectTransform ResolveAdaptationSectionHostRoot(RectTransform fallbackRoot)
+        {
+            if (adaptationSectionHostRoot != null)
+            {
+                return adaptationSectionHostRoot;
+            }
+
+            for (int i = 0; i < fallbackRoot.childCount; i++)
+            {
+                if (fallbackRoot.GetChild(i) is RectTransform child && child.name == "UI_GrowthPreviewRoot")
+                {
+                    adaptationSectionHostRoot = child;
+                    break;
+                }
+            }
+
+            return adaptationSectionHostRoot;
         }
 
         private void ApplyAdaptationSectionStyle()
@@ -374,7 +410,7 @@ namespace FungusToast.Unity.UI
 
             var layoutGroup = section.GetComponent<VerticalLayoutGroup>();
             layoutGroup.padding = new RectOffset(10, 10, 8, 10);
-            layoutGroup.spacing = 8f;
+            layoutGroup.spacing = AdaptationSectionSpacing;
             layoutGroup.childAlignment = TextAnchor.UpperLeft;
             layoutGroup.childControlWidth = true;
             layoutGroup.childControlHeight = true;
@@ -386,7 +422,8 @@ namespace FungusToast.Unity.UI
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var layout = section.GetComponent<LayoutElement>();
-            layout.preferredHeight = 84f;
+            layout.preferredHeight = -1f;
+            layout.minHeight = 0f;
             layout.flexibleHeight = 0f;
 
             return rect;
@@ -424,7 +461,7 @@ namespace FungusToast.Unity.UI
             grid.spacing = new Vector2(8f, 8f);
             grid.childAlignment = TextAnchor.UpperLeft;
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = 4;
+            grid.constraintCount = AdaptationIconColumns;
             grid.startAxis = GridLayoutGroup.Axis.Horizontal;
 
             var layout = gridObject.GetComponent<LayoutElement>();
@@ -432,6 +469,31 @@ namespace FungusToast.Unity.UI
             layout.flexibleHeight = 0f;
 
             return rect;
+        }
+
+        private void UpdateAdaptationLayoutMetrics(int iconCount)
+        {
+            if (adaptationIconGridRoot == null || adaptationSectionRoot == null)
+            {
+                return;
+            }
+
+            int rows = Mathf.Max(1, Mathf.CeilToInt(iconCount / (float)AdaptationIconColumns));
+            float gridHeight = (rows * AdaptationIconSize) + ((rows - 1) * 8f);
+
+            var gridLayout = adaptationIconGridRoot.GetComponent<LayoutElement>();
+            if (gridLayout != null)
+            {
+                gridLayout.preferredHeight = gridHeight;
+                gridLayout.minHeight = gridHeight;
+            }
+
+            var sectionLayout = adaptationSectionRoot.GetComponent<LayoutElement>();
+            if (sectionLayout != null)
+            {
+                sectionLayout.preferredHeight = 8f + 28f + AdaptationSectionSpacing + gridHeight + 10f;
+                sectionLayout.minHeight = sectionLayout.preferredHeight;
+            }
         }
 
         private static bool IsCardinal(GrowthPreviewDirection dir)

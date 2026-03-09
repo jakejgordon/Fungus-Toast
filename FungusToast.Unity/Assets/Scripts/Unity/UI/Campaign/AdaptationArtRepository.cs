@@ -16,13 +16,14 @@ namespace FungusToast.Unity.UI.Campaign
                 return GetFallbackIcon();
             }
 
-            if (Cache.TryGetValue(adaptation.Id, out var cached))
+            string cacheKey = adaptation.IconId;
+            if (Cache.TryGetValue(cacheKey, out var cached))
             {
                 return cached;
             }
 
-            var sprite = BuildIcon(adaptation.Id);
-            Cache[adaptation.Id] = sprite;
+            var sprite = BuildIcon(cacheKey);
+            Cache[cacheKey] = sprite;
             return sprite;
         }
 
@@ -64,13 +65,13 @@ namespace FungusToast.Unity.UI.Campaign
 
             switch (adaptationId)
             {
-                case AdaptationIds.ConidialRelay:
+                case "conidial_relay":
                     DrawConidialRelay(texture, accent, highlight);
                     break;
-                case AdaptationIds.HyphalEconomy:
+                case "hyphal_economy":
                     DrawHyphalEconomy(texture, accent, highlight);
                     break;
-                case AdaptationIds.MycotoxicHalo:
+                case "mycotoxic_halo":
                     DrawMycotoxicHalo(texture, accent, highlight);
                     break;
                 default:
@@ -86,9 +87,9 @@ namespace FungusToast.Unity.UI.Campaign
         {
             return adaptationId switch
             {
-                AdaptationIds.ConidialRelay => UIStyleTokens.Surface.PanelSecondary,
-                AdaptationIds.HyphalEconomy => Color.Lerp(UIStyleTokens.Accent.Moss, UIStyleTokens.Surface.PanelPrimary, 0.45f),
-                AdaptationIds.MycotoxicHalo => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Surface.PanelPrimary, 0.4f),
+                "conidial_relay" => UIStyleTokens.Surface.PanelSecondary,
+                "hyphal_economy" => Color.Lerp(UIStyleTokens.Accent.Moss, UIStyleTokens.Surface.PanelPrimary, 0.45f),
+                "mycotoxic_halo" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Surface.PanelPrimary, 0.4f),
                 _ => UIStyleTokens.Surface.PanelPrimary
             };
         }
@@ -97,9 +98,9 @@ namespace FungusToast.Unity.UI.Campaign
         {
             return adaptationId switch
             {
-                AdaptationIds.ConidialRelay => UIStyleTokens.State.Info,
-                AdaptationIds.HyphalEconomy => UIStyleTokens.State.Success,
-                AdaptationIds.MycotoxicHalo => UIStyleTokens.State.Warning,
+                "conidial_relay" => UIStyleTokens.State.Info,
+                "hyphal_economy" => UIStyleTokens.State.Success,
+                "mycotoxic_halo" => UIStyleTokens.State.Warning,
                 _ => UIStyleTokens.Text.Primary
             };
         }
