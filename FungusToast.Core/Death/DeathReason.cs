@@ -14,6 +14,7 @@ namespace FungusToast.Core.Death
         JettingMycelium,
         Infested,
         Poisoned,
+        MycotoxicLash,
         PutrefactiveCascade,
         PutrefactiveCascadePoison,
         CytolyticBurst

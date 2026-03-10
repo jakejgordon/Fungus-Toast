@@ -43,9 +43,11 @@ namespace FungusToast.Unity.UI
         private const string ArrowName = "UI_GrowthPreviewCellArrowImage";
         private const string PercentName = "UI_GrowthPreviewCellPercentText";
         private const string SurgeName = "UI_GrowthPreviewCellSurgeText";
-        private const float AdaptationHeaderScale = 1.12f;
-        private const int AdaptationIconSize = 40;
-        private const int AdaptationIconColumns = 4;
+        private const float AdaptationHeaderFontSize = 18f;
+        private const float AdaptationHeaderHeight = 24f;
+        private const int AdaptationIconSize = 24;
+        private const int AdaptationIconMaxColumns = 7;
+        private const float AdaptationIconSpacing = 4f;
         private const float AdaptationSectionSpacing = 8f;
 
         private readonly List<GameObject> adaptationIconObjects = new();
@@ -360,8 +362,51 @@ namespace FungusToast.Unity.UI
                 adaptationHeaderText.text = adaptationHeaderLabel;
                 adaptationHeaderText.color = UIStyleTokens.Text.Primary;
                 adaptationHeaderText.fontStyle = FontStyles.Bold;
-                ApplyTextScale(adaptationHeaderText, AdaptationHeaderScale);
+                adaptationHeaderText.enableAutoSizing = false;
+                adaptationHeaderText.fontSize = AdaptationHeaderFontSize;
             }
+
+            UpdateAdaptationGridConstraint();
+        }
+
+        private void UpdateAdaptationGridConstraint()
+        {
+            if (adaptationIconGridRoot == null)
+            {
+                return;
+            }
+
+            var grid = adaptationIconGridRoot.GetComponent<GridLayoutGroup>();
+            if (grid == null)
+            {
+                return;
+            }
+
+            grid.cellSize = new Vector2(AdaptationIconSize, AdaptationIconSize);
+            grid.spacing = new Vector2(AdaptationIconSpacing, AdaptationIconSpacing);
+            grid.constraintCount = GetAdaptationColumnCount();
+        }
+
+        private int GetAdaptationColumnCount()
+        {
+            float availableWidth = 0f;
+            if (adaptationIconGridRoot != null)
+            {
+                availableWidth = adaptationIconGridRoot.rect.width;
+            }
+
+            if (availableWidth <= 0f && adaptationSectionRoot != null)
+            {
+                availableWidth = Mathf.Max(0f, adaptationSectionRoot.rect.width - 20f);
+            }
+
+            if (availableWidth <= 0f)
+            {
+                return AdaptationIconMaxColumns;
+            }
+
+            int columns = Mathf.FloorToInt((availableWidth + AdaptationIconSpacing) / (AdaptationIconSize + AdaptationIconSpacing));
+            return Mathf.Clamp(columns, 1, AdaptationIconMaxColumns);
         }
 
         private void CreateAdaptationIcon(AdaptationDefinition adaptation)
@@ -435,11 +480,12 @@ namespace FungusToast.Unity.UI
             headerObject.transform.SetParent(parent, false);
 
             var layout = headerObject.GetComponent<LayoutElement>();
-            layout.preferredHeight = 28f;
+            layout.preferredHeight = AdaptationHeaderHeight;
 
             var text = headerObject.GetComponent<TextMeshProUGUI>();
             text.text = label;
-            text.fontSize = 20f;
+            text.fontSize = AdaptationHeaderFontSize;
+            text.enableAutoSizing = false;
             text.enableWordWrapping = false;
             text.alignment = TextAlignmentOptions.Left;
 
@@ -458,10 +504,10 @@ namespace FungusToast.Unity.UI
 
             var grid = gridObject.GetComponent<GridLayoutGroup>();
             grid.cellSize = new Vector2(AdaptationIconSize, AdaptationIconSize);
-            grid.spacing = new Vector2(8f, 8f);
+            grid.spacing = new Vector2(AdaptationIconSpacing, AdaptationIconSpacing);
             grid.childAlignment = TextAnchor.UpperLeft;
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = AdaptationIconColumns;
+            grid.constraintCount = AdaptationIconMaxColumns;
             grid.startAxis = GridLayoutGroup.Axis.Horizontal;
 
             var layout = gridObject.GetComponent<LayoutElement>();
@@ -478,8 +524,11 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            int rows = Mathf.Max(1, Mathf.CeilToInt(iconCount / (float)AdaptationIconColumns));
-            float gridHeight = (rows * AdaptationIconSize) + ((rows - 1) * 8f);
+            UpdateAdaptationGridConstraint();
+
+            int columns = GetAdaptationColumnCount();
+            int rows = Mathf.Max(1, Mathf.CeilToInt(iconCount / (float)columns));
+            float gridHeight = (rows * AdaptationIconSize) + ((rows - 1) * AdaptationIconSpacing);
 
             var gridLayout = adaptationIconGridRoot.GetComponent<LayoutElement>();
             if (gridLayout != null)
@@ -491,7 +540,7 @@ namespace FungusToast.Unity.UI
             var sectionLayout = adaptationSectionRoot.GetComponent<LayoutElement>();
             if (sectionLayout != null)
             {
-                sectionLayout.preferredHeight = 8f + 28f + AdaptationSectionSpacing + gridHeight + 10f;
+                sectionLayout.preferredHeight = 8f + AdaptationHeaderHeight + AdaptationSectionSpacing + gridHeight + 10f;
                 sectionLayout.minHeight = sectionLayout.preferredHeight;
             }
         }

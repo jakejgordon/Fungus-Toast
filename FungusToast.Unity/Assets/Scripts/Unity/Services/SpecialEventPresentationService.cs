@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using FungusToast.Core.Events;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Grid;
@@ -67,6 +68,13 @@ namespace FungusToast.Unity
                 while (pendingEvents.Count > 0)
                 {
                     var specialEvent = pendingEvents.Dequeue();
+
+                    if (specialEvent.EventKind == SpecialBoardEventKind.MycotoxicLashTriggered)
+                    {
+                        yield return PresentMycotoxicLashBatch(CollectMycotoxicLashBatch(specialEvent));
+                        continue;
+                    }
+
                     yield return PresentSpecialEvent(specialEvent);
                 }
             }
@@ -98,6 +106,51 @@ namespace FungusToast.Unity
                         specialEvent.DestinationTileId);
                     break;
             }
+        }
+
+        private List<SpecialBoardEventArgs> CollectMycotoxicLashBatch(SpecialBoardEventArgs firstEvent)
+        {
+            var batch = new List<SpecialBoardEventArgs> { firstEvent };
+
+            while (pendingEvents.Count > 0)
+            {
+                var nextEvent = pendingEvents.Peek();
+                if (nextEvent.EventKind != SpecialBoardEventKind.MycotoxicLashTriggered || nextEvent.PlayerId != firstEvent.PlayerId)
+                {
+                    break;
+                }
+
+                batch.Add(pendingEvents.Dequeue());
+            }
+
+            return batch;
+        }
+
+        private IEnumerator PresentMycotoxicLashBatch(IReadOnlyList<SpecialBoardEventArgs> events)
+        {
+            if (events == null || events.Count == 0)
+            {
+                yield break;
+            }
+
+            var uiManager = getGameUIManager();
+            var gridVisualizer = getGridVisualizer();
+            if (uiManager == null || gridVisualizer == null)
+            {
+                yield break;
+            }
+
+            var affectedTileIds = events
+                .SelectMany(e => e.AffectedTileIds ?? new List<int>())
+                .Distinct()
+                .ToList();
+            if (affectedTileIds.Count == 0)
+            {
+                yield break;
+            }
+
+            uiManager.GameLogRouter?.RecordMycotoxicLashKills(events[0].PlayerId, affectedTileIds.Count);
+            yield return gridVisualizer.PlayMycotoxicLashAnimation(affectedTileIds);
         }
     }
 }

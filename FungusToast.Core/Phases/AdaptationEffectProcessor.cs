@@ -43,8 +43,15 @@ namespace FungusToast.Core.Phases
                 return;
             }
 
-            board.KillFungalCell(targetTile.FungalCell, DeathReason.Poisoned, owner.PlayerId, eventArgs.TileId);
-            observer.RecordAttributedKill(owner.PlayerId, DeathReason.Poisoned, 1);
+            board.KillFungalCell(targetTile.FungalCell, DeathReason.MycotoxicLash, owner.PlayerId, eventArgs.TileId);
+            observer.RecordAttributedKill(owner.PlayerId, DeathReason.MycotoxicLash, 1);
+            board.OnSpecialBoardEventTriggered(
+                new SpecialBoardEventArgs(
+                    SpecialBoardEventKind.MycotoxicLashTriggered,
+                    owner.PlayerId,
+                    eventArgs.TileId,
+                    targetTile.TileId,
+                    new[] { targetTile.TileId }));
         }
 
         public static void OnPostDecayPhase(

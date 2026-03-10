@@ -397,6 +397,7 @@ namespace FungusToast.Unity.UI
             DeathReason.JettingMycelium           => "Jetting Mycelium",
             DeathReason.Infested                  => "Infested",
             DeathReason.Poisoned                  => "Poisoned",
+            DeathReason.MycotoxicLash             => "Mycotoxic Lash",
             DeathReason.PutrefactiveCascade       => "Putrefactive Cascade",
             DeathReason.PutrefactiveCascadePoison => "Putrefactive Cascade Poison",
             DeathReason.Unknown                   => "Unknown",

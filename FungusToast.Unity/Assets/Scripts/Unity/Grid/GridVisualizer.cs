@@ -104,6 +104,121 @@ namespace FungusToast.Unity.Grid
             => _startingSporeAnimator != null ? _startingSporeAnimator.Play(startingTileIds) : null;
         public IEnumerator PlayConidialRelayAnimation(int playerId, int sourceTileId, int destinationTileId)
             => _conidialRelayAnimator != null ? _conidialRelayAnimator.Play(playerId, sourceTileId, destinationTileId) : null;
+        public IEnumerator PlayMycotoxicLashAnimation(IReadOnlyList<int> tileIds)
+        {
+            if (board == null || tileIds == null || tileIds.Count == 0)
+            {
+                yield break;
+            }
+
+            var states = new List<(Vector3Int pos, bool hasMold, Color moldColor, bool hasOverlay, Color overlayColor)>();
+            var seenTileIds = new HashSet<int>();
+
+            for (int i = 0; i < tileIds.Count; i++)
+            {
+                int tileId = tileIds[i];
+                if (!seenTileIds.Add(tileId))
+                {
+                    continue;
+                }
+
+                var (x, y) = board.GetXYFromTileId(tileId);
+                var pos = new Vector3Int(x, y, 0);
+                bool hasMold = moldTilemap != null && moldTilemap.HasTile(pos);
+                bool hasOverlay = overlayTilemap != null && overlayTilemap.HasTile(pos);
+                if (!hasMold && !hasOverlay)
+                {
+                    continue;
+                }
+
+                states.Add((
+                    pos,
+                    hasMold,
+                    hasMold ? moldTilemap.GetColor(pos) : Color.white,
+                    hasOverlay,
+                    hasOverlay ? overlayTilemap.GetColor(pos) : Color.white));
+            }
+
+            if (states.Count == 0)
+            {
+                yield break;
+            }
+
+            float totalDuration = UIEffectConstants.MycotoxicLashAnimationDurationSeconds;
+            float halfDuration = totalDuration * 0.5f;
+
+            BeginAnimation();
+            try
+            {
+                float elapsed = 0f;
+                while (elapsed < halfDuration)
+                {
+                    elapsed += Time.deltaTime;
+                    float t = Mathf.Clamp01(elapsed / halfDuration);
+                    float eased = 1f - Mathf.Pow(1f - t, 2f);
+                    ApplyMycotoxicLashColors(states, eased, true);
+                    yield return null;
+                }
+
+                elapsed = 0f;
+                while (elapsed < halfDuration)
+                {
+                    elapsed += Time.deltaTime;
+                    float t = Mathf.Clamp01(elapsed / halfDuration);
+                    float eased = 1f - Mathf.Pow(1f - t, 2f);
+                    ApplyMycotoxicLashColors(states, eased, false);
+                    yield return null;
+                }
+            }
+            finally
+            {
+                for (int i = 0; i < states.Count; i++)
+                {
+                    var state = states[i];
+                    if (state.hasMold && moldTilemap != null && moldTilemap.HasTile(state.pos))
+                    {
+                        moldTilemap.SetColor(state.pos, state.moldColor);
+                    }
+
+                    if (state.hasOverlay && overlayTilemap != null && overlayTilemap.HasTile(state.pos))
+                    {
+                        overlayTilemap.SetColor(state.pos, state.overlayColor);
+                    }
+                }
+
+                EndAnimation();
+            }
+        }
+
+        private void ApplyMycotoxicLashColors(
+            IReadOnlyList<(Vector3Int pos, bool hasMold, Color moldColor, bool hasOverlay, Color overlayColor)> states,
+            float t,
+            bool darkening)
+        {
+            for (int i = 0; i < states.Count; i++)
+            {
+                var state = states[i];
+                if (state.hasMold && moldTilemap != null && moldTilemap.HasTile(state.pos))
+                {
+                    Color darkestMold = new Color(0f, 0f, 0f, state.moldColor.a);
+                    moldTilemap.SetColor(
+                        state.pos,
+                        darkening
+                            ? Color.Lerp(state.moldColor, darkestMold, t)
+                            : Color.Lerp(darkestMold, state.moldColor, t));
+                }
+
+                if (state.hasOverlay && overlayTilemap != null && overlayTilemap.HasTile(state.pos))
+                {
+                    Color darkestOverlay = new Color(0f, 0f, 0f, state.overlayColor.a);
+                    overlayTilemap.SetColor(
+                        state.pos,
+                        darkening
+                            ? Color.Lerp(state.overlayColor, darkestOverlay, t)
+                            : Color.Lerp(darkestOverlay, state.overlayColor, t));
+                }
+            }
+        }
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
         {

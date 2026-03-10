@@ -80,6 +80,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\GameStart\UI_HotseatHumanCountButton.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameLog\UI_GameLogPanel.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\GameStart\UI_PlayerCountButton.cs" />
+    <Compile Include="Assets\Scripts\Unity\Services\SpecialEventPresentationService.cs" />
     <Compile Include="Assets\Scripts\Unity\Phases\DecayPhaseRunner.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationNodeUI.cs" />
     <Compile Include="Assets\Scripts\Unity\Services\PlayerInitializer.cs" />
@@ -108,6 +109,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\GrowthPreviewDirection.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MultiTileSelectionController.cs" />
     <Compile Include="Assets\Scripts\Unity\Campaign\CampaignProgression.cs" />
+    <Compile Include="Assets\Scripts\Unity\Grid\Animation\ConidialRelayAnimator.cs" />
     <Compile Include="Assets\Scripts\Unity\Grid\GridVisualizer.cs" />
     <Compile Include="Assets\Scripts\Unity\Campaign\ForcedGameResultMode.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\UI_MoldProfileRoot.cs" />

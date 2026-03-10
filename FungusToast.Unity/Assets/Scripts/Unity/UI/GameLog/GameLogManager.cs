@@ -354,7 +354,7 @@ namespace FungusToast.Unity.UI.GameLog
                 var reasons = agg.Deaths
                     .Where(kv => kv.Value > 0)
                     .OrderByDescending(kv => kv.Value)
-                    .Select(kv => kv.Key + " " + kv.Value)
+                    .Select(kv => DeathReasonName(kv.Key) + " " + kv.Value)
                     .ToList();
                 blocks.Add("Deaths " + totalDeaths + " (" + string.Join(", ", reasons) + ")");
             }
@@ -492,6 +492,25 @@ namespace FungusToast.Unity.UI.GameLog
             _ => src.ToString()
         };
 
+        private static string DeathReasonName(DeathReason reason) => reason switch
+        {
+            DeathReason.Age => "Old Age",
+            DeathReason.Randomness => "Random Death",
+            DeathReason.PutrefactiveMycotoxin => "Putrefactive Mycotoxin",
+            DeathReason.SporicidalBloom => "Sporicidal Bloom",
+            DeathReason.MycotoxinPotentiation => "Mycotoxin Potentiation",
+            DeathReason.HyphalVectoring => "Hyphal Vectoring",
+            DeathReason.JettingMycelium => "Jetting Mycelium",
+            DeathReason.Infested => "Infested",
+            DeathReason.Poisoned => "Poisoned",
+            DeathReason.MycotoxicLash => "Mycotoxic Lash",
+            DeathReason.PutrefactiveCascade => "Putrefactive Cascade",
+            DeathReason.PutrefactiveCascadePoison => "Putrefactive Cascade Poison",
+            DeathReason.CytolyticBurst => "Cytolytic Burst",
+            DeathReason.Unknown => "Unknown",
+            _ => reason.ToString()
+        };
+
         public void SetActiveHumanPlayer(int newHumanPlayerId, GameBoard currentBoard)
         {
             if (newHumanPlayerId == activePlayerId) return;
@@ -612,6 +631,20 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned, bool deprecated = true) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }
         public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations) { }
         public void RecordConidialRelayRelocation(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Starting cell relocated via Conidial Relay", GameLogCategory.Lucky); }
+        public void RecordMycotoxicLashKills(int playerId, int cellsKilled)
+        {
+            if (!IsHuman(playerId) || cellsKilled <= 0)
+            {
+                return;
+            }
+
+            AddPlayerEvent(
+                playerId,
+                cellsKilled == 1
+                    ? "Mycotoxic Lash killed 1 cell"
+                    : $"Mycotoxic Lash killed {cellsKilled} cells",
+                GameLogCategory.Lucky);
+        }
         public void RecordCreepingMoldMove(int playerId) { }
         public void RecordCreepingMoldToxinJump(int playerId) { }
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }
