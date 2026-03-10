@@ -937,6 +937,7 @@ namespace FungusToast.Unity.UI
 
             if (!postVictoryTestingEnabled)
             {
+                postVictoryFastForwardRounds = 0;
                 postVictorySkipToEnd = false;
                 postVictoryForcedResult = ForcedGameResultMode.Natural;
                 postVictoryForcedMycovariantId = null;
@@ -1089,6 +1090,7 @@ namespace FungusToast.Unity.UI
 
             if (!postVictoryTestingEnabled)
             {
+                manager.DisableTestingMode();
                 return;
             }
 
