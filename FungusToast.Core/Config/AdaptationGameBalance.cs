@@ -5,5 +5,6 @@ namespace FungusToast.Core.Config
         public const int ConidialRelayTriggerRound = 10;
         public const int HyphalEconomySurgeCostReduction = 1;
         public const float MycotoxicHaloOrthogonalKillChanceBonus = 0.02f;
+        public const float MycotoxicLashToxinDropKillChance = 0.035f;
     }
 }

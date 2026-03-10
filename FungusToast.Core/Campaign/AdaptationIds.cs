@@ -5,5 +5,6 @@ namespace FungusToast.Core.Campaign
         public const string ConidialRelay = "adaptation_1";
         public const string HyphalEconomy = "adaptation_2";
         public const string MycotoxicHalo = "adaptation_3";
+        public const string MycotoxicLash = "adaptation_4";
     }
 }

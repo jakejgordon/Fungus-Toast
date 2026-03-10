@@ -14,6 +14,8 @@ namespace FungusToast.Core.Campaign
     {
         private static readonly string mycotoxicHaloPercent =
             (AdaptationGameBalance.MycotoxicHaloOrthogonalKillChanceBonus * 100f).ToString("0.0", CultureInfo.InvariantCulture);
+        private static readonly string mycotoxicLashPercent =
+            (AdaptationGameBalance.MycotoxicLashToxinDropKillChance * 100f).ToString("0.0", CultureInfo.InvariantCulture);
 
         private static readonly ReadOnlyCollection<AdaptationDefinition> all =
             new ReadOnlyCollection<AdaptationDefinition>(
@@ -34,7 +36,11 @@ namespace FungusToast.Core.Campaign
                         "Mycotoxic Halo",
                         $"For the rest of the campaign, your toxins gain +{mycotoxicHaloPercent}% chance to kill orthogonally adjacent living cells during decay. This stacks with Mycotoxin Potentiation.",
                         "mycotoxic_halo"),
-                    new AdaptationDefinition("adaptation_4", "Adaptation 4", "Placeholder adaptation with no gameplay effect yet."),
+                    new AdaptationDefinition(
+                        "adaptation_4",
+                        "Mycotoxic Lash",
+                        $"For the rest of the campaign, each new toxin drop has a {mycotoxicLashPercent}% chance to instantly kill the first adjacent enemy living cell.",
+                        "mycotoxic_lash"),
                     new AdaptationDefinition("adaptation_5", "Adaptation 5", "Placeholder adaptation with no gameplay effect yet."),
                     new AdaptationDefinition("adaptation_6", "Adaptation 6", "Placeholder adaptation with no gameplay effect yet."),
                     new AdaptationDefinition("adaptation_7", "Adaptation 7", "Placeholder adaptation with no gameplay effect yet."),
