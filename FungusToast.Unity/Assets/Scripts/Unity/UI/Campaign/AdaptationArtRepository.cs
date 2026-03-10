@@ -74,6 +74,9 @@ namespace FungusToast.Unity.UI.Campaign
                 case "mycotoxic_halo":
                     DrawMycotoxicHalo(texture, accent, highlight);
                     break;
+                case "mycotoxic_lash":
+                    DrawMycotoxicLash(texture, accent, highlight);
+                    break;
                 default:
                     DrawFallback(texture, accent, highlight);
                     break;
@@ -90,6 +93,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "conidial_relay" => UIStyleTokens.Surface.PanelSecondary,
                 "hyphal_economy" => Color.Lerp(UIStyleTokens.Accent.Moss, UIStyleTokens.Surface.PanelPrimary, 0.45f),
                 "mycotoxic_halo" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Surface.PanelPrimary, 0.4f),
+                "mycotoxic_lash" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Surface.PanelPrimary, 0.52f),
                 _ => UIStyleTokens.Surface.PanelPrimary
             };
         }
@@ -101,6 +105,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "conidial_relay" => UIStyleTokens.State.Info,
                 "hyphal_economy" => UIStyleTokens.State.Success,
                 "mycotoxic_halo" => UIStyleTokens.State.Warning,
+                "mycotoxic_lash" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.State.Danger, 0.45f),
                 _ => UIStyleTokens.Text.Primary
             };
         }
@@ -146,6 +151,16 @@ namespace FungusToast.Unity.UI.Campaign
             FillCircle(texture, 30, 20, 2, highlight);
             FillCircle(texture, 20, 10, 2, highlight);
             FillCircle(texture, 20, 30, 2, highlight);
+        }
+
+        private static void DrawMycotoxicLash(Texture2D texture, Color accent, Color highlight)
+        {
+            FillCircle(texture, 20, 10, 4, highlight);
+            DrawLine(texture, 20, 14, 20, 26, accent, 2);
+            DrawLine(texture, 20, 26, 13, 32, accent, 2);
+            DrawLine(texture, 20, 26, 27, 32, accent, 2);
+            DrawLine(texture, 10, 20, 15, 20, highlight, 1);
+            DrawLine(texture, 25, 20, 30, 20, highlight, 1);
         }
 
         private static void DrawFallback(Texture2D texture, Color accent, Color highlight)
