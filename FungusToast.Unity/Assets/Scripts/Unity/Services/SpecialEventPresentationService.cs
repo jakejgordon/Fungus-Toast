@@ -88,6 +88,7 @@ namespace FungusToast.Unity
             switch (specialEvent.EventKind)
             {
                 case SpecialBoardEventKind.ConidialRelayTriggered:
+                    uiManager.GameLogRouter?.RecordConidialRelayRelocation(specialEvent.PlayerId);
                     uiManager.PhaseBanner?.Show(
                         "Conidial Relay triggered!",
                         UIEffectConstants.ConidialRelayBannerHoldSeconds);

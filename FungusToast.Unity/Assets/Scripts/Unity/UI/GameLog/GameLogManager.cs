@@ -611,6 +611,7 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained) { if (IsHuman(playerId) && targetLevelsGained > 0 && !string.IsNullOrEmpty(targetMutationName)) AddFreeUpgrade(playerId, "Ontogenic Regression", targetMutationName, targetLevelsGained); }
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned, bool deprecated = true) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }
         public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations) { }
+        public void RecordConidialRelayRelocation(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Starting cell relocated via Conidial Relay", GameLogCategory.Lucky); }
         public void RecordCreepingMoldMove(int playerId) { }
         public void RecordCreepingMoldToxinJump(int playerId) { }
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }
