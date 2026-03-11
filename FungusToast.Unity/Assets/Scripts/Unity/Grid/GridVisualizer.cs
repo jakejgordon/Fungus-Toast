@@ -145,26 +145,35 @@ namespace FungusToast.Unity.Grid
             }
 
             float totalDuration = UIEffectConstants.MycotoxicLashAnimationDurationSeconds;
-            float halfDuration = totalDuration * 0.5f;
+            float fadeToBlackDuration = totalDuration * UIEffectConstants.MycotoxicLashFadeToBlackPortion;
+            float blackHoldDuration = totalDuration * UIEffectConstants.MycotoxicLashBlackHoldPortion;
+            float restoreDuration = Mathf.Max(0f, totalDuration - fadeToBlackDuration - blackHoldDuration);
 
             BeginAnimation();
             try
             {
                 float elapsed = 0f;
-                while (elapsed < halfDuration)
+                while (elapsed < fadeToBlackDuration)
                 {
                     elapsed += Time.deltaTime;
-                    float t = Mathf.Clamp01(elapsed / halfDuration);
-                    float eased = 1f - Mathf.Pow(1f - t, 2f);
+                    float t = fadeToBlackDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / fadeToBlackDuration);
+                    float eased = 1f - Mathf.Pow(1f - t, 3f);
                     ApplyMycotoxicLashColors(states, eased, true);
                     yield return null;
                 }
 
+                ApplyMycotoxicLashColors(states, 1f, true);
+
+                if (blackHoldDuration > 0f)
+                {
+                    yield return new WaitForSeconds(blackHoldDuration);
+                }
+
                 elapsed = 0f;
-                while (elapsed < halfDuration)
+                while (elapsed < restoreDuration)
                 {
                     elapsed += Time.deltaTime;
-                    float t = Mathf.Clamp01(elapsed / halfDuration);
+                    float t = restoreDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / restoreDuration);
                     float eased = 1f - Mathf.Pow(1f - t, 2f);
                     ApplyMycotoxicLashColors(states, eased, false);
                     yield return null;

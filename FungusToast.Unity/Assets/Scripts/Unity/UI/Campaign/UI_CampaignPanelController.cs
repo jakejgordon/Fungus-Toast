@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.Campaign;
 using TMPro;
@@ -39,6 +40,8 @@ namespace FungusToast.Unity.UI.Campaign
         private Button fastForwardButton;
         private Button skipToEndButton;
         private Button forcedResultButton;
+        private GameObject adaptationRow;
+        private TMP_Dropdown adaptationDropdown;
 
         private bool testingEnabled;
         private bool skipToEnd;
@@ -212,6 +215,7 @@ namespace FungusToast.Unity.UI.Campaign
             fastForwardButton = EnsureSettingButton(testingCard.transform, "UI_FastForwardButton", OnFastForwardClicked);
             skipToEndButton = EnsureSettingButton(testingCard.transform, "UI_SkipToEndButton", OnSkipToEndClicked);
             forcedResultButton = EnsureSettingButton(testingCard.transform, "UI_ForcedResultButton", OnForcedResultClicked);
+            adaptationRow = EnsureAdaptationRow(testingCard.transform);
 
             if (testingToggleButton != null)
             {
@@ -232,6 +236,10 @@ namespace FungusToast.Unity.UI.Campaign
             if (forcedResultButton != null)
             {
                 forcedResultButton.transform.SetSiblingIndex(4);
+            }
+            if (adaptationRow != null)
+            {
+                adaptationRow.transform.SetSiblingIndex(5);
             }
         }
 
@@ -426,6 +434,76 @@ namespace FungusToast.Unity.UI.Campaign
             return row;
         }
 
+        private GameObject EnsureAdaptationRow(Transform parent)
+        {
+            var existing = parent.Find("UI_CampaignAdaptationRow");
+            if (existing != null)
+            {
+                var existingDropdown = existing.GetComponentInChildren<TMP_Dropdown>(true);
+                if (existingDropdown != null)
+                {
+                    adaptationDropdown = existingDropdown;
+                }
+
+                return existing.gameObject;
+            }
+
+            var row = new GameObject("UI_CampaignAdaptationRow", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            row.transform.SetParent(parent, false);
+
+            var rowLayout = row.GetComponent<VerticalLayoutGroup>();
+            rowLayout.childAlignment = TextAnchor.UpperLeft;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = false;
+            rowLayout.spacing = 4f;
+            rowLayout.padding = new RectOffset(2, 2, 0, 0);
+
+            var rowElement = row.GetComponent<LayoutElement>();
+            rowElement.minHeight = 80f;
+            rowElement.preferredHeight = 86f;
+
+            var labelObj = new GameObject("UI_CampaignAdaptationLabel", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            labelObj.transform.SetParent(row.transform, false);
+            var label = labelObj.GetComponent<TextMeshProUGUI>();
+            label.text = "Forced Adaptation";
+            label.color = UIStyleTokens.Text.Primary;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 15f;
+            label.fontSizeMax = 20f;
+            label.alignment = TextAlignmentOptions.Left;
+
+            var labelElement = labelObj.GetComponent<LayoutElement>();
+            labelElement.minHeight = 22f;
+            labelElement.preferredHeight = 26f;
+
+            var template = FindDropdownTemplate();
+            if (template != null)
+            {
+                var dropdownObj = Instantiate(template.gameObject, row.transform);
+                dropdownObj.name = "UI_CampaignAdaptationDropdown";
+                adaptationDropdown = dropdownObj.GetComponent<TMP_Dropdown>();
+
+                var dropdownElement = dropdownObj.GetComponent<LayoutElement>();
+                if (dropdownElement == null)
+                {
+                    dropdownElement = dropdownObj.AddComponent<LayoutElement>();
+                }
+
+                dropdownElement.minHeight = 40f;
+                dropdownElement.preferredHeight = 44f;
+                dropdownElement.minWidth = 460f;
+                dropdownElement.preferredWidth = 470f;
+            }
+            else
+            {
+                Debug.LogWarning("UI_CampaignPanelController: No TMP_Dropdown template found; adaptation selector unavailable.");
+            }
+
+            return row;
+        }
+
         private TMP_Dropdown FindDropdownTemplate()
         {
             if (testingOptionsSectionRoot != null)
@@ -460,6 +538,7 @@ namespace FungusToast.Unity.UI.Campaign
             UIStyleTokens.Button.SetButtonLabelColor(forcedResultButton, UIStyleTokens.Button.TextDefault);
 
             ApplyDropdownReadability(mycovariantDropdown);
+            ApplyDropdownReadability(adaptationDropdown);
         }
 
         private static void ApplyDropdownReadability(TMP_Dropdown dropdown)
@@ -537,6 +616,22 @@ namespace FungusToast.Unity.UI.Campaign
             mycovariantDropdown.value = 0;
             mycovariantDropdown.RefreshShownValue();
             ApplyDropdownReadability(mycovariantDropdown);
+
+            if (adaptationDropdown != null)
+            {
+                var adaptationOptions = new List<string> { "Select Adaptation..." };
+                for (int i = 0; i < AdaptationRepository.All.Count; i++)
+                {
+                    var adaptation = AdaptationRepository.All[i];
+                    adaptationOptions.Add($"{adaptation.Name} (ID: {adaptation.Id})");
+                }
+
+                adaptationDropdown.ClearOptions();
+                adaptationDropdown.AddOptions(adaptationOptions);
+                adaptationDropdown.value = 0;
+                adaptationDropdown.RefreshShownValue();
+                ApplyDropdownReadability(adaptationDropdown);
+            }
         }
 
         private void RefreshTestingVisualState()
@@ -561,9 +656,19 @@ namespace FungusToast.Unity.UI.Campaign
                 forcedResultButton.gameObject.SetActive(testingEnabled && skipToEnd);
             }
 
+            if (adaptationRow != null)
+            {
+                adaptationRow.SetActive(testingEnabled && skipToEnd);
+            }
+
             if (mycovariantDropdown != null)
             {
                 mycovariantDropdown.interactable = testingEnabled;
+            }
+
+            if (adaptationDropdown != null)
+            {
+                adaptationDropdown.interactable = testingEnabled && skipToEnd;
             }
 
             SetButtonLabel(testingToggleButton, $"Development Testing: {(testingEnabled ? "On" : "Off")}");
@@ -575,6 +680,11 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 forcedResult = ForcedGameResultMode.Natural;
                 SetButtonLabel(forcedResultButton, "Forced Result: Natural");
+                if (adaptationDropdown != null)
+                {
+                    adaptationDropdown.value = 0;
+                    adaptationDropdown.RefreshShownValue();
+                }
             }
         }
 
@@ -656,8 +766,18 @@ namespace FungusToast.Unity.UI.Campaign
                 }
             }
 
+            string selectedAdaptationId = string.Empty;
+            if (skipToEnd && adaptationDropdown != null && adaptationDropdown.value > 0)
+            {
+                int index = adaptationDropdown.value - 1;
+                if (index >= 0 && index < AdaptationRepository.All.Count)
+                {
+                    selectedAdaptationId = AdaptationRepository.All[index].Id;
+                }
+            }
+
             var forced = skipToEnd ? forcedResult : ForcedGameResultMode.Natural;
-            GameManager.Instance.EnableTestingMode(selectedMycoId, fastForwardRounds, skipToEnd, forced);
+            GameManager.Instance.EnableTestingMode(selectedMycoId, fastForwardRounds, skipToEnd, forced, selectedAdaptationId);
         }
 
         private void OnResumeClicked()

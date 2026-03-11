@@ -39,7 +39,7 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         "adaptation_4",
                         "Mycotoxic Lash",
-                        $"For the rest of the campaign, each new toxin drop has a {mycotoxicLashPercent}% chance to instantly kill the first adjacent enemy living cell.",
+                        $"For the rest of the campaign, each new toxin drop has a {mycotoxicLashPercent}% chance to instantly kill the first orthogonally adjacent enemy living cell.",
                         "mycotoxic_lash"),
                     new AdaptationDefinition("adaptation_5", "Adaptation 5", "Placeholder adaptation with no gameplay effect yet."),
                     new AdaptationDefinition("adaptation_6", "Adaptation 6", "Placeholder adaptation with no gameplay effect yet."),

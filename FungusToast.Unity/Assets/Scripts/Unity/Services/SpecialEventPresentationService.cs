@@ -6,6 +6,7 @@ using FungusToast.Core.Events;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI;
+using UnityEngine;
 
 namespace FungusToast.Unity
 {
@@ -149,8 +150,20 @@ namespace FungusToast.Unity
                 yield break;
             }
 
+            uiManager.PhaseBanner?.Show(
+                BuildMycotoxicLashBannerText(affectedTileIds.Count),
+                0f);
             uiManager.GameLogRouter?.RecordMycotoxicLashKills(events[0].PlayerId, affectedTileIds.Count);
             yield return gridVisualizer.PlayMycotoxicLashAnimation(affectedTileIds);
+        }
+
+        private static string BuildMycotoxicLashBannerText(int cellsKilled)
+        {
+            string lashMessage = cellsKilled == 1
+                ? "Mycotoxic Lash kills 1 cell!"
+                : $"Mycotoxic Lash kills {cellsKilled} cells!";
+            string colorHex = ColorUtility.ToHtmlStringRGB(UIStyleTokens.State.Danger);
+            return $"Decay Phase Begins!\n<size=60%><color=#{colorHex}>{lashMessage}</color></size>";
         }
     }
 }

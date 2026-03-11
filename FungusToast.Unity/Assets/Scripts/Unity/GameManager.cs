@@ -43,6 +43,7 @@ namespace FungusToast.Unity
         [Header("Testing Mode")] 
         public bool testingModeEnabled = false; 
         public int? testingMycovariantId = null; 
+        public string testingForcedAdaptationId = string.Empty;
         public bool testingModeForceHumanFirst = true; 
         public ForcedGameResultMode testingForcedGameResult = ForcedGameResultMode.Natural;
         public int fastForwardRounds =0; 
@@ -318,7 +319,10 @@ namespace FungusToast.Unity
                 return false;
             }
 
-            var choices = campaignController.GetAdaptationDraftChoices(rng, 3);
+            var choices = campaignController.GetAdaptationDraftChoices(
+                rng,
+                3,
+                testingModeEnabled ? testingForcedAdaptationId : string.Empty);
             if (choices.Count == 0)
             {
                 Debug.Log("[GameManager] No remaining adaptations; advancing campaign level without reward.");
@@ -906,10 +910,12 @@ namespace FungusToast.Unity
             int? mycovariantId,
             int fastForwardRounds =0,
             bool skipToEndgameAfterFastForward = false,
-            ForcedGameResultMode forcedGameResult = ForcedGameResultMode.Natural)
+            ForcedGameResultMode forcedGameResult = ForcedGameResultMode.Natural,
+            string forcedAdaptationId = "")
         {
             testingModeEnabled = true;
             testingMycovariantId = mycovariantId;
+            testingForcedAdaptationId = forcedAdaptationId ?? string.Empty;
             testingModeForceHumanFirst = mycovariantId.HasValue;
             testingForcedGameResult = forcedGameResult;
             this.fastForwardRounds = fastForwardRounds;
@@ -920,6 +926,7 @@ namespace FungusToast.Unity
         {
             testingModeEnabled = false;
             testingMycovariantId = null;
+            testingForcedAdaptationId = string.Empty;
             testingModeForceHumanFirst = false;
             testingForcedGameResult = ForcedGameResultMode.Natural;
             fastForwardRounds =0;

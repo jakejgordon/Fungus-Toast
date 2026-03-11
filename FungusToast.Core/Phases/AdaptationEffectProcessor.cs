@@ -37,7 +37,11 @@ namespace FungusToast.Core.Phases
                 return;
             }
 
-            var targetTile = board.GetAdjacentLivingTiles(eventArgs.TileId, excludePlayerId: owner.PlayerId).FirstOrDefault();
+            var targetTile = board.GetOrthogonalNeighbors(eventArgs.TileId)
+                .FirstOrDefault(tile =>
+                    tile.FungalCell != null
+                    && tile.FungalCell.IsAlive
+                    && tile.FungalCell.OwnerPlayerId != owner.PlayerId);
             if (targetTile?.FungalCell == null)
             {
                 return;

@@ -129,7 +129,7 @@ namespace FungusToast.Unity.Campaign
             CampaignSaveService.Save(State);
         }
 
-        public List<AdaptationDefinition> GetAdaptationDraftChoices(System.Random random, int count)
+        public List<AdaptationDefinition> GetAdaptationDraftChoices(System.Random random, int count, string forcedAdaptationId = "")
         {
             if (State == null)
             {
@@ -146,6 +146,12 @@ namespace FungusToast.Unity.Campaign
                 return remaining;
             }
 
+            AdaptationDefinition forcedAdaptation = null;
+            if (!string.IsNullOrWhiteSpace(forcedAdaptationId))
+            {
+                forcedAdaptation = remaining.FirstOrDefault(x => string.Equals(x.Id, forcedAdaptationId, StringComparison.Ordinal));
+            }
+
             if (count <= 0 || count >= remaining.Count)
             {
                 return remaining;
@@ -156,6 +162,22 @@ namespace FungusToast.Unity.Campaign
             {
                 int swapIndex = random.Next(i + 1);
                 (remaining[i], remaining[swapIndex]) = (remaining[swapIndex], remaining[i]);
+            }
+
+            if (forcedAdaptation != null)
+            {
+                remaining.RemoveAll(x => string.Equals(x.Id, forcedAdaptation.Id, StringComparison.Ordinal));
+
+                var forcedChoices = remaining.Take(Math.Max(0, count - 1)).ToList();
+                forcedChoices.Add(forcedAdaptation);
+
+                for (int i = forcedChoices.Count - 1; i > 0; i--)
+                {
+                    int swapIndex = random.Next(i + 1);
+                    (forcedChoices[i], forcedChoices[swapIndex]) = (forcedChoices[swapIndex], forcedChoices[i]);
+                }
+
+                return forcedChoices;
             }
 
             return remaining.Take(count).ToList();
