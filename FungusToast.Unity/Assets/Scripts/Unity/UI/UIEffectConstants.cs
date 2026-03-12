@@ -72,19 +72,14 @@ namespace FungusToast.Unity.UI
         public const float ConidialRelayTotalDurationSeconds = 1.5f;
 
         /// <summary>
-        /// Total duration of the Mycotoxic Lash dead-cell blackout pulse.
+        /// Total duration of the Mycotoxic Lash special-death emphasis step.
         /// </summary>
         public const float MycotoxicLashAnimationDurationSeconds = 1f;
 
         /// <summary>
-        /// Portion of the Mycotoxic Lash animation spent fading the killed cells to black.
+        /// Portion of the Mycotoxic Lash emphasis step spent fading the killed cells to black.
         /// </summary>
         public const float MycotoxicLashFadeToBlackPortion = 0.2f;
-
-        /// <summary>
-        /// Portion of the Mycotoxic Lash animation spent holding the killed cells fully black.
-        /// </summary>
-        public const float MycotoxicLashBlackHoldPortion = 0.2f;
 
         /// <summary>
         /// Duration of the source emphasis before the relay launches.

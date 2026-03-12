@@ -146,8 +146,7 @@ namespace FungusToast.Unity.Grid
 
             float totalDuration = UIEffectConstants.MycotoxicLashAnimationDurationSeconds;
             float fadeToBlackDuration = totalDuration * UIEffectConstants.MycotoxicLashFadeToBlackPortion;
-            float blackHoldDuration = totalDuration * UIEffectConstants.MycotoxicLashBlackHoldPortion;
-            float restoreDuration = Mathf.Max(0f, totalDuration - fadeToBlackDuration - blackHoldDuration);
+            float blackHoldDuration = Mathf.Max(0f, totalDuration - fadeToBlackDuration);
 
             BeginAnimation();
             try
@@ -158,51 +157,26 @@ namespace FungusToast.Unity.Grid
                     elapsed += Time.deltaTime;
                     float t = fadeToBlackDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / fadeToBlackDuration);
                     float eased = 1f - Mathf.Pow(1f - t, 3f);
-                    ApplyMycotoxicLashColors(states, eased, true);
+                    ApplyMycotoxicLashColors(states, eased);
                     yield return null;
                 }
 
-                ApplyMycotoxicLashColors(states, 1f, true);
+                ApplyMycotoxicLashColors(states, 1f);
 
                 if (blackHoldDuration > 0f)
                 {
                     yield return new WaitForSeconds(blackHoldDuration);
                 }
-
-                elapsed = 0f;
-                while (elapsed < restoreDuration)
-                {
-                    elapsed += Time.deltaTime;
-                    float t = restoreDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / restoreDuration);
-                    float eased = 1f - Mathf.Pow(1f - t, 2f);
-                    ApplyMycotoxicLashColors(states, eased, false);
-                    yield return null;
-                }
             }
             finally
             {
-                for (int i = 0; i < states.Count; i++)
-                {
-                    var state = states[i];
-                    if (state.hasMold && moldTilemap != null && moldTilemap.HasTile(state.pos))
-                    {
-                        moldTilemap.SetColor(state.pos, state.moldColor);
-                    }
-
-                    if (state.hasOverlay && overlayTilemap != null && overlayTilemap.HasTile(state.pos))
-                    {
-                        overlayTilemap.SetColor(state.pos, state.overlayColor);
-                    }
-                }
-
                 EndAnimation();
             }
         }
 
         private void ApplyMycotoxicLashColors(
             IReadOnlyList<(Vector3Int pos, bool hasMold, Color moldColor, bool hasOverlay, Color overlayColor)> states,
-            float t,
-            bool darkening)
+            float t)
         {
             for (int i = 0; i < states.Count; i++)
             {
@@ -210,21 +184,13 @@ namespace FungusToast.Unity.Grid
                 if (state.hasMold && moldTilemap != null && moldTilemap.HasTile(state.pos))
                 {
                     Color darkestMold = new Color(0f, 0f, 0f, state.moldColor.a);
-                    moldTilemap.SetColor(
-                        state.pos,
-                        darkening
-                            ? Color.Lerp(state.moldColor, darkestMold, t)
-                            : Color.Lerp(darkestMold, state.moldColor, t));
+                    moldTilemap.SetColor(state.pos, Color.Lerp(state.moldColor, darkestMold, t));
                 }
 
                 if (state.hasOverlay && overlayTilemap != null && overlayTilemap.HasTile(state.pos))
                 {
                     Color darkestOverlay = new Color(0f, 0f, 0f, state.overlayColor.a);
-                    overlayTilemap.SetColor(
-                        state.pos,
-                        darkening
-                            ? Color.Lerp(state.overlayColor, darkestOverlay, t)
-                            : Color.Lerp(darkestOverlay, state.overlayColor, t));
+                    overlayTilemap.SetColor(state.pos, Color.Lerp(state.overlayColor, darkestOverlay, t));
                 }
             }
         }
