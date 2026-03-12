@@ -112,6 +112,8 @@ namespace FungusToast.Unity
         private bool _fastForwardStarted = false;
         private bool initialMutationPointsAssigned = false;
         private float nextUiStuckCheckTime;
+        private bool isPauseMenuOpen;
+        private UI_PauseMenuPanel pauseMenuPanel;
 
         // Services
         private PlayerInitializer playerInitializer; 
@@ -148,12 +150,15 @@ namespace FungusToast.Unity
         {
             if (Application.isPlaying)
             {
+                ForceClosePauseMenu();
                 ShowStartGamePanel();
             }
         }
 
         private void Update()
         {
+            HandlePauseMenuInput();
+
             // Safety net: recover from rare transition bugs where all gameplay UI roots end up hidden.
             if (Time.unscaledTime < nextUiStuckCheckTime)
             {
@@ -170,6 +175,8 @@ namespace FungusToast.Unity
 
         private void BootstrapServices()
         {
+            BootstrapPauseMenu();
+
             playerInitializer = new PlayerInitializer(
                 gridVisualizer,
                 gameUIManager,
@@ -364,6 +371,7 @@ namespace FungusToast.Unity
             mycovariantDraftController?.StopAllCoroutines();
             gameUIManager?.MutationUIManager?.ResetForNewGameState();
             gameUIManager.EndGamePanel?.gameObject.SetActive(false);
+            ForceClosePauseMenu();
 
             gameUIManager.LoadingScreen?.Show("Preparing the toast…");
             gameEnded = false;
@@ -402,6 +410,7 @@ namespace FungusToast.Unity
             gameUIManager.LeftSidebar?.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
+            pauseMenuPanel?.SetGameplayVisibility(true);
             mycovariantDraftController?.gameObject.SetActive(false);
             cameraCenterer?.CaptureInitialFraming();
             InitGameLogs();
@@ -804,6 +813,8 @@ namespace FungusToast.Unity
 
         public void ShowStartGamePanel()
         {
+            ForceClosePauseMenu();
+
             if (gameUIManager != null)
             {
                 gameUIManager.LoadingScreen?.gameObject.SetActive(false);
@@ -811,6 +822,7 @@ namespace FungusToast.Unity
                 gameUIManager.RightSidebar?.gameObject.SetActive(false);
                 gameUIManager.MutationUIManager?.gameObject.SetActive(false);
                 gameUIManager.EndGamePanel?.gameObject.SetActive(false);
+                gameUIManager.PauseMenuPanel?.SetGameplayVisibility(false);
 
                 // Clear log data so stale entries don't persist into the next game
                 gameUIManager.GlobalGameLogManager?.ClearLog();
@@ -833,6 +845,7 @@ namespace FungusToast.Unity
 
         public void ReturnToMainMenu()
         {
+            ForceClosePauseMenu();
             StopAllCoroutines();
             TooltipManager.Instance?.CancelAll();
 
@@ -859,6 +872,7 @@ namespace FungusToast.Unity
 
         public void QuitGame()
         {
+            ForceClosePauseMenu();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
@@ -1020,6 +1034,8 @@ namespace FungusToast.Unity
         internal Player GetPrimaryHumanInternal() => humanPlayer;
         internal System.Random GetRngInternal() => rng;
         internal MycovariantPoolManager GetPersistentPoolInternal() => persistentPoolManager;
+        public bool IsPauseMenuOpen => isPauseMenuOpen;
+
         internal void TriggerEndGameInternal()
         {
             endgameService.EndGame();
@@ -1069,6 +1085,129 @@ namespace FungusToast.Unity
                     gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(humanPlayer.MutationPoints > 0);
                 }
             }
+        }
+
+        private void BootstrapPauseMenu()
+        {
+            pauseMenuPanel = GetComponent<UI_PauseMenuPanel>();
+            if (pauseMenuPanel == null)
+            {
+                pauseMenuPanel = gameObject.AddComponent<UI_PauseMenuPanel>();
+            }
+
+            pauseMenuPanel.SetDependencies(
+                gameUIManager,
+                OpenPauseMenu,
+                ResumeGameplay,
+                ReturnToMainMenu,
+                QuitGame);
+
+            gameUIManager?.RegisterPauseMenuPanel(pauseMenuPanel);
+            pauseMenuPanel.SetGameplayVisibility(false);
+        }
+
+        private void HandlePauseMenuInput()
+        {
+            if (!Application.isPlaying || !Input.GetKeyDown(KeyCode.Escape))
+            {
+                return;
+            }
+
+            if (isPauseMenuOpen)
+            {
+                if (pauseMenuPanel != null && pauseMenuPanel.IsConfirming)
+                {
+                    pauseMenuPanel.CancelPendingAction();
+                    return;
+                }
+
+                ResumeGameplay();
+                return;
+            }
+
+            if (TryCancelActiveSelection())
+            {
+                return;
+            }
+
+            if (CanOpenPauseMenu())
+            {
+                OpenPauseMenu();
+            }
+        }
+
+        private bool CanOpenPauseMenu()
+        {
+            if (Board == null || gameEnded || isInDraftPhase)
+            {
+                return false;
+            }
+
+            bool inMenu = (modeSelectPanel != null && modeSelectPanel.activeInHierarchy)
+                          || (startGamePanel != null && startGamePanel.gameObject.activeInHierarchy);
+            if (inMenu)
+            {
+                return false;
+            }
+
+            if (mycovariantDraftController != null && mycovariantDraftController.gameObject.activeInHierarchy)
+            {
+                return false;
+            }
+
+            if (gameUIManager?.EndGamePanel != null && gameUIManager.EndGamePanel.gameObject.activeInHierarchy)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool TryCancelActiveSelection()
+        {
+            if (MultiCellSelectionController.Instance != null && MultiCellSelectionController.Instance.HasActiveSelection)
+            {
+                MultiCellSelectionController.Instance.CancelSelection();
+                return true;
+            }
+
+            if (MultiTileSelectionController.Instance != null && MultiTileSelectionController.Instance.HasActiveSelection)
+            {
+                MultiTileSelectionController.Instance.CancelSelection();
+                return true;
+            }
+
+            if (TileSelectionController.Instance != null && TileSelectionController.Instance.HasActiveSelection)
+            {
+                TileSelectionController.Instance.CancelSelection();
+                return true;
+            }
+
+            return false;
+        }
+
+        private void OpenPauseMenu()
+        {
+            if (!CanOpenPauseMenu())
+            {
+                return;
+            }
+
+            isPauseMenuOpen = true;
+            Time.timeScale = 0f;
+            pauseMenuPanel?.Show();
+        }
+
+        private void ResumeGameplay()
+        {
+            ForceClosePauseMenu();
+        }
+
+        private void ForceClosePauseMenu()
+        {
+            isPauseMenuOpen = false;
+            Time.timeScale = 1f;
+            pauseMenuPanel?.Hide();
         }
 
         #endregion

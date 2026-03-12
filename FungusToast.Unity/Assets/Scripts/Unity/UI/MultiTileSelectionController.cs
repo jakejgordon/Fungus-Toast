@@ -171,13 +171,6 @@ namespace FungusToast.Unity.UI
             return selectionActive && selectedTileIds.Contains(tileId);
         }
 
-        private void Update()
-        {
-            // Handle Escape key to cancel selection
-            if (selectionActive && Input.GetKeyDown(KeyCode.Escape))
-            {
-                CancelSelection();
-            }
-        }
+        public bool HasActiveSelection => selectionActive;
     }
 }

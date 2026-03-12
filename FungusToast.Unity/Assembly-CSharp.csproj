@@ -82,6 +82,7 @@
     <Compile Include="Assets\Scripts\Unity\UI\GameStart\UI_PlayerCountButton.cs" />
     <Compile Include="Assets\Scripts\Unity\Services\SpecialEventPresentationService.cs" />
     <Compile Include="Assets\Scripts\Unity\Phases\DecayPhaseRunner.cs" />
+    <Compile Include="Assets\Scripts\Unity\UI\UI_PauseMenuPanel.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\MutationTree\MutationNodeUI.cs" />
     <Compile Include="Assets\Scripts\Unity\Services\PlayerInitializer.cs" />
     <Compile Include="Assets\Scripts\Unity\UI\Campaign\UI_CampaignPanelController.cs" />

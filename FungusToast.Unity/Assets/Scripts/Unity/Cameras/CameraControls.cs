@@ -23,6 +23,11 @@ namespace FungusToast.Unity.Cameras
 
         void Update()
         {
+            if (GameManager.Instance != null && GameManager.Instance.IsPauseMenuOpen)
+            {
+                return;
+            }
+
             // Zoom with scroll wheel
             float scroll = Input.GetAxis("Mouse ScrollWheel");
             if (Camera.main != null)

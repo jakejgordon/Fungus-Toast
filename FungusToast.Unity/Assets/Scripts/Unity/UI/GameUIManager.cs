@@ -30,6 +30,9 @@ namespace FungusToast.Unity.UI
         [Header("End-game")]
         [SerializeField] private UI_EndGamePanel endGamePanel;
 
+        [Header("Pause Menu")]
+        [SerializeField] private UI_PauseMenuPanel pauseMenuPanel;
+
         [Header("Phase Transitions")]
         [SerializeField] private UI_PhaseBanner phaseBanner;
 
@@ -45,6 +48,7 @@ namespace FungusToast.Unity.UI
         public UI_RightSidebar RightSidebar => rightSidebar;
         public UI_LoadingScreen LoadingScreen => loadingScreen;
         public UI_EndGamePanel EndGamePanel => endGamePanel;
+        public UI_PauseMenuPanel PauseMenuPanel => pauseMenuPanel;
         public UI_PhaseBanner PhaseBanner => phaseBanner;
         public UI_MoldProfileRoot MoldProfileRoot => moldProfileRoot;
 
@@ -87,6 +91,8 @@ namespace FungusToast.Unity.UI
         public GameLogManager GameLogManager => playerActivityLogManager;
         public UI_GameLogPanel GlobalGameLogPanel => globalEventsLogPanel;
         public GlobalGameLogManager GlobalGameLogManager => globalEventsLogManager;
+
+        public void RegisterPauseMenuPanel(UI_PauseMenuPanel panel) => pauseMenuPanel = panel;
 
         // Routing observer for unified event handling
         private GameLogRouter gameLogRouter;

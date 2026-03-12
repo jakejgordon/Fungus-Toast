@@ -32,6 +32,15 @@ namespace FungusToast.Unity.Grid
             if (gridVisualizer == null || gridVisualizer.toastTilemap == null)
                 return;
 
+            if (GameManager.Instance != null && GameManager.Instance.IsPauseMenuOpen)
+            {
+                gridVisualizer?.ClearHoverEffect();
+                if (crosshairInstance != null)
+                    crosshairInstance.SetActive(false);
+                lastHoveredCell = null;
+                return;
+            }
+
             Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector3Int cellPos = gridVisualizer.toastTilemap.WorldToCell(mouseWorldPos);
 
@@ -91,7 +100,7 @@ namespace FungusToast.Unity.Grid
                 TriggerPressedAnimation(cellPos);
             }
 
-            if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetMouseButtonDown(1))
             {
                 if (selectionTiles.Count > 0)
                 {

@@ -248,5 +248,7 @@ namespace FungusToast.Unity.UI
         {
             return selectionActive && selectableTileIds.Contains(tileId);
         }
+
+        public bool HasActiveSelection => selectionActive;
     }
 }
