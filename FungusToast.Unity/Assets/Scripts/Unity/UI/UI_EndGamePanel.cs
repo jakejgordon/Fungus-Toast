@@ -15,6 +15,17 @@ namespace FungusToast.Unity.UI
 {
     public class UI_EndGamePanel : MonoBehaviour
     {
+        private const float OutcomeLabelAnchorMinX = 0.08f;
+        private const float OutcomeLabelAnchorMaxX = 0.92f;
+        private const float OutcomeLabelAnchorMinY = 0.89f;
+        private const float OutcomeLabelAnchorMaxY = 0.975f;
+        private const float OutcomeBackdropAnchorMinX = 0.04f;
+        private const float OutcomeBackdropAnchorMaxX = 0.96f;
+        private const float OutcomeBackdropAnchorMinY = 0.875f;
+        private const float OutcomeBackdropAnchorMaxY = 0.99f;
+        private const float CampaignOutcomeSpacerPreferredHeight = 94f;
+        private const float CampaignOutcomeSpacerMinHeight = 88f;
+
         /* ─────────── Inspector ─────────── */
         [Header("UI References")]
         [SerializeField] private CanvasGroup canvasGroup;
@@ -133,8 +144,8 @@ namespace FungusToast.Unity.UI
                 if (outcomeLabel.rectTransform != null)
                 {
                     var labelRect = outcomeLabel.rectTransform;
-                    labelRect.anchorMin = new Vector2(0.08f, 0.86f);
-                    labelRect.anchorMax = new Vector2(0.92f, 0.98f);
+                    labelRect.anchorMin = new Vector2(OutcomeLabelAnchorMinX, OutcomeLabelAnchorMinY);
+                    labelRect.anchorMax = new Vector2(OutcomeLabelAnchorMaxX, OutcomeLabelAnchorMaxY);
                     labelRect.pivot = new Vector2(0.5f, 0.5f);
                     labelRect.anchoredPosition = Vector2.zero;
                     labelRect.offsetMin = Vector2.zero;
@@ -532,8 +543,8 @@ namespace FungusToast.Unity.UI
             spacer.transform.SetParent(resultsContainer, false);
 
             var layout = spacer.GetComponent<LayoutElement>();
-            layout.preferredHeight = 118f;
-            layout.minHeight = 110f;
+            layout.preferredHeight = CampaignOutcomeSpacerPreferredHeight;
+            layout.minHeight = CampaignOutcomeSpacerMinHeight;
             layout.flexibleHeight = 0f;
         }
 
@@ -1208,8 +1219,8 @@ namespace FungusToast.Unity.UI
                 outcomeBackdrop.color = backdropColor;
 
                 var backdropRect = outcomeBackdrop.rectTransform;
-                backdropRect.anchorMin = new Vector2(0.04f, 0.84f);
-                backdropRect.anchorMax = new Vector2(0.96f, 0.995f);
+                backdropRect.anchorMin = new Vector2(OutcomeBackdropAnchorMinX, OutcomeBackdropAnchorMinY);
+                backdropRect.anchorMax = new Vector2(OutcomeBackdropAnchorMaxX, OutcomeBackdropAnchorMaxY);
                 backdropRect.pivot = new Vector2(0.5f, 0.5f);
                 backdropRect.anchoredPosition = Vector2.zero;
                 backdropRect.offsetMin = Vector2.zero;
