@@ -33,6 +33,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         [SerializeField] private GameObject draftPanel; // Main draft panel root
         [SerializeField] private CanvasGroup interactionBlocker; // semi-transparent overlay, blocks raycasts
         [SerializeField] private TextMeshProUGUI draftBannerText;
+        [SerializeField] private TextMeshProUGUI draftBlurbText;
         [SerializeField] private DraftOrderRow draftOrderRow; // progress bar, highlights current/next/done
         [SerializeField] private Transform choiceContainer; // Parent for card prefabs
         [SerializeField] private MycovariantCard cardPrefab; // Assign in inspector
@@ -81,6 +82,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             ClearDraftMessages();
             AddDraftMessage($"Draft started. {draftOrder.Count} player{(draftOrder.Count == 1 ? "" : "s")} picking in order.");
 
+            SetDraftHeader(
+                "Choose a Mycovariant",
+                "Select a unique mycovariant mutation.");
+
             isCampaignAdaptationDraft = false;
             onAdaptationPicked = null;
             ShowDraftUI();
@@ -104,10 +109,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             EnsureDraftMessageUI();
             ClearDraftMessages();
             AddDraftMessage("Victory secured. Choose an Adaptation to evolve your colony for the rest of this campaign.");
-            if (draftBannerText != null)
-            {
-                draftBannerText.text = "Choose an Adaptation";
-            }
+
+            SetDraftHeader(
+                "Choose an Adaptation",
+                "Select one adaptation to strengthen your colony for the rest of the campaign.");
 
             ShowDraftUI();
             if (draftOrderRow != null)
@@ -160,6 +165,19 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 draftBannerText.text = $"AI Drafting: {currentPlayer.PlayerName}";
             else
                 draftBannerText.text = $"Your turn to draft a Mycovariant!";
+        }
+
+        private void SetDraftHeader(string title, string blurb)
+        {
+            if (draftBannerText != null)
+            {
+                draftBannerText.text = title;
+            }
+
+            if (draftBlurbText != null)
+            {
+                draftBlurbText.text = blurb;
+            }
         }
 
         private void SetDraftState(DraftUIState state)

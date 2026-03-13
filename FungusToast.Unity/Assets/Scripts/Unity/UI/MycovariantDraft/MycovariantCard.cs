@@ -7,6 +7,9 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
 {
     public class MycovariantCard : MonoBehaviour
     {
+        private const float TitleFontSizeMin = 16f;
+        private const float TitleFontSizeMax = 20f;
+
         public Image iconImage;
         public TextMeshProUGUI nameText;
         public TextMeshProUGUI effectText;
@@ -55,10 +58,27 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 iconImage.color = Color.white;
             }
 
-            nameText.text = title;
-            effectText.text = description;
-            pickButton.onClick.RemoveAllListeners();
-            pickButton.onClick.AddListener(() => onClick?.Invoke());
+            if (nameText != null)
+            {
+                nameText.enableAutoSizing = true;
+                nameText.fontSizeMin = TitleFontSizeMin;
+                nameText.fontSizeMax = TitleFontSizeMax;
+                nameText.textWrappingMode = TextWrappingModes.Normal;
+                nameText.overflowMode = TextOverflowModes.Ellipsis;
+                nameText.alignment = TextAlignmentOptions.MidlineLeft;
+                nameText.text = title;
+            }
+
+            if (effectText != null)
+            {
+                effectText.text = description;
+            }
+
+            if (pickButton != null)
+            {
+                pickButton.onClick.RemoveAllListeners();
+                pickButton.onClick.AddListener(() => onClick?.Invoke());
+            }
 
             SetActiveHighlight(false);
 

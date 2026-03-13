@@ -120070,6 +120070,7 @@ MonoBehaviour:
   draftPanel: {fileID: 1723225966}
   interactionBlocker: {fileID: 636063208}
   draftBannerText: {fileID: 943250108}
+  draftBlurbText: {fileID: 139326511}
   draftOrderRow: {fileID: 933624053}
   choiceContainer: {fileID: 1610402562}
   cardPrefab: {fileID: 8528227567745809826, guid: 7dede3b59e08fd54e953ba71f543bf16, type: 3}
