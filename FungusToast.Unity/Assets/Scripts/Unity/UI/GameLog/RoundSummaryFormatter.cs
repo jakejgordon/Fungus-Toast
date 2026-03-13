@@ -9,6 +9,23 @@ namespace FungusToast.Unity.UI.GameLog
     /// </summary>
     public static class RoundSummaryFormatter
     {
+        public static string FormatPlayerActivitySummary(
+            int roundNumber,
+            int friendlyCellsGrown,
+            int friendlyCellsDied,
+            int toxinsDropped)
+        {
+            if (friendlyCellsGrown <= 0 && friendlyCellsDied <= 0 && toxinsDropped <= 0)
+            {
+                return $"Round {roundNumber} Summary: no changes";
+            }
+
+            return $"Round {roundNumber} Summary: " +
+                   $"{friendlyCellsGrown} friendly {(friendlyCellsGrown == 1 ? "cell grew" : "cells grew")}, " +
+                   $"{friendlyCellsDied} {(friendlyCellsDied == 1 ? "cell died" : "cells died")}, " +
+                   $"{toxinsDropped} {(toxinsDropped == 1 ? "toxin dropped" : "toxins dropped")}";
+        }
+
         /// <summary>
         /// Creates a formatted round summary message with consistent structure
         /// </summary>

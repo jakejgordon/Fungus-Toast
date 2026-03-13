@@ -69,6 +69,13 @@ namespace FungusToast.Unity.UI.GameLog
             public int Toxins;
         }
 
+        private struct RoundActivityTotals
+        {
+            public int FriendlyCellsGrown;
+            public int FriendlyCellsDied;
+            public int ToxinsDropped;
+        }
+
         private class PlayerLogAggregation
         {
             public Dictionary<string, int> Totals = new();
@@ -118,6 +125,7 @@ namespace FungusToast.Unity.UI.GameLog
         private readonly Dictionary<int, PlayerLogSummary> summaries = new();
         private readonly Dictionary<int, PlayerSnapshot> roundStartSnapshots = new();
         private readonly Dictionary<int, PlayerLogAggregation> aggregations = new();
+        private readonly Dictionary<int, RoundActivityTotals> roundActivityTotals = new();
         private readonly Dictionary<int, Queue<SegmentSummary>> pendingSegmentSummaries = new();
         private readonly Dictionary<int, string> pendingRoundSummaries = new();
         private readonly Dictionary<int, int> pendingRoundNumber = new();
@@ -145,6 +153,7 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 roundStartSnapshots[hp.PlayerId] = TakeSnapshot(hp.PlayerId);
                 aggregations[hp.PlayerId] = new PlayerLogAggregation();
+                roundActivityTotals[hp.PlayerId] = new RoundActivityTotals();
                 pendingSegmentSummaries[hp.PlayerId] = new Queue<SegmentSummary>();
             }
 
@@ -391,7 +400,10 @@ namespace FungusToast.Unity.UI.GameLog
         {
             if (board == null) return;
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
+            {
                 roundStartSnapshots[hp.PlayerId] = TakeSnapshot(hp.PlayerId);
+                roundActivityTotals[hp.PlayerId] = new RoundActivityTotals();
+            }
         }
 
         public void OnRoundComplete(int round)
@@ -402,18 +414,13 @@ namespace FungusToast.Unity.UI.GameLog
 
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
             {
-                if (!roundStartSnapshots.TryGetValue(hp.PlayerId, out var start)) continue;
-                var end = TakeSnapshot(hp.PlayerId);
+                roundActivityTotals.TryGetValue(hp.PlayerId, out var activityTotals);
 
-                int dl = end.Living - start.Living;
-                int dd = end.Dead - start.Dead;
-                int dt = end.Toxins - start.Toxins;
-
-                string msg = (dl != 0 || dd != 0 || dt != 0)
-                    ? RoundSummaryFormatter
-                        .FormatRoundSummary(round, dl, dd, dt, end.Living, end.Dead, end.Toxins, 0f, true)
-                        .Replace("summary:", "Summary:")
-                    : $"Round {round} Summary: no changes";
+                string msg = RoundSummaryFormatter.FormatPlayerActivitySummary(
+                    round,
+                    activityTotals.FriendlyCellsGrown,
+                    activityTotals.FriendlyCellsDied,
+                    activityTotals.ToxinsDropped);
 
                 pendingRoundSummaries[hp.PlayerId] = msg;
                 pendingRoundNumber[hp.PlayerId] = round;
@@ -546,6 +553,19 @@ namespace FungusToast.Unity.UI.GameLog
             }
             if (!dict.ContainsKey(src)) dict[src] = 0;
             dict[src] += amount;
+
+            roundActivityTotals.TryGetValue(playerId, out var activityTotals);
+
+            if (kind == EventKinds.Colonized || kind == EventKinds.Infested || kind == EventKinds.Reclaimed || kind == EventKinds.Overgrown)
+            {
+                activityTotals.FriendlyCellsGrown += amount;
+            }
+            else if (kind == EventKinds.Toxified)
+            {
+                activityTotals.ToxinsDropped += amount;
+            }
+
+            roundActivityTotals[playerId] = activityTotals;
         }
 
         private void IncDeath(int playerId, DeathReason reason, int count)
@@ -621,7 +641,19 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordAnabolicInversionBonus(int playerId, int bonus) { if (bonus > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Anabolic Inversion", bonus); }
         public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints) { if (bonusPoints > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Ontogenic Regression", bonusPoints); }
         public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset) { }
-        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1) { if (IsHuman(playerId)) IncDeath(playerId, reason, deathCount); }
+        public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
+        {
+            if (!IsHuman(playerId))
+            {
+                return;
+            }
+
+            IncDeath(playerId, reason, deathCount);
+
+            roundActivityTotals.TryGetValue(playerId, out var activityTotals);
+            activityTotals.FriendlyCellsDied += deathCount;
+            roundActivityTotals[playerId] = activityTotals;
+        }
         public void RecordAttributedKill(int playerId, DeathReason reason, int killCount = 1) { }
         public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints) { if (catabolizedMutationPoints > 0 && IsHuman(playerId)) AddPlayerEvent(playerId, catabolizedMutationPoints == 1 ? "Earned 1 mutation point from Mycotoxin Catabolism" : $"Earned {catabolizedMutationPoints} mutation points from Mycotoxin Catabolism", GameLogCategory.Lucky); }
         public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName) { if (IsHuman(playerId) && !string.IsNullOrEmpty(mutationName)) AddFreeUpgrade(playerId, "Mutator Phenotype", mutationName, 1); }
