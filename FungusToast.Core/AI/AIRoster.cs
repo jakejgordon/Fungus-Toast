@@ -57,19 +57,28 @@ namespace FungusToast.Core.AI
         TierCap
     }
 
+    public enum StrategyStatus
+    {
+        Testing,
+        Proven,
+        Loser
+    }
+
     public sealed class StrategyProfile
     {
-        public StrategyProfile(string strategyName, StrategySetEnum strategySet, StrategyTheme theme, string intent)
+        public StrategyProfile(string strategyName, StrategySetEnum strategySet, StrategyTheme theme, StrategyStatus status, string intent)
         {
             StrategyName = strategyName;
             StrategySet = strategySet;
             Theme = theme;
+            Status = status;
             Intent = intent;
         }
 
         public string StrategyName { get; }
         public StrategySetEnum StrategySet { get; }
         public StrategyTheme Theme { get; }
+        public StrategyStatus Status { get; }
         public string Intent { get; }
     }
 
@@ -775,6 +784,11 @@ namespace FungusToast.Core.AI
                 ["Growth/Resilience"] = StrategyTheme.TierCap,
             };
 
+        private static readonly Dictionary<string, StrategyStatus> ExplicitStrategyStatusesByName =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+            };
+
         public static readonly Dictionary<string, IMutationSpendingStrategy> ProvenStrategiesByName;
         public static readonly Dictionary<string, IMutationSpendingStrategy> TestingStrategiesByName;
         public static readonly Dictionary<string, IMutationSpendingStrategy> CampaignStrategiesByName;
@@ -906,8 +920,15 @@ namespace FungusToast.Core.AI
                     s.StrategyName,
                     strategySet,
                     GetThemeForStrategy(s),
+                    GetStatusForStrategy(s, strategySet),
                     BuildIntentLabel(s)))
                 .ToList();
+        }
+
+        public static StrategyProfile? GetStrategyProfile(StrategySetEnum strategySet, string strategyName)
+        {
+            return GetStrategyProfiles(strategySet)
+                .FirstOrDefault(p => string.Equals(p.StrategyName, strategyName, StringComparison.OrdinalIgnoreCase));
         }
 
         public static List<IMutationSpendingStrategy> GetStrategiesByName(
@@ -953,6 +974,23 @@ namespace FungusToast.Core.AI
             if (name.Contains("Resilience", StringComparison.OrdinalIgnoreCase) || name.Contains("Defend", StringComparison.OrdinalIgnoreCase) || name.Contains("Resistance", StringComparison.OrdinalIgnoreCase)) return StrategyTheme.Defense;
             if (name.Contains("Vector", StringComparison.OrdinalIgnoreCase) || name.Contains("Mobility", StringComparison.OrdinalIgnoreCase)) return StrategyTheme.Mobility;
             return StrategyTheme.Balanced;
+        }
+
+        public static StrategyStatus GetStatusForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
+        {
+            if (ExplicitStrategyStatusesByName.TryGetValue(strategy.StrategyName, out var explicitStatus))
+            {
+                return explicitStatus;
+            }
+
+            return strategySet switch
+            {
+                StrategySetEnum.Proven => StrategyStatus.Proven,
+                StrategySetEnum.Campaign => StrategyStatus.Proven,
+                StrategySetEnum.Testing => StrategyStatus.Testing,
+                StrategySetEnum.Mycovariants => StrategyStatus.Testing,
+                _ => StrategyStatus.Testing
+            };
         }
 
         private static string BuildIntentLabel(IMutationSpendingStrategy strategy)

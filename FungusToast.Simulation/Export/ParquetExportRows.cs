@@ -7,6 +7,9 @@ namespace FungusToast.Simulation.Export
         public int GameIndex { get; set; }
         public int GameSeed { get; set; }
         public string StrategySet { get; set; } = string.Empty;
+        public string StrategySelectionPolicy { get; set; } = string.Empty;
+        public string StrategySelectionSource { get; set; } = string.Empty;
+        public string SelectedStrategyLineup { get; set; } = string.Empty;
         public string SlotAssignmentPolicy { get; set; } = string.Empty;
         public int BoardWidth { get; set; }
         public int BoardHeight { get; set; }
@@ -24,8 +27,10 @@ namespace FungusToast.Simulation.Export
         public int GameSeed { get; set; }
         public int PlayerId { get; set; }
         public int AssignedSlot { get; set; }
+        public int SelectedLineupOrder { get; set; }
         public string StrategyName { get; set; } = string.Empty;
         public string StrategyTheme { get; set; } = string.Empty;
+        public string StrategyStatus { get; set; } = string.Empty;
         public string DominantOpponentTheme { get; set; } = string.Empty;
         public string OpponentThemeSet { get; set; } = string.Empty;
         public int UniqueOpponentThemes { get; set; }

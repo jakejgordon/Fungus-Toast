@@ -81,8 +81,10 @@ Use this same pattern each balance pass so results are comparable over time.
 ### 1) Run a stable baseline simulation
 
 - Use explicit strategy names so lineup composition is fixed across iterations.
+- Keep all explicit names inside one roster set for the run; named experiments cannot mix `Proven`/`Testing`/`Campaign`/`Mycovariants` in a single lineup.
 - Use enough games to reduce variance (`>= 300`, preferred `500+`).
-- Keep seed and slot policy fixed while comparing revisions.
+- Keep seed, slot policy, and selection/provenance metadata fixed while comparing revisions.
+- Save the emitted `manifest.json` alongside any downstream analysis exports; it is the canonical record of the exact lineup used.
 
 Example:
 

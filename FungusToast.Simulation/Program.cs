@@ -61,7 +61,7 @@ namespace FungusToast.Simulation
             var runMetadata = BuildRunMetadata(
                 config,
                 experimentId,
-                strategies.Count,
+                strategies,
                 config.BoardWidth,
                 config.BoardHeight,
                 config.StrategySet,
@@ -124,7 +124,7 @@ namespace FungusToast.Simulation
                         var runMetadata = BuildRunMetadata(
                             config,
                             stratumExperimentId,
-                            players,
+                            strategies,
                             board.Width,
                             board.Height,
                             strategySet,
@@ -157,7 +157,7 @@ namespace FungusToast.Simulation
         private static SimulationRunMetadata BuildRunMetadata(
             SimulationConfig config,
             string experimentId,
-            int numberOfPlayers,
+            IReadOnlyList<IMutationSpendingStrategy> selectedStrategies,
             int boardWidth,
             int boardHeight,
             StrategySetEnum strategySet,
@@ -170,10 +170,24 @@ namespace FungusToast.Simulation
                 StrategySet = strategySet,
                 BaseSeed = baseSeed,
                 SlotAssignmentPolicy = config.SlotAssignmentPolicy,
-                NumberOfPlayers = numberOfPlayers,
+                StrategySelectionPolicy = config.StrategySelectionPolicy,
+                StrategySelectionSource = config.ExplicitStrategyNames is { Count: > 0 }
+                    ? StrategySelectionSource.ExplicitLineup
+                    : StrategySelectionSource.Sampled,
+                NumberOfPlayers = selectedStrategies.Count,
                 NumberOfGamesRequested = config.NumberOfGames,
                 BoardWidth = boardWidth,
-                BoardHeight = boardHeight
+                BoardHeight = boardHeight,
+                SelectedStrategies = selectedStrategies
+                    .Select((strategy, index) => new SelectedStrategyMetadata
+                    {
+                        LineupOrder = index + 1,
+                        StrategyName = strategy.StrategyName,
+                        StrategyTheme = AIRoster.GetThemeForStrategy(strategy).ToString(),
+                        StrategyStatus = AIRoster.GetStatusForStrategy(strategy, strategySet).ToString(),
+                        Intent = AIRoster.GetStrategyProfile(strategySet, strategy.StrategyName)?.Intent ?? string.Empty
+                    })
+                    .ToList()
             };
         }
 
