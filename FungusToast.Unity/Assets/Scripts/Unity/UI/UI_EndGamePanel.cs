@@ -25,6 +25,7 @@ namespace FungusToast.Unity.UI
         private const float OutcomeBackdropAnchorMaxY = 0.99f;
         private const float CampaignOutcomeSpacerPreferredHeight = 94f;
         private const float CampaignOutcomeSpacerMinHeight = 88f;
+        private const int CampaignOutcomeSubtitleFontSize = 26;
 
         /* ─────────── Inspector ─────────── */
         [Header("UI References")]
@@ -217,14 +218,14 @@ namespace FungusToast.Unity.UI
                 {
                     outcomeLabel.text =
                         $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Campaign complete</b></color>\n" +
-                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Congratulations you mycelial mastermind! You won the campaign!</color></size>";
+                        $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Congratulations you mycelial mastermind! You won the campaign!</color></size>";
                 }
                 else
                 {
                     // mid-run victory
                     outcomeLabel.text =
                         $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Level {completedLevelDisplay} cleared</b></color>\n" +
-                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Select an Adaptation to continue the campaign.</color></size>";
+                        $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Select an Adaptation to continue the campaign.</color></size>";
                 }
             }
 
@@ -309,7 +310,7 @@ namespace FungusToast.Unity.UI
             {
                 outcomeLabel.text =
                     $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Level {snapshot.clearedLevelDisplay} cleared</b></color>\n" +
-                    $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Select an Adaptation to continue the campaign.</color></size>";
+                    $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Select an Adaptation to continue the campaign.</color></size>";
             }
 
             if (continueButton != null)
@@ -992,7 +993,11 @@ namespace FungusToast.Unity.UI
         private void OnPostVictorySkipToEndToggled()
         {
             postVictorySkipToEnd = !postVictorySkipToEnd;
-            if (!postVictorySkipToEnd)
+            if (postVictorySkipToEnd)
+            {
+                postVictoryForcedResult = ForcedGameResultMode.ForcedWin;
+            }
+            else
             {
                 postVictoryForcedResult = ForcedGameResultMode.Natural;
             }

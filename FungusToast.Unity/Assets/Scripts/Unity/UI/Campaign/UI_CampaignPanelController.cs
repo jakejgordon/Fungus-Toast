@@ -721,7 +721,11 @@ namespace FungusToast.Unity.UI.Campaign
         private void OnSkipToEndClicked()
         {
             skipToEnd = !skipToEnd;
-            if (!skipToEnd)
+            if (skipToEnd)
+            {
+                forcedResult = ForcedGameResultMode.ForcedWin;
+            }
+            else
             {
                 forcedResult = ForcedGameResultMode.Natural;
             }
