@@ -23,7 +23,7 @@ FungusToast.Unity/
 ## Libraries and Frameworks
 
 **FungusToast.Unity Dependencies:**
-- Unity 6000.0.45f1
+- Unity 6000.3.10f1
 - References FungusToast.Core.dll from Assets/Plugins
 - TextMeshPro (Unity package)
 - Unity UI system

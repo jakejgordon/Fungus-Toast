@@ -21,6 +21,7 @@ Important fields:
 - `selectedAdaptationIds`: unique adaptation IDs chosen this run
 - `pendingAdaptationSelection`: true between level victory and adaptation selection
 - `campaignCompleted`: true after final victory
+- `pendingVictorySnapshot`: persisted endgame snapshot shown when resuming into a pending adaptation pick
 - `boardPresetId`, `boardWidth`, `boardHeight`, `unlockedMutationTierMax`
 
 Save file:
@@ -106,15 +107,16 @@ Adaptation draft UI reuse:
 ### Add more adaptations
 1. Add entries to `AdaptationRepository.All`.
 2. Keep IDs stable and unique (`adaptation_#` or slug style).
-3. Add gameplay effects later via a dedicated adaptation effect service.
+3. Wire gameplay effects through core/runtime hooks when needed.
 
 ### Tune difficulty
 1. Change strategy names in relevant `BoardPreset.aiPlayers` lists.
 2. Optionally adjust board sizes and `mutationTierMax`.
-3. Run simulation/balance passes once campaign simulation hooks are expanded.
+3. Validate in Unity; campaign simulation is not supported yet.
 
 ## Notes
 
 - Keep campaign logic deterministic where possible.
 - Prefer data changes in assets and repositories over hardcoded branching.
 - Keep Core adaptation definitions Unity-free.
+- For non-campaign work, default validation is build + smoke simulation. Campaign changes need Unity-side validation instead.

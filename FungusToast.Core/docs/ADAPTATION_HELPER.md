@@ -15,17 +15,17 @@ Adaptations commonly do one of two things:
 - **Naming rules:** [MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md](MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md)
 - **Campaign flow and persistence:** [CAMPAIGN_HELPER.md](CAMPAIGN_HELPER.md)
 - **Authoring standards for concise mechanics copy:** [MYCOVARIANT_AUTHORING_STYLE.md](MYCOVARIANT_AUTHORING_STYLE.md)
-- **Technical reference pattern for passive behavior wiring:** [MYCOVARIANT_TECHNICAL_FLOW.md](MYCOVARIANT_TECHNICAL_FLOW.md)
+- **Technical implementation flow:** [ADAPTATION_TECHNICAL_FLOW.md](ADAPTATION_TECHNICAL_FLOW.md)
 
 ## Suggested Agent Workflow
 
 1. Read `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` before naming a new Adaptation.
 2. Read `CAMPAIGN_HELPER.md` before changing reward flow, persistence, or campaign state.
 3. Read `MYCOVARIANT_AUTHORING_STYLE.md` before writing or revising Adaptation descriptions.
-4. Use `MYCOVARIANT_TECHNICAL_FLOW.md` as the reference pattern for passive effect timing, event wiring, and simulation validation until a dedicated Adaptation technical flow doc exists.
+4. Read `ADAPTATION_TECHNICAL_FLOW.md` before wiring gameplay behavior.
 5. Generate a unique icon for the Adaptation so the campaign draft, tooltips, and profile UI do not fall back to generic art. The first pass can be provisional and replaced later, but every new Adaptation should ship with distinct iconography.
 6. Implement metadata in the Adaptation catalog and wire gameplay behavior through the appropriate campaign and core runtime hooks.
-7. Validate with Core and Simulation builds after behavior changes.
+7. Validate with Core and Simulation builds for core behavior changes; validate campaign flow in Unity because campaign simulation is not supported yet.
 
 ## Common Tasks
 
@@ -45,8 +45,9 @@ Adaptations commonly do one of two things:
 
 ### Validate Adaptation behavior
 1. Build `FungusToast.Core/FungusToast.Core.csproj`.
-2. Build `FungusToast.Simulation/FungusToast.Simulation.csproj`.
-3. Verify campaign save/load, reward selection, and any persistent passive effects still behave correctly.
+2. Build `FungusToast.Simulation/FungusToast.Simulation.csproj` when the change affects shared core behavior.
+3. Verify campaign save/load, reward selection, and any persistent passive effects in Unity.
+4. Do not rely on simulation for campaign flow validation yet.
 
 ## Notes
 

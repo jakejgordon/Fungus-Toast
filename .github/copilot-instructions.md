@@ -6,7 +6,7 @@ Fungus Toast is a 2D Unity game where each player represents a mold colony tryin
 
 - **FungusToast.Core**: Core business logic (.NET Standard 2.1) - ~189 C# files containing game mechanics, mutations, AI, and simulation logic
 - **FungusToast.Simulation**: Simulation runner (.NET 8.0) for running many-game simulations, AI testing, and balance-tuning
-- **FungusToast.Unity**: Unity game project (Unity 6000.0.45f1) with UI, graphics, and game presentation layer
+- **FungusToast.Unity**: Unity game project (Unity 6000.3.10f1) with UI, graphics, and game presentation layer
 
 **Key Facts:**
 - Total codebase: > 180 files
@@ -19,7 +19,7 @@ Fungus Toast is a 2D Unity game where each player represents a mold colony tryin
 ### Prerequisites
 - .NET 8.0 SDK (for FungusToast.Simulation)
 - .NET Standard 2.1 compatible SDK (for FungusToast.Core)
-- Unity Editor 6000.0.45f1 (for Unity project, optional for core logic work)
+- Unity Editor 6000.3.10f1 (for Unity project, optional for core logic work)
 - PowerShell (for automation scripts)
 
 ### Building Projects
@@ -91,6 +91,7 @@ FungusToast.Simulation/bin/Debug/net8.0/SimulationOutput/
 -o, --output <filename>  Custom output filename (default: auto-generated)
 --no-keyboard            Disable keyboard interruption (Q/Escape), useful for automation
 --strategy-set <set>     Strategy pool: Proven, Testing, Mycovariants, Campaign
+--strategy-names <csv>   Explicit strategy names for single-run mode; overrides --players
 --selection-policy <p>   Strategy sampler: RandomUnique, CoverageBalanced, StratifiedCycle
 --seed <number>          Deterministic base seed (default: 0)
 --rotate-slots           Rotate strategy-to-player slot assignment every game
@@ -129,7 +130,7 @@ The PowerShell script includes detection for automated execution environments. I
 ├── LICENSE                        # License file
 ├── FungusToast.Core/             # Core game logic (.NET Standard 2.1)
 ├── FungusToast.Simulation/       # Simulation runner (.NET 8.0)
-└── FungusToast.Unity/            # Unity project (Unity 6000.0.45f1)
+└── FungusToast.Unity/            # Unity project (Unity 6000.3.10f1)
 ```
 
 ### FungusToast.Core Structure
@@ -156,6 +157,7 @@ FungusToast.Core/
 └── docs/                       # Comprehensive documentation
    ├── AI_STRATEGY_AUTHORING.md       # AI strategy sets, themes, and simulation patterns
    ├── ADAPTATION_HELPER.md          # Adaptation system guide
+   ├── ADAPTATION_TECHNICAL_FLOW.md  # Adaptation technical integration flow
    ├── ANIMATION_HELPER.md            # Animation timing and trigger map
    ├── BUILD_INSTRUCTIONS.md          # Basic build commands
    ├── DESIGN_PRINCIPLES.md           # Architecture and design philosophy
@@ -228,7 +230,7 @@ FungusToast.Unity/
 - No external dependencies
 
 **FungusToast.Unity Dependencies:**
-- Unity 6000.0.45f1
+- Unity 6000.3.10f1
 - References FungusToast.Core.dll from Assets/Plugins
 - TextMeshPro (Unity package)
 - Unity UI system
@@ -243,7 +245,7 @@ FungusToast.Unity/
 
 ### Testing Changes
 1. **Unit testing:** Limited formal test infrastructure; uses simulation-based validation
-2. **Simulation validation:** Use `run_simulation.ps1` with small game counts for quick validation
+2. **Simulation validation:** Use `run_simulation.ps1` with small game counts for quick validation on non-campaign work
 3. **Balance testing:** Run longer simulations with multiple strategies
 
 ### Common File Modification Patterns
@@ -259,7 +261,7 @@ FungusToast.Unity/
 
 **Adding New Adaptations:**
 - Primary location: `FungusToast.Core/Campaign/`
-- Reference: `FungusToast.Core/docs/ADAPTATION_HELPER.md`
+- References: `FungusToast.Core/docs/ADAPTATION_HELPER.md`, `FungusToast.Core/docs/ADAPTATION_TECHNICAL_FLOW.md`
 - Naming: `FungusToast.Core/docs/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`
 
 **Adding New AI Strategies:**
@@ -344,6 +346,7 @@ FungusToast.Unity/
 - `FungusToast.Core/docs/AI_STRATEGY_AUTHORING.md`: Strategy sets/themes and reproducible balance-testing patterns.
 - `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`: Mutation authoring workflow with tracking and UI integration points.
 - `FungusToast.Core/docs/ADAPTATION_HELPER.md`: Adaptation authoring workflow, campaign persistence touchpoints, and validation steps.
+- `FungusToast.Core/docs/ADAPTATION_TECHNICAL_FLOW.md`: Adaptation runtime wiring, campaign integration, and validation boundaries.
 - `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`: Index page for Mycovariant authoring and implementation docs.
 - `FungusToast.Core/docs/MYCOVARIANT_AUTHORING_STYLE.md`: Style and clarity rules for Mycovariant Description/FlavorText.
 - `FungusToast.Core/docs/MYCOVARIANT_TECHNICAL_FLOW.md`: End-to-end technical flow for Core/Simulation/Unity draft integration.

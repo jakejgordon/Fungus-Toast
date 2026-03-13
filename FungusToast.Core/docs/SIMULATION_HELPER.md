@@ -217,6 +217,7 @@ The simulation supports the following command-line parameters:
 | `--width` | `-w` | Board width (number of tiles) | 160 |
 | `--height` | | Board height (number of tiles) | 160 |
 | `--strategy-set` | `-s` | Strategy pool to sample from (`Proven`, `Testing`, `Mycovariants`, `Campaign`) | `Testing` |
+| `--strategy-names` | | Explicit strategy names for single-run mode; overrides `--players` | Off |
 | `--selection-policy` | | Strategy sampler (`RandomUnique`, `CoverageBalanced`, `StratifiedCycle`) | `CoverageBalanced` |
 | `--player-counts` | | Batch strata list for players (CSV), e.g. `2,4,8` | Off |
 | `--board-sizes` | | Batch strata list for board sizes (CSV), e.g. `80x80,160x160` | Off |
@@ -257,6 +258,9 @@ dotnet run --width 150 --height 120 --players 6 --games 25 --output large_board_
 
 # Deterministic proven strategy experiment with slot rotation and Parquet export
 dotnet run --games 200 --players 8 --strategy-set Proven --seed 12345 --rotate-slots --experiment-id proven_seed12345 --no-keyboard
+
+# Fixed explicit lineup for reproducible balance passes (single-run mode only)
+dotnet run --games 200 --strategy-set Proven --strategy-names StrategyA,StrategyB,StrategyC,StrategyD --seed 12345 --rotate-slots --experiment-id proven_fixed_lineup --no-keyboard
 
 # Coverage-balanced testing run for statistically diverse strategy lineups
 dotnet run --games 200 --players 8 --strategy-set Testing --selection-policy CoverageBalanced --seed 12345 --rotate-slots --experiment-id testing_cov_balanced --no-keyboard
