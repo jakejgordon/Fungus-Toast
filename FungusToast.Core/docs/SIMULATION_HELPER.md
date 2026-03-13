@@ -260,10 +260,13 @@ dotnet run --width 150 --height 120 --players 6 --games 25 --output large_board_
 dotnet run --games 200 --players 8 --strategy-set Proven --seed 12345 --rotate-slots --experiment-id proven_seed12345 --no-keyboard
 
 # Fixed explicit lineup for reproducible balance passes (single-run mode only)
+# Note: explicit names are resolved only inside the selected --strategy-set; do not mix Proven/Testing/Campaign/Mycovariants names in one --strategy-names list.
 dotnet run --games 200 --strategy-set Proven --strategy-names StrategyA,StrategyB,StrategyC,StrategyD --seed 12345 --rotate-slots --experiment-id proven_fixed_lineup --no-keyboard
 
 # Coverage-balanced testing run for statistically diverse strategy lineups
 dotnet run --games 200 --players 8 --strategy-set Testing --selection-policy CoverageBalanced --seed 12345 --rotate-slots --experiment-id testing_cov_balanced --no-keyboard
+
+# Best practice: keep the emitted manifest.json with analysis artifacts so lineup provenance stays attached to results
 
 # Deterministic strategy cycle across strata
 dotnet run --games 150 --player-counts 4,8 --board-sizes 120x120,160x160 --strategy-sets Testing --selection-policy StratifiedCycle --seed 12345 --experiment-id testing_cycle --no-keyboard
@@ -294,7 +297,35 @@ Files produced:
 
 These files are designed for downstream AI/statistical analysis in `FungusToast.Analytics`.
 
+`manifest.json` is the canonical run-provenance record: it captures strategy set, selection policy, whether the lineup was sampled or explicitly provided, and the exact selected strategy lineup in order.
+
 `upgrade_events.parquet` logs ordered mutation upgrades for each player with round, level change, mutation points before/after spend, and source (`manual`, `surge`, `auto`).
+
+## Canonical Experiment Best Practices
+
+Use this as the default process when a run is meant to support balance decisions or cross-revision comparisons.
+
+- Prefer explicit `--strategy-names` for canonical comparison runs so lineup composition does not drift with roster edits.
+- Treat sampled-roster runs (`--players` + `--strategy-set`) as exploratory unless you keep the emitted `manifest.json` and intentionally compare the same sampled lineup.
+- Keep `--seed`, `--selection-policy`, slot policy (`--fixed-slots`/`--rotate-slots`), board size, player count, and strategy set fixed while comparing revisions.
+- Always set an explicit `--experiment-id` for named experiments so downstream analysis folders are stable and easy to diff.
+- Keep `manifest.json` with any exported CSV/Parquet analysis outputs; it is the authoritative roster provenance record.
+- `--strategy-names` is resolved against exactly one `--strategy-set`. A named-lineup experiment cannot mix roster sets in the same run.
+- If you need cross-set coverage, run separate experiments per set (for example `..._proven` and `..._testing`) instead of combining names from multiple rosters.
+
+## Repeatability Notes
+
+Current simulation entrypoints are mostly seed-driven:
+
+- roster sampling uses the run seed (or derived stratum seed in batch mode),
+- each game gets a deterministic per-game seed derived from the base seed plus game index,
+- core simulation phases share that per-game `Random` instance through game setup, draft, growth, decay, and mutation processors.
+
+Strict reproducibility note:
+
+- `ParameterizedSpendingStrategy.GetShuffledCategories()` now uses the same seeded per-game `Random` instance as the rest of the simulation path, removing the prior `Guid.NewGuid()` fallback-ordering divergence.
+
+Practical guidance: for the strongest apples-to-apples comparisons, still keep `--seed`, lineup/selection policy, slot policy, board size, and player count fixed when re-running.
 
 In batch mode (`--player-counts` / `--board-sizes` / `--strategy-sets`), each stratum is exported to a separate folder with suffixes like:
 

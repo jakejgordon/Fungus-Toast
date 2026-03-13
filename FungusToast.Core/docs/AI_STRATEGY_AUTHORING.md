@@ -11,6 +11,16 @@ Strategies are currently grouped into the following sets in `FungusToast.Core/AI
 - `Campaign`: simple named variants (`AI1`, `AI2`, etc.) for campaign integration.
 - `Mycovariants`: focused permutations for mycovariant studies.
 
+## Strategy Status
+
+Each strategy profile now carries a status tag in `AIRoster`:
+
+- `Testing`: experimental or tuning-oriented strategies.
+- `Proven`: baseline strategies considered stable enough for broader comparison.
+- `Loser`: reserved for future demotion/blacklist workflows when a strategy should stay cataloged but be treated as a poor baseline.
+
+Current defaulting is roster-based (`Proven`/`Campaign` => `Proven`, `Testing`/`Mycovariants` => `Testing`) with per-strategy overrides available in `ExplicitStrategyStatusesByName`.
+
 ## Selection Policies
 
 Simulation commands can choose strategy sampling behavior via:
@@ -69,7 +79,10 @@ Authoring implication:
 3. Keep mutation-goal chains coherent: early economy, mid stabilization, late finish.
 4. Prefer category-specific mycovariant preferences for clearer test intent.
 5. Build `FungusToast.Core` and `FungusToast.Simulation` after any roster changes.
-6. Run at least one seeded smoke simulation and verify strategy names appear in output.
+6. Run at least one seeded smoke simulation and verify strategy names/statuses appear in exported metadata.
+7. For comparison runs, prefer a fixed `--seed`, record the `--selection-policy`, and keep the manifest's selected lineup with the results.
+8. For canonical balance experiments, prefer explicit `--strategy-names` instead of sampled rosters so roster composition does not drift with future roster edits.
+9. Explicit strategy-name experiments are single-roster by design: all names must come from the chosen `--strategy-set`, so do not mix `Proven`/`Testing`/`Campaign`/`Mycovariants` names in one run.
 
 ## Recommended Simulation Pattern
 

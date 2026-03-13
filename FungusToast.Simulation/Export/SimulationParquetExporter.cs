@@ -36,10 +36,13 @@ namespace FungusToast.Simulation.Export
 
             var manifest = new
             {
-                schemaVersion = "v2",
+                schemaVersion = "v3",
                 metadata.ExperimentId,
                 metadata.RunTimestampUtc,
                 strategySet = metadata.StrategySet.ToString(),
+                strategySelectionPolicy = metadata.StrategySelectionPolicy.ToString(),
+                strategySelectionSource = metadata.StrategySelectionSource.ToString(),
+                selectedStrategyLineup = metadata.SelectedStrategies,
                 metadata.BaseSeed,
                 slotAssignmentPolicy = metadata.SlotAssignmentPolicy.ToString(),
                 metadata.NumberOfPlayers,
@@ -99,6 +102,9 @@ namespace FungusToast.Simulation.Export
                     GameIndex = game.GameIndex,
                     GameSeed = game.GameSeed,
                     StrategySet = metadata.StrategySet.ToString(),
+                    StrategySelectionPolicy = metadata.StrategySelectionPolicy.ToString(),
+                    StrategySelectionSource = metadata.StrategySelectionSource.ToString(),
+                    SelectedStrategyLineup = string.Join("|", metadata.SelectedStrategies.OrderBy(s => s.LineupOrder).Select(s => s.StrategyName)),
                     SlotAssignmentPolicy = metadata.SlotAssignmentPolicy.ToString(),
                     BoardWidth = metadata.BoardWidth,
                     BoardHeight = metadata.BoardHeight,
@@ -126,6 +132,9 @@ namespace FungusToast.Simulation.Export
 
                 foreach (var player in game.PlayerResults)
                 {
+                    var lineupEntry = metadata.SelectedStrategies
+                        .FirstOrDefault(s => string.Equals(s.StrategyName, player.StrategyName, StringComparison.OrdinalIgnoreCase));
+
                     var opponentThemes = game.PlayerResults
                         .Where(p => p.PlayerId != player.PlayerId)
                         .Select(p => playerThemeById[p.PlayerId])
@@ -149,8 +158,10 @@ namespace FungusToast.Simulation.Export
                         GameSeed = game.GameSeed,
                         PlayerId = player.PlayerId,
                         AssignedSlot = player.PlayerId,
+                        SelectedLineupOrder = lineupEntry?.LineupOrder ?? 0,
                         StrategyName = player.StrategyName,
                         StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
+                        StrategyStatus = lineupEntry?.StrategyStatus ?? AIRoster.GetStatusForStrategy(player.Strategy, metadata.StrategySet).ToString(),
                         DominantOpponentTheme = dominantOpponentTheme,
                         OpponentThemeSet = opponentThemeSet,
                         UniqueOpponentThemes = opponentThemes.Distinct(StringComparer.Ordinal).Count(),

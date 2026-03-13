@@ -618,7 +618,7 @@ namespace FungusToast.Core.AI
             bool spent;
             do
             {
-                spent = TrySpendByCategory(player, allMutations, board, simulationObserver)
+                spent = TrySpendByCategory(player, allMutations, board, rnd, simulationObserver)
                      || TrySpendFallback(player, allMutations, board, simulationObserver)
                      || TrySpendEconomyBiasedRandomly(player, allMutations, board, rnd, simulationObserver);
             }
@@ -638,9 +638,10 @@ namespace FungusToast.Core.AI
             Player player,
             List<Mutation> allMutations,
             GameBoard board,
+            Random rnd,
             ISimulationObserver simulationObserver)
         {
-            foreach (var category in GetShuffledCategories())
+            foreach (var category in GetShuffledCategories(rnd))
             {
                 var candidates = allMutations
                     .Where(m => m.Category == category
@@ -809,10 +810,10 @@ namespace FungusToast.Core.AI
             return priorityMutationCategories ?? Enum.GetValues(typeof(MutationCategory)).Cast<MutationCategory>().ToList();
         }
 
-        private List<MutationCategory> GetShuffledCategories()
+        private List<MutationCategory> GetShuffledCategories(Random rnd)
         {
             return GetCategories()
-                .OrderBy(_ => Guid.NewGuid())
+                .OrderBy(_ => rnd.Next())
                 .ToList();
         }
     }
