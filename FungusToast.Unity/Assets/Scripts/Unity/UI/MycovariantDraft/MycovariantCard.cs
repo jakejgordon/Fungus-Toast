@@ -47,7 +47,14 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
 
         public void SetCardContent(string title, string description, Sprite icon, System.Action onClick)
         {
-            iconImage.sprite = icon;
+            if (iconImage != null)
+            {
+                iconImage.sprite = icon;
+                iconImage.enabled = icon != null;
+                iconImage.preserveAspect = true;
+                iconImage.color = Color.white;
+            }
+
             nameText.text = title;
             effectText.text = description;
             pickButton.onClick.RemoveAllListeners();
