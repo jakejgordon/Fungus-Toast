@@ -12,7 +12,7 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <Exec Command="call &quot;$(ProjectDir)PostBuild_CopyAndTouch.bat&quot;" />
   </Target>
 
