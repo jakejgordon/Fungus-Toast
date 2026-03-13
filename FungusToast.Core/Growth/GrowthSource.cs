@@ -127,6 +127,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Growth created by Aggressotropic Conduit pre-growth effect
         /// </summary>
-        AggressotropicConduit
+        AggressotropicConduit,
+
+        /// <summary>
+        /// Resistance granted by the Aegis Hyphae adaptation.
+        /// </summary>
+        AegisHyphae
     }
 }

@@ -107213,7 +107213,9 @@ MonoBehaviour:
   boardHeight: 160
   playerCount: 1
   testingModeEnabled: 0
+  testingForcedAdaptationId: 
   testingModeForceHumanFirst: 1
+  testingForcedGameResult: 0
   fastForwardRounds: 0
   testingSkipToEndgameAfterFastForward: 0
   gridVisualizer: {fileID: 989759029}
@@ -108410,6 +108412,8 @@ MonoBehaviour:
   testingOptionsSectionRoot: {fileID: 0}
   testingModeToggle: {fileID: 0}
   mycovariantDropdown: {fileID: 0}
+  forcedGameResultDropdown: {fileID: 0}
+  forcedGameResultRow: {fileID: 0}
   testingModePanel: {fileID: 0}
   fastForwardRoundsInput: {fileID: 0}
   fastForwardLabel: {fileID: 0}
@@ -111009,6 +111013,11 @@ MonoBehaviour:
     parent: {fileID: 362979584}
   centerPlayerIcon: {fileID: 530626433}
   growthPreviewHeaderText: {fileID: 0}
+  adaptationSectionRoot: {fileID: 0}
+  adaptationHeaderText: {fileID: 0}
+  adaptationIconGridRoot: {fileID: 0}
+  adaptationSectionHostRoot: {fileID: 0}
+  adaptationHeaderLabel: Adaptations
   zeroChanceColor: {r: 1, g: 1, b: 1, a: 0.35}
   finalZeroGreen: {r: 0.4, g: 1, b: 0.4, a: 1}
   growthPreviewHeaderLabel: Growth Chance Per Living Cell
@@ -111396,6 +111405,7 @@ MonoBehaviour:
   globalEventsLogManager: {fileID: 1039523364}
   loadingScreen: {fileID: 1121346468}
   endGamePanel: {fileID: 193983058}
+  pauseMenuPanel: {fileID: 0}
   phaseBanner: {fileID: 247844408}
   phaseProgressTracker: {fileID: 518604235}
 --- !u!4 &948889970

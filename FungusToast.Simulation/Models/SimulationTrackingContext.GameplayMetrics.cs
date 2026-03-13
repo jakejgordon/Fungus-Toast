@@ -479,5 +479,9 @@ namespace FungusToast.Simulation.Models
         public void RecordSpecificMutationUpgrade(int playerId, string mutationName)
         {
         }
+
+        public void RecordRetrogradeBloomUpgrade(int playerId, string evolvedMutationName, string devolvedMutationSummary, int devolvedPoints)
+        {
+        }
     }
 }

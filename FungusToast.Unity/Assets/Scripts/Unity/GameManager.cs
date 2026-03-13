@@ -643,6 +643,10 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
             gameUIManager.GameLogRouter?.OnPhaseStart("Mutation");
             gameUIManager.PhaseBanner.Show("Mutation Phase Begins!",2f);
+            if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
+            {
+                StartCoroutine(specialEventPresentationService.PresentPendingImmediate());
+            }
             UpdatePhaseProgressTrackerLabel();
             phaseProgressTracker?.HighlightMutationPhase();
         }

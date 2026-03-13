@@ -129,6 +129,24 @@ namespace FungusToast.Unity.UI.GameLog
             playerActivityLogManager?.RecordConidialRelayRelocation(playerId);
         }
 
+        public void RecordRetrogradeBloomUpgrade(int playerId, string evolvedMutationName, string devolvedMutationSummary, int devolvedPoints)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordRetrogradeBloomUpgrade(playerId, evolvedMutationName, devolvedMutationSummary, devolvedPoints);
+        }
+
+        public void RecordAegisHyphaeResistance(int playerId, int cellsFortified)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordAegisHyphaeResistance(playerId, cellsFortified);
+        }
+
+        public void RecordSaprophageRingConsumption(int playerId, int cellsConsumed)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordSaprophageRingConsumption(playerId, cellsConsumed);
+        }
+
         public void RecordMycotoxicLashKills(int playerId, int cellsKilled)
         {
             if (IsSilentMode) return;

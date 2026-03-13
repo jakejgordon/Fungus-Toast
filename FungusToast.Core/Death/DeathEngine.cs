@@ -100,6 +100,12 @@ namespace FungusToast.Core.Death
 
                 if (deathResult.ShouldDie)
                 {
+                    if (AdaptationEffectProcessor.TryConsumeSaprophageRingDeath(board, owner, cell, deathResult))
+                    {
+                        livingCellCounts[owner.PlayerId]--;
+                        continue;
+                    }
+
                     // Pass both killerPlayerId and attackerTileId to the board so the event can record them
                     board.KillFungalCell(cell, deathResult.Reason!.Value, deathResult.KillerPlayerId, deathResult.AttackerTileId);
                     livingCellCounts[owner.PlayerId]--;

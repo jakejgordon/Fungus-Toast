@@ -6,5 +6,8 @@ namespace FungusToast.Core.Campaign
         public const string HyphalEconomy = "adaptation_2";
         public const string MycotoxicHalo = "adaptation_3";
         public const string MycotoxicLash = "adaptation_4";
+        public const string RetrogradeBloom = "adaptation_5";
+        public const string AegisHyphae = "adaptation_6";
+        public const string SaprophageRing = "adaptation_7";
     }
 }

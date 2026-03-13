@@ -431,6 +431,17 @@ namespace FungusToast.Core.Board
             RemoveControlFromPlayer(tileId);
             OnCellDeath(ownerId, tileId, reason, killerPlayerId, cell, attackerTileId);
         }
+        public void ConsumeFungalCell(FungalCell cell, DeathReason reason, int? killerPlayerId = null, int? attackerTileId = null)
+        {
+            if (cell.IsResistant) return;
+            int tileId = cell.TileId;
+            int ownerId = cell.OwnerPlayerId ?? -1;
+            cell.MarkAsDying();
+            cell.Kill(reason);
+            RemoveControlFromPlayer(tileId);
+            RemoveCellInternal(tileId, removeControl: false);
+            OnCellDeath(ownerId, tileId, reason, killerPlayerId, cell, attackerTileId);
+        }
         public bool TryReclaimDeadCell(int playerId, int tileId, GrowthSource reclaimGrowthSource)
         {
             var tile = GetTileById(tileId);

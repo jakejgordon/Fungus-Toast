@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Board;
+using FungusToast.Core.Growth;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI; // added for UIEffectConstants
 
@@ -19,6 +20,7 @@ namespace FungusToast.Unity
         private readonly Dictionary<int, List<int>> regenReclaimBuffer = new();
         private readonly List<int> postGrowthResistanceTiles = new();
         private readonly List<int> postGrowthHrtNewResistantTiles = new();
+        private readonly List<int> aegisHyphaeResistanceTiles = new();
         private HashSet<int> resistantBaseline = new();
         private bool sequenceRunning = false;
 
@@ -29,6 +31,26 @@ namespace FungusToast.Unity
         {
             board.PostGrowthPhase += OnPostGrowthPhase_StartSequence;
             board.PostGrowthPhaseCompleted += OnPostGrowthPhaseCompleted_CaptureHrt;
+            board.ResistanceAppliedBatch += OnResistanceAppliedBatch_Buffer;
+        }
+
+        private void OnResistanceAppliedBatch_Buffer(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
+        {
+            if (isFastForwarding() || tileIds == null || tileIds.Count == 0)
+            {
+                return;
+            }
+
+            var buffer = source == GrowthSource.AegisHyphae
+                ? aegisHyphaeResistanceTiles
+                : postGrowthResistanceTiles;
+            foreach (var tileId in tileIds)
+            {
+                if (!buffer.Contains(tileId))
+                {
+                    buffer.Add(tileId);
+                }
+            }
         }
 
         private void OnPostGrowthPhase_StartSequence()
@@ -62,6 +84,16 @@ namespace FungusToast.Unity
             {
                 grid.PlayResistancePulseBatchScaled(postGrowthResistanceTiles, 0.5f); yield return grid.WaitForAllAnimations(); postGrowthResistanceTiles.Clear();
             }
+            if (aegisHyphaeResistanceTiles.Count > 0)
+            {
+                gameManager.GameUI?.PhaseBanner?.Show(
+                    aegisHyphaeResistanceTiles.Count == 1
+                        ? "Aegis Hyphae fortifies 1 new cell!"
+                        : $"Aegis Hyphae fortifies {aegisHyphaeResistanceTiles.Count} new cells!",
+                    UIEffectConstants.AegisHyphaeBannerHoldSeconds);
+                gameManager.GameUI?.GameLogRouter?.RecordAegisHyphaeResistance(gameManager.GetPrimaryHumanInternal().PlayerId, aegisHyphaeResistanceTiles.Count);
+                grid.PlayResistancePulseBatchScaled(aegisHyphaeResistanceTiles, 0.65f); yield return grid.WaitForAllAnimations(); aegisHyphaeResistanceTiles.Clear();
+            }
             bool anyPlayerHasHrt = gameManager.Board.Players.Any(p => p.GetMycovariant(MycovariantIds.HyphalResistanceTransferId) != null);
             if (anyPlayerHasHrt && postGrowthHrtNewResistantTiles.Count > 0)
             {
@@ -72,7 +104,7 @@ namespace FungusToast.Unity
 
         private void ClearBuffers()
         {
-            regenReclaimBuffer.Clear(); postGrowthResistanceTiles.Clear(); postGrowthHrtNewResistantTiles.Clear();
+            regenReclaimBuffer.Clear(); postGrowthResistanceTiles.Clear(); postGrowthHrtNewResistantTiles.Clear(); aegisHyphaeResistanceTiles.Clear();
         }
     }
 }

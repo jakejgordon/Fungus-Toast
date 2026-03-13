@@ -8,7 +8,9 @@ namespace FungusToast.Core.Events
     public enum SpecialBoardEventKind
     {
         ConidialRelayTriggered = 1,
-        MycotoxicLashTriggered = 2
+        MycotoxicLashTriggered = 2,
+        RetrogradeBloomTriggered = 3,
+        SaprophageRingTriggered = 4
     }
 
     public sealed class SpecialBoardEventArgs : EventArgs

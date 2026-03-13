@@ -67,6 +67,21 @@ namespace FungusToast.Unity.UI
         public const float ConidialRelayBannerHoldSeconds = 0.5f;
 
         /// <summary>
+        /// Hold duration for the Retrograde Bloom mutation exchange banner.
+        /// </summary>
+        public const float RetrogradeBloomBannerHoldSeconds = 0.75f;
+
+        /// <summary>
+        /// Hold duration for the Aegis Hyphae post-growth banner.
+        /// </summary>
+        public const float AegisHyphaeBannerHoldSeconds = 0.55f;
+
+        /// <summary>
+        /// Hold duration for the Saprophage Ring decay banner.
+        /// </summary>
+        public const float SaprophageRingBannerHoldSeconds = 0.65f;
+
+        /// <summary>
         /// Total duration for the Conidial Relay presentation animation.
         /// </summary>
         public const float ConidialRelayTotalDurationSeconds = 1.5f;
@@ -75,6 +90,16 @@ namespace FungusToast.Unity.UI
         /// Total duration of the Mycotoxic Lash special-death emphasis step.
         /// </summary>
         public const float MycotoxicLashAnimationDurationSeconds = 1f;
+
+        /// <summary>
+        /// Total duration of the Retrograde Bloom board pulse.
+        /// </summary>
+        public const float RetrogradeBloomAnimationDurationSeconds = 1f;
+
+        /// <summary>
+        /// Total duration of the Saprophage Ring consumed-cell emphasis.
+        /// </summary>
+        public const float SaprophageRingAnimationDurationSeconds = 0.95f;
 
         /// <summary>
         /// Portion of the Mycotoxic Lash emphasis step spent fading the killed cells to black.

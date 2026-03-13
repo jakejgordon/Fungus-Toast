@@ -16,6 +16,10 @@ namespace FungusToast.Core.Campaign
             (AdaptationGameBalance.MycotoxicHaloOrthogonalKillChanceBonus * 100f).ToString("0.0", CultureInfo.InvariantCulture);
         private static readonly string mycotoxicLashPercent =
             (AdaptationGameBalance.MycotoxicLashToxinDropKillChance * 100f).ToString("0.0", CultureInfo.InvariantCulture);
+        private static readonly string retrogradeBloomLostLevels =
+            AdaptationGameBalance.RetrogradeBloomTier1LevelsLost.ToString(CultureInfo.InvariantCulture);
+        private static readonly string retrogradeBloomGainedLevels =
+            AdaptationGameBalance.RetrogradeBloomTier5LevelsGained.ToString(CultureInfo.InvariantCulture);
 
         private static readonly ReadOnlyCollection<AdaptationDefinition> all =
             new ReadOnlyCollection<AdaptationDefinition>(
@@ -41,9 +45,21 @@ namespace FungusToast.Core.Campaign
                         "Mycotoxic Lash",
                         $"For the rest of the campaign, each new toxin drop has a {mycotoxicLashPercent}% chance to instantly kill the first orthogonally adjacent enemy living cell.",
                         "mycotoxic_lash"),
-                    new AdaptationDefinition("adaptation_5", "Adaptation 5", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_6", "Adaptation 6", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_7", "Adaptation 7", "Placeholder adaptation with no gameplay effect yet."),
+                    new AdaptationDefinition(
+                        AdaptationIds.RetrogradeBloom,
+                        "Retrograde Bloom",
+                        $"At the start of round {AdaptationGameBalance.RetrogradeBloomTriggerRound}, {retrogradeBloomLostLevels} random Tier 1 mutation levels devolve and {retrogradeBloomGainedLevels} random Tier 5 mutation level evolves for free.",
+                        "retrograde_bloom"),
+                    new AdaptationDefinition(
+                        AdaptationIds.AegisHyphae,
+                        "Aegis Hyphae",
+                        $"Each round, the first {AdaptationGameBalance.AegisHyphaeCellsPerRound} cells you grow gain Resistance.",
+                        "aegis_hyphae"),
+                    new AdaptationDefinition(
+                        AdaptationIds.SaprophageRing,
+                        "Saprophage Ring",
+                        "Your cells that die beside one of your resistant cells are consumed, leaving the tile empty instead of a corpse.",
+                        "saprophage_ring"),
                     new AdaptationDefinition("adaptation_8", "Adaptation 8", "Placeholder adaptation with no gameplay effect yet."),
                     new AdaptationDefinition("adaptation_9", "Adaptation 9", "Placeholder adaptation with no gameplay effect yet."),
                     new AdaptationDefinition("adaptation_10", "Adaptation 10", "Placeholder adaptation with no gameplay effect yet."),

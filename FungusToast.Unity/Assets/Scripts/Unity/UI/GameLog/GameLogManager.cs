@@ -626,11 +626,63 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints) { if (catabolizedMutationPoints > 0 && IsHuman(playerId)) AddPlayerEvent(playerId, catabolizedMutationPoints == 1 ? "Earned 1 mutation point from Mycotoxin Catabolism" : $"Earned {catabolizedMutationPoints} mutation points from Mycotoxin Catabolism", GameLogCategory.Lucky); }
         public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName) { if (IsHuman(playerId) && !string.IsNullOrEmpty(mutationName)) AddFreeUpgrade(playerId, "Mutator Phenotype", mutationName, 1); }
         public void RecordSpecificMutationUpgrade(int playerId, string mutationName) { if (IsHuman(playerId) && !string.IsNullOrEmpty(mutationName)) AddFreeUpgrade(playerId, "Mutator Phenotype", mutationName, 1); }
+        public void RecordRetrogradeBloomUpgrade(int playerId, string evolvedMutationName, string devolvedMutationSummary, int devolvedPoints)
+        {
+            if (!IsHuman(playerId))
+            {
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(evolvedMutationName))
+            {
+                AddFreeUpgrade(playerId, "Retrograde Bloom", evolvedMutationName, 1);
+            }
+
+            if (!string.IsNullOrWhiteSpace(evolvedMutationName) && !string.IsNullOrWhiteSpace(devolvedMutationSummary))
+            {
+                string pointLabel = devolvedPoints == 1 ? "point" : "points";
+                AddPlayerEvent(
+                    playerId,
+                    $"Retrograde Bloom devolved {devolvedMutationSummary} for {devolvedPoints} mutation {pointLabel} and evolved {evolvedMutationName} for free",
+                    GameLogCategory.Lucky);
+                return;
+            }
+
+            AddPlayerEvent(playerId, "Retrograde Bloom reshaped your mutation tree", GameLogCategory.Lucky);
+        }
         public void RecordMutationUpgradeEvent(int playerId, int mutationId, string mutationName, MutationTier mutationTier, int oldLevel, int newLevel, int round, int mutationPointsBefore, int mutationPointsAfter, int pointsSpent, string upgradeSource) { }
         public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained) { if (IsHuman(playerId) && targetLevelsGained > 0 && !string.IsNullOrEmpty(targetMutationName)) AddFreeUpgrade(playerId, "Ontogenic Regression", targetMutationName, targetLevelsGained); }
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned, bool deprecated = true) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }
         public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations) { }
         public void RecordConidialRelayRelocation(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Starting cell relocated via Conidial Relay", GameLogCategory.Lucky); }
+        public void RecordAegisHyphaeResistance(int playerId, int cellsFortified)
+        {
+            if (!IsHuman(playerId) || cellsFortified <= 0)
+            {
+                return;
+            }
+
+            AddPlayerEvent(
+                playerId,
+                cellsFortified == 1
+                    ? "Aegis Hyphae fortified 1 new cell"
+                    : $"Aegis Hyphae fortified {cellsFortified} new cells",
+                GameLogCategory.Lucky);
+        }
+        public void RecordSaprophageRingConsumption(int playerId, int cellsConsumed)
+        {
+            if (!IsHuman(playerId) || cellsConsumed <= 0)
+            {
+                return;
+            }
+
+            AddPlayerEvent(
+                playerId,
+                cellsConsumed == 1
+                    ? "Saprophage Ring consumed 1 dying cell"
+                    : $"Saprophage Ring consumed {cellsConsumed} dying cells",
+                GameLogCategory.Lucky);
+        }
         public void RecordMycotoxicLashKills(int playerId, int cellsKilled)
         {
             if (!IsHuman(playerId) || cellsKilled <= 0)

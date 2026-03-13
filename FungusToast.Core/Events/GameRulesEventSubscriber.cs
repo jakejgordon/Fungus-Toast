@@ -74,6 +74,11 @@ namespace FungusToast.Core.Events
                 AdaptationEffectProcessor.OnPostDecayPhase(board, players, rng, observer);
             };
 
+            board.CellColonized += (playerId, tileId, source) =>
+            {
+                AdaptationEffectProcessor.OnCellColonized(playerId, tileId, source, board, players);
+            };
+
             // Necrophytic Bloom (initial burst on activation)
             board.NecrophyticBloomActivatedEvent += () =>
             {
@@ -83,6 +88,7 @@ namespace FungusToast.Core.Events
             // Mutator Phenotype (mutation phase start auto-upgrade effect)
             board.MutationPhaseStart += () =>
             {
+                AdaptationEffectProcessor.OnMutationPhaseStart(board, players, rng, observer);
                 MutationEffectCoordinator.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, observer);
                 MutationEffectCoordinator.OnMutationPhaseStart_OntogenicRegression(board, players, allMutations, rng, observer);
                 MutationEffectCoordinator.OnMutationPhaseStart_AdaptiveExpression(board, players, rng, observer);

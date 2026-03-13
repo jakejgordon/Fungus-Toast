@@ -174,6 +174,116 @@ namespace FungusToast.Unity.Grid
             }
         }
 
+        public IEnumerator PlayRetrogradeBloomAnimation(int anchorTileId)
+        {
+            if (board == null)
+            {
+                yield break;
+            }
+
+            var highlightTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
+            if (anchorTileId >= 0)
+            {
+                yield return BastionResistantPulseAnimation(anchorTileId, 0.85f);
+            }
+
+            if (highlightTilemap == null || solidHighlightTile == null || anchorTileId < 0)
+            {
+                yield break;
+            }
+
+            var (x, y) = board.GetXYFromTileId(anchorTileId);
+            var center = new Vector3Int(x, y, 0);
+            float duration = UIEffectConstants.RetrogradeBloomAnimationDurationSeconds;
+
+            BeginAnimation();
+            try
+            {
+                float startTime = Time.time;
+                while (Time.time - startTime < duration)
+                {
+                    float u = Mathf.Clamp01((Time.time - startTime) / duration);
+                    float radius = Mathf.Lerp(0.35f, 2.8f, u);
+                    Color ringColor = Color.Lerp(new Color(1f, 0.85f, 0.25f, 0.95f), new Color(1f, 0.45f, 0.12f, 0f), u);
+                    InternalDrawRing(center, radius, 0.45f, ringColor, highlightTilemap);
+                    yield return null;
+                }
+            }
+            finally
+            {
+                InternalClearRing(highlightTilemap);
+                EndAnimation();
+            }
+        }
+
+        public IEnumerator PlaySaprophageRingAnimation(IReadOnlyList<int> resistantTileIds, IReadOnlyList<int> consumedTileIds)
+        {
+            if (board == null || consumedTileIds == null || consumedTileIds.Count == 0)
+            {
+                yield break;
+            }
+
+            var highlightTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
+            if (highlightTilemap == null || solidHighlightTile == null)
+            {
+                yield break;
+            }
+
+            var resistantSources = (resistantTileIds ?? System.Array.Empty<int>()).Distinct().ToList();
+            foreach (var sourceTileId in resistantSources)
+            {
+                StartCoroutine(BastionResistantPulseAnimation(sourceTileId, 0.75f));
+            }
+
+            var consumedPositions = consumedTileIds
+                .Distinct()
+                .Select(tileId =>
+                {
+                    var (x, y) = board.GetXYFromTileId(tileId);
+                    return new Vector3Int(x, y, 0);
+                })
+                .ToList();
+
+            foreach (var pos in consumedPositions)
+            {
+                highlightTilemap.SetTile(pos, solidHighlightTile);
+                highlightTilemap.SetTileFlags(pos, TileFlags.None);
+            }
+
+            float duration = UIEffectConstants.SaprophageRingAnimationDurationSeconds;
+            BeginAnimation();
+            try
+            {
+                float elapsed = 0f;
+                while (elapsed < duration)
+                {
+                    elapsed += Time.deltaTime;
+                    float u = Mathf.Clamp01(elapsed / duration);
+                    float scale = Mathf.Lerp(1.1f, 0.25f, u);
+                    Color color = Color.Lerp(new Color(0.42f, 0.95f, 0.62f, 0.85f), new Color(0.07f, 0.16f, 0.08f, 0f), u);
+
+                    foreach (var pos in consumedPositions)
+                    {
+                        highlightTilemap.SetColor(pos, color);
+                        highlightTilemap.SetTransformMatrix(pos, Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f)));
+                    }
+
+                    yield return null;
+                }
+            }
+            finally
+            {
+                foreach (var pos in consumedPositions)
+                {
+                    highlightTilemap.SetTile(pos, null);
+                    highlightTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+                    highlightTilemap.SetColor(pos, Color.white);
+                }
+
+                EndAnimation();
+            }
+        }
+
         private void ApplyMycotoxicLashColors(
             IReadOnlyList<(Vector3Int pos, bool hasMold, Color moldColor, bool hasOverlay, Color overlayColor)> states,
             float t)

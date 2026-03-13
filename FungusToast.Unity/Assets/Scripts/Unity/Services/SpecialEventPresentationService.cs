@@ -16,7 +16,8 @@ namespace FungusToast.Unity
         private readonly Func<GridVisualizer> getGridVisualizer;
         private readonly Func<Player> getHumanPlayer;
         private readonly Func<bool> isFastForwarding;
-        private readonly Queue<SpecialBoardEventArgs> pendingEvents = new();
+        private readonly Queue<SpecialBoardEventArgs> pendingImmediateEvents = new();
+        private readonly Queue<SpecialBoardEventArgs> pendingPostDecayEvents = new();
 
         private bool isPresenting;
 
@@ -32,11 +33,13 @@ namespace FungusToast.Unity
             this.isFastForwarding = isFastForwarding;
         }
 
-        public bool HasPendingEvents => pendingEvents.Count > 0;
+        public bool HasPendingEvents => pendingPostDecayEvents.Count > 0;
+        public bool HasPendingImmediateEvents => pendingImmediateEvents.Count > 0;
 
         public void Reset()
         {
-            pendingEvents.Clear();
+            pendingImmediateEvents.Clear();
+            pendingPostDecayEvents.Clear();
             isPresenting = false;
         }
 
@@ -53,12 +56,18 @@ namespace FungusToast.Unity
                 return;
             }
 
-            pendingEvents.Enqueue(e);
+            if (IsImmediateEvent(e.EventKind))
+            {
+                pendingImmediateEvents.Enqueue(e);
+                return;
+            }
+
+            pendingPostDecayEvents.Enqueue(e);
         }
 
-        public IEnumerator PresentPendingAfterDecayRender()
+        public IEnumerator PresentPendingImmediate()
         {
-            if (isPresenting || pendingEvents.Count == 0 || isFastForwarding())
+            if (isPresenting || pendingImmediateEvents.Count == 0 || isFastForwarding())
             {
                 yield break;
             }
@@ -66,13 +75,40 @@ namespace FungusToast.Unity
             isPresenting = true;
             try
             {
-                while (pendingEvents.Count > 0)
+                while (pendingImmediateEvents.Count > 0)
                 {
-                    var specialEvent = pendingEvents.Dequeue();
+                    yield return PresentSpecialEvent(pendingImmediateEvents.Dequeue());
+                }
+            }
+            finally
+            {
+                isPresenting = false;
+            }
+        }
+
+        public IEnumerator PresentPendingAfterDecayRender()
+        {
+            if (isPresenting || pendingPostDecayEvents.Count == 0 || isFastForwarding())
+            {
+                yield break;
+            }
+
+            isPresenting = true;
+            try
+            {
+                while (pendingPostDecayEvents.Count > 0)
+                {
+                    var specialEvent = pendingPostDecayEvents.Dequeue();
 
                     if (specialEvent.EventKind == SpecialBoardEventKind.MycotoxicLashTriggered)
                     {
                         yield return PresentMycotoxicLashBatch(CollectMycotoxicLashBatch(specialEvent));
+                        continue;
+                    }
+
+                    if (specialEvent.EventKind == SpecialBoardEventKind.SaprophageRingTriggered)
+                    {
+                        yield return PresentSaprophageRingBatch(CollectSaprophageRingBatch(specialEvent));
                         continue;
                     }
 
@@ -106,22 +142,51 @@ namespace FungusToast.Unity
                         specialEvent.SourceTileId,
                         specialEvent.DestinationTileId);
                     break;
+                case SpecialBoardEventKind.RetrogradeBloomTriggered:
+                    uiManager.PhaseBanner?.Show(
+                        "Retrograde Bloom twists your mutation tree!",
+                        UIEffectConstants.RetrogradeBloomBannerHoldSeconds);
+                    yield return gridVisualizer.PlayRetrogradeBloomAnimation(specialEvent.SourceTileId);
+                    break;
             }
+        }
+
+        private static bool IsImmediateEvent(SpecialBoardEventKind eventKind)
+        {
+            return eventKind == SpecialBoardEventKind.RetrogradeBloomTriggered;
         }
 
         private List<SpecialBoardEventArgs> CollectMycotoxicLashBatch(SpecialBoardEventArgs firstEvent)
         {
             var batch = new List<SpecialBoardEventArgs> { firstEvent };
 
-            while (pendingEvents.Count > 0)
+            while (pendingPostDecayEvents.Count > 0)
             {
-                var nextEvent = pendingEvents.Peek();
+                var nextEvent = pendingPostDecayEvents.Peek();
                 if (nextEvent.EventKind != SpecialBoardEventKind.MycotoxicLashTriggered || nextEvent.PlayerId != firstEvent.PlayerId)
                 {
                     break;
                 }
 
-                batch.Add(pendingEvents.Dequeue());
+                batch.Add(pendingPostDecayEvents.Dequeue());
+            }
+
+            return batch;
+        }
+
+        private List<SpecialBoardEventArgs> CollectSaprophageRingBatch(SpecialBoardEventArgs firstEvent)
+        {
+            var batch = new List<SpecialBoardEventArgs> { firstEvent };
+
+            while (pendingPostDecayEvents.Count > 0)
+            {
+                var nextEvent = pendingPostDecayEvents.Peek();
+                if (nextEvent.EventKind != SpecialBoardEventKind.SaprophageRingTriggered || nextEvent.PlayerId != firstEvent.PlayerId)
+                {
+                    break;
+                }
+
+                batch.Add(pendingPostDecayEvents.Dequeue());
             }
 
             return batch;
@@ -157,6 +222,42 @@ namespace FungusToast.Unity
             yield return gridVisualizer.PlayMycotoxicLashAnimation(affectedTileIds);
         }
 
+        private IEnumerator PresentSaprophageRingBatch(IReadOnlyList<SpecialBoardEventArgs> events)
+        {
+            if (events == null || events.Count == 0)
+            {
+                yield break;
+            }
+
+            var uiManager = getGameUIManager();
+            var gridVisualizer = getGridVisualizer();
+            if (uiManager == null || gridVisualizer == null)
+            {
+                yield break;
+            }
+
+            var consumedTileIds = events
+                .SelectMany(e => e.AffectedTileIds ?? new List<int>())
+                .Distinct()
+                .ToList();
+            if (consumedTileIds.Count == 0)
+            {
+                yield break;
+            }
+
+            var resistantTileIds = events
+                .Select(e => e.SourceTileId)
+                .Where(tileId => tileId >= 0)
+                .Distinct()
+                .ToList();
+
+            uiManager.PhaseBanner?.Show(
+                BuildSaprophageRingBannerText(consumedTileIds.Count),
+                UIEffectConstants.SaprophageRingBannerHoldSeconds);
+            uiManager.GameLogRouter?.RecordSaprophageRingConsumption(events[0].PlayerId, consumedTileIds.Count);
+            yield return gridVisualizer.PlaySaprophageRingAnimation(resistantTileIds, consumedTileIds);
+        }
+
         private static string BuildMycotoxicLashBannerText(int cellsKilled)
         {
             string lashMessage = cellsKilled == 1
@@ -164,6 +265,13 @@ namespace FungusToast.Unity
                 : $"Mycotoxic Lash kills {cellsKilled} cells!";
             string colorHex = ColorUtility.ToHtmlStringRGB(UIStyleTokens.State.Danger);
             return $"Decay Phase Begins!\n<size=60%><color=#{colorHex}>{lashMessage}</color></size>";
+        }
+
+        private static string BuildSaprophageRingBannerText(int cellsConsumed)
+        {
+            return cellsConsumed == 1
+                ? "Saprophage Ring consumes 1 dying cell!"
+                : $"Saprophage Ring consumes {cellsConsumed} dying cells!";
         }
     }
 }
