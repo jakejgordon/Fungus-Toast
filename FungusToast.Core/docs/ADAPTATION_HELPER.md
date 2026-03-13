@@ -23,8 +23,9 @@ Adaptations commonly do one of two things:
 2. Read `CAMPAIGN_HELPER.md` before changing reward flow, persistence, or campaign state.
 3. Read `MYCOVARIANT_AUTHORING_STYLE.md` before writing or revising Adaptation descriptions.
 4. Use `MYCOVARIANT_TECHNICAL_FLOW.md` as the reference pattern for passive effect timing, event wiring, and simulation validation until a dedicated Adaptation technical flow doc exists.
-5. Implement metadata in the Adaptation catalog and wire gameplay behavior through the appropriate campaign and core runtime hooks.
-6. Validate with Core and Simulation builds after behavior changes.
+5. Generate a unique icon for the Adaptation so the campaign draft, tooltips, and profile UI do not fall back to generic art. The first pass can be provisional and replaced later, but every new Adaptation should ship with distinct iconography.
+6. Implement metadata in the Adaptation catalog and wire gameplay behavior through the appropriate campaign and core runtime hooks.
+7. Validate with Core and Simulation builds after behavior changes.
 
 ## Common Tasks
 
@@ -33,12 +34,14 @@ Adaptations commonly do one of two things:
 2. Keep the ID stable and unique.
 3. Name it using `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`.
 4. Write concise description text using the same cadence-first standards used for Mycovariants.
-5. If the Adaptation has gameplay behavior, wire it through the campaign startup seam and any required passive phase/event hooks.
+5. Generate a unique icon keyed off the Adaptation's `IconId`. It can be temporary and replaced later, but it should be distinct from every other Adaptation.
+6. If the Adaptation has gameplay behavior, wire it through the campaign startup seam and any required passive phase/event hooks.
 
 ### Add Adaptation UI presence
 1. Reuse the existing Unity tooltip system with `ITooltipContentProvider` and `TooltipTrigger`.
 2. Reuse a centralized art lookup path for icons rather than binding sprites ad hoc.
-3. Keep in-game Adaptation display consistent with the campaign reward draft and sidebar presentation.
+3. Ensure the centralized art repository has a unique generated icon for the Adaptation even if it is only a first-pass placeholder.
+4. Keep in-game Adaptation display consistent with the campaign reward draft and sidebar presentation.
 
 ### Validate Adaptation behavior
 1. Build `FungusToast.Core/FungusToast.Core.csproj`.

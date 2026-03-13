@@ -77,6 +77,15 @@ namespace FungusToast.Unity.UI.Campaign
                 case "mycotoxic_lash":
                     DrawMycotoxicLash(texture, accent, highlight);
                     break;
+                case "retrograde_bloom":
+                    DrawRetrogradeBloom(texture, accent, highlight);
+                    break;
+                case "aegis_hyphae":
+                    DrawAegisHyphae(texture, accent, highlight);
+                    break;
+                case "saprophage_ring":
+                    DrawSaprophageRing(texture, accent, highlight);
+                    break;
                 default:
                     DrawFallback(texture, accent, highlight);
                     break;
@@ -94,6 +103,9 @@ namespace FungusToast.Unity.UI.Campaign
                 "hyphal_economy" => Color.Lerp(UIStyleTokens.Accent.Moss, UIStyleTokens.Surface.PanelPrimary, 0.45f),
                 "mycotoxic_halo" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Surface.PanelPrimary, 0.4f),
                 "mycotoxic_lash" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Surface.PanelPrimary, 0.52f),
+                "retrograde_bloom" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.Surface.PanelPrimary, 0.42f),
+                "aegis_hyphae" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.58f),
+                "saprophage_ring" => Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.Surface.PanelPrimary, 0.6f),
                 _ => UIStyleTokens.Surface.PanelPrimary
             };
         }
@@ -106,6 +118,9 @@ namespace FungusToast.Unity.UI.Campaign
                 "hyphal_economy" => UIStyleTokens.State.Success,
                 "mycotoxic_halo" => UIStyleTokens.State.Warning,
                 "mycotoxic_lash" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.State.Danger, 0.45f),
+                "retrograde_bloom" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.State.Warning, 0.2f),
+                "aegis_hyphae" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Text.Primary, 0.15f),
+                "saprophage_ring" => Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.State.Warning, 0.25f),
                 _ => UIStyleTokens.Text.Primary
             };
         }
@@ -163,10 +178,67 @@ namespace FungusToast.Unity.UI.Campaign
             DrawLine(texture, 25, 20, 30, 20, highlight, 1);
         }
 
+        private static void DrawRetrogradeBloom(Texture2D texture, Color accent, Color highlight)
+        {
+            DrawRing(texture, 20, 20, 11, 2, accent);
+            FillCircle(texture, 20, 20, 3, highlight);
+            FillCircle(texture, 20, 8, 3, highlight);
+            FillCircle(texture, 32, 20, 3, highlight);
+            FillCircle(texture, 20, 32, 3, highlight);
+            FillCircle(texture, 8, 20, 3, highlight);
+            DrawLine(texture, 12, 28, 26, 14, accent, 1);
+            DrawLine(texture, 26, 14, 22, 14, accent, 1);
+            DrawLine(texture, 26, 14, 26, 18, accent, 1);
+        }
+
+        private static void DrawAegisHyphae(Texture2D texture, Color accent, Color highlight)
+        {
+            FillShield(texture, 20, 21, 10, 12, accent);
+            DrawLine(texture, 20, 11, 20, 28, highlight, 1);
+            DrawLine(texture, 20, 18, 13, 24, highlight, 1);
+            DrawLine(texture, 20, 18, 27, 24, highlight, 1);
+            FillCircle(texture, 20, 11, 2, highlight);
+            FillCircle(texture, 13, 24, 2, highlight);
+            FillCircle(texture, 27, 24, 2, highlight);
+        }
+
+        private static void DrawSaprophageRing(Texture2D texture, Color accent, Color highlight)
+        {
+            DrawRing(texture, 20, 20, 12, 3, accent);
+            DrawRing(texture, 20, 20, 7, 2, highlight);
+            FillCircle(texture, 20, 20, 3, new Color(0f, 0f, 0f, 0f));
+            FillCircle(texture, 20, 8, 2, highlight);
+            FillCircle(texture, 32, 20, 2, highlight);
+            FillCircle(texture, 20, 32, 2, highlight);
+            FillCircle(texture, 8, 20, 2, highlight);
+        }
+
         private static void DrawFallback(Texture2D texture, Color accent, Color highlight)
         {
             DrawLine(texture, 8, 8, 31, 31, accent, 2);
             DrawLine(texture, 31, 8, 8, 31, highlight, 2);
+        }
+
+        private static void FillShield(Texture2D texture, int centerX, int centerY, int halfWidth, int halfHeight, Color color)
+        {
+            for (int y = centerY - halfHeight; y <= centerY + halfHeight; y++)
+            {
+                for (int x = centerX - halfWidth; x <= centerX + halfWidth; x++)
+                {
+                    if (!IsInsideBounds(x, y))
+                    {
+                        continue;
+                    }
+
+                    float normalizedX = Mathf.Abs(x - centerX) / (float)halfWidth;
+                    bool withinTopHalf = y <= centerY && normalizedX <= 0.95f - ((centerY - y) / (float)(halfHeight * 3));
+                    bool withinBottomHalf = y > centerY && normalizedX <= 1f - ((y - centerY) / (float)halfHeight);
+                    if (withinTopHalf || withinBottomHalf)
+                    {
+                        texture.SetPixel(x, y, color);
+                    }
+                }
+            }
         }
 
         private static void FillCircle(Texture2D texture, int centerX, int centerY, int radius, Color color)

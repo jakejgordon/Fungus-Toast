@@ -80,7 +80,7 @@ namespace FungusToast.Core.Config
         public const int MycotoxinCatabolismMaxLevel = 8;
 
         // Hyphal Surge (Tier 2 MycelialSurges)
-        public const float HyphalSurgeEffectPerLevel = .009f;
+        public const float HyphalSurgeEffectPerLevel = .013f;
         public const int HyphalSurgeMaxLevel = 10;
         public const int HyphalSurgePointsPerActivation = 7;
         public const int HyphalSurgeDurationRounds = 2;

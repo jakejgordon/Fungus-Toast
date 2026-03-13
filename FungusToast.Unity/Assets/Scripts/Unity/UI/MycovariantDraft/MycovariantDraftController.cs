@@ -6,6 +6,7 @@ using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Effects;
 using FungusToast.Unity.Grid;
+using FungusToast.Unity.UI.Campaign;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -440,12 +441,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 Destroy(child.gameObject);
             }
 
-            var fallbackIcon = MycovariantArtRepository.GetIcon(MycovariantType.Passive);
             for (int i = 0; i < choices.Count; i++)
             {
                 var adaptation = choices[i];
                 var card = Instantiate(cardPrefab, choiceContainer);
-                card.SetCardContent(adaptation.Name, adaptation.Description, fallbackIcon, () => OnAdaptationChoicePicked(adaptation));
+                card.SetCardContent(adaptation.Name, adaptation.Description, AdaptationArtRepository.GetIcon(adaptation), () => OnAdaptationChoicePicked(adaptation));
                 card.SetActiveHighlight(true);
             }
         }

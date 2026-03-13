@@ -53,7 +53,7 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.AegisHyphae,
                         "Aegis Hyphae",
-                        $"Each round, the first {AdaptationGameBalance.AegisHyphaeCellsPerRound} cells you grow gain Resistance.",
+                        $"Each round, the first {AdaptationGameBalance.AegisHyphaeCellsPerRound} {(AdaptationGameBalance.AegisHyphaeCellsPerRound == 1 ? "cell" : "cells")} you grow gain Resistance.",
                         "aegis_hyphae"),
                     new AdaptationDefinition(
                         AdaptationIds.SaprophageRing,
