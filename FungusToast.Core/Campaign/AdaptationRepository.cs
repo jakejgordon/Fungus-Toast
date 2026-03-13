@@ -60,7 +60,11 @@ namespace FungusToast.Core.Campaign
                         "Saprophage Ring",
                         "Your cells that die beside one of your resistant cells are consumed, leaving the tile empty instead of a corpse.",
                         "saprophage_ring"),
-                    new AdaptationDefinition("adaptation_8", "Adaptation 8", "Placeholder adaptation with no gameplay effect yet."),
+                    new AdaptationDefinition(
+                        AdaptationIds.MarginalClamp,
+                        "Marginal Clamp",
+                        "For the rest of the campaign, whenever one of your living cells grows beside an enemy living cell or any toxin on the crust, those border threats are cleared immediately. Resistant enemy cells still survive.",
+                        "marginal_clamp"),
                     new AdaptationDefinition("adaptation_9", "Adaptation 9", "Placeholder adaptation with no gameplay effect yet."),
                     new AdaptationDefinition("adaptation_10", "Adaptation 10", "Placeholder adaptation with no gameplay effect yet."),
                     new AdaptationDefinition("adaptation_11", "Adaptation 11", "Placeholder adaptation with no gameplay effect yet."),

@@ -729,6 +729,20 @@ namespace FungusToast.Unity.UI.GameLog
                     : $"Mycotoxic Lash killed {cellsKilled} cells",
                 GameLogCategory.Lucky);
         }
+        public void RecordMarginalClampKills(int playerId, int cellsKilled)
+        {
+            if (!IsHuman(playerId) || cellsKilled <= 0)
+            {
+                return;
+            }
+
+            AddPlayerEvent(
+                playerId,
+                cellsKilled == 1
+                    ? "Marginal Clamp cleared 1 border threat"
+                    : $"Marginal Clamp cleared {cellsKilled} border threats",
+                GameLogCategory.Lucky);
+        }
         public void RecordCreepingMoldMove(int playerId) { }
         public void RecordCreepingMoldToxinJump(int playerId) { }
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }

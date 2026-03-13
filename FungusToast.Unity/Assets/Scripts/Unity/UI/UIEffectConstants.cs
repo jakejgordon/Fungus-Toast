@@ -82,6 +82,11 @@ namespace FungusToast.Unity.UI
         public const float SaprophageRingBannerHoldSeconds = 0.65f;
 
         /// <summary>
+        /// Hold duration for the Marginal Clamp growth-triggered banner.
+        /// </summary>
+        public const float MarginalClampBannerHoldSeconds = 0.55f;
+
+        /// <summary>
         /// Total duration for the Conidial Relay presentation animation.
         /// </summary>
         public const float ConidialRelayTotalDurationSeconds = 1.5f;

@@ -152,6 +152,12 @@ namespace FungusToast.Unity.UI.GameLog
             if (IsSilentMode) return;
             playerActivityLogManager?.RecordMycotoxicLashKills(playerId, cellsKilled);
         }
+
+        public void RecordMarginalClampKills(int playerId, int cellsKilled)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordMarginalClampKills(playerId, cellsKilled);
+        }
         #endregion
 
         #region Phase / Round Routing (suppressed in silent mode)

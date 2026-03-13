@@ -9,5 +9,6 @@ namespace FungusToast.Core.Campaign
         public const string RetrogradeBloom = "adaptation_5";
         public const string AegisHyphae = "adaptation_6";
         public const string SaprophageRing = "adaptation_7";
+        public const string MarginalClamp = "adaptation_8";
     }
 }

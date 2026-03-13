@@ -76,7 +76,7 @@ namespace FungusToast.Core.Events
 
             board.CellColonized += (playerId, tileId, source) =>
             {
-                AdaptationEffectProcessor.OnCellColonized(playerId, tileId, source, board, players);
+                AdaptationEffectProcessor.OnCellColonized(playerId, tileId, source, board, players, observer);
             };
 
             // Necrophytic Bloom (initial burst on activation)

@@ -10,7 +10,8 @@ namespace FungusToast.Core.Events
         ConidialRelayTriggered = 1,
         MycotoxicLashTriggered = 2,
         RetrogradeBloomTriggered = 3,
-        SaprophageRingTriggered = 4
+        SaprophageRingTriggered = 4,
+        MarginalClampTriggered = 5
     }
 
     public sealed class SpecialBoardEventArgs : EventArgs

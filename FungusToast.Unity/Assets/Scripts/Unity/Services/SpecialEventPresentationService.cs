@@ -77,7 +77,15 @@ namespace FungusToast.Unity
             {
                 while (pendingImmediateEvents.Count > 0)
                 {
-                    yield return PresentSpecialEvent(pendingImmediateEvents.Dequeue());
+                    var specialEvent = pendingImmediateEvents.Dequeue();
+
+                    if (specialEvent.EventKind == SpecialBoardEventKind.MarginalClampTriggered)
+                    {
+                        yield return PresentMarginalClampBatch(CollectMarginalClampBatch(specialEvent));
+                        continue;
+                    }
+
+                    yield return PresentSpecialEvent(specialEvent);
                 }
             }
             finally
@@ -148,12 +156,26 @@ namespace FungusToast.Unity
                         UIEffectConstants.RetrogradeBloomBannerHoldSeconds);
                     yield return gridVisualizer.PlayRetrogradeBloomAnimation(specialEvent.SourceTileId);
                     break;
+                case SpecialBoardEventKind.MarginalClampTriggered:
+                    int cellsKilled = specialEvent.AffectedTileIds?.Distinct().Count() ?? 0;
+                    if (cellsKilled <= 0)
+                    {
+                        yield break;
+                    }
+
+                    uiManager.PhaseBanner?.Show(
+                        BuildMarginalClampBannerText(cellsKilled),
+                        UIEffectConstants.MarginalClampBannerHoldSeconds);
+                    uiManager.GameLogRouter?.RecordMarginalClampKills(specialEvent.PlayerId, cellsKilled);
+                    yield return gridVisualizer.PlayMycotoxicLashAnimation(specialEvent.AffectedTileIds.Distinct().ToList());
+                    break;
             }
         }
 
         private static bool IsImmediateEvent(SpecialBoardEventKind eventKind)
         {
-            return eventKind == SpecialBoardEventKind.RetrogradeBloomTriggered;
+            return eventKind == SpecialBoardEventKind.RetrogradeBloomTriggered
+                || eventKind == SpecialBoardEventKind.MarginalClampTriggered;
         }
 
         private List<SpecialBoardEventArgs> CollectMycotoxicLashBatch(SpecialBoardEventArgs firstEvent)
@@ -187,6 +209,24 @@ namespace FungusToast.Unity
                 }
 
                 batch.Add(pendingPostDecayEvents.Dequeue());
+            }
+
+            return batch;
+        }
+
+        private List<SpecialBoardEventArgs> CollectMarginalClampBatch(SpecialBoardEventArgs firstEvent)
+        {
+            var batch = new List<SpecialBoardEventArgs> { firstEvent };
+
+            while (pendingImmediateEvents.Count > 0)
+            {
+                var nextEvent = pendingImmediateEvents.Peek();
+                if (nextEvent.EventKind != SpecialBoardEventKind.MarginalClampTriggered || nextEvent.PlayerId != firstEvent.PlayerId)
+                {
+                    break;
+                }
+
+                batch.Add(pendingImmediateEvents.Dequeue());
             }
 
             return batch;
@@ -258,6 +298,36 @@ namespace FungusToast.Unity
             yield return gridVisualizer.PlaySaprophageRingAnimation(resistantTileIds, consumedTileIds);
         }
 
+        private IEnumerator PresentMarginalClampBatch(IReadOnlyList<SpecialBoardEventArgs> events)
+        {
+            if (events == null || events.Count == 0)
+            {
+                yield break;
+            }
+
+            var uiManager = getGameUIManager();
+            var gridVisualizer = getGridVisualizer();
+            if (uiManager == null || gridVisualizer == null)
+            {
+                yield break;
+            }
+
+            var affectedTileIds = events
+                .SelectMany(e => e.AffectedTileIds ?? new List<int>())
+                .Distinct()
+                .ToList();
+            if (affectedTileIds.Count == 0)
+            {
+                yield break;
+            }
+
+            uiManager.PhaseBanner?.Show(
+                BuildMarginalClampBannerText(affectedTileIds.Count),
+                UIEffectConstants.MarginalClampBannerHoldSeconds);
+            uiManager.GameLogRouter?.RecordMarginalClampKills(events[0].PlayerId, affectedTileIds.Count);
+            yield return gridVisualizer.PlayMycotoxicLashAnimation(affectedTileIds);
+        }
+
         private static string BuildMycotoxicLashBannerText(int cellsKilled)
         {
             string lashMessage = cellsKilled == 1
@@ -272,6 +342,13 @@ namespace FungusToast.Unity
             return cellsConsumed == 1
                 ? "Saprophage Ring consumes 1 dying cell!"
                 : $"Saprophage Ring consumes {cellsConsumed} dying cells!";
+        }
+
+        private static string BuildMarginalClampBannerText(int cellsKilled)
+        {
+            return cellsKilled == 1
+                ? "Marginal Clamp clears 1 border threat!"
+                : $"Marginal Clamp clears {cellsKilled} border threats!";
         }
     }
 }

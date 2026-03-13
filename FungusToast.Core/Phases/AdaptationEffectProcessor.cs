@@ -46,15 +46,37 @@ namespace FungusToast.Core.Phases
             int tileId,
             GrowthSource source,
             GameBoard board,
-            List<Player> players)
+            List<Player> players,
+            ISimulationObserver observer)
         {
             var player = players.FirstOrDefault(candidate => candidate.PlayerId == playerId);
-            if (player == null || !player.HasAdaptation(AdaptationIds.AegisHyphae))
+            if (player == null)
             {
                 return;
             }
 
-            int fortifiedThisRound = board.CurrentRoundContext.GetEffectCount(playerId, AegisHyphaeCounterKey);
+            var tile = board.GetTileById(tileId);
+            var cell = tile?.FungalCell;
+            if (cell == null || !cell.IsAlive || cell.OwnerPlayerId != playerId)
+            {
+                return;
+            }
+
+            TryApplyMarginalClamp(player, tileId, board, observer);
+            TryApplyAegisHyphae(player, tileId, board);
+        }
+
+        private static void TryApplyAegisHyphae(
+            Player player,
+            int tileId,
+            GameBoard board)
+        {
+            if (!player.HasAdaptation(AdaptationIds.AegisHyphae))
+            {
+                return;
+            }
+
+            int fortifiedThisRound = board.CurrentRoundContext.GetEffectCount(player.PlayerId, AegisHyphaeCounterKey);
             if (fortifiedThisRound >= AdaptationGameBalance.AegisHyphaeCellsPerRound)
             {
                 return;
@@ -62,14 +84,75 @@ namespace FungusToast.Core.Phases
 
             var tile = board.GetTileById(tileId);
             var cell = tile?.FungalCell;
-            if (cell == null || !cell.IsAlive || cell.OwnerPlayerId != playerId || cell.IsResistant)
+            if (cell == null || !cell.IsAlive || cell.OwnerPlayerId != player.PlayerId || cell.IsResistant)
             {
                 return;
             }
 
             cell.MakeResistant();
-            board.CurrentRoundContext.IncrementEffectCount(playerId, AegisHyphaeCounterKey);
-            board.OnResistanceAppliedBatch(playerId, GrowthSource.AegisHyphae, new List<int> { tileId });
+            board.CurrentRoundContext.IncrementEffectCount(player.PlayerId, AegisHyphaeCounterKey);
+            board.OnResistanceAppliedBatch(player.PlayerId, GrowthSource.AegisHyphae, new List<int> { tileId });
+        }
+
+        private static void TryApplyMarginalClamp(
+            Player player,
+            int tileId,
+            GameBoard board,
+            ISimulationObserver observer)
+        {
+            if (!player.HasAdaptation(AdaptationIds.MarginalClamp))
+            {
+                return;
+            }
+
+            var borderThreatTiles = board.GetOrthogonalNeighbors(tileId)
+                .Where(tile => BoardUtilities.IsOnBorder(tile, board.Width, board.Height))
+                .Where(tile => tile.FungalCell != null)
+                .ToList();
+
+            var enemyLivingTargetTiles = borderThreatTiles
+                .Where(tile => tile.FungalCell!.IsAlive)
+                .Where(tile => tile.FungalCell!.OwnerPlayerId != player.PlayerId)
+                .Where(tile => !tile.FungalCell!.IsResistant)
+                .ToList();
+
+            var toxinTargetTiles = borderThreatTiles
+                .Where(tile => tile.FungalCell!.IsToxin)
+                .ToList();
+
+            if (enemyLivingTargetTiles.Count == 0 && toxinTargetTiles.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var targetTile in enemyLivingTargetTiles)
+            {
+                board.KillFungalCell(targetTile.FungalCell!, DeathReason.MarginalClamp, player.PlayerId, tileId);
+            }
+
+            foreach (var toxinTile in toxinTargetTiles)
+            {
+                board.RemoveCellInternal(toxinTile.TileId, removeControl: true);
+            }
+
+            if (enemyLivingTargetTiles.Count > 0)
+            {
+                observer.RecordAttributedKill(player.PlayerId, DeathReason.MarginalClamp, enemyLivingTargetTiles.Count);
+            }
+
+            var affectedTileIds = enemyLivingTargetTiles
+                .Select(tile => tile.TileId)
+                .Concat(toxinTargetTiles.Select(tile => tile.TileId))
+                .Distinct()
+                .ToList();
+
+            board.OnSpecialBoardEventTriggered(
+                new SpecialBoardEventArgs(
+                    SpecialBoardEventKind.MarginalClampTriggered,
+                    player.PlayerId,
+                    tileId,
+                    affectedTileIds[0],
+                    affectedTileIds));
         }
 
         public static bool TryConsumeSaprophageRingDeath(
