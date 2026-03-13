@@ -34,13 +34,15 @@ dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj
 
 ### Common Build Issues and Workarounds
 
-#### Issue: PostBuild Script Fails on Linux/macOS
-**Error:** `The command "call "PostBuild_CopyAndTouch.bat"" exited with code 127`
+#### Issue: Unity copy step on Linux/macOS/WSL
+**Cause:** The FungusToast.Core project uses a Windows batch file post-build step to copy the compiled DLL into Unity's Assets/Plugins folder.
 
-**Cause:** The FungusToast.Core project has a Windows batch file post-build step that copies the compiled DLL to Unity's Assets/Plugins folder.
+**Current behavior:**
+- On Windows, the post-build copy/touch step runs automatically.
+- On Linux/macOS/WSL, the post-build step is skipped so `dotnet build` succeeds cleanly.
 
 **Solution:**
-If the script fails due to a locked .dll file, simply run the build command a second time - this almost always succeeds. For Unity integration, use the post-build .bat file which copies the DLL and touches forcecompile.cs to trigger Unity rebuild.
+If Unity needs the latest Core build on Linux/macOS/WSL, run `./FungusToast.Core/copy_to_unity.sh` after building. It copies the output from `FungusToast.Core/bin/Debug/netstandard2.1/` into `FungusToast.Unity/Assets/Plugins/` and touches `ForceRecompile.cs`.
 
 #### Build Time Expectations
 - **FungusToast.Core**: ~6 seconds (clean build), ~2 seconds (incremental)
