@@ -59,25 +59,7 @@ namespace FungusToast.Core.Campaign
                         AdaptationIds.SaprophageRing,
                         "Saprophage Ring",
                         "Your cells that die beside one of your resistant cells are consumed, leaving the tile empty instead of a corpse.",
-                        "saprophage_ring"),
-                    new AdaptationDefinition("adaptation_8", "Adaptation 8", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_9", "Adaptation 9", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_10", "Adaptation 10", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_11", "Adaptation 11", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_12", "Adaptation 12", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_13", "Adaptation 13", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_14", "Adaptation 14", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_15", "Adaptation 15", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_16", "Adaptation 16", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_17", "Adaptation 17", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_18", "Adaptation 18", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_19", "Adaptation 19", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_20", "Adaptation 20", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_21", "Adaptation 21", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_22", "Adaptation 22", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_23", "Adaptation 23", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_24", "Adaptation 24", "Placeholder adaptation with no gameplay effect yet."),
-                    new AdaptationDefinition("adaptation_25", "Adaptation 25", "Placeholder adaptation with no gameplay effect yet.")
+                        "saprophage_ring")
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;
