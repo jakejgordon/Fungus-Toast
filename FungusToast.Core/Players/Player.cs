@@ -244,6 +244,7 @@ namespace FungusToast.Core.Players
                 pm.Upgrade(currentRound);
                 int newLevel = pm.CurrentLevel;
                 int duration = mutation.SurgeDuration;
+                TryApplyApicalYield(mutation, oldLevel, newLevel, simulationObserver);
 
                 // Activate the surge
                 ActiveSurges[mutation.Id] = new ActiveSurgeInfo(mutation.Id, newLevel, duration);
@@ -292,6 +293,7 @@ namespace FungusToast.Core.Players
                     MutationPoints -= mutation.PointsPerUpgrade;
                     pm.Upgrade(currentRound);
                     int newLevel = pm.CurrentLevel;
+                    TryApplyApicalYield(mutation, oldLevel, newLevel, simulationObserver);
 
                     // --- Set PrereqMetRound on dependents ---
                     foreach (var dependent in FungusToast.Core.Mutations.MutationRegistry.All.Values)
@@ -387,6 +389,10 @@ namespace FungusToast.Core.Players
                 int mutationPointsBefore = MutationPoints;
                 pm.Upgrade(currentRound);
                 int newLevel = pm.CurrentLevel;
+                if (simulationObserver != null)
+                {
+                    TryApplyApicalYield(mut, oldLevel, newLevel, simulationObserver);
+                }
                 MutationsChanged?.Invoke(this);
 
                 // --- Set PrereqMetRound on dependents ---
@@ -522,6 +528,21 @@ namespace FungusToast.Core.Players
             MutationPoints += amount;
         }
 
+        private void TryApplyApicalYield(Mutation mutation, int oldLevel, int newLevel, ISimulationObserver simulationObserver)
+        {
+            if (simulationObserver == null
+                || mutation == null
+                || !HasAdaptation(AdaptationIds.ApicalYield)
+                || oldLevel >= mutation.MaxLevel
+                || newLevel < mutation.MaxLevel)
+            {
+                return;
+            }
+
+            AddMutationPoints(AdaptationGameBalance.ApicalYieldMutationPointAward);
+            simulationObserver.RecordApicalYieldBonus(PlayerId, mutation.Name, AdaptationGameBalance.ApicalYieldMutationPointAward);
+        }
+
 
         public bool HasMycovariant(int id) =>
             PlayerMycovariants.Any(m => m.MycovariantId == id);
@@ -546,7 +567,7 @@ namespace FungusToast.Core.Players
             PlayerMycovariants.Add(playerMyco);
         }
 
-        internal void SetMutationLevel(int id, int newLevel, int currentRound = -1)
+        internal void SetMutationLevel(int id, int newLevel, int currentRound = -1, ISimulationObserver? simulationObserver = null)
         {
             // Get the mutation definition from the registry
             if (!FungusToast.Core.Mutations.MutationRegistry.All.TryGetValue(id, out var mutation))
@@ -564,6 +585,11 @@ namespace FungusToast.Core.Players
 
             // Set the level directly
             pm.CurrentLevel = newLevel;
+
+            if (simulationObserver != null)
+            {
+                TryApplyApicalYield(mutation, oldLevel, newLevel, simulationObserver);
+            }
 
             // If setting to 0, we could remove the entry entirely, but keeping it for consistency
             if (newLevel == 0)

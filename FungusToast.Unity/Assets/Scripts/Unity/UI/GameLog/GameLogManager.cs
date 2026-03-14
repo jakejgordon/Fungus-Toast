@@ -639,6 +639,22 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }
         public void RecordAdaptiveExpressionBonus(int playerId, int bonus) { if (bonus > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Adaptive Expression", bonus); }
         public void RecordAnabolicInversionBonus(int playerId, int bonus) { if (bonus > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Anabolic Inversion", bonus); }
+        public void RecordApicalYieldBonus(int playerId, string mutationName, int bonusPoints)
+        {
+            if (!IsHuman(playerId) || bonusPoints <= 0)
+            {
+                return;
+            }
+
+            AddFreePoints(playerId, "Apical Yield", bonusPoints);
+
+            string pointsLabel = bonusPoints == 1 ? "point" : "points";
+            string mutationLabel = string.IsNullOrWhiteSpace(mutationName) ? "a mutation" : mutationName;
+            AddPlayerEvent(
+                playerId,
+                $"Apical Yield triggered when {mutationLabel} reached max level, granting {bonusPoints} mutation {pointsLabel}",
+                GameLogCategory.Lucky);
+        }
         public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints) { if (bonusPoints > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Ontogenic Regression", bonusPoints); }
         public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset) { }
         public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)

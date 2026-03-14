@@ -89,6 +89,9 @@ namespace FungusToast.Unity.UI.Campaign
                 case "marginal_clamp":
                     DrawMarginalClamp(texture, accent, highlight);
                     break;
+                case "apical_yield":
+                    DrawApicalYield(texture, accent, highlight);
+                    break;
                 default:
                     DrawFallback(texture, accent, highlight);
                     break;
@@ -110,6 +113,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "aegis_hyphae" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.58f),
                 "saprophage_ring" => Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.Surface.PanelPrimary, 0.6f),
                 "marginal_clamp" => Color.Lerp(UIStyleTokens.State.Danger, UIStyleTokens.Surface.PanelPrimary, 0.55f),
+                "apical_yield" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.Surface.PanelPrimary, 0.48f),
                 _ => UIStyleTokens.Surface.PanelPrimary
             };
         }
@@ -126,6 +130,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "aegis_hyphae" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Text.Primary, 0.15f),
                 "saprophage_ring" => Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.State.Warning, 0.25f),
                 "marginal_clamp" => Color.Lerp(UIStyleTokens.State.Danger, UIStyleTokens.State.Warning, 0.2f),
+                "apical_yield" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.State.Warning, 0.25f),
                 _ => UIStyleTokens.Text.Primary
             };
         }
@@ -230,6 +235,17 @@ namespace FungusToast.Unity.UI.Campaign
             DrawLine(texture, 18, 13, 22, 13, highlight, 1);
             DrawLine(texture, 18, 27, 22, 27, highlight, 1);
             DrawLine(texture, 10, 20, 29, 20, accent, 1);
+        }
+
+        private static void DrawApicalYield(Texture2D texture, Color accent, Color highlight)
+        {
+            DrawLine(texture, 20, 30, 20, 12, accent, 2);
+            DrawLine(texture, 20, 12, 14, 18, accent, 2);
+            DrawLine(texture, 20, 12, 26, 18, accent, 2);
+            DrawLine(texture, 13, 29, 27, 29, highlight, 1);
+            FillCircle(texture, 11, 10, 3, highlight);
+            FillCircle(texture, 29, 10, 3, highlight);
+            FillCircle(texture, 20, 19, 2, highlight);
         }
 
         private static void DrawFallback(Texture2D texture, Color accent, Color highlight)

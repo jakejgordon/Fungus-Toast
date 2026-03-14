@@ -332,7 +332,7 @@ namespace FungusToast.Core.Phases
             foreach (var kvp in levelsLostByMutationId)
             {
                 int currentLevel = player.GetMutationLevel(kvp.Key);
-                player.SetMutationLevel(kvp.Key, currentLevel - kvp.Value, board.CurrentRound);
+                player.SetMutationLevel(kvp.Key, currentLevel - kvp.Value, board.CurrentRound, observer);
             }
 
             string devolvedMutationSummary = BuildRetrogradeBloomDevolvedMutationSummary(levelsLostByMutationId);
@@ -341,7 +341,7 @@ namespace FungusToast.Core.Phases
             var targetMutation = eligibleTier5Mutations[rng.Next(eligibleTier5Mutations.Count)];
             int oldLevel = player.GetMutationLevel(targetMutation.Id);
             int newLevel = oldLevel + AdaptationGameBalance.RetrogradeBloomTier5LevelsGained;
-            player.SetMutationLevel(targetMutation.Id, newLevel, board.CurrentRound);
+            player.SetMutationLevel(targetMutation.Id, newLevel, board.CurrentRound, observer);
             observer.RecordMutationUpgradeEvent(
                 playerId: player.PlayerId,
                 mutationId: targetMutation.Id,

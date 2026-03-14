@@ -77,6 +77,21 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetAllAnabolicInversionPointsEarned() => new(anabolicInversionPointsEarned);
 
         // ────────────────
+        // Apical Yield Points
+        // ────────────────
+
+        private readonly Dictionary<int, int> apicalYieldPointsEarned = new();
+        public void RecordApicalYieldBonus(int playerId, string mutationName, int bonusPoints)
+        {
+            if (!apicalYieldPointsEarned.ContainsKey(playerId))
+                apicalYieldPointsEarned[playerId] = 0;
+            apicalYieldPointsEarned[playerId] += bonusPoints;
+        }
+        public int GetApicalYieldPointsEarned(int playerId)
+            => apicalYieldPointsEarned.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllApicalYieldPointsEarned() => new(apicalYieldPointsEarned);
+
+        // ────────────────
         // Mutator Phenotype Points
         // ────────────────
 

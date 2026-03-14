@@ -61,6 +61,10 @@ namespace FungusToast.Unity.UI.MutationTree
         private List<MutationNodeUI> mutationButtons = new();
         private Dictionary<int, List<int>> directDependentsByMutationId = new();
 
+        public bool IsTreeOpen => isTreeOpen;
+        public RectTransform MutationTreeRect => mutationTreeRect;
+        public Transform MutationTreeTransform => mutationTreePanel != null ? mutationTreePanel.transform : transform;
+
         private void Awake()
         {
             if (mutationTreePanel != null)

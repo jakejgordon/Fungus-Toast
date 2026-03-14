@@ -3,6 +3,7 @@ using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Board;
+using FungusToast.Unity.UI.MutationTree;
 
 namespace FungusToast.Unity.UI.GameLog
 {
@@ -15,16 +16,18 @@ namespace FungusToast.Unity.UI.GameLog
     {
         private readonly GameLogManager playerActivityLogManager;
         private readonly GlobalGameLogManager globalEventsLogManager;
+        private readonly UI_MutationTreeToastPresenter mutationTreeToastPresenter;
 
         /// <summary>
         /// When true, UI emission is suppressed. Some aggregation still occurs.
         /// </summary>
         public bool IsSilentMode { get; private set; } = false;
 
-        public GameLogRouter(GameLogManager playerLog, GlobalGameLogManager globalLog)
+        public GameLogRouter(GameLogManager playerLog, GlobalGameLogManager globalLog, UI_MutationTreeToastPresenter mutationTreeToast)
         {
             playerActivityLogManager = playerLog;
             globalEventsLogManager = globalLog;
+            mutationTreeToastPresenter = mutationTreeToast;
         }
 
         #region Silent Mode
@@ -59,6 +62,19 @@ namespace FungusToast.Unity.UI.GameLog
 
         public void RecordAnabolicInversionBonus(int playerId, int bonus)
             => playerActivityLogManager?.RecordAnabolicInversionBonus(playerId, bonus);
+
+        public void RecordApicalYieldBonus(int playerId, string mutationName, int bonusPoints)
+        {
+            playerActivityLogManager?.RecordApicalYieldBonus(playerId, mutationName, bonusPoints);
+
+            if (IsSilentMode || bonusPoints <= 0)
+            {
+                return;
+            }
+
+            string pointLabel = bonusPoints == 1 ? "point" : "points";
+            mutationTreeToastPresenter?.ShowIfTreeOpen($"Apical Yield grants {bonusPoints} mutation {pointLabel}!");
+        }
 
         public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints)
             => playerActivityLogManager?.RecordOntogenicRegressionFailureBonus(playerId, bonusPoints);

@@ -64,7 +64,12 @@ namespace FungusToast.Core.Campaign
                         AdaptationIds.MarginalClamp,
                         "Marginal Clamp",
                         "For the rest of the campaign, whenever one of your living cells grows beside an enemy living cell or any toxin on the crust, those border threats are cleared immediately. Resistant enemy cells still survive.",
-                        "marginal_clamp")
+                        "marginal_clamp"),
+                    new AdaptationDefinition(
+                        AdaptationIds.ApicalYield,
+                        "Apical Yield",
+                        $"For the rest of the campaign, whenever one of your mutations reaches max level, gain {AdaptationGameBalance.ApicalYieldMutationPointAward} free mutation points.",
+                        "apical_yield")
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;

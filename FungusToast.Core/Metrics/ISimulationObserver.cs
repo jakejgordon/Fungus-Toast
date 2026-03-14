@@ -11,6 +11,7 @@ namespace FungusToast.Core.Metrics
         void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned);
         void RecordAdaptiveExpressionBonus(int playerId, int bonus);
         void RecordAnabolicInversionBonus(int playerId, int bonus);
+        void RecordApicalYieldBonus(int playerId, string mutationName, int bonusPoints);
 
         void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1);
         void RecordAttributedKill(int playerId, DeathReason reason, int killCount = 1);

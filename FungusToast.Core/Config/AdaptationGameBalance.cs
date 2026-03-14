@@ -10,5 +10,6 @@ namespace FungusToast.Core.Config
         public const int RetrogradeBloomTier1LevelsLost = 5;
         public const int RetrogradeBloomTier5LevelsGained = 1;
         public const int AegisHyphaeCellsPerRound = 1;
+        public const int ApicalYieldMutationPointAward = 2;
     }
 }

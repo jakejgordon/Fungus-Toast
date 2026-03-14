@@ -15,6 +15,9 @@ namespace FungusToast.Unity.UI.Campaign
     /// </summary>
     public class UI_CampaignPanelController : MonoBehaviour
     {
+        private const float TestingDropdownFontSize = 18f;
+        private const float TestingDropdownScrollSensitivity = 1.5f;
+
         [Header("Buttons")]
         [SerializeField] private Button resumeButton;
         [SerializeField] private Button newButton;
@@ -551,11 +554,43 @@ namespace FungusToast.Unity.UI.Campaign
             if (dropdown.captionText != null)
             {
                 dropdown.captionText.color = UIStyleTokens.Button.TextDefault;
+                dropdown.captionText.enableAutoSizing = false;
+                dropdown.captionText.fontSize = TestingDropdownFontSize;
+                dropdown.captionText.fontSizeMin = TestingDropdownFontSize;
+                dropdown.captionText.fontSizeMax = TestingDropdownFontSize;
             }
 
             if (dropdown.itemText != null)
             {
                 dropdown.itemText.color = UIStyleTokens.Button.TextDefault;
+                dropdown.itemText.enableAutoSizing = false;
+                dropdown.itemText.fontSize = TestingDropdownFontSize;
+                dropdown.itemText.fontSizeMin = TestingDropdownFontSize;
+                dropdown.itemText.fontSizeMax = TestingDropdownFontSize;
+            }
+
+            if (dropdown.template != null)
+            {
+                var scrollRect = dropdown.template.GetComponentInChildren<ScrollRect>(true);
+                if (scrollRect != null)
+                {
+                    scrollRect.scrollSensitivity = TestingDropdownScrollSensitivity;
+                }
+
+                var templateLabels = dropdown.template.GetComponentsInChildren<TextMeshProUGUI>(true);
+                for (int index = 0; index < templateLabels.Length; index++)
+                {
+                    var templateLabel = templateLabels[index];
+                    if (templateLabel == null)
+                    {
+                        continue;
+                    }
+
+                    templateLabel.enableAutoSizing = false;
+                    templateLabel.fontSize = TestingDropdownFontSize;
+                    templateLabel.fontSizeMin = TestingDropdownFontSize;
+                    templateLabel.fontSizeMax = TestingDropdownFontSize;
+                }
             }
 
             var labels = dropdown.GetComponentsInChildren<TextMeshProUGUI>(true);
@@ -575,6 +610,11 @@ namespace FungusToast.Unity.UI.Campaign
                 {
                     text.color = UIStyleTokens.Button.TextDefault;
                 }
+
+                text.enableAutoSizing = false;
+                text.fontSize = TestingDropdownFontSize;
+                text.fontSizeMin = TestingDropdownFontSize;
+                text.fontSizeMax = TestingDropdownFontSize;
             }
         }
 

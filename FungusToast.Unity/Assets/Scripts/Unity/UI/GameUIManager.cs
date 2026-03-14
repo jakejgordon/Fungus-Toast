@@ -78,7 +78,7 @@ namespace FungusToast.Unity.UI
             {
                 if (gameLogRouter == null)
                 {
-                    gameLogRouter = new GameLogRouter(playerActivityLogManager, globalEventsLogManager);
+                    gameLogRouter = new GameLogRouter(playerActivityLogManager, globalEventsLogManager, MutationTreeToastPresenter);
                     
                     // Set the router reference on the player activity log manager for silent mode awareness
                     playerActivityLogManager?.SetGameLogRouter(gameLogRouter);
@@ -91,10 +91,29 @@ namespace FungusToast.Unity.UI
         public GameLogManager GameLogManager => playerActivityLogManager;
         public UI_GameLogPanel GlobalGameLogPanel => globalEventsLogPanel;
         public GlobalGameLogManager GlobalGameLogManager => globalEventsLogManager;
+        public UI_MutationTreeToastPresenter MutationTreeToastPresenter
+        {
+            get
+            {
+                if (mutationTreeToastPresenter == null)
+                {
+                    mutationTreeToastPresenter = GetComponent<UI_MutationTreeToastPresenter>();
+                    if (mutationTreeToastPresenter == null)
+                    {
+                        mutationTreeToastPresenter = gameObject.AddComponent<UI_MutationTreeToastPresenter>();
+                    }
+
+                    mutationTreeToastPresenter.Initialize(mutationUIManager);
+                }
+
+                return mutationTreeToastPresenter;
+            }
+        }
 
         public void RegisterPauseMenuPanel(UI_PauseMenuPanel panel) => pauseMenuPanel = panel;
 
         // Routing observer for unified event handling
         private GameLogRouter gameLogRouter;
+        private UI_MutationTreeToastPresenter mutationTreeToastPresenter;
     }
 }

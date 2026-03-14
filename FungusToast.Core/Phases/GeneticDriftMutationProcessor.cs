@@ -677,10 +677,10 @@ namespace FungusToast.Core.Phases
 
                 int currentSourceLevel = player.GetMutationLevel(sourceMutation.Id);
                 int newSourceLevel = Math.Max(0, currentSourceLevel - effectiveLevelsToConsume);
-                player.SetMutationLevel(sourceMutation.Id, newSourceLevel, board.CurrentRound);
+                player.SetMutationLevel(sourceMutation.Id, newSourceLevel, board.CurrentRound, observer);
 
                 int currentTargetLevel = player.GetMutationLevel(targetMutation.Id);
-                player.SetMutationLevel(targetMutation.Id, currentTargetLevel + 1, board.CurrentRound);
+                player.SetMutationLevel(targetMutation.Id, currentTargetLevel + 1, board.CurrentRound, observer);
 
                 observer.RecordOntogenicRegressionEffect(player.PlayerId, sourceMutation.Name, effectiveLevelsToConsume, targetMutation.Name, 1);
                 if (sacrificed.Count > 0)
