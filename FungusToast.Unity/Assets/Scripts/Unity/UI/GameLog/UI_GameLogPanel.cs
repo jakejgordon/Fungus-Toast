@@ -28,6 +28,7 @@ namespace FungusToast.Unity.UI.GameLog
         private int activePlayerId = -1; // for player-specific filtering
         private bool subscribed = false; // prevent double subscription
         private bool pendingLayoutRebuild = false; // coalesce multiple adds per frame
+        private int pendingBottomScrollFrames = 0;
 
         private void Awake()
         {
@@ -118,6 +119,12 @@ namespace FungusToast.Unity.UI.GameLog
                 ForceLayoutRefreshImmediate();
                 pendingLayoutRebuild = false;
             }
+
+            if (pendingBottomScrollFrames > 0)
+            {
+                ForceLayoutRefreshImmediate();
+                pendingBottomScrollFrames--;
+            }
         }
 
         public void Initialize(IGameLogManager gameLogManager)
@@ -153,6 +160,7 @@ namespace FungusToast.Unity.UI.GameLog
                     AddLogEntry(entry);
                 }
                 QueueLayoutRefresh();
+                QueueBottomScrollFollowup();
             }
         }
 
@@ -233,6 +241,7 @@ namespace FungusToast.Unity.UI.GameLog
             }
 
             QueueLayoutRefresh();
+            QueueBottomScrollFollowup();
         }
 
         private void ClearLog()
@@ -248,6 +257,7 @@ namespace FungusToast.Unity.UI.GameLog
                 logManager.ClearLog();
 
             QueueLayoutRefresh();
+            QueueBottomScrollFollowup();
         }
 
         private void RebuildForPlayerEntries(IEnumerable<GameLogEntry> entries)
@@ -259,9 +269,20 @@ namespace FungusToast.Unity.UI.GameLog
             foreach (var entry in entries.Where(e => !e.PlayerId.HasValue || e.PlayerId == activePlayerId).TakeLast(maxVisibleEntries))
                 CreateVisualEntry(entry);
             QueueLayoutRefresh();
+            QueueBottomScrollFollowup();
         }
 
         private void QueueLayoutRefresh() => pendingLayoutRebuild = true;
+
+        private void QueueBottomScrollFollowup()
+        {
+            if (!autoScrollToBottom || scrollRect == null)
+            {
+                return;
+            }
+
+            pendingBottomScrollFrames = Mathf.Max(pendingBottomScrollFrames, 3);
+        }
 
         private void ForceLayoutRefreshImmediate()
         {
@@ -273,11 +294,19 @@ namespace FungusToast.Unity.UI.GameLog
             if (contentRT != null)
                 LayoutRebuilder.ForceRebuildLayoutImmediate(contentRT);
 
+            if (scrollRect != null && scrollRect.viewport != null)
+                LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect.viewport);
+
             if (scrollRect != null && scrollRect.content != null)
                 LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect.content);
 
             if (autoScrollToBottom && scrollRect != null)
+            {
+                Canvas.ForceUpdateCanvases();
+                scrollRect.StopMovement();
                 scrollRect.verticalNormalizedPosition = 0f;
+                scrollRect.velocity = Vector2.zero;
+            }
         }
 
         public void SetAutoScroll(bool enabled) => autoScrollToBottom = enabled;
@@ -286,7 +315,9 @@ namespace FungusToast.Unity.UI.GameLog
             if (scrollRect != null)
             {
                 Canvas.ForceUpdateCanvases();
+                scrollRect.StopMovement();
                 scrollRect.verticalNormalizedPosition = 0f;
+                scrollRect.velocity = Vector2.zero;
             }
         }
         public void ScrollToTop()
