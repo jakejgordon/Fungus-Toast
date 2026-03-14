@@ -89,6 +89,8 @@ ExportedObj/
 Thumbs.db
 *.log
 run_logs/
+.venv/
+**/.venv/
 
 # === PLASTIC SCM / UNITY COLLAB ===
 
