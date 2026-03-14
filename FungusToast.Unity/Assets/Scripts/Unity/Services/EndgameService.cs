@@ -16,6 +16,8 @@ namespace FungusToast.Unity
     /// </summary>
     public class EndgameService
     {
+        private const int ImmediateFinalRoundCountdown = 1;
+
         private readonly GameUIManager ui;
         private readonly Func<GameBoard> getBoard;
         private readonly Func<Player> getHumanPlayer;
@@ -61,6 +63,38 @@ namespace FungusToast.Unity
             GameEnded = false;
             isCountdownActive = false;
             roundsRemainingUntilGameEnd = 0;
+            ui.RightSidebar?.SetEndgameCountdownText(null);
+        }
+
+        /// <summary>
+        /// When testing fast-forward lands on a board that already satisfies the endgame
+        /// occupancy threshold, arm the countdown so the next interactive round is the last one.
+        /// </summary>
+        public bool TryArmImmediateFinalRoundCountdown()
+        {
+            if (GameEnded)
+            {
+                return false;
+            }
+
+            var board = getBoard();
+            if (board == null || !board.ShouldTriggerEndgame())
+            {
+                return false;
+            }
+
+            bool alreadyArmedForFinalRound = isCountdownActive
+                && roundsRemainingUntilGameEnd == ImmediateFinalRoundCountdown;
+
+            isCountdownActive = true;
+            roundsRemainingUntilGameEnd = ImmediateFinalRoundCountdown;
+
+            if (!alreadyArmedForFinalRound)
+            {
+                UpdateCountdownUI();
+            }
+
+            return true;
         }
 
         /// <summary>

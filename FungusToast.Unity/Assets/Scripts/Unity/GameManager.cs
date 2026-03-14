@@ -1046,6 +1046,12 @@ namespace FungusToast.Unity
             gameEnded = endgameService.GameEnded;
         }
 
+        internal void ArmImmediateFinalRoundAfterFastForwardIfNeeded()
+        {
+            endgameService.TryArmImmediateFinalRoundCountdown();
+            gameEnded = endgameService.GameEnded;
+        }
+
         private void RecoverGameplayUiIfStuck()
         {
             if (Board == null || gameUIManager == null)

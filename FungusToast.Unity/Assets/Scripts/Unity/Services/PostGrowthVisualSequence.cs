@@ -42,19 +42,49 @@ namespace FungusToast.Unity
                 return;
             }
 
+            IReadOnlyList<int> filteredTileIds = source == GrowthSource.CrustalCallus
+                ? FilterToNewlyGrownResistantTiles(tileIds)
+                : tileIds;
+            if (filteredTileIds.Count == 0)
+            {
+                return;
+            }
+
             var buffer = source switch
             {
                 GrowthSource.AegisHyphae => aegisHyphaeResistanceTiles,
                 GrowthSource.CrustalCallus => crustalCallusResistanceTiles,
                 _ => postGrowthResistanceTiles
             };
-            foreach (var tileId in tileIds)
+            foreach (var tileId in filteredTileIds)
             {
                 if (!buffer.Contains(tileId))
                 {
                     buffer.Add(tileId);
                 }
             }
+
+            if (source == GrowthSource.CrustalCallus)
+            {
+                grid.DeferResistanceOverlayReveal(filteredTileIds);
+            }
+        }
+
+        private IReadOnlyList<int> FilterToNewlyGrownResistantTiles(IReadOnlyList<int> tileIds)
+        {
+            var filtered = new List<int>(tileIds.Count);
+            for (int i = 0; i < tileIds.Count; i++)
+            {
+                int tileId = tileIds[i];
+                var tile = gameManager.Board.GetTileById(tileId);
+                var cell = tile?.FungalCell;
+                if (cell?.IsAlive == true && cell.IsResistant && cell.IsNewlyGrown)
+                {
+                    filtered.Add(tileId);
+                }
+            }
+
+            return filtered;
         }
 
         private void OnPostGrowthPhase_StartSequence()
@@ -91,7 +121,7 @@ namespace FungusToast.Unity
             if (crustalCallusResistanceTiles.Count > 0)
             {
                 gameManager.GameUI?.GameLogRouter?.RecordCrustalCallusResistance(gameManager.GetPrimaryHumanInternal().PlayerId, crustalCallusResistanceTiles.Count);
-                grid.PlayResistancePulseBatchScaled(crustalCallusResistanceTiles, 0.5f); yield return grid.WaitForAllAnimations(); crustalCallusResistanceTiles.Clear();
+                grid.PlayResistanceDropBatch(crustalCallusResistanceTiles, 1f); yield return grid.WaitForAllAnimations(); crustalCallusResistanceTiles.Clear();
             }
             if (aegisHyphaeResistanceTiles.Count > 0)
             {
@@ -113,6 +143,7 @@ namespace FungusToast.Unity
 
         private void ClearBuffers()
         {
+            grid.RevealDeferredResistanceOverlays(crustalCallusResistanceTiles);
             regenReclaimBuffer.Clear(); postGrowthResistanceTiles.Clear(); postGrowthHrtNewResistantTiles.Clear(); crustalCallusResistanceTiles.Clear(); aegisHyphaeResistanceTiles.Clear();
         }
     }

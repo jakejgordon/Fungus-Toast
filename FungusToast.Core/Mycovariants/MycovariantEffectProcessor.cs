@@ -280,19 +280,18 @@ public static class MycovariantEffectProcessor
                 // Roll for toxin placement
                 if (rng.NextDouble() < toxinChance)
                 {
-                    var existingCell = targetTile.FungalCell;
-                    
                     // Calculate toxin lifespan (considering Enduring Toxaphores if player has it)
                     int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, toxinDuration);
-                    
-                    if (existingCell != null && existingCell.IsAlive && !existingCell.IsResistant)
+
+                    var currentCell = targetTile.FungalCell;
+                    if (currentCell != null && currentCell.IsAlive && !currentCell.IsResistant)
                     {
                         // Kill and toxify living cells (excluding resistant ones)
                         ToxinHelper.KillAndToxify(board, targetTileId, toxinLifespan, DeathReason.CytolyticBurst, GrowthSource.CytolyticBurst, player, sourceToxinTileId);
                         cellsKilled++;
                         toxinsCreated++;
                     }
-                    else if (existingCell == null || existingCell.IsDead)
+                    else if (currentCell == null || currentCell.IsDead)
                     {
                         // Convert empty or dead tiles to toxin
                         ToxinHelper.ConvertToToxin(board, targetTileId, toxinLifespan, GrowthSource.CytolyticBurst, player);

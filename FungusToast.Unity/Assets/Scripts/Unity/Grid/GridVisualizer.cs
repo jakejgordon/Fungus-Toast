@@ -59,6 +59,7 @@ namespace FungusToast.Unity.Grid
         private readonly Dictionary<int, Coroutine> deathAnimationCoroutines = new();
         private readonly HashSet<int> toxinDropTileIds = new();
         private readonly Dictionary<int, Coroutine> toxinDropCoroutines = new();
+        private readonly HashSet<int> deferredResistanceOverlayTileIds = new();
 
         private SelectionHighlightHelper selectionHelper;
         private RingHighlightHelper ringHelper;
@@ -338,7 +339,7 @@ namespace FungusToast.Unity.Grid
                             }
                         }
                     }
-                    if (cell.IsResistant && goldShieldOverlayTile != null)
+                    if (ShouldRenderResistanceOverlay(tile.TileId, cell))
                     {
                         overlayTile = goldShieldOverlayTile;
                         overlayColor = Color.white;
@@ -402,6 +403,94 @@ namespace FungusToast.Unity.Grid
             overlayTilemap.SetTileFlags(pos, TileFlags.None);
             overlayTilemap.SetColor(pos, color);
             overlayTilemap.RefreshTile(pos);
+        }
+
+        private bool ShouldRenderResistanceOverlay(int tileId, FungalCell cell)
+        {
+            return cell != null
+                && cell.CellType == FungalCellType.Alive
+                && cell.IsResistant
+                && goldShieldOverlayTile != null
+                && !deferredResistanceOverlayTileIds.Contains(tileId);
+        }
+
+        private Vector3Int GetPositionForTileId(int tileId)
+        {
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null)
+            {
+                return Vector3Int.zero;
+            }
+
+            var xy = activeBoard.GetXYFromTileId(tileId);
+            return new Vector3Int(xy.Item1, xy.Item2, 0);
+        }
+
+        private void ClearResistanceOverlayTile(int tileId)
+        {
+            if (overlayTilemap == null)
+            {
+                return;
+            }
+
+            var pos = GetPositionForTileId(tileId);
+            overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+            if (overlayTilemap.GetTile(pos) == goldShieldOverlayTile)
+            {
+                overlayTilemap.SetTile(pos, null);
+                overlayTilemap.RefreshTile(pos);
+            }
+        }
+
+        private void RestoreResistanceOverlayTile(int tileId)
+        {
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null || overlayTilemap == null || goldShieldOverlayTile == null)
+            {
+                return;
+            }
+
+            var tile = activeBoard.GetTileById(tileId);
+            var cell = tile?.FungalCell;
+            if (!ShouldRenderResistanceOverlay(tileId, cell))
+            {
+                return;
+            }
+
+            var pos = GetPositionForTileId(tileId);
+            overlayTilemap.SetTile(pos, goldShieldOverlayTile);
+            overlayTilemap.SetTileFlags(pos, TileFlags.None);
+            overlayTilemap.SetColor(pos, Color.white);
+            overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+            overlayTilemap.RefreshTile(pos);
+        }
+
+        public void DeferResistanceOverlayReveal(IReadOnlyList<int> tileIds)
+        {
+            if (tileIds == null || tileIds.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var tileId in tileIds)
+            {
+                deferredResistanceOverlayTileIds.Add(tileId);
+                ClearResistanceOverlayTile(tileId);
+            }
+        }
+
+        public void RevealDeferredResistanceOverlays(IReadOnlyList<int> tileIds)
+        {
+            if (tileIds == null || tileIds.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var tileId in tileIds)
+            {
+                deferredResistanceOverlayTileIds.Remove(tileId);
+                RestoreResistanceOverlayTile(tileId);
+            }
         }
 
         public Tile GetTileForPlayer(int playerId)
@@ -798,8 +887,7 @@ namespace FungusToast.Unity.Grid
             if (activeBoard == null || goldShieldOverlayTile == null || overlayTilemap == null)
                 yield break;
 
-            var xy = activeBoard.GetXYFromTileId(tileId);
-            Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
+            Vector3Int pos = GetPositionForTileId(tileId);
 
             float total = UIEffectConstants.SurgicalInoculationDropDurationSeconds;
             float dropT = Mathf.Clamp01(UIEffectConstants.SurgicalInoculationDropPortion);
@@ -881,6 +969,8 @@ namespace FungusToast.Unity.Grid
             }
             finally
             {
+                deferredResistanceOverlayTileIds.Remove(tileId);
+                RestoreResistanceOverlayTile(tileId);
                 EndAnimation();
             }
         }
@@ -952,6 +1042,19 @@ namespace FungusToast.Unity.Grid
             if (tileIds == null || tileIds.Count == 0) return;
             foreach (var id in tileIds)
                 StartCoroutine(BastionResistantPulseAnimation(id, scaleMultiplier));
+        }
+
+        public void PlayResistanceDropBatch(IReadOnlyList<int> tileIds, float finalScale = 1f)
+        {
+            if (tileIds == null || tileIds.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var id in tileIds)
+            {
+                StartCoroutine(ResistantDropAnimation(id, finalScale));
+            }
         }
         // BACK COMPAT overloads (old signatures) -----------------
         public void PlayResistancePulseBatchScaled(IReadOnlyList<int> tileIds, float scaleMultiplier)
