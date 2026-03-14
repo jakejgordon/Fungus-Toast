@@ -164,6 +164,7 @@ FungusToast.Core/
    ├── BUILD_INSTRUCTIONS.md          # Basic build commands
    ├── DESIGN_PRINCIPLES.md           # Architecture and design philosophy
    ├── FUTURE_IMPROVEMENTS.md         # Backlog and future UX/architecture tasks
+   ├── GAME_BALANCE_CONSTANTS.md      # Canonical gameplay balance levers and tuning guidance
    ├── MYCOVARIANT_AUTHORING_STYLE.md # Mycovariant copy/style standards
    ├── MYCOVARIANT_HELPER.md          # Mycovariant system guide
    ├── MYCOVARIANT_PR_CHECKLIST.md    # Mycovariant review checklist
@@ -347,6 +348,7 @@ FungusToast.Unity/
 - `FungusToast.Core/docs/SIMULATION_HELPER.md`: Simulation CLI options, output locations, parquet export, tracking checklist.
 - `FungusToast.Core/docs/AI_STRATEGY_AUTHORING.md`: Strategy sets/themes and reproducible balance-testing patterns.
 - `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`: Mutation authoring workflow with tracking and UI integration points.
+- `FungusToast.Core/docs/GAME_BALANCE_CONSTANTS.md`: Canonical balance levers, tuning categories, and when not to use AI config as the primary gameplay balance tool.
 - `FungusToast.Core/docs/ADAPTATION_HELPER.md`: Adaptation authoring workflow, campaign persistence touchpoints, and validation steps.
 - `FungusToast.Core/docs/ADAPTATION_TECHNICAL_FLOW.md`: Adaptation runtime wiring, campaign integration, and validation boundaries.
 - `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`: Index page for Mycovariant authoring and implementation docs.
