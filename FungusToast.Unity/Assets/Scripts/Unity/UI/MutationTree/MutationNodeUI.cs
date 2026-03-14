@@ -60,7 +60,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private float targetProgressFill;
         private float currentProgressFill;
         private static readonly float ProgressLerpSpeed = 6f;
-        private const float ProgressFillVisibilityBoost = 1.15f;
+        private const float ProgressFillVisibilityBoost = 3.8f;
 
         public int MutationId => mutation.Id;
 
@@ -93,7 +93,7 @@ namespace FungusToast.Unity.UI.MutationTree
             targetProgressFill = mutation.MaxLevel > 0 ? currentLevel / (float)mutation.MaxLevel : 0f;
             currentProgressFill = targetProgressFill;
             if (levelProgressFill != null)
-                levelProgressFill.rectTransform.anchorMax = new Vector2(currentProgressFill, 0);
+                levelProgressFill.rectTransform.anchorMax = new Vector2(currentProgressFill, 0f);
 
             UpdateDisplay();
 
@@ -251,7 +251,7 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 currentProgressFill = Mathf.MoveTowards(currentProgressFill, targetProgressFill, ProgressLerpSpeed * Time.deltaTime);
                 var fillRect = levelProgressFill.rectTransform;
-                fillRect.anchorMax = new Vector2(currentProgressFill, 0);
+                fillRect.anchorMax = new Vector2(currentProgressFill, 0f);
             }
         }
 
@@ -603,14 +603,15 @@ namespace FungusToast.Unity.UI.MutationTree
             var layoutElem = fillGO.AddComponent<LayoutElement>();
             layoutElem.ignoreLayout = true;
 
-            // Bottom-aligned thin strip matching the level-text line height.
+            // Keep the fill as a narrow band aligned to the level row so it
+            // reads as progress without flooding the entire center of the node.
             // anchorMax.x is driven by fill ratio in Update().
             var fillRect = fillGO.GetComponent<RectTransform>();
-            fillRect.anchorMin = Vector2.zero;                    // bottom-left
-            fillRect.anchorMax = new Vector2(0, 0);               // starts at zero width, bottom edge
-            fillRect.pivot = new Vector2(0, 0);                   // grow rightward from bottom-left
-            fillRect.anchoredPosition = new Vector2(0, 5);
-            fillRect.sizeDelta = new Vector2(0, 18);              // fixed height matching text line
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = new Vector2(0f, 0f);
+            fillRect.pivot = new Vector2(0f, 0f);
+            fillRect.anchoredPosition = new Vector2(0f, 5f);
+            fillRect.sizeDelta = new Vector2(0f, 18f);
         }
 
         private void EnsureNodeBorder()
