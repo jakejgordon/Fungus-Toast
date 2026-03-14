@@ -717,6 +717,20 @@ namespace FungusToast.Unity.UI.GameLog
                     : $"Aegis Hyphae fortified {cellsFortified} new cells",
                 GameLogCategory.Lucky);
         }
+        public void RecordCrustalCallusResistance(int playerId, int cellsFortified)
+        {
+            if (!IsHuman(playerId) || cellsFortified <= 0)
+            {
+                return;
+            }
+
+            AddPlayerEvent(
+                playerId,
+                cellsFortified == 1
+                    ? "Crustal Callus fortified 1 border cell"
+                    : $"Crustal Callus fortified {cellsFortified} border cells",
+                GameLogCategory.Lucky);
+        }
         public void RecordSaprophageRingConsumption(int playerId, int cellsConsumed)
         {
             if (!IsHuman(playerId) || cellsConsumed <= 0)

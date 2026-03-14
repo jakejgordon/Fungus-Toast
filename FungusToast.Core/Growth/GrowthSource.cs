@@ -132,6 +132,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Resistance granted by the Aegis Hyphae adaptation.
         /// </summary>
-        AegisHyphae
+        AegisHyphae,
+
+        /// <summary>
+        /// Resistance granted by the Crustal Callus adaptation.
+        /// </summary>
+        CrustalCallus
     }
 }

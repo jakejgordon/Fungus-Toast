@@ -20,6 +20,7 @@ namespace FungusToast.Unity
         private readonly Dictionary<int, List<int>> regenReclaimBuffer = new();
         private readonly List<int> postGrowthResistanceTiles = new();
         private readonly List<int> postGrowthHrtNewResistantTiles = new();
+        private readonly List<int> crustalCallusResistanceTiles = new();
         private readonly List<int> aegisHyphaeResistanceTiles = new();
         private HashSet<int> resistantBaseline = new();
         private bool sequenceRunning = false;
@@ -41,9 +42,12 @@ namespace FungusToast.Unity
                 return;
             }
 
-            var buffer = source == GrowthSource.AegisHyphae
-                ? aegisHyphaeResistanceTiles
-                : postGrowthResistanceTiles;
+            var buffer = source switch
+            {
+                GrowthSource.AegisHyphae => aegisHyphaeResistanceTiles,
+                GrowthSource.CrustalCallus => crustalCallusResistanceTiles,
+                _ => postGrowthResistanceTiles
+            };
             foreach (var tileId in tileIds)
             {
                 if (!buffer.Contains(tileId))
@@ -84,6 +88,11 @@ namespace FungusToast.Unity
             {
                 grid.PlayResistancePulseBatchScaled(postGrowthResistanceTiles, 0.5f); yield return grid.WaitForAllAnimations(); postGrowthResistanceTiles.Clear();
             }
+            if (crustalCallusResistanceTiles.Count > 0)
+            {
+                gameManager.GameUI?.GameLogRouter?.RecordCrustalCallusResistance(gameManager.GetPrimaryHumanInternal().PlayerId, crustalCallusResistanceTiles.Count);
+                grid.PlayResistancePulseBatchScaled(crustalCallusResistanceTiles, 0.5f); yield return grid.WaitForAllAnimations(); crustalCallusResistanceTiles.Clear();
+            }
             if (aegisHyphaeResistanceTiles.Count > 0)
             {
                 gameManager.GameUI?.PhaseBanner?.Show(
@@ -104,7 +113,7 @@ namespace FungusToast.Unity
 
         private void ClearBuffers()
         {
-            regenReclaimBuffer.Clear(); postGrowthResistanceTiles.Clear(); postGrowthHrtNewResistantTiles.Clear(); aegisHyphaeResistanceTiles.Clear();
+            regenReclaimBuffer.Clear(); postGrowthResistanceTiles.Clear(); postGrowthHrtNewResistantTiles.Clear(); crustalCallusResistanceTiles.Clear(); aegisHyphaeResistanceTiles.Clear();
         }
     }
 }

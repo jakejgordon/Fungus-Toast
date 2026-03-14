@@ -69,7 +69,12 @@ namespace FungusToast.Core.Campaign
                         AdaptationIds.ApicalYield,
                         "Apical Yield",
                         $"For the rest of the campaign, whenever one of your mutations reaches max level, gain {AdaptationGameBalance.ApicalYieldMutationPointAward} free mutation points.",
-                        "apical_yield")
+                        "apical_yield"),
+                    new AdaptationDefinition(
+                        AdaptationIds.CrustalCallus,
+                        "Crustal Callus",
+                        "For the rest of the campaign, whenever one of your living cells establishes itself on the board edge (the crust), it gains Resistance.",
+                        "crustal_callus")
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;

@@ -41,7 +41,7 @@ namespace FungusToast.Core.Phases
             }
         }
 
-        public static void OnCellColonized(
+        public static void OnLivingCellEstablished(
             int playerId,
             int tileId,
             GrowthSource source,
@@ -63,7 +63,45 @@ namespace FungusToast.Core.Phases
             }
 
             TryApplyMarginalClamp(player, tileId, board, observer);
+            TryApplyCrustalCallus(player, tileId, board);
             TryApplyAegisHyphae(player, tileId, board);
+        }
+
+        public static void OnCellColonized(
+            int playerId,
+            int tileId,
+            GrowthSource source,
+            GameBoard board,
+            List<Player> players,
+            ISimulationObserver observer)
+        {
+            OnLivingCellEstablished(playerId, tileId, source, board, players, observer);
+        }
+
+        private static void TryApplyCrustalCallus(
+            Player player,
+            int tileId,
+            GameBoard board)
+        {
+            if (!player.HasAdaptation(AdaptationIds.CrustalCallus))
+            {
+                return;
+            }
+
+            var tile = board.GetTileById(tileId);
+            var cell = tile?.FungalCell;
+            if (tile == null
+                || cell == null
+                || !cell.IsAlive
+                || cell.OwnerPlayerId != player.PlayerId
+                || cell.IsResistant
+                || !BoardUtilities.IsWithinEdgeDistance(tile, board.Width, board.Height, AdaptationGameBalance.CrustalCallusEdgeDistance))
+            {
+                return;
+            }
+
+            cell.MakeResistant();
+            board.OnResistanceAppliedBatch(player.PlayerId, GrowthSource.CrustalCallus, new List<int> { tileId });
         }
 
         private static void TryApplyAegisHyphae(
