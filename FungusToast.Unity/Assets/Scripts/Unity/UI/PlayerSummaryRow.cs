@@ -14,6 +14,7 @@ namespace FungusToast.Unity.UI
     public class PlayerSummaryRow : MonoBehaviour
     {
         private const float StatTextScale = 1.05f;
+        private const float StatColumnWidth = 90f;
         private static readonly Color InactiveRowBackground = new Color(
             UIStyleTokens.Surface.PanelPrimary.r,
             UIStyleTokens.Surface.PanelPrimary.g,
@@ -50,6 +51,7 @@ namespace FungusToast.Unity.UI
                 livingCellsText.fontStyle = FontStyles.Bold;
                 ApplyTextScale(livingCellsText, StatTextScale);
                 ConfigureNumericColumn(livingCellsText);
+                ApplyColumnWidth(livingCellsText.transform, StatColumnWidth);
             }
             if (deadCellsText != null)
             {
@@ -57,6 +59,7 @@ namespace FungusToast.Unity.UI
                 deadCellsText.fontStyle = FontStyles.Bold;
                 ApplyTextScale(deadCellsText, StatTextScale);
                 ConfigureNumericColumn(deadCellsText);
+                ApplyColumnWidth(deadCellsText.transform, StatColumnWidth);
             }
             if (toxinCellsText != null)
             {
@@ -64,7 +67,26 @@ namespace FungusToast.Unity.UI
                 toxinCellsText.fontStyle = FontStyles.Bold;
                 ApplyTextScale(toxinCellsText, StatTextScale);
                 ConfigureNumericColumn(toxinCellsText);
+                ApplyColumnWidth(toxinCellsText.transform, StatColumnWidth);
             }
+        }
+
+        private static void ApplyColumnWidth(Transform cell, float width)
+        {
+            if (cell == null)
+            {
+                return;
+            }
+
+            var layout = cell.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = cell.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layout.preferredWidth = width;
+            layout.minWidth = width;
+            layout.flexibleWidth = -1f;
         }
 
         private static void ConfigureNumericColumn(TextMeshProUGUI label)

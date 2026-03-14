@@ -49,6 +49,8 @@ namespace FungusToast.Unity.UI
         private const int AdaptationIconMaxColumns = 7;
         private const float AdaptationIconSpacing = 4f;
         private const float AdaptationSectionSpacing = 8f;
+        private const string GrowthPreviewRootName = "UI_GrowthPreviewRoot";
+        private const string StatsRootName = "UI_StatsRoot";
 
         private readonly List<GameObject> adaptationIconObjects = new();
 
@@ -96,6 +98,75 @@ namespace FungusToast.Unity.UI
             ApplyGrowthPreviewHeaderText();
             EnsureAdaptationSectionExists();
             ApplyAdaptationSectionStyle();
+            ApplyLayoutBehavior();
+        }
+
+        private void ApplyLayoutBehavior()
+        {
+            if (TryGetComponent<LayoutElement>(out var rootLayout))
+            {
+                rootLayout.preferredHeight = -1f;
+                rootLayout.flexibleHeight = 0f;
+            }
+
+            if (TryGetComponent<VerticalLayoutGroup>(out var rootGroup))
+            {
+                rootGroup.childControlHeight = true;
+                rootGroup.childForceExpandHeight = false;
+            }
+
+            ApplyChildLayoutBehavior(GrowthPreviewRootName, ignoreIfEmpty: false);
+            ApplyChildLayoutBehavior(StatsRootName, ignoreIfEmpty: true);
+
+            if (transform is RectTransform rootRect)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(rootRect);
+            }
+        }
+
+        private void ApplyChildLayoutBehavior(string childName, bool ignoreIfEmpty)
+        {
+            var child = FindDirectChildRect(childName);
+            if (child == null)
+            {
+                return;
+            }
+
+            if (child.TryGetComponent<LayoutElement>(out var layout))
+            {
+                bool shouldIgnoreLayout = ignoreIfEmpty && child.childCount == 0;
+                layout.ignoreLayout = shouldIgnoreLayout;
+                layout.flexibleHeight = 0f;
+
+                if (shouldIgnoreLayout)
+                {
+                    layout.minHeight = 0f;
+                    layout.preferredHeight = -1f;
+                }
+            }
+
+            if (child.TryGetComponent<VerticalLayoutGroup>(out var verticalLayout))
+            {
+                verticalLayout.childForceExpandHeight = false;
+            }
+
+            if (child.TryGetComponent<HorizontalLayoutGroup>(out var horizontalLayout))
+            {
+                horizontalLayout.childForceExpandHeight = false;
+            }
+        }
+
+        private RectTransform FindDirectChildRect(string childName)
+        {
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                if (transform.GetChild(i) is RectTransform child && child.name == childName)
+                {
+                    return child;
+                }
+            }
+
+            return null;
         }
 
         private void ApplyGrowthPreviewHeaderText()

@@ -16,6 +16,9 @@ namespace FungusToast.Unity.UI
     {
         private const float TopStatsScale = 1.18f;
         private const float SummaryHeaderScale = 1.10f;
+        private const float SummaryIconColumnWidth = 50f;
+        private const float SummaryStatColumnWidth = 90f;
+        private const int SummaryHorizontalInset = 15;
 
         [Header("Player Summary Panel")]
         [SerializeField] private Transform playerSummaryContainer;
@@ -42,6 +45,8 @@ namespace FungusToast.Unity.UI
             UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.PanelSecondary);
             UIStyleTokens.ApplyPanelSurface(playerSummaryContainer != null ? playerSummaryContainer.gameObject : null, UIStyleTokens.Surface.PanelElevated);
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 30f);
+            ApplySidebarLayoutBehavior();
+            ApplyPlayerSummaryContainerPadding();
 
             if (roundAndOccupancyText != null)
             {
@@ -66,6 +71,51 @@ namespace FungusToast.Unity.UI
             }
 
             ApplyPlayerSummaryHeaderReadability();
+        }
+
+        private void ApplySidebarLayoutBehavior()
+        {
+            Transform layoutContainer = transform.Find("UI_RightSidebarLayoutContainer");
+            if (layoutContainer is not RectTransform layoutRect)
+            {
+                return;
+            }
+
+            layoutRect.anchorMin = new Vector2(0f, 0f);
+            layoutRect.anchorMax = new Vector2(1f, 1f);
+            layoutRect.pivot = new Vector2(0.5f, 1f);
+            layoutRect.offsetMin = Vector2.zero;
+            layoutRect.offsetMax = Vector2.zero;
+
+            var sizeFitter = layoutRect.GetComponent<ContentSizeFitter>();
+            if (sizeFitter != null)
+            {
+                sizeFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+            }
+
+            var layoutGroup = layoutRect.GetComponent<VerticalLayoutGroup>();
+            if (layoutGroup != null)
+            {
+                layoutGroup.childControlHeight = true;
+                layoutGroup.childForceExpandHeight = false;
+            }
+        }
+
+        private void ApplyPlayerSummaryContainerPadding()
+        {
+            if (playerSummaryContainer == null)
+            {
+                return;
+            }
+
+            var layoutGroup = playerSummaryContainer.GetComponent<HorizontalOrVerticalLayoutGroup>();
+            if (layoutGroup == null)
+            {
+                return;
+            }
+
+            layoutGroup.padding.left = SummaryHorizontalInset;
+            layoutGroup.padding.right = SummaryHorizontalInset;
         }
 
         private void ApplyPlayerSummaryHeaderReadability()
@@ -111,10 +161,10 @@ namespace FungusToast.Unity.UI
                 headerLayout.childForceExpandHeight = false;
             }
 
-            ApplyColumnWidth(headerRow.Find("UI_BlankPlayerMoldIconHeaderText"), 50f);
-            ApplyColumnWidth(headerRow.Find("UI_AliveHeaderText"), 70f);
-            ApplyColumnWidth(headerRow.Find("UI_DeadHeaderText"), 70f);
-            ApplyColumnWidth(headerRow.Find("UI_ToxinHeaderText"), 70f);
+            ApplyColumnWidth(headerRow.Find("UI_BlankPlayerMoldIconHeaderText"), SummaryIconColumnWidth);
+            ApplyColumnWidth(headerRow.Find("UI_AliveHeaderText"), SummaryStatColumnWidth);
+            ApplyColumnWidth(headerRow.Find("UI_DeadHeaderText"), SummaryStatColumnWidth);
+            ApplyColumnWidth(headerRow.Find("UI_ToxinHeaderText"), SummaryStatColumnWidth);
         }
 
         private static void ApplyColumnWidth(Transform cell, float width)

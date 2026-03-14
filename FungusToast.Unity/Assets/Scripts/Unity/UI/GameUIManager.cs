@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using FungusToast.Core.Board;
 using FungusToast.Unity.UI.MutationTree;
 using FungusToast.Unity.UI.GameLog;
@@ -7,6 +8,8 @@ namespace FungusToast.Unity.UI
 {
     public class GameUIManager : MonoBehaviour
     {
+            private const float FlexibleLogMinHeight = 180f;
+
         [Header("Core UI")]
         [SerializeField] private UI_MutationManager mutationUIManager;
         [SerializeField] private UI_PlayerBinder playerUIBinder;
@@ -39,7 +42,40 @@ namespace FungusToast.Unity.UI
         [Header("Phase Tracker")]
         [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker;
 
+            private void Awake()
+            {
+                ApplySidebarLogLayoutBehavior();
+            }
+
         public UI_PhaseProgressTracker PhaseProgressTracker => phaseProgressTracker;
+
+            private void ApplySidebarLogLayoutBehavior()
+            {
+                if (leftSidebar != null)
+                {
+                    var sidebarLayout = leftSidebar.GetComponent<VerticalLayoutGroup>();
+                    if (sidebarLayout != null)
+                    {
+                        sidebarLayout.childControlHeight = true;
+                        sidebarLayout.childForceExpandHeight = false;
+                    }
+                }
+
+                if (playerActivityLogPanel == null)
+                {
+                    return;
+                }
+
+                var layoutElement = playerActivityLogPanel.GetComponent<LayoutElement>();
+                if (layoutElement == null)
+                {
+                    layoutElement = playerActivityLogPanel.gameObject.AddComponent<LayoutElement>();
+                }
+
+                layoutElement.minHeight = FlexibleLogMinHeight;
+                layoutElement.preferredHeight = -1f;
+                layoutElement.flexibleHeight = 1f;
+            }
 
         // ── Core accessors ──
         public UI_MutationManager MutationUIManager => mutationUIManager;
