@@ -520,6 +520,31 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
             ),
 
+            // 4b) Diagnostic variant: same shell, but push surge activations and surge pickups slightly later
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_HyphalSurgeTempo_DelayedSurge",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.GeneticDrift,
+                    MutationCategory.MycelialSurges
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
+                    new TargetMutationGoal(MutationIds.HyphalVectoring),
+                    new TargetMutationGoal(MutationIds.HyphalSurge)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalVectoring, MutationIds.HyphalSurge },
+                surgeAttemptTurnFrequency: 7,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
+            ),
+
             // 5) Defensive shell that transitions into pressure
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_FortressResilience",
@@ -619,6 +644,37 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.Necrosporulation),
                     new TargetMutationGoal(MutationIds.CatabolicRebirth)
                 }
+            ),
+
+            // 10b) Diagnostic variant: keep anabolic opener, but delay the necro conversion package
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_BalancedControl_AnabolicFirst_DelayedNecro",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth),
+                    new TargetMutationGoal(MutationIds.Necrosporulation)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+            ),
+
+            // 10c) Diagnostic variant: keep anabolic opener, but delay catabolism-style conversion follow-through
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_BalancedControl_AnabolicFirst_DelayedCatabolism",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth),
+                    new TargetMutationGoal(MutationIds.MycotoxinCatabolism)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
             ),
 
             // 11) Rebirth attrition loop

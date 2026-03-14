@@ -163,6 +163,7 @@ FungusToast.Core/
    ├── ANIMATION_HELPER.md            # Animation timing and trigger map
    ├── BUILD_INSTRUCTIONS.md          # Basic build commands
    ├── DESIGN_PRINCIPLES.md           # Architecture and design philosophy
+   ├── DOMINANCE_DIAGNOSIS_WORKFLOW.md # Controlled workflow for explaining why a strategy dominates
    ├── FUTURE_IMPROVEMENTS.md         # Backlog and future UX/architecture tasks
    ├── GAME_BALANCE_CONSTANTS.md      # Canonical gameplay balance levers and tuning guidance
    ├── MYCOVARIANT_AUTHORING_STYLE.md # Mycovariant copy/style standards
@@ -346,6 +347,7 @@ FungusToast.Unity/
 ### Documentation Index (Use This First)
 - `FungusToast.Core/docs/BUILD_INSTRUCTIONS.md`: Canonical CLI build commands for Core and Simulation.
 - `FungusToast.Core/docs/SIMULATION_HELPER.md`: Simulation CLI options, output locations, parquet export, tracking checklist.
+- `FungusToast.Core/docs/DOMINANCE_DIAGNOSIS_WORKFLOW.md`: Controlled experiment pattern for diagnosing why a strategy dominates, including mutation timing and mycovariant timing analysis.
 - `FungusToast.Core/docs/AI_STRATEGY_AUTHORING.md`: Strategy sets/themes and reproducible balance-testing patterns.
 - `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`: Mutation authoring workflow with tracking and UI integration points.
 - `FungusToast.Core/docs/GAME_BALANCE_CONSTANTS.md`: Canonical balance levers, tuning categories, and when not to use AI config as the primary gameplay balance tool.

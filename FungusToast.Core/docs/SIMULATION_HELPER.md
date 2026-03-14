@@ -305,6 +305,8 @@ These files are designed for downstream AI/statistical analysis in `FungusToast.
 
 Use this as the default process when a run is meant to support balance decisions or cross-revision comparisons.
 
+For controlled diagnosis of a dominant strategy, including early mutation timing and mycovariant timing questions, use `DOMINANCE_DIAGNOSIS_WORKFLOW.md`.
+
 - Prefer explicit `--strategy-names` for canonical comparison runs so lineup composition does not drift with roster edits.
 - Treat sampled-roster runs (`--players` + `--strategy-set`) as exploratory unless you keep the emitted `manifest.json` and intentionally compare the same sampled lineup.
 - Keep `--seed`, `--selection-policy`, slot policy (`--fixed-slots`/`--rotate-slots`), board size, player count, and strategy set fixed while comparing revisions.

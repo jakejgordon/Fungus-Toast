@@ -82,7 +82,7 @@ namespace FungusToast.Core.Config
         // Hyphal Surge (Tier 2 MycelialSurges)
         public const float HyphalSurgeEffectPerLevel = .013f;
         public const int HyphalSurgeMaxLevel = 10;
-        public const int HyphalSurgePointsPerActivation = 7;
+        public const int HyphalSurgePointsPerActivation = 8;
         public const int HyphalSurgeDurationRounds = 2;
         public const int HyphalSurgePointIncreasePerLevel = 1;
 
@@ -120,7 +120,7 @@ namespace FungusToast.Core.Config
         public const float AnabolicInversionHighRewardCutoff = 0.6f; // boundary before 4-5 MP bucket ends
         public const float AnabolicInversionMidRewardCutoff  = 0.8f; // boundary before 3 MP bucket ends
         public const float AnabolicInversionLowRewardCutoff  = 0.9f; // boundary before 2 MP bucket ends
-        public const float AnabolicInversionCatabolismCleanupMultiplier = 2f; // Max-level Anabolic Inversion doubles cleanup chance vs larger players' toxins
+        public const float AnabolicInversionCatabolismCleanupMultiplier = 1f; // Max-level Anabolic Inversion cleanup bonus reduced; no extra multiplier vs larger players' toxins
 
         // Mycotropic Induction (Tier 3 Growth)
         public const float MycotropicInductionEffectPerLevel = 0.25f;

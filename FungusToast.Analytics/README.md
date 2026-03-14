@@ -64,6 +64,8 @@ The markdown report includes ranked OP/UP candidates, matchup-theme sensitivity,
 
 ## Upgrade Event Logging
 
+For the full controlled diagnosis pattern, including how to combine mutation timing and mycovariant timing analysis, see `../FungusToast.Core/docs/DOMINANCE_DIAGNOSIS_WORKFLOW.md`.
+
 `upgrade_events.parquet` contains ordered mutation upgrade events per player/game.
 Useful fields include:
 

@@ -81,7 +81,7 @@ namespace FungusToast.Core.Mutations.Factories
                 flavorText: "When population pressure nears collapse, the mycelium initiates necrophytic recovery — resurrecting fallen cells and seeding the surface in desperate bloom.",
                 type: MutationType.NecrophyticBloomSporeDrop,
                 effectPerLevel: GameBalance.NecrophyticBloomSporesPerDeathPerLevel,
-                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4) + 1,
                 maxLevel: GameBalance.NecrophyticBloomMaxLevel,
                 category: MutationCategory.GeneticDrift,
                 tier: MutationTier.Tier4
