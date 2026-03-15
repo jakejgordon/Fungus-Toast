@@ -49,6 +49,16 @@ Examples:
 - Any word longer than 11 characters.
 - Names that imply the wrong cadence or target.
 
+## New Adaptation Naming Workflow
+
+When creating a new Adaptation instance, generate **5 candidate names** and present them to the user before finalizing. For each candidate:
+
+1. State the name.
+2. Give a one-sentence explanation of the biological or fungal concept it draws from.
+3. Describe what gameplay mechanic or theme it implies to a player reading it in a tooltip or draft card.
+
+This gives the user enough context to make an informed choice without having to research the terms independently. Apply all naming rules above before proposing any candidate — only offer names that pass every checklist item.
+
 ## Checklist
 
 Before finalizing a name:

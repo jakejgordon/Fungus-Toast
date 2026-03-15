@@ -105,6 +105,8 @@ namespace FungusToast.Unity.Grid
             => _startingSporeAnimator != null ? _startingSporeAnimator.Play(startingTileIds) : null;
         public IEnumerator PlayConidialRelayAnimation(int playerId, int sourceTileId, int destinationTileId)
             => _conidialRelayAnimator != null ? _conidialRelayAnimator.Play(playerId, sourceTileId, destinationTileId) : null;
+        public IEnumerator PlayDistalSporeAnimation(int playerId, int sourceTileId, int destinationTileId)
+            => _conidialRelayAnimator != null ? _conidialRelayAnimator.Play(playerId, sourceTileId, destinationTileId, preserveSourceCell: true) : null;
         public IEnumerator PlayMycotoxicLashAnimation(IReadOnlyList<int> tileIds)
         {
             if (board == null || tileIds == null || tileIds.Count == 0)

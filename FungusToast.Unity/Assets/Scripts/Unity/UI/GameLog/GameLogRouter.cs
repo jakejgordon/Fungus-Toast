@@ -145,6 +145,12 @@ namespace FungusToast.Unity.UI.GameLog
             playerActivityLogManager?.RecordConidialRelayRelocation(playerId);
         }
 
+        public void RecordDistalSporeDeployment(int playerId)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordDistalSporeDeployment(playerId);
+        }
+
         public void RecordRetrogradeBloomUpgrade(int playerId, string evolvedMutationName, string devolvedMutationSummary, int devolvedPoints)
         {
             if (IsSilentMode) return;

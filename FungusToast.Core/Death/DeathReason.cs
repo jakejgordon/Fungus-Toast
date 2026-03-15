@@ -18,6 +18,7 @@ namespace FungusToast.Core.Death
         MarginalClamp,
         PutrefactiveCascade,
         PutrefactiveCascadePoison,
-        CytolyticBurst
+        CytolyticBurst,
+        DistalSpore
     }
 }

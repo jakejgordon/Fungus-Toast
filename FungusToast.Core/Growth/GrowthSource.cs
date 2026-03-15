@@ -87,6 +87,11 @@ namespace FungusToast.Core.Growth
         /// Spore drop from Mycotoxin Tracer mutation
         /// </summary>
         MycotoxinTracer,
+
+        /// <summary>
+        /// Resistant cell placed via Distal Spore adaptation
+        /// </summary>
+        DistalSpore,
         
         /// <summary>
         /// Manual placement (editor/testing)

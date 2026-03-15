@@ -150,6 +150,16 @@ namespace FungusToast.Unity
                         specialEvent.SourceTileId,
                         specialEvent.DestinationTileId);
                     break;
+                case SpecialBoardEventKind.DistalSporeTriggered:
+                    uiManager.GameLogRouter?.RecordDistalSporeDeployment(specialEvent.PlayerId);
+                    uiManager.PhaseBanner?.Show(
+                        "Distal Spore triggered!",
+                        UIEffectConstants.ConidialRelayBannerHoldSeconds);
+                    yield return gridVisualizer.PlayDistalSporeAnimation(
+                        specialEvent.PlayerId,
+                        specialEvent.SourceTileId,
+                        specialEvent.DestinationTileId);
+                    break;
                 case SpecialBoardEventKind.RetrogradeBloomTriggered:
                     uiManager.PhaseBanner?.Show(
                         "Retrograde Bloom twists your mutation tree!",
@@ -175,7 +185,8 @@ namespace FungusToast.Unity
         private static bool IsImmediateEvent(SpecialBoardEventKind eventKind)
         {
             return eventKind == SpecialBoardEventKind.RetrogradeBloomTriggered
-                || eventKind == SpecialBoardEventKind.MarginalClampTriggered;
+                || eventKind == SpecialBoardEventKind.MarginalClampTriggered
+                || eventKind == SpecialBoardEventKind.DistalSporeTriggered;
         }
 
         private List<SpecialBoardEventArgs> CollectMycotoxicLashBatch(SpecialBoardEventArgs firstEvent)

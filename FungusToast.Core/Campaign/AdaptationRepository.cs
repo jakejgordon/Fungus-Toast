@@ -74,7 +74,12 @@ namespace FungusToast.Core.Campaign
                         AdaptationIds.CrustalCallus,
                         "Crustal Callus",
                         "For the rest of the campaign, whenever one of your living cells establishes itself on the board edge (the crust), it gains Resistance.",
-                        "crustal_callus")
+                        "crustal_callus"),
+                    new AdaptationDefinition(
+                        AdaptationIds.DistalSpore,
+                        "Distal Spore",
+                        $"At the start of round {AdaptationGameBalance.DistalSporeTriggerRound}, a resistant cell arches from your starting spore into the corner of the toast most distant from it. It replaces any non-resistant occupant. If that corner holds a resistant cell, it roots in the nearest non-resistant tile to that corner instead.",
+                        "distal_spore")
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;

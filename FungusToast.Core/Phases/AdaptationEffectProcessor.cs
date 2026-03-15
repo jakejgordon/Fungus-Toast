@@ -23,21 +23,36 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver observer)
         {
-            if (board.CurrentRound != AdaptationGameBalance.RetrogradeBloomTriggerRound)
+            if (board.CurrentRound == AdaptationGameBalance.RetrogradeBloomTriggerRound)
             {
-                return;
+                foreach (var player in players)
+                {
+                    var adaptation = player.GetAdaptation(AdaptationIds.RetrogradeBloom);
+                    if (adaptation == null || adaptation.HasTriggered)
+                    {
+                        continue;
+                    }
+
+                    adaptation.MarkTriggered();
+                    TryApplyRetrogradeBloom(player, board, rng, observer);
+                }
             }
 
-            foreach (var player in players)
+            if (board.CurrentRound == AdaptationGameBalance.DistalSporeTriggerRound)
             {
-                var adaptation = player.GetAdaptation(AdaptationIds.RetrogradeBloom);
-                if (adaptation == null || adaptation.HasTriggered)
+                foreach (var player in players)
                 {
-                    continue;
-                }
+                    var adaptation = player.GetAdaptation(AdaptationIds.DistalSpore);
+                    if (adaptation == null || adaptation.HasTriggered)
+                    {
+                        continue;
+                    }
 
-                adaptation.MarkTriggered();
-                TryApplyRetrogradeBloom(player, board, rng, observer);
+                    if (TryApplyDistalSpore(player, board))
+                    {
+                        adaptation.MarkTriggered();
+                    }
+                }
             }
         }
 
@@ -328,6 +343,104 @@ namespace FungusToast.Core.Phases
             return false;
         }
 
+        private static bool TryApplyDistalSpore(Player player, GameBoard board)
+        {
+            if (!player.StartingTileId.HasValue)
+            {
+                return false;
+            }
+
+            int sourceTileId = player.StartingTileId.Value;
+            var (startX, startY) = board.GetXYFromTileId(sourceTileId);
+
+            int[] cornerTileIds =
+            {
+                0,
+                Math.Max(0, board.Width - 1),
+                Math.Max(0, board.Height - 1) * board.Width,
+                (Math.Max(0, board.Height - 1) * board.Width) + Math.Max(0, board.Width - 1)
+            };
+
+            int cornerTileId = cornerTileIds
+                .Distinct()
+                .OrderByDescending(tileId => SquaredDistance(board.GetXYFromTileId(tileId), (startX, startY)))
+                .ThenBy(tileId => tileId)
+                .First();
+
+            var cornerTile = board.GetTileById(cornerTileId);
+            if (cornerTile == null)
+            {
+                return false;
+            }
+
+            int targetTileId = cornerTileId;
+            if (cornerTile.FungalCell?.IsResistant == true)
+            {
+                var fallbackTile = board.AllTiles()
+                    .Where(tile => tile.FungalCell?.IsResistant != true)
+                    .OrderBy(tile => SquaredDistance((tile.X, tile.Y), (cornerTile.X, cornerTile.Y)))
+                    .ThenBy(tile => tile.TileId)
+                    .FirstOrDefault();
+                if (fallbackTile == null)
+                {
+                    return false;
+                }
+
+                targetTileId = fallbackTile.TileId;
+            }
+
+            var targetTile = board.GetTileById(targetTileId);
+            if (targetTile == null)
+            {
+                return false;
+            }
+
+            var existingCell = targetTile.FungalCell;
+            if (existingCell != null)
+            {
+                if (existingCell.IsResistant)
+                {
+                    return false;
+                }
+
+                if (existingCell.IsAlive)
+                {
+                    board.ConsumeFungalCell(existingCell, DeathReason.DistalSpore, player.PlayerId, sourceTileId);
+                }
+                else
+                {
+                    board.RemoveCellInternal(targetTileId, removeControl: true);
+                }
+            }
+
+            if (!board.SpawnSporeForPlayer(player, targetTileId, GrowthSource.DistalSpore))
+            {
+                return false;
+            }
+
+            var spawnedCell = board.GetCell(targetTileId);
+            if (spawnedCell == null || !spawnedCell.IsAlive || spawnedCell.OwnerPlayerId != player.PlayerId)
+            {
+                return false;
+            }
+
+            if (!spawnedCell.IsResistant)
+            {
+                spawnedCell.MakeResistant();
+                board.OnResistanceAppliedBatch(player.PlayerId, GrowthSource.DistalSpore, new List<int> { targetTileId });
+            }
+
+            board.OnSpecialBoardEventTriggered(
+                new SpecialBoardEventArgs(
+                    SpecialBoardEventKind.DistalSporeTriggered,
+                    player.PlayerId,
+                    sourceTileId,
+                    targetTileId,
+                    new[] { targetTileId }));
+
+            return true;
+        }
+
         private static bool TryApplyRetrogradeBloom(
             Player player,
             GameBoard board,
@@ -437,6 +550,13 @@ namespace FungusToast.Core.Phases
                     .Select(entry => entry.LevelsLost == 1
                         ? entry.MutationName
                         : $"{entry.MutationName} x{entry.LevelsLost}"));
+        }
+
+        private static int SquaredDistance((int x, int y) a, (int x, int y) b)
+        {
+            int dx = a.x - b.x;
+            int dy = a.y - b.y;
+            return (dx * dx) + (dy * dy);
         }
     }
 }

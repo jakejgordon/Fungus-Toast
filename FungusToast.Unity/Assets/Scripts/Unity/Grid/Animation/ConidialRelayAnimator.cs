@@ -13,7 +13,7 @@ namespace FungusToast.Unity.Grid.Animation
             this.viz = viz;
         }
 
-        public IEnumerator Play(int playerId, int sourceTileId, int destinationTileId)
+        public IEnumerator Play(int playerId, int sourceTileId, int destinationTileId, bool preserveSourceCell = false)
         {
             var board = viz.ActiveBoard;
             if (board == null)
@@ -56,7 +56,7 @@ namespace FungusToast.Unity.Grid.Animation
             viz.BeginAnimation();
             try
             {
-                yield return SourceEmphasis(compositeRoot, sourceCell, referenceTilemap);
+                yield return SourceEmphasis(compositeRoot, sourceCell, referenceTilemap, preserveSourceCell);
                 yield return ArcFlight(compositeRoot, sourceCell, destinationCell, referenceTilemap);
                 yield return Landing(compositeRoot, destinationCell, referenceTilemap);
             }
@@ -68,11 +68,11 @@ namespace FungusToast.Unity.Grid.Animation
             }
         }
 
-        private IEnumerator SourceEmphasis(GameObject compositeRoot, Vector3Int sourceCell, Tilemap tilemap)
+        private IEnumerator SourceEmphasis(GameObject compositeRoot, Vector3Int sourceCell, Tilemap tilemap, bool preserveSourceCell)
         {
             float duration = UI.UIEffectConstants.ConidialRelaySourceEmphasisDurationSeconds;
             Vector3 sourceWorld = CellCenterWorld(tilemap, sourceCell);
-            Vector3 startScale = Vector3.one * UI.UIEffectConstants.ConidialRelaySourceStartScale;
+            Vector3 startScale = Vector3.one * (preserveSourceCell ? 0.45f : UI.UIEffectConstants.ConidialRelaySourceStartScale);
             Vector3 endScale = Vector3.one * UI.UIEffectConstants.ConidialRelayLiftScale;
             float liftOffset = UI.UIEffectConstants.ConidialRelayLiftYOffset;
 
