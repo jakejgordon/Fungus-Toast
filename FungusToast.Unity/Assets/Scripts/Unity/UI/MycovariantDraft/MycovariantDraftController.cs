@@ -81,6 +81,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             EnsureDraftMessageUI();
             ClearDraftMessages();
             AddDraftMessage($"Draft started. {draftOrder.Count} player{(draftOrder.Count == 1 ? "" : "s")} picking in order.");
+            TryAnnounceAscusPrimacyDraftPriority();
 
             SetDraftHeader(
                 "Choose a Mycovariant",
@@ -632,6 +633,25 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 sb.AppendLine(line);
             }
             draftMessageBodyText.text = sb.ToString().TrimEnd();
+        }
+
+        private void TryAnnounceAscusPrimacyDraftPriority()
+        {
+            if (draftOrder == null || draftOrder.Count == 0)
+            {
+                return;
+            }
+
+            var firstPlayer = draftOrder[0];
+            if (firstPlayer == null
+                || firstPlayer.PlayerType != PlayerTypeEnum.Human
+                || !firstPlayer.HasAdaptation(AdaptationIds.AscusPrimacy))
+            {
+                return;
+            }
+
+            AddDraftMessage("Ascus Primacy allows you to draft first!");
+            GameManager.Instance?.GameUI?.GameLogRouter?.RecordAscusPrimacyDraftPriority(firstPlayer.PlayerId);
         }
 
         private void AddDraftResultMessage(Player player, Mycovariant picked, PlayerMycovariant playerMyco)

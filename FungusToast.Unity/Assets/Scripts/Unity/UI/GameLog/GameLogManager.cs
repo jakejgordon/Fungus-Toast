@@ -704,6 +704,7 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations) { }
         public void RecordConidialRelayRelocation(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Starting cell relocated via Conidial Relay", GameLogCategory.Lucky); }
         public void RecordDistalSporeDeployment(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Distal Spore rooted a resistant cell in the far corner", GameLogCategory.Lucky); }
+        public void RecordAscusPrimacyDraftPriority(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Ascus Primacy allows you to draft first!", GameLogCategory.Lucky); }
         public void RecordAegisHyphaeResistance(int playerId, int cellsFortified)
         {
             if (!IsHuman(playerId) || cellsFortified <= 0)

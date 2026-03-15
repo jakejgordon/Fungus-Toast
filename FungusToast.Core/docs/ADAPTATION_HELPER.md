@@ -25,7 +25,8 @@ Adaptations commonly do one of two things:
 4. Read `ADAPTATION_TECHNICAL_FLOW.md` before wiring gameplay behavior.
 5. Generate a unique icon for the Adaptation so the campaign draft, tooltips, and profile UI do not fall back to generic art. The first pass can be provisional and replaced later, but every new Adaptation should ship with distinct iconography.
 6. Implement metadata in the Adaptation catalog and wire gameplay behavior through the appropriate campaign and core runtime hooks.
-7. Validate with Core and Simulation builds for core behavior changes; validate campaign flow in Unity because campaign simulation is not supported yet.
+7. Proactively list the proposed test cases for the new Adaptation, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and campaign-specific validation points.
+8. Validate with Core and Simulation builds for core behavior changes; validate campaign flow in Unity because campaign simulation is not supported yet.
 
 ## Common Tasks
 

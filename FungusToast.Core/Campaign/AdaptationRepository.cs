@@ -79,7 +79,12 @@ namespace FungusToast.Core.Campaign
                         AdaptationIds.DistalSpore,
                         "Distal Spore",
                         $"At the start of round {AdaptationGameBalance.DistalSporeTriggerRound}, a resistant cell arches from your starting spore into the corner of the toast most distant from it. It replaces any non-resistant occupant. If that corner holds a resistant cell, it roots in the nearest non-resistant tile to that corner instead.",
-                        "distal_spore")
+                        "distal_spore"),
+                    new AdaptationDefinition(
+                        AdaptationIds.AscusPrimacy,
+                        "Ascus Primacy",
+                        "For the rest of the campaign, you always draft first during Mycovariant drafting, regardless of how many living cells you control.",
+                        "ascus_primacy")
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;

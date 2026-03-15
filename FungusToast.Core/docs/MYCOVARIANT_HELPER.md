@@ -19,5 +19,6 @@ Mycovariants are drafted abilities that either:
 1. Read `MYCOVARIANT_AUTHORING_STYLE.md` before editing descriptions/flavor text.
 2. Read `MYCOVARIANT_TECHNICAL_FLOW.md` before adding or changing behavior.
 3. Implement changes in category factories and processors.
-4. Validate with Core + Simulation builds.
-5. Complete `MYCOVARIANT_PR_CHECKLIST.md` before requesting review.
+4. Proactively list the proposed test cases for the new or changed Mycovariant, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and likely regressions.
+5. Validate with Core + Simulation builds.
+6. Complete `MYCOVARIANT_PR_CHECKLIST.md` before requesting review.

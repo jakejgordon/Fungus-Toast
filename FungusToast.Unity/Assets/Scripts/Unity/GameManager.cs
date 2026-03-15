@@ -717,10 +717,7 @@ namespace FungusToast.Unity
                     .OrderBy(p => p.PlayerType == PlayerTypeEnum.Human ?0 :1)
                     .ThenBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
                     .ToList()
-                : Board.Players
-                    .OrderBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
-                    .ThenBy(p => p.PlayerId)
-                    .ToList();
+                : MycovariantDraftManager.BuildDraftOrder(Board.Players, Board);
             if (testingModeEnabled && testingModeForceHumanFirst)
             {
                 testingModeForceHumanFirst = false;

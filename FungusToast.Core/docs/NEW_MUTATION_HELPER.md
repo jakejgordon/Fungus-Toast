@@ -6,6 +6,8 @@
 
 This guide provides a systematic approach for adding new mutations to Fungus Toast. Follow these steps in order to ensure proper integration with the game system, simulation tracking, and UI display.
 
+When creating a new Mutation, proactively list the proposed test cases that should be run to validate the mechanic. Include the expected happy path, key edge cases, important interactions with existing systems, and any likely regression risks so testing can be planned immediately.
+
 ---
 
 ## Naming & Description Convention

@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.Board;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Players;
 using FungusToast.Core.AI;
@@ -33,11 +34,7 @@ namespace FungusToast.Core.Mycovariants
            int choicesCount = 3,
            Func<Player, List<Mycovariant>, Mycovariant>? humanSelectionCallback = null)
         {
-            // Sort by fewest living cells (tiebreaker: lowest playerId)
-            var draftOrder = players
-                .OrderBy(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
-                .ThenBy(p => p.PlayerId)
-                .ToList();
+            var draftOrder = BuildDraftOrder(players, board);
 
             foreach (var player in draftOrder)
             {
@@ -103,6 +100,20 @@ namespace FungusToast.Core.Mycovariants
             poolManager.ReturnUndraftedToPool(allMycovariants, rng);
         }
 
+        public static List<Player> BuildDraftOrder(List<Player> players, GameBoard board)
+        {
+            if (players == null || board == null)
+            {
+                return new List<Player>();
+            }
+
+            return players
+                .OrderByDescending(HasDraftPriorityAdaptation)
+                .ThenBy(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
+                .ThenBy(p => p.PlayerId)
+                .ToList();
+        }
+
 
         /// <summary>
         /// Returns a random set of draft choices for a player, honoring pool eligibility and uniqueness.
@@ -156,6 +167,11 @@ namespace FungusToast.Core.Mycovariants
             FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Draft] Final choices for player {player.PlayerId}: [{string.Join(", ", choices.Select(c => c.Name))}]");
 
             return choices;
+        }
+
+        private static bool HasDraftPriorityAdaptation(Player player)
+        {
+            return player != null && player.HasAdaptation(AdaptationIds.AscusPrimacy);
         }
 
         /// <summary>

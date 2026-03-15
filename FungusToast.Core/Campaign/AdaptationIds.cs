@@ -13,5 +13,6 @@ namespace FungusToast.Core.Campaign
         public const string ApicalYield = "adaptation_9";
         public const string CrustalCallus = "adaptation_10";
         public const string DistalSpore = "adaptation_11";
+        public const string AscusPrimacy = "adaptation_12";
     }
 }

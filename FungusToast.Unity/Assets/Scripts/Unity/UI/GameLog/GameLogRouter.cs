@@ -151,6 +151,12 @@ namespace FungusToast.Unity.UI.GameLog
             playerActivityLogManager?.RecordDistalSporeDeployment(playerId);
         }
 
+        public void RecordAscusPrimacyDraftPriority(int playerId)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordAscusPrimacyDraftPriority(playerId);
+        }
+
         public void RecordRetrogradeBloomUpgrade(int playerId, string evolvedMutationName, string devolvedMutationSummary, int devolvedPoints)
         {
             if (IsSilentMode) return;
