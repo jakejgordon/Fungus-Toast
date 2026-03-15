@@ -75,9 +75,6 @@ ExportedObj/
 
 !FungusToast.Core/FungusToast.Core.csproj
 !FungusToast.Simulation/FungusToast.Simulation.csproj
-!Assembly-CSharp.csproj
-!FungusToast.Unity.csproj
-!Fungus Toast.sln
 !FungusToast.sln
 
 # Keep Visual Studio configuration for required workloads
