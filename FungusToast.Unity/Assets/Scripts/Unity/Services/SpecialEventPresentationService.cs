@@ -155,10 +155,19 @@ namespace FungusToast.Unity
                     uiManager.PhaseBanner?.Show(
                         "Distal Spore triggered!",
                         UIEffectConstants.ConidialRelayBannerHoldSeconds);
+                    var activeBoard = gridVisualizer.ActiveBoard;
+                    if (activeBoard != null)
+                    {
+                        gridVisualizer.RenderBoard(activeBoard, suppressAnimations: true);
+                    }
                     yield return gridVisualizer.PlayDistalSporeAnimation(
                         specialEvent.PlayerId,
                         specialEvent.SourceTileId,
                         specialEvent.DestinationTileId);
+                    if (activeBoard != null)
+                    {
+                        gridVisualizer.RenderBoard(activeBoard, suppressAnimations: true);
+                    }
                     break;
                 case SpecialBoardEventKind.RetrogradeBloomTriggered:
                     uiManager.PhaseBanner?.Show(
