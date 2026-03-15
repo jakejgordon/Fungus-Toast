@@ -1100,7 +1100,6 @@ namespace FungusToast.Unity.Grid
             toxinDropCoroutines.Clear();
 
             newlyGrownTileIds.Clear();
-            newlyGrownAnimationPlayedTileIds.Clear();
             dyingTileIds.Clear();
             toxinDropTileIds.Clear();
 
@@ -1115,6 +1114,8 @@ namespace FungusToast.Unity.Grid
                     if (fc.IsDying) fc.ClearDyingFlag();
                     if (fc.IsReceivingToxinDrop) fc.ClearToxinDropFlag();
                 }
+
+                newlyGrownAnimationPlayedTileIds.Clear();
             }
             else
             {
