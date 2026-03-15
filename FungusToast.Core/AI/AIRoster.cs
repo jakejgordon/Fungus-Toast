@@ -66,13 +66,34 @@ namespace FungusToast.Core.AI
 
     public sealed class StrategyProfile
     {
-        public StrategyProfile(string strategyName, StrategySetEnum strategySet, StrategyTheme theme, StrategyStatus status, string intent)
+        public StrategyProfile(
+            string strategyName,
+            StrategySetEnum strategySet,
+            StrategyTheme theme,
+            StrategyStatus status,
+            string intent,
+            StrategyPowerTier powerTier,
+            StrategyRole role,
+            StrategyLifecycle lifecycle,
+            IReadOnlyCollection<DifficultyBand> difficultyBands,
+            StrategyPool pools,
+            IReadOnlyCollection<CounterTag> favoredAgainst,
+            IReadOnlyCollection<CounterTag> weakAgainst,
+            string notes)
         {
             StrategyName = strategyName;
             StrategySet = strategySet;
             Theme = theme;
             Status = status;
             Intent = intent;
+            PowerTier = powerTier;
+            Role = role;
+            Lifecycle = lifecycle;
+            DifficultyBands = difficultyBands;
+            Pools = pools;
+            FavoredAgainst = favoredAgainst;
+            WeakAgainst = weakAgainst;
+            Notes = notes;
         }
 
         public string StrategyName { get; }
@@ -80,6 +101,14 @@ namespace FungusToast.Core.AI
         public StrategyTheme Theme { get; }
         public StrategyStatus Status { get; }
         public string Intent { get; }
+        public StrategyPowerTier PowerTier { get; }
+        public StrategyRole Role { get; }
+        public StrategyLifecycle Lifecycle { get; }
+        public IReadOnlyCollection<DifficultyBand> DifficultyBands { get; }
+        public StrategyPool Pools { get; }
+        public IReadOnlyCollection<CounterTag> FavoredAgainst { get; }
+        public IReadOnlyCollection<CounterTag> WeakAgainst { get; }
+        public string Notes { get; }
     }
 
     public static class AIRoster
@@ -87,7 +116,7 @@ namespace FungusToast.Core.AI
         /// <summary>
         /// All curated, proven AI strategies for use in UI and simulation.
         /// </summary>
-        public static readonly List<IMutationSpendingStrategy> ProvenStrategies = new List<IMutationSpendingStrategy>
+        private static readonly List<IMutationSpendingStrategy> RawProvenStrategies = new List<IMutationSpendingStrategy>
         {
             // Economic focus for mycovariants
             new ParameterizedSpendingStrategy(
@@ -263,7 +292,7 @@ namespace FungusToast.Core.AI
         /// <summary>
         /// Campaign strategies: mirror ProvenStrategies but with simple names AI1..AI N for UI draft/select purposes.
         /// </summary>
-        public static readonly List<IMutationSpendingStrategy> CampaignStrategies = new List<IMutationSpendingStrategy>
+        private static readonly List<IMutationSpendingStrategy> RawCampaignStrategies = new List<IMutationSpendingStrategy>
         {
             // AI1
             new ParameterizedSpendingStrategy(
@@ -448,7 +477,7 @@ namespace FungusToast.Core.AI
         /// <summary>
         /// Testing strategies for specific scenarios (not included in proven strategies)
         /// </summary>
-        public static readonly List<IMutationSpendingStrategy> TestingStrategies = new List<IMutationSpendingStrategy>
+        private static readonly List<IMutationSpendingStrategy> RawTestingStrategies = new List<IMutationSpendingStrategy>
         {
             // 1) Hyper-economy ramp into late pressure
             new ParameterizedSpendingStrategy(
@@ -845,15 +874,129 @@ namespace FungusToast.Core.AI
             {
             };
 
+        private static readonly Dictionary<string, StrategyPowerTier> ExplicitPowerTiersByName =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["TST_BalancedControl_AnabolicFirst"] = StrategyPowerTier.Strong,
+                ["TST_BalancedControl_MaxEconomy"] = StrategyPowerTier.Strong,
+                ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyPowerTier.Strong,
+                ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyPowerTier.Strong,
+                ["TST_LowTierEconomyGrinder"] = StrategyPowerTier.Weak,
+                ["TST_LowTierSurgeSkirmisher"] = StrategyPowerTier.Weak,
+                ["Growth/Resilience"] = StrategyPowerTier.Weak,
+                ["AI6"] = StrategyPowerTier.Weak,
+                ["AI12"] = StrategyPowerTier.Weak,
+                ["AI13"] = StrategyPowerTier.Weak,
+                ["AI1"] = StrategyPowerTier.Strong,
+                ["AI2"] = StrategyPowerTier.Strong,
+                ["AI3"] = StrategyPowerTier.Strong,
+                ["AI10"] = StrategyPowerTier.Strong,
+                ["TST_LateGameSpike"] = StrategyPowerTier.Spike,
+                ["Power Mutations Max Econ"] = StrategyPowerTier.Spike,
+                ["Best_MaxEcon_Surge10_HyphalSurge"] = StrategyPowerTier.Spike,
+                ["SurgeFreq_10_Hyphal"] = StrategyPowerTier.Spike,
+            };
+
+        private static readonly Dictionary<string, StrategyRole> ExplicitRolesByName =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["TST_HyperEconomyRamp"] = StrategyRole.Experimental,
+                ["TST_EarlyReclaimerSwarm"] = StrategyRole.Experimental,
+                ["TST_ToxinSiege"] = StrategyRole.Experimental,
+                ["TST_HyphalSurgeTempo"] = StrategyRole.Experimental,
+                ["TST_FortressResilience"] = StrategyRole.Experimental,
+                ["TST_OpportunisticCounterplay"] = StrategyRole.Experimental,
+                ["TST_Tier3PlateauSpecialist"] = StrategyRole.Experimental,
+                ["TST_LateGameSpike"] = StrategyRole.Experimental,
+                ["TST_BalancedGeneralistControl"] = StrategyRole.Experimental,
+                ["TST_BalancedControl_NoPreferredMyco"] = StrategyRole.Experimental,
+                ["TST_RebirthAttrition"] = StrategyRole.Experimental,
+                ["TST_BalancedControl_MaxEconomy"] = StrategyRole.Experimental,
+                ["TST_LowTierEconomyGrinder"] = StrategyRole.Training,
+                ["TST_LowTierSurgeSkirmisher"] = StrategyRole.Training,
+                ["TST_BalancedControl_MinorEconomy"] = StrategyRole.Experimental,
+                ["TST_CampaignMirror_AI7_Hyphal"] = StrategyRole.Experimental,
+                ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyRole.Experimental,
+                ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyRole.Experimental,
+                ["AI1"] = StrategyRole.Boss,
+                ["AI2"] = StrategyRole.Boss,
+                ["AI3"] = StrategyRole.Boss,
+                ["AI10"] = StrategyRole.Boss,
+                ["AI6"] = StrategyRole.Training,
+                ["AI12"] = StrategyRole.Training,
+                ["AI13"] = StrategyRole.Training,
+            };
+
+        private static readonly Dictionary<string, StrategyLifecycle> ExplicitLifecycleByName =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["TST_BalancedControl_AnabolicFirst"] = StrategyLifecycle.NeedsTuning,
+                ["TST_BalancedControl_MaxEconomy"] = StrategyLifecycle.NeedsTuning,
+                ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyLifecycle.NeedsTuning,
+                ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyLifecycle.NeedsTuning,
+            };
+
+        private static readonly Dictionary<string, DifficultyBand[]> ExplicitDifficultyBandsByName =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["AI6"] = new[] { DifficultyBand.Easy },
+                ["AI12"] = new[] { DifficultyBand.Easy },
+                ["AI13"] = new[] { DifficultyBand.Easy },
+                ["AI7"] = new[] { DifficultyBand.Normal },
+                ["AI8"] = new[] { DifficultyBand.Normal },
+                ["AI9"] = new[] { DifficultyBand.Normal },
+                ["AI11"] = new[] { DifficultyBand.Normal },
+                ["AI1"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["AI2"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["AI3"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["AI10"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["TST_LowTierEconomyGrinder"] = new[] { DifficultyBand.Easy },
+                ["TST_LowTierSurgeSkirmisher"] = new[] { DifficultyBand.Easy },
+                ["TST_BalancedGeneralistControl"] = new[] { DifficultyBand.Normal },
+                ["TST_BalancedControl_AnabolicFirst"] = new[] { DifficultyBand.Hard },
+                ["TST_BalancedControl_MaxEconomy"] = new[] { DifficultyBand.Hard },
+            };
+
+        private static readonly Dictionary<string, CounterTag[]> ExplicitFavoredAgainstByName =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["TST_HyperEconomyRamp"] = new[] { new CounterTag(StrategyArchetype.Control, reason: "Punishes slower setups if left alone.") },
+                ["TST_LowTierSurgeSkirmisher"] = new[] { new CounterTag(StrategyArchetype.EconomyRamp, reason: "Cheap pressure can disrupt greedy openings.") },
+                ["TST_OpportunisticCounterplay"] = new[] { new CounterTag(StrategyArchetype.LateGameSpike, reason: "Flexible pivoting can punish telegraphed spikes.") },
+            };
+
+        private static readonly Dictionary<string, CounterTag[]> ExplicitWeakAgainstByName =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["TST_HyperEconomyRamp"] = new[] { new CounterTag(StrategyArchetype.Offense, reason: "Greedy ramps are vulnerable to early pressure.") },
+                ["TST_LateGameSpike"] = new[] { new CounterTag(StrategyArchetype.SurgeTempo, reason: "Burst-tempo lines can end games before the spike lands.") },
+                ["TST_BalancedControl_AnabolicFirst"] = new[] { new CounterTag(StrategyArchetype.Counterplay, reason: "Well-timed disruption can blunt the setup line.") },
+                ["TST_BalancedControl_MaxEconomy"] = new[] { new CounterTag(StrategyArchetype.Counterplay, reason: "Greedier control openings give counters more room.") },
+            };
+
+        public static readonly List<IMutationSpendingStrategy> ProvenStrategies;
+        public static readonly List<IMutationSpendingStrategy> TestingStrategies;
+        public static readonly List<IMutationSpendingStrategy> CampaignStrategies;
+
         public static readonly Dictionary<string, IMutationSpendingStrategy> ProvenStrategiesByName;
         public static readonly Dictionary<string, IMutationSpendingStrategy> TestingStrategiesByName;
         public static readonly Dictionary<string, IMutationSpendingStrategy> CampaignStrategiesByName;
 
         static AIRoster()
         {
-            ProvenStrategiesByName = BuildStrategyDictionary(ProvenStrategies, nameof(ProvenStrategies));
-            TestingStrategiesByName = BuildStrategyDictionary(TestingStrategies, nameof(TestingStrategies));
-            CampaignStrategiesByName = BuildStrategyDictionary(CampaignStrategies, nameof(CampaignStrategies));
+            StrategyRegistry.Reset();
+            StrategyRegistry.Register(StrategySetEnum.Proven, RawProvenStrategies, strategy => BuildCatalogEntry(strategy, StrategySetEnum.Proven));
+            StrategyRegistry.Register(StrategySetEnum.Testing, RawTestingStrategies, strategy => BuildCatalogEntry(strategy, StrategySetEnum.Testing));
+            StrategyRegistry.Register(StrategySetEnum.Campaign, RawCampaignStrategies, strategy => BuildCatalogEntry(strategy, StrategySetEnum.Campaign));
+            StrategyRegistry.Register(StrategySetEnum.Mycovariants, MycovariantPermutations(), strategy => BuildCatalogEntry(strategy, StrategySetEnum.Mycovariants));
+
+            ProvenStrategies = StrategyRegistry.GetStrategies(StrategySetEnum.Proven);
+            TestingStrategies = StrategyRegistry.GetStrategies(StrategySetEnum.Testing);
+            CampaignStrategies = StrategyRegistry.GetStrategies(StrategySetEnum.Campaign);
+
+            ProvenStrategiesByName = StrategyRegistry.GetStrategyDictionary(StrategySetEnum.Proven);
+            TestingStrategiesByName = StrategyRegistry.GetStrategyDictionary(StrategySetEnum.Testing);
+            CampaignStrategiesByName = StrategyRegistry.GetStrategyDictionary(StrategySetEnum.Campaign);
 
             AuditSurgeBackboneSynergy(TestingStrategies, nameof(TestingStrategies));
         }
@@ -972,18 +1115,24 @@ namespace FungusToast.Core.AI
         public static IReadOnlyList<StrategyProfile> GetStrategyProfiles(StrategySetEnum strategySet)
         {
             return GetSourceStrategies(strategySet)
-                .Select(s => new StrategyProfile(
-                    s.StrategyName,
-                    strategySet,
-                    GetThemeForStrategy(s),
-                    GetStatusForStrategy(s, strategySet),
-                    BuildIntentLabel(s)))
+                .Select(s => BuildStrategyProfile(s, strategySet))
                 .ToList();
         }
 
         public static StrategyProfile? GetStrategyProfile(StrategySetEnum strategySet, string strategyName)
         {
             return GetStrategyProfiles(strategySet)
+                .FirstOrDefault(p => string.Equals(p.StrategyName, strategyName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static IReadOnlyList<StrategyCatalogEntry> GetStrategyCatalogEntries(StrategySetEnum strategySet)
+        {
+            return StrategyRegistry.GetCatalogEntries(strategySet);
+        }
+
+        public static StrategyCatalogEntry? GetStrategyCatalogEntry(StrategySetEnum strategySet, string strategyName)
+        {
+            return GetStrategyCatalogEntries(strategySet)
                 .FirstOrDefault(p => string.Equals(p.StrategyName, strategyName, StringComparison.OrdinalIgnoreCase));
         }
 
@@ -1013,6 +1162,54 @@ namespace FungusToast.Core.AI
             }
 
             return selected;
+        }
+
+        private static StrategyProfile BuildStrategyProfile(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
+        {
+            var theme = GetThemeForStrategy(strategy);
+            var status = GetStatusForStrategy(strategy, strategySet);
+            var powerTier = GetPowerTierForStrategy(strategy, strategySet);
+            var role = GetRoleForStrategy(strategy, strategySet);
+            var lifecycle = GetLifecycleForStrategy(strategy, strategySet);
+            var difficultyBands = GetDifficultyBandsForStrategy(strategy, strategySet);
+            var pools = GetPoolsForStrategy(strategySet);
+            var favoredAgainst = GetFavoredAgainstForStrategy(strategy);
+            var weakAgainst = GetWeakAgainstForStrategy(strategy);
+            var notes = BuildNotes(strategy, strategySet, powerTier, role, lifecycle);
+
+            return new StrategyProfile(
+                strategy.StrategyName,
+                strategySet,
+                theme,
+                status,
+                BuildIntentLabel(strategy),
+                powerTier,
+                role,
+                lifecycle,
+                difficultyBands,
+                pools,
+                favoredAgainst,
+                weakAgainst,
+                notes);
+        }
+
+        private static StrategyCatalogEntry BuildCatalogEntry(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
+        {
+            var profile = BuildStrategyProfile(strategy, strategySet);
+            return new StrategyCatalogEntry(
+                profile.StrategyName,
+                profile.StrategySet,
+                (StrategyArchetype)profile.Theme,
+                profile.Status,
+                profile.PowerTier,
+                profile.Role,
+                profile.Lifecycle,
+                profile.DifficultyBands,
+                profile.Pools,
+                profile.Intent,
+                profile.Notes,
+                profile.FavoredAgainst,
+                profile.WeakAgainst);
         }
 
         public static StrategyTheme GetThemeForStrategy(IMutationSpendingStrategy strategy)
@@ -1049,6 +1246,134 @@ namespace FungusToast.Core.AI
             };
         }
 
+        public static StrategyPowerTier GetPowerTierForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
+        {
+            if (ExplicitPowerTiersByName.TryGetValue(strategy.StrategyName, out var explicitTier))
+            {
+                return explicitTier;
+            }
+
+            return strategySet switch
+            {
+                StrategySetEnum.Testing => StrategyPowerTier.Standard,
+                StrategySetEnum.Campaign => StrategyPowerTier.Standard,
+                _ => StrategyPowerTier.Standard
+            };
+        }
+
+        public static StrategyRole GetRoleForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
+        {
+            if (ExplicitRolesByName.TryGetValue(strategy.StrategyName, out var explicitRole))
+            {
+                return explicitRole;
+            }
+
+            return strategySet switch
+            {
+                StrategySetEnum.Testing => StrategyRole.Experimental,
+                StrategySetEnum.Mycovariants => StrategyRole.Experimental,
+                _ => StrategyRole.Baseline
+            };
+        }
+
+        public static StrategyLifecycle GetLifecycleForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
+        {
+            if (ExplicitLifecycleByName.TryGetValue(strategy.StrategyName, out var explicitLifecycle))
+            {
+                return explicitLifecycle;
+            }
+
+            return StrategyLifecycle.Active;
+        }
+
+        public static IReadOnlyCollection<DifficultyBand> GetDifficultyBandsForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
+        {
+            if (ExplicitDifficultyBandsByName.TryGetValue(strategy.StrategyName, out var explicitBands))
+            {
+                return explicitBands;
+            }
+
+            return strategySet switch
+            {
+                StrategySetEnum.Campaign => new[] { DifficultyBand.Normal },
+                _ => Array.Empty<DifficultyBand>()
+            };
+        }
+
+        public static StrategyPool GetPoolsForStrategy(StrategySetEnum strategySet)
+        {
+            return strategySet switch
+            {
+                StrategySetEnum.Proven => StrategyPool.SimulationBaseline,
+                StrategySetEnum.Testing => StrategyPool.SimulationExperimental,
+                StrategySetEnum.Campaign => StrategyPool.Campaign,
+                StrategySetEnum.Mycovariants => StrategyPool.MycovariantLab | StrategyPool.SimulationExperimental,
+                _ => StrategyPool.None
+            };
+        }
+
+        public static IReadOnlyCollection<CounterTag> GetFavoredAgainstForStrategy(IMutationSpendingStrategy strategy)
+        {
+            return ExplicitFavoredAgainstByName.TryGetValue(strategy.StrategyName, out var explicitCounters)
+                ? explicitCounters
+                : Array.Empty<CounterTag>();
+        }
+
+        public static IReadOnlyCollection<CounterTag> GetWeakAgainstForStrategy(IMutationSpendingStrategy strategy)
+        {
+            return ExplicitWeakAgainstByName.TryGetValue(strategy.StrategyName, out var explicitCounters)
+                ? explicitCounters
+                : Array.Empty<CounterTag>();
+        }
+
+        private static string BuildNotes(
+            IMutationSpendingStrategy strategy,
+            StrategySetEnum strategySet,
+            StrategyPowerTier powerTier,
+            StrategyRole role,
+            StrategyLifecycle lifecycle)
+        {
+            var notes = new List<string>();
+
+            if (strategySet == StrategySetEnum.Campaign)
+            {
+                notes.Add("Campaign-eligible strategy.");
+            }
+
+            if (role == StrategyRole.Training)
+            {
+                notes.Add("Intentionally suitable for weaker opposition or onboarding difficulty.");
+            }
+            else if (role == StrategyRole.Boss)
+            {
+                notes.Add("Intended for high-pressure encounters.");
+            }
+            else if (role == StrategyRole.Spice)
+            {
+                notes.Add("Intentionally uneven or novelty-oriented for roster variety.");
+            }
+            else if (role == StrategyRole.Experimental)
+            {
+                notes.Add("Primary home is experimentation and simulation tuning.");
+            }
+
+            if (lifecycle == StrategyLifecycle.NeedsTuning)
+            {
+                notes.Add("Flagged for follow-up balance tuning.");
+            }
+
+            if (powerTier == StrategyPowerTier.Weak)
+            {
+                notes.Add("Expected to perform below baseline by design or current tuning.");
+            }
+            else if (powerTier == StrategyPowerTier.Spike)
+            {
+                notes.Add("High-variance ceiling; matchup and tempo matter heavily.");
+            }
+
+            return string.Join(" ", notes);
+        }
+
         private static string BuildIntentLabel(IMutationSpendingStrategy strategy)
         {
             return GetThemeForStrategy(strategy) switch
@@ -1069,26 +1394,24 @@ namespace FungusToast.Core.AI
 
         private static List<IMutationSpendingStrategy> GetSourceStrategies(StrategySetEnum strategySet)
         {
-            return strategySet switch
+            var strategies = StrategyRegistry.GetStrategies(strategySet);
+            if (strategies.Count == 0)
             {
-                StrategySetEnum.Proven => ProvenStrategies,
-                StrategySetEnum.Testing => TestingStrategies,
-                StrategySetEnum.Mycovariants => MycovariantPermutations(),
-                StrategySetEnum.Campaign => CampaignStrategies,
-                _ => throw new ArgumentException($"Unknown strategy set: {strategySet}", nameof(strategySet))
-            };
+                throw new ArgumentException($"Unknown strategy set: {strategySet}", nameof(strategySet));
+            }
+
+            return strategies;
         }
 
         private static Dictionary<string, IMutationSpendingStrategy> GetStrategyDictionary(StrategySetEnum strategySet)
         {
-            return strategySet switch
+            var strategies = StrategyRegistry.GetStrategyDictionary(strategySet);
+            if (strategies.Count == 0)
             {
-                StrategySetEnum.Proven => ProvenStrategiesByName,
-                StrategySetEnum.Testing => TestingStrategiesByName,
-                StrategySetEnum.Campaign => CampaignStrategiesByName,
-                StrategySetEnum.Mycovariants => BuildStrategyDictionary(MycovariantPermutations(), nameof(MycovariantPermutations)),
-                _ => throw new ArgumentException($"Unknown strategy set: {strategySet}", nameof(strategySet))
-            };
+                throw new ArgumentException($"Unknown strategy set: {strategySet}", nameof(strategySet));
+            }
+
+            return strategies;
         }
 
         private static List<IMutationSpendingStrategy> SelectStrategiesByPolicy(

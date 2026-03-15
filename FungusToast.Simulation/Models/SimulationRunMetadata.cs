@@ -14,6 +14,14 @@ namespace FungusToast.Simulation.Models
         public required string StrategyName { get; init; }
         public required string StrategyTheme { get; init; }
         public required string StrategyStatus { get; init; }
+        public required string StrategyPowerTier { get; init; }
+        public required string StrategyRole { get; init; }
+        public required string StrategyLifecycle { get; init; }
+        public required IReadOnlyList<string> DifficultyBands { get; init; }
+        public required string StrategyPools { get; init; }
+        public required IReadOnlyList<string> FavoredAgainst { get; init; }
+        public required IReadOnlyList<string> WeakAgainst { get; init; }
+        public required string Notes { get; init; }
         public required string Intent { get; init; }
     }
 

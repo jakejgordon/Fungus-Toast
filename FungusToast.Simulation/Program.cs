@@ -179,16 +179,42 @@ namespace FungusToast.Simulation
                 BoardWidth = boardWidth,
                 BoardHeight = boardHeight,
                 SelectedStrategies = selectedStrategies
-                    .Select((strategy, index) => new SelectedStrategyMetadata
+                    .Select((strategy, index) =>
                     {
-                        LineupOrder = index + 1,
-                        StrategyName = strategy.StrategyName,
-                        StrategyTheme = AIRoster.GetThemeForStrategy(strategy).ToString(),
-                        StrategyStatus = AIRoster.GetStatusForStrategy(strategy, strategySet).ToString(),
-                        Intent = AIRoster.GetStrategyProfile(strategySet, strategy.StrategyName)?.Intent ?? string.Empty
+                        var profile = AIRoster.GetStrategyProfile(strategySet, strategy.StrategyName);
+                        return new SelectedStrategyMetadata
+                        {
+                            LineupOrder = index + 1,
+                            StrategyName = strategy.StrategyName,
+                            StrategyTheme = AIRoster.GetThemeForStrategy(strategy).ToString(),
+                            StrategyStatus = AIRoster.GetStatusForStrategy(strategy, strategySet).ToString(),
+                            StrategyPowerTier = profile?.PowerTier.ToString() ?? string.Empty,
+                            StrategyRole = profile?.Role.ToString() ?? string.Empty,
+                            StrategyLifecycle = profile?.Lifecycle.ToString() ?? string.Empty,
+                            DifficultyBands = profile?.DifficultyBands.Select(x => x.ToString()).ToList() ?? new List<string>(),
+                            StrategyPools = profile?.Pools.ToString() ?? string.Empty,
+                            FavoredAgainst = profile?.FavoredAgainst.Select(FormatCounterTag).ToList() ?? new List<string>(),
+                            WeakAgainst = profile?.WeakAgainst.Select(FormatCounterTag).ToList() ?? new List<string>(),
+                            Notes = profile?.Notes ?? string.Empty,
+                            Intent = profile?.Intent ?? string.Empty
+                        };
                     })
                     .ToList()
             };
+        }
+
+        private static string FormatCounterTag(CounterTag counterTag)
+        {
+            var target = counterTag.StrategyName
+                ?? counterTag.Archetype?.ToString()
+                ?? "Unknown";
+
+            if (string.IsNullOrWhiteSpace(counterTag.Reason))
+            {
+                return target;
+            }
+
+            return $"{target}: {counterTag.Reason}";
         }
 
         private static int DeriveStratumSeed(int baseSeed, int players, int width, int height, StrategySetEnum strategySet)
