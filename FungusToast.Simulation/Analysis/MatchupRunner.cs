@@ -9,15 +9,13 @@ using System.Linq;
 
 namespace FungusToast.Simulation.Analysis
 {
-    public class MatchupRunner
+    public static class MatchupRunner
     {
-        private readonly GameSimulator simulator = new();
-
         /// <summary>
         /// Run a head-to-head matchup between two strategies across many games.
         /// Players alternate between A and B for fairness. Requires even player count.
         /// </summary>
-        public List<GameResult> RunMatchups(
+        public static List<GameResult> RunMatchups(
             IMutationSpendingStrategy strategyA,
             IMutationSpendingStrategy strategyB,
             int gamesToPlay,
@@ -48,7 +46,7 @@ namespace FungusToast.Simulation.Analysis
 
                 var context = new SimulationTrackingContext();
 
-                var result = simulator.RunSimulation(
+                var result = GameSimulator.RunSimulation(
                     strategies,
                     seed: i,
                     gameIndex: i + 1,
@@ -69,7 +67,7 @@ namespace FungusToast.Simulation.Analysis
         /// Run games using a fixed list of strategies per match.
         /// Useful for 1–8 player simulation loops.
         /// </summary>
-        public SimulationBatchResult RunMatchups(
+        public static SimulationBatchResult RunMatchups(
             List<IMutationSpendingStrategy> strategies,
             int gamesToPlay,
             int boardWidth = GameBalance.BoardWidth,
@@ -105,7 +103,7 @@ namespace FungusToast.Simulation.Analysis
                 var context = new SimulationTrackingContext();
                 int gameSeed = unchecked(baseSeed + i);
 
-                var result = simulator.RunSimulation(
+                var result = GameSimulator.RunSimulation(
                     assigned,
                     seed: gameSeed,
                     gameIndex: i + 1,

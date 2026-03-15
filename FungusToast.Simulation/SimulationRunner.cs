@@ -31,8 +31,7 @@ namespace FungusToast.Simulation
             Console.WriteLine($"Strategy Set: {strategySet} | Base Seed: {effectiveSeed} | Slot Policy: {slotAssignmentPolicy}\n");
 
             // Run simulation
-            var runner = new MatchupRunner();
-            var results = runner.RunMatchups(
+            var results = MatchupRunner.RunMatchups(
                 strategies,
                 gamesToPlay: numberOfGames,
                 boardWidth: boardWidth,
@@ -44,8 +43,7 @@ namespace FungusToast.Simulation
             PrintParityInvariantSummary(results.GameResults);
 
             // Print strategy summary
-            var aggregator = new MatchupStatsAggregator();
-            aggregator.PrintSummary(results.GameResults, results.CumulativeDeathReasons);
+            MatchupStatsAggregator.PrintSummary(results.GameResults, results.CumulativeDeathReasons);
 
             // Analyze mutation impact
             var impactTracker = new MutationImpactTracker();
@@ -79,8 +77,7 @@ namespace FungusToast.Simulation
 
             if (exportParquet && runMetadata != null)
             {
-                var parquetExporter = new SimulationParquetExporter();
-                var exportFolder = parquetExporter.Export(results, runMetadata);
+                var exportFolder = SimulationParquetExporter.Export(results, runMetadata);
                 Console.WriteLine($"Parquet export complete: {exportFolder}");
             }
 

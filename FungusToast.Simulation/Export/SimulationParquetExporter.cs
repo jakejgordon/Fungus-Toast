@@ -6,11 +6,11 @@ using System.Text.Json;
 
 namespace FungusToast.Simulation.Export
 {
-    public sealed class SimulationParquetExporter
+    public static class SimulationParquetExporter
     {
         private const string ExportRootFolderName = "SimulationParquet";
 
-        public string Export(SimulationBatchResult batchResult, SimulationRunMetadata metadata)
+        public static string Export(SimulationBatchResult batchResult, SimulationRunMetadata metadata)
         {
             string baseOutputDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ExportRootFolderName);
             string runFolder = Path.Combine(baseOutputDir, metadata.ExperimentId);

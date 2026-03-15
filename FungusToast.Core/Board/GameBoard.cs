@@ -47,7 +47,6 @@ namespace FungusToast.Core.Board
         public delegate void MutationPointsSpentEventHandler(int playerId, MutationTier tier, int amount);
         public delegate void TendrilGrowthEventHandler(int playerId, int tileId, DiagonalDirection direction);
         public delegate void CreepingMoldMoveEventHandler(int playerId, int fromTileId, int toTileId);
-        public delegate void JettingMyceliumCatabolicGrowthEventHandler(int playerId, int tileId);
         public delegate void PostGrowthPhaseEventHandler();
         public delegate void PostGrowthPhaseCompletedEventHandler();
         public delegate void DecayPhaseEventHandler(Dictionary<int, int> failedGrowthsByPlayerId);
@@ -80,7 +79,6 @@ namespace FungusToast.Core.Board
         public event MutationPointsSpentEventHandler? MutationPointsSpent;
         public event TendrilGrowthEventHandler? TendrilGrowth;
         public event CreepingMoldMoveEventHandler? CreepingMoldMove;
-        public event JettingMyceliumCatabolicGrowthEventHandler? JettingMyceliumCatabolicGrowth;
         public event PostGrowthPhaseEventHandler? PostGrowthPhase;
         public event PostGrowthPhaseCompletedEventHandler? PostGrowthPhaseCompleted;
         public event DecayPhaseEventHandler? DecayPhase;

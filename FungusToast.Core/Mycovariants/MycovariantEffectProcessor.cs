@@ -991,6 +991,7 @@ public static class MycovariantEffectProcessor
 
         // Use highest tier for recording (III > II > I)
         var attributionMyco = tierIII ?? tierII ?? tierI;
+        if (attributionMyco == null) return;
 
         int startTile = player.StartingTileId.Value;
         int enemyStart = targetEnemy.StartingTileId.Value;

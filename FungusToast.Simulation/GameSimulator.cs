@@ -17,7 +17,7 @@ namespace FungusToast.Simulation.GameSimulation
 {
     public class GameSimulator
     {
-        public GameResult RunSimulation(
+        public static GameResult RunSimulation(
             List<IMutationSpendingStrategy> strategies,
             int seed,
             SimulationTrackingContext context,
@@ -180,7 +180,7 @@ namespace FungusToast.Simulation.GameSimulation
 
 
 
-        private (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng, ISimulationObserver observer, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight)
+        private static (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng, ISimulationObserver observer, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight)
         {
             int playerCount = strategies.Count;
             var players = new List<Player>();

@@ -262,7 +262,7 @@ namespace FungusToast.Core.Phases
                         if (rng.NextDouble() > chance)
                             continue; // failed roll
 
-                        BoardTile targetTile = null;
+                        BoardTile? targetTile = null;
                         if (enemyLiving.Count > 0) targetTile = enemyLiving[rng.Next(enemyLiving.Count)];
                         else if (enemyToxins.Count > 0) targetTile = enemyToxins[rng.Next(enemyToxins.Count)];
                         else if (empty.Count > 0) targetTile = empty[rng.Next(empty.Count)];

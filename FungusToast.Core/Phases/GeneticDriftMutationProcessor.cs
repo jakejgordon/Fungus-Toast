@@ -375,7 +375,7 @@ namespace FungusToast.Core.Phases
 
             // Check if Competitive Antagonism surge is active for enhanced targeting
             bool hasCompetitiveAntagonism = owner.IsSurgeActive(MutationIds.CompetitiveAntagonism);
-            List<int> targetTileIds;
+            List<int>? targetTileIds;
 
             if (hasCompetitiveAntagonism)
             {
@@ -394,7 +394,7 @@ namespace FungusToast.Core.Phases
                 targetTileIds = null;
             }
 
-            if (targetTileIds != null && targetTileIds.Count == 0)
+            if (targetTileIds is { Count: 0 })
             {
                 observer.ReportNecrophyticBloomSporeDrop(owner.PlayerId, spores, 0);
                 return;
@@ -403,9 +403,15 @@ namespace FungusToast.Core.Phases
             int reclaims = 0;
             for (int i = 0; i < spores; i++)
             {
-                int randomTileId = targetTileIds == null
-                    ? rng.Next(board.TotalTiles)
-                    : targetTileIds[rng.Next(targetTileIds.Count)];
+                int randomTileId;
+                if (targetTileIds == null)
+                {
+                    randomTileId = rng.Next(board.TotalTiles);
+                }
+                else
+                {
+                    randomTileId = targetTileIds[rng.Next(targetTileIds.Count)];
+                }
                 bool success = board.TryReclaimDeadCell(owner.PlayerId, randomTileId, Growth.GrowthSource.NecrophyticBloom);
                 if (success) reclaims++;
             }
@@ -616,6 +622,9 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             ISimulationObserver observer)
         {
+            if (board == null)
+                throw new ArgumentNullException(nameof(board));
+
             int regressionLevel = player.GetMutationLevel(MutationIds.OntogenicRegression);
             if (regressionLevel <= 0) return;
 
@@ -637,7 +646,7 @@ namespace FungusToast.Core.Phases
                 List<FungalCell> sacrificed = new();
                 int effectiveLevelsToConsume = GameBalance.OntogenicRegressionTier1LevelsToConsume;
                 int reductionsAchieved = 0;
-                if (atMaxLevel && board != null)
+                if (atMaxLevel)
                 {
                     sacrificed = CollectOntogenicRegressionSacrifices(player, board, rng, effectiveLevelsToConsume, out reductionsAchieved);
                     if (reductionsAchieved > 0)
@@ -674,6 +683,8 @@ namespace FungusToast.Core.Phases
 
                 var sourceMutation = tier1Mutations[rng.Next(tier1Mutations.Count)];
                 var targetMutation = targetMutations[rng.Next(targetMutations.Count)];
+                if (sourceMutation == null || targetMutation == null)
+                    continue;
 
                 int currentSourceLevel = player.GetMutationLevel(sourceMutation.Id);
                 int newSourceLevel = Math.Max(0, currentSourceLevel - effectiveLevelsToConsume);

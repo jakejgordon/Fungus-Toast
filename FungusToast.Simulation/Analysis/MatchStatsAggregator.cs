@@ -12,9 +12,9 @@ using FungusToast.Simulation.Models;
 
 namespace FungusToast.Simulation.Analysis
 {
-    public class MatchupStatsAggregator
+    public static class MatchupStatsAggregator
     {
-        private void PrintDeathReasonSummaryFloat(
+        private static void PrintDeathReasonSummaryFloat(
             Dictionary<DeathReason, float> avgDeathReasons,
             string label,
             int gameCount)
@@ -36,7 +36,7 @@ namespace FungusToast.Simulation.Analysis
             }
         }
 
-        private void PrintGameLevelStats(List<GameResult> results, int totalCells)
+        private static void PrintGameLevelStats(List<GameResult> results, int totalCells)
         {
             int totalGames = results.Count;
             float avgLivingCells = (float)results.Average(r => r.PlayerResults.Sum(p => p.LivingCells));
@@ -60,7 +60,7 @@ namespace FungusToast.Simulation.Analysis
         }
 
 
-        public void PrintSummary(
+        public static void PrintSummary(
             List<GameResult> results,
             Dictionary<DeathReason, int> cumulativeDeathReasons // only for end-state legacy
         )
@@ -181,7 +181,7 @@ namespace FungusToast.Simulation.Analysis
             PrintPlayerSummaryTable(playerStats, results);
         }
 
-        private void PrintPlayerSummaryTable(
+        private static void PrintPlayerSummaryTable(
             Dictionary<int, (
                 IMutationSpendingStrategy strategyObj, int wins, int appearances,
                 int living, int dead, int endGameToxins, int mpSpent,
@@ -286,7 +286,7 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine(new string('-', 251));
         }
 
-        private void PrintDeathReasonSummary(
+        private static void PrintDeathReasonSummary(
             Dictionary<DeathReason, int> deathReasonCounts,
             string label,
             int gameCount)
@@ -308,7 +308,7 @@ namespace FungusToast.Simulation.Analysis
             }
         }
 
-        private string Truncate(string s, int max) =>
+        private static string Truncate(string s, int max) =>
             s.Length > max ? s.Substring(0, max - 1) + "…" : s;
 
         public static List<(int PlayerId, string StrategyName)> GetRankedPlayerList(List<GameResult> gameResults)
