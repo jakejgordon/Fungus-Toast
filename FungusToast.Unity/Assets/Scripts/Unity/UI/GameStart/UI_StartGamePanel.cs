@@ -1,11 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
-using FungusToast.Core.Mycovariants;
-using FungusToast.Core.Config;
 using TMPro;
 using FungusToast.Unity;
-using FungusToast.Unity.Campaign;
+using FungusToast.Unity.UI.Testing;
 using System; // added for strict validation exceptions
 
 namespace FungusToast.Unity.UI.GameStart
@@ -43,8 +41,12 @@ namespace FungusToast.Unity.UI.GameStart
         private int? selectedPlayerCount = null;
         private int selectedHumanPlayerCount = 1; // always defaults to 1 when total players picked
         public int SelectedHumanPlayerCount => selectedHumanPlayerCount; // expose for future game manager refactor
-        private TextMeshProUGUI testingModeToggleLabel;
-        private Text testingModeToggleLegacyLabel;
+        private DevelopmentTestingCardController testingCardController;
+        private RectTransform setupContentRoot;
+        private RectTransform titleSectionRoot;
+        private RectTransform playerCountSectionRoot;
+        private RectTransform testingCardSectionRoot;
+        private RectTransform actionButtonStackRoot;
 
         private void Awake()
         {
@@ -53,13 +55,14 @@ namespace FungusToast.Unity.UI.GameStart
             // Strict validation: all required refs must be assigned in Inspector
             ValidateSerializedRefs();
 
+            EnsureRuntimeLayoutScaffold();
             ApplyStyle();
+            InitializeTestingCard();
 
             if (backButton != null)
                 backButton.onClick.AddListener(OnBackPressed);
 
             startGameButton.interactable = false;
-            InitializeTestingModeUI();
             InitializeHumanPlayerUI();
 
             // Ensure magnifier visuals are disabled at startup
@@ -67,15 +70,17 @@ namespace FungusToast.Unity.UI.GameStart
                 magnifierVisualRoot.SetActive(false);
         }
 
+        private void OnEnable()
+        {
+            EnsureRuntimeLayoutScaffold();
+            testingCardController?.RefreshDropdownOptions();
+            testingCardController?.RefreshVisualState();
+            RefreshTestingSectionLayout();
+        }
+
         private void ValidateSerializedRefs()
         {
             if (startGameButton == null) throw new InvalidOperationException("UI_StartGamePanel: startGameButton is not assigned.");
-            if (testingModeToggle == null) throw new InvalidOperationException("UI_StartGamePanel: testingModeToggle is not assigned.");
-            if (mycovariantDropdown == null) throw new InvalidOperationException("UI_StartGamePanel: mycovariantDropdown is not assigned.");
-            if (testingModePanel == null) throw new InvalidOperationException("UI_StartGamePanel: testingModePanel is not assigned.");
-            if (fastForwardRoundsInput == null) throw new InvalidOperationException("UI_StartGamePanel: fastForwardRoundsInput is not assigned.");
-            if (fastForwardLabel == null) throw new InvalidOperationException("UI_StartGamePanel: fastForwardLabel is not assigned.");
-            if (skipToEndgameToggle == null) throw new InvalidOperationException("UI_StartGamePanel: skipToEndgameToggle is not assigned.");
             if (testingOptionsSectionRoot == null) Debug.LogWarning("UI_StartGamePanel: testingOptionsSectionRoot not assigned (will use legacy direct testing refs).");
             if (backButton == null) Debug.LogWarning("UI_StartGamePanel: backButton not assigned (menu back navigation disabled).");
             if (modeSelectPanel == null) Debug.LogWarning("UI_StartGamePanel: modeSelectPanel not assigned (menu back navigation disabled).");
@@ -104,132 +109,10 @@ namespace FungusToast.Unity.UI.GameStart
 
             EnsureTestingSectionLayout(sectionRoot);
 
-            if (testingModeToggle == null)
-            {
-                testingModeToggle = FindToggleByName(sectionRoot.transform, "TestingModeToggle", "Skip");
-                if (testingModeToggle == null)
-                {
-                    testingModeToggle = sectionRoot.GetComponentInChildren<Toggle>(true);
-                }
-            }
-
             if (mycovariantDropdown == null)
             {
-                mycovariantDropdown = FindDropdownByName(sectionRoot.transform, "Mycovariant", "Forced");
-                if (mycovariantDropdown == null)
-                {
-                    mycovariantDropdown = sectionRoot.GetComponentInChildren<TMP_Dropdown>(true);
-                }
+                mycovariantDropdown = sectionRoot.GetComponentInChildren<TMP_Dropdown>(true);
             }
-
-            if (forcedGameResultDropdown == null)
-            {
-                forcedGameResultDropdown = FindDropdownByName(sectionRoot.transform, "ForcedGameResult", null);
-            }
-
-            if (testingModeToggleLabel == null && testingModeToggle != null)
-            {
-                var labelTransform = FindTransformByName(testingModeToggle.transform, "ToggleLabel");
-                if (labelTransform != null)
-                {
-                    testingModeToggleLabel = labelTransform.GetComponent<TextMeshProUGUI>();
-                    testingModeToggleLegacyLabel = labelTransform.GetComponent<Text>();
-                }
-            }
-
-            if (fastForwardRoundsInput == null)
-            {
-                fastForwardRoundsInput = sectionRoot.GetComponentInChildren<TMP_InputField>(true);
-            }
-
-            if (skipToEndgameToggle == null)
-            {
-                skipToEndgameToggle = FindToggleByName(sectionRoot.transform, "Skip", null);
-            }
-
-            if (testingModePanel == null)
-            {
-                var panelTransform = FindTransformByName(sectionRoot.transform, "TestingModePanel");
-                if (panelTransform != null)
-                {
-                    testingModePanel = panelTransform.gameObject;
-                }
-            }
-
-            if (fastForwardLabel == null)
-            {
-                var labelTransform = FindTransformByName(sectionRoot.transform, "FastForwardRoundsLabel");
-                if (labelTransform != null)
-                {
-                    fastForwardLabel = labelTransform.GetComponent<TextMeshProUGUI>();
-                }
-            }
-        }
-
-        private static Transform FindTransformByName(Transform root, string contains)
-        {
-            var allChildren = root.GetComponentsInChildren<Transform>(true);
-            for (int index = 0; index < allChildren.Length; index++)
-            {
-                var child = allChildren[index];
-                if (child == null)
-                {
-                    continue;
-                }
-
-                if (child.name.IndexOf(contains, StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    return child;
-                }
-            }
-
-            return null;
-        }
-
-        private static Toggle FindToggleByName(Transform root, string include, string exclude)
-        {
-            var toggles = root.GetComponentsInChildren<Toggle>(true);
-            for (int index = 0; index < toggles.Length; index++)
-            {
-                var toggle = toggles[index];
-                if (toggle == null)
-                {
-                    continue;
-                }
-
-                string name = toggle.gameObject.name;
-                bool includes = string.IsNullOrEmpty(include) || name.IndexOf(include, StringComparison.OrdinalIgnoreCase) >= 0;
-                bool excludes = !string.IsNullOrEmpty(exclude) && name.IndexOf(exclude, StringComparison.OrdinalIgnoreCase) >= 0;
-                if (includes && !excludes)
-                {
-                    return toggle;
-                }
-            }
-
-            return null;
-        }
-
-        private static TMP_Dropdown FindDropdownByName(Transform root, string include, string exclude)
-        {
-            var dropdowns = root.GetComponentsInChildren<TMP_Dropdown>(true);
-            for (int index = 0; index < dropdowns.Length; index++)
-            {
-                var dropdown = dropdowns[index];
-                if (dropdown == null)
-                {
-                    continue;
-                }
-
-                string name = dropdown.gameObject.name;
-                bool includes = string.IsNullOrEmpty(include) || name.IndexOf(include, StringComparison.OrdinalIgnoreCase) >= 0;
-                bool excludes = !string.IsNullOrEmpty(exclude) && name.IndexOf(exclude, StringComparison.OrdinalIgnoreCase) >= 0;
-                if (includes && !excludes)
-                {
-                    return dropdown;
-                }
-            }
-
-            return null;
         }
 
         private static void EnsureTestingSectionLayout(GameObject sectionRoot)
@@ -278,111 +161,422 @@ namespace FungusToast.Unity.UI.GameStart
             layoutElement.preferredWidth = -1f;
             layoutElement.preferredHeight = 40f;
 
-            EnsureTestingToggleRowLayout(sectionRoot.transform);
         }
 
-        private static void EnsureTestingToggleRowLayout(Transform sectionRoot)
+        private void InitializeTestingCard()
         {
-            var toggleRow = sectionRoot.Find("UI_TestingModeToggle") ?? FindTransformByName(sectionRoot, "TestingModeToggle");
-            if (toggleRow == null)
+            if (testingOptionsSectionRoot == null)
             {
                 return;
             }
 
-            if (toggleRow.name.IndexOf("Background", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                toggleRow.name.IndexOf("Label", StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                toggleRow = toggleRow.parent;
-            }
+            EnsureTestingCardSection();
 
-            if (toggleRow == null)
+            testingCardController = new DevelopmentTestingCardController(new DevelopmentTestingCardOptions
+            {
+                Parent = testingCardSectionRoot,
+                ButtonTemplate = backButton != null ? backButton : startGameButton,
+                DropdownTemplate = ResolveDropdownTemplate(),
+                SupportsForcedAdaptation = false,
+                CardName = "UI_StartGameTestingCard",
+                ControlPrefix = "UI_StartGameTesting",
+                LogPrefix = "UI_StartGamePanel",
+                LayoutInvalidated = RefreshTestingSectionLayout
+            });
+            testingCardController.Build();
+            HideLegacyTestingControls();
+            EnsureRuntimeLayoutScaffold();
+            RefreshTestingSectionLayout();
+        }
+
+        private void EnsureRuntimeLayoutScaffold()
+        {
+            var panelRect = GetComponent<RectTransform>();
+            if (panelRect == null)
             {
                 return;
             }
 
-            var accidentalLayouts = toggleRow.GetComponents<LayoutGroup>();
-            for (int index = 0; index < accidentalLayouts.Length; index++)
+            var rootLayout = GetComponent<VerticalLayoutGroup>();
+            if (rootLayout != null)
             {
-                if (accidentalLayouts[index] != null)
+                rootLayout.enabled = false;
+            }
+
+            if (setupContentRoot == null)
+            {
+                var existing = transform.Find("UI_StartGameContentRoot") as RectTransform;
+                if (existing != null)
                 {
-                    Destroy(accidentalLayouts[index]);
+                    setupContentRoot = existing;
+                }
+                else
+                {
+                    var contentRoot = new GameObject(
+                        "UI_StartGameContentRoot",
+                        typeof(RectTransform),
+                        typeof(VerticalLayoutGroup),
+                        typeof(ContentSizeFitter),
+                        typeof(LayoutElement));
+                    setupContentRoot = contentRoot.GetComponent<RectTransform>();
+                    setupContentRoot.SetParent(transform, false);
                 }
             }
 
-            var accidentalFitter = toggleRow.GetComponent<ContentSizeFitter>();
-            if (accidentalFitter != null)
-            {
-                Destroy(accidentalFitter);
-            }
+            ConfigureSetupContentRoot(setupContentRoot);
+            ResolveSetupSectionReferences();
 
-            var toggleRect = toggleRow.GetComponent<RectTransform>();
-            if (toggleRect != null)
-            {
-                toggleRect.anchorMin = new Vector2(0f, toggleRect.anchorMin.y);
-                toggleRect.anchorMax = new Vector2(1f, toggleRect.anchorMax.y);
-                toggleRect.anchoredPosition = new Vector2(0f, toggleRect.anchoredPosition.y);
-                toggleRect.sizeDelta = new Vector2(0f, Mathf.Max(30f, toggleRect.sizeDelta.y));
-            }
+            var orderedSections = new List<RectTransform>();
+            TryAddSetupSection(orderedSections, titleSectionRoot);
+            TryAddSetupSection(orderedSections, playerCountSectionRoot);
+            TryAddSetupSection(orderedSections, humanPlayerSectionRoot != null ? humanPlayerSectionRoot.GetComponent<RectTransform>() : null);
+            TryAddSetupSection(orderedSections, testingCardSectionRoot);
 
-            var toggleLayoutElement = toggleRow.GetComponent<LayoutElement>();
-            if (toggleLayoutElement == null)
+            for (int index = 0; index < orderedSections.Count; index++)
             {
-                toggleLayoutElement = toggleRow.gameObject.AddComponent<LayoutElement>();
-            }
-
-            toggleLayoutElement.minWidth = 300f;
-            toggleLayoutElement.preferredWidth = 300f;
-            toggleLayoutElement.minHeight = 30f;
-            toggleLayoutElement.preferredHeight = 30f;
-
-            var toggleBackground = FindTransformByName(toggleRow, "ToggleBackground");
-            if (toggleBackground is RectTransform backgroundRect)
-            {
-                backgroundRect.anchorMin = new Vector2(0f, 0.5f);
-                backgroundRect.anchorMax = new Vector2(0f, 0.5f);
-                backgroundRect.pivot = new Vector2(0.5f, 0.5f);
-                backgroundRect.anchoredPosition = new Vector2(10f, 0f);
-                backgroundRect.sizeDelta = new Vector2(20f, 20f);
-            }
-
-            var toggleLabel = FindTransformByName(toggleRow, "ToggleLabel");
-            if (toggleLabel is RectTransform labelRect)
-            {
-                if (labelRect.parent != toggleRow)
+                var section = orderedSections[index];
+                if (section == null)
                 {
-                    labelRect.SetParent(toggleRow, false);
+                    continue;
                 }
 
-                labelRect.anchorMin = new Vector2(0f, 0.5f);
-                labelRect.anchorMax = new Vector2(0f, 0.5f);
-                labelRect.pivot = new Vector2(0f, 0.5f);
-                labelRect.anchoredPosition = new Vector2(30f, 0f);
-                labelRect.sizeDelta = new Vector2(260f, 30f);
+                section.SetParent(setupContentRoot, false);
+                section.SetSiblingIndex(index);
+                ConfigureSetupSection(section);
+            }
 
-                var labelLayoutElement = labelRect.GetComponent<LayoutElement>();
-                if (labelLayoutElement == null)
+            EnsureActionButtonStack();
+            ReparentActionButton(startGameButton, 0);
+            ReparentActionButton(backButton, 1);
+        }
+
+        private void ResolveSetupSectionReferences()
+        {
+            titleSectionRoot ??= FindNamedRectTransform("UI_HowManyPlayersText");
+            playerCountSectionRoot ??= FindNamedRectTransform("UI_PlayerCountButtonGroupWrapper");
+            testingCardSectionRoot ??= FindNamedRectTransform("UI_StartGameTestingSection");
+
+            if (playerCountSectionRoot == null)
+            {
+                playerCountSectionRoot = GetTopLevelSection(playerButtons != null && playerButtons.Count > 0 ? playerButtons[0]?.transform : null) as RectTransform;
+            }
+
+            ConfigureCenteredButtonRow(playerCountSectionRoot, "UI_PlayerCountButtonGroup");
+            ConfigureCenteredButtonRow(humanPlayerSectionRoot != null ? humanPlayerSectionRoot.GetComponent<RectTransform>() : null, "UI_HumanPlayerCountButtonGroup");
+        }
+
+        private void ConfigureCenteredButtonRow(RectTransform sectionRoot, string rowName)
+        {
+            if (sectionRoot == null || string.IsNullOrWhiteSpace(rowName))
+            {
+                return;
+            }
+
+            var row = FindNamedRectTransform(rowName);
+            if (row == null || row.parent != sectionRoot)
+            {
+                return;
+            }
+
+            row.anchorMin = new Vector2(0.5f, 1f);
+            row.anchorMax = new Vector2(0.5f, 1f);
+            row.pivot = new Vector2(0.5f, 0.5f);
+            row.anchoredPosition = new Vector2(0f, row.anchoredPosition.y);
+            row.localScale = Vector3.one;
+        }
+
+        private void EnsureTestingCardSection()
+        {
+            if (setupContentRoot == null)
+            {
+                return;
+            }
+
+            if (testingCardSectionRoot == null)
+            {
+                var existing = FindNamedRectTransform("UI_StartGameTestingSection");
+                if (existing != null)
                 {
-                    labelLayoutElement = labelRect.gameObject.AddComponent<LayoutElement>();
+                    testingCardSectionRoot = existing;
                 }
-
-                labelLayoutElement.ignoreLayout = true;
-                labelLayoutElement.preferredWidth = -1f;
-                labelLayoutElement.preferredHeight = -1f;
+                else
+                {
+                    var sectionObject = new GameObject(
+                        "UI_StartGameTestingSection",
+                        typeof(RectTransform),
+                        typeof(VerticalLayoutGroup),
+                        typeof(ContentSizeFitter),
+                        typeof(LayoutElement));
+                    testingCardSectionRoot = sectionObject.GetComponent<RectTransform>();
+                    testingCardSectionRoot.SetParent(setupContentRoot, false);
+                }
             }
 
-            var legacyLabel = toggleLabel != null ? toggleLabel.GetComponent<Text>() : null;
-            if (legacyLabel != null)
+            testingCardSectionRoot.SetParent(setupContentRoot, false);
+            ConfigureTestingCardSection(testingCardSectionRoot);
+        }
+
+        private static void ConfigureTestingCardSection(RectTransform sectionRoot)
+        {
+            if (sectionRoot == null)
             {
-                legacyLabel.color = UIStyleTokens.Button.TextDefault;
-                legacyLabel.alignment = TextAnchor.MiddleLeft;
+                return;
             }
 
-            var tmpLabel = toggleLabel != null ? toggleLabel.GetComponent<TextMeshProUGUI>() : null;
-            if (tmpLabel != null)
+            sectionRoot.anchorMin = new Vector2(0.5f, 1f);
+            sectionRoot.anchorMax = new Vector2(0.5f, 1f);
+            sectionRoot.pivot = new Vector2(0.5f, 0.5f);
+            sectionRoot.anchoredPosition = Vector2.zero;
+            sectionRoot.localScale = Vector3.one;
+
+            var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
+            layoutGroup.padding = new RectOffset(0, 0, 0, 0);
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+            layoutGroup.spacing = 0f;
+            layoutGroup.childForceExpandWidth = false;
+            layoutGroup.childForceExpandHeight = false;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = true;
+
+            var fitter = sectionRoot.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var element = sectionRoot.GetComponent<LayoutElement>();
+            element.minWidth = 500f;
+            element.preferredWidth = 500f;
+            element.minHeight = 56f;
+            element.preferredHeight = -1f;
+        }
+
+        private RectTransform FindNamedRectTransform(string objectName)
+        {
+            if (string.IsNullOrWhiteSpace(objectName))
             {
-                tmpLabel.color = UIStyleTokens.Button.TextDefault;
-                tmpLabel.alignment = TextAlignmentOptions.MidlineLeft;
+                return null;
             }
+
+            var allChildren = GetComponentsInChildren<RectTransform>(true);
+            for (int index = 0; index < allChildren.Length; index++)
+            {
+                var child = allChildren[index];
+                if (child != null && string.Equals(child.name, objectName, StringComparison.Ordinal))
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
+        private void EnsureActionButtonStack()
+        {
+            if (setupContentRoot == null)
+            {
+                return;
+            }
+
+            if (actionButtonStackRoot == null)
+            {
+                var existing = FindNamedRectTransform("UI_StartGameActionStack");
+                if (existing != null)
+                {
+                    actionButtonStackRoot = existing;
+                }
+                else
+                {
+                    var stackObject = new GameObject(
+                        "UI_StartGameActionStack",
+                        typeof(RectTransform),
+                        typeof(VerticalLayoutGroup),
+                        typeof(ContentSizeFitter),
+                        typeof(LayoutElement));
+                    actionButtonStackRoot = stackObject.GetComponent<RectTransform>();
+                    actionButtonStackRoot.SetParent(setupContentRoot, false);
+                }
+            }
+
+            actionButtonStackRoot.SetParent(setupContentRoot, false);
+            actionButtonStackRoot.SetSiblingIndex(setupContentRoot.childCount - 1);
+            ConfigureActionButtonStack(actionButtonStackRoot);
+        }
+
+        private static void ConfigureActionButtonStack(RectTransform stackRoot)
+        {
+            if (stackRoot == null)
+            {
+                return;
+            }
+
+            stackRoot.anchorMin = new Vector2(0.5f, 1f);
+            stackRoot.anchorMax = new Vector2(0.5f, 1f);
+            stackRoot.pivot = new Vector2(0.5f, 0.5f);
+            stackRoot.anchoredPosition = Vector2.zero;
+            stackRoot.localScale = Vector3.one;
+
+            var layoutGroup = stackRoot.GetComponent<VerticalLayoutGroup>();
+            layoutGroup.padding = new RectOffset(0, 0, 0, 0);
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+            layoutGroup.spacing = 10f;
+            layoutGroup.childForceExpandWidth = false;
+            layoutGroup.childForceExpandHeight = false;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = true;
+
+            var fitter = stackRoot.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var element = stackRoot.GetComponent<LayoutElement>();
+            element.minWidth = 470f;
+            element.preferredWidth = 470f;
+            element.minHeight = 104f;
+            element.preferredHeight = -1f;
+        }
+
+        private void ReparentActionButton(Button button, int siblingIndex)
+        {
+            if (button == null || actionButtonStackRoot == null)
+            {
+                return;
+            }
+
+            button.transform.SetParent(actionButtonStackRoot, false);
+            button.transform.SetSiblingIndex(siblingIndex);
+            ConfigureSetupSection(button.transform as RectTransform);
+            EnsureActionButtonLayout(button);
+        }
+
+        private static void EnsureActionButtonLayout(Button button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var layoutElement = button.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = button.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.minWidth = 470f;
+            layoutElement.preferredWidth = 470f;
+            layoutElement.minHeight = 48f;
+            layoutElement.preferredHeight = 52f;
+            layoutElement.flexibleWidth = 0f;
+            layoutElement.flexibleHeight = 0f;
+        }
+
+        private static void ConfigureSetupContentRoot(RectTransform contentRoot)
+        {
+            if (contentRoot == null)
+            {
+                return;
+            }
+
+            contentRoot.anchorMin = new Vector2(0.5f, 1f);
+            contentRoot.anchorMax = new Vector2(0.5f, 1f);
+            contentRoot.pivot = new Vector2(0.5f, 1f);
+            contentRoot.anchoredPosition = new Vector2(0f, -36f);
+            contentRoot.sizeDelta = new Vector2(760f, 0f);
+            contentRoot.localScale = Vector3.one;
+
+            var layoutGroup = contentRoot.GetComponent<VerticalLayoutGroup>();
+            layoutGroup.padding = new RectOffset(24, 24, 0, 24);
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+            layoutGroup.spacing = 14f;
+            layoutGroup.childForceExpandWidth = true;
+            layoutGroup.childForceExpandHeight = false;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = false;
+
+            var fitter = contentRoot.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var element = contentRoot.GetComponent<LayoutElement>();
+            element.minWidth = 760f;
+            element.preferredWidth = 760f;
+            element.minHeight = 200f;
+        }
+
+        private static void ConfigureSetupSection(RectTransform section)
+        {
+            if (section == null)
+            {
+                return;
+            }
+
+            section.anchorMin = new Vector2(0.5f, 1f);
+            section.anchorMax = new Vector2(0.5f, 1f);
+            section.pivot = new Vector2(0.5f, 0.5f);
+            section.anchoredPosition = Vector2.zero;
+            section.localScale = Vector3.one;
+        }
+
+        private Transform GetTopLevelSection(Transform target)
+        {
+            if (target == null)
+            {
+                return null;
+            }
+
+            var current = target;
+            while (current.parent != null && current.parent != transform && current.parent != setupContentRoot)
+            {
+                current = current.parent;
+            }
+
+            if (current.parent == setupContentRoot && current != setupContentRoot)
+            {
+                return current;
+            }
+
+            return current.parent == transform ? current : null;
+        }
+
+        private void TryAddSetupSection(List<RectTransform> sections, RectTransform candidate)
+        {
+            if (candidate == null || sections == null)
+            {
+                return;
+            }
+
+            if (candidate == setupContentRoot)
+            {
+                return;
+            }
+
+            if (!sections.Contains(candidate))
+            {
+                sections.Add(candidate);
+            }
+        }
+
+        private TMP_Dropdown ResolveDropdownTemplate()
+        {
+            if (mycovariantDropdown != null)
+            {
+                return mycovariantDropdown;
+            }
+
+            if (testingOptionsSectionRoot != null)
+            {
+                return testingOptionsSectionRoot.GetComponentInChildren<TMP_Dropdown>(true);
+            }
+
+            return FindFirstObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
+        }
+
+        private void HideLegacyTestingControls()
+        {
+            if (testingOptionsSectionRoot == null)
+            {
+                return;
+            }
+
+            testingOptionsSectionRoot.SetActive(false);
         }
 
         private void InitializeHumanPlayerUI()
@@ -411,11 +605,6 @@ namespace FungusToast.Unity.UI.GameStart
                 UIStyleTokens.ApplyPanelSurface(humanPlayerSectionRoot, UIStyleTokens.Surface.PanelPrimary);
             }
 
-            if (testingModePanel != null)
-            {
-                UIStyleTokens.ApplyPanelSurface(testingModePanel, UIStyleTokens.Surface.PanelPrimary);
-            }
-
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
 
             UIStyleTokens.Button.ApplyStyle(startGameButton, useSelectedAsNormal: true);
@@ -425,179 +614,16 @@ namespace FungusToast.Unity.UI.GameStart
             {
                 playerSummaryLabel.color = UIStyleTokens.Text.Secondary;
             }
-
-            if (fastForwardLabel != null)
-            {
-                fastForwardLabel.color = UIStyleTokens.Text.Secondary;
-            }
-
-            ApplyTestingInputReadability();
         }
 
-        private void ApplyTestingInputReadability()
+        private void RefreshTestingSectionLayout()
         {
-            ApplyDropdownReadability(mycovariantDropdown);
-            ApplyDropdownReadability(forcedGameResultDropdown);
-            ApplyInputReadability(fastForwardRoundsInput);
-        }
-
-        private static void ApplyDropdownReadability(TMP_Dropdown dropdown)
-        {
-            if (dropdown == null)
+            if (testingCardSectionRoot == null)
             {
                 return;
             }
 
-            if (dropdown.captionText != null)
-            {
-                dropdown.captionText.color = UIStyleTokens.Button.TextDefault;
-            }
-
-            if (dropdown.itemText != null)
-            {
-                dropdown.itemText.color = UIStyleTokens.Button.TextDefault;
-            }
-
-            var allLabels = dropdown.GetComponentsInChildren<TextMeshProUGUI>(true);
-            for (int i = 0; i < allLabels.Length; i++)
-            {
-                if (allLabels[i] == null)
-                {
-                    continue;
-                }
-
-                if (allLabels[i].name.IndexOf("Placeholder", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    allLabels[i].color = UIStyleTokens.Text.Disabled;
-                }
-                else
-                {
-                    allLabels[i].color = UIStyleTokens.Button.TextDefault;
-                }
-            }
-        }
-
-        private static void ApplyInputReadability(TMP_InputField input)
-        {
-            if (input == null)
-            {
-                return;
-            }
-
-            if (input.textComponent != null)
-            {
-                input.textComponent.color = UIStyleTokens.Button.TextDefault;
-            }
-
-            if (input.placeholder is TextMeshProUGUI placeholderLabel)
-            {
-                placeholderLabel.color = UIStyleTokens.Text.Disabled;
-            }
-            else if (input.placeholder is Graphic placeholderGraphic)
-            {
-                placeholderGraphic.color = UIStyleTokens.Text.Disabled;
-            }
-        }
-
-        private void InitializeTestingModeUI()
-        {
-            EnsureForcedGameResultDropdown();
-
-            // Initialize mycovariant dropdown
-            mycovariantDropdown.ClearOptions();
-            var options = new List<string> { "Select Mycovariant..." };
-            var mycovariants = MycovariantRepository.All;
-            foreach (var mycovariant in mycovariants)
-                options.Add($"{mycovariant.Name} (ID: {mycovariant.Id})");
-            mycovariantDropdown.AddOptions(options);
-            mycovariantDropdown.value = 0;
-
-            InitializeForcedGameResultDropdownOptions();
-
-            // Set up testing mode toggle
-            testingModeToggle.onValueChanged.AddListener(OnTestingModeToggled);
-            testingModePanel.SetActive(false);
-            RefreshTestingSectionLayout(false);
-            UpdateTestingToggleLabel();
-
-            // Initialize fast-forward input
-            fastForwardRoundsInput.contentType = TMP_InputField.ContentType.IntegerNumber;
-
-            // Default state for skip-to-end toggle
-            skipToEndgameToggle.isOn = false;
-            skipToEndgameToggle.interactable = false; // disabled until testing mode is enabled
-            skipToEndgameToggle.onValueChanged.AddListener(_ => UpdateForcedGameResultVisibility());
-
-            UpdateForcedGameResultVisibility();
-        }
-
-        private void OnTestingModeToggled(bool isEnabled)
-        {
-            testingModePanel.SetActive(isEnabled);
-            mycovariantDropdown.interactable = isEnabled;
-            fastForwardRoundsInput.interactable = isEnabled;
-            fastForwardLabel.gameObject.SetActive(isEnabled);
-            
-            // Enable/disable strictly based on Testing Mode; no auto-search fallback
-            skipToEndgameToggle.interactable = isEnabled;
-            if (!isEnabled)
-            {
-                // Reset when turning testing mode off
-                skipToEndgameToggle.isOn = false;
-            }
-
-            RefreshTestingSectionLayout(isEnabled);
-            UpdateForcedGameResultVisibility();
-            UpdateTestingToggleLabel();
-        }
-
-        private void UpdateTestingToggleLabel()
-        {
-            if (testingModeToggleLabel != null)
-            {
-                testingModeToggleLabel.text = testingModeToggle != null && testingModeToggle.isOn
-                    ? "Development Testing: On"
-                    : "Development Testing: Off";
-            }
-
-            if (testingModeToggleLegacyLabel != null)
-            {
-                testingModeToggleLegacyLabel.text = testingModeToggle != null && testingModeToggle.isOn
-                    ? "Development Testing: On"
-                    : "Development Testing: Off";
-            }
-        }
-
-        private void RefreshTestingSectionLayout(bool isExpanded)
-        {
-            if (testingOptionsSectionRoot == null)
-            {
-                return;
-            }
-
-            const float collapsedHeight = 40f;
-            float expandedHeight = collapsedHeight;
-
-            if (isExpanded && testingModePanel != null)
-            {
-                float panelHeight = 220f;
-                var panelLayoutElement = testingModePanel.GetComponent<LayoutElement>();
-                if (panelLayoutElement != null && panelLayoutElement.preferredHeight > 0f)
-                {
-                    panelHeight = panelLayoutElement.preferredHeight;
-                }
-
-                expandedHeight += 8f + panelHeight;
-            }
-
-            var sectionLayoutElement = testingOptionsSectionRoot.GetComponent<LayoutElement>();
-            if (sectionLayoutElement != null)
-            {
-                sectionLayoutElement.minHeight = isExpanded ? expandedHeight : collapsedHeight;
-                sectionLayoutElement.preferredHeight = isExpanded ? expandedHeight : collapsedHeight;
-            }
-
-            var sectionRect = testingOptionsSectionRoot.GetComponent<RectTransform>();
+            var sectionRect = testingCardSectionRoot;
             if (sectionRect != null)
             {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(sectionRect);
@@ -695,32 +721,7 @@ namespace FungusToast.Unity.UI.GameStart
                 // Persist hotseat config for future multi-human implementation
                 GameManager.Instance?.SetHotseatConfig(selectedHumanPlayerCount);
 
-                // Handle testing mode
-                if (testingModeToggle.isOn)
-                {
-                    // Get fast forward rounds regardless of mycovariant selection
-                    int fastForwardRounds = 0;
-                    if (int.TryParse(fastForwardRoundsInput.text, out int parsedRounds))
-                        fastForwardRounds = Mathf.Max(0, parsedRounds);
-
-                    bool skipToEnd = skipToEndgameToggle.isOn;
-                    ForcedGameResultMode forcedResultMode = GetForcedGameResultSelection();
-
-                    // Enable testing mode with or without a mycovariant selected
-                    if (mycovariantDropdown.value > 0)
-                    {
-                        var selectedMycovariant = MycovariantRepository.All[mycovariantDropdown.value - 1];
-                        GameManager.Instance.EnableTestingMode(selectedMycovariant.Id, fastForwardRounds, skipToEnd, forcedResultMode);
-                    }
-                    else
-                    {
-                        GameManager.Instance.EnableTestingMode(null, fastForwardRounds, skipToEnd, forcedResultMode);
-                    }
-                }
-                else
-                {
-                    GameManager.Instance.DisableTestingMode();
-                }
+                testingCardController?.ApplyToGameManager(GameManager.Instance);
 
                 // NOTE: For this initial UI-only step we do not yet create multiple human players.
                 // The selectedHumanPlayerCount value is retained for future hotseat implementation.
@@ -744,127 +745,5 @@ namespace FungusToast.Unity.UI.GameStart
                 modeSelectPanel.SetActive(true);
         }
 
-        private void EnsureForcedGameResultDropdown()
-        {
-            if (testingModePanel == null || mycovariantDropdown == null)
-            {
-                return;
-            }
-
-            if (forcedGameResultDropdown == null)
-            {
-                forcedGameResultDropdown = FindDropdownByName(testingModePanel.transform, "ForcedGameResult", null);
-            }
-
-            if (forcedGameResultDropdown != null)
-            {
-                forcedGameResultRow = forcedGameResultDropdown.transform.parent != null
-                    ? forcedGameResultDropdown.transform.parent.gameObject
-                    : null;
-                return;
-            }
-
-            forcedGameResultRow = new GameObject("UI_ForcedGameResultRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
-            forcedGameResultRow.transform.SetParent(testingModePanel.transform, false);
-
-            var rowLayout = forcedGameResultRow.GetComponent<HorizontalLayoutGroup>();
-            rowLayout.childAlignment = TextAnchor.MiddleLeft;
-            rowLayout.childControlWidth = true;
-            rowLayout.childControlHeight = true;
-            rowLayout.childForceExpandWidth = false;
-            rowLayout.childForceExpandHeight = false;
-            rowLayout.spacing = 10f;
-
-            var rowElement = forcedGameResultRow.GetComponent<LayoutElement>();
-            rowElement.minHeight = 40f;
-            rowElement.preferredHeight = 42f;
-
-            var labelObject = new GameObject("UI_ForcedGameResultLabel", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
-            labelObject.transform.SetParent(forcedGameResultRow.transform, false);
-            var labelElement = labelObject.GetComponent<LayoutElement>();
-            labelElement.preferredWidth = 170f;
-            labelElement.minWidth = 150f;
-
-            var label = labelObject.GetComponent<TextMeshProUGUI>();
-            label.text = "Forced Game Result";
-            label.color = UIStyleTokens.Text.Secondary;
-            label.fontSize = 22f;
-            label.alignment = TextAlignmentOptions.MidlineLeft;
-
-            var dropdownObject = Instantiate(mycovariantDropdown.gameObject, forcedGameResultRow.transform);
-            dropdownObject.name = "UI_ForcedGameResultDropdown";
-            forcedGameResultDropdown = dropdownObject.GetComponent<TMP_Dropdown>();
-
-            if (forcedGameResultDropdown == null)
-            {
-                Destroy(forcedGameResultRow);
-                forcedGameResultRow = null;
-                return;
-            }
-
-            var dropdownElement = dropdownObject.GetComponent<LayoutElement>();
-            if (dropdownElement == null)
-            {
-                dropdownElement = dropdownObject.AddComponent<LayoutElement>();
-            }
-            dropdownElement.flexibleWidth = 1f;
-            dropdownElement.preferredHeight = 38f;
-        }
-
-        private void InitializeForcedGameResultDropdownOptions()
-        {
-            if (forcedGameResultDropdown == null)
-            {
-                return;
-            }
-
-            forcedGameResultDropdown.ClearOptions();
-            forcedGameResultDropdown.AddOptions(new List<string>
-            {
-                "Natural",
-                "Forced Win",
-                "Forced Loss"
-            });
-            forcedGameResultDropdown.value = 0;
-            forcedGameResultDropdown.RefreshShownValue();
-        }
-
-        private ForcedGameResultMode GetForcedGameResultSelection()
-        {
-            if (forcedGameResultDropdown == null)
-            {
-                return ForcedGameResultMode.Natural;
-            }
-
-            return forcedGameResultDropdown.value switch
-            {
-                1 => ForcedGameResultMode.ForcedWin,
-                2 => ForcedGameResultMode.ForcedLoss,
-                _ => ForcedGameResultMode.Natural
-            };
-        }
-
-        private void UpdateForcedGameResultVisibility()
-        {
-            bool testingEnabled = testingModeToggle != null && testingModeToggle.isOn;
-            bool skipEnabled = skipToEndgameToggle != null && skipToEndgameToggle.isOn;
-            bool showForcedResult = testingEnabled && skipEnabled;
-
-            if (forcedGameResultRow != null)
-            {
-                forcedGameResultRow.SetActive(showForcedResult);
-            }
-
-            if (forcedGameResultDropdown != null)
-            {
-                forcedGameResultDropdown.interactable = showForcedResult;
-
-                if (!showForcedResult)
-                {
-                    forcedGameResultDropdown.value = 0;
-                    forcedGameResultDropdown.RefreshShownValue();
-                }
-            }
-        }
     }
 }

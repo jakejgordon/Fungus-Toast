@@ -155,6 +155,7 @@ namespace FungusToast.Unity.UI
             }
 
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 30f);
+            SetOutcomeBannerVisibility(false);
             ApplyControlReadabilityOverrides();
         }
 
@@ -170,6 +171,8 @@ namespace FungusToast.Unity.UI
         {
             ShowResultsInternal(ranked, board, useCampaignTopSpacer: false);
             SetLegacyResultsHeaderVisibility(true);
+            SetOutcomeBannerVisibility(false);
+            ApplyControlReadabilityOverrides();
             // Solo / hotseat baseline: only exit button (continue hidden)
             if (continueButton != null) continueButton.gameObject.SetActive(false);
             if (exitButton != null) exitButton.gameObject.SetActive(true);
@@ -193,6 +196,7 @@ namespace FungusToast.Unity.UI
         {
             ShowResultsInternal(ranked, board, useCampaignTopSpacer: true);
             SetLegacyResultsHeaderVisibility(!isCampaign);
+            SetOutcomeBannerVisibility(isCampaign);
             requiresAdaptationBeforeContinue = false;
             if (!isCampaign)
             {
@@ -200,6 +204,7 @@ namespace FungusToast.Unity.UI
                 if (continueButton != null) continueButton.gameObject.SetActive(false);
                 if (exitButton != null) exitButton.gameObject.SetActive(true);
                 if (outcomeLabel != null) outcomeLabel.text = "";
+                SetOutcomeBannerVisibility(false);
                 UpdatePostVictoryTestingVisibility(false);
                 return;
             }
@@ -279,6 +284,8 @@ namespace FungusToast.Unity.UI
                 rank++;
             }
 
+            ApplyControlReadabilityOverrides();
+
             gameObject.SetActive(true);
             canvasGroup.alpha = 0f;
             canvasGroup.interactable = true;
@@ -304,6 +311,7 @@ namespace FungusToast.Unity.UI
 
             ShowSnapshotRows(snapshot);
             SetLegacyResultsHeaderVisibility(false);
+            SetOutcomeBannerVisibility(true);
             requiresAdaptationBeforeContinue = true;
 
             if (outcomeLabel != null)
@@ -359,6 +367,8 @@ namespace FungusToast.Unity.UI
                     rowData.deadCells,
                     rowData.toxinCells);
             }
+
+            ApplyControlReadabilityOverrides();
 
             gameObject.SetActive(true);
             canvasGroup.alpha = 1f;
@@ -419,6 +429,8 @@ namespace FungusToast.Unity.UI
                     $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Adaptation secured</b></color>\n" +
                     $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Continue when you are ready for the next level.</color></size>";
             }
+
+            SetOutcomeBannerVisibility(true);
 
             if (continueButton != null)
             {
@@ -1046,6 +1058,119 @@ namespace FungusToast.Unity.UI
             UIStyleTokens.Button.SetButtonLabelColor(postVictoryForcedResultButton, UIStyleTokens.Button.TextDefault);
 
             ApplyDropdownReadability(postVictoryMycovariantDropdown);
+            ApplyResultsHeaderReadabilityOverrides();
+        }
+
+        private void ApplyResultsHeaderReadabilityOverrides()
+        {
+            var tmpLabels = GetComponentsInChildren<TextMeshProUGUI>(true);
+            for (int i = 0; i < tmpLabels.Length; i++)
+            {
+                var label = tmpLabels[i];
+                if (!IsResultsHeaderLabel(label, out bool isTitle))
+                {
+                    continue;
+                }
+
+                label.color = UIStyleTokens.Text.Primary;
+                label.fontStyle |= FontStyles.Bold;
+            }
+
+            var legacyLabels = GetComponentsInChildren<Text>(true);
+            for (int i = 0; i < legacyLabels.Length; i++)
+            {
+                var label = legacyLabels[i];
+                if (!IsResultsHeaderLabel(label, out bool isTitle))
+                {
+                    continue;
+                }
+
+                label.color = UIStyleTokens.Text.Primary;
+                label.fontStyle = FontStyle.Bold;
+            }
+        }
+
+        private static bool IsResultsHeaderLabel(TMP_Text label, out bool isTitle)
+        {
+            isTitle = false;
+            if (label == null)
+            {
+                return false;
+            }
+
+            return TryClassifyResultsHeader(label.name, label.text, out isTitle);
+        }
+
+        private static bool IsResultsHeaderLabel(Text label, out bool isTitle)
+        {
+            isTitle = false;
+            if (label == null)
+            {
+                return false;
+            }
+
+            return TryClassifyResultsHeader(label.name, label.text, out isTitle);
+        }
+
+        private static bool TryClassifyResultsHeader(string name, string text, out bool isTitle)
+        {
+            isTitle = false;
+
+            if (IsResultsTitleName(name) || IsResultsTitleText(text))
+            {
+                isTitle = true;
+                return true;
+            }
+
+            return IsResultsColumnHeaderName(name) || IsResultsColumnHeaderText(text);
+        }
+
+        private static bool IsResultsTitleName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return false;
+            }
+
+            return name.IndexOf("GameEndResultsHeaderText", StringComparison.OrdinalIgnoreCase) >= 0
+                || name.IndexOf("GameResults", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsResultsTitleText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            return text.IndexOf("Game Results", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsResultsColumnHeaderName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return false;
+            }
+
+            return name.IndexOf("GameEndHeader_", StringComparison.OrdinalIgnoreCase) >= 0
+                || name.IndexOf("AliveHeaderText", StringComparison.OrdinalIgnoreCase) >= 0
+                || name.IndexOf("DeadHeaderText", StringComparison.OrdinalIgnoreCase) >= 0
+                || name.IndexOf("ToxinHeaderText", StringComparison.OrdinalIgnoreCase) >= 0
+                || name.IndexOf("PlayerSummariesPanelHeaderRow", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsResultsColumnHeaderText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            return string.Equals(text, "Player", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(text, "Alive", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(text, "Dead", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(text, "Toxins", StringComparison.OrdinalIgnoreCase);
         }
 
         private static void ApplyDropdownReadability(TMP_Dropdown dropdown)
@@ -1254,6 +1379,19 @@ namespace FungusToast.Unity.UI
             }
 
             layoutElement.ignoreLayout = true;
+        }
+
+        private void SetOutcomeBannerVisibility(bool visible)
+        {
+            if (outcomeLabel != null)
+            {
+                outcomeLabel.gameObject.SetActive(visible);
+            }
+
+            if (outcomeBackdrop != null)
+            {
+                outcomeBackdrop.gameObject.SetActive(visible);
+            }
         }
 
         private static void EnsureTooltip(Button button, string text)
