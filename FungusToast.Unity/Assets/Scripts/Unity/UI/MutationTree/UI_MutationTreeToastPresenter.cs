@@ -90,7 +90,7 @@ namespace FungusToast.Unity.UI.MutationTree
             messageText.color = UIStyleTokens.Text.Primary;
             messageText.fontSize = 23f;
             messageText.fontStyle = FontStyles.Bold;
-            messageText.enableWordWrapping = false;
+            messageText.textWrappingMode = TextWrappingModes.NoWrap;
             messageText.overflowMode = TextOverflowModes.Ellipsis;
             messageText.raycastTarget = false;
 

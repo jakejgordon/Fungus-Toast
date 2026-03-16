@@ -16,7 +16,7 @@ namespace FungusToast.Unity.UI
         public float sidebarWidthFraction = 0.2f; // 20% of the screen width
 
         private RectTransform rectTransform = null!;
-        private Canvas? rootCanvas;
+        private Canvas rootCanvas;
         private float lastAppliedWidth;
 
         void Awake()

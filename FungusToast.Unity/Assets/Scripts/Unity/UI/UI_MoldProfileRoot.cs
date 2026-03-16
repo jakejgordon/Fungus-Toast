@@ -557,7 +557,7 @@ namespace FungusToast.Unity.UI
             text.text = label;
             text.fontSize = AdaptationHeaderFontSize;
             text.enableAutoSizing = false;
-            text.enableWordWrapping = false;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
             text.alignment = TextAlignmentOptions.Left;
 
             return text;

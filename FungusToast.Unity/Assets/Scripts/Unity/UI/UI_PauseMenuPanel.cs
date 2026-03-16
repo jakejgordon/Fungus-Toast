@@ -174,7 +174,7 @@ namespace FungusToast.Unity.UI
                 }
             }
 
-            Canvas anyCanvas = FindObjectOfType<Canvas>();
+            Canvas anyCanvas = FindFirstObjectByType<Canvas>();
             return anyCanvas != null ? anyCanvas.rootCanvas : null;
         }
 
@@ -295,7 +295,7 @@ namespace FungusToast.Unity.UI
             confirmationLabel = CreateLabel(confirmationRoot.transform, string.Empty, 21f, FontStyles.Normal);
             confirmationLabel.alignment = TextAlignmentOptions.Center;
             confirmationLabel.color = UIStyleTokens.Text.Secondary;
-            confirmationLabel.enableWordWrapping = true;
+            confirmationLabel.textWrappingMode = TextWrappingModes.Normal;
 
             GameObject confirmationButtons = CreateUiObject("ConfirmationButtons", confirmationRoot.transform);
             HorizontalLayoutGroup buttonRow = confirmationButtons.AddComponent<HorizontalLayoutGroup>();
@@ -404,7 +404,7 @@ namespace FungusToast.Unity.UI
             label.text = text;
             label.fontSize = fontSize;
             label.fontStyle = fontStyle;
-            label.enableWordWrapping = false;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
             label.color = UIStyleTokens.Text.Primary;
             label.raycastTarget = false;
 

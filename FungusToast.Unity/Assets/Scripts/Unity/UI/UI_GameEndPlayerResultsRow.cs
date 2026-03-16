@@ -108,7 +108,7 @@ namespace FungusToast.Unity.UI
             if (!allowAutoSize)
             {
                 label.fontSize = fontSize;
-                label.enableWordWrapping = false;
+                label.textWrappingMode = TextWrappingModes.NoWrap;
                 label.overflowMode = TextOverflowModes.Ellipsis;
             }
         }

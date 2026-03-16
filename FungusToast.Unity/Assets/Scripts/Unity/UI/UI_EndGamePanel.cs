@@ -717,7 +717,7 @@ namespace FungusToast.Unity.UI
                 return null;
             }
 
-            TMP_Dropdown template = FindObjectOfType<TMP_Dropdown>(includeInactive: true);
+            TMP_Dropdown template = FindFirstObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
             if (template == null)
             {
                 Debug.LogWarning("UI_EndGamePanel: Unable to create Mycovariant dropdown because no TMP_Dropdown template was found in scene.");
