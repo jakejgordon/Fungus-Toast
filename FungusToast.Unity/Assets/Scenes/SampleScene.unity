@@ -4125,6 +4125,7 @@ GameObject:
   m_Component:
   - component: {fileID: 355076242}
   - component: {fileID: 355076243}
+  - component: {fileID: 355076244}
   m_Layer: 0
   m_Name: MutationManager
   m_TagString: Untagged
@@ -4159,6 +4160,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf5273c0fc08ddc46a311017e1dc1247, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &355076244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 355076240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01e6784f27ab463459ff96c69465f1f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  statusText: {fileID: 0}
+  deathReasonText: {fileID: 0}
+  ownerText: {fileID: 0}
+  lastOwnerText: {fileID: 0}
+  growthAgeText: {fileID: 0}
+  expirationText: {fileID: 0}
+  resistantText: {fileID: 0}
+  growthSourceText: {fileID: 0}
+  additionalInfoText: {fileID: 0}
+  statusIcon: {fileID: 0}
+  ownerIcon: {fileID: 0}
+  lastOwnerIcon: {fileID: 0}
+  toxinIcon: {fileID: 0}
+  resistantIcon: {fileID: 0}
+  statusGroup: {fileID: 0}
+  ownerGroup: {fileID: 0}
+  deathReasonGroup: {fileID: 0}
+  lastOwnerGroup: {fileID: 0}
+  ageGroup: {fileID: 0}
+  expirationGroup: {fileID: 0}
+  resistantGroup: {fileID: 0}
+  growthSourceGroup: {fileID: 0}
+  additionalInfoGroup: {fileID: 0}
+  tooltipBackgroundImage: {fileID: 0}
+  tooltipBackgroundAlpha: 0.96
+  rowBackgroundAlpha: 0.35
+  normalizeTooltipStructureOnAwake: 1
 --- !u!1 &356102964
 GameObject:
   m_ObjectHideFlags: 0
@@ -110978,6 +111018,14 @@ MonoBehaviour:
   adaptationIconGridRoot: {fileID: 0}
   adaptationSectionHostRoot: {fileID: 0}
   adaptationHeaderLabel: Adaptations
+  adaptationHeaderTooltip: Adaptations are permanent campaign traits your mold develops
+    by winning campaign levels.
+  mycovariantSectionRoot: {fileID: 0}
+  mycovariantHeaderText: {fileID: 0}
+  mycovariantIconGridRoot: {fileID: 0}
+  mycovariantHeaderLabel: Mycovariants
+  mycovariantHeaderTooltip: Mycovariants are game-only traits your mold carries for
+    the current match.
   zeroChanceColor: {r: 1, g: 1, b: 1, a: 0.35}
   finalZeroGreen: {r: 0.4, g: 1, b: 0.4, a: 1}
   growthPreviewHeaderLabel: Growth Chance Per Living Cell
@@ -111890,6 +111938,7 @@ MonoBehaviour:
   toastTilemap: {fileID: 382906180}
   moldTilemap: {fileID: 2001715907}
   overlayTilemap: {fileID: 775599106}
+  crustTilemap: {fileID: 0}
   SelectionHighlightTileMap: {fileID: 1138086393}
   SelectedTileMap: {fileID: 330199868}
   HoverOverlayTileMap: {fileID: 1757602804}
@@ -111908,6 +111957,7 @@ MonoBehaviour:
   toxinOverlayTile: {fileID: 11400000, guid: b03fa0ef3f880e944836bca2e3270b89, type: 2}
   solidHighlightTile: {fileID: 11400000, guid: 2948f1915b2f9f94faed40359df6b9d4, type: 2}
   goldShieldOverlayTile: {fileID: 11400000, guid: c263d2624d4a84043852764dbdb51385, type: 2}
+  defaultBoardMedium: {fileID: 11400000, guid: 8afee80008d80ca4098efb4d5e0790b4, type: 2}
 --- !u!4 &989759030
 Transform:
   m_ObjectHideFlags: 0

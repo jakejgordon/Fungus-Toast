@@ -230,6 +230,7 @@ namespace FungusToast.Unity
         public void StartHotseatGame(int numberOfPlayers)
         {
             CurrentGameMode = GameMode.Hotseat;
+            gridVisualizer?.ClearBoardMediumOverride();
             InitializeGame(numberOfPlayers);
         }
 
@@ -248,6 +249,7 @@ namespace FungusToast.Unity
                 boardWidth = preset.boardWidth;
                 boardHeight = preset.boardHeight;
             }
+            gridVisualizer?.SetBoardMedium(preset?.boardMedium);
             int totalPlayers =1 + (preset?.aiPlayers?.Count ??0);
             SetHotseatConfig(1);
             InitializeGame(totalPlayers);
@@ -277,6 +279,7 @@ namespace FungusToast.Unity
                 boardWidth = preset.boardWidth;
                 boardHeight = preset.boardHeight;
             }
+            gridVisualizer?.SetBoardMedium(preset?.boardMedium);
             int totalPlayers =1 + (preset?.aiPlayers?.Count ??0);
             SetHotseatConfig(1);
             InitializeGame(totalPlayers);

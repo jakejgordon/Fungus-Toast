@@ -28,6 +28,8 @@ namespace FungusToast.Unity.Grid
         public Tilemap toastTilemap;
         public Tilemap moldTilemap;
         public Tilemap overlayTilemap;
+        [Tooltip("Optional dedicated tilemap for decorative board borders. Falls back to Toast Tilemap when omitted.")]
+        public Tilemap crustTilemap;
         public Tilemap SelectionHighlightTileMap;
         public Tilemap SelectedTileMap;
         public Tilemap HoverOverlayTileMap;
@@ -42,8 +44,15 @@ namespace FungusToast.Unity.Grid
         [SerializeField] private Tile solidHighlightTile;
         public Tile goldShieldOverlayTile;
 
+        [Header("Board Medium")]
+        [SerializeField] private BoardMediumConfig defaultBoardMedium;
+
+        private BoardMediumConfig runtimeBoardMedium;
+
         private GameBoard board;
         public GameBoard ActiveBoard => board ?? GameManager.Instance?.Board; // now public for helper access
+        public BoardMediumConfig ActiveBoardMedium => runtimeBoardMedium != null ? runtimeBoardMedium : defaultBoardMedium;
+        public int CurrentBoardVisualPaddingTiles => board == null ? 0 : GetCrustThickness(board);
 
         // Selection highlight state
         private readonly List<Vector3Int> highlightedPositions = new();
@@ -95,6 +104,8 @@ namespace FungusToast.Unity.Grid
         }
 
         public void Initialize(GameBoard board) => this.board = board;
+        public void SetBoardMedium(BoardMediumConfig boardMedium) => runtimeBoardMedium = boardMedium;
+        public void ClearBoardMediumOverride() => runtimeBoardMedium = null;
 
         // === Public wrappers for extracted reclaim & surgical animations ===
         public void PlayRegenerativeHyphaeReclaimBatch(IReadOnlyList<int> tileIds, float scaleMultiplier, float explicitTotalSeconds)
@@ -1134,6 +1145,7 @@ namespace FungusToast.Unity.Grid
             toastTilemap.ClearAllTiles();
             moldTilemap.ClearAllTiles();
             overlayTilemap.ClearAllTiles();
+            GetCrustTargetTilemap()?.ClearAllTiles();
 
             for (int x = 0; x < board.Width; x++)
             {
@@ -1141,12 +1153,14 @@ namespace FungusToast.Unity.Grid
                 {
                     var pos = new Vector3Int(x, y, 0);
                     var tile = board.Grid[x, y];
-                    toastTilemap.SetTile(pos, baseTile);
+                    toastTilemap.SetTile(pos, GetSurfaceTile(x, y));
                     toastTilemap.SetTileFlags(pos, TileFlags.None);
-                    toastTilemap.SetColor(pos, Color.white);
+                    toastTilemap.SetColor(pos, GetSurfaceColor(x, y, board.Width, board.Height));
                     RenderFungalCellOverlay(tile, pos);
                 }
             }
+
+            RenderDecorativeCrust(board);
 
             if (!suppressAnimations)
             {
@@ -1218,6 +1232,200 @@ namespace FungusToast.Unity.Grid
         {
             ClearHighlights();
             ClearSelectedTiles();
+        }
+
+        private Tilemap GetCrustTargetTilemap()
+        {
+            if (crustTilemap != null && crustTilemap != toastTilemap)
+            {
+                return crustTilemap;
+            }
+
+            return ActiveBoardMedium != null && ActiveBoardMedium.renderCrust ? toastTilemap : crustTilemap;
+        }
+
+        private TileBase GetSurfaceTile(int x, int y)
+        {
+            var activeMedium = ActiveBoardMedium;
+            if (activeMedium == null || !activeMedium.ShouldOverridePlayableSurface)
+            {
+                return baseTile;
+            }
+
+            return activeMedium.GetSurfaceTile(x, y) ?? activeMedium.boardSurfaceTile;
+        }
+
+        private Color GetSurfaceColor(int x, int y, int boardWidth, int boardHeight)
+        {
+            var activeMedium = ActiveBoardMedium;
+            if (activeMedium == null || !activeMedium.ShouldOverridePlayableSurface || !activeMedium.IsPerimeterTintEnabled)
+            {
+                return Color.white;
+            }
+
+            int distanceToEdge = Mathf.Min(x, y, boardWidth - 1 - x, boardHeight - 1 - y);
+            if (distanceToEdge >= activeMedium.perimeterTintDepth)
+            {
+                return Color.white;
+            }
+
+            float depth = activeMedium.perimeterTintDepth <= 1
+                ? 1f
+                : 1f - (distanceToEdge / (float)(activeMedium.perimeterTintDepth - 1));
+            return Color.Lerp(Color.white, activeMedium.perimeterTint, depth);
+        }
+
+        private int GetCrustThickness(GameBoard activeBoard)
+        {
+            var activeMedium = ActiveBoardMedium;
+            return activeMedium?.GetCrustThickness(activeBoard.Width, activeBoard.Height) ?? 0;
+        }
+
+        private void RenderDecorativeCrust(GameBoard activeBoard)
+        {
+            var activeMedium = ActiveBoardMedium;
+            if (activeBoard == null || activeMedium == null)
+            {
+                return;
+            }
+
+            int crustThickness = GetCrustThickness(activeBoard);
+            if (crustThickness <= 0)
+            {
+                return;
+            }
+
+            Tilemap targetTilemap = GetCrustTargetTilemap();
+            if (targetTilemap == null)
+            {
+                return;
+            }
+
+            TileBase edgeTile = activeMedium.crustEdgeTile;
+            TileBase cornerTile = activeMedium.crustCornerTile != null ? activeMedium.crustCornerTile : edgeTile;
+            if (edgeTile == null && cornerTile == null)
+            {
+                return;
+            }
+
+            int minY = -crustThickness;
+            int maxY = activeBoard.Height - 1 + crustThickness;
+            for (int y = minY; y <= maxY; y++)
+            {
+                int rowInset = GetBreadCrustInsetForRow(activeMedium, activeBoard, crustThickness, y);
+                int rowMinX = -crustThickness + rowInset;
+                int rowMaxX = activeBoard.Width - 1 + crustThickness - rowInset;
+                if (rowMinX > rowMaxX)
+                {
+                    continue;
+                }
+
+                for (int x = rowMinX; x <= rowMaxX; x++)
+                {
+                    if (x >= 0 && x < activeBoard.Width && y >= 0 && y < activeBoard.Height)
+                    {
+                        continue;
+                    }
+
+                    bool isRowEdge = x == rowMinX || x == rowMaxX;
+                    TileBase tile = isRowEdge ? (cornerTile ?? edgeTile) : (edgeTile ?? cornerTile);
+                    Color crustColor = EvaluateCrustColor(activeMedium, activeBoard, crustThickness, x, y);
+                    SetCrustTile(targetTilemap, new Vector3Int(x, y, 0), tile, crustColor);
+                }
+            }
+        }
+
+        private static int GetBreadCrustInsetForRow(BoardMediumConfig activeMedium, GameBoard activeBoard, int crustThickness, int y)
+        {
+            if (activeMedium == null || !activeMedium.useBreadSliceSilhouette || crustThickness <= 1)
+            {
+                return 0;
+            }
+
+            if (y >= activeBoard.Height)
+            {
+                int rowAboveBoard = y - activeBoard.Height;
+                int maxInset = Mathf.Max(
+                    Mathf.RoundToInt(activeMedium.topCrustRoundness * crustThickness),
+                    Mathf.RoundToInt(activeBoard.Width * 0.12f * activeMedium.topCrustRoundness));
+                return CalculateCrustRowInset(rowAboveBoard, crustThickness, maxInset, 0.72f);
+            }
+
+            if (y < 0)
+            {
+                int rowBelowBoard = -y - 1;
+                int maxInset = Mathf.Max(
+                    Mathf.RoundToInt(activeMedium.bottomCrustRoundness * crustThickness),
+                    Mathf.RoundToInt(activeBoard.Width * 0.035f * activeMedium.bottomCrustRoundness));
+                return CalculateCrustRowInset(rowBelowBoard, crustThickness, maxInset, 1.35f);
+            }
+
+            return 0;
+        }
+
+        private static int CalculateCrustRowInset(int externalRowIndex, int crustThickness, int maxInset, float curvePower)
+        {
+            if (crustThickness <= 0 || maxInset <= 0)
+            {
+                return 0;
+            }
+
+            float normalizedRow = Mathf.Clamp01((externalRowIndex + 1f) / crustThickness);
+            float curvedRow = Mathf.Pow(normalizedRow, curvePower);
+            return Mathf.Clamp(Mathf.RoundToInt(curvedRow * maxInset), 0, maxInset);
+        }
+
+        private static Color EvaluateCrustColor(BoardMediumConfig activeMedium, GameBoard activeBoard, int crustThickness, int x, int y)
+        {
+            int horizontalDistance = 0;
+            if (x < 0)
+            {
+                horizontalDistance = -x;
+            }
+            else if (x >= activeBoard.Width)
+            {
+                horizontalDistance = x - activeBoard.Width + 1;
+            }
+
+            int verticalDistance = 0;
+            if (y < 0)
+            {
+                verticalDistance = -y;
+            }
+            else if (y >= activeBoard.Height)
+            {
+                verticalDistance = y - activeBoard.Height + 1;
+            }
+
+            int crustDistance = Mathf.Max(horizontalDistance, verticalDistance);
+            float t = crustThickness <= 1
+                ? 1f
+                : Mathf.Clamp01((crustDistance - 1f) / (crustThickness - 1f));
+            Color gradientColor = t < 0.5f
+                ? Color.Lerp(activeMedium.crustInnerColor, activeMedium.crustMidColor, t / 0.5f)
+                : Color.Lerp(activeMedium.crustMidColor, activeMedium.crustOuterColor, (t - 0.5f) / 0.5f);
+
+            if (y >= activeBoard.Height)
+            {
+                float topDepth = crustThickness <= 0
+                    ? 0f
+                    : Mathf.Clamp01((y - activeBoard.Height + 1f) / crustThickness);
+                gradientColor = Color.Lerp(gradientColor, activeMedium.crustOuterColor, topDepth * activeMedium.crustTopDarkening);
+            }
+
+            return gradientColor;
+        }
+
+        private static void SetCrustTile(Tilemap tilemap, Vector3Int position, TileBase tile, Color color)
+        {
+            if (tilemap == null || tile == null)
+            {
+                return;
+            }
+
+            tilemap.SetTile(position, tile);
+            tilemap.SetTileFlags(position, TileFlags.None);
+            tilemap.SetColor(position, color);
         }
 
         #region Starting Tile Ping
