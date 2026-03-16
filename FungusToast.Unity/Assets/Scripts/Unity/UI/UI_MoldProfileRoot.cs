@@ -32,12 +32,14 @@ namespace FungusToast.Unity.UI
         [SerializeField] private RectTransform adaptationIconGridRoot;
         [SerializeField] private RectTransform adaptationSectionHostRoot;
         [SerializeField] private string adaptationHeaderLabel = "Adaptations";
+        [SerializeField, TextArea] private string adaptationHeaderTooltip = "Adaptations are permanent campaign traits your mold develops by winning campaign levels.";
 
         [Header("Campaign Mycovariants")]
         [SerializeField] private RectTransform mycovariantSectionRoot;
         [SerializeField] private TextMeshProUGUI mycovariantHeaderText;
         [SerializeField] private RectTransform mycovariantIconGridRoot;
         [SerializeField] private string mycovariantHeaderLabel = "Mycovariants";
+        [SerializeField, TextArea] private string mycovariantHeaderTooltip = "Mycovariants are game-only traits your mold carries for the current match.";
 
         [Header("Formatting / Visuals")]
         [SerializeField] private Color zeroChanceColor = new Color(1f,1f,1f,0.35f);
@@ -416,7 +418,7 @@ namespace FungusToast.Unity.UI
                 adaptationSectionRoot.SetSiblingIndex(hostRoot.GetSiblingIndex() + 1);
             }
 
-            adaptationHeaderText = CreateSectionHeader(adaptationSectionRoot, "UI_AdaptationHeaderText", adaptationHeaderLabel);
+            adaptationHeaderText = CreateSectionHeader(adaptationSectionRoot, "UI_AdaptationHeaderText", adaptationHeaderLabel, adaptationHeaderTooltip);
             adaptationIconGridRoot = CreateIconGrid(adaptationSectionRoot, "UI_AdaptationIconGrid");
 
             ApplyAdaptationSectionStyle();
@@ -443,7 +445,7 @@ namespace FungusToast.Unity.UI
                 mycovariantSectionRoot.SetSiblingIndex(adaptationSectionRoot.GetSiblingIndex() + 1);
             }
 
-            mycovariantHeaderText = CreateSectionHeader(mycovariantSectionRoot, "UI_MycovariantHeaderText", mycovariantHeaderLabel);
+            mycovariantHeaderText = CreateSectionHeader(mycovariantSectionRoot, "UI_MycovariantHeaderText", mycovariantHeaderLabel, mycovariantHeaderTooltip);
             mycovariantIconGridRoot = CreateIconGrid(mycovariantSectionRoot, "UI_MycovariantIconGrid");
 
             ApplyMycovariantSectionStyle();
@@ -635,7 +637,7 @@ namespace FungusToast.Unity.UI
             return rect;
         }
 
-        private static TextMeshProUGUI CreateSectionHeader(RectTransform parent, string objectName, string label)
+        private static TextMeshProUGUI CreateSectionHeader(RectTransform parent, string objectName, string label, string tooltipText)
         {
             var headerObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
             headerObject.transform.SetParent(parent, false);
@@ -649,6 +651,13 @@ namespace FungusToast.Unity.UI
             text.enableAutoSizing = false;
             text.textWrappingMode = TextWrappingModes.NoWrap;
             text.alignment = TextAlignmentOptions.Left;
+
+            if (!string.IsNullOrWhiteSpace(tooltipText))
+            {
+                var trigger = headerObject.AddComponent<TooltipTrigger>();
+                trigger.SetStaticText(tooltipText);
+                trigger.SetAutoPlacementOffsetX(18f);
+            }
 
             return text;
         }
