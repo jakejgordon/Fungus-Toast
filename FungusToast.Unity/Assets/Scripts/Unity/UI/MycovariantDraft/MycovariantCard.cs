@@ -39,13 +39,20 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             this.mycovariant = mycovariant;
             this.onPicked = onPicked;
 
-            SetCardContent(
+            SetChoiceContent(
+                mycovariant,
                 mycovariant.Name,
                 mycovariant.Description,
-                MycovariantArtRepository.GetIcon(mycovariant.Type),
+                MycovariantArtRepository.GetIcon(mycovariant),
                 () => this.onPicked?.Invoke(mycovariant));
 
             SetActiveHighlight(false);
+        }
+
+        public void SetChoiceContent(Mycovariant boundMycovariant, string title, string description, Sprite icon, System.Action onClick)
+        {
+            mycovariant = boundMycovariant;
+            SetCardContent(title, description, icon, onClick);
         }
 
         public void SetCardContent(string title, string description, Sprite icon, System.Action onClick)

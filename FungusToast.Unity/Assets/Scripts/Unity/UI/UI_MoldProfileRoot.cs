@@ -4,6 +4,7 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Mutations; // keep if other mutation id helpers needed
 using FungusToast.Core.Phases; // GrowthMutationProcessor lives here
 using FungusToast.Core.Players;
+using Assets.Scripts.Unity.UI.MycovariantDraft;
 using FungusToast.Unity.UI.Campaign;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
@@ -32,6 +33,12 @@ namespace FungusToast.Unity.UI
         [SerializeField] private RectTransform adaptationSectionHostRoot;
         [SerializeField] private string adaptationHeaderLabel = "Adaptations";
 
+        [Header("Campaign Mycovariants")]
+        [SerializeField] private RectTransform mycovariantSectionRoot;
+        [SerializeField] private TextMeshProUGUI mycovariantHeaderText;
+        [SerializeField] private RectTransform mycovariantIconGridRoot;
+        [SerializeField] private string mycovariantHeaderLabel = "Mycovariants";
+
         [Header("Formatting / Visuals")]
         [SerializeField] private Color zeroChanceColor = new Color(1f,1f,1f,0.35f);
         [SerializeField] private Color finalZeroGreen = new Color(0.4f, 1f, 0.4f, 1f);
@@ -46,13 +53,14 @@ namespace FungusToast.Unity.UI
         private const float AdaptationHeaderFontSize = 18f;
         private const float AdaptationHeaderHeight = 24f;
         private const int AdaptationIconSize = 24;
-        private const int AdaptationIconMaxColumns = 7;
+        private const int AdaptationIconMaxColumns = 12;
         private const float AdaptationIconSpacing = 4f;
         private const float AdaptationSectionSpacing = 8f;
         private const string GrowthPreviewRootName = "UI_GrowthPreviewRoot";
         private const string StatsRootName = "UI_StatsRoot";
 
         private readonly List<GameObject> adaptationIconObjects = new();
+        private readonly List<GameObject> mycovariantIconObjects = new();
 
         private bool cellsResolved = false;
         private bool deferredRefreshRequested = false;
@@ -97,7 +105,9 @@ namespace FungusToast.Unity.UI
 
             ApplyGrowthPreviewHeaderText();
             EnsureAdaptationSectionExists();
+            EnsureMycovariantSectionExists();
             ApplyAdaptationSectionStyle();
+            ApplyMycovariantSectionStyle();
             ApplyLayoutBehavior();
         }
 
@@ -259,6 +269,7 @@ namespace FungusToast.Unity.UI
             EnsureCellsResolved();
             UpdateGrowthChances();
             RefreshAdaptations();
+            RefreshMycovariants();
             deferredRefreshRequested = false;
         }
 
@@ -324,30 +335,47 @@ namespace FungusToast.Unity.UI
         {
             EnsureAdaptationSectionExists();
 
-            if (adaptationSectionRoot == null || adaptationIconGridRoot == null)
+            var adaptations = new List<AdaptationDefinition>();
+            if (trackedPlayer?.PlayerAdaptations != null)
+            {
+                for (int i = 0; i < trackedPlayer.PlayerAdaptations.Count; i++)
+                {
+                    adaptations.Add(trackedPlayer.PlayerAdaptations[i].Adaptation);
+                }
+            }
+
+            RefreshIconSection(adaptationSectionRoot, adaptationIconGridRoot, adaptationIconObjects, adaptations, CreateAdaptationIcon);
+        }
+
+        private void RefreshMycovariants()
+        {
+            EnsureMycovariantSectionExists();
+            RefreshIconSection(mycovariantSectionRoot, mycovariantIconGridRoot, mycovariantIconObjects, trackedPlayer?.PlayerMycovariants, CreateMycovariantIcon);
+        }
+
+        private void RefreshIconSection<T>(RectTransform sectionRoot, RectTransform iconGridRoot, List<GameObject> iconObjects, IList<T> entries, Action<T> createIcon)
+        {
+            if (sectionRoot == null || iconGridRoot == null)
             {
                 return;
             }
 
-            ClearAdaptationIcons();
+            ClearIconObjects(iconObjects);
 
-            bool hasAdaptations = trackedPlayer != null
-                && trackedPlayer.PlayerAdaptations != null
-                && trackedPlayer.PlayerAdaptations.Count > 0;
-
-            adaptationSectionRoot.gameObject.SetActive(hasAdaptations);
-            if (!hasAdaptations)
+            bool hasEntries = entries != null && entries.Count > 0;
+            sectionRoot.gameObject.SetActive(hasEntries);
+            if (!hasEntries)
             {
                 return;
             }
 
-            for (int i = 0; i < trackedPlayer.PlayerAdaptations.Count; i++)
+            for (int i = 0; i < entries.Count; i++)
             {
-                CreateAdaptationIcon(trackedPlayer.PlayerAdaptations[i].Adaptation);
+                createIcon(entries[i]);
             }
 
-            UpdateAdaptationLayoutMetrics(trackedPlayer.PlayerAdaptations.Count);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(adaptationSectionRoot);
+            UpdateSectionLayoutMetrics(sectionRoot, iconGridRoot, entries.Count);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(sectionRoot);
 
             if (transform is RectTransform rootRect)
             {
@@ -355,17 +383,17 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        private void ClearAdaptationIcons()
+        private static void ClearIconObjects(List<GameObject> iconObjects)
         {
-            for (int i = 0; i < adaptationIconObjects.Count; i++)
+            for (int i = 0; i < iconObjects.Count; i++)
             {
-                if (adaptationIconObjects[i] != null)
+                if (iconObjects[i] != null)
                 {
-                    Destroy(adaptationIconObjects[i]);
+                    Destroy(iconObjects[i]);
                 }
             }
 
-            adaptationIconObjects.Clear();
+            iconObjects.Clear();
         }
 
         private void EnsureAdaptationSectionExists()
@@ -382,16 +410,43 @@ namespace FungusToast.Unity.UI
             }
 
             var hostRoot = ResolveAdaptationSectionHostRoot(rootTransform);
-            adaptationSectionRoot = CreateSectionRoot(rootTransform);
+            adaptationSectionRoot = CreateSectionRoot(rootTransform, "UI_AdaptationSection");
             if (hostRoot != null)
             {
                 adaptationSectionRoot.SetSiblingIndex(hostRoot.GetSiblingIndex() + 1);
             }
 
-            adaptationHeaderText = CreateSectionHeader(adaptationSectionRoot, adaptationHeaderLabel);
-            adaptationIconGridRoot = CreateIconGrid(adaptationSectionRoot);
+            adaptationHeaderText = CreateSectionHeader(adaptationSectionRoot, "UI_AdaptationHeaderText", adaptationHeaderLabel);
+            adaptationIconGridRoot = CreateIconGrid(adaptationSectionRoot, "UI_AdaptationIconGrid");
 
             ApplyAdaptationSectionStyle();
+        }
+
+        private void EnsureMycovariantSectionExists()
+        {
+            EnsureAdaptationSectionExists();
+
+            if (mycovariantSectionRoot != null && mycovariantIconGridRoot != null && mycovariantHeaderText != null)
+            {
+                return;
+            }
+
+            var rootTransform = transform as RectTransform;
+            if (rootTransform == null)
+            {
+                return;
+            }
+
+            mycovariantSectionRoot = CreateSectionRoot(rootTransform, "UI_MycovariantSection");
+            if (adaptationSectionRoot != null)
+            {
+                mycovariantSectionRoot.SetSiblingIndex(adaptationSectionRoot.GetSiblingIndex() + 1);
+            }
+
+            mycovariantHeaderText = CreateSectionHeader(mycovariantSectionRoot, "UI_MycovariantHeaderText", mycovariantHeaderLabel);
+            mycovariantIconGridRoot = CreateIconGrid(mycovariantSectionRoot, "UI_MycovariantIconGrid");
+
+            ApplyMycovariantSectionStyle();
         }
 
         private RectTransform ResolveAdaptationSectionHostRoot(RectTransform fallbackRoot)
@@ -415,39 +470,49 @@ namespace FungusToast.Unity.UI
 
         private void ApplyAdaptationSectionStyle()
         {
-            if (adaptationSectionRoot == null)
+            ApplySectionStyle(adaptationSectionRoot, adaptationHeaderText, adaptationIconGridRoot, adaptationHeaderLabel);
+        }
+
+        private void ApplyMycovariantSectionStyle()
+        {
+            ApplySectionStyle(mycovariantSectionRoot, mycovariantHeaderText, mycovariantIconGridRoot, mycovariantHeaderLabel);
+        }
+
+        private void ApplySectionStyle(RectTransform sectionRoot, TextMeshProUGUI headerText, RectTransform iconGridRoot, string headerLabel)
+        {
+            if (sectionRoot == null)
             {
                 return;
             }
 
-            UIStyleTokens.ApplyPanelSurface(adaptationSectionRoot.gameObject, UIStyleTokens.Surface.PanelSecondary);
+            UIStyleTokens.ApplyPanelSurface(sectionRoot.gameObject, UIStyleTokens.Surface.PanelSecondary);
 
-            var sectionImage = adaptationSectionRoot.GetComponent<Image>();
+            var sectionImage = sectionRoot.GetComponent<Image>();
             if (sectionImage != null)
             {
                 sectionImage.color = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Surface.PanelElevated, 0.35f);
             }
 
-            if (adaptationHeaderText != null)
+            if (headerText != null)
             {
-                adaptationHeaderText.text = adaptationHeaderLabel;
-                adaptationHeaderText.color = UIStyleTokens.Text.Primary;
-                adaptationHeaderText.fontStyle = FontStyles.Bold;
-                adaptationHeaderText.enableAutoSizing = false;
-                adaptationHeaderText.fontSize = AdaptationHeaderFontSize;
+                headerText.text = headerLabel;
+                headerText.color = UIStyleTokens.Text.Primary;
+                headerText.fontStyle = FontStyles.Bold;
+                headerText.enableAutoSizing = false;
+                headerText.fontSize = AdaptationHeaderFontSize;
             }
 
-            UpdateAdaptationGridConstraint();
+            UpdateSectionGridConstraint(sectionRoot, iconGridRoot);
         }
 
-        private void UpdateAdaptationGridConstraint()
+        private void UpdateSectionGridConstraint(RectTransform sectionRoot, RectTransform iconGridRoot)
         {
-            if (adaptationIconGridRoot == null)
+            if (iconGridRoot == null)
             {
                 return;
             }
 
-            var grid = adaptationIconGridRoot.GetComponent<GridLayoutGroup>();
+            var grid = iconGridRoot.GetComponent<GridLayoutGroup>();
             if (grid == null)
             {
                 return;
@@ -455,20 +520,20 @@ namespace FungusToast.Unity.UI
 
             grid.cellSize = new Vector2(AdaptationIconSize, AdaptationIconSize);
             grid.spacing = new Vector2(AdaptationIconSpacing, AdaptationIconSpacing);
-            grid.constraintCount = GetAdaptationColumnCount();
+            grid.constraintCount = GetSectionColumnCount(sectionRoot, iconGridRoot);
         }
 
-        private int GetAdaptationColumnCount()
+        private int GetSectionColumnCount(RectTransform sectionRoot, RectTransform iconGridRoot)
         {
             float availableWidth = 0f;
-            if (adaptationIconGridRoot != null)
+            if (iconGridRoot != null)
             {
-                availableWidth = adaptationIconGridRoot.rect.width;
+                availableWidth = iconGridRoot.rect.width;
             }
 
-            if (availableWidth <= 0f && adaptationSectionRoot != null)
+            if (availableWidth <= 0f && sectionRoot != null)
             {
-                availableWidth = Mathf.Max(0f, adaptationSectionRoot.rect.width - 20f);
+                availableWidth = Mathf.Max(0f, sectionRoot.rect.width - 20f);
             }
 
             if (availableWidth <= 0f)
@@ -487,9 +552,39 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            var iconObject = new GameObject($"UI_Adaptation_{adaptation.Id}", typeof(RectTransform), typeof(LayoutElement), typeof(Image));
-            iconObject.transform.SetParent(adaptationIconGridRoot, false);
-            adaptationIconObjects.Add(iconObject);
+            var iconObject = CreateIconObject($"UI_Adaptation_{adaptation.Id}", adaptationIconGridRoot, adaptationIconObjects, AdaptationArtRepository.GetIcon(adaptation));
+
+            var provider = iconObject.AddComponent<AdaptationTooltipProvider>();
+            provider.Initialize(adaptation);
+
+            var trigger = iconObject.AddComponent<TooltipTrigger>();
+            trigger.SetDynamicProvider(provider);
+            trigger.SetAutoPlacementOffsetX(20f);
+        }
+
+        private void CreateMycovariantIcon(PlayerMycovariant playerMycovariant)
+        {
+            if (mycovariantIconGridRoot == null || playerMycovariant?.Mycovariant == null)
+            {
+                return;
+            }
+
+            var definition = playerMycovariant.Mycovariant;
+            var iconObject = CreateIconObject($"UI_Mycovariant_{definition.Id}", mycovariantIconGridRoot, mycovariantIconObjects, MycovariantArtRepository.GetIcon(definition));
+
+            var provider = iconObject.AddComponent<MycovariantTooltipProvider>();
+            provider.Initialize(definition);
+
+            var trigger = iconObject.AddComponent<TooltipTrigger>();
+            trigger.SetDynamicProvider(provider);
+            trigger.SetAutoPlacementOffsetX(20f);
+        }
+
+        private static GameObject CreateIconObject(string objectName, RectTransform gridRoot, List<GameObject> iconObjects, Sprite sprite)
+        {
+            var iconObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(Image));
+            iconObject.transform.SetParent(gridRoot, false);
+            iconObjects.Add(iconObject);
 
             var rect = iconObject.GetComponent<RectTransform>();
             rect.sizeDelta = new Vector2(AdaptationIconSize, AdaptationIconSize);
@@ -501,22 +596,17 @@ namespace FungusToast.Unity.UI
             layout.minHeight = AdaptationIconSize;
 
             var image = iconObject.GetComponent<Image>();
-            image.sprite = AdaptationArtRepository.GetIcon(adaptation);
+            image.sprite = sprite;
             image.type = Image.Type.Simple;
             image.preserveAspect = true;
             image.color = Color.white;
 
-            var provider = iconObject.AddComponent<AdaptationTooltipProvider>();
-            provider.Initialize(adaptation);
-
-            var trigger = iconObject.AddComponent<TooltipTrigger>();
-            trigger.SetDynamicProvider(provider);
-            trigger.SetAutoPlacementOffsetX(20f);
+            return iconObject;
         }
 
-        private static RectTransform CreateSectionRoot(RectTransform parent)
+        private static RectTransform CreateSectionRoot(RectTransform parent, string objectName)
         {
-            var section = new GameObject("UI_AdaptationSection", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
+            var section = new GameObject(objectName, typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
             section.transform.SetParent(parent, false);
 
             var rect = section.GetComponent<RectTransform>();
@@ -545,9 +635,9 @@ namespace FungusToast.Unity.UI
             return rect;
         }
 
-        private static TextMeshProUGUI CreateSectionHeader(RectTransform parent, string label)
+        private static TextMeshProUGUI CreateSectionHeader(RectTransform parent, string objectName, string label)
         {
-            var headerObject = new GameObject("UI_AdaptationHeaderText", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            var headerObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
             headerObject.transform.SetParent(parent, false);
 
             var layout = headerObject.GetComponent<LayoutElement>();
@@ -563,9 +653,9 @@ namespace FungusToast.Unity.UI
             return text;
         }
 
-        private static RectTransform CreateIconGrid(RectTransform parent)
+        private static RectTransform CreateIconGrid(RectTransform parent, string objectName)
         {
-            var gridObject = new GameObject("UI_AdaptationIconGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(LayoutElement));
+            var gridObject = new GameObject(objectName, typeof(RectTransform), typeof(GridLayoutGroup), typeof(LayoutElement));
             gridObject.transform.SetParent(parent, false);
 
             var rect = gridObject.GetComponent<RectTransform>();
@@ -588,27 +678,27 @@ namespace FungusToast.Unity.UI
             return rect;
         }
 
-        private void UpdateAdaptationLayoutMetrics(int iconCount)
+        private void UpdateSectionLayoutMetrics(RectTransform sectionRoot, RectTransform iconGridRoot, int iconCount)
         {
-            if (adaptationIconGridRoot == null || adaptationSectionRoot == null)
+            if (iconGridRoot == null || sectionRoot == null)
             {
                 return;
             }
 
-            UpdateAdaptationGridConstraint();
+            UpdateSectionGridConstraint(sectionRoot, iconGridRoot);
 
-            int columns = GetAdaptationColumnCount();
+            int columns = GetSectionColumnCount(sectionRoot, iconGridRoot);
             int rows = Mathf.Max(1, Mathf.CeilToInt(iconCount / (float)columns));
             float gridHeight = (rows * AdaptationIconSize) + ((rows - 1) * AdaptationIconSpacing);
 
-            var gridLayout = adaptationIconGridRoot.GetComponent<LayoutElement>();
+            var gridLayout = iconGridRoot.GetComponent<LayoutElement>();
             if (gridLayout != null)
             {
                 gridLayout.preferredHeight = gridHeight;
                 gridLayout.minHeight = gridHeight;
             }
 
-            var sectionLayout = adaptationSectionRoot.GetComponent<LayoutElement>();
+            var sectionLayout = sectionRoot.GetComponent<LayoutElement>();
             if (sectionLayout != null)
             {
                 sectionLayout.preferredHeight = 8f + AdaptationHeaderHeight + AdaptationSectionSpacing + gridHeight + 10f;

@@ -17,7 +17,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             var def = myco.Mycovariant; // The Mycovariant definition
 
-            iconImage.sprite = MycovariantArtRepository.GetIcon(def.Type);
+            iconImage.sprite = MycovariantArtRepository.GetIcon(def);
             tooltip.SetText(def.Name, def.Description);
         }
 

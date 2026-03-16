@@ -227,14 +227,17 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private void PopulateChoices(List<Mycovariant> choices)
         {
-            foreach (Transform child in choiceContainer)
-                Destroy(child.gameObject);
+            ClearChoiceCards();
 
             foreach (var m in choices)
             {
-                var card = Instantiate(cardPrefab, choiceContainer);
-                card.SetMycovariant(m, OnChoicePicked);
-                card.SetActiveHighlight(false);
+                CreateChoiceCard(
+                    m,
+                    m.Name,
+                    m.Description,
+                    MycovariantArtRepository.GetIcon(m),
+                    () => OnChoicePicked(m),
+                    highlight: false);
             }
         }
 
@@ -455,18 +458,35 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private void PopulateAdaptationChoices(IReadOnlyList<AdaptationDefinition> choices)
         {
-            foreach (Transform child in choiceContainer)
-            {
-                Destroy(child.gameObject);
-            }
+            ClearChoiceCards();
 
             for (int i = 0; i < choices.Count; i++)
             {
                 var adaptation = choices[i];
-                var card = Instantiate(cardPrefab, choiceContainer);
-                card.SetCardContent(adaptation.Name, adaptation.Description, AdaptationArtRepository.GetIcon(adaptation), () => OnAdaptationChoicePicked(adaptation));
-                card.SetActiveHighlight(true);
+                CreateChoiceCard(
+                    null,
+                    adaptation.Name,
+                    adaptation.Description,
+                    AdaptationArtRepository.GetIcon(adaptation),
+                    () => OnAdaptationChoicePicked(adaptation),
+                    highlight: true);
             }
+        }
+
+        private void ClearChoiceCards()
+        {
+            foreach (Transform child in choiceContainer)
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        private MycovariantCard CreateChoiceCard(Mycovariant boundMycovariant, string title, string description, Sprite icon, Action onPicked, bool highlight)
+        {
+            var card = Instantiate(cardPrefab, choiceContainer);
+            card.SetChoiceContent(boundMycovariant, title, description, icon, onPicked);
+            card.SetActiveHighlight(highlight);
+            return card;
         }
 
         private void OnAdaptationChoicePicked(AdaptationDefinition picked)

@@ -1,6 +1,8 @@
+using System;
 using FungusToast.Core.Campaign;
 using System.Collections.Generic;
 using UnityEngine;
+using FungusToast.Unity.UI;
 
 namespace FungusToast.Unity.UI.Campaign
 {
@@ -42,72 +44,58 @@ namespace FungusToast.Unity.UI.Campaign
 
         private static Sprite BuildIcon(string adaptationId)
         {
-            var texture = new Texture2D(IconSize, IconSize, TextureFormat.RGBA32, false)
-            {
-                filterMode = FilterMode.Point,
-                wrapMode = TextureWrapMode.Clamp,
-                name = $"AdaptationIcon_{adaptationId}"
-            };
-
             var background = ResolveBackground(adaptationId);
             var accent = ResolveAccent(adaptationId);
-            var highlight = Color.Lerp(accent, Color.white, 0.32f);
-
-            for (int y = 0; y < IconSize; y++)
-            {
-                for (int x = 0; x < IconSize; x++)
+            return ProceduralIconUtility.CreateSprite(
+                $"AdaptationIcon_{adaptationId}",
+                background,
+                accent,
+                (texture, drawAccent, highlight) =>
                 {
-                    texture.SetPixel(x, y, background);
-                }
-            }
-
-            DrawBorder(texture, accent);
-
-            switch (adaptationId)
-            {
-                case "conidial_relay":
-                    DrawConidialRelay(texture, accent, highlight);
-                    break;
-                case "hyphal_economy":
-                    DrawHyphalEconomy(texture, accent, highlight);
-                    break;
-                case "mycotoxic_halo":
-                    DrawMycotoxicHalo(texture, accent, highlight);
-                    break;
-                case "mycotoxic_lash":
-                    DrawMycotoxicLash(texture, accent, highlight);
-                    break;
-                case "retrograde_bloom":
-                    DrawRetrogradeBloom(texture, accent, highlight);
-                    break;
-                case "aegis_hyphae":
-                    DrawAegisHyphae(texture, accent, highlight);
-                    break;
-                case "saprophage_ring":
-                    DrawSaprophageRing(texture, accent, highlight);
-                    break;
-                case "marginal_clamp":
-                    DrawMarginalClamp(texture, accent, highlight);
-                    break;
-                case "apical_yield":
-                    DrawApicalYield(texture, accent, highlight);
-                    break;
-                case "crustal_callus":
-                    DrawCrustalCallus(texture, accent, highlight);
-                    break;
-                case "distal_spore":
-                    DrawDistalSpore(texture, accent, highlight);
-                    break;
-                case "ascus_primacy":
-                    DrawAscusPrimacy(texture, accent, highlight);
-                    break;
-                default:
-                    DrawFallback(texture, accent, highlight);
-                    break;
-            }
-
-            texture.Apply();
-            return Sprite.Create(texture, new Rect(0, 0, IconSize, IconSize), new Vector2(0.5f, 0.5f), 100f);
+                    switch (adaptationId)
+                    {
+                        case "conidial_relay":
+                            DrawConidialRelay(texture, drawAccent, highlight);
+                            break;
+                        case "hyphal_economy":
+                            DrawHyphalEconomy(texture, drawAccent, highlight);
+                            break;
+                        case "mycotoxic_halo":
+                            DrawMycotoxicHalo(texture, drawAccent, highlight);
+                            break;
+                        case "mycotoxic_lash":
+                            DrawMycotoxicLash(texture, drawAccent, highlight);
+                            break;
+                        case "retrograde_bloom":
+                            DrawRetrogradeBloom(texture, drawAccent, highlight);
+                            break;
+                        case "aegis_hyphae":
+                            DrawAegisHyphae(texture, drawAccent, highlight);
+                            break;
+                        case "saprophage_ring":
+                            DrawSaprophageRing(texture, drawAccent, highlight);
+                            break;
+                        case "marginal_clamp":
+                            DrawMarginalClamp(texture, drawAccent, highlight);
+                            break;
+                        case "apical_yield":
+                            DrawApicalYield(texture, drawAccent, highlight);
+                            break;
+                        case "crustal_callus":
+                            DrawCrustalCallus(texture, drawAccent, highlight);
+                            break;
+                        case "distal_spore":
+                            DrawDistalSpore(texture, drawAccent, highlight);
+                            break;
+                        case "ascus_primacy":
+                            DrawAscusPrimacy(texture, drawAccent, highlight);
+                            break;
+                        default:
+                            DrawFallback(texture, drawAccent, highlight);
+                            break;
+                    }
+                },
+                IconSize);
         }
 
         private static Color ResolveBackground(string adaptationId)
@@ -152,14 +140,7 @@ namespace FungusToast.Unity.UI.Campaign
 
         private static void DrawBorder(Texture2D texture, Color color)
         {
-            int max = IconSize - 1;
-            for (int i = 0; i < IconSize; i++)
-            {
-                texture.SetPixel(i, 0, color);
-                texture.SetPixel(i, max, color);
-                texture.SetPixel(0, i, color);
-                texture.SetPixel(max, i, color);
-            }
+            ProceduralIconUtility.DrawBorder(texture, color);
         }
 
         private static void DrawConidialRelay(Texture2D texture, Color accent, Color highlight)
@@ -303,11 +284,117 @@ namespace FungusToast.Unity.UI.Campaign
 
         private static void FillShield(Texture2D texture, int centerX, int centerY, int halfWidth, int halfHeight, Color color)
         {
+            ProceduralIconUtility.FillShield(texture, centerX, centerY, halfWidth, halfHeight, color);
+        }
+
+        private static void FillCircle(Texture2D texture, int centerX, int centerY, int radius, Color color)
+        {
+            ProceduralIconUtility.FillCircle(texture, centerX, centerY, radius, color);
+        }
+
+        private static void DrawRing(Texture2D texture, int centerX, int centerY, int radius, int thickness, Color color)
+        {
+            ProceduralIconUtility.DrawRing(texture, centerX, centerY, radius, thickness, color);
+        }
+
+        private static void DrawLine(Texture2D texture, int x0, int y0, int x1, int y1, Color color, int thickness)
+        {
+            ProceduralIconUtility.DrawLine(texture, x0, y0, x1, y1, color, thickness);
+        }
+
+        private static void PaintBrush(Texture2D texture, int centerX, int centerY, int radius, Color color)
+        {
+            ProceduralIconUtility.PaintBrush(texture, centerX, centerY, radius, color);
+        }
+
+        private static bool IsInsideBounds(int x, int y)
+        {
+            return x >= 0 && x < IconSize && y >= 0 && y < IconSize;
+        }
+    }
+}
+
+namespace FungusToast.Unity.UI
+{
+    internal static class ProceduralIconUtility
+    {
+        public const int DefaultIconSize = 40;
+
+        public static Sprite CreateSprite(
+            string textureName,
+            Color background,
+            Color accent,
+            Action<Texture2D, Color, Color> drawAction,
+            int size = DefaultIconSize)
+        {
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp,
+                name = textureName
+            };
+
+            Fill(texture, background);
+            DrawBorder(texture, accent);
+
+            var highlight = Color.Lerp(accent, Color.white, 0.32f);
+            drawAction?.Invoke(texture, accent, highlight);
+
+            texture.Apply();
+            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+        }
+
+        public static int ComputeStableHash(string value)
+        {
+            unchecked
+            {
+                uint hash = 2166136261;
+                string source = value ?? string.Empty;
+                for (int i = 0; i < source.Length; i++)
+                {
+                    hash ^= source[i];
+                    hash *= 16777619;
+                }
+
+                return (int)(hash & 0x7FFFFFFF);
+            }
+        }
+
+        public static void Fill(Texture2D texture, Color color)
+        {
+            for (int y = 0; y < texture.height; y++)
+            {
+                for (int x = 0; x < texture.width; x++)
+                {
+                    texture.SetPixel(x, y, color);
+                }
+            }
+        }
+
+        public static void DrawBorder(Texture2D texture, Color color)
+        {
+            int maxX = texture.width - 1;
+            int maxY = texture.height - 1;
+            for (int i = 0; i < texture.width; i++)
+            {
+                texture.SetPixel(i, 0, color);
+                texture.SetPixel(i, maxY, color);
+            }
+
+            for (int i = 0; i < texture.height; i++)
+            {
+                texture.SetPixel(0, i, color);
+                texture.SetPixel(maxX, i, color);
+            }
+        }
+
+        public static void FillShield(Texture2D texture, int centerX, int centerY, int halfWidth, int halfHeight, Color color)
+        {
             for (int y = centerY - halfHeight; y <= centerY + halfHeight; y++)
             {
                 for (int x = centerX - halfWidth; x <= centerX + halfWidth; x++)
                 {
-                    if (!IsInsideBounds(x, y))
+                    if (!IsInsideBounds(texture, x, y))
                     {
                         continue;
                     }
@@ -323,14 +410,14 @@ namespace FungusToast.Unity.UI.Campaign
             }
         }
 
-        private static void FillCircle(Texture2D texture, int centerX, int centerY, int radius, Color color)
+        public static void FillCircle(Texture2D texture, int centerX, int centerY, int radius, Color color)
         {
             int radiusSquared = radius * radius;
             for (int y = centerY - radius; y <= centerY + radius; y++)
             {
                 for (int x = centerX - radius; x <= centerX + radius; x++)
                 {
-                    if (!IsInsideBounds(x, y))
+                    if (!IsInsideBounds(texture, x, y))
                     {
                         continue;
                     }
@@ -345,7 +432,7 @@ namespace FungusToast.Unity.UI.Campaign
             }
         }
 
-        private static void DrawRing(Texture2D texture, int centerX, int centerY, int radius, int thickness, Color color)
+        public static void DrawRing(Texture2D texture, int centerX, int centerY, int radius, int thickness, Color color)
         {
             int inner = (radius - thickness) * (radius - thickness);
             int outer = radius * radius;
@@ -353,7 +440,7 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 for (int x = centerX - radius; x <= centerX + radius; x++)
                 {
-                    if (!IsInsideBounds(x, y))
+                    if (!IsInsideBounds(texture, x, y))
                     {
                         continue;
                     }
@@ -369,7 +456,7 @@ namespace FungusToast.Unity.UI.Campaign
             }
         }
 
-        private static void DrawLine(Texture2D texture, int x0, int y0, int x1, int y1, Color color, int thickness)
+        public static void DrawLine(Texture2D texture, int x0, int y0, int x1, int y1, Color color, int thickness)
         {
             int dx = Mathf.Abs(x1 - x0);
             int dy = Mathf.Abs(y1 - y0);
@@ -400,13 +487,13 @@ namespace FungusToast.Unity.UI.Campaign
             }
         }
 
-        private static void PaintBrush(Texture2D texture, int centerX, int centerY, int radius, Color color)
+        public static void PaintBrush(Texture2D texture, int centerX, int centerY, int radius, Color color)
         {
             for (int y = centerY - radius; y <= centerY + radius; y++)
             {
                 for (int x = centerX - radius; x <= centerX + radius; x++)
                 {
-                    if (IsInsideBounds(x, y))
+                    if (IsInsideBounds(texture, x, y))
                     {
                         texture.SetPixel(x, y, color);
                     }
@@ -414,9 +501,9 @@ namespace FungusToast.Unity.UI.Campaign
             }
         }
 
-        private static bool IsInsideBounds(int x, int y)
+        public static bool IsInsideBounds(Texture2D texture, int x, int y)
         {
-            return x >= 0 && x < IconSize && y >= 0 && y < IconSize;
+            return x >= 0 && x < texture.width && y >= 0 && y < texture.height;
         }
     }
 }

@@ -9,11 +9,18 @@ namespace FungusToast.Core.Mycovariants
 {
     public class Mycovariant : MycovariantBase
     {
+        private string iconId = string.Empty;
+
         public int Id { get; set; }
         public string Name { get; set; } = "";
         public string Description { get; set; } = "";
         public string FlavorText { get; set; } = "";
         public MycovariantType Type { get; set; }
+        public string IconId
+        {
+            get => string.IsNullOrWhiteSpace(iconId) ? $"myco_{Id}" : iconId;
+            set => iconId = value ?? string.Empty;
+        }
         
         /// <summary>
         /// Categorizes this mycovariant for AI preference and selection logic.
