@@ -10,6 +10,7 @@ using FungusToast.Unity.UI.Tooltips;
 using System.Globalization;
 using System;
 using FungusToast.Unity.Campaign;
+using FungusToast.Unity.UI.Testing;
 
 namespace FungusToast.Unity.UI
 {
@@ -989,15 +990,7 @@ namespace FungusToast.Unity.UI
 
         private void OnPostVictoryFastForwardCycle()
         {
-            postVictoryFastForwardRounds = postVictoryFastForwardRounds switch
-            {
-                0 => 5,
-                5 => 10,
-                10 => 25,
-                25 => 50,
-                50 => 100,
-                _ => 0
-            };
+            postVictoryFastForwardRounds = DevelopmentTestingFastForwardPresets.GetNext(postVictoryFastForwardRounds);
 
             UpdatePostVictoryTestingLabels();
         }

@@ -9,6 +9,22 @@ using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI.Testing
 {
+    public static class DevelopmentTestingFastForwardPresets
+    {
+        private static readonly int[] Presets = { 0, 5, 10, 15, 20, 25, 30, 35 };
+
+        public static int GetNext(int current)
+        {
+            int index = Array.IndexOf(Presets, current);
+            if (index < 0 || index >= Presets.Length - 1)
+            {
+                return Presets[0];
+            }
+
+            return Presets[index + 1];
+        }
+    }
+
     public sealed class DevelopmentTestingConfiguration
     {
         public bool IsEnabled { get; }
@@ -468,15 +484,7 @@ namespace FungusToast.Unity.UI.Testing
 
         private void OnFastForwardClicked()
         {
-            fastForwardRounds = fastForwardRounds switch
-            {
-                0 => 5,
-                5 => 10,
-                10 => 25,
-                25 => 50,
-                50 => 100,
-                _ => 0
-            };
+            fastForwardRounds = DevelopmentTestingFastForwardPresets.GetNext(fastForwardRounds);
 
             RefreshVisualState();
         }
