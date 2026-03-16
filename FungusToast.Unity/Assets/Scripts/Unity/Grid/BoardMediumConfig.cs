@@ -36,6 +36,11 @@ namespace FungusToast.Unity.Grid
         public Color crustMidColor = new(0.79f, 0.47f, 0.16f, 1f);
         public Color crustOuterColor = new(0.42f, 0.2f, 0.05f, 1f);
         [Range(0f, 1f)] public float crustTopDarkening = 0.18f;
+        [Range(0f, 0.2f)] public float crustColorVariation = 0.06f;
+
+        [Header("Tile Rendering")]
+        [Range(1f, 1.08f)] public float playableSurfaceTileScale = 1.01f;
+        [Range(1f, 1.12f)] public float crustTileScale = 1.03f;
 
         [Header("Inner Browning")]
         public bool tintPerimeterTiles = false;

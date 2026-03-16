@@ -48,6 +48,7 @@ namespace FungusToast.Unity.Grid
         [SerializeField] private BoardMediumConfig defaultBoardMedium;
 
         private BoardMediumConfig runtimeBoardMedium;
+        private static readonly Matrix4x4 IdentityMatrix = Matrix4x4.identity;
 
         private GameBoard board;
         public GameBoard ActiveBoard => board ?? GameManager.Instance?.Board; // now public for helper access
@@ -106,6 +107,8 @@ namespace FungusToast.Unity.Grid
         public void Initialize(GameBoard board) => this.board = board;
         public void SetBoardMedium(BoardMediumConfig boardMedium) => runtimeBoardMedium = boardMedium;
         public void ClearBoardMediumOverride() => runtimeBoardMedium = null;
+        public bool IsPlayableBoardCell(Vector3Int cellPos)
+            => board != null && cellPos.x >= 0 && cellPos.x < board.Width && cellPos.y >= 0 && cellPos.y < board.Height;
 
         // === Public wrappers for extracted reclaim & surgical animations ===
         public void PlayRegenerativeHyphaeReclaimBatch(IReadOnlyList<int> tileIds, float scaleMultiplier, float explicitTotalSeconds)
@@ -1145,7 +1148,11 @@ namespace FungusToast.Unity.Grid
             toastTilemap.ClearAllTiles();
             moldTilemap.ClearAllTiles();
             overlayTilemap.ClearAllTiles();
-            GetCrustTargetTilemap()?.ClearAllTiles();
+            var targetCrustTilemap = GetCrustTargetTilemap();
+            if (targetCrustTilemap != null)
+            {
+                targetCrustTilemap.ClearAllTiles();
+            }
 
             for (int x = 0; x < board.Width; x++)
             {
@@ -1156,6 +1163,7 @@ namespace FungusToast.Unity.Grid
                     toastTilemap.SetTile(pos, GetSurfaceTile(x, y));
                     toastTilemap.SetTileFlags(pos, TileFlags.None);
                     toastTilemap.SetColor(pos, GetSurfaceColor(x, y, board.Width, board.Height));
+                    toastTilemap.SetTransformMatrix(pos, GetPlayableSurfaceTileMatrix());
                     RenderFungalCellOverlay(tile, pos);
                 }
             }
@@ -1236,12 +1244,12 @@ namespace FungusToast.Unity.Grid
 
         private Tilemap GetCrustTargetTilemap()
         {
-            if (crustTilemap != null && crustTilemap != toastTilemap)
+            if (crustTilemap != null)
             {
                 return crustTilemap;
             }
 
-            return ActiveBoardMedium != null && ActiveBoardMedium.renderCrust ? toastTilemap : crustTilemap;
+            return ActiveBoardMedium != null && ActiveBoardMedium.renderCrust ? toastTilemap : null;
         }
 
         private TileBase GetSurfaceTile(int x, int y)
@@ -1281,6 +1289,17 @@ namespace FungusToast.Unity.Grid
             return activeMedium?.GetCrustThickness(activeBoard.Width, activeBoard.Height) ?? 0;
         }
 
+        private Matrix4x4 GetPlayableSurfaceTileMatrix()
+        {
+            float scale = Mathf.Max(1f, ActiveBoardMedium?.playableSurfaceTileScale ?? 1f);
+            if (Mathf.Approximately(scale, 1f))
+            {
+                return IdentityMatrix;
+            }
+
+            return Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+        }
+
         private void RenderDecorativeCrust(GameBoard activeBoard)
         {
             var activeMedium = ActiveBoardMedium;
@@ -1295,18 +1314,13 @@ namespace FungusToast.Unity.Grid
                 return;
             }
 
-            Tilemap targetTilemap = GetCrustTargetTilemap();
-            if (targetTilemap == null)
+            var targetCrustTilemap = GetCrustTargetTilemap();
+            if (targetCrustTilemap == null)
             {
                 return;
             }
 
-            TileBase edgeTile = activeMedium.crustEdgeTile;
-            TileBase cornerTile = activeMedium.crustCornerTile != null ? activeMedium.crustCornerTile : edgeTile;
-            if (edgeTile == null && cornerTile == null)
-            {
-                return;
-            }
+            Matrix4x4 crustTileMatrix = GetCrustTileMatrix();
 
             int minY = -crustThickness;
             int maxY = activeBoard.Height - 1 + crustThickness;
@@ -1327,12 +1341,21 @@ namespace FungusToast.Unity.Grid
                         continue;
                     }
 
-                    bool isRowEdge = x == rowMinX || x == rowMaxX;
-                    TileBase tile = isRowEdge ? (cornerTile ?? edgeTile) : (edgeTile ?? cornerTile);
                     Color crustColor = EvaluateCrustColor(activeMedium, activeBoard, crustThickness, x, y);
-                    SetCrustTile(targetTilemap, new Vector3Int(x, y, 0), tile, crustColor);
+                    SetCrustTile(targetCrustTilemap, new Vector3Int(x, y, 0), activeMedium.crustEdgeTile, crustColor, crustTileMatrix);
                 }
             }
+        }
+
+        private Matrix4x4 GetCrustTileMatrix()
+        {
+            float scale = Mathf.Max(1f, ActiveBoardMedium?.crustTileScale ?? 1f);
+            if (Mathf.Approximately(scale, 1f))
+            {
+                return IdentityMatrix;
+            }
+
+            return Matrix4x4.Scale(new Vector3(scale, scale, 1f));
         }
 
         private static int GetBreadCrustInsetForRow(BoardMediumConfig activeMedium, GameBoard activeBoard, int crustThickness, int y)
@@ -1405,6 +1428,15 @@ namespace FungusToast.Unity.Grid
                 ? Color.Lerp(activeMedium.crustInnerColor, activeMedium.crustMidColor, t / 0.5f)
                 : Color.Lerp(activeMedium.crustMidColor, activeMedium.crustOuterColor, (t - 0.5f) / 0.5f);
 
+            float variationStrength = Mathf.Clamp(activeMedium.crustColorVariation, 0f, 0.2f);
+            if (variationStrength > 0f)
+            {
+                float variation = EvaluateCoordinateNoise(activeMedium, x, y);
+                float brightness = 1f + ((variation * 2f) - 1f) * variationStrength;
+                gradientColor *= brightness;
+                gradientColor.a = 1f;
+            }
+
             if (y >= activeBoard.Height)
             {
                 float topDepth = crustThickness <= 0
@@ -1416,7 +1448,27 @@ namespace FungusToast.Unity.Grid
             return gradientColor;
         }
 
-        private static void SetCrustTile(Tilemap tilemap, Vector3Int position, TileBase tile, Color color)
+        private static float EvaluateCoordinateNoise(BoardMediumConfig activeMedium, int x, int y)
+        {
+            unchecked
+            {
+                uint hash = 2166136261u;
+                hash = (hash ^ (uint)x) * 16777619u;
+                hash = (hash ^ (uint)y) * 16777619u;
+                string mediumId = activeMedium?.mediumId;
+                if (!string.IsNullOrEmpty(mediumId))
+                {
+                    for (int i = 0; i < mediumId.Length; i++)
+                    {
+                        hash = (hash ^ mediumId[i]) * 16777619u;
+                    }
+                }
+
+                return (hash & 1023u) / 1023f;
+            }
+        }
+
+        private static void SetCrustTile(Tilemap tilemap, Vector3Int position, TileBase tile, Color color, Matrix4x4 transformMatrix)
         {
             if (tilemap == null || tile == null)
             {
@@ -1426,6 +1478,7 @@ namespace FungusToast.Unity.Grid
             tilemap.SetTile(position, tile);
             tilemap.SetTileFlags(position, TileFlags.None);
             tilemap.SetColor(position, color);
+            tilemap.SetTransformMatrix(position, transformMatrix);
         }
 
         #region Starting Tile Ping

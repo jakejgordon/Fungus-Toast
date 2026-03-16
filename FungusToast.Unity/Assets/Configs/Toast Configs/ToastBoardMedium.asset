@@ -30,6 +30,9 @@ MonoBehaviour:
   crustMidColor: {r: 0.8, g: 0.47, b: 0.14, a: 1}
   crustOuterColor: {r: 0.42, g: 0.2, b: 0.05, a: 1}
   crustTopDarkening: 0.22
+  crustColorVariation: 0.06
+  playableSurfaceTileScale: 1.01
+  crustTileScale: 1.03
   tintPerimeterTiles: 0
   perimeterTintDepth: 1
   perimeterTint: {r: 0.88, g: 0.78, b: 0.56, a: 1}

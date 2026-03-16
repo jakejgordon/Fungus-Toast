@@ -135,7 +135,7 @@ namespace FungusToast.Unity.Grid
 
         bool IsCellOnBoard(Vector3Int cellPos)
         {
-            return gridVisualizer.toastTilemap.cellBounds.Contains(cellPos);
+            return gridVisualizer != null && gridVisualizer.IsPlayableBoardCell(cellPos);
         }
 
         public void SetSelectableTiles(HashSet<int> selectableTileIds)

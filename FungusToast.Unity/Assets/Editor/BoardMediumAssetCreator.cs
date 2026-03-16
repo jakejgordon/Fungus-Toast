@@ -34,6 +34,9 @@ public static class BoardMediumAssetCreator
         asset.crustMidColor = new Color(0.8f, 0.47f, 0.14f, 1f);
         asset.crustOuterColor = new Color(0.42f, 0.2f, 0.05f, 1f);
         asset.crustTopDarkening = 0.22f;
+        asset.crustColorVariation = 0.06f;
+        asset.playableSurfaceTileScale = 1.01f;
+        asset.crustTileScale = 1.03f;
         asset.tintPerimeterTiles = false;
         asset.perimeterTintDepth = 1;
         asset.perimeterTint = new Color(0.88f, 0.78f, 0.56f, 1f);

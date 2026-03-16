@@ -193,7 +193,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 
         Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3Int cellPos = gridVisualizer.toastTilemap.WorldToCell(mouseWorld);
-        return gridVisualizer.toastTilemap.HasTile(cellPos);
+        return gridVisualizer.IsPlayableBoardCell(cellPos) && gridVisualizer.toastTilemap.HasTile(cellPos);
     }
 
     Vector3Int GetCurrentCellPosition()
