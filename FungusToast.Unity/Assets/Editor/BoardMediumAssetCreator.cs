@@ -27,6 +27,8 @@ public static class BoardMediumAssetCreator
         asset.crustThicknessRatio = 0.1f;
         asset.minCrustThickness = 1;
         asset.maxCrustThickness = 6;
+        asset.minVisualCrustThickness = 1.75f;
+        asset.maxVisualCrustThickness = 8f;
         asset.useBreadSliceSilhouette = true;
         asset.topCrustRoundness = 1f;
         asset.bottomCrustRoundness = 0.35f;
@@ -35,6 +37,9 @@ public static class BoardMediumAssetCreator
         asset.crustOuterColor = new Color(0.42f, 0.2f, 0.05f, 1f);
         asset.crustTopDarkening = 0.22f;
         asset.crustColorVariation = 0.06f;
+        asset.breadInteriorColor = new Color(0.93f, 0.82f, 0.62f, 1f);
+        asset.breadShadeColor = new Color(0.88f, 0.74f, 0.53f, 1f);
+        asset.breadColorVariation = 0.025f;
         asset.playableSurfaceTileScale = 1.01f;
         asset.crustTileScale = 1.03f;
         asset.tintPerimeterTiles = false;

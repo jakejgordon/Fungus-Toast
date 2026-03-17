@@ -23,6 +23,8 @@ MonoBehaviour:
   crustThicknessRatio: 0.1
   minCrustThickness: 1
   maxCrustThickness: 6
+  minVisualCrustThickness: 1.75
+  maxVisualCrustThickness: 8
   useBreadSliceSilhouette: 1
   topCrustRoundness: 1
   bottomCrustRoundness: 0.35
@@ -31,6 +33,9 @@ MonoBehaviour:
   crustOuterColor: {r: 0.42, g: 0.2, b: 0.05, a: 1}
   crustTopDarkening: 0.22
   crustColorVariation: 0.06
+  breadInteriorColor: {r: 0.93, g: 0.82, b: 0.62, a: 1}
+  breadShadeColor: {r: 0.88, g: 0.74, b: 0.53, a: 1}
+  breadColorVariation: 0.025
   playableSurfaceTileScale: 1.01
   crustTileScale: 1.03
   tintPerimeterTiles: 0

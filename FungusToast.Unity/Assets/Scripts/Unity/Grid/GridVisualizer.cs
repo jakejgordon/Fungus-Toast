@@ -49,6 +49,10 @@ namespace FungusToast.Unity.Grid
 
         private BoardMediumConfig runtimeBoardMedium;
         private static readonly Matrix4x4 IdentityMatrix = Matrix4x4.identity;
+        private SpriteRenderer generatedCrustRenderer;
+        private Sprite generatedCrustSprite;
+        private Texture2D generatedCrustTexture;
+        private string generatedCrustCacheKey;
 
         private GameBoard board;
         public GameBoard ActiveBoard => board ?? GameManager.Instance?.Board; // now public for helper access
@@ -102,6 +106,11 @@ namespace FungusToast.Unity.Grid
             _surgicalAnimator = new Animation.SurgicalInoculationAnimator(this);
             _startingSporeAnimator = new Animation.StartingSporeArrivalAnimator(this); // NEW
             _conidialRelayAnimator = new Animation.ConidialRelayAnimator(this);
+        }
+
+        private void OnDestroy()
+        {
+            DestroyGeneratedCrustAssets();
         }
 
         public void Initialize(GameBoard board) => this.board = board;
@@ -1244,12 +1253,7 @@ namespace FungusToast.Unity.Grid
 
         private Tilemap GetCrustTargetTilemap()
         {
-            if (crustTilemap != null)
-            {
-                return crustTilemap;
-            }
-
-            return ActiveBoardMedium != null && ActiveBoardMedium.renderCrust ? toastTilemap : null;
+            return crustTilemap != null ? crustTilemap : null;
         }
 
         private TileBase GetSurfaceTile(int x, int y)
@@ -1305,147 +1309,297 @@ namespace FungusToast.Unity.Grid
             var activeMedium = ActiveBoardMedium;
             if (activeBoard == null || activeMedium == null)
             {
+                ClearGeneratedCrustVisual();
                 return;
             }
 
-            int crustThickness = GetCrustThickness(activeBoard);
-            if (crustThickness <= 0)
+            float visualCrustThickness = activeMedium.GetVisualCrustThickness(activeBoard.Width, activeBoard.Height);
+            if (visualCrustThickness <= 0f)
             {
+                ClearGeneratedCrustVisual();
                 return;
             }
 
             var targetCrustTilemap = GetCrustTargetTilemap();
-            if (targetCrustTilemap == null)
+            if (targetCrustTilemap != null)
+            {
+                targetCrustTilemap.ClearAllTiles();
+            }
+
+            EnsureGeneratedCrustVisual(activeBoard, activeMedium, visualCrustThickness);
+        }
+
+        private void EnsureGeneratedCrustVisual(GameBoard activeBoard, BoardMediumConfig activeMedium, float visualCrustThickness)
+        {
+            string cacheKey = BuildGeneratedCrustCacheKey(activeBoard, activeMedium, visualCrustThickness);
+            if (generatedCrustRenderer == null)
+            {
+                generatedCrustRenderer = CreateGeneratedCrustRenderer();
+            }
+
+            if (generatedCrustRenderer == null)
             {
                 return;
             }
 
-            Matrix4x4 crustTileMatrix = GetCrustTileMatrix();
-
-            int minY = -crustThickness;
-            int maxY = activeBoard.Height - 1 + crustThickness;
-            for (int y = minY; y <= maxY; y++)
+            Transform visualParent = GetGeneratedCrustVisualParent();
+            if (generatedCrustRenderer.transform.parent != visualParent)
             {
-                int rowInset = GetBreadCrustInsetForRow(activeMedium, activeBoard, crustThickness, y);
-                int rowMinX = -crustThickness + rowInset;
-                int rowMaxX = activeBoard.Width - 1 + crustThickness - rowInset;
-                if (rowMinX > rowMaxX)
+                generatedCrustRenderer.transform.SetParent(visualParent, false);
+            }
+
+            if (generatedCrustCacheKey != cacheKey || generatedCrustSprite == null || generatedCrustTexture == null)
+            {
+                RebuildGeneratedCrustSprite(activeBoard, activeMedium, visualCrustThickness, cacheKey);
+            }
+
+            PositionGeneratedCrustRenderer(activeBoard);
+            generatedCrustRenderer.enabled = generatedCrustSprite != null;
+        }
+
+        private SpriteRenderer CreateGeneratedCrustRenderer()
+        {
+            var crustObject = new GameObject("GeneratedCrustVisual");
+            crustObject.transform.SetParent(GetGeneratedCrustVisualParent(), false);
+            var spriteRenderer = crustObject.AddComponent<SpriteRenderer>();
+
+            if (toastTilemap != null)
+            {
+                var tilemapRenderer = toastTilemap.GetComponent<TilemapRenderer>();
+                if (tilemapRenderer != null)
+                {
+                    spriteRenderer.sortingLayerID = tilemapRenderer.sortingLayerID;
+                    spriteRenderer.sortingOrder = tilemapRenderer.sortingOrder - 1;
+                }
+            }
+
+            return spriteRenderer;
+        }
+
+        private Transform GetGeneratedCrustVisualParent()
+        {
+            return toastTilemap != null ? toastTilemap.transform : transform;
+        }
+
+        private void RebuildGeneratedCrustSprite(GameBoard activeBoard, BoardMediumConfig activeMedium, float visualCrustThickness, string cacheKey)
+        {
+            DestroyGeneratedCrustAssets();
+
+            int pixelsPerUnit = GetBackdropPixelsPerUnit(activeBoard, visualCrustThickness);
+            int textureWidth = Mathf.Max(1, Mathf.CeilToInt((activeBoard.Width + (visualCrustThickness * 2f)) * pixelsPerUnit));
+            int textureHeight = Mathf.Max(1, Mathf.CeilToInt((activeBoard.Height + (visualCrustThickness * 2f)) * pixelsPerUnit));
+
+            generatedCrustTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+                alphaIsTransparency = true
+            };
+
+            var pixels = new Color32[textureWidth * textureHeight];
+            float outerFeather = 1.75f / pixelsPerUnit;
+
+            for (int py = 0; py < textureHeight; py++)
+            {
+                float y = ((py + 0.5f) / pixelsPerUnit) - visualCrustThickness;
+                if (!TryGetBreadOuterBoundsForY(activeMedium, activeBoard, visualCrustThickness, y, out float minX, out float maxX))
                 {
                     continue;
                 }
 
-                for (int x = rowMinX; x <= rowMaxX; x++)
+                for (int px = 0; px < textureWidth; px++)
                 {
-                    if (x >= 0 && x < activeBoard.Width && y >= 0 && y < activeBoard.Height)
+                    float x = ((px + 0.5f) / pixelsPerUnit) - visualCrustThickness;
+                    if (x < minX || x > maxX)
+                    {
+                        continue;
+                    }
+                    float outerEdgeDistance = Mathf.Min(x - minX, maxX - x, y + visualCrustThickness, activeBoard.Height + visualCrustThickness - y);
+                    float alpha = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(outerEdgeDistance / outerFeather));
+                    if (alpha <= 0f)
                     {
                         continue;
                     }
 
-                    Color crustColor = EvaluateCrustColor(activeMedium, activeBoard, crustThickness, x, y);
-                    SetCrustTile(targetCrustTilemap, new Vector3Int(x, y, 0), activeMedium.crustEdgeTile, crustColor, crustTileMatrix);
+                    Color color = EvaluateToastSliceColor(activeMedium, activeBoard, visualCrustThickness, x, y, outerEdgeDistance);
+                    color.a = alpha;
+                    pixels[(py * textureWidth) + px] = color;
                 }
             }
+
+            generatedCrustTexture.SetPixels32(pixels);
+            generatedCrustTexture.Apply(false, false);
+            generatedCrustSprite = Sprite.Create(
+                generatedCrustTexture,
+                new Rect(0f, 0f, textureWidth, textureHeight),
+                new Vector2(0.5f, 0.5f),
+                pixelsPerUnit,
+                0,
+                SpriteMeshType.FullRect);
+            generatedCrustRenderer.sprite = generatedCrustSprite;
+            generatedCrustCacheKey = cacheKey;
         }
 
-        private Matrix4x4 GetCrustTileMatrix()
+        private void PositionGeneratedCrustRenderer(GameBoard activeBoard)
         {
-            float scale = Mathf.Max(1f, ActiveBoardMedium?.crustTileScale ?? 1f);
-            if (Mathf.Approximately(scale, 1f))
+            if (generatedCrustRenderer == null)
             {
-                return IdentityMatrix;
+                return;
             }
 
-            return Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+            generatedCrustRenderer.transform.localPosition = new Vector3(activeBoard.Width * 0.5f, activeBoard.Height * 0.5f, 0f);
+            generatedCrustRenderer.transform.localRotation = Quaternion.identity;
+            generatedCrustRenderer.transform.localScale = Vector3.one;
         }
 
-        private static int GetBreadCrustInsetForRow(BoardMediumConfig activeMedium, GameBoard activeBoard, int crustThickness, int y)
+        private int GetBackdropPixelsPerUnit(GameBoard activeBoard, float visualCrustThickness)
         {
-            if (activeMedium == null || !activeMedium.useBreadSliceSilhouette || crustThickness <= 1)
-            {
-                return 0;
-            }
-
-            if (y >= activeBoard.Height)
-            {
-                int rowAboveBoard = y - activeBoard.Height;
-                int maxInset = Mathf.Max(
-                    Mathf.RoundToInt(activeMedium.topCrustRoundness * crustThickness),
-                    Mathf.RoundToInt(activeBoard.Width * 0.12f * activeMedium.topCrustRoundness));
-                return CalculateCrustRowInset(rowAboveBoard, crustThickness, maxInset, 0.72f);
-            }
-
-            if (y < 0)
-            {
-                int rowBelowBoard = -y - 1;
-                int maxInset = Mathf.Max(
-                    Mathf.RoundToInt(activeMedium.bottomCrustRoundness * crustThickness),
-                    Mathf.RoundToInt(activeBoard.Width * 0.035f * activeMedium.bottomCrustRoundness));
-                return CalculateCrustRowInset(rowBelowBoard, crustThickness, maxInset, 1.35f);
-            }
-
-            return 0;
+            float fullWidth = activeBoard.Width + (visualCrustThickness * 2f);
+            float fullHeight = activeBoard.Height + (visualCrustThickness * 2f);
+            float longestSide = Mathf.Max(fullWidth, fullHeight);
+            int pixelsPerUnit = Mathf.FloorToInt(2048f / Mathf.Max(1f, longestSide));
+            return Mathf.Clamp(pixelsPerUnit, 8, 24);
         }
 
-        private static int CalculateCrustRowInset(int externalRowIndex, int crustThickness, int maxInset, float curvePower)
+        private string BuildGeneratedCrustCacheKey(GameBoard activeBoard, BoardMediumConfig activeMedium, float visualCrustThickness)
         {
-            if (crustThickness <= 0 || maxInset <= 0)
-            {
-                return 0;
-            }
-
-            float normalizedRow = Mathf.Clamp01((externalRowIndex + 1f) / crustThickness);
-            float curvedRow = Mathf.Pow(normalizedRow, curvePower);
-            return Mathf.Clamp(Mathf.RoundToInt(curvedRow * maxInset), 0, maxInset);
+            return string.Join("|",
+                activeBoard.Width,
+                activeBoard.Height,
+                visualCrustThickness,
+                activeMedium.mediumId,
+                activeMedium.topCrustRoundness,
+                activeMedium.bottomCrustRoundness,
+                activeMedium.crustInnerColor,
+                activeMedium.crustMidColor,
+                activeMedium.crustOuterColor,
+                activeMedium.crustTopDarkening,
+                activeMedium.crustColorVariation,
+                activeMedium.minVisualCrustThickness,
+                activeMedium.maxVisualCrustThickness);
         }
 
-        private static Color EvaluateCrustColor(BoardMediumConfig activeMedium, GameBoard activeBoard, int crustThickness, int x, int y)
+        private void ClearGeneratedCrustVisual()
         {
-            int horizontalDistance = 0;
-            if (x < 0)
+            if (generatedCrustRenderer != null)
             {
-                horizontalDistance = -x;
-            }
-            else if (x >= activeBoard.Width)
-            {
-                horizontalDistance = x - activeBoard.Width + 1;
+                generatedCrustRenderer.sprite = null;
+                generatedCrustRenderer.enabled = false;
             }
 
-            int verticalDistance = 0;
-            if (y < 0)
+            DestroyGeneratedCrustAssets();
+            generatedCrustCacheKey = null;
+        }
+
+        private void DestroyGeneratedCrustAssets()
+        {
+            if (generatedCrustSprite != null)
             {
-                verticalDistance = -y;
-            }
-            else if (y >= activeBoard.Height)
-            {
-                verticalDistance = y - activeBoard.Height + 1;
+                Destroy(generatedCrustSprite);
+                generatedCrustSprite = null;
             }
 
-            int crustDistance = Mathf.Max(horizontalDistance, verticalDistance);
-            float t = crustThickness <= 1
+            if (generatedCrustTexture != null)
+            {
+                Destroy(generatedCrustTexture);
+                generatedCrustTexture = null;
+            }
+        }
+
+        private static bool TryGetBreadOuterBoundsForY(BoardMediumConfig activeMedium, GameBoard activeBoard, float visualCrustThickness, float y, out float minX, out float maxX)
+        {
+            minX = 0f;
+            maxX = 0f;
+
+            if (y < -visualCrustThickness || y > activeBoard.Height + visualCrustThickness)
+            {
+                return false;
+            }
+
+            float horizontalOverhang = 0f;
+            float sideBulge = 0f;
+            float inset = 0f;
+            if (activeMedium.useBreadSliceSilhouette && visualCrustThickness > 0f)
+            {
+                horizontalOverhang = Mathf.Min(visualCrustThickness * 0.45f, activeBoard.Width * 0.045f);
+
+                float fullHeight = activeBoard.Height + (visualCrustThickness * 2f);
+                float verticalProgress = Mathf.Clamp01((y + visualCrustThickness) / Mathf.Max(0.001f, fullHeight));
+                float shoulderCurve = Mathf.Sin(verticalProgress * Mathf.PI);
+                float maxBulge = Mathf.Min(visualCrustThickness * 0.55f, activeBoard.Width * 0.05f);
+                sideBulge = shoulderCurve * shoulderCurve * maxBulge;
+
+                if (y > activeBoard.Height)
+                {
+                    float topProgress = Mathf.Clamp01((y - activeBoard.Height) / Mathf.Max(0.001f, visualCrustThickness));
+                    float maxTopInset = Mathf.Max(activeMedium.topCrustRoundness * visualCrustThickness, activeBoard.Width * 0.1f * activeMedium.topCrustRoundness);
+                    inset += Mathf.Pow(topProgress, 1.55f) * maxTopInset;
+                }
+
+                float bottomShoulderDepth = Mathf.Max(visualCrustThickness * 1.05f, activeBoard.Height * 0.07f);
+                float bottomEndY = bottomShoulderDepth;
+                if (y <= bottomEndY)
+                {
+                    float bottomProgress = Mathf.Clamp01((bottomEndY - y) / Mathf.Max(0.001f, bottomEndY + visualCrustThickness));
+                    float maxBottomInset = Mathf.Max(activeMedium.bottomCrustRoundness * visualCrustThickness * 1.1f, activeBoard.Width * 0.05f * activeMedium.bottomCrustRoundness);
+                    inset += Mathf.Pow(bottomProgress, 1.9f) * maxBottomInset;
+                }
+            }
+
+            minX = -visualCrustThickness - horizontalOverhang - sideBulge + inset;
+            maxX = activeBoard.Width + visualCrustThickness + horizontalOverhang + sideBulge - inset;
+            return minX < maxX;
+        }
+
+        private static Color EvaluateToastSliceColor(BoardMediumConfig activeMedium, GameBoard activeBoard, float visualCrustThickness, float x, float y, float outerEdgeDistance)
+        {
+            float crustBlend = visualCrustThickness <= 0f
                 ? 1f
-                : Mathf.Clamp01((crustDistance - 1f) / (crustThickness - 1f));
-            Color gradientColor = t < 0.5f
-                ? Color.Lerp(activeMedium.crustInnerColor, activeMedium.crustMidColor, t / 0.5f)
-                : Color.Lerp(activeMedium.crustMidColor, activeMedium.crustOuterColor, (t - 0.5f) / 0.5f);
+                : Mathf.Clamp01(outerEdgeDistance / visualCrustThickness);
+            Color crustGradientColor = crustBlend < 0.35f
+                ? Color.Lerp(activeMedium.crustOuterColor, activeMedium.crustMidColor, crustBlend / 0.35f)
+                : crustBlend < 0.75f
+                    ? Color.Lerp(activeMedium.crustMidColor, activeMedium.crustInnerColor, (crustBlend - 0.35f) / 0.4f)
+                    : Color.Lerp(activeMedium.crustInnerColor, activeMedium.breadShadeColor, (crustBlend - 0.75f) / 0.25f);
+
+            float interiorMix = visualCrustThickness <= 0f
+                ? 1f
+                : Mathf.Clamp01((outerEdgeDistance - visualCrustThickness) / Mathf.Max(0.001f, visualCrustThickness * 1.4f));
+            Color breadColor = Color.Lerp(activeMedium.breadShadeColor, activeMedium.breadInteriorColor, interiorMix);
+            Color finalColor = outerEdgeDistance < visualCrustThickness
+                ? crustGradientColor
+                : breadColor;
 
             float variationStrength = Mathf.Clamp(activeMedium.crustColorVariation, 0f, 0.2f);
             if (variationStrength > 0f)
             {
-                float variation = EvaluateCoordinateNoise(activeMedium, x, y);
+                float variation = EvaluateCoordinateNoise(activeMedium, Mathf.RoundToInt(x * 12f), Mathf.RoundToInt(y * 12f));
                 float brightness = 1f + ((variation * 2f) - 1f) * variationStrength;
-                gradientColor *= brightness;
-                gradientColor.a = 1f;
+                finalColor *= brightness;
+                finalColor.a = 1f;
             }
 
-            if (y >= activeBoard.Height)
+            float breadVariationStrength = Mathf.Clamp(activeMedium.breadColorVariation, 0f, 0.15f);
+            if (breadVariationStrength > 0f && outerEdgeDistance >= visualCrustThickness)
             {
-                float topDepth = crustThickness <= 0
-                    ? 0f
-                    : Mathf.Clamp01((y - activeBoard.Height + 1f) / crustThickness);
-                gradientColor = Color.Lerp(gradientColor, activeMedium.crustOuterColor, topDepth * activeMedium.crustTopDarkening);
+                float variation = EvaluateCoordinateNoise(activeMedium, Mathf.RoundToInt(x * 6f) + 187, Mathf.RoundToInt(y * 10f) + 911);
+                float brightness = 1f + ((variation * 2f) - 1f) * breadVariationStrength;
+                finalColor *= brightness;
+                finalColor.a = 1f;
             }
 
-            return gradientColor;
+            float verticalShade = Mathf.Clamp01((y + visualCrustThickness) / Mathf.Max(0.001f, activeBoard.Height + (visualCrustThickness * 2f)));
+            finalColor = Color.Lerp(finalColor, activeMedium.breadShadeColor, (1f - verticalShade) * 0.08f);
+
+            if (y > activeBoard.Height)
+            {
+                float topDepth = visualCrustThickness <= 0f
+                    ? 0f
+                    : Mathf.Clamp01((y - activeBoard.Height) / visualCrustThickness);
+                finalColor = Color.Lerp(finalColor, activeMedium.crustOuterColor, topDepth * activeMedium.crustTopDarkening);
+            }
+
+            return finalColor;
         }
 
         private static float EvaluateCoordinateNoise(BoardMediumConfig activeMedium, int x, int y)
@@ -1466,19 +1620,6 @@ namespace FungusToast.Unity.Grid
 
                 return (hash & 1023u) / 1023f;
             }
-        }
-
-        private static void SetCrustTile(Tilemap tilemap, Vector3Int position, TileBase tile, Color color, Matrix4x4 transformMatrix)
-        {
-            if (tilemap == null || tile == null)
-            {
-                return;
-            }
-
-            tilemap.SetTile(position, tile);
-            tilemap.SetTileFlags(position, TileFlags.None);
-            tilemap.SetColor(position, color);
-            tilemap.SetTransformMatrix(position, transformMatrix);
         }
 
         #region Starting Tile Ping

@@ -25,6 +25,8 @@ namespace FungusToast.Unity.Grid
         [Range(0.02f, 0.25f)] public float crustThicknessRatio = 0.1f;
         [Min(0)] public int minCrustThickness = 1;
         [Min(0)] public int maxCrustThickness = 6;
+        [Min(0f)] public float minVisualCrustThickness = 1.75f;
+        [Min(0f)] public float maxVisualCrustThickness = 8f;
 
         [Header("Crust Shape")]
         public bool useBreadSliceSilhouette = true;
@@ -38,6 +40,11 @@ namespace FungusToast.Unity.Grid
         [Range(0f, 1f)] public float crustTopDarkening = 0.18f;
         [Range(0f, 0.2f)] public float crustColorVariation = 0.06f;
 
+        [Header("Bread Interior Colors")]
+        public Color breadInteriorColor = new(0.93f, 0.82f, 0.62f, 1f);
+        public Color breadShadeColor = new(0.88f, 0.74f, 0.53f, 1f);
+        [Range(0f, 0.15f)] public float breadColorVariation = 0.025f;
+
         [Header("Tile Rendering")]
         [Range(1f, 1.08f)] public float playableSurfaceTileScale = 1.01f;
         [Range(1f, 1.12f)] public float crustTileScale = 1.03f;
@@ -49,7 +56,12 @@ namespace FungusToast.Unity.Grid
 
         public int GetCrustThickness(int boardWidth, int boardHeight)
         {
-            if (!renderCrust || (crustEdgeTile == null && crustCornerTile == null))
+            return Mathf.CeilToInt(GetVisualCrustThickness(boardWidth, boardHeight));
+        }
+
+        public float GetVisualCrustThickness(int boardWidth, int boardHeight)
+        {
+            if (!renderCrust)
             {
                 return 0;
             }
@@ -60,9 +72,10 @@ namespace FungusToast.Unity.Grid
             }
 
             int shortSide = Mathf.Min(boardWidth, boardHeight);
-            int unclampedThickness = Mathf.RoundToInt(shortSide * crustThicknessRatio);
-            int upperBound = Mathf.Max(minCrustThickness, maxCrustThickness);
-            return Mathf.Clamp(unclampedThickness, minCrustThickness, upperBound);
+            float unclampedThickness = shortSide * crustThicknessRatio;
+            float minThickness = Mathf.Max(minCrustThickness, minVisualCrustThickness);
+            float maxThickness = Mathf.Max(minThickness, Mathf.Max(maxCrustThickness, maxVisualCrustThickness));
+            return Mathf.Clamp(unclampedThickness, minThickness, maxThickness);
         }
 
         public bool IsPerimeterTintEnabled => tintPerimeterTiles && perimeterTint.a > 0f;
