@@ -39,6 +39,36 @@ namespace FungusToast.Unity.UI
         public const float ToxinDropAnimationDurationSeconds = 0.9f; // was 0.8f, +0.1s for more hang time
 
         /// <summary>
+        /// Duration (in seconds) for the expired-toxin dissolve animation.
+        /// </summary>
+        public const float ToxinExpiryDissolveDurationSeconds = 0.5f;
+
+        /// <summary>
+        /// Final uniform scale reached by the transient expired-toxin dissolve visual.
+        /// </summary>
+        public const float ToxinExpiryDissolveFinalScale = 0.78f;
+
+        /// <summary>
+        /// Final overlay scale reached by the transient expired-toxin dissolve visual.
+        /// </summary>
+        public const float ToxinExpiryDissolveOverlayScale = 0.72f;
+
+        /// <summary>
+        /// World-space upward drift applied while an expired toxin dissolves.
+        /// </summary>
+        public const float ToxinExpiryDissolveLiftWorld = 0.08f;
+
+        /// <summary>
+        /// Maximum transient rotation used to break up the expired-toxin dissolve silhouette.
+        /// </summary>
+        public const float ToxinExpiryDissolveRotationDegrees = 5f;
+
+        /// <summary>
+        /// Flicker frequency used during the expired-toxin dissolve fade.
+        /// </summary>
+        public const float ToxinExpiryDissolveFlickerFrequency = 18f;
+
+        /// <summary>
         /// Delay (in seconds) for AI to "think" before picking a mycovariant during draft.
         /// </summary>
         public const float AIDraftPickDelaySeconds = 0.7f;
