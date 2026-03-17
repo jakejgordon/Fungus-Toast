@@ -7,6 +7,7 @@
 [Bb]uilds/
 [Ll]ogs/
 [Uu]ser[Ss]ettings/
+**/_[Rr]ecovery/
 [Mm]emoryCaptures/
 [Rr]ecordings/
 [Oo]utput/
@@ -72,6 +73,7 @@ ExportedObj/
 # Ignore all, then allow known project files
 *.csproj
 *.sln
+*.slnx
 
 !FungusToast.Core/FungusToast.Core.csproj
 !FungusToast.Simulation/FungusToast.Simulation.csproj

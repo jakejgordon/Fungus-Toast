@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1134431f681edf469e1d9820753843a, type: 3}
+  m_Name: ToastBoardMedium
+  m_EditorClassIdentifier: Assembly-CSharp::FungusToast.Unity.Grid.BoardMediumConfig
+  mediumId: toast
+  overridePlayableSurface: 0
+  boardSurfaceTile: {fileID: 11400000, guid: 320d89d12948e6245a2bc7e3a2112079, type: 2}
+  boardSurfaceVariantTiles: []
+  surfaceVariantDensity: 0
+  renderCrust: 1
+  crustEdgeTile: {fileID: 11400000, guid: a2c1abe15abab7e47b13da82b9a1deed, type: 2}
+  crustCornerTile: {fileID: 11400000, guid: a2c1abe15abab7e47b13da82b9a1deed, type: 2}
+  crustThicknessRatio: 0.1
+  minCrustThickness: 1
+  maxCrustThickness: 6
+  minVisualCrustThickness: 1.75
+  maxVisualCrustThickness: 8
+  useBreadSliceSilhouette: 1
+  topCrustRoundness: 1
+  bottomCrustRoundness: 0.35
+  crustInnerColor: {r: 0.96, g: 0.8, b: 0.56, a: 1}
+  crustMidColor: {r: 0.8, g: 0.47, b: 0.14, a: 1}
+  crustOuterColor: {r: 0.42, g: 0.2, b: 0.05, a: 1}
+  crustTopDarkening: 0.22
+  crustColorVariation: 0.06
+  breadInteriorColor: {r: 0.93, g: 0.82, b: 0.62, a: 1}
+  breadShadeColor: {r: 0.88, g: 0.74, b: 0.53, a: 1}
+  breadColorVariation: 0.025
+  playableSurfaceTileScale: 1.01
+  crustTileScale: 1.03
+  tintPerimeterTiles: 0
+  perimeterTintDepth: 1
+  perimeterTint: {r: 0.88, g: 0.78, b: 0.56, a: 1}

@@ -114,6 +114,12 @@ namespace FungusToast.Unity.UI
             initialized = true;
 
             rootRect = GetComponent<RectTransform>();
+            if (rootRect == null)
+            {
+                Debug.LogWarning($"[CellTooltipUI] Disabled on non-UI object '{name}' because no RectTransform is present.");
+                enabled = false;
+                return;
+            }
 
             // 1. Disable every layout-automation component on the root
             var vlg = GetComponent<VerticalLayoutGroup>();
@@ -137,15 +143,20 @@ namespace FungusToast.Unity.UI
             HideGroup(additionalInfoGroup);
 
             // 3. Pick a TMP to use as the single body renderer
-            bodyText = additionalInfoText
-                       ?? statusText
-                       ?? ownerText
-                       ?? growthAgeText;
+            bodyText = ResolveBodyText();
 
             if (bodyText == null)
             {
-                Debug.LogError("[CellTooltipUI] No TextMeshProUGUI assigned – tooltip will be blank.");
-                return;
+                bodyText = CreateFallbackBodyText();
+
+                if (bodyText == null)
+                {
+                    Debug.LogWarning($"[CellTooltipUI] Disabled on '{name}' because no TextMeshProUGUI was assigned and no fallback could be created.");
+                    enabled = false;
+                    return;
+                }
+
+                Debug.LogWarning("[CellTooltipUI] No TextMeshProUGUI assigned. Created a runtime fallback text renderer.");
             }
 
             // Re-parent directly under root so it stays visible
@@ -156,6 +167,54 @@ namespace FungusToast.Unity.UI
 
             // 4. Style the background
             ApplyBackground();
+        }
+
+        private TextMeshProUGUI ResolveBodyText()
+        {
+            var assignedText = additionalInfoText
+                               ?? statusText
+                               ?? ownerText
+                               ?? growthAgeText
+                               ?? deathReasonText
+                               ?? lastOwnerText
+                               ?? expirationText
+                               ?? resistantText
+                               ?? growthSourceText;
+
+            if (assignedText != null)
+            {
+                return assignedText;
+            }
+
+            var availableText = GetComponentInChildren<TextMeshProUGUI>(true);
+            if (availableText != null)
+            {
+                return availableText;
+            }
+
+            return null;
+        }
+
+        private TextMeshProUGUI CreateFallbackBodyText()
+        {
+            if (rootRect == null)
+            {
+                return null;
+            }
+
+            var bodyTextObject = new GameObject("TooltipBodyText", typeof(RectTransform));
+            bodyTextObject.transform.SetParent(transform, false);
+
+            var fallbackText = bodyTextObject.AddComponent<TextMeshProUGUI>();
+            fallbackText.raycastTarget = false;
+            fallbackText.text = string.Empty;
+
+            if (fallbackText.font == null && TMP_Settings.defaultFontAsset != null)
+            {
+                fallbackText.font = TMP_Settings.defaultFontAsset;
+            }
+
+            return fallbackText;
         }
 
         // ═══════════════════════════════════════════════════════════════════

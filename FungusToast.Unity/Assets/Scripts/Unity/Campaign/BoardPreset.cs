@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using FungusToast.Core.AI; // for strategy names (referencing AIRoster)
+using FungusToast.Unity.Grid;
 
 namespace FungusToast.Unity.Campaign
 {
@@ -17,6 +18,9 @@ namespace FungusToast.Unity.Campaign
         [Header("Board Dimensions")]
         public int boardWidth = 160;
         public int boardHeight = 160;
+
+        [Header("Board Visuals")]
+        public BoardMediumConfig boardMedium;
 
         [Header("Mutation Tier Cap")]
         public int mutationTierMax = 2; // highest tier unlocked when using this preset

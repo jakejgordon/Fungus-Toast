@@ -49,11 +49,14 @@ namespace FungusToast.Unity.Cameras
         {
             if (Camera.main == null || gameManager?.Board == null) return;
             int boardW = gameManager.Board.Width; int boardH = gameManager.Board.Height;
+            int visualPaddingTiles = Mathf.Max(0, gameManager.gridVisualizer?.CurrentBoardVisualPaddingTiles ?? 0);
+            float visualBoardWidth = boardW + (visualPaddingTiles * 2f);
+            float visualBoardHeight = boardH + (visualPaddingTiles * 2f);
             float aspect = (float)Screen.width / Screen.height;
 
             // Fit board only (ignore sidebars for size). Choose larger dimension requirement.
-            float sizeByHeight = (boardH /2f) + padding;
-            float sizeByWidth = (boardW / (2f * aspect)) + padding;
+            float sizeByHeight = (visualBoardHeight /2f) + padding;
+            float sizeByWidth = (visualBoardWidth / (2f * aspect)) + padding;
             targetOrthographicSize = Mathf.Max(sizeByHeight, sizeByWidth);
 
             // Visible world horizontal span
@@ -77,7 +80,7 @@ namespace FungusToast.Unity.Cameras
 
             if (logFramingDebug)
             {
-                Debug.Log($"[CameraCenterer] board {boardW}x{boardH} sizeH={sizeByHeight:F2} sizeW={sizeByWidth:F2} finalSize={targetOrthographicSize:F2} visWidth={visibleWorldWidth:F2} unitsPx={unitsPerPixel:F4} leftPx={leftPixels:F1} rightPx={rightPixels:F1} deltaPx={deltaPixels:F1} camX={cameraCenterWorldX:F2}");
+                Debug.Log($"[CameraCenterer] board {boardW}x{boardH} crust={visualPaddingTiles} sizeH={sizeByHeight:F2} sizeW={sizeByWidth:F2} finalSize={targetOrthographicSize:F2} visWidth={visibleWorldWidth:F2} unitsPx={unitsPerPixel:F4} leftPx={leftPixels:F1} rightPx={rightPixels:F1} deltaPx={deltaPixels:F1} camX={cameraCenterWorldX:F2}");
             }
         }
 
