@@ -16,6 +16,8 @@ namespace FungusToast.Core.Campaign
             (AdaptationGameBalance.MycotoxicHaloOrthogonalKillChanceBonus * 100f).ToString("0.0", CultureInfo.InvariantCulture);
         private static readonly string mycotoxicLashPercent =
             (AdaptationGameBalance.MycotoxicLashToxinDropKillChance * 100f).ToString("0.0", CultureInfo.InvariantCulture);
+        private static readonly string vesicleBurstPercent =
+            (AdaptationGameBalance.VesicleBurstExpiredToxinPopChance * 100f).ToString("0.0", CultureInfo.InvariantCulture);
         private static readonly string retrogradeBloomLostLevels =
             AdaptationGameBalance.RetrogradeBloomTier1LevelsLost.ToString(CultureInfo.InvariantCulture);
         private static readonly string retrogradeBloomGainedLevels =
@@ -89,7 +91,12 @@ namespace FungusToast.Core.Campaign
                         AdaptationIds.SporeSalvo,
                         "Spore Salvo",
                         "At the start of the game, your starting spore launches one toxin into the nearest open tile beside each enemy starting spore.",
-                        "spore_salvo")
+                        "spore_salvo"),
+                    new AdaptationDefinition(
+                        AdaptationIds.VesicleBurst,
+                        "Vesicle Burst",
+                        $"For the rest of the campaign, each of your expired toxins has a {vesicleBurstPercent}% chance to pop and drop friendly toxins into every orthogonally adjacent tile that is empty or occupied by a non-resistant enemy cell, corpse, or toxin.",
+                        "vesicle_burst")
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;

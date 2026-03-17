@@ -91,6 +91,12 @@ namespace FungusToast.Unity
                         continue;
                     }
 
+                    if (specialEvent.EventKind == SpecialBoardEventKind.VesicleBurstTriggered)
+                    {
+                        yield return PresentVesicleBurstBatch(CollectVesicleBurstBatch(specialEvent));
+                        continue;
+                    }
+
                     yield return PresentSpecialEvent(specialEvent);
                 }
             }
@@ -194,6 +200,18 @@ namespace FungusToast.Unity
                     uiManager.GameLogRouter?.RecordMarginalClampKills(specialEvent.PlayerId, cellsKilled);
                     yield return gridVisualizer.PlayMycotoxicLashAnimation(specialEvent.AffectedTileIds.Distinct().ToList());
                     break;
+                case SpecialBoardEventKind.VesicleBurstTriggered:
+                    int affectedTiles = specialEvent.AffectedTileIds?.Distinct().Count() ?? 0;
+                    if (affectedTiles <= 0)
+                    {
+                        yield break;
+                    }
+
+                    uiManager.PhaseBanner?.Show(
+                        BuildVesicleBurstBannerText(affectedTiles),
+                        UIEffectConstants.MarginalClampBannerHoldSeconds);
+                    yield return gridVisualizer.PlayMycotoxicLashAnimation(specialEvent.AffectedTileIds.Distinct().ToList());
+                    break;
             }
         }
 
@@ -267,6 +285,24 @@ namespace FungusToast.Unity
             {
                 var nextEvent = pendingImmediateEvents.Peek();
                 if (nextEvent.EventKind != SpecialBoardEventKind.MarginalClampTriggered || nextEvent.PlayerId != firstEvent.PlayerId)
+                {
+                    break;
+                }
+
+                batch.Add(pendingImmediateEvents.Dequeue());
+            }
+
+            return batch;
+        }
+
+        private List<SpecialBoardEventArgs> CollectVesicleBurstBatch(SpecialBoardEventArgs firstEvent)
+        {
+            var batch = new List<SpecialBoardEventArgs> { firstEvent };
+
+            while (pendingImmediateEvents.Count > 0)
+            {
+                var nextEvent = pendingImmediateEvents.Peek();
+                if (nextEvent.EventKind != SpecialBoardEventKind.VesicleBurstTriggered || nextEvent.PlayerId != firstEvent.PlayerId)
                 {
                     break;
                 }
@@ -373,6 +409,35 @@ namespace FungusToast.Unity
             yield return gridVisualizer.PlayMycotoxicLashAnimation(affectedTileIds);
         }
 
+        private IEnumerator PresentVesicleBurstBatch(IReadOnlyList<SpecialBoardEventArgs> events)
+        {
+            if (events == null || events.Count == 0)
+            {
+                yield break;
+            }
+
+            var uiManager = getGameUIManager();
+            var gridVisualizer = getGridVisualizer();
+            if (uiManager == null || gridVisualizer == null)
+            {
+                yield break;
+            }
+
+            var affectedTileIds = events
+                .SelectMany(e => e.AffectedTileIds ?? new List<int>())
+                .Distinct()
+                .ToList();
+            if (affectedTileIds.Count == 0)
+            {
+                yield break;
+            }
+
+            uiManager.PhaseBanner?.Show(
+                BuildVesicleBurstBannerText(affectedTileIds.Count),
+                UIEffectConstants.MarginalClampBannerHoldSeconds);
+            yield return gridVisualizer.PlayMycotoxicLashAnimation(affectedTileIds);
+        }
+
         private IEnumerator PresentSporeSalvoBatch(IReadOnlyList<SpecialBoardEventArgs> events)
         {
             if (events == null || events.Count == 0)
@@ -457,6 +522,13 @@ namespace FungusToast.Unity
             return cellsKilled == 1
                 ? "Marginal Clamp clears 1 border threat!"
                 : $"Marginal Clamp clears {cellsKilled} border threats!";
+        }
+
+        private static string BuildVesicleBurstBannerText(int affectedTiles)
+        {
+            return affectedTiles == 1
+                ? "Vesicle Burst toxifies 1 tile!"
+                : $"Vesicle Burst toxifies {affectedTiles} tiles!";
         }
 
         private static string BuildSporeSalvoBannerText()

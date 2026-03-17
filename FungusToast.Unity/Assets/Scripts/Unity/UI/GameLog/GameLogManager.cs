@@ -703,6 +703,20 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned, bool deprecated = true) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }
         public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations) { }
         public void RecordConidialRelayRelocation(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Starting cell relocated via Conidial Relay", GameLogCategory.Lucky); }
+        public void RecordVesicleBurstEffect(int playerId, int poisonedCells, int toxifiedTiles)
+        {
+            if (!IsHuman(playerId) || (poisonedCells <= 0 && toxifiedTiles <= 0))
+            {
+                return;
+            }
+
+            string poisonedLabel = poisonedCells == 1 ? "1 cell" : $"{poisonedCells} cells";
+            string toxifiedLabel = toxifiedTiles == 1 ? "1 tile" : $"{toxifiedTiles} tiles";
+            AddPlayerEvent(
+                playerId,
+                $"Vesicle Burst poisoned {poisonedLabel} and toxified {toxifiedLabel}",
+                GameLogCategory.Lucky);
+        }
         public void RecordDistalSporeDeployment(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Distal Spore rooted a resistant cell in the far corner", GameLogCategory.Lucky); }
         public void RecordAscusPrimacyDraftPriority(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Ascus Primacy allows you to draft first!", GameLogCategory.Lucky); }
         public void RecordAegisHyphaeResistance(int playerId, int cellsFortified)

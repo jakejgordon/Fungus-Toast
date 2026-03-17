@@ -145,6 +145,12 @@ namespace FungusToast.Unity.UI.GameLog
             playerActivityLogManager?.RecordConidialRelayRelocation(playerId);
         }
 
+        public void RecordVesicleBurstEffect(int playerId, int poisonedCells, int toxifiedTiles)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordVesicleBurstEffect(playerId, poisonedCells, toxifiedTiles);
+        }
+
         public void RecordDistalSporeDeployment(int playerId)
         {
             if (IsSilentMode) return;

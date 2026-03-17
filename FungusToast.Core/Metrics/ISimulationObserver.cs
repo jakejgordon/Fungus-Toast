@@ -69,6 +69,7 @@ namespace FungusToast.Core.Metrics
         void RecordCytolyticBurstToxins(int playerId, int toxinsCreated);
         void RecordCytolyticBurstKills(int playerId, int cellsKilled);
         void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations);
+        void RecordVesicleBurstEffect(int playerId, int poisonedCells, int toxifiedTiles);
         void RecordHypersystemicRegenerationResistance(int playerId);
         void RecordHypersystemicDiagonalReclaim(int playerId);
         void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName);

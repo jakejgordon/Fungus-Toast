@@ -4,6 +4,7 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Core.Metrics;
+using FungusToast.Unity;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI;
 using System.Collections;
@@ -22,6 +23,7 @@ namespace FungusToast.Unity.Phases
         private System.Random rng = new();
         private RoundContext roundContext;
         private ISimulationObserver observer;
+        private SpecialEventPresentationService specialEventPresentationService;
         public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
 
         private int phaseCycle = 0; // 1–5 for UI display
@@ -33,6 +35,7 @@ namespace FungusToast.Unity.Phases
             this.board = board;
             this.gridVisualizer = gridVisualizer;
             this.observer = GameManager.Instance.GameUI.GameLogRouter;
+            this.specialEventPresentationService = GameManager.Instance.SpecialEventPresentationService;
             this.processor = new GrowthPhaseProcessor(board, players, rng, observer);
             isRunning = false;
         }
@@ -80,6 +83,12 @@ namespace FungusToast.Unity.Phases
             var failedThisCycle = processor.ExecuteSingleCycle(roundContext);
             MergeFailedGrowths(failedThisCycle);
             gridVisualizer.RenderBoard(board);
+
+            if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
+            {
+                yield return specialEventPresentationService.PresentPendingImmediate();
+                gridVisualizer.RenderBoard(board, suppressAnimations: true);
+            }
 
             // Update Occupancy in sidebar after each growth cycle
             int round = GameManager.Instance.Board.CurrentRound;

@@ -122,6 +122,7 @@ namespace FungusToast.Core.Events
             board.ToxinExpired += (sender, args) =>
             {
                 MutationEffectCoordinator.OnToxinExpired_CatabolicRebirth(args, board, players, rng, observer);
+                AdaptationEffectProcessor.OnToxinExpired(args, board, players, rng, observer);
             };
 
             // TODO: Add additional event-driven rule subscriptions here.

@@ -147,6 +147,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Toxin launched by the Spore Salvo adaptation.
         /// </summary>
-        SporeSalvo
+        SporeSalvo,
+
+        /// <summary>
+        /// Toxins propagated by the Vesicle Burst adaptation.
+        /// </summary>
+        VesicleBurst
     }
 }

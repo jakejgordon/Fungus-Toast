@@ -91,6 +91,7 @@ namespace FungusToast.Unity
 
         public GameBoard Board { get; private set; } 
         public GameUIManager GameUI => gameUIManager; 
+        public SpecialEventPresentationService SpecialEventPresentationService => specialEventPresentationService;
         public static GameManager Instance { get; private set; }
 
         private readonly List<Player> players = new(); 

@@ -303,6 +303,33 @@ namespace FungusToast.Core.Phases
                     new[] { targetTile.TileId }));
         }
 
+        public static void OnToxinExpired(
+            ToxinExpiredEventArgs eventArgs,
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            if (eventArgs?.ToxinOwnerPlayerId == null)
+            {
+                return;
+            }
+
+            var owner = players.FirstOrDefault(player => player.PlayerId == eventArgs.ToxinOwnerPlayerId.Value);
+            if (owner == null || !owner.HasAdaptation(AdaptationIds.VesicleBurst))
+            {
+                return;
+            }
+
+            float popChance = Math.Clamp(AdaptationGameBalance.VesicleBurstExpiredToxinPopChance, 0f, 1f);
+            if (popChance <= 0f || rng.NextDouble() >= popChance)
+            {
+                return;
+            }
+
+            TryApplyVesicleBurst(owner, eventArgs.TileId, board, observer);
+        }
+
         public static void OnPostDecayPhase(
             GameBoard board,
             List<Player> players,
@@ -604,6 +631,82 @@ namespace FungusToast.Core.Phases
                     .Select(entry => entry.LevelsLost == 1
                         ? entry.MutationName
                         : $"{entry.MutationName} x{entry.LevelsLost}"));
+        }
+
+        private static void TryApplyVesicleBurst(
+            Player owner,
+            int sourceTileId,
+            GameBoard board,
+            ISimulationObserver observer)
+        {
+            int poisonedCells = 0;
+            int toxifiedTiles = 0;
+            var affectedTileIds = new List<int>();
+
+            foreach (var targetTile in board.GetOrthogonalNeighbors(sourceTileId))
+            {
+                if (!IsEligibleVesicleBurstTarget(targetTile, owner.PlayerId))
+                {
+                    continue;
+                }
+
+                var targetCell = targetTile.FungalCell;
+                if (targetCell?.IsAlive == true)
+                {
+                    ToxinHelper.KillAndToxify(
+                        board,
+                        targetTile.TileId,
+                        ToxinHelper.GetToxinExpirationAge(owner),
+                        DeathReason.Poisoned,
+                        GrowthSource.VesicleBurst,
+                        owner,
+                        sourceTileId);
+                    poisonedCells++;
+                    affectedTileIds.Add(targetTile.TileId);
+                    continue;
+                }
+
+                ToxinHelper.ConvertToToxin(board, targetTile.TileId, GrowthSource.VesicleBurst, owner);
+                var placedToxin = board.GetCell(targetTile.TileId);
+                if (placedToxin?.IsToxin == true && placedToxin.OwnerPlayerId == owner.PlayerId)
+                {
+                    toxifiedTiles++;
+                    affectedTileIds.Add(targetTile.TileId);
+                }
+            }
+
+            if (poisonedCells > 0)
+            {
+                observer.RecordAttributedKill(owner.PlayerId, DeathReason.Poisoned, poisonedCells);
+            }
+
+            if (poisonedCells > 0 || toxifiedTiles > 0)
+            {
+                observer.RecordVesicleBurstEffect(owner.PlayerId, poisonedCells, toxifiedTiles);
+                board.OnSpecialBoardEventTriggered(
+                    new SpecialBoardEventArgs(
+                        SpecialBoardEventKind.VesicleBurstTriggered,
+                        owner.PlayerId,
+                        sourceTileId,
+                        sourceTileId,
+                        affectedTileIds.Distinct().ToList()));
+            }
+        }
+
+        private static bool IsEligibleVesicleBurstTarget(BoardTile tile, int ownerPlayerId)
+        {
+            var cell = tile.FungalCell;
+            if (cell == null)
+            {
+                return true;
+            }
+
+            if (cell.IsResistant)
+            {
+                return false;
+            }
+
+            return cell.OwnerPlayerId != ownerPlayerId;
         }
 
         private static int SquaredDistance((int x, int y) a, (int x, int y) b)
