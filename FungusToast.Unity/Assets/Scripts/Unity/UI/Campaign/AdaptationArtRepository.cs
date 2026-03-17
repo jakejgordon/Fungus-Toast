@@ -90,6 +90,9 @@ namespace FungusToast.Unity.UI.Campaign
                         case "ascus_primacy":
                             DrawAscusPrimacy(texture, drawAccent, highlight);
                             break;
+                        case "spore_salvo":
+                            DrawSporeSalvo(texture, drawAccent, highlight);
+                            break;
                         default:
                             DrawFallback(texture, drawAccent, highlight);
                             break;
@@ -114,6 +117,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "crustal_callus" => Color.Lerp(UIStyleTokens.Accent.Moss, UIStyleTokens.Surface.PanelPrimary, 0.5f),
                 "distal_spore" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.52f),
                 "ascus_primacy" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Surface.PanelPrimary, 0.5f),
+                "spore_salvo" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Surface.PanelPrimary, 0.48f),
                 _ => UIStyleTokens.Surface.PanelPrimary
             };
         }
@@ -134,6 +138,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "crustal_callus" => Color.Lerp(UIStyleTokens.Accent.Moss, UIStyleTokens.State.Info, 0.2f),
                 "distal_spore" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Text.Primary, 0.08f),
                 "ascus_primacy" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Text.Primary, 0.12f),
+                "spore_salvo" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.State.Danger, 0.35f),
                 _ => UIStyleTokens.Text.Primary
             };
         }
@@ -274,6 +279,20 @@ namespace FungusToast.Unity.UI.Campaign
             DrawLine(texture, 20, 16, 20, 29, accent, 2);
             DrawLine(texture, 28, 16, 20, 25, accent, 1);
             FillCircle(texture, 20, 31, 4, highlight);
+        }
+
+        private static void DrawSporeSalvo(Texture2D texture, Color accent, Color highlight)
+        {
+            FillCircle(texture, 10, 10, 4, highlight);
+            DrawLine(texture, 13, 12, 23, 18, accent, 1);
+            DrawLine(texture, 13, 10, 26, 10, accent, 1);
+            DrawLine(texture, 13, 8, 23, 2, accent, 1);
+            FillCircle(texture, 28, 20, 3, accent);
+            FillCircle(texture, 28, 10, 3, accent);
+            FillCircle(texture, 28, 30, 3, accent);
+            PaintBrush(texture, 31, 20, 2, highlight);
+            PaintBrush(texture, 31, 10, 2, highlight);
+            PaintBrush(texture, 31, 30, 2, highlight);
         }
 
         private static void DrawFallback(Texture2D texture, Color accent, Color highlight)

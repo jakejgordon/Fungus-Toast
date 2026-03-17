@@ -775,6 +775,20 @@ namespace FungusToast.Unity.UI.GameLog
                     : $"Marginal Clamp cleared {cellsKilled} border threats",
                 GameLogCategory.Lucky);
         }
+        public void RecordSporeSalvoLaunches(int playerId, int launches)
+        {
+            if (!IsHuman(playerId) || launches <= 0)
+            {
+                return;
+            }
+
+            AddPlayerEvent(
+                playerId,
+                launches == 1
+                    ? "Spore Salvo launched 1 toxin at an enemy start"
+                    : $"Spore Salvo launched {launches} toxins at enemy starts",
+                GameLogCategory.Lucky);
+        }
         public void RecordCreepingMoldMove(int playerId) { }
         public void RecordCreepingMoldToxinJump(int playerId) { }
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }

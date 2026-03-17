@@ -79,6 +79,12 @@ namespace FungusToast.Unity
                 {
                     var specialEvent = pendingImmediateEvents.Dequeue();
 
+                    if (specialEvent.EventKind == SpecialBoardEventKind.SporeSalvoTriggered)
+                    {
+                        yield return PresentSporeSalvoBatch(CollectSporeSalvoBatch(specialEvent));
+                        continue;
+                    }
+
                     if (specialEvent.EventKind == SpecialBoardEventKind.MarginalClampTriggered)
                     {
                         yield return PresentMarginalClampBatch(CollectMarginalClampBatch(specialEvent));
@@ -195,7 +201,26 @@ namespace FungusToast.Unity
         {
             return eventKind == SpecialBoardEventKind.RetrogradeBloomTriggered
                 || eventKind == SpecialBoardEventKind.MarginalClampTriggered
-                || eventKind == SpecialBoardEventKind.DistalSporeTriggered;
+                || eventKind == SpecialBoardEventKind.DistalSporeTriggered
+                || eventKind == SpecialBoardEventKind.SporeSalvoTriggered;
+        }
+
+        private List<SpecialBoardEventArgs> CollectSporeSalvoBatch(SpecialBoardEventArgs firstEvent)
+        {
+            var batch = new List<SpecialBoardEventArgs> { firstEvent };
+
+            while (pendingImmediateEvents.Count > 0)
+            {
+                var nextEvent = pendingImmediateEvents.Peek();
+                if (nextEvent.EventKind != SpecialBoardEventKind.SporeSalvoTriggered || nextEvent.PlayerId != firstEvent.PlayerId)
+                {
+                    break;
+                }
+
+                batch.Add(pendingImmediateEvents.Dequeue());
+            }
+
+            return batch;
         }
 
         private List<SpecialBoardEventArgs> CollectMycotoxicLashBatch(SpecialBoardEventArgs firstEvent)
@@ -348,6 +373,69 @@ namespace FungusToast.Unity
             yield return gridVisualizer.PlayMycotoxicLashAnimation(affectedTileIds);
         }
 
+        private IEnumerator PresentSporeSalvoBatch(IReadOnlyList<SpecialBoardEventArgs> events)
+        {
+            if (events == null || events.Count == 0)
+            {
+                yield break;
+            }
+
+            var uiManager = getGameUIManager();
+            var gridVisualizer = getGridVisualizer();
+            if (uiManager == null || gridVisualizer == null)
+            {
+                yield break;
+            }
+
+            uiManager.PhaseBanner?.Show(
+                BuildSporeSalvoBannerText(),
+                UIEffectConstants.SporeSalvoBannerHoldSeconds);
+            uiManager.GameLogRouter?.RecordSporeSalvoLaunches(events[0].PlayerId, events.Count);
+
+            var activeBoard = gridVisualizer.ActiveBoard;
+            var destinationTileIds = events
+                .Select(e => e.DestinationTileId)
+                .Where(tileId => tileId >= 0)
+                .Distinct()
+                .ToList();
+            foreach (var tileId in destinationTileIds)
+            {
+                activeBoard?.GetTileById(tileId)?.FungalCell?.ClearToxinDropFlag();
+            }
+
+            int remainingAnimations = 0;
+            foreach (var specialEvent in events)
+            {
+                remainingAnimations++;
+                gridVisualizer.StartCoroutine(AwaitAnimation(
+                    gridVisualizer.PlaySporeSalvoAnimation(
+                        specialEvent.PlayerId,
+                        specialEvent.SourceTileId,
+                        specialEvent.DestinationTileId),
+                    () => remainingAnimations--));
+            }
+
+            while (remainingAnimations > 0)
+            {
+                yield return null;
+            }
+
+            if (activeBoard != null)
+            {
+                gridVisualizer.RenderBoard(activeBoard, suppressAnimations: true);
+            }
+        }
+
+        private static IEnumerator AwaitAnimation(IEnumerator animation, Action onComplete)
+        {
+            if (animation != null)
+            {
+                yield return animation;
+            }
+
+            onComplete?.Invoke();
+        }
+
         private static string BuildMycotoxicLashBannerText(int cellsKilled)
         {
             string lashMessage = cellsKilled == 1
@@ -369,6 +457,11 @@ namespace FungusToast.Unity
             return cellsKilled == 1
                 ? "Marginal Clamp clears 1 border threat!"
                 : $"Marginal Clamp clears {cellsKilled} border threats!";
+        }
+
+        private static string BuildSporeSalvoBannerText()
+        {
+            return "Spore Salvo launches toxins at enemy molds!";
         }
     }
 }

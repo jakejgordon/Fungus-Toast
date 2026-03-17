@@ -17,6 +17,23 @@ namespace FungusToast.Core.Phases
     {
         private const string AegisHyphaeCounterKey = "adaptation_aegis_hyphae_growths";
 
+        public static void OnStartingSporesEstablished(
+            GameBoard board,
+            List<Player> players)
+        {
+            foreach (var player in players)
+            {
+                var adaptation = player.GetAdaptation(AdaptationIds.SporeSalvo);
+                if (adaptation == null || adaptation.HasTriggered)
+                {
+                    continue;
+                }
+
+                TryApplySporeSalvo(player, board, players);
+                adaptation.MarkTriggered();
+            }
+        }
+
         public static void OnMutationPhaseStart(
             GameBoard board,
             List<Player> players,
@@ -341,6 +358,43 @@ namespace FungusToast.Core.Phases
             }
 
             return false;
+        }
+
+        private static void TryApplySporeSalvo(
+            Player player,
+            GameBoard board,
+            IReadOnlyList<Player> players)
+        {
+            if (!player.StartingTileId.HasValue)
+            {
+                return;
+            }
+
+            int sourceTileId = player.StartingTileId.Value;
+            var sourcePosition = board.GetXYFromTileId(sourceTileId);
+
+            foreach (var enemy in players.Where(candidate => candidate.PlayerId != player.PlayerId && candidate.StartingTileId.HasValue))
+            {
+                int enemyStartingTileId = enemy.StartingTileId!.Value;
+                var targetTile = board.GetOrthogonalNeighbors(enemyStartingTileId)
+                    .Where(tile => !tile.IsOccupied)
+                    .OrderBy(tile => SquaredDistance((tile.X, tile.Y), sourcePosition))
+                    .ThenBy(tile => tile.TileId)
+                    .FirstOrDefault();
+                if (targetTile == null)
+                {
+                    continue;
+                }
+
+                ToxinHelper.ConvertToToxin(board, targetTile.TileId, GrowthSource.SporeSalvo, player);
+                board.OnSpecialBoardEventTriggered(
+                    new SpecialBoardEventArgs(
+                        SpecialBoardEventKind.SporeSalvoTriggered,
+                        player.PlayerId,
+                        sourceTileId,
+                        targetTile.TileId,
+                        new[] { targetTile.TileId }));
+            }
         }
 
         private static bool TryApplyDistalSpore(Player player, GameBoard board)

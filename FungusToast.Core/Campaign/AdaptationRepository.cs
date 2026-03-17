@@ -84,7 +84,12 @@ namespace FungusToast.Core.Campaign
                         AdaptationIds.AscusPrimacy,
                         "Ascus Primacy",
                         "For the rest of the campaign, you always draft first during Mycovariant drafting, regardless of how many living cells you control.",
-                        "ascus_primacy")
+                        "ascus_primacy"),
+                    new AdaptationDefinition(
+                        AdaptationIds.SporeSalvo,
+                        "Spore Salvo",
+                        "At the start of the game, your starting spore launches one toxin into the nearest open tile beside each enemy starting spore.",
+                        "spore_salvo")
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;

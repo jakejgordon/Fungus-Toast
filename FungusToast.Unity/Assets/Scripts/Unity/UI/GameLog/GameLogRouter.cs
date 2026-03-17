@@ -192,6 +192,12 @@ namespace FungusToast.Unity.UI.GameLog
             if (IsSilentMode) return;
             playerActivityLogManager?.RecordMarginalClampKills(playerId, cellsKilled);
         }
+
+        public void RecordSporeSalvoLaunches(int playerId, int launches)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordSporeSalvoLaunches(playerId, launches);
+        }
         #endregion
 
         #region Phase / Round Routing (suppressed in silent mode)

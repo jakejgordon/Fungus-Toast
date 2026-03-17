@@ -142,6 +142,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Resistance granted by the Crustal Callus adaptation.
         /// </summary>
-        CrustalCallus
+        CrustalCallus,
+
+        /// <summary>
+        /// Toxin launched by the Spore Salvo adaptation.
+        /// </summary>
+        SporeSalvo
     }
 }

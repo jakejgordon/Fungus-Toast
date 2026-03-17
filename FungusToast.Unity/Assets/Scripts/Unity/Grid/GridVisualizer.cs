@@ -107,6 +107,17 @@ namespace FungusToast.Unity.Grid
             => _conidialRelayAnimator != null ? _conidialRelayAnimator.Play(playerId, sourceTileId, destinationTileId) : null;
         public IEnumerator PlayDistalSporeAnimation(int playerId, int sourceTileId, int destinationTileId)
             => _conidialRelayAnimator != null ? _conidialRelayAnimator.Play(playerId, sourceTileId, destinationTileId, preserveSourceCell: true) : null;
+        public IEnumerator PlaySporeSalvoAnimation(int playerId, int sourceTileId, int destinationTileId)
+            => _conidialRelayAnimator != null
+                ? _conidialRelayAnimator.Play(
+                    playerId,
+                    sourceTileId,
+                    destinationTileId,
+                    preserveSourceCell: true,
+                    overlaySprite: toxinOverlayTile != null ? toxinOverlayTile.sprite : null,
+                    overlayScale: UIEffectConstants.SporeSalvoOverlayScale,
+                    restoreBoardStateOnFinish: true)
+                : null;
         public IEnumerator PlayMycotoxicLashAnimation(IReadOnlyList<int> tileIds)
         {
             if (board == null || tileIds == null || tileIds.Count == 0)
@@ -502,6 +513,37 @@ namespace FungusToast.Unity.Grid
 
             Debug.LogWarning($"No tile found for Player ID {playerId}.");
             return null;
+        }
+
+        public void RenderTileFromBoard(int tileId)
+        {
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null)
+            {
+                return;
+            }
+
+            var tile = activeBoard.GetTileById(tileId);
+            var pos = GetPositionForTileId(tileId);
+
+            if (moldTilemap != null)
+            {
+                moldTilemap.SetTile(pos, null);
+                moldTilemap.SetColor(pos, Color.white);
+                moldTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+            }
+
+            if (overlayTilemap != null)
+            {
+                overlayTilemap.SetTile(pos, null);
+                overlayTilemap.SetColor(pos, Color.white);
+                overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+            }
+
+            if (tile?.FungalCell != null)
+            {
+                RenderFungalCellOverlay(tile, pos);
+            }
         }
 
         private void StartFadeInAnimations()

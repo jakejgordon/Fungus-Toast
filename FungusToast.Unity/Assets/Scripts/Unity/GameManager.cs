@@ -978,6 +978,17 @@ namespace FungusToast.Unity
             bool willFastForward = testingModeEnabled && fastForwardRounds > 0 && !_fastForwardStarted;
             if (!willFastForward)
                 gameUIManager.LoadingScreen?.FadeOut();
+
+            AdaptationEffectProcessor.OnStartingSporesEstablished(Board, players);
+            if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
+            {
+                yield return specialEventPresentationService.PresentPendingImmediate();
+            }
+            else
+            {
+                gridVisualizer.RenderBoard(Board, suppressAnimations: true);
+            }
+
             gameUIManager.LeftSidebar?.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.MutationUIManager.gameObject.SetActive(true);

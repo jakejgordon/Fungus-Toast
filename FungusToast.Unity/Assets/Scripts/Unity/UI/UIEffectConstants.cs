@@ -87,6 +87,11 @@ namespace FungusToast.Unity.UI
         public const float MarginalClampBannerHoldSeconds = 0.55f;
 
         /// <summary>
+        /// Hold duration for the Spore Salvo startup volley banner.
+        /// </summary>
+        public const float SporeSalvoBannerHoldSeconds = 0.7f;
+
+        /// <summary>
         /// Total duration for the Conidial Relay presentation animation.
         /// </summary>
         public const float ConidialRelayTotalDurationSeconds = 1.5f;
@@ -175,6 +180,11 @@ namespace FungusToast.Unity.UI
         /// Shield scale relative to the mold sprite for Conidial Relay.
         /// </summary>
         public const float ConidialRelayShieldScale = 0.52f;
+
+        /// <summary>
+        /// Toxin overlay scale relative to the mold sprite for Spore Salvo launches.
+        /// </summary>
+        public const float SporeSalvoOverlayScale = 0.72f;
 
         /// <summary>
         /// X scale used during the landing impact stretch.

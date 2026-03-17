@@ -208,6 +208,7 @@ namespace FungusToast.Simulation.GameSimulation
 
             // Use the shared starting spore placement utility
             StartingSporeUtility.PlaceStartingSpores(board, players, rng);
+            AdaptationEffectProcessor.OnStartingSporesEstablished(board, players);
 
             return (players, board);
         }
