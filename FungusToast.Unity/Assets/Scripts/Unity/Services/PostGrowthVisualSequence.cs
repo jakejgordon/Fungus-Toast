@@ -96,9 +96,39 @@ namespace FungusToast.Unity
         private void OnPostGrowthPhaseCompleted_CaptureHrt()
         {
             if (isFastForwarding()) { postGrowthHrtNewResistantTiles.Clear(); return; }
+            var alreadyBufferedResistanceTiles = GetBufferedResistanceTileIds();
             var now = gameManager.Board.AllTiles().Where(t => t.FungalCell?.IsAlive == true && t.FungalCell.IsResistant).Select(t => t.TileId).ToList();
-            postGrowthHrtNewResistantTiles.Clear(); foreach (var id in now) if (!resistantBaseline.Contains(id)) postGrowthHrtNewResistantTiles.Add(id);
+            postGrowthHrtNewResistantTiles.Clear();
+            foreach (var id in now)
+            {
+                if (!resistantBaseline.Contains(id) && !alreadyBufferedResistanceTiles.Contains(id))
+                {
+                    postGrowthHrtNewResistantTiles.Add(id);
+                }
+            }
             if (!sequenceRunning) { sequenceRunning = true; gameManager.StartCoroutine(RunSequence()); }
+        }
+
+        private HashSet<int> GetBufferedResistanceTileIds()
+        {
+            var bufferedTileIds = new HashSet<int>();
+
+            foreach (var tileId in postGrowthResistanceTiles)
+            {
+                bufferedTileIds.Add(tileId);
+            }
+
+            foreach (var tileId in crustalCallusResistanceTiles)
+            {
+                bufferedTileIds.Add(tileId);
+            }
+
+            foreach (var tileId in aegisHyphaeResistanceTiles)
+            {
+                bufferedTileIds.Add(tileId);
+            }
+
+            return bufferedTileIds;
         }
 
         private IEnumerator RunSequence()
