@@ -63,6 +63,11 @@ namespace FungusToast.Core.Events
                 MutationEffectCoordinator.OnPostGrowthPhase(board, players, rng, observer);
             };
 
+            board.PostGrowthPhaseCompleted += () =>
+            {
+                AdaptationEffectProcessor.OnPostGrowthPhaseCompleted(board, players, rng, observer);
+            };
+
             // All mutation-based decay phase effects (consolidated)
             board.DecayPhase += (failedGrowthsByPlayerId) =>
             {

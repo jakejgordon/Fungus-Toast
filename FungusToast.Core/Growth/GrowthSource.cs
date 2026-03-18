@@ -152,6 +152,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Toxins propagated by the Vesicle Burst adaptation.
         /// </summary>
-        VesicleBurst
+        VesicleBurst,
+
+        /// <summary>
+        /// Living cells dropped in sequence by the Hyphal Bridge adaptation.
+        /// </summary>
+        HyphalBridge
     }
 }

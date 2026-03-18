@@ -1,14 +1,34 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
 namespace FungusToast.Unity.Grid.Animation
 {
-    internal sealed class ConidialRelayAnimator
+    internal sealed class CompositeLaunchArcAnimator
     {
         private readonly GridVisualizer viz;
 
-        public ConidialRelayAnimator(GridVisualizer viz)
+        private readonly struct TileVisibilityState
+        {
+            public TileVisibilityState(Vector3Int cell, bool hasMoldTile, Color moldColor, bool hasOverlayTile, Color overlayColor)
+            {
+                Cell = cell;
+                HasMoldTile = hasMoldTile;
+                MoldColor = moldColor;
+                HasOverlayTile = hasOverlayTile;
+                OverlayColor = overlayColor;
+            }
+
+            public Vector3Int Cell { get; }
+            public bool HasMoldTile { get; }
+            public Color MoldColor { get; }
+            public bool HasOverlayTile { get; }
+            public Color OverlayColor { get; }
+        }
+
+        public CompositeLaunchArcAnimator(GridVisualizer viz)
         {
             this.viz = viz;
         }
@@ -20,7 +40,102 @@ namespace FungusToast.Unity.Grid.Animation
             bool preserveSourceCell = false,
             Sprite overlaySprite = null,
             float overlayScale = UI.UIEffectConstants.ConidialRelayShieldScale,
-            bool restoreBoardStateOnFinish = false)
+            bool restoreBoardStateOnFinish = false,
+            float durationScale = 1f)
+        {
+            var board = viz.ActiveBoard;
+            if (board == null)
+            {
+                yield break;
+            }
+
+            var destinationCell = ToCell(board, destinationTileId);
+            var destinationState = CaptureTileVisibility(destinationCell);
+            HideTile(destinationState);
+
+            yield return PlaySegment(
+                playerId,
+                sourceTileId,
+                destinationTileId,
+                destinationState,
+                preserveSourceCell,
+                overlaySprite,
+                overlayScale,
+                restoreBoardStateOnFinish,
+                revealDestinationOnFinish: false,
+                emphasizeSource: true,
+                durationScale);
+        }
+
+        public IEnumerator PlaySequence(
+            int playerId,
+            int sourceTileId,
+            IReadOnlyList<int> destinationTileIds,
+            bool preserveSourceCell = true,
+            Sprite overlaySprite = null,
+            float overlayScale = UI.UIEffectConstants.ConidialRelayShieldScale,
+            bool restoreBoardStateOnFinish = false,
+            float durationScale = 1f)
+        {
+            var board = viz.ActiveBoard;
+            if (board == null || destinationTileIds == null || destinationTileIds.Count == 0)
+            {
+                yield break;
+            }
+
+            var orderedDestinations = destinationTileIds
+                .Where(tileId => tileId >= 0)
+                .Distinct()
+                .ToList();
+            if (orderedDestinations.Count == 0)
+            {
+                yield break;
+            }
+
+            var hiddenStates = orderedDestinations
+                .Select(tileId => CaptureTileVisibility(ToCell(board, tileId)))
+                .ToDictionary(state => state.Cell, state => state);
+
+            foreach (var state in hiddenStates.Values)
+            {
+                HideTile(state);
+            }
+
+            int currentSourceTileId = sourceTileId;
+            for (int index = 0; index < orderedDestinations.Count; index++)
+            {
+                int destinationTileId = orderedDestinations[index];
+                var destinationState = hiddenStates[ToCell(board, destinationTileId)];
+
+                yield return PlaySegment(
+                    playerId,
+                    currentSourceTileId,
+                    destinationTileId,
+                    destinationState,
+                    preserveSourceCell,
+                    overlaySprite,
+                    overlayScale,
+                    restoreBoardStateOnFinish,
+                    revealDestinationOnFinish: true,
+                    emphasizeSource: true,
+                    durationScale);
+
+                currentSourceTileId = destinationTileId;
+            }
+        }
+
+        private IEnumerator PlaySegment(
+            int playerId,
+            int sourceTileId,
+            int destinationTileId,
+            TileVisibilityState destinationState,
+            bool preserveSourceCell,
+            Sprite overlaySprite,
+            float overlayScale,
+            bool restoreBoardStateOnFinish,
+            bool revealDestinationOnFinish,
+            bool emphasizeSource,
+            float durationScale)
         {
             var board = viz.ActiveBoard;
             if (board == null)
@@ -33,58 +148,63 @@ namespace FungusToast.Unity.Grid.Animation
             var projectileOverlaySprite = overlaySprite ?? (viz.goldShieldOverlayTile != null ? viz.goldShieldOverlayTile.sprite : null);
             if (moldSprite == null || projectileOverlaySprite == null)
             {
+                RestoreTile(destinationState, destinationTileId, restoreBoardStateOnFinish);
                 yield break;
             }
 
             var referenceTilemap = viz.overlayTilemap != null ? viz.overlayTilemap : viz.moldTilemap;
             if (referenceTilemap == null)
             {
+                RestoreTile(destinationState, destinationTileId, restoreBoardStateOnFinish);
                 yield break;
             }
 
             var sourceCell = ToCell(board, sourceTileId);
-            var destinationCell = ToCell(board, destinationTileId);
-            var destinationMoldColor = viz.moldTilemap != null && viz.moldTilemap.HasTile(destinationCell)
-                ? viz.moldTilemap.GetColor(destinationCell)
-                : Color.white;
-            var destinationOverlayColor = viz.overlayTilemap != null && viz.overlayTilemap.HasTile(destinationCell)
-                ? viz.overlayTilemap.GetColor(destinationCell)
-                : Color.white;
-
-            HideDestination(destinationCell);
+            var destinationCell = destinationState.Cell;
 
             var compositeRoot = BuildComposite(referenceTilemap, moldSprite, projectileOverlaySprite, overlayScale);
             if (compositeRoot == null)
             {
-                RestoreDestination(destinationCell, destinationMoldColor, destinationOverlayColor);
+                RestoreTile(destinationState, destinationTileId, restoreBoardStateOnFinish);
                 yield break;
             }
 
             viz.BeginAnimation();
             try
             {
-                yield return SourceEmphasis(compositeRoot, sourceCell, referenceTilemap, preserveSourceCell);
-                yield return ArcFlight(compositeRoot, sourceCell, destinationCell, referenceTilemap);
-                yield return Landing(compositeRoot, destinationCell, referenceTilemap);
+                if (emphasizeSource)
+                {
+                    yield return SourceEmphasis(compositeRoot, sourceCell, referenceTilemap, preserveSourceCell, durationScale);
+                }
+                else
+                {
+                    compositeRoot.transform.position = CellCenterWorld(referenceTilemap, sourceCell);
+                    compositeRoot.transform.localScale = Vector3.one * (preserveSourceCell ? 0.45f : UI.UIEffectConstants.ConidialRelaySourceStartScale);
+                    compositeRoot.transform.localRotation = Quaternion.identity;
+                }
+
+                yield return ArcFlight(compositeRoot, sourceCell, destinationCell, referenceTilemap, durationScale);
+                yield return Landing(compositeRoot, destinationCell, referenceTilemap, durationScale);
             }
             finally
             {
                 Object.Destroy(compositeRoot);
-                if (restoreBoardStateOnFinish)
+                if (revealDestinationOnFinish)
                 {
+                    viz.RevealPreAnimationPreviewTile(destinationTileId);
                     viz.RenderTileFromBoard(destinationTileId);
                 }
                 else
                 {
-                    RestoreDestination(destinationCell, destinationMoldColor, destinationOverlayColor);
+                    RestoreTile(destinationState, destinationTileId, restoreBoardStateOnFinish);
                 }
                 viz.EndAnimation();
             }
         }
 
-        private IEnumerator SourceEmphasis(GameObject compositeRoot, Vector3Int sourceCell, Tilemap tilemap, bool preserveSourceCell)
+        private IEnumerator SourceEmphasis(GameObject compositeRoot, Vector3Int sourceCell, Tilemap tilemap, bool preserveSourceCell, float durationScale)
         {
-            float duration = UI.UIEffectConstants.ConidialRelaySourceEmphasisDurationSeconds;
+            float duration = ScaleDuration(UI.UIEffectConstants.ConidialRelaySourceEmphasisDurationSeconds, durationScale);
             Vector3 sourceWorld = CellCenterWorld(tilemap, sourceCell);
             Vector3 startScale = Vector3.one * (preserveSourceCell ? 0.45f : UI.UIEffectConstants.ConidialRelaySourceStartScale);
             Vector3 endScale = Vector3.one * UI.UIEffectConstants.ConidialRelayLiftScale;
@@ -103,9 +223,9 @@ namespace FungusToast.Unity.Grid.Animation
             }
         }
 
-        private IEnumerator ArcFlight(GameObject compositeRoot, Vector3Int sourceCell, Vector3Int destinationCell, Tilemap tilemap)
+        private IEnumerator ArcFlight(GameObject compositeRoot, Vector3Int sourceCell, Vector3Int destinationCell, Tilemap tilemap, float durationScale)
         {
-            float duration = UI.UIEffectConstants.ConidialRelayArcDurationSeconds;
+            float duration = ScaleDuration(UI.UIEffectConstants.ConidialRelayArcDurationSeconds, durationScale);
             Vector3 startWorld = CellCenterWorld(tilemap, sourceCell) + Vector3.up * UI.UIEffectConstants.ConidialRelayLiftYOffset;
             Vector3 endWorld = CellCenterWorld(tilemap, destinationCell);
 
@@ -138,18 +258,18 @@ namespace FungusToast.Unity.Grid.Animation
             }
         }
 
-        private IEnumerator Landing(GameObject compositeRoot, Vector3Int destinationCell, Tilemap tilemap)
+        private IEnumerator Landing(GameObject compositeRoot, Vector3Int destinationCell, Tilemap tilemap, float durationScale)
         {
-            float duration = UI.UIEffectConstants.ConidialRelayLandingDurationSeconds;
+            float duration = ScaleDuration(UI.UIEffectConstants.ConidialRelayLandingDurationSeconds, durationScale);
             float impactDuration = duration * UI.UIEffectConstants.ConidialRelayLandingImpactPortion;
-            float settleDuration = duration - impactDuration;
+            float settleDuration = Mathf.Max(0.0001f, duration - impactDuration);
             Vector3 destinationWorld = CellCenterWorld(tilemap, destinationCell);
 
             float elapsed = 0f;
             while (elapsed < impactDuration)
             {
                 elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / impactDuration);
+                float t = impactDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / impactDuration);
                 float eased = 1f - Mathf.Pow(1f - t, 2f);
                 float scaleX = Mathf.Lerp(UI.UIEffectConstants.ConidialRelayDescentScale, UI.UIEffectConstants.ConidialRelayLandingStretchX, eased);
                 float scaleY = Mathf.Lerp(UI.UIEffectConstants.ConidialRelayDescentScale, UI.UIEffectConstants.ConidialRelayLandingStretchY, eased);
@@ -178,7 +298,7 @@ namespace FungusToast.Unity.Grid.Animation
 
         private GameObject BuildComposite(Tilemap tilemap, Sprite moldSprite, Sprite overlaySprite, float overlayScale)
         {
-            var root = new GameObject("ConidialRelayComposite");
+            var root = new GameObject("CompositeLaunchArc");
             root.transform.SetParent(tilemap.transform, false);
 
             var mold = new GameObject("Mold");
@@ -186,7 +306,7 @@ namespace FungusToast.Unity.Grid.Animation
             var moldRenderer = mold.AddComponent<SpriteRenderer>();
             moldRenderer.sprite = moldSprite;
 
-            var shield = new GameObject("Shield");
+            var shield = new GameObject("Overlay");
             shield.transform.SetParent(root.transform, false);
             var shieldRenderer = shield.AddComponent<SpriteRenderer>();
             shieldRenderer.sprite = overlaySprite;
@@ -204,33 +324,51 @@ namespace FungusToast.Unity.Grid.Animation
             return root;
         }
 
-        private void HideDestination(Vector3Int destinationCell)
+        private TileVisibilityState CaptureTileVisibility(Vector3Int cell)
         {
-            if (viz.moldTilemap != null && viz.moldTilemap.HasTile(destinationCell))
+            bool hasMoldTile = viz.moldTilemap != null && viz.moldTilemap.HasTile(cell);
+            bool hasOverlayTile = viz.overlayTilemap != null && viz.overlayTilemap.HasTile(cell);
+            return new TileVisibilityState(
+                cell,
+                hasMoldTile,
+                hasMoldTile ? viz.moldTilemap.GetColor(cell) : Color.white,
+                hasOverlayTile,
+                hasOverlayTile ? viz.overlayTilemap.GetColor(cell) : Color.white);
+        }
+
+        private void HideTile(TileVisibilityState state)
+        {
+            if (state.HasMoldTile && viz.moldTilemap != null)
             {
-                var color = viz.moldTilemap.GetColor(destinationCell);
+                var color = viz.moldTilemap.GetColor(state.Cell);
                 color.a = 0f;
-                viz.moldTilemap.SetColor(destinationCell, color);
+                viz.moldTilemap.SetColor(state.Cell, color);
             }
 
-            if (viz.overlayTilemap != null && viz.overlayTilemap.HasTile(destinationCell))
+            if (state.HasOverlayTile && viz.overlayTilemap != null)
             {
-                var color = viz.overlayTilemap.GetColor(destinationCell);
+                var color = viz.overlayTilemap.GetColor(state.Cell);
                 color.a = 0f;
-                viz.overlayTilemap.SetColor(destinationCell, color);
+                viz.overlayTilemap.SetColor(state.Cell, color);
             }
         }
 
-        private void RestoreDestination(Vector3Int destinationCell, Color moldColor, Color overlayColor)
+        private void RestoreTile(TileVisibilityState state, int tileId, bool restoreBoardStateOnFinish)
         {
-            if (viz.moldTilemap != null && viz.moldTilemap.HasTile(destinationCell))
+            if (restoreBoardStateOnFinish)
             {
-                viz.moldTilemap.SetColor(destinationCell, moldColor);
+                viz.RenderTileFromBoard(tileId);
+                return;
             }
 
-            if (viz.overlayTilemap != null && viz.overlayTilemap.HasTile(destinationCell))
+            if (state.HasMoldTile && viz.moldTilemap != null)
             {
-                viz.overlayTilemap.SetColor(destinationCell, overlayColor);
+                viz.moldTilemap.SetColor(state.Cell, state.MoldColor);
+            }
+
+            if (state.HasOverlayTile && viz.overlayTilemap != null)
+            {
+                viz.overlayTilemap.SetColor(state.Cell, state.OverlayColor);
             }
         }
 
@@ -245,6 +383,11 @@ namespace FungusToast.Unity.Grid.Animation
             Vector3 world = tilemap.CellToWorld(cell);
             Vector3 cellSize = tilemap.cellSize;
             return world + new Vector3(cellSize.x * 0.5f, cellSize.y * 0.5f, 0f);
+        }
+
+        private static float ScaleDuration(float baseDuration, float durationScale)
+        {
+            return Mathf.Max(0.0001f, baseDuration * Mathf.Max(0.01f, durationScale));
         }
     }
 }

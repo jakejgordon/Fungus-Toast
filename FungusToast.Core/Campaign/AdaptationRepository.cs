@@ -93,6 +93,11 @@ namespace FungusToast.Core.Campaign
                         "At the start of the game, your starting spore launches one toxin into the nearest open tile beside each enemy starting spore.",
                         "spore_salvo"),
                     new AdaptationDefinition(
+                        AdaptationIds.HyphalBridge,
+                        "Hyphal Bridge",
+                        $"At the end of round {AdaptationGameBalance.HyphalBridgeTriggerRound}, 4 living cells drop in a straight line at equal intervals between your starting cell and the nearest enemy starting cell. They replace any non-resistant occupant and skip resistant cells.",
+                        "hyphal_bridge"),
+                    new AdaptationDefinition(
                         AdaptationIds.VesicleBurst,
                         "Vesicle Burst",
                         $"For the rest of the campaign, each of your expired toxins has a {vesicleBurstPercent}% chance to pop and drop friendly toxins into every orthogonally adjacent tile that is empty or occupied by a non-resistant enemy cell, corpse, or toxin.",

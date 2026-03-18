@@ -122,6 +122,11 @@ namespace FungusToast.Unity.UI
         public const float SporeSalvoBannerHoldSeconds = 0.7f;
 
         /// <summary>
+        /// Hold duration for the Hyphal Bridge growth-end banner.
+        /// </summary>
+        public const float HyphalBridgeBannerHoldSeconds = 1.1f;
+
+        /// <summary>
         /// Total duration for the Conidial Relay presentation animation.
         /// </summary>
         public const float ConidialRelayTotalDurationSeconds = 1.5f;
@@ -230,6 +235,11 @@ namespace FungusToast.Unity.UI
         /// Portion of landing time used by the initial impact squash.
         /// </summary>
         public const float ConidialRelayLandingImpactPortion = 0.42f;
+
+        /// <summary>
+        /// Duration scale applied to each Hyphal Bridge hop so four launches fit cleanly into the growth-end presentation.
+        /// </summary>
+        public const float HyphalBridgeSegmentDurationScale = 0.5f;
 
         /// <summary>
         /// Duration (in seconds) between growth cycles during the growth phase.

@@ -93,6 +93,9 @@ namespace FungusToast.Unity.UI.Campaign
                         case "spore_salvo":
                             DrawSporeSalvo(texture, drawAccent, highlight);
                             break;
+                        case "hyphal_bridge":
+                            DrawHyphalBridge(texture, drawAccent, highlight);
+                            break;
                         case "vesicle_burst":
                             DrawVesicleBurst(texture, drawAccent, highlight);
                             break;
@@ -121,6 +124,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "distal_spore" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.52f),
                 "ascus_primacy" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Surface.PanelPrimary, 0.5f),
                 "spore_salvo" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Surface.PanelPrimary, 0.48f),
+                "hyphal_bridge" => Color.Lerp(UIStyleTokens.Accent.Moss, UIStyleTokens.Surface.PanelPrimary, 0.42f),
                 "vesicle_burst" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Accent.Putrefaction, 0.3f),
                 _ => UIStyleTokens.Surface.PanelPrimary
             };
@@ -143,6 +147,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "distal_spore" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Text.Primary, 0.08f),
                 "ascus_primacy" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Text.Primary, 0.12f),
                 "spore_salvo" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.State.Danger, 0.35f),
+                "hyphal_bridge" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.State.Info, 0.25f),
                 "vesicle_burst" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Accent.Putrefaction, 0.35f),
                 _ => UIStyleTokens.Text.Primary
             };
@@ -298,6 +303,17 @@ namespace FungusToast.Unity.UI.Campaign
             PaintBrush(texture, 31, 20, 2, highlight);
             PaintBrush(texture, 31, 10, 2, highlight);
             PaintBrush(texture, 31, 30, 2, highlight);
+        }
+
+        private static void DrawHyphalBridge(Texture2D texture, Color accent, Color highlight)
+        {
+            FillCircle(texture, 8, 11, 4, highlight);
+            FillCircle(texture, 32, 29, 4, highlight);
+            DrawLine(texture, 11, 13, 29, 27, accent, 2);
+            FillCircle(texture, 13, 15, 2, accent);
+            FillCircle(texture, 18, 19, 2, highlight);
+            FillCircle(texture, 22, 23, 2, accent);
+            FillCircle(texture, 27, 27, 2, highlight);
         }
 
         private static void DrawVesicleBurst(Texture2D texture, Color accent, Color highlight)

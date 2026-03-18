@@ -77,6 +77,7 @@ namespace FungusToast.Unity.Grid
         private readonly Dictionary<int, ExpiringToxinVisualSnapshot> pendingToxinExpirySnapshots = new();
         private readonly Dictionary<int, Coroutine> toxinExpiryCoroutines = new();
         private readonly HashSet<int> deferredResistanceOverlayTileIds = new();
+        private readonly HashSet<int> preAnimationHiddenPreviewTileIds = new();
 
         private sealed class ExpiringToxinVisualSnapshot
         {
@@ -108,7 +109,7 @@ namespace FungusToast.Unity.Grid
         private Animation.RegenerativeHyphaeReclaimAnimator _reclaimAnimator;
         private Animation.SurgicalInoculationAnimator _surgicalAnimator; // ensure correct reference
         private Animation.StartingSporeArrivalAnimator _startingSporeAnimator; // NEW: starting spores
-        private Animation.ConidialRelayAnimator _conidialRelayAnimator;
+        private Animation.CompositeLaunchArcAnimator _launchArcAnimator;
 
         // Animation tracking so external code can wait for all visual animations to finish
         private int _activeAnimationCount = 0;
@@ -126,7 +127,7 @@ namespace FungusToast.Unity.Grid
             _reclaimAnimator = new Animation.RegenerativeHyphaeReclaimAnimator(this);
             _surgicalAnimator = new Animation.SurgicalInoculationAnimator(this);
             _startingSporeAnimator = new Animation.StartingSporeArrivalAnimator(this); // NEW
-            _conidialRelayAnimator = new Animation.ConidialRelayAnimator(this);
+            _launchArcAnimator = new Animation.CompositeLaunchArcAnimator(this);
         }
 
         private void OnDestroy()
@@ -168,12 +169,12 @@ namespace FungusToast.Unity.Grid
         public IEnumerator PlayStartingSporeArrivalAnimation(IEnumerable<int> startingTileIds)
             => _startingSporeAnimator != null ? _startingSporeAnimator.Play(startingTileIds) : null;
         public IEnumerator PlayConidialRelayAnimation(int playerId, int sourceTileId, int destinationTileId)
-            => _conidialRelayAnimator != null ? _conidialRelayAnimator.Play(playerId, sourceTileId, destinationTileId) : null;
+            => _launchArcAnimator != null ? _launchArcAnimator.Play(playerId, sourceTileId, destinationTileId) : null;
         public IEnumerator PlayDistalSporeAnimation(int playerId, int sourceTileId, int destinationTileId)
-            => _conidialRelayAnimator != null ? _conidialRelayAnimator.Play(playerId, sourceTileId, destinationTileId, preserveSourceCell: true) : null;
+            => _launchArcAnimator != null ? _launchArcAnimator.Play(playerId, sourceTileId, destinationTileId, preserveSourceCell: true) : null;
         public IEnumerator PlaySporeSalvoAnimation(int playerId, int sourceTileId, int destinationTileId)
-            => _conidialRelayAnimator != null
-                ? _conidialRelayAnimator.Play(
+            => _launchArcAnimator != null
+                ? _launchArcAnimator.Play(
                     playerId,
                     sourceTileId,
                     destinationTileId,
@@ -181,6 +182,15 @@ namespace FungusToast.Unity.Grid
                     overlaySprite: toxinOverlayTile != null ? toxinOverlayTile.sprite : null,
                     overlayScale: UIEffectConstants.SporeSalvoOverlayScale,
                     restoreBoardStateOnFinish: true)
+                : null;
+        public IEnumerator PlayHyphalBridgeAnimation(int playerId, int sourceTileId, IReadOnlyList<int> destinationTileIds)
+            => _launchArcAnimator != null
+                ? _launchArcAnimator.PlaySequence(
+                    playerId,
+                    sourceTileId,
+                    destinationTileIds,
+                    preserveSourceCell: true,
+                    durationScale: UIEffectConstants.HyphalBridgeSegmentDurationScale)
                 : null;
         public IEnumerator PlayMycotoxicLashAnimation(IReadOnlyList<int> tileIds)
         {
@@ -800,6 +810,29 @@ namespace FungusToast.Unity.Grid
             return null;
         }
 
+        public void RegisterPreAnimationHiddenPreviewTiles(IEnumerable<int> tileIds)
+        {
+            if (tileIds == null)
+            {
+                return;
+            }
+
+            foreach (int tileId in tileIds.Where(tileId => tileId >= 0))
+            {
+                preAnimationHiddenPreviewTileIds.Add(tileId);
+            }
+        }
+
+        public void RevealPreAnimationPreviewTile(int tileId)
+        {
+            preAnimationHiddenPreviewTileIds.Remove(tileId);
+        }
+
+        public void ClearPreAnimationPreviewTiles()
+        {
+            preAnimationHiddenPreviewTileIds.Clear();
+        }
+
         public void RenderTileFromBoard(int tileId)
         {
             var activeBoard = ActiveBoard;
@@ -828,6 +861,31 @@ namespace FungusToast.Unity.Grid
             if (tile?.FungalCell != null)
             {
                 RenderFungalCellOverlay(tile, pos);
+                ApplyPreAnimationPreviewHiddenState(tileId, pos);
+            }
+        }
+
+        private void ApplyPreAnimationPreviewHiddenState(int tileId, Vector3Int pos)
+        {
+            if (!preAnimationHiddenPreviewTileIds.Contains(tileId))
+            {
+                return;
+            }
+
+            if (moldTilemap != null && moldTilemap.HasTile(pos))
+            {
+                moldTilemap.SetTileFlags(pos, TileFlags.None);
+                var moldColor = moldTilemap.GetColor(pos);
+                moldColor.a = 0f;
+                moldTilemap.SetColor(pos, moldColor);
+            }
+
+            if (overlayTilemap != null && overlayTilemap.HasTile(pos))
+            {
+                overlayTilemap.SetTileFlags(pos, TileFlags.None);
+                var overlayColor = overlayTilemap.GetColor(pos);
+                overlayColor.a = 0f;
+                overlayTilemap.SetColor(pos, overlayColor);
             }
         }
 
@@ -1484,6 +1542,7 @@ namespace FungusToast.Unity.Grid
                     toastTilemap.SetColor(pos, GetSurfaceColor(x, y, board.Width, board.Height));
                     toastTilemap.SetTransformMatrix(pos, GetPlayableSurfaceTileMatrix());
                     RenderFungalCellOverlay(tile, pos);
+                    ApplyPreAnimationPreviewHiddenState(tile.TileId, pos);
                 }
             }
 

@@ -2,6 +2,8 @@ namespace FungusToast.Core.Config
 {
     public static class AdaptationGameBalance
     {
+        public const int HyphalBridgeTriggerRound = 8;
+        public const int HyphalBridgeCellCount = 4;
         public const int ConidialRelayTriggerRound = 10;
         public const int HyphalEconomySurgeCostReduction = 1;
         public const float MycotoxicHaloOrthogonalKillChanceBonus = 0.02f;

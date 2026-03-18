@@ -16,5 +16,6 @@ namespace FungusToast.Core.Campaign
         public const string AscusPrimacy = "adaptation_12";
         public const string SporeSalvo = "adaptation_13";
         public const string VesicleBurst = "adaptation_14";
+        public const string HyphalBridge = "adaptation_15";
     }
 }

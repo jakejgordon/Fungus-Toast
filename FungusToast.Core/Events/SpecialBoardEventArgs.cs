@@ -14,7 +14,8 @@ namespace FungusToast.Core.Events
         MarginalClampTriggered = 5,
         DistalSporeTriggered = 6,
         SporeSalvoTriggered = 7,
-        VesicleBurstTriggered = 8
+        VesicleBurstTriggered = 8,
+        HyphalBridgeTriggered = 9
     }
 
     public sealed class SpecialBoardEventArgs : EventArgs

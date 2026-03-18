@@ -73,6 +73,32 @@ namespace FungusToast.Core.Phases
             }
         }
 
+        public static void OnPostGrowthPhaseCompleted(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            if (board.CurrentRound != AdaptationGameBalance.HyphalBridgeTriggerRound)
+            {
+                return;
+            }
+
+            foreach (var player in players)
+            {
+                var adaptation = player.GetAdaptation(AdaptationIds.HyphalBridge);
+                if (adaptation == null || adaptation.HasTriggered)
+                {
+                    continue;
+                }
+
+                if (TryApplyHyphalBridge(player, board, players))
+                {
+                    adaptation.MarkTriggered();
+                }
+            }
+        }
+
         public static void OnLivingCellEstablished(
             int playerId,
             int tileId,
@@ -385,6 +411,80 @@ namespace FungusToast.Core.Phases
             }
 
             return false;
+        }
+
+        private static bool TryApplyHyphalBridge(
+            Player player,
+            GameBoard board,
+            IReadOnlyList<Player> players)
+        {
+            if (!player.StartingTileId.HasValue)
+            {
+                return false;
+            }
+
+            int sourceTileId = player.StartingTileId.Value;
+            var sourcePosition = board.GetXYFromTileId(sourceTileId);
+            var playerSummaries = BoardUtilities.GetPlayerBoardSummaries(players.ToList(), board);
+
+            var nearestEnemy = players
+                .Where(candidate => candidate.PlayerId != player.PlayerId && candidate.StartingTileId.HasValue)
+                .OrderBy(candidate => SquaredDistance(board.GetXYFromTileId(candidate.StartingTileId!.Value), sourcePosition))
+                .ThenByDescending(candidate => playerSummaries.TryGetValue(candidate.PlayerId, out var summary) ? summary.LivingCells : 0)
+                .ThenBy(candidate => candidate.PlayerId)
+                .FirstOrDefault();
+            if (nearestEnemy?.StartingTileId == null)
+            {
+                return false;
+            }
+
+            var bridgeTileIds = GetHyphalBridgeTileIds(
+                board,
+                sourceTileId,
+                nearestEnemy.StartingTileId.Value,
+                AdaptationGameBalance.HyphalBridgeCellCount);
+            if (bridgeTileIds.Count == 0)
+            {
+                return false;
+            }
+
+            var resolvedTileIds = new List<int>(bridgeTileIds.Count);
+            foreach (int tileId in bridgeTileIds)
+            {
+                var tile = board.GetTileById(tileId);
+                if (tile == null || tile.FungalCell?.IsResistant == true)
+                {
+                    continue;
+                }
+
+                var replacementCell = new FungalCell(
+                    ownerPlayerId: player.PlayerId,
+                    tileId: tileId,
+                    source: GrowthSource.HyphalBridge,
+                    lastOwnerPlayerId: tile.FungalCell?.OwnerPlayerId);
+                board.PlaceFungalCell(replacementCell);
+
+                var placedCell = board.GetCell(tileId);
+                if (placedCell?.IsAlive == true && placedCell.OwnerPlayerId == player.PlayerId)
+                {
+                    placedCell.ClearNewlyGrownFlag();
+                    resolvedTileIds.Add(tileId);
+                }
+            }
+
+            if (resolvedTileIds.Count == 0)
+            {
+                return false;
+            }
+
+            board.OnSpecialBoardEventTriggered(
+                new SpecialBoardEventArgs(
+                    SpecialBoardEventKind.HyphalBridgeTriggered,
+                    player.PlayerId,
+                    sourceTileId,
+                    resolvedTileIds[resolvedTileIds.Count - 1],
+                    resolvedTileIds));
+            return true;
         }
 
         private static void TryApplySporeSalvo(
@@ -707,6 +807,108 @@ namespace FungusToast.Core.Phases
             }
 
             return cell.OwnerPlayerId != ownerPlayerId;
+        }
+
+        private static List<int> GetHyphalBridgeTileIds(
+            GameBoard board,
+            int sourceTileId,
+            int destinationTileId,
+            int requestedStops)
+        {
+            var (startX, startY) = board.GetXYFromTileId(sourceTileId);
+            var (endX, endY) = board.GetXYFromTileId(destinationTileId);
+            var line = GenerateLine(startX, startY, endX, endY);
+            if (line.Count < 3 || requestedStops <= 0)
+            {
+                return new List<int>();
+            }
+
+            int maxInteriorIndex = line.Count - 2;
+            var selectedIndices = new List<int>(requestedStops);
+            for (int stopNumber = 1; stopNumber <= requestedStops; stopNumber++)
+            {
+                int preferredIndex = (int)Math.Round(((line.Count - 1) * stopNumber) / (requestedStops + 1d), MidpointRounding.AwayFromZero);
+                preferredIndex = Math.Clamp(preferredIndex, 1, maxInteriorIndex);
+
+                int chosenIndex = FindNearestUnusedInteriorIndex(preferredIndex, maxInteriorIndex, selectedIndices);
+                if (chosenIndex >= 1)
+                {
+                    selectedIndices.Add(chosenIndex);
+                }
+            }
+
+            return selectedIndices
+                .Distinct()
+                .OrderBy(index => index)
+                .Select(index =>
+                {
+                    var point = line[index];
+                    return (point.y * board.Width) + point.x;
+                })
+                .Distinct()
+                .ToList();
+        }
+
+        private static int FindNearestUnusedInteriorIndex(int preferredIndex, int maxInteriorIndex, IReadOnlyCollection<int> usedIndices)
+        {
+            if (!usedIndices.Contains(preferredIndex))
+            {
+                return preferredIndex;
+            }
+
+            for (int offset = 1; offset <= maxInteriorIndex; offset++)
+            {
+                int lower = preferredIndex - offset;
+                if (lower >= 1 && !usedIndices.Contains(lower))
+                {
+                    return lower;
+                }
+
+                int upper = preferredIndex + offset;
+                if (upper <= maxInteriorIndex && !usedIndices.Contains(upper))
+                {
+                    return upper;
+                }
+            }
+
+            return -1;
+        }
+
+        private static List<(int x, int y)> GenerateLine(int x0, int y0, int x1, int y1)
+        {
+            var points = new List<(int x, int y)>();
+
+            int dx = Math.Abs(x1 - x0);
+            int dy = Math.Abs(y1 - y0);
+            int sx = x0 < x1 ? 1 : -1;
+            int sy = y0 < y1 ? 1 : -1;
+            int err = dx - dy;
+
+            int currentX = x0;
+            int currentY = y0;
+            while (true)
+            {
+                points.Add((currentX, currentY));
+                if (currentX == x1 && currentY == y1)
+                {
+                    break;
+                }
+
+                int doubledError = 2 * err;
+                if (doubledError > -dy)
+                {
+                    err -= dy;
+                    currentX += sx;
+                }
+
+                if (doubledError < dx)
+                {
+                    err += dx;
+                    currentY += sy;
+                }
+            }
+
+            return points;
         }
 
         private static int SquaredDistance((int x, int y) a, (int x, int y) b)

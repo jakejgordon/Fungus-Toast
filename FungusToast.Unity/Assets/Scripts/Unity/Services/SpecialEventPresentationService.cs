@@ -41,6 +41,7 @@ namespace FungusToast.Unity
             pendingImmediateEvents.Clear();
             pendingPostDecayEvents.Clear();
             isPresenting = false;
+            getGridVisualizer()?.ClearPreAnimationPreviewTiles();
         }
 
         public void Enqueue(SpecialBoardEventArgs e)
@@ -58,11 +59,28 @@ namespace FungusToast.Unity
 
             if (IsImmediateEvent(e.EventKind))
             {
+                RegisterPreAnimationPreviewTiles(e);
                 pendingImmediateEvents.Enqueue(e);
                 return;
             }
 
             pendingPostDecayEvents.Enqueue(e);
+        }
+
+        private void RegisterPreAnimationPreviewTiles(SpecialBoardEventArgs specialEvent)
+        {
+            if (specialEvent?.EventKind != SpecialBoardEventKind.HyphalBridgeTriggered)
+            {
+                return;
+            }
+
+            var gridVisualizer = getGridVisualizer();
+            if (gridVisualizer == null)
+            {
+                return;
+            }
+
+            gridVisualizer.RegisterPreAnimationHiddenPreviewTiles(specialEvent.AffectedTileIds);
         }
 
         public IEnumerator PresentPendingImmediate()
@@ -162,6 +180,22 @@ namespace FungusToast.Unity
                         specialEvent.SourceTileId,
                         specialEvent.DestinationTileId);
                     break;
+                case SpecialBoardEventKind.HyphalBridgeTriggered:
+                    int bridgeCells = specialEvent.AffectedTileIds?.Count ?? 0;
+                    if (bridgeCells <= 0)
+                    {
+                        yield break;
+                    }
+
+                    uiManager.GameLogRouter?.RecordHyphalBridgeDeployment(specialEvent.PlayerId, bridgeCells);
+                    uiManager.PhaseBanner?.Show(
+                        BuildHyphalBridgeBannerText(bridgeCells),
+                        UIEffectConstants.HyphalBridgeBannerHoldSeconds);
+                    yield return gridVisualizer.PlayHyphalBridgeAnimation(
+                        specialEvent.PlayerId,
+                        specialEvent.SourceTileId,
+                        specialEvent.AffectedTileIds.ToList());
+                    break;
                 case SpecialBoardEventKind.DistalSporeTriggered:
                     uiManager.GameLogRouter?.RecordDistalSporeDeployment(specialEvent.PlayerId);
                     uiManager.PhaseBanner?.Show(
@@ -220,7 +254,8 @@ namespace FungusToast.Unity
             return eventKind == SpecialBoardEventKind.RetrogradeBloomTriggered
                 || eventKind == SpecialBoardEventKind.MarginalClampTriggered
                 || eventKind == SpecialBoardEventKind.DistalSporeTriggered
-                || eventKind == SpecialBoardEventKind.SporeSalvoTriggered;
+                || eventKind == SpecialBoardEventKind.SporeSalvoTriggered
+                || eventKind == SpecialBoardEventKind.HyphalBridgeTriggered;
         }
 
         private List<SpecialBoardEventArgs> CollectSporeSalvoBatch(SpecialBoardEventArgs firstEvent)
@@ -534,6 +569,13 @@ namespace FungusToast.Unity
         private static string BuildSporeSalvoBannerText()
         {
             return "Spore Salvo launches toxins at enemy molds!";
+        }
+
+        private static string BuildHyphalBridgeBannerText(int bridgeCells)
+        {
+            return bridgeCells == 1
+                ? "Hyphal Bridge roots 1 bridge cell!"
+                : $"Hyphal Bridge roots {bridgeCells} bridge cells!";
         }
     }
 }

@@ -703,6 +703,20 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned, bool deprecated = true) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }
         public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations) { }
         public void RecordConidialRelayRelocation(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Starting cell relocated via Conidial Relay", GameLogCategory.Lucky); }
+        public void RecordHyphalBridgeDeployment(int playerId, int cellsPlaced)
+        {
+            if (!IsHuman(playerId) || cellsPlaced <= 0)
+            {
+                return;
+            }
+
+            AddPlayerEvent(
+                playerId,
+                cellsPlaced == 1
+                    ? "Hyphal Bridge rooted 1 bridge cell"
+                    : $"Hyphal Bridge rooted {cellsPlaced} bridge cells",
+                GameLogCategory.Lucky);
+        }
         public void RecordVesicleBurstEffect(int playerId, int poisonedCells, int toxifiedTiles)
         {
             if (!IsHuman(playerId) || (poisonedCells <= 0 && toxifiedTiles <= 0))
