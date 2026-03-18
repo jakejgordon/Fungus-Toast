@@ -217,6 +217,34 @@ namespace FungusToast.Core.AI
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
             ),
+            // Proven promotion: AI13 shell with anabolic-first opener
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_CampaignMirror_AI13_AnabolicFirst",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+            ),
+            // Proven promotion: original AI13 shell
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_CampaignMirror_AI13_BalancedControl_MaxEconomy",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+            ),
             new ParameterizedSpendingStrategy(
                 strategyName: "SurgeFreq_10_Hyphal",
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -465,12 +493,12 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.MaxEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.CreepingMold),
                     new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
                     new TargetMutationGoal(MutationIds.Necrosporulation),
                     new TargetMutationGoal(MutationIds.CatabolicRebirth)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
             )
         };
 
@@ -839,6 +867,110 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.CatabolicRebirth)
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+            ),
+
+            // Temporary AI13 permutations for tuning analysis
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_CampaignMirror_AI13_AnabolicFirst",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TMP_AI13_ModerateEconomy",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TMP_AI13_NoPreferredMyco",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TMP_AI13_AnabolicFirst_ModerateEconomy",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TMP_AI13_AnabolicFirst_NoPreferredMyco",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TMP_AI13_AnabolicFirst_ReclamationOnlyMyco",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Reclamation)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TMP_AI13_AnabolicFirst_MinorEconomy",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
             )
         };
 
@@ -860,6 +992,9 @@ namespace FungusToast.Core.AI
                 ["TST_LowTierEconomyGrinder"] = StrategyTheme.TierCap,
                 ["TST_LowTierSurgeSkirmisher"] = StrategyTheme.Counterplay,
                 ["TST_BalancedControl_MinorEconomy"] = StrategyTheme.Control,
+                ["TST_CampaignMirror_AI13_AnabolicFirst"] = StrategyTheme.Control,
+                ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyTheme.Control,
+                ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyTheme.EconomyRamp,
                 ["Grow>Defend>Kill"] = StrategyTheme.Defense,
                 ["Grow>Kill>Reclaim(Econ)"] = StrategyTheme.EconomyRamp,
                 ["Grow>Kill>Reclaim(Econ/Reclaim)"] = StrategyTheme.Reclamation,
@@ -880,13 +1015,18 @@ namespace FungusToast.Core.AI
                 ["TST_BalancedControl_AnabolicFirst"] = StrategyPowerTier.Strong,
                 ["TST_BalancedControl_MaxEconomy"] = StrategyPowerTier.Strong,
                 ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyPowerTier.Strong,
+                ["TST_CampaignMirror_AI13_AnabolicFirst"] = StrategyPowerTier.Strong,
+                ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyPowerTier.Strong,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyPowerTier.Strong,
+                ["TST_FortressResilience"] = StrategyPowerTier.Weak,
+                ["TST_OpportunisticCounterplay"] = StrategyPowerTier.Weak,
+                ["TST_RebirthAttrition"] = StrategyPowerTier.Weak,
                 ["TST_LowTierEconomyGrinder"] = StrategyPowerTier.Weak,
                 ["TST_LowTierSurgeSkirmisher"] = StrategyPowerTier.Weak,
                 ["Growth/Resilience"] = StrategyPowerTier.Weak,
                 ["AI6"] = StrategyPowerTier.Weak,
                 ["AI12"] = StrategyPowerTier.Weak,
-                ["AI13"] = StrategyPowerTier.Weak,
+                ["AI13"] = StrategyPowerTier.Strong,
                 ["AI1"] = StrategyPowerTier.Strong,
                 ["AI2"] = StrategyPowerTier.Strong,
                 ["AI3"] = StrategyPowerTier.Strong,
@@ -904,13 +1044,13 @@ namespace FungusToast.Core.AI
                 ["TST_EarlyReclaimerSwarm"] = StrategyRole.Experimental,
                 ["TST_ToxinSiege"] = StrategyRole.Experimental,
                 ["TST_HyphalSurgeTempo"] = StrategyRole.Experimental,
-                ["TST_FortressResilience"] = StrategyRole.Experimental,
-                ["TST_OpportunisticCounterplay"] = StrategyRole.Experimental,
+                ["TST_FortressResilience"] = StrategyRole.Training,
+                ["TST_OpportunisticCounterplay"] = StrategyRole.Training,
                 ["TST_Tier3PlateauSpecialist"] = StrategyRole.Experimental,
                 ["TST_LateGameSpike"] = StrategyRole.Experimental,
                 ["TST_BalancedGeneralistControl"] = StrategyRole.Experimental,
                 ["TST_BalancedControl_NoPreferredMyco"] = StrategyRole.Experimental,
-                ["TST_RebirthAttrition"] = StrategyRole.Experimental,
+                ["TST_RebirthAttrition"] = StrategyRole.Training,
                 ["TST_BalancedControl_MaxEconomy"] = StrategyRole.Experimental,
                 ["TST_LowTierEconomyGrinder"] = StrategyRole.Training,
                 ["TST_LowTierSurgeSkirmisher"] = StrategyRole.Training,
@@ -918,10 +1058,12 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI7_Hyphal"] = StrategyRole.Experimental,
                 ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyRole.Experimental,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyRole.Experimental,
+                ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyRole.Experimental,
                 ["AI1"] = StrategyRole.Boss,
                 ["AI2"] = StrategyRole.Boss,
                 ["AI3"] = StrategyRole.Boss,
                 ["AI10"] = StrategyRole.Boss,
+                ["AI13"] = StrategyRole.Boss,
                 ["AI6"] = StrategyRole.Training,
                 ["AI12"] = StrategyRole.Training,
                 ["AI13"] = StrategyRole.Training,
@@ -934,6 +1076,10 @@ namespace FungusToast.Core.AI
                 ["TST_BalancedControl_MaxEconomy"] = StrategyLifecycle.NeedsTuning,
                 ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyLifecycle.NeedsTuning,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyLifecycle.NeedsTuning,
+                ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyLifecycle.Active,
+                ["TST_FortressResilience"] = StrategyLifecycle.NeedsTuning,
+                ["TST_OpportunisticCounterplay"] = StrategyLifecycle.NeedsTuning,
+                ["TST_RebirthAttrition"] = StrategyLifecycle.NeedsTuning,
             };
 
         private static readonly Dictionary<string, DifficultyBand[]> ExplicitDifficultyBandsByName =
@@ -941,7 +1087,7 @@ namespace FungusToast.Core.AI
             {
                 ["AI6"] = new[] { DifficultyBand.Easy },
                 ["AI12"] = new[] { DifficultyBand.Easy },
-                ["AI13"] = new[] { DifficultyBand.Easy },
+                ["AI13"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["AI7"] = new[] { DifficultyBand.Normal },
                 ["AI8"] = new[] { DifficultyBand.Normal },
                 ["AI9"] = new[] { DifficultyBand.Normal },
@@ -955,6 +1101,9 @@ namespace FungusToast.Core.AI
                 ["TST_BalancedGeneralistControl"] = new[] { DifficultyBand.Normal },
                 ["TST_BalancedControl_AnabolicFirst"] = new[] { DifficultyBand.Hard },
                 ["TST_BalancedControl_MaxEconomy"] = new[] { DifficultyBand.Hard },
+                ["TST_CampaignMirror_AI13_AnabolicFirst"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
             };
 
         private static readonly Dictionary<string, CounterTag[]> ExplicitFavoredAgainstByName =
@@ -1287,6 +1436,13 @@ namespace FungusToast.Core.AI
 
         public static StrategyRole GetRoleForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
+            if (strategySet == StrategySetEnum.Proven
+                && (string.Equals(strategy.StrategyName, "TST_CampaignMirror_AI13_BalancedControl_MaxEconomy", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(strategy.StrategyName, "TST_CampaignMirror_AI13_AnabolicFirst", StringComparison.OrdinalIgnoreCase)))
+            {
+                return StrategyRole.Baseline;
+            }
+
             if (ExplicitRolesByName.TryGetValue(strategy.StrategyName, out var explicitRole))
             {
                 return explicitRole;
@@ -1302,6 +1458,13 @@ namespace FungusToast.Core.AI
 
         public static StrategyLifecycle GetLifecycleForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
+            if (strategySet == StrategySetEnum.Proven
+                && (string.Equals(strategy.StrategyName, "TST_CampaignMirror_AI13_BalancedControl_MaxEconomy", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(strategy.StrategyName, "TST_CampaignMirror_AI13_AnabolicFirst", StringComparison.OrdinalIgnoreCase)))
+            {
+                return StrategyLifecycle.Active;
+            }
+
             if (ExplicitLifecycleByName.TryGetValue(strategy.StrategyName, out var explicitLifecycle))
             {
                 return explicitLifecycle;
