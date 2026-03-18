@@ -50,14 +50,17 @@ namespace FungusToast.Simulation
         private static void RunSingleSimulation(SimulationConfig config, string experimentId)
         {
             var strategyRng = config.BaseSeed.HasValue ? new Random(config.BaseSeed.Value) : null;
+            var filteredStrategyPool = AIRoster.GetStrategiesByFilter(config.StrategySet, config.StrategyFilter);
             var strategies = config.ExplicitStrategyNames is { Count: > 0 }
                 ? AIRoster.GetStrategiesByName(config.StrategySet, config.ExplicitStrategyNames, out _)
-                : AIRoster.GetStrategies(
+                : SelectStrategies(
                     config.NumberOfPlayers,
                     config.StrategySet,
                     strategyRng,
                     config.StrategySelectionPolicy,
-                    cycleIndex: 0);
+                    config.StrategyFilter,
+                    cycleIndex: 0,
+                    prefilteredStrategies: filteredStrategyPool);
             var runMetadata = BuildRunMetadata(
                 config,
                 experimentId,
@@ -115,12 +118,15 @@ namespace FungusToast.Simulation
                         int stratumSeed = DeriveStratumSeed(config.BaseSeed ?? 0, players, board.Width, board.Height, strategySet);
                         string stratumExperimentId = $"{experimentId}__p{players}_w{board.Width}_h{board.Height}_s{strategySet}";
                         var strategyRng = new Random(stratumSeed);
-                        var strategies = AIRoster.GetStrategies(
+                        var filteredStrategyPool = AIRoster.GetStrategiesByFilter(strategySet, config.StrategyFilter);
+                        var strategies = SelectStrategies(
                             players,
                             strategySet,
                             strategyRng,
                             config.StrategySelectionPolicy,
-                            cycleIndex: stratumIndex - 1);
+                            config.StrategyFilter,
+                            cycleIndex: stratumIndex - 1,
+                            prefilteredStrategies: filteredStrategyPool);
                         var runMetadata = BuildRunMetadata(
                             config,
                             stratumExperimentId,
@@ -152,6 +158,40 @@ namespace FungusToast.Simulation
 
             Console.WriteLine();
             Console.WriteLine($"Batch complete. Export root hint: SimulationParquet/{experimentId}__*");
+        }
+
+        private static List<IMutationSpendingStrategy> SelectStrategies(
+            int count,
+            StrategySetEnum strategySet,
+            Random? rng,
+            StrategySelectionPolicy selectionPolicy,
+            StrategyCatalogFilter? filter,
+            int cycleIndex,
+            IReadOnlyList<IMutationSpendingStrategy>? prefilteredStrategies = null)
+        {
+            if (filter == null || filter.IsEmpty)
+            {
+                return AIRoster.GetStrategies(count, strategySet, rng, selectionPolicy, cycleIndex);
+            }
+
+            var sourceStrategies = prefilteredStrategies?.ToList() ?? AIRoster.GetStrategiesByFilter(strategySet, filter);
+            if (sourceStrategies.Count == 0)
+            {
+                throw new InvalidOperationException($"No strategies matched the requested filters for set {strategySet}.");
+            }
+
+            if (count > sourceStrategies.Count)
+            {
+                throw new InvalidOperationException($"Requested {count} strategies, but only {sourceStrategies.Count} matched the requested filters for set {strategySet}.");
+            }
+
+            return selectionPolicy switch
+            {
+                StrategySelectionPolicy.RandomUnique => sourceStrategies.OrderBy(_ => rng?.Next() ?? Random.Shared.Next()).Take(count).ToList(),
+                StrategySelectionPolicy.CoverageBalanced => sourceStrategies.OrderBy(_ => rng?.Next() ?? Random.Shared.Next()).Take(count).ToList(),
+                StrategySelectionPolicy.StratifiedCycle => sourceStrategies.Skip(cycleIndex % sourceStrategies.Count).Concat(sourceStrategies.Take(cycleIndex % sourceStrategies.Count)).Take(count).ToList(),
+                _ => sourceStrategies.Take(count).ToList()
+            };
         }
 
         private static SimulationRunMetadata BuildRunMetadata(
@@ -249,7 +289,8 @@ namespace FungusToast.Simulation
                 ExperimentId = "",
                 PlayerCounts = null,
                 BoardSizes = null,
-                StrategySets = null
+                StrategySets = null,
+                StrategyFilter = new StrategyCatalogFilter()
             };
 
             for (int i = 0; i < args.Length; i++)
@@ -381,6 +422,96 @@ namespace FungusToast.Simulation
                             i++;
                         }
                         break;
+                    case "--archetypes":
+                        if (i + 1 < args.Length)
+                        {
+                            var parsed = ParseCsvEnums<StrategyArchetype>(args[i + 1]);
+                            if (parsed.Count == 0)
+                            {
+                                Console.WriteLine($"Invalid --archetypes value: {args[i + 1]}");
+                                Console.WriteLine($"Valid values: {string.Join(", ", Enum.GetNames(typeof(StrategyArchetype)))}");
+                                return null;
+                            }
+
+                            config.StrategyFilter.Archetypes = parsed;
+                            i++;
+                        }
+                        break;
+                    case "--power-tiers":
+                        if (i + 1 < args.Length)
+                        {
+                            var parsed = ParseCsvEnums<StrategyPowerTier>(args[i + 1]);
+                            if (parsed.Count == 0)
+                            {
+                                Console.WriteLine($"Invalid --power-tiers value: {args[i + 1]}");
+                                Console.WriteLine($"Valid values: {string.Join(", ", Enum.GetNames(typeof(StrategyPowerTier)))}");
+                                return null;
+                            }
+
+                            config.StrategyFilter.PowerTiers = parsed;
+                            i++;
+                        }
+                        break;
+                    case "--roles":
+                        if (i + 1 < args.Length)
+                        {
+                            var parsed = ParseCsvEnums<StrategyRole>(args[i + 1]);
+                            if (parsed.Count == 0)
+                            {
+                                Console.WriteLine($"Invalid --roles value: {args[i + 1]}");
+                                Console.WriteLine($"Valid values: {string.Join(", ", Enum.GetNames(typeof(StrategyRole)))}");
+                                return null;
+                            }
+
+                            config.StrategyFilter.Roles = parsed;
+                            i++;
+                        }
+                        break;
+                    case "--lifecycles":
+                        if (i + 1 < args.Length)
+                        {
+                            var parsed = ParseCsvEnums<StrategyLifecycle>(args[i + 1]);
+                            if (parsed.Count == 0)
+                            {
+                                Console.WriteLine($"Invalid --lifecycles value: {args[i + 1]}");
+                                Console.WriteLine($"Valid values: {string.Join(", ", Enum.GetNames(typeof(StrategyLifecycle)))}");
+                                return null;
+                            }
+
+                            config.StrategyFilter.Lifecycles = parsed;
+                            i++;
+                        }
+                        break;
+                    case "--difficulty-bands":
+                        if (i + 1 < args.Length)
+                        {
+                            var parsed = ParseCsvEnums<DifficultyBand>(args[i + 1]);
+                            if (parsed.Count == 0)
+                            {
+                                Console.WriteLine($"Invalid --difficulty-bands value: {args[i + 1]}");
+                                Console.WriteLine($"Valid values: {string.Join(", ", Enum.GetNames(typeof(DifficultyBand)))}");
+                                return null;
+                            }
+
+                            config.StrategyFilter.DifficultyBands = parsed;
+                            i++;
+                        }
+                        break;
+                    case "--pools":
+                        if (i + 1 < args.Length)
+                        {
+                            var parsed = ParseCsvEnums<StrategyPool>(args[i + 1]);
+                            if (parsed.Count == 0)
+                            {
+                                Console.WriteLine($"Invalid --pools value: {args[i + 1]}");
+                                Console.WriteLine($"Valid values: {string.Join(", ", Enum.GetNames(typeof(StrategyPool)).Where(n => n != nameof(StrategyPool.None)))}");
+                                return null;
+                            }
+
+                            config.StrategyFilter.Pools = parsed;
+                            i++;
+                        }
+                        break;
                     case "--seed":
                         if (i + 1 < args.Length && int.TryParse(args[i + 1], out int baseSeed))
                         {
@@ -480,6 +611,22 @@ namespace FungusToast.Simulation
                 config.NumberOfPlayers = selectedByName.Count;
             }
 
+            if ((config.StrategyFilter?.IsEmpty ?? true) == false)
+            {
+                var filteredStrategies = AIRoster.GetStrategiesByFilter(config.StrategySet, config.StrategyFilter);
+                if (filteredStrategies.Count == 0)
+                {
+                    Console.WriteLine($"No strategies matched the requested filters for set {config.StrategySet}.");
+                    return null;
+                }
+
+                if (config.NumberOfPlayers > filteredStrategies.Count)
+                {
+                    Console.WriteLine($"Requested {config.NumberOfPlayers} players, but only {filteredStrategies.Count} strategies matched the requested filters for set {config.StrategySet}.");
+                    return null;
+                }
+            }
+
             return config;
         }
 
@@ -499,6 +646,12 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --board-sizes <csv>      Batch mode list, e.g. 80x80,160x160");
             Console.WriteLine("  --strategy-sets <csv>    Batch mode list, e.g. Testing,Proven,Mycovariants");
             Console.WriteLine("  --strategy-names <csv>   Explicit strategy names for single-run mode (overrides --players)");
+            Console.WriteLine("  --archetypes <csv>       Filter roster by archetype metadata");
+            Console.WriteLine("  --power-tiers <csv>      Filter roster by power tier metadata");
+            Console.WriteLine("  --roles <csv>            Filter roster by role metadata");
+            Console.WriteLine("  --lifecycles <csv>       Filter roster by lifecycle metadata");
+            Console.WriteLine("  --difficulty-bands <csv> Filter roster by difficulty metadata");
+            Console.WriteLine("  --pools <csv>            Filter roster by pool metadata");
             Console.WriteLine("  --seed <number>          Base seed for deterministic strategy/order/game seeds (default: 0)");
             Console.WriteLine("  --selection-policy <p>   Strategy sampler: RandomUnique, CoverageBalanced, StratifiedCycle (default: CoverageBalanced)");
             Console.WriteLine("  --experiment-id <id>     Identifier for this run's analytics artifacts");
@@ -524,6 +677,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  dotnet run --seed 12345             # Run with deterministic seed 12345");
             Console.WriteLine("  dotnet run --selection-policy StratifiedCycle --games 200 --no-keyboard");
             Console.WriteLine("  dotnet run --strategy-set Testing --strategy-names TST_BalancedGeneralistControl,TST_BalancedControl_MaxEconomy --games 20 --no-keyboard");
+            Console.WriteLine("  dotnet run --strategy-set Testing --roles Experimental --power-tiers Strong,Spike --games 50 --no-keyboard");
             Console.WriteLine("  dotnet run --experiment-id testA    # Tag outputs under experiment ID testA");
             Console.WriteLine("  dotnet run --width 50 --height 75   # Run with 50x75 board");
             Console.WriteLine("  dotnet run -w 200 -p 4              # Run 4 players on 200x100 board");
@@ -550,11 +704,30 @@ namespace FungusToast.Simulation
             public List<BoardSize>? BoardSizes { get; set; }
             public List<StrategySetEnum>? StrategySets { get; set; }
             public List<string>? ExplicitStrategyNames { get; set; }
+            public StrategyCatalogFilter StrategyFilter { get; set; } = new();
 
             public bool IsBatchMode =>
                 (PlayerCounts != null && PlayerCounts.Count > 0) ||
                 (BoardSizes != null && BoardSizes.Count > 0) ||
                 (StrategySets != null && StrategySets.Count > 0);
+        }
+
+        private static IReadOnlyList<TEnum> ParseCsvEnums<TEnum>(string csv)
+            where TEnum : struct, Enum
+        {
+            var result = new List<TEnum>();
+            var parts = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var part in parts)
+            {
+                if (!Enum.TryParse<TEnum>(part, ignoreCase: true, out var value))
+                {
+                    return Array.Empty<TEnum>();
+                }
+
+                result.Add(value);
+            }
+
+            return result.Distinct().ToList();
         }
 
         private static List<int> ParseCsvIntegers(string csv)

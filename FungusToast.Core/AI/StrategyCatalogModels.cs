@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace FungusToast.Core.AI
 {
@@ -143,5 +144,57 @@ namespace FungusToast.Core.AI
         public string Notes { get; }
         public IReadOnlyCollection<CounterTag> FavoredAgainst { get; }
         public IReadOnlyCollection<CounterTag> WeakAgainst { get; }
+    }
+
+    public sealed class StrategyCatalogFilter
+    {
+        public IReadOnlyCollection<StrategyArchetype> Archetypes { get; set; } = Array.Empty<StrategyArchetype>();
+        public IReadOnlyCollection<StrategyPowerTier> PowerTiers { get; set; } = Array.Empty<StrategyPowerTier>();
+        public IReadOnlyCollection<StrategyRole> Roles { get; set; } = Array.Empty<StrategyRole>();
+        public IReadOnlyCollection<StrategyLifecycle> Lifecycles { get; set; } = Array.Empty<StrategyLifecycle>();
+        public IReadOnlyCollection<DifficultyBand> DifficultyBands { get; set; } = Array.Empty<DifficultyBand>();
+        public IReadOnlyCollection<StrategyPool> Pools { get; set; } = Array.Empty<StrategyPool>();
+
+        public bool IsEmpty => Archetypes.Count == 0
+            && PowerTiers.Count == 0
+            && Roles.Count == 0
+            && Lifecycles.Count == 0
+            && DifficultyBands.Count == 0
+            && Pools.Count == 0;
+
+        public bool Matches(StrategyCatalogEntry entry)
+        {
+            if (Archetypes.Count > 0 && !Archetypes.Contains(entry.Archetype))
+            {
+                return false;
+            }
+
+            if (PowerTiers.Count > 0 && !PowerTiers.Contains(entry.PowerTier))
+            {
+                return false;
+            }
+
+            if (Roles.Count > 0 && !Roles.Contains(entry.Role))
+            {
+                return false;
+            }
+
+            if (Lifecycles.Count > 0 && !Lifecycles.Contains(entry.Lifecycle))
+            {
+                return false;
+            }
+
+            if (DifficultyBands.Count > 0 && !entry.DifficultyBands.Any(DifficultyBands.Contains))
+            {
+                return false;
+            }
+
+            if (Pools.Count > 0 && !Pools.Any(pool => (entry.Pools & pool) == pool))
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

@@ -1136,6 +1136,30 @@ namespace FungusToast.Core.AI
                 .FirstOrDefault(p => string.Equals(p.StrategyName, strategyName, StringComparison.OrdinalIgnoreCase));
         }
 
+        public static IReadOnlyList<StrategyCatalogEntry> GetStrategyCatalogEntries(
+            StrategySetEnum strategySet,
+            StrategyCatalogFilter? filter)
+        {
+            var entries = GetStrategyCatalogEntries(strategySet);
+            if (filter == null || filter.IsEmpty)
+            {
+                return entries;
+            }
+
+            return entries.Where(filter.Matches).ToList();
+        }
+
+        public static List<IMutationSpendingStrategy> GetStrategiesByFilter(
+            StrategySetEnum strategySet,
+            StrategyCatalogFilter? filter)
+        {
+            var strategyDictionary = GetStrategyDictionary(strategySet);
+            return GetStrategyCatalogEntries(strategySet, filter)
+                .Where(entry => strategyDictionary.ContainsKey(entry.StrategyName))
+                .Select(entry => strategyDictionary[entry.StrategyName])
+                .ToList();
+        }
+
         public static List<IMutationSpendingStrategy> GetStrategiesByName(
             StrategySetEnum strategySet,
             IEnumerable<string> strategyNames,
