@@ -25,8 +25,9 @@ namespace FungusToast.Unity.Campaign
         public bool IsAwaitingAdaptationSelection => State != null && State.pendingAdaptationSelection;
         public bool IsCompleted => State != null && State.campaignCompleted;
         public CampaignVictorySnapshot PendingVictorySnapshot => State?.pendingVictorySnapshot;
+        public int HumanMoldIndex => State != null ? State.humanMoldIndex : 0;
 
-        public void StartNew()
+        public void StartNew(int humanMoldIndex = 0)
         {
             if (progression.MaxLevels == 0) throw new InvalidOperationException("CampaignProgression has no levels defined.");
             var firstSpec = progression.Get(0);
@@ -41,6 +42,7 @@ namespace FungusToast.Unity.Campaign
                 seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue),
                 boardWidth = preset.boardWidth,
                 boardHeight = preset.boardHeight,
+                humanMoldIndex = Mathf.Max(0, humanMoldIndex),
                 pendingAdaptationSelection = false,
                 campaignCompleted = false,
                 pendingVictorySnapshot = null

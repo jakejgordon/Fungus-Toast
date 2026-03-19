@@ -462,7 +462,7 @@ namespace FungusToast.Unity.UI.GameStart
             label.fontSize = fontSize;
             label.fontStyle = fontStyle;
             label.alignment = alignment;
-            label.enableWordWrapping = true;
+            label.textWrappingMode = TextWrappingModes.Normal;
             label.text = string.Empty;
 
             var layoutElement = label.GetComponent<LayoutElement>();

@@ -252,14 +252,14 @@ namespace FungusToast.Unity
             InitializeGame(numberOfPlayers);
         }
 
-        public void StartCampaignNew()
+        public void StartCampaignNew(int humanMoldIndex = 0)
         {
             if (campaignController == null)
             {
                 Debug.LogError("[GameManager] Cannot start campaign: CampaignProgression not assigned.");
                 return;
             }
-            campaignController.StartNew();
+            campaignController.StartNew(humanMoldIndex);
             CurrentGameMode = GameMode.Campaign;
             var preset = campaignController.CurrentBoardPreset;
             if (preset != null)
@@ -269,7 +269,7 @@ namespace FungusToast.Unity
             }
             gridVisualizer?.SetBoardMedium(preset?.boardMedium);
             int totalPlayers =1 + (preset?.aiPlayers?.Count ??0);
-            SetHotseatConfig(1);
+            SetHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
             InitializeGame(totalPlayers);
         }
 
@@ -299,7 +299,7 @@ namespace FungusToast.Unity
             }
             gridVisualizer?.SetBoardMedium(preset?.boardMedium);
             int totalPlayers =1 + (preset?.aiPlayers?.Count ??0);
-            SetHotseatConfig(1);
+            SetHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
             InitializeGame(totalPlayers);
         }
 
@@ -316,7 +316,7 @@ namespace FungusToast.Unity
                 }
 
                 int totalPlayersFallback = 1 + (presetFallback?.aiPlayers?.Count ?? 0);
-                SetHotseatConfig(1);
+                SetHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
                 InitializeGame(totalPlayersFallback);
                 return;
             }
