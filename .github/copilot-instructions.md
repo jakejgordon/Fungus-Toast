@@ -262,6 +262,8 @@ FungusToast.Unity/
 **Adding New Mycovariants:**
 - Primary location: `FungusToast.Core/Mycovariants/Factories/`
 - Reference: `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`
+- Naming: generate 5 candidate names first using `FungusToast.Core/docs/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`
+- Presentation: generate a unique icon keyed off the Mycovariant's `IconId`; do not ship new Mycovariants on generic fallback art
 
 **Adding New Adaptations:**
 - Primary location: `FungusToast.Core/Campaign/`

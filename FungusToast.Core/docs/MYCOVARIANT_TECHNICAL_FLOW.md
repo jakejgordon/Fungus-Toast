@@ -4,13 +4,15 @@ This guide covers technical implementation and integration for Mycovariants in C
 
 ## Quick Workflow
 
-1. Add/confirm ID in `MycovariantIds.cs`.
-2. Add/confirm tunables in `MycovariantGameBalance.cs`.
-3. Define/update Mycovariant in the correct category factory under `Mycovariants/Factories/`.
-4. Implement/update effect logic in core processors/helpers.
-5. Wire draft behavior correctly for simulation and Unity paths.
-6. Add simulation tracking/reporting if needed.
-7. Validate by building Core + Simulation and running smoke checks.
+1. Generate 5 candidate names that satisfy `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`, then finalize one with the user.
+2. Add/confirm ID in `MycovariantIds.cs`.
+3. Add/confirm tunables in `MycovariantGameBalance.cs`.
+4. Define/update Mycovariant in the correct category factory under `Mycovariants/Factories/`.
+5. Generate and wire a unique icon through the centralized art lookup path using the Mycovariant's `IconId`.
+6. Implement/update effect logic in core processors/helpers.
+7. Wire draft behavior correctly for simulation and Unity paths.
+8. Add simulation tracking/reporting if needed.
+9. Validate by building Core + Simulation and running smoke checks.
 
 ---
 
@@ -41,14 +43,20 @@ Use Id-based lookups from the aggregated set; avoid creating new ad hoc aggregat
 ### 2) Factory Definition
 - Add private builder method to the proper category factory.
 - Add `yield return` in that factory’s `CreateAll()`.
-- Set fields coherently (`Type`, `Category`, `IsUniversal`, `AutoMarkTriggered`, `SynergyWith`, `AIScore`).
+- Set fields coherently (`Type`, `Category`, `IsUniversal`, `AutoMarkTriggered`, `SynergyWith`, `AIScore`, `IconId`).
 
-### 3) Core Effect Logic
+### 3) Icon and Presentation Wiring
+- Generate a unique icon for every new Mycovariant, even if the first pass is provisional.
+- Use the Mycovariant's `IconId` as the stable lookup key; do not rely on generic fallback art for shipped content.
+- Reuse centralized art lookup and loading paths instead of binding one-off sprites directly in UI code.
+- Verify the same icon appears consistently in draft cards, tooltips, and any persistent UI surfaces that expose Mycovariants.
+
+### 4) Core Effect Logic
 - Implement logic in `MycovariantEffectProcessor.cs` and/or helper classes.
 - Keep logic deterministic and Unity-free.
 - Reuse existing helper patterns when available.
 
-### 4) Draft Integration (Critical)
+### 5) Draft Integration (Critical)
 
 There are two execution contexts:
 - **Silent draft / simulation**: core execution path.
@@ -118,20 +126,20 @@ In recurring processors/events:
 - apply chance/effect,
 - increment tracked counts if this effect should appear in simulation output.
 
-### 5) Event and Phase Wiring
+### 6) Event and Phase Wiring
 If timing depends on lifecycle hooks, wire into appropriate systems, such as:
 - `GameRulesEventSubscriber.cs`
 - `TurnEngine.cs`
 - phase-specific processors/runners
 
-### 6) Simulation Tracking and Reporting
+### 7) Simulation Tracking and Reporting
 If effect output should appear in simulation results:
 - Add/extend `MycovariantEffectType` values as needed.
 - Record effect counts on `PlayerMycovariant` and/or observer methods.
 - Map counts into simulation output builders.
 - Extend observer interface/implementation when introducing new tracked events.
 
-### 7) Synergy and AI Scoring
+### 8) Synergy and AI Scoring
 - Add/update synergy groups in `MycovariantSynergyListFactory.cs`.
 - Keep AI scoring bounded and explainable.
 - Prefer existing scoring patterns unless new behavior demands otherwise.
@@ -140,6 +148,8 @@ If effect output should appear in simulation results:
 
 ## Common Pitfalls
 
+- Skipping the candidate-name step and locking in a name before checking clarity against the mechanic.
+- Reusing generic fallback art instead of assigning a distinct `IconId` and generated icon.
 - Treating Unity draft execution as identical to silent simulation execution.
 - Implementing active logic for human draft only and missing Unity AI draft behavior.
 - Forgetting simulation reporting hooks for effects intended to be analyzed.
