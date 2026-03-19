@@ -67,7 +67,23 @@ namespace FungusToast.Unity
         [Header("Hotseat Config")] 
         public int configuredHumanPlayerCount =1; 
         public int ConfiguredHumanPlayerCount => configuredHumanPlayerCount; 
-        public void SetHotseatConfig(int humanCount) => configuredHumanPlayerCount = Mathf.Max(1, humanCount);
+        private readonly List<int> configuredHumanMoldIndices = new();
+        public void SetHotseatConfig(int humanCount) => SetHotseatConfig(humanCount, null);
+        public void SetHotseatConfig(int humanCount, IReadOnlyList<int> humanMoldIndices)
+        {
+            configuredHumanPlayerCount = Mathf.Max(1, humanCount);
+            configuredHumanMoldIndices.Clear();
+
+            if (humanMoldIndices == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < humanMoldIndices.Count; i++)
+            {
+                configuredHumanMoldIndices.Add(humanMoldIndices[i]);
+            }
+        }
 
         [Header("Campaign Config")] 
         public CampaignProgression campaignProgression; // assign ScriptableObject in inspector
@@ -232,6 +248,7 @@ namespace FungusToast.Unity
         {
             CurrentGameMode = GameMode.Hotseat;
             gridVisualizer?.ClearBoardMediumOverride();
+            gridVisualizer?.ClearPlayerMoldAssignments();
             InitializeGame(numberOfPlayers);
         }
 
@@ -396,6 +413,8 @@ namespace FungusToast.Unity
             GameUIEventSubscriber.Subscribe(Board, gameUIManager, specialEventPresentationService);
             AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
 
+            ApplyConfiguredPlayerMoldAssignments(playerCount);
+
             playerInitializer.InitializePlayers(Board, players, humanPlayers, out humanPlayer, playerCount);
             ApplyCampaignAdaptations();
             SubscribeToPlayerMutationEvents();
@@ -406,6 +425,7 @@ namespace FungusToast.Unity
             gridVisualizer.Initialize(Board);
             PlaceStartingSpores();
             gridVisualizer.RenderBoard(Board);
+            InitializeHumanSidebarUiForCurrentPlayer();
 
             StartCoroutine(PlayStartingSporeIntroAndContinue());
             mutationManager.ResetMutationPoints(players);
@@ -457,6 +477,76 @@ namespace FungusToast.Unity
             {
                 magnifyingGlass.ApplyBoardSizeGate(Board.Width, Board.Height);
             }
+        }
+
+        private void ApplyConfiguredPlayerMoldAssignments(int totalPlayers)
+        {
+            if (gridVisualizer == null)
+            {
+                return;
+            }
+
+            var assignments = ResolveConfiguredPlayerMoldAssignments(totalPlayers);
+            if (assignments.Count == 0)
+            {
+                gridVisualizer.ClearPlayerMoldAssignments();
+                return;
+            }
+
+            gridVisualizer.SetPlayerMoldAssignments(assignments);
+        }
+
+        private List<int> ResolveConfiguredPlayerMoldAssignments(int totalPlayers)
+        {
+            var assignments = new List<int>();
+            int availableMolds = gridVisualizer != null ? gridVisualizer.PlayerMoldTileCount : 0;
+            if (availableMolds <= 0 || totalPlayers <= 0)
+            {
+                return assignments;
+            }
+
+            int humanCount = Mathf.Clamp(configuredHumanPlayerCount, 1, totalPlayers);
+            var remainingMolds = Enumerable.Range(0, availableMolds).ToList();
+
+            for (int humanIndex = 0; humanIndex < humanCount; humanIndex++)
+            {
+                int moldIndex = TakeConfiguredOrFallbackHumanMoldIndex(humanIndex, remainingMolds);
+                assignments.Add(moldIndex);
+                remainingMolds.Remove(moldIndex);
+            }
+
+            for (int playerIndex = humanCount; playerIndex < totalPlayers; playerIndex++)
+            {
+                if (remainingMolds.Count > 0)
+                {
+                    assignments.Add(remainingMolds[0]);
+                    remainingMolds.RemoveAt(0);
+                    continue;
+                }
+
+                assignments.Add(playerIndex % availableMolds);
+            }
+
+            return assignments;
+        }
+
+        private int TakeConfiguredOrFallbackHumanMoldIndex(int humanIndex, List<int> remainingMolds)
+        {
+            if (remainingMolds == null || remainingMolds.Count == 0)
+            {
+                return 0;
+            }
+
+            if (humanIndex < configuredHumanMoldIndices.Count)
+            {
+                int configuredMoldIndex = configuredHumanMoldIndices[humanIndex];
+                if (remainingMolds.Contains(configuredMoldIndex))
+                {
+                    return configuredMoldIndex;
+                }
+            }
+
+            return remainingMolds[0];
         }
 
         private void InitGameLogs()
@@ -999,7 +1089,7 @@ namespace FungusToast.Unity
             mycovariantDraftController?.gameObject.SetActive(false);
             cameraCenterer?.CaptureInitialFraming();
             InitGameLogs();
-            gameUIManager.MoldProfileRoot?.Initialize(Board.Players[0], Board.Players);
+            InitializeHumanSidebarUiForCurrentPlayer();
             if (testingModeEnabled)
             {
                 if (fastForwardRounds >0 && !_fastForwardStarted)
@@ -1039,6 +1129,24 @@ namespace FungusToast.Unity
             {
                 Debug.Log("[GameManager] Starting initial round mutation phase via StartNextRound()");
                 StartNextRound();
+            }
+        }
+
+        private void InitializeHumanSidebarUiForCurrentPlayer()
+        {
+            if (humanPlayer == null || gameUIManager == null)
+            {
+                return;
+            }
+
+            gameUIManager.MoldProfileRoot?.Initialize(humanPlayer, Board?.Players);
+
+            if (gameUIManager.MutationUIManager != null)
+            {
+                gameUIManager.MutationUIManager.ReinitializeForPlayer(humanPlayer, keepPanelClosed: true);
+                gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+                gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
+                gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
             }
         }
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.Tilemaps;
 using FungusToast.Unity;
 using FungusToast.Unity.UI.Testing;
 using System; // added for strict validation exceptions
@@ -10,6 +11,12 @@ namespace FungusToast.Unity.UI.GameStart
 {
     public class UI_StartGamePanel : MonoBehaviour
     {
+        private enum SetupStep
+        {
+            CountSelection,
+            MoldSelection
+        }
+
         public static UI_StartGamePanel Instance { get; private set; }
 
         [SerializeField] private List<UI_PlayerCountButton> playerButtons;
@@ -47,6 +54,19 @@ namespace FungusToast.Unity.UI.GameStart
         private RectTransform playerCountSectionRoot;
         private RectTransform testingCardSectionRoot;
         private RectTransform actionButtonStackRoot;
+        private RectTransform moldSelectionSectionRoot;
+        private TextMeshProUGUI setupTitleLabel;
+        private string defaultTitleText;
+        private TextMeshProUGUI moldSelectionTitleLabel;
+        private TextMeshProUGUI moldSelectionStatusLabel;
+        private GridLayoutGroup moldSelectionGrid;
+        private readonly List<Button> moldSelectionButtons = new();
+        private readonly List<Image> moldSelectionHighlights = new();
+        private readonly List<Image> moldSelectionIcons = new();
+        private readonly List<TextMeshProUGUI> moldSelectionLabels = new();
+        private readonly List<int?> selectedHumanMoldIndices = new();
+        private SetupStep currentStep = SetupStep.CountSelection;
+        private int currentHumanMoldSelectionIndex;
 
         private void Awake()
         {
@@ -64,6 +84,8 @@ namespace FungusToast.Unity.UI.GameStart
 
             startGameButton.interactable = false;
             InitializeHumanPlayerUI();
+            EnsureMoldSelectionSection();
+            UpdateSetupStepState();
 
             // Ensure magnifier visuals are disabled at startup
             if (magnifierVisualRoot != null)
@@ -76,6 +98,7 @@ namespace FungusToast.Unity.UI.GameStart
             testingCardController?.RefreshDropdownOptions();
             testingCardController?.RefreshVisualState();
             RefreshTestingSectionLayout();
+            UpdateSetupStepState();
         }
 
         private void ValidateSerializedRefs()
@@ -225,11 +248,13 @@ namespace FungusToast.Unity.UI.GameStart
 
             ConfigureSetupContentRoot(setupContentRoot);
             ResolveSetupSectionReferences();
+            EnsureMoldSelectionSection();
 
             var orderedSections = new List<RectTransform>();
             TryAddSetupSection(orderedSections, titleSectionRoot);
             TryAddSetupSection(orderedSections, playerCountSectionRoot);
             TryAddSetupSection(orderedSections, humanPlayerSectionRoot != null ? humanPlayerSectionRoot.GetComponent<RectTransform>() : null);
+            TryAddSetupSection(orderedSections, moldSelectionSectionRoot);
             TryAddSetupSection(orderedSections, testingCardSectionRoot);
 
             for (int index = 0; index < orderedSections.Count; index++)
@@ -255,6 +280,14 @@ namespace FungusToast.Unity.UI.GameStart
             titleSectionRoot ??= FindNamedRectTransform("UI_HowManyPlayersText");
             playerCountSectionRoot ??= FindNamedRectTransform("UI_PlayerCountButtonGroupWrapper");
             testingCardSectionRoot ??= FindNamedRectTransform("UI_StartGameTestingSection");
+            if (setupTitleLabel == null && titleSectionRoot != null)
+            {
+                setupTitleLabel = titleSectionRoot.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (setupTitleLabel != null && string.IsNullOrWhiteSpace(defaultTitleText))
+                {
+                    defaultTitleText = setupTitleLabel.text;
+                }
+            }
 
             if (playerCountSectionRoot == null)
             {
@@ -314,6 +347,178 @@ namespace FungusToast.Unity.UI.GameStart
 
             testingCardSectionRoot.SetParent(setupContentRoot, false);
             ConfigureTestingCardSection(testingCardSectionRoot);
+        }
+
+        private void EnsureMoldSelectionSection()
+        {
+            if (setupContentRoot == null)
+            {
+                return;
+            }
+
+            if (moldSelectionSectionRoot == null)
+            {
+                var sectionObject = new GameObject(
+                    "UI_MoldSelectionSection",
+                    typeof(RectTransform),
+                    typeof(Image),
+                    typeof(VerticalLayoutGroup),
+                    typeof(ContentSizeFitter),
+                    typeof(LayoutElement));
+                moldSelectionSectionRoot = sectionObject.GetComponent<RectTransform>();
+                moldSelectionSectionRoot.SetParent(setupContentRoot, false);
+            }
+
+            ConfigureMoldSelectionSection(moldSelectionSectionRoot);
+            EnsureMoldSelectionHeader();
+            EnsureMoldSelectionGrid();
+        }
+
+        private void ConfigureMoldSelectionSection(RectTransform sectionRoot)
+        {
+            if (sectionRoot == null)
+            {
+                return;
+            }
+
+            sectionRoot.anchorMin = new Vector2(0.5f, 1f);
+            sectionRoot.anchorMax = new Vector2(0.5f, 1f);
+            sectionRoot.pivot = new Vector2(0.5f, 0.5f);
+            sectionRoot.anchoredPosition = Vector2.zero;
+            sectionRoot.localScale = Vector3.one;
+
+            var surface = sectionRoot.GetComponent<Image>();
+            if (surface != null)
+            {
+                surface.color = UIStyleTokens.Surface.PanelPrimary;
+            }
+
+            var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
+            layoutGroup.padding = new RectOffset(18, 18, 18, 18);
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+            layoutGroup.spacing = 12f;
+            layoutGroup.childForceExpandWidth = false;
+            layoutGroup.childForceExpandHeight = false;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = false;
+
+            var fitter = sectionRoot.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var element = sectionRoot.GetComponent<LayoutElement>();
+            element.minWidth = 540f;
+            element.preferredWidth = 540f;
+            element.minHeight = 220f;
+            element.preferredHeight = -1f;
+        }
+
+        private void EnsureMoldSelectionHeader()
+        {
+            if (moldSelectionSectionRoot == null)
+            {
+                return;
+            }
+
+            moldSelectionTitleLabel ??= CreateMoldSelectionText(
+                "UI_MoldSelectionTitle",
+                28f,
+                FontStyles.Bold,
+                UIStyleTokens.Text.Primary,
+                TextAlignmentOptions.Center,
+                40f);
+            moldSelectionStatusLabel ??= CreateMoldSelectionText(
+                "UI_MoldSelectionStatus",
+                20f,
+                FontStyles.Normal,
+                UIStyleTokens.Text.Secondary,
+                TextAlignmentOptions.Center,
+                56f);
+        }
+
+        private TextMeshProUGUI CreateMoldSelectionText(
+            string objectName,
+            float fontSize,
+            FontStyles fontStyle,
+            Color color,
+            TextAlignmentOptions alignment,
+            float minHeight)
+        {
+            var existing = moldSelectionSectionRoot.Find(objectName) as RectTransform;
+            TextMeshProUGUI label;
+            if (existing != null)
+            {
+                label = existing.GetComponent<TextMeshProUGUI>();
+            }
+            else
+            {
+                var labelObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+                var labelRect = labelObject.GetComponent<RectTransform>();
+                labelRect.SetParent(moldSelectionSectionRoot, false);
+                label = labelObject.GetComponent<TextMeshProUGUI>();
+            }
+
+            label.color = color;
+            label.fontSize = fontSize;
+            label.fontStyle = fontStyle;
+            label.alignment = alignment;
+            label.enableWordWrapping = true;
+            label.text = string.Empty;
+
+            var layoutElement = label.GetComponent<LayoutElement>();
+            layoutElement.minWidth = 500f;
+            layoutElement.preferredWidth = 500f;
+            layoutElement.minHeight = minHeight;
+            layoutElement.preferredHeight = -1f;
+
+            return label;
+        }
+
+        private void EnsureMoldSelectionGrid()
+        {
+            if (moldSelectionSectionRoot == null)
+            {
+                return;
+            }
+
+            if (moldSelectionGrid == null)
+            {
+                var existing = moldSelectionSectionRoot.Find("UI_MoldSelectionGrid") as RectTransform;
+                if (existing != null)
+                {
+                    moldSelectionGrid = existing.GetComponent<GridLayoutGroup>();
+                }
+                else
+                {
+                    var gridObject = new GameObject(
+                        "UI_MoldSelectionGrid",
+                        typeof(RectTransform),
+                        typeof(GridLayoutGroup),
+                        typeof(ContentSizeFitter),
+                        typeof(LayoutElement));
+                    var gridRect = gridObject.GetComponent<RectTransform>();
+                    gridRect.SetParent(moldSelectionSectionRoot, false);
+                    moldSelectionGrid = gridObject.GetComponent<GridLayoutGroup>();
+                }
+            }
+
+            moldSelectionGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            moldSelectionGrid.constraintCount = 4;
+            moldSelectionGrid.cellSize = new Vector2(116f, 116f);
+            moldSelectionGrid.spacing = new Vector2(10f, 10f);
+            moldSelectionGrid.childAlignment = TextAnchor.UpperCenter;
+            moldSelectionGrid.startAxis = GridLayoutGroup.Axis.Horizontal;
+            moldSelectionGrid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+
+            var fitter = moldSelectionGrid.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var layoutElement = moldSelectionGrid.GetComponent<LayoutElement>();
+            layoutElement.minWidth = 504f;
+            layoutElement.preferredWidth = 504f;
+            layoutElement.minHeight = 240f;
+            layoutElement.preferredHeight = -1f;
         }
 
         private static void ConfigureTestingCardSection(RectTransform sectionRoot)
@@ -616,6 +821,390 @@ namespace FungusToast.Unity.UI.GameStart
             }
         }
 
+        private void UpdateSetupStepState()
+        {
+            EnsureMoldSelectionSection();
+
+            bool isMoldSelectionStep = currentStep == SetupStep.MoldSelection;
+            if (playerCountSectionRoot != null)
+            {
+                playerCountSectionRoot.gameObject.SetActive(!isMoldSelectionStep);
+            }
+
+            if (humanPlayerSectionRoot != null)
+            {
+                humanPlayerSectionRoot.SetActive(!isMoldSelectionStep && selectedPlayerCount.HasValue);
+            }
+
+            if (testingCardSectionRoot != null)
+            {
+                testingCardSectionRoot.gameObject.SetActive(!isMoldSelectionStep);
+            }
+
+            if (moldSelectionSectionRoot != null)
+            {
+                moldSelectionSectionRoot.gameObject.SetActive(isMoldSelectionStep);
+            }
+
+            if (setupTitleLabel != null)
+            {
+                setupTitleLabel.text = isMoldSelectionStep ? "Pick Your Mold" : defaultTitleText;
+            }
+
+            if (isMoldSelectionStep)
+            {
+                RefreshMoldSelectionUi();
+            }
+
+            SetButtonText(startGameButton, isMoldSelectionStep ? GetMoldStepPrimaryButtonText() : "Choose Mold");
+            SetButtonText(backButton, isMoldSelectionStep ? "Back" : "Back");
+            startGameButton.interactable = isMoldSelectionStep ? IsCurrentHumanMoldSelected() : selectedPlayerCount.HasValue;
+            RefreshTestingSectionLayout();
+        }
+
+        private void ResetMoldSelectionState()
+        {
+            currentStep = SetupStep.CountSelection;
+            currentHumanMoldSelectionIndex = 0;
+            selectedHumanMoldIndices.Clear();
+        }
+
+        private void EnterMoldSelectionStep()
+        {
+            int totalPlayers = selectedPlayerCount ?? 0;
+            int availableMoldCount = GetAvailableMoldCount();
+            if (totalPlayers <= 0 || availableMoldCount <= 0)
+            {
+                StartConfiguredGame();
+                return;
+            }
+
+            selectedHumanPlayerCount = Mathf.Clamp(selectedHumanPlayerCount, 1, Mathf.Min(totalPlayers, availableMoldCount));
+            if (selectedHumanMoldIndices.Count != selectedHumanPlayerCount)
+            {
+                selectedHumanMoldIndices.Clear();
+                for (int i = 0; i < selectedHumanPlayerCount; i++)
+                {
+                    selectedHumanMoldIndices.Add(null);
+                }
+            }
+
+            currentStep = SetupStep.MoldSelection;
+            currentHumanMoldSelectionIndex = FindNextHumanWithoutSelection();
+            UpdateSetupStepState();
+        }
+
+        private void ReturnToCountSelectionStep()
+        {
+            currentStep = SetupStep.CountSelection;
+            currentHumanMoldSelectionIndex = 0;
+            UpdateSetupStepState();
+        }
+
+        private int FindNextHumanWithoutSelection()
+        {
+            for (int i = 0; i < selectedHumanMoldIndices.Count; i++)
+            {
+                if (!selectedHumanMoldIndices[i].HasValue)
+                {
+                    return i;
+                }
+            }
+
+            return Mathf.Max(0, selectedHumanMoldIndices.Count - 1);
+        }
+
+        private void RefreshMoldSelectionUi()
+        {
+            if (moldSelectionTitleLabel != null)
+            {
+                moldSelectionTitleLabel.text = "Choose a unique mold icon for each human player.";
+            }
+
+            if (moldSelectionStatusLabel != null)
+            {
+                moldSelectionStatusLabel.text = BuildMoldSelectionStatusText();
+            }
+
+            RebuildMoldSelectionButtons();
+        }
+
+        private string BuildMoldSelectionStatusText()
+        {
+            int humanNumber = currentHumanMoldSelectionIndex + 1;
+            string currentChoice = "None selected yet";
+            if (currentHumanMoldSelectionIndex >= 0
+                && currentHumanMoldSelectionIndex < selectedHumanMoldIndices.Count
+                && selectedHumanMoldIndices[currentHumanMoldSelectionIndex].HasValue)
+            {
+                currentChoice = $"Mold {selectedHumanMoldIndices[currentHumanMoldSelectionIndex].Value + 1}";
+            }
+
+            return $"Human {humanNumber} of {selectedHumanPlayerCount} is choosing. Current selection: {currentChoice}.";
+        }
+
+        private void RebuildMoldSelectionButtons()
+        {
+            if (moldSelectionGrid == null)
+            {
+                return;
+            }
+
+            int availableMoldCount = GetAvailableMoldCount();
+            EnsureMoldSelectionButtonCount(availableMoldCount);
+
+            for (int moldIndex = 0; moldIndex < moldSelectionButtons.Count; moldIndex++)
+            {
+                bool shouldShow = moldIndex < availableMoldCount;
+                var button = moldSelectionButtons[moldIndex];
+                button.gameObject.SetActive(shouldShow);
+                if (!shouldShow)
+                {
+                    continue;
+                }
+
+                var tile = GetMoldTileAtIndex(moldIndex);
+                if (moldIndex < moldSelectionIcons.Count)
+                {
+                    moldSelectionIcons[moldIndex].sprite = tile != null ? tile.sprite : null;
+                    moldSelectionIcons[moldIndex].enabled = tile != null && tile.sprite != null;
+                }
+
+                bool isSelected = currentHumanMoldSelectionIndex >= 0
+                    && currentHumanMoldSelectionIndex < selectedHumanMoldIndices.Count
+                    && selectedHumanMoldIndices[currentHumanMoldSelectionIndex] == moldIndex;
+                bool isTakenByOtherHuman = IsMoldTakenByOtherHuman(moldIndex);
+
+                button.interactable = !isTakenByOtherHuman || isSelected;
+
+                if (moldIndex < moldSelectionHighlights.Count)
+                {
+                    moldSelectionHighlights[moldIndex].enabled = isSelected;
+                    moldSelectionHighlights[moldIndex].gameObject.SetActive(isSelected);
+                }
+
+                if (moldIndex < moldSelectionLabels.Count)
+                {
+                    moldSelectionLabels[moldIndex].text = isTakenByOtherHuman && !isSelected ? "Taken" : $"Mold {moldIndex + 1}";
+                    moldSelectionLabels[moldIndex].color = button.interactable ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled;
+                }
+            }
+        }
+
+        private void EnsureMoldSelectionButtonCount(int requiredCount)
+        {
+            while (moldSelectionButtons.Count < requiredCount)
+            {
+                CreateMoldSelectionButton(moldSelectionButtons.Count);
+            }
+        }
+
+        private void CreateMoldSelectionButton(int moldIndex)
+        {
+            var buttonObject = new GameObject(
+                $"UI_MoldButton_{moldIndex + 1}",
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(Button),
+                typeof(LayoutElement));
+            var buttonRect = buttonObject.GetComponent<RectTransform>();
+            buttonRect.SetParent(moldSelectionGrid.transform, false);
+
+            var background = buttonObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Button.BackgroundDefault;
+
+            var button = buttonObject.GetComponent<Button>();
+            button.targetGraphic = background;
+            UIStyleTokens.Button.ApplyStyle(button);
+            int capturedIndex = moldIndex;
+            button.onClick.AddListener(() => OnMoldOptionSelected(capturedIndex));
+
+            var layoutElement = buttonObject.GetComponent<LayoutElement>();
+            layoutElement.minWidth = 116f;
+            layoutElement.preferredWidth = 116f;
+            layoutElement.minHeight = 116f;
+            layoutElement.preferredHeight = 116f;
+
+            var highlightObject = new GameObject("Highlight", typeof(RectTransform), typeof(Image));
+            var highlightRect = highlightObject.GetComponent<RectTransform>();
+            highlightRect.SetParent(buttonRect, false);
+            highlightRect.anchorMin = Vector2.zero;
+            highlightRect.anchorMax = Vector2.one;
+            highlightRect.offsetMin = new Vector2(4f, 4f);
+            highlightRect.offsetMax = new Vector2(-4f, -4f);
+            var highlightImage = highlightObject.GetComponent<Image>();
+            var selectedTint = UIStyleTokens.Button.BackgroundSelected;
+            selectedTint.a = 0.4f;
+            highlightImage.color = selectedTint;
+            highlightImage.raycastTarget = false;
+            highlightImage.enabled = false;
+            highlightObject.SetActive(false);
+
+            var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            var iconRect = iconObject.GetComponent<RectTransform>();
+            iconRect.SetParent(buttonRect, false);
+            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            iconRect.pivot = new Vector2(0.5f, 0.5f);
+            iconRect.sizeDelta = new Vector2(58f, 58f);
+            iconRect.anchoredPosition = new Vector2(0f, 14f);
+            var iconImage = iconObject.GetComponent<Image>();
+            iconImage.preserveAspect = true;
+            iconImage.raycastTarget = false;
+
+            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            var labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.SetParent(buttonRect, false);
+            labelRect.anchorMin = new Vector2(0.5f, 0f);
+            labelRect.anchorMax = new Vector2(0.5f, 0f);
+            labelRect.pivot = new Vector2(0.5f, 0f);
+            labelRect.sizeDelta = new Vector2(96f, 24f);
+            labelRect.anchoredPosition = new Vector2(0f, 10f);
+            var label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.fontSize = 16f;
+            label.alignment = TextAlignmentOptions.Center;
+            label.color = UIStyleTokens.Button.TextDefault;
+            label.raycastTarget = false;
+
+            moldSelectionButtons.Add(button);
+            moldSelectionHighlights.Add(highlightImage);
+            moldSelectionIcons.Add(iconImage);
+            moldSelectionLabels.Add(label);
+        }
+
+        private void OnMoldOptionSelected(int moldIndex)
+        {
+            if (currentHumanMoldSelectionIndex < 0 || currentHumanMoldSelectionIndex >= selectedHumanMoldIndices.Count)
+            {
+                return;
+            }
+
+            selectedHumanMoldIndices[currentHumanMoldSelectionIndex] = moldIndex;
+            UpdateSetupStepState();
+        }
+
+        private bool IsCurrentHumanMoldSelected()
+        {
+            return currentHumanMoldSelectionIndex >= 0
+                && currentHumanMoldSelectionIndex < selectedHumanMoldIndices.Count
+                && selectedHumanMoldIndices[currentHumanMoldSelectionIndex].HasValue;
+        }
+
+        private bool IsMoldTakenByOtherHuman(int moldIndex)
+        {
+            for (int i = 0; i < selectedHumanMoldIndices.Count; i++)
+            {
+                if (i == currentHumanMoldSelectionIndex)
+                {
+                    continue;
+                }
+
+                if (selectedHumanMoldIndices[i] == moldIndex)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private Tile GetMoldTileAtIndex(int moldIndex)
+        {
+            var visualizer = GameManager.Instance != null ? GameManager.Instance.gridVisualizer : null;
+            if (visualizer?.playerMoldTiles == null || moldIndex < 0 || moldIndex >= visualizer.playerMoldTiles.Length)
+            {
+                return null;
+            }
+
+            return visualizer.playerMoldTiles[moldIndex];
+        }
+
+        private int GetAvailableMoldCount()
+        {
+            var visualizer = GameManager.Instance != null ? GameManager.Instance.gridVisualizer : null;
+            return visualizer != null ? visualizer.PlayerMoldTileCount : 0;
+        }
+
+        private string GetMoldStepPrimaryButtonText()
+        {
+            return currentHumanMoldSelectionIndex >= selectedHumanPlayerCount - 1 ? "Start Game" : "Next Player";
+        }
+
+        private void SetButtonText(Button button, string text)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var tmpLabel = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (tmpLabel != null)
+            {
+                tmpLabel.text = text;
+                return;
+            }
+
+            var legacyLabel = button.GetComponentInChildren<Text>(true);
+            if (legacyLabel != null)
+            {
+                legacyLabel.text = text;
+            }
+        }
+
+        private void AdvanceMoldSelectionOrStartGame()
+        {
+            if (!IsCurrentHumanMoldSelected())
+            {
+                UpdateSetupStepState();
+                return;
+            }
+
+            if (currentHumanMoldSelectionIndex < selectedHumanPlayerCount - 1)
+            {
+                currentHumanMoldSelectionIndex++;
+                UpdateSetupStepState();
+                return;
+            }
+
+            StartConfiguredGame();
+        }
+
+        private void StartConfiguredGame()
+        {
+            if (!selectedPlayerCount.HasValue)
+            {
+                return;
+            }
+
+            var selectedMolds = new List<int>();
+            for (int i = 0; i < selectedHumanMoldIndices.Count; i++)
+            {
+                if (selectedHumanMoldIndices[i].HasValue)
+                {
+                    selectedMolds.Add(selectedHumanMoldIndices[i].Value);
+                }
+            }
+
+            GameManager.Instance?.SetHotseatConfig(selectedHumanPlayerCount, selectedMolds);
+            testingCardController?.ApplyToGameManager(GameManager.Instance);
+
+            GameManager.Instance.InitializeGame(selectedPlayerCount.Value);
+            GameManager.Instance.cameraCenterer.CenterCameraSmooth();
+            gameObject.SetActive(false);
+
+            if (magnifyingGlassUI != null)
+            {
+                magnifyingGlassUI.SetActive(true);
+            }
+
+            if (magnifierVisualRoot != null)
+            {
+                magnifierVisualRoot.SetActive(true);
+            }
+
+            MagnifyingGlassFollowMouse.gameStarted = true;
+        }
+
         private void RefreshTestingSectionLayout()
         {
             if (testingCardSectionRoot == null)
@@ -643,15 +1232,15 @@ namespace FungusToast.Unity.UI.GameStart
         public void OnPlayerCountSelected(int count)
         {
             selectedPlayerCount = count;
+            ResetMoldSelectionState();
             UpdateButtonVisuals();
-            startGameButton.interactable = true;
             // Reset human player count to default (1) or clamp if fewer than previous selection
             selectedHumanPlayerCount = 1;
             UpdatePlayerButtonVisuals();
             ConfigureHumanPlayerButtons();
             UpdateHumanPlayerButtonVisuals();
             UpdatePlayerSummaryLabel();
-            startGameButton.interactable = true; // per requirements: selecting total players is sufficient
+            UpdateSetupStepState();
         }
 
         private void ConfigureHumanPlayerButtons()
@@ -673,8 +1262,11 @@ namespace FungusToast.Unity.UI.GameStart
             if (humanCount < 1) humanCount = 1; // must have at least one human
             if (humanCount > selectedPlayerCount.Value) humanCount = selectedPlayerCount.Value; // clamp
             selectedHumanPlayerCount = humanCount;
+            selectedHumanMoldIndices.Clear();
+            currentHumanMoldSelectionIndex = 0;
             UpdateHumanPlayerButtonVisuals();
             UpdatePlayerSummaryLabel();
+            UpdateSetupStepState();
         }
 
         private void UpdatePlayerSummaryLabel()
@@ -716,30 +1308,35 @@ namespace FungusToast.Unity.UI.GameStart
 
         public void OnStartGamePressed()
         {
-            if (selectedPlayerCount.HasValue)
+            if (!selectedPlayerCount.HasValue)
             {
-                // Persist hotseat config for future multi-human implementation
-                GameManager.Instance?.SetHotseatConfig(selectedHumanPlayerCount);
-
-                testingCardController?.ApplyToGameManager(GameManager.Instance);
-
-                // NOTE: For this initial UI-only step we do not yet create multiple human players.
-                // The selectedHumanPlayerCount value is retained for future hotseat implementation.
-                GameManager.Instance.InitializeGame(selectedPlayerCount.Value);
-                GameManager.Instance.cameraCenterer.CenterCameraSmooth();
-                gameObject.SetActive(false);
-
-                // Enable the magnifying glass UI after the game starts
-                if (magnifyingGlassUI != null)
-                    magnifyingGlassUI.SetActive(true);
-                if (magnifierVisualRoot != null)
-                    magnifierVisualRoot.SetActive(true);
-                MagnifyingGlassFollowMouse.gameStarted = true;
+                return;
             }
+
+            if (currentStep == SetupStep.CountSelection)
+            {
+                EnterMoldSelectionStep();
+                return;
+            }
+
+            AdvanceMoldSelectionOrStartGame();
         }
 
         public void OnBackPressed()
         {
+            if (currentStep == SetupStep.MoldSelection)
+            {
+                if (currentHumanMoldSelectionIndex > 0)
+                {
+                    currentHumanMoldSelectionIndex--;
+                    UpdateSetupStepState();
+                    return;
+                }
+
+                ReturnToCountSelectionStep();
+                return;
+            }
+
             gameObject.SetActive(false);
             if (modeSelectPanel != null)
                 modeSelectPanel.SetActive(true);

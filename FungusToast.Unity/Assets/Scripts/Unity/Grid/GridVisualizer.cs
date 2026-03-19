@@ -56,9 +56,11 @@ namespace FungusToast.Unity.Grid
         private string generatedCrustCacheKey;
 
         private GameBoard board;
+        private readonly List<int> playerMoldAssignments = new();
         public GameBoard ActiveBoard => board ?? GameManager.Instance?.Board; // now public for helper access
         public BoardMediumConfig ActiveBoardMedium => runtimeBoardMedium != null ? runtimeBoardMedium : defaultBoardMedium;
         public int CurrentBoardVisualPaddingTiles => board == null ? 0 : GetCrustThickness(board);
+        public int PlayerMoldTileCount => playerMoldTiles?.Length ?? 0;
 
         // Selection highlight state
         private readonly List<Vector3Int> highlightedPositions = new();
@@ -158,6 +160,20 @@ namespace FungusToast.Unity.Grid
         }
         public void SetBoardMedium(BoardMediumConfig boardMedium) => runtimeBoardMedium = boardMedium;
         public void ClearBoardMediumOverride() => runtimeBoardMedium = null;
+        public void SetPlayerMoldAssignments(IReadOnlyList<int> assignments)
+        {
+            playerMoldAssignments.Clear();
+            if (assignments == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < assignments.Count; i++)
+            {
+                playerMoldAssignments.Add(assignments[i]);
+            }
+        }
+        public void ClearPlayerMoldAssignments() => playerMoldAssignments.Clear();
         public bool IsPlayableBoardCell(Vector3Int cellPos)
             => board != null && cellPos.x >= 0 && cellPos.x < board.Width && cellPos.y >= 0 && cellPos.y < board.Height;
 
@@ -421,9 +437,9 @@ namespace FungusToast.Unity.Grid
                 }
             }
 
-            if (moldTile == null && e.ToxinOwnerPlayerId is int ownerPlayerId && ownerPlayerId >= 0 && ownerPlayerId < playerMoldTiles.Length)
+            if (moldTile == null && e.ToxinOwnerPlayerId is int ownerPlayerId)
             {
-                moldTile = playerMoldTiles[ownerPlayerId];
+                moldTile = GetTileForPlayer(ownerPlayerId);
             }
 
             TileBase overlayTile = toxinOverlayTile;
@@ -628,9 +644,9 @@ namespace FungusToast.Unity.Grid
             switch (cell.CellType)
             {
                 case FungalCellType.Alive:
-                    if (cell.OwnerPlayerId is int idA && idA >= 0 && idA < playerMoldTiles.Length)
+                    if (cell.OwnerPlayerId is int idA)
                     {
-                        moldTile = playerMoldTiles[idA];
+                        moldTile = GetTileForPlayer(idA);
                         if (cell.IsNewlyGrown)
                         {
                             moldColor = new Color(1f, 1f, 1f, UIEffectConstants.NewGrowthFinalAlpha);
@@ -655,10 +671,10 @@ namespace FungusToast.Unity.Grid
                     break;
 
                 case FungalCellType.Dead:
-                    if (cell.OwnerPlayerId is int ownerId && ownerId >= 0 && ownerId < playerMoldTiles.Length)
+                    if (cell.OwnerPlayerId is int ownerId)
                     {
                         moldTilemap.SetTileFlags(pos, TileFlags.None);
-                        moldTilemap.SetTile(pos, playerMoldTiles[ownerId]);
+                        moldTilemap.SetTile(pos, GetTileForPlayer(ownerId));
                         
                         if (cell.IsDying)
                         {
@@ -675,9 +691,9 @@ namespace FungusToast.Unity.Grid
                     break;
 
                 case FungalCellType.Toxin:
-                    if (cell.OwnerPlayerId is int idT && idT >= 0 && idT < playerMoldTiles.Length)
+                    if (cell.OwnerPlayerId is int idT)
                     {
-                        moldTile = playerMoldTiles[idT];
+                        moldTile = GetTileForPlayer(idT);
                         moldColor = Color.white;
                     }
                     overlayTile = toxinOverlayTile;
@@ -803,13 +819,21 @@ namespace FungusToast.Unity.Grid
 
         public Tile GetTileForPlayer(int playerId)
         {
-            if (playerMoldTiles != null && playerId >= 0 && playerId < playerMoldTiles.Length)
-                return playerMoldTiles[playerId];
+            if (playerMoldTiles == null || playerMoldTiles.Length == 0 || playerId < 0)
+            {
+                Debug.LogWarning($"No tile found for Player ID {playerId}.");
+                return null;
+            }
+
+            int moldIndex = ResolvePlayerMoldIndex(playerId);
+            if (moldIndex >= 0 && moldIndex < playerMoldTiles.Length)
+            {
+                return playerMoldTiles[moldIndex];
+            }
 
             Debug.LogWarning($"No tile found for Player ID {playerId}.");
             return null;
         }
-
         public void RegisterPreAnimationHiddenPreviewTiles(IEnumerable<int> tileIds)
         {
             if (tileIds == null)
@@ -831,6 +855,20 @@ namespace FungusToast.Unity.Grid
         public void ClearPreAnimationPreviewTiles()
         {
             preAnimationHiddenPreviewTileIds.Clear();
+        }
+
+        private int ResolvePlayerMoldIndex(int playerId)
+        {
+            if (playerId >= 0 && playerId < playerMoldAssignments.Count)
+            {
+                int assignedIndex = playerMoldAssignments[playerId];
+                if (assignedIndex >= 0 && assignedIndex < playerMoldTiles.Length)
+                {
+                    return assignedIndex;
+                }
+            }
+
+            return playerId;
         }
 
         public void RenderTileFromBoard(int tileId)
