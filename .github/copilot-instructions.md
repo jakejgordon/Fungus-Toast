@@ -107,6 +107,8 @@ FungusToast.Simulation/bin/Debug/net8.0/SimulationOutput/
 
 **Note:** Default game count is 1 for fast feedback. Increase `--games` (for example 100+) when doing balance/statistical analysis.
 
+**Caution on slot testing:** `--fixed-slots` fixes strategy-to-player assignment, but starting spores are still shuffled each game by `StartingSporeUtility`. So fixed-slot runs are not pure board-position tests unless that shuffle is disabled or spawn coordinates are captured and analyzed.
+
 ### Simulation Troubleshooting
 
 #### PowerShell Execution Policy Issues
