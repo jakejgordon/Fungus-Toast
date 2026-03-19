@@ -18,17 +18,21 @@ namespace FungusToast.Core.Board
         /// </summary>
         /// <param name="board">Game board to place spores on</param>
         /// <param name="players">List of players to place spores for</param>
-        /// <param name="rng">Random number generator for shuffling player order</param>
-        public static void PlaceStartingSpores(GameBoard board, List<Player> players, Random rng)
+        /// <param name="rng">Random number generator for optional shuffling of player order</param>
+        /// <param name="shufflePlayerOrder">Whether to shuffle player-to-position assignment before placement</param>
+        public static void PlaceStartingSpores(GameBoard board, List<Player> players, Random rng, bool shufflePlayerOrder = true)
         {
             float radius = Math.Min(board.Width, board.Height) * 0.35f;
             float centerX = board.Width / 2f;
             float centerY = board.Height / 2f;
 
-            // Create a list of shuffled player indices for variety
-            var shuffledPlayerIndices = Enumerable.Range(0, players.Count)
-                .OrderBy(_ => rng.Next())
-                .ToList();
+            var playerIndices = Enumerable.Range(0, players.Count).ToList();
+            if (shufflePlayerOrder)
+            {
+                playerIndices = playerIndices
+                    .OrderBy(_ => rng.Next())
+                    .ToList();
+            }
 
             for (int i = 0; i < players.Count; i++)
             {
@@ -37,7 +41,7 @@ namespace FungusToast.Core.Board
                 int py = Math.Clamp((int)Math.Round(centerY + radius * Math.Sin(angle)), 0, board.Height - 1);
                 
                 // Use PlaceInitialSpore to ensure proper resistant spore placement
-                board.PlaceInitialSpore(shuffledPlayerIndices[i], px, py);
+                board.PlaceInitialSpore(playerIndices[i], px, py);
             }
         }
     }

@@ -25,11 +25,12 @@ namespace FungusToast.Simulation.GameSimulation
             int totalGames = -1,
             DateTime? startTime = null,
             int boardWidth = GameBalance.BoardWidth,
-            int boardHeight = GameBalance.BoardHeight
+            int boardHeight = GameBalance.BoardHeight,
+            bool shuffleStartingSpores = true
         )
         {
             var rng = new Random(seed);
-            var (players, board) = InitializeGame(strategies, rng, context, boardWidth, boardHeight);
+            var (players, board) = InitializeGame(strategies, rng, context, boardWidth, boardHeight, shuffleStartingSpores);
             var allMutations = MutationRegistry.GetAll().ToList();
             var allMycovariants = MycovariantRepository.All;
             var mycovariantPoolManager = new MycovariantPoolManager();
@@ -180,7 +181,7 @@ namespace FungusToast.Simulation.GameSimulation
 
 
 
-        private static (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng, ISimulationObserver observer, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight)
+        private static (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng, ISimulationObserver observer, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight, bool shuffleStartingSpores = true)
         {
             int playerCount = strategies.Count;
             var players = new List<Player>();
@@ -207,7 +208,7 @@ namespace FungusToast.Simulation.GameSimulation
                 board.Players.Add(player);
 
             // Use the shared starting spore placement utility
-            StartingSporeUtility.PlaceStartingSpores(board, players, rng);
+            StartingSporeUtility.PlaceStartingSpores(board, players, rng, shuffleStartingSpores);
             AdaptationEffectProcessor.OnStartingSporesEstablished(board, players);
 
             return (players, board);
