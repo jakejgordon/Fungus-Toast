@@ -261,6 +261,9 @@ dotnet run --games 200 --players 8 --strategy-set Proven --seed 12345 --rotate-s
 
 # Fixed explicit lineup for reproducible balance passes (single-run mode only)
 # Note: explicit names are resolved only inside the selected --strategy-set; do not mix Proven/Testing/Campaign/Mycovariants names in one --strategy-names list.
+# Important: --fixed-slots fixes strategy-to-player assignment, but starting spores are still shuffled each game by StartingSporeUtility.
+# That means --fixed-slots is NOT a pure board-position test today; it can still mix spawn locations across games.
+# For balance/fairness evaluation, prefer --rotate-slots. For true position studies, disable starting-spore shuffle or export/analyze actual spawn coordinates per game.
 dotnet run --games 200 --strategy-set Proven --strategy-names StrategyA,StrategyB,StrategyC,StrategyD --seed 12345 --rotate-slots --experiment-id proven_fixed_lineup --no-keyboard
 
 # Coverage-balanced testing run for statistically diverse strategy lineups

@@ -111,7 +111,8 @@ namespace FungusToast.Simulation.Analysis
                     startTime: startTime,
                     context: context,
                     boardWidth: boardWidth,
-                    boardHeight: boardHeight
+                    boardHeight: boardHeight,
+                    shuffleStartingSpores: slotAssignmentPolicy != SlotAssignmentPolicy.Fixed
                 );
 
                 results.Add(result);
