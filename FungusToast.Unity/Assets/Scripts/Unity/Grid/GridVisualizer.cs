@@ -208,6 +208,18 @@ namespace FungusToast.Unity.Grid
                     preserveSourceCell: true,
                     durationScale: UIEffectConstants.HyphalBridgeSegmentDurationScale)
                 : null;
+        public IEnumerator PlayHyphalDrawAnimation(int playerId, IReadOnlyList<(int sourceTileId, int destinationTileId)> moves)
+            => _launchArcAnimator != null
+                ? _launchArcAnimator.PlayBatch(
+                    playerId,
+                    moves,
+                    preserveSourceCell: false,
+                    overlaySprite: null,
+                    overlayScale: 1f,
+                    restoreBoardStateOnFinish: false,
+                    durationScale: 1f,
+                    allowOverlayFallback: false)
+                : null;
         public IEnumerator PlayMycotoxicLashAnimation(IReadOnlyList<int> tileIds)
         {
             if (board == null || tileIds == null || tileIds.Count == 0)

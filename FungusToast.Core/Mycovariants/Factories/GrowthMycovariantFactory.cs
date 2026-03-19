@@ -9,6 +9,7 @@ namespace FungusToast.Core.Mycovariants
         public static IEnumerable<Mycovariant> CreateAll()
         {
             yield return PerimeterProliferator();
+            yield return HyphalDraw();
             yield return CornerConduitI();
             yield return CornerConduitII();
             yield return CornerConduitIII();
@@ -78,6 +79,24 @@ namespace FungusToast.Core.Mycovariants
             IsUniversal = false,
             AutoMarkTriggered = true,
             AIScore = (player, board) => CornerConduitScore(player, board, 8f, 6f, 4f)
+        };
+
+        private static Mycovariant HyphalDraw() => new Mycovariant
+        {
+            Id = MycovariantIds.HyphalDrawId,
+            Name = "Hyphal Draw",
+            Description = "One-time on draft: trace from your starting spore toward the enemy start with the most living cells, pick up your non-Resistant living cells on that path, then redeploy them from the enemy side back toward you, skipping Resistant tiles.",
+            FlavorText = "The colony cinches its vascular strand taut, hauling living biomass forward into a tighter assault lane.",
+            IconId = "myco_hyphal_draw",
+            Type = MycovariantType.Active,
+            Category = MycovariantCategory.Growth,
+            IsUniversal = false,
+            AutoMarkTriggered = false,
+            ApplyEffect = (playerMyco, board, rng, observer) =>
+            {
+                MycovariantEffectProcessor.ResolveHyphalDraw(playerMyco, board, rng, observer);
+            },
+            AIScore = (player, board) => MycovariantEffectProcessor.EvaluateHyphalDrawScore(player, board)
         };
 
         private static float CornerConduitScore(Players.Player player, Board.GameBoard board, float high, float mid, float low)

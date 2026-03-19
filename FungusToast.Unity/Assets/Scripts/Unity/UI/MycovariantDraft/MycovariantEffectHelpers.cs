@@ -134,6 +134,64 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
         }
 
+        public static IEnumerator HandleHyphalDraw(
+            Player player,
+            Mycovariant picked,
+            Action onComplete,
+            GameObject draftPanel,
+            GridVisualizer gridVisualizer,
+            GameManager gameManager)
+        {
+            if (gameManager == null)
+            {
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            var board = gameManager.Board;
+            var gameLogRouter = gameManager.GameUI.GameLogRouter;
+            var playerMyco = player.PlayerMycovariants
+                .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+
+            if (playerMyco == null)
+            {
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            draftPanel?.SetActive(false);
+
+            if (player.PlayerType == PlayerTypeEnum.AI)
+            {
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
+            }
+
+            var resolution = MycovariantEffectProcessor.ResolveHyphalDraw(
+                playerMyco,
+                board,
+                new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                gameLogRouter);
+
+            gridVisualizer.RenderBoard(board);
+
+            if (resolution?.HasAnyMovement == true)
+            {
+                var movePairs = resolution.Moves
+                    .Select(move => (move.SourceTileId, move.DestinationTileId))
+                    .ToList();
+
+                yield return gridVisualizer.PlayHyphalDrawAnimation(player.PlayerId, movePairs);
+                yield return gridVisualizer.WaitForAllAnimations();
+            }
+
+            if (player.PlayerType == PlayerTypeEnum.AI)
+            {
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
+            }
+
+            onComplete?.Invoke();
+        }
+
         /// <summary>
         /// Returns the correct CardinalDirection for a Jetting Mycelium mycovariant ID.
         /// </summary>

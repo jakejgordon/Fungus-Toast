@@ -157,6 +157,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Living cells dropped in sequence by the Hyphal Bridge adaptation.
         /// </summary>
-        HyphalBridge
+        HyphalBridge,
+
+        /// <summary>
+        /// Living cells repositioned by the Hyphal Draw mycovariant.
+        /// </summary>
+        HyphalDraw
     }
 }

@@ -41,7 +41,8 @@ namespace FungusToast.Unity.Grid.Animation
             Sprite overlaySprite = null,
             float overlayScale = UI.UIEffectConstants.ConidialRelayShieldScale,
             bool restoreBoardStateOnFinish = false,
-            float durationScale = 1f)
+            float durationScale = 1f,
+            bool allowOverlayFallback = true)
         {
             var board = viz.ActiveBoard;
             if (board == null)
@@ -64,7 +65,8 @@ namespace FungusToast.Unity.Grid.Animation
                 restoreBoardStateOnFinish,
                 revealDestinationOnFinish: false,
                 emphasizeSource: true,
-                durationScale);
+                durationScale,
+                allowOverlayFallback);
         }
 
         public IEnumerator PlaySequence(
@@ -75,7 +77,8 @@ namespace FungusToast.Unity.Grid.Animation
             Sprite overlaySprite = null,
             float overlayScale = UI.UIEffectConstants.ConidialRelayShieldScale,
             bool restoreBoardStateOnFinish = false,
-            float durationScale = 1f)
+            float durationScale = 1f,
+            bool allowOverlayFallback = true)
         {
             var board = viz.ActiveBoard;
             if (board == null || destinationTileIds == null || destinationTileIds.Count == 0)
@@ -118,9 +121,56 @@ namespace FungusToast.Unity.Grid.Animation
                     restoreBoardStateOnFinish,
                     revealDestinationOnFinish: true,
                     emphasizeSource: true,
-                    durationScale);
+                    durationScale,
+                    allowOverlayFallback);
 
                 currentSourceTileId = destinationTileId;
+            }
+        }
+
+        public IEnumerator PlayBatch(
+            int playerId,
+            IReadOnlyList<(int sourceTileId, int destinationTileId)> moves,
+            bool preserveSourceCell = false,
+            Sprite overlaySprite = null,
+            float overlayScale = UI.UIEffectConstants.ConidialRelayShieldScale,
+            bool restoreBoardStateOnFinish = false,
+            float durationScale = 1f,
+            bool allowOverlayFallback = true)
+        {
+            if (moves == null || moves.Count == 0)
+            {
+                yield break;
+            }
+
+            var orderedMoves = moves
+                .Where(move => move.sourceTileId >= 0 && move.destinationTileId >= 0 && move.sourceTileId != move.destinationTileId)
+                .Distinct()
+                .ToList();
+            if (orderedMoves.Count == 0)
+            {
+                yield break;
+            }
+
+            int remaining = orderedMoves.Count;
+            foreach (var move in orderedMoves)
+            {
+                viz.StartCoroutine(PlayWithCompletion(
+                    playerId,
+                    move.sourceTileId,
+                    move.destinationTileId,
+                    preserveSourceCell,
+                    overlaySprite,
+                    overlayScale,
+                    restoreBoardStateOnFinish,
+                    durationScale,
+                    allowOverlayFallback,
+                    () => remaining--));
+            }
+
+            while (remaining > 0)
+            {
+                yield return null;
             }
         }
 
@@ -135,7 +185,8 @@ namespace FungusToast.Unity.Grid.Animation
             bool restoreBoardStateOnFinish,
             bool revealDestinationOnFinish,
             bool emphasizeSource,
-            float durationScale)
+            float durationScale,
+            bool allowOverlayFallback)
         {
             var board = viz.ActiveBoard;
             if (board == null)
@@ -145,8 +196,8 @@ namespace FungusToast.Unity.Grid.Animation
 
             var moldTile = viz.GetTileForPlayer(playerId);
             var moldSprite = moldTile != null ? moldTile.sprite : null;
-            var projectileOverlaySprite = overlaySprite ?? (viz.goldShieldOverlayTile != null ? viz.goldShieldOverlayTile.sprite : null);
-            if (moldSprite == null || projectileOverlaySprite == null)
+            var projectileOverlaySprite = overlaySprite ?? (allowOverlayFallback && viz.goldShieldOverlayTile != null ? viz.goldShieldOverlayTile.sprite : null);
+            if (moldSprite == null)
             {
                 RestoreTile(destinationState, destinationTileId, restoreBoardStateOnFinish);
                 yield break;
@@ -199,6 +250,37 @@ namespace FungusToast.Unity.Grid.Animation
                     RestoreTile(destinationState, destinationTileId, restoreBoardStateOnFinish);
                 }
                 viz.EndAnimation();
+            }
+        }
+
+        private IEnumerator PlayWithCompletion(
+            int playerId,
+            int sourceTileId,
+            int destinationTileId,
+            bool preserveSourceCell,
+            Sprite overlaySprite,
+            float overlayScale,
+            bool restoreBoardStateOnFinish,
+            float durationScale,
+            bool allowOverlayFallback,
+            System.Action onComplete)
+        {
+            try
+            {
+                yield return Play(
+                    playerId,
+                    sourceTileId,
+                    destinationTileId,
+                    preserveSourceCell,
+                    overlaySprite,
+                    overlayScale,
+                    restoreBoardStateOnFinish,
+                    durationScale,
+                    allowOverlayFallback);
+            }
+            finally
+            {
+                onComplete?.Invoke();
             }
         }
 
@@ -306,19 +388,26 @@ namespace FungusToast.Unity.Grid.Animation
             var moldRenderer = mold.AddComponent<SpriteRenderer>();
             moldRenderer.sprite = moldSprite;
 
-            var shield = new GameObject("Overlay");
-            shield.transform.SetParent(root.transform, false);
-            var shieldRenderer = shield.AddComponent<SpriteRenderer>();
-            shieldRenderer.sprite = overlaySprite;
-            shield.transform.localScale = Vector3.one * overlayScale;
+            SpriteRenderer shieldRenderer = null;
+            if (overlaySprite != null)
+            {
+                var shield = new GameObject("Overlay");
+                shield.transform.SetParent(root.transform, false);
+                shieldRenderer = shield.AddComponent<SpriteRenderer>();
+                shieldRenderer.sprite = overlaySprite;
+                shield.transform.localScale = Vector3.one * overlayScale;
+            }
 
             var tilemapRenderer = tilemap.GetComponent<TilemapRenderer>();
             if (tilemapRenderer != null)
             {
                 moldRenderer.sortingLayerID = tilemapRenderer.sortingLayerID;
                 moldRenderer.sortingOrder = tilemapRenderer.sortingOrder + 9;
-                shieldRenderer.sortingLayerID = tilemapRenderer.sortingLayerID;
-                shieldRenderer.sortingOrder = tilemapRenderer.sortingOrder + 10;
+                if (shieldRenderer != null)
+                {
+                    shieldRenderer.sortingLayerID = tilemapRenderer.sortingLayerID;
+                    shieldRenderer.sortingOrder = tilemapRenderer.sortingOrder + 10;
+                }
             }
 
             return root;

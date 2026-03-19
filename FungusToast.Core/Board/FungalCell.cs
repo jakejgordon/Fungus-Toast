@@ -174,6 +174,32 @@ namespace FungusToast.Core.Board
             IsReceivingToxinDrop = false;
         }
 
+        public FungalCell CloneForRelocation(int newTileId, GrowthSource source)
+        {
+            if (!IsAlive)
+                throw new InvalidOperationException("Only living cells can be relocated.");
+
+            var clone = new FungalCell(OwnerPlayerId, newTileId, source, LastOwnerPlayerId)
+            {
+                OriginalOwnerPlayerId = OriginalOwnerPlayerId,
+                GrowthCycleAge = GrowthCycleAge,
+                BirthRound = BirthRound,
+                ReclaimCount = ReclaimCount,
+                ToxinExpirationAge = ToxinExpirationAge,
+                IsNewlyGrown = false,
+                IsDying = false,
+                IsReceivingToxinDrop = false,
+                CauseOfDeath = null
+            };
+
+            if (IsResistant)
+            {
+                clone.MakeResistant();
+            }
+
+            return clone;
+        }
+
         /// <summary>
         /// Kills this cell (living → dead), for any non-toxin death (Killed/Infested/Poisoned/etc).
         /// Resistant cells cannot be killed.

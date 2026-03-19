@@ -107,6 +107,12 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
 
         private static void DrawCategoryMotif(Texture2D texture, Mycovariant mycovariant, Color accent, Color highlight)
         {
+            if (mycovariant?.IconId == "myco_hyphal_draw")
+            {
+                DrawHyphalDrawMotif(texture, accent, highlight);
+                return;
+            }
+
             switch (mycovariant.Type)
             {
                 case MycovariantType.Directional:
@@ -129,6 +135,17 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                     DrawPassiveMotif(texture, accent, highlight);
                     break;
             }
+        }
+
+        private static void DrawHyphalDrawMotif(Texture2D texture, Color accent, Color highlight)
+        {
+            ProceduralIconUtility.DrawLine(texture, 8, 30, 31, 11, accent, 2);
+            ProceduralIconUtility.DrawLine(texture, 10, 24, 26, 24, highlight, 1);
+            ProceduralIconUtility.FillCircle(texture, 11, 27, 2, highlight);
+            ProceduralIconUtility.FillCircle(texture, 17, 22, 2, accent);
+            ProceduralIconUtility.FillCircle(texture, 23, 17, 2, highlight);
+            ProceduralIconUtility.FillCircle(texture, 29, 13, 3, accent);
+            ProceduralIconUtility.DrawRing(texture, 29, 13, 5, 1, highlight);
         }
 
         private static void DrawPassiveMotif(Texture2D texture, Color accent, Color highlight)

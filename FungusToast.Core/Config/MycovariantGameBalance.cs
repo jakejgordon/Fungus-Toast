@@ -66,6 +66,11 @@ namespace FungusToast.Core.Config
         public const int AggressotropicConduitIIReplacementsPerPhase = 2;
         public const int AggressotropicConduitIIIReplacementsPerPhase = 3;
 
+        // Hyphal Draw AI scoring constants
+        public const float HyphalDrawBaseAIScore = 4f;
+        public const float HyphalDrawForwardAdvanceAIScorePerTile = 0.45f;
+        public const float HyphalDrawEnemyCaptureAIScore = 1.25f;
+
         // AI scoring for Mycovariants
         public const float MycelialBastionIBaseAIScore = 4f;
         public const float MycelialBastionIIBaseAIScore = 5f;

@@ -36,6 +36,8 @@ namespace FungusToast.Unity.Effects
             id == MycovariantIds.JettingMyceliumSouthId ||
             id == MycovariantIds.JettingMyceliumWestId;
 
+        public static bool IsHyphalDraw(int id) => id == MycovariantIds.HyphalDrawId;
+
         public IEnumerator ResolveEffect(
             Player player,
             Mycovariant mycovariant,
@@ -54,6 +56,19 @@ namespace FungusToast.Unity.Effects
             {
                 yield return StartCoroutine(
                     MycovariantEffectHelpers.HandleJettingMycelium(
+                        player,
+                        mycovariant,
+                        onComplete,
+                        draftPanel,
+                        gridVisualizer,
+                        GameManager.Instance
+                    )
+                );
+            }
+            else if (IsHyphalDraw(mycovariant.Id))
+            {
+                yield return StartCoroutine(
+                    MycovariantEffectHelpers.HandleHyphalDraw(
                         player,
                         mycovariant,
                         onComplete,

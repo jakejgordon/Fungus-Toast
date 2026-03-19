@@ -14,6 +14,45 @@ using FungusToast.Core.Growth;
 
 public static class MycovariantEffectProcessor
 {
+    public sealed class HyphalDrawMove
+    {
+        public HyphalDrawMove(int sourceTileId, int destinationTileId)
+        {
+            SourceTileId = sourceTileId;
+            DestinationTileId = destinationTileId;
+        }
+
+        public int SourceTileId { get; }
+        public int DestinationTileId { get; }
+    }
+
+    public sealed class HyphalDrawResolution
+    {
+        public HyphalDrawResolution(
+            int playerId,
+            int targetEnemyPlayerId,
+            int targetEnemyStartingTileId,
+            IReadOnlyList<int> pathTileIds,
+            IReadOnlyList<HyphalDrawMove> moves,
+            int enemyCaptures)
+        {
+            PlayerId = playerId;
+            TargetEnemyPlayerId = targetEnemyPlayerId;
+            TargetEnemyStartingTileId = targetEnemyStartingTileId;
+            PathTileIds = pathTileIds;
+            Moves = moves;
+            EnemyCaptures = enemyCaptures;
+        }
+
+        public int PlayerId { get; }
+        public int TargetEnemyPlayerId { get; }
+        public int TargetEnemyStartingTileId { get; }
+        public IReadOnlyList<int> PathTileIds { get; }
+        public IReadOnlyList<HyphalDrawMove> Moves { get; }
+        public int EnemyCaptures { get; }
+        public bool HasAnyMovement => Moves.Count > 0;
+    }
+
     public static void ResolveJettingMycelium(
         PlayerMycovariant playerMyco,
         Player player,
@@ -318,6 +357,60 @@ public static class MycovariantEffectProcessor
         playerMyco.MarkTriggered();
     }
 
+    public static HyphalDrawResolution? ResolveHyphalDraw(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+        if (player == null)
+        {
+            return null;
+        }
+
+        var plan = BuildHyphalDrawPlan(player, board, rng);
+        if (plan == null)
+        {
+            return null;
+        }
+
+        ApplyHyphalDrawPlan(playerMyco, board, plan);
+        return plan;
+    }
+
+    public static float EvaluateHyphalDrawScore(Player player, GameBoard board)
+    {
+        var seededRng = new Random(player.PlayerId * 7919 + board.CurrentRound * 104729);
+        var plan = BuildHyphalDrawPlan(player, board, seededRng);
+        if (plan == null)
+        {
+            return 1f;
+        }
+
+        var pathIndexes = plan.PathTileIds
+            .Select((tileId, index) => new { tileId, index })
+            .ToDictionary(x => x.tileId, x => x.index);
+
+        int totalAdvance = 0;
+        foreach (var move in plan.Moves)
+        {
+            if (!pathIndexes.TryGetValue(move.SourceTileId, out int sourceIndex) ||
+                !pathIndexes.TryGetValue(move.DestinationTileId, out int destinationIndex))
+            {
+                continue;
+            }
+
+            totalAdvance += Math.Max(0, destinationIndex - sourceIndex);
+        }
+
+        float score = MycovariantGameBalance.HyphalDrawBaseAIScore
+            + (totalAdvance * MycovariantGameBalance.HyphalDrawForwardAdvanceAIScorePerTile)
+            + (plan.EnemyCaptures * MycovariantGameBalance.HyphalDrawEnemyCaptureAIScore);
+
+        return Math.Clamp(score, 1f, 10f);
+    }
+
     // For AI: auto-selects a target as before
     public static void ResolveSurgicalInoculationAI(
         PlayerMycovariant playerMyco,
@@ -478,6 +571,151 @@ public static class MycovariantEffectProcessor
             playerMyco.IncrementEffectCount(MycovariantEffectType.ResistantTransfers, transferredCount);
             observer.RecordHyphalResistanceTransfer(playerId, transferredCount);
         }
+    }
+
+    private static HyphalDrawResolution? BuildHyphalDrawPlan(Player player, GameBoard board, Random rng)
+    {
+        if (!player.StartingTileId.HasValue)
+        {
+            return null;
+        }
+
+        var targetEnemy = SelectHyphalDrawTargetEnemy(player, board, rng);
+        if (targetEnemy == null || !targetEnemy.StartingTileId.HasValue)
+        {
+            return null;
+        }
+
+        int startingTileId = player.StartingTileId.Value;
+        int enemyStartingTileId = targetEnemy.StartingTileId.Value;
+        var (sx, sy) = board.GetXYFromTileId(startingTileId);
+        var (ex, ey) = board.GetXYFromTileId(enemyStartingTileId);
+
+        var fullLine = GenerateBresenhamLine(sx, sy, ex, ey)
+            .Select(point => point.y * board.Width + point.x)
+            .ToList();
+        if (fullLine.Count <= 2)
+        {
+            return null;
+        }
+
+        var pathTileIds = fullLine.Skip(1).Take(fullLine.Count - 2).ToList();
+        var sourceTileIds = pathTileIds
+            .Where(tileId =>
+            {
+                var cell = board.GetCell(tileId);
+                return cell != null &&
+                    cell.IsAlive &&
+                    cell.OwnerPlayerId == player.PlayerId &&
+                    !cell.IsResistant;
+            })
+            .ToList();
+        if (sourceTileIds.Count == 0)
+        {
+            return null;
+        }
+
+        var sourceQueue = sourceTileIds
+            .OrderByDescending(tileId => pathTileIds.IndexOf(tileId))
+            .ToList();
+        var destinationQueue = pathTileIds
+            .AsEnumerable()
+            .Reverse()
+            .Where(tileId =>
+            {
+                var cell = board.GetCell(tileId);
+                return cell == null || !cell.IsResistant;
+            })
+            .ToList();
+
+        var moves = new List<HyphalDrawMove>();
+        int enemyCaptures = 0;
+        int moveCount = Math.Min(sourceQueue.Count, destinationQueue.Count);
+        for (int index = 0; index < moveCount; index++)
+        {
+            int sourceTileId = sourceQueue[index];
+            int destinationTileId = destinationQueue[index];
+            if (sourceTileId == destinationTileId)
+            {
+                continue;
+            }
+
+            var destinationCell = board.GetCell(destinationTileId);
+            if (destinationCell != null && destinationCell.IsAlive && destinationCell.OwnerPlayerId != player.PlayerId)
+            {
+                enemyCaptures++;
+            }
+
+            moves.Add(new HyphalDrawMove(sourceTileId, destinationTileId));
+        }
+
+        return new HyphalDrawResolution(
+            player.PlayerId,
+            targetEnemy.PlayerId,
+            enemyStartingTileId,
+            pathTileIds,
+            moves,
+            enemyCaptures);
+    }
+
+    private static Player? SelectHyphalDrawTargetEnemy(Player player, GameBoard board, Random rng)
+    {
+        var boardSummaries = BoardUtilities.GetPlayerBoardSummaries(board.Players, board);
+        var leaders = board.Players
+            .Where(candidate => candidate.PlayerId != player.PlayerId && candidate.StartingTileId.HasValue)
+            .Select(candidate => new
+            {
+                Player = candidate,
+                LivingCells = boardSummaries.TryGetValue(candidate.PlayerId, out var summary) ? summary.LivingCells : 0
+            })
+            .Where(candidate => candidate.LivingCells > 0)
+            .ToList();
+        if (leaders.Count == 0)
+        {
+            return null;
+        }
+
+        int maxLivingCells = leaders.Max(candidate => candidate.LivingCells);
+        var tiedLeaders = leaders
+            .Where(candidate => candidate.LivingCells == maxLivingCells)
+            .Select(candidate => candidate.Player)
+            .ToList();
+        return tiedLeaders.Count == 0 ? null : tiedLeaders[rng.Next(tiedLeaders.Count)];
+    }
+
+    private static void ApplyHyphalDrawPlan(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        HyphalDrawResolution plan)
+    {
+        if (!plan.HasAnyMovement)
+        {
+            return;
+        }
+
+        var relocations = new List<FungalCell>(plan.Moves.Count);
+        foreach (var move in plan.Moves)
+        {
+            var sourceCell = board.GetCell(move.SourceTileId);
+            if (sourceCell == null || !sourceCell.IsAlive || sourceCell.OwnerPlayerId != playerMyco.PlayerId)
+            {
+                continue;
+            }
+
+            relocations.Add(sourceCell.CloneForRelocation(move.DestinationTileId, GrowthSource.HyphalDraw));
+        }
+
+        foreach (var move in plan.Moves)
+        {
+            board.RemoveCellInternal(move.SourceTileId, removeControl: true);
+        }
+
+        foreach (var relocatedCell in relocations)
+        {
+            board.PlaceFungalCell(relocatedCell);
+        }
+
+        playerMyco.IncrementEffectCount(MycovariantEffectType.Relocations, relocations.Count);
     }
 
     /// <summary>
@@ -778,28 +1016,30 @@ public static class MycovariantEffectProcessor
             (board.Width-1,board.Height-1),
             (0,board.Height-1)
         };
-        int bestIndex = -1;
+        (int x, int y)? bestCorner = null;
         int bestDist = int.MaxValue;
-        for (int i=0;i<corners.Length;i++)
+        for (int i = 0; i < corners.Length; i++)
         {
             var c = corners[i];
             int dist = Math.Abs(c.x - sx) + Math.Abs(c.y - sy);
             if (dist < bestDist)
             {
                 bestDist = dist;
-                bestIndex = i;
+                bestCorner = c;
             }
         }
-        if (bestIndex < 0) return null;
-        return corners[bestIndex];
+        return bestCorner;
     }
 
     private static bool ShouldSkipTile(FungalCell? existing, int playerId)
     {
-        if (existing == null) return false; // empty tile actionable
-        if (existing.IsAlive && existing.OwnerPlayerId == playerId) return true; // friendly living
-        if (existing.IsAlive && existing.OwnerPlayerId != playerId && existing.IsResistant) return true; // enemy resistant
-        return false; // actionable otherwise
+        return existing switch
+        {
+            null => false,
+            { IsAlive: true, OwnerPlayerId: int ownerId } when ownerId == playerId => true,
+            { IsAlive: true, OwnerPlayerId: int ownerId, IsResistant: true } when ownerId != playerId => true,
+            _ => false
+        };
     }
 
     private static void ApplyConduitAction(
