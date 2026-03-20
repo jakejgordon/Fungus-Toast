@@ -153,6 +153,8 @@ Notes:
 - Prefer lower contrast fill with clear border/label.
 - Reserve primary style for the main call to action only.
 - Disabled styling should never be used for active controls. If a control is clickable, label contrast must match active button text tokens.
+- On dark panels or overlays, secondary buttons should not reuse light primary fills by default. Prefer a dark raised surface treatment such as `Surface.PanelElevated` with `Text.Primary` so compact table actions and dismiss controls remain readable at a glance.
+- Runtime-built buttons must receive an explicit active label color after styling passes. Do not assume inherited TMP defaults will remain contrast-safe.
 
 ### 5.3 Dropdown/Input Readability
 - Dropdown caption and option text must use `Button.Text.Default` on light dropdown surfaces.
@@ -184,6 +186,8 @@ Notes:
 - Use `Surface.OverlayDim` behind modal content.
 - Primary result text must be high-contrast and concise.
 - Reuse semantic tokens (`State.Success/Warning/Danger`) consistently.
+- Dismissible read-only modals should expose a visible top-right dismiss control. An `X` button remains the standard desktop convention when paired with backdrop click and `Escape` support.
+- Footer `Close` buttons are optional for read-only detail modals. Prefer the top-right dismiss control when vertical space is constrained.
 
 ---
 

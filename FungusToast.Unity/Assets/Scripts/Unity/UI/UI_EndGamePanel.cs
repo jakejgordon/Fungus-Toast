@@ -4,13 +4,17 @@ using UnityEngine;
 using UnityEngine.UI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Players;
+using FungusToast.Core.Mutations;
 using System.Linq;
 using TMPro;
 using FungusToast.Unity.UI.Tooltips;
 using System.Globalization;
 using System;
+using FungusToast.Unity.UI.Campaign;
+using Assets.Scripts.Unity.UI.MycovariantDraft;
 using FungusToast.Unity.Campaign;
 using FungusToast.Unity.UI.Testing;
+using UnityEngine.EventSystems;
 
 namespace FungusToast.Unity.UI
 {
@@ -27,6 +31,15 @@ namespace FungusToast.Unity.UI
         private const float CampaignOutcomeSpacerPreferredHeight = 94f;
         private const float CampaignOutcomeSpacerMinHeight = 88f;
         private const int CampaignOutcomeSubtitleFontSize = 26;
+        private const float DetailsCardPreferredWidth = 820f;
+        private const float DetailsCardPreferredHeight = 900f;
+        private const float DetailsCardMinWidth = 680f;
+        private const float DetailsCardMinHeight = 640f;
+        private const float DetailsCardSideBuffer = 72f;
+        private const float DetailsCardVerticalBuffer = 34f;
+        private const float DetailsDismissButtonSize = 44f;
+        private const float DetailsHeaderIconSize = 56f;
+        private const float DetailsSectionSpacing = 12f;
 
         /* ─────────── Inspector ─────────── */
         [Header("UI References")]
@@ -61,6 +74,18 @@ namespace FungusToast.Unity.UI
         private int postVictoryFastForwardRounds;
         private ForcedGameResultMode postVictoryForcedResult = ForcedGameResultMode.Natural;
         private int? postVictoryForcedMycovariantId;
+        private GameObject detailsOverlayRoot;
+        private CanvasGroup detailsOverlayCanvasGroup;
+        private Image detailsOverlayBackground;
+        private Image detailsCardBackgroundImage;
+        private TextMeshProUGUI detailsTitleText;
+        private TextMeshProUGUI detailsSubtitleText;
+        private Image detailsPlayerIconImage;
+        private Button detailsCloseButton;
+        private ScrollRect detailsScrollRect;
+        private RectTransform detailsScrollContent;
+        private RectTransform detailsCardRect;
+        private Button detailsBackdropButton;
 
         /// <summary>
         /// Call once after the panel is created to wire up dependencies without reaching
@@ -97,7 +122,19 @@ namespace FungusToast.Unity.UI
             else
                 Debug.LogWarning("UI_EndGamePanel: ExitButton reference is missing (player cannot exit results).");
 
+            EnsureDetailsModal();
+
             HideInstant();
+        }
+
+        private void Update()
+        {
+            if (!Application.isPlaying || !IsDetailsModalOpen || !Input.GetKeyDown(KeyCode.Escape))
+            {
+                return;
+            }
+
+            HidePlayerDetails();
         }
 
         private void ApplyStyle()
@@ -130,6 +167,7 @@ namespace FungusToast.Unity.UI
             EnsureActionButtonsShareContainer();
             EnsureButtonContainerLayout();
             EnsurePostVictoryTestingControls();
+            EnsureDetailsModal();
             UpdatePostVictoryTestingLabels();
 
             if (outcomeLabel != null)
@@ -258,6 +296,8 @@ namespace FungusToast.Unity.UI
         /* ─────────── Internal Row Builder ─────────── */
         private void ShowResultsInternal(List<Player> ranked, GameBoard board, bool useCampaignTopSpacer)
         {
+            HidePlayerDetails();
+
             /* clear previous rows */
             foreach (Transform child in resultsContainer)
                 Destroy(child.gameObject);
@@ -281,7 +321,18 @@ namespace FungusToast.Unity.UI
                     ? gameUI.PlayerUIBinder.GetIcon(p)
                     : GameManager.Instance.GameUI.PlayerUIBinder.GetIcon(p);
 
-                row.Populate(rank, icon, p.PlayerName, summary.LivingCells, summary.DeadCells, summary.ToxinCells);
+                int capturedRank = rank;
+                Player capturedPlayer = p;
+                Sprite capturedIcon = icon;
+
+                row.Populate(
+                    rank,
+                    icon,
+                    p.PlayerName,
+                    summary.LivingCells,
+                    summary.DeadCells,
+                    summary.ToxinCells,
+                    () => ShowPlayerDetails(capturedPlayer, capturedRank, capturedIcon));
                 rank++;
             }
 
@@ -343,6 +394,8 @@ namespace FungusToast.Unity.UI
 
         private void ShowSnapshotRows(CampaignVictorySnapshot snapshot)
         {
+            HidePlayerDetails();
+
             foreach (Transform child in resultsContainer)
             {
                 Destroy(child.gameObject);
@@ -360,13 +413,18 @@ namespace FungusToast.Unity.UI
                     ? gameUI.PlayerUIBinder.GetPlayerIcon(rowData.playerId)
                     : GameManager.Instance?.GameUI?.PlayerUIBinder?.GetPlayerIcon(rowData.playerId);
 
+                var player = ResolvePlayerForDetails(rowData.playerId);
+                int capturedRank = rowData.rank;
+                Sprite capturedIcon = icon;
+
                 row.Populate(
                     rowData.rank,
                     icon,
                     rowData.playerName,
                     rowData.livingCells,
                     rowData.deadCells,
-                    rowData.toxinCells);
+                    rowData.toxinCells,
+                    player != null ? () => ShowPlayerDetails(player, capturedRank, capturedIcon) : null);
             }
 
             ApplyControlReadabilityOverrides();
@@ -476,6 +534,7 @@ namespace FungusToast.Unity.UI
         private void HideInstant()
         {
             StopAllCoroutines();
+            HidePlayerDetails();
             canvasGroup.alpha = 0f;
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
@@ -544,6 +603,691 @@ namespace FungusToast.Unity.UI
             CreateHeaderCell(header.transform, "Alive", 140f, TextAlignmentOptions.Right, false);
             CreateHeaderCell(header.transform, "Dead", 140f, TextAlignmentOptions.Right, false);
             CreateHeaderCell(header.transform, "Toxins", 140f, TextAlignmentOptions.Right, false);
+            CreateHeaderCell(header.transform, "Details", 132f, TextAlignmentOptions.Center, false);
+        }
+
+        private Player ResolvePlayerForDetails(int playerId)
+        {
+            var board = gameUI?.Board ?? GameManager.Instance?.GameUI?.Board;
+            if (board?.Players == null)
+            {
+                return null;
+            }
+
+            return board.Players.FirstOrDefault(player => player.PlayerId == playerId);
+        }
+
+        private void EnsureDetailsModal()
+        {
+            if (detailsOverlayRoot != null)
+            {
+                return;
+            }
+
+            detailsOverlayRoot = new GameObject("UI_EndGameDetailsOverlay", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Button));
+            detailsOverlayRoot.transform.SetParent(transform, false);
+            detailsOverlayRoot.transform.SetAsLastSibling();
+            EnsureIgnoreParentLayout(detailsOverlayRoot);
+
+            var overlayRect = detailsOverlayRoot.GetComponent<RectTransform>();
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.offsetMin = Vector2.zero;
+            overlayRect.offsetMax = Vector2.zero;
+
+            detailsOverlayCanvasGroup = detailsOverlayRoot.GetComponent<CanvasGroup>();
+            detailsOverlayBackground = detailsOverlayRoot.GetComponent<Image>();
+            detailsOverlayBackground.color = new Color(UIStyleTokens.Surface.OverlayDim.r, UIStyleTokens.Surface.OverlayDim.g, UIStyleTokens.Surface.OverlayDim.b, 0.88f);
+            detailsOverlayBackground.raycastTarget = true;
+
+            detailsBackdropButton = detailsOverlayRoot.GetComponent<Button>();
+            detailsBackdropButton.transition = Selectable.Transition.None;
+            detailsBackdropButton.onClick.RemoveAllListeners();
+            detailsBackdropButton.onClick.AddListener(HidePlayerDetails);
+
+            var cardObject = new GameObject("UI_EndGameDetailsCard", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            cardObject.transform.SetParent(detailsOverlayRoot.transform, false);
+            EnsureIgnoreParentLayout(cardObject);
+
+            detailsCardBackgroundImage = cardObject.GetComponent<Image>();
+            var cardColor = UIStyleTokens.Surface.PanelPrimary;
+            cardColor.a = 0.98f;
+            detailsCardBackgroundImage.color = cardColor;
+
+            detailsCardRect = cardObject.GetComponent<RectTransform>();
+            detailsCardRect.anchorMin = new Vector2(0.5f, 0.5f);
+            detailsCardRect.anchorMax = new Vector2(0.5f, 0.5f);
+            detailsCardRect.pivot = new Vector2(0.5f, 0.5f);
+            detailsCardRect.anchoredPosition = Vector2.zero;
+            UpdateDetailsCardSize();
+
+            var cardLayout = cardObject.GetComponent<VerticalLayoutGroup>();
+            cardLayout.childAlignment = TextAnchor.UpperLeft;
+            cardLayout.childControlWidth = true;
+            cardLayout.childControlHeight = true;
+            cardLayout.childForceExpandWidth = true;
+            cardLayout.childForceExpandHeight = false;
+            cardLayout.spacing = 14f;
+            cardLayout.padding = new RectOffset(22, 22, 22, 22);
+
+            var cardElement = cardObject.GetComponent<LayoutElement>();
+            cardElement.ignoreLayout = true;
+
+            BuildDetailsHeader(cardObject.transform);
+            BuildDetailsScrollArea(cardObject.transform);
+
+            detailsOverlayRoot.SetActive(false);
+            detailsOverlayCanvasGroup.alpha = 0f;
+            detailsOverlayCanvasGroup.interactable = false;
+            detailsOverlayCanvasGroup.blocksRaycasts = false;
+        }
+
+        private void BuildDetailsHeader(Transform cardTransform)
+        {
+            var header = new GameObject("UI_EndGameDetailsHeader", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            header.transform.SetParent(cardTransform, false);
+
+            var layout = header.GetComponent<HorizontalLayoutGroup>();
+            layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlHeight = true;
+            layout.childControlWidth = true;
+            layout.childForceExpandHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.spacing = 16f;
+
+            var layoutElement = header.GetComponent<LayoutElement>();
+            layoutElement.preferredHeight = 76f;
+            layoutElement.minHeight = 72f;
+
+            var iconObject = new GameObject("UI_EndGameDetailsPlayerIcon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            iconObject.transform.SetParent(header.transform, false);
+
+            detailsPlayerIconImage = iconObject.GetComponent<Image>();
+            detailsPlayerIconImage.preserveAspect = true;
+
+            var iconLayout = iconObject.GetComponent<LayoutElement>();
+            iconLayout.preferredWidth = DetailsHeaderIconSize;
+            iconLayout.preferredHeight = DetailsHeaderIconSize;
+            iconLayout.minWidth = DetailsHeaderIconSize;
+            iconLayout.minHeight = DetailsHeaderIconSize;
+
+            var textRoot = new GameObject("UI_EndGameDetailsTextRoot", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            textRoot.transform.SetParent(header.transform, false);
+
+            var textLayout = textRoot.GetComponent<VerticalLayoutGroup>();
+            textLayout.childAlignment = TextAnchor.MiddleLeft;
+            textLayout.childControlWidth = true;
+            textLayout.childControlHeight = true;
+            textLayout.childForceExpandHeight = false;
+            textLayout.childForceExpandWidth = true;
+            textLayout.spacing = 4f;
+
+            var textRootLayout = textRoot.GetComponent<LayoutElement>();
+            textRootLayout.flexibleWidth = 1f;
+
+            detailsTitleText = CreateTextLabel(textRoot.transform, "UI_EndGameDetailsTitle", 31f, FontStyles.Bold, UIStyleTokens.Text.Primary, TextAlignmentOptions.Left);
+            detailsSubtitleText = CreateTextLabel(textRoot.transform, "UI_EndGameDetailsSubtitle", 18f, FontStyles.Normal, UIStyleTokens.Text.Secondary, TextAlignmentOptions.Left);
+            detailsSubtitleText.enableAutoSizing = true;
+            detailsSubtitleText.fontSizeMax = 18f;
+            detailsSubtitleText.fontSizeMin = 14f;
+
+            detailsCloseButton = CreateDetailsDismissButton(header.transform);
+        }
+
+        private void BuildDetailsScrollArea(Transform cardTransform)
+        {
+            var scrollObject = new GameObject("UI_EndGameDetailsScroll", typeof(RectTransform), typeof(Image), typeof(ScrollRect), typeof(LayoutElement));
+            scrollObject.transform.SetParent(cardTransform, false);
+
+            var scrollLayout = scrollObject.GetComponent<LayoutElement>();
+            scrollLayout.flexibleHeight = 1f;
+            scrollLayout.minHeight = 220f;
+
+            var scrollImage = scrollObject.GetComponent<Image>();
+            scrollImage.color = new Color(UIStyleTokens.Surface.PanelSecondary.r, UIStyleTokens.Surface.PanelSecondary.g, UIStyleTokens.Surface.PanelSecondary.b, 0.22f);
+            scrollImage.raycastTarget = true;
+
+            detailsScrollRect = scrollObject.GetComponent<ScrollRect>();
+            detailsScrollRect.horizontal = false;
+            detailsScrollRect.vertical = true;
+            detailsScrollRect.movementType = ScrollRect.MovementType.Clamped;
+            detailsScrollRect.scrollSensitivity = 24f;
+
+            var viewportObject = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(Mask));
+            viewportObject.transform.SetParent(scrollObject.transform, false);
+
+            var viewportRect = viewportObject.GetComponent<RectTransform>();
+            viewportRect.anchorMin = Vector2.zero;
+            viewportRect.anchorMax = Vector2.one;
+            viewportRect.offsetMin = new Vector2(8f, 8f);
+            viewportRect.offsetMax = new Vector2(-8f, -8f);
+
+            var viewportImage = viewportObject.GetComponent<Image>();
+            viewportImage.color = new Color(0f, 0f, 0f, 0.01f);
+            viewportImage.raycastTarget = true;
+            viewportObject.GetComponent<Mask>().showMaskGraphic = false;
+
+            var contentObject = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            contentObject.transform.SetParent(viewportObject.transform, false);
+
+            detailsScrollContent = contentObject.GetComponent<RectTransform>();
+            detailsScrollContent.anchorMin = new Vector2(0f, 1f);
+            detailsScrollContent.anchorMax = new Vector2(1f, 1f);
+            detailsScrollContent.pivot = new Vector2(0.5f, 1f);
+            detailsScrollContent.anchoredPosition = Vector2.zero;
+            detailsScrollContent.sizeDelta = new Vector2(0f, 0f);
+
+            var contentLayout = contentObject.GetComponent<VerticalLayoutGroup>();
+            contentLayout.childAlignment = TextAnchor.UpperLeft;
+            contentLayout.childControlWidth = true;
+            contentLayout.childControlHeight = true;
+            contentLayout.childForceExpandHeight = false;
+            contentLayout.childForceExpandWidth = true;
+            contentLayout.spacing = DetailsSectionSpacing;
+            contentLayout.padding = new RectOffset(2, 2, 2, 2);
+
+            var fitter = contentObject.GetComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            detailsScrollRect.viewport = viewportRect;
+            detailsScrollRect.content = detailsScrollContent;
+        }
+
+        private Button CreateDetailsDismissButton(Transform parent)
+        {
+            var buttonObject = new GameObject("UI_EndGameDetailsCloseButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+            buttonObject.transform.SetParent(parent, false);
+
+            var image = buttonObject.GetComponent<Image>();
+            image.raycastTarget = true;
+
+            var button = buttonObject.GetComponent<Button>();
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(HidePlayerDetails);
+            UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
+
+            var layoutElement = buttonObject.GetComponent<LayoutElement>();
+            layoutElement.preferredWidth = DetailsDismissButtonSize;
+            layoutElement.preferredHeight = DetailsDismissButtonSize;
+            layoutElement.minWidth = DetailsDismissButtonSize;
+            layoutElement.minHeight = DetailsDismissButtonSize;
+
+            var textObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            textObject.transform.SetParent(buttonObject.transform, false);
+            var textRect = textObject.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = Vector2.zero;
+            textRect.offsetMax = Vector2.zero;
+
+            var text = textObject.GetComponent<TextMeshProUGUI>();
+            text.text = "×";
+            text.alignment = TextAlignmentOptions.Center;
+            text.fontStyle = FontStyles.Bold;
+            text.enableAutoSizing = true;
+            text.fontSizeMax = 30f;
+            text.fontSizeMin = 20f;
+            text.color = UIStyleTokens.Text.Primary;
+            text.raycastTarget = false;
+
+            EnsureTooltip(button, "Close this details view.");
+            return button;
+        }
+
+        private void ShowPlayerDetails(Player player, int rank, Sprite icon)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            EnsureDetailsModal();
+            if (detailsOverlayRoot == null || detailsScrollContent == null)
+            {
+                return;
+            }
+
+            detailsOverlayRoot.transform.SetAsLastSibling();
+            UpdateDetailsCardSize();
+            detailsOverlayRoot.SetActive(true);
+            detailsOverlayCanvasGroup.alpha = 1f;
+            detailsOverlayCanvasGroup.interactable = true;
+            detailsOverlayCanvasGroup.blocksRaycasts = true;
+
+            if (detailsPlayerIconImage != null)
+            {
+                detailsPlayerIconImage.sprite = icon;
+                detailsPlayerIconImage.enabled = icon != null;
+            }
+
+            int mutationCount = player.PlayerMutations.Values.Count(pm => pm.CurrentLevel > 0);
+            int mycovariantCount = player.PlayerMycovariants?.Count ?? 0;
+            int adaptationCount = player.PlayerAdaptations?.Count ?? 0;
+
+            if (detailsTitleText != null)
+            {
+                detailsTitleText.text = $"{player.PlayerName} Details";
+            }
+
+            if (detailsSubtitleText != null)
+            {
+                detailsSubtitleText.text = $"Rank {rank}  •  {mutationCount} mutation{Pluralize(mutationCount)}  •  {mycovariantCount} mycovariant{Pluralize(mycovariantCount)}  •  {adaptationCount} adaptation{Pluralize(adaptationCount)}";
+            }
+
+            ClearDetailsScrollContent();
+            BuildMutationSection(player);
+            BuildMycovariantSection(player);
+            BuildAdaptationSection(player);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(detailsScrollContent);
+            detailsScrollRect.verticalNormalizedPosition = 1f;
+        }
+
+        private void HidePlayerDetails()
+        {
+            if (detailsOverlayRoot == null || detailsOverlayCanvasGroup == null)
+            {
+                return;
+            }
+
+            detailsOverlayCanvasGroup.alpha = 0f;
+            detailsOverlayCanvasGroup.interactable = false;
+            detailsOverlayCanvasGroup.blocksRaycasts = false;
+            detailsOverlayRoot.SetActive(false);
+        }
+
+        public bool BlocksGameplayCameraInput => gameObject.activeInHierarchy && canvasGroup != null && canvasGroup.blocksRaycasts;
+
+        public bool IsDetailsModalOpen => detailsOverlayRoot != null && detailsOverlayRoot.activeSelf && detailsOverlayCanvasGroup != null && detailsOverlayCanvasGroup.blocksRaycasts;
+
+        private void UpdateDetailsCardSize()
+        {
+            if (detailsOverlayRoot == null || detailsCardRect == null)
+            {
+                return;
+            }
+
+            var overlayRect = detailsOverlayRoot.GetComponent<RectTransform>();
+            if (overlayRect == null)
+            {
+                return;
+            }
+
+            float availableWidth = Mathf.Max(DetailsCardMinWidth, overlayRect.rect.width - (DetailsCardSideBuffer * 2f));
+            float availableHeight = Mathf.Max(DetailsCardMinHeight, overlayRect.rect.height - (DetailsCardVerticalBuffer * 2f));
+
+            float width = Mathf.Clamp(DetailsCardPreferredWidth, DetailsCardMinWidth, availableWidth);
+            float height = Mathf.Clamp(DetailsCardPreferredHeight, DetailsCardMinHeight, availableHeight);
+
+            detailsCardRect.sizeDelta = new Vector2(width, height);
+        }
+
+        private void ClearDetailsScrollContent()
+        {
+            if (detailsScrollContent == null)
+            {
+                return;
+            }
+
+            for (int i = detailsScrollContent.childCount - 1; i >= 0; i--)
+            {
+                var child = detailsScrollContent.GetChild(i);
+                child.SetParent(null, false);
+                Destroy(child.gameObject);
+            }
+        }
+
+        private void BuildMutationSection(Player player)
+        {
+            var mutations = player.PlayerMutations.Values
+                .Where(pm => pm != null && pm.CurrentLevel > 0 && pm.Mutation != null)
+                .OrderBy(pm => pm.FirstUpgradeRound ?? int.MaxValue)
+                .ThenBy(pm => pm.Mutation.TierNumber)
+                .ThenBy(pm => pm.Mutation.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+
+            var section = CreateDetailsSectionContainer($"Mutations ({mutations.Count})");
+            if (mutations.Count == 0)
+            {
+                CreateEmptyStateLabel(section, "No mutations acquired this game.");
+                return;
+            }
+
+            for (int i = 0; i < mutations.Count; i++)
+            {
+                CreateMutationEntry(section, mutations[i]);
+            }
+        }
+
+        private void BuildMycovariantSection(Player player)
+        {
+            int count = player.PlayerMycovariants?.Count ?? 0;
+            var section = CreateDetailsSectionContainer($"Mycovariants ({count})");
+            if (count == 0)
+            {
+                CreateEmptyStateLabel(section, "No mycovariants drafted.");
+                return;
+            }
+
+            for (int i = 0; i < player.PlayerMycovariants.Count; i++)
+            {
+                CreateMycovariantEntry(section, player.PlayerMycovariants[i]);
+            }
+        }
+
+        private void BuildAdaptationSection(Player player)
+        {
+            int count = player.PlayerAdaptations?.Count ?? 0;
+            var section = CreateDetailsSectionContainer($"Adaptations ({count})");
+            if (count == 0)
+            {
+                CreateEmptyStateLabel(section, "No adaptations acquired.");
+                return;
+            }
+
+            for (int i = 0; i < player.PlayerAdaptations.Count; i++)
+            {
+                CreateAdaptationEntry(section, player.PlayerAdaptations[i]);
+            }
+        }
+
+        private RectTransform CreateDetailsSectionContainer(string title)
+        {
+            var sectionObject = new GameObject($"UI_EndGameDetailsSection_{title}", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            sectionObject.transform.SetParent(detailsScrollContent, false);
+
+            var background = sectionObject.GetComponent<Image>();
+            var color = UIStyleTokens.Surface.PanelSecondary;
+            color.a = 0.72f;
+            background.color = color;
+            background.raycastTarget = false;
+
+            var layout = sectionObject.GetComponent<VerticalLayoutGroup>();
+            layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandHeight = false;
+            layout.childForceExpandWidth = true;
+            layout.spacing = 8f;
+            layout.padding = new RectOffset(14, 14, 12, 12);
+
+            var layoutElement = sectionObject.GetComponent<LayoutElement>();
+            layoutElement.flexibleWidth = 1f;
+
+            CreateTextLabel(sectionObject.transform, "SectionTitle", 22f, FontStyles.Bold, UIStyleTokens.Text.Primary, TextAlignmentOptions.Left).text = title;
+            return sectionObject.GetComponent<RectTransform>();
+        }
+
+        private void CreateEmptyStateLabel(Transform parent, string text)
+        {
+            var label = CreateTextLabel(parent, "EmptyState", 18f, FontStyles.Italic, UIStyleTokens.Text.Muted, TextAlignmentOptions.Left);
+            label.text = text;
+            label.enableAutoSizing = true;
+            label.fontSizeMax = 18f;
+            label.fontSizeMin = 13f;
+            label.textWrappingMode = TextWrappingModes.Normal;
+        }
+
+        private void CreateMutationEntry(Transform parent, PlayerMutation playerMutation)
+        {
+            var root = CreateDetailsEntryCard(parent, "MutationEntry");
+            var topRow = CreateHorizontalContainer(root.transform, "TopRow", 12f);
+            topRow.childAlignment = TextAnchor.MiddleLeft;
+
+            var nameLabel = CreateTextLabel(topRow.transform, "Name", 20f, FontStyles.Bold, UIStyleTokens.Text.Primary, TextAlignmentOptions.Left);
+            nameLabel.text = playerMutation.Mutation.Name;
+            var nameLayout = nameLabel.gameObject.AddComponent<LayoutElement>();
+            nameLayout.flexibleWidth = 1f;
+
+            var levelLabel = CreateTextLabel(topRow.transform, "Level", 17f, FontStyles.Bold, UIStyleTokens.State.Success, TextAlignmentOptions.Right);
+            levelLabel.text = $"Lv {playerMutation.CurrentLevel}/{playerMutation.Mutation.MaxLevel}";
+
+            var metaLabel = CreateTextLabel(root.transform, "Meta", 16f, FontStyles.Normal, UIStyleTokens.Text.Secondary, TextAlignmentOptions.Left);
+            metaLabel.text = BuildMutationMetaText(playerMutation);
+            metaLabel.enableAutoSizing = true;
+            metaLabel.fontSizeMax = 16f;
+            metaLabel.fontSizeMin = 12f;
+            metaLabel.textWrappingMode = TextWrappingModes.Normal;
+
+            AttachStaticTooltip(root.gameObject, BuildMutationTooltip(playerMutation));
+        }
+
+        private void CreateMycovariantEntry(Transform parent, PlayerMycovariant playerMycovariant)
+        {
+            var root = CreateIconDetailsEntry(parent, "MycovariantEntry", MycovariantArtRepository.GetIcon(playerMycovariant.Mycovariant));
+            PopulateIconEntryText(
+                root,
+                playerMycovariant.Mycovariant.Name,
+                BuildMycovariantMetaText(playerMycovariant));
+
+            AttachStaticTooltip(root.gameObject, BuildMycovariantTooltip(playerMycovariant));
+        }
+
+        private void CreateAdaptationEntry(Transform parent, PlayerAdaptation playerAdaptation)
+        {
+            var root = CreateIconDetailsEntry(parent, "AdaptationEntry", AdaptationArtRepository.GetIcon(playerAdaptation.Adaptation));
+            PopulateIconEntryText(
+                root,
+                playerAdaptation.Adaptation.Name,
+                BuildAdaptationMetaText(playerAdaptation));
+
+            AttachStaticTooltip(root.gameObject, BuildAdaptationTooltip(playerAdaptation));
+        }
+
+        private RectTransform CreateIconDetailsEntry(Transform parent, string name, Sprite icon)
+        {
+            var root = CreateDetailsEntryCard(parent, name);
+            var row = CreateHorizontalContainer(root.transform, "EntryRow", 12f);
+            row.childAlignment = TextAnchor.UpperLeft;
+
+            var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            iconObject.transform.SetParent(row.transform, false);
+            var image = iconObject.GetComponent<Image>();
+            image.sprite = icon;
+            image.preserveAspect = true;
+            image.enabled = icon != null;
+
+            var iconLayout = iconObject.GetComponent<LayoutElement>();
+            iconLayout.preferredWidth = 40f;
+            iconLayout.preferredHeight = 40f;
+            iconLayout.minWidth = 40f;
+            iconLayout.minHeight = 40f;
+
+            var textRoot = new GameObject("TextRoot", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            textRoot.transform.SetParent(row.transform, false);
+            var textLayout = textRoot.GetComponent<VerticalLayoutGroup>();
+            textLayout.childAlignment = TextAnchor.MiddleLeft;
+            textLayout.childControlWidth = true;
+            textLayout.childControlHeight = true;
+            textLayout.childForceExpandHeight = false;
+            textLayout.childForceExpandWidth = true;
+            textLayout.spacing = 3f;
+
+            var textRootLayout = textRoot.GetComponent<LayoutElement>();
+            textRootLayout.flexibleWidth = 1f;
+
+            return root.GetComponent<RectTransform>();
+        }
+
+        private void PopulateIconEntryText(RectTransform root, string title, string meta)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var textRoot = root.GetComponentsInChildren<VerticalLayoutGroup>(true)
+                .Select(group => group.transform)
+                .FirstOrDefault(transform => string.Equals(transform.name, "TextRoot", StringComparison.Ordinal));
+            if (textRoot == null)
+            {
+                return;
+            }
+
+            var titleLabel = CreateTextLabel(textRoot, "Title", 20f, FontStyles.Bold, UIStyleTokens.Text.Primary, TextAlignmentOptions.Left);
+            titleLabel.text = title;
+
+            var metaLabel = CreateTextLabel(textRoot, "Meta", 16f, FontStyles.Normal, UIStyleTokens.Text.Secondary, TextAlignmentOptions.Left);
+            metaLabel.text = meta;
+            metaLabel.enableAutoSizing = true;
+            metaLabel.fontSizeMax = 16f;
+            metaLabel.fontSizeMin = 12f;
+            metaLabel.textWrappingMode = TextWrappingModes.Normal;
+        }
+
+        private GameObject CreateDetailsEntryCard(Transform parent, string name)
+        {
+            var entryObject = new GameObject($"UI_EndGameDetails{name}", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            entryObject.transform.SetParent(parent, false);
+
+            var background = entryObject.GetComponent<Image>();
+            var color = UIStyleTokens.Surface.PanelPrimary;
+            color.a = 0.8f;
+            background.color = color;
+            background.raycastTarget = true;
+
+            var layout = entryObject.GetComponent<VerticalLayoutGroup>();
+            layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandHeight = false;
+            layout.childForceExpandWidth = true;
+            layout.spacing = 4f;
+            layout.padding = new RectOffset(12, 12, 10, 10);
+
+            var layoutElement = entryObject.GetComponent<LayoutElement>();
+            layoutElement.flexibleWidth = 1f;
+            layoutElement.minHeight = 58f;
+
+            return entryObject;
+        }
+
+        private HorizontalLayoutGroup CreateHorizontalContainer(Transform parent, string name, float spacing)
+        {
+            var row = new GameObject(name, typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            row.transform.SetParent(parent, false);
+            var layout = row.GetComponent<HorizontalLayoutGroup>();
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.spacing = spacing;
+            return layout;
+        }
+
+        private TextMeshProUGUI CreateTextLabel(Transform parent, string name, float fontSize, FontStyles fontStyle, Color color, TextAlignmentOptions alignment)
+        {
+            var textObject = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
+            textObject.transform.SetParent(parent, false);
+
+            var text = textObject.GetComponent<TextMeshProUGUI>();
+            text.fontSize = fontSize;
+            text.fontStyle = fontStyle;
+            text.color = color;
+            text.alignment = alignment;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            text.overflowMode = TextOverflowModes.Ellipsis;
+            return text;
+        }
+
+        private void AttachStaticTooltip(GameObject target, string text)
+        {
+            if (target == null || string.IsNullOrWhiteSpace(text))
+            {
+                return;
+            }
+
+            var trigger = target.GetComponent<TooltipTrigger>();
+            if (trigger == null)
+            {
+                trigger = target.AddComponent<TooltipTrigger>();
+            }
+
+            trigger.SetStaticText(text);
+        }
+
+        private static string BuildMutationMetaText(PlayerMutation playerMutation)
+        {
+            string tier = $"Tier {playerMutation.Mutation.TierNumber}";
+            string category = FormatEnumLabel(playerMutation.Mutation.Category.ToString());
+            string roundText = playerMutation.FirstUpgradeRound.HasValue
+                ? $"First taken in round {playerMutation.FirstUpgradeRound.Value}"
+                : "Acquisition round unavailable";
+
+            if (playerMutation.Mutation.IsSurge)
+            {
+                return $"{tier} • {category} • Surge • {roundText}";
+            }
+
+            return $"{tier} • {category} • {roundText}";
+        }
+
+        private static string BuildMycovariantMetaText(PlayerMycovariant playerMycovariant)
+        {
+            string type = FormatEnumLabel(playerMycovariant.Mycovariant.Type.ToString());
+            string category = FormatEnumLabel(playerMycovariant.Mycovariant.Category.ToString());
+            string triggerState = playerMycovariant.HasTriggered ? "Triggered" : "Ready";
+            return $"{type} • {category} • {triggerState}";
+        }
+
+        private static string BuildAdaptationMetaText(PlayerAdaptation playerAdaptation)
+        {
+            return playerAdaptation.HasTriggered
+                ? "Campaign Adaptation • Triggered"
+                : "Campaign Adaptation";
+        }
+
+        private static string BuildMutationTooltip(PlayerMutation playerMutation)
+        {
+            string flavor = string.IsNullOrWhiteSpace(playerMutation.Mutation.FlavorText)
+                ? string.Empty
+                : $"\n\n<i>{playerMutation.Mutation.FlavorText}</i>";
+            string surge = playerMutation.Mutation.IsSurge
+                ? $"\nSurge Duration: {playerMutation.Mutation.SurgeDuration} round{Pluralize(playerMutation.Mutation.SurgeDuration)}"
+                : string.Empty;
+
+            return $"<b>{playerMutation.Mutation.Name}</b>\n<i>{BuildMutationMetaText(playerMutation)}</i>\n\n{playerMutation.Mutation.Description}{surge}{flavor}";
+        }
+
+        private static string BuildMycovariantTooltip(PlayerMycovariant playerMycovariant)
+        {
+            string flavor = string.IsNullOrWhiteSpace(playerMycovariant.Mycovariant.FlavorText)
+                ? string.Empty
+                : $"\n\n<i>{playerMycovariant.Mycovariant.FlavorText}</i>";
+            return $"<b>{playerMycovariant.Mycovariant.Name}</b>\n<i>{BuildMycovariantMetaText(playerMycovariant)}</i>\n\n{playerMycovariant.Mycovariant.Description}{flavor}";
+        }
+
+        private static string BuildAdaptationTooltip(PlayerAdaptation playerAdaptation)
+        {
+            return $"<b>{playerAdaptation.Adaptation.Name}</b>\n<i>{BuildAdaptationMetaText(playerAdaptation)}</i>\n\n{playerAdaptation.Adaptation.Description}";
+        }
+
+        private static string FormatEnumLabel(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return string.Empty;
+            }
+
+            var builder = new System.Text.StringBuilder(raw.Length + 8);
+            for (int i = 0; i < raw.Length; i++)
+            {
+                char current = raw[i];
+                if (i > 0 && char.IsUpper(current) && !char.IsWhiteSpace(raw[i - 1]))
+                {
+                    builder.Append(' ');
+                }
+
+                builder.Append(current);
+            }
+
+            return builder.ToString();
+        }
+
+        private static string Pluralize(int count)
+        {
+            return count == 1 ? string.Empty : "s";
         }
 
         private void BuildCampaignTopSpacer()
@@ -1050,6 +1794,11 @@ namespace FungusToast.Unity.UI
             UIStyleTokens.Button.SetButtonLabelColor(postVictorySkipToEndButton, UIStyleTokens.Button.TextDefault);
             UIStyleTokens.Button.SetButtonLabelColor(postVictoryForcedResultButton, UIStyleTokens.Button.TextDefault);
 
+            if (detailsCloseButton != null)
+            {
+                UIStyleTokens.Button.ApplyPanelSecondaryStyle(detailsCloseButton);
+            }
+
             ApplyDropdownReadability(postVictoryMycovariantDropdown);
             ApplyResultsHeaderReadabilityOverrides();
         }
@@ -1163,7 +1912,8 @@ namespace FungusToast.Unity.UI
             return string.Equals(text, "Player", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(text, "Alive", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(text, "Dead", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(text, "Toxins", StringComparison.OrdinalIgnoreCase);
+                || string.Equals(text, "Toxins", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(text, "Details", StringComparison.OrdinalIgnoreCase);
         }
 
         private static void ApplyDropdownReadability(TMP_Dropdown dropdown)

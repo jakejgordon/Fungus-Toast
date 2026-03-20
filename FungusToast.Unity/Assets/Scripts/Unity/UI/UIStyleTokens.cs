@@ -99,6 +99,27 @@ namespace FungusToast.Unity.UI
                 SetButtonLabelColor(button, TextDefault);
             }
 
+            public static void ApplyPanelSecondaryStyle(UnityEngine.UI.Button button)
+            {
+                if (button == null)
+                {
+                    return;
+                }
+
+                button.colors = new ColorBlock
+                {
+                    normalColor = Surface.PanelElevated,
+                    highlightedColor = Surface.PanelSecondary,
+                    pressedColor = Surface.PanelPrimary,
+                    selectedColor = Surface.PanelSecondary,
+                    disabledColor = new Color(Surface.PanelPrimary.r, Surface.PanelPrimary.g, Surface.PanelPrimary.b, 0.6f),
+                    colorMultiplier = 1f,
+                    fadeDuration = 0.1f
+                };
+
+                SetButtonLabelColor(button, Text.Primary);
+            }
+
             public static void SetButtonLabelColor(UnityEngine.UI.Button button, Color color)
             {
                 if (button == null)

@@ -28,6 +28,12 @@ namespace FungusToast.Unity.Cameras
                 return;
             }
 
+            if (GameManager.Instance?.GameUI?.EndGamePanel != null
+                && GameManager.Instance.GameUI.EndGamePanel.BlocksGameplayCameraInput)
+            {
+                return;
+            }
+
             // Zoom with scroll wheel
             float scroll = Input.GetAxis("Mouse ScrollWheel");
             if (Camera.main != null)
