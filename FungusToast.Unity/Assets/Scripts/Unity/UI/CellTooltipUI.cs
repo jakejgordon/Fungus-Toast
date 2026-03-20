@@ -4,6 +4,7 @@ using TMPro;
 using FungusToast.Core.Board;
 using FungusToast.Core.Death;
 using FungusToast.Core.Growth;
+using System;
 using System.Text;
 
 namespace FungusToast.Unity.UI
@@ -58,13 +59,22 @@ namespace FungusToast.Unity.UI
         [HideInInspector, SerializeField] private bool normalizeTooltipStructureOnAwake = true;
 
         // ── Constants ──────────────────────────────────────────────────────
-        private const float TooltipWidth = 300f;
-        private const float Padding = 14f;
-        private const float ContentWidth = TooltipWidth - Padding * 2f;
+        private const float TooltipWidth = 332f;
+        private const float LeftPadding = 28f;
+        private const float RightPadding = 16f;
+        private const float VerticalPadding = 16f;
+        private const float ContentWidth = TooltipWidth - LeftPadding - RightPadding;
+        private const float DefaultSectionFontSize = 15.5f;
+        private const float EmphasizedSectionFontSize = 18f;
+        private const float DetailSectionFontSize = 14f;
+        private const float OwnerBadgeSize = 18f;
+        private const float OwnerBadgeHorizontalOffset = 12f;
 
         // ── Runtime state ──────────────────────────────────────────────────
         private UI_PlayerBinder playerBinder;
         private TextMeshProUGUI bodyText;
+        private Image ownerBadgeImage;
+        private Image lastOwnerBadgeImage;
         private RectTransform rootRect;
         private bool initialized;
         private readonly StringBuilder sb = new();
@@ -97,9 +107,12 @@ namespace FungusToast.Unity.UI
             AppendAnimationFlags(cell);
 
             bodyText.text = sb.ToString().TrimEnd('\n', '\r');
+            bodyText.ForceMeshUpdate();
 
             // ── Size root to fit ──
             SizeToContent();
+            bodyText.ForceMeshUpdate();
+            UpdateOwnershipIcons(cell);
         }
 
         // ═══════════════════════════════════════════════════════════════════
@@ -164,6 +177,8 @@ namespace FungusToast.Unity.UI
             bodyText.gameObject.SetActive(true);
             bodyText.transform.SetAsLastSibling();
             ConfigureBodyText(bodyText);
+            ownerBadgeImage = PrepareOwnershipBadge(ownerIcon, "OwnerBadgeIcon");
+            lastOwnerBadgeImage = PrepareOwnershipBadge(lastOwnerIcon, "LastOwnerBadgeIcon");
 
             // 4. Style the background
             ApplyBackground();
@@ -230,14 +245,14 @@ namespace FungusToast.Unity.UI
         {
             // Text style
             tmp.enableAutoSizing = false;
-            tmp.fontSize = 15f;
+            tmp.fontSize = DefaultSectionFontSize;
             tmp.overflowMode = TextOverflowModes.Overflow;
             tmp.textWrappingMode = TextWrappingModes.Normal;
             tmp.richText = true;
             tmp.color = UIStyleTokens.Text.Primary;
             tmp.fontStyle = FontStyles.Normal;
             tmp.alignment = TextAlignmentOptions.TopLeft;
-            tmp.lineSpacing = 4f;
+            tmp.lineSpacing = 5f;
             tmp.paragraphSpacing = 0f;
             tmp.margin = Vector4.zero;
 
@@ -245,8 +260,8 @@ namespace FungusToast.Unity.UI
             var rt = tmp.rectTransform;
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
-            rt.offsetMin = new Vector2(Padding, Padding);
-            rt.offsetMax = new Vector2(-Padding, -Padding);
+            rt.offsetMin = new Vector2(LeftPadding, VerticalPadding);
+            rt.offsetMax = new Vector2(-RightPadding, -VerticalPadding);
 
             // Remove components that might interfere
             var le = tmp.GetComponent<LayoutElement>();
@@ -256,13 +271,41 @@ namespace FungusToast.Unity.UI
             if (fit != null) Destroy(fit);
         }
 
+        private Image PrepareOwnershipBadge(Image configuredImage, string objectName)
+        {
+            Image badge = configuredImage;
+            if (badge == null)
+            {
+                var badgeObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                badgeObject.transform.SetParent(bodyText.transform, false);
+                badge = badgeObject.GetComponent<Image>();
+            }
+            else
+            {
+                badge.transform.SetParent(bodyText.transform, false);
+            }
+
+            badge.gameObject.SetActive(false);
+            badge.raycastTarget = false;
+            badge.preserveAspect = true;
+
+            RectTransform badgeRect = badge.rectTransform;
+            badgeRect.anchorMin = new Vector2(0.5f, 0.5f);
+            badgeRect.anchorMax = new Vector2(0.5f, 0.5f);
+            badgeRect.pivot = new Vector2(0.5f, 0.5f);
+            badgeRect.sizeDelta = new Vector2(OwnerBadgeSize, OwnerBadgeSize);
+            badgeRect.localScale = Vector3.one;
+
+            return badge;
+        }
+
         private void SizeToContent()
         {
             if (bodyText == null || rootRect == null) return;
 
             // TMP can report preferred height for a given width
             float textHeight = bodyText.GetPreferredValues(bodyText.text, ContentWidth, 0f).y;
-            float totalHeight = textHeight + Padding * 2f;
+            float totalHeight = textHeight + VerticalPadding * 2f;
 
             rootRect.sizeDelta = new Vector2(TooltipWidth, totalHeight);
         }
@@ -287,40 +330,40 @@ namespace FungusToast.Unity.UI
         private void AppendStatus(FungalCell cell)
         {
             if (cell.IsAlive)
-                sb.AppendLine(HeaderLine("Alive", UIStyleTokens.State.Success));
+                sb.AppendLine(EmphasizedLine("Status", "Alive", UIStyleTokens.State.Success));
             else if (cell.IsDead)
-                sb.AppendLine(HeaderLine("Dead", UIStyleTokens.Text.Muted));
+                sb.AppendLine(EmphasizedLine("Status", "Dead", UIStyleTokens.Text.Muted));
             else if (cell.IsToxin)
-                sb.AppendLine(HeaderLine("Toxin", UIStyleTokens.Category.Fungicide));
+                sb.AppendLine(EmphasizedLine("Status", "Toxin", UIStyleTokens.Category.Fungicide));
         }
 
         private void AppendGrowthSource(FungalCell cell)
         {
             if (cell.SourceOfGrowth.HasValue)
-                sb.AppendLine(LabelValue("Source",
+                sb.AppendLine(EmphasizedLine("Source",
                     GrowthSourceName(cell.SourceOfGrowth.Value),
-                    UIStyleTokens.Text.Secondary, UIStyleTokens.State.Info));
+                    UIStyleTokens.State.Info));
         }
 
         private void AppendDeathReason(FungalCell cell)
         {
             if (cell.IsDead && cell.CauseOfDeath.HasValue)
-                sb.AppendLine(LabelValue("Death",
+                sb.AppendLine(EmphasizedLine("Death",
                     DeathReasonName(cell.CauseOfDeath.Value),
-                    UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger));
+                    UIStyleTokens.State.Danger));
         }
 
         private void AppendOwnership(FungalCell cell)
         {
             if (cell.OwnerPlayerId.HasValue)
-                sb.AppendLine(LabelValue("Owner",
+                sb.AppendLine(EmphasizedLine("Owner",
                     $"Player {cell.OwnerPlayerId.Value + 1}",
-                    UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+                    UIStyleTokens.Text.Primary));
 
             if (cell.LastOwnerPlayerId.HasValue)
-                sb.AppendLine(LabelValue("Last Owner",
+                sb.AppendLine(EmphasizedLine("Last Owner",
                     $"Player {cell.LastOwnerPlayerId.Value + 1}",
-                    UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Secondary));
+                    UIStyleTokens.Text.Secondary));
         }
 
         private void AppendAge(FungalCell cell)
@@ -328,9 +371,9 @@ namespace FungusToast.Unity.UI
             bool young = cell.IsAlive
                          && cell.GrowthCycleAge < UIEffectConstants.GrowthCycleAgeHighlightTextThreshold;
             Color ageColor = young ? UIStyleTokens.State.Success : UIStyleTokens.Text.Primary;
-            sb.AppendLine(LabelValue("Growth Cycle Age",
+            sb.AppendLine(EmphasizedLine("Growth Cycle Age",
                 cell.GrowthCycleAge.ToString(),
-                UIStyleTokens.Text.Secondary, ageColor));
+                ageColor));
         }
 
         private void AppendExpiration(FungalCell cell)
@@ -339,11 +382,11 @@ namespace FungusToast.Unity.UI
 
             int remaining = cell.ToxinExpirationAge - cell.GrowthCycleAge;
             if (remaining > 0)
-                sb.AppendLine(LabelValue("Cycles Until Expiration",
+                sb.AppendLine(DetailLine("Cycles Until Expiration",
                     remaining.ToString(),
                     UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             else
-                sb.AppendLine(LabelValue("Expiration",
+                sb.AppendLine(DetailLine("Expiration",
                     "Expires this cycle",
                     UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger));
         }
@@ -351,7 +394,7 @@ namespace FungusToast.Unity.UI
         private void AppendResistance(FungalCell cell)
         {
             if (cell.IsResistant)
-                sb.AppendLine(LabelValue("Resistance", "Active",
+                sb.AppendLine(DetailLine("Resistance", "Active",
                     UIStyleTokens.Text.Secondary, UIStyleTokens.Accent.Spore));
         }
 
@@ -361,14 +404,14 @@ namespace FungusToast.Unity.UI
             sb.AppendLine();
 
             var (x, y) = board.GetXYFromTileId(cell.TileId);
-            sb.AppendLine(LabelValue("Tile", $"({x}, {y})",
+            sb.AppendLine(DetailLine("Tile", $"({x}, {y})",
                 UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
 
             bool isBorder = x == 0 || y == 0 || x == board.Width - 1 || y == board.Height - 1;
             bool nearEdge = !isBorder && (x <= 1 || y <= 1 || x >= board.Width - 2 || y >= board.Height - 2);
             string posLabel = isBorder ? "Border" : nearEdge ? "Near Edge" : "Interior";
             Color posColor = isBorder ? UIStyleTokens.State.Warning : UIStyleTokens.Text.Primary;
-            sb.AppendLine(LabelValue("Position", posLabel,
+            sb.AppendLine(DetailLine("Position", posLabel,
                 UIStyleTokens.Text.Secondary, posColor));
 
             int allies = 0, enemies = 0, toxins = 0, empty = 0;
@@ -383,56 +426,142 @@ namespace FungusToast.Unity.UI
                     enemies++;
             }
 
-            sb.AppendLine(LabelValue("Adjacent Allies", allies.ToString(),
+            sb.AppendLine(DetailLine("Adjacent Allies", allies.ToString(),
                 UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
-            sb.AppendLine(LabelValue("Adjacent Enemies", enemies.ToString(),
+            sb.AppendLine(DetailLine("Adjacent Enemies", enemies.ToString(),
                 UIStyleTokens.Text.Secondary,
                 enemies > 0 ? UIStyleTokens.State.Danger : UIStyleTokens.Text.Primary));
-            sb.AppendLine(LabelValue("Adjacent Toxins", toxins.ToString(),
+            sb.AppendLine(DetailLine("Adjacent Toxins", toxins.ToString(),
                 UIStyleTokens.Text.Secondary,
                 toxins > 0 ? UIStyleTokens.Category.Fungicide : UIStyleTokens.Text.Primary));
-            sb.AppendLine(LabelValue("Adjacent Empty", empty.ToString(),
+            sb.AppendLine(DetailLine("Adjacent Empty", empty.ToString(),
                 UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
 
             bool contested = enemies > 0 && cell.IsAlive;
             if (contested)
-                sb.AppendLine(LabelValue("Local State", "Contested",
+                sb.AppendLine(DetailLine("Local State", "Contested",
                     UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger));
             else if (cell.IsAlive)
-                sb.AppendLine(LabelValue("Local State", "Stable",
+                sb.AppendLine(DetailLine("Local State", "Stable",
                     UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
 
             if (cell.ReclaimCount > 0)
-                sb.AppendLine(LabelValue("Reclaimed", $"{cell.ReclaimCount}x",
+                sb.AppendLine(DetailLine("Reclaimed", $"{cell.ReclaimCount}x",
                     UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
         }
 
         private void AppendAnimationFlags(FungalCell cell)
         {
             if (cell.IsNewlyGrown)
-                sb.AppendLine($"<color=#{Hex(Contrast(UIStyleTokens.State.Warning))}>• Newly Grown</color>");
+                sb.AppendLine(DetailBullet("Newly Grown", UIStyleTokens.State.Warning));
             if (cell.IsDying)
-                sb.AppendLine($"<color=#{Hex(Contrast(UIStyleTokens.State.Danger))}>• Dying</color>");
+                sb.AppendLine(DetailBullet("Dying", UIStyleTokens.State.Danger));
             if (cell.IsReceivingToxinDrop)
-                sb.AppendLine($"<color=#{Hex(Contrast(UIStyleTokens.Category.Fungicide))}>• Receiving Toxin</color>");
+                sb.AppendLine(DetailBullet("Receiving Toxin", UIStyleTokens.Category.Fungicide));
         }
 
         // ═══════════════════════════════════════════════════════════════════
         //  Formatting helpers
         // ═══════════════════════════════════════════════════════════════════
 
-        private static string HeaderLine(string status, Color statusColor)
+        private static string EmphasizedLine(string label, string value, Color valueColor)
         {
-            Color sc = Contrast(statusColor);
-            return $"<color=#{Hex(UIStyleTokens.Text.Primary)}><b>Status</b></color>: " +
-                   $"<color=#{Hex(sc)}><b>{status}</b></color>";
+            return $"<size={EmphasizedSectionFontSize}><color=#{Hex(UIStyleTokens.Text.Primary)}><b>{label}</b></color>: " +
+                   $"<color=#{Hex(Contrast(valueColor))}><b>{value}</b></color></size>";
         }
 
-        private static string LabelValue(string label, string value,
+        private static string DetailLine(string label, string value,
             Color labelColor, Color valueColor)
         {
             Color vc = Contrast(valueColor);
-            return $"<color=#{Hex(labelColor)}>{label}:</color> <color=#{Hex(vc)}>{value}</color>";
+            return $"<size={DetailSectionFontSize}><color=#{Hex(labelColor)}>{label}:</color> <color=#{Hex(vc)}>{value}</color></size>";
+        }
+
+        private static string DetailBullet(string text, Color color)
+        {
+            return $"<size={DetailSectionFontSize}><color=#{Hex(Contrast(color))}>• {text}</color></size>";
+        }
+
+        private void UpdateOwnershipIcons(FungalCell cell)
+        {
+            UpdateOwnershipBadge(ownerBadgeImage, cell.OwnerPlayerId, "Owner:");
+            UpdateOwnershipBadge(lastOwnerBadgeImage, cell.LastOwnerPlayerId, "Last Owner:");
+        }
+
+        private void UpdateOwnershipBadge(Image badge, int? playerId, string linePrefix)
+        {
+            if (badge == null)
+            {
+                return;
+            }
+
+            if (!playerId.HasValue || playerBinder == null)
+            {
+                badge.gameObject.SetActive(false);
+                return;
+            }
+
+            Sprite sprite = playerBinder.GetPlayerIcon(playerId.Value);
+            if (sprite == null || !TryGetLineAnchor(linePrefix, out Vector3 badgePosition))
+            {
+                badge.gameObject.SetActive(false);
+                return;
+            }
+
+            badge.sprite = sprite;
+            badge.rectTransform.localPosition = badgePosition;
+            badge.gameObject.SetActive(true);
+        }
+
+        private bool TryGetLineAnchor(string linePrefix, out Vector3 badgePosition)
+        {
+            badgePosition = Vector3.zero;
+
+            if (bodyText == null)
+            {
+                return false;
+            }
+
+            TMP_TextInfo textInfo = bodyText.textInfo;
+            for (int lineIndex = 0; lineIndex < textInfo.lineCount; lineIndex++)
+            {
+                TMP_LineInfo lineInfo = textInfo.lineInfo[lineIndex];
+                string renderedLine = ExtractRenderedLine(textInfo, lineInfo).TrimStart();
+                if (!renderedLine.StartsWith(linePrefix, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                int firstVisibleCharacterIndex = lineInfo.firstVisibleCharacterIndex;
+                if (firstVisibleCharacterIndex < 0 || firstVisibleCharacterIndex >= textInfo.characterCount)
+                {
+                    return false;
+                }
+
+                TMP_CharacterInfo firstCharacter = textInfo.characterInfo[firstVisibleCharacterIndex];
+                float centerY = (firstCharacter.topLeft.y + firstCharacter.bottomLeft.y) * 0.5f;
+                badgePosition = new Vector3(firstCharacter.bottomLeft.x - OwnerBadgeHorizontalOffset, centerY, 0f);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static string ExtractRenderedLine(TMP_TextInfo textInfo, TMP_LineInfo lineInfo)
+        {
+            if (lineInfo.characterCount <= 0)
+            {
+                return string.Empty;
+            }
+
+            int lastCharacterIndex = Math.Min(lineInfo.lastCharacterIndex, textInfo.characterCount - 1);
+            var lineBuilder = new StringBuilder(lineInfo.characterCount);
+            for (int characterIndex = lineInfo.firstCharacterIndex; characterIndex <= lastCharacterIndex; characterIndex++)
+            {
+                lineBuilder.Append(textInfo.characterInfo[characterIndex].character);
+            }
+
+            return lineBuilder.ToString();
         }
 
         private static Color Contrast(Color c)
