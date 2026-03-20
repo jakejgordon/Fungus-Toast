@@ -15,6 +15,7 @@ namespace FungusToast.Core.Mycovariants
             yield return MycelialBastionIII();
             yield return SurgicalInoculation();
             yield return HyphalResistanceTransfer();
+            yield return SeptalAlarm();
             yield return AggressotropicConduitI();
             yield return AggressotropicConduitII();
             yield return AggressotropicConduitIII();
@@ -109,6 +110,21 @@ namespace FungusToast.Core.Mycovariants
             AutoMarkTriggered = true,
             SynergyWith = MycovariantSynergyListFactory.GetResistanceSynergyMycovariantIdsExcluding(MycovariantIds.HyphalResistanceTransferId),
             AIScore = (player, board) => MycovariantGameBalance.HyphalResistanceTransferBaseAIScoreEarly
+        };
+
+        private static Mycovariant SeptalAlarm() => new Mycovariant
+        {
+            Id = MycovariantIds.SeptalAlarmId,
+            Name = "Septal Alarm",
+            Description = $"For the rest of the game, whenever one of your living cells dies, each of your living non-Resistant cells orthogonally adjacent to it has a {MycovariantGameBalance.SeptalAlarmResistanceChance * 100f:0}% chance to become Resistant.",
+            FlavorText = "Damage closes the septa and sends a hardening signal through the surviving branch tips.",
+            Type = MycovariantType.Passive,
+            Category = MycovariantCategory.Resistance,
+            IsUniversal = false,
+            AutoMarkTriggered = true,
+            IconId = "myco_septal_alarm",
+            SynergyWith = MycovariantSynergyListFactory.GetResistanceSynergyMycovariantIdsExcluding(MycovariantIds.SeptalAlarmId),
+            AIScore = (player, board) => MycovariantGameBalance.SeptalAlarmBaseAIScore
         };
 
         private static Mycovariant AggressotropicConduitI() => new Mycovariant

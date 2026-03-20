@@ -30,6 +30,10 @@ namespace FungusToast.Simulation.Models
             => hyphalResistanceTransfers.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllHyphalResistanceTransfers() => new(hyphalResistanceTransfers);
 
+        public void RecordSeptalAlarmResistance(int playerId, int count)
+        {
+        }
+
         // ────────────────
         // Enduring Toxaphores Extended Cycles
         // ────────────────

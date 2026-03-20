@@ -162,6 +162,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Living cells repositioned by the Hyphal Draw mycovariant.
         /// </summary>
-        HyphalDraw
+        HyphalDraw,
+
+        /// <summary>
+        /// Resistance granted by the Septal Alarm mycovariant during decay.
+        /// </summary>
+        SeptalAlarm
     }
 }

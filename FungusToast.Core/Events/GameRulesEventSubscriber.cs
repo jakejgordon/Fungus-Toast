@@ -44,6 +44,7 @@ namespace FungusToast.Core.Events
             // Mycovariant-based cell death effects (separate since they're not mutations)
             board.CellDeath += (sender, args) =>
             {
+                MycovariantEffectProcessor.OnCellDeath_SeptalAlarm(board, args, players, rng, observer);
                 MycovariantEffectProcessor.OnCellDeath_NecrophoricAdaptation(board, args.OwnerPlayerId, args.TileId, players, rng, observer);
             };
 

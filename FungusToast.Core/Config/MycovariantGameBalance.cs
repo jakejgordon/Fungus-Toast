@@ -30,6 +30,7 @@ namespace FungusToast.Core.Config
         public const int MycelialBastionIIIMaxResistantCells = 16;
 
         public const float HyphalResistanceTransferChance = 0.12f;
+        public const float SeptalAlarmResistanceChance = 0.15f;
 
         public const float PerimeterProliferatorEdgeMultiplier = 2.5f;
         public const int PerimeterProliferatorEdgeDistance = 2; // Cells within this many tiles of the edge get the bonus
@@ -89,6 +90,7 @@ namespace FungusToast.Core.Config
         public const float AIDraftModeratePriority = 6f;
         public const float HyphalResistanceTransferBaseAIScoreEarly = 5f;
         public const float HyphalResistanceTransferBaseAIScoreLate = 3f;
+        public const float SeptalAlarmBaseAIScore = 5f;
         public const float MycovariantSynergyBonus = 3f;
     }
 }

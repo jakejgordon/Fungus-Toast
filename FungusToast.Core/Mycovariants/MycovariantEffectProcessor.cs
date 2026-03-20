@@ -829,6 +829,62 @@ public static class MycovariantEffectProcessor
     /// If the player has Necrophoric Adaptation, there's a chance to reclaim an adjacent dead tile.
     /// This method also considers ReclamationRhizomorphs for second attempts.
     /// </summary>
+    public static void OnCellDeath_SeptalAlarm(
+        GameBoard board,
+        FungalCellDiedEventArgs eventArgs,
+        List<Player> players,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        int playerId = eventArgs.OwnerPlayerId;
+        if (playerId < 0)
+        {
+            return;
+        }
+
+        var player = players.FirstOrDefault(p => p.PlayerId == playerId);
+        if (player == null)
+        {
+            return;
+        }
+
+        var playerMyco = player.GetMycovariant(MycovariantIds.SeptalAlarmId);
+        if (playerMyco == null)
+        {
+            return;
+        }
+
+        int resistantGains = 0;
+        var resistantTileIds = new List<int>(4);
+        foreach (var adjacentTile in board.GetOrthogonalNeighbors(eventArgs.TileId))
+        {
+            var adjacentCell = adjacentTile.FungalCell;
+            if (adjacentCell == null
+                || !adjacentCell.IsAlive
+                || adjacentCell.IsResistant
+                || adjacentCell.OwnerPlayerId != playerId)
+            {
+                continue;
+            }
+
+            if (rng.NextDouble() >= MycovariantGameBalance.SeptalAlarmResistanceChance)
+            {
+                continue;
+            }
+
+            adjacentCell.MakeResistant();
+            resistantGains++;
+            resistantTileIds.Add(adjacentCell.TileId);
+        }
+
+        if (resistantGains > 0)
+        {
+            playerMyco.IncrementEffectCount(MycovariantEffectType.SeptalAlarmResistances, resistantGains);
+            board.OnResistanceAppliedBatch(playerId, GrowthSource.SeptalAlarm, resistantTileIds);
+            observer.RecordSeptalAlarmResistance(playerId, resistantGains);
+        }
+    }
+
     public static void OnCellDeath_NecrophoricAdaptation(
         GameBoard board,
         int playerId,

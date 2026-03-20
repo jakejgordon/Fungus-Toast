@@ -291,12 +291,29 @@ namespace FungusToast.Unity.UI.GameLog
         public void ReportHyphalVectoringInfested(int playerId, int infested) { }
         public void RecordStandardGrowth(int playerId) { }
         public void RecordNeutralizingMantleEffect(int playerId, int toxinsNeutralized) { }
-        public void RecordBastionedCells(int playerId, int count) { }
+        public void RecordBastionedCells(int playerId, int count)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordBastionedCells(playerId, count);
+        }
         public void RecordCatabolicRebirthAgedToxin(int playerId, int toxinsAged) { }
-        public void RecordSurgicalInoculationDrop(int playerId, int count) { }
+        public void RecordSurgicalInoculationDrop(int playerId, int count)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordSurgicalInoculationDrop(playerId, count);
+        }
         public void RecordPutrefactiveRejuvenationGrowthCyclesReduced(int playerId, int totalCyclesReduced) { }
         public void RecordPerimeterProliferatorGrowth(int playerId) { }
-        public void RecordHyphalResistanceTransfer(int playerId, int count) { }
+        public void RecordHyphalResistanceTransfer(int playerId, int count)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordHyphalResistanceTransfer(playerId, count);
+        }
+        public void RecordSeptalAlarmResistance(int playerId, int count)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordSeptalAlarmResistance(playerId, count);
+        }
         public void RecordEnduringToxaphoresExtendedCycles(int playerId, int cycles) { }
         public void RecordEnduringToxaphoresExistingExtensions(int playerId, int cycles) { }
         public void RecordReclamationRhizomorphsSecondAttempt(int playerId, int count) { }
@@ -309,7 +326,11 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordMimeticResilienceDrops(int playerId, int drops) { }
         public void RecordCytolyticBurstToxins(int playerId, int toxinsCreated) { }
         public void RecordCytolyticBurstKills(int playerId, int cellsKilled) { }
-        public void RecordHypersystemicRegenerationResistance(int playerId) { }
+        public void RecordHypersystemicRegenerationResistance(int playerId)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordHypersystemicRegenerationResistance(playerId);
+        }
         public void RecordHypersystemicDiagonalReclaim(int playerId) { }
         public void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected) { }
         #endregion

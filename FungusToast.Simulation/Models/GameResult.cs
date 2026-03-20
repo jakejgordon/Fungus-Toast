@@ -260,6 +260,13 @@ namespace FungusToast.Simulation.Models
                             break;
                         }
 
+                    case var id when id == MycovariantIds.SeptalAlarmId:
+                        {
+                            if (myco.EffectCounts.TryGetValue(MycovariantEffectType.SeptalAlarmResistances, out var resistances) && resistances > 0)
+                                effectCounts[MycovariantEffectType.SeptalAlarmResistances] = resistances;
+                            break;
+                        }
+
                     case var id when id == MycovariantIds.PerimeterProliferatorId:
                         {
                             int perim = tracking.GetPerimeterProliferatorGrowths(player.PlayerId);

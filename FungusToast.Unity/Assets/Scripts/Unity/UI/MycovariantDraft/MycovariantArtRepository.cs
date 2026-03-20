@@ -113,6 +113,12 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 return;
             }
 
+            if (mycovariant?.IconId == "myco_septal_alarm")
+            {
+                DrawSeptalAlarmMotif(texture, accent, highlight);
+                return;
+            }
+
             switch (mycovariant.Type)
             {
                 case MycovariantType.Directional:
@@ -146,6 +152,21 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             ProceduralIconUtility.FillCircle(texture, 23, 17, 2, highlight);
             ProceduralIconUtility.FillCircle(texture, 29, 13, 3, accent);
             ProceduralIconUtility.DrawRing(texture, 29, 13, 5, 1, highlight);
+        }
+
+        private static void DrawSeptalAlarmMotif(Texture2D texture, Color accent, Color highlight)
+        {
+            ProceduralIconUtility.DrawRing(texture, 20, 20, 6, 2, accent);
+            ProceduralIconUtility.DrawLine(texture, 20, 10, 20, 14, highlight, 2);
+            ProceduralIconUtility.DrawLine(texture, 20, 26, 20, 30, highlight, 2);
+            ProceduralIconUtility.DrawLine(texture, 10, 20, 14, 20, highlight, 2);
+            ProceduralIconUtility.DrawLine(texture, 26, 20, 30, 20, highlight, 2);
+            ProceduralIconUtility.FillCircle(texture, 20, 10, 3, highlight);
+            ProceduralIconUtility.FillCircle(texture, 20, 30, 2, accent);
+            ProceduralIconUtility.FillCircle(texture, 10, 20, 2, accent);
+            ProceduralIconUtility.FillCircle(texture, 30, 20, 2, accent);
+            ProceduralIconUtility.DrawLine(texture, 14, 14, 26, 26, accent, 1);
+            ProceduralIconUtility.DrawLine(texture, 14, 26, 18, 22, accent, 1);
         }
 
         private static void DrawPassiveMotif(Texture2D texture, Color accent, Color highlight)

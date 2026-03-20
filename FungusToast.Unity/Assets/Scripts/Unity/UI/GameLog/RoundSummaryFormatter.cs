@@ -13,9 +13,10 @@ namespace FungusToast.Unity.UI.GameLog
             int roundNumber,
             int friendlyCellsGrown,
             int friendlyCellsDied,
-            int toxinsDropped)
+            int toxinsDropped,
+            int resistanceGained)
         {
-            if (friendlyCellsGrown <= 0 && friendlyCellsDied <= 0 && toxinsDropped <= 0)
+            if (friendlyCellsGrown <= 0 && friendlyCellsDied <= 0 && toxinsDropped <= 0 && resistanceGained <= 0)
             {
                 return $"Round {roundNumber} Summary: no changes";
             }
@@ -23,7 +24,8 @@ namespace FungusToast.Unity.UI.GameLog
             return $"Round {roundNumber} Summary: " +
                    $"{friendlyCellsGrown} friendly {(friendlyCellsGrown == 1 ? "cell grew" : "cells grew")}, " +
                    $"{friendlyCellsDied} {(friendlyCellsDied == 1 ? "cell died" : "cells died")}, " +
-                   $"{toxinsDropped} {(toxinsDropped == 1 ? "toxin dropped" : "toxins dropped")}";
+                   $"{toxinsDropped} {(toxinsDropped == 1 ? "toxin dropped" : "toxins dropped")}, " +
+                   $"{resistanceGained} {(resistanceGained == 1 ? "cell gained resistance" : "cells gained resistance")}";
         }
 
         /// <summary>

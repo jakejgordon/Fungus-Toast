@@ -51,6 +51,7 @@ namespace FungusToast.Core.Mycovariants
         [Obsolete] public static Mycovariant MycelialBastionIII() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.MycelialBastionIIIId);
         [Obsolete] public static Mycovariant SurgicalInoculation() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.SurgicalInoculationId);
         [Obsolete] public static Mycovariant HyphalResistanceTransfer() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.HyphalResistanceTransferId);
+        [Obsolete] public static Mycovariant SeptalAlarm() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.SeptalAlarmId);
         [Obsolete] public static Mycovariant AggressotropicConduitI() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.AggressotropicConduitIId);
         [Obsolete] public static Mycovariant AggressotropicConduitII() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.AggressotropicConduitIIId);
         [Obsolete] public static Mycovariant AggressotropicConduitIII() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.AggressotropicConduitIIIId);

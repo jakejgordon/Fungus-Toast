@@ -381,6 +381,7 @@ Whenever generating new .md files, add a reference to the documentation in copil
 - **Architecture:** Clean domain separation between Core, Simulation, and Unity layers
 - **Error handling:** Comprehensive logging and event systems for debugging
 - **Testing strategy:** Simulation-based validation rather than unit tests
+- **Consants:** Use well-named constants for all tunable values; avoid magic numbers
 
 ### AI-Friendly Change Patterns
 - Prefer small, composable helper methods over large monolithic methods.
