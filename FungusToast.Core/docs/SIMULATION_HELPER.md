@@ -261,9 +261,8 @@ dotnet run --games 200 --players 8 --strategy-set Proven --seed 12345 --rotate-s
 
 # Fixed explicit lineup for reproducible balance passes (single-run mode only)
 # Note: explicit names are resolved only inside the selected --strategy-set; do not mix Proven/Testing/Campaign/Mycovariants names in one --strategy-names list.
-# Important: --fixed-slots fixes strategy-to-player assignment, but starting spores are still shuffled each game by StartingSporeUtility.
-# That means --fixed-slots is NOT a pure board-position test today; it can still mix spawn locations across games.
-# For balance/fairness evaluation, prefer --rotate-slots. For true position studies, disable starting-spore shuffle or export/analyze actual spawn coordinates per game.
+# Current behavior: --fixed-slots also keeps starting-spore assignment fixed, so it is a true position test.
+# For balance/fairness evaluation, prefer --rotate-slots. For true position studies, use --fixed-slots with an explicit lineup.
 dotnet run --games 200 --strategy-set Proven --strategy-names StrategyA,StrategyB,StrategyC,StrategyD --seed 12345 --rotate-slots --experiment-id proven_fixed_lineup --no-keyboard
 
 # Coverage-balanced testing run for statistically diverse strategy lineups
@@ -317,6 +316,41 @@ For controlled diagnosis of a dominant strategy, including early mutation timing
 - Keep `manifest.json` with any exported CSV/Parquet analysis outputs; it is the authoritative roster provenance record.
 - `--strategy-names` is resolved against exactly one `--strategy-set`. A named-lineup experiment cannot mix roster sets in the same run.
 - If you need cross-set coverage, run separate experiments per set (for example `..._proven` and `..._testing`) instead of combining names from multiple rosters.
+
+## Starting Position Fairness Notes
+
+`StartingSporeUtility` now exposes two relevant APIs:
+
+- `GetStartingPositions(width, height, playerCount)` → returns the chosen start coordinates
+- `GetStartingPositionAnalysis(width, height, playerCount)` → returns the geometric fairness analysis for those positions
+
+The analysis includes, per slot:
+- coordinate
+- uncontested tile count
+- early uncontested tile count (within ~10 tiles)
+- tie tile count
+- favor rank
+- overall layout score
+
+This is intended as a reusable difficulty/balance lever, especially for campaign tuning when certain slots should be intentionally favored or disadvantaged.
+
+### Saved reference: 160x160, 8 players
+
+Current chosen layout:
+- P0 `(142,106)`
+- P1 `(106,142)`
+- P2 `(54,142)`
+- P3 `(18,106)`
+- P4 `(18,54)`
+- P5 `(54,18)`
+- P6 `(106,18)`
+- P7 `(142,54)`
+
+True-fixed identical-AI validation:
+- Seed `20260323`: `16,10,10,14,9,13,14,14`
+- Seed `20260324`: `10,9,16,8,13,16,14,14`
+
+Compared to the previous layout, this reduced the observed slot-win range from `15` (`22..7`) to `7-8` (`16..9` and `16..8`) in the 160x160 / 8-player square tests.
 
 ## Repeatability Notes
 

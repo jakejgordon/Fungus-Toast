@@ -14,6 +14,7 @@ namespace FungusToast.Core.Board
     public static class StartingSporeUtility
     {
         private static readonly Dictionary<(int Width, int Height, int Players), (int x, int y)[]> CachedStartingPositions = new();
+        private static readonly Dictionary<(int Width, int Height, int Players), StartingPositionAnalysis> CachedAnalysis = new();
         private static readonly object CacheLock = new();
 
         private struct StartPosition
@@ -25,6 +26,40 @@ namespace FungusToast.Core.Board
             {
                 X = x;
                 Y = y;
+            }
+        }
+
+        public sealed class StartingPositionAnalysisEntry
+        {
+            public int SlotIndex { get; }
+            public int X { get; }
+            public int Y { get; }
+            public int UncontestedTileCount { get; }
+            public int EarlyUncontestedTileCount { get; }
+            public int TieTileCount { get; }
+            public int FavorRank { get; }
+
+            public StartingPositionAnalysisEntry(int slotIndex, int x, int y, int uncontestedTileCount, int earlyUncontestedTileCount, int tieTileCount, int favorRank)
+            {
+                SlotIndex = slotIndex;
+                X = x;
+                Y = y;
+                UncontestedTileCount = uncontestedTileCount;
+                EarlyUncontestedTileCount = earlyUncontestedTileCount;
+                TieTileCount = tieTileCount;
+                FavorRank = favorRank;
+            }
+        }
+
+        public sealed class StartingPositionAnalysis
+        {
+            public double LayoutScore { get; }
+            public IReadOnlyList<StartingPositionAnalysisEntry> Entries { get; }
+
+            public StartingPositionAnalysis(double layoutScore, IReadOnlyList<StartingPositionAnalysisEntry> entries)
+            {
+                LayoutScore = layoutScore;
+                Entries = entries;
             }
         }
 
@@ -63,17 +98,51 @@ namespace FungusToast.Core.Board
                 }
             }
 
+            var analysis = GetStartingPositionAnalysis(boardWidth, boardHeight, playerCount);
+            return analysis.Entries
+                .OrderBy(e => e.SlotIndex)
+                .Select(e => (e.X, e.Y))
+                .ToArray();
+        }
+
+        public static StartingPositionAnalysis GetStartingPositionAnalysis(int boardWidth, int boardHeight, int playerCount)
+        {
+            if (boardWidth <= 0) throw new ArgumentOutOfRangeException(nameof(boardWidth));
+            if (boardHeight <= 0) throw new ArgumentOutOfRangeException(nameof(boardHeight));
+            if (playerCount <= 0) return new StartingPositionAnalysis(0, Array.Empty<StartingPositionAnalysisEntry>());
+            if (playerCount == 1)
+            {
+                return new StartingPositionAnalysis(0, new[]
+                {
+                    new StartingPositionAnalysisEntry(0, boardWidth / 2, boardHeight / 2, boardWidth * boardHeight, boardWidth * boardHeight, 0, 1)
+                });
+            }
+
+            var key = (Width: boardWidth, Height: boardHeight, Players: playerCount);
+            lock (CacheLock)
+            {
+                if (CachedAnalysis.TryGetValue(key, out var cached))
+                {
+                    return cached;
+                }
+            }
+
             var best = FindBestLayout(boardWidth, boardHeight, playerCount);
-            var computed = best.Positions.Select(p => (p.X, p.Y)).ToArray();
+            var analysis = BuildAnalysis(boardWidth, boardHeight, best.Score, best.Positions);
 
             lock (CacheLock)
             {
-                if (!CachedStartingPositions.ContainsKey(key))
+                if (!CachedAnalysis.ContainsKey(key))
                 {
-                    CachedStartingPositions[key] = computed;
+                    CachedAnalysis[key] = analysis;
                 }
 
-                return CachedStartingPositions[key];
+                if (!CachedStartingPositions.ContainsKey(key))
+                {
+                    CachedStartingPositions[key] = best.Positions.Select(p => (p.X, p.Y)).ToArray();
+                }
+
+                return CachedAnalysis[key];
             }
         }
 
@@ -317,6 +386,89 @@ namespace FungusToast.Core.Board
                 + (varianceTies * 0.25)
                 + (varianceCenterDistance * 0.05)
                 + (minimumSeparationPenalty * 500.0);
+        }
+
+        private static StartingPositionAnalysis BuildAnalysis(int boardWidth, int boardHeight, double layoutScore, IReadOnlyList<StartPosition> positions)
+        {
+            int playerCount = positions.Count;
+            var ownership = new int[playerCount];
+            var ties = new int[playerCount];
+            var earlyOwnership = new int[playerCount];
+
+            for (int x = 0; x < boardWidth; x++)
+            {
+                for (int y = 0; y < boardHeight; y++)
+                {
+                    double bestDistance = double.MaxValue;
+                    int bestIndex = -1;
+                    bool tied = false;
+
+                    for (int i = 0; i < playerCount; i++)
+                    {
+                        double distance = SquaredDistance(positions[i].X, positions[i].Y, x, y);
+                        if (distance + 0.000001 < bestDistance)
+                        {
+                            bestDistance = distance;
+                            bestIndex = i;
+                            tied = false;
+                        }
+                        else if (Math.Abs(distance - bestDistance) < 0.000001)
+                        {
+                            tied = true;
+                        }
+                    }
+
+                    if (bestIndex < 0)
+                    {
+                        continue;
+                    }
+
+                    if (tied)
+                    {
+                        for (int i = 0; i < playerCount; i++)
+                        {
+                            double distance = SquaredDistance(positions[i].X, positions[i].Y, x, y);
+                            if (Math.Abs(distance - bestDistance) < 0.000001)
+                            {
+                                ties[i]++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ownership[bestIndex]++;
+                        if (bestDistance <= 100.0)
+                        {
+                            earlyOwnership[bestIndex]++;
+                        }
+                    }
+                }
+            }
+
+            var rankOrder = Enumerable.Range(0, playerCount)
+                .OrderByDescending(i => earlyOwnership[i])
+                .ThenByDescending(i => ownership[i])
+                .ThenBy(i => ties[i])
+                .ToList();
+
+            var ranks = new int[playerCount];
+            for (int rank = 0; rank < rankOrder.Count; rank++)
+            {
+                ranks[rankOrder[rank]] = rank + 1;
+            }
+
+            var entries = Enumerable.Range(0, playerCount)
+                .Select(i => new StartingPositionAnalysisEntry(
+                    slotIndex: i,
+                    x: positions[i].X,
+                    y: positions[i].Y,
+                    uncontestedTileCount: ownership[i],
+                    earlyUncontestedTileCount: earlyOwnership[i],
+                    tieTileCount: ties[i],
+                    favorRank: ranks[i]))
+                .ToArray();
+
+            return new StartingPositionAnalysis(layoutScore, entries);
         }
 
         private static double ComputeMinimumSeparationSquared(IReadOnlyList<StartPosition> positions)
