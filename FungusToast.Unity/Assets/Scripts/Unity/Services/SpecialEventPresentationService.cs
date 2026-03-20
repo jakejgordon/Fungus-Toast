@@ -246,6 +246,12 @@ namespace FungusToast.Unity
                         UIEffectConstants.MarginalClampBannerHoldSeconds);
                     yield return gridVisualizer.PlayMycotoxicLashAnimation(specialEvent.AffectedTileIds.Distinct().ToList());
                     break;
+                case SpecialBoardEventKind.NutrientPatchConsumed:
+                    yield return gridVisualizer.PlayNutrientPatchConsumptionAnimation(
+                        specialEvent.SourceTileId,
+                        specialEvent.DestinationTileId,
+                        1);
+                    break;
             }
         }
 
@@ -255,7 +261,8 @@ namespace FungusToast.Unity
                 || eventKind == SpecialBoardEventKind.MarginalClampTriggered
                 || eventKind == SpecialBoardEventKind.DistalSporeTriggered
                 || eventKind == SpecialBoardEventKind.SporeSalvoTriggered
-                || eventKind == SpecialBoardEventKind.HyphalBridgeTriggered;
+                || eventKind == SpecialBoardEventKind.HyphalBridgeTriggered
+                || eventKind == SpecialBoardEventKind.NutrientPatchConsumed;
         }
 
         private List<SpecialBoardEventArgs> CollectSporeSalvoBatch(SpecialBoardEventArgs firstEvent)

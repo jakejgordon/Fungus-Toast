@@ -10,7 +10,9 @@ namespace FungusToast.Core.Board
         public int TileId { get; }
 
         public FungalCell? FungalCell { get; private set; }
+        public NutrientPatch? NutrientPatch { get; private set; }
         public bool IsOccupied => FungalCell != null;
+        public bool HasNutrientPatch => NutrientPatch != null;
 
         public BoardTile(int x, int y, int boardWidth)
         {
@@ -27,6 +29,18 @@ namespace FungusToast.Core.Board
         internal void ClearCell()
         {
             FungalCell = null;
+        }
+
+        internal void PlaceNutrientPatch(NutrientPatch nutrientPatch)
+        {
+            NutrientPatch = nutrientPatch;
+        }
+
+        internal NutrientPatch? ClearNutrientPatch()
+        {
+            NutrientPatch? nutrientPatch = NutrientPatch;
+            NutrientPatch = null;
+            return nutrientPatch;
         }
 
         // Proxy accessors

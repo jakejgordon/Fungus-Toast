@@ -22,6 +22,7 @@ namespace FungusToast.Simulation.Models
         public int BoardWidth { get; set; }
         public int BoardHeight { get; set; }
         public int ToxicTileCount { get; set; }
+        public int NutrientPatchCount { get; set; }
         public SimulationTrackingContext TrackingContext { get; set; } = null!;
         public ParityInvariantReport? ParityInvariantReport { get; set; }
 
@@ -147,6 +148,8 @@ namespace FungusToast.Simulation.Models
                     MutatorPhenotypePointsEarned = tracking.GetMutatorPhenotypePointsEarned(player.PlayerId),
                     HyperadaptiveDriftPointsEarned = tracking.GetHyperadaptiveDriftPointsEarned(player.PlayerId),
                     AnabolicInversionPointsEarned = tracking.GetAnabolicInversionPointsEarned(player.PlayerId),
+                    NutrientPatchesConsumed = tracking.GetNutrientPatchesConsumed(player.PlayerId),
+                    NutrientMutationPointsEarned = tracking.GetNutrientMutationPointsEarned(player.PlayerId),
                     MutationPointIncome = tracking.GetMutationPointIncome(player.PlayerId),
                     MutationPointsSpentByTier = tracking.GetMutationPointsSpentByTier(player.PlayerId),
                     TotalMutationPointsSpent = tracking.GetTotalMutationPointsSpent(player.PlayerId),
@@ -182,6 +185,7 @@ namespace FungusToast.Simulation.Models
                 SporesFromNecrosporulation = tracking.GetNecrosporulationSporeDropCounts(),
                 SporesFromMycotoxinTracer = tracking.GetMycotoxinSporeDropCounts(),
                 ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin),
+                NutrientPatchCount = tracking.GetNutrientPatchesPlaced(),
                 TrackingContext = tracking,
                 PerimeterProliferatorGrowthsByPlayer = tracking.GetAllPerimeterProliferatorGrowths()
             };

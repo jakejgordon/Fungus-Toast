@@ -34,6 +34,14 @@ namespace FungusToast.Core.Events
             {
                 observer.RecordNecrotoxicConversionReclaim(playerId, 1);
             };
+
+            board.NutrientPatchConsumed += (playerId, nutrientTileId, _, rewardType, rewardAmount) =>
+            {
+                if (rewardType == NutrientRewardType.MutationPoints)
+                {
+                    observer.RecordNutrientPatchConsumed(playerId, nutrientTileId, rewardAmount);
+                }
+            };
         }
 
         /// <summary>

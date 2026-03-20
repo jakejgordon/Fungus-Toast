@@ -67,6 +67,11 @@ namespace FungusToast.Unity.UI
         /// Flicker frequency used during the expired-toxin dissolve fade.
         /// </summary>
         public const float ToxinExpiryDissolveFlickerFrequency = 18f;
+        public const float NutrientPatchMarkerScale = 0.62f;
+        public const float NutrientPatchConsumptionDurationSeconds = 0.65f;
+        public const float NutrientPatchToastRiseWorld = 0.55f;
+        public const float NutrientPatchToastDurationSeconds = 0.85f;
+        public const float NutrientPatchPullOffsetWorld = 0.22f;
 
         /// <summary>
         /// Delay (in seconds) for AI to "think" before picking a mycovariant during draft.

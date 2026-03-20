@@ -60,6 +60,41 @@ namespace FungusToast.Simulation.Models
             => bankedPointsByPlayer;
 
         // ────────────────
+        // Nutrient Patches
+        // ────────────────
+
+        private int nutrientPatchesPlaced;
+        private readonly Dictionary<int, int> nutrientPatchesConsumedByPlayer = new();
+        private readonly Dictionary<int, int> nutrientMutationPointsEarnedByPlayer = new();
+
+        public void RecordNutrientPatchesPlaced(int count)
+        {
+            nutrientPatchesPlaced += count;
+        }
+
+        public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, int mutationPointAward)
+        {
+            if (!nutrientPatchesConsumedByPlayer.ContainsKey(playerId))
+            {
+                nutrientPatchesConsumedByPlayer[playerId] = 0;
+            }
+
+            if (!nutrientMutationPointsEarnedByPlayer.ContainsKey(playerId))
+            {
+                nutrientMutationPointsEarnedByPlayer[playerId] = 0;
+            }
+
+            nutrientPatchesConsumedByPlayer[playerId]++;
+            nutrientMutationPointsEarnedByPlayer[playerId] += mutationPointAward;
+        }
+
+        public int GetNutrientPatchesPlaced() => nutrientPatchesPlaced;
+        public int GetNutrientPatchesConsumed(int playerId)
+            => nutrientPatchesConsumedByPlayer.TryGetValue(playerId, out var value) ? value : 0;
+        public int GetNutrientMutationPointsEarned(int playerId)
+            => nutrientMutationPointsEarnedByPlayer.TryGetValue(playerId, out var value) ? value : 0;
+
+        // ────────────────
         // Cell Deaths by Reason
         // ────────────────
 

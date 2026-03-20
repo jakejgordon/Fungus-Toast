@@ -258,12 +258,12 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         var board = FungusToast.Unity.GameManager.Instance.Board;
         int tileId = cellPos.y * board.Width + cellPos.x;
         var cell = board.GetCell(tileId);
+        var tile = board.GetTileById(tileId);
 
         if (enableDebugLogs)
             Debug.Log($"[Tooltip Debug] Cell at {cellPos} (tileId: {tileId}): {(cell != null ? $"Found {(cell.IsAlive ? "Alive" : cell.IsDead ? "Dead" : "Toxin")} cell" : "null (empty)")}");
 
-        // Only show tooltip if the cell is occupied (has a FungalCell)
-        if (cell == null)
+        if (cell == null && tile?.HasNutrientPatch != true)
         {
             if (enableDebugLogs)
                 Debug.Log("[Tooltip Debug] Cell is null - no tooltip will be shown");
@@ -294,7 +294,14 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         // Update tooltip content using the CellTooltipUI component
         if (tooltipUI != null)
         {
-            tooltipUI.UpdateTooltip(cell, board, gridVisualizer);
+            if (cell != null)
+            {
+                tooltipUI.UpdateTooltip(cell, board, gridVisualizer);
+            }
+            else if (tile != null)
+            {
+                tooltipUI.UpdateTooltip(tile, board, gridVisualizer);
+            }
             if (enableDebugLogs)
                 Debug.Log("[Tooltip Debug] Tooltip content updated via CellTooltipUI");
         }

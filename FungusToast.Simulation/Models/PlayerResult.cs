@@ -97,6 +97,8 @@ namespace FungusToast.Simulation.Models
         public int MutatorPhenotypePointsEarned { get; set; }
         public int HyperadaptiveDriftPointsEarned { get; set; }
         public int AnabolicInversionPointsEarned { get; set; }
+        public int NutrientPatchesConsumed { get; set; }
+        public int NutrientMutationPointsEarned { get; set; }
 
         // ──────────────
         // MUTATION POINT ECONOMY

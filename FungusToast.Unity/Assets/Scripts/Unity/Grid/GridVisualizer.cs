@@ -7,6 +7,7 @@ using FungusToast.Unity.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -80,6 +81,8 @@ namespace FungusToast.Unity.Grid
         private readonly Dictionary<int, Coroutine> toxinExpiryCoroutines = new();
         private readonly HashSet<int> deferredResistanceOverlayTileIds = new();
         private readonly HashSet<int> preAnimationHiddenPreviewTileIds = new();
+        private static readonly Color NutrientPatchColor = new(0.97f, 0.78f, 0.28f, 0.92f);
+        private static readonly Color NutrientPatchTextColor = new(1f, 0.95f, 0.72f, 1f);
 
         private sealed class ExpiringToxinVisualSnapshot
         {
@@ -394,6 +397,82 @@ namespace FungusToast.Unity.Grid
                     highlightTilemap.SetTile(pos, null);
                     highlightTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
                     highlightTilemap.SetColor(pos, Color.white);
+                }
+
+                EndAnimation();
+            }
+        }
+
+        public IEnumerator PlayNutrientPatchConsumptionAnimation(int nutrientTileId, int destinationTileId, int mutationPointAward)
+        {
+            if (board == null || overlayTilemap == null)
+            {
+                yield break;
+            }
+
+            Vector3Int sourcePos = GetPositionForTileId(nutrientTileId);
+            Vector3Int destinationPos = GetPositionForTileId(destinationTileId);
+            TileBase nutrientTile = GetNutrientPatchTile();
+            if (nutrientTile == null)
+            {
+                yield break;
+            }
+
+            TextMeshPro floatingText = CreateNutrientToastText(destinationPos, mutationPointAward);
+            Vector3 sourceWorld = overlayTilemap.GetCellCenterWorld(sourcePos);
+            Vector3 destinationWorld = overlayTilemap.GetCellCenterWorld(destinationPos);
+            Vector3 delta = destinationWorld - sourceWorld;
+            Vector3 pullOffset = delta.sqrMagnitude > 0.0001f
+                ? delta.normalized * UIEffectConstants.NutrientPatchPullOffsetWorld
+                : Vector3.zero;
+
+            overlayTilemap.SetTile(sourcePos, nutrientTile);
+            overlayTilemap.SetTileFlags(sourcePos, TileFlags.None);
+            overlayTilemap.SetColor(sourcePos, NutrientPatchColor);
+
+            float duration = UIEffectConstants.NutrientPatchConsumptionDurationSeconds;
+            float textDuration = UIEffectConstants.NutrientPatchToastDurationSeconds;
+
+            BeginAnimation();
+            try
+            {
+                float elapsed = 0f;
+                while (elapsed < duration)
+                {
+                    elapsed += Time.deltaTime;
+                    float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
+                    float eased = 1f - Mathf.Pow(1f - t, 3f);
+                    float scale = Mathf.Lerp(UIEffectConstants.NutrientPatchMarkerScale, 0.18f, eased);
+                    Vector3 translation = Vector3.Lerp(Vector3.zero, pullOffset, eased);
+                    Color color = Color.Lerp(NutrientPatchColor, new Color(NutrientPatchColor.r, NutrientPatchColor.g, NutrientPatchColor.b, 0f), eased);
+
+                    overlayTilemap.SetTransformMatrix(
+                        sourcePos,
+                        Matrix4x4.TRS(translation, Quaternion.identity, new Vector3(scale, scale, 1f)));
+                    overlayTilemap.SetColor(sourcePos, color);
+
+                    if (floatingText != null)
+                    {
+                        float textT = textDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / textDuration);
+                        Vector3 textStart = destinationWorld + new Vector3(0f, 0.18f, 0f);
+                        Vector3 textEnd = textStart + new Vector3(0f, UIEffectConstants.NutrientPatchToastRiseWorld, 0f);
+                        floatingText.transform.position = Vector3.Lerp(textStart, textEnd, textT);
+                        var textColor = NutrientPatchTextColor;
+                        textColor.a = 1f - textT;
+                        floatingText.color = textColor;
+                    }
+
+                    yield return null;
+                }
+            }
+            finally
+            {
+                overlayTilemap.SetTile(sourcePos, null);
+                overlayTilemap.SetTransformMatrix(sourcePos, IdentityMatrix);
+                overlayTilemap.SetColor(sourcePos, Color.white);
+                if (floatingText != null)
+                {
+                    Destroy(floatingText.gameObject);
                 }
 
                 EndAnimation();
@@ -731,6 +810,64 @@ namespace FungusToast.Unity.Grid
                 overlayTilemap.SetColor(pos, overlayColor);
                 overlayTilemap.RefreshTile(pos);
             }
+        }
+
+        private void RenderNutrientPatchOverlay(BoardTile tile, Vector3Int pos)
+        {
+            if (tile == null || !tile.HasNutrientPatch || tile.FungalCell != null || overlayTilemap == null)
+            {
+                return;
+            }
+
+            TileBase nutrientTile = GetNutrientPatchTile();
+            if (nutrientTile == null)
+            {
+                return;
+            }
+
+            overlayTilemap.SetTile(pos, nutrientTile);
+            overlayTilemap.SetTileFlags(pos, TileFlags.None);
+            overlayTilemap.SetColor(pos, NutrientPatchColor);
+            overlayTilemap.SetTransformMatrix(
+                pos,
+                Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(UIEffectConstants.NutrientPatchMarkerScale, UIEffectConstants.NutrientPatchMarkerScale, 1f)));
+            overlayTilemap.RefreshTile(pos);
+        }
+
+        private TileBase GetNutrientPatchTile()
+        {
+            if (solidHighlightTile != null)
+            {
+                return solidHighlightTile;
+            }
+
+            return baseTile;
+        }
+
+        private TextMeshPro CreateNutrientToastText(Vector3Int destinationPos, int mutationPointAward)
+        {
+            var textObject = new GameObject("NutrientPatchToast", typeof(TextMeshPro));
+            textObject.transform.SetParent(transform, false);
+
+            var tmp = textObject.GetComponent<TextMeshPro>();
+            tmp.text = mutationPointAward == 1
+                ? "+1 Mutation Point!"
+                : $"+{mutationPointAward} Mutation Points!";
+            tmp.fontSize = 4.1f;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.textWrappingMode = TextWrappingModes.NoWrap;
+            tmp.color = NutrientPatchTextColor;
+            tmp.outlineWidth = 0.2f;
+            tmp.outlineColor = new Color(0.24f, 0.12f, 0.02f, 1f);
+            tmp.transform.position = overlayTilemap.GetCellCenterWorld(destinationPos) + new Vector3(0f, 0.18f, 0f);
+
+            var renderer = tmp.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                renderer.sortingOrder = 40;
+            }
+
+            return tmp;
         }
 
         private void SetOverlayTile(Vector3Int pos, TileBase tile, Color color)
@@ -1592,6 +1729,7 @@ namespace FungusToast.Unity.Grid
                     toastTilemap.SetColor(pos, GetSurfaceColor(x, y, board.Width, board.Height));
                     toastTilemap.SetTransformMatrix(pos, GetPlayableSurfaceTileMatrix());
                     RenderFungalCellOverlay(tile, pos);
+                    RenderNutrientPatchOverlay(tile, pos);
                     ApplyPreAnimationPreviewHiddenState(tile.TileId, pos);
                 }
             }

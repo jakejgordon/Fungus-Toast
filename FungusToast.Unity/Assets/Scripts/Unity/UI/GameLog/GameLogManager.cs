@@ -696,6 +696,20 @@ namespace FungusToast.Unity.UI.GameLog
         #region ISimulationObserver (Implemented / Routed)
 
         public void RecordMutationPointIncome(int playerId, int totalMutationPoints) { }
+        public void RecordNutrientPatchesPlaced(int count) { }
+        public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, int mutationPointAward)
+        {
+            if (!IsHuman(playerId) || mutationPointAward <= 0)
+            {
+                return;
+            }
+
+            string pointLabel = mutationPointAward == 1 ? "point" : "points";
+            AddPlayerEvent(
+                playerId,
+                $"Consumed a Nutrient Patch for {mutationPointAward} mutation {pointLabel}",
+                GameLogCategory.Lucky);
+        }
         public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned) { /* Mutator Phenotype grants free upgrades, not spendable points – exclude from Free Points summary */ }
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }
         public void RecordAdaptiveExpressionBonus(int playerId, int bonus) { if (bonus > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Adaptive Expression", bonus); }

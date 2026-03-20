@@ -115,6 +115,29 @@ namespace FungusToast.Unity.UI
             UpdateOwnershipIcons(cell);
         }
 
+        public void UpdateTooltip(
+            BoardTile tile,
+            GameBoard board,
+            FungusToast.Unity.Grid.GridVisualizer gridVisualizer)
+        {
+            EnsureInitialized();
+
+            if (bodyText == null || tile?.NutrientPatch == null)
+            {
+                return;
+            }
+
+            sb.Clear();
+            AppendNutrientPatch(tile.NutrientPatch);
+            AppendNutrientTileInfo(tile, board);
+
+            bodyText.text = sb.ToString().TrimEnd('\n', '\r');
+            bodyText.ForceMeshUpdate();
+            SizeToContent();
+            bodyText.ForceMeshUpdate();
+            HideOwnershipIcons();
+        }
+
         // ═══════════════════════════════════════════════════════════════════
         //  Initialisation (runs once)
         // ═══════════════════════════════════════════════════════════════════
@@ -460,6 +483,56 @@ namespace FungusToast.Unity.UI
                 sb.AppendLine(DetailBullet("Receiving Toxin", UIStyleTokens.Category.Fungicide));
         }
 
+        private void AppendNutrientPatch(NutrientPatch nutrientPatch)
+        {
+            sb.AppendLine(EmphasizedLine("Status", nutrientPatch.DisplayName, UIStyleTokens.State.Warning));
+            sb.AppendLine(DetailLine("Reward", $"+{nutrientPatch.RewardAmount} Mutation Point", UIStyleTokens.Text.Secondary, UIStyleTokens.Accent.Spore));
+            sb.AppendLine(DetailLine("Trigger", "First orthogonal living growth consumes it", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine();
+            sb.AppendLine(DetailLine("Notes", nutrientPatch.Description, UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+        }
+
+        private void AppendNutrientTileInfo(BoardTile tile, GameBoard board)
+        {
+            sb.AppendLine();
+
+            sb.AppendLine(DetailLine("Tile", $"({tile.X}, {tile.Y})", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+
+            int alliedNeighbors = 0;
+            int enemyNeighbors = 0;
+            int toxinNeighbors = 0;
+            foreach (var adjacentTile in board.GetOrthogonalNeighbors(tile.TileId))
+            {
+                var adjacentCell = adjacentTile.FungalCell;
+                if (adjacentCell == null)
+                {
+                    continue;
+                }
+
+                if (adjacentCell.IsToxin)
+                {
+                    toxinNeighbors++;
+                    continue;
+                }
+
+                if (adjacentCell.OwnerPlayerId.HasValue)
+                {
+                    if (adjacentCell.IsAlive)
+                    {
+                        alliedNeighbors++;
+                    }
+                    else
+                    {
+                        enemyNeighbors++;
+                    }
+                }
+            }
+
+            sb.AppendLine(DetailLine("Orthogonal Living Cells", alliedNeighbors.ToString(), UIStyleTokens.Text.Secondary, alliedNeighbors > 0 ? UIStyleTokens.State.Success : UIStyleTokens.Text.Primary));
+            sb.AppendLine(DetailLine("Orthogonal Dead Cells", enemyNeighbors.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine(DetailLine("Orthogonal Toxins", toxinNeighbors.ToString(), UIStyleTokens.Text.Secondary, toxinNeighbors > 0 ? UIStyleTokens.Category.Fungicide : UIStyleTokens.Text.Primary));
+        }
+
         // ═══════════════════════════════════════════════════════════════════
         //  Formatting helpers
         // ═══════════════════════════════════════════════════════════════════
@@ -486,6 +559,19 @@ namespace FungusToast.Unity.UI
         {
             UpdateOwnershipBadge(ownerBadgeImage, cell.OwnerPlayerId, "Owner:");
             UpdateOwnershipBadge(lastOwnerBadgeImage, cell.LastOwnerPlayerId, "Last Owner:");
+        }
+
+        private void HideOwnershipIcons()
+        {
+            if (ownerBadgeImage != null)
+            {
+                ownerBadgeImage.gameObject.SetActive(false);
+            }
+
+            if (lastOwnerBadgeImage != null)
+            {
+                lastOwnerBadgeImage.gameObject.SetActive(false);
+            }
         }
 
         private void UpdateOwnershipBadge(Image badge, int? playerId, string linePrefix)

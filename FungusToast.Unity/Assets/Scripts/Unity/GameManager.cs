@@ -599,6 +599,7 @@ namespace FungusToast.Unity
         private void PlaceStartingSpores()
         {
             StartingSporeUtility.PlaceStartingSpores(Board, players, rng);
+            NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(Board, players, rng, gameUIManager.GameLogRouter);
             int round = Board.CurrentRound;
             float occ = Board.GetOccupiedTileRatio() *100f;
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ);

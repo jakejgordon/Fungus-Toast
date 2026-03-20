@@ -116,6 +116,16 @@ namespace FungusToast.Unity.UI.GameLog
             playerActivityLogManager?.RecordMutationPointIncome(playerId, newMutationPoints);
         }
 
+        public void RecordNutrientPatchesPlaced(int count)
+        {
+        }
+
+        public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, int mutationPointAward)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordNutrientPatchConsumed(playerId, nutrientTileId, mutationPointAward);
+        }
+
         public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints)
         {
             if (IsSilentMode) return;
