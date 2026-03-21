@@ -1,6 +1,6 @@
 # Unity UI Architecture Helper
 
-> **📚 Related Documentation**: For animation timing, see [ANIMATION_HELPER.md](ANIMATION_HELPER.md). For game flow and phases, see [DESIGN_PRINCIPLES.md](DESIGN_PRINCIPLES.md).
+> **📚 Related Documentation**: For animation timing, see [ANIMATION_HELPER.md](ANIMATION_HELPER.md). For game flow and phases, see [DESIGN_PRINCIPLES.md](DESIGN_PRINCIPLES.md). For the full documentation hierarchy, see [README.md](README.md).
 
 This document describes the established UI patterns in FungusToast.Unity. Follow these conventions when adding or modifying UI components.
 

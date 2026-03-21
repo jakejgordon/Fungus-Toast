@@ -56,7 +56,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 1. ✅ Add simulation flags to disable nutrient patches and mycovariant drafting for fairness tests.
 2. ✅ Replace temporary source edits with reusable starting-position override parameters/plumbing.
 3. ✅ Keep progress tracked here so future sessions can resume cleanly.
-4. ⏳ Commit the new simulation/override plumbing.
+4. ✅ Commit the new simulation/override plumbing.
 5. ⏳ Run a clean 6-player candidate bakeoff using explicit starting-position overrides.
 6. ⏳ Promote the best validated 6-player layout into the precomputed fast-path once it actually holds up.
 

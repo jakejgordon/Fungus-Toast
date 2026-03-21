@@ -1,5 +1,7 @@
 # AI Strategy Authoring
 
+See also: [README.md](README.md) for the full documentation hierarchy, [SIMULATION_HELPER.md](SIMULATION_HELPER.md) for simulation workflows, and [GAME_BALANCE_CONSTANTS.md](GAME_BALANCE_CONSTANTS.md) for balance-lever guidance.
+
 This document explains how AI mutation spending strategies are configured, selected, and validated for simulation runs.
 
 ## Strategy Sets

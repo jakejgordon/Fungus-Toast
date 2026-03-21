@@ -1,436 +1,126 @@
 # Fungus Toast - GitHub Copilot Instructions
 
+## Start Here
+
+This file is the top-level router for AI-assisted development in this repository.
+
+### First-hop task entry docs
+
+- **Build + validation basics:** `FungusToast.Core/docs/BUILD_INSTRUCTIONS.md`
+- **Simulation workflows, reproducibility, fairness testing, and balance runs:** `FungusToast.Core/docs/SIMULATION_HELPER.md`
+- **AI strategy authoring and roster metadata:** `FungusToast.Core/docs/AI_STRATEGY_AUTHORING.md`
+- **Mutation authoring:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`
+- **Mycovariant authoring:** `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`
+- **Adaptation authoring:** `FungusToast.Core/docs/ADAPTATION_HELPER.md`
+- **Campaign systems and progression context:** `FungusToast.Core/docs/CAMPAIGN_HELPER.md`
+- **Dominance diagnosis / controlled balance investigation:** `FungusToast.Core/docs/DOMINANCE_DIAGNOSIS_WORKFLOW.md`
+- **Gameplay balance levers and canonical constants:** `FungusToast.Core/docs/GAME_BALANCE_CONSTANTS.md`
+- **Unity UI architecture and service patterns:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`
+- **Unity UI style rules:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`
+- **Technical architecture context:** `FungusToast.Core/docs/DESIGN_PRINCIPLES.md`
+- **Analytics workflow for simulation exports:** `FungusToast.Analytics/README.md`
+- **Unity-front-end-only overview:** `FungusToast.Unity/.github/instructions/project-overview.instructions.md`
+- **Complete documentation map / secondary references:** `FungusToast.Core/docs/README.md`
+
+If a task is unclear, route through the most specific document above before making changes.
+
 ## Repository Overview
 
-Fungus Toast is a 2D Unity game where each player represents a mold colony trying to take the largest share of the toast. The repository contains three main projects:
+Fungus Toast is a 2D Unity game where each player represents a mold colony trying to take the largest share of the toast.
 
-- **FungusToast.Core**: Core business logic (.NET Standard 2.1) - ~189 C# files containing game mechanics, mutations, AI, and simulation logic
-- **FungusToast.Simulation**: Simulation runner (.NET 8.0) for running many-game simulations, AI testing, and balance-tuning
-- **FungusToast.Unity**: Unity game project (Unity 6000.3.10f1) with UI, graphics, and game presentation layer
+Main projects:
+- **FungusToast.Core**: deterministic game rules, mutations, AI, simulation-facing logic
+- **FungusToast.Simulation**: console runner for many-game simulations and balance validation
+- **FungusToast.Unity**: Unity front end, presentation, UI, and interaction flow
+- **FungusToast.Analytics**: offline analysis tooling for simulation exports
 
-**Key Facts:**
-- Total codebase: > 180 files
-- Language: C# with some PowerShell scripting
-- Primary target: Windows development environment with Unity Editor
-- Architecture: Clean separation between core logic, simulation, and presentation
+## Hard Rules
 
-## Build Instructions
+- Keep gameplay logic deterministic and Unity-free inside `FungusToast.Core`.
+- Do not edit Unity-generated project files such as:
+  - `Assembly-CSharp.csproj`
+  - `Assembly-CSharp-Editor.csproj`
+  - `FungusToast.Unity.csproj`
+- No magic constants for tunable gameplay/UI values. Use the appropriate constants file.
+- Prefer minimal, scoped changes over opportunistic refactors.
+- When touching Unity UI, prefer existing architecture patterns:
+  - `GameUIManager` facade
+  - extracted services
+  - tooltip system
+  - object pooling
+- When adding new docs, link them into the documentation hierarchy so they are discoverable.
 
-### Prerequisites
-- .NET 8.0 SDK (for FungusToast.Simulation)
-- .NET Standard 2.1 compatible SDK (for FungusToast.Core)
-- Unity Editor 6000.3.10f1 (for Unity project, optional for core logic work)
-- PowerShell (for automation scripts)
+## Build and Validation Expectations
 
-### Building Projects
+### Canonical CLI builds
 
-**IMPORTANT: Only build Core and Simulation projects with dotnet CLI. Unity projects are built by the Unity Editor.**
+Build these with `dotnet build`:
 
 ```bash
-# Always build in this order to respect dependencies:
 dotnet build FungusToast.Core/FungusToast.Core.csproj
 dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj
 ```
 
-### Common Build Issues and Workarounds
-
-#### Issue: Unity copy step on Linux/macOS/WSL
-**Cause:** The FungusToast.Core project uses a Windows batch file post-build step to copy the compiled DLL into Unity's Assets/Plugins folder.
-
-**Current behavior:**
-- On Windows, the post-build copy/touch step runs automatically.
-- On Linux/macOS/WSL, the post-build step is skipped so `dotnet build` succeeds cleanly.
-
-**Solution:**
-If Unity needs the latest Core build on Linux/macOS/WSL, run `./FungusToast.Core/copy_to_unity.sh` after building. It copies the output from `FungusToast.Core/bin/Debug/netstandard2.1/` into `FungusToast.Unity/Assets/Plugins/` and touches `ForceRecompile.cs`.
-
-#### Build Time Expectations
-- **FungusToast.Core**: ~6 seconds (clean build), ~2 seconds (incremental)
-- **FungusToast.Simulation**: ~5 seconds (clean build), ~1 second (incremental)
-
-## Running Simulations
-
-### Using PowerShell Script (Recommended)
-The simulation includes a comprehensive PowerShell script that builds the project and launches a simulation in a separate window:
-
-```powershell
-# Navigate to simulation directory
-cd FungusToast.Simulation
-
-# Run simulation with automatic building
-.\run_simulation.ps1 --games 100 --players 8 --no-keyboard
-
-# Custom output filename
-.\run_simulation.ps1 --games 50 --players 4 --output "my_test.txt" --no-keyboard
-
-# Quick test run
-.\run_simulation.ps1 --games 1 --players 2 --no-keyboard
-```
-
-### Direct dotnet Execution
-```bash
-cd FungusToast.Simulation
-dotnet run -- --games 100 --players 8 --output simulation_results.txt --no-keyboard
-```
-
-### Simulation Output Location
-**All simulation output is automatically saved to:**
-```
-FungusToast.Simulation/bin/Debug/net8.0/SimulationOutput/
-```
-
-**Output Files:**
-- Auto-generated timestamped filenames: `Simulation_output_YYYY-MM-DDTHH-mm-ss.txt`
-- Custom filenames when using `--output` parameter
-- Full absolute path is displayed in console after simulation completion
-
-### Command Line Options
-```
--g, --games <number>     Number of games to play per matchup (default: 1)
--p, --players <number>   Number of players/strategies to use (default: 8)  
--w, --width <number>     Board width (default: 160)
---height <number>        Board height (default: 160)  
--o, --output <filename>  Custom output filename (default: auto-generated)
---no-keyboard            Disable keyboard interruption (Q/Escape), useful for automation
---strategy-set <set>     Strategy pool: Proven, Testing, Mycovariants, Campaign
---strategy-names <csv>   Explicit strategy names for single-run mode; overrides --players
---selection-policy <p>   Strategy sampler: RandomUnique, CoverageBalanced, StratifiedCycle
---seed <number>          Deterministic base seed (default: 0)
---rotate-slots           Rotate strategy-to-player slot assignment every game
---player-counts <csv>    Batch mode player strata (example: 2,4,8)
---board-sizes <csv>      Batch mode board strata (example: 80x80,160x160)
---strategy-sets <csv>    Batch mode strategy-set strata
---experiment-id <id>     Analytics export tag
---parquet / --no-parquet Enable or disable parquet analytics export
---help                   Show help message
-```
-
-**Note:** Default game count is 1 for fast feedback. Increase `--games` (for example 100+) when doing balance/statistical analysis.
-
-**Caution on slot testing:** `--fixed-slots` fixes strategy-to-player assignment, but starting spores are still shuffled each game by `StartingSporeUtility`. So fixed-slot runs are not pure board-position tests unless that shuffle is disabled or spawn coordinates are captured and analyzed.
-
-### Simulation Troubleshooting
-
-#### PowerShell Execution Policy Issues
-If scripts won't run on Windows:
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-
-#### Automated Tool Failures
-The PowerShell script includes detection for automated execution environments. If GitHub Copilot tools hang:
-
-1. **Manual execution:** Run the simulation manually using Visual Studio terminal
-2. **Get output path:** After completion, use the printed absolute path
-3. **File analysis:** Use file reading tools to analyze results
-
-## Project Architecture and Layout
-
-### Repository Root Structure
-```
-.
-├── .gitattributes                 # Git configuration
-├── .gitignore                     # Comprehensive ignore rules for Unity + .NET
-├── LICENSE                        # License file
-├── FungusToast.Core/             # Core game logic (.NET Standard 2.1)
-├── FungusToast.Simulation/       # Simulation runner (.NET 8.0)
-└── FungusToast.Unity/            # Unity project (Unity 6000.3.10f1)
-```
-
-### FungusToast.Core Structure
-Core business logic with clean domain separation:
-
-```
-FungusToast.Core/
-├── FungusToast.Core.csproj      # Project file with PostBuild step
-├── PostBuild_CopyAndTouch.bat   # Windows batch script (Linux incompatible)
-├── AI/                          # AI strategies and player automation
-├── Board/                       # Game board, tiles, and cell management
-├── Common/                      # Shared utilities and helpers
-├── Config/                      # Game balance and configuration
-├── Death/                       # Cell death mechanics and toxin systems
-├── Events/                      # Game event system and logging
-├── Growth/                      # Cell growth and expansion mechanics
-├── Logging/                     # Core logging infrastructure
-├── Metrics/                     # Performance and game metrics
-├── Mutations/                   # Mutation tree system and upgrades
-├── Mycovariants/               # Special ability drafting system
-├── Phases/                     # Game phase management and processors
-├── Players/                    # Player management and state
-├── TileState.cs                # Core tile state definitions
-└── docs/                       # Comprehensive documentation
-   ├── AI_STRATEGY_AUTHORING.md       # AI strategy sets, themes, and simulation patterns
-   ├── ADAPTATION_HELPER.md          # Adaptation system guide
-   ├── ADAPTATION_TECHNICAL_FLOW.md  # Adaptation technical integration flow
-   ├── ANIMATION_HELPER.md            # Animation timing and trigger map
-   ├── BUILD_INSTRUCTIONS.md          # Basic build commands
-   ├── DESIGN_PRINCIPLES.md           # Architecture and design philosophy
-   ├── DOMINANCE_DIAGNOSIS_WORKFLOW.md # Controlled workflow for explaining why a strategy dominates
-   ├── FUTURE_IMPROVEMENTS.md         # Backlog and future UX/architecture tasks
-   ├── GAME_BALANCE_CONSTANTS.md      # Canonical gameplay balance levers and tuning guidance
-   ├── MYCOVARIANT_AUTHORING_STYLE.md # Mycovariant copy/style standards
-   ├── MYCOVARIANT_HELPER.md          # Mycovariant system guide
-   ├── MYCOVARIANT_PR_CHECKLIST.md    # Mycovariant review checklist
-   ├── MYCOVARIANT_TECHNICAL_FLOW.md  # Mycovariant technical integration flow
-   ├── MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md # Shared naming rules for abilities
-   ├── NEW_MUTATION_HELPER.md         # Adding new mutations guide
-   ├── PLAYER_ACTIVITY_LOG_HELPER.md  # Player activity log aggregation semantics
-   ├── SIMULATION_HELPER.md           # Detailed simulation commands and debugging
-   ├── UI_ARCHITECTURE_HELPER.md      # Unity UI patterns, services, tooltips, pooling
-   ├── UI_POLISH_TASKLIST.md          # Cross-session UI polish tracker
-   └── UI_STYLE_GUIDE.md              # Canonical UI style tokens and recipes
-```
-
-### FungusToast.Simulation Structure
-```
-FungusToast.Simulation/
-├── FungusToast.Simulation.csproj    # Console application project
-├── Program.cs                       # Main entry point with argument parsing
-├── run_simulation.ps1               # Comprehensive automation script
-├── SimulationRunner.cs              # Core simulation orchestration
-├── OutputManager.cs                 # Output file management and redirection
-├── GameSimulator.cs                 # Individual game simulation logic
-├── Analysis/                        # Specialized test runners and analysis tools
-└── Models/                          # Data models for simulation results
-```
-
-### FungusToast.Unity Structure
-```
-FungusToast.Unity/
-├── FungusToast.Unity.csproj        # Unity-generated project file (DO NOT EDIT)
-├── Assembly-CSharp.csproj           # Unity-generated assembly (DO NOT EDIT)
-├── .vsconfig                        # Visual Studio workload configuration
-├── .editorconfig                    # Code formatting rules
-├── run_simulation.ps1               # Unity-specific simulation script
-├── Assets/                          # Unity assets and scripts
-│   ├── Plugins/                     # Contains FungusToast.Core.dll (auto-copied)
-│   ├── Scripts/Unity/               # Unity-specific C# scripts
-│   │   ├── GameManager.cs           # Central game orchestrator (delegates to services)
-│   │   ├── Services/                # Extracted service classes
-│   │   │   ├── EndgameService.cs    # Endgame detection, countdown, final results
-│   │   │   └── MutationPointService.cs # Mutation point assignment, AI spending
-│   │   ├── UI/                      # UI panels, sidebars, and widgets
-│   │   │   ├── GameUIManager.cs     # Lightweight UI façade (avoids GameManager.Instance)
-│   │   │   ├── Tooltips/            # Unified tooltip system
-│   │   │   ├── GameLog/             # Object-pooled game log entries
-│   │   │   ├── MutationTree/        # Mutation tree panel and nodes
-│   │   │   └── ...                  # Other UI panels
-│   │   └── ...                      # Phases, Grid, Cameras, etc.
-│   ├── Scenes/                      # Unity scene files
-│   └── ...                          # Other Unity assets
-├── Packages/                        # Unity package manager files
-├── ProjectSettings/                 # Unity project configuration
-└── Library/                         # Unity build cache (ignored)
-```
-
-### Key Dependencies and Integration Points
-
-**FungusToast.Core Dependencies:**
-- .NET Standard 2.1 (Unity compatible)
-- No external NuGet packages (self-contained)
-- Post-build integration with Unity via DLL copying
-
-**FungusToast.Simulation Dependencies:**
-- References FungusToast.Core project
-- .NET 8.0 console application
-- No external dependencies
-
-**FungusToast.Unity Dependencies:**
-- Unity 6000.3.10f1
-- References FungusToast.Core.dll from Assets/Plugins
-- TextMeshPro (Unity package)
-- Unity UI system
-
-## Development Workflow
-
-### Making Changes to Core Logic
-1. **Edit code** in FungusToast.Core
-2. **Build Core** project: `dotnet build FungusToast.Core/FungusToast.Core.csproj`
-3. **For Unity testing:** Manually copy DLL to Unity Assets/Plugins (if on Linux/macOS)
-4. **For simulation testing:** Build and run simulation project
-
-### Testing Changes
-1. **Unit testing:** Limited formal test infrastructure; uses simulation-based validation
-2. **Simulation validation:** Use `run_simulation.ps1` with small game counts for quick validation on non-campaign work
-3. **Balance testing:** Run longer simulations with multiple strategies
-
-### Common File Modification Patterns
-
-**Adding New Mutations:**
-- Primary location: `FungusToast.Core/Mutations/Factories/`
-- Reference: `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`
-- Integration: Update `MutationRepository.cs`
-
-**Adding New Mycovariants:**
-- Primary location: `FungusToast.Core/Mycovariants/Factories/`
-- Reference: `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`
-- Naming: generate 5 candidate names first using `FungusToast.Core/docs/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`
-- Presentation: generate a unique icon keyed off the Mycovariant's `IconId`; do not ship new Mycovariants on generic fallback art
-
-**Adding New Adaptations:**
-- Primary location: `FungusToast.Core/Campaign/`
-- References: `FungusToast.Core/docs/ADAPTATION_HELPER.md`, `FungusToast.Core/docs/ADAPTATION_TECHNICAL_FLOW.md`
-- Naming: `FungusToast.Core/docs/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`
-
-**Adding New AI Strategies:**
-- Primary location: `FungusToast.Core/AI/`
-- Registration: Update `AIRoster.cs`
-- Testing: Use simulation framework for validation
-
-**Unity UI Changes:**
-- Location: `FungusToast.Unity/Assets/Scripts/Unity/`
-- Build: Use Unity Editor (not dotnet CLI)
-- Testing: Play mode in Unity Editor
-- Reference: `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`
-
-## Validation and Verification
-
-### Pre-commit Validation Steps
-1. **Build verification:**
-   ```bash
-   dotnet build FungusToast.Core/FungusToast.Core.csproj
-   dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj
-   ```
-
-2. **Simulation smoke test:**
-   ```bash
-   cd FungusToast.Simulation
-   dotnet run -- --games 1 --players 2
-   ```
-   **Expected outcome:** Creates timestamped output file in `bin/Debug/net8.0/SimulationOutput/`
-
-3. **Check output generation:**
-   - Verify output file creation in `bin/Debug/net8.0/SimulationOutput/`
-   - Confirm no obvious errors in console output
-
-### No Formal CI/CD Pipeline
-- **Current state:** No GitHub Actions or automated CI
-- **Validation approach:** Manual testing and simulation-based verification
-- **Quality assurance:** Relies on comprehensive simulation testing for balance and correctness
-
-### Performance Considerations
-- **Core logic:** Optimized for simulation speed (thousands of games)
-- **Memory usage:** Designed for batch processing of multiple games
-- **Simulation runtime:** less than 1 minute per game typical; varies by strategy complexity and board size
-- **Output files:** Can be 20KB+ for detailed single-game results
-
-## Important Notes for Coding Agents
-
-### Copilot Productivity Rules (Read First)
-- Prefer working in `FungusToast.Core` for game rules, data models, and deterministic logic. Only use `FungusToast.Unity` for view/controllers and input.
-- No magic constants: balance values, durations, percentages, UI timings, and other tunable numbers must live in the appropriate constants file such as `GameBalance`, `MycovariantGameBalance`, `AdaptationGameBalance`, or `UIEffectConstants`. Reuse the same constant in both gameplay logic and user-facing copy/description text.
-- Avoid adding new `MonoBehaviour` singletons or `GameManager.Instance` reach-ins. Prefer passing references or adding lightweight facades in `GameUIManager`.
-- **Service extraction pattern:** When `GameManager` grows, extract cohesive clusters into service classes under `Services/` (see `EndgameService`, `MutationPointService`). Services receive dependencies via `Func<>` delegates, not direct `GameManager` references.
-- **Tooltip system:** Use `ITooltipContentProvider` + `TooltipTrigger` for all tooltips. Do not create new standalone tooltip implementations. See `UI_ARCHITECTURE_HELPER.md`.
-- **Object pooling:** Use `UnityEngine.Pool.ObjectPool<T>` for frequently instantiated UI elements (e.g., game log entries). Add a `ResetForReuse()` method to pooled components.
-- Keep core logic Unity-free (no `UnityEngine` types in `FungusToast.Core`).
-- For per-turn/per-cycle logic, avoid repeated LINQ over board state. Use `BoardUtilities.GetPlayerBoardSummaries` or cache counts.
-- When adding new mutations or mycovariants, follow the helper docs exactly and update all required integration points.
-- Do not edit Unity-generated project files: `Assembly-CSharp.csproj`, `Assembly-CSharp-Editor.csproj`, `FungusToast.Unity.csproj`.
-- Keep changes minimal and scoped to the requested feature; avoid refactors unless explicitly requested.
-
-### What to Trust and Verify
-1. **Trust these instructions** for build processes and project structure
-2. **Verify simulation output** by examining generated files
-3. **Check existing documentation** in `FungusToast.Core/docs/` for domain-specific guidance
-4. **Test build commands** on your target platform (Linux workarounds may be needed)
-
-### Platform-Specific Considerations
-- **Windows:** Full compatibility with all scripts and automation
-- **Linux/macOS:** Core and Simulation projects work; Unity and PostBuild script require workarounds
-- **Development focus:** Primarily Windows-based with Unity Editor
-
-### Search and Exploration Guidance
-- **For mutations:** Start with `FungusToast.Core/Mutations/` and `NEW_MUTATION_HELPER.md`
-- **For AI/strategy:** Examine `FungusToast.Core/AI/` and existing strategy implementations
-- **For simulation:** Reference `SIMULATION_HELPER.md` for comprehensive command examples
-- **For Unity integration:** Check `FungusToast.Unity/Assets/Scripts/Unity/`
-- **For UI patterns (tooltips, pooling, services):** See `UI_ARCHITECTURE_HELPER.md`
-- **For UI styling and motif consistency:** See `UI_STYLE_GUIDE.md`
-
-### Documentation Index (Use This First)
-- `FungusToast.Core/docs/BUILD_INSTRUCTIONS.md`: Canonical CLI build commands for Core and Simulation.
-- `FungusToast.Core/docs/SIMULATION_HELPER.md`: Simulation CLI options, output locations, parquet export, tracking checklist.
-- `FungusToast.Core/docs/DOMINANCE_DIAGNOSIS_WORKFLOW.md`: Controlled experiment pattern for diagnosing why a strategy dominates, including mutation timing and mycovariant timing analysis.
-- `FungusToast.Core/docs/AI_STRATEGY_AUTHORING.md`: Strategy sets/themes and reproducible balance-testing patterns.
-- `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`: Mutation authoring workflow with tracking and UI integration points.
-- `FungusToast.Core/docs/GAME_BALANCE_CONSTANTS.md`: Canonical balance levers, tuning categories, and when not to use AI config as the primary gameplay balance tool.
-- `FungusToast.Core/docs/ADAPTATION_HELPER.md`: Adaptation authoring workflow, campaign persistence touchpoints, and validation steps.
-- `FungusToast.Core/docs/ADAPTATION_TECHNICAL_FLOW.md`: Adaptation runtime wiring, campaign integration, and validation boundaries.
-- `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`: Index page for Mycovariant authoring and implementation docs.
-- `FungusToast.Core/docs/MYCOVARIANT_AUTHORING_STYLE.md`: Style and clarity rules for Mycovariant Description/FlavorText.
-- `FungusToast.Core/docs/MYCOVARIANT_TECHNICAL_FLOW.md`: End-to-end technical flow for Core/Simulation/Unity draft integration.
-- `FungusToast.Core/docs/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`: Shared naming constraints and naming patterns for Mutations, Mycovariants, and Adaptations.
-- `FungusToast.Core/docs/MYCOVARIANT_PR_CHECKLIST.md`: PR readiness checklist for Mycovariant work.
-- `FungusToast.Core/docs/PLAYER_ACTIVITY_LOG_HELPER.md`: Human activity log segment/aggregation semantics.
-- `FungusToast.Core/docs/CAMPAIGN_HELPER.md`: Campaign mode vision, progression/configuration touchpoints, and adaptation guidance.
-- `FungusToast.Core/docs/ANIMATION_HELPER.md`: Gameplay animation trigger order and timing constants.
-- `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`: `GameUIManager` facade, services, tooltips, pooling patterns.
-- `FungusToast.Core/docs/UI_STYLE_GUIDE.md`: UI semantic token dictionary and component recipes.
-- `FungusToast.Core/docs/UI_POLISH_TASKLIST.md`: Current/pending UI polish verification tasks.
-- `FungusToast.Core/docs/FUTURE_IMPROVEMENTS.md`: Backlog items and longer-horizon architecture/UX tasks.
-- `FungusToast.Core/docs/DESIGN_PRINCIPLES.md`: Technical architecture context and terminology.
-- `FungusToast.Analytics/README.md`: Parquet analytics workflow and recurring balance-pass procedure.
-- `FungusToast.Unity/.github/instructions/project-overview.instructions.md`: Unity front-end project overview for Unity-only tasks.
-
-#### New Documentation
-Whenever generating new .md files, add a reference to the documentation in copilot-instructions.md so it is more easily discoverable.
-
-### Code Quality and Conventions
-- **Nullable reference types:** Enabled
-- **Architecture:** Clean domain separation between Core, Simulation, and Unity layers
-- **Error handling:** Comprehensive logging and event systems for debugging
-- **Testing strategy:** Simulation-based validation rather than unit tests
-- **Consants:** Use well-named constants for all tunable values; avoid magic numbers
-
-### AI-Friendly Change Patterns
-- Prefer small, composable helper methods over large monolithic methods.
-- When touching `GameManager`, consider moving logic into a service class under `Services/` and call that service from `GameManager`. Use `Func<>` delegates for dependencies instead of passing `GameManager` directly.
-- For new UI that shows/hides frequently, follow the object pool pattern in `UI_GameLogPanel` — use `ObjectPool<T>` and add `ResetForReuse()` to the component.
-- For new tooltips, implement `ITooltipContentProvider` on the target component and attach a `TooltipTrigger` — don't build custom hover/tooltip code.
-- Expand `GameUIManager` instead of reaching into `GameManager.Instance` from UI scripts. Use `SetDependencies()` pattern (see `UI_EndGamePanel`) for panels that need callbacks.
-- Add new events through `GameBoard` + `GameRulesEventSubscriber` so Unity and Simulation stay consistent.
-- Use `ISimulationObserver` for any effect tracking that should appear in simulation output.
-
-### UI Style Guide Rules (Copilot)
-- Follow `FungusToast.Core/docs/UI_STYLE_GUIDE.md` for all Unity UI polish and new UI authoring.
-- Prefer semantic style tokens and shared component recipes over ad hoc color/font/button values.
-- Reuse existing prefabs and UI systems before introducing one-off visuals.
-- Avoid new raw color literals in UI scripts unless unavoidable; if needed, keep usage local and add a migration TODO.
-- Keep style-only changes isolated from gameplay logic changes whenever feasible.
-
-**When in doubt:** Consult the existing documentation in `FungusToast.Core/docs/` which contains domain-specific implementation guidance written by the project maintainers.
-
-## Validation Examples
-
-### Complete Build and Test Workflow
-```bash
-# 1. Clean build of both projects
-dotnet build FungusToast.Core/FungusToast.Core.csproj
-dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj
-
-# 2. Quick functionality test
-cd FungusToast.Simulation
-dotnet run -- --games 1 --players 2
-
-# 3. Verify output file creation
-ls bin/Debug/net8.0/SimulationOutput/
-
-# 4. Check help documentation
-dotnet run -- --help
-```
-
-### Expected Console Output Patterns
-**Successful simulation run includes:**
-- "Simulation output redirected to: [path]" message
-- Real-time game progress with turn counts and winners
-- Comprehensive statistical summary at completion
-- Mutation usage statistics
-- Player-strategy performance breakdown
-
-**Signs of successful completion:**
-- Output file created in SimulationOutput directory
-- File size typically 20KB+ for single games
-- Console shows "Simulation complete." message
-- No error or exception messages
+See `FungusToast.Core/docs/BUILD_INSTRUCTIONS.md` for the authoritative build commands and platform notes.
 
+### Unity compile validation
+
+For Unity-facing changes, also validate Unity compile health in the Unity environment. Unity-generated project files may exist for editor/tooling support, but the Unity Editor remains the authoritative build/compile surface for Unity-side correctness.
+
+## Quick Validation Checklist
+
+Choose the smallest checklist that matches the change:
+
+### Core-only gameplay change
+1. Build Core
+2. Build Simulation
+3. Run an appropriate smoke simulation if gameplay behavior changed
+
+### Simulation tooling / CLI change
+1. Build Core
+2. Build Simulation
+3. Run a smoke simulation
+4. Confirm expected output/help behavior
+
+### Unity-facing change
+1. Build Core
+2. Build Simulation if shared behavior changed
+3. Validate Unity compile health in the Unity environment
+4. Verify the affected UI/flow in Unity
+
+## AI Productivity Rules
+
+- Prefer `FungusToast.Core` for rules, data models, and deterministic mechanics.
+- Only use `FungusToast.Unity` for view/controllers, interaction flow, and presentation concerns.
+- When `GameManager` grows, prefer service extraction instead of adding more singleton reach-ins.
+- Use `ITooltipContentProvider` + `TooltipTrigger` for tooltips.
+- Use `ObjectPool<T>` for frequently reused UI elements.
+- Add new cross-layer gameplay tracking through `GameBoard` events plus `ISimulationObserver` so Simulation and Unity stay aligned.
+- Reuse the documentation hierarchy instead of inventing fresh patterns when a helper already exists.
+
+## Documentation Ownership
+
+Use this precedence order when multiple docs seem relevant:
+
+1. **This file** = top-level router + hard repo rules
+2. **Specific helper/workflow docs** = authoritative task instructions
+3. **`FungusToast.Core/docs/README.md`** = complete documentation map / secondary references
+4. **Tracking docs** such as `docs/WORKLOG.md` = current handoff and active thread, not canonical design truth
+
+## Search Guidance
+
+- Simulation/balance tasks → `SIMULATION_HELPER.md`
+- Mutation work → `NEW_MUTATION_HELPER.md`
+- Mycovariant work → `MYCOVARIANT_HELPER.md`
+- Adaptation/campaign work → `ADAPTATION_HELPER.md` and `CAMPAIGN_HELPER.md`
+- AI strategy work → `AI_STRATEGY_AUTHORING.md`
+- UI/service/tooltip/pooling work → `UI_ARCHITECTURE_HELPER.md` and `UI_STYLE_GUIDE.md`
+- Deep architecture questions → `DESIGN_PRINCIPLES.md`
+- Export analysis → `FungusToast.Analytics/README.md`
+
+## New Documentation Rule
+
+Whenever generating a new `.md` file:
+- first decide whether an existing doc should be updated instead
+- if a new doc is warranted, add it to the documentation hierarchy
+- make sure it is referenced either from this root file or from another indexed doc such as `FungusToast.Core/docs/README.md`

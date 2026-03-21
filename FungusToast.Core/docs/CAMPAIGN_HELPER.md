@@ -1,5 +1,7 @@
 # Campaign Helper
 
+See also: [README.md](README.md) for the full documentation hierarchy and [ADAPTATION_HELPER.md](ADAPTATION_HELPER.md) for Adaptation-specific workflow.
+
 This guide documents the current Campaign mode vision and where to configure progression, AI lineup, and adaptation rewards.
 
 ## Vision

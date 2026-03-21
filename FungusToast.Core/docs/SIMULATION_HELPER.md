@@ -1,6 +1,6 @@
 # Fungus Toast Simulation Helper
 
-> **📚 Related Documentation**: For technical architecture and design principles, see [DESIGN_PRINCIPLES.md](DESIGN_PRINCIPLES.md)
+> **📚 Related Documentation**: For technical architecture and design principles, see [DESIGN_PRINCIPLES.md](DESIGN_PRINCIPLES.md). For the full documentation hierarchy, see [README.md](README.md).
 
 This document contains the most effective commands for running different simulation scenarios and debugging the Fungus Toast game.
 
@@ -316,6 +316,23 @@ For controlled diagnosis of a dominant strategy, including early mutation timing
 - Keep `manifest.json` with any exported CSV/Parquet analysis outputs; it is the authoritative roster provenance record.
 - `--strategy-names` is resolved against exactly one `--strategy-set`. A named-lineup experiment cannot mix roster sets in the same run.
 - If you need cross-set coverage, run separate experiments per set (for example `..._proven` and `..._testing`) instead of combining names from multiple rosters.
+
+### Fairness-testing workflow (do this by default)
+
+For starting-position fairness studies and other symmetry-sensitive simulation work:
+
+- **Do not edit source files just to test a candidate layout.** Use simulation parameters instead.
+- Use explicit lineups via `--strategy-names` so every slot gets the same AI (or another intentionally fixed lineup).
+- For pure slot-fairness testing, disable asymmetry sources unless they are the subject of the test:
+  - `--no-nutrient-patches`
+  - `--no-mycovariants`
+- Use `--starting-positions x1:y1,x2:y2,...` to test a candidate layout without changing `StartingSporeUtility`.
+- Use `--fixed-slots` for true position studies; use `--rotate-slots` for general balance tests where slot bias should average out.
+- Use explicit `--output` and `--experiment-id` values when comparing multiple candidates so each run can be traced unambiguously.
+- For candidate bakeoffs, use a staged process:
+  1. short screening runs (for example 20 games each)
+  2. longer confirmation runs (for example 100 games) only for the best survivors
+- Only promote a layout into the precomputed fast-path after it survives the longer clean validation.
 
 ## Starting Position Fairness Notes
 

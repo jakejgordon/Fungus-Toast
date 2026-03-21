@@ -1,5 +1,7 @@
 # Build Instructions
 
+See also: [README.md](README.md) for the full documentation hierarchy.
+
 To build the solution from the command line (Cursor/CLI), only build the following projects:
 
 1. FungusToast.Core
