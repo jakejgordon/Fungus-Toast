@@ -40,27 +40,157 @@ namespace FungusToast.Core.Board
 
             Shuffle(candidateTileIds, rng);
 
-            int placedCount = 0;
-            foreach (int tileId in candidateTileIds)
+            int placedTileCount = 0;
+            int nextClusterId = 1;
+
+            while (targetCount - placedTileCount >= GameBalance.NutrientPatchClusterMinimumSize)
             {
-                if (placedCount >= targetCount)
+                int remainingTileBudget = targetCount - placedTileCount;
+                int maxClusterSize = Math.Min(GameBalance.NutrientPatchClusterMaximumSize, remainingTileBudget);
+                if (maxClusterSize < GameBalance.NutrientPatchClusterMinimumSize)
                 {
                     break;
                 }
 
-                if (!IsFarEnoughFromStartingSpores(board, tileId, startingTileIds, minimumDistanceFromStartingSpores))
+                List<int> sizeOptions = BuildWeightedClusterSizeOptions(maxClusterSize);
+                Shuffle(sizeOptions, rng);
+
+                bool clusterPlaced = false;
+                foreach (int desiredClusterSize in sizeOptions)
                 {
-                    continue;
+                    var clusterTileIds = TryBuildCluster(
+                        board,
+                        candidateTileIds,
+                        startingTileIds,
+                        minimumDistanceFromStartingSpores,
+                        desiredClusterSize,
+                        rng);
+                    if (clusterTileIds.Count < GameBalance.NutrientPatchClusterMinimumSize)
+                    {
+                        continue;
+                    }
+
+                    NutrientPatch clusterPatch = NutrientPatch.CreateMutationPointCluster(nextClusterId++, clusterTileIds.Count);
+                    foreach (int clusterTileId in clusterTileIds)
+                    {
+                        if (board.PlaceNutrientPatch(clusterTileId, clusterPatch))
+                        {
+                            placedTileCount++;
+                        }
+                    }
+
+                    clusterPlaced = true;
+                    break;
                 }
 
-                if (board.PlaceNutrientPatch(tileId, NutrientPatch.CreateDefaultMutationPointPatch()))
+                if (!clusterPlaced)
                 {
-                    placedCount++;
+                    break;
                 }
             }
 
-            observer?.RecordNutrientPatchesPlaced(placedCount);
-            return placedCount;
+            observer?.RecordNutrientPatchesPlaced(placedTileCount);
+            return placedTileCount;
+        }
+
+        private static List<int> TryBuildCluster(
+            GameBoard board,
+            IReadOnlyList<int> candidateTileIds,
+            IReadOnlyList<int> startingTileIds,
+            int minimumDistanceFromStartingSpores,
+            int desiredClusterSize,
+            Random rng)
+        {
+            var seedTileIds = candidateTileIds
+                .Where(tileId => IsEligibleClusterTile(
+                    board,
+                    tileId,
+                    startingTileIds,
+                    minimumDistanceFromStartingSpores,
+                    Array.Empty<int>()))
+                .ToList();
+
+            Shuffle(seedTileIds, rng);
+
+            foreach (int seedTileId in seedTileIds)
+            {
+                var clusterTileIds = new HashSet<int> { seedTileId };
+                var frontierTileIds = new List<int> { seedTileId };
+
+                while (clusterTileIds.Count < desiredClusterSize && frontierTileIds.Count > 0)
+                {
+                    int frontierIndex = rng.Next(frontierTileIds.Count);
+                    int frontierTileId = frontierTileIds[frontierIndex];
+
+                    var growthOptions = board.GetOrthogonalNeighbors(frontierTileId)
+                        .Select(tile => tile.TileId)
+                        .Where(tileId => !clusterTileIds.Contains(tileId))
+                        .Where(tileId => IsEligibleClusterTile(
+                            board,
+                            tileId,
+                            startingTileIds,
+                            minimumDistanceFromStartingSpores,
+                            clusterTileIds))
+                        .ToList();
+
+                    if (growthOptions.Count == 0)
+                    {
+                        frontierTileIds.RemoveAt(frontierIndex);
+                        continue;
+                    }
+
+                    int nextTileId = growthOptions[rng.Next(growthOptions.Count)];
+                    if (clusterTileIds.Add(nextTileId))
+                    {
+                        frontierTileIds.Add(nextTileId);
+                    }
+                }
+
+                if (clusterTileIds.Count >= GameBalance.NutrientPatchClusterMinimumSize)
+                {
+                    return clusterTileIds.ToList();
+                }
+            }
+
+            return new List<int>();
+        }
+
+        private static List<int> BuildWeightedClusterSizeOptions(int maxClusterSize)
+        {
+            var sizeOptions = new List<int>();
+            for (int size = GameBalance.NutrientPatchClusterMinimumSize; size <= maxClusterSize; size++)
+            {
+                int weight = maxClusterSize - size + 1;
+                for (int i = 0; i < weight; i++)
+                {
+                    sizeOptions.Add(size);
+                }
+            }
+
+            return sizeOptions;
+        }
+
+        private static bool IsEligibleClusterTile(
+            GameBoard board,
+            int candidateTileId,
+            IReadOnlyList<int> startingTileIds,
+            int minimumDistanceFromStartingSpores,
+            IEnumerable<int> currentClusterTileIds)
+        {
+            BoardTile? candidateTile = board.GetTileById(candidateTileId);
+            if (candidateTile == null || candidateTile.IsOccupied || candidateTile.HasNutrientPatch)
+            {
+                return false;
+            }
+
+            if (!IsFarEnoughFromStartingSpores(board, candidateTileId, startingTileIds, minimumDistanceFromStartingSpores))
+            {
+                return false;
+            }
+
+            HashSet<int> currentClusterTileSet = currentClusterTileIds as HashSet<int> ?? new HashSet<int>(currentClusterTileIds);
+            return board.GetOrthogonalNeighbors(candidateTileId)
+                .All(orthogonalNeighbor => !orthogonalNeighbor.HasNutrientPatch || currentClusterTileSet.Contains(orthogonalNeighbor.TileId));
         }
 
         private static bool IsFarEnoughFromStartingSpores(

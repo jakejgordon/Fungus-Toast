@@ -250,7 +250,7 @@ namespace FungusToast.Unity
                     yield return gridVisualizer.PlayNutrientPatchConsumptionAnimation(
                         specialEvent.SourceTileId,
                         specialEvent.DestinationTileId,
-                        1);
+                        specialEvent.AffectedTileIds.Distinct().Count());
                     break;
             }
         }

@@ -23,6 +23,8 @@ namespace FungusToast.Core.Config
         public const int NutrientPatchMinimumCount = 1;
         public const float NutrientPatchMinimumDistanceFromStartingSporeWidthFactor = 0.12f;
         public const int NutrientPatchMutationPointReward = 1;
+        public const int NutrientPatchClusterMinimumSize = 4;
+        public const int NutrientPatchClusterMaximumSize = 12;
 
         // --- NEW: Dynamic random decay scaling (starting at round 10 adds +0.1% per round) ---
         public const int RandomDecayScalingStartRound = 10; // Round at which incremental scaling begins

@@ -486,8 +486,10 @@ namespace FungusToast.Unity.UI
         private void AppendNutrientPatch(NutrientPatch nutrientPatch)
         {
             sb.AppendLine(EmphasizedLine("Status", nutrientPatch.DisplayName, UIStyleTokens.State.Warning));
-            sb.AppendLine(DetailLine("Reward", $"+{nutrientPatch.RewardAmount} Mutation Point", UIStyleTokens.Text.Secondary, UIStyleTokens.Accent.Spore));
-            sb.AppendLine(DetailLine("Trigger", "First orthogonal living growth consumes it", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            string pointLabel = nutrientPatch.RewardAmount == 1 ? "Point" : "Points";
+            sb.AppendLine(DetailLine("Cluster Size", nutrientPatch.ClusterTileCount.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine(DetailLine("Reward", $"+{nutrientPatch.RewardAmount} Mutation {pointLabel}", UIStyleTokens.Text.Secondary, UIStyleTokens.Accent.Spore));
+            sb.AppendLine(DetailLine("Trigger", "First living growth onto this cluster claims it", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine();
             sb.AppendLine(DetailLine("Notes", nutrientPatch.Description, UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
         }
@@ -497,6 +499,7 @@ namespace FungusToast.Unity.UI
             sb.AppendLine();
 
             sb.AppendLine(DetailLine("Tile", $"({tile.X}, {tile.Y})", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine(DetailLine("Cluster Tiles", board.GetNutrientClusterTileCount(tile.TileId).ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
 
             int alliedNeighbors = 0;
             int enemyNeighbors = 0;

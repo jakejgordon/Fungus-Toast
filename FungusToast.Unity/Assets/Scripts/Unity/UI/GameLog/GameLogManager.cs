@@ -707,7 +707,7 @@ namespace FungusToast.Unity.UI.GameLog
             string pointLabel = mutationPointAward == 1 ? "point" : "points";
             AddPlayerEvent(
                 playerId,
-                $"Consumed a Nutrient Patch for {mutationPointAward} mutation {pointLabel}",
+                $"Claimed a Nutrient Cluster for {mutationPointAward} mutation {pointLabel}",
                 GameLogCategory.Lucky);
         }
         public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned) { /* Mutator Phenotype grants free upgrades, not spendable points – exclude from Free Points summary */ }

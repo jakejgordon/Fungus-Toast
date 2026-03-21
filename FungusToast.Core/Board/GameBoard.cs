@@ -310,6 +310,25 @@ namespace FungusToast.Core.Board
             }
         }
         public int GetNutrientPatchCount() => AllNutrientPatchTiles().Count();
+
+        public IReadOnlyList<int> GetNutrientClusterTileIds(int tileId)
+        {
+            NutrientPatch? nutrientPatch = GetTileById(tileId)?.NutrientPatch;
+            if (nutrientPatch == null)
+            {
+                return Array.Empty<int>();
+            }
+
+            return AllNutrientPatchTiles()
+                .Where(tile => tile.NutrientPatch?.ClusterId == nutrientPatch.ClusterId)
+                .Select(tile => tile.TileId)
+                .ToList();
+        }
+
+        public int GetNutrientClusterTileCount(int tileId)
+        {
+            return GetTileById(tileId)?.NutrientPatch?.ClusterTileCount ?? 0;
+        }
         #endregion
 
         #region Spawning / Placement / Removal
@@ -430,14 +449,14 @@ namespace FungusToast.Core.Board
             if (cell.ReclaimCount > 0 && !isNew)
             {
                 OnCellReclaimed(ownerId, cell.TileId, source);
-                TryConsumeAdjacentNutrientPatches(ownerId, cell);
+                TryConsumeNutrientPatchOnEnteredTile(ownerId, cell);
                 return;
             }
             if (isNew)
             {
                 if (cell.IsToxin) { OnCellToxified(ownerId, cell.TileId, source); }
                 else { OnCellColonized(ownerId, cell.TileId, source); }
-                TryConsumeAdjacentNutrientPatches(ownerId, cell);
+                TryConsumeNutrientPatchOnEnteredTile(ownerId, cell);
                 return;
             }
             if (oldCell == null || ReferenceEquals(oldCell, cell)) return;
@@ -455,7 +474,7 @@ namespace FungusToast.Core.Board
             {
                 if (cell.IsToxin) OnCellToxified(ownerId, cell.TileId, source); else OnCellReclaimed(ownerId, cell.TileId, source);
             }
-            TryConsumeAdjacentNutrientPatches(ownerId, cell);
+            TryConsumeNutrientPatchOnEnteredTile(ownerId, cell);
         }
         public void KillFungalCell(FungalCell cell, DeathReason reason, int? killerPlayerId = null, int? attackerTileId = null)
         {
@@ -492,7 +511,7 @@ namespace FungusToast.Core.Board
             OnCellReclaimed(playerId, cell.TileId, reclaimGrowthSource);
             OnDeadCellReclaim?.Invoke(cell, playerId);
             if (reclaimGrowthSource == GrowthSource.RegenerativeHyphae) OnRegenerativeHyphaeReclaimed(playerId, cell.TileId);
-            TryConsumeAdjacentNutrientPatches(playerId, cell);
+            TryConsumeNutrientPatchOnEnteredTile(playerId, cell);
             return true;
         }
         public void RemoveControlFromPlayer(int tileId)
@@ -500,7 +519,7 @@ namespace FungusToast.Core.Board
             foreach (var p in Players) p.ControlledTileIds.Remove(tileId);
         }
 
-        private void TryConsumeAdjacentNutrientPatches(int playerId, FungalCell cell)
+        private void TryConsumeNutrientPatchOnEnteredTile(int playerId, FungalCell cell)
         {
             if (playerId < 0
                 || cell == null
@@ -511,19 +530,28 @@ namespace FungusToast.Core.Board
                 return;
             }
 
-            foreach (var adjacentTile in GetOrthogonalNeighbors(cell.TileId))
+            BoardTile? tile = GetTileById(cell.TileId);
+            NutrientPatch? nutrientPatch = tile?.NutrientPatch;
+            if (tile == null || nutrientPatch == null)
             {
-                NutrientPatch? nutrientPatch = adjacentTile.ClearNutrientPatch();
-                if (nutrientPatch == null)
-                {
-                    continue;
-                }
-
-                ApplyNutrientReward(playerId, adjacentTile.TileId, cell.TileId, nutrientPatch);
+                return;
             }
+
+            List<int> clusterTileIds = GetNutrientClusterTileIds(cell.TileId).Distinct().ToList();
+            if (clusterTileIds.Count == 0)
+            {
+                return;
+            }
+
+            foreach (int clusterTileId in clusterTileIds)
+            {
+                GetTileById(clusterTileId)?.ClearNutrientPatch();
+            }
+
+            ApplyNutrientReward(playerId, cell.TileId, cell.TileId, nutrientPatch, clusterTileIds);
         }
 
-        private void ApplyNutrientReward(int playerId, int nutrientTileId, int destinationTileId, NutrientPatch nutrientPatch)
+        private void ApplyNutrientReward(int playerId, int nutrientTileId, int destinationTileId, NutrientPatch nutrientPatch, IReadOnlyList<int>? affectedTileIds = null)
         {
             if (playerId < 0 || playerId >= Players.Count)
             {
@@ -544,7 +572,7 @@ namespace FungusToast.Core.Board
                 playerId,
                 nutrientTileId,
                 destinationTileId,
-                new[] { nutrientTileId, destinationTileId }));
+                affectedTileIds ?? new[] { nutrientTileId, destinationTileId }));
         }
         #endregion
 
