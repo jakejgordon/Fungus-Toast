@@ -57,8 +57,9 @@ Use the following minimal workflow to preserve working memory across sessions:
 2. ✅ Replace temporary source edits with reusable starting-position override parameters/plumbing.
 3. ✅ Keep progress tracked here so future sessions can resume cleanly.
 4. ✅ Commit the new simulation/override plumbing.
-5. ⏳ Run a clean 6-player candidate bakeoff using explicit starting-position overrides.
-6. ⏳ Promote the best validated 6-player layout into the precomputed fast-path once it actually holds up.
+5. ✅ Run a clean 6-player candidate bakeoff using explicit starting-position overrides.
+6. ✅ Promote the best validated 6-player layout into the precomputed fast-path once it actually holds up.
+7. ⏳ Start clean 5-player validation and identify the fairest starting layout.
 
 ## Current Handoff
 
@@ -82,6 +83,20 @@ Use the following minimal workflow to preserve working memory across sessions:
 - **Evidence:** Clean 100-game result for candidate 6 on `160x160` with same AI in all slots and fixed positions was `17,12,19,16,18,18` (range `7`).
 - **Open questions:** Which of the saved 6-player candidates remains strongest under the clean no-nutrients/no-mycovariants setup?
 - **Next steps:** Commit the new plumbing, then run a clean staged bakeoff across the top saved 6-player candidates using `--starting-positions`.
+
+## Session Checkpoint Template
+
+### YYYY-MM-DD
+- **Focus:**
+- **Changed:**
+- **Learned:**
+- **Open questions:**
+- **Next steps:**
+.
+- **Learned:** Of the tested clean 100-game validations, candidate 6 performed best; candidate 15 and 18 both regressed badly despite looking promising in short screens.
+- **Evidence:** Candidate 6 clean 100-game result on `160x160` with same AI in all slots and fixed positions was `17,12,19,16,18,18` (range `7`). Candidate 15 was `22,12,19,13,20,14` (range `10`). Candidate 18 was `21,16,23,11,16,13` (range `12`).
+- **Open questions:** 5-player validation has not been documented yet.
+- **Next steps:** Start clean 5-player validation, record the current auto-selected 5-player baseline, and compare candidates if needed.
 
 ## Session Checkpoint Template
 
