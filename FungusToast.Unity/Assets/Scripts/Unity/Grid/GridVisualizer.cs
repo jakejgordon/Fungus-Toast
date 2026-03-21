@@ -443,34 +443,47 @@ namespace FungusToast.Unity.Grid
 
             float duration = UIEffectConstants.NutrientPatchConsumptionDurationSeconds;
             float textDuration = UIEffectConstants.NutrientPatchToastDurationSeconds;
+            float animationDuration = Mathf.Max(duration, textDuration);
 
             BeginAnimation();
             try
             {
                 float elapsed = 0f;
-                while (elapsed < duration)
+                bool clearedSourceTile = false;
+                while (elapsed < animationDuration)
                 {
                     elapsed += Time.deltaTime;
-                    float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
-                    float eased = 1f - Mathf.Pow(1f - t, 3f);
-                    float scale = Mathf.Lerp(UIEffectConstants.NutrientPatchPulseMinScale, 0.18f, eased);
-                    Vector3 translation = Vector3.Lerp(Vector3.zero, pullOffset, eased);
-                    Color color = Color.Lerp(NutrientPatchColor, new Color(NutrientPatchColor.r, NutrientPatchColor.g, NutrientPatchColor.b, 0f), eased);
+                    if (elapsed < duration)
+                    {
+                        float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
+                        float eased = 1f - Mathf.Pow(1f - t, 3f);
+                        float scale = Mathf.Lerp(UIEffectConstants.NutrientPatchPulseMinScale, 0.18f, eased);
+                        Vector3 translation = Vector3.Lerp(Vector3.zero, pullOffset, eased);
+                        Color color = Color.Lerp(NutrientPatchColor, new Color(NutrientPatchColor.r, NutrientPatchColor.g, NutrientPatchColor.b, 0f), eased);
 
-                    overlayTilemap.SetTransformMatrix(
-                        sourcePos,
-                        Matrix4x4.TRS(translation, Quaternion.identity, new Vector3(scale, scale, 1f)));
-                    overlayTilemap.SetColor(sourcePos, color);
+                        overlayTilemap.SetTransformMatrix(
+                            sourcePos,
+                            Matrix4x4.TRS(translation, Quaternion.identity, new Vector3(scale, scale, 1f)));
+                        overlayTilemap.SetColor(sourcePos, color);
+                    }
+                    else if (!clearedSourceTile)
+                    {
+                        overlayTilemap.SetTile(sourcePos, null);
+                        overlayTilemap.SetTransformMatrix(sourcePos, IdentityMatrix);
+                        overlayTilemap.SetColor(sourcePos, Color.white);
+                        clearedSourceTile = true;
+                    }
 
                     if (floatingText != null)
                     {
                         float textT = textDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / textDuration);
-                        Vector3 textStart = destinationWorld + new Vector3(0f, 0.18f, 0f);
+                        Vector3 textStart = destinationWorld + new Vector3(0f, UIEffectConstants.NutrientPatchToastStartHeightWorld, 0f);
                         Vector3 textEnd = textStart + new Vector3(0f, UIEffectConstants.NutrientPatchToastRiseWorld, 0f);
                         floatingText.transform.position = Vector3.Lerp(textStart, textEnd, textT);
-                        floatingText.transform.localScale = Vector3.one * GetNutrientToastScaleMultiplier();
+                        floatingText.transform.localScale = Vector3.one * GetAnimatedNutrientToastScaleMultiplier(textT);
                         var textColor = GetNutrientToastColor(patchType);
-                        textColor.a = 1f - textT;
+                        float fadeT = Mathf.Clamp01((textT - 0.42f) / 0.58f);
+                        textColor.a = 1f - fadeT;
                         floatingText.color = textColor;
                     }
 
@@ -1060,6 +1073,20 @@ namespace FungusToast.Unity.Grid
             return Mathf.Clamp(zoomScale, 1f, UIEffectConstants.NutrientPatchToastMaxScaleMultiplier);
         }
 
+        private static float GetAnimatedNutrientToastScaleMultiplier(float textT)
+        {
+            float baseScale = GetNutrientToastScaleMultiplier();
+            float popIn = 1f - Mathf.Pow(1f - Mathf.Clamp01(textT / 0.18f), 3f);
+            float settle = Mathf.Clamp01((textT - 0.18f) / 0.26f);
+
+            float minScale = UIEffectConstants.NutrientPatchToastMinScaleMultiplier;
+            float popScale = UIEffectConstants.NutrientPatchToastPopScaleMultiplier;
+            float animatedScale = Mathf.Lerp(minScale, popScale, popIn);
+            animatedScale = Mathf.Lerp(animatedScale, 1f, settle);
+
+            return baseScale * animatedScale;
+        }
+
         private static Color GetNutrientToastColor(NutrientPatchType patchType)
         {
             return patchType == NutrientPatchType.Adaptogen
@@ -1075,8 +1102,8 @@ namespace FungusToast.Unity.Grid
                     ? "+1 Mutation Point!"
                     : $"+{rewardAmount} Mutation Points!",
                 NutrientRewardType.FreeGrowth => rewardAmount == 1
-                    ? "+1 Free Growth!"
-                    : $"+{rewardAmount} Free Growths!",
+                    ? "1 Cell Grown!"
+                    : $"{rewardAmount} Cells Grown!",
                 _ => "Nutrient Claimed!"
             };
         }
@@ -1091,16 +1118,17 @@ namespace FungusToast.Unity.Grid
             tmp.fontSize = UIEffectConstants.NutrientPatchToastFontSize;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.textWrappingMode = TextWrappingModes.NoWrap;
+            tmp.fontStyle = FontStyles.Bold;
             tmp.color = GetNutrientToastColor(patchType);
-            tmp.outlineWidth = 0.2f;
+            tmp.outlineWidth = 0.32f;
             tmp.outlineColor = new Color(0.24f, 0.12f, 0.02f, 1f);
-            tmp.transform.position = overlayTilemap.GetCellCenterWorld(destinationPos) + new Vector3(0f, 0.18f, 0f);
-            tmp.transform.localScale = Vector3.one * GetNutrientToastScaleMultiplier();
+            tmp.transform.position = overlayTilemap.GetCellCenterWorld(destinationPos) + new Vector3(0f, UIEffectConstants.NutrientPatchToastStartHeightWorld, 0f);
+            tmp.transform.localScale = Vector3.one * (GetNutrientToastScaleMultiplier() * UIEffectConstants.NutrientPatchToastMinScaleMultiplier);
 
             var renderer = tmp.GetComponent<MeshRenderer>();
             if (renderer != null)
             {
-                renderer.sortingOrder = 40;
+                renderer.sortingOrder = 60;
             }
 
             return tmp;
