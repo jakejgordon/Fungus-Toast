@@ -70,8 +70,16 @@ namespace FungusToast.Unity.UI
         public const float NutrientPatchMarkerScale = 0.62f;
         public const float NutrientPatchConsumptionDurationSeconds = 0.65f;
         public const float NutrientPatchToastRiseWorld = 0.55f;
-        public const float NutrientPatchToastDurationSeconds = 0.85f;
+            public const float NutrientPatchToastDurationSeconds = 1.75f;
+            public const float NutrientPatchToastFontSize = 4.1f;
+            public const float NutrientPatchToastZoomReferenceOrthographicSize = 18f;
+            public const float NutrientPatchToastMaxScaleMultiplier = 2.35f;
         public const float NutrientPatchPullOffsetWorld = 0.22f;
+        public const float NutrientPatchPulseSpeed = 2.15f;
+        public const float NutrientPatchPulseScaleAmplitude = 0.075f;
+        public const float NutrientPatchPulseAlphaMin = 0.78f;
+        public const float NutrientPatchPulseAlphaMax = 0.98f;
+        public const float NutrientPatchPulsePhaseOffsetRadians = 0.37f;
 
         /// <summary>
         /// Delay (in seconds) for AI to "think" before picking a mycovariant during draft.

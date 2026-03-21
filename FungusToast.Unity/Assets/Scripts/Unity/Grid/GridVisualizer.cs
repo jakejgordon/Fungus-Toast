@@ -55,6 +55,9 @@ namespace FungusToast.Unity.Grid
         private Sprite generatedCrustSprite;
         private Texture2D generatedCrustTexture;
         private string generatedCrustCacheKey;
+        private Tile generatedNutrientTile;
+        private Sprite generatedNutrientSprite;
+        private Texture2D generatedNutrientTexture;
 
         private GameBoard board;
         private readonly List<int> playerMoldAssignments = new();
@@ -77,11 +80,12 @@ namespace FungusToast.Unity.Grid
         private readonly Dictionary<int, Coroutine> deathAnimationCoroutines = new();
         private readonly HashSet<int> toxinDropTileIds = new();
         private readonly Dictionary<int, Coroutine> toxinDropCoroutines = new();
+        private readonly HashSet<int> nutrientPulseTileIds = new();
         private readonly Dictionary<int, ExpiringToxinVisualSnapshot> pendingToxinExpirySnapshots = new();
         private readonly Dictionary<int, Coroutine> toxinExpiryCoroutines = new();
         private readonly HashSet<int> deferredResistanceOverlayTileIds = new();
         private readonly HashSet<int> preAnimationHiddenPreviewTileIds = new();
-        private static readonly Color NutrientPatchColor = new(0.97f, 0.78f, 0.28f, 0.92f);
+        private static readonly Color NutrientPatchColor = new(1f, 1f, 1f, 0.92f);
         private static readonly Color NutrientPatchTextColor = new(1f, 0.95f, 0.72f, 1f);
 
         private sealed class ExpiringToxinVisualSnapshot
@@ -141,6 +145,12 @@ namespace FungusToast.Unity.Grid
             ClearPendingToxinExpirySnapshots();
             StopAndClearToxinExpiryAnimations();
             DestroyGeneratedCrustAssets();
+            DestroyGeneratedNutrientAssets();
+        }
+
+        private void LateUpdate()
+        {
+            UpdateNutrientPulseVisuals();
         }
 
         public void Initialize(GameBoard board)
@@ -457,6 +467,7 @@ namespace FungusToast.Unity.Grid
                         Vector3 textStart = destinationWorld + new Vector3(0f, 0.18f, 0f);
                         Vector3 textEnd = textStart + new Vector3(0f, UIEffectConstants.NutrientPatchToastRiseWorld, 0f);
                         floatingText.transform.position = Vector3.Lerp(textStart, textEnd, textT);
+                        floatingText.transform.localScale = Vector3.one * GetNutrientToastScaleMultiplier();
                         var textColor = NutrientPatchTextColor;
                         textColor.a = 1f - textT;
                         floatingText.color = textColor;
@@ -827,21 +838,178 @@ namespace FungusToast.Unity.Grid
 
             overlayTilemap.SetTile(pos, nutrientTile);
             overlayTilemap.SetTileFlags(pos, TileFlags.None);
-            overlayTilemap.SetColor(pos, NutrientPatchColor);
-            overlayTilemap.SetTransformMatrix(
-                pos,
-                Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(UIEffectConstants.NutrientPatchMarkerScale, UIEffectConstants.NutrientPatchMarkerScale, 1f)));
+            nutrientPulseTileIds.Add(tile.TileId);
+            overlayTilemap.SetColor(pos, GetNutrientPulseColor(tile.TileId));
+            overlayTilemap.SetTransformMatrix(pos, GetNutrientPulseMatrix(tile.TileId));
             overlayTilemap.RefreshTile(pos);
         }
 
         private TileBase GetNutrientPatchTile()
         {
+            EnsureGeneratedNutrientTile();
+
+            if (generatedNutrientTile != null)
+            {
+                return generatedNutrientTile;
+            }
+
             if (solidHighlightTile != null)
             {
                 return solidHighlightTile;
             }
 
             return baseTile;
+        }
+
+        private void EnsureGeneratedNutrientTile()
+        {
+            if (generatedNutrientTile != null && generatedNutrientSprite != null && generatedNutrientTexture != null)
+            {
+                return;
+            }
+
+            DestroyGeneratedNutrientAssets();
+
+            const int textureSize = 48;
+            generatedNutrientTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+                alphaIsTransparency = true
+            };
+
+            var pixels = new Color32[textureSize * textureSize];
+            for (int py = 0; py < textureSize; py++)
+            {
+                for (int px = 0; px < textureSize; px++)
+                {
+                    pixels[(py * textureSize) + px] = EvaluateNutrientPixel(textureSize, px, py);
+                }
+            }
+
+            generatedNutrientTexture.SetPixels32(pixels);
+            generatedNutrientTexture.Apply(false, false);
+            generatedNutrientSprite = Sprite.Create(
+                generatedNutrientTexture,
+                new Rect(0f, 0f, textureSize, textureSize),
+                new Vector2(0.5f, 0.5f),
+                textureSize,
+                0,
+                SpriteMeshType.FullRect);
+
+            generatedNutrientTile = ScriptableObject.CreateInstance<Tile>();
+            generatedNutrientTile.sprite = generatedNutrientSprite;
+            generatedNutrientTile.color = Color.white;
+            generatedNutrientTile.colliderType = Tile.ColliderType.None;
+        }
+
+        private static Color32 EvaluateNutrientPixel(int textureSize, int px, int py)
+        {
+            float x = (((px + 0.5f) / textureSize) * 2f) - 1f;
+            float y = (((py + 0.5f) / textureSize) * 2f) - 1f;
+            float radius = Mathf.Sqrt((x * x) + (y * y));
+            float diamond = (Mathf.Abs(x) * 0.88f) + (Mathf.Abs(y) * 0.88f);
+            float outerBody = 1f - Mathf.SmoothStep(0.64f, 0.9f, diamond);
+            float core = 1f - Mathf.SmoothStep(0.12f, 0.32f, radius);
+            float ring = 1f - Mathf.SmoothStep(0.02f, 0.11f, Mathf.Abs(radius - 0.43f));
+            float verticalVein = 1f - Mathf.SmoothStep(0.015f, 0.075f, Mathf.Abs(x));
+            float horizontalVein = 1f - Mathf.SmoothStep(0.015f, 0.075f, Mathf.Abs(y));
+            float veins = Mathf.Max(verticalVein * core, horizontalVein * core * 0.82f);
+
+            float satelliteNorth = 1f - Mathf.SmoothStep(0.03f, 0.12f, Vector2.Distance(new Vector2(x, y), new Vector2(0f, 0.58f)));
+            float satelliteSouth = 1f - Mathf.SmoothStep(0.03f, 0.12f, Vector2.Distance(new Vector2(x, y), new Vector2(0f, -0.58f)));
+            float satelliteEast = 1f - Mathf.SmoothStep(0.03f, 0.12f, Vector2.Distance(new Vector2(x, y), new Vector2(0.58f, 0f)));
+            float satelliteWest = 1f - Mathf.SmoothStep(0.03f, 0.12f, Vector2.Distance(new Vector2(x, y), new Vector2(-0.58f, 0f)));
+            float satellites = Mathf.Max(Mathf.Max(satelliteNorth, satelliteSouth), Mathf.Max(satelliteEast, satelliteWest));
+
+            float alpha = Mathf.Max(outerBody * 0.94f, core * 0.88f);
+            alpha = Mathf.Max(alpha, ring * 0.72f);
+            alpha = Mathf.Max(alpha, satellites * 0.66f);
+            if (alpha <= 0.01f)
+            {
+                return new Color(0f, 0f, 0f, 0f);
+            }
+
+            Color outerColor = new(0.42f, 0.25f, 0.08f, 1f);
+            Color bodyColor = new(0.86f, 0.63f, 0.16f, 1f);
+            Color ringColor = new(0.96f, 0.8f, 0.33f, 1f);
+            Color coreColor = new(0.99f, 0.93f, 0.72f, 1f);
+            Color veinColor = new(1f, 0.98f, 0.88f, 1f);
+
+            Color color = Color.Lerp(outerColor, bodyColor, Mathf.Clamp01(outerBody * 0.92f));
+            color = Color.Lerp(color, ringColor, ring * 0.85f);
+            color = Color.Lerp(color, coreColor, core * 0.9f);
+            color = Color.Lerp(color, veinColor, veins * 0.75f);
+            color = Color.Lerp(color, ringColor, satellites * 0.55f);
+            color.a = Mathf.Clamp01(alpha);
+            return color;
+        }
+
+        private void UpdateNutrientPulseVisuals()
+        {
+            if (overlayTilemap == null || board == null || nutrientPulseTileIds.Count == 0)
+            {
+                return;
+            }
+
+            var staleTileIds = new List<int>();
+            foreach (int tileId in nutrientPulseTileIds)
+            {
+                BoardTile tile = board.GetTileById(tileId);
+                if (tile == null || !tile.HasNutrientPatch || tile.FungalCell != null)
+                {
+                    staleTileIds.Add(tileId);
+                    continue;
+                }
+
+                Vector3Int pos = GetPositionForTileId(tileId);
+                if (!overlayTilemap.HasTile(pos))
+                {
+                    continue;
+                }
+
+                overlayTilemap.SetTransformMatrix(pos, GetNutrientPulseMatrix(tileId));
+                overlayTilemap.SetColor(pos, GetNutrientPulseColor(tileId));
+            }
+
+            for (int i = 0; i < staleTileIds.Count; i++)
+            {
+                nutrientPulseTileIds.Remove(staleTileIds[i]);
+            }
+        }
+
+        private Matrix4x4 GetNutrientPulseMatrix(int tileId)
+        {
+            float pulse = GetNutrientPulseFactor(tileId);
+            float scale = UIEffectConstants.NutrientPatchMarkerScale * Mathf.Lerp(1f - UIEffectConstants.NutrientPatchPulseScaleAmplitude, 1f + UIEffectConstants.NutrientPatchPulseScaleAmplitude, pulse);
+            return Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
+        }
+
+        private Color GetNutrientPulseColor(int tileId)
+        {
+            float pulse = GetNutrientPulseFactor(tileId);
+            float alpha = Mathf.Lerp(UIEffectConstants.NutrientPatchPulseAlphaMin, UIEffectConstants.NutrientPatchPulseAlphaMax, pulse);
+            return new Color(NutrientPatchColor.r, NutrientPatchColor.g, NutrientPatchColor.b, alpha);
+        }
+
+        private static float GetNutrientPulseFactor(int tileId)
+        {
+            float phase = (Time.time * UIEffectConstants.NutrientPatchPulseSpeed) + (tileId * UIEffectConstants.NutrientPatchPulsePhaseOffsetRadians);
+            float wave = 0.5f + (0.5f * Mathf.Sin(phase));
+            return wave * wave * (3f - (2f * wave));
+        }
+
+        private static float GetNutrientToastScaleMultiplier()
+        {
+            Camera mainCamera = Camera.main;
+            if (mainCamera == null || !mainCamera.orthographic)
+            {
+                return 1f;
+            }
+
+            float normalizedZoom = mainCamera.orthographicSize / UIEffectConstants.NutrientPatchToastZoomReferenceOrthographicSize;
+            float zoomScale = Mathf.Sqrt(Mathf.Max(1f, normalizedZoom));
+            return Mathf.Clamp(zoomScale, 1f, UIEffectConstants.NutrientPatchToastMaxScaleMultiplier);
         }
 
         private TextMeshPro CreateNutrientToastText(Vector3Int destinationPos, int mutationPointAward)
@@ -853,13 +1021,14 @@ namespace FungusToast.Unity.Grid
             tmp.text = mutationPointAward == 1
                 ? "+1 Mutation Point!"
                 : $"+{mutationPointAward} Mutation Points!";
-            tmp.fontSize = 4.1f;
+            tmp.fontSize = UIEffectConstants.NutrientPatchToastFontSize;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.textWrappingMode = TextWrappingModes.NoWrap;
             tmp.color = NutrientPatchTextColor;
             tmp.outlineWidth = 0.2f;
             tmp.outlineColor = new Color(0.24f, 0.12f, 0.02f, 1f);
             tmp.transform.position = overlayTilemap.GetCellCenterWorld(destinationPos) + new Vector3(0f, 0.18f, 0f);
+            tmp.transform.localScale = Vector3.one * GetNutrientToastScaleMultiplier();
 
             var renderer = tmp.GetComponent<MeshRenderer>();
             if (renderer != null)
@@ -1045,10 +1214,18 @@ namespace FungusToast.Unity.Grid
                 overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
             }
 
+            nutrientPulseTileIds.Remove(tileId);
+
             if (tile?.FungalCell != null)
             {
                 RenderFungalCellOverlay(tile, pos);
                 ApplyPreAnimationPreviewHiddenState(tileId, pos);
+                return;
+            }
+
+            if (tile?.HasNutrientPatch == true)
+            {
+                RenderNutrientPatchOverlay(tile, pos);
             }
         }
 
@@ -1680,6 +1857,7 @@ namespace FungusToast.Unity.Grid
             newlyGrownTileIds.Clear();
             dyingTileIds.Clear();
             toxinDropTileIds.Clear();
+            nutrientPulseTileIds.Clear();
 
             // When suppressing animations (fast-forward completion), clear transient flags so no new coroutines would start later.
             if (suppressAnimations)
@@ -2061,6 +2239,27 @@ namespace FungusToast.Unity.Grid
             {
                 Destroy(generatedCrustTexture);
                 generatedCrustTexture = null;
+            }
+        }
+
+        private void DestroyGeneratedNutrientAssets()
+        {
+            if (generatedNutrientTile != null)
+            {
+                Destroy(generatedNutrientTile);
+                generatedNutrientTile = null;
+            }
+
+            if (generatedNutrientSprite != null)
+            {
+                Destroy(generatedNutrientSprite);
+                generatedNutrientSprite = null;
+            }
+
+            if (generatedNutrientTexture != null)
+            {
+                Destroy(generatedNutrientTexture);
+                generatedNutrientTexture = null;
             }
         }
 
