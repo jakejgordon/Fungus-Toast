@@ -43,7 +43,7 @@ Rules:
 Configured in:
 - `FungusToast.Unity/Assets/Configs/Campaign/CampaignProgression.asset`
 
-Each level points to a `BoardPreset` asset.
+Each level points to a `BoardPreset` asset and can independently enable or disable nutrient patches via `enableNutrientPatches`.
 
 ### 2) Board + AI lineup per level
 Configured in assets under:

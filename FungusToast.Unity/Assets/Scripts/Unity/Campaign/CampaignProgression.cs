@@ -25,6 +25,8 @@ namespace FungusToast.Unity.Campaign
             public int levelIndex;
             /// <summary>Board preset containing authoritative board size, AI roster, mutation tier cap.</summary>
             public BoardPreset boardPreset;
+            /// <summary>Whether nutrient patches should be placed on this campaign level.</summary>
+            public bool enableNutrientPatches = true;
         }
 
         /// <summary>
