@@ -610,12 +610,6 @@ namespace FungusToast.Simulation
                 config.PlayerCounts = capped;
             }
 
-            if (config.StartingPositionOverride is { Count: > 0 } && config.StartingPositionOverride.Count != config.NumberOfPlayers)
-            {
-                Console.WriteLine($"--starting-positions count ({config.StartingPositionOverride.Count}) must match player count ({config.NumberOfPlayers}).");
-                return null;
-            }
-
             if (config.ExplicitStrategyNames is { Count: > 0 })
             {
                 if (config.IsBatchMode)
@@ -648,6 +642,12 @@ namespace FungusToast.Simulation
                 }
 
                 config.NumberOfPlayers = selectedByName.Count;
+            }
+
+            if (config.StartingPositionOverride is { Count: > 0 } && config.StartingPositionOverride.Count != config.NumberOfPlayers)
+            {
+                Console.WriteLine($"--starting-positions count ({config.StartingPositionOverride.Count}) must match player count ({config.NumberOfPlayers}).");
+                return null;
             }
 
             if ((config.StrategyFilter?.IsEmpty ?? true) == false)
