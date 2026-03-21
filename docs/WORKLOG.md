@@ -60,7 +60,8 @@ Use the following minimal workflow to preserve working memory across sessions:
 5. ✅ Run a clean 6-player candidate bakeoff using explicit starting-position overrides.
 6. ✅ Promote the best validated 6-player layout into the precomputed fast-path once it actually holds up.
 7. ✅ Start clean 5-player validation and identify the fairest starting layout.
-8. ⏳ Commit the selected 5-player layout and record the validation results.
+8. ✅ Commit the selected 5-player layout and record the validation results.
+9. ⏳ Document the 4-player symmetry assumption and start 3-player validation.
 
 ## Current Handoff
 
@@ -107,6 +108,13 @@ Use the following minimal workflow to preserve working memory across sessions:
 - **Selected layout:** P0 `(114,104)`, P1 `(67,120)`, P2 `(38,80)`, P3 `(67,40)`, P4 `(114,56)`.
 - **Open questions:** Remaining player counts below 5 have not been validated in this pass.
 - **Next steps:** Commit/push the selected 5-player layout and continue only if additional player-count tuning is desired.
+
+### 2026-03-21 (4-player assumption / 3-player start)
+- **Focus:** Record the 4-player symmetry assumption and move on to 3-player tuning.
+- **Changed:** Added a symmetric 4-player fast-path reference for square boards and documented the assumption that 4-player square placement is geometrically even enough to treat as solved unless future evidence says otherwise.
+- **Selected 4-player layout:** P0 `(128,128)`, P1 `(32,128)`, P2 `(32,32)`, P3 `(128,32)`.
+- **Open questions:** 3-player placement still appears asymmetric under geometry and needs real simulation-driven tuning.
+- **Next steps:** Run the first clean 3-player baseline and compare candidate alternatives if the current auto-selected layout is biased.
 
 ## Session Checkpoint Template
 
