@@ -38,6 +38,9 @@ namespace FungusToast.Core.Board
                 .Select(tile => tile.TileId)
                 .ToList();
 
+            var candidateRegionIndicesByTileId = BuildNearestStartingRegionIndices(board, candidateTileIds, startingTileIds);
+            int[] placedTileCountsByRegion = new int[startingTileIds.Count];
+
             Shuffle(candidateTileIds, rng);
 
             int placedTileCount = 0;
@@ -64,7 +67,9 @@ namespace FungusToast.Core.Board
                         startingTileIds,
                         minimumDistanceFromStartingSpores,
                         desiredClusterSize,
-                        rng);
+                        rng,
+                        candidateRegionIndicesByTileId,
+                        placedTileCountsByRegion);
                     if (clusterTileIds.Count < GameBalance.NutrientPatchClusterMinimumSize)
                     {
                         continue;
@@ -76,6 +81,10 @@ namespace FungusToast.Core.Board
                         if (board.PlaceNutrientPatch(clusterTileId, clusterPatch))
                         {
                             placedTileCount++;
+                            if (candidateRegionIndicesByTileId.TryGetValue(clusterTileId, out int regionIndex))
+                            {
+                                placedTileCountsByRegion[regionIndex]++;
+                            }
                         }
                     }
 
@@ -99,9 +108,47 @@ namespace FungusToast.Core.Board
             IReadOnlyList<int> startingTileIds,
             int minimumDistanceFromStartingSpores,
             int desiredClusterSize,
+            Random rng,
+            IReadOnlyDictionary<int, int> candidateRegionIndicesByTileId,
+            IReadOnlyList<int> placedTileCountsByRegion)
+        {
+            foreach (int regionIndex in BuildRegionPlacementOrder(placedTileCountsByRegion))
+            {
+                var regionalSeedTileIds = candidateTileIds
+                    .Where(tileId => candidateRegionIndicesByTileId.TryGetValue(tileId, out int tileRegionIndex) && tileRegionIndex == regionIndex)
+                    .ToList();
+
+                List<int> clusterTileIds = TryBuildClusterFromSeedPool(
+                    board,
+                    regionalSeedTileIds,
+                    startingTileIds,
+                    minimumDistanceFromStartingSpores,
+                    desiredClusterSize,
+                    rng);
+                if (clusterTileIds.Count >= GameBalance.NutrientPatchClusterMinimumSize)
+                {
+                    return clusterTileIds;
+                }
+            }
+
+            return TryBuildClusterFromSeedPool(
+                board,
+                candidateTileIds,
+                startingTileIds,
+                minimumDistanceFromStartingSpores,
+                desiredClusterSize,
+                rng);
+        }
+
+        private static List<int> TryBuildClusterFromSeedPool(
+            GameBoard board,
+            IReadOnlyList<int> seedCandidateTileIds,
+            IReadOnlyList<int> startingTileIds,
+            int minimumDistanceFromStartingSpores,
+            int desiredClusterSize,
             Random rng)
         {
-            var seedTileIds = candidateTileIds
+            var seedTileIds = seedCandidateTileIds
                 .Where(tileId => IsEligibleClusterTile(
                     board,
                     tileId,
@@ -215,6 +262,65 @@ namespace FungusToast.Core.Board
             }
 
             return true;
+        }
+
+        private static Dictionary<int, int> BuildNearestStartingRegionIndices(
+            GameBoard board,
+            IReadOnlyList<int> candidateTileIds,
+            IReadOnlyList<int> startingTileIds)
+        {
+            var tileRegionIndices = new Dictionary<int, int>();
+            if (startingTileIds.Count == 0)
+            {
+                return tileRegionIndices;
+            }
+
+            foreach (int candidateTileId in candidateTileIds)
+            {
+                tileRegionIndices[candidateTileId] = GetNearestStartingRegionIndex(board, candidateTileId, startingTileIds);
+            }
+
+            return tileRegionIndices;
+        }
+
+        private static int GetNearestStartingRegionIndex(
+            GameBoard board,
+            int candidateTileId,
+            IReadOnlyList<int> startingTileIds)
+        {
+            BoardTile? candidateTile = board.GetTileById(candidateTileId);
+            if (candidateTile == null)
+            {
+                return 0;
+            }
+
+            int nearestRegionIndex = 0;
+            int nearestDistance = int.MaxValue;
+
+            for (int i = 0; i < startingTileIds.Count; i++)
+            {
+                BoardTile? startingTile = board.GetTileById(startingTileIds[i]);
+                if (startingTile == null)
+                {
+                    continue;
+                }
+
+                int distance = candidateTile.DistanceTo(startingTile);
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearestRegionIndex = i;
+                }
+            }
+
+            return nearestRegionIndex;
+        }
+
+        private static IEnumerable<int> BuildRegionPlacementOrder(IReadOnlyList<int> placedTileCountsByRegion)
+        {
+            return Enumerable.Range(0, placedTileCountsByRegion.Count)
+                .OrderBy(regionIndex => placedTileCountsByRegion[regionIndex])
+                .ThenBy(regionIndex => regionIndex);
         }
 
         private static void Shuffle<T>(IList<T> list, Random rng)
