@@ -12,17 +12,59 @@ namespace FungusToast.Unity.Grid
 
         private Vector2Int _lastFilledSize;
         private Tile _lastTileUsed;
+        private Tilemap _tilemap;
+
+#if UNITY_EDITOR
+        private bool _fillQueued;
+#endif
 
         void OnEnable()
         {
-            // Only run in the Editor or at runtime when the script is enabled
-            TryFillGrid();
+            if (Application.isPlaying)
+            {
+                TryFillGrid();
+                return;
+            }
+
+#if UNITY_EDITOR
+            QueueEditorFill();
+#endif
+        }
+
+        void OnDisable()
+        {
+#if UNITY_EDITOR
+            if (_fillQueued)
+            {
+                UnityEditor.EditorApplication.delayCall -= FlushQueuedFill;
+                _fillQueued = false;
+            }
+#endif
         }
 
 #if UNITY_EDITOR
         void OnValidate()
         {
-            // Runs when you change grid size or tile in the Inspector
+            QueueEditorFill();
+        }
+
+        void QueueEditorFill()
+        {
+            if (_fillQueued)
+                return;
+
+            _fillQueued = true;
+            UnityEditor.EditorApplication.delayCall += FlushQueuedFill;
+        }
+
+        void FlushQueuedFill()
+        {
+            UnityEditor.EditorApplication.delayCall -= FlushQueuedFill;
+            _fillQueued = false;
+
+            if (this == null || !isActiveAndEnabled || Application.isPlaying)
+                return;
+
             TryFillGrid();
         }
 #endif
@@ -44,7 +86,7 @@ namespace FungusToast.Unity.Grid
 
         void FillGrid()
         {
-            Tilemap tilemap = GetComponent<Tilemap>();
+            Tilemap tilemap = _tilemap != null ? _tilemap : (_tilemap = GetComponent<Tilemap>());
             tilemap.ClearAllTiles();
 
             for (int x = 0; x < gridSize.x; x++)

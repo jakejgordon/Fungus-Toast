@@ -4125,7 +4125,6 @@ GameObject:
   m_Component:
   - component: {fileID: 355076242}
   - component: {fileID: 355076243}
-  - component: {fileID: 355076244}
   m_Layer: 0
   m_Name: MutationManager
   m_TagString: Untagged
@@ -4160,45 +4159,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf5273c0fc08ddc46a311017e1dc1247, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &355076244
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 355076240}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01e6784f27ab463459ff96c69465f1f9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  statusText: {fileID: 0}
-  deathReasonText: {fileID: 0}
-  ownerText: {fileID: 0}
-  lastOwnerText: {fileID: 0}
-  growthAgeText: {fileID: 0}
-  expirationText: {fileID: 0}
-  resistantText: {fileID: 0}
-  growthSourceText: {fileID: 0}
-  additionalInfoText: {fileID: 0}
-  statusIcon: {fileID: 0}
-  ownerIcon: {fileID: 0}
-  lastOwnerIcon: {fileID: 0}
-  toxinIcon: {fileID: 0}
-  resistantIcon: {fileID: 0}
-  statusGroup: {fileID: 0}
-  ownerGroup: {fileID: 0}
-  deathReasonGroup: {fileID: 0}
-  lastOwnerGroup: {fileID: 0}
-  ageGroup: {fileID: 0}
-  expirationGroup: {fileID: 0}
-  resistantGroup: {fileID: 0}
-  growthSourceGroup: {fileID: 0}
-  additionalInfoGroup: {fileID: 0}
-  tooltipBackgroundImage: {fileID: 0}
-  tooltipBackgroundAlpha: 0.96
-  rowBackgroundAlpha: 0.35
-  normalizeTooltipStructureOnAwake: 1
 --- !u!1 &356102964
 GameObject:
   m_ObjectHideFlags: 0
