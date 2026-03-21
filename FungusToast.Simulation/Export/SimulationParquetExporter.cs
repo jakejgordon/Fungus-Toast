@@ -36,7 +36,7 @@ namespace FungusToast.Simulation.Export
 
             var manifest = new
             {
-                schemaVersion = "v3",
+                schemaVersion = "v4",
                 metadata.ExperimentId,
                 metadata.RunTimestampUtc,
                 strategySet = metadata.StrategySet.ToString(),
@@ -169,6 +169,11 @@ namespace FungusToast.Simulation.Export
                         LivingCells = player.LivingCells,
                         DeadCells = player.DeadCells,
                         EndGameToxinCells = player.EndGameToxinCells,
+                        NutrientClaims = player.NutrientPatchesConsumed,
+                        NutrientMutationPointsEarned = player.NutrientMutationPointsEarned,
+                        AvgNutrientClusterSize = player.NutrientPatchesConsumed > 0
+                            ? (float)player.NutrientMutationPointsEarned / player.NutrientPatchesConsumed
+                            : 0f,
                         MutationPointIncome = player.MutationPointIncome,
                         TotalMutationPointsSpent = player.TotalMutationPointsSpent,
                         BankedPoints = player.BankedPoints,

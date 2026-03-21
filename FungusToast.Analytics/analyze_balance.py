@@ -92,6 +92,21 @@ def _empty_mycovariant_scores() -> pd.DataFrame:
     return pd.DataFrame(columns=cols)
 
 
+def _empty_nutrient_summary() -> pd.DataFrame:
+    cols = [
+        "strategy_name",
+        "strategy_theme",
+        "samples",
+        "win_rate",
+        "avg_nutrient_claims",
+        "avg_nutrient_mutation_points",
+        "avg_claimed_cluster_size",
+        "avg_nutrient_mp_share_of_income",
+        "players_with_nutrient_claims_rate",
+    ]
+    return pd.DataFrame(columns=cols)
+
+
 def build_mutation_by_opponent_theme(players: pd.DataFrame, mutations: pd.DataFrame) -> pd.DataFrame:
     if players.empty or mutations.empty or "dominant_opponent_theme" not in players.columns:
         return pd.DataFrame(
@@ -475,6 +490,50 @@ def build_mycovariant_scores(players: pd.DataFrame, mycovariants: pd.DataFrame) 
     return grouped.sort_values("balance_score", ascending=False)
 
 
+def build_nutrient_summary(players: pd.DataFrame) -> pd.DataFrame:
+    required_columns = {
+        "strategy_name",
+        "strategy_theme",
+        "is_winner",
+        "nutrient_claims",
+        "nutrient_mutation_points_earned",
+        "mutation_point_income",
+    }
+    if players.empty or not required_columns.issubset(players.columns):
+        return _empty_nutrient_summary()
+
+    nutrient_df = players.copy()
+    nutrient_df["nutrient_claims"] = nutrient_df["nutrient_claims"].fillna(0)
+    nutrient_df["nutrient_mutation_points_earned"] = nutrient_df["nutrient_mutation_points_earned"].fillna(0)
+    nutrient_df["mutation_point_income"] = nutrient_df["mutation_point_income"].fillna(0)
+    nutrient_df["claimed_cluster_size"] = np.where(
+        nutrient_df["nutrient_claims"] > 0,
+        nutrient_df["nutrient_mutation_points_earned"] / nutrient_df["nutrient_claims"],
+        0.0,
+    )
+    nutrient_df["nutrient_mp_share_of_income"] = np.where(
+        nutrient_df["mutation_point_income"] > 0,
+        nutrient_df["nutrient_mutation_points_earned"] / nutrient_df["mutation_point_income"],
+        0.0,
+    )
+    nutrient_df["has_nutrient_claim"] = nutrient_df["nutrient_claims"] > 0
+
+    grouped = nutrient_df.groupby(["strategy_name", "strategy_theme"], as_index=False).agg(
+        samples=("player_id", "size"),
+        win_rate=("is_winner", "mean"),
+        avg_nutrient_claims=("nutrient_claims", "mean"),
+        avg_nutrient_mutation_points=("nutrient_mutation_points_earned", "mean"),
+        avg_claimed_cluster_size=("claimed_cluster_size", "mean"),
+        avg_nutrient_mp_share_of_income=("nutrient_mp_share_of_income", "mean"),
+        players_with_nutrient_claims_rate=("has_nutrient_claim", "mean"),
+    )
+
+    return grouped.sort_values(
+        ["avg_nutrient_mutation_points", "avg_claimed_cluster_size", "win_rate"],
+        ascending=[False, False, False],
+    )
+
+
 def _filter_scores_for_report(
     df: pd.DataFrame,
     min_confidence: float,
@@ -497,6 +556,7 @@ def write_markdown_report(
     mutation_by_opponent_theme: pd.DataFrame,
     mutation_synergies: pd.DataFrame,
     myco_mutation_interactions: pd.DataFrame,
+    nutrient_summary: pd.DataFrame,
     output_path: Path,
     min_confidence: float,
     min_picks: int,
@@ -522,6 +582,7 @@ def write_markdown_report(
     top_theme_sensitive = mutation_by_opponent_theme.sort_values("win_lift", ascending=False).head(12)
     top_synergies = mutation_synergies.head(12)
     top_interactions = myco_mutation_interactions.head(12)
+    top_nutrient_strategies = nutrient_summary.head(12)
 
     def _table(df: pd.DataFrame, cols: list[str]) -> str:
         if df.empty:
@@ -551,6 +612,8 @@ def write_markdown_report(
         _table(top_synergies, ["mutation_a_name", "mutation_b_name", "pair_samples", "pair_win_rate", "win_lift_vs_global", "synergy_score"]),
         "## Mycovariant-Mutation Interaction Candidates",
         _table(top_interactions, ["mycovariant_name", "mutation_name", "combo_samples", "combo_win_rate", "combo_lift_vs_global", "interaction_score"]),
+        "## Nutrient Economy by Strategy",
+        _table(top_nutrient_strategies, ["strategy_name", "strategy_theme", "samples", "win_rate", "avg_nutrient_claims", "avg_nutrient_mutation_points", "avg_claimed_cluster_size", "avg_nutrient_mp_share_of_income", "players_with_nutrient_claims_rate"]),
     ]
 
     output_path.write_text("\n".join(lines), encoding="utf-8")
@@ -592,18 +655,21 @@ def main() -> None:
         mycovariants,
         min_combo_samples=args.min_combo_samples,
     )
+    nutrient_summary = build_nutrient_summary(players)
 
     mutation_scores.to_csv(output_dir / "mutation_recommendations.csv", index=False)
     mycovariant_scores.to_csv(output_dir / "mycovariant_recommendations.csv", index=False)
     mutation_by_opponent_theme.to_csv(output_dir / "mutation_by_opponent_theme.csv", index=False)
     mutation_synergies.to_csv(output_dir / "mutation_synergies.csv", index=False)
     myco_mutation_interactions.to_csv(output_dir / "mycovariant_mutation_interactions.csv", index=False)
+    nutrient_summary.to_csv(output_dir / "nutrient_economy_summary.csv", index=False)
     write_markdown_report(
         mutation_scores,
         mycovariant_scores,
         mutation_by_opponent_theme,
         mutation_synergies,
         myco_mutation_interactions,
+        nutrient_summary,
         output_dir / "balance_recommendations.md",
         min_confidence=args.min_confidence,
         min_picks=args.min_picks,

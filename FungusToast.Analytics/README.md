@@ -58,9 +58,10 @@ python analyze_balance.py --run-folder "<path>" --min-confidence 0.5 --min-picks
 - `mutation_by_opponent_theme.csv`
 - `mutation_synergies.csv`
 - `mycovariant_mutation_interactions.csv`
+- `nutrient_economy_summary.csv`
 - `balance_recommendations.md`
 
-The markdown report includes ranked OP/UP candidates, matchup-theme sensitivity, mutation synergy candidates, and mycovariant-mutation interaction candidates.
+The markdown report includes ranked OP/UP candidates, matchup-theme sensitivity, mutation synergy candidates, mycovariant-mutation interaction candidates, and nutrient economy summaries showing which strategies are benefiting most from clustered nutrients.
 
 ## Upgrade Event Logging
 

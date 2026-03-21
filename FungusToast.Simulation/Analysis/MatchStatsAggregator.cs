@@ -45,6 +45,10 @@ namespace FungusToast.Simulation.Analysis
             float avgSporesDropped = results.Sum(r => r.SporesFromSporocidalBloom.Values.Sum()) / totalGames;
             float avgToxicTiles = (float)results.Average(r => r.ToxicTileCount);
             float avgTurns = (float)results.Average(r => r.TurnsPlayed);
+            float avgNutrientTilesPlaced = (float)results.Average(r => r.NutrientPatchCount);
+            float avgNutrientClaims = (float)results.Average(r => r.PlayerResults.Sum(p => p.NutrientPatchesConsumed));
+            float avgNutrientMutationPoints = (float)results.Average(r => r.PlayerResults.Sum(p => p.NutrientMutationPointsEarned));
+            float avgClaimedClusterSize = avgNutrientClaims > 0f ? avgNutrientMutationPoints / avgNutrientClaims : 0f;
             double stdDevTurns = Math.Sqrt(results.Sum(r => Math.Pow(r.TurnsPlayed - avgTurns, 2)) / Math.Max(1, totalGames - 1));
 
             Console.WriteLine($"\n=== Game-Level Stats ===");
@@ -57,6 +61,10 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine($"Avg Empty Cells:    {avgEmptyCells:N1}");
             Console.WriteLine($"Avg Spores Dropped: {avgSporesDropped:N1}");
             Console.WriteLine($"Avg Lingering Toxic Tiles: {avgToxicTiles:N1}");
+            Console.WriteLine($"Avg Nutrient Tiles Placed: {avgNutrientTilesPlaced:N1}");
+            Console.WriteLine($"Avg Nutrient Claims:       {avgNutrientClaims:N1}");
+            Console.WriteLine($"Avg Nutrient MP Earned:    {avgNutrientMutationPoints:N1}");
+            Console.WriteLine($"Avg Claimed Cluster Size:  {avgClaimedClusterSize:N2}");
         }
 
 
@@ -195,6 +203,8 @@ namespace FungusToast.Simulation.Analysis
             var totalMpEarnedByPlayer = new Dictionary<int, int>();
             var totalAutoupgradeMpByPlayer = new Dictionary<int, int>();
             var totalBankedPointsByPlayer = new Dictionary<int, int>();
+            var totalNutrientClaimsByPlayer = new Dictionary<int, int>();
+            var totalNutrientMutationPointsByPlayer = new Dictionary<int, int>();
 
             foreach (var game in gameResults)
             {
@@ -222,10 +232,20 @@ namespace FungusToast.Simulation.Analysis
                 {
                     int playerId = player.PlayerId;
                     int autoupgradeMp = player.MutatorPhenotypePointsEarned + player.HyperadaptiveDriftPointsEarned;
+                    int nutrientClaims = player.NutrientPatchesConsumed;
+                    int nutrientMutationPoints = player.NutrientMutationPointsEarned;
                     
                     if (!totalAutoupgradeMpByPlayer.ContainsKey(playerId))
                         totalAutoupgradeMpByPlayer[playerId] = 0;
                     totalAutoupgradeMpByPlayer[playerId] += autoupgradeMp;
+
+                    if (!totalNutrientClaimsByPlayer.ContainsKey(playerId))
+                        totalNutrientClaimsByPlayer[playerId] = 0;
+                    totalNutrientClaimsByPlayer[playerId] += nutrientClaims;
+
+                    if (!totalNutrientMutationPointsByPlayer.ContainsKey(playerId))
+                        totalNutrientMutationPointsByPlayer[playerId] = 0;
+                    totalNutrientMutationPointsByPlayer[playerId] += nutrientMutationPoints;
                 }
 
                 // Calculate total banked points
@@ -244,9 +264,9 @@ namespace FungusToast.Simulation.Analysis
             Console.WriteLine("\n=== Per-Player Summary ===");
             Console.WriteLine(
                 $"{"Player",6} | {"Strategy",-40} | {"WinRate",7} | {"Avg Alive",13} | {"Avg % of Total Living",20} | {"Avg Dead",13} | " +
-                $"{"Avg End Toxins",15} | {"Avg MP Spent",16} | {"Avg MP Earned",16} | {"Avg Autoupgrade MP",20} | {"Avg Banked",12} | " +
+                $"{"Avg End Toxins",15} | {"Avg Nutrient Claims",19} | {"Avg Nutrient MP",17} | {"Avg Cluster Size",16} | {"Avg MP Spent",16} | {"Avg MP Earned",16} | {"Avg Autoupgrade MP",20} | {"Avg Banked",12} | " +
                 $"{"Growth%",11} | {"SelfDeath%",13}");
-            Console.WriteLine(new string('-', 251));
+            Console.WriteLine(new string('-', 310));
 
             foreach (var (id, strategyName) in rankedPlayerList)
             {
@@ -264,11 +284,16 @@ namespace FungusToast.Simulation.Analysis
                 int totalMpEarned = totalMpEarnedByPlayer.TryGetValue(id, out var v2) ? v2 : 0;
                 int totalAutoupgradeMp = totalAutoupgradeMpByPlayer.TryGetValue(id, out var v3) ? v3 : 0;
                 int totalBankedPoints = totalBankedPointsByPlayer.TryGetValue(id, out var v4) ? v4 : 0;
+                int totalNutrientClaims = totalNutrientClaimsByPlayer.TryGetValue(id, out var v5) ? v5 : 0;
+                int totalNutrientMutationPoints = totalNutrientMutationPointsByPlayer.TryGetValue(id, out var v6) ? v6 : 0;
 
                 float avgMpSpent = appearances > 0 ? (float)totalMpSpent / appearances : 0f;
                 float avgMpEarned = appearances > 0 ? (float)totalMpEarned / appearances : 0f;
                 float avgAutoupgradeMp = appearances > 0 ? (float)totalAutoupgradeMp / appearances : 0f;
                 float avgBankedPoints = appearances > 0 ? (float)totalBankedPoints / appearances : 0f;
+                float avgNutrientClaims = appearances > 0 ? (float)totalNutrientClaims / appearances : 0f;
+                float avgNutrientMutationPoints = appearances > 0 ? (float)totalNutrientMutationPoints / appearances : 0f;
+                float avgNutrientClusterSize = totalNutrientClaims > 0 ? (float)totalNutrientMutationPoints / totalNutrientClaims : 0f;
 
                 float avgLiving = (float)living / appearances;
                 float avgDead = (float)dead / appearances;
@@ -278,12 +303,12 @@ namespace FungusToast.Simulation.Analysis
                 Console.WriteLine(
                     $"{id,6} | {Truncate(strategyObj.StrategyName, 40),-40} | {winRate,6:N1}% | " +
                     $"{avgLiving,13:N1} | {livingPercentage,19:N1}% | {avgDead,13:N1} | " +
-                    $"{avgEndGameToxins,15:N1} | " +
+                    $"{avgEndGameToxins,15:N1} | {avgNutrientClaims,19:N1} | {avgNutrientMutationPoints,17:N1} | {avgNutrientClusterSize,16:N2} | " +
                     $"{avgMpSpent,16:N1} | {avgMpEarned,16:N1} | {avgAutoupgradeMp,20:N1} | {avgBankedPoints,12:N1} | " +
                     $"{growth / appearances * 100f,10:N2}% | {selfDeath / appearances * 100f,12:N2}%");
             }
 
-            Console.WriteLine(new string('-', 251));
+            Console.WriteLine(new string('-', 310));
         }
 
         private static void PrintDeathReasonSummary(
