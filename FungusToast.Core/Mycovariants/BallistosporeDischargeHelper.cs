@@ -24,7 +24,7 @@ namespace FungusToast.Core.Mycovariants
             if (player == null) return;
 
             // Get all empty tiles
-            var emptyTiles = board.AllTiles().Where(t => t.FungalCell == null).ToList();
+            var emptyTiles = board.AllTiles().Where(t => !t.IsOccupiedForSporePlacement).ToList();
             int maxSpores = Math.Min(sporesToDrop, emptyTiles.Count);
             if (maxSpores == 0) return;
 
@@ -77,6 +77,11 @@ namespace FungusToast.Core.Mycovariants
         {
             var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
             if (player == null) return;
+            var tile = board.GetTileById(tileId);
+            if (tile == null || tile.IsOccupiedForSporePlacement)
+            {
+                return;
+            }
             // Use custom duration for Ballistospore Discharge, with all bonuses
             int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, MycovariantGameBalance.BallistosporeDischargeToxinDuration);
             ToxinHelper.ConvertToToxin(board, tileId, toxinLifespan, GrowthSource.Ballistospore, player);

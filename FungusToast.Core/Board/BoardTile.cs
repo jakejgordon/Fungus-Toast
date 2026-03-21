@@ -13,6 +13,7 @@ namespace FungusToast.Core.Board
         public NutrientPatch? NutrientPatch { get; private set; }
         public bool IsOccupied => FungalCell != null;
         public bool HasNutrientPatch => NutrientPatch != null;
+        public bool IsOccupiedForSporePlacement => FungalCell != null || NutrientPatch != null;
 
         public BoardTile(int x, int y, int boardWidth)
         {

@@ -165,7 +165,7 @@ namespace FungusToast.Core.Phases
                     .Where(t => {
                         var cell = t.FungalCell;
                         // Exclude tiles with player's own living or dead cells
-                        return !(cell != null && cell.OwnerPlayerId == player.PlayerId);
+                        return !(cell != null && cell.OwnerPlayerId == player.PlayerId) && !t.HasNutrientPatch;
                     })
                     .ToList();
 
@@ -231,8 +231,8 @@ namespace FungusToast.Core.Phases
         private static List<BoardTile> ApplySporicidalBloomMaxLevelBonus(List<BoardTile> availableTiles, Random rng)
         {
             // Separate empty tiles from enemy tiles
-            var emptyTiles = availableTiles.Where(t => t.FungalCell == null).ToList();
-            var nonEmptyTiles = availableTiles.Where(t => t.FungalCell != null).ToList();
+            var emptyTiles = availableTiles.Where(t => !t.IsOccupiedForSporePlacement).ToList();
+            var nonEmptyTiles = availableTiles.Where(t => t.IsOccupiedForSporePlacement).ToList();
 
             // Remove 25% of empty tiles randomly
             int emptyTilesToRemove = (int)Math.Floor(emptyTiles.Count * 0.25f);
@@ -620,7 +620,7 @@ namespace FungusToast.Core.Phases
             // Single pass over empty tiles: assign each tile to the highest-priority adjacent target player.
             foreach (var tile in board.AllTiles())
             {
-                if (tile.IsOccupied)
+                if (tile.IsOccupiedForSporePlacement)
                     continue;
 
                 int bestPriority = int.MaxValue;

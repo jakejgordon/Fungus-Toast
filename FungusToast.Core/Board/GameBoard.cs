@@ -406,7 +406,7 @@ namespace FungusToast.Core.Board
         public bool SpawnSporeForPlayer(Player player, int tileId, GrowthSource source)
         {
             var tile = GetTileById(tileId);
-            if (tile == null || tile.FungalCell != null) return false;
+            if (tile == null || tile.IsOccupiedForSporePlacement) return false;
             var cell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: tileId, source: source, lastOwnerPlayerId: null);
             cell.MarkAsNewlyGrown();
             cell.SetBirthRound(CurrentRound);
@@ -762,7 +762,7 @@ namespace FungusToast.Core.Board
         {
             float dropChance = player.GetMutationEffect(MutationType.Necrosporulation);
             if (dropChance <= 0f || rng.NextDouble() > dropChance) return;
-            var candidates = AllTiles().Where(t => !t.IsOccupied).OrderBy(_ => rng.NextDouble()).ToList();
+            var candidates = AllTiles().Where(t => !t.IsOccupiedForSporePlacement).OrderBy(_ => rng.NextDouble()).ToList();
             foreach (var tile in candidates)
             {
                 if (SpawnSporeForPlayer(player, tile.TileId, GrowthSource.Necrosporulation))

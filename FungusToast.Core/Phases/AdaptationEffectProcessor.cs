@@ -392,7 +392,7 @@ namespace FungusToast.Core.Phases
             int sourceTileId = player.StartingTileId.Value;
 
             var candidates = board.AllTiles()
-                .Where(tile => !tile.IsOccupied)
+                .Where(tile => !tile.IsOccupiedForSporePlacement)
                 .OrderBy(_ => rng.NextDouble())
                 .ToList();
 
@@ -504,7 +504,7 @@ namespace FungusToast.Core.Phases
             {
                 int enemyStartingTileId = enemy.StartingTileId!.Value;
                 var targetTile = board.GetOrthogonalNeighbors(enemyStartingTileId)
-                    .Where(tile => !tile.IsOccupied)
+                    .Where(tile => !tile.IsOccupiedForSporePlacement)
                     .OrderBy(tile => SquaredDistance((tile.X, tile.Y), sourcePosition))
                     .ThenBy(tile => tile.TileId)
                     .FirstOrDefault();

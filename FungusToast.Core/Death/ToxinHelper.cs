@@ -131,7 +131,7 @@ namespace FungusToast.Core.Death
         public static List<BoardTile> FindMycotoxinTargetTiles(GameBoard board, Player player)
         {
             return board.AllTiles()
-                .Where(tile => !tile.IsOccupied && // Empty tiles only
+                .Where(tile => !tile.IsOccupiedForSporePlacement && // Empty tiles only for spore-style toxin drops
                     board.GetOrthogonalNeighbors(tile.TileId)
                         .Any(neighbor => neighbor.FungalCell?.IsAlive == true && 
                                        neighbor.FungalCell.OwnerPlayerId != player.PlayerId)) // Adjacent to enemy living cells
