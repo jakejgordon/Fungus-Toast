@@ -452,7 +452,7 @@ namespace FungusToast.Unity.Grid
                     elapsed += Time.deltaTime;
                     float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
                     float eased = 1f - Mathf.Pow(1f - t, 3f);
-                    float scale = Mathf.Lerp(UIEffectConstants.NutrientPatchMarkerScale, 0.18f, eased);
+                    float scale = Mathf.Lerp(UIEffectConstants.NutrientPatchPulseMinScale, 0.18f, eased);
                     Vector3 translation = Vector3.Lerp(Vector3.zero, pullOffset, eased);
                     Color color = Color.Lerp(NutrientPatchColor, new Color(NutrientPatchColor.r, NutrientPatchColor.g, NutrientPatchColor.b, 0f), eased);
 
@@ -981,7 +981,7 @@ namespace FungusToast.Unity.Grid
         private Matrix4x4 GetNutrientPulseMatrix(int tileId)
         {
             float pulse = GetNutrientPulseFactor(tileId);
-            float scale = UIEffectConstants.NutrientPatchMarkerScale * Mathf.Lerp(1f - UIEffectConstants.NutrientPatchPulseScaleAmplitude, 1f + UIEffectConstants.NutrientPatchPulseScaleAmplitude, pulse);
+            float scale = Mathf.Lerp(UIEffectConstants.NutrientPatchPulseMinScale, UIEffectConstants.NutrientPatchPulseMaxScale, pulse);
             return Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
         }
 
