@@ -47,7 +47,7 @@ namespace FungusToast.Core.Board
         public delegate void MutationPointsSpentEventHandler(int playerId, MutationTier tier, int amount);
         public delegate void TendrilGrowthEventHandler(int playerId, int tileId, DiagonalDirection direction);
         public delegate void CreepingMoldMoveEventHandler(int playerId, int fromTileId, int toTileId);
-        public delegate void NutrientPatchConsumedEventHandler(int playerId, int nutrientTileId, int destinationTileId, NutrientRewardType rewardType, int rewardAmount);
+        public delegate void NutrientPatchConsumedEventHandler(int playerId, int nutrientTileId, int destinationTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount);
         public delegate void PostGrowthPhaseEventHandler();
         public delegate void PostGrowthPhaseCompletedEventHandler();
         public delegate void DecayPhaseEventHandler(Dictionary<int, int> failedGrowthsByPlayerId);
@@ -122,8 +122,8 @@ namespace FungusToast.Core.Board
         protected virtual void OnMutationPointsSpent(int playerId, MutationTier tier, int amount) => MutationPointsSpent?.Invoke(playerId, tier, amount);
         protected virtual void OnTendrilGrowth(int playerId, int tileId, DiagonalDirection direction) => TendrilGrowth?.Invoke(playerId, tileId, direction);
         protected virtual void OnCreepingMoldMove(int playerId, int fromTileId, int toTileId) => CreepingMoldMove?.Invoke(playerId, fromTileId, toTileId);
-        protected virtual void OnNutrientPatchConsumed(int playerId, int nutrientTileId, int destinationTileId, NutrientRewardType rewardType, int rewardAmount)
-            => NutrientPatchConsumed?.Invoke(playerId, nutrientTileId, destinationTileId, rewardType, rewardAmount);
+        protected virtual void OnNutrientPatchConsumed(int playerId, int nutrientTileId, int destinationTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
+            => NutrientPatchConsumed?.Invoke(playerId, nutrientTileId, destinationTileId, patchType, rewardType, rewardAmount);
         protected virtual void OnToxinExpiredInternal(ToxinExpiredEventArgs e) => ToxinExpired?.Invoke(this, e);
         public virtual void OnPostGrowthPhase() => PostGrowthPhase?.Invoke();
         public virtual void OnPostGrowthPhaseCompleted() => PostGrowthPhaseCompleted?.Invoke();
@@ -548,10 +548,52 @@ namespace FungusToast.Core.Board
                 GetTileById(clusterTileId)?.ClearNutrientPatch();
             }
 
-            ApplyNutrientReward(playerId, cell.TileId, cell.TileId, nutrientPatch, clusterTileIds);
+            int effectiveRewardAmount = nutrientPatch.RewardType switch
+            {
+                NutrientRewardType.MutationPoints => nutrientPatch.RewardAmount,
+                NutrientRewardType.FreeGrowth => ApplySporemealGrowth(playerId, cell.TileId, clusterTileIds),
+                _ => 0
+            };
+
+            ApplyNutrientReward(playerId, cell.TileId, cell.TileId, nutrientPatch, effectiveRewardAmount, clusterTileIds);
         }
 
-        private void ApplyNutrientReward(int playerId, int nutrientTileId, int destinationTileId, NutrientPatch nutrientPatch, IReadOnlyList<int>? affectedTileIds = null)
+        private int ApplySporemealGrowth(int playerId, int originTileId, IReadOnlyList<int> clusterTileIds)
+        {
+            if (playerId < 0 || playerId >= Players.Count)
+            {
+                return 0;
+            }
+
+            Player player = Players[playerId];
+            var clusterTileSet = new HashSet<int>(clusterTileIds);
+            var visitedTileIds = new HashSet<int> { originTileId };
+            var frontierTileIds = new Queue<int>();
+            frontierTileIds.Enqueue(originTileId);
+
+            int freeGrowthsApplied = 0;
+            while (frontierTileIds.Count > 0)
+            {
+                int frontierTileId = frontierTileIds.Dequeue();
+                foreach (BoardTile neighbor in GetOrthogonalNeighbors(frontierTileId))
+                {
+                    if (!clusterTileSet.Contains(neighbor.TileId) || !visitedTileIds.Add(neighbor.TileId))
+                    {
+                        continue;
+                    }
+
+                    if (SpawnSporeForPlayer(player, neighbor.TileId, GrowthSource.SporemealPatch))
+                    {
+                        freeGrowthsApplied++;
+                        frontierTileIds.Enqueue(neighbor.TileId);
+                    }
+                }
+            }
+
+            return freeGrowthsApplied;
+        }
+
+        private void ApplyNutrientReward(int playerId, int nutrientTileId, int destinationTileId, NutrientPatch nutrientPatch, int effectiveRewardAmount, IReadOnlyList<int>? affectedTileIds = null)
         {
             if (playerId < 0 || playerId >= Players.Count)
             {
@@ -561,18 +603,23 @@ namespace FungusToast.Core.Board
             switch (nutrientPatch.RewardType)
             {
                 case NutrientRewardType.MutationPoints:
-                    Players[playerId].AddMutationPoints(nutrientPatch.RewardAmount);
-                    OnMutationPointsEarned(playerId, nutrientPatch.RewardAmount);
+                    Players[playerId].AddMutationPoints(effectiveRewardAmount);
+                    OnMutationPointsEarned(playerId, effectiveRewardAmount);
+                    break;
+                case NutrientRewardType.FreeGrowth:
                     break;
             }
 
-            OnNutrientPatchConsumed(playerId, nutrientTileId, destinationTileId, nutrientPatch.RewardType, nutrientPatch.RewardAmount);
+            OnNutrientPatchConsumed(playerId, nutrientTileId, destinationTileId, nutrientPatch.PatchType, nutrientPatch.RewardType, effectiveRewardAmount);
             OnSpecialBoardEventTriggered(new SpecialBoardEventArgs(
                 SpecialBoardEventKind.NutrientPatchConsumed,
                 playerId,
                 nutrientTileId,
                 destinationTileId,
-                affectedTileIds ?? new[] { nutrientTileId, destinationTileId }));
+                affectedTileIds ?? new[] { nutrientTileId, destinationTileId },
+                nutrientPatch.PatchType,
+                nutrientPatch.RewardType,
+                effectiveRewardAmount));
         }
         #endregion
 

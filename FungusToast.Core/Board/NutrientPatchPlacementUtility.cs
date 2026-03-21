@@ -20,9 +20,12 @@ namespace FungusToast.Core.Board
                 return 0;
             }
 
-            int targetCount = Math.Max(
+            int baseTargetCount = Math.Max(
                 GameBalance.NutrientPatchMinimumCount,
                 (int)Math.Round(board.TotalTiles * GameBalance.NutrientPatchDensity, MidpointRounding.AwayFromZero));
+            int targetCount = Math.Max(
+                GameBalance.NutrientPatchMinimumCount,
+                (int)Math.Floor(baseTargetCount * GameBalance.NutrientPatchTotalTileMultiplier));
 
             int minimumDistanceFromStartingSpores = Math.Max(
                 1,
@@ -75,7 +78,9 @@ namespace FungusToast.Core.Board
                         continue;
                     }
 
-                    NutrientPatch clusterPatch = NutrientPatch.CreateMutationPointCluster(nextClusterId++, clusterTileIds.Count);
+                    NutrientPatch clusterPatch = rng.NextDouble() < 0.5d
+                        ? NutrientPatch.CreateAdaptogenCluster(nextClusterId++, clusterTileIds.Count)
+                        : NutrientPatch.CreateSporemealCluster(nextClusterId++, clusterTileIds.Count);
                     foreach (int clusterTileId in clusterTileIds)
                     {
                         if (board.PlaceNutrientPatch(clusterTileId, clusterPatch))

@@ -1,3 +1,4 @@
+using FungusToast.Core.Board;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -250,7 +251,9 @@ namespace FungusToast.Unity
                     yield return gridVisualizer.PlayNutrientPatchConsumptionAnimation(
                         specialEvent.SourceTileId,
                         specialEvent.DestinationTileId,
-                        specialEvent.AffectedTileIds.Distinct().Count());
+                        specialEvent.NutrientPatchType ?? NutrientPatchType.Adaptogen,
+                        specialEvent.NutrientRewardType ?? NutrientRewardType.MutationPoints,
+                        specialEvent.RewardAmount > 0 ? specialEvent.RewardAmount : specialEvent.AffectedTileIds.Distinct().Count());
                     break;
             }
         }

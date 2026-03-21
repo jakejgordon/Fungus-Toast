@@ -697,18 +697,21 @@ namespace FungusToast.Unity.UI.GameLog
 
         public void RecordMutationPointIncome(int playerId, int totalMutationPoints) { }
         public void RecordNutrientPatchesPlaced(int count) { }
-        public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, int mutationPointAward)
+        public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
         {
-            if (!IsHuman(playerId) || mutationPointAward <= 0)
+            if (!IsHuman(playerId))
             {
                 return;
             }
 
-            string pointLabel = mutationPointAward == 1 ? "point" : "points";
-            AddPlayerEvent(
-                playerId,
-                $"Claimed a Nutrient Cluster for {mutationPointAward} mutation {pointLabel}",
-                GameLogCategory.Lucky);
+            string message = rewardType switch
+            {
+                NutrientRewardType.MutationPoints => $"Claimed an Adaptogen Patch for {rewardAmount} mutation {(rewardAmount == 1 ? "point" : "points")}",
+                NutrientRewardType.FreeGrowth => $"Claimed a Sporemeal Patch and spread through {rewardAmount} extra {(rewardAmount == 1 ? "tile" : "tiles")}",
+                _ => $"Claimed a {patchType} Patch"
+            };
+
+            AddPlayerEvent(playerId, message, GameLogCategory.Lucky);
         }
         public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned) { /* Mutator Phenotype grants free upgrades, not spendable points – exclude from Free Points summary */ }
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }

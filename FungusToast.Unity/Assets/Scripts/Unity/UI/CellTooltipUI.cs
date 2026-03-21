@@ -486,9 +486,16 @@ namespace FungusToast.Unity.UI
         private void AppendNutrientPatch(NutrientPatch nutrientPatch)
         {
             sb.AppendLine(EmphasizedLine("Status", nutrientPatch.DisplayName, UIStyleTokens.State.Warning));
-            string pointLabel = nutrientPatch.RewardAmount == 1 ? "Point" : "Points";
             sb.AppendLine(DetailLine("Cluster Size", nutrientPatch.ClusterTileCount.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
-            sb.AppendLine(DetailLine("Reward", $"+{nutrientPatch.RewardAmount} Mutation {pointLabel}", UIStyleTokens.Text.Secondary, UIStyleTokens.Accent.Spore));
+
+            string rewardText = nutrientPatch.RewardType switch
+            {
+                NutrientRewardType.MutationPoints => $"+{nutrientPatch.RewardAmount} Mutation {(nutrientPatch.RewardAmount == 1 ? "Point" : "Points")}",
+                NutrientRewardType.FreeGrowth => $"{nutrientPatch.RewardAmount} Free {(nutrientPatch.RewardAmount == 1 ? "Growth" : "Growths")}",
+                _ => nutrientPatch.Description
+            };
+
+            sb.AppendLine(DetailLine("Reward", rewardText, UIStyleTokens.Text.Secondary, UIStyleTokens.Accent.Spore));
             sb.AppendLine(DetailLine("Trigger", "First living growth onto this cluster claims it", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine();
             sb.AppendLine(DetailLine("Notes", nutrientPatch.Description, UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));

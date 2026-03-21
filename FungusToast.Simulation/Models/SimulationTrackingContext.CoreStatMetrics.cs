@@ -1,3 +1,4 @@
+using FungusToast.Core.Board;
 using FungusToast.Core.Death;
 using FungusToast.Core.Mutations;
 
@@ -72,7 +73,7 @@ namespace FungusToast.Simulation.Models
             nutrientPatchesPlaced += count;
         }
 
-        public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, int mutationPointAward)
+        public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
         {
             if (!nutrientPatchesConsumedByPlayer.ContainsKey(playerId))
             {
@@ -85,7 +86,10 @@ namespace FungusToast.Simulation.Models
             }
 
             nutrientPatchesConsumedByPlayer[playerId]++;
-            nutrientMutationPointsEarnedByPlayer[playerId] += mutationPointAward;
+            if (rewardType == NutrientRewardType.MutationPoints)
+            {
+                nutrientMutationPointsEarnedByPlayer[playerId] += rewardAmount;
+            }
         }
 
         public int GetNutrientPatchesPlaced() => nutrientPatchesPlaced;

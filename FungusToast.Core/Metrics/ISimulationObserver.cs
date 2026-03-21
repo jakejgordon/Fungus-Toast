@@ -22,7 +22,7 @@ namespace FungusToast.Core.Metrics
         void RecordTendrilGrowth(int playerId, DiagonalDirection value);
         void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints);
         void RecordNutrientPatchesPlaced(int count);
-        void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, int mutationPointAward);
+        void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount);
         void RecordNecrotoxicConversionReclaim(int playerId, int necrotoxicConversions);
         void RecordCatabolicRebirthResurrection(int playerId, int resurrectedCells);
         void RecordRegenerativeHyphaeReclaim(int playerId);

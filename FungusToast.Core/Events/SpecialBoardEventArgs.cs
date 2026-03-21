@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using FungusToast.Core.Board;
 
 namespace FungusToast.Core.Events
 {
@@ -26,19 +27,28 @@ namespace FungusToast.Core.Events
         public int SourceTileId { get; }
         public int DestinationTileId { get; }
         public IReadOnlyList<int> AffectedTileIds { get; }
+        public NutrientPatchType? NutrientPatchType { get; }
+        public NutrientRewardType? NutrientRewardType { get; }
+        public int RewardAmount { get; }
 
         public SpecialBoardEventArgs(
             SpecialBoardEventKind eventKind,
             int playerId,
             int sourceTileId,
             int destinationTileId,
-            IEnumerable<int>? affectedTileIds = null)
+            IEnumerable<int>? affectedTileIds = null,
+            NutrientPatchType? nutrientPatchType = null,
+            NutrientRewardType? nutrientRewardType = null,
+            int rewardAmount = 0)
         {
             EventKind = eventKind;
             PlayerId = playerId;
             SourceTileId = sourceTileId;
             DestinationTileId = destinationTileId;
             AffectedTileIds = new ReadOnlyCollection<int>((affectedTileIds ?? Enumerable.Empty<int>()).ToList());
+            NutrientPatchType = nutrientPatchType;
+            NutrientRewardType = nutrientRewardType;
+            RewardAmount = rewardAmount;
         }
     }
 }

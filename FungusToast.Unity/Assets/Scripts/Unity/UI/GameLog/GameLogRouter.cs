@@ -120,10 +120,10 @@ namespace FungusToast.Unity.UI.GameLog
         {
         }
 
-        public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, int mutationPointAward)
+        public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
         {
             if (IsSilentMode) return;
-            playerActivityLogManager?.RecordNutrientPatchConsumed(playerId, nutrientTileId, mutationPointAward);
+            playerActivityLogManager?.RecordNutrientPatchConsumed(playerId, nutrientTileId, patchType, rewardType, rewardAmount);
         }
 
         public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints)

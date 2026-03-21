@@ -167,6 +167,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Resistance granted by the Septal Alarm mycovariant during decay.
         /// </summary>
-        SeptalAlarm
+        SeptalAlarm,
+
+        /// <summary>
+        /// Free chained growth granted by claiming a Sporemeal Patch.
+        /// </summary>
+        SporemealPatch
     }
 }

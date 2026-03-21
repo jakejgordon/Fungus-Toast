@@ -55,9 +55,9 @@ namespace FungusToast.Unity.Grid
         private Sprite generatedCrustSprite;
         private Texture2D generatedCrustTexture;
         private string generatedCrustCacheKey;
-        private Tile generatedNutrientTile;
-        private Sprite generatedNutrientSprite;
-        private Texture2D generatedNutrientTexture;
+        private readonly Dictionary<NutrientPatchType, Tile> generatedNutrientTiles = new();
+        private readonly Dictionary<NutrientPatchType, Sprite> generatedNutrientSprites = new();
+        private readonly Dictionary<NutrientPatchType, Texture2D> generatedNutrientTextures = new();
 
         private GameBoard board;
         private readonly List<int> playerMoldAssignments = new();
@@ -86,7 +86,8 @@ namespace FungusToast.Unity.Grid
         private readonly HashSet<int> deferredResistanceOverlayTileIds = new();
         private readonly HashSet<int> preAnimationHiddenPreviewTileIds = new();
         private static readonly Color NutrientPatchColor = new(1f, 1f, 1f, 0.92f);
-        private static readonly Color NutrientPatchTextColor = new(1f, 0.95f, 0.72f, 1f);
+        private static readonly Color AdaptogenPatchTextColor = new(0.8f, 0.97f, 1f, 1f);
+        private static readonly Color SporemealPatchTextColor = new(0.92f, 1f, 0.8f, 1f);
 
         private sealed class ExpiringToxinVisualSnapshot
         {
@@ -413,7 +414,7 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        public IEnumerator PlayNutrientPatchConsumptionAnimation(int nutrientTileId, int destinationTileId, int mutationPointAward)
+        public IEnumerator PlayNutrientPatchConsumptionAnimation(int nutrientTileId, int destinationTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
         {
             if (board == null || overlayTilemap == null)
             {
@@ -422,13 +423,13 @@ namespace FungusToast.Unity.Grid
 
             Vector3Int sourcePos = GetPositionForTileId(nutrientTileId);
             Vector3Int destinationPos = GetPositionForTileId(destinationTileId);
-            TileBase nutrientTile = GetNutrientPatchTile();
+            TileBase nutrientTile = GetNutrientPatchTile(patchType);
             if (nutrientTile == null)
             {
                 yield break;
             }
 
-            TextMeshPro floatingText = CreateNutrientToastText(destinationPos, mutationPointAward);
+            TextMeshPro floatingText = CreateNutrientToastText(destinationPos, patchType, rewardType, rewardAmount);
             Vector3 sourceWorld = overlayTilemap.GetCellCenterWorld(sourcePos);
             Vector3 destinationWorld = overlayTilemap.GetCellCenterWorld(destinationPos);
             Vector3 delta = destinationWorld - sourceWorld;
@@ -468,7 +469,7 @@ namespace FungusToast.Unity.Grid
                         Vector3 textEnd = textStart + new Vector3(0f, UIEffectConstants.NutrientPatchToastRiseWorld, 0f);
                         floatingText.transform.position = Vector3.Lerp(textStart, textEnd, textT);
                         floatingText.transform.localScale = Vector3.one * GetNutrientToastScaleMultiplier();
-                        var textColor = NutrientPatchTextColor;
+                        var textColor = GetNutrientToastColor(patchType);
                         textColor.a = 1f - textT;
                         floatingText.color = textColor;
                     }
@@ -830,7 +831,7 @@ namespace FungusToast.Unity.Grid
                 return;
             }
 
-            TileBase nutrientTile = GetNutrientPatchTile();
+            TileBase nutrientTile = GetNutrientPatchTile(tile.NutrientPatch);
             if (nutrientTile == null)
             {
                 return;
@@ -844,11 +845,16 @@ namespace FungusToast.Unity.Grid
             overlayTilemap.RefreshTile(pos);
         }
 
-        private TileBase GetNutrientPatchTile()
+        private TileBase GetNutrientPatchTile(NutrientPatch nutrientPatch)
         {
-            EnsureGeneratedNutrientTile();
+            return GetNutrientPatchTile(nutrientPatch?.PatchType ?? NutrientPatchType.Adaptogen);
+        }
 
-            if (generatedNutrientTile != null)
+        private TileBase GetNutrientPatchTile(NutrientPatchType patchType)
+        {
+            EnsureGeneratedNutrientTile(patchType);
+
+            if (generatedNutrientTiles.TryGetValue(patchType, out Tile generatedNutrientTile) && generatedNutrientTile != null)
             {
                 return generatedNutrientTile;
             }
@@ -861,17 +867,17 @@ namespace FungusToast.Unity.Grid
             return baseTile;
         }
 
-        private void EnsureGeneratedNutrientTile()
+        private void EnsureGeneratedNutrientTile(NutrientPatchType patchType)
         {
-            if (generatedNutrientTile != null && generatedNutrientSprite != null && generatedNutrientTexture != null)
+            if (generatedNutrientTiles.ContainsKey(patchType)
+                && generatedNutrientSprites.ContainsKey(patchType)
+                && generatedNutrientTextures.ContainsKey(patchType))
             {
                 return;
             }
 
-            DestroyGeneratedNutrientAssets();
-
             const int textureSize = 48;
-            generatedNutrientTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false)
+            var generatedNutrientTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false)
             {
                 filterMode = FilterMode.Bilinear,
                 wrapMode = TextureWrapMode.Clamp,
@@ -883,13 +889,13 @@ namespace FungusToast.Unity.Grid
             {
                 for (int px = 0; px < textureSize; px++)
                 {
-                    pixels[(py * textureSize) + px] = EvaluateNutrientPixel(textureSize, px, py);
+                    pixels[(py * textureSize) + px] = EvaluateNutrientPixel(textureSize, px, py, patchType);
                 }
             }
 
             generatedNutrientTexture.SetPixels32(pixels);
             generatedNutrientTexture.Apply(false, false);
-            generatedNutrientSprite = Sprite.Create(
+            var generatedNutrientSprite = Sprite.Create(
                 generatedNutrientTexture,
                 new Rect(0f, 0f, textureSize, textureSize),
                 new Vector2(0.5f, 0.5f),
@@ -897,13 +903,17 @@ namespace FungusToast.Unity.Grid
                 0,
                 SpriteMeshType.FullRect);
 
-            generatedNutrientTile = ScriptableObject.CreateInstance<Tile>();
+            var generatedNutrientTile = ScriptableObject.CreateInstance<Tile>();
             generatedNutrientTile.sprite = generatedNutrientSprite;
             generatedNutrientTile.color = Color.white;
             generatedNutrientTile.colliderType = Tile.ColliderType.None;
+
+            generatedNutrientTextures[patchType] = generatedNutrientTexture;
+            generatedNutrientSprites[patchType] = generatedNutrientSprite;
+            generatedNutrientTiles[patchType] = generatedNutrientTile;
         }
 
-        private static Color32 EvaluateNutrientPixel(int textureSize, int px, int py)
+        private static Color32 EvaluateNutrientPixel(int textureSize, int px, int py, NutrientPatchType patchType)
         {
             float x = (((px + 0.5f) / textureSize) * 2f) - 1f;
             float y = (((py + 0.5f) / textureSize) * 2f) - 1f;
@@ -941,6 +951,44 @@ namespace FungusToast.Unity.Grid
             color = Color.Lerp(color, coreColor, core * 0.9f);
             color = Color.Lerp(color, veinColor, veins * 0.75f);
             color = Color.Lerp(color, ringColor, satellites * 0.55f);
+
+            if (patchType == NutrientPatchType.Adaptogen)
+            {
+                float helixLeft = 1f - Mathf.SmoothStep(0.018f, 0.07f, Mathf.Abs(x - (0.18f * Mathf.Sin(y * 7.2f)) - 0.16f));
+                float helixRight = 1f - Mathf.SmoothStep(0.018f, 0.07f, Mathf.Abs(x + (0.18f * Mathf.Sin(y * 7.2f)) + 0.16f));
+                float helix = Mathf.Max(helixLeft, helixRight) * (1f - Mathf.SmoothStep(0.56f, 0.9f, radius));
+                float ladder = (1f - Mathf.SmoothStep(0.02f, 0.07f, Mathf.Abs(x)))
+                    * (0.5f + (0.5f * Mathf.Cos(y * 18f)))
+                    * (1f - Mathf.SmoothStep(0.2f, 0.72f, Mathf.Abs(y)));
+
+                Color helixColor = new(0.35f, 0.84f, 1f, 1f);
+                Color ladderColor = new(0.84f, 0.98f, 1f, 1f);
+                color = Color.Lerp(color, helixColor, helix * 0.92f);
+                color = Color.Lerp(color, ladderColor, ladder * 0.85f);
+                alpha = Mathf.Max(alpha, helix * 0.8f);
+                alpha = Mathf.Max(alpha, ladder * 0.72f);
+            }
+            else
+            {
+                float runnerStem = 1f - Mathf.SmoothStep(0.02f, 0.085f, Mathf.Abs(x));
+                float branchNorthEast = 1f - Mathf.SmoothStep(0.02f, 0.085f, Mathf.Abs((y - 0.18f) - (x * 0.92f)));
+                float branchNorthWest = 1f - Mathf.SmoothStep(0.02f, 0.085f, Mathf.Abs((y - 0.18f) + (x * 0.92f)));
+                float branchSouthEast = 1f - Mathf.SmoothStep(0.02f, 0.085f, Mathf.Abs((y + 0.22f) + (x * 1.08f)));
+                float branchSouthWest = 1f - Mathf.SmoothStep(0.02f, 0.085f, Mathf.Abs((y + 0.22f) - (x * 1.08f)));
+                float runner = Mathf.Max(Mathf.Max(runnerStem, branchNorthEast), Mathf.Max(branchNorthWest, Mathf.Max(branchSouthEast, branchSouthWest)));
+                runner *= 1f - Mathf.SmoothStep(0.6f, 0.95f, radius);
+
+                float sporeburst = 1f - Mathf.SmoothStep(0.015f, 0.07f, Mathf.Abs(radius - 0.28f));
+                sporeburst *= 0.5f + (0.5f * Mathf.Cos((Mathf.Atan2(y, x) * 6f)));
+
+                Color runnerColor = new(0.72f, 0.9f, 0.42f, 1f);
+                Color sporeColor = new(0.98f, 1f, 0.84f, 1f);
+                color = Color.Lerp(color, runnerColor, runner * 0.82f);
+                color = Color.Lerp(color, sporeColor, sporeburst * 0.56f);
+                alpha = Mathf.Max(alpha, runner * 0.76f);
+                alpha = Mathf.Max(alpha, sporeburst * 0.44f);
+            }
+
             color.a = Mathf.Clamp01(alpha);
             return color;
         }
@@ -1012,19 +1060,38 @@ namespace FungusToast.Unity.Grid
             return Mathf.Clamp(zoomScale, 1f, UIEffectConstants.NutrientPatchToastMaxScaleMultiplier);
         }
 
-        private TextMeshPro CreateNutrientToastText(Vector3Int destinationPos, int mutationPointAward)
+        private static Color GetNutrientToastColor(NutrientPatchType patchType)
+        {
+            return patchType == NutrientPatchType.Adaptogen
+                ? AdaptogenPatchTextColor
+                : SporemealPatchTextColor;
+        }
+
+        private static string BuildNutrientToastText(NutrientRewardType rewardType, int rewardAmount)
+        {
+            return rewardType switch
+            {
+                NutrientRewardType.MutationPoints => rewardAmount == 1
+                    ? "+1 Mutation Point!"
+                    : $"+{rewardAmount} Mutation Points!",
+                NutrientRewardType.FreeGrowth => rewardAmount == 1
+                    ? "+1 Free Growth!"
+                    : $"+{rewardAmount} Free Growths!",
+                _ => "Nutrient Claimed!"
+            };
+        }
+
+        private TextMeshPro CreateNutrientToastText(Vector3Int destinationPos, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
         {
             var textObject = new GameObject("NutrientPatchToast", typeof(TextMeshPro));
             textObject.transform.SetParent(transform, false);
 
             var tmp = textObject.GetComponent<TextMeshPro>();
-            tmp.text = mutationPointAward == 1
-                ? "+1 Mutation Point!"
-                : $"+{mutationPointAward} Mutation Points!";
+            tmp.text = BuildNutrientToastText(rewardType, rewardAmount);
             tmp.fontSize = UIEffectConstants.NutrientPatchToastFontSize;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.textWrappingMode = TextWrappingModes.NoWrap;
-            tmp.color = NutrientPatchTextColor;
+            tmp.color = GetNutrientToastColor(patchType);
             tmp.outlineWidth = 0.2f;
             tmp.outlineColor = new Color(0.24f, 0.12f, 0.02f, 1f);
             tmp.transform.position = overlayTilemap.GetCellCenterWorld(destinationPos) + new Vector3(0f, 0.18f, 0f);
@@ -2244,23 +2311,33 @@ namespace FungusToast.Unity.Grid
 
         private void DestroyGeneratedNutrientAssets()
         {
-            if (generatedNutrientTile != null)
+            foreach (Tile generatedNutrientTile in generatedNutrientTiles.Values)
             {
-                Destroy(generatedNutrientTile);
-                generatedNutrientTile = null;
+                if (generatedNutrientTile != null)
+                {
+                    Destroy(generatedNutrientTile);
+                }
             }
 
-            if (generatedNutrientSprite != null)
+            foreach (Sprite generatedNutrientSprite in generatedNutrientSprites.Values)
             {
-                Destroy(generatedNutrientSprite);
-                generatedNutrientSprite = null;
+                if (generatedNutrientSprite != null)
+                {
+                    Destroy(generatedNutrientSprite);
+                }
             }
 
-            if (generatedNutrientTexture != null)
+            foreach (Texture2D generatedNutrientTexture in generatedNutrientTextures.Values)
             {
-                Destroy(generatedNutrientTexture);
-                generatedNutrientTexture = null;
+                if (generatedNutrientTexture != null)
+                {
+                    Destroy(generatedNutrientTexture);
+                }
             }
+
+            generatedNutrientTiles.Clear();
+            generatedNutrientSprites.Clear();
+            generatedNutrientTextures.Clear();
         }
 
         private static bool TryGetBreadOuterBoundsForY(BoardMediumConfig activeMedium, GameBoard activeBoard, float visualCrustThickness, float y, out float minX, out float maxX)
