@@ -378,6 +378,31 @@ Current precomputed references:
 - 7 players: `(139,94)`, `(106,135)`, `(54,135)`, `(21,94)`, `(32,42)`, `(80,19)`, `(128,42)`
 - 8 players: `(142,106)`, `(106,142)`, `(54,142)`, `(18,106)`, `(18,54)`, `(54,18)`, `(106,18)`, `(142,54)`
 
+### Saved reference: 160x160, 6 players
+
+Selected current layout:
+- P0 `(136,95)`
+- P1 `(92,126)`
+- P2 `(37,123)`
+- P3 `(24,65)`
+- P4 `(68,34)`
+- P5 `(123,37)`
+
+Clean identical-AI validation (`--fixed-slots --no-nutrient-patches --no-mycovariants`):
+- Seed `20260327`: `17,12,19,16,18,18`
+
+Observed win rates:
+- P0 `17%`
+- P1 `12%`
+- P2 `19%`
+- P3 `16%`
+- P4 `18%`
+- P5 `18%`
+
+Observed slot-win range: `7`.
+
+This was the best-performing tested 6-player candidate among the 100-game clean confirmations run in this pass.
+
 The search-based fallback remains in place for other player counts and for future tuning passes.
 
 ## Repeatability Notes
