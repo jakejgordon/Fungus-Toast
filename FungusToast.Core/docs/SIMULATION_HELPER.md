@@ -374,9 +374,46 @@ Compared to the previous layout, this reduced the observed slot-win range from `
 To avoid expensive startup-time layout searches during normal gameplay, the established improved layouts for `6`, `7`, and `8` players are now stored as precomputed reference layouts derived from `160x160` tuning and scaled to the active board size at runtime.
 
 Current precomputed references:
+- 4 players: `(128,128)`, `(32,128)`, `(32,32)`, `(128,32)`
+- 5 players: `(114,104)`, `(67,120)`, `(38,80)`, `(67,40)`, `(114,56)`
 - 6 players: `(136,95)`, `(92,126)`, `(37,123)`, `(24,65)`, `(68,34)`, `(123,37)`
 - 7 players: `(139,94)`, `(106,135)`, `(54,135)`, `(21,94)`, `(32,42)`, `(80,19)`, `(128,42)`
 - 8 players: `(142,106)`, `(106,142)`, `(54,142)`, `(18,106)`, `(18,54)`, `(54,18)`, `(106,18)`, `(142,54)`
+
+### Saved reference: 160x160, 4 players
+
+Selected symmetric square-board layout:
+- P0 `(128,128)`
+- P1 `(32,128)`
+- P2 `(32,32)`
+- P3 `(128,32)`
+
+Assumption for square boards:
+- For 4 players on a square board, a symmetric equidistant corner layout should be geometrically even enough that dedicated tuning is lower priority than 3/5/6/7-player cases.
+- This layout is therefore treated as the canonical 4-player fast-path reference unless future simulation evidence shows a meaningful residual bias.
+
+### Saved reference: 160x160, 5 players
+
+Selected current layout:
+- P0 `(114,104)`
+- P1 `(67,120)`
+- P2 `(38,80)`
+- P3 `(67,40)`
+- P4 `(114,56)`
+
+Clean identical-AI validation (`--fixed-slots --no-nutrient-patches --no-mycovariants`):
+- Seed `20260327`: `22,18,22,16,22`
+
+Observed win rates:
+- P0 `22%`
+- P1 `18%`
+- P2 `22%`
+- P3 `16%`
+- P4 `22%`
+
+Observed slot-win range: `6`.
+
+This replaced the prior 5-player auto-selected layout, which had a clean 100-game result of `22,15,27,14,22` (range `13`).
 
 ### Saved reference: 160x160, 6 players
 

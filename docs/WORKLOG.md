@@ -59,7 +59,9 @@ Use the following minimal workflow to preserve working memory across sessions:
 4. ✅ Commit the new simulation/override plumbing.
 5. ✅ Run a clean 6-player candidate bakeoff using explicit starting-position overrides.
 6. ✅ Promote the best validated 6-player layout into the precomputed fast-path once it actually holds up.
-7. ⏳ Start clean 5-player validation and identify the fairest starting layout.
+7. ✅ Start clean 5-player validation and identify the fairest starting layout.
+8. ✅ Commit the selected 5-player layout and record the validation results.
+9. ⏳ Document the 4-player symmetry assumption and start 3-player validation.
 
 ## Current Handoff
 
@@ -97,6 +99,22 @@ Use the following minimal workflow to preserve working memory across sessions:
 - **Evidence:** Candidate 6 clean 100-game result on `160x160` with same AI in all slots and fixed positions was `17,12,19,16,18,18` (range `7`). Candidate 15 was `22,12,19,13,20,14` (range `10`). Candidate 18 was `21,16,23,11,16,13` (range `12`).
 - **Open questions:** 5-player validation has not been documented yet.
 - **Next steps:** Start clean 5-player validation, record the current auto-selected 5-player baseline, and compare candidates if needed.
+
+### 2026-03-21 (5-player decision)
+- **Focus:** Finish 5-player starting-position selection.
+- **Changed:** Accepted candidate 11 as the selected 5-player layout and added it to the precomputed fast-path.
+- **Learned:** The previous 5-player auto-selected layout was too biased. A tighter 5-player ring performed substantially better under clean validation.
+- **Evidence:** Previous auto-selected layout produced `22,15,27,14,22` (range `13`). Selected candidate 11 produced `22,18,22,16,22` (range `6`) on `160x160` with same AI in all slots, fixed positions, nutrients off, and mycovariants off.
+- **Selected layout:** P0 `(114,104)`, P1 `(67,120)`, P2 `(38,80)`, P3 `(67,40)`, P4 `(114,56)`.
+- **Open questions:** Remaining player counts below 5 have not been validated in this pass.
+- **Next steps:** Commit/push the selected 5-player layout and continue only if additional player-count tuning is desired.
+
+### 2026-03-21 (4-player assumption / 3-player start)
+- **Focus:** Record the 4-player symmetry assumption and move on to 3-player tuning.
+- **Changed:** Added a symmetric 4-player fast-path reference for square boards and documented the assumption that 4-player square placement is geometrically even enough to treat as solved unless future evidence says otherwise.
+- **Selected 4-player layout:** P0 `(128,128)`, P1 `(32,128)`, P2 `(32,32)`, P3 `(128,32)`.
+- **Open questions:** 3-player placement still appears asymmetric under geometry and needs real simulation-driven tuning.
+- **Next steps:** Run the first clean 3-player baseline and compare candidate alternatives if the current auto-selected layout is biased.
 
 ## Session Checkpoint Template
 
