@@ -22,29 +22,29 @@ These are the main task-entry documents and are also referenced from `.github/co
 - `UI_STYLE_GUIDE.md` — UI semantic styling rules
 - `DESIGN_PRINCIPLES.md` — architecture and terminology context
 
-## 2. Authoring / Technical Subdocs
+## 2. second-level / Supporting Docs
 
 These are intentionally second-hop documents: they are discovered from entry docs rather than from the root router.
 
 ### Adaptations
-- `ADAPTATION_TECHNICAL_FLOW.md` — runtime and persistence wiring details
+- `second-level/ADAPTATION_TECHNICAL_FLOW.md` — runtime and persistence wiring details
 
 ### Mycovariants
-- `MYCOVARIANT_AUTHORING_STYLE.md` — concise mechanics/copy style rules
-- `MYCOVARIANT_TECHNICAL_FLOW.md` — end-to-end technical implementation flow
-- `MYCOVARIANT_PR_CHECKLIST.md` — pre-review completion checklist
+- `second-level/MYCOVARIANT_AUTHORING_STYLE.md` — concise mechanics/copy style rules
+- `second-level/MYCOVARIANT_TECHNICAL_FLOW.md` — end-to-end technical implementation flow
+- `second-level/MYCOVARIANT_PR_CHECKLIST.md` — pre-review completion checklist
 
 ### Shared naming
-- `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` — naming constraints shared across content systems
+- `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` — naming constraints shared across content systems
 
 ## 3. Specialized / Secondary References
 
 These are useful for narrower tasks and should remain discoverable here even when not listed in the root router.
 
-- `ANIMATION_HELPER.md` — gameplay animation trigger/timing guidance
-- `PLAYER_ACTIVITY_LOG_HELPER.md` — player activity log semantics and aggregation
-- `FUTURE_IMPROVEMENTS.md` — backlog / longer-horizon ideas
-- `UI_POLISH_TASKLIST.md` — UI polish tracker
+- `second-level/ANIMATION_HELPER.md` — gameplay animation trigger/timing guidance
+- `second-level/PLAYER_ACTIVITY_LOG_HELPER.md` — player activity log semantics and aggregation
+- `second-level/FUTURE_IMPROVEMENTS.md` — backlog / longer-horizon ideas
+- `second-level/UI_POLISH_TASKLIST.md` — UI polish tracker
 
 ## 4. Tracking / Operational Docs
 

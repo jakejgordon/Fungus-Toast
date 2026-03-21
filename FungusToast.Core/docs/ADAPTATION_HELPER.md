@@ -12,10 +12,10 @@ Adaptations commonly do one of two things:
 
 ## Primary Docs
 
-- **Naming rules:** [MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md](MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md)
+- **Naming rules:** [second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md](second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md)
 - **Campaign flow and persistence:** [CAMPAIGN_HELPER.md](CAMPAIGN_HELPER.md)
-- **Authoring standards for concise mechanics copy:** [MYCOVARIANT_AUTHORING_STYLE.md](MYCOVARIANT_AUTHORING_STYLE.md)
-- **Technical implementation flow:** [ADAPTATION_TECHNICAL_FLOW.md](ADAPTATION_TECHNICAL_FLOW.md)
+- **Authoring standards for concise mechanics copy:** [second-level/MYCOVARIANT_AUTHORING_STYLE.md](second-level/MYCOVARIANT_AUTHORING_STYLE.md)
+- **Technical implementation flow:** [second-level/ADAPTATION_TECHNICAL_FLOW.md](second-level/ADAPTATION_TECHNICAL_FLOW.md)
 
 ## Suggested Agent Workflow
 
@@ -33,7 +33,7 @@ Adaptations commonly do one of two things:
 ### Add a new Adaptation
 1. Add or update the entry in `FungusToast.Core/Campaign/AdaptationRepository.cs`.
 2. Keep the ID stable and unique.
-3. Name it using `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`.
+3. Name it using `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`.
 4. Write concise description text using the same cadence-first standards used for Mycovariants.
 5. Generate a unique icon keyed off the Adaptation's `IconId`. It can be temporary and replaced later, but it should be distinct from every other Adaptation.
 6. If the Adaptation has gameplay behavior, wire it through the campaign startup seam and any required passive phase/event hooks.

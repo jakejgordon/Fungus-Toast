@@ -10,10 +10,10 @@ Mycovariants are drafted abilities that either:
 
 ## Primary Docs
 
-- **Naming rules and candidate-name workflow:** [MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md](MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md)
-- **Authoring standards (copy/UX text):** [MYCOVARIANT_AUTHORING_STYLE.md](MYCOVARIANT_AUTHORING_STYLE.md)
-- **Technical implementation flow:** [MYCOVARIANT_TECHNICAL_FLOW.md](MYCOVARIANT_TECHNICAL_FLOW.md)
-- **Review checklist for PRs:** [MYCOVARIANT_PR_CHECKLIST.md](MYCOVARIANT_PR_CHECKLIST.md)
+- **Naming rules and candidate-name workflow:** [second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md](second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md)
+- **Authoring standards (copy/UX text):** [second-level/MYCOVARIANT_AUTHORING_STYLE.md](second-level/MYCOVARIANT_AUTHORING_STYLE.md)
+- **Technical implementation flow:** [second-level/MYCOVARIANT_TECHNICAL_FLOW.md](second-level/MYCOVARIANT_TECHNICAL_FLOW.md)
+- **Review checklist for PRs:** [second-level/MYCOVARIANT_PR_CHECKLIST.md](second-level/MYCOVARIANT_PR_CHECKLIST.md)
 
 ## Suggested Agent Workflow
 
@@ -31,8 +31,8 @@ Mycovariants are drafted abilities that either:
 
 ### Add a new Mycovariant
 1. Add or confirm the ID in `FungusToast.Core/Mycovariants/MycovariantIds.cs`.
-2. Name it using `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`, starting with 5 candidate names before finalizing.
-3. Write concise description and optional flavor text using `MYCOVARIANT_AUTHORING_STYLE.md`.
+2. Name it using `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`, starting with 5 candidate names before finalizing.
+3. Write concise description and optional flavor text using `second-level/MYCOVARIANT_AUTHORING_STYLE.md`.
 4. Generate a unique icon keyed off the Mycovariant's `IconId`. It can be temporary and replaced later, but it should be distinct from every other Mycovariant.
 5. Define the Mycovariant in the correct category factory and wire any gameplay behavior through the appropriate processors, observers, and Unity draft hooks.
 
@@ -53,3 +53,4 @@ Mycovariants are drafted abilities that either:
 - Keep Mycovariant logic deterministic and Unity-free in Core.
 - Treat the Mycovariant definition plus its `IconId` as the source of truth for card metadata.
 - Reuse Adaptation guidance for icon distinctness and centralized art lookup patterns where helpful, but do not assume the same runtime flow.
+untime flow.

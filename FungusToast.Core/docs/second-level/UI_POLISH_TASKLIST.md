@@ -1,7 +1,7 @@
 # UI Polish Task List
 
 Purpose: persistent tracker for UX/style-guide implementation across chat sessions.
-Source of truth for style decisions: [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md).
+Source of truth for style decisions: [../UI_STYLE_GUIDE.md](../UI_STYLE_GUIDE.md).
 
 ## Current Status
 

@@ -162,5 +162,5 @@ When a strategy is too strong, ask in this order:
 - `SIMULATION_HELPER.md`
 - `AI_STRATEGY_AUTHORING.md`
 - `NEW_MUTATION_HELPER.md`
-- `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`
+- `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`
 - `FungusToast.Analytics/README.md`

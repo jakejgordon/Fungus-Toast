@@ -1,6 +1,6 @@
 # Fungus Toast – Technical Overview
 
-> **📚 Related Documentation**: For practical simulation commands and debugging, see [SIMULATION_HELPER.md](SIMULATION_HELPER.md). For UI theming and polish standards, see [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md). For Mycovariant writing standards, see [MYCOVARIANT_AUTHORING_STYLE.md](MYCOVARIANT_AUTHORING_STYLE.md). For Mycovariant implementation flow, see [MYCOVARIANT_TECHNICAL_FLOW.md](MYCOVARIANT_TECHNICAL_FLOW.md). For Mycovariant review criteria, see [MYCOVARIANT_PR_CHECKLIST.md](MYCOVARIANT_PR_CHECKLIST.md).
+> **📚 Related Documentation**: For practical simulation commands and debugging, see [SIMULATION_HELPER.md](SIMULATION_HELPER.md). For UI theming and polish standards, see [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md). For Mycovariant writing standards, see [second-level/MYCOVARIANT_AUTHORING_STYLE.md](second-level/MYCOVARIANT_AUTHORING_STYLE.md). For Mycovariant implementation flow, see [second-level/MYCOVARIANT_TECHNICAL_FLOW.md](second-level/MYCOVARIANT_TECHNICAL_FLOW.md). For Mycovariant review criteria, see [second-level/MYCOVARIANT_PR_CHECKLIST.md](second-level/MYCOVARIANT_PR_CHECKLIST.md).
 
 ## Project Description
 
