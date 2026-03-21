@@ -74,7 +74,10 @@ namespace FungusToast.Simulation.Analysis
             int boardHeight = GameBalance.BoardHeight,
             bool enableKeyboardInterrupt = true,
             int baseSeed = 0,
-            SlotAssignmentPolicy slotAssignmentPolicy = SlotAssignmentPolicy.Fixed)
+            SlotAssignmentPolicy slotAssignmentPolicy = SlotAssignmentPolicy.Fixed,
+            bool enableNutrientPatches = true,
+            bool enableMycovariantDraft = true,
+            IReadOnlyList<(int x, int y)>? startingPositionOverride = null)
         {
             var results = new List<GameResult>();
             var startTime = DateTime.UtcNow;
@@ -112,7 +115,10 @@ namespace FungusToast.Simulation.Analysis
                     context: context,
                     boardWidth: boardWidth,
                     boardHeight: boardHeight,
-                    shuffleStartingSpores: slotAssignmentPolicy != SlotAssignmentPolicy.Fixed
+                    shuffleStartingSpores: slotAssignmentPolicy != SlotAssignmentPolicy.Fixed,
+                    enableNutrientPatches: enableNutrientPatches,
+                    enableMycovariantDraft: enableMycovariantDraft,
+                    startingPositionOverride: startingPositionOverride
                 );
 
                 results.Add(result);

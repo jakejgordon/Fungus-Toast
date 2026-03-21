@@ -26,11 +26,14 @@ namespace FungusToast.Simulation.GameSimulation
             DateTime? startTime = null,
             int boardWidth = GameBalance.BoardWidth,
             int boardHeight = GameBalance.BoardHeight,
-            bool shuffleStartingSpores = true
+            bool shuffleStartingSpores = true,
+            bool enableNutrientPatches = true,
+            bool enableMycovariantDraft = true,
+            IReadOnlyList<(int x, int y)>? startingPositionOverride = null
         )
         {
             var rng = new Random(seed);
-            var (players, board) = InitializeGame(strategies, rng, context, boardWidth, boardHeight, shuffleStartingSpores);
+            var (players, board) = InitializeGame(strategies, rng, context, boardWidth, boardHeight, shuffleStartingSpores, enableNutrientPatches, startingPositionOverride);
             var allMutations = MutationRegistry.GetAll().ToList();
             var allMycovariants = MycovariantRepository.All;
             var mycovariantPoolManager = new MycovariantPoolManager();
@@ -60,7 +63,7 @@ namespace FungusToast.Simulation.GameSimulation
             while (board.CurrentRound < GameBalance.MaxNumberOfRoundsBeforeGameEndTrigger && !gameEnded)
             {
                 // Mycovariant Draft Phase
-                if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(board.CurrentRound))
+                if (enableMycovariantDraft && MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(board.CurrentRound))
                 {
                     mycovariantPoolManager.InitializePool(allMycovariants, rng);
                     MycovariantDraftManager.RunDraft(players, mycovariantPoolManager, board, rng, simTracking);
@@ -181,7 +184,7 @@ namespace FungusToast.Simulation.GameSimulation
 
 
 
-        private static (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng, ISimulationObserver observer, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight, bool shuffleStartingSpores = true)
+        private static (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng, ISimulationObserver observer, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight, bool shuffleStartingSpores = true, bool enableNutrientPatches = true, IReadOnlyList<(int x, int y)>? startingPositionOverride = null)
         {
             int playerCount = strategies.Count;
             var players = new List<Player>();
@@ -208,8 +211,11 @@ namespace FungusToast.Simulation.GameSimulation
                 board.Players.Add(player);
 
             // Use the shared starting spore placement utility
-            StartingSporeUtility.PlaceStartingSpores(board, players, rng, shuffleStartingSpores);
-            NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(board, players, rng, observer);
+            StartingSporeUtility.PlaceStartingSpores(board, players, rng, shuffleStartingSpores, startingPositionOverride);
+            if (enableNutrientPatches)
+            {
+                NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(board, players, rng, observer);
+            }
             AdaptationEffectProcessor.OnStartingSporesEstablished(board, players);
 
             return (players, board);

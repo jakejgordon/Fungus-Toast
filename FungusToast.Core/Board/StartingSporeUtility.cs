@@ -113,7 +113,7 @@ namespace FungusToast.Core.Board
         /// Returns the chosen starting positions for a board size and player count.
         /// Positions are ordered by player slot.
         /// </summary>
-        public static IReadOnlyList<(int x, int y)> GetStartingPositions(int boardWidth, int boardHeight, int playerCount)
+        public static IReadOnlyList<(int x, int y)> GetStartingPositions(int boardWidth, int boardHeight, int playerCount, IReadOnlyList<(int x, int y)>? overridePositions = null)
         {
             if (boardWidth <= 0) throw new ArgumentOutOfRangeException(nameof(boardWidth));
             if (boardHeight <= 0) throw new ArgumentOutOfRangeException(nameof(boardHeight));
@@ -121,6 +121,13 @@ namespace FungusToast.Core.Board
             if (playerCount == 1)
             {
                 return new[] { (boardWidth / 2, boardHeight / 2) };
+            }
+
+            if (overridePositions is { Count: > 0 })
+            {
+                return NormalizeOverridePositions(boardWidth, boardHeight, playerCount, overridePositions)
+                    .Select(p => (p.X, p.Y))
+                    .ToArray();
             }
 
             var key = (Width: boardWidth, Height: boardHeight, Players: playerCount);
@@ -139,7 +146,7 @@ namespace FungusToast.Core.Board
                 .ToArray();
         }
 
-        public static StartingPositionAnalysis GetStartingPositionAnalysis(int boardWidth, int boardHeight, int playerCount)
+        public static StartingPositionAnalysis GetStartingPositionAnalysis(int boardWidth, int boardHeight, int playerCount, IReadOnlyList<(int x, int y)>? overridePositions = null)
         {
             if (boardWidth <= 0) throw new ArgumentOutOfRangeException(nameof(boardWidth));
             if (boardHeight <= 0) throw new ArgumentOutOfRangeException(nameof(boardHeight));
@@ -150,6 +157,12 @@ namespace FungusToast.Core.Board
                 {
                     new StartingPositionAnalysisEntry(0, boardWidth / 2, boardHeight / 2, boardWidth * boardHeight, boardWidth * boardHeight, 0, 1)
                 });
+            }
+
+            if (overridePositions is { Count: > 0 })
+            {
+                var normalizedOverride = NormalizeOverridePositions(boardWidth, boardHeight, playerCount, overridePositions);
+                return BuildAnalysis(boardWidth, boardHeight, 0, normalizedOverride);
             }
 
             var key = (Width: boardWidth, Height: boardHeight, Players: playerCount);
@@ -202,9 +215,9 @@ namespace FungusToast.Core.Board
         /// <summary>
         /// Places starting spores for all players using the shared layout.
         /// </summary>
-        public static void PlaceStartingSpores(GameBoard board, List<Player> players, Random rng, bool shufflePlayerOrder = true)
+        public static void PlaceStartingSpores(GameBoard board, List<Player> players, Random rng, bool shufflePlayerOrder = true, IReadOnlyList<(int x, int y)>? overridePositions = null)
         {
-            var positions = GetStartingPositions(board.Width, board.Height, players.Count);
+            var positions = GetStartingPositions(board.Width, board.Height, players.Count, overridePositions);
 
             var playerIndices = Enumerable.Range(0, players.Count).ToList();
             if (shufflePlayerOrder)
@@ -293,20 +306,38 @@ namespace FungusToast.Core.Board
                 return false;
             }
 
-            positions = referencePositions
-                .Select(p =>
-                {
-                    int x = ScaleCoordinate(p.x, ReferenceBoardSize, boardWidth);
-                    int y = ScaleCoordinate(p.y, ReferenceBoardSize, boardHeight);
-                    return (x, y);
-                })
-                .ToArray();
-
-            positions = ResolveDuplicatePositions(positions.Select(p => new StartPosition(p.x, p.y)).ToList(), boardWidth, boardHeight)
+            positions = ScaleReferencePositions(referencePositions, boardWidth, boardHeight)
                 .Select(p => (p.X, p.Y))
                 .ToArray();
 
             return true;
+        }
+
+        private static IReadOnlyList<StartPosition> NormalizeOverridePositions(int boardWidth, int boardHeight, int playerCount, IReadOnlyList<(int x, int y)> overridePositions)
+        {
+            if (overridePositions.Count != playerCount)
+            {
+                throw new ArgumentException($"Override positions count ({overridePositions.Count}) must match player count ({playerCount}).", nameof(overridePositions));
+            }
+
+            var normalized = overridePositions
+                .Select(p => new StartPosition(
+                    Math.Clamp(p.x, 0, boardWidth - 1),
+                    Math.Clamp(p.y, 0, boardHeight - 1)))
+                .ToList();
+
+            return ResolveDuplicatePositions(normalized, boardWidth, boardHeight);
+        }
+
+        private static IReadOnlyList<StartPosition> ScaleReferencePositions(IReadOnlyList<(int x, int y)> referencePositions, int boardWidth, int boardHeight)
+        {
+            var scaled = referencePositions
+                .Select(p => new StartPosition(
+                    ScaleCoordinate(p.x, ReferenceBoardSize, boardWidth),
+                    ScaleCoordinate(p.y, ReferenceBoardSize, boardHeight)))
+                .ToList();
+
+            return ResolveDuplicatePositions(scaled, boardWidth, boardHeight);
         }
 
         private static int ScaleCoordinate(int coordinate, int referenceBoardSize, int targetBoardSize)

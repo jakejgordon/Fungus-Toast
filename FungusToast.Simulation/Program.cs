@@ -81,7 +81,10 @@ namespace FungusToast.Simulation
                 strategySet: config.StrategySet,
                 slotAssignmentPolicy: config.SlotAssignmentPolicy,
                 runMetadata: runMetadata,
-                exportParquet: config.ExportParquet);
+                exportParquet: config.ExportParquet,
+                enableNutrientPatches: config.EnableNutrientPatches,
+                enableMycovariantDraft: config.EnableMycovariantDraft,
+                startingPositionOverride: config.StartingPositionOverride);
         }
 
         private static void RunStratifiedBatch(SimulationConfig config, string experimentId)
@@ -151,7 +154,10 @@ namespace FungusToast.Simulation
                             strategySet: strategySet,
                             slotAssignmentPolicy: config.SlotAssignmentPolicy,
                             runMetadata: runMetadata,
-                            exportParquet: config.ExportParquet);
+                            exportParquet: config.ExportParquet,
+                            enableNutrientPatches: config.EnableNutrientPatches,
+                            enableMycovariantDraft: config.EnableMycovariantDraft,
+                            startingPositionOverride: config.StartingPositionOverride);
                     }
                 }
             }
@@ -286,6 +292,9 @@ namespace FungusToast.Simulation
                 SlotAssignmentPolicy = SlotAssignmentPolicy.Fixed,
                 StrategySelectionPolicy = StrategySelectionPolicy.CoverageBalanced,
                 ExportParquet = true,
+                EnableNutrientPatches = true,
+                EnableMycovariantDraft = true,
+                StartingPositionOverride = null,
                 ExperimentId = "",
                 PlayerCounts = null,
                 BoardSizes = null,
@@ -551,6 +560,30 @@ namespace FungusToast.Simulation
                     case "--no-parquet":
                         config.ExportParquet = false;
                         break;
+                    case "--no-nutrient-patches":
+                    case "--disable-nutrient-patches":
+                        config.EnableNutrientPatches = false;
+                        break;
+                    case "--no-mycovariants":
+                    case "--disable-mycovariants":
+                    case "--no-mycovariant-draft":
+                        config.EnableMycovariantDraft = false;
+                        break;
+                    case "--starting-positions":
+                        if (i + 1 < args.Length)
+                        {
+                            var parsed = ParseStartingPositions(args[i + 1]);
+                            if (parsed.Count == 0)
+                            {
+                                Console.WriteLine($"Invalid --starting-positions value: {args[i + 1]}");
+                                Console.WriteLine("Expected format: x1:y1,x2:y2,...");
+                                return null;
+                            }
+
+                            config.StartingPositionOverride = parsed;
+                            i++;
+                        }
+                        break;
                     case "--rotate-slots":
                         config.SlotAssignmentPolicy = SlotAssignmentPolicy.RotateByGame;
                         break;
@@ -575,6 +608,12 @@ namespace FungusToast.Simulation
                 }
 
                 config.PlayerCounts = capped;
+            }
+
+            if (config.StartingPositionOverride is { Count: > 0 } && config.StartingPositionOverride.Count != config.NumberOfPlayers)
+            {
+                Console.WriteLine($"--starting-positions count ({config.StartingPositionOverride.Count}) must match player count ({config.NumberOfPlayers}).");
+                return null;
             }
 
             if (config.ExplicitStrategyNames is { Count: > 0 })
@@ -660,6 +699,9 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --non-interactive        Alias for --no-keyboard");
             Console.WriteLine("  --parquet                Export canonical Parquet datasets (default: enabled)");
             Console.WriteLine("  --no-parquet             Disable Parquet export");
+            Console.WriteLine("  --no-nutrient-patches    Disable nutrient patch placement");
+            Console.WriteLine("  --no-mycovariants        Disable mycovariant drafting");
+            Console.WriteLine("  --starting-positions     Override start positions as x1:y1,x2:y2,...");
             Console.WriteLine("  --rotate-slots           Rotate strategy-to-player slot assignment each game");
             Console.WriteLine("  --fixed-slots            Keep strategy-to-player slot assignment fixed (default)");
             Console.WriteLine("  --help                   Show this help message");
@@ -683,6 +725,8 @@ namespace FungusToast.Simulation
             Console.WriteLine("  dotnet run -w 200 -p 4              # Run 4 players on 200x100 board");
             Console.WriteLine("  dotnet run -o my_test.txt           # Run with custom output filename");
             Console.WriteLine("  dotnet run --rotate-slots --games 100 --no-keyboard  # Rotate slot assignment per game");
+            Console.WriteLine("  dotnet run --games 100 --fixed-slots --no-nutrient-patches --no-mycovariants --no-keyboard");
+            Console.WriteLine("  dotnet run --games 20 --starting-positions 136:95,92:126,37:123,24:65,68:34,123:37 --no-keyboard");
             Console.WriteLine("  dotnet run --games 1 --no-keyboard  # Run non-interactive (no Q/Escape listener)");
         }
 
@@ -699,6 +743,9 @@ namespace FungusToast.Simulation
             public SlotAssignmentPolicy SlotAssignmentPolicy { get; set; }
             public StrategySelectionPolicy StrategySelectionPolicy { get; set; }
             public bool ExportParquet { get; set; }
+            public bool EnableNutrientPatches { get; set; }
+            public bool EnableMycovariantDraft { get; set; }
+            public List<(int x, int y)>? StartingPositionOverride { get; set; }
             public string ExperimentId { get; set; } = "";
             public List<int>? PlayerCounts { get; set; }
             public List<BoardSize>? BoardSizes { get; set; }
@@ -745,6 +792,25 @@ namespace FungusToast.Simulation
             }
 
             return result.Distinct().ToList();
+        }
+
+        private static List<(int x, int y)> ParseStartingPositions(string csv)
+        {
+            var result = new List<(int x, int y)>();
+            var parts = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            foreach (var part in parts)
+            {
+                var dims = part.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (dims.Length != 2 || !int.TryParse(dims[0], out var x) || !int.TryParse(dims[1], out var y))
+                {
+                    return new List<(int x, int y)>();
+                }
+
+                result.Add((x, y));
+            }
+
+            return result;
         }
 
         private static List<BoardSize> ParseBoardSizes(string csv)

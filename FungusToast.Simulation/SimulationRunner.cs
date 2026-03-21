@@ -20,7 +20,10 @@ namespace FungusToast.Simulation
             StrategySetEnum strategySet = StrategySetEnum.Testing,
             SlotAssignmentPolicy slotAssignmentPolicy = SlotAssignmentPolicy.Fixed,
             SimulationRunMetadata? runMetadata = null,
-            bool exportParquet = true)
+            bool exportParquet = true,
+            bool enableNutrientPatches = true,
+            bool enableMycovariantDraft = true,
+            IReadOnlyList<(int x, int y)>? startingPositionOverride = null)
         {
             // Use TestingStrategies as default if none provided
             strategies ??= AIRoster.TestingStrategies;
@@ -28,7 +31,7 @@ namespace FungusToast.Simulation
             var effectiveSeed = baseSeed ?? 0;
 
             Console.WriteLine($"Running simulation with {strategies.Count} players for {numberOfGames} games each...\n");
-            Console.WriteLine($"Strategy Set: {strategySet} | Base Seed: {effectiveSeed} | Slot Policy: {slotAssignmentPolicy}\n");
+            Console.WriteLine($"Strategy Set: {strategySet} | Base Seed: {effectiveSeed} | Slot Policy: {slotAssignmentPolicy} | Nutrients: {(enableNutrientPatches ? "On" : "Off")} | Mycovariants: {(enableMycovariantDraft ? "On" : "Off")} | StartOverride: {(startingPositionOverride is { Count: > 0 } ? "On" : "Off")}\n");
 
             // Run simulation
             var results = MatchupRunner.RunMatchups(
@@ -38,7 +41,10 @@ namespace FungusToast.Simulation
                 boardHeight: boardHeight,
                 enableKeyboardInterrupt: enableKeyboardInterrupt,
                 baseSeed: effectiveSeed,
-                slotAssignmentPolicy: slotAssignmentPolicy);
+                slotAssignmentPolicy: slotAssignmentPolicy,
+                enableNutrientPatches: enableNutrientPatches,
+                enableMycovariantDraft: enableMycovariantDraft,
+                startingPositionOverride: startingPositionOverride);
 
             PrintParityInvariantSummary(results.GameResults);
 
