@@ -16,6 +16,40 @@ namespace FungusToast.Core.Board
         private static readonly Dictionary<(int Width, int Height, int Players), (int x, int y)[]> CachedStartingPositions = new();
         private static readonly Dictionary<(int Width, int Height, int Players), StartingPositionAnalysis> CachedAnalysis = new();
         private static readonly object CacheLock = new();
+        private const int ReferenceBoardSize = 160;
+        private static readonly Dictionary<int, (int x, int y)[]> PrecomputedReferenceLayouts = new()
+        {
+            [6] = new[]
+            {
+                (136, 95),
+                (92, 126),
+                (37, 123),
+                (24, 65),
+                (68, 34),
+                (123, 37),
+            },
+            [7] = new[]
+            {
+                (139, 94),
+                (106, 135),
+                (54, 135),
+                (21, 94),
+                (32, 42),
+                (80, 19),
+                (128, 42),
+            },
+            [8] = new[]
+            {
+                (142, 106),
+                (106, 142),
+                (54, 142),
+                (18, 106),
+                (18, 54),
+                (54, 18),
+                (106, 18),
+                (142, 54),
+            },
+        };
 
         private struct StartPosition
         {
@@ -119,6 +153,25 @@ namespace FungusToast.Core.Board
             }
 
             var key = (Width: boardWidth, Height: boardHeight, Players: playerCount);
+            if (TryGetPrecomputedPositions(boardWidth, boardHeight, playerCount, out var precomputedPositions))
+            {
+                var precomputedAnalysis = BuildAnalysis(boardWidth, boardHeight, 0, precomputedPositions.Select(p => new StartPosition(p.x, p.y)).ToArray());
+                lock (CacheLock)
+                {
+                    if (!CachedAnalysis.ContainsKey(key))
+                    {
+                        CachedAnalysis[key] = precomputedAnalysis;
+                    }
+
+                    if (!CachedStartingPositions.ContainsKey(key))
+                    {
+                        CachedStartingPositions[key] = precomputedPositions;
+                    }
+
+                    return CachedAnalysis[key];
+                }
+            }
+
             lock (CacheLock)
             {
                 if (CachedAnalysis.TryGetValue(key, out var cached))
@@ -199,6 +252,24 @@ namespace FungusToast.Core.Board
                 }
             }
 
+            // Square 6-player boards can need per-opposite-pair radii to avoid one obviously favored arc.
+            if (playerCount == 6)
+            {
+                for (double radiusA = radiusMin; radiusA <= radiusMax + 0.0001; radiusA += radiusStep)
+                {
+                    for (double radiusB = radiusMin; radiusB <= radiusMax + 0.0001; radiusB += radiusStep)
+                    {
+                        for (double radiusC = radiusMin; radiusC <= radiusMax + 0.0001; radiusC += radiusStep)
+                        {
+                            foreach (double angleOffset in angleOffsets)
+                            {
+                                candidates.Add(BuildCandidateSixPlayer(boardWidth, boardHeight, radiusA, radiusB, radiusC, angleOffset));
+                            }
+                        }
+                    }
+                }
+            }
+
             return candidates
                 .OrderBy(c => c.Score)
                 .ThenBy(c => ComputeMinimumWallDistance(c.Positions, boardWidth, boardHeight))
@@ -214,9 +285,52 @@ namespace FungusToast.Core.Board
             }
         }
 
+        private static bool TryGetPrecomputedPositions(int boardWidth, int boardHeight, int playerCount, out (int x, int y)[] positions)
+        {
+            if (!PrecomputedReferenceLayouts.TryGetValue(playerCount, out var referencePositions))
+            {
+                positions = Array.Empty<(int x, int y)>();
+                return false;
+            }
+
+            positions = referencePositions
+                .Select(p =>
+                {
+                    int x = ScaleCoordinate(p.x, ReferenceBoardSize, boardWidth);
+                    int y = ScaleCoordinate(p.y, ReferenceBoardSize, boardHeight);
+                    return (x, y);
+                })
+                .ToArray();
+
+            positions = ResolveDuplicatePositions(positions.Select(p => new StartPosition(p.x, p.y)).ToList(), boardWidth, boardHeight)
+                .Select(p => (p.X, p.Y))
+                .ToArray();
+
+            return true;
+        }
+
+        private static int ScaleCoordinate(int coordinate, int referenceBoardSize, int targetBoardSize)
+        {
+            if (targetBoardSize <= 1)
+            {
+                return 0;
+            }
+
+            double referenceMax = Math.Max(1, referenceBoardSize - 1);
+            double targetMax = targetBoardSize - 1;
+            return Math.Clamp((int)Math.Round((coordinate / referenceMax) * targetMax), 0, targetBoardSize - 1);
+        }
+
         private static LayoutCandidate BuildCandidate(int boardWidth, int boardHeight, int playerCount, double cardinalRadiusFactor, double diagonalRadiusFactor, double angleOffset)
         {
             var positions = GenerateCircularPositions(boardWidth, boardHeight, playerCount, cardinalRadiusFactor, diagonalRadiusFactor, angleOffset);
+            double score = ScoreLayout(boardWidth, boardHeight, positions);
+            return new LayoutCandidate(score, positions);
+        }
+
+        private static LayoutCandidate BuildCandidateSixPlayer(int boardWidth, int boardHeight, double radiusA, double radiusB, double radiusC, double angleOffset)
+        {
+            var positions = GenerateSixPlayerPositions(boardWidth, boardHeight, radiusA, radiusB, radiusC, angleOffset);
             double score = ScoreLayout(boardWidth, boardHeight, positions);
             return new LayoutCandidate(score, positions);
         }
@@ -234,6 +348,26 @@ namespace FungusToast.Core.Board
                 bool isCardinal = IsNearCardinal(angle);
                 double radius = baseRadius * (isCardinal ? cardinalRadiusFactor : diagonalRadiusFactor);
 
+                int x = Math.Clamp((int)Math.Round(centerX + radius * Math.Cos(angle)), 0, boardWidth - 1);
+                int y = Math.Clamp((int)Math.Round(centerY + radius * Math.Sin(angle)), 0, boardHeight - 1);
+                positions.Add(new StartPosition(x, y));
+            }
+
+            return ResolveDuplicatePositions(positions, boardWidth, boardHeight);
+        }
+
+        private static List<StartPosition> GenerateSixPlayerPositions(int boardWidth, int boardHeight, double radiusA, double radiusB, double radiusC, double angleOffset)
+        {
+            double baseRadius = Math.Min(boardWidth, boardHeight);
+            double centerX = boardWidth / 2.0;
+            double centerY = boardHeight / 2.0;
+            var radiusFactors = new[] { radiusA, radiusB, radiusC, radiusA, radiusB, radiusC };
+            var positions = new List<StartPosition>(6);
+
+            for (int i = 0; i < 6; i++)
+            {
+                double angle = angleOffset + i * Math.PI * 2.0 / 6.0;
+                double radius = baseRadius * radiusFactors[i];
                 int x = Math.Clamp((int)Math.Round(centerX + radius * Math.Cos(angle)), 0, boardWidth - 1);
                 int y = Math.Clamp((int)Math.Round(centerY + radius * Math.Sin(angle)), 0, boardHeight - 1);
                 positions.Add(new StartPosition(x, y));

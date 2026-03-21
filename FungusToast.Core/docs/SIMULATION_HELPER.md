@@ -352,6 +352,17 @@ True-fixed identical-AI validation:
 
 Compared to the previous layout, this reduced the observed slot-win range from `15` (`22..7`) to `7-8` (`16..9` and `16..8`) in the 160x160 / 8-player square tests.
 
+### Precomputed fast-path layouts
+
+To avoid expensive startup-time layout searches during normal gameplay, the established improved layouts for `6`, `7`, and `8` players are now stored as precomputed reference layouts derived from `160x160` tuning and scaled to the active board size at runtime.
+
+Current precomputed references:
+- 6 players: `(136,95)`, `(92,126)`, `(37,123)`, `(24,65)`, `(68,34)`, `(123,37)`
+- 7 players: `(139,94)`, `(106,135)`, `(54,135)`, `(21,94)`, `(32,42)`, `(80,19)`, `(128,42)`
+- 8 players: `(142,106)`, `(106,142)`, `(54,142)`, `(18,106)`, `(18,54)`, `(54,18)`, `(106,18)`, `(142,54)`
+
+The search-based fallback remains in place for other player counts and for future tuning passes.
+
 ## Repeatability Notes
 
 Current simulation entrypoints are mostly seed-driven:
