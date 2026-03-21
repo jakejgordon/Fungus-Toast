@@ -234,6 +234,8 @@ namespace FungusToast.Unity.Grid
                     durationScale: 1f,
                     allowOverlayFallback: false)
                 : null;
+        public void PlayNutrientPatchConsumptionAnimationAsync(int nutrientTileId, int destinationTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
+            => StartCoroutine(PlayNutrientPatchConsumptionAnimation(nutrientTileId, destinationTileId, patchType, rewardType, rewardAmount));
         public IEnumerator PlayMycotoxicLashAnimation(IReadOnlyList<int> tileIds)
         {
             if (board == null || tileIds == null || tileIds.Count == 0)
@@ -445,7 +447,6 @@ namespace FungusToast.Unity.Grid
             float textDuration = UIEffectConstants.NutrientPatchToastDurationSeconds;
             float animationDuration = Mathf.Max(duration, textDuration);
 
-            BeginAnimation();
             try
             {
                 float elapsed = 0f;
@@ -499,8 +500,6 @@ namespace FungusToast.Unity.Grid
                 {
                     Destroy(floatingText.gameObject);
                 }
-
-                EndAnimation();
             }
         }
 

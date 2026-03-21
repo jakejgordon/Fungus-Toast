@@ -248,7 +248,7 @@ namespace FungusToast.Unity
                     yield return gridVisualizer.PlayMycotoxicLashAnimation(specialEvent.AffectedTileIds.Distinct().ToList());
                     break;
                 case SpecialBoardEventKind.NutrientPatchConsumed:
-                    yield return gridVisualizer.PlayNutrientPatchConsumptionAnimation(
+                    gridVisualizer.PlayNutrientPatchConsumptionAnimationAsync(
                         specialEvent.SourceTileId,
                         specialEvent.DestinationTileId,
                         specialEvent.NutrientPatchType ?? NutrientPatchType.Adaptogen,
