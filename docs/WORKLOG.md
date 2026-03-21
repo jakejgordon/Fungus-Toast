@@ -59,7 +59,8 @@ Use the following minimal workflow to preserve working memory across sessions:
 4. ✅ Commit the new simulation/override plumbing.
 5. ✅ Run a clean 6-player candidate bakeoff using explicit starting-position overrides.
 6. ✅ Promote the best validated 6-player layout into the precomputed fast-path once it actually holds up.
-7. ⏳ Start clean 5-player validation and identify the fairest starting layout.
+7. ✅ Start clean 5-player validation and identify the fairest starting layout.
+8. ⏳ Commit the selected 5-player layout and record the validation results.
 
 ## Current Handoff
 
@@ -97,6 +98,15 @@ Use the following minimal workflow to preserve working memory across sessions:
 - **Evidence:** Candidate 6 clean 100-game result on `160x160` with same AI in all slots and fixed positions was `17,12,19,16,18,18` (range `7`). Candidate 15 was `22,12,19,13,20,14` (range `10`). Candidate 18 was `21,16,23,11,16,13` (range `12`).
 - **Open questions:** 5-player validation has not been documented yet.
 - **Next steps:** Start clean 5-player validation, record the current auto-selected 5-player baseline, and compare candidates if needed.
+
+### 2026-03-21 (5-player decision)
+- **Focus:** Finish 5-player starting-position selection.
+- **Changed:** Accepted candidate 11 as the selected 5-player layout and added it to the precomputed fast-path.
+- **Learned:** The previous 5-player auto-selected layout was too biased. A tighter 5-player ring performed substantially better under clean validation.
+- **Evidence:** Previous auto-selected layout produced `22,15,27,14,22` (range `13`). Selected candidate 11 produced `22,18,22,16,22` (range `6`) on `160x160` with same AI in all slots, fixed positions, nutrients off, and mycovariants off.
+- **Selected layout:** P0 `(114,104)`, P1 `(67,120)`, P2 `(38,80)`, P3 `(67,40)`, P4 `(114,56)`.
+- **Open questions:** Remaining player counts below 5 have not been validated in this pass.
+- **Next steps:** Commit/push the selected 5-player layout and continue only if additional player-count tuning is desired.
 
 ## Session Checkpoint Template
 
