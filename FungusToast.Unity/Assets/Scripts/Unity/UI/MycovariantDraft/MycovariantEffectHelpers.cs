@@ -297,7 +297,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         foreach (var cell in selectedCells)
                         {
                             selectedTileIds.Add(cell.TileId);
-                            cell.MakeResistant();
+                            cell.MakeResistant("Mycelial Bastion");
                             MycovariantEffectProcessor.OnResistantCellPlaced(
                                 board,
                                 player.PlayerId,

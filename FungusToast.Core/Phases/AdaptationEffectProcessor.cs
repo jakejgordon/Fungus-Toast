@@ -158,7 +158,7 @@ namespace FungusToast.Core.Phases
                 return;
             }
 
-            cell.MakeResistant();
+            cell.MakeResistant(GrowthSource.CrustalCallus);
             board.OnResistanceAppliedBatch(player.PlayerId, GrowthSource.CrustalCallus, new List<int> { tileId });
         }
 
@@ -185,7 +185,7 @@ namespace FungusToast.Core.Phases
                 return;
             }
 
-            cell.MakeResistant();
+            cell.MakeResistant(GrowthSource.AegisHyphae);
             board.CurrentRoundContext.IncrementEffectCount(player.PlayerId, AegisHyphaeCounterKey);
             board.OnResistanceAppliedBatch(player.PlayerId, GrowthSource.AegisHyphae, new List<int> { tileId });
         }

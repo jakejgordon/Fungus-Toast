@@ -68,6 +68,11 @@ namespace FungusToast.Core.Board
         /// </summary>
         public bool IsResistant { get; private set; } = false;
 
+        /// <summary>
+        /// The mutation, mycovariant, adaptation, or growth source that made this cell resistant.
+        /// </summary>
+        public string? ResistanceSource { get; private set; }
+
         public FungalCell() { }
 
         public FungalCell(int? ownerPlayerId, int tileId, GrowthSource source, int? lastOwnerPlayerId = null)
@@ -125,12 +130,16 @@ namespace FungusToast.Core.Board
             // Clear CauseOfDeath when becoming alive - keep LastOwnerPlayerId as historical data
             CauseOfDeath = null;
             SourceOfGrowth = source;
+            IsResistant = false;
+            ResistanceSource = null;
         }
 
         private void SetDead(DeathReason reason)
         {
             CellType = FungalCellType.Dead;
             CauseOfDeath = reason;
+            IsResistant = false;
+            ResistanceSource = null;
             // For natural deaths (same owner), set LastOwnerPlayerId to track who lost the cell
             LastOwnerPlayerId = OwnerPlayerId;
             // Keep SourceOfGrowth for historical reference
@@ -142,6 +151,8 @@ namespace FungusToast.Core.Board
             ToxinExpirationAge = toxinLifespan; // This is what determines expiration
             GrowthCycleAge = 0; // Reset growth cycle age when becoming a toxin
             SourceOfGrowth = growthSource; // Set the provided growth source or null
+            IsResistant = false;
+            ResistanceSource = null;
             // Don't modify ownership tracking here
         }
 
@@ -163,7 +174,20 @@ namespace FungusToast.Core.Board
         /// </summary>
         public void MakeResistant()
         {
+            MakeResistant((string?)null);
+        }
+
+        public void MakeResistant(GrowthSource source)
+        {
+            MakeResistant(GrowthSourceDisplayNames.GetDisplayName(source));
+        }
+
+        public void MakeResistant(string? resistanceSource)
+        {
             IsResistant = true;
+            ResistanceSource = string.IsNullOrWhiteSpace(resistanceSource)
+                ? SourceOfGrowth.HasValue ? GrowthSourceDisplayNames.GetDisplayName(SourceOfGrowth.Value) : null
+                : resistanceSource;
         }
 
         /// <summary>
@@ -194,7 +218,7 @@ namespace FungusToast.Core.Board
 
             if (IsResistant)
             {
-                clone.MakeResistant();
+                clone.MakeResistant(ResistanceSource);
             }
 
             return clone;

@@ -155,7 +155,7 @@ namespace FungusToast.Core.Phases
                 // Make selected cells resistant
                 foreach (var cell in cellsToFortifyList)
                 {
-                    cell.MakeResistant();
+                    cell.MakeResistant(GrowthSource.ChitinFortification);
                 }
 
                 // Track the effect for simulation

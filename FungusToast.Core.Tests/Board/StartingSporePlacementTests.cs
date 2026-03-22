@@ -33,6 +33,7 @@ public class StartingSporePlacementTests
             Assert.Equal(playerId, fungalCell!.OwnerPlayerId);
             Assert.Equal(GrowthSource.InitialSpore, fungalCell.SourceOfGrowth);
             Assert.True(fungalCell.IsResistant, $"Expected starting spore for player {playerId} at ({x}, {y}) to be resistant.");
+            Assert.Equal("Initial Spore", fungalCell.ResistanceSource);
 
             int expectedTileId = y * board.Width + x;
             Assert.Equal(expectedTileId, players[playerId].StartingTileId);

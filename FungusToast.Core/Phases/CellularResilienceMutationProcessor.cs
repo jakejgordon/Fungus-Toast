@@ -112,7 +112,7 @@ namespace FungusToast.Core.Phases
                 var tile = board.GetTileById(tileId);
                 if (tile?.FungalCell != null)
                 {
-                    tile.FungalCell.MakeResistant();
+                    tile.FungalCell.MakeResistant("Hypersystemic Regeneration");
                     observer.RecordHypersystemicRegenerationResistance(player.PlayerId);
                 }
             }

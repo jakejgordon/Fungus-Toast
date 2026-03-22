@@ -364,7 +364,7 @@ namespace FungusToast.Unity.UI
         {
             if (cell.SourceOfGrowth.HasValue)
                 sb.AppendLine(EmphasizedLine("Source",
-                    GrowthSourceName(cell.SourceOfGrowth.Value),
+                    GrowthSourceDisplayNames.GetDisplayName(cell.SourceOfGrowth.Value),
                     UIStyleTokens.State.Info));
         }
 
@@ -417,8 +417,16 @@ namespace FungusToast.Unity.UI
         private void AppendResistance(FungalCell cell)
         {
             if (cell.IsResistant)
+            {
                 sb.AppendLine(DetailLine("Resistance", "Active",
                     UIStyleTokens.Text.Secondary, UIStyleTokens.Accent.Spore));
+
+                if (!string.IsNullOrWhiteSpace(cell.ResistanceSource))
+                {
+                    sb.AppendLine(DetailLine("Resistance Source", cell.ResistanceSource,
+                        UIStyleTokens.Text.Secondary, UIStyleTokens.State.Info));
+                }
+            }
         }
 
         private void AppendTacticalInfo(FungalCell cell, GameBoard board)
@@ -688,31 +696,5 @@ namespace FungusToast.Unity.UI
             _                                     => r.ToString()
         };
 
-        private static string GrowthSourceName(GrowthSource s) => s switch
-        {
-            GrowthSource.InitialSpore             => "Initial Spore",
-            GrowthSource.HyphalOutgrowth          => "Hyphal Outgrowth",
-            GrowthSource.TendrilOutgrowth         => "Tendril Outgrowth",
-            GrowthSource.RegenerativeHyphae       => "Regenerative Hyphae",
-            GrowthSource.NecrotoxicConversion     => "Necrotoxic Conversion",
-            GrowthSource.HyphalSurge              => "Hyphal Surge",
-            GrowthSource.JettingMycelium          => "Jetting Mycelium",
-            GrowthSource.HyphalVectoring          => "Hyphal Vectoring",
-            GrowthSource.SurgicalInoculation      => "Surgical Inoculation",
-            GrowthSource.Necrosporulation         => "Necrosporulation",
-            GrowthSource.NecrophyticBloom         => "Necrophytic Bloom",
-            GrowthSource.NecrohyphalInfiltration  => "Necrohyphal Infiltration",
-            GrowthSource.CreepingMold             => "Creeping Mold",
-            GrowthSource.CatabolicRebirth         => "Catabolic Rebirth",
-            GrowthSource.Ballistospore            => "Ballistospore",
-            GrowthSource.MycotoxinTracer          => "Mycotoxin Tracers",
-            GrowthSource.SporicidalBloom          => "Sporicidal Bloom",
-            GrowthSource.MimeticResilience        => "Mimetic Resilience",
-            GrowthSource.CornerConduit            => "Corner Conduit",
-            GrowthSource.AggressotropicConduit    => "Aggressotropic Conduit",
-            GrowthSource.Manual                   => "Manual",
-            GrowthSource.Unknown                  => "Unknown",
-            _                                     => s.ToString()
-        };
     }
 }

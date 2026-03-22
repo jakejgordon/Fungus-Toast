@@ -272,7 +272,7 @@ public static class MycovariantEffectProcessor
             int j = rng.Next(i, livingCells.Count);
             (livingCells[i], livingCells[j]) = (livingCells[j], livingCells[i]);
             var cell = livingCells[i];
-            cell.MakeResistant();
+            cell.MakeResistant("Mycelial Bastion");
             
             playerMyco.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);
             observer.RecordBastionedCells(player.PlayerId, 1);
@@ -511,7 +511,7 @@ public static class MycovariantEffectProcessor
             else if (!prevCell.IsResistant)
             {
                 // Take over (alive, dead, or toxin) and make Resistant
-                prevCell.Takeover(playerId, allowToxin: true);
+                prevCell.Takeover(playerId, GrowthSource.SurgicalInoculation, allowToxin: true);
                 prevCell.MakeResistant();
                 board.PlaceFungalCell(prevCell);
                 observer.RecordSurgicalInoculationDrop(playerId, 1);
@@ -559,7 +559,7 @@ public static class MycovariantEffectProcessor
                 // Apply chance-based transfer
                 if (rng.NextDouble() < MycovariantGameBalance.HyphalResistanceTransferChance)
                 {
-                    adjacentCell.MakeResistant();
+                    adjacentCell.MakeResistant("Hyphal Resistance Transfer");
                     transferredCount++;
                 }
             }
@@ -761,7 +761,7 @@ public static class MycovariantEffectProcessor
 
                     if (rng.NextDouble() < MycovariantGameBalance.HyphalResistanceTransferChance)
                     {
-                        adjacentCell.MakeResistant();
+                        adjacentCell.MakeResistant("Hyphal Resistance Transfer");
                         transferredCount++;
                     }
                 }
@@ -872,7 +872,7 @@ public static class MycovariantEffectProcessor
                 continue;
             }
 
-            adjacentCell.MakeResistant();
+            adjacentCell.MakeResistant(GrowthSource.SeptalAlarm);
             resistantGains++;
             resistantTileIds.Add(adjacentCell.TileId);
         }
