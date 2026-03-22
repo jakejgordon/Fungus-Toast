@@ -51,16 +51,10 @@ namespace FungusToast.Unity.Grid
 
         private BoardMediumConfig runtimeBoardMedium;
         private static readonly Matrix4x4 IdentityMatrix = Matrix4x4.identity;
-        private SpriteRenderer generatedCrustRenderer;
-        private Sprite generatedCrustSprite;
-        private Texture2D generatedCrustTexture;
-        private string generatedCrustCacheKey;
-        private readonly Dictionary<NutrientPatchType, Tile> generatedNutrientTiles = new();
-        private readonly Dictionary<NutrientPatchType, Sprite> generatedNutrientSprites = new();
-        private readonly Dictionary<NutrientPatchType, Texture2D> generatedNutrientTextures = new();
-        private Tile generatedChemobeaconEmblemTile;
-        private Sprite generatedChemobeaconEmblemSprite;
-        private Texture2D generatedChemobeaconEmblemTexture;
+        private GridBoardMediumRenderer boardMediumRenderer;
+        private GridOverlayRenderer overlayRenderer;
+        private GridCellStateAnimationController cellStateAnimationController;
+        private GridSpecialPresentationEffects presentationEffects;
 
         private GameBoard board;
         private readonly List<int> playerMoldAssignments = new();
@@ -76,43 +70,8 @@ namespace FungusToast.Unity.Grid
         private Color pulseColorB = new(0.1f, 1f, 1f, 1f);
 
         // Animation effect tracking
-        private readonly HashSet<int> newlyGrownTileIds = new();
-        private readonly HashSet<int> newlyGrownAnimationPlayedTileIds = new();
-        private readonly Dictionary<int, Coroutine> fadeInCoroutines = new();
-        private readonly HashSet<int> dyingTileIds = new();
-        private readonly Dictionary<int, Coroutine> deathAnimationCoroutines = new();
-        private readonly HashSet<int> toxinDropTileIds = new();
-        private readonly Dictionary<int, Coroutine> toxinDropCoroutines = new();
-        private readonly HashSet<int> nutrientPulseTileIds = new();
-        private readonly Dictionary<int, ExpiringToxinVisualSnapshot> pendingToxinExpirySnapshots = new();
-        private readonly Dictionary<int, Coroutine> toxinExpiryCoroutines = new();
-        private readonly Dictionary<int, Coroutine> chemobeaconExpiryCoroutines = new();
         private readonly HashSet<int> deferredResistanceOverlayTileIds = new();
         private readonly HashSet<int> preAnimationHiddenPreviewTileIds = new();
-        private static readonly Color NutrientPatchColor = new(1f, 1f, 1f, 0.92f);
-        private static readonly Color AdaptogenPatchTextColor = new(0.8f, 0.97f, 1f, 1f);
-        private static readonly Color SporemealPatchTextColor = new(0.92f, 1f, 0.8f, 1f);
-        private static readonly Color ChemobeaconColor = new(0.92f, 0.86f, 0.42f, 0.95f);
-        private static readonly Color HyphalVectoringToastColor = new(0.96f, 0.99f, 0.78f, 1f);
-        private static readonly Color HyphalVectoringPulseColor = new(1f, 0.95f, 0.58f, 0.92f);
-
-        private sealed class ExpiringToxinVisualSnapshot
-        {
-            public ExpiringToxinVisualSnapshot(int tileId, TileBase moldTile, Color moldColor, TileBase overlayTile, Color overlayColor)
-            {
-                TileId = tileId;
-                MoldTile = moldTile;
-                MoldColor = moldColor;
-                OverlayTile = overlayTile;
-                OverlayColor = overlayColor;
-            }
-
-            public int TileId { get; }
-            public TileBase MoldTile { get; }
-            public Color MoldColor { get; }
-            public TileBase OverlayTile { get; }
-            public Color OverlayColor { get; }
-        }
 
         private SelectionHighlightHelper selectionHelper;
         private RingHighlightHelper ringHelper;
@@ -137,6 +96,55 @@ namespace FungusToast.Unity.Grid
 
         private void Awake()
         {
+            boardMediumRenderer = new GridBoardMediumRenderer(
+                () => ActiveBoardMedium,
+                () => toastTilemap,
+                () => crustTilemap,
+                () => toastTilemap != null ? toastTilemap.transform : transform);
+            overlayRenderer = new GridOverlayRenderer(
+                () => ActiveBoard,
+                () => moldTilemap,
+                () => overlayTilemap,
+                () => PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap,
+                GetPositionForTileId,
+                GetTileForPlayer,
+                () => solidHighlightTile,
+                () => baseTile,
+                () => toxinOverlayTile);
+            cellStateAnimationController = new GridCellStateAnimationController(
+                () => ActiveBoard,
+                () => moldTilemap,
+                () => overlayTilemap,
+                () => PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap,
+                GetPositionForTileId,
+                playerId => GetTileForPlayer(playerId),
+                () => toxinOverlayTile,
+                coroutine => StartCoroutine(coroutine),
+                coroutine =>
+                {
+                    if (coroutine != null)
+                    {
+                        StopCoroutine(coroutine);
+                    }
+                },
+                BeginAnimation,
+                EndAnimation);
+            presentationEffects = new GridSpecialPresentationEffects(
+                () => ActiveBoard,
+                () => moldTilemap,
+                () => overlayTilemap,
+                () => PingOverlayTileMap,
+                () => HoverOverlayTileMap,
+                () => solidHighlightTile,
+                () => transform,
+                GetPositionForTileId,
+                patchType => GetNutrientPatchTile(patchType),
+                (tileId, scaleMultiplier) => BastionResistantPulseAnimation(tileId, scaleMultiplier),
+                (center, radius, thickness, color, tilemap) => InternalDrawRing(center, radius, thickness, color, tilemap),
+                tilemap => InternalClearRing(tilemap),
+                coroutine => StartCoroutine(coroutine),
+                BeginAnimation,
+                EndAnimation);
             selectionHelper = new SelectionHighlightHelper(SelectionHighlightTileMap, SelectedTileMap, solidHighlightTile);
             ringHelper = new RingHighlightHelper(PingOverlayTileMap, HoverOverlayTileMap, solidHighlightTile);
             hoverHelper = new HoverEffectHelper(this, HoverOverlayTileMap, solidHighlightTile);
@@ -150,12 +158,10 @@ namespace FungusToast.Unity.Grid
         private void OnDestroy()
         {
             UnsubscribeFromBoardEvents();
-            ClearPendingToxinExpirySnapshots();
-            StopAndClearToxinExpiryAnimations();
-            DestroyLingeringNutrientToasts();
-            DestroyGeneratedCrustAssets();
-            DestroyGeneratedNutrientAssets();
-            DestroyGeneratedChemobeaconAssets();
+            cellStateAnimationController?.Dispose();
+            presentationEffects?.DestroyLingeringToasts();
+            boardMediumRenderer?.Dispose();
+            overlayRenderer?.Dispose();
         }
 
         private void LateUpdate()
@@ -172,9 +178,9 @@ namespace FungusToast.Unity.Grid
             }
 
             UnsubscribeFromBoardEvents();
-            ClearPendingToxinExpirySnapshots();
-            StopAndClearToxinExpiryAnimations();
-            DestroyLingeringNutrientToasts();
+            cellStateAnimationController?.ClearPendingToxinExpirySnapshots();
+            cellStateAnimationController?.StopAndClearToxinExpiryAnimations();
+            presentationEffects?.DestroyLingeringToasts();
 
             this.board = board;
 
@@ -191,28 +197,17 @@ namespace FungusToast.Unity.Grid
             StopAllCoroutines();
             UnsubscribeFromBoardEvents();
             board = null;
-            DestroyLingeringNutrientToasts();
+            presentationEffects?.DestroyLingeringToasts();
 
             _activeAnimationCount = 0;
             pulseHighlightCoroutine = null;
             startingTilePingCoroutine = null;
             lastPingTilemap = null;
 
-            ClearPendingToxinExpirySnapshots();
-            StopAndClearToxinExpiryAnimations();
-            StopAndClearChemobeaconExpiryAnimations();
-
-            newlyGrownTileIds.Clear();
-            newlyGrownAnimationPlayedTileIds.Clear();
-            fadeInCoroutines.Clear();
-            dyingTileIds.Clear();
-            deathAnimationCoroutines.Clear();
-            toxinDropTileIds.Clear();
-            toxinDropCoroutines.Clear();
-            nutrientPulseTileIds.Clear();
-            chemobeaconExpiryCoroutines.Clear();
+            cellStateAnimationController?.ResetRuntimeState();
             deferredResistanceOverlayTileIds.Clear();
             preAnimationHiddenPreviewTileIds.Clear();
+            overlayRenderer?.ResetRuntimeState();
 
             ClearAllHighlights();
             ClearHoverEffect();
@@ -225,11 +220,8 @@ namespace FungusToast.Unity.Grid
             SelectedTileMap?.ClearAllTiles();
             SelectionHighlightTileMap?.ClearAllTiles();
 
-            var targetCrustTilemap = GetCrustTargetTilemap();
-            if (targetCrustTilemap != null)
-            {
-                targetCrustTilemap.ClearAllTiles();
-            }
+            boardMediumRenderer?.ClearDecorativeCrustTilemap();
+            boardMediumRenderer?.ResetGeneratedCrustVisual();
         }
         public void SetBoardMedium(BoardMediumConfig boardMedium) => runtimeBoardMedium = boardMedium;
         public void ClearBoardMediumOverride() => runtimeBoardMedium = null;
@@ -296,445 +288,16 @@ namespace FungusToast.Unity.Grid
         public void PlayNutrientPatchConsumptionAnimationAsync(int nutrientTileId, int destinationTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
             => StartCoroutine(PlayNutrientPatchConsumptionAnimation(nutrientTileId, destinationTileId, patchType, rewardType, rewardAmount));
         public IEnumerator PlayMycotoxicLashAnimation(IReadOnlyList<int> tileIds)
-        {
-            if (board == null || tileIds == null || tileIds.Count == 0)
-            {
-                yield break;
-            }
-
-            var states = new List<(Vector3Int pos, bool hasMold, Color moldColor, bool hasOverlay, Color overlayColor)>();
-            var seenTileIds = new HashSet<int>();
-
-            for (int i = 0; i < tileIds.Count; i++)
-            {
-                int tileId = tileIds[i];
-                if (!seenTileIds.Add(tileId))
-                {
-                    continue;
-                }
-
-                var (x, y) = board.GetXYFromTileId(tileId);
-                var pos = new Vector3Int(x, y, 0);
-                bool hasMold = moldTilemap != null && moldTilemap.HasTile(pos);
-                bool hasOverlay = overlayTilemap != null && overlayTilemap.HasTile(pos);
-                if (!hasMold && !hasOverlay)
-                {
-                    continue;
-                }
-
-                states.Add((
-                    pos,
-                    hasMold,
-                    hasMold ? moldTilemap.GetColor(pos) : Color.white,
-                    hasOverlay,
-                    hasOverlay ? overlayTilemap.GetColor(pos) : Color.white));
-            }
-
-            if (states.Count == 0)
-            {
-                yield break;
-            }
-
-            float totalDuration = UIEffectConstants.MycotoxicLashAnimationDurationSeconds;
-            float fadeToBlackDuration = totalDuration * UIEffectConstants.MycotoxicLashFadeToBlackPortion;
-            float blackHoldDuration = Mathf.Max(0f, totalDuration - fadeToBlackDuration);
-
-            BeginAnimation();
-            try
-            {
-                float elapsed = 0f;
-                while (elapsed < fadeToBlackDuration)
-                {
-                    elapsed += Time.deltaTime;
-                    float t = fadeToBlackDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / fadeToBlackDuration);
-                    float eased = 1f - Mathf.Pow(1f - t, 3f);
-                    ApplyMycotoxicLashColors(states, eased);
-                    yield return null;
-                }
-
-                ApplyMycotoxicLashColors(states, 1f);
-
-                if (blackHoldDuration > 0f)
-                {
-                    yield return new WaitForSeconds(blackHoldDuration);
-                }
-            }
-            finally
-            {
-                EndAnimation();
-            }
-        }
+            => presentationEffects != null ? presentationEffects.PlayMycotoxicLashAnimation(tileIds) : null;
 
         public IEnumerator PlayRetrogradeBloomAnimation(int anchorTileId)
-        {
-            if (board == null)
-            {
-                yield break;
-            }
-
-            var highlightTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
-            if (anchorTileId >= 0)
-            {
-                yield return BastionResistantPulseAnimation(anchorTileId, 0.85f);
-            }
-
-            if (highlightTilemap == null || solidHighlightTile == null || anchorTileId < 0)
-            {
-                yield break;
-            }
-
-            var (x, y) = board.GetXYFromTileId(anchorTileId);
-            var center = new Vector3Int(x, y, 0);
-            float duration = UIEffectConstants.RetrogradeBloomAnimationDurationSeconds;
-
-            BeginAnimation();
-            try
-            {
-                float startTime = Time.time;
-                while (Time.time - startTime < duration)
-                {
-                    float u = Mathf.Clamp01((Time.time - startTime) / duration);
-                    float radius = Mathf.Lerp(0.35f, 2.8f, u);
-                    Color ringColor = Color.Lerp(new Color(1f, 0.85f, 0.25f, 0.95f), new Color(1f, 0.45f, 0.12f, 0f), u);
-                    InternalDrawRing(center, radius, 0.45f, ringColor, highlightTilemap);
-                    yield return null;
-                }
-            }
-            finally
-            {
-                InternalClearRing(highlightTilemap);
-                EndAnimation();
-            }
-        }
+            => presentationEffects != null ? presentationEffects.PlayRetrogradeBloomAnimation(anchorTileId) : null;
 
         public IEnumerator PlaySaprophageRingAnimation(IReadOnlyList<int> resistantTileIds, IReadOnlyList<int> consumedTileIds)
-        {
-            if (board == null || consumedTileIds == null || consumedTileIds.Count == 0)
-            {
-                yield break;
-            }
-
-            var highlightTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
-            if (highlightTilemap == null || solidHighlightTile == null)
-            {
-                yield break;
-            }
-
-            var resistantSources = (resistantTileIds ?? System.Array.Empty<int>()).Distinct().ToList();
-            foreach (var sourceTileId in resistantSources)
-            {
-                StartCoroutine(BastionResistantPulseAnimation(sourceTileId, 0.75f));
-            }
-
-            var consumedPositions = consumedTileIds
-                .Distinct()
-                .Select(tileId =>
-                {
-                    var (x, y) = board.GetXYFromTileId(tileId);
-                    return new Vector3Int(x, y, 0);
-                })
-                .ToList();
-
-            foreach (var pos in consumedPositions)
-            {
-                highlightTilemap.SetTile(pos, solidHighlightTile);
-                highlightTilemap.SetTileFlags(pos, TileFlags.None);
-            }
-
-            float duration = UIEffectConstants.SaprophageRingAnimationDurationSeconds;
-            BeginAnimation();
-            try
-            {
-                float elapsed = 0f;
-                while (elapsed < duration)
-                {
-                    elapsed += Time.deltaTime;
-                    float u = Mathf.Clamp01(elapsed / duration);
-                    float scale = Mathf.Lerp(1.1f, 0.25f, u);
-                    Color color = Color.Lerp(new Color(0.42f, 0.95f, 0.62f, 0.85f), new Color(0.07f, 0.16f, 0.08f, 0f), u);
-
-                    foreach (var pos in consumedPositions)
-                    {
-                        highlightTilemap.SetColor(pos, color);
-                        highlightTilemap.SetTransformMatrix(pos, Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f)));
-                    }
-
-                    yield return null;
-                }
-            }
-            finally
-            {
-                foreach (var pos in consumedPositions)
-                {
-                    highlightTilemap.SetTile(pos, null);
-                    highlightTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
-                    highlightTilemap.SetColor(pos, Color.white);
-                }
-
-                EndAnimation();
-            }
-        }
+            => presentationEffects != null ? presentationEffects.PlaySaprophageRingAnimation(resistantTileIds, consumedTileIds) : null;
 
         public IEnumerator PlayNutrientPatchConsumptionAnimation(int nutrientTileId, int destinationTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
-        {
-            if (board == null || overlayTilemap == null)
-            {
-                yield break;
-            }
-
-            Vector3Int sourcePos = GetPositionForTileId(nutrientTileId);
-            Vector3Int destinationPos = GetPositionForTileId(destinationTileId);
-            TileBase nutrientTile = GetNutrientPatchTile(patchType);
-            if (nutrientTile == null)
-            {
-                yield break;
-            }
-
-            TextMeshPro floatingText = CreateNutrientToastText(destinationPos, patchType, rewardType, rewardAmount);
-            Vector3 sourceWorld = overlayTilemap.GetCellCenterWorld(sourcePos);
-            Vector3 destinationWorld = overlayTilemap.GetCellCenterWorld(destinationPos);
-            Vector3 delta = destinationWorld - sourceWorld;
-            Vector3 pullOffset = delta.sqrMagnitude > 0.0001f
-                ? delta.normalized * UIEffectConstants.NutrientPatchPullOffsetWorld
-                : Vector3.zero;
-
-            overlayTilemap.SetTile(sourcePos, nutrientTile);
-            overlayTilemap.SetTileFlags(sourcePos, TileFlags.None);
-            overlayTilemap.SetColor(sourcePos, NutrientPatchColor);
-
-            float duration = UIEffectConstants.NutrientPatchConsumptionDurationSeconds;
-            float textDuration = UIEffectConstants.NutrientPatchToastDurationSeconds;
-            float animationDuration = Mathf.Max(duration, textDuration);
-
-            try
-            {
-                float elapsed = 0f;
-                bool clearedSourceTile = false;
-                while (elapsed < animationDuration)
-                {
-                    elapsed += Time.deltaTime;
-                    if (elapsed < duration)
-                    {
-                        float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
-                        float eased = 1f - Mathf.Pow(1f - t, 3f);
-                        float scale = Mathf.Lerp(UIEffectConstants.NutrientPatchPulseMinScale, 0.18f, eased);
-                        Vector3 translation = Vector3.Lerp(Vector3.zero, pullOffset, eased);
-                        Color color = Color.Lerp(NutrientPatchColor, new Color(NutrientPatchColor.r, NutrientPatchColor.g, NutrientPatchColor.b, 0f), eased);
-
-                        overlayTilemap.SetTransformMatrix(
-                            sourcePos,
-                            Matrix4x4.TRS(translation, Quaternion.identity, new Vector3(scale, scale, 1f)));
-                        overlayTilemap.SetColor(sourcePos, color);
-                    }
-                    else if (!clearedSourceTile)
-                    {
-                        overlayTilemap.SetTile(sourcePos, null);
-                        overlayTilemap.SetTransformMatrix(sourcePos, IdentityMatrix);
-                        overlayTilemap.SetColor(sourcePos, Color.white);
-                        clearedSourceTile = true;
-                    }
-
-                    if (floatingText != null)
-                    {
-                        float textT = textDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / textDuration);
-                        Vector3 textStart = destinationWorld + new Vector3(0f, UIEffectConstants.NutrientPatchToastStartHeightWorld, 0f);
-                        Vector3 textEnd = textStart + new Vector3(0f, UIEffectConstants.NutrientPatchToastRiseWorld, 0f);
-                        floatingText.transform.position = Vector3.Lerp(textStart, textEnd, textT);
-                        floatingText.transform.localScale = Vector3.one * GetAnimatedNutrientToastScaleMultiplier(textT);
-                        var textColor = GetNutrientToastColor(patchType);
-                        float fadeT = Mathf.Clamp01((textT - 0.42f) / 0.58f);
-                        textColor.a = 1f - fadeT;
-                        floatingText.color = textColor;
-                    }
-
-                    yield return null;
-                }
-            }
-            finally
-            {
-                overlayTilemap.SetTile(sourcePos, null);
-                overlayTilemap.SetTransformMatrix(sourcePos, IdentityMatrix);
-                overlayTilemap.SetColor(sourcePos, Color.white);
-                if (floatingText != null)
-                {
-                    Destroy(floatingText.gameObject);
-                }
-            }
-        }
-
-        private IEnumerator RunHyphalVectoringSurgePresentation(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds)
-        {
-            Tilemap pulseTilemap = GetTransientPulseTilemap();
-            if (pulseTilemap == null || solidHighlightTile == null || overlayTilemap == null)
-            {
-                yield break;
-            }
-
-            var orderedTileIds = affectedTileIds
-                .Where(tileId => tileId >= 0)
-                .Distinct()
-                .ToList();
-            if (orderedTileIds.Count == 0)
-            {
-                yield break;
-            }
-
-            TextMeshPro toast = CreateHyphalVectoringToastText(orderedTileIds);
-
-            try
-            {
-                if (originTileId >= 0)
-                {
-                    Vector3Int originPos = GetPositionForTileId(originTileId);
-                    yield return PulseTiles(
-                        pulseTilemap,
-                        new[] { originPos },
-                        UIEffectConstants.HyphalVectoringOriginPulseDurationSeconds,
-                        HyphalVectoringPulseColor,
-                        1f,
-                        UIEffectConstants.HyphalVectoringPulseScale);
-                }
-
-                foreach (var chunk in BuildHyphalVectoringChunks(orderedTileIds))
-                {
-                    var chunkPositions = chunk.Select(GetPositionForTileId).ToArray();
-                    StartCoroutine(PulseTiles(
-                        pulseTilemap,
-                        chunkPositions,
-                        UIEffectConstants.HyphalVectoringChunkPulseDurationSeconds,
-                        HyphalVectoringPulseColor,
-                        0.92f,
-                        UIEffectConstants.HyphalVectoringPulseScale));
-                    yield return new WaitForSeconds(UIEffectConstants.HyphalVectoringChunkStaggerSeconds);
-                }
-
-                if (toast != null)
-                {
-                    yield return AnimateFloatingToast(
-                        toast,
-                        UIEffectConstants.HyphalVectoringToastDurationSeconds,
-                        HyphalVectoringToastColor,
-                        UIEffectConstants.HyphalVectoringToastRiseWorld,
-                        useAnimatedScale: false);
-                }
-            }
-            finally
-            {
-                if (toast != null)
-                {
-                    Destroy(toast.gameObject);
-                }
-            }
-        }
-
-        private IEnumerable<List<int>> BuildHyphalVectoringChunks(IReadOnlyList<int> orderedTileIds)
-        {
-            int tileCount = orderedTileIds.Count;
-            if (tileCount == 0)
-            {
-                yield break;
-            }
-
-            int chunkCount = tileCount <= 2
-                ? tileCount
-                : Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(tileCount)), UIEffectConstants.HyphalVectoringChunkCountMin, UIEffectConstants.HyphalVectoringChunkCountMax);
-            int chunkSize = Mathf.CeilToInt(tileCount / (float)Mathf.Max(1, chunkCount));
-
-            for (int index = 0; index < tileCount; index += chunkSize)
-            {
-                yield return orderedTileIds.Skip(index).Take(chunkSize).ToList();
-            }
-        }
-
-        private Tilemap GetTransientPulseTilemap()
-        {
-            if (PingOverlayTileMap != null)
-            {
-                return PingOverlayTileMap;
-            }
-
-            if (HoverOverlayTileMap != null)
-            {
-                return HoverOverlayTileMap;
-            }
-
-            return overlayTilemap;
-        }
-
-        private IEnumerator PulseTiles(Tilemap targetTilemap, IReadOnlyList<Vector3Int> positions, float duration, Color pulseColor, float maxAlpha, float pulseScale)
-        {
-            if (targetTilemap == null || positions == null || positions.Count == 0 || solidHighlightTile == null)
-            {
-                yield break;
-            }
-
-            foreach (var pos in positions)
-            {
-                targetTilemap.SetTile(pos, solidHighlightTile);
-                targetTilemap.SetTileFlags(pos, TileFlags.None);
-            }
-
-            float elapsed = 0f;
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
-                float eased = Mathf.Sin(t * Mathf.PI);
-                float alpha = Mathf.Lerp(0.12f, maxAlpha, eased);
-                float scale = Mathf.Lerp(1f, pulseScale, eased);
-
-                foreach (var pos in positions)
-                {
-                    var color = pulseColor;
-                    color.a = alpha;
-                    targetTilemap.SetColor(pos, color);
-                    targetTilemap.SetTransformMatrix(pos, Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f)));
-                }
-
-                yield return null;
-            }
-
-            ClearPulseTiles(targetTilemap, positions);
-        }
-
-        private void ClearPulseTiles(Tilemap targetTilemap, IEnumerable<Vector3Int> positions)
-        {
-            if (targetTilemap == null || positions == null)
-            {
-                return;
-            }
-
-            foreach (var pos in positions)
-            {
-                targetTilemap.SetTransformMatrix(pos, IdentityMatrix);
-                targetTilemap.SetColor(pos, Color.white);
-                if (targetTilemap.GetTile(pos) == solidHighlightTile)
-                {
-                    targetTilemap.SetTile(pos, null);
-                }
-            }
-        }
-
-        private void ApplyMycotoxicLashColors(
-            IReadOnlyList<(Vector3Int pos, bool hasMold, Color moldColor, bool hasOverlay, Color overlayColor)> states,
-            float t)
-        {
-            for (int i = 0; i < states.Count; i++)
-            {
-                var state = states[i];
-                if (state.hasMold && moldTilemap != null && moldTilemap.HasTile(state.pos))
-                {
-                    Color darkestMold = new Color(0f, 0f, 0f, state.moldColor.a);
-                    moldTilemap.SetColor(state.pos, Color.Lerp(state.moldColor, darkestMold, t));
-                }
-
-                if (state.hasOverlay && overlayTilemap != null && overlayTilemap.HasTile(state.pos))
-                {
-                    Color darkestOverlay = new Color(0f, 0f, 0f, state.overlayColor.a);
-                    overlayTilemap.SetColor(state.pos, Color.Lerp(state.overlayColor, darkestOverlay, t));
-                }
-            }
-        }
+            => presentationEffects != null ? presentationEffects.PlayNutrientPatchConsumptionAnimation(nutrientTileId, destinationTileId, patchType, rewardType, rewardAmount) : null;
 
         private void UnsubscribeFromBoardEvents()
         {
@@ -753,20 +316,14 @@ namespace FungusToast.Unity.Grid
                 return;
             }
 
-            CancelChemobeaconExpiryAnimation(tileId);
+            cellStateAnimationController?.CancelChemobeaconExpiryAnimation(tileId);
             RenderChemobeaconOverlay(tileId, GetPositionForTileId(tileId));
         }
 
         private void HandleChemobeaconExpired(int playerId, int tileId)
         {
             ClearChemobeaconOverlay(tileId);
-
-            if (chemobeaconExpiryCoroutines.ContainsKey(tileId))
-            {
-                CancelChemobeaconExpiryAnimation(tileId);
-            }
-
-            chemobeaconExpiryCoroutines[tileId] = StartCoroutine(PlayChemobeaconEvaporationAnimation(playerId, tileId));
+            cellStateAnimationController?.StartChemobeaconExpiryAnimation(playerId, tileId);
         }
 
         private void HandleToxinExpired(object sender, ToxinExpiredEventArgs e)
@@ -775,274 +332,7 @@ namespace FungusToast.Unity.Grid
             {
                 return;
             }
-
-            var pos = GetPositionForTileId(e.TileId);
-
-            TileBase moldTile = null;
-            Color moldColor = Color.white;
-            if (moldTilemap != null)
-            {
-                moldTile = moldTilemap.GetTile(pos);
-                if (moldTile != null)
-                {
-                    moldColor = moldTilemap.GetColor(pos);
-                }
-            }
-
-            if (moldTile == null && e.ToxinOwnerPlayerId is int ownerPlayerId)
-            {
-                moldTile = GetTileForPlayer(ownerPlayerId);
-            }
-
-            TileBase overlayTile = toxinOverlayTile;
-            Color overlayColor = Color.white;
-            if (overlayTilemap != null)
-            {
-                var currentOverlayTile = overlayTilemap.GetTile(pos);
-                if (currentOverlayTile != null)
-                {
-                    overlayTile = currentOverlayTile;
-                    overlayColor = overlayTilemap.GetColor(pos);
-                }
-            }
-
-            if (moldTile == null && overlayTile == null)
-            {
-                return;
-            }
-
-            pendingToxinExpirySnapshots[e.TileId] = new ExpiringToxinVisualSnapshot(
-                e.TileId,
-                moldTile,
-                moldColor,
-                overlayTile,
-                overlayColor);
-        }
-
-        private void ClearPendingToxinExpirySnapshots()
-        {
-            pendingToxinExpirySnapshots.Clear();
-        }
-
-        private void StartPendingToxinExpiryAnimations()
-        {
-            if (pendingToxinExpirySnapshots.Count == 0)
-            {
-                return;
-            }
-
-            var pendingSnapshots = pendingToxinExpirySnapshots.Values.ToList();
-            pendingToxinExpirySnapshots.Clear();
-
-            foreach (var snapshot in pendingSnapshots)
-            {
-                var tile = board?.GetTileById(snapshot.TileId);
-                if (tile?.FungalCell?.IsToxin == true)
-                {
-                    continue;
-                }
-
-                if (toxinExpiryCoroutines.ContainsKey(snapshot.TileId))
-                {
-                    CancelToxinExpiryAnimation(snapshot.TileId);
-                }
-
-                toxinExpiryCoroutines[snapshot.TileId] = StartCoroutine(ToxinExpiryDissolveAnimation(snapshot));
-            }
-        }
-
-        private void StopAndClearToxinExpiryAnimations()
-        {
-            foreach (int tileId in toxinExpiryCoroutines.Keys.ToList())
-            {
-                CancelToxinExpiryAnimation(tileId);
-            }
-
-            toxinExpiryCoroutines.Clear();
-        }
-
-        private void StopAndClearChemobeaconExpiryAnimations()
-        {
-            foreach (int tileId in chemobeaconExpiryCoroutines.Keys.ToList())
-            {
-                CancelChemobeaconExpiryAnimation(tileId);
-            }
-
-            chemobeaconExpiryCoroutines.Clear();
-        }
-
-        private void CancelChemobeaconExpiryAnimation(int tileId)
-        {
-            if (chemobeaconExpiryCoroutines.TryGetValue(tileId, out var coroutine) && coroutine != null)
-            {
-                StopCoroutine(coroutine);
-                chemobeaconExpiryCoroutines.Remove(tileId);
-                EndAnimation();
-            }
-
-            ClearChemobeaconTransientOverlay(tileId);
-        }
-
-        private IEnumerator PlayChemobeaconEvaporationAnimation(int playerId, int tileId)
-        {
-            var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
-            TileBase chemobeaconTile = GetTileForPlayer(playerId);
-            if (targetTilemap == null || chemobeaconTile == null || board == null)
-            {
-                chemobeaconExpiryCoroutines.Remove(tileId);
-                yield break;
-            }
-
-            Vector3Int pos = GetPositionForTileId(tileId);
-            targetTilemap.SetTile(pos, chemobeaconTile);
-            targetTilemap.SetTileFlags(pos, TileFlags.None);
-
-            float duration = UIEffectConstants.ChemobeaconEvaporationDurationSeconds;
-            BeginAnimation();
-            try
-            {
-                float elapsed = 0f;
-                while (elapsed < duration)
-                {
-                    elapsed += Time.deltaTime;
-                    float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
-                    float eased = 1f - Mathf.Pow(1f - t, 3f);
-                    float scale = Mathf.Lerp(UIEffectConstants.ChemobeaconIdleScale, UIEffectConstants.ChemobeaconEvaporationFinalScale, eased);
-                    float lift = Mathf.Lerp(0f, UIEffectConstants.ChemobeaconEvaporationLiftWorld, eased);
-                    Color color = Color.Lerp(Color.white, new Color(1f, 1f, 1f, 0f), eased);
-
-                    targetTilemap.SetColor(pos, color);
-                    targetTilemap.SetTransformMatrix(pos, Matrix4x4.TRS(new Vector3(0f, lift, 0f), Quaternion.identity, new Vector3(scale, scale, 1f)));
-                    yield return null;
-                }
-            }
-            finally
-            {
-                chemobeaconExpiryCoroutines.Remove(tileId);
-                ClearChemobeaconTransientOverlay(tileId);
-                EndAnimation();
-            }
-        }
-
-        private void CancelToxinExpiryAnimation(int tileId)
-        {
-            if (toxinExpiryCoroutines.TryGetValue(tileId, out var coroutine) && coroutine != null)
-            {
-                StopCoroutine(coroutine);
-                toxinExpiryCoroutines.Remove(tileId);
-                EndAnimation();
-            }
-
-            ClearToxinExpiryVisualTile(tileId);
-        }
-
-        private IEnumerator ToxinExpiryDissolveAnimation(ExpiringToxinVisualSnapshot snapshot)
-        {
-            Vector3Int pos = GetPositionForTileId(snapshot.TileId);
-            bool shouldRenderMold = snapshot.MoldTile != null && moldTilemap != null && !moldTilemap.HasTile(pos);
-            bool shouldRenderOverlay = snapshot.OverlayTile != null && overlayTilemap != null && !overlayTilemap.HasTile(pos);
-
-            if (!shouldRenderMold && !shouldRenderOverlay)
-            {
-                toxinExpiryCoroutines.Remove(snapshot.TileId);
-                yield break;
-            }
-
-            if (shouldRenderMold)
-            {
-                moldTilemap.SetTile(pos, snapshot.MoldTile);
-                moldTilemap.SetTileFlags(pos, TileFlags.None);
-                moldTilemap.SetColor(pos, snapshot.MoldColor);
-                moldTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
-                moldTilemap.RefreshTile(pos);
-            }
-
-            if (shouldRenderOverlay)
-            {
-                overlayTilemap.SetTile(pos, snapshot.OverlayTile);
-                overlayTilemap.SetTileFlags(pos, TileFlags.None);
-                overlayTilemap.SetColor(pos, snapshot.OverlayColor);
-                overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
-                overlayTilemap.RefreshTile(pos);
-            }
-
-            float duration = UIEffectConstants.ToxinExpiryDissolveDurationSeconds;
-            float elapsed = 0f;
-
-            BeginAnimation();
-            try
-            {
-                while (elapsed < duration)
-                {
-                    elapsed += Time.deltaTime;
-                    float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
-                    float eased = 1f - Mathf.Pow(1f - t, 3f);
-                    float flicker = 0.92f + 0.08f * Mathf.Sin((t * UIEffectConstants.ToxinExpiryDissolveFlickerFrequency) + snapshot.TileId * 0.71f);
-                    float alphaFactor = Mathf.Clamp01((1f - eased) * flicker);
-                    float scale = Mathf.Lerp(1f, UIEffectConstants.ToxinExpiryDissolveFinalScale, eased);
-                    float verticalLift = Mathf.Lerp(0f, UIEffectConstants.ToxinExpiryDissolveLiftWorld, eased);
-                    float rotation = Mathf.Sin(t * UIEffectConstants.ToxinExpiryDissolveFlickerFrequency) * UIEffectConstants.ToxinExpiryDissolveRotationDegrees * (1f - eased);
-
-                    var matrix = Matrix4x4.TRS(
-                        new Vector3(0f, verticalLift, 0f),
-                        Quaternion.Euler(0f, 0f, rotation),
-                        new Vector3(scale, scale, 1f));
-
-                    if (shouldRenderMold)
-                    {
-                        Color moldColor = Color.Lerp(
-                            snapshot.MoldColor,
-                            new Color(snapshot.MoldColor.r * 0.45f, snapshot.MoldColor.g * 0.32f, snapshot.MoldColor.b * 0.26f, 0f),
-                            eased);
-                        moldColor.a = snapshot.MoldColor.a * alphaFactor;
-                        moldTilemap.SetColor(pos, moldColor);
-                        moldTilemap.SetTransformMatrix(pos, matrix);
-                    }
-
-                    if (shouldRenderOverlay)
-                    {
-                        Color overlayColor = Color.Lerp(
-                            snapshot.OverlayColor,
-                            new Color(snapshot.OverlayColor.r * 0.3f, snapshot.OverlayColor.g * 0.26f, snapshot.OverlayColor.b * 0.2f, 0f),
-                            eased);
-                        overlayColor.a = snapshot.OverlayColor.a * alphaFactor;
-                        overlayTilemap.SetColor(pos, overlayColor);
-                        overlayTilemap.SetTransformMatrix(
-                            pos,
-                            Matrix4x4.TRS(
-                                new Vector3(0f, verticalLift, 0f),
-                                Quaternion.Euler(0f, 0f, rotation),
-                                Vector3.one * Mathf.Lerp(1f, UIEffectConstants.ToxinExpiryDissolveOverlayScale, eased)));
-                    }
-
-                    yield return null;
-                }
-            }
-            finally
-            {
-                toxinExpiryCoroutines.Remove(snapshot.TileId);
-                ClearToxinExpiryVisualTile(snapshot.TileId);
-                EndAnimation();
-            }
-        }
-
-        private void ClearToxinExpiryVisualTile(int tileId)
-        {
-            var pos = GetPositionForTileId(tileId);
-
-            if (moldTilemap != null)
-            {
-                moldTilemap.SetTile(pos, null);
-                moldTilemap.SetColor(pos, Color.white);
-                moldTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
-            }
-
-            if (overlayTilemap != null)
-            {
-                overlayTilemap.SetTile(pos, null);
-                overlayTilemap.SetColor(pos, Color.white);
-                overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
-            }
+            cellStateAnimationController?.CaptureToxinExpirySnapshot(e);
         }
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
@@ -1136,249 +426,15 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        private void RenderNutrientPatchOverlay(BoardTile tile, Vector3Int pos)
-        {
-            if (tile == null || !tile.HasNutrientPatch || tile.FungalCell != null || overlayTilemap == null)
-            {
-                return;
-            }
+        private void RenderNutrientPatchOverlay(BoardTile tile, Vector3Int pos) => overlayRenderer?.RenderNutrientPatchOverlay(tile, pos);
 
-            TileBase nutrientTile = GetNutrientPatchTile(tile.NutrientPatch);
-            if (nutrientTile == null)
-            {
-                return;
-            }
+        private void RenderChemobeaconOverlay(int tileId, Vector3Int pos) => overlayRenderer?.RenderChemobeaconOverlay(tileId, pos);
 
-            overlayTilemap.SetTile(pos, nutrientTile);
-            overlayTilemap.SetTileFlags(pos, TileFlags.None);
-            nutrientPulseTileIds.Add(tile.TileId);
-            overlayTilemap.SetColor(pos, GetNutrientPulseColor(tile.TileId));
-            overlayTilemap.SetTransformMatrix(pos, GetNutrientPulseMatrix(tile.TileId));
-            overlayTilemap.RefreshTile(pos);
-        }
+        private void ClearChemobeaconOverlay(int tileId) => overlayRenderer?.ClearChemobeaconOverlay(tileId);
 
-        private void RenderChemobeaconOverlay(int tileId, Vector3Int pos)
-        {
-            if (board == null || overlayTilemap == null)
-            {
-                return;
-            }
+        private void ClearChemobeaconTransientOverlay(int tileId) => overlayRenderer?.ClearChemobeaconTransientOverlay(tileId);
 
-            var marker = board.GetChemobeaconAtTile(tileId);
-            TileBase chemobeaconTile = marker != null ? GetTileForPlayer(marker.PlayerId) : null;
-            if (marker == null || chemobeaconTile == null)
-            {
-                return;
-            }
-
-            EnsureGeneratedChemobeaconEmblemTile();
-
-            moldTilemap.SetTile(pos, chemobeaconTile);
-            moldTilemap.SetTileFlags(pos, TileFlags.None);
-            moldTilemap.SetColor(pos, GetChemobeaconPulseColor(tileId));
-            moldTilemap.SetTransformMatrix(pos, GetChemobeaconPulseMatrix(tileId));
-            moldTilemap.RefreshTile(pos);
-
-            overlayTilemap.SetTile(pos, generatedChemobeaconEmblemTile != null ? generatedChemobeaconEmblemTile : solidHighlightTile);
-            overlayTilemap.SetTileFlags(pos, TileFlags.None);
-            overlayTilemap.SetColor(pos, Color.white);
-            overlayTilemap.SetTransformMatrix(pos, GetChemobeaconEmblemMatrix());
-            overlayTilemap.RefreshTile(pos);
-        }
-
-        private void ClearChemobeaconOverlay(int tileId)
-        {
-            if (overlayTilemap == null || moldTilemap == null)
-            {
-                return;
-            }
-
-            Vector3Int pos = GetPositionForTileId(tileId);
-            moldTilemap.SetTile(pos, null);
-            moldTilemap.SetColor(pos, Color.white);
-            moldTilemap.SetTransformMatrix(pos, IdentityMatrix);
-            overlayTilemap.SetTile(pos, null);
-            overlayTilemap.SetColor(pos, Color.white);
-            overlayTilemap.SetTransformMatrix(pos, IdentityMatrix);
-        }
-
-        private void ClearChemobeaconTransientOverlay(int tileId)
-        {
-            var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
-            if (targetTilemap == null)
-            {
-                return;
-            }
-
-            Vector3Int pos = GetPositionForTileId(tileId);
-            targetTilemap.SetTile(pos, null);
-            targetTilemap.SetColor(pos, Color.white);
-            targetTilemap.SetTransformMatrix(pos, IdentityMatrix);
-        }
-
-        private void UpdateChemobeaconPulseVisuals()
-        {
-            if (board == null || overlayTilemap == null || moldTilemap == null)
-            {
-                return;
-            }
-
-            foreach (var marker in board.GetActiveChemobeacons())
-            {
-                Vector3Int pos = GetPositionForTileId(marker.TileId);
-                if (!moldTilemap.HasTile(pos))
-                {
-                    continue;
-                }
-
-                moldTilemap.SetColor(pos, GetChemobeaconPulseColor(marker.TileId));
-                moldTilemap.SetTransformMatrix(pos, GetChemobeaconPulseMatrix(marker.TileId));
-                if (overlayTilemap.HasTile(pos))
-                {
-                    overlayTilemap.SetColor(pos, Color.white);
-                    overlayTilemap.SetTransformMatrix(pos, GetChemobeaconEmblemMatrix());
-                }
-            }
-        }
-
-        private Matrix4x4 GetChemobeaconPulseMatrix(int tileId)
-        {
-            float wave = GetChemobeaconPulseFactor(tileId);
-            float scale = Mathf.Lerp(UIEffectConstants.ChemobeaconPulseMinScale, UIEffectConstants.ChemobeaconPulseMaxScale, wave);
-            return Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
-        }
-
-        private static Color GetChemobeaconPulseColor(int tileId)
-        {
-            float wave = GetChemobeaconPulseFactor(tileId);
-            float alpha = Mathf.Lerp(UIEffectConstants.ChemobeaconPulseMinAlpha, UIEffectConstants.ChemobeaconPulseMaxAlpha, wave);
-            return new Color(1f, 1f, 1f, alpha);
-        }
-
-        private static float GetChemobeaconPulseFactor(int tileId)
-        {
-            float duration = Mathf.Max(0.01f, UIEffectConstants.ChemobeaconPulseDurationSeconds);
-            float cycle = Mathf.Repeat(Time.time + tileId * 0.137f, duration) / duration;
-            return 0.5f + 0.5f * Mathf.Sin(cycle * Mathf.PI * 2f);
-        }
-
-        private static Matrix4x4 GetChemobeaconEmblemMatrix()
-        {
-            return Matrix4x4.TRS(new Vector3(0f, 0.02f, 0f), Quaternion.identity, new Vector3(0.78f, 0.78f, 1f));
-        }
-
-        private void EnsureGeneratedChemobeaconEmblemTile()
-        {
-            if (generatedChemobeaconEmblemTile != null && generatedChemobeaconEmblemSprite != null && generatedChemobeaconEmblemTexture != null)
-            {
-                return;
-            }
-
-            const int textureSize = 48;
-            generatedChemobeaconEmblemTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false)
-            {
-                filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp,
-                alphaIsTransparency = true
-            };
-
-            var pixels = new Color32[textureSize * textureSize];
-            for (int py = 0; py < textureSize; py++)
-            {
-                for (int px = 0; px < textureSize; px++)
-                {
-                    pixels[(py * textureSize) + px] = EvaluateChemobeaconEmblemPixel(textureSize, px, py);
-                }
-            }
-
-            generatedChemobeaconEmblemTexture.SetPixels32(pixels);
-            generatedChemobeaconEmblemTexture.Apply(false, false);
-            generatedChemobeaconEmblemSprite = Sprite.Create(
-                generatedChemobeaconEmblemTexture,
-                new Rect(0f, 0f, textureSize, textureSize),
-                new Vector2(0.5f, 0.5f),
-                textureSize,
-                0,
-                SpriteMeshType.FullRect);
-
-            generatedChemobeaconEmblemTile = ScriptableObject.CreateInstance<Tile>();
-            generatedChemobeaconEmblemTile.sprite = generatedChemobeaconEmblemSprite;
-            generatedChemobeaconEmblemTile.color = Color.white;
-            generatedChemobeaconEmblemTile.colliderType = Tile.ColliderType.None;
-        }
-
-        private static Color32 EvaluateChemobeaconEmblemPixel(int textureSize, int px, int py)
-        {
-            float x = (((px + 0.5f) / textureSize) * 2f) - 1f;
-            float y = (((py + 0.5f) / textureSize) * 2f) - 1f;
-
-            float tower = RectMask(x, y, -0.12f, 0.12f, -0.42f, 0.34f);
-            float cap = TriangleMask(x, y, new Vector2(-0.22f, 0.2f), new Vector2(0.22f, 0.2f), new Vector2(0f, 0.52f));
-            float basePlate = RectMask(x, y, -0.3f, 0.3f, -0.58f, -0.42f);
-            float door = RectMask(x, y, -0.055f, 0.055f, -0.42f, -0.16f);
-            float lampRoom = RectMask(x, y, -0.18f, 0.18f, 0.08f, 0.2f);
-            float beamRight = TriangleMask(x, y, new Vector2(0.08f, 0.14f), new Vector2(0.78f, 0.34f), new Vector2(0.78f, -0.04f));
-            float beamLeft = TriangleMask(x, y, new Vector2(-0.08f, 0.14f), new Vector2(-0.78f, 0.34f), new Vector2(-0.78f, -0.04f));
-            float railing = RectMask(x, y, -0.24f, 0.24f, 0.02f, 0.08f);
-
-            float silhouette = Mathf.Max(basePlate, tower);
-            silhouette = Mathf.Max(silhouette, cap);
-            silhouette = Mathf.Max(silhouette, lampRoom);
-            silhouette = Mathf.Max(silhouette, beamLeft * 0.92f);
-            silhouette = Mathf.Max(silhouette, beamRight * 0.92f);
-            silhouette = Mathf.Max(silhouette, railing);
-            silhouette *= 1f - (door * 0.85f);
-
-            if (silhouette <= 0.02f)
-            {
-                return new Color32(0, 0, 0, 0);
-            }
-
-            byte alpha = (byte)Mathf.Clamp(Mathf.RoundToInt(silhouette * 255f), 0, 255);
-            return new Color32(0, 0, 0, alpha);
-        }
-
-        private static float RectMask(float x, float y, float minX, float maxX, float minY, float maxY)
-        {
-            return x >= minX && x <= maxX && y >= minY && y <= maxY ? 1f : 0f;
-        }
-
-        private static float TriangleMask(float x, float y, Vector2 a, Vector2 b, Vector2 c)
-        {
-            Vector2 p = new(x, y);
-            float d1 = Sign(p, a, b);
-            float d2 = Sign(p, b, c);
-            float d3 = Sign(p, c, a);
-            bool hasNeg = d1 < 0f || d2 < 0f || d3 < 0f;
-            bool hasPos = d1 > 0f || d2 > 0f || d3 > 0f;
-            return hasNeg && hasPos ? 0f : 1f;
-        }
-
-        private static float Sign(Vector2 p1, Vector2 p2, Vector2 p3)
-        {
-            return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
-        }
-
-        private void DestroyGeneratedChemobeaconAssets()
-        {
-            if (generatedChemobeaconEmblemTile != null)
-            {
-                Destroy(generatedChemobeaconEmblemTile);
-                generatedChemobeaconEmblemTile = null;
-            }
-
-            if (generatedChemobeaconEmblemSprite != null)
-            {
-                Destroy(generatedChemobeaconEmblemSprite);
-                generatedChemobeaconEmblemSprite = null;
-            }
-
-            if (generatedChemobeaconEmblemTexture != null)
-            {
-                Destroy(generatedChemobeaconEmblemTexture);
-                generatedChemobeaconEmblemTexture = null;
-            }
-        }
+        private void UpdateChemobeaconPulseVisuals() => overlayRenderer?.UpdateChemobeaconPulseVisuals();
 
         private TileBase GetNutrientPatchTile(NutrientPatch nutrientPatch)
         {
@@ -1387,358 +443,10 @@ namespace FungusToast.Unity.Grid
 
         private TileBase GetNutrientPatchTile(NutrientPatchType patchType)
         {
-            EnsureGeneratedNutrientTile(patchType);
-
-            if (generatedNutrientTiles.TryGetValue(patchType, out Tile generatedNutrientTile) && generatedNutrientTile != null)
-            {
-                return generatedNutrientTile;
-            }
-
-            if (solidHighlightTile != null)
-            {
-                return solidHighlightTile;
-            }
-
-            return baseTile;
+            return overlayRenderer != null ? overlayRenderer.GetNutrientPatchTile(patchType) : baseTile;
         }
 
-        private void EnsureGeneratedNutrientTile(NutrientPatchType patchType)
-        {
-            if (generatedNutrientTiles.ContainsKey(patchType)
-                && generatedNutrientSprites.ContainsKey(patchType)
-                && generatedNutrientTextures.ContainsKey(patchType))
-            {
-                return;
-            }
-
-            const int textureSize = 48;
-            var generatedNutrientTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false)
-            {
-                filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp,
-                alphaIsTransparency = true
-            };
-
-            var pixels = new Color32[textureSize * textureSize];
-            for (int py = 0; py < textureSize; py++)
-            {
-                for (int px = 0; px < textureSize; px++)
-                {
-                    pixels[(py * textureSize) + px] = EvaluateNutrientPixel(textureSize, px, py, patchType);
-                }
-            }
-
-            generatedNutrientTexture.SetPixels32(pixels);
-            generatedNutrientTexture.Apply(false, false);
-            var generatedNutrientSprite = Sprite.Create(
-                generatedNutrientTexture,
-                new Rect(0f, 0f, textureSize, textureSize),
-                new Vector2(0.5f, 0.5f),
-                textureSize,
-                0,
-                SpriteMeshType.FullRect);
-
-            var generatedNutrientTile = ScriptableObject.CreateInstance<Tile>();
-            generatedNutrientTile.sprite = generatedNutrientSprite;
-            generatedNutrientTile.color = Color.white;
-            generatedNutrientTile.colliderType = Tile.ColliderType.None;
-
-            generatedNutrientTextures[patchType] = generatedNutrientTexture;
-            generatedNutrientSprites[patchType] = generatedNutrientSprite;
-            generatedNutrientTiles[patchType] = generatedNutrientTile;
-        }
-
-        private static Color32 EvaluateNutrientPixel(int textureSize, int px, int py, NutrientPatchType patchType)
-        {
-            float x = (((px + 0.5f) / textureSize) * 2f) - 1f;
-            float y = (((py + 0.5f) / textureSize) * 2f) - 1f;
-            float radius = Mathf.Sqrt((x * x) + (y * y));
-            float diamond = (Mathf.Abs(x) * 0.88f) + (Mathf.Abs(y) * 0.88f);
-            float outerBody = 1f - Mathf.SmoothStep(0.64f, 0.9f, diamond);
-            float core = 1f - Mathf.SmoothStep(0.12f, 0.32f, radius);
-            float ring = 1f - Mathf.SmoothStep(0.02f, 0.11f, Mathf.Abs(radius - 0.43f));
-            float verticalVein = 1f - Mathf.SmoothStep(0.015f, 0.075f, Mathf.Abs(x));
-            float horizontalVein = 1f - Mathf.SmoothStep(0.015f, 0.075f, Mathf.Abs(y));
-            float veins = Mathf.Max(verticalVein * core, horizontalVein * core * 0.82f);
-
-            float satelliteNorth = 1f - Mathf.SmoothStep(0.03f, 0.12f, Vector2.Distance(new Vector2(x, y), new Vector2(0f, 0.58f)));
-            float satelliteSouth = 1f - Mathf.SmoothStep(0.03f, 0.12f, Vector2.Distance(new Vector2(x, y), new Vector2(0f, -0.58f)));
-            float satelliteEast = 1f - Mathf.SmoothStep(0.03f, 0.12f, Vector2.Distance(new Vector2(x, y), new Vector2(0.58f, 0f)));
-            float satelliteWest = 1f - Mathf.SmoothStep(0.03f, 0.12f, Vector2.Distance(new Vector2(x, y), new Vector2(-0.58f, 0f)));
-            float satellites = Mathf.Max(Mathf.Max(satelliteNorth, satelliteSouth), Mathf.Max(satelliteEast, satelliteWest));
-
-            float alpha = Mathf.Max(outerBody * 0.94f, core * 0.88f);
-            alpha = Mathf.Max(alpha, ring * 0.72f);
-            alpha = Mathf.Max(alpha, satellites * 0.66f);
-            if (alpha <= 0.01f)
-            {
-                return new Color(0f, 0f, 0f, 0f);
-            }
-
-            Color outerColor = new(0.42f, 0.25f, 0.08f, 1f);
-            Color bodyColor = new(0.86f, 0.63f, 0.16f, 1f);
-            Color ringColor = new(0.96f, 0.8f, 0.33f, 1f);
-            Color coreColor = new(0.99f, 0.93f, 0.72f, 1f);
-            Color veinColor = new(1f, 0.98f, 0.88f, 1f);
-
-            Color color = Color.Lerp(outerColor, bodyColor, Mathf.Clamp01(outerBody * 0.92f));
-            color = Color.Lerp(color, ringColor, ring * 0.85f);
-            color = Color.Lerp(color, coreColor, core * 0.9f);
-            color = Color.Lerp(color, veinColor, veins * 0.75f);
-            color = Color.Lerp(color, ringColor, satellites * 0.55f);
-
-            if (patchType == NutrientPatchType.Adaptogen)
-            {
-                float helixLeft = 1f - Mathf.SmoothStep(0.018f, 0.07f, Mathf.Abs(x - (0.18f * Mathf.Sin(y * 7.2f)) - 0.16f));
-                float helixRight = 1f - Mathf.SmoothStep(0.018f, 0.07f, Mathf.Abs(x + (0.18f * Mathf.Sin(y * 7.2f)) + 0.16f));
-                float helix = Mathf.Max(helixLeft, helixRight) * (1f - Mathf.SmoothStep(0.56f, 0.9f, radius));
-                float ladder = (1f - Mathf.SmoothStep(0.02f, 0.07f, Mathf.Abs(x)))
-                    * (0.5f + (0.5f * Mathf.Cos(y * 18f)))
-                    * (1f - Mathf.SmoothStep(0.2f, 0.72f, Mathf.Abs(y)));
-
-                Color helixColor = new(0.35f, 0.84f, 1f, 1f);
-                Color ladderColor = new(0.84f, 0.98f, 1f, 1f);
-                color = Color.Lerp(color, helixColor, helix * 0.92f);
-                color = Color.Lerp(color, ladderColor, ladder * 0.85f);
-                alpha = Mathf.Max(alpha, helix * 0.8f);
-                alpha = Mathf.Max(alpha, ladder * 0.72f);
-            }
-            else
-            {
-                float runnerStem = 1f - Mathf.SmoothStep(0.02f, 0.085f, Mathf.Abs(x));
-                float branchNorthEast = 1f - Mathf.SmoothStep(0.02f, 0.085f, Mathf.Abs((y - 0.18f) - (x * 0.92f)));
-                float branchNorthWest = 1f - Mathf.SmoothStep(0.02f, 0.085f, Mathf.Abs((y - 0.18f) + (x * 0.92f)));
-                float branchSouthEast = 1f - Mathf.SmoothStep(0.02f, 0.085f, Mathf.Abs((y + 0.22f) + (x * 1.08f)));
-                float branchSouthWest = 1f - Mathf.SmoothStep(0.02f, 0.085f, Mathf.Abs((y + 0.22f) - (x * 1.08f)));
-                float runner = Mathf.Max(Mathf.Max(runnerStem, branchNorthEast), Mathf.Max(branchNorthWest, Mathf.Max(branchSouthEast, branchSouthWest)));
-                runner *= 1f - Mathf.SmoothStep(0.6f, 0.95f, radius);
-
-                float sporeburst = 1f - Mathf.SmoothStep(0.015f, 0.07f, Mathf.Abs(radius - 0.28f));
-                sporeburst *= 0.5f + (0.5f * Mathf.Cos((Mathf.Atan2(y, x) * 6f)));
-
-                Color runnerColor = new(0.72f, 0.9f, 0.42f, 1f);
-                Color sporeColor = new(0.98f, 1f, 0.84f, 1f);
-                color = Color.Lerp(color, runnerColor, runner * 0.82f);
-                color = Color.Lerp(color, sporeColor, sporeburst * 0.56f);
-                alpha = Mathf.Max(alpha, runner * 0.76f);
-                alpha = Mathf.Max(alpha, sporeburst * 0.44f);
-            }
-
-            color.a = Mathf.Clamp01(alpha);
-            return color;
-        }
-
-        private void UpdateNutrientPulseVisuals()
-        {
-            if (overlayTilemap == null || board == null || nutrientPulseTileIds.Count == 0)
-            {
-                return;
-            }
-
-            var staleTileIds = new List<int>();
-            foreach (int tileId in nutrientPulseTileIds)
-            {
-                BoardTile tile = board.GetTileById(tileId);
-                if (tile == null || !tile.HasNutrientPatch || tile.FungalCell != null)
-                {
-                    staleTileIds.Add(tileId);
-                    continue;
-                }
-
-                Vector3Int pos = GetPositionForTileId(tileId);
-                if (!overlayTilemap.HasTile(pos))
-                {
-                    continue;
-                }
-
-                overlayTilemap.SetTransformMatrix(pos, GetNutrientPulseMatrix(tileId));
-                overlayTilemap.SetColor(pos, GetNutrientPulseColor(tileId));
-            }
-
-            for (int i = 0; i < staleTileIds.Count; i++)
-            {
-                nutrientPulseTileIds.Remove(staleTileIds[i]);
-            }
-        }
-
-        private Matrix4x4 GetNutrientPulseMatrix(int tileId)
-        {
-            float pulse = GetNutrientPulseFactor(tileId);
-            float scale = Mathf.Lerp(UIEffectConstants.NutrientPatchPulseMinScale, UIEffectConstants.NutrientPatchPulseMaxScale, pulse);
-            return Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
-        }
-
-        private Color GetNutrientPulseColor(int tileId)
-        {
-            float pulse = GetNutrientPulseFactor(tileId);
-            float alpha = Mathf.Lerp(UIEffectConstants.NutrientPatchPulseAlphaMin, UIEffectConstants.NutrientPatchPulseAlphaMax, pulse);
-            return new Color(NutrientPatchColor.r, NutrientPatchColor.g, NutrientPatchColor.b, alpha);
-        }
-
-        private static float GetNutrientPulseFactor(int tileId)
-        {
-            float phase = (Time.time * UIEffectConstants.NutrientPatchPulseSpeed) + (tileId * UIEffectConstants.NutrientPatchPulsePhaseOffsetRadians);
-            float wave = 0.5f + (0.5f * Mathf.Sin(phase));
-            return wave * wave * (3f - (2f * wave));
-        }
-
-        private static float GetNutrientToastScaleMultiplier()
-        {
-            Camera mainCamera = Camera.main;
-            if (mainCamera == null || !mainCamera.orthographic)
-            {
-                return UIEffectConstants.BoardToastScaleMultiplier;
-            }
-
-            float normalizedZoom = mainCamera.orthographicSize / UIEffectConstants.NutrientPatchToastZoomReferenceOrthographicSize;
-            float zoomScale = Mathf.Sqrt(Mathf.Max(1f, normalizedZoom));
-            return Mathf.Clamp(zoomScale, 1f, UIEffectConstants.NutrientPatchToastMaxScaleMultiplier) * UIEffectConstants.BoardToastScaleMultiplier;
-        }
-
-        private static float GetAnimatedNutrientToastScaleMultiplier(float textT)
-        {
-            float baseScale = GetNutrientToastScaleMultiplier();
-            float popIn = 1f - Mathf.Pow(1f - Mathf.Clamp01(textT / 0.18f), 3f);
-            float settle = Mathf.Clamp01((textT - 0.18f) / 0.26f);
-
-            float minScale = UIEffectConstants.NutrientPatchToastMinScaleMultiplier;
-            float popScale = UIEffectConstants.NutrientPatchToastPopScaleMultiplier;
-            float animatedScale = Mathf.Lerp(minScale, popScale, popIn);
-            animatedScale = Mathf.Lerp(animatedScale, 1f, settle);
-
-            return baseScale * animatedScale;
-        }
-
-        private static Color GetNutrientToastColor(NutrientPatchType patchType)
-        {
-            return patchType == NutrientPatchType.Adaptogen
-                ? AdaptogenPatchTextColor
-                : SporemealPatchTextColor;
-        }
-
-        private static string BuildNutrientToastText(NutrientRewardType rewardType, int rewardAmount)
-        {
-            return rewardType switch
-            {
-                NutrientRewardType.MutationPoints => rewardAmount == 1
-                    ? "+1 Mutation Point!"
-                    : $"+{rewardAmount} Mutation Points!",
-                NutrientRewardType.FreeGrowth => rewardAmount == 1
-                    ? "1 Cell Grown!"
-                    : $"{rewardAmount} Cells Grown!",
-                _ => "Nutrient Claimed!"
-            };
-        }
-
-        private static string BuildHyphalVectoringToastText(int tileCount)
-        {
-            return tileCount == 1
-                ? "Hyphal Vectoring!"
-                : $"Hyphal Vectoring x{tileCount}!";
-        }
-
-        private TextMeshPro CreateNutrientToastText(Vector3Int destinationPos, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
-        {
-            var textObject = new GameObject("NutrientPatchToast", typeof(TextMeshPro));
-            textObject.transform.SetParent(transform, false);
-
-            var tmp = textObject.GetComponent<TextMeshPro>();
-            tmp.text = BuildNutrientToastText(rewardType, rewardAmount);
-            tmp.fontSize = UIEffectConstants.NutrientPatchToastFontSize;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.textWrappingMode = TextWrappingModes.NoWrap;
-            tmp.fontStyle = FontStyles.Bold;
-            tmp.color = GetNutrientToastColor(patchType);
-            tmp.outlineWidth = 0.32f;
-            tmp.outlineColor = new Color(0.24f, 0.12f, 0.02f, 1f);
-            tmp.transform.position = overlayTilemap.GetCellCenterWorld(destinationPos) + new Vector3(0f, UIEffectConstants.NutrientPatchToastStartHeightWorld, 0f);
-            tmp.transform.localScale = Vector3.one * (GetNutrientToastScaleMultiplier() * UIEffectConstants.NutrientPatchToastMinScaleMultiplier);
-
-            var renderer = tmp.GetComponent<MeshRenderer>();
-            if (renderer != null)
-            {
-                renderer.sortingOrder = 60;
-            }
-
-            return tmp;
-        }
-
-        private TextMeshPro CreateHyphalVectoringToastText(IReadOnlyList<int> affectedTileIds)
-        {
-            if (overlayTilemap == null || affectedTileIds == null || affectedTileIds.Count == 0)
-            {
-                return null;
-            }
-
-            Vector3 averageWorld = Vector3.zero;
-            foreach (var tileId in affectedTileIds)
-            {
-                averageWorld += overlayTilemap.GetCellCenterWorld(GetPositionForTileId(tileId));
-            }
-
-            averageWorld /= affectedTileIds.Count;
-
-            var textObject = new GameObject("HyphalVectoringToast", typeof(TextMeshPro));
-            textObject.transform.SetParent(transform, false);
-
-            var tmp = textObject.GetComponent<TextMeshPro>();
-            tmp.text = BuildHyphalVectoringToastText(affectedTileIds.Count);
-            tmp.fontSize = UIEffectConstants.HyphalVectoringToastFontSize;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.textWrappingMode = TextWrappingModes.NoWrap;
-            tmp.fontStyle = FontStyles.Bold;
-            tmp.color = HyphalVectoringToastColor;
-            tmp.outlineWidth = 0.32f;
-            tmp.outlineColor = new Color(0.18f, 0.11f, 0.02f, 1f);
-            tmp.transform.position = averageWorld + new Vector3(0f, UIEffectConstants.HyphalVectoringToastStartHeightWorld, 0f);
-            tmp.transform.localScale = Vector3.one * GetNutrientToastScaleMultiplier();
-
-            var renderer = tmp.GetComponent<MeshRenderer>();
-            if (renderer != null)
-            {
-                renderer.sortingOrder = 61;
-            }
-
-            return tmp;
-        }
-
-        private IEnumerator AnimateFloatingToast(TextMeshPro toast, float duration, Color baseColor, float riseWorld, bool useAnimatedScale)
-        {
-            if (toast == null)
-            {
-                yield break;
-            }
-
-            Vector3 start = toast.transform.position;
-            Vector3 end = start + new Vector3(0f, riseWorld, 0f);
-
-            float elapsed = 0f;
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
-                toast.transform.position = Vector3.Lerp(start, end, t);
-                toast.transform.localScale = Vector3.one * (useAnimatedScale ? GetAnimatedNutrientToastScaleMultiplier(t) : GetNutrientToastScaleMultiplier());
-
-                var textColor = baseColor;
-                float fadeT = Mathf.Clamp01((t - 0.48f) / 0.52f);
-                textColor.a = 1f - fadeT;
-                toast.color = textColor;
-                yield return null;
-            }
-        }
-
-        private void DestroyLingeringNutrientToasts()
-        {
-            for (int i = transform.childCount - 1; i >= 0; i--)
-            {
-                Transform child = transform.GetChild(i);
-                if (child != null && (child.name == "NutrientPatchToast" || child.name == "HyphalVectoringToast"))
-                {
-                    Destroy(child.gameObject);
-                }
-            }
-        }
+        private void UpdateNutrientPulseVisuals() => overlayRenderer?.UpdateNutrientPulseVisuals();
 
         private void SetOverlayTile(Vector3Int pos, TileBase tile, Color color)
         {
@@ -1915,7 +623,7 @@ namespace FungusToast.Unity.Grid
                 overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
             }
 
-            nutrientPulseTileIds.Remove(tileId);
+            overlayRenderer?.RemoveTrackedNutrientTile(tileId);
 
             if (tile?.FungalCell != null)
             {
@@ -1954,383 +662,14 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        private void StartFadeInAnimations()
-        {
-            foreach (int tileId in newlyGrownTileIds
-        )
-            {
-                if (newlyGrownAnimationPlayedTileIds.Contains(tileId))
-                {
-                    continue;
-                }
-
-                if (fadeInCoroutines.ContainsKey(tileId))
-                {
-                    StopCoroutine(fadeInCoroutines[tileId]);
-                    EndAnimation();
-                }
-                fadeInCoroutines[tileId] = StartCoroutine(FadeInCell(tileId));
-                newlyGrownAnimationPlayedTileIds.Add(tileId);
-            }
-        }
-
-        private IEnumerator FadeInCell(int tileId)
-        {
-            var xy = board.GetXYFromTileId(tileId);
-            Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
-            
-            float duration = UIEffectConstants.CellGrowthFadeInDurationSeconds;
-            float startAlpha = 0.1f;
-            float targetAlpha = 1f;
-            float elapsed = 0f;
-
-            BeginAnimation();
-            try
-            {
-                while (elapsed < duration)
-                {
-                    elapsed += Time.deltaTime;
-                    float t = elapsed / duration;
-                    float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, t);
-                    
-                    if (moldTilemap.HasTile(pos))
-                    {
-                        Color currentColor = moldTilemap.GetColor(pos);
-                        currentColor.a = currentAlpha;
-                        moldTilemap.SetColor(pos, currentColor);
-                    }
-                    
-                    yield return null;
-                }
-
-                if (moldTilemap.HasTile(pos))
-                {
-                    Color finalColor = moldTilemap.GetColor(pos);
-                    finalColor.a = 1f;
-                    moldTilemap.SetColor(pos, finalColor);
-                }
-
-                float flashElapsed = 0f;
-                Color originalColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
-                while (flashElapsed < UIEffectConstants.NewGrowthFlashDurationSeconds)
-                {
-                    flashElapsed += Time.deltaTime;
-                    if (moldTilemap.HasTile(pos))
-                    {
-                        moldTilemap.SetColor(pos, UIEffectConstants.NewGrowthFlashColor);
-                    }
-                    yield return null;
-                }
-
-                if (moldTilemap.HasTile(pos))
-                {
-                    Color settleColor = Color.white;
-                    settleColor.a = UIEffectConstants.NewGrowthFinalAlpha;
-                    moldTilemap.SetColor(pos, settleColor);
-                }
-
-            }
-            finally
-            {
-                fadeInCoroutines.Remove(tileId);
-                EndAnimation();
-            }
-        }
-
         public void ClearNewlyGrownFlagsForNextGrowthPhase()
-        {
-            if (board == null)
-            {
-                return;
-            }
-
-            foreach (var tile in board.AllTiles())
-            {
-                var cell = tile.FungalCell;
-                if (cell?.IsNewlyGrown == true)
-                {
-                    cell.ClearNewlyGrownFlag();
-                }
-            }
-
-            newlyGrownTileIds.Clear();
-            newlyGrownAnimationPlayedTileIds.Clear();
-        }
-
-        private void StartDeathAnimations()
-        {
-            foreach (int tileId in dyingTileIds)
-            {
-                if (deathAnimationCoroutines.ContainsKey(tileId))
-                {
-                    StopCoroutine(deathAnimationCoroutines[tileId]);
-                    EndAnimation();
-                }
-                deathAnimationCoroutines[tileId] = StartCoroutine(DeathAnimation(tileId));
-            }
-        }
+            => cellStateAnimationController?.ClearNewlyGrownFlagsForNextGrowthPhase();
 
         public void TriggerDeathAnimation(int tileId)
-        {
-            var tile = board.GetTileById(tileId);
-            if (tile?.FungalCell != null)
-            {
-                tile.FungalCell.MarkAsDying();
-                dyingTileIds.Add(tileId);
-                if (deathAnimationCoroutines.ContainsKey(tileId))
-                {
-                    StopCoroutine(deathAnimationCoroutines[tileId]);
-                    EndAnimation();
-                }
-                deathAnimationCoroutines[tileId] = StartCoroutine(DeathAnimation(tileId));
-            }
-        }
-
-        private IEnumerator DeathAnimation(int tileId)
-        {
-            var xy = board.GetXYFromTileId(tileId);
-            Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
-            
-            float duration = UIEffectConstants.CellDeathAnimationDurationSeconds;
-
-            var tile = board.GetTileById(tileId);
-            var cell = tile?.FungalCell;
-            if (cell == null)
-            {
-                deathAnimationCoroutines.Remove(tileId);
-                yield break;
-            }
-
-            BeginAnimation();
-            try
-            {
-                Color initialLivingColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
-                Color initialOverlayColor = overlayTilemap.HasTile(pos) ? overlayTilemap.GetColor(pos) : Color.white;
-                Matrix4x4 initialTransform = moldTilemap.GetTransformMatrix(pos);
-
-                Color deathFlashColor = new Color(1f, 0.2f, 0.2f, 1f);
-                
-                float flashDuration = duration * 0.15f;
-                float flashElapsed = 0f;
-                
-                while (flashElapsed < flashDuration)
-                {
-                    flashElapsed += Time.deltaTime;
-                    float flashProgress = flashElapsed / flashDuration;
-                    
-                    Color flashColor = Color.Lerp(deathFlashColor, initialLivingColor, flashProgress);
-                    
-                    if (moldTilemap.HasTile(pos))
-                    {
-                        moldTilemap.SetColor(pos, flashColor);
-                    }
-                    
-                    yield return null;
-                }
-
-                float mainDuration = duration - flashDuration;
-                float mainElapsed = 0f;
-
-                while (mainElapsed < mainDuration)
-                {
-                    mainElapsed += Time.deltaTime;
-                    float progress = mainElapsed / mainDuration;
-                    
-                    float easedProgress = 1f - Mathf.Pow(1f - progress, 2f);
-                    
-                    float scaleAmount = Mathf.Lerp(1f, 0.85f, easedProgress);
-                    Matrix4x4 scaleMatrix = Matrix4x4.Scale(new Vector3(scaleAmount, scaleAmount, 1f));
-                    
-                    Color currentLivingColor = Color.Lerp(initialLivingColor, 
-                        new Color(initialLivingColor.r * 0.7f, initialLivingColor.g * 0.7f, initialLivingColor.b * 0.7f, 
-                        Mathf.Lerp(1f, 0.8f, easedProgress)), easedProgress);
-                    
-                    if (moldTilemap.HasTile(pos))
-                    {
-                        moldTilemap.SetColor(pos, currentLivingColor);
-                        moldTilemap.SetTransformMatrix(pos, scaleMatrix);
-                    }
-                    
-                    if (overlayTilemap.HasTile(pos))
-                    {
-                        Color overlayColor = initialOverlayColor;
-                        overlayColor.a = Mathf.Lerp(0f, 1f, easedProgress);
-                        overlayTilemap.SetColor(pos, overlayColor);
-                    }
-                    
-                    yield return null;
-                }
-
-                if (moldTilemap.HasTile(pos))
-                {
-                    Color finalLivingColor = initialLivingColor;
-                    finalLivingColor.a = 0.8f;
-                    moldTilemap.SetColor(pos, finalLivingColor);
-                    moldTilemap.SetTransformMatrix(pos, Matrix4x4.Scale(new Vector3(0.85f, 0.85f, 1f)));
-                }
-                
-                if (overlayTilemap.HasTile(pos))
-                {
-                    Color finalOverlayColor = initialOverlayColor;
-                    finalOverlayColor.a = 1f;
-                    overlayTilemap.SetColor(pos, finalOverlayColor);
-                }
-
-                cell.ClearDyingFlag();
-            }
-            finally
-            {
-                deathAnimationCoroutines.Remove(tileId);
-                EndAnimation();
-            }
-        }
-
-        private void StartToxinDropAnimations()
-        {
-            foreach (int tileId in toxinDropTileIds)
-            {
-                if (toxinDropCoroutines.ContainsKey(tileId))
-                {
-                    StopCoroutine(toxinDropCoroutines[tileId]);
-                    EndAnimation();
-                }
-                toxinDropCoroutines[tileId] = StartCoroutine(ToxinDropAnimation(tileId));
-            }
-        }
+            => cellStateAnimationController?.TriggerDeathAnimation(tileId);
 
         public void TriggerToxinDropAnimation(int tileId)
-        {
-            var tile = board.GetTileById(tileId);
-            if (tile?.FungalCell != null)
-            {
-                tile.FungalCell.MarkAsReceivingToxinDrop();
-                toxinDropTileIds.Add(tileId);
-                if (toxinDropCoroutines.ContainsKey(tileId))
-                {
-                    StopCoroutine(toxinDropCoroutines[tileId]);
-                    EndAnimation();
-                }
-                toxinDropCoroutines[tileId] = StartCoroutine(ToxinDropAnimation(tileId));
-            }
-        }
-
-        private IEnumerator ToxinDropAnimation(int tileId)
-        {
-            var xy = board.GetXYFromTileId(tileId);
-            Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
-            
-            float duration = UIEffectConstants.ToxinDropAnimationDurationSeconds;
-
-            var tile = board.GetTileById(tileId);
-            var cell = tile?.FungalCell;
-            if (cell == null)
-            {
-                toxinDropCoroutines.Remove(tileId);
-                yield break;
-            }
-
-            BeginAnimation();
-            try
-            {
-                Color initialMoldColor = moldTilemap.HasTile(pos) ? moldTilemap.GetColor(pos) : Color.white;
-                Color initialOverlayColor = overlayTilemap.HasTile(pos) ? overlayTilemap.GetColor(pos) : Color.white;
-
-                if (!overlayTilemap.HasTile(pos) && toxinOverlayTile != null)
-                {
-                    overlayTilemap.SetTile(pos, toxinOverlayTile);
-                    overlayTilemap.SetTileFlags(pos, TileFlags.None);
-                    overlayTilemap.SetColor(pos, Color.clear);
-                }
-
-                if (moldTilemap.HasTile(pos))
-                {
-                    var c = moldTilemap.GetColor(pos);
-                    c.a = 0f;
-                    moldTilemap.SetColor(pos, c);
-                }
-
-                float startYOffset = UIEffectConstants.ToxinDropStartYOffset;
-                ApplyOverlayTransform(pos, new Vector3(0f, startYOffset, 0f), Vector3.one);
-
-                float approachPortion = Mathf.Clamp01(UIEffectConstants.ToxinDropApproachPortion);
-                float approachDuration = duration * approachPortion;
-                float approachElapsed = 0f;
-                while (approachElapsed < approachDuration)
-                {
-                    approachElapsed += Time.deltaTime;
-                    float t = Mathf.Clamp01(approachElapsed / approachDuration);
-                    float eased = t * t * t;
-                    float yOffset = Mathf.Lerp(startYOffset, 0f, eased);
-                    ApplyOverlayTransform(pos, new Vector3(0f, yOffset, 0f), Vector3.one);
-                    yield return null;
-                }
-
-                float squashX = UIEffectConstants.ToxinDropImpactSquashX;
-                float squashY = UIEffectConstants.ToxinDropImpactSquashY;
-                float impactPortion = 1f - approachPortion;
-                float impactDuration = duration * impactPortion * 0.35f;
-                float settleDuration = duration * impactPortion - impactDuration;
-
-                float impactElapsed = 0f;
-                while (impactElapsed < impactDuration)
-                {
-                    impactElapsed += Time.deltaTime;
-                    float t = Mathf.Clamp01(impactElapsed / impactDuration);
-                    float sx = Mathf.Lerp(1f, squashX, 1f - (1f - t) * (1f - t));
-                    float sy = Mathf.Lerp(1f, squashY, 1f - (1f - t) * (1f - t));
-                    ApplyOverlayTransform(pos, Vector3.zero, new Vector3(sx, sy, 1f));
-
-                    if (overlayTilemap.HasTile(pos))
-                    {
-                        Color c = overlayTilemap.GetColor(pos);
-                        c.a = Mathf.Lerp(0f, 1f, t);
-                        overlayTilemap.SetColor(pos, c);
-                    }
-                    yield return null;
-                }
-
-                float settleElapsed = 0f;
-                while (settleElapsed < settleDuration)
-                {
-                    settleElapsed += Time.deltaTime;
-                    float t = Mathf.Clamp01(settleElapsed / settleDuration);
-                    float sx = Mathf.Lerp(squashX, 1f, t);
-                    float sy = Mathf.Lerp(squashY, 1f, t);
-                    ApplyOverlayTransform(pos, Vector3.zero, new Vector3(sx, sy, 1f));
-                    yield return null;
-                }
-
-                ApplyOverlayTransform(pos, Vector3.zero, Vector3.one);
-                if (overlayTilemap.HasTile(pos))
-                {
-                    overlayTilemap.SetColor(pos, Color.white);
-                }
-                if (moldTilemap.HasTile(pos))
-                {
-                    moldTilemap.SetColor(pos, new Color(0.8f, 0.8f, 0.8f, 0.8f));
-                }
-
-                cell.ClearToxinDropFlag();
-            }
-            finally
-            {
-                toxinDropCoroutines.Remove(tileId);
-                EndAnimation();
-            }
-        }
-
-        private void ApplyOverlayTransform(Vector3Int pos, Vector3 localOffset, Vector3 localScale)
-        {
-            var trs = Matrix4x4.TRS(localOffset, Quaternion.identity, localScale);
-            overlayTilemap.SetTransformMatrix(pos, trs);
-        }
-
-        private void ApplyCompositeTransform(Vector3Int pos, Vector3 localOffset, Vector3 localScale)
-        {
-            var m = Matrix4x4.TRS(localOffset, Quaternion.identity, localScale);
-            if (moldTilemap.HasTile(pos)) moldTilemap.SetTransformMatrix(pos, m);
-            if (overlayTilemap.HasTile(pos)) overlayTilemap.SetTransformMatrix(pos, m);
-        }
+            => cellStateAnimationController?.TriggerToxinDropAnimation(tileId);
 
         // NEW: Resistant drop animation for Surgical Inoculation (Option A)
         public IEnumerator ResistantDropAnimation(int tileId, float finalScale = 1f, float durationScale = 1f)
@@ -2546,52 +885,8 @@ namespace FungusToast.Unity.Grid
         #region Public Interaction / Rendering API (restored)
         public void RenderBoard(GameBoard board, bool suppressAnimations)
         {
-            if (suppressAnimations)
-            {
-                ClearPendingToxinExpirySnapshots();
-            }
-
-            // Stop any in-flight animation coroutines
-            foreach (var c in fadeInCoroutines.Values) if (c != null) { StopCoroutine(c); EndAnimation(); }
-            fadeInCoroutines.Clear();
-            foreach (var c in deathAnimationCoroutines.Values) if (c != null) { StopCoroutine(c); EndAnimation(); }
-            deathAnimationCoroutines.Clear();
-            foreach (var c in toxinDropCoroutines.Values) if (c != null) { StopCoroutine(c); EndAnimation(); }
-            toxinDropCoroutines.Clear();
-            StopAndClearToxinExpiryAnimations();
-
-            newlyGrownTileIds.Clear();
-            dyingTileIds.Clear();
-            toxinDropTileIds.Clear();
-            nutrientPulseTileIds.Clear();
-
-            // When suppressing animations (fast-forward completion), clear transient flags so no new coroutines would start later.
-            if (suppressAnimations)
-            {
-                foreach (var tile in board.AllTiles())
-                {
-                    var fc = tile.FungalCell;
-                    if (fc == null) continue;
-                    if (fc.IsNewlyGrown) fc.ClearNewlyGrownFlag();
-                    if (fc.IsDying) fc.ClearDyingFlag();
-                    if (fc.IsReceivingToxinDrop) fc.ClearToxinDropFlag();
-                }
-
-                newlyGrownAnimationPlayedTileIds.Clear();
-            }
-            else
-            {
-                for (int x = 0; x < board.Width; x++)
-                {
-                    for (int y = 0; y < board.Height; y++)
-                    {
-                        var tile = board.Grid[x, y];
-                        if (tile.FungalCell?.IsNewlyGrown == true) newlyGrownTileIds.Add(tile.TileId);
-                        if (tile.FungalCell?.IsDying == true) dyingTileIds.Add(tile.TileId);
-                        if (tile.FungalCell?.IsReceivingToxinDrop == true) toxinDropTileIds.Add(tile.TileId);
-                    }
-                }
-            }
+            cellStateAnimationController?.PrepareForBoardRender(board, suppressAnimations);
+            overlayRenderer?.ResetRuntimeState();
 
             toastTilemap.ClearAllTiles();
             moldTilemap.ClearAllTiles();
@@ -2623,10 +918,7 @@ namespace FungusToast.Unity.Grid
 
             if (!suppressAnimations)
             {
-                StartFadeInAnimations();
-                StartDeathAnimations();
-                StartToxinDropAnimations();
-                StartPendingToxinExpiryAnimations();
+                cellStateAnimationController?.StartQueuedAnimations();
             }
         }
 
@@ -2680,7 +972,10 @@ namespace FungusToast.Unity.Grid
                 return;
             }
 
-            StartCoroutine(RunHyphalVectoringSurgePresentation(playerId, originTileId, affectedTileIds));
+            if (presentationEffects != null)
+            {
+                StartCoroutine(presentationEffects.RunHyphalVectoringSurgePresentation(playerId, originTileId, affectedTileIds));
+            }
         }
 
         public void ShowSelectedTiles(IEnumerable<int> tileIds, Color? selectedColor = null)
@@ -2711,399 +1006,31 @@ namespace FungusToast.Unity.Grid
 
         private TileBase GetSurfaceTile(int x, int y)
         {
-            var activeMedium = ActiveBoardMedium;
-            if (activeMedium == null || !activeMedium.ShouldOverridePlayableSurface)
-            {
-                return baseTile;
-            }
-
-            return activeMedium.GetSurfaceTile(x, y) ?? activeMedium.boardSurfaceTile;
+            return boardMediumRenderer != null
+                ? boardMediumRenderer.GetSurfaceTile(x, y, baseTile)
+                : baseTile;
         }
 
         private Color GetSurfaceColor(int x, int y, int boardWidth, int boardHeight)
         {
-            var activeMedium = ActiveBoardMedium;
-            if (activeMedium == null || !activeMedium.ShouldOverridePlayableSurface || !activeMedium.IsPerimeterTintEnabled)
-            {
-                return Color.white;
-            }
-
-            int distanceToEdge = Mathf.Min(x, y, boardWidth - 1 - x, boardHeight - 1 - y);
-            if (distanceToEdge >= activeMedium.perimeterTintDepth)
-            {
-                return Color.white;
-            }
-
-            float depth = activeMedium.perimeterTintDepth <= 1
-                ? 1f
-                : 1f - (distanceToEdge / (float)(activeMedium.perimeterTintDepth - 1));
-            return Color.Lerp(Color.white, activeMedium.perimeterTint, depth);
+            return boardMediumRenderer != null
+                ? boardMediumRenderer.GetSurfaceColor(x, y, boardWidth, boardHeight)
+                : Color.white;
         }
 
         private int GetCrustThickness(GameBoard activeBoard)
         {
-            var activeMedium = ActiveBoardMedium;
-            return activeMedium?.GetCrustThickness(activeBoard.Width, activeBoard.Height) ?? 0;
+            return boardMediumRenderer?.GetCrustThickness(activeBoard) ?? 0;
         }
 
         private Matrix4x4 GetPlayableSurfaceTileMatrix()
         {
-            float scale = Mathf.Max(1f, ActiveBoardMedium?.playableSurfaceTileScale ?? 1f);
-            if (Mathf.Approximately(scale, 1f))
-            {
-                return IdentityMatrix;
-            }
-
-            return Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+            return boardMediumRenderer?.GetPlayableSurfaceTileMatrix() ?? IdentityMatrix;
         }
 
         private void RenderDecorativeCrust(GameBoard activeBoard)
         {
-            var activeMedium = ActiveBoardMedium;
-            if (activeBoard == null || activeMedium == null)
-            {
-                ClearGeneratedCrustVisual();
-                return;
-            }
-
-            float visualCrustThickness = activeMedium.GetVisualCrustThickness(activeBoard.Width, activeBoard.Height);
-            if (visualCrustThickness <= 0f)
-            {
-                ClearGeneratedCrustVisual();
-                return;
-            }
-
-            var targetCrustTilemap = GetCrustTargetTilemap();
-            if (targetCrustTilemap != null)
-            {
-                targetCrustTilemap.ClearAllTiles();
-            }
-
-            EnsureGeneratedCrustVisual(activeBoard, activeMedium, visualCrustThickness);
-        }
-
-        private void EnsureGeneratedCrustVisual(GameBoard activeBoard, BoardMediumConfig activeMedium, float visualCrustThickness)
-        {
-            string cacheKey = BuildGeneratedCrustCacheKey(activeBoard, activeMedium, visualCrustThickness);
-            if (generatedCrustRenderer == null)
-            {
-                generatedCrustRenderer = CreateGeneratedCrustRenderer();
-            }
-
-            if (generatedCrustRenderer == null)
-            {
-                return;
-            }
-
-            Transform visualParent = GetGeneratedCrustVisualParent();
-            if (generatedCrustRenderer.transform.parent != visualParent)
-            {
-                generatedCrustRenderer.transform.SetParent(visualParent, false);
-            }
-
-            if (generatedCrustCacheKey != cacheKey || generatedCrustSprite == null || generatedCrustTexture == null)
-            {
-                RebuildGeneratedCrustSprite(activeBoard, activeMedium, visualCrustThickness, cacheKey);
-            }
-
-            PositionGeneratedCrustRenderer(activeBoard);
-            generatedCrustRenderer.enabled = generatedCrustSprite != null;
-        }
-
-        private SpriteRenderer CreateGeneratedCrustRenderer()
-        {
-            var crustObject = new GameObject("GeneratedCrustVisual");
-            crustObject.transform.SetParent(GetGeneratedCrustVisualParent(), false);
-            var spriteRenderer = crustObject.AddComponent<SpriteRenderer>();
-
-            if (toastTilemap != null)
-            {
-                var tilemapRenderer = toastTilemap.GetComponent<TilemapRenderer>();
-                if (tilemapRenderer != null)
-                {
-                    spriteRenderer.sortingLayerID = tilemapRenderer.sortingLayerID;
-                    spriteRenderer.sortingOrder = tilemapRenderer.sortingOrder - 1;
-                }
-            }
-
-            return spriteRenderer;
-        }
-
-        private Transform GetGeneratedCrustVisualParent()
-        {
-            return toastTilemap != null ? toastTilemap.transform : transform;
-        }
-
-        private void RebuildGeneratedCrustSprite(GameBoard activeBoard, BoardMediumConfig activeMedium, float visualCrustThickness, string cacheKey)
-        {
-            DestroyGeneratedCrustAssets();
-
-            int pixelsPerUnit = GetBackdropPixelsPerUnit(activeBoard, visualCrustThickness);
-            int textureWidth = Mathf.Max(1, Mathf.CeilToInt((activeBoard.Width + (visualCrustThickness * 2f)) * pixelsPerUnit));
-            int textureHeight = Mathf.Max(1, Mathf.CeilToInt((activeBoard.Height + (visualCrustThickness * 2f)) * pixelsPerUnit));
-
-            generatedCrustTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false)
-            {
-                filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp,
-                alphaIsTransparency = true
-            };
-
-            var pixels = new Color32[textureWidth * textureHeight];
-            float outerFeather = 1.75f / pixelsPerUnit;
-
-            for (int py = 0; py < textureHeight; py++)
-            {
-                float y = ((py + 0.5f) / pixelsPerUnit) - visualCrustThickness;
-                if (!TryGetBreadOuterBoundsForY(activeMedium, activeBoard, visualCrustThickness, y, out float minX, out float maxX))
-                {
-                    continue;
-                }
-
-                for (int px = 0; px < textureWidth; px++)
-                {
-                    float x = ((px + 0.5f) / pixelsPerUnit) - visualCrustThickness;
-                    if (x < minX || x > maxX)
-                    {
-                        continue;
-                    }
-                    float outerEdgeDistance = Mathf.Min(x - minX, maxX - x, y + visualCrustThickness, activeBoard.Height + visualCrustThickness - y);
-                    float alpha = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(outerEdgeDistance / outerFeather));
-                    if (alpha <= 0f)
-                    {
-                        continue;
-                    }
-
-                    Color color = EvaluateToastSliceColor(activeMedium, activeBoard, visualCrustThickness, x, y, outerEdgeDistance);
-                    color.a = alpha;
-                    pixels[(py * textureWidth) + px] = color;
-                }
-            }
-
-            generatedCrustTexture.SetPixels32(pixels);
-            generatedCrustTexture.Apply(false, false);
-            generatedCrustSprite = Sprite.Create(
-                generatedCrustTexture,
-                new Rect(0f, 0f, textureWidth, textureHeight),
-                new Vector2(0.5f, 0.5f),
-                pixelsPerUnit,
-                0,
-                SpriteMeshType.FullRect);
-            generatedCrustRenderer.sprite = generatedCrustSprite;
-            generatedCrustCacheKey = cacheKey;
-        }
-
-        private void PositionGeneratedCrustRenderer(GameBoard activeBoard)
-        {
-            if (generatedCrustRenderer == null)
-            {
-                return;
-            }
-
-            generatedCrustRenderer.transform.localPosition = new Vector3(activeBoard.Width * 0.5f, activeBoard.Height * 0.5f, 0f);
-            generatedCrustRenderer.transform.localRotation = Quaternion.identity;
-            generatedCrustRenderer.transform.localScale = Vector3.one;
-        }
-
-        private int GetBackdropPixelsPerUnit(GameBoard activeBoard, float visualCrustThickness)
-        {
-            float fullWidth = activeBoard.Width + (visualCrustThickness * 2f);
-            float fullHeight = activeBoard.Height + (visualCrustThickness * 2f);
-            float longestSide = Mathf.Max(fullWidth, fullHeight);
-            int pixelsPerUnit = Mathf.FloorToInt(2048f / Mathf.Max(1f, longestSide));
-            return Mathf.Clamp(pixelsPerUnit, 8, 24);
-        }
-
-        private string BuildGeneratedCrustCacheKey(GameBoard activeBoard, BoardMediumConfig activeMedium, float visualCrustThickness)
-        {
-            return string.Join("|",
-                activeBoard.Width,
-                activeBoard.Height,
-                visualCrustThickness,
-                activeMedium.mediumId,
-                activeMedium.topCrustRoundness,
-                activeMedium.bottomCrustRoundness,
-                activeMedium.crustInnerColor,
-                activeMedium.crustMidColor,
-                activeMedium.crustOuterColor,
-                activeMedium.crustTopDarkening,
-                activeMedium.crustColorVariation,
-                activeMedium.minVisualCrustThickness,
-                activeMedium.maxVisualCrustThickness);
-        }
-
-        private void ClearGeneratedCrustVisual()
-        {
-            if (generatedCrustRenderer != null)
-            {
-                generatedCrustRenderer.sprite = null;
-                generatedCrustRenderer.enabled = false;
-            }
-
-            DestroyGeneratedCrustAssets();
-            generatedCrustCacheKey = null;
-        }
-
-        private void DestroyGeneratedCrustAssets()
-        {
-            if (generatedCrustSprite != null)
-            {
-                Destroy(generatedCrustSprite);
-                generatedCrustSprite = null;
-            }
-
-            if (generatedCrustTexture != null)
-            {
-                Destroy(generatedCrustTexture);
-                generatedCrustTexture = null;
-            }
-        }
-
-        private void DestroyGeneratedNutrientAssets()
-        {
-            foreach (Tile generatedNutrientTile in generatedNutrientTiles.Values)
-            {
-                if (generatedNutrientTile != null)
-                {
-                    Destroy(generatedNutrientTile);
-                }
-            }
-
-            foreach (Sprite generatedNutrientSprite in generatedNutrientSprites.Values)
-            {
-                if (generatedNutrientSprite != null)
-                {
-                    Destroy(generatedNutrientSprite);
-                }
-            }
-
-            foreach (Texture2D generatedNutrientTexture in generatedNutrientTextures.Values)
-            {
-                if (generatedNutrientTexture != null)
-                {
-                    Destroy(generatedNutrientTexture);
-                }
-            }
-
-            generatedNutrientTiles.Clear();
-            generatedNutrientSprites.Clear();
-            generatedNutrientTextures.Clear();
-        }
-
-        private static bool TryGetBreadOuterBoundsForY(BoardMediumConfig activeMedium, GameBoard activeBoard, float visualCrustThickness, float y, out float minX, out float maxX)
-        {
-            minX = 0f;
-            maxX = 0f;
-
-            if (y < -visualCrustThickness || y > activeBoard.Height + visualCrustThickness)
-            {
-                return false;
-            }
-
-            float horizontalOverhang = 0f;
-            float sideBulge = 0f;
-            float inset = 0f;
-            if (activeMedium.useBreadSliceSilhouette && visualCrustThickness > 0f)
-            {
-                horizontalOverhang = Mathf.Min(visualCrustThickness * 0.45f, activeBoard.Width * 0.045f);
-
-                float fullHeight = activeBoard.Height + (visualCrustThickness * 2f);
-                float verticalProgress = Mathf.Clamp01((y + visualCrustThickness) / Mathf.Max(0.001f, fullHeight));
-                float shoulderCurve = Mathf.Sin(verticalProgress * Mathf.PI);
-                float maxBulge = Mathf.Min(visualCrustThickness * 0.55f, activeBoard.Width * 0.05f);
-                sideBulge = shoulderCurve * shoulderCurve * maxBulge;
-
-                if (y > activeBoard.Height)
-                {
-                    float topProgress = Mathf.Clamp01((y - activeBoard.Height) / Mathf.Max(0.001f, visualCrustThickness));
-                    float maxTopInset = Mathf.Max(activeMedium.topCrustRoundness * visualCrustThickness, activeBoard.Width * 0.1f * activeMedium.topCrustRoundness);
-                    inset += Mathf.Pow(topProgress, 1.55f) * maxTopInset;
-                }
-
-                float bottomShoulderDepth = Mathf.Max(visualCrustThickness * 1.05f, activeBoard.Height * 0.07f);
-                float bottomEndY = bottomShoulderDepth;
-                if (y <= bottomEndY)
-                {
-                    float bottomProgress = Mathf.Clamp01((bottomEndY - y) / Mathf.Max(0.001f, bottomEndY + visualCrustThickness));
-                    float maxBottomInset = Mathf.Max(activeMedium.bottomCrustRoundness * visualCrustThickness * 1.1f, activeBoard.Width * 0.05f * activeMedium.bottomCrustRoundness);
-                    inset += Mathf.Pow(bottomProgress, 1.9f) * maxBottomInset;
-                }
-            }
-
-            minX = -visualCrustThickness - horizontalOverhang - sideBulge + inset;
-            maxX = activeBoard.Width + visualCrustThickness + horizontalOverhang + sideBulge - inset;
-            return minX < maxX;
-        }
-
-        private static Color EvaluateToastSliceColor(BoardMediumConfig activeMedium, GameBoard activeBoard, float visualCrustThickness, float x, float y, float outerEdgeDistance)
-        {
-            float crustBlend = visualCrustThickness <= 0f
-                ? 1f
-                : Mathf.Clamp01(outerEdgeDistance / visualCrustThickness);
-            Color crustGradientColor = crustBlend < 0.35f
-                ? Color.Lerp(activeMedium.crustOuterColor, activeMedium.crustMidColor, crustBlend / 0.35f)
-                : crustBlend < 0.75f
-                    ? Color.Lerp(activeMedium.crustMidColor, activeMedium.crustInnerColor, (crustBlend - 0.35f) / 0.4f)
-                    : Color.Lerp(activeMedium.crustInnerColor, activeMedium.breadShadeColor, (crustBlend - 0.75f) / 0.25f);
-
-            float interiorMix = visualCrustThickness <= 0f
-                ? 1f
-                : Mathf.Clamp01((outerEdgeDistance - visualCrustThickness) / Mathf.Max(0.001f, visualCrustThickness * 1.4f));
-            Color breadColor = Color.Lerp(activeMedium.breadShadeColor, activeMedium.breadInteriorColor, interiorMix);
-            Color finalColor = outerEdgeDistance < visualCrustThickness
-                ? crustGradientColor
-                : breadColor;
-
-            float variationStrength = Mathf.Clamp(activeMedium.crustColorVariation, 0f, 0.2f);
-            if (variationStrength > 0f)
-            {
-                float variation = EvaluateCoordinateNoise(activeMedium, Mathf.RoundToInt(x * 12f), Mathf.RoundToInt(y * 12f));
-                float brightness = 1f + ((variation * 2f) - 1f) * variationStrength;
-                finalColor *= brightness;
-                finalColor.a = 1f;
-            }
-
-            float breadVariationStrength = Mathf.Clamp(activeMedium.breadColorVariation, 0f, 0.15f);
-            if (breadVariationStrength > 0f && outerEdgeDistance >= visualCrustThickness)
-            {
-                float variation = EvaluateCoordinateNoise(activeMedium, Mathf.RoundToInt(x * 6f) + 187, Mathf.RoundToInt(y * 10f) + 911);
-                float brightness = 1f + ((variation * 2f) - 1f) * breadVariationStrength;
-                finalColor *= brightness;
-                finalColor.a = 1f;
-            }
-
-            float verticalShade = Mathf.Clamp01((y + visualCrustThickness) / Mathf.Max(0.001f, activeBoard.Height + (visualCrustThickness * 2f)));
-            finalColor = Color.Lerp(finalColor, activeMedium.breadShadeColor, (1f - verticalShade) * 0.08f);
-
-            if (y > activeBoard.Height)
-            {
-                float topDepth = visualCrustThickness <= 0f
-                    ? 0f
-                    : Mathf.Clamp01((y - activeBoard.Height) / visualCrustThickness);
-                finalColor = Color.Lerp(finalColor, activeMedium.crustOuterColor, topDepth * activeMedium.crustTopDarkening);
-            }
-
-            return finalColor;
-        }
-
-        private static float EvaluateCoordinateNoise(BoardMediumConfig activeMedium, int x, int y)
-        {
-            unchecked
-            {
-                uint hash = 2166136261u;
-                hash = (hash ^ (uint)x) * 16777619u;
-                hash = (hash ^ (uint)y) * 16777619u;
-                string mediumId = activeMedium?.mediumId;
-                if (!string.IsNullOrEmpty(mediumId))
-                {
-                    for (int i = 0; i < mediumId.Length; i++)
-                    {
-                        hash = (hash ^ mediumId[i]) * 16777619u;
-                    }
-                }
-
-                return (hash & 1023u) / 1023f;
-            }
+            boardMediumRenderer?.RenderDecorativeCrust(activeBoard);
         }
 
         #region Starting Tile Ping
