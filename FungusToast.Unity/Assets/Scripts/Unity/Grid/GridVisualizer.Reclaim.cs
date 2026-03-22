@@ -1300,4 +1300,567 @@ namespace FungusToast.Unity.Grid.Helpers
 			overlayTilemap.SetTransformMatrix(pos, transformMatrix);
 		}
 	}
+
+	internal sealed class GridResistanceOverlayController
+	{
+		private readonly Func<GameBoard> _getBoard;
+		private readonly Func<Tilemap> _getOverlayTilemap;
+		private readonly Func<TileBase> _getShieldTile;
+		private readonly Func<int, Vector3Int> _getPositionForTileId;
+		private readonly Func<float> _getResistancePulseTotal;
+		private readonly Func<float> _getPostGrowthDurationMultiplier;
+		private readonly Func<IEnumerator, Coroutine> _startCoroutine;
+		private readonly Action _beginAnimation;
+		private readonly Action _endAnimation;
+		private readonly Action<Vector3Int, float, float, Color, Tilemap> _drawRing;
+		private readonly Action<Tilemap> _clearRing;
+		private readonly Func<Tilemap> _getPingOverlayTilemap;
+		private readonly Func<Tilemap> _getHoverOverlayTilemap;
+		private readonly Func<TileBase> _getSolidHighlightTile;
+
+		private readonly HashSet<int> _deferredResistanceOverlayTileIds = new();
+
+		public GridResistanceOverlayController(
+			Func<GameBoard> getBoard,
+			Func<Tilemap> getOverlayTilemap,
+			Func<TileBase> getShieldTile,
+			Func<int, Vector3Int> getPositionForTileId,
+			Func<float> getResistancePulseTotal,
+			Func<float> getPostGrowthDurationMultiplier,
+			Func<IEnumerator, Coroutine> startCoroutine,
+			Action beginAnimation,
+			Action endAnimation,
+			Action<Vector3Int, float, float, Color, Tilemap> drawRing,
+			Action<Tilemap> clearRing,
+			Func<Tilemap> getPingOverlayTilemap,
+			Func<Tilemap> getHoverOverlayTilemap,
+			Func<TileBase> getSolidHighlightTile)
+		{
+			_getBoard = getBoard;
+			_getOverlayTilemap = getOverlayTilemap;
+			_getShieldTile = getShieldTile;
+			_getPositionForTileId = getPositionForTileId;
+			_getResistancePulseTotal = getResistancePulseTotal;
+			_getPostGrowthDurationMultiplier = getPostGrowthDurationMultiplier;
+			_startCoroutine = startCoroutine;
+			_beginAnimation = beginAnimation;
+			_endAnimation = endAnimation;
+			_drawRing = drawRing;
+			_clearRing = clearRing;
+			_getPingOverlayTilemap = getPingOverlayTilemap;
+			_getHoverOverlayTilemap = getHoverOverlayTilemap;
+			_getSolidHighlightTile = getSolidHighlightTile;
+		}
+
+		public void ResetRuntimeState()
+		{
+			_deferredResistanceOverlayTileIds.Clear();
+		}
+
+		public bool ShouldRenderResistanceOverlay(int tileId, FungalCell cell)
+		{
+			return cell != null
+				&& cell.CellType == FungalCellType.Alive
+				&& cell.IsResistant
+				&& _getShieldTile() != null
+				&& !_deferredResistanceOverlayTileIds.Contains(tileId);
+		}
+
+		public void ClearResistanceOverlayTile(int tileId)
+		{
+			var overlayTilemap = _getOverlayTilemap();
+			TileBase shieldTile = _getShieldTile();
+			if (overlayTilemap == null)
+			{
+				return;
+			}
+
+			Vector3Int pos = _getPositionForTileId(tileId);
+			overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+			if (overlayTilemap.GetTile(pos) == shieldTile)
+			{
+				overlayTilemap.SetTile(pos, null);
+				overlayTilemap.RefreshTile(pos);
+			}
+		}
+
+		public void RestoreResistanceOverlayTile(int tileId)
+		{
+			var activeBoard = _getBoard();
+			var overlayTilemap = _getOverlayTilemap();
+			TileBase shieldTile = _getShieldTile();
+			if (activeBoard == null || overlayTilemap == null || shieldTile == null)
+			{
+				return;
+			}
+
+			var tile = activeBoard.GetTileById(tileId);
+			var cell = tile?.FungalCell;
+			if (!ShouldRenderResistanceOverlay(tileId, cell))
+			{
+				return;
+			}
+
+			Vector3Int pos = _getPositionForTileId(tileId);
+			overlayTilemap.SetTile(pos, shieldTile);
+			overlayTilemap.SetTileFlags(pos, TileFlags.None);
+			overlayTilemap.SetColor(pos, Color.white);
+			overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+			overlayTilemap.RefreshTile(pos);
+		}
+
+		public void DeferResistanceOverlayReveal(IReadOnlyList<int> tileIds)
+		{
+			if (tileIds == null || tileIds.Count == 0)
+			{
+				return;
+			}
+
+			foreach (int tileId in tileIds)
+			{
+				_deferredResistanceOverlayTileIds.Add(tileId);
+				ClearResistanceOverlayTile(tileId);
+			}
+		}
+
+		public void RevealDeferredResistanceOverlays(IReadOnlyList<int> tileIds)
+		{
+			if (tileIds == null || tileIds.Count == 0)
+			{
+				return;
+			}
+
+			foreach (int tileId in tileIds)
+			{
+				_deferredResistanceOverlayTileIds.Remove(tileId);
+				RestoreResistanceOverlayTile(tileId);
+			}
+		}
+
+		public IEnumerator ResistantDropAnimation(int tileId, float finalScale = 1f, float durationScale = 1f)
+		{
+			var activeBoard = _getBoard();
+			var overlayTilemap = _getOverlayTilemap();
+			TileBase shieldTile = _getShieldTile();
+			if (activeBoard == null || overlayTilemap == null || shieldTile == null)
+			{
+				yield break;
+			}
+
+			Vector3Int pos = _getPositionForTileId(tileId);
+			float total = UIEffectConstants.SurgicalInoculationDropDurationSeconds * Mathf.Max(0.01f, durationScale);
+			float dropT = Mathf.Clamp01(UIEffectConstants.SurgicalInoculationDropPortion);
+			float impactT = Mathf.Clamp01(UIEffectConstants.SurgicalInoculationImpactPortion);
+			float settleT = Mathf.Clamp01(UIEffectConstants.SurgicalInoculationSettlePortion);
+			float normSum = dropT + impactT + settleT;
+			if (normSum <= 0f)
+			{
+				normSum = 1f;
+			}
+			dropT /= normSum;
+			impactT /= normSum;
+			settleT /= normSum;
+
+			float dropDur = total * dropT;
+			float impactDur = total * impactT;
+			float settleDur = total * settleT;
+
+			overlayTilemap.SetTile(pos, shieldTile);
+			overlayTilemap.SetTileFlags(pos, TileFlags.None);
+			overlayTilemap.SetColor(pos, Color.white);
+
+			_beginAnimation();
+			try
+			{
+				float startYOffset = UIEffectConstants.SurgicalInoculationDropStartYOffset;
+				float startScale = UIEffectConstants.SurgicalInoculationDropStartScale * finalScale;
+				float spinTurns = UIEffectConstants.SurgicalInoculationDropSpinTurns;
+
+				float t = 0f;
+				while (t < dropDur)
+				{
+					t += Time.deltaTime;
+					float u = Mathf.Clamp01(t / dropDur);
+					float eased = u * u * u;
+					float yOff = Mathf.Lerp(startYOffset, 0f, eased);
+					float s = Mathf.Lerp(startScale, finalScale, eased);
+					float angle = Mathf.Lerp(0f, 360f * spinTurns, eased);
+					var rotation = Quaternion.Euler(0f, 0f, angle);
+					var transformMatrix = Matrix4x4.TRS(new Vector3(0f, yOff, 0f), rotation, new Vector3(s, s, 1f));
+					overlayTilemap.SetTransformMatrix(pos, transformMatrix);
+					yield return null;
+				}
+
+				float squashX = UIEffectConstants.SurgicalInoculationImpactSquashX * finalScale;
+				float squashY = UIEffectConstants.SurgicalInoculationImpactSquashY * finalScale;
+				t = 0f;
+				_startCoroutine(ImpactRingPulse(pos));
+				while (t < impactDur)
+				{
+					t += Time.deltaTime;
+					float u = Mathf.Clamp01(t / impactDur);
+					float eased = 1f - (1f - u) * (1f - u);
+					float sx = Mathf.Lerp(finalScale, squashX, eased);
+					float sy = Mathf.Lerp(finalScale, squashY, eased);
+					var transformMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(sx, sy, 1f));
+					overlayTilemap.SetTransformMatrix(pos, transformMatrix);
+					yield return null;
+				}
+
+				t = 0f;
+				while (t < settleDur)
+				{
+					t += Time.deltaTime;
+					float u = Mathf.Clamp01(t / settleDur);
+					float sx = Mathf.Lerp(squashX, finalScale, u);
+					float sy = Mathf.Lerp(squashY, finalScale, u);
+					var transformMatrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(sx, sy, 1f));
+					overlayTilemap.SetTransformMatrix(pos, transformMatrix);
+					yield return null;
+				}
+
+				overlayTilemap.SetTransformMatrix(
+					pos,
+					Mathf.Approximately(finalScale, 1f)
+						? Matrix4x4.identity
+						: Matrix4x4.Scale(new Vector3(finalScale, finalScale, 1f)));
+			}
+			finally
+			{
+				_deferredResistanceOverlayTileIds.Remove(tileId);
+				RestoreResistanceOverlayTile(tileId);
+				_endAnimation();
+			}
+		}
+
+		public IEnumerator BastionResistantPulseAnimation(int tileId, float scaleMultiplier = 1f)
+		{
+			var activeBoard = _getBoard();
+			var overlayTilemap = _getOverlayTilemap();
+			TileBase shieldTile = _getShieldTile();
+			if (activeBoard == null || overlayTilemap == null || shieldTile == null)
+			{
+				yield break;
+			}
+
+			var xy = activeBoard.GetXYFromTileId(tileId);
+			Vector3Int pos = new(xy.Item1, xy.Item2, 0);
+			_deferredResistanceOverlayTileIds.Add(tileId);
+			ClearResistanceOverlayTile(tileId);
+
+			float baseTotal = UIEffectConstants.MycelialBastionPulseDurationSeconds;
+			float configuredTotal = _getResistancePulseTotal();
+			float total = configuredTotal > 0f ? configuredTotal : baseTotal * _getPostGrowthDurationMultiplier();
+			float outT = Mathf.Clamp01(UIEffectConstants.MycelialBastionPulseOutPortion);
+			float inT = Mathf.Clamp01(UIEffectConstants.MycelialBastionPulseInPortion);
+			float norm = outT + inT;
+			if (norm <= 0f)
+			{
+				norm = 1f;
+			}
+			outT /= norm;
+			inT /= norm;
+			float outDur = total * outT;
+			float inDur = total * inT;
+			float baseMaxScale = Mathf.Max(1f, UIEffectConstants.MycelialBastionPulseMaxScale);
+			float clampedScaleMultiplier = Mathf.Clamp(scaleMultiplier, 0.1f, 10f);
+			float maxScale = Mathf.Max(1f, baseMaxScale * clampedScaleMultiplier);
+			float yPop = UIEffectConstants.MycelialBastionPulseYOffset * clampedScaleMultiplier;
+
+			overlayTilemap.SetTile(pos, shieldTile);
+			overlayTilemap.SetTileFlags(pos, TileFlags.None);
+			overlayTilemap.SetColor(pos, Color.white);
+
+			_beginAnimation();
+			try
+			{
+				float t = 0f;
+				while (t < outDur)
+				{
+					t += Time.deltaTime;
+					float u = Mathf.Clamp01(t / outDur);
+					float eased = 1f - (1f - u) * (1f - u);
+					float s = Mathf.Lerp(1f, maxScale, eased);
+					float y = Mathf.Lerp(0f, yPop, eased);
+					var transformMatrix = Matrix4x4.TRS(new Vector3(0f, y, 0f), Quaternion.identity, new Vector3(s, s, 1f));
+					overlayTilemap.SetTransformMatrix(pos, transformMatrix);
+					yield return null;
+				}
+
+				t = 0f;
+				while (t < inDur)
+				{
+					t += Time.deltaTime;
+					float u = Mathf.Clamp01(t / inDur);
+					float eased = u * u;
+					float s = Mathf.Lerp(maxScale, 1f, eased);
+					float y = Mathf.Lerp(yPop, 0f, eased);
+					var transformMatrix = Matrix4x4.TRS(new Vector3(0f, y, 0f), Quaternion.identity, new Vector3(s, s, 1f));
+					overlayTilemap.SetTransformMatrix(pos, transformMatrix);
+					yield return null;
+				}
+
+				overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+			}
+			finally
+			{
+				_deferredResistanceOverlayTileIds.Remove(tileId);
+				RestoreResistanceOverlayTile(tileId);
+				_endAnimation();
+			}
+		}
+
+		public void PlayResistancePulseBatchScaled(IReadOnlyList<int> tileIds, float scaleMultiplier)
+		{
+			if (tileIds == null || tileIds.Count == 0)
+			{
+				return;
+			}
+
+			foreach (int tileId in tileIds)
+			{
+				_startCoroutine(BastionResistantPulseAnimation(tileId, scaleMultiplier));
+			}
+		}
+
+		public void PlayResistanceDropBatch(IReadOnlyList<int> tileIds, float finalScale)
+		{
+			if (tileIds == null || tileIds.Count == 0)
+			{
+				return;
+			}
+
+			foreach (int tileId in tileIds)
+			{
+				_startCoroutine(ResistantDropAnimation(tileId, finalScale));
+			}
+		}
+
+		public IEnumerator ImpactRingPulse(Vector3Int centerPos)
+		{
+			var targetTilemap = _getPingOverlayTilemap() ?? _getHoverOverlayTilemap();
+			if (targetTilemap == null || _getSolidHighlightTile() == null)
+			{
+				yield break;
+			}
+
+			float duration = UIEffectConstants.SurgicalInoculationRingPulseDurationSeconds;
+			float maxRadius = 2.5f;
+			float ringThickness = 0.6f;
+			float startTime = Time.time;
+			while (Time.time - startTime < duration)
+			{
+				float u = Mathf.Clamp01((Time.time - startTime) / duration);
+				float radius = Mathf.Lerp(0.3f, maxRadius, u);
+				Color ringColor = new(1f, 0.95f, 0.5f, 0.9f * (1f - u));
+				_drawRing(centerPos, radius, ringThickness, ringColor, targetTilemap);
+				yield return null;
+			}
+
+			_clearRing(targetTilemap);
+		}
+	}
+
+	internal sealed class GridBoardStateRenderer
+	{
+		private readonly Func<GameBoard> _getActiveBoard;
+		private readonly Func<Tilemap> _getMoldTilemap;
+		private readonly Func<Tilemap> _getOverlayTilemap;
+		private readonly Func<TileBase> _getGoldShieldOverlayTile;
+		private readonly Func<TileBase> _getDeadTile;
+		private readonly Func<TileBase> _getToxinOverlayTile;
+		private readonly Func<int, Vector3Int> _getPositionForTileId;
+		private readonly Func<int, Tile> _getTileForPlayer;
+		private readonly Func<int, FungalCell, bool> _shouldRenderResistanceOverlay;
+		private readonly Func<int, bool> _isPreviewHiddenTile;
+		private readonly Action<int> _removeTrackedNutrientTile;
+		private readonly Action<BoardTile, Vector3Int> _renderNutrientPatchOverlay;
+
+		public GridBoardStateRenderer(
+			Func<GameBoard> getActiveBoard,
+			Func<Tilemap> getMoldTilemap,
+			Func<Tilemap> getOverlayTilemap,
+			Func<TileBase> getGoldShieldOverlayTile,
+			Func<TileBase> getDeadTile,
+			Func<TileBase> getToxinOverlayTile,
+			Func<int, Vector3Int> getPositionForTileId,
+			Func<int, Tile> getTileForPlayer,
+			Func<int, FungalCell, bool> shouldRenderResistanceOverlay,
+			Func<int, bool> isPreviewHiddenTile,
+			Action<int> removeTrackedNutrientTile,
+			Action<BoardTile, Vector3Int> renderNutrientPatchOverlay)
+		{
+			_getActiveBoard = getActiveBoard;
+			_getMoldTilemap = getMoldTilemap;
+			_getOverlayTilemap = getOverlayTilemap;
+			_getGoldShieldOverlayTile = getGoldShieldOverlayTile;
+			_getDeadTile = getDeadTile;
+			_getToxinOverlayTile = getToxinOverlayTile;
+			_getPositionForTileId = getPositionForTileId;
+			_getTileForPlayer = getTileForPlayer;
+			_shouldRenderResistanceOverlay = shouldRenderResistanceOverlay;
+			_isPreviewHiddenTile = isPreviewHiddenTile;
+			_removeTrackedNutrientTile = removeTrackedNutrientTile;
+			_renderNutrientPatchOverlay = renderNutrientPatchOverlay;
+		}
+
+		public void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
+		{
+			var moldTilemap = _getMoldTilemap();
+			var overlayTilemap = _getOverlayTilemap();
+			if (tile == null || moldTilemap == null || overlayTilemap == null)
+			{
+				return;
+			}
+
+			TileBase moldTile = null;
+			TileBase overlayTile = null;
+			Color moldColor = Color.white;
+			Color overlayColor = Color.white;
+
+			var cell = tile.FungalCell;
+			if (cell == null)
+			{
+				return;
+			}
+
+			switch (cell.CellType)
+			{
+				case FungalCellType.Alive:
+					if (cell.OwnerPlayerId is int aliveOwnerId)
+					{
+						moldTile = _getTileForPlayer(aliveOwnerId);
+						moldColor = cell.IsNewlyGrown || cell.GrowthCycleAge < UIEffectConstants.GrowthCycleAgeHighlightTextThreshold
+							? new Color(1f, 1f, 1f, UIEffectConstants.NewGrowthFinalAlpha)
+							: Color.white;
+					}
+
+					if (_shouldRenderResistanceOverlay(tile.TileId, cell))
+					{
+						overlayTile = _getGoldShieldOverlayTile();
+						overlayColor = Color.white;
+					}
+					break;
+
+				case FungalCellType.Dead:
+					if (cell.OwnerPlayerId is int deadOwnerId)
+					{
+						moldTilemap.SetTileFlags(pos, TileFlags.None);
+						moldTilemap.SetTile(pos, _getTileForPlayer(deadOwnerId));
+
+						if (cell.IsDying)
+						{
+							moldColor = Color.white;
+						}
+						else
+						{
+							moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, 0.8f));
+							moldTilemap.RefreshTile(pos);
+						}
+					}
+
+					overlayTile = _getDeadTile();
+					overlayColor = cell.IsDying ? new Color(1f, 1f, 1f, 0f) : Color.white;
+					break;
+
+				case FungalCellType.Toxin:
+					if (cell.OwnerPlayerId is int toxinOwnerId)
+					{
+						moldTile = _getTileForPlayer(toxinOwnerId);
+						moldColor = Color.white;
+					}
+
+					overlayTile = _getToxinOverlayTile();
+					overlayColor = cell.IsReceivingToxinDrop ? new Color(1f, 1f, 1f, 0f) : Color.white;
+					break;
+
+				default:
+					return;
+			}
+
+			if (moldTile != null)
+			{
+				moldTilemap.SetTile(pos, moldTile);
+				moldTilemap.SetTileFlags(pos, TileFlags.None);
+				moldTilemap.SetColor(pos, moldColor);
+				moldTilemap.RefreshTile(pos);
+			}
+
+			if (overlayTile != null)
+			{
+				overlayTilemap.SetTile(pos, overlayTile);
+				overlayTilemap.SetTileFlags(pos, TileFlags.None);
+				overlayTilemap.SetColor(pos, overlayColor);
+				overlayTilemap.RefreshTile(pos);
+			}
+		}
+
+		public void RenderTileFromBoard(int tileId)
+		{
+			var activeBoard = _getActiveBoard();
+			if (activeBoard == null)
+			{
+				return;
+			}
+
+			var moldTilemap = _getMoldTilemap();
+			var overlayTilemap = _getOverlayTilemap();
+			var tile = activeBoard.GetTileById(tileId);
+			var pos = _getPositionForTileId(tileId);
+
+			if (moldTilemap != null)
+			{
+				moldTilemap.SetTile(pos, null);
+				moldTilemap.SetColor(pos, Color.white);
+				moldTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+			}
+
+			if (overlayTilemap != null)
+			{
+				overlayTilemap.SetTile(pos, null);
+				overlayTilemap.SetColor(pos, Color.white);
+				overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+			}
+
+			_removeTrackedNutrientTile?.Invoke(tileId);
+
+			if (tile?.FungalCell != null)
+			{
+				RenderFungalCellOverlay(tile, pos);
+				ApplyPreAnimationPreviewHiddenState(tileId, pos);
+				return;
+			}
+
+			if (tile?.HasNutrientPatch == true)
+			{
+				_renderNutrientPatchOverlay?.Invoke(tile, pos);
+			}
+		}
+
+		public void ApplyPreAnimationPreviewHiddenState(int tileId, Vector3Int pos)
+		{
+			if (!_isPreviewHiddenTile(tileId))
+			{
+				return;
+			}
+
+			var moldTilemap = _getMoldTilemap();
+			if (moldTilemap != null && moldTilemap.HasTile(pos))
+			{
+				moldTilemap.SetTileFlags(pos, TileFlags.None);
+				var moldColor = moldTilemap.GetColor(pos);
+				moldColor.a = 0f;
+				moldTilemap.SetColor(pos, moldColor);
+			}
+
+			var overlayTilemap = _getOverlayTilemap();
+			if (overlayTilemap != null && overlayTilemap.HasTile(pos))
+			{
+				overlayTilemap.SetTileFlags(pos, TileFlags.None);
+				var overlayColor = overlayTilemap.GetColor(pos);
+				overlayColor.a = 0f;
+				overlayTilemap.SetColor(pos, overlayColor);
+			}
+		}
+	}
 }
