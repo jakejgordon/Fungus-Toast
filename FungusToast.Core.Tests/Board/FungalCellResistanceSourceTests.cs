@@ -8,7 +8,7 @@ public class FungalCellResistanceSourceTests
     [Fact]
     public void MakeResistant_without_explicit_source_uses_growth_source_name()
     {
-        var cell = new FungalCell(ownerPlayerId: 0, tileId: 12, source: GrowthSource.InitialSpore);
+        var cell = new FungalCell(ownerPlayerId: 0, tileId: 12, source: GrowthSource.InitialSpore, lastOwnerPlayerId: null);
 
         cell.MakeResistant();
 
@@ -19,7 +19,7 @@ public class FungalCellResistanceSourceTests
     [Fact]
     public void MakeResistant_with_explicit_source_uses_ability_name()
     {
-        var cell = new FungalCell(ownerPlayerId: 0, tileId: 12, source: GrowthSource.HyphalOutgrowth);
+        var cell = new FungalCell(ownerPlayerId: 0, tileId: 12, source: GrowthSource.HyphalOutgrowth, lastOwnerPlayerId: null);
 
         cell.MakeResistant("Mycelial Bastion");
 
@@ -30,7 +30,7 @@ public class FungalCellResistanceSourceTests
     [Fact]
     public void CloneForRelocation_preserves_resistance_source()
     {
-        var cell = new FungalCell(ownerPlayerId: 0, tileId: 12, source: GrowthSource.InitialSpore);
+        var cell = new FungalCell(ownerPlayerId: 0, tileId: 12, source: GrowthSource.InitialSpore, lastOwnerPlayerId: null);
         cell.MakeResistant();
 
         var clone = cell.CloneForRelocation(newTileId: 30, GrowthSource.HyphalDraw);

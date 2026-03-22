@@ -112,6 +112,51 @@ When writing or editing tests:
 - avoid bare `Assert.True(...)` / `Assert.False(...)` unless the condition is genuinely the clearest expression
 - if a boolean assertion is still the best fit, add a short message explaining the contract that failed
 
+## Internal Test Seams
+
+When tests need access to a meaningful non-public seam, prefer:
+
+- keeping the production member `internal`
+- exposing it to `FungusToast.Core.Tests` via `InternalsVisibleTo`
+
+Prefer this over reflection when all of the following are true:
+
+- the member is a real assembly-internal seam, not just a random helper
+- tests need it often enough that reflection becomes noisy or brittle
+- exposing it to the test assembly improves clarity without turning it into public API
+
+Avoid widening members all the way to `public` just for tests.
+
+Reflection is acceptable as a temporary fallback, but it should not be the preferred long-term pattern for frequently used internal seams.
+
+## Probabilistic Behavior Testing
+
+For mechanics that trigger with an X% chance, prefer deterministic control of the random roll over mutating global constants.
+
+Best-practice order:
+
+1. **Inject or wrap randomness behind a controllable RNG seam**
+   - use an interface or wrapper around random generation
+   - in tests, provide a seeded or fake implementation that returns known values
+
+2. **Separate probability calculation from effect application when practical**
+   - test the computed chance independently
+   - test the trigger/no-trigger branching independently
+   - test the applied effect independently
+
+3. **Use injected configuration objects for balance values where needed**
+   - avoid mutating shared static globals inside tests
+   - prefer per-test config/rules objects for deterministic setup
+
+Prefer tests like:
+
+- chance is `25%`, roll is `0.24` → triggers
+- chance is `25%`, roll is `0.25` or `0.90` → does not trigger
+- chance is `100%` via config → always triggers
+- chance is `0%` via config → never triggers
+
+Avoid relying on repeated sampling or order-dependent global state changes to make probabilistic tests pass.
+
 ## What To Test First
 
 Strong first targets in `FungusToast.Core` are:

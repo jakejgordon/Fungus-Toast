@@ -93,8 +93,7 @@ namespace FungusToast.Simulation.Analysis
                 int totalEndGameToxins,
                 int mutationPointsSpent,
                 float growthChance,
-                float selfDeathChance,
-                float decayMod)>();
+                float selfDeathChance)>();
 
             var endStateDeathReasonCounts = new Dictionary<DeathReason, int>();
 
@@ -116,8 +115,7 @@ namespace FungusToast.Simulation.Analysis
                             totalEndGameToxins: 0,
                             mutationPointsSpent: 0,
                             growthChance: 0f,
-                            selfDeathChance: 0f,
-                            decayMod: 0f
+                            selfDeathChance: 0f
                         );
                     }
 
@@ -130,7 +128,6 @@ namespace FungusToast.Simulation.Analysis
                     entry.totalEndGameToxins += pr.EndGameToxinCells;
                     entry.growthChance += pr.EffectiveGrowthChance;
                     entry.selfDeathChance += pr.EffectiveSelfDeathChance;
-                    entry.decayMod += pr.OffensiveDecayModifier;
                     playerStats[id] = entry;
 
                     if (pr.DeadCellDeathReasons != null)
@@ -193,7 +190,7 @@ namespace FungusToast.Simulation.Analysis
             Dictionary<int, (
                 IMutationSpendingStrategy strategyObj, int wins, int appearances,
                 int living, int dead, int endGameToxins, int mpSpent,
-                float growthChance, float selfDeathChance, float decayMod)> playerStats,
+                float growthChance, float selfDeathChance)> playerStats,
             List<GameResult> gameResults
         )
         {
@@ -275,7 +272,7 @@ namespace FungusToast.Simulation.Analysis
 
                 var (
                     strategyObj, wins, appearances, living, dead,
-                    endGameToxins, mpSpent, growth, selfDeath, decayMod
+                    endGameToxins, mpSpent, growth, selfDeath
                 ) = entry;
 
                 float winRate = appearances > 0 ? (float)wins / appearances * 100f : 0f;

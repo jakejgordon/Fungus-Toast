@@ -179,7 +179,6 @@ namespace FungusToast.Simulation.Export
                         BankedPoints = player.BankedPoints,
                         EffectiveGrowthChance = player.EffectiveGrowthChance,
                         EffectiveSelfDeathChance = player.EffectiveSelfDeathChance,
-                        OffensiveDecayModifier = player.OffensiveDecayModifier,
                         AvgAIScoreAtDraft = player.AvgAIScoreAtDraft
                     });
                 }

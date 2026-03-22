@@ -45,7 +45,6 @@ namespace FungusToast.Simulation.Models
         // ──────────────
         public float EffectiveGrowthChance { get; set; }
         public float EffectiveSelfDeathChance { get; set; }
-        public float OffensiveDecayModifier { get; set; }
 
         // ──────────────
         // MUTATION EFFECT COUNTERS (RUNNING TOTALS)

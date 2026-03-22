@@ -140,11 +140,6 @@ namespace FungusToast.Core.Players
             return level * bonusPerLevel;
         }
 
-        public float GetOffensiveDecayModifierAgainst(FungalCell targetCell, GameBoard board)
-        {
-            return GetMutationEffect(MutationType.AdjacentFungicide);
-        }
-
         /* ---------------- Diagonal growth helpers ------------- */
 
         public float GetDiagonalGrowthChance(DiagonalDirection dir) =>
@@ -295,6 +290,9 @@ namespace FungusToast.Core.Players
             // Only set PrereqMetRound the first time prerequisites are met
             if (mutation.Prerequisites.Count > 0 && prereqsMet && pm.PrereqMetRound == null)
                 pm.PrereqMetRound = currentRound;
+
+            if (mutation.Prerequisites.Count > 0 && !prereqsMet)
+                return false;
 
             if (mutation.IsSurge)
             {
