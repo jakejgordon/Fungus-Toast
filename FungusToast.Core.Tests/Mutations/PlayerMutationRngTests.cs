@@ -1,5 +1,6 @@
 using FungusToast.Core.Board;
 using FungusToast.Core.Common;
+using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 
@@ -48,6 +49,22 @@ public class PlayerMutationRngTests
         var bonus = player.GetBonusMutationPoints(new SequenceRandomSource(0.0, 0.0));
 
         Assert.Equal(2, bonus);
+    }
+
+    [Fact]
+    public void GetBonusMutationPoints_obeys_injected_balance_values()
+    {
+        var player = CreatePlayer();
+        player.SetMutationLevel(MutationIds.AdaptiveExpression, newLevel: 1, currentRound: 1);
+        var balance = new TestCoreBalance
+        {
+            AdaptiveExpressionEffectPerLevel = 1.0f,
+            AdaptiveExpressionSecondPointChancePerLevel = 0.0f
+        };
+
+        var bonus = player.GetBonusMutationPoints(new SequenceRandomSource(0.5, 0.5), balance);
+
+        Assert.Equal(1, bonus);
     }
 
     [Fact]
@@ -101,6 +118,32 @@ public class PlayerMutationRngTests
         Assert.InRange(bonus, 4, 5);
     }
 
+    [Fact]
+    public void RollAnabolicInversionBonus_obeys_injected_balance_values_and_reward_cap()
+    {
+        var player = CreatePlayer();
+        var other = CreatePlayer(1);
+        var board = new GameBoard(width: 3, height: 3, playerCount: 2);
+        player.SetMutationLevel(MutationIds.AnabolicInversion, newLevel: 1, currentRound: 1);
+        var balance = new TestCoreBalance
+        {
+            AnabolicInversionGapBonusPerLevel = 1.0f,
+            AnabolicInversionHighRewardCutoff = 1.0f,
+            AnabolicInversionMidRewardCutoff = 1.0f,
+            AnabolicInversionLowRewardCutoff = 1.0f,
+            AnabolicInversionMaxMutationPointsPerRound = 2
+        };
+
+        var bonus = player.RollAnabolicInversionBonus(
+            new List<Player> { player, other },
+            new SequenceRandomSource(0.0, 0.0, 0.0),
+            board,
+            new Dictionary<int, int> { [0] = 0, [1] = 10 },
+            balance);
+
+        Assert.Equal(2, bonus);
+    }
+
     private static Player CreatePlayer(int playerId = 0)
     {
         return new Player(playerId: playerId, playerName: $"P{playerId}", playerType: PlayerTypeEnum.AI);
@@ -129,5 +172,16 @@ public class PlayerMutationRngTests
 
             return (int)Math.Min(maxValue - 1, Math.Floor(NextDouble() * maxValue));
         }
+    }
+
+    private sealed class TestCoreBalance : ICoreBalance
+    {
+        public float AdaptiveExpressionEffectPerLevel { get; set; } = GameBalance.AdaptiveExpressionEffectPerLevel;
+        public float AdaptiveExpressionSecondPointChancePerLevel { get; set; } = GameBalance.AdaptiveExpressionSecondPointChancePerLevel;
+        public float AnabolicInversionGapBonusPerLevel { get; set; } = GameBalance.AnabolicInversionGapBonusPerLevel;
+        public float AnabolicInversionHighRewardCutoff { get; set; } = GameBalance.AnabolicInversionHighRewardCutoff;
+        public float AnabolicInversionMidRewardCutoff { get; set; } = GameBalance.AnabolicInversionMidRewardCutoff;
+        public float AnabolicInversionLowRewardCutoff { get; set; } = GameBalance.AnabolicInversionLowRewardCutoff;
+        public int AnabolicInversionMaxMutationPointsPerRound { get; set; } = GameBalance.AnabolicInversionMaxMutationPointsPerRound;
     }
 }
