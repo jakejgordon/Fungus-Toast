@@ -441,9 +441,11 @@ namespace FungusToast.Unity.UI.GameStart
             label.enableAutoSizing = true;
             label.fontSizeMin = 15f;
             label.fontSizeMax = 20f;
-            label.alignment = TextAlignmentOptions.Left;
+            label.alignment = TextAlignmentOptions.Center;
 
             var element = labelObject.GetComponent<LayoutElement>();
+            element.minWidth = 470f;
+            element.preferredWidth = 470f;
             element.minHeight = 22f;
             element.preferredHeight = 26f;
         }
@@ -492,7 +494,7 @@ namespace FungusToast.Unity.UI.GameStart
             dropdownElement.minHeight = 40f;
             dropdownElement.preferredHeight = 44f;
             dropdownElement.minWidth = 470f;
-            dropdownElement.preferredWidth = 500f;
+            dropdownElement.preferredWidth = 470f;
 
             ConfigureBoardSizeDropdown();
         }
@@ -701,7 +703,7 @@ namespace FungusToast.Unity.UI.GameStart
 
             var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
             layoutGroup.padding = new RectOffset(12, 12, 8, 8);
-            layoutGroup.childAlignment = TextAnchor.UpperLeft;
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
             layoutGroup.spacing = 4f;
             layoutGroup.childForceExpandWidth = false;
             layoutGroup.childForceExpandHeight = false;
