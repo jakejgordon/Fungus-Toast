@@ -371,14 +371,44 @@ Compared to the previous layout, this reduced the observed slot-win range from `
 
 ### Precomputed fast-path layouts
 
-To avoid expensive startup-time layout searches during normal gameplay, the established improved layouts for `6`, `7`, and `8` players are now stored as precomputed reference layouts derived from `160x160` tuning and scaled to the active board size at runtime.
+To avoid expensive startup-time layout searches during normal gameplay, canonical square-board reference layouts are now stored for the most important player counts and scaled to the active board size at runtime.
+
+Current fast-path behavior:
+- `1` player: direct center placement (`boardWidth / 2`, `boardHeight / 2`)
+- `2-8` players: use precomputed `160x160` reference coordinates, scaled to the target board size
+- other player counts: fall back to the search-based layout generator
 
 Current precomputed references:
+- 2 players: `(128,80)`, `(32,80)`
+- 3 players: `(141,80)`, `(50,133)`, `(50,27)`
 - 4 players: `(128,128)`, `(32,128)`, `(32,32)`, `(128,32)`
 - 5 players: `(114,104)`, `(67,120)`, `(38,80)`, `(67,40)`, `(114,56)`
 - 6 players: `(136,95)`, `(92,126)`, `(37,123)`, `(24,65)`, `(68,34)`, `(123,37)`
 - 7 players: `(139,94)`, `(106,135)`, `(54,135)`, `(21,94)`, `(32,42)`, `(80,19)`, `(128,42)`
 - 8 players: `(142,106)`, `(106,142)`, `(54,142)`, `(18,106)`, `(18,54)`, `(54,18)`, `(106,18)`, `(142,54)`
+
+Scaling note:
+- These reference coordinates are scaled independently across width and height, then de-duplicated if rounding would collide positions on smaller boards.
+- This means the game now starts from the intended slot geometry without recomputing an expensive search for player counts `2-8`.
+
+### Saved reference: 160x160, 3 players
+
+Selected current layout:
+- P0 `(141,80)`
+- P1 `(50,133)`
+- P2 `(50,27)`
+
+Clean identical-AI validation (`--fixed-slots --no-nutrient-patches --no-mycovariants`):
+- Seed `20260327`: `33,35,32`
+
+Observed win rates:
+- P0 `33%`
+- P1 `35%`
+- P2 `32%`
+
+Observed slot-win range: `3`.
+
+This replaced the prior 3-player auto-selected layout, which had a clean 100-game result of `38,28,34` (range `10`).
 
 ### Saved reference: 160x160, 4 players
 
