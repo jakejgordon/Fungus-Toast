@@ -223,6 +223,9 @@ namespace FungusToast.Core.Players
             if (mutation.Prerequisites.Count > 0 && prereqsMet && pm.PrereqMetRound == null)
                 pm.PrereqMetRound = currentRound;
 
+            if (mutation.Prerequisites.Count > 0 && !prereqsMet)
+                return false;
+
             if (mutation.IsSurge)
             {
                 // Surge logic
