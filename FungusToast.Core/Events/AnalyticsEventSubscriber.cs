@@ -15,9 +15,19 @@ namespace FungusToast.Core.Events
     {
         private sealed class SubscriptionSet
         {
-            public EventHandler<FungalCellDiedEventArgs> CellDeathHandler;
-            public GameBoard.NecrotoxicConversionEventHandler NecrotoxicConversionHandler;
-            public GameBoard.NutrientPatchConsumedEventHandler NutrientPatchConsumedHandler;
+            public SubscriptionSet(
+                EventHandler<FungalCellDiedEventArgs> cellDeathHandler,
+                GameBoard.NecrotoxicConversionEventHandler necrotoxicConversionHandler,
+                GameBoard.NutrientPatchConsumedEventHandler nutrientPatchConsumedHandler)
+            {
+                CellDeathHandler = cellDeathHandler;
+                NecrotoxicConversionHandler = necrotoxicConversionHandler;
+                NutrientPatchConsumedHandler = nutrientPatchConsumedHandler;
+            }
+
+            public EventHandler<FungalCellDiedEventArgs> CellDeathHandler { get; }
+            public GameBoard.NecrotoxicConversionEventHandler NecrotoxicConversionHandler { get; }
+            public GameBoard.NutrientPatchConsumedEventHandler NutrientPatchConsumedHandler { get; }
         }
 
         private static readonly Dictionary<GameBoard, SubscriptionSet> subscriptionsByBoard = new();
@@ -32,29 +42,32 @@ namespace FungusToast.Core.Events
 
             Unsubscribe(board, observer);
 
-            var subscriptions = new SubscriptionSet();
-
             // Example: board.CellDeath += (sender, args) => observer.RecordCellDeath(args.OwnerPlayerId, args.Reason, 1);
             // board.CellColonized += (playerId, tileId) => observer.RecordColonization(playerId, tileId);
 
-            subscriptions.CellDeathHandler = (sender, e) =>
+            EventHandler<FungalCellDiedEventArgs> cellDeathHandler = (sender, e) =>
             {
                 // call observer methods here
                 observer.RecordCellDeath(e.OwnerPlayerId, e.Reason, 1);
             };
-            board.CellDeath += subscriptions.CellDeathHandler;
+            board.CellDeath += cellDeathHandler;
 
-            subscriptions.NecrotoxicConversionHandler = (playerId, tileId, oldOwnerId) =>
+            GameBoard.NecrotoxicConversionEventHandler necrotoxicConversionHandler = (playerId, tileId, oldOwnerId) =>
             {
                 observer.RecordNecrotoxicConversionReclaim(playerId, 1);
             };
-            board.NecrotoxicConversion += subscriptions.NecrotoxicConversionHandler;
+            board.NecrotoxicConversion += necrotoxicConversionHandler;
 
-            subscriptions.NutrientPatchConsumedHandler = (playerId, nutrientTileId, destinationTileId, patchType, rewardType, rewardAmount) =>
+            GameBoard.NutrientPatchConsumedEventHandler nutrientPatchConsumedHandler = (playerId, nutrientTileId, destinationTileId, patchType, rewardType, rewardAmount) =>
             {
                 observer.RecordNutrientPatchConsumed(playerId, nutrientTileId, patchType, rewardType, rewardAmount);
             };
-            board.NutrientPatchConsumed += subscriptions.NutrientPatchConsumedHandler;
+            board.NutrientPatchConsumed += nutrientPatchConsumedHandler;
+
+            var subscriptions = new SubscriptionSet(
+                cellDeathHandler,
+                necrotoxicConversionHandler,
+                nutrientPatchConsumedHandler);
 
             subscriptionsByBoard[board] = subscriptions;
         }

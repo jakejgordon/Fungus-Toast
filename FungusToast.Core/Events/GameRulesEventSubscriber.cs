@@ -20,21 +20,55 @@ namespace FungusToast.Core.Events
     {
         private sealed class SubscriptionSet
         {
-            public EventHandler<FungalCellDiedEventArgs> CellDeathMutationHandler;
-            public EventHandler<FungalCellDiedEventArgs> CellDeathMycovariantHandler;
-            public GameBoard.PreGrowthPhaseEventHandler PreGrowthPhaseHandler;
-            public GameBoard.PostGrowthPhaseEventHandler PostGrowthPhaseHandler;
-            public GameBoard.PostGrowthPhaseCompletedEventHandler PostGrowthPhaseCompletedHandler;
-            public GameBoard.DecayPhaseEventHandler DecayPhaseHandler;
-            public GameBoard.PostDecayPhaseEventHandler PostDecayPhaseHandler;
-            public GameBoard.CellColonizedEventHandler CellColonizedHandler;
-            public GameBoard.CellInfestedEventHandler CellInfestedHandler;
-            public GameBoard.CellReclaimedEventHandler CellReclaimedHandler;
-            public GameBoard.CellOvergrownEventHandler CellOvergrownHandler;
-            public GameBoard.NecrophyticBloomActivatedEventHandler NecrophyticBloomActivatedHandler;
-            public GameBoard.MutationPhaseStartEventHandler MutationPhaseStartHandler;
-            public GameBoard.ToxinPlacedEventHandler ToxinPlacedHandler;
-            public GameBoard.ToxinExpiredEventHandler ToxinExpiredHandler;
+            public SubscriptionSet(
+                EventHandler<FungalCellDiedEventArgs> cellDeathMutationHandler,
+                EventHandler<FungalCellDiedEventArgs> cellDeathMycovariantHandler,
+                GameBoard.PreGrowthPhaseEventHandler preGrowthPhaseHandler,
+                GameBoard.PostGrowthPhaseEventHandler postGrowthPhaseHandler,
+                GameBoard.PostGrowthPhaseCompletedEventHandler postGrowthPhaseCompletedHandler,
+                GameBoard.DecayPhaseEventHandler decayPhaseHandler,
+                GameBoard.PostDecayPhaseEventHandler postDecayPhaseHandler,
+                GameBoard.CellColonizedEventHandler cellColonizedHandler,
+                GameBoard.CellInfestedEventHandler cellInfestedHandler,
+                GameBoard.CellReclaimedEventHandler cellReclaimedHandler,
+                GameBoard.CellOvergrownEventHandler cellOvergrownHandler,
+                GameBoard.NecrophyticBloomActivatedEventHandler necrophyticBloomActivatedHandler,
+                GameBoard.MutationPhaseStartEventHandler mutationPhaseStartHandler,
+                GameBoard.ToxinPlacedEventHandler toxinPlacedHandler,
+                GameBoard.ToxinExpiredEventHandler toxinExpiredHandler)
+            {
+                CellDeathMutationHandler = cellDeathMutationHandler;
+                CellDeathMycovariantHandler = cellDeathMycovariantHandler;
+                PreGrowthPhaseHandler = preGrowthPhaseHandler;
+                PostGrowthPhaseHandler = postGrowthPhaseHandler;
+                PostGrowthPhaseCompletedHandler = postGrowthPhaseCompletedHandler;
+                DecayPhaseHandler = decayPhaseHandler;
+                PostDecayPhaseHandler = postDecayPhaseHandler;
+                CellColonizedHandler = cellColonizedHandler;
+                CellInfestedHandler = cellInfestedHandler;
+                CellReclaimedHandler = cellReclaimedHandler;
+                CellOvergrownHandler = cellOvergrownHandler;
+                NecrophyticBloomActivatedHandler = necrophyticBloomActivatedHandler;
+                MutationPhaseStartHandler = mutationPhaseStartHandler;
+                ToxinPlacedHandler = toxinPlacedHandler;
+                ToxinExpiredHandler = toxinExpiredHandler;
+            }
+
+            public EventHandler<FungalCellDiedEventArgs> CellDeathMutationHandler { get; }
+            public EventHandler<FungalCellDiedEventArgs> CellDeathMycovariantHandler { get; }
+            public GameBoard.PreGrowthPhaseEventHandler PreGrowthPhaseHandler { get; }
+            public GameBoard.PostGrowthPhaseEventHandler PostGrowthPhaseHandler { get; }
+            public GameBoard.PostGrowthPhaseCompletedEventHandler PostGrowthPhaseCompletedHandler { get; }
+            public GameBoard.DecayPhaseEventHandler DecayPhaseHandler { get; }
+            public GameBoard.PostDecayPhaseEventHandler PostDecayPhaseHandler { get; }
+            public GameBoard.CellColonizedEventHandler CellColonizedHandler { get; }
+            public GameBoard.CellInfestedEventHandler CellInfestedHandler { get; }
+            public GameBoard.CellReclaimedEventHandler CellReclaimedHandler { get; }
+            public GameBoard.CellOvergrownEventHandler CellOvergrownHandler { get; }
+            public GameBoard.NecrophyticBloomActivatedEventHandler NecrophyticBloomActivatedHandler { get; }
+            public GameBoard.MutationPhaseStartEventHandler MutationPhaseStartHandler { get; }
+            public GameBoard.ToxinPlacedEventHandler ToxinPlacedHandler { get; }
+            public GameBoard.ToxinExpiredEventHandler ToxinExpiredHandler { get; }
         }
 
         private static readonly Dictionary<GameBoard, SubscriptionSet> subscriptionsByBoard = new();
@@ -62,25 +96,24 @@ namespace FungusToast.Core.Events
             UnsubscribeAll(board);
 
             var allMutations = MutationRegistry.GetAll().ToList();
-            var subscriptions = new SubscriptionSet();
 
             // All mutation-based cell death effects (consolidated)
-            subscriptions.CellDeathMutationHandler = (sender, args) =>
+            EventHandler<FungalCellDiedEventArgs> cellDeathMutationHandler = (sender, args) =>
             {
                 MutationEffectCoordinator.OnCellDeath(args, board, players, rng, observer);
             };
-            board.CellDeath += subscriptions.CellDeathMutationHandler;
+            board.CellDeath += cellDeathMutationHandler;
 
             // Mycovariant-based cell death effects (separate since they're not mutations)
-            subscriptions.CellDeathMycovariantHandler = (sender, args) =>
+            EventHandler<FungalCellDiedEventArgs> cellDeathMycovariantHandler = (sender, args) =>
             {
                 MycovariantEffectProcessor.OnCellDeath_SeptalAlarm(board, args, players, rng, observer);
                 MycovariantEffectProcessor.OnCellDeath_NecrophoricAdaptation(board, args.OwnerPlayerId, args.TileId, players, rng, observer);
             };
-            board.CellDeath += subscriptions.CellDeathMycovariantHandler;
+            board.CellDeath += cellDeathMycovariantHandler;
 
             // All mutation-based pre-growth phase effects (consolidated)
-            subscriptions.PreGrowthPhaseHandler = () =>
+            GameBoard.PreGrowthPhaseEventHandler preGrowthPhaseHandler = () =>
             {
                 MutationEffectCoordinator.OnPreGrowthPhase(board, players, rng, observer);
                 // Corner Conduit should run AFTER toxin cleaning (Mycotoxin Catabolism) and surge prep
@@ -88,67 +121,67 @@ namespace FungusToast.Core.Events
                 // Aggressotropic Conduit runs after Corner Conduit (enemy-targeting path)
                 MycovariantEffectProcessor.OnPreGrowthPhase_AggressotropicConduit(board, players, rng, observer);
             };
-            board.PreGrowthPhase += subscriptions.PreGrowthPhaseHandler;
+            board.PreGrowthPhase += preGrowthPhaseHandler;
 
             // All mutation-based post-growth phase effects (consolidated)
-            subscriptions.PostGrowthPhaseHandler = () =>
+            GameBoard.PostGrowthPhaseEventHandler postGrowthPhaseHandler = () =>
             {
                 MutationEffectCoordinator.OnPostGrowthPhase(board, players, rng, observer);
             };
-            board.PostGrowthPhase += subscriptions.PostGrowthPhaseHandler;
+            board.PostGrowthPhase += postGrowthPhaseHandler;
 
-            subscriptions.PostGrowthPhaseCompletedHandler = () =>
+            GameBoard.PostGrowthPhaseCompletedEventHandler postGrowthPhaseCompletedHandler = () =>
             {
                 AdaptationEffectProcessor.OnPostGrowthPhaseCompleted(board, players, rng, observer);
             };
-            board.PostGrowthPhaseCompleted += subscriptions.PostGrowthPhaseCompletedHandler;
+            board.PostGrowthPhaseCompleted += postGrowthPhaseCompletedHandler;
 
             // All mutation-based decay phase effects (consolidated)
-            subscriptions.DecayPhaseHandler = (failedGrowthsByPlayerId) =>
+            GameBoard.DecayPhaseEventHandler decayPhaseHandler = (failedGrowthsByPlayerId) =>
             {
                 MutationEffectCoordinator.OnDecayPhase(board, players, failedGrowthsByPlayerId, rng, observer);
             };
-            board.DecayPhase += subscriptions.DecayPhaseHandler;
+            board.DecayPhase += decayPhaseHandler;
 
-            subscriptions.PostDecayPhaseHandler = () =>
+            GameBoard.PostDecayPhaseEventHandler postDecayPhaseHandler = () =>
             {
                 AdaptationEffectProcessor.OnPostDecayPhase(board, players, rng, observer);
             };
-            board.PostDecayPhase += subscriptions.PostDecayPhaseHandler;
+            board.PostDecayPhase += postDecayPhaseHandler;
 
-            subscriptions.CellColonizedHandler = (playerId, tileId, source) =>
+            GameBoard.CellColonizedEventHandler cellColonizedHandler = (playerId, tileId, source) =>
             {
                 AdaptationEffectProcessor.OnLivingCellEstablished(playerId, tileId, source, board, players, observer);
             };
-            board.CellColonized += subscriptions.CellColonizedHandler;
+            board.CellColonized += cellColonizedHandler;
 
-            subscriptions.CellInfestedHandler = (playerId, tileId, oldOwnerId, source) =>
+            GameBoard.CellInfestedEventHandler cellInfestedHandler = (playerId, tileId, oldOwnerId, source) =>
             {
                 AdaptationEffectProcessor.OnLivingCellEstablished(playerId, tileId, source, board, players, observer);
             };
-            board.CellInfested += subscriptions.CellInfestedHandler;
+            board.CellInfested += cellInfestedHandler;
 
-            subscriptions.CellReclaimedHandler = (playerId, tileId, source) =>
+            GameBoard.CellReclaimedEventHandler cellReclaimedHandler = (playerId, tileId, source) =>
             {
                 AdaptationEffectProcessor.OnLivingCellEstablished(playerId, tileId, source, board, players, observer);
             };
-            board.CellReclaimed += subscriptions.CellReclaimedHandler;
+            board.CellReclaimed += cellReclaimedHandler;
 
-            subscriptions.CellOvergrownHandler = (playerId, tileId, oldOwnerId, source) =>
+            GameBoard.CellOvergrownEventHandler cellOvergrownHandler = (playerId, tileId, oldOwnerId, source) =>
             {
                 AdaptationEffectProcessor.OnLivingCellEstablished(playerId, tileId, source, board, players, observer);
             };
-            board.CellOvergrown += subscriptions.CellOvergrownHandler;
+            board.CellOvergrown += cellOvergrownHandler;
 
             // Necrophytic Bloom (initial burst on activation)
-            subscriptions.NecrophyticBloomActivatedHandler = () =>
+            GameBoard.NecrophyticBloomActivatedEventHandler necrophyticBloomActivatedHandler = () =>
             {
                 MutationEffectCoordinator.OnNecrophyticBloomActivated(board, players, rng, observer);
             };
-            board.NecrophyticBloomActivatedEvent += subscriptions.NecrophyticBloomActivatedHandler;
+            board.NecrophyticBloomActivatedEvent += necrophyticBloomActivatedHandler;
 
             // Mutator Phenotype (mutation phase start auto-upgrade effect)
-            subscriptions.MutationPhaseStartHandler = () =>
+            GameBoard.MutationPhaseStartEventHandler mutationPhaseStartHandler = () =>
             {
                 AdaptationEffectProcessor.OnMutationPhaseStart(board, players, rng, observer);
                 MutationEffectCoordinator.OnMutationPhaseStart_MutatorPhenotype(board, players, allMutations, rng, observer);
@@ -156,24 +189,41 @@ namespace FungusToast.Core.Events
                 MutationEffectCoordinator.OnMutationPhaseStart_AdaptiveExpression(board, players, rng, observer);
                 MutationEffectCoordinator.OnMutationPhaseStart_AnabolicInversion(board, players, rng, observer);
             };
-            board.MutationPhaseStart += subscriptions.MutationPhaseStartHandler;
+            board.MutationPhaseStart += mutationPhaseStartHandler;
 
             // Neutralizing Mantle (toxin placement neutralization)
-            subscriptions.ToxinPlacedHandler = (sender, args) =>
+            GameBoard.ToxinPlacedEventHandler toxinPlacedHandler = (sender, args) =>
             {
                 MycovariantEffectProcessor.OnToxinPlaced_NeutralizingMantle(args, board, players, rng, observer);
                 MycovariantEffectProcessor.OnToxinPlaced_EnduringToxaphores(args, board, players, observer);
                 AdaptationEffectProcessor.OnToxinPlaced(args, board, players, rng, observer);
             };
-            board.ToxinPlaced += subscriptions.ToxinPlacedHandler;
+            board.ToxinPlaced += toxinPlacedHandler;
 
             // Catabolic Rebirth (toxin expiration resurrection effect)
-            subscriptions.ToxinExpiredHandler = (sender, args) =>
+            GameBoard.ToxinExpiredEventHandler toxinExpiredHandler = (sender, args) =>
             {
                 MutationEffectCoordinator.OnToxinExpired_CatabolicRebirth(args, board, players, rng, observer);
                 AdaptationEffectProcessor.OnToxinExpired(args, board, players, rng, observer);
             };
-            board.ToxinExpired += subscriptions.ToxinExpiredHandler;
+            board.ToxinExpired += toxinExpiredHandler;
+
+            var subscriptions = new SubscriptionSet(
+                cellDeathMutationHandler,
+                cellDeathMycovariantHandler,
+                preGrowthPhaseHandler,
+                postGrowthPhaseHandler,
+                postGrowthPhaseCompletedHandler,
+                decayPhaseHandler,
+                postDecayPhaseHandler,
+                cellColonizedHandler,
+                cellInfestedHandler,
+                cellReclaimedHandler,
+                cellOvergrownHandler,
+                necrophyticBloomActivatedHandler,
+                mutationPhaseStartHandler,
+                toxinPlacedHandler,
+                toxinExpiredHandler);
 
             subscriptionsByBoard[board] = subscriptions;
 
