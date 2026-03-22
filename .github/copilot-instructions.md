@@ -7,6 +7,7 @@ This file is the top-level router for AI-assisted development in this repository
 ### First-hop task entry docs
 
 - **Build + validation basics:** `FungusToast.Core/docs/BUILD_INSTRUCTIONS.md`
+- **Unit test stack and canonical test commands:** `FungusToast.Core/docs/TESTING_HELPER.md`
 - **Simulation workflows, reproducibility, fairness testing, and balance runs:** `FungusToast.Core/docs/SIMULATION_HELPER.md`
 - **AI strategy authoring and roster metadata:** `FungusToast.Core/docs/AI_STRATEGY_AUTHORING.md`
 - **Mutation authoring:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`
