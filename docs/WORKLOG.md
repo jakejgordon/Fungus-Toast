@@ -61,7 +61,8 @@ Use the following minimal workflow to preserve working memory across sessions:
 6. ✅ Promote the best validated 6-player layout into the precomputed fast-path once it actually holds up.
 7. ✅ Start clean 5-player validation and identify the fairest starting layout.
 8. ✅ Commit the selected 5-player layout and record the validation results.
-9. ⏳ Document the 4-player symmetry assumption and start 3-player validation.
+9. ✅ Document the 4-player symmetry assumption and start 3-player validation.
+10. ⏳ Commit the selected 3-player layout and record the validation results.
 
 ## Current Handoff
 
@@ -115,6 +116,15 @@ Use the following minimal workflow to preserve working memory across sessions:
 - **Selected 4-player layout:** P0 `(128,128)`, P1 `(32,128)`, P2 `(32,32)`, P3 `(128,32)`.
 - **Open questions:** 3-player placement still appears asymmetric under geometry and needs real simulation-driven tuning.
 - **Next steps:** Run the first clean 3-player baseline and compare candidate alternatives if the current auto-selected layout is biased.
+
+### 2026-03-21 (3-player decision)
+- **Focus:** Finish 3-player starting-position selection.
+- **Changed:** Accepted candidate 7 as the selected 3-player layout and added it to the precomputed fast-path.
+- **Learned:** The previous 3-player auto-selected layout was clearly biased. A wider 3-player ring performed much better under clean validation.
+- **Evidence:** Previous auto-selected layout produced `38,28,34` (range `10`). Selected candidate 7 produced `33,35,32` (range `3`) on `160x160` with same AI in all slots, fixed positions, nutrients off, and mycovariants off.
+- **Selected layout:** P0 `(141,80)`, P1 `(50,133)`, P2 `(50,27)`.
+- **Open questions:** Player counts below 3 remain untreated, but may be low priority depending on actual game usage.
+- **Next steps:** Commit/push the selected 3-player layout and decide whether any smaller player counts need explicit treatment.
 
 ## Session Checkpoint Template
 
