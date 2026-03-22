@@ -75,13 +75,13 @@ namespace FungusToast.Unity.UI.GameLog
             public int FriendlyCellsDied;
             public int ToxinsDropped;
             public int ResistanceGained;
-            public int SeptalAlarmResistanceGained;
         }
 
         private class PlayerLogAggregation
         {
             public Dictionary<string, int> Totals = new();
             public Dictionary<string, Dictionary<GrowthSource, int>> PerSource = new();
+            public Dictionary<string, int> ResistanceBySource = new();
             public Dictionary<DeathReason, int> Deaths = new();
             public Dictionary<string, int> FreePointsBySource = new();
             public Dictionary<string, Dictionary<string, int>> FreeUpgradesBySource = new();
@@ -91,6 +91,7 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 Totals.Clear();
                 PerSource.Clear();
+                ResistanceBySource.Clear();
                 Deaths.Clear();
             }
 
@@ -399,6 +400,21 @@ namespace FungusToast.Unity.UI.GameLog
                     blocks.Add(kind + " " + total + " (" + string.Join(", ", perSource) + ")");
             }
 
+            if (agg.ResistanceBySource.Count > 0)
+            {
+                int totalResistance = agg.ResistanceBySource.Values.Sum();
+                var sourceParts = agg.ResistanceBySource
+                    .Where(kv => kv.Value > 0)
+                    .OrderByDescending(kv => kv.Value)
+                    .Select(kv => kv.Value + " from " + kv.Key)
+                    .ToList();
+
+                if (sourceParts.Count > 0)
+                {
+                    blocks.Add($"{totalResistance} {(totalResistance == 1 ? "cell gained resistance" : "cells gained resistance")}: {JoinWithAnd(sourceParts)}");
+                }
+            }
+
             if (agg.Deaths.Values.Any(v => v > 0))
             {
                 int totalDeaths = agg.Deaths.Values.Sum();
@@ -466,18 +482,6 @@ namespace FungusToast.Unity.UI.GameLog
                     activityTotals.FriendlyCellsDied,
                     activityTotals.ToxinsDropped,
                     activityTotals.ResistanceGained);
-
-                if (activityTotals.SeptalAlarmResistanceGained > 0)
-                {
-                    int count = activityTotals.SeptalAlarmResistanceGained;
-                    pendingRoundLeadSummaries[hp.PlayerId].Enqueue(new SegmentSummary
-                    {
-                        Message = count == 1
-                            ? "Septal Alarm granted resistance to 1 cell this round"
-                            : $"Septal Alarm granted resistance to {count} cells this round",
-                        Round = round
-                    });
-                }
 
                 pendingRoundSummaries[hp.PlayerId] = msg;
                 pendingRoundNumber[hp.PlayerId] = round;
@@ -580,9 +584,34 @@ namespace FungusToast.Unity.UI.GameLog
             GrowthSource.RegenerativeHyphae => "Regenerative Hyphae",
             GrowthSource.CornerConduit => "Corner Conduit",
             GrowthSource.AggressotropicConduit => "Aggressotropic Conduit",
+            GrowthSource.ChitinFortification => "Chitin Fortification",
+            GrowthSource.AegisHyphae => "Aegis Hyphae",
+            GrowthSource.CrustalCallus => "Crustal Callus",
+            GrowthSource.SeptalAlarm => "Septal Alarm",
+            GrowthSource.DistalSpore => "Distal Spore",
             GrowthSource.Manual => "Manual placement",
             _ => src.ToString()
         };
+
+        private static string JoinWithAnd(IReadOnlyList<string> parts)
+        {
+            if (parts == null || parts.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            if (parts.Count == 1)
+            {
+                return parts[0];
+            }
+
+            if (parts.Count == 2)
+            {
+                return parts[0] + " and " + parts[1];
+            }
+
+            return string.Join(", ", parts.Take(parts.Count - 1)) + ", and " + parts[^1];
+        }
 
         private static string DeathReasonName(DeathReason reason) => reason switch
         {
@@ -662,7 +691,7 @@ namespace FungusToast.Unity.UI.GameLog
             agg.Deaths[reason] += count;
         }
 
-        private void AddResistanceGain(int playerId, int count, bool fromSeptalAlarm = false)
+        private void AddResistanceGain(int playerId, int count, string sourceName)
         {
             if (!IsHuman(playerId) || count <= 0)
             {
@@ -671,12 +700,25 @@ namespace FungusToast.Unity.UI.GameLog
 
             roundActivityTotals.TryGetValue(playerId, out var activityTotals);
             activityTotals.ResistanceGained += count;
-            if (fromSeptalAlarm)
+            roundActivityTotals[playerId] = activityTotals;
+
+            if (string.IsNullOrWhiteSpace(sourceName))
             {
-                activityTotals.SeptalAlarmResistanceGained += count;
+                return;
             }
 
-            roundActivityTotals[playerId] = activityTotals;
+            var agg = Agg(playerId);
+            if (!agg.ResistanceBySource.ContainsKey(sourceName))
+            {
+                agg.ResistanceBySource[sourceName] = 0;
+            }
+
+            agg.ResistanceBySource[sourceName] += count;
+        }
+
+        private void AddResistanceGain(int playerId, int count, GrowthSource source)
+        {
+            AddResistanceGain(playerId, count, AbilityName(source));
         }
 
         private void AddFreePoints(int playerId, string source, int points)
@@ -741,12 +783,7 @@ namespace FungusToast.Unity.UI.GameLog
                 return;
             }
 
-            if (source == GrowthSource.SeptalAlarm)
-            {
-                return;
-            }
-
-            AddResistanceGain(playerId, tileIds.Count);
+            AddResistanceGain(playerId, tileIds.Count, source);
         }
 
         #endregion
@@ -871,31 +908,9 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordAscusPrimacyDraftPriority(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Ascus Primacy allows you to draft first!", GameLogCategory.Lucky); }
         public void RecordAegisHyphaeResistance(int playerId, int cellsFortified)
         {
-            if (!IsHuman(playerId) || cellsFortified <= 0)
-            {
-                return;
-            }
-
-            AddPlayerEvent(
-                playerId,
-                cellsFortified == 1
-                    ? "Aegis Hyphae fortified 1 new cell"
-                    : $"Aegis Hyphae fortified {cellsFortified} new cells",
-                GameLogCategory.Lucky);
         }
         public void RecordCrustalCallusResistance(int playerId, int cellsFortified)
         {
-            if (!IsHuman(playerId) || cellsFortified <= 0)
-            {
-                return;
-            }
-
-            AddPlayerEvent(
-                playerId,
-                cellsFortified == 1
-                    ? "Crustal Callus fortified 1 border cell"
-                    : $"Crustal Callus fortified {cellsFortified} border cells",
-                GameLogCategory.Lucky);
         }
         public void RecordSaprophageRingConsumption(int playerId, int cellsConsumed)
         {
@@ -985,13 +1000,13 @@ namespace FungusToast.Unity.UI.GameLog
         public void ReportHyphalVectoringInfested(int playerId, int infested) { if (IsHuman(playerId) && infested > 0) Inc(EventKinds.Infested, playerId, GrowthSource.HyphalVectoring, infested); }
         public void RecordStandardGrowth(int playerId) { }
         public void RecordNeutralizingMantleEffect(int playerId, int toxinsNeutralized) { }
-        public void RecordBastionedCells(int playerId, int count) { AddResistanceGain(playerId, count); }
+        public void RecordBastionedCells(int playerId, int count) { AddResistanceGain(playerId, count, "Mycelial Bastion"); }
         public void RecordCatabolicRebirthAgedToxin(int playerId, int toxinsAged) { }
-        public void RecordSurgicalInoculationDrop(int playerId, int count) { AddResistanceGain(playerId, count); }
+        public void RecordSurgicalInoculationDrop(int playerId, int count) { AddResistanceGain(playerId, count, "Surgical Inoculation"); }
         public void RecordPutrefactiveRejuvenationGrowthCyclesReduced(int playerId, int totalCyclesReduced) { }
         public void RecordPerimeterProliferatorGrowth(int playerId) { }
-        public void RecordHyphalResistanceTransfer(int playerId, int count) { AddResistanceGain(playerId, count); }
-        public void RecordSeptalAlarmResistance(int playerId, int count) { AddResistanceGain(playerId, count, fromSeptalAlarm: true); }
+        public void RecordHyphalResistanceTransfer(int playerId, int count) { AddResistanceGain(playerId, count, "Hyphal Resistance Transfer"); }
+        public void RecordSeptalAlarmResistance(int playerId, int count) { }
         public void RecordEnduringToxaphoresExtendedCycles(int playerId, int cycles) { }
         public void RecordEnduringToxaphoresExistingExtensions(int playerId, int cycles) { }
         public void RecordReclamationRhizomorphsSecondAttempt(int playerId, int count) { }
@@ -1005,7 +1020,7 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordCytolyticBurstToxins(int playerId, int toxinsCreated) { if (IsHuman(playerId) && toxinsCreated > 0) Inc(EventKinds.Toxified, playerId, GrowthSource.CytolyticBurst, toxinsCreated); }
         public void RecordCytolyticBurstKills(int playerId, int cellsKilled) { }
         public void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected) { }
-        public void RecordHypersystemicRegenerationResistance(int playerId) { AddResistanceGain(playerId, 1); }
+        public void RecordHypersystemicRegenerationResistance(int playerId) { AddResistanceGain(playerId, 1, "Hypersystemic Regeneration"); }
         public void RecordHypersystemicDiagonalReclaim(int playerId) { }
 
         #endregion
