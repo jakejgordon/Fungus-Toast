@@ -2,7 +2,6 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Players;
-using System.Reflection;
 
 namespace FungusToast.Core.Tests.Board;
 
@@ -84,7 +83,7 @@ public class GameBoardQueryHelperTests
         board.SpawnSporeForPlayer(board.Players[0], tileId: 7, GrowthSource.HyphalOutgrowth);
 
         var toxinCell = new FungalCell(ownerPlayerId: 0, tileId: 12, source: GrowthSource.CytolyticBurst, toxinExpirationAge: 3, lastOwnerPlayerId: null);
-        PlaceCell(board, toxinCell);
+        board.PlaceFungalCell(toxinCell);
 
         var livingCells = board.AllLivingFungalCells().OrderBy(cell => cell.TileId).ToArray();
         var livingCellsWithTiles = board.AllLivingFungalCellsWithTiles().OrderBy(pair => pair.cell.TileId).ToArray();
@@ -101,7 +100,7 @@ public class GameBoardQueryHelperTests
 
         board.PlaceInitialSpore(playerId: 0, x: 1, y: 1);
         var toxinCell = new FungalCell(ownerPlayerId: 0, tileId: 12, source: GrowthSource.CytolyticBurst, toxinExpirationAge: 3, lastOwnerPlayerId: null);
-        PlaceCell(board, toxinCell);
+        board.PlaceFungalCell(toxinCell);
 
         var toxinTile = Assert.Single(board.AllToxinTiles());
         var toxinFungalCell = Assert.Single(board.AllToxinFungalCells());
@@ -121,20 +120,13 @@ public class GameBoardQueryHelperTests
         board.SpawnSporeForPlayer(board.Players[1], tileId: 7, GrowthSource.HyphalOutgrowth); // adjacent, alive
         board.SpawnSporeForPlayer(board.Players[0], tileId: 11, GrowthSource.HyphalOutgrowth); // adjacent, alive
         var toxinCell = new FungalCell(ownerPlayerId: 1, tileId: 12, source: GrowthSource.CytolyticBurst, toxinExpirationAge: 3, lastOwnerPlayerId: null); // adjacent, not alive
-        PlaceCell(board, toxinCell);
+        board.PlaceFungalCell(toxinCell);
 
         var allAdjacentLiving = board.GetAdjacentLivingTiles(6).Select(tile => tile.TileId).OrderBy(id => id).ToArray();
         var excludingPlayerZero = board.GetAdjacentLivingTiles(6, excludePlayerId: 0).Select(tile => tile.TileId).OrderBy(id => id).ToArray();
 
         Assert.Equal(new[] { 7, 11 }, allAdjacentLiving);
         Assert.Equal(new[] { 7 }, excludingPlayerZero);
-    }
-
-    private static void PlaceCell(GameBoard board, FungalCell cell)
-    {
-        var placeFungalCell = typeof(GameBoard).GetMethod("PlaceFungalCell", BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(placeFungalCell);
-        placeFungalCell!.Invoke(board, new object[] { cell });
     }
 
     private static GameBoard CreateBoard(int width, int height, int playerCount)
