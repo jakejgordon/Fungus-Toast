@@ -1587,12 +1587,12 @@ namespace FungusToast.Unity.Grid
             Camera mainCamera = Camera.main;
             if (mainCamera == null || !mainCamera.orthographic)
             {
-                return 1f;
+                return UIEffectConstants.BoardToastScaleMultiplier;
             }
 
             float normalizedZoom = mainCamera.orthographicSize / UIEffectConstants.NutrientPatchToastZoomReferenceOrthographicSize;
             float zoomScale = Mathf.Sqrt(Mathf.Max(1f, normalizedZoom));
-            return Mathf.Clamp(zoomScale, 1f, UIEffectConstants.NutrientPatchToastMaxScaleMultiplier);
+            return Mathf.Clamp(zoomScale, 1f, UIEffectConstants.NutrientPatchToastMaxScaleMultiplier) * UIEffectConstants.BoardToastScaleMultiplier;
         }
 
         private static float GetAnimatedNutrientToastScaleMultiplier(float textT)

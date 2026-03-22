@@ -74,6 +74,7 @@ namespace FungusToast.Unity.UI
         public const float NutrientPatchToastRiseWorld = 0.9f;
         public const float NutrientPatchToastDurationSeconds = 3.3f;
         public const float NutrientPatchToastFontSize = 6.6f;
+        public const float BoardToastScaleMultiplier = 2f;
         public const float NutrientPatchToastZoomReferenceOrthographicSize = 18f;
         public const float NutrientPatchToastMaxScaleMultiplier = 4.1f;
         public const float NutrientPatchToastPopScaleMultiplier = 1.38f;

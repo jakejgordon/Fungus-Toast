@@ -15,6 +15,8 @@ namespace FungusToast.Unity.UI.GameLog
         [SerializeField] private float verticalPadding = 4f; // extra padding added to calculated height
         [SerializeField] private float minHeight = 24f; // baseline single-line height
         [SerializeField] private float extraSafetyPadding = 2f; // prevents last line clipping
+        [SerializeField] private float timestampSpacing = 14f;
+        [SerializeField] private float minimumReservedTimestampWidth = 34f;
         private bool deferredScheduled = false;
 
         public void SetEntry(GameLogEntry entry)
@@ -29,7 +31,10 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 timestampText.text = $"R{entry.Round}";
                 timestampText.color = UIStyleTokens.Text.Muted;
+                timestampText.textWrappingMode = TextWrappingModes.NoWrap;
             }
+
+            ApplyMessageLayoutSpacing();
             
             // Set background color based on category
             if (backgroundImage != null)
@@ -49,30 +54,64 @@ namespace FungusToast.Unity.UI.GameLog
             if (layoutElement == null) layoutElement = GetComponent<LayoutElement>();
             if (layoutElement == null) return; // still optional
 
+            ApplyMessageLayoutSpacing();
+
             // Ensure TMP has generated geometry for current text
             messageText.ForceMeshUpdate();
 
             // Determine available width for text (current rect width may still be 0 first frame)
-            float availableWidth = messageText.rectTransform.rect.width;
+            float availableWidth = messageText.rectTransform.rect.width - GetReservedTimestampWidth();
             if (availableWidth <= 0f)
             {
                 // Try parent width as fallback
                 var parentRT = messageText.rectTransform.parent as RectTransform;
-                if (parentRT != null) availableWidth = parentRT.rect.width;
+                if (parentRT != null) availableWidth = parentRT.rect.width - GetReservedTimestampWidth();
             }
-            if (availableWidth <= 0f) availableWidth = 500f; // sane fallback
+            if (availableWidth <= 0f) availableWidth = 460f; // sane fallback
 
             // Constrained preferred size (height) for current width
             var preferredValues = messageText.GetPreferredValues(messageText.text, availableWidth, 0f);
             float preferredHeight = preferredValues.y;
 
-            float target = Mathf.Max(minHeight, Mathf.Ceil(preferredHeight) + verticalPadding + extraSafetyPadding);
+            float target = Mathf.Max(
+                Mathf.Max(minHeight, 30f),
+                Mathf.Ceil(preferredHeight) + Mathf.Max(verticalPadding, 8f) + Mathf.Max(extraSafetyPadding, 4f));
 
             if (Mathf.Abs(layoutElement.preferredHeight - target) > 0.5f)
             {
                 layoutElement.preferredHeight = target;
                 LayoutRebuilder.MarkLayoutForRebuild(transform as RectTransform);
             }
+        }
+
+        private void ApplyMessageLayoutSpacing()
+        {
+            if (messageText == null)
+            {
+                return;
+            }
+
+            messageText.textWrappingMode = TextWrappingModes.Normal;
+            messageText.overflowMode = TextOverflowModes.Overflow;
+
+            float reservedWidth = GetReservedTimestampWidth();
+            Vector4 margin = messageText.margin;
+            if (Mathf.Abs(margin.z - reservedWidth) > 0.5f)
+            {
+                messageText.margin = new Vector4(margin.x, margin.y, reservedWidth, margin.w);
+            }
+        }
+
+        private float GetReservedTimestampWidth()
+        {
+            if (timestampText == null)
+            {
+                return 0f;
+            }
+
+            timestampText.ForceMeshUpdate();
+            float preferredWidth = timestampText.GetPreferredValues(timestampText.text, 0f, 0f).x;
+            return Mathf.Max(minimumReservedTimestampWidth, preferredWidth + timestampSpacing);
         }
 
         private IEnumerator DeferredHeightRecalc()
