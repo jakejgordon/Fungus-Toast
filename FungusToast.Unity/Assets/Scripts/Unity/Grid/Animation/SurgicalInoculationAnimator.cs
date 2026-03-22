@@ -15,18 +15,18 @@ namespace FungusToast.Unity.Grid.Animation
             var board = _viz.ActiveBoard;
             if (board == null || sprite == null)
             {
-                yield return _viz.ResistantDropAnimation(targetTileId);
+                yield return _viz.ResistantDropAnimation(targetTileId, durationScale: UIEffectConstants.SurgicalInoculationDropDurationScale);
                 yield break;
             }
             if (playerId < 0 || playerId >= board.Players.Count)
             {
-                yield return _viz.ResistantDropAnimation(targetTileId);
+                yield return _viz.ResistantDropAnimation(targetTileId, durationScale: UIEffectConstants.SurgicalInoculationDropDurationScale);
                 yield break;
             }
             var player = board.Players[playerId];
             if (!player.StartingTileId.HasValue)
             {
-                yield return _viz.ResistantDropAnimation(targetTileId);
+                yield return _viz.ResistantDropAnimation(targetTileId, durationScale: UIEffectConstants.SurgicalInoculationDropDurationScale);
                 yield break;
             }
             int startId = player.StartingTileId.Value;
@@ -51,7 +51,7 @@ namespace FungusToast.Unity.Grid.Animation
             {
                 _viz.EndAnimation();
             }
-            yield return _viz.ResistantDropAnimation(targetTileId);
+            yield return _viz.ResistantDropAnimation(targetTileId, durationScale: UIEffectConstants.SurgicalInoculationDropDurationScale);
         }
     }
 }

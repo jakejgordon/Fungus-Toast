@@ -79,7 +79,10 @@ namespace FungusToast.Unity.Grid.Animation
                     // Restore tiles then fallback drop (shield-only)
                     if (_viz.moldTilemap.HasTile(endCell)) { var c = _viz.moldTilemap.GetColor(endCell); c.a = 1f; _viz.moldTilemap.SetColor(endCell, c); }
                     if (_viz.overlayTilemap.HasTile(endCell)) { var c = _viz.overlayTilemap.GetColor(endCell); c.a = 0f; _viz.overlayTilemap.SetColor(endCell, c); }
-                    yield return _viz.ResistantDropAnimation(tileId, CompositeDropFinalScale);
+                    yield return _viz.ResistantDropAnimation(
+                        tileId,
+                        CompositeDropFinalScale,
+                        UI.UIEffectConstants.StartingSporeArrivalDropDurationScale);
                 }
                 else
                 {
@@ -182,7 +185,7 @@ namespace FungusToast.Unity.Grid.Animation
             if (parent == null) yield break;
             var posWorld = parent.transform.position;
 
-            float total = UI.UIEffectConstants.SurgicalInoculationDropDurationSeconds;
+            float total = UI.UIEffectConstants.SurgicalInoculationDropDurationSeconds * UI.UIEffectConstants.StartingSporeArrivalDropDurationScale;
             float dropT = Mathf.Clamp01(UI.UIEffectConstants.SurgicalInoculationDropPortion);
             float impactT = Mathf.Clamp01(UI.UIEffectConstants.SurgicalInoculationImpactPortion);
             float settleT = Mathf.Clamp01(UI.UIEffectConstants.SurgicalInoculationSettlePortion);

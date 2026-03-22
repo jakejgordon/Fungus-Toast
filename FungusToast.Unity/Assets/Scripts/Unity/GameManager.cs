@@ -636,7 +636,47 @@ namespace FungusToast.Unity
             gridVisualizer.ClearNewlyGrownFlagsForNextGrowthPhase();
             gameUIManager.PhaseBanner.Show("Growth Phase Begins!",2f);
             phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
-            Board.OnPreGrowthPhase();
+            StartCoroutine(BeginGrowthPhaseAfterPreGrowthEffects());
+        }
+
+        private IEnumerator BeginGrowthPhaseAfterPreGrowthEffects()
+        {
+            var chitinFortificationTileIds = new List<int>();
+
+            void BufferPreGrowthResistanceAnimation(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
+            {
+                if (source != GrowthSource.ChitinFortification || tileIds == null || tileIds.Count == 0)
+                {
+                    return;
+                }
+
+                foreach (var tileId in tileIds)
+                {
+                    if (!chitinFortificationTileIds.Contains(tileId))
+                    {
+                        chitinFortificationTileIds.Add(tileId);
+                    }
+                }
+            }
+
+            Board.ResistanceAppliedBatch += BufferPreGrowthResistanceAnimation;
+            try
+            {
+                Board.OnPreGrowthPhase();
+            }
+            finally
+            {
+                Board.ResistanceAppliedBatch -= BufferPreGrowthResistanceAnimation;
+            }
+
+            if (!isFastForwarding && chitinFortificationTileIds.Count > 0)
+            {
+                gridVisualizer.DeferResistanceOverlayReveal(chitinFortificationTileIds);
+                gridVisualizer.RenderBoard(Board, suppressAnimations: true);
+                gridVisualizer.PlayResistancePulseBatchScaled(chitinFortificationTileIds, 0.5f);
+                yield return gridVisualizer.WaitForAllAnimations();
+            }
+
             growthPhaseRunner.StartGrowthPhase();
         }
 

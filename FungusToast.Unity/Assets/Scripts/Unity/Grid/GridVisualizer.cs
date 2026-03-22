@@ -1784,7 +1784,7 @@ namespace FungusToast.Unity.Grid
         }
 
         // NEW: Resistant drop animation for Surgical Inoculation (Option A)
-        public IEnumerator ResistantDropAnimation(int tileId, float finalScale = 1f)
+        public IEnumerator ResistantDropAnimation(int tileId, float finalScale = 1f, float durationScale = 1f)
         {
             var activeBoard = ActiveBoard;
             if (activeBoard == null || goldShieldOverlayTile == null || overlayTilemap == null)
@@ -1792,7 +1792,7 @@ namespace FungusToast.Unity.Grid
 
             Vector3Int pos = GetPositionForTileId(tileId);
 
-            float total = UIEffectConstants.SurgicalInoculationDropDurationSeconds;
+            float total = UIEffectConstants.SurgicalInoculationDropDurationSeconds * Mathf.Max(0.01f, durationScale);
             float dropT = Mathf.Clamp01(UIEffectConstants.SurgicalInoculationDropPortion);
             float impactT = Mathf.Clamp01(UIEffectConstants.SurgicalInoculationImpactPortion);
             float settleT = Mathf.Clamp01(UIEffectConstants.SurgicalInoculationSettlePortion);
@@ -1887,6 +1887,9 @@ namespace FungusToast.Unity.Grid
             var xy = activeBoard.GetXYFromTileId(tileId);
             Vector3Int pos = new Vector3Int(xy.Item1, xy.Item2, 0);
 
+            deferredResistanceOverlayTileIds.Add(tileId);
+            ClearResistanceOverlayTile(tileId);
+
             float baseTotal = UIEffectConstants.MycelialBastionPulseDurationSeconds;
             float total = _timingContext.ResistancePulseTotal > 0f ? _timingContext.ResistancePulseTotal : baseTotal * postGrowthPhaseDurationMultiplier;
             float outT = Mathf.Clamp01(UIEffectConstants.MycelialBastionPulseOutPortion);
@@ -1935,6 +1938,8 @@ namespace FungusToast.Unity.Grid
             }
             finally
             {
+                deferredResistanceOverlayTileIds.Remove(tileId);
+                RestoreResistanceOverlayTile(tileId);
                 EndAnimation();
             }
         }

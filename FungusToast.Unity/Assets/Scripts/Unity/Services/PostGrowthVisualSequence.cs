@@ -76,6 +76,11 @@ namespace FungusToast.Unity
                 return;
             }
 
+            if (source == GrowthSource.ChitinFortification)
+            {
+                return;
+            }
+
             IReadOnlyList<int> filteredTileIds = source == GrowthSource.CrustalCallus
                 ? FilterToNewlyGrownResistantTiles(tileIds)
                 : tileIds;
@@ -185,7 +190,7 @@ namespace FungusToast.Unity
             if (crustalCallusResistanceTiles.Count > 0)
             {
                 gameManager.GameUI?.GameLogRouter?.RecordCrustalCallusResistance(gameManager.GetPrimaryHumanInternal().PlayerId, crustalCallusResistanceTiles.Count);
-                grid.PlayResistanceDropBatch(crustalCallusResistanceTiles, 1f); yield return grid.WaitForAllAnimations(); crustalCallusResistanceTiles.Clear();
+                grid.PlayResistancePulseBatchScaled(crustalCallusResistanceTiles, 0.5f); yield return grid.WaitForAllAnimations(); crustalCallusResistanceTiles.Clear();
             }
             if (aegisHyphaeResistanceTiles.Count > 0)
             {

@@ -395,7 +395,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         if (player.StartingTileId.HasValue && shieldSprite != null)
                             yield return gridVisualizer.SurgicalInoculationArcAnimation(player.PlayerId, placedTileId, shieldSprite);
                         else
-                            yield return gridVisualizer.ResistantDropAnimation(placedTileId);
+                            yield return gridVisualizer.ResistantDropAnimation(
+                                placedTileId,
+                                durationScale: UIEffectConstants.SurgicalInoculationDropDurationScale);
                     }
                     yield return gridVisualizer.WaitForAllAnimations();
                 }
@@ -467,7 +469,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     if (player.StartingTileId.HasValue && shieldSprite != null)
                         yield return gridVisualizer.SurgicalInoculationArcAnimation(player.PlayerId, placedTileId, shieldSprite);
                     else
-                        yield return gridVisualizer.ResistantDropAnimation(placedTileId);
+                        yield return gridVisualizer.ResistantDropAnimation(
+                            placedTileId,
+                            durationScale: UIEffectConstants.SurgicalInoculationDropDurationScale);
                     yield return gridVisualizer.WaitForAllAnimations();
                 }
                 onComplete?.Invoke();

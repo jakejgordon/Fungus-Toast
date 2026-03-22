@@ -107,8 +107,8 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.ChitinFortification,
                 name: "Chitin Fortification",
                 description:
-                    $"On activation, grants resistance to {GameBalance.ChitinFortificationCellsPerLevel} random living cell(s) per level for {GameBalance.ChitinFortificationDurationRounds} rounds. " +
-                    $"Resistant cells cannot be killed or replaced until the surge expires. " +
+                    $"Before each growth phase while the surge is active, {GameBalance.ChitinFortificationCellsPerLevel} random living cell(s) per level gain Resistant. " +
+                    $"Resistant living cells cannot be killed or replaced. " +
                     $"Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points plus {GameBalance.ChitinFortificationPointIncreasePerLevel} per level.",
                 flavorText: "Rapid chitin synthesis creates an impenetrable exoskeleton around select cells, rendering them invulnerable to all forms of destruction for a limited time.",
                 type: MutationType.ChitinFortification,

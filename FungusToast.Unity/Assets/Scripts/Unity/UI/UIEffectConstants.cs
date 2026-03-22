@@ -331,6 +331,14 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public const float SurgicalInoculationDropDurationSeconds = 1.0f; // was 0.8f
         /// <summary>
+        /// Multiplier used to slow Surgical Inoculation's shield drop animation.
+        /// </summary>
+        public const float SurgicalInoculationDropDurationScale = 1.2f;
+        /// <summary>
+        /// Multiplier used to slow the starting resistant spore shield drop animation.
+        /// </summary>
+        public const float StartingSporeArrivalDropDurationScale = 1.2f;
+        /// <summary>
         /// Starting local Y offset used for the shield drop.
         /// </summary>
         public const float SurgicalInoculationDropStartYOffset = 3.0f;
