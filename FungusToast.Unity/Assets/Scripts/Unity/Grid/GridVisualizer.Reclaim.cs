@@ -567,6 +567,25 @@ namespace FungusToast.Unity.Grid.Helpers
 			StartPendingToxinExpiryAnimations();
 		}
 
+		public float GetAliveCellAlpha(int tileId, FungalCell cell)
+		{
+			if (cell == null)
+			{
+				return 1f;
+			}
+
+			if (cell.IsNewlyGrown)
+			{
+				return _newlyGrownAnimationPlayedTileIds.Contains(tileId)
+					? UIEffectConstants.NewGrowthFinalAlpha
+					: UIEffectConstants.CellGrowthFadeInStartAlpha;
+			}
+
+			return cell.GrowthCycleAge < UIEffectConstants.GrowthCycleAgeHighlightTextThreshold
+				? UIEffectConstants.NewGrowthFinalAlpha
+				: 1f;
+		}
+
 		public void ClearPendingToxinExpirySnapshots()
 		{
 			_pendingToxinExpirySnapshots.Clear();
@@ -780,7 +799,8 @@ namespace FungusToast.Unity.Grid.Helpers
 			var xy = board.GetXYFromTileId(tileId);
 			var pos = new Vector3Int(xy.Item1, xy.Item2, 0);
 			float duration = UIEffectConstants.CellGrowthFadeInDurationSeconds;
-			float startAlpha = 0.1f;
+			float settleDuration = UIEffectConstants.CellGrowthSettleDurationSeconds;
+			float startAlpha = UIEffectConstants.CellGrowthFadeInStartAlpha;
 			float targetAlpha = 1f;
 			float elapsed = 0f;
 
@@ -790,7 +810,7 @@ namespace FungusToast.Unity.Grid.Helpers
 				while (elapsed < duration)
 				{
 					elapsed += Time.deltaTime;
-					float t = elapsed / duration;
+					float t = duration <= 0f ? 1f : elapsed / duration;
 					float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, t);
 
 					if (moldTilemap.HasTile(pos))
@@ -810,13 +830,16 @@ namespace FungusToast.Unity.Grid.Helpers
 					moldTilemap.SetColor(pos, finalColor);
 				}
 
-				float flashElapsed = 0f;
-				while (flashElapsed < UIEffectConstants.NewGrowthFlashDurationSeconds)
+				float settleElapsed = 0f;
+				while (settleElapsed < settleDuration)
 				{
-					flashElapsed += Time.deltaTime;
+					settleElapsed += Time.deltaTime;
 					if (moldTilemap.HasTile(pos))
 					{
-						moldTilemap.SetColor(pos, UIEffectConstants.NewGrowthFlashColor);
+						Color settleColor = moldTilemap.GetColor(pos);
+						float t = settleDuration <= 0f ? 1f : Mathf.Clamp01(settleElapsed / settleDuration);
+						settleColor.a = Mathf.Lerp(1f, UIEffectConstants.NewGrowthFinalAlpha, t);
+						moldTilemap.SetColor(pos, settleColor);
 					}
 					yield return null;
 				}
@@ -1672,6 +1695,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Func<int, Vector3Int> _getPositionForTileId;
 		private readonly Func<int, Tile> _getTileForPlayer;
 		private readonly Func<int, FungalCell, bool> _shouldRenderResistanceOverlay;
+		private readonly Func<int, FungalCell, float> _getAliveCellAlpha;
 		private readonly Func<int, bool> _isPreviewHiddenTile;
 		private readonly Action<int> _removeTrackedNutrientTile;
 		private readonly Action<BoardTile, Vector3Int> _renderNutrientPatchOverlay;
@@ -1686,6 +1710,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			Func<int, Vector3Int> getPositionForTileId,
 			Func<int, Tile> getTileForPlayer,
 			Func<int, FungalCell, bool> shouldRenderResistanceOverlay,
+			Func<int, FungalCell, float> getAliveCellAlpha,
 			Func<int, bool> isPreviewHiddenTile,
 			Action<int> removeTrackedNutrientTile,
 			Action<BoardTile, Vector3Int> renderNutrientPatchOverlay)
@@ -1699,6 +1724,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_getPositionForTileId = getPositionForTileId;
 			_getTileForPlayer = getTileForPlayer;
 			_shouldRenderResistanceOverlay = shouldRenderResistanceOverlay;
+			_getAliveCellAlpha = getAliveCellAlpha;
 			_isPreviewHiddenTile = isPreviewHiddenTile;
 			_removeTrackedNutrientTile = removeTrackedNutrientTile;
 			_renderNutrientPatchOverlay = renderNutrientPatchOverlay;
@@ -1730,9 +1756,7 @@ namespace FungusToast.Unity.Grid.Helpers
 					if (cell.OwnerPlayerId is int aliveOwnerId)
 					{
 						moldTile = _getTileForPlayer(aliveOwnerId);
-						moldColor = cell.IsNewlyGrown || cell.GrowthCycleAge < UIEffectConstants.GrowthCycleAgeHighlightTextThreshold
-							? new Color(1f, 1f, 1f, UIEffectConstants.NewGrowthFinalAlpha)
-							: Color.white;
+							moldColor = new Color(1f, 1f, 1f, _getAliveCellAlpha(tile.TileId, cell));
 					}
 
 					if (_shouldRenderResistanceOverlay(tile.TileId, cell))

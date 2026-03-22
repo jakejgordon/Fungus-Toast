@@ -31,7 +31,17 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Duration (in seconds) for cell growth fade-in animation.
         /// </summary>
-        public const float CellGrowthFadeInDurationSeconds = 0.3f;
+        public const float CellGrowthFadeInDurationSeconds = 0.5f;
+
+        /// <summary>
+        /// Starting alpha used when a newly grown cell first appears before fading to full opacity.
+        /// </summary>
+        public const float CellGrowthFadeInStartAlpha = 0f;
+
+        /// <summary>
+        /// Duration (in seconds) for a newly grown cell to settle back to its highlighted transparency after reaching full opacity.
+        /// </summary>
+        public const float CellGrowthSettleDurationSeconds = 0.3f;
 
         /// <summary>
         /// Duration (in seconds) for toxin drop animation.

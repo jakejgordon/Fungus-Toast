@@ -155,6 +155,7 @@ namespace FungusToast.Unity.Grid
                 GetPositionForTileId,
                 GetTileForPlayer,
                 (tileId, cell) => ShouldRenderResistanceOverlay(tileId, cell),
+                (tileId, cell) => cellStateAnimationController != null ? cellStateAnimationController.GetAliveCellAlpha(tileId, cell) : 1f,
                 tileId => preAnimationHiddenPreviewTileIds.Contains(tileId),
                 tileId => overlayRenderer?.RemoveTrackedNutrientTile(tileId),
                 (tile, pos) => RenderNutrientPatchOverlay(tile, pos));
