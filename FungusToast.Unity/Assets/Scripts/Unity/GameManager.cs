@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using FungusToast.Unity.Campaign; // NEW: campaign namespace
 
 namespace FungusToast.Unity
@@ -62,6 +63,8 @@ namespace FungusToast.Unity
         [SerializeField] private UI_HotseatTurnPrompt hotseatTurnPrompt; 
         public GameObject SelectionPromptPanel; 
         public TextMeshProUGUI SelectionPromptText; 
+        [SerializeField] private Button selectionPromptCancelButton;
+        [SerializeField] private TextMeshProUGUI selectionPromptCancelButtonText;
         [SerializeField] private GameObject modeSelectPanel; // NEW: root of mode select UI
 
         [Header("Hotseat Config")] 
@@ -709,6 +712,7 @@ namespace FungusToast.Unity
             {
                 p.TickDownActiveSurges();
             }
+            Board.SynchronizeChemobeaconsWithSurges(Board.Players);
             CheckForEndgameCondition();
             if (endgameService.GameEnded)
             {
@@ -1075,13 +1079,106 @@ namespace FungusToast.Unity
 #endif
         }
 
-        public void ShowSelectionPrompt(string message)
+        public void ShowSelectionPrompt(string message, bool showCancelButton = false, string cancelButtonLabel = "Cancel", Action onCancel = null)
         {
+            EnsureSelectionPromptCancelButton();
             SelectionPromptPanel.SetActive(true);
             SelectionPromptText.text = message;
+            ConfigureSelectionPromptCancelButton(showCancelButton, cancelButtonLabel, onCancel);
         }
 
-        public void HideSelectionPrompt() => SelectionPromptPanel.SetActive(false);
+        public void HideSelectionPrompt()
+        {
+            ConfigureSelectionPromptCancelButton(false, "Cancel", null);
+            SelectionPromptPanel.SetActive(false);
+        }
+
+        private void EnsureSelectionPromptCancelButton()
+        {
+            if (SelectionPromptPanel == null)
+            {
+                return;
+            }
+
+            if (selectionPromptCancelButton == null)
+            {
+                selectionPromptCancelButton = SelectionPromptPanel.GetComponentInChildren<Button>(true);
+            }
+
+            if (selectionPromptCancelButton == null)
+            {
+                var buttonObject = new GameObject("UI_SelectionPromptCancelButton", typeof(RectTransform), typeof(Image), typeof(Button));
+                buttonObject.layer = SelectionPromptPanel.layer;
+                buttonObject.transform.SetParent(SelectionPromptPanel.transform, false);
+
+                var rectTransform = buttonObject.GetComponent<RectTransform>();
+                rectTransform.anchorMin = new Vector2(1f, 0.5f);
+                rectTransform.anchorMax = new Vector2(1f, 0.5f);
+                rectTransform.pivot = new Vector2(1f, 0.5f);
+                rectTransform.anchoredPosition = new Vector2(-18f, 0f);
+                rectTransform.sizeDelta = new Vector2(170f, 38f);
+
+                var image = buttonObject.GetComponent<Image>();
+                image.color = new Color(0.16f, 0.12f, 0.1f, 0.92f);
+
+                selectionPromptCancelButton = buttonObject.GetComponent<Button>();
+                var colors = selectionPromptCancelButton.colors;
+                colors.normalColor = image.color;
+                colors.highlightedColor = new Color(0.26f, 0.2f, 0.16f, 1f);
+                colors.pressedColor = new Color(0.12f, 0.09f, 0.07f, 1f);
+                colors.selectedColor = colors.highlightedColor;
+                colors.disabledColor = new Color(0.16f, 0.12f, 0.1f, 0.45f);
+                selectionPromptCancelButton.colors = colors;
+
+                var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+                labelObject.layer = SelectionPromptPanel.layer;
+                labelObject.transform.SetParent(buttonObject.transform, false);
+
+                var labelRect = labelObject.GetComponent<RectTransform>();
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = Vector2.zero;
+                labelRect.offsetMax = Vector2.zero;
+
+                selectionPromptCancelButtonText = labelObject.GetComponent<TextMeshProUGUI>();
+                selectionPromptCancelButtonText.fontSize = 22f;
+                selectionPromptCancelButtonText.fontStyle = FontStyles.Bold;
+                selectionPromptCancelButtonText.alignment = TextAlignmentOptions.Center;
+                selectionPromptCancelButtonText.color = new Color(0.97f, 0.94f, 0.86f, 1f);
+            }
+
+            if (selectionPromptCancelButtonText == null && selectionPromptCancelButton != null)
+            {
+                selectionPromptCancelButtonText = selectionPromptCancelButton.GetComponentInChildren<TextMeshProUGUI>(true);
+            }
+
+            if (SelectionPromptText != null)
+            {
+                SelectionPromptText.margin = new Vector4(18f, 0f, 200f, 0f);
+            }
+        }
+
+        private void ConfigureSelectionPromptCancelButton(bool visible, string cancelButtonLabel, Action onCancel)
+        {
+            if (selectionPromptCancelButton == null)
+            {
+                return;
+            }
+
+            selectionPromptCancelButton.onClick.RemoveAllListeners();
+            selectionPromptCancelButton.gameObject.SetActive(visible);
+            selectionPromptCancelButton.interactable = visible;
+
+            if (selectionPromptCancelButtonText != null)
+            {
+                selectionPromptCancelButtonText.text = cancelButtonLabel;
+            }
+
+            if (visible && onCancel != null)
+            {
+                selectionPromptCancelButton.onClick.AddListener(() => onCancel());
+            }
+        }
 
         public void SetActiveHumanPlayer(Player player)
         {

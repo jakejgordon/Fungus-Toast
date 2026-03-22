@@ -205,6 +205,79 @@ namespace FungusToast.Core.Players
 
         public event Action<Player>? MutationsChanged; // Unified event for any mutation level change (manual, surge, auto, regression)
 
+        private bool TryActivateSurgeInternal(
+            Mutation mutation,
+            ISimulationObserver simulationObserver,
+            int currentRound,
+            int? reservedActivationCost)
+        {
+            if (mutation == null) return false;
+
+            if (!PlayerMutations.ContainsKey(mutation.Id))
+                PlayerMutations[mutation.Id] = new PlayerMutation(PlayerId, mutation.Id, mutation);
+            var pm = PlayerMutations[mutation.Id];
+
+            bool prereqsMet = true;
+            foreach (var pre in mutation.Prerequisites)
+                if (GetMutationLevel(pre.MutationId) < pre.RequiredLevel)
+                    prereqsMet = false;
+
+            if (mutation.Prerequisites.Count > 0 && prereqsMet && pm.PrereqMetRound == null)
+                pm.PrereqMetRound = currentRound;
+
+            if (IsSurgeActive(mutation.Id)) return false;
+
+            int activationCost = reservedActivationCost ?? GetMutationPointCost(mutation);
+
+            if ((!reservedActivationCost.HasValue && MutationPoints < activationCost) || pm.CurrentLevel >= mutation.MaxLevel)
+                return false;
+
+            if (mutation.Prerequisites.Count > 0 && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
+                return false;
+
+            int oldLevel = pm.CurrentLevel;
+            int mutationPointsBefore = reservedActivationCost.HasValue ? MutationPoints + activationCost : MutationPoints;
+
+            if (!reservedActivationCost.HasValue)
+                MutationPoints -= activationCost;
+
+            pm.Upgrade(currentRound);
+            int newLevel = pm.CurrentLevel;
+            int duration = mutation.SurgeDuration;
+            TryApplyApicalYield(mutation, oldLevel, newLevel, simulationObserver);
+
+            ActiveSurges[mutation.Id] = new ActiveSurgeInfo(mutation.Id, newLevel, duration);
+
+            foreach (var dependent in FungusToast.Core.Mutations.MutationRegistry.All.Values)
+            {
+                if (dependent.Prerequisites.Any(p => p.MutationId == mutation.Id))
+                {
+                    if (!PlayerMutations.ContainsKey(dependent.Id))
+                        PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
+                    var depPlayerMutation = PlayerMutations[dependent.Id];
+                    bool allMet = dependent.Prerequisites.All(p => GetMutationLevel(p.MutationId) >= p.RequiredLevel);
+                    if (dependent.Prerequisites.Count > 0 && allMet && depPlayerMutation.PrereqMetRound == null)
+                        depPlayerMutation.PrereqMetRound = currentRound;
+                }
+            }
+
+            simulationObserver.RecordMutationPointsSpent(PlayerId, mutation.Tier, activationCost);
+            simulationObserver.RecordMutationUpgradeEvent(
+                playerId: PlayerId,
+                mutationId: mutation.Id,
+                mutationName: mutation.Name,
+                mutationTier: mutation.Tier,
+                oldLevel: oldLevel,
+                newLevel: newLevel,
+                round: currentRound,
+                mutationPointsBefore: mutationPointsBefore,
+                mutationPointsAfter: MutationPoints,
+                pointsSpent: activationCost,
+                upgradeSource: "surge");
+            MutationsChanged?.Invoke(this);
+            return true;
+        }
+
         public bool TryUpgradeMutation(Mutation mutation, ISimulationObserver simulationObserver, int currentRound)
         {
             if (mutation == null) return false;
@@ -225,59 +298,7 @@ namespace FungusToast.Core.Players
 
             if (mutation.IsSurge)
             {
-                // Surge logic
-                if (IsSurgeActive(mutation.Id)) return false; // Can't upgrade/activate if active
-
-                int activationCost = GetMutationPointCost(mutation);
-
-                if (MutationPoints < activationCost || pm.CurrentLevel >= mutation.MaxLevel)
-                    return false;
-
-                // Enforce one-round delay after prereqs met (only for non-root mutations)
-                if (mutation.Prerequisites.Count > 0 && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
-                    return false;
-
-                // Deduct points and upgrade
-                int oldLevel = pm.CurrentLevel;
-                int mutationPointsBefore = MutationPoints;
-                MutationPoints -= activationCost;
-                pm.Upgrade(currentRound);
-                int newLevel = pm.CurrentLevel;
-                int duration = mutation.SurgeDuration;
-                TryApplyApicalYield(mutation, oldLevel, newLevel, simulationObserver);
-
-                // Activate the surge
-                ActiveSurges[mutation.Id] = new ActiveSurgeInfo(mutation.Id, newLevel, duration);
-
-                // --- Set PrereqMetRound on dependents ---
-                foreach (var dependent in FungusToast.Core.Mutations.MutationRegistry.All.Values)
-                {
-                    if (dependent.Prerequisites.Any(p => p.MutationId == mutation.Id))
-                    {
-                        if (!PlayerMutations.ContainsKey(dependent.Id))
-                            PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
-                        var depPlayerMutation = PlayerMutations[dependent.Id];
-                        bool allMet = dependent.Prerequisites.All(p => GetMutationLevel(p.MutationId) >= p.RequiredLevel);
-                        if (dependent.Prerequisites.Count > 0 && allMet && depPlayerMutation.PrereqMetRound == null)
-                            depPlayerMutation.PrereqMetRound = currentRound;
-                    }
-                }
-
-                simulationObserver.RecordMutationPointsSpent(PlayerId, mutation.Tier, activationCost);
-                simulationObserver.RecordMutationUpgradeEvent(
-                    playerId: PlayerId,
-                    mutationId: mutation.Id,
-                    mutationName: mutation.Name,
-                    mutationTier: mutation.Tier,
-                    oldLevel: oldLevel,
-                    newLevel: newLevel,
-                    round: currentRound,
-                    mutationPointsBefore: mutationPointsBefore,
-                    mutationPointsAfter: MutationPoints,
-                    pointsSpent: activationCost,
-                    upgradeSource: "surge");
-                MutationsChanged?.Invoke(this); // notify once per successful upgrade
-                return true;
+                return TryActivateSurgeInternal(mutation, simulationObserver, currentRound, reservedActivationCost: null);
             }
             else
             {
@@ -327,6 +348,62 @@ namespace FungusToast.Core.Players
                 }
                 return false;
             }
+        }
+
+        public bool TryActivateTargetedSurge(
+            Mutation mutation,
+            GameBoard board,
+            int targetTileId,
+            ISimulationObserver simulationObserver,
+            int currentRound)
+        {
+            if (mutation == null || board == null)
+            {
+                return false;
+            }
+
+            if (mutation.Id != MutationIds.ChemotacticBeacon)
+            {
+                return TryUpgradeMutation(mutation, simulationObserver, currentRound);
+            }
+
+            if (!board.IsTileOpenForChemobeacon(targetTileId))
+            {
+                return false;
+            }
+
+            if (!TryUpgradeMutation(mutation, simulationObserver, currentRound))
+            {
+                return false;
+            }
+
+            return board.TryPlaceChemobeacon(PlayerId, targetTileId, mutation.Id, mutation.SurgeDuration);
+        }
+
+        public bool TryActivateReservedTargetedSurge(
+            Mutation mutation,
+            GameBoard board,
+            int targetTileId,
+            ISimulationObserver simulationObserver,
+            int currentRound,
+            int reservedActivationCost)
+        {
+            if (mutation == null || board == null || mutation.Id != MutationIds.ChemotacticBeacon)
+            {
+                return false;
+            }
+
+            if (!board.IsTileOpenForChemobeacon(targetTileId))
+            {
+                return false;
+            }
+
+            if (!TryActivateSurgeInternal(mutation, simulationObserver, currentRound, reservedActivationCost))
+            {
+                return false;
+            }
+
+            return board.TryPlaceChemobeacon(PlayerId, targetTileId, mutation.Id, mutation.SurgeDuration);
         }
 
         public bool CanUpgrade(Mutation mut, int currentRound)

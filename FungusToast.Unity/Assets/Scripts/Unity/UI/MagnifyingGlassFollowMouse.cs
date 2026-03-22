@@ -263,7 +263,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         if (enableDebugLogs)
             Debug.Log($"[Tooltip Debug] Cell at {cellPos} (tileId: {tileId}): {(cell != null ? $"Found {(cell.IsAlive ? "Alive" : cell.IsDead ? "Dead" : "Toxin")} cell" : "null (empty)")}");
 
-        if (cell == null && tile?.HasNutrientPatch != true)
+        if (cell == null && tile?.HasNutrientPatch != true && !board.IsChemobeaconTile(tileId))
         {
             if (enableDebugLogs)
                 Debug.Log("[Tooltip Debug] Cell is null - no tooltip will be shown");

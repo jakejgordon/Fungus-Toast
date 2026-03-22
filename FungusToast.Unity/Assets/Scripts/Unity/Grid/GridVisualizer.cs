@@ -58,6 +58,9 @@ namespace FungusToast.Unity.Grid
         private readonly Dictionary<NutrientPatchType, Tile> generatedNutrientTiles = new();
         private readonly Dictionary<NutrientPatchType, Sprite> generatedNutrientSprites = new();
         private readonly Dictionary<NutrientPatchType, Texture2D> generatedNutrientTextures = new();
+        private Tile generatedChemobeaconEmblemTile;
+        private Sprite generatedChemobeaconEmblemSprite;
+        private Texture2D generatedChemobeaconEmblemTexture;
 
         private GameBoard board;
         private readonly List<int> playerMoldAssignments = new();
@@ -83,11 +86,13 @@ namespace FungusToast.Unity.Grid
         private readonly HashSet<int> nutrientPulseTileIds = new();
         private readonly Dictionary<int, ExpiringToxinVisualSnapshot> pendingToxinExpirySnapshots = new();
         private readonly Dictionary<int, Coroutine> toxinExpiryCoroutines = new();
+        private readonly Dictionary<int, Coroutine> chemobeaconExpiryCoroutines = new();
         private readonly HashSet<int> deferredResistanceOverlayTileIds = new();
         private readonly HashSet<int> preAnimationHiddenPreviewTileIds = new();
         private static readonly Color NutrientPatchColor = new(1f, 1f, 1f, 0.92f);
         private static readonly Color AdaptogenPatchTextColor = new(0.8f, 0.97f, 1f, 1f);
         private static readonly Color SporemealPatchTextColor = new(0.92f, 1f, 0.8f, 1f);
+        private static readonly Color ChemobeaconColor = new(0.92f, 0.86f, 0.42f, 0.95f);
 
         private sealed class ExpiringToxinVisualSnapshot
         {
@@ -148,11 +153,13 @@ namespace FungusToast.Unity.Grid
             DestroyLingeringNutrientToasts();
             DestroyGeneratedCrustAssets();
             DestroyGeneratedNutrientAssets();
+            DestroyGeneratedChemobeaconAssets();
         }
 
         private void LateUpdate()
         {
             UpdateNutrientPulseVisuals();
+            UpdateChemobeaconPulseVisuals();
         }
 
         public void Initialize(GameBoard board)
@@ -172,6 +179,8 @@ namespace FungusToast.Unity.Grid
             if (this.board != null)
             {
                 this.board.ToxinExpired += HandleToxinExpired;
+                this.board.ChemobeaconPlaced += HandleChemobeaconPlaced;
+                this.board.ChemobeaconExpired += HandleChemobeaconExpired;
             }
         }
 
@@ -189,6 +198,7 @@ namespace FungusToast.Unity.Grid
 
             ClearPendingToxinExpirySnapshots();
             StopAndClearToxinExpiryAnimations();
+            StopAndClearChemobeaconExpiryAnimations();
 
             newlyGrownTileIds.Clear();
             newlyGrownAnimationPlayedTileIds.Clear();
@@ -198,6 +208,7 @@ namespace FungusToast.Unity.Grid
             toxinDropTileIds.Clear();
             toxinDropCoroutines.Clear();
             nutrientPulseTileIds.Clear();
+            chemobeaconExpiryCoroutines.Clear();
             deferredResistanceOverlayTileIds.Clear();
             preAnimationHiddenPreviewTileIds.Clear();
 
@@ -575,7 +586,32 @@ namespace FungusToast.Unity.Grid
             if (board != null)
             {
                 board.ToxinExpired -= HandleToxinExpired;
+                board.ChemobeaconPlaced -= HandleChemobeaconPlaced;
+                board.ChemobeaconExpired -= HandleChemobeaconExpired;
             }
+        }
+
+        private void HandleChemobeaconPlaced(int playerId, int tileId)
+        {
+            if (board == null || overlayTilemap == null || moldTilemap == null)
+            {
+                return;
+            }
+
+            CancelChemobeaconExpiryAnimation(tileId);
+            RenderChemobeaconOverlay(tileId, GetPositionForTileId(tileId));
+        }
+
+        private void HandleChemobeaconExpired(int playerId, int tileId)
+        {
+            ClearChemobeaconOverlay(tileId);
+
+            if (chemobeaconExpiryCoroutines.ContainsKey(tileId))
+            {
+                CancelChemobeaconExpiryAnimation(tileId);
+            }
+
+            chemobeaconExpiryCoroutines[tileId] = StartCoroutine(PlayChemobeaconEvaporationAnimation(playerId, tileId));
         }
 
         private void HandleToxinExpired(object sender, ToxinExpiredEventArgs e)
@@ -668,6 +704,69 @@ namespace FungusToast.Unity.Grid
             }
 
             toxinExpiryCoroutines.Clear();
+        }
+
+        private void StopAndClearChemobeaconExpiryAnimations()
+        {
+            foreach (int tileId in chemobeaconExpiryCoroutines.Keys.ToList())
+            {
+                CancelChemobeaconExpiryAnimation(tileId);
+            }
+
+            chemobeaconExpiryCoroutines.Clear();
+        }
+
+        private void CancelChemobeaconExpiryAnimation(int tileId)
+        {
+            if (chemobeaconExpiryCoroutines.TryGetValue(tileId, out var coroutine) && coroutine != null)
+            {
+                StopCoroutine(coroutine);
+                chemobeaconExpiryCoroutines.Remove(tileId);
+                EndAnimation();
+            }
+
+            ClearChemobeaconTransientOverlay(tileId);
+        }
+
+        private IEnumerator PlayChemobeaconEvaporationAnimation(int playerId, int tileId)
+        {
+            var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
+            TileBase chemobeaconTile = GetTileForPlayer(playerId);
+            if (targetTilemap == null || chemobeaconTile == null || board == null)
+            {
+                chemobeaconExpiryCoroutines.Remove(tileId);
+                yield break;
+            }
+
+            Vector3Int pos = GetPositionForTileId(tileId);
+            targetTilemap.SetTile(pos, chemobeaconTile);
+            targetTilemap.SetTileFlags(pos, TileFlags.None);
+
+            float duration = UIEffectConstants.ChemobeaconEvaporationDurationSeconds;
+            BeginAnimation();
+            try
+            {
+                float elapsed = 0f;
+                while (elapsed < duration)
+                {
+                    elapsed += Time.deltaTime;
+                    float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
+                    float eased = 1f - Mathf.Pow(1f - t, 3f);
+                    float scale = Mathf.Lerp(UIEffectConstants.ChemobeaconIdleScale, UIEffectConstants.ChemobeaconEvaporationFinalScale, eased);
+                    float lift = Mathf.Lerp(0f, UIEffectConstants.ChemobeaconEvaporationLiftWorld, eased);
+                    Color color = Color.Lerp(Color.white, new Color(1f, 1f, 1f, 0f), eased);
+
+                    targetTilemap.SetColor(pos, color);
+                    targetTilemap.SetTransformMatrix(pos, Matrix4x4.TRS(new Vector3(0f, lift, 0f), Quaternion.identity, new Vector3(scale, scale, 1f)));
+                    yield return null;
+                }
+            }
+            finally
+            {
+                chemobeaconExpiryCoroutines.Remove(tileId);
+                ClearChemobeaconTransientOverlay(tileId);
+                EndAnimation();
+            }
         }
 
         private void CancelToxinExpiryAnimation(int tileId)
@@ -901,6 +1000,217 @@ namespace FungusToast.Unity.Grid
             overlayTilemap.SetColor(pos, GetNutrientPulseColor(tile.TileId));
             overlayTilemap.SetTransformMatrix(pos, GetNutrientPulseMatrix(tile.TileId));
             overlayTilemap.RefreshTile(pos);
+        }
+
+        private void RenderChemobeaconOverlay(int tileId, Vector3Int pos)
+        {
+            if (board == null || overlayTilemap == null)
+            {
+                return;
+            }
+
+            var marker = board.GetChemobeaconAtTile(tileId);
+            TileBase chemobeaconTile = marker != null ? GetTileForPlayer(marker.PlayerId) : null;
+            if (marker == null || chemobeaconTile == null)
+            {
+                return;
+            }
+
+            EnsureGeneratedChemobeaconEmblemTile();
+
+            moldTilemap.SetTile(pos, chemobeaconTile);
+            moldTilemap.SetTileFlags(pos, TileFlags.None);
+            moldTilemap.SetColor(pos, Color.white);
+            moldTilemap.SetTransformMatrix(pos, GetChemobeaconPulseMatrix(tileId));
+            moldTilemap.RefreshTile(pos);
+
+            overlayTilemap.SetTile(pos, generatedChemobeaconEmblemTile != null ? generatedChemobeaconEmblemTile : solidHighlightTile);
+            overlayTilemap.SetTileFlags(pos, TileFlags.None);
+            overlayTilemap.SetColor(pos, Color.white);
+            overlayTilemap.SetTransformMatrix(pos, GetChemobeaconEmblemMatrix());
+            overlayTilemap.RefreshTile(pos);
+        }
+
+        private void ClearChemobeaconOverlay(int tileId)
+        {
+            if (overlayTilemap == null || moldTilemap == null)
+            {
+                return;
+            }
+
+            Vector3Int pos = GetPositionForTileId(tileId);
+            moldTilemap.SetTile(pos, null);
+            moldTilemap.SetColor(pos, Color.white);
+            moldTilemap.SetTransformMatrix(pos, IdentityMatrix);
+            overlayTilemap.SetTile(pos, null);
+            overlayTilemap.SetColor(pos, Color.white);
+            overlayTilemap.SetTransformMatrix(pos, IdentityMatrix);
+        }
+
+        private void ClearChemobeaconTransientOverlay(int tileId)
+        {
+            var targetTilemap = PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap;
+            if (targetTilemap == null)
+            {
+                return;
+            }
+
+            Vector3Int pos = GetPositionForTileId(tileId);
+            targetTilemap.SetTile(pos, null);
+            targetTilemap.SetColor(pos, Color.white);
+            targetTilemap.SetTransformMatrix(pos, IdentityMatrix);
+        }
+
+        private void UpdateChemobeaconPulseVisuals()
+        {
+            if (board == null || overlayTilemap == null || moldTilemap == null)
+            {
+                return;
+            }
+
+            foreach (var marker in board.GetActiveChemobeacons())
+            {
+                Vector3Int pos = GetPositionForTileId(marker.TileId);
+                if (!moldTilemap.HasTile(pos))
+                {
+                    continue;
+                }
+
+                moldTilemap.SetColor(pos, Color.white);
+                moldTilemap.SetTransformMatrix(pos, GetChemobeaconPulseMatrix(marker.TileId));
+                if (overlayTilemap.HasTile(pos))
+                {
+                    overlayTilemap.SetColor(pos, Color.white);
+                    overlayTilemap.SetTransformMatrix(pos, GetChemobeaconEmblemMatrix());
+                }
+            }
+        }
+
+        private Matrix4x4 GetChemobeaconPulseMatrix(int tileId)
+        {
+            float duration = Mathf.Max(0.01f, UIEffectConstants.ChemobeaconPulseDurationSeconds);
+            float cycle = Mathf.Repeat(Time.time + tileId * 0.137f, duration) / duration;
+            float wave = 0.5f + 0.5f * Mathf.Sin(cycle * Mathf.PI * 2f);
+            float scale = Mathf.Lerp(UIEffectConstants.ChemobeaconPulseMinScale, UIEffectConstants.ChemobeaconPulseMaxScale, wave);
+            return Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
+        }
+
+        private static Matrix4x4 GetChemobeaconEmblemMatrix()
+        {
+            return Matrix4x4.TRS(new Vector3(0f, 0.02f, 0f), Quaternion.identity, new Vector3(0.78f, 0.78f, 1f));
+        }
+
+        private void EnsureGeneratedChemobeaconEmblemTile()
+        {
+            if (generatedChemobeaconEmblemTile != null && generatedChemobeaconEmblemSprite != null && generatedChemobeaconEmblemTexture != null)
+            {
+                return;
+            }
+
+            const int textureSize = 48;
+            generatedChemobeaconEmblemTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+                alphaIsTransparency = true
+            };
+
+            var pixels = new Color32[textureSize * textureSize];
+            for (int py = 0; py < textureSize; py++)
+            {
+                for (int px = 0; px < textureSize; px++)
+                {
+                    pixels[(py * textureSize) + px] = EvaluateChemobeaconEmblemPixel(textureSize, px, py);
+                }
+            }
+
+            generatedChemobeaconEmblemTexture.SetPixels32(pixels);
+            generatedChemobeaconEmblemTexture.Apply(false, false);
+            generatedChemobeaconEmblemSprite = Sprite.Create(
+                generatedChemobeaconEmblemTexture,
+                new Rect(0f, 0f, textureSize, textureSize),
+                new Vector2(0.5f, 0.5f),
+                textureSize,
+                0,
+                SpriteMeshType.FullRect);
+
+            generatedChemobeaconEmblemTile = ScriptableObject.CreateInstance<Tile>();
+            generatedChemobeaconEmblemTile.sprite = generatedChemobeaconEmblemSprite;
+            generatedChemobeaconEmblemTile.color = Color.white;
+            generatedChemobeaconEmblemTile.colliderType = Tile.ColliderType.None;
+        }
+
+        private static Color32 EvaluateChemobeaconEmblemPixel(int textureSize, int px, int py)
+        {
+            float x = (((px + 0.5f) / textureSize) * 2f) - 1f;
+            float y = (((py + 0.5f) / textureSize) * 2f) - 1f;
+
+            float tower = RectMask(x, y, -0.12f, 0.12f, -0.42f, 0.34f);
+            float cap = TriangleMask(x, y, new Vector2(-0.22f, 0.2f), new Vector2(0.22f, 0.2f), new Vector2(0f, 0.52f));
+            float basePlate = RectMask(x, y, -0.3f, 0.3f, -0.58f, -0.42f);
+            float door = RectMask(x, y, -0.055f, 0.055f, -0.42f, -0.16f);
+            float lampRoom = RectMask(x, y, -0.18f, 0.18f, 0.08f, 0.2f);
+            float beamRight = TriangleMask(x, y, new Vector2(0.08f, 0.14f), new Vector2(0.78f, 0.34f), new Vector2(0.78f, -0.04f));
+            float beamLeft = TriangleMask(x, y, new Vector2(-0.08f, 0.14f), new Vector2(-0.78f, 0.34f), new Vector2(-0.78f, -0.04f));
+            float railing = RectMask(x, y, -0.24f, 0.24f, 0.02f, 0.08f);
+
+            float silhouette = Mathf.Max(basePlate, tower);
+            silhouette = Mathf.Max(silhouette, cap);
+            silhouette = Mathf.Max(silhouette, lampRoom);
+            silhouette = Mathf.Max(silhouette, beamLeft * 0.92f);
+            silhouette = Mathf.Max(silhouette, beamRight * 0.92f);
+            silhouette = Mathf.Max(silhouette, railing);
+            silhouette *= 1f - (door * 0.85f);
+
+            if (silhouette <= 0.02f)
+            {
+                return new Color32(0, 0, 0, 0);
+            }
+
+            byte alpha = (byte)Mathf.Clamp(Mathf.RoundToInt(silhouette * 255f), 0, 255);
+            return new Color32(0, 0, 0, alpha);
+        }
+
+        private static float RectMask(float x, float y, float minX, float maxX, float minY, float maxY)
+        {
+            return x >= minX && x <= maxX && y >= minY && y <= maxY ? 1f : 0f;
+        }
+
+        private static float TriangleMask(float x, float y, Vector2 a, Vector2 b, Vector2 c)
+        {
+            Vector2 p = new(x, y);
+            float d1 = Sign(p, a, b);
+            float d2 = Sign(p, b, c);
+            float d3 = Sign(p, c, a);
+            bool hasNeg = d1 < 0f || d2 < 0f || d3 < 0f;
+            bool hasPos = d1 > 0f || d2 > 0f || d3 > 0f;
+            return hasNeg && hasPos ? 0f : 1f;
+        }
+
+        private static float Sign(Vector2 p1, Vector2 p2, Vector2 p3)
+        {
+            return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+        }
+
+        private void DestroyGeneratedChemobeaconAssets()
+        {
+            if (generatedChemobeaconEmblemTile != null)
+            {
+                Destroy(generatedChemobeaconEmblemTile);
+                generatedChemobeaconEmblemTile = null;
+            }
+
+            if (generatedChemobeaconEmblemSprite != null)
+            {
+                Destroy(generatedChemobeaconEmblemSprite);
+                generatedChemobeaconEmblemSprite = null;
+            }
+
+            if (generatedChemobeaconEmblemTexture != null)
+            {
+                Destroy(generatedChemobeaconEmblemTexture);
+                generatedChemobeaconEmblemTexture = null;
+            }
         }
 
         private TileBase GetNutrientPatchTile(NutrientPatch nutrientPatch)
@@ -2065,6 +2375,7 @@ namespace FungusToast.Unity.Grid
                     toastTilemap.SetTransformMatrix(pos, GetPlayableSurfaceTileMatrix());
                     RenderFungalCellOverlay(tile, pos);
                     RenderNutrientPatchOverlay(tile, pos);
+                    RenderChemobeaconOverlay(tile.TileId, pos);
                     ApplyPreAnimationPreviewHiddenState(tile.TileId, pos);
                 }
             }

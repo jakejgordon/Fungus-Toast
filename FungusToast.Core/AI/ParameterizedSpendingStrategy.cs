@@ -282,7 +282,7 @@ namespace FungusToast.Core.AI
                     {
                         if (player.MutationPoints > 0 && player.CanUpgrade(economyMutation, board.CurrentRound))
                         {
-                            if (player.TryUpgradeMutation(economyMutation, simulationObserver, board.CurrentRound))
+                            if (MutationSpendingHelper.TryUpgradeWithTargeting(player, economyMutation, board, simulationObserver, board.CurrentRound))
                             {
                                 // Successfully upgraded an economy mutation, continue with normal logic
                                 break;
@@ -346,7 +346,7 @@ namespace FungusToast.Core.AI
 
                     while (curLvl < needed && player.MutationPoints > 0 && player.CanUpgrade(mutation, board.CurrentRound))
                     {
-                        if (player.TryUpgradeMutation(mutation, simulationObserver, board.CurrentRound))
+                        if (MutationSpendingHelper.TryUpgradeWithTargeting(player, mutation, board, simulationObserver, board.CurrentRound))
                         {
                             curLvl++;
                             upgraded = true;
@@ -373,7 +373,7 @@ namespace FungusToast.Core.AI
                            player.MutationPoints > 0 && 
                            player.CanUpgrade(targetMutation, board.CurrentRound))
                     {
-                        if (player.TryUpgradeMutation(targetMutation, simulationObserver, board.CurrentRound))
+                        if (MutationSpendingHelper.TryUpgradeWithTargeting(player, targetMutation, board, simulationObserver, board.CurrentRound))
                         {
                             upgraded = true;
                         }
@@ -498,7 +498,7 @@ namespace FungusToast.Core.AI
                     continue;
                 }
 
-                if (player.TryUpgradeMutation(surge, simulationObserver, board.CurrentRound))
+                if (MutationSpendingHelper.TryUpgradeWithTargeting(player, surge, board, simulationObserver, board.CurrentRound))
                 {
                     return true;
                 }
@@ -581,8 +581,10 @@ namespace FungusToast.Core.AI
 
                         if (player.MutationPoints >= cost)
                         {
-                            player.TryUpgradeMutation(surge, simulationObserver, board.CurrentRound);
-                            return true;
+                            if (MutationSpendingHelper.TryUpgradeWithTargeting(player, surge, board, simulationObserver, board.CurrentRound))
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -598,8 +600,10 @@ namespace FungusToast.Core.AI
 
                         if (player.MutationPoints >= cost)
                         {
-                            player.TryUpgradeMutation(surge, simulationObserver, board.CurrentRound);
-                            return true;
+                            if (MutationSpendingHelper.TryUpgradeWithTargeting(player, surge, board, simulationObserver, board.CurrentRound))
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -630,7 +634,7 @@ namespace FungusToast.Core.AI
                 var anyUpgradable = allMutations.Where(m => player.CanUpgrade(m, board.CurrentRound)).ToList();
                 if (anyUpgradable.Count == 0)
                     break;
-                player.TryUpgradeMutation(anyUpgradable[0], simulationObserver, board.CurrentRound);
+                MutationSpendingHelper.TryUpgradeWithTargeting(player, anyUpgradable[0], board, simulationObserver, board.CurrentRound);
             }
         }
 
@@ -798,11 +802,11 @@ namespace FungusToast.Core.AI
             {
                 var bestTendril = PickBestTendrilMutation(player, allCandidates.Where(IsTendril).ToList(), board);
                 if (bestTendril != null)
-                    return player.TryUpgradeMutation(bestTendril, simulationObserver, board.CurrentRound);
+                    return MutationSpendingHelper.TryUpgradeWithTargeting(player, bestTendril, board, simulationObserver, board.CurrentRound);
                 return false;
             }
 
-            return player.TryUpgradeMutation(candidate, simulationObserver, board.CurrentRound);
+            return MutationSpendingHelper.TryUpgradeWithTargeting(player, candidate, board, simulationObserver, board.CurrentRound);
         }
 
         private List<MutationCategory> GetCategories()

@@ -132,17 +132,18 @@ namespace FungusToast.Unity.UI.MutationTree
 
             upgradeButton.interactable = false;
 
-            bool success = uiManager.TryUpgradeMutation(mutation);
-
-            if (success)
+            uiManager.TryUpgradeMutation(mutation, success =>
             {
-                UpdateDisplay();
-                PlayUpgradeEffect();
-            }
-            else
-            {
-                upgradeButton.interactable = true;
-            }
+                if (success)
+                {
+                    UpdateDisplay();
+                    PlayUpgradeEffect();
+                }
+                else
+                {
+                    upgradeButton.interactable = true;
+                }
+            });
         }
 
         public void UpdateDisplay()

@@ -92,6 +92,7 @@ namespace FungusToast.Simulation.GameSimulation
                 // TICK DOWN ALL ACTIVE SURGES FOR ALL PLAYERS
                 foreach (var player in players)
                     player.TickDownActiveSurges();
+                board.SynchronizeChemobeaconsWithSurges(players);
 
                 // INCREMENT ROUND at end!
                 board.IncrementRound();

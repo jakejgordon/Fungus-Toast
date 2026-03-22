@@ -20,6 +20,8 @@ namespace FungusToast.Unity.UI
         private HashSet<int> selectedTileIds = new HashSet<int>();
         private int maxSelections = 5;
         private bool selectionActive = false;
+        private static readonly Color SelectableColorA = new(1f, 0.2f, 0.8f, 1f);
+        private static readonly Color SelectableColorB = new(1f, 0.7f, 1f, 1f);
 
         private void Awake()
         {
@@ -56,11 +58,7 @@ namespace FungusToast.Unity.UI
             selectableTileIds = new HashSet<int>(validTiles.Select(t => t.TileId));
 
             // Highlight valid tiles with pinkish color
-            gridVisualizer.HighlightTiles(
-                selectableTileIds,
-                new Color(1f, 0.2f, 0.8f, 1f),   // Pink pulse
-                new Color(1f, 0.7f, 1f, 1f)      // Pinkish white
-            );
+            ReapplySelectionHighlights();
 
             // Show the initial prompt
             UpdateSelectionPrompt();
@@ -112,11 +110,7 @@ namespace FungusToast.Unity.UI
 
                 // Keep the pulsing highlights for all selectable tiles
                 // This maintains the dramatic black-to-pink pulse for all valid targets
-                gridVisualizer.HighlightTiles(
-                    selectableTileIds,
-                    new Color(1f, 0.2f, 0.8f, 1f),   // Pink pulse
-                    new Color(1f, 0.7f, 1f, 1f)      // Pinkish white
-                );
+                ReapplySelectionHighlights();
 
                 UpdateSelectionPrompt();
 
@@ -169,6 +163,17 @@ namespace FungusToast.Unity.UI
         public bool IsSelected(int tileId)
         {
             return selectionActive && selectedTileIds.Contains(tileId);
+        }
+
+        public void ReapplySelectionHighlights()
+        {
+            if (!selectionActive || selectableTileIds.Count == 0)
+            {
+                return;
+            }
+
+            gridVisualizer.HighlightTiles(selectableTileIds, SelectableColorA, SelectableColorB);
+            gridVisualizer.ShowSelectedTiles(selectedTileIds, Color.black);
         }
 
         public bool HasActiveSelection => selectionActive;

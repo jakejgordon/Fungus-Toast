@@ -55,6 +55,26 @@ namespace FungusToast.Core.Mutations.Factories
             new MutationPrerequisite(MutationIds.MycelialBloom, 7)
             );
 
+            helper.MakeChild(new Mutation(
+                id: MutationIds.ChemotacticBeacon,
+                name: "Chemotactic Beacon",
+                description:
+                    $"On activation, mark one empty non-nutrient tile as a Chemobeacon for {GameBalance.ChemotacticBeaconSurgeDuration} rounds. Growth moving closer gains {helper.FormatPercent(GameBalance.ChemotacticBeaconTowardGrowthBonus)}; other directions lose {helper.FormatPercent(GameBalance.ChemotacticBeaconTowardGrowthBonus)} minus {helper.FormatPercent(GameBalance.ChemotacticBeaconPenaltyReductionPerLevel)}/level.",
+                flavorText: "A volatile lure condenses over bare toast, exhaling a phantom food trail that bends the colony's advance while the beacon itself slowly evaporates.",
+                type: MutationType.ChemotacticBeacon,
+                effectPerLevel: GameBalance.ChemotacticBeaconPenaltyReductionPerLevel,
+                pointsPerUpgrade: GameBalance.ChemotacticBeaconPointsPerActivation,
+                maxLevel: GameBalance.ChemotacticBeaconMaxLevel,
+                category: MutationCategory.MycelialSurges,
+                tier: MutationTier.Tier2,
+                isSurge: true,
+                surgeDuration: GameBalance.ChemotacticBeaconSurgeDuration,
+                pointsPerActivation: GameBalance.ChemotacticBeaconPointsPerActivation,
+                pointIncreasePerLevel: GameBalance.ChemotacticBeaconPointIncreasePerLevel
+            ),
+            new MutationPrerequisite(MutationIds.MycelialBloom, 7)
+            );
+
             // Tier-3
             helper.MakeChild(new Mutation(
                 id: MutationIds.MimeticResilience,

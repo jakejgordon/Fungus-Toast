@@ -21,6 +21,8 @@ namespace FungusToast.Unity.UI
         private HashSet<int> selectableTileIds = new HashSet<int>();
         private bool selectionActive = false;
         private Action<int> onTileSelected; // For generic board tile selection
+        private Color highlightColorA = new Color(0.2f, 0.8f, 1f, 1f);
+        private Color highlightColorB = new Color(0.7f, 1f, 1f, 1f);
 
         private void Awake()
         {
@@ -69,22 +71,22 @@ namespace FungusToast.Unity.UI
                 .ToList();
 
             selectableTileIds = new HashSet<int>(validCells.Select(c => c.TileId));
+            highlightColorA = new Color(1f, 0.2f, 0.8f, 1f);
+            highlightColorB = new Color(1f, 0.7f, 1f, 1f);
 
             if (hoverHighlighter != null)
                 hoverHighlighter.SetSelectableTiles(selectableTileIds);
 
-            gridVisualizer.HighlightTiles(
-                selectableTileIds,
-                new Color(1f, 0.2f, 0.8f, 1f),
-                new Color(1f, 0.7f, 1f, 1f)
-            );
+            ReapplySelectionHighlights();
         }
 
         public void PromptSelectBoardTile(
             Func<BoardTile, bool> isValidTile,
             Action<BoardTile> onSelected,
             Action onCancel = null,
-            string promptMessage = null)
+            string promptMessage = null,
+            bool showCancelButton = false,
+            string cancelButtonLabel = "Cancel")
         {
             var board = GameManager.Instance?.Board;
             if (board == null)
@@ -97,7 +99,7 @@ namespace FungusToast.Unity.UI
             selectionActive = true;
 
             if (!string.IsNullOrEmpty(promptMessage))
-                GameManager.Instance.ShowSelectionPrompt(promptMessage);
+                GameManager.Instance.ShowSelectionPrompt(promptMessage, showCancelButton, cancelButtonLabel, CancelSelection);
 
             Action<int> onTileSelected = (tileId) =>
             {
@@ -115,15 +117,13 @@ namespace FungusToast.Unity.UI
                 .Where(isValidTile)
                 .ToList();
             selectableTileIds = new HashSet<int>(validTiles.Select(t => t.TileId));
+            highlightColorA = new Color(0.2f, 0.8f, 1f, 1f);
+            highlightColorB = new Color(0.7f, 1f, 1f, 1f);
 
             if (hoverHighlighter != null)
                 hoverHighlighter.SetSelectableTiles(selectableTileIds);
 
-            gridVisualizer.HighlightTiles(
-                selectableTileIds,
-                new Color(0.2f, 0.8f, 1f, 1f),
-                new Color(0.7f, 1f, 1f, 1f)
-            );
+            ReapplySelectionHighlights();
 
             onCellSelected = null;
             this.onTileSelected = onTileSelected;
@@ -152,15 +152,13 @@ namespace FungusToast.Unity.UI
                 .Where(isValidTile)
                 .ToList();
             selectableTileIds = new HashSet<int>(validTiles.Select(t => t.TileId));
+            highlightColorA = new Color(0.2f, 0.8f, 1f, 1f);
+            highlightColorB = new Color(0.7f, 1f, 1f, 1f);
 
             if (hoverHighlighter != null)
                 hoverHighlighter.SetSelectableTiles(selectableTileIds);
 
-            gridVisualizer.HighlightTiles(
-                selectableTileIds,
-                new Color(0.2f, 0.8f, 1f, 1f),
-                new Color(0.7f, 1f, 1f, 1f)
-            );
+            ReapplySelectionHighlights();
 
             var selectedTileIds = new HashSet<int>();
             int selectedCount = 0;
@@ -247,6 +245,16 @@ namespace FungusToast.Unity.UI
         public bool IsSelectable(int tileId)
         {
             return selectionActive && selectableTileIds.Contains(tileId);
+        }
+
+        public void ReapplySelectionHighlights()
+        {
+            if (!selectionActive || selectableTileIds.Count == 0)
+            {
+                return;
+            }
+
+            gridVisualizer.HighlightTiles(selectableTileIds, highlightColorA, highlightColorB);
         }
 
         public bool HasActiveSelection => selectionActive;

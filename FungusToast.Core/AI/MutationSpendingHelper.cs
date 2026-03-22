@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core.Board;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
@@ -11,19 +13,34 @@ namespace FungusToast.Core.AI
     {
         private static readonly Random rng = new();
 
-        public static bool TrySpendRandomly(Player player, List<Mutation> allMutations, ISimulationObserver simulationObserver, int currentRound)
+        public static bool TrySpendRandomly(Player player, List<Mutation> allMutations, GameBoard board, ISimulationObserver simulationObserver, int currentRound)
         {
             var eligible = allMutations
                 .Where(m => player.CanUpgrade(m, currentRound))
                 .OrderBy(_ => rng.NextDouble())
                 .ToList();
 
-            if (eligible.Count == 0)
-                return false;
+            foreach (var selected in eligible)
+            {
+                if (TryUpgradeWithTargeting(player, selected, board, simulationObserver, currentRound))
+                {
+                    return true;
+                }
+            }
 
-            var selected = eligible[0];
-            var success = player.TryUpgradeMutation(selected, simulationObserver, currentRound);
-            return success;
+            return false;
+        }
+
+        public static bool TryUpgradeWithTargeting(Player player, Mutation mutation, GameBoard board, ISimulationObserver simulationObserver, int currentRound)
+        {
+            if (mutation.Id == MutationIds.ChemotacticBeacon)
+            {
+                int? targetTileId = ChemotacticBeaconHelper.TrySelectAITargetTile(player, board);
+                return targetTileId.HasValue
+                    && player.TryActivateTargetedSurge(mutation, board, targetTileId.Value, simulationObserver, currentRound);
+            }
+
+            return player.TryUpgradeMutation(mutation, simulationObserver, currentRound);
         }
     }
 }

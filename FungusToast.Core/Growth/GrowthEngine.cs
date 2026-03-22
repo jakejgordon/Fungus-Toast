@@ -135,13 +135,15 @@ namespace FungusToast.Core.Growth
             float edgeMultiplier = GetEdgeGrowthMultiplier(owner, sourceTile, board);
             foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
             {
-                if (!tile.IsOccupied && tile.TileId != sourceTile.TileId)
+                if (!tile.IsOccupied && !board.IsTileBlockedForOccupation(tile.TileId) && tile.TileId != sourceTile.TileId)
                 {
-                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier, null, surgeBonus));
+                    float chance = ChemotacticBeaconHelper.ApplyDirectionalBias(board, owner, sourceTile, tile, baseChance * edgeMultiplier);
+                    targets.Add(new GrowthTarget(tile, chance, null, surgeBonus));
                 }
                 else if (hasMaxCreepingMold && tile.FungalCell != null && tile.FungalCell.IsToxin)
                 {
-                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier, null, surgeBonus));
+                    float chance = ChemotacticBeaconHelper.ApplyDirectionalBias(board, owner, sourceTile, tile, baseChance * edgeMultiplier);
+                    targets.Add(new GrowthTarget(tile, chance, null, surgeBonus));
                 }
             }
             var diagonalDirs = new (int dx, int dy, DiagonalDirection dir, int mutationId)[]
@@ -162,8 +164,11 @@ namespace FungusToast.Core.Growth
                 int nx = sourceTile.X + dx;
                 int ny = sourceTile.Y + dy;
                 var maybeTile = board.GetTile(nx, ny);
-                if (maybeTile is { IsOccupied: false, TileId: var id } && id != sourceTile.TileId)
-                    targets.Add(new GrowthTarget(maybeTile, chance, dir, 0f));
+                if (maybeTile is { IsOccupied: false, TileId: var id } && !board.IsTileBlockedForOccupation(id) && id != sourceTile.TileId)
+                {
+                    float adjustedChance = ChemotacticBeaconHelper.ApplyDirectionalBias(board, owner, sourceTile, maybeTile, chance);
+                    targets.Add(new GrowthTarget(maybeTile, adjustedChance, dir, 0f));
+                }
             }
             return targets;
         }
@@ -176,7 +181,7 @@ namespace FungusToast.Core.Growth
             Random rng,
             ISimulationObserver observer)
         {
-            if (target.Tile.IsOccupied) return false;
+            if (target.Tile.IsOccupied || board.IsTileBlockedForOccupation(target.Tile.TileId)) return false;
             double roll = rng.NextDouble();
             var (edgeMultiplier, baseChance) = GetPerimeterProliferatorContext(board, owner, sourceTileId, target);
             GrowthSource growthSource = target.DiagonalDirection.HasValue
@@ -225,7 +230,7 @@ namespace FungusToast.Core.Growth
         private static bool TryGrowWithCorrectSource(GameBoard board, int playerId, int sourceTileId, int targetTileId, GrowthSource growthSource)
         {
             var targetTile = board.GetTileById(targetTileId);
-            if (targetTile == null || targetTile.IsOccupied || targetTile.IsResistant)
+            if (targetTile == null || targetTile.IsOccupied || targetTile.IsResistant || board.IsTileBlockedForOccupation(targetTileId))
                 return false;
 
             // Create new cell but DO NOT place directly on the tile here.

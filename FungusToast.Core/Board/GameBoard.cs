@@ -15,6 +15,27 @@ namespace FungusToast.Core.Board
     // Game board root – maintains authoritative mapping of tileId -> FungalCell
     public partial class GameBoard
     {
+        public sealed class ChemobeaconMarker
+        {
+            public ChemobeaconMarker(int playerId, int mutationId, int tileId, int turnsRemaining)
+            {
+                PlayerId = playerId;
+                MutationId = mutationId;
+                TileId = tileId;
+                TurnsRemaining = turnsRemaining;
+            }
+
+            public int PlayerId { get; }
+            public int MutationId { get; }
+            public int TileId { get; }
+            public int TurnsRemaining { get; private set; }
+
+            internal void SetTurnsRemaining(int turnsRemaining)
+            {
+                TurnsRemaining = Math.Max(0, turnsRemaining);
+            }
+        }
+
         public int Width { get; }
         public int Height { get; }
         public BoardTile[,] Grid { get; }
@@ -22,6 +43,7 @@ namespace FungusToast.Core.Board
 
         // Occupancy index (authoritative for all occupied tiles)
         private readonly Dictionary<int, FungalCell> tileIdToCell = new();
+        private readonly Dictionary<int, ChemobeaconMarker> chemobeaconsByPlayerId = new();
 
         public int CurrentRound { get; private set; } = 1;
         public int CurrentGrowthCycle { get; private set; } = 0;
@@ -62,6 +84,7 @@ namespace FungusToast.Core.Board
         public delegate void ResistanceAppliedBatchEventHandler(int playerId, GrowthSource source, IReadOnlyList<int> tileIds);
         public delegate void RegenerativeHyphaeReclaimedEventHandler(int playerId, int tileId);
         public delegate void PostDecayPhaseEventHandler(); // NEW
+        public delegate void ChemobeaconMarkerEventHandler(int playerId, int tileId);
         #endregion
 
         #region Events
@@ -95,6 +118,8 @@ namespace FungusToast.Core.Board
         public event ResistanceAppliedBatchEventHandler? ResistanceAppliedBatch;
         public event RegenerativeHyphaeReclaimedEventHandler? RegenerativeHyphaeReclaimed;
         public event PostDecayPhaseEventHandler? PostDecayPhase; // NEW
+        public event ChemobeaconMarkerEventHandler? ChemobeaconPlaced;
+        public event ChemobeaconMarkerEventHandler? ChemobeaconExpired;
         public event EventHandler<SpecialBoardEventArgs>? SpecialBoardEventTriggered;
         // Growth attempt lifecycle events
         public event EventHandler<GrowthAttemptEventArgs>? BeforeGrowthAttempt;
@@ -137,6 +162,8 @@ namespace FungusToast.Core.Board
         protected virtual void OnBeforeGrowthAttempt(GrowthAttemptEventArgs e) => BeforeGrowthAttempt?.Invoke(this, e);
         protected virtual void OnAfterGrowthAttempt(GrowthAttemptEventArgs e) => AfterGrowthAttempt?.Invoke(this, e);
         public virtual void OnResistanceAppliedBatch(int playerId, GrowthSource source, List<int> tileIds) => ResistanceAppliedBatch?.Invoke(playerId, source, tileIds);
+        protected virtual void OnChemobeaconPlaced(int playerId, int tileId) => ChemobeaconPlaced?.Invoke(playerId, tileId);
+        protected virtual void OnChemobeaconExpired(int playerId, int tileId) => ChemobeaconExpired?.Invoke(playerId, tileId);
         #endregion
 
         #region Construction
@@ -289,6 +316,66 @@ namespace FungusToast.Core.Board
         public List<int> GetAllTileIds() => tileIdToCell.Keys.ToList();
         public float GetOccupiedTileRatio() { int occupied = ComputeOccupiedTileCount(); return occupied == 0 ? 0f : (float)occupied / TotalTiles; }
         public bool ShouldTriggerEndgame() => GetOccupiedTileRatio() >= GameBalance.GameEndTileOccupancyThreshold;
+        public IReadOnlyCollection<ChemobeaconMarker> GetActiveChemobeacons() => chemobeaconsByPlayerId.Values.ToList();
+        public ChemobeaconMarker? GetChemobeacon(int playerId)
+            => chemobeaconsByPlayerId.TryGetValue(playerId, out var marker) ? marker : null;
+        public ChemobeaconMarker? GetChemobeaconAtTile(int tileId)
+            => chemobeaconsByPlayerId.Values.FirstOrDefault(marker => marker.TileId == tileId);
+        public bool HasChemobeacon(int playerId) => chemobeaconsByPlayerId.ContainsKey(playerId);
+        public bool IsChemobeaconTile(int tileId) => chemobeaconsByPlayerId.Values.Any(marker => marker.TileId == tileId);
+        public bool IsTileBlockedForOccupation(int tileId) => IsChemobeaconTile(tileId);
+        public bool IsTileOpenForChemobeacon(int tileId)
+        {
+            var tile = GetTileById(tileId);
+            return tile != null && !tile.IsOccupied && !tile.HasNutrientPatch && !IsTileBlockedForOccupation(tileId);
+        }
+
+        public bool TryPlaceChemobeacon(int playerId, int tileId, int mutationId, int turnsRemaining)
+        {
+            if (HasChemobeacon(playerId) || !IsTileOpenForChemobeacon(tileId))
+            {
+                return false;
+            }
+
+            chemobeaconsByPlayerId[playerId] = new ChemobeaconMarker(playerId, mutationId, tileId, turnsRemaining);
+            OnChemobeaconPlaced(playerId, tileId);
+            return true;
+        }
+
+        public void SynchronizeChemobeaconsWithSurges(IEnumerable<Player> players)
+        {
+            if (players == null || chemobeaconsByPlayerId.Count == 0)
+            {
+                return;
+            }
+
+            var playersById = players.ToDictionary(player => player.PlayerId);
+            var expiredPlayerIds = new List<int>();
+
+            foreach (var marker in chemobeaconsByPlayerId.Values)
+            {
+                if (!playersById.TryGetValue(marker.PlayerId, out var player)
+                    || !player.IsSurgeActive(MutationIds.ChemotacticBeacon))
+                {
+                    expiredPlayerIds.Add(marker.PlayerId);
+                    continue;
+                }
+
+                marker.SetTurnsRemaining(player.GetSurgeTurnsRemaining(MutationIds.ChemotacticBeacon));
+            }
+
+            foreach (int playerId in expiredPlayerIds)
+            {
+                if (!chemobeaconsByPlayerId.TryGetValue(playerId, out var marker))
+                {
+                    continue;
+                }
+
+                chemobeaconsByPlayerId.Remove(playerId);
+                OnChemobeaconExpired(marker.PlayerId, marker.TileId);
+            }
+        }
+
         public IEnumerable<FungalCell> AllLivingFungalCells()
         {
             var snapshot = tileIdToCell.Values.ToList();
@@ -353,7 +440,7 @@ namespace FungusToast.Core.Board
             }
 
             var tile = GetTileById(tileId);
-            if (tile == null || tile.IsOccupied || tile.HasNutrientPatch)
+            if (tile == null || tile.IsOccupied || tile.HasNutrientPatch || IsTileBlockedForOccupation(tileId))
             {
                 return false;
             }
@@ -376,7 +463,7 @@ namespace FungusToast.Core.Board
 
             var currentTile = GetTileById(currentTileId);
             var targetTile = GetTileById(targetTileId);
-            if (currentTile == null || targetTile == null || targetTile.IsOccupied)
+            if (currentTile == null || targetTile == null || targetTile.IsOccupied || IsTileBlockedForOccupation(targetTileId))
             {
                 return false;
             }
@@ -406,7 +493,7 @@ namespace FungusToast.Core.Board
         public bool SpawnSporeForPlayer(Player player, int tileId, GrowthSource source)
         {
             var tile = GetTileById(tileId);
-            if (tile == null || tile.IsOccupiedForSporePlacement) return false;
+            if (tile == null || tile.IsOccupiedForSporePlacement || IsTileBlockedForOccupation(tileId)) return false;
             var cell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: tileId, source: source, lastOwnerPlayerId: null);
             cell.MarkAsNewlyGrown();
             cell.SetBirthRound(CurrentRound);
@@ -421,6 +508,7 @@ namespace FungusToast.Core.Board
             var (x, y) = GetXYFromTileId(cell.TileId);
             var tile = Grid[x, y];
             var oldCell = tile.FungalCell;
+            if (oldCell == null && IsTileBlockedForOccupation(cell.TileId)) return;
             if (oldCell != null && oldCell.IsResistant && !ReferenceEquals(oldCell, cell)) return; // cannot replace resistant
             bool isNew = oldCell == null;
 
@@ -762,7 +850,7 @@ namespace FungusToast.Core.Board
         {
             float dropChance = player.GetMutationEffect(MutationType.Necrosporulation);
             if (dropChance <= 0f || rng.NextDouble() > dropChance) return;
-            var candidates = AllTiles().Where(t => !t.IsOccupiedForSporePlacement).OrderBy(_ => rng.NextDouble()).ToList();
+            var candidates = AllTiles().Where(t => !t.IsOccupiedForSporePlacement && !IsTileBlockedForOccupation(t.TileId)).OrderBy(_ => rng.NextDouble()).ToList();
             foreach (var tile in candidates)
             {
                 if (SpawnSporeForPlayer(player, tile.TileId, GrowthSource.Necrosporulation))

@@ -24,6 +24,24 @@ namespace FungusToast.Unity.UI
             if (FungusToast.Unity.GameManager.Instance != null && FungusToast.Unity.GameManager.Instance.IsDraftPhaseActive)
                 return;
 
+            if (MultiCellSelectionController.Instance != null && MultiCellSelectionController.Instance.HasActiveSelection)
+            {
+                MultiCellSelectionController.Instance.ReapplySelectionHighlights();
+                return;
+            }
+
+            if (MultiTileSelectionController.Instance != null && MultiTileSelectionController.Instance.HasActiveSelection)
+            {
+                MultiTileSelectionController.Instance.ReapplySelectionHighlights();
+                return;
+            }
+
+            if (TileSelectionController.Instance != null && TileSelectionController.Instance.HasActiveSelection)
+            {
+                TileSelectionController.Instance.ReapplySelectionHighlights();
+                return;
+            }
+
             gridVisualizer.ClearHighlights();
         }
     }

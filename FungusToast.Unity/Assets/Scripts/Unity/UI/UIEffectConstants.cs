@@ -419,6 +419,36 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public const float SurgicalInoculationArcPeakScale = 10.0f;
 
+        // ==================== CHEMOBEACON ====================
+        /// <summary>
+        /// Baseline scale applied to active Chemobeacon markers.
+        /// </summary>
+        public const float ChemobeaconIdleScale = 1.0f;
+        /// <summary>
+        /// Minimum active Chemobeacon scale, corresponding to 75% tile area.
+        /// </summary>
+        public const float ChemobeaconPulseMinScale = 0.8660254f;
+        /// <summary>
+        /// Maximum active Chemobeacon scale, corresponding to 200% tile area.
+        /// </summary>
+        public const float ChemobeaconPulseMaxScale = 1.4142135f;
+        /// <summary>
+        /// Duration of a full Chemobeacon pulse cycle.
+        /// </summary>
+        public const float ChemobeaconPulseDurationSeconds = 1.15f;
+        /// <summary>
+        /// Total duration for the Chemobeacon evaporation animation.
+        /// </summary>
+        public const float ChemobeaconEvaporationDurationSeconds = 0.7f;
+        /// <summary>
+        /// Final scale reached before the Chemobeacon fully evaporates.
+        /// </summary>
+        public const float ChemobeaconEvaporationFinalScale = 2.7f;
+        /// <summary>
+        /// Vertical lift applied during Chemobeacon evaporation.
+        /// </summary>
+        public const float ChemobeaconEvaporationLiftWorld = 0.18f;
+
         // ==================== REGENERATIVE HYPHAE ====================
         /// <summary>
         /// Duration of the rise animation for Regenerative Hyphae. (Doubled from 0.22f)

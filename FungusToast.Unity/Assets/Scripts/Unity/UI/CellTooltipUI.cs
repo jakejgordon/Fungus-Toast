@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Core.Board;
+using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Growth;
 using System;
@@ -122,14 +123,27 @@ namespace FungusToast.Unity.UI
         {
             EnsureInitialized();
 
-            if (bodyText == null || tile?.NutrientPatch == null)
+            if (bodyText == null || tile == null)
+            {
+                return;
+            }
+
+            var chemobeacon = board?.GetChemobeaconAtTile(tile.TileId);
+            if (tile.NutrientPatch == null && chemobeacon == null)
             {
                 return;
             }
 
             sb.Clear();
-            AppendNutrientPatch(tile.NutrientPatch);
-            AppendNutrientTileInfo(tile, board);
+            if (chemobeacon != null)
+            {
+                AppendChemobeaconInfo(tile, board, chemobeacon);
+            }
+            else if (tile.NutrientPatch != null)
+            {
+                AppendNutrientPatch(tile.NutrientPatch);
+                AppendNutrientTileInfo(tile, board);
+            }
 
             bodyText.text = sb.ToString().TrimEnd('\n', '\r');
             bodyText.ForceMeshUpdate();
@@ -549,6 +563,18 @@ namespace FungusToast.Unity.UI
             sb.AppendLine(DetailLine("Orthogonal Living Cells", alliedNeighbors.ToString(), UIStyleTokens.Text.Secondary, alliedNeighbors > 0 ? UIStyleTokens.State.Success : UIStyleTokens.Text.Primary));
             sb.AppendLine(DetailLine("Orthogonal Dead Cells", enemyNeighbors.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine(DetailLine("Orthogonal Toxins", toxinNeighbors.ToString(), UIStyleTokens.Text.Secondary, toxinNeighbors > 0 ? UIStyleTokens.Category.Fungicide : UIStyleTokens.Text.Primary));
+        }
+
+        private void AppendChemobeaconInfo(BoardTile tile, GameBoard board, GameBoard.ChemobeaconMarker chemobeacon)
+        {
+            sb.AppendLine(EmphasizedLine("Status", "Chemobeacon", UIStyleTokens.Accent.Spore));
+            sb.AppendLine(DetailLine("Owner", $"Player {chemobeacon.PlayerId + 1}", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine(DetailLine("Rounds Remaining", chemobeacon.TurnsRemaining.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.State.Warning));
+            sb.AppendLine(DetailLine("Effect", $"Closer growth gains +{GameBalance.ChemotacticBeaconTowardGrowthBonus:P0}", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
+            sb.AppendLine(DetailLine("Effect", "Other directions are reduced while the beacon persists", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine();
+            sb.AppendLine(DetailLine("Tile", $"({tile.X}, {tile.Y})", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine(DetailLine("Occupancy", "Blocked while active", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger));
         }
 
         // ═══════════════════════════════════════════════════════════════════

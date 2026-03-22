@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -65,6 +66,21 @@ namespace FungusToast.Unity.UI.MutationTree
         private bool humanTurnEnded = false;
         private List<MutationNodeUI> mutationButtons = new();
         private Dictionary<int, List<int>> directDependentsByMutationId = new();
+        private PendingTargetedSurgeSelection pendingTargetedSurgeSelection;
+
+        private sealed class PendingTargetedSurgeSelection
+        {
+            public PendingTargetedSurgeSelection(Mutation mutation, int reservedCost, int currentRound)
+            {
+                Mutation = mutation;
+                ReservedCost = reservedCost;
+                CurrentRound = currentRound;
+            }
+
+            public Mutation Mutation { get; }
+            public int ReservedCost { get; }
+            public int CurrentRound { get; }
+        }
 
         public bool IsTreeOpen => isTreeOpen;
         public RectTransform MutationTreeRect => mutationTreeRect;
@@ -132,6 +148,7 @@ namespace FungusToast.Unity.UI.MutationTree
             humanPlayer = null;
             mutationButtons.Clear();
             directDependentsByMutationId.Clear();
+            pendingTargetedSurgeSelection = null;
 
             if (mutationTreePanel != null)
             {
@@ -236,7 +253,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void OnSpendPointsClicked()
         {
-            if (isSliding) return;
+            if (isSliding || pendingTargetedSurgeSelection != null) return;
 
             // Initialize if not already done
             if (humanPlayer == null && GameManager.Instance != null && GameManager.Instance.Board.Players.Count > 0)
@@ -278,29 +295,160 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationButtons = mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
         }
 
-        public bool TryUpgradeMutation(Mutation mutation)
+        public void TryUpgradeMutation(Mutation mutation, Action<bool> onResolved)
         {
+            if (mutation.Id == MutationIds.ChemotacticBeacon)
+            {
+                StartCoroutine(ResolveChemotacticBeaconUpgrade(mutation, onResolved));
+                return;
+            }
+
             int currentRound = GameManager.Instance.Board.CurrentRound;
-            
+
             // Get the observer through GameManager's GameUI.GameLogRouter
             var observer = GameManager.Instance.GameUI.GameLogRouter;
-            
+
             if (humanPlayer.TryUpgradeMutation(mutation, observer, currentRound))
             {
                 RefreshSpendPointsButtonUI();
                 RefreshAllMutationButtons(); // <-- Ensures hourglass overlays update
                 TryEndHumanTurn();
-                return true;
+                onResolved?.Invoke(true);
+                return;
             }
 
             Debug.LogWarning($"⚠️ Player {humanPlayer.PlayerId} failed to upgrade {mutation.Name}");
-            return false;
+            onResolved?.Invoke(false);
+        }
+
+        private IEnumerator ResolveChemotacticBeaconUpgrade(Mutation mutation, Action<bool> onResolved)
+        {
+            var gameManager = GameManager.Instance;
+            var board = gameManager?.Board;
+            if (gameManager == null || board == null || humanPlayer == null)
+            {
+                onResolved?.Invoke(false);
+                yield break;
+            }
+
+            if (pendingTargetedSurgeSelection != null)
+            {
+                onResolved?.Invoke(false);
+                yield break;
+            }
+
+            int currentRound = board.CurrentRound;
+            if (!humanPlayer.CanUpgrade(mutation, currentRound))
+            {
+                onResolved?.Invoke(false);
+                yield break;
+            }
+
+            var validTiles = board.AllTiles()
+                .Where(tile => board.IsTileOpenForChemobeacon(tile.TileId))
+                .ToList();
+            if (validTiles.Count == 0)
+            {
+                Debug.LogWarning("⚠️ No valid Chemobeacon tiles are available.");
+                onResolved?.Invoke(false);
+                yield break;
+            }
+
+            int reservedCost = humanPlayer.GetMutationPointCost(mutation);
+            if (humanPlayer.MutationPoints < reservedCost)
+            {
+                onResolved?.Invoke(false);
+                yield break;
+            }
+
+            pendingTargetedSurgeSelection = new PendingTargetedSurgeSelection(mutation, reservedCost, currentRound);
+            humanPlayer.MutationPoints -= reservedCost;
+            RefreshSpendPointsButtonUI();
+            RefreshAllMutationButtons();
+            SetMutationChoiceLocked(true);
+            ForceCloseTreePanel();
+
+            bool resolved = false;
+            bool success = false;
+            var observer = gameManager.GameUI.GameLogRouter;
+
+            TileSelectionController.Instance.PromptSelectBoardTile(
+                tile => board.IsTileOpenForChemobeacon(tile.TileId),
+                tile =>
+                {
+                    success = humanPlayer.TryActivateReservedTargetedSurge(
+                        mutation,
+                        board,
+                        tile.TileId,
+                        observer,
+                        currentRound,
+                        reservedCost);
+                    if (!success)
+                    {
+                        humanPlayer.MutationPoints += reservedCost;
+                    }
+
+                    pendingTargetedSurgeSelection = null;
+                    if (success)
+                    {
+                        var placedTile = board.GetTileById(tile.TileId);
+                        if (placedTile != null)
+                        {
+                            observer.RecordChemobeaconPlacement(humanPlayer.PlayerId, placedTile.X, placedTile.Y);
+                        }
+
+                        RefreshSpendPointsButtonUI();
+                        RefreshAllMutationButtons();
+                        TryEndHumanTurn();
+                    }
+                    else
+                    {
+                        RefreshSpendPointsButtonUI();
+                        RefreshAllMutationButtons();
+                    }
+
+                    SetMutationChoiceLocked(false);
+
+                    resolved = true;
+                },
+                () =>
+                {
+                    humanPlayer.MutationPoints += reservedCost;
+                    pendingTargetedSurgeSelection = null;
+                    RefreshSpendPointsButtonUI();
+                    RefreshAllMutationButtons();
+                    SetMutationChoiceLocked(false);
+                    resolved = true;
+                },
+                "Select one empty, non-nutrient tile to place your Chemobeacon.",
+                showCancelButton: true,
+                cancelButtonLabel: "Cancel Beacon"
+            );
+
+            while (!resolved)
+            {
+                yield return null;
+            }
+
+            onResolved?.Invoke(success);
         }
 
         public void RefreshSpendPointsButtonUI()
         {
             if (spendPointsButton == null || buttonOutline == null || humanPlayer == null)
                 return;
+
+            if (pendingTargetedSurgeSelection != null)
+            {
+                spendPointsButton.interactable = false;
+                spendPointsButtonText.text = "Select Chemobeacon Tile";
+                buttonOutline.enabled = false;
+
+                if (mutationPointsCounterText != null)
+                    mutationPointsCounterText.text = $"Mutation Points: {humanPlayer.MutationPoints}";
+
+                return;
+            }
 
             int points = humanPlayer.MutationPoints;
             if (points > 0)
@@ -353,6 +501,9 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void TogglePanelDock()
         {
+            if (pendingTargetedSurgeSelection != null)
+                return;
+
             if (isTreeOpen)
                 StartCoroutine(SlideOutTree());
             else
@@ -481,10 +632,32 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void OnStoreMutationPointsClicked()
         {
+            if (pendingTargetedSurgeSelection != null)
+            {
+                return;
+            }
+
             if (humanPlayer != null)
             {
                 humanPlayer.WantsToBankPointsThisTurn = true;
                 EndHumanMutationPhase();
+            }
+        }
+
+        private void SetMutationChoiceLocked(bool locked)
+        {
+            if (storePointsButton != null)
+            {
+                storePointsButton.interactable = !locked;
+            }
+
+            if (locked)
+            {
+                SetSpendPointsButtonInteractable(false);
+            }
+            else if (humanPlayer != null)
+            {
+                RefreshSpendPointsButtonUI();
             }
         }
 

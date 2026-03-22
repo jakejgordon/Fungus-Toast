@@ -24,6 +24,8 @@ namespace FungusToast.Unity.UI
         private int maxSelections = 5;
         private bool selectionActive = false;
         private int lastRemaining = -1;
+        private static readonly Color SelectableColorA = new(1f, 0.15f, 0.8f, 1f);
+        private static readonly Color SelectableColorB = new(1f, 1f, 1f, 1f);
 
         private void Awake()
         {
@@ -62,11 +64,7 @@ namespace FungusToast.Unity.UI
             selectableTileIds = new HashSet<int>(validCells.Select(c => c.TileId));
 
             // Highlight valid tiles using GridVisualizer (use magenta-pink like Jetting Mycelium)
-            gridVisualizer.HighlightTiles(
-                selectableTileIds,
-                new Color(1f, 0.15f, 0.8f, 1f),   // Magenta-pink for selectable (matches Jetting Mycelium)
-                new Color(1f, 1f, 1f, 1f)          // White
-            );
+            ReapplySelectionHighlights();
 
             // Show the initial prompt
             UpdateSelectionPrompt();
@@ -215,6 +213,17 @@ namespace FungusToast.Unity.UI
         public bool IsSelected(int tileId)
         {
             return selectionActive && selectedTileIds.Contains(tileId);
+        }
+
+        public void ReapplySelectionHighlights()
+        {
+            if (!selectionActive || selectableTileIds.Count == 0)
+            {
+                return;
+            }
+
+            gridVisualizer.HighlightTiles(selectableTileIds, SelectableColorA, SelectableColorB);
+            gridVisualizer.ShowSelectedTiles(selectedTileIds, Color.black);
         }
 
         public bool HasActiveSelection => selectionActive;

@@ -72,7 +72,7 @@ namespace FungusToast.Unity
                     yield return RunSilentGrowthPhase(board);
                     yield return RunSilentDecayPhase(board);
                     yield return RunSilentMutationPhase(board, mutationMgr, ui);
-                    foreach (var p in board.Players) p.TickDownActiveSurges(); board.IncrementRound(); iterations++;
+                    foreach (var p in board.Players) p.TickDownActiveSurges(); board.SynchronizeChemobeaconsWithSurges(board.Players); board.IncrementRound(); iterations++;
                     if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(board.CurrentRound)) RunSilentDraft(board, ui, testingMycoId);
                 }
                 onComplete?.Invoke();

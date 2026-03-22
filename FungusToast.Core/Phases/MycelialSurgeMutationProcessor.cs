@@ -94,9 +94,12 @@ namespace FungusToast.Core.Phases
                     else
                     {
                         // Place a new living cell if empty
-                        var newCell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: targetTileId, source: GrowthSource.HyphalVectoring, lastOwnerPlayerId: null);
-                        board.PlaceFungalCell(newCell); // Use board.PlaceFungalCell instead of targetTile.PlaceFungalCell for proper tracking
-                        colonized++;
+                        if (!board.IsTileBlockedForOccupation(targetTileId))
+                        {
+                            var newCell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: targetTileId, source: GrowthSource.HyphalVectoring, lastOwnerPlayerId: null);
+                            board.PlaceFungalCell(newCell); // Use board.PlaceFungalCell instead of targetTile.PlaceFungalCell for proper tracking
+                            colonized++;
+                        }
                     }
 
                     placed++;
@@ -250,7 +253,7 @@ namespace FungusToast.Core.Phases
                         // Priority buckets
                         var enemyLiving = candidateTiles.Where(t => t.FungalCell != null && t.FungalCell.IsAlive && !t.FungalCell.IsResistant && t.FungalCell.OwnerPlayerId != player.PlayerId).ToList();
                         var enemyToxins = candidateTiles.Where(t => t.FungalCell != null && t.FungalCell.CellType == FungalCellType.Toxin && t.FungalCell.OwnerPlayerId != player.PlayerId).ToList();
-                        var empty = candidateTiles.Where(t => t.FungalCell == null).ToList();
+                        var empty = candidateTiles.Where(t => t.FungalCell == null && !t.HasNutrientPatch && !board.IsTileBlockedForOccupation(t.TileId)).ToList();
                         var dead = candidateTiles.Where(t => t.FungalCell != null && !t.FungalCell.IsAlive).ToList();
 
                         if (enemyLiving.Count == 0 && enemyToxins.Count == 0 && empty.Count == 0 && dead.Count == 0)

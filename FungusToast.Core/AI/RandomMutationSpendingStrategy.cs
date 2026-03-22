@@ -34,7 +34,7 @@ namespace FungusToast.Core.AI
         {
             while (player.MutationPoints > 0)
             {
-                if (!MutationSpendingHelper.TrySpendRandomly(player, allMutations, observer, board.CurrentRound))
+                if (!MutationSpendingHelper.TrySpendRandomly(player, allMutations, board, observer, board.CurrentRound))
                     break;
             }
         }

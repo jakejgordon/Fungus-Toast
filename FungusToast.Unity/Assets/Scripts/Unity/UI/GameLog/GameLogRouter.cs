@@ -220,6 +220,12 @@ namespace FungusToast.Unity.UI.GameLog
             if (IsSilentMode) return;
             playerActivityLogManager?.RecordSporeSalvoLaunches(playerId, launches);
         }
+
+        public void RecordChemobeaconPlacement(int playerId, int tileX, int tileY)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordChemobeaconPlacement(playerId, tileX, tileY);
+        }
         #endregion
 
         #region Phase / Round Routing (suppressed in silent mode)

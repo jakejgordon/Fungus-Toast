@@ -37,5 +37,6 @@ namespace FungusToast.Core
         OntogenicRegression,
         CompetitiveAntagonism,
         HyphalSurge,
+        ChemotacticBeacon,
     }
 }

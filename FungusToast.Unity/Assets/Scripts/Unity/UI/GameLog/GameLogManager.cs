@@ -968,6 +968,18 @@ namespace FungusToast.Unity.UI.GameLog
                     : $"Spore Salvo launched {launches} toxins at enemy starts",
                 GameLogCategory.Lucky);
         }
+        public void RecordChemobeaconPlacement(int playerId, int tileX, int tileY)
+        {
+            if (!IsHuman(playerId))
+            {
+                return;
+            }
+
+            AddPlayerEvent(
+                playerId,
+                $"Chemotactic Beacon placed at ({tileX}, {tileY})",
+                GameLogCategory.Lucky);
+        }
         public void RecordCreepingMoldMove(int playerId) { }
         public void RecordCreepingMoldToxinJump(int playerId) { }
         public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }
