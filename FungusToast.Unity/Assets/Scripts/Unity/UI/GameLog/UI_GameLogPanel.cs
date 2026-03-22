@@ -129,15 +129,8 @@ namespace FungusToast.Unity.UI.GameLog
 
         public void Initialize(IGameLogManager gameLogManager)
         {
-            // If already subscribed to same manager, ignore
-            if (subscribed && ReferenceEquals(logManager, gameLogManager))
-            {
-                Debug.Log("[UI_GameLogPanel] Initialize called again with same manager; ignored.");
-                return;
-            }
-
             // Unsubscribe old manager if switching
-            if (subscribed && logManager != null)
+            if (subscribed && logManager != null && !ReferenceEquals(logManager, gameLogManager))
             {
                 logManager.OnNewLogEntry -= AddLogEntry;
                 subscribed = false;
@@ -146,8 +139,11 @@ namespace FungusToast.Unity.UI.GameLog
             logManager = gameLogManager;
             if (logManager != null)
             {
-                logManager.OnNewLogEntry += AddLogEntry;
-                subscribed = true;
+                if (!subscribed)
+                {
+                    logManager.OnNewLogEntry += AddLogEntry;
+                    subscribed = true;
+                }
 
                 // Clear existing visual list to avoid duplicates when re-initializing
                 foreach (var e in entryUIs)

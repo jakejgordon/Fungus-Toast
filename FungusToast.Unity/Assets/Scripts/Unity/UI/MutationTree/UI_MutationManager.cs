@@ -16,6 +16,11 @@ namespace FungusToast.Unity.UI.MutationTree
 {
     public class UI_MutationManager : MonoBehaviour
     {
+        private const float SpendButtonMinWidth = 220f;
+        private const float SpendButtonMinHeight = 40f;
+        private const float StoreButtonMinWidth = 220f;
+        private const float StoreButtonMinHeight = 36f;
+
         [Header("General UI References")]
         [SerializeField] private MutationManager mutationManager;
         [SerializeField] private GameObject mutationTreePanel;
@@ -77,7 +82,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             storePointsButton.onClick.AddListener(OnStoreMutationPointsClicked);
             RefreshSpendPointsButtonUI();
-            originalButtonScale = spendPointsButton.transform.localScale;
+            CaptureOriginalControlScales();
             if (mutationPointsCounterText != null)
                 originalCounterScale = mutationPointsCounterText.transform.localScale;
 
@@ -87,6 +92,7 @@ namespace FungusToast.Unity.UI.MutationTree
             ApplyPanelTheme();
 
             ApplyActionStyles();
+            RestoreActionRowLayout();
 
             // ── Store Points button tooltip ──
             WireStorePointsTooltip();
@@ -118,10 +124,14 @@ namespace FungusToast.Unity.UI.MutationTree
         public void ResetForNewGameState()
         {
             StopAllCoroutines();
+            CaptureOriginalControlScales();
 
             isTreeOpen = false;
             isSliding = false;
             humanTurnEnded = false;
+            humanPlayer = null;
+            mutationButtons.Clear();
+            directDependentsByMutationId.Clear();
 
             if (mutationTreePanel != null)
             {
@@ -140,8 +150,28 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (spendPointsButton != null)
             {
+                spendPointsButton.gameObject.SetActive(true);
                 spendPointsButton.interactable = false;
             }
+
+            if (storePointsButton != null)
+            {
+                storePointsButton.gameObject.SetActive(true);
+                storePointsButton.interactable = false;
+            }
+
+            if (spendPointsButtonText != null)
+            {
+                spendPointsButtonText.text = "No Points Available";
+            }
+
+            if (mutationPointsCounterText != null)
+            {
+                mutationPointsCounterText.text = "Mutation Points: 0";
+            }
+
+            ResetPulse();
+            RestoreActionRowLayout();
         }
 
         public void Initialize(Player player)
@@ -223,7 +253,13 @@ namespace FungusToast.Unity.UI.MutationTree
         public void SetSpendPointsButtonVisible(bool visible)
         {
             if (spendPointsButton != null)
+            {
                 spendPointsButton.gameObject.SetActive(visible);
+                if (visible)
+                {
+                    RestoreActionRowLayout();
+                }
+            }
         }
 
         public void PopulateAllMutations()
@@ -306,6 +342,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void ResetPulse()
         {
+            CaptureOriginalControlScales();
+
             if (spendPointsButton != null)
                 spendPointsButton.transform.localScale = originalButtonScale;
 
@@ -522,8 +560,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 Debug.LogError("❌ ReinitializeForPlayer received null player");
                 return;
             }
+            CaptureOriginalControlScales();
             Debug.Log($"[UI_MutationManager] ReinitializeForPlayer playerId={player.PlayerId} name={player.PlayerName} mp={player.MutationPoints}");
             humanPlayer = player;
+            SetSpendPointsButtonVisible(true);
             // Ensure spend button exists
             if (spendPointsButton == null)
                 Debug.LogError("[UI_MutationManager] spendPointsButton missing");
@@ -552,6 +592,11 @@ namespace FungusToast.Unity.UI.MutationTree
             PopulateAllMutations();
             // Force enable controls regardless of previous turn state
             SetSpendPointsButtonInteractable(true);
+            if (storePointsButton != null)
+            {
+                storePointsButton.gameObject.SetActive(true);
+                storePointsButton.interactable = true;
+            }
             if (buttonOutline != null) buttonOutline.enabled = player.MutationPoints > 0;
             if (spendPointsButtonText != null)
             {
@@ -559,6 +604,8 @@ namespace FungusToast.Unity.UI.MutationTree
             }
             if (mutationPointsCounterText != null)
                 mutationPointsCounterText.text = $"Mutation Points: {player.MutationPoints}";
+
+            RestoreActionRowLayout();
 
             Debug.Log($"[UI_MutationManager] After force-enable interactable={spendPointsButton?.interactable} text='{spendPointsButtonText?.text}'");
 
@@ -660,8 +707,8 @@ namespace FungusToast.Unity.UI.MutationTree
             var layout = storePointsButton.GetComponent<LayoutElement>();
             if (layout == null)
                 layout = storePointsButton.gameObject.AddComponent<LayoutElement>();
-            layout.minHeight = Mathf.Max(layout.minHeight, 36f);
-            layout.minWidth = Mathf.Max(layout.minWidth, 220f);
+            layout.minHeight = Mathf.Max(layout.minHeight, StoreButtonMinHeight);
+            layout.minWidth = Mathf.Max(layout.minWidth, StoreButtonMinWidth);
 
             // Button color block for hover / press states
             var colors = storePointsButton.colors;
@@ -808,6 +855,117 @@ namespace FungusToast.Unity.UI.MutationTree
             // Consider anything with average RGB > 0.55 and meaningful alpha as "bright"
             float avg = (c.r + c.g + c.b) / 3f;
             return avg > 0.55f && c.a > 0.3f;
+        }
+
+        private void CaptureOriginalControlScales()
+        {
+            if (spendPointsButton != null)
+            {
+                Vector3 currentScale = spendPointsButton.transform.localScale;
+                if (!IsUsableScale(originalButtonScale))
+                {
+                    originalButtonScale = IsUsableScale(currentScale) ? currentScale : Vector3.one;
+                }
+            }
+
+            if (mutationPointsCounterText != null)
+            {
+                Vector3 currentScale = mutationPointsCounterText.transform.localScale;
+                if (!IsUsableScale(originalCounterScale))
+                {
+                    originalCounterScale = IsUsableScale(currentScale) ? currentScale : Vector3.one;
+                }
+            }
+        }
+
+        private void RestoreActionRowLayout()
+        {
+            RestoreSpendButtonLayout();
+            RestoreStoreButtonLayout();
+
+            if (mutationPointsCounterText != null)
+            {
+                mutationPointsCounterText.transform.localScale = originalCounterScale;
+            }
+
+            ForceLayoutRebuild(spendPointsButton != null ? spendPointsButton.transform.parent as RectTransform : null);
+        }
+
+        private void RestoreSpendButtonLayout()
+        {
+            if (spendPointsButton == null)
+            {
+                return;
+            }
+
+            spendPointsButton.gameObject.SetActive(true);
+            spendPointsButton.transform.localScale = originalButtonScale;
+
+            if (spendPointsButton.TryGetComponent<RectTransform>(out var rectTransform))
+            {
+                if (rectTransform.sizeDelta.y < SpendButtonMinHeight)
+                {
+                    rectTransform.sizeDelta = new Vector2(rectTransform.sizeDelta.x, SpendButtonMinHeight);
+                }
+            }
+
+            var layout = spendPointsButton.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = spendPointsButton.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layout.minWidth = Mathf.Max(layout.minWidth, SpendButtonMinWidth);
+            layout.preferredWidth = Mathf.Max(layout.preferredWidth, SpendButtonMinWidth);
+            layout.minHeight = Mathf.Max(layout.minHeight, SpendButtonMinHeight);
+            layout.preferredHeight = Mathf.Max(layout.preferredHeight, SpendButtonMinHeight);
+        }
+
+        private void RestoreStoreButtonLayout()
+        {
+            if (storePointsButton == null)
+            {
+                return;
+            }
+
+            storePointsButton.gameObject.SetActive(true);
+
+            var layout = storePointsButton.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = storePointsButton.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layout.minWidth = Mathf.Max(layout.minWidth, StoreButtonMinWidth);
+            layout.preferredWidth = Mathf.Max(layout.preferredWidth, StoreButtonMinWidth);
+            layout.minHeight = Mathf.Max(layout.minHeight, StoreButtonMinHeight);
+            layout.preferredHeight = Mathf.Max(layout.preferredHeight, StoreButtonMinHeight);
+        }
+
+        private static void ForceLayoutRebuild(RectTransform rowRect)
+        {
+            if (rowRect == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rowRect);
+
+            if (rowRect.parent is RectTransform parentRect)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(parentRect);
+            }
+        }
+
+        private static bool IsUsableScale(Vector3 scale)
+        {
+            return scale.x > 0f
+                && scale.y > 0f
+                && scale.z > 0f
+                && !float.IsNaN(scale.x)
+                && !float.IsNaN(scale.y)
+                && !float.IsNaN(scale.z);
         }
     }
 }

@@ -21,9 +21,12 @@ namespace FungusToast.Unity.Phases
         private SpecialEventPresentationService specialEventPresentationService;
         private readonly List<int> septalAlarmResistanceTiles = new();
         private GameBoard subscribedResistanceBoard;
+        private int runVersion;
 
         public void Initialize(GameBoard board, List<Player> players, GridVisualizer gridVisualizer)
         {
+            runVersion++;
+
             if (!ReferenceEquals(subscribedResistanceBoard, board))
             {
                 if (subscribedResistanceBoard != null)
@@ -37,6 +40,25 @@ namespace FungusToast.Unity.Phases
 
             this.board = board ?? throw new ArgumentNullException(nameof(board));
             this.gridVisualizer = gridVisualizer ?? throw new ArgumentNullException(nameof(gridVisualizer));
+            this.specialEventPresentationService = null;
+            septalAlarmResistanceTiles.Clear();
+        }
+
+        public void ResetForGameTransition()
+        {
+            runVersion++;
+            StopAllCoroutines();
+
+            if (subscribedResistanceBoard != null)
+            {
+                subscribedResistanceBoard.ResistanceAppliedBatch -= OnResistanceAppliedBatch_Buffer;
+                subscribedResistanceBoard = null;
+            }
+
+            board = null;
+            gridVisualizer = null;
+            specialEventPresentationService = null;
+            septalAlarmResistanceTiles.Clear();
         }
 
         public void StartDecayPhase(
@@ -47,10 +69,16 @@ namespace FungusToast.Unity.Phases
         {
             this.specialEventPresentationService = specialEventPresentationService;
             septalAlarmResistanceTiles.Clear();
+            runVersion++;
+            int activeRunVersion = runVersion;
             StartCoroutine(RunDecayPhase(
                 failedGrowthsByPlayerId,
                 rng,
-                simulationObserver
+                simulationObserver,
+                board,
+                gridVisualizer,
+                this.specialEventPresentationService,
+                activeRunVersion
             ));
         }
 
@@ -83,34 +111,57 @@ namespace FungusToast.Unity.Phases
         private IEnumerator RunDecayPhase(
             Dictionary<int, int> failedGrowthsByPlayerId,
             System.Random rng,
-            ISimulationObserver simulationObserver)
+            ISimulationObserver simulationObserver,
+            GameBoard activeBoard,
+            GridVisualizer activeGridVisualizer,
+            SpecialEventPresentationService activeSpecialEventPresentationService,
+            int activeRunVersion)
         {
+            if (activeRunVersion != runVersion || activeBoard == null || activeGridVisualizer == null)
+            {
+                yield break;
+            }
 
-            DeathEngine.ExecuteDeathCycle(board, failedGrowthsByPlayerId, rng, simulationObserver);
-            board.OnPostDecayPhase();
+            DeathEngine.ExecuteDeathCycle(activeBoard, failedGrowthsByPlayerId, rng, simulationObserver);
+            activeBoard.OnPostDecayPhase();
 
             yield return new WaitForSeconds(UIEffectConstants.TimeBeforeDecayRender);
 
-            gridVisualizer.RenderBoard(board);
+            if (activeRunVersion != runVersion)
+            {
+                yield break;
+            }
+
+            activeGridVisualizer.RenderBoard(activeBoard);
 
             if (septalAlarmResistanceTiles.Count > 0)
             {
-                gridVisualizer.PlayResistancePulseBatchScaled(septalAlarmResistanceTiles, 0.45f);
-                yield return gridVisualizer.WaitForAllAnimations();
+                activeGridVisualizer.PlayResistancePulseBatchScaled(septalAlarmResistanceTiles, 0.45f);
+                yield return activeGridVisualizer.WaitForAllAnimations();
                 septalAlarmResistanceTiles.Clear();
             }
 
-            GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(board.Players);
-            GameManager.Instance.GameUI.RightSidebar?.SortPlayerSummaryRows(board.Players);
+            if (activeRunVersion != runVersion)
+            {
+                yield break;
+            }
 
-            bool hadSpecialEvents = specialEventPresentationService != null && specialEventPresentationService.HasPendingEvents;
+            GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(activeBoard.Players);
+            GameManager.Instance.GameUI.RightSidebar?.SortPlayerSummaryRows(activeBoard.Players);
+
+            bool hadSpecialEvents = activeSpecialEventPresentationService != null && activeSpecialEventPresentationService.HasPendingEvents;
             if (hadSpecialEvents)
             {
-                yield return specialEventPresentationService.PresentPendingAfterDecayRender();
+                yield return activeSpecialEventPresentationService.PresentPendingAfterDecayRender();
             }
             else
             {
                 yield return new WaitForSeconds(UIEffectConstants.TimeAfterDecayRender);
+            }
+
+            if (activeRunVersion != runVersion)
+            {
+                yield break;
             }
 
             GameManager.Instance.OnRoundComplete();

@@ -145,6 +145,7 @@ namespace FungusToast.Unity.Grid
             UnsubscribeFromBoardEvents();
             ClearPendingToxinExpirySnapshots();
             StopAndClearToxinExpiryAnimations();
+            DestroyLingeringNutrientToasts();
             DestroyGeneratedCrustAssets();
             DestroyGeneratedNutrientAssets();
         }
@@ -164,12 +165,57 @@ namespace FungusToast.Unity.Grid
             UnsubscribeFromBoardEvents();
             ClearPendingToxinExpirySnapshots();
             StopAndClearToxinExpiryAnimations();
+            DestroyLingeringNutrientToasts();
 
             this.board = board;
 
             if (this.board != null)
             {
                 this.board.ToxinExpired += HandleToxinExpired;
+            }
+        }
+
+        public void ResetForGameTransition()
+        {
+            StopAllCoroutines();
+            UnsubscribeFromBoardEvents();
+            board = null;
+            DestroyLingeringNutrientToasts();
+
+            _activeAnimationCount = 0;
+            pulseHighlightCoroutine = null;
+            startingTilePingCoroutine = null;
+            lastPingTilemap = null;
+
+            ClearPendingToxinExpirySnapshots();
+            StopAndClearToxinExpiryAnimations();
+
+            newlyGrownTileIds.Clear();
+            newlyGrownAnimationPlayedTileIds.Clear();
+            fadeInCoroutines.Clear();
+            dyingTileIds.Clear();
+            deathAnimationCoroutines.Clear();
+            toxinDropTileIds.Clear();
+            toxinDropCoroutines.Clear();
+            nutrientPulseTileIds.Clear();
+            deferredResistanceOverlayTileIds.Clear();
+            preAnimationHiddenPreviewTileIds.Clear();
+
+            ClearAllHighlights();
+            ClearHoverEffect();
+
+            toastTilemap?.ClearAllTiles();
+            moldTilemap?.ClearAllTiles();
+            overlayTilemap?.ClearAllTiles();
+            PingOverlayTileMap?.ClearAllTiles();
+            HoverOverlayTileMap?.ClearAllTiles();
+            SelectedTileMap?.ClearAllTiles();
+            SelectionHighlightTileMap?.ClearAllTiles();
+
+            var targetCrustTilemap = GetCrustTargetTilemap();
+            if (targetCrustTilemap != null)
+            {
+                targetCrustTilemap.ClearAllTiles();
             }
         }
         public void SetBoardMedium(BoardMediumConfig boardMedium) => runtimeBoardMedium = boardMedium;
@@ -1131,6 +1177,18 @@ namespace FungusToast.Unity.Grid
             }
 
             return tmp;
+        }
+
+        private void DestroyLingeringNutrientToasts()
+        {
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = transform.GetChild(i);
+                if (child != null && child.name == "NutrientPatchToast")
+                {
+                    Destroy(child.gameObject);
+                }
+            }
         }
 
         private void SetOverlayTile(Vector3Int pos, TileBase tile, Color color)

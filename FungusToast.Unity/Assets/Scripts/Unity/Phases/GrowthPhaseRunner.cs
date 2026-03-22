@@ -25,6 +25,7 @@ namespace FungusToast.Unity.Phases
         private ISimulationObserver observer;
         private SpecialEventPresentationService specialEventPresentationService;
         public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
+        private int runVersion = 0;
 
         private int phaseCycle = 0; // 1–5 for UI display
 
@@ -32,18 +33,40 @@ namespace FungusToast.Unity.Phases
 
         public void Initialize(GameBoard board, List<Player> players, GridVisualizer gridVisualizer)
         {
+            runVersion++;
             this.board = board;
             this.gridVisualizer = gridVisualizer;
             this.observer = GameManager.Instance.GameUI.GameLogRouter;
             this.specialEventPresentationService = GameManager.Instance.SpecialEventPresentationService;
             this.processor = new GrowthPhaseProcessor(board, players, rng, observer);
             isRunning = false;
+            phaseCycle = 0;
+            FailedGrowthsByPlayerId.Clear();
+            roundContext = null;
+        }
+
+        public void ResetForGameTransition()
+        {
+            runVersion++;
+            StopAllCoroutines();
+
+            isRunning = false;
+            phaseCycle = 0;
+            FailedGrowthsByPlayerId.Clear();
+            roundContext = null;
+            processor = null;
+            board = null;
+            gridVisualizer = null;
+            observer = null;
+            specialEventPresentationService = null;
         }
 
         public void StartGrowthPhase()
         {
             if (isRunning) return;
 
+            runVersion++;
+            int activeRunVersion = runVersion;
             isRunning = true;
             phaseCycle = 0;
 
@@ -52,11 +75,16 @@ namespace FungusToast.Unity.Phases
 
             roundContext = new RoundContext();
 
-            StartCoroutine(RunNextCycle());
+            StartCoroutine(RunNextCycle(activeRunVersion));
         }
 
-        private IEnumerator RunNextCycle()
+        private IEnumerator RunNextCycle(int activeRunVersion)
         {
+            if (activeRunVersion != runVersion || board == null || gridVisualizer == null)
+            {
+                yield break;
+            }
+
             if (phaseCycle >= GameBalance.TotalGrowthCycles)
             {
                 // === Post-Growth Mutation Effects ===
@@ -99,7 +127,13 @@ namespace FungusToast.Unity.Phases
             GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(board.Players);
 
             yield return new WaitForSeconds(UIEffectConstants.TimeBetweenGrowthCycles);
-            StartCoroutine(RunNextCycle());
+
+            if (activeRunVersion != runVersion)
+            {
+                yield break;
+            }
+
+            StartCoroutine(RunNextCycle(activeRunVersion));
         }
 
         private void MergeFailedGrowths(Dictionary<int, int> failedThisCycle)

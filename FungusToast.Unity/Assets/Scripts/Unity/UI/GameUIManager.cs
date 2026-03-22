@@ -98,6 +98,7 @@ namespace FungusToast.Unity.UI
         /// reference the board via GameUIManager instead of GameManager.Instance.
         /// </summary>
         public void SetBoard(GameBoard board) => Board = board;
+        public void ClearBoard() => Board = null;
         
         // Player Activity Log (Left Sidebar)
         public UI_GameLogPanel PlayerActivityLogPanel => playerActivityLogPanel;

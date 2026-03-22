@@ -24,6 +24,27 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationManager = manager;
         }
 
+        public void ResetForGameTransition()
+        {
+            pendingMessages.Clear();
+
+            if (activeRoutine != null)
+            {
+                StopCoroutine(activeRoutine);
+                activeRoutine = null;
+            }
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+            }
+
+            if (messageText != null)
+            {
+                messageText.text = string.Empty;
+            }
+        }
+
         public void ShowIfTreeOpen(string message)
         {
             if (mutationManager == null

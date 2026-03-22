@@ -50,6 +50,8 @@ namespace FungusToast.Unity.UI.GameLog
         
         public void Initialize(GameBoard gameBoard)
         {
+            logEntries.Clear();
+            lastRoundCompleteProcessed = -1;
             board = gameBoard;
             
             // Take initial snapshot BEFORE any spores are placed (for accurate Round 1 tracking)
@@ -59,6 +61,13 @@ namespace FungusToast.Unity.UI.GameLog
             }
             
             // Don't add initial game start message - Round 1 begins will be shown instead
+        }
+
+        public void ResetForGameTransition()
+        {
+            logEntries.Clear();
+            lastRoundCompleteProcessed = -1;
+            board = null;
         }
         
         public void OnRoundStart(int roundNumber)

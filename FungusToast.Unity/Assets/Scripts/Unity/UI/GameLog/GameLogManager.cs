@@ -148,17 +148,37 @@ namespace FungusToast.Unity.UI.GameLog
 
         public void Initialize(GameBoard gameBoard)
         {
-            if (initialized) return;
+            if (initialized && board != null)
+            {
+                board.CellPoisoned -= OnCellPoisoned;
+                board.CellColonized -= OnCellColonized;
+                board.CellInfested -= OnCellInfested;
+                board.CellReclaimed -= OnCellReclaimed;
+                board.CellToxified -= OnCellToxified;
+                board.CellOvergrown -= OnCellOvergrown;
+                board.ResistanceAppliedBatch -= OnResistanceAppliedBatch;
+            }
+
             board = gameBoard;
+            summaries.Clear();
+            roundStartSnapshots.Clear();
+            aggregations.Clear();
+            roundActivityTotals.Clear();
+            pendingSegmentSummaries.Clear();
+            pendingRoundLeadSummaries.Clear();
+            pendingRoundSummaries.Clear();
+            pendingRoundNumber.Clear();
+            growthPhaseStartSnapshots.Clear();
+            activePlayerId = -1;
+            currentSegment = LogSegmentType.None;
+            lastRoundCompletedRound = -1;
+            initialized = false;
+
             if (board == null) return;
 
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
             {
-                roundStartSnapshots[hp.PlayerId] = TakeSnapshot(hp.PlayerId);
-                aggregations[hp.PlayerId] = new PlayerLogAggregation();
-                roundActivityTotals[hp.PlayerId] = new RoundActivityTotals();
-                pendingSegmentSummaries[hp.PlayerId] = new Queue<SegmentSummary>();
-                pendingRoundLeadSummaries[hp.PlayerId] = new Queue<SegmentSummary>();
+                EnsurePlayerState(hp.PlayerId);
             }
 
             board.CellPoisoned += OnCellPoisoned;
@@ -170,6 +190,11 @@ namespace FungusToast.Unity.UI.GameLog
             board.ResistanceAppliedBatch += OnResistanceAppliedBatch;
 
             initialized = true;
+        }
+
+        public void ResetForGameTransition()
+        {
+            Initialize(null);
         }
 
         public void SetGameLogRouter(GameLogRouter r) => router = r;
@@ -202,7 +227,7 @@ namespace FungusToast.Unity.UI.GameLog
             if (newType == LogSegmentType.DraftPhase)
             {
                 foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
-                    aggregations[hp.PlayerId].DraftStartSnapshot = TakeSnapshot(hp.PlayerId);
+                    Agg(hp.PlayerId).DraftStartSnapshot = TakeSnapshot(hp.PlayerId);
             }
 
             if (newType == LogSegmentType.GrowthPhase)
@@ -254,6 +279,7 @@ namespace FungusToast.Unity.UI.GameLog
 
                 if (!string.IsNullOrEmpty(summaryText))
                 {
+                    EnsurePlayerState(hp.PlayerId);
                     int roundForSummary = currentSegment == LogSegmentType.DecayPhase
                         ? (lastRoundCompletedRound >= 0 ? lastRoundCompletedRound : (board.CurrentRound - 1))
                         : board.CurrentRound;
@@ -417,6 +443,7 @@ namespace FungusToast.Unity.UI.GameLog
             if (board == null) return;
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
             {
+                EnsurePlayerState(hp.PlayerId);
                 roundStartSnapshots[hp.PlayerId] = TakeSnapshot(hp.PlayerId);
                 roundActivityTotals[hp.PlayerId] = new RoundActivityTotals();
             }
@@ -430,6 +457,7 @@ namespace FungusToast.Unity.UI.GameLog
 
             foreach (var hp in board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human))
             {
+                EnsurePlayerState(hp.PlayerId);
                 roundActivityTotals.TryGetValue(hp.PlayerId, out var activityTotals);
 
                 string msg = RoundSummaryFormatter.FormatPlayerActivitySummary(
@@ -479,6 +507,34 @@ namespace FungusToast.Unity.UI.GameLog
                 summaries[playerId] = s;
             }
             return s;
+        }
+
+        private void EnsurePlayerState(int playerId)
+        {
+            if (!aggregations.ContainsKey(playerId))
+            {
+                aggregations[playerId] = new PlayerLogAggregation();
+            }
+
+            if (!roundActivityTotals.ContainsKey(playerId))
+            {
+                roundActivityTotals[playerId] = new RoundActivityTotals();
+            }
+
+            if (!pendingSegmentSummaries.ContainsKey(playerId))
+            {
+                pendingSegmentSummaries[playerId] = new Queue<SegmentSummary>();
+            }
+
+            if (!pendingRoundLeadSummaries.ContainsKey(playerId))
+            {
+                pendingRoundLeadSummaries[playerId] = new Queue<SegmentSummary>();
+            }
+
+            if (board != null && !roundStartSnapshots.ContainsKey(playerId))
+            {
+                roundStartSnapshots[playerId] = TakeSnapshot(playerId);
+            }
         }
 
         private void AddPlayerEvent(int playerId, string message, GameLogCategory cat, int? explicitRound = null)
@@ -553,8 +609,10 @@ namespace FungusToast.Unity.UI.GameLog
 
             activePlayerId = newHumanPlayerId;
 
-            if (currentBoard != null && !roundStartSnapshots.ContainsKey(activePlayerId))
-                roundStartSnapshots[activePlayerId] = TakeSnapshot(activePlayerId);
+            if (currentBoard != null)
+            {
+                EnsurePlayerState(activePlayerId);
+            }
 
             Debug.Log($"[GameLogManager] Active player context switched -> PlayerId={activePlayerId}");
         }
@@ -966,6 +1024,16 @@ namespace FungusToast.Unity.UI.GameLog
             if (activePlayerId < 0) return;
             int round = board?.CurrentRound ?? 0;
             GetSummary(activePlayerId).Clear(round);
+            if (pendingSegmentSummaries.TryGetValue(activePlayerId, out var segmentQueue))
+            {
+                segmentQueue.Clear();
+            }
+            if (pendingRoundLeadSummaries.TryGetValue(activePlayerId, out var roundLeadQueue))
+            {
+                roundLeadQueue.Clear();
+            }
+            pendingRoundSummaries.Remove(activePlayerId);
+            pendingRoundNumber.Remove(activePlayerId);
             OnNewLogEntry?.Invoke(new GameLogEntry("Log cleared", GameLogCategory.Normal, null, activePlayerId));
         }
 

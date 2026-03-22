@@ -24,15 +24,49 @@ namespace FungusToast.Unity
         private readonly List<int> aegisHyphaeResistanceTiles = new();
         private HashSet<int> resistantBaseline = new();
         private bool sequenceRunning = false;
+        private GameBoard registeredBoard;
 
         public PostGrowthVisualSequence(GameManager gm, GridVisualizer grid, System.Func<bool> fastForwardFlag, System.Action startDecayPhase)
         { gameManager = gm; this.grid = grid; isFastForwarding = fastForwardFlag; this.startDecayPhase = startDecayPhase; }
 
         public void Register(GameBoard board)
         {
+            Unregister();
+            if (board == null)
+            {
+                return;
+            }
+
             board.PostGrowthPhase += OnPostGrowthPhase_StartSequence;
             board.PostGrowthPhaseCompleted += OnPostGrowthPhaseCompleted_CaptureHrt;
             board.ResistanceAppliedBatch += OnResistanceAppliedBatch_Buffer;
+            registeredBoard = board;
+        }
+
+        public void Unregister(GameBoard board = null)
+        {
+            var boardToUnregister = board ?? registeredBoard;
+            if (boardToUnregister == null)
+            {
+                return;
+            }
+
+            boardToUnregister.PostGrowthPhase -= OnPostGrowthPhase_StartSequence;
+            boardToUnregister.PostGrowthPhaseCompleted -= OnPostGrowthPhaseCompleted_CaptureHrt;
+            boardToUnregister.ResistanceAppliedBatch -= OnResistanceAppliedBatch_Buffer;
+
+            if (ReferenceEquals(registeredBoard, boardToUnregister))
+            {
+                registeredBoard = null;
+            }
+        }
+
+        public void ResetForGameTransition(GameBoard board = null)
+        {
+            Unregister(board);
+            ClearBuffers();
+            resistantBaseline.Clear();
+            sequenceRunning = false;
         }
 
         private void OnResistanceAppliedBatch_Buffer(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)

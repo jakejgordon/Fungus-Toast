@@ -93,6 +93,28 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             BeginNextDraft();
         }
 
+        public void ResetForGameTransition()
+        {
+            StopAllCoroutines();
+
+            draftChoices = null;
+            currentPlayer = null;
+            draftOrder = null;
+            draftIndex = 0;
+            poolManager = null;
+            rng = null;
+            draftChoicesCount = 0;
+            uiState = DraftUIState.Idle;
+            isFinishingDraftPhase = false;
+            isCampaignAdaptationDraft = false;
+            onAdaptationPicked = null;
+            _cameraRecenteredThisDraftPhase = false;
+
+            ClearChoiceCards();
+            ClearDraftMessages();
+            HideDraftUI();
+        }
+
         public void StartCampaignAdaptationDraft(
             IReadOnlyList<AdaptationDefinition> choices,
             Action<AdaptationDefinition> onPicked)

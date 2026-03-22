@@ -388,8 +388,7 @@ namespace FungusToast.Unity
         public void InitializeGame(int numberOfPlayers)
         {
             // Clear any lingering scene coroutines/UI overlays from the previous game before bootstrapping a new board.
-            StopAllCoroutines();
-            mycovariantDraftController?.StopAllCoroutines();
+            ResetRuntimeStateForGameTransition();
             gameUIManager?.MutationUIManager?.ResetForNewGameState();
             gameUIManager.EndGamePanel?.gameObject.SetActive(false);
             ForceClosePauseMenu();
@@ -422,14 +421,15 @@ namespace FungusToast.Unity
             persistentPoolManager = new MycovariantPoolManager();
             persistentPoolManager.InitializePool(MycovariantRepository.All.ToList(), rng);
 
+            mutationManager.ResetMutationPoints(players);
+            initialMutationPointsAssigned = true;
+
             gridVisualizer.Initialize(Board);
             PlaceStartingSpores();
             gridVisualizer.RenderBoard(Board);
             InitializeHumanSidebarUiForCurrentPlayer();
 
             StartCoroutine(PlayStartingSporeIntroAndContinue());
-            mutationManager.ResetMutationPoints(players);
-            initialMutationPointsAssigned = true;
 
             gameUIManager.LeftSidebar?.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
@@ -568,6 +568,14 @@ namespace FungusToast.Unity
             foreach (var p in Board.Players)
             {
                 p.MutationsChanged += OnPlayerMutationsChanged;
+            }
+        }
+
+        private void UnsubscribeFromPlayerMutationEvents()
+        {
+            foreach (var p in players)
+            {
+                p.MutationsChanged -= OnPlayerMutationsChanged;
             }
         }
 
@@ -937,6 +945,14 @@ namespace FungusToast.Unity
                 // Clear log data so stale entries don't persist into the next game
                 gameUIManager.GlobalGameLogManager?.ClearLog();
                 gameUIManager.GameLogManager?.ClearLog();
+                if (gameUIManager.GlobalGameLogManager != null && gameUIManager.GlobalGameLogPanel != null)
+                {
+                    gameUIManager.GlobalGameLogPanel.Initialize(gameUIManager.GlobalGameLogManager);
+                }
+                if (gameUIManager.GameLogManager != null && gameUIManager.GameLogPanel != null)
+                {
+                    gameUIManager.GameLogPanel.Initialize(gameUIManager.GameLogManager);
+                }
             }
             // Prefer showing mode select panel if present; fallback to legacy start panel
             if (modeSelectPanel != null)
@@ -956,7 +972,7 @@ namespace FungusToast.Unity
         public void ReturnToMainMenu()
         {
             ForceClosePauseMenu();
-            StopAllCoroutines();
+            ResetRuntimeStateForGameTransition();
             TooltipManager.Instance?.CancelAll();
 
             gameEnded = false;
@@ -978,6 +994,35 @@ namespace FungusToast.Unity
             gridVisualizer?.ClearHoverEffect();
 
             ShowStartGamePanel();
+        }
+
+        private void ResetRuntimeStateForGameTransition()
+        {
+            var currentBoard = Board;
+
+            UnsubscribeFromPlayerMutationEvents();
+
+            if (currentBoard != null)
+            {
+                postGrowthVisualSequence?.ResetForGameTransition(currentBoard);
+                GameRulesEventSubscriber.UnsubscribeAll(currentBoard);
+                GameUIEventSubscriber.Unsubscribe(currentBoard, gameUIManager);
+                AnalyticsEventSubscriber.Unsubscribe(currentBoard, gameUIManager?.GameLogRouter);
+            }
+
+            StopAllCoroutines();
+            mycovariantDraftController?.ResetForGameTransition();
+            growthPhaseRunner?.ResetForGameTransition();
+            decayPhaseRunner?.ResetForGameTransition();
+            gridVisualizer?.ResetForGameTransition();
+            specialEventPresentationService?.Reset();
+            gameUIManager?.MutationUIManager?.ResetForNewGameState();
+            gameUIManager?.MutationTreeToastPresenter?.ResetForGameTransition();
+            gameUIManager?.GameLogManager?.ResetForGameTransition();
+            gameUIManager?.GlobalGameLogManager?.ResetForGameTransition();
+            gameUIManager?.ClearBoard();
+            gameUIManager?.GameLogRouter?.DisableSilentMode();
+            TooltipManager.Instance?.CancelAll();
         }
 
         public void QuitGame()
