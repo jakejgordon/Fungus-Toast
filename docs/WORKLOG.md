@@ -62,7 +62,8 @@ Use the following minimal workflow to preserve working memory across sessions:
 7. ✅ Start clean 5-player validation and identify the fairest starting layout.
 8. ✅ Commit the selected 5-player layout and record the validation results.
 9. ✅ Document the 4-player symmetry assumption and start 3-player validation.
-10. ⏳ Commit the selected 3-player layout and record the validation results.
+10. ✅ Commit the selected 3-player layout and record the validation results.
+11. ⏳ Add/document the symmetric 2-player fast-path and confirm `1-8` startup placement behavior.
 
 ## Current Handoff
 
@@ -125,6 +126,16 @@ Use the following minimal workflow to preserve working memory across sessions:
 - **Selected layout:** P0 `(141,80)`, P1 `(50,133)`, P2 `(50,27)`.
 - **Open questions:** Player counts below 3 remain untreated, but may be low priority depending on actual game usage.
 - **Next steps:** Commit/push the selected 3-player layout and decide whether any smaller player counts need explicit treatment.
+
+### 2026-03-21 (2-player fast-path confirmation)
+- **Focus:** Close the loop on startup placement coverage.
+- **Changed:** Added a symmetric 2-player precomputed layout and documented the complete fast-path behavior.
+- **Selected 2-player layout:** P0 `(128,80)`, P1 `(32,80)` on the `160x160` reference board.
+- **Resulting startup behavior:**
+  - 1 player uses direct center placement
+  - 2-8 players now use precomputed/scaled layouts
+  - only other player counts fall back to search
+- **Next steps:** No further starting-position search is needed for the common square-board player counts unless future gameplay evidence suggests a new imbalance.
 
 ## Session Checkpoint Template
 

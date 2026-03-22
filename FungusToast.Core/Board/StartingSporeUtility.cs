@@ -19,6 +19,11 @@ namespace FungusToast.Core.Board
         private const int ReferenceBoardSize = 160;
         private static readonly Dictionary<int, (int x, int y)[]> PrecomputedReferenceLayouts = new()
         {
+            [2] = new[]
+            {
+                (128, 80),
+                (32, 80),
+            },
             [3] = new[]
             {
                 (141, 80),
