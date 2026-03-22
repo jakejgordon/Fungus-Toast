@@ -197,6 +197,12 @@ namespace FungusToast.Unity.UI.GameLog
             playerActivityLogManager?.RecordCrustalCallusResistance(playerId, cellsFortified);
         }
 
+        public void RecordHyphalVectoringSurge(int playerId, int cellsPlaced)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordHyphalVectoringSurge(playerId, cellsPlaced);
+        }
+
         public void RecordSaprophageRingConsumption(int playerId, int cellsConsumed)
         {
             if (IsSilentMode) return;

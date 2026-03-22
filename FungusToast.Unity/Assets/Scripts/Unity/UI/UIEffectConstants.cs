@@ -143,6 +143,61 @@ namespace FungusToast.Unity.UI
         public const float HyphalBridgeBannerHoldSeconds = 1.1f;
 
         /// <summary>
+        /// Hold duration for the Hyphal Vectoring surge banner.
+        /// </summary>
+        public const float HyphalVectoringBannerHoldSeconds = 0.7f;
+
+        /// <summary>
+        /// Lifetime of the floating Hyphal Vectoring toast.
+        /// </summary>
+        public const float HyphalVectoringToastDurationSeconds = 1.35f;
+
+        /// <summary>
+        /// World-space height at which the Hyphal Vectoring toast begins.
+        /// </summary>
+        public const float HyphalVectoringToastStartHeightWorld = 0.28f;
+
+        /// <summary>
+        /// World-space vertical travel applied to the Hyphal Vectoring toast.
+        /// </summary>
+        public const float HyphalVectoringToastRiseWorld = 0.72f;
+
+        /// <summary>
+        /// Font size used for the floating Hyphal Vectoring toast.
+        /// </summary>
+        public const float HyphalVectoringToastFontSize = 5.8f;
+
+        /// <summary>
+        /// Duration of the origin emphasis pulse.
+        /// </summary>
+        public const float HyphalVectoringOriginPulseDurationSeconds = 0.2f;
+
+        /// <summary>
+        /// Duration of each Hyphal Vectoring chunk pulse.
+        /// </summary>
+        public const float HyphalVectoringChunkPulseDurationSeconds = 0.24f;
+
+        /// <summary>
+        /// Delay between Hyphal Vectoring chunk pulses.
+        /// </summary>
+        public const float HyphalVectoringChunkStaggerSeconds = 0.09f;
+
+        /// <summary>
+        /// Minimum number of chunk beats used for larger Hyphal Vectoring paths.
+        /// </summary>
+        public const int HyphalVectoringChunkCountMin = 3;
+
+        /// <summary>
+        /// Maximum number of chunk beats used for larger Hyphal Vectoring paths.
+        /// </summary>
+        public const int HyphalVectoringChunkCountMax = 6;
+
+        /// <summary>
+        /// Peak scale for the Hyphal Vectoring overlay pulse.
+        /// </summary>
+        public const float HyphalVectoringPulseScale = 1.22f;
+
+        /// <summary>
         /// Total duration for the Conidial Relay presentation animation.
         /// </summary>
         public const float ConidialRelayTotalDurationSeconds = 1.5f;

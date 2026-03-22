@@ -22,6 +22,7 @@ namespace FungusToast.Unity
         private readonly List<int> postGrowthHrtNewResistantTiles = new();
         private readonly List<int> crustalCallusResistanceTiles = new();
         private readonly List<int> aegisHyphaeResistanceTiles = new();
+        private readonly List<GameBoard.HyphalVectoringSurgeEventArgs> hyphalVectoringSurges = new();
         private HashSet<int> resistantBaseline = new();
         private bool sequenceRunning = false;
         private GameBoard registeredBoard;
@@ -40,6 +41,7 @@ namespace FungusToast.Unity
             board.PostGrowthPhase += OnPostGrowthPhase_StartSequence;
             board.PostGrowthPhaseCompleted += OnPostGrowthPhaseCompleted_CaptureHrt;
             board.ResistanceAppliedBatch += OnResistanceAppliedBatch_Buffer;
+            board.HyphalVectoringSurge += OnHyphalVectoringSurge_Buffer;
             registeredBoard = board;
         }
 
@@ -54,6 +56,7 @@ namespace FungusToast.Unity
             boardToUnregister.PostGrowthPhase -= OnPostGrowthPhase_StartSequence;
             boardToUnregister.PostGrowthPhaseCompleted -= OnPostGrowthPhaseCompleted_CaptureHrt;
             boardToUnregister.ResistanceAppliedBatch -= OnResistanceAppliedBatch_Buffer;
+            boardToUnregister.HyphalVectoringSurge -= OnHyphalVectoringSurge_Buffer;
 
             if (ReferenceEquals(registeredBoard, boardToUnregister))
             {
@@ -126,6 +129,16 @@ namespace FungusToast.Unity
             return filtered;
         }
 
+        private void OnHyphalVectoringSurge_Buffer(GameBoard.HyphalVectoringSurgeEventArgs e)
+        {
+            if (isFastForwarding() || e == null || e.AffectedTileCount <= 0)
+            {
+                return;
+            }
+
+            hyphalVectoringSurges.Add(e);
+        }
+
         private void OnPostGrowthPhase_StartSequence()
         {
             if (isFastForwarding()) return;
@@ -183,6 +196,38 @@ namespace FungusToast.Unity
                 yield return grid.WaitForAllAnimations();
                 regenReclaimBuffer.Clear();
             }
+            if (hyphalVectoringSurges.Count > 0)
+            {
+                bool multipleSurges = hyphalVectoringSurges.Count > 1;
+                foreach (var surge in hyphalVectoringSurges)
+                {
+                    if (surge.AffectedTileCount <= 0)
+                    {
+                        continue;
+                    }
+
+                    grid.PlayHyphalVectoringSurgePresentation(surge.PlayerId, surge.OriginTileId, surge.AffectedTileIds);
+                    gameManager.GameUI?.GameLogRouter?.RecordHyphalVectoringSurge(surge.PlayerId, surge.AffectedTileCount);
+
+                    if (!multipleSurges)
+                    {
+                        gameManager.GameUI?.PhaseBanner?.Show(
+                            surge.AffectedTileCount == 1
+                                ? "Hyphal Vectoring surges 1 tile toward the center!"
+                                : $"Hyphal Vectoring surges {surge.AffectedTileCount} tiles toward the center!",
+                            UIEffectConstants.HyphalVectoringBannerHoldSeconds);
+                    }
+                }
+
+                if (multipleSurges)
+                {
+                    gameManager.GameUI?.PhaseBanner?.Show(
+                        "Hyphal Vectoring surges ripple toward the center!",
+                        UIEffectConstants.HyphalVectoringBannerHoldSeconds);
+                }
+
+                hyphalVectoringSurges.Clear();
+            }
             if (postGrowthResistanceTiles.Count > 0)
             {
                 grid.PlayResistancePulseBatchScaled(postGrowthResistanceTiles, 0.5f); yield return grid.WaitForAllAnimations(); postGrowthResistanceTiles.Clear();
@@ -213,7 +258,7 @@ namespace FungusToast.Unity
         private void ClearBuffers()
         {
             grid.RevealDeferredResistanceOverlays(crustalCallusResistanceTiles);
-            regenReclaimBuffer.Clear(); postGrowthResistanceTiles.Clear(); postGrowthHrtNewResistantTiles.Clear(); crustalCallusResistanceTiles.Clear(); aegisHyphaeResistanceTiles.Clear();
+            regenReclaimBuffer.Clear(); postGrowthResistanceTiles.Clear(); postGrowthHrtNewResistantTiles.Clear(); crustalCallusResistanceTiles.Clear(); aegisHyphaeResistanceTiles.Clear(); hyphalVectoringSurges.Clear();
         }
     }
 }

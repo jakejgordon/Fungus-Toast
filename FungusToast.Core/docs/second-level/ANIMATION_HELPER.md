@@ -2,6 +2,8 @@
 
 This file lists WHEN gameplay animations run during normal play (excluding mycovariant draft UI), the METHOD that triggers each batch, and the PRIMARY CONSTANT that determines total batch duration (or the value you pass in).
 
+Any new gameplay animation entry point should be added to this file when introduced so it stays discoverable for later reuse, tuning, and sequencing work.
+
 ## Core (Normal Round Flow)
 
 | Sequence Point (Order of Appearance) | What Triggers It (public entry or immediate caller) | Per‑Tile Coroutine | Duration Input / Governing Constant |
@@ -11,6 +13,7 @@ This file lists WHEN gameplay animations run during normal play (excluding mycov
 | Toxin expires during growth-start cleanup | `GameBoard.ToxinExpired` → `GridVisualizer.HandleToxinExpired()` → next `RenderBoard()` → `StartPendingToxinExpiryAnimations()` | `ToxinExpiryDissolveAnimation` | `ToxinExpiryDissolveDurationSeconds` |
 | Cell marked dying (mainly after decay phase) | `TriggerDeathAnimation(int)` or `RenderBoard()` → `StartDeathAnimations()` | `DeathAnimation` | `CellDeathAnimationDurationSeconds` (first 15% is flash) |
 | Post‑Growth: Regenerative Hyphae reclaim batch | `PlayRegenerativeHyphaeReclaimBatch(tileIds, simplified, scaleMult [, explicitTotalSeconds])` | `RegenerativeHyphaeReclaimFull` / `RegenerativeHyphaeReclaimLite` | If provided: `explicitTotalSeconds`; else base sum `RegenerativeHyphaeTotalBaseDurationSeconds` scaled by `postGrowthPhaseDurationMultiplier` & `regenerativeHyphaeDurationMultiplier` |
+| Post‑Growth: Hyphal Vectoring surge presentation | `GameBoard.HyphalVectoringSurge` → `PostGrowthVisualSequence` → `PlayHyphalVectoringSurgePresentation(playerId, originTileId, tileIds)` | `RunHyphalVectoringSurgePresentation` with chunk pulses + floating toast | `HyphalVectoringOriginPulseDurationSeconds` + chunk cadence (`HyphalVectoringChunkPulseDurationSeconds`, `HyphalVectoringChunkStaggerSeconds`) + `HyphalVectoringToastDurationSeconds` |
 | Post‑Growth: Resistance pulses (Bastion / HRT spread) | `PlayResistancePulseBatchScaled(tileIds, scaleMultiplier)` | `BastionResistantPulseAnimation` | `MycelialBastionPulseDurationSeconds` (or `_timingContext.ResistancePulseTotal` if set) |
 | Starting tile ping highlight (occasionally shown) | `TriggerStartingTilePing(playerId)` → `RunStartingTilePing()` | (helper in `RingHighlightHelper`) | Fixed 1.0s internal (no constant yet) |
 
@@ -18,6 +21,7 @@ This file lists WHEN gameplay animations run during normal play (excluding mycov
 - Reclaim FULL sub‑phases (rise / hold / swap / settle) proportions come from base constants (`RegenerativeHyphae*DurationSeconds` + `RegenerativeHyphaeHoldBaseSeconds`). When you pass `explicitTotalSeconds`, those portions are applied linearly.
 - Lite reclaim uses only rise + swap (same proportional logic limited to those two components).
 - Timing context (`SetPostGrowthTiming`) can override reclaim (rise / hold / swap / settle / lite total) and resistance pulse totals directly.
+- When adding a new reusable animation or board-FX entry point, register it here with its trigger, main method, and governing constants.
 
 ## Minimal Mycovariant (Active Ability) Animations
 Use the same GridVisualizer entry points; only the triggering context differs.

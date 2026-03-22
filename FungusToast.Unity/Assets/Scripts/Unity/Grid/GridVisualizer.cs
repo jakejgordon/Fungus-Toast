@@ -93,6 +93,8 @@ namespace FungusToast.Unity.Grid
         private static readonly Color AdaptogenPatchTextColor = new(0.8f, 0.97f, 1f, 1f);
         private static readonly Color SporemealPatchTextColor = new(0.92f, 1f, 0.8f, 1f);
         private static readonly Color ChemobeaconColor = new(0.92f, 0.86f, 0.42f, 0.95f);
+        private static readonly Color HyphalVectoringToastColor = new(0.96f, 0.99f, 0.78f, 1f);
+        private static readonly Color HyphalVectoringPulseColor = new(1f, 0.95f, 0.58f, 0.92f);
 
         private sealed class ExpiringToxinVisualSnapshot
         {
@@ -556,6 +558,159 @@ namespace FungusToast.Unity.Grid
                 if (floatingText != null)
                 {
                     Destroy(floatingText.gameObject);
+                }
+            }
+        }
+
+        private IEnumerator RunHyphalVectoringSurgePresentation(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds)
+        {
+            Tilemap pulseTilemap = GetTransientPulseTilemap();
+            if (pulseTilemap == null || solidHighlightTile == null || overlayTilemap == null)
+            {
+                yield break;
+            }
+
+            var orderedTileIds = affectedTileIds
+                .Where(tileId => tileId >= 0)
+                .Distinct()
+                .ToList();
+            if (orderedTileIds.Count == 0)
+            {
+                yield break;
+            }
+
+            TextMeshPro toast = CreateHyphalVectoringToastText(orderedTileIds);
+
+            try
+            {
+                if (originTileId >= 0)
+                {
+                    Vector3Int originPos = GetPositionForTileId(originTileId);
+                    yield return PulseTiles(
+                        pulseTilemap,
+                        new[] { originPos },
+                        UIEffectConstants.HyphalVectoringOriginPulseDurationSeconds,
+                        HyphalVectoringPulseColor,
+                        1f,
+                        UIEffectConstants.HyphalVectoringPulseScale);
+                }
+
+                foreach (var chunk in BuildHyphalVectoringChunks(orderedTileIds))
+                {
+                    var chunkPositions = chunk.Select(GetPositionForTileId).ToArray();
+                    StartCoroutine(PulseTiles(
+                        pulseTilemap,
+                        chunkPositions,
+                        UIEffectConstants.HyphalVectoringChunkPulseDurationSeconds,
+                        HyphalVectoringPulseColor,
+                        0.92f,
+                        UIEffectConstants.HyphalVectoringPulseScale));
+                    yield return new WaitForSeconds(UIEffectConstants.HyphalVectoringChunkStaggerSeconds);
+                }
+
+                if (toast != null)
+                {
+                    yield return AnimateFloatingToast(
+                        toast,
+                        UIEffectConstants.HyphalVectoringToastDurationSeconds,
+                        HyphalVectoringToastColor,
+                        UIEffectConstants.HyphalVectoringToastRiseWorld,
+                        useAnimatedScale: false);
+                }
+            }
+            finally
+            {
+                if (toast != null)
+                {
+                    Destroy(toast.gameObject);
+                }
+            }
+        }
+
+        private IEnumerable<List<int>> BuildHyphalVectoringChunks(IReadOnlyList<int> orderedTileIds)
+        {
+            int tileCount = orderedTileIds.Count;
+            if (tileCount == 0)
+            {
+                yield break;
+            }
+
+            int chunkCount = tileCount <= 2
+                ? tileCount
+                : Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(tileCount)), UIEffectConstants.HyphalVectoringChunkCountMin, UIEffectConstants.HyphalVectoringChunkCountMax);
+            int chunkSize = Mathf.CeilToInt(tileCount / (float)Mathf.Max(1, chunkCount));
+
+            for (int index = 0; index < tileCount; index += chunkSize)
+            {
+                yield return orderedTileIds.Skip(index).Take(chunkSize).ToList();
+            }
+        }
+
+        private Tilemap GetTransientPulseTilemap()
+        {
+            if (PingOverlayTileMap != null)
+            {
+                return PingOverlayTileMap;
+            }
+
+            if (HoverOverlayTileMap != null)
+            {
+                return HoverOverlayTileMap;
+            }
+
+            return overlayTilemap;
+        }
+
+        private IEnumerator PulseTiles(Tilemap targetTilemap, IReadOnlyList<Vector3Int> positions, float duration, Color pulseColor, float maxAlpha, float pulseScale)
+        {
+            if (targetTilemap == null || positions == null || positions.Count == 0 || solidHighlightTile == null)
+            {
+                yield break;
+            }
+
+            foreach (var pos in positions)
+            {
+                targetTilemap.SetTile(pos, solidHighlightTile);
+                targetTilemap.SetTileFlags(pos, TileFlags.None);
+            }
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
+                float eased = Mathf.Sin(t * Mathf.PI);
+                float alpha = Mathf.Lerp(0.12f, maxAlpha, eased);
+                float scale = Mathf.Lerp(1f, pulseScale, eased);
+
+                foreach (var pos in positions)
+                {
+                    var color = pulseColor;
+                    color.a = alpha;
+                    targetTilemap.SetColor(pos, color);
+                    targetTilemap.SetTransformMatrix(pos, Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f)));
+                }
+
+                yield return null;
+            }
+
+            ClearPulseTiles(targetTilemap, positions);
+        }
+
+        private void ClearPulseTiles(Tilemap targetTilemap, IEnumerable<Vector3Int> positions)
+        {
+            if (targetTilemap == null || positions == null)
+            {
+                return;
+            }
+
+            foreach (var pos in positions)
+            {
+                targetTilemap.SetTransformMatrix(pos, IdentityMatrix);
+                targetTilemap.SetColor(pos, Color.white);
+                if (targetTilemap.GetTile(pos) == solidHighlightTile)
+                {
+                    targetTilemap.SetTile(pos, null);
                 }
             }
         }
@@ -1475,6 +1630,13 @@ namespace FungusToast.Unity.Grid
             };
         }
 
+        private static string BuildHyphalVectoringToastText(int tileCount)
+        {
+            return tileCount == 1
+                ? "Hyphal Vectoring!"
+                : $"Hyphal Vectoring x{tileCount}!";
+        }
+
         private TextMeshPro CreateNutrientToastText(Vector3Int destinationPos, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
         {
             var textObject = new GameObject("NutrientPatchToast", typeof(TextMeshPro));
@@ -1501,12 +1663,77 @@ namespace FungusToast.Unity.Grid
             return tmp;
         }
 
+        private TextMeshPro CreateHyphalVectoringToastText(IReadOnlyList<int> affectedTileIds)
+        {
+            if (overlayTilemap == null || affectedTileIds == null || affectedTileIds.Count == 0)
+            {
+                return null;
+            }
+
+            Vector3 averageWorld = Vector3.zero;
+            foreach (var tileId in affectedTileIds)
+            {
+                averageWorld += overlayTilemap.GetCellCenterWorld(GetPositionForTileId(tileId));
+            }
+
+            averageWorld /= affectedTileIds.Count;
+
+            var textObject = new GameObject("HyphalVectoringToast", typeof(TextMeshPro));
+            textObject.transform.SetParent(transform, false);
+
+            var tmp = textObject.GetComponent<TextMeshPro>();
+            tmp.text = BuildHyphalVectoringToastText(affectedTileIds.Count);
+            tmp.fontSize = UIEffectConstants.HyphalVectoringToastFontSize;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.textWrappingMode = TextWrappingModes.NoWrap;
+            tmp.fontStyle = FontStyles.Bold;
+            tmp.color = HyphalVectoringToastColor;
+            tmp.outlineWidth = 0.32f;
+            tmp.outlineColor = new Color(0.18f, 0.11f, 0.02f, 1f);
+            tmp.transform.position = averageWorld + new Vector3(0f, UIEffectConstants.HyphalVectoringToastStartHeightWorld, 0f);
+            tmp.transform.localScale = Vector3.one * GetNutrientToastScaleMultiplier();
+
+            var renderer = tmp.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                renderer.sortingOrder = 61;
+            }
+
+            return tmp;
+        }
+
+        private IEnumerator AnimateFloatingToast(TextMeshPro toast, float duration, Color baseColor, float riseWorld, bool useAnimatedScale)
+        {
+            if (toast == null)
+            {
+                yield break;
+            }
+
+            Vector3 start = toast.transform.position;
+            Vector3 end = start + new Vector3(0f, riseWorld, 0f);
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
+                toast.transform.position = Vector3.Lerp(start, end, t);
+                toast.transform.localScale = Vector3.one * (useAnimatedScale ? GetAnimatedNutrientToastScaleMultiplier(t) : GetNutrientToastScaleMultiplier());
+
+                var textColor = baseColor;
+                float fadeT = Mathf.Clamp01((t - 0.48f) / 0.52f);
+                textColor.a = 1f - fadeT;
+                toast.color = textColor;
+                yield return null;
+            }
+        }
+
         private void DestroyLingeringNutrientToasts()
         {
             for (int i = transform.childCount - 1; i >= 0; i--)
             {
                 Transform child = transform.GetChild(i);
-                if (child != null && child.name == "NutrientPatchToast")
+                if (child != null && (child.name == "NutrientPatchToast" || child.name == "HyphalVectoringToast"))
                 {
                     Destroy(child.gameObject);
                 }
@@ -2444,6 +2671,16 @@ namespace FungusToast.Unity.Grid
                 StopCoroutine(pulseHighlightCoroutine);
                 pulseHighlightCoroutine = null;
             }
+        }
+
+        public void PlayHyphalVectoringSurgePresentation(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds)
+        {
+            if (affectedTileIds == null || affectedTileIds.Count == 0)
+            {
+                return;
+            }
+
+            StartCoroutine(RunHyphalVectoringSurgePresentation(playerId, originTileId, affectedTileIds));
         }
 
         public void ShowSelectedTiles(IEnumerable<int> tileIds, Color? selectedColor = null)

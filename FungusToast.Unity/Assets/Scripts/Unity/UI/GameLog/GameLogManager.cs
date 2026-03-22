@@ -996,6 +996,20 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordBankedPoints(int playerId, int pointsBanked) { }
         public void RecordHyphalSurgeGrowth(int playerId) { }
         public void RecordHyphalVectoringGrowth(int playerId, int cellsPlaced) { }
+        public void RecordHyphalVectoringSurge(int playerId, int cellsPlaced)
+        {
+            if (!IsHuman(playerId) || cellsPlaced <= 0)
+            {
+                return;
+            }
+
+            AddPlayerEvent(
+                playerId,
+                cellsPlaced == 1
+                    ? "Hyphal Vectoring surged 1 tile toward the center"
+                    : $"Hyphal Vectoring surged {cellsPlaced} tiles toward the center",
+                GameLogCategory.Lucky);
+        }
         public void ReportJettingMyceliumReclaimed(int playerId, int reclaimed) { if (IsHuman(playerId) && reclaimed > 0) Inc(EventKinds.Reclaimed, playerId, GrowthSource.JettingMycelium, reclaimed); }
         public void ReportJettingMyceliumCatabolicGrowth(int playerId, int catabolicGrowth) { }
         public void ReportJettingMyceliumAlreadyOwned(int playerId, int alreadyOwned) { }
