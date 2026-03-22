@@ -103,7 +103,8 @@ namespace FungusToast.Core.Config
         public const int HyphalVectoringSurgePointIncreasePerLevel = 1;
 
         // Chemotactic Beacon (Tier 2 MycelialSurges)
-        public const float ChemotacticBeaconTowardGrowthBonus = 0.05f;
+            public const float ChemotacticBeaconTowardGrowthBonus = 0.05f;
+            public const float ChemotacticBeaconBaseNonTargetPenalty = 0.06f;
         public const float ChemotacticBeaconPenaltyReductionPerLevel = 0.01f;
         public const int ChemotacticBeaconMaxLevel = 5;
         public const int ChemotacticBeaconPointsPerActivation = 8;

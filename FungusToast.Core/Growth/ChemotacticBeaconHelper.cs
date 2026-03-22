@@ -34,15 +34,15 @@ namespace FungusToast.Core.Growth
                 return chance;
             }
 
-            bool movesCloser = DoesMoveApproachMarker(sourceTile, targetTile, board, marker.TileId);
-            float adjustment = movesCloser
+            bool movesTowardOrNeutral = DoesMoveStayAsCloseOrCloserToMarker(sourceTile, targetTile, board, marker.TileId);
+            float adjustment = movesTowardOrNeutral
                 ? GameBalance.ChemotacticBeaconTowardGrowthBonus
                 : -GetNonTargetPenalty(player.GetMutationLevel(MutationIds.ChemotacticBeacon));
 
             return Math.Clamp(chance + adjustment, 0f, 1f);
         }
 
-        public static bool DoesMoveApproachMarker(BoardTile sourceTile, BoardTile targetTile, GameBoard board, int markerTileId)
+        public static bool DoesMoveStayAsCloseOrCloserToMarker(BoardTile sourceTile, BoardTile targetTile, GameBoard board, int markerTileId)
         {
             var markerTile = board.GetTileById(markerTileId);
             if (markerTile == null)
@@ -52,12 +52,12 @@ namespace FungusToast.Core.Growth
 
             int sourceDistance = sourceTile.DistanceTo(markerTile);
             int targetDistance = targetTile.DistanceTo(markerTile);
-            return targetDistance < sourceDistance;
+            return targetDistance <= sourceDistance;
         }
 
         public static float GetNonTargetPenalty(int level)
         {
-            return Math.Max(0f, GameBalance.ChemotacticBeaconTowardGrowthBonus - level * GameBalance.ChemotacticBeaconPenaltyReductionPerLevel);
+            return Math.Max(0f, GameBalance.ChemotacticBeaconBaseNonTargetPenalty - level * GameBalance.ChemotacticBeaconPenaltyReductionPerLevel);
         }
 
         public static int? TrySelectAITargetTile(Player player, GameBoard board)

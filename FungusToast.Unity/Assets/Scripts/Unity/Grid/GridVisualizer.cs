@@ -1020,7 +1020,7 @@ namespace FungusToast.Unity.Grid
 
             moldTilemap.SetTile(pos, chemobeaconTile);
             moldTilemap.SetTileFlags(pos, TileFlags.None);
-            moldTilemap.SetColor(pos, Color.white);
+            moldTilemap.SetColor(pos, GetChemobeaconPulseColor(tileId));
             moldTilemap.SetTransformMatrix(pos, GetChemobeaconPulseMatrix(tileId));
             moldTilemap.RefreshTile(pos);
 
@@ -1076,7 +1076,7 @@ namespace FungusToast.Unity.Grid
                     continue;
                 }
 
-                moldTilemap.SetColor(pos, Color.white);
+                moldTilemap.SetColor(pos, GetChemobeaconPulseColor(marker.TileId));
                 moldTilemap.SetTransformMatrix(pos, GetChemobeaconPulseMatrix(marker.TileId));
                 if (overlayTilemap.HasTile(pos))
                 {
@@ -1088,11 +1088,23 @@ namespace FungusToast.Unity.Grid
 
         private Matrix4x4 GetChemobeaconPulseMatrix(int tileId)
         {
-            float duration = Mathf.Max(0.01f, UIEffectConstants.ChemobeaconPulseDurationSeconds);
-            float cycle = Mathf.Repeat(Time.time + tileId * 0.137f, duration) / duration;
-            float wave = 0.5f + 0.5f * Mathf.Sin(cycle * Mathf.PI * 2f);
+            float wave = GetChemobeaconPulseFactor(tileId);
             float scale = Mathf.Lerp(UIEffectConstants.ChemobeaconPulseMinScale, UIEffectConstants.ChemobeaconPulseMaxScale, wave);
             return Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
+        }
+
+        private static Color GetChemobeaconPulseColor(int tileId)
+        {
+            float wave = GetChemobeaconPulseFactor(tileId);
+            float alpha = Mathf.Lerp(UIEffectConstants.ChemobeaconPulseMinAlpha, UIEffectConstants.ChemobeaconPulseMaxAlpha, wave);
+            return new Color(1f, 1f, 1f, alpha);
+        }
+
+        private static float GetChemobeaconPulseFactor(int tileId)
+        {
+            float duration = Mathf.Max(0.01f, UIEffectConstants.ChemobeaconPulseDurationSeconds);
+            float cycle = Mathf.Repeat(Time.time + tileId * 0.137f, duration) / duration;
+            return 0.5f + 0.5f * Mathf.Sin(cycle * Mathf.PI * 2f);
         }
 
         private static Matrix4x4 GetChemobeaconEmblemMatrix()

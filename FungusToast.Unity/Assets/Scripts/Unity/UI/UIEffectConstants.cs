@@ -436,6 +436,14 @@ namespace FungusToast.Unity.UI
         /// Duration of a full Chemobeacon pulse cycle.
         /// </summary>
         public const float ChemobeaconPulseDurationSeconds = 1.15f;
+            /// <summary>
+            /// Minimum alpha for the pulsing Chemobeacon owner icon.
+            /// </summary>
+            public const float ChemobeaconPulseMinAlpha = 0f;
+            /// <summary>
+            /// Maximum alpha for the pulsing Chemobeacon owner icon.
+            /// </summary>
+            public const float ChemobeaconPulseMaxAlpha = 1f;
         /// <summary>
         /// Total duration for the Chemobeacon evaporation animation.
         /// </summary>

@@ -107190,6 +107190,8 @@ MonoBehaviour:
   hotseatTurnPrompt: {fileID: 1565504626}
   SelectionPromptPanel: {fileID: 373902686}
   SelectionPromptText: {fileID: 818361141}
+  selectionPromptCancelButton: {fileID: 0}
+  selectionPromptCancelButtonText: {fileID: 0}
   modeSelectPanel: {fileID: 1539722632}
   configuredHumanPlayerCount: 1
   campaignProgression: {fileID: 11400000, guid: ddba19d3898f54445b37abdc3b92a2b7, type: 2}
