@@ -1383,6 +1383,7 @@ namespace FungusToast.Unity
                 return;
             }
 
+            gameUIManager?.MutationUIManager?.ForceCloseTreePanel();
             isPauseMenuOpen = true;
             Time.timeScale = 0f;
             pauseMenuPanel?.Show();

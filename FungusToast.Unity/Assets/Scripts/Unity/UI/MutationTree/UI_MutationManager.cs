@@ -359,6 +359,31 @@ namespace FungusToast.Unity.UI.MutationTree
                 StartCoroutine(SlideInTree());
         }
 
+        public void ForceCloseTreePanel()
+        {
+            if (mutationTreePanel == null)
+            {
+                return;
+            }
+
+            StopAllCoroutines();
+
+            isTreeOpen = false;
+            isSliding = false;
+
+            if (mutationTreeRect != null)
+            {
+                mutationTreeRect.anchoredPosition = hiddenPosition;
+            }
+
+            mutationTreePanel.SetActive(false);
+
+            if (dockButtonText != null)
+            {
+                dockButtonText.text = ">";
+            }
+        }
+
 
 
         private IEnumerator SlideInTree()
