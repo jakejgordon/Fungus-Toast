@@ -17,7 +17,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeRoot(new Mutation(
                 id: MutationIds.MycotoxinTracer,
                 name: "Mycotoxin Tracer",
-                description: "At the start of each decay phase, release toxin spores scaling with mutation level and failed growth attempts (with diminishing returns, capped by board size). Spores place toxins on empty tiles adjacent to enemy cells, blocking their growth and reclamation.",
+                description: "At the start of each decay phase, release toxin spores based on three factors: a random base amount that scales with level (with diminishing returns), a random bonus from failed growth attempts, and an early-game bonus when failed growths are high relative to your living cells. Total spores are capped by board size. Spores place toxins on empty tiles adjacent to enemy cells, blocking their growth and reclamation.",
                 flavorText: "Microscopic chemical trails seep outward, clouding enemy borders in dormant inhibition fields.",
                 type: MutationType.FungicideToxinSpores,
                 effectPerLevel: GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel,
