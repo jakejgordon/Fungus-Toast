@@ -60,6 +60,58 @@ dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj
 
 Typical output lands under the test project's `TestResults/` directory. Keep coverage as a supporting signal, not the goal by itself; high-value deterministic tests matter more than chasing a percentage.
 
+## Assertion Style Guidance
+
+Prefer assertions that produce useful failure output without needing to re-read the whole test body.
+
+Good defaults in xUnit:
+
+- `Assert.Equal(...)`
+- `Assert.Single(...)`
+- `Assert.InRange(...)`
+- `Assert.Contains(...)`
+- `Assert.IsType<T>(...)`
+- `Assert.All(...)`
+
+Prefer these over generic boolean assertions when possible.
+
+### Prefer specific assertions over `Assert.True(...)`
+
+Examples:
+
+```csharp
+// weaker
+Assert.True(entry.UncontestedTileCount >= 0);
+
+// better
+Assert.InRange(entry.UncontestedTileCount, 0, int.MaxValue);
+```
+
+```csharp
+// weaker
+Assert.True(tile.FungalCell.IsResistant);
+
+// better when there is no more specific built-in assertion
+Assert.True(tile.FungalCell.IsResistant, "Expected starting spores to be resistant.");
+```
+
+### Why
+
+Specific assertions usually provide:
+
+- expected vs actual values
+- collection mismatch details
+- the failing item index inside `Assert.All(...)`
+- better diagnostics when a regression appears in CI
+
+### Practical rule
+
+When writing or editing tests:
+
+- use the most specific built-in xUnit assertion available
+- avoid bare `Assert.True(...)` / `Assert.False(...)` unless the condition is genuinely the clearest expression
+- if a boolean assertion is still the best fit, add a short message explaining the contract that failed
+
 ## What To Test First
 
 Strong first targets in `FungusToast.Core` are:

@@ -26,12 +26,13 @@ public class StartingSporePlacementTests
             var (x, y) = overridePositions[playerId];
             var tile = board.GetTile(x, y);
 
-            Assert.NotNull(tile);
-            Assert.True(tile!.IsOccupied);
-            Assert.NotNull(tile.FungalCell);
-            Assert.Equal(playerId, tile.FungalCell!.OwnerPlayerId);
-            Assert.Equal(GrowthSource.InitialSpore, tile.FungalCell.SourceOfGrowth);
-            Assert.True(tile.FungalCell.IsResistant);
+            var occupiedTile = Assert.IsType<BoardTile>(tile);
+            Assert.NotNull(occupiedTile.FungalCell);
+            var fungalCell = occupiedTile.FungalCell;
+
+            Assert.Equal(playerId, fungalCell!.OwnerPlayerId);
+            Assert.Equal(GrowthSource.InitialSpore, fungalCell.SourceOfGrowth);
+            Assert.True(fungalCell.IsResistant, $"Expected starting spore for player {playerId} at ({x}, {y}) to be resistant.");
 
             int expectedTileId = y * board.Width + x;
             Assert.Equal(expectedTileId, players[playerId].StartingTileId);
@@ -62,7 +63,12 @@ public class StartingSporePlacementTests
 
         Assert.Equal(4, occupiedTiles.Length);
         Assert.Equal(4, players.Count(player => player.StartingTileId.HasValue));
-        Assert.All(players, player => Assert.Single(player.ControlledTileIds));
+        Assert.All(players, player =>
+        {
+            var controlledTileId = Assert.Single(player.ControlledTileIds);
+            var startingTileId = Assert.IsType<int>(player.StartingTileId);
+            Assert.Equal(controlledTileId, startingTileId);
+        });
         var ownerIds = occupiedTiles
             .Select(tile => tile!.FungalCell!.OwnerPlayerId)
             .OrderBy(id => id)
