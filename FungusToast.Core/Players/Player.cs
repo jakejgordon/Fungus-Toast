@@ -140,11 +140,6 @@ namespace FungusToast.Core.Players
             return level * bonusPerLevel;
         }
 
-        public float GetOffensiveDecayModifierAgainst(FungalCell targetCell, GameBoard board)
-        {
-            return GetMutationEffect(MutationType.AdjacentFungicide);
-        }
-
         /* ---------------- Diagonal growth helpers ------------- */
 
         public float GetDiagonalGrowthChance(DiagonalDirection dir) =>

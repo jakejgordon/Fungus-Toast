@@ -46,7 +46,6 @@ namespace FungusToast.Simulation.Export
         public int BankedPoints { get; set; }
         public float EffectiveGrowthChance { get; set; }
         public float EffectiveSelfDeathChance { get; set; }
-        public float OffensiveDecayModifier { get; set; }
         public float? AvgAIScoreAtDraft { get; set; }
     }
 

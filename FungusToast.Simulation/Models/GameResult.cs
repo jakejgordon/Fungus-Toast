@@ -82,11 +82,6 @@ namespace FungusToast.Simulation.Models
                     // --- Effective rates (final snapshot) ---
                     EffectiveGrowthChance = player.GetEffectiveGrowthChance(),
                     EffectiveSelfDeathChance = player.GetEffectiveSelfDeathChance(),
-                    OffensiveDecayModifier = board.GetAllCells()
-                        .Where(c => c.IsAlive && c.OwnerPlayerId != player.PlayerId)
-                        .Select(c => player.GetOffensiveDecayModifierAgainst(c, board))
-                        .DefaultIfEmpty(0f)
-                        .Average(),
 
                     // --- Per-mutation event counters ---
                     RegenerativeHyphaeReclaims = tracking.GetRegenerativeHyphaeReclaims(player.PlayerId),
