@@ -12,12 +12,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.Logging;
+using FungusToast.Core.Common;
 
 namespace FungusToast.Core.Players
 {
     public class Player
     {
-        private static readonly System.Random rng = new System.Random();
+        private static readonly IRandomSource rng = new SystemRandomSource(new System.Random());
 
         public int PlayerId { get; }
         public string PlayerName { get; }
@@ -430,19 +431,21 @@ namespace FungusToast.Core.Players
 
         /* ---------------- Bonus MP & auto-upgrade ------------- */
 
-        public int GetBonusMutationPoints()
+        public int GetBonusMutationPoints(IRandomSource? randomSource = null)
         {
             if (!PlayerMutations.TryGetValue(MutationIds.AdaptiveExpression, out var pm) || pm.CurrentLevel <= 0)
                 return 0;
 
+            randomSource ??= rng;
+
             int level = pm.CurrentLevel;
             float firstChance = level * GameBalance.AdaptiveExpressionEffectPerLevel;
             int bonus = 0;
-            if (rng.NextDouble() < firstChance)
+            if (randomSource.NextDouble() < firstChance)
             {
                 bonus = 1;
                 float secondChance = level * GameBalance.AdaptiveExpressionSecondPointChancePerLevel;
-                if (rng.NextDouble() < secondChance)
+                if (randomSource.NextDouble() < secondChance)
                 {
                     bonus = 2;
                 }
@@ -511,7 +514,7 @@ namespace FungusToast.Core.Players
         }
         public void RemoveControlledTile(int id) => ControlledTileIds.Remove(id);
 
-        public int RollAnabolicInversionBonus(List<Player> allPlayers, System.Random rng, GameBoard board, IReadOnlyDictionary<int,int>? precomputedLivingCellCounts = null)
+        public int RollAnabolicInversionBonus(List<Player> allPlayers, IRandomSource randomSource, GameBoard board, IReadOnlyDictionary<int,int>? precomputedLivingCellCounts = null)
         {
             if (!PlayerMutations.TryGetValue(MutationIds.AnabolicInversion, out var pm) || pm.CurrentLevel <= 0)
                 return 0;
@@ -546,10 +549,10 @@ namespace FungusToast.Core.Players
             float rawChance = (1f - ratio) + pm.CurrentLevel * GameBalance.AnabolicInversionGapBonusPerLevel;
             float chance = Math.Clamp(rawChance, 0f, 1f); // Prevent >100% auto-triggering
 
-            if (rng.NextDouble() < chance)
+            if (randomSource.NextDouble() < chance)
             {
                 float weight = 1f - ratio; // More weight => more likely higher payout
-                float rand = (float)rng.NextDouble();
+                float rand = (float)randomSource.NextDouble();
                 int bonus;
 
                 float highCutoff = weight * GameBalance.AnabolicInversionHighRewardCutoff;
@@ -558,7 +561,7 @@ namespace FungusToast.Core.Players
 
                 if (rand < highCutoff)
                 {
-                    bonus = rng.NextDouble() < weight ? 5 : 4;
+                    bonus = randomSource.NextDouble() < weight ? 5 : 4;
                 }
                 else if (rand < midCutoff)
                 {

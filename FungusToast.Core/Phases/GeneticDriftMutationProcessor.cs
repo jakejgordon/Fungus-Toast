@@ -774,7 +774,7 @@ namespace FungusToast.Core.Phases
         {
             int level = player.GetMutationLevel(MutationIds.AnabolicInversion);
             if (level <= 0) return;
-            int bonusPoints = player.RollAnabolicInversionBonus(allPlayers, rng, board, livingCellCounts);
+            int bonusPoints = player.RollAnabolicInversionBonus(allPlayers, new FungusToast.Core.Common.SystemRandomSource(rng), board, livingCellCounts);
             if (bonusPoints > 0)
             {
                 player.MutationPoints += bonusPoints;
