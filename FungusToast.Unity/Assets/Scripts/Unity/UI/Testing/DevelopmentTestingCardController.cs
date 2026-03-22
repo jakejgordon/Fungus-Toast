@@ -9,6 +9,75 @@ using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI.Testing
 {
+    public static class DevelopmentTestingBoardSizePresets
+    {
+        public const int DefaultSize = 160;
+        public const int MinimumSize = 10;
+        public const int MaximumSize = 200;
+        public const int Increment = 5;
+
+        private static readonly List<int> Sizes = BuildSizes();
+
+        public static IReadOnlyList<int> All => Sizes;
+
+        public static int ClampToSupportedSize(int size)
+        {
+            if (size <= MinimumSize)
+            {
+                return MinimumSize;
+            }
+
+            if (size >= MaximumSize)
+            {
+                return MaximumSize;
+            }
+
+            int offset = size - MinimumSize;
+            int steps = (int)Math.Round(offset / (double)Increment, MidpointRounding.AwayFromZero);
+            return MinimumSize + (steps * Increment);
+        }
+
+        public static List<string> BuildLabels()
+        {
+            var labels = new List<string>(Sizes.Count);
+            for (int index = 0; index < Sizes.Count; index++)
+            {
+                int size = Sizes[index];
+                labels.Add($"{size}x{size}");
+            }
+
+            return labels;
+        }
+
+        public static int GetIndex(int size)
+        {
+            int clampedSize = ClampToSupportedSize(size);
+            int index = Sizes.IndexOf(clampedSize);
+            return index >= 0 ? index : Sizes.IndexOf(DefaultSize);
+        }
+
+        public static int GetSizeAt(int index)
+        {
+            if (index < 0 || index >= Sizes.Count)
+            {
+                return DefaultSize;
+            }
+
+            return Sizes[index];
+        }
+
+        private static List<int> BuildSizes()
+        {
+            var sizes = new List<int>();
+            for (int size = MinimumSize; size <= MaximumSize; size += Increment)
+            {
+                sizes.Add(size);
+            }
+
+            return sizes;
+        }
+    }
+
     public static class DevelopmentTestingFastForwardPresets
     {
         private static readonly int[] Presets = { 0, 5, 10, 15, 20, 25, 30, 35 };
@@ -28,6 +97,7 @@ namespace FungusToast.Unity.UI.Testing
     public sealed class DevelopmentTestingConfiguration
     {
         public bool IsEnabled { get; }
+        public int? BoardSizeOverride { get; }
         public int? MycovariantId { get; }
         public int FastForwardRounds { get; }
         public bool SkipToEndGame { get; }
@@ -36,6 +106,7 @@ namespace FungusToast.Unity.UI.Testing
 
         public DevelopmentTestingConfiguration(
             bool isEnabled,
+            int? boardSizeOverride,
             int? mycovariantId,
             int fastForwardRounds,
             bool skipToEndGame,
@@ -43,6 +114,7 @@ namespace FungusToast.Unity.UI.Testing
             string forcedAdaptationId)
         {
             IsEnabled = isEnabled;
+            BoardSizeOverride = boardSizeOverride;
             MycovariantId = mycovariantId;
             FastForwardRounds = fastForwardRounds;
             SkipToEndGame = skipToEndGame;
@@ -57,6 +129,7 @@ namespace FungusToast.Unity.UI.Testing
         public Button ButtonTemplate { get; set; }
         public TMP_Dropdown DropdownTemplate { get; set; }
         public bool SupportsForcedAdaptation { get; set; }
+        public bool SupportsBoardSizeOverride { get; set; }
         public string CardName { get; set; } = "UI_DevelopmentTestingCard";
         public string ControlPrefix { get; set; } = "UI_DevelopmentTesting";
         public string LogPrefix { get; set; } = "DevelopmentTestingCardController";
@@ -74,6 +147,8 @@ namespace FungusToast.Unity.UI.Testing
 
         private GameObject cardRoot;
         private Button testingToggleButton;
+        private GameObject boardSizeRow;
+        private TMP_Dropdown boardSizeDropdown;
         private GameObject mycovariantRow;
         private TMP_Dropdown mycovariantDropdown;
         private Button fastForwardButton;
@@ -85,6 +160,7 @@ namespace FungusToast.Unity.UI.Testing
         private bool testingEnabled;
         private bool skipToEnd;
         private int fastForwardRounds;
+        private int selectedBoardSize = DevelopmentTestingBoardSizePresets.DefaultSize;
         private ForcedGameResultMode forcedResult = ForcedGameResultMode.Natural;
 
         public DevelopmentTestingCardController(DevelopmentTestingCardOptions options)
@@ -102,6 +178,18 @@ namespace FungusToast.Unity.UI.Testing
         {
             cardRoot = EnsureCardRoot();
             testingToggleButton = EnsureSettingButton($"{options.ControlPrefix}ToggleButton", OnTestingToggleClicked);
+
+            if (options.SupportsBoardSizeOverride)
+            {
+                boardSizeRow = EnsureDropdownRow(
+                    $"{options.ControlPrefix}BoardSizeRow",
+                    $"{options.ControlPrefix}BoardSizeLabel",
+                    $"{options.ControlPrefix}BoardSizeDropdown",
+                    "Board Size",
+                    out boardSizeDropdown);
+                ConfigureBoardSizeDropdown();
+            }
+
             mycovariantRow = EnsureDropdownRow(
                 $"{options.ControlPrefix}MycovariantRow",
                 $"{options.ControlPrefix}MycovariantLabel",
@@ -123,11 +211,12 @@ namespace FungusToast.Unity.UI.Testing
             }
 
             SetSiblingIndex(testingToggleButton != null ? testingToggleButton.transform : null, 0);
-            SetSiblingIndex(mycovariantRow != null ? mycovariantRow.transform : null, 1);
-            SetSiblingIndex(fastForwardButton != null ? fastForwardButton.transform : null, 2);
-            SetSiblingIndex(skipToEndButton != null ? skipToEndButton.transform : null, 3);
-            SetSiblingIndex(forcedResultButton != null ? forcedResultButton.transform : null, 4);
-            SetSiblingIndex(adaptationRow != null ? adaptationRow.transform : null, 5);
+            SetSiblingIndex(boardSizeRow != null ? boardSizeRow.transform : null, 1);
+            SetSiblingIndex(mycovariantRow != null ? mycovariantRow.transform : null, 2);
+            SetSiblingIndex(fastForwardButton != null ? fastForwardButton.transform : null, 3);
+            SetSiblingIndex(skipToEndButton != null ? skipToEndButton.transform : null, 4);
+            SetSiblingIndex(forcedResultButton != null ? forcedResultButton.transform : null, 5);
+            SetSiblingIndex(adaptationRow != null ? adaptationRow.transform : null, 6);
 
             RefreshDropdownOptions();
             RefreshVisualState();
@@ -135,6 +224,16 @@ namespace FungusToast.Unity.UI.Testing
 
         public void RefreshDropdownOptions()
         {
+            if (boardSizeDropdown != null)
+            {
+                int selectedIndex = DevelopmentTestingBoardSizePresets.GetIndex(selectedBoardSize);
+                boardSizeDropdown.ClearOptions();
+                boardSizeDropdown.AddOptions(DevelopmentTestingBoardSizePresets.BuildLabels());
+                boardSizeDropdown.value = selectedIndex;
+                boardSizeDropdown.RefreshShownValue();
+                ApplyDropdownReadability(boardSizeDropdown);
+            }
+
             if (mycovariantDropdown != null)
             {
                 var mycovariantOptions = new List<string> { "Select Mycovariant..." };
@@ -172,6 +271,11 @@ namespace FungusToast.Unity.UI.Testing
         {
             UpdateButtonState(testingToggleButton, true, true);
 
+            if (boardSizeRow != null)
+            {
+                boardSizeRow.SetActive(testingEnabled);
+            }
+
             if (mycovariantRow != null)
             {
                 mycovariantRow.SetActive(testingEnabled);
@@ -189,6 +293,11 @@ namespace FungusToast.Unity.UI.Testing
             if (mycovariantDropdown != null)
             {
                 mycovariantDropdown.interactable = testingEnabled;
+            }
+
+            if (boardSizeDropdown != null)
+            {
+                boardSizeDropdown.interactable = testingEnabled;
             }
 
             if (adaptationDropdown != null)
@@ -232,7 +341,7 @@ namespace FungusToast.Unity.UI.Testing
         {
             if (!testingEnabled)
             {
-                return new DevelopmentTestingConfiguration(false, null, 0, false, ForcedGameResultMode.Natural, string.Empty);
+                return new DevelopmentTestingConfiguration(false, null, null, 0, false, ForcedGameResultMode.Natural, string.Empty);
             }
 
             int? selectedMycovariantId = null;
@@ -257,6 +366,7 @@ namespace FungusToast.Unity.UI.Testing
 
             return new DevelopmentTestingConfiguration(
                 true,
+                options.SupportsBoardSizeOverride ? selectedBoardSize : null,
                 selectedMycovariantId,
                 fastForwardRounds,
                 skipToEnd,
@@ -284,6 +394,21 @@ namespace FungusToast.Unity.UI.Testing
                 configuration.SkipToEndGame,
                 configuration.ForcedResult,
                 configuration.ForcedAdaptationId);
+        }
+
+        private void ConfigureBoardSizeDropdown()
+        {
+            if (boardSizeDropdown == null)
+            {
+                return;
+            }
+
+            boardSizeDropdown.onValueChanged = new TMP_Dropdown.DropdownEvent();
+            boardSizeDropdown.onValueChanged.AddListener(OnBoardSizeChanged);
+            selectedBoardSize = DevelopmentTestingBoardSizePresets.ClampToSupportedSize(selectedBoardSize);
+            boardSizeDropdown.value = DevelopmentTestingBoardSizePresets.GetIndex(selectedBoardSize);
+            boardSizeDropdown.RefreshShownValue();
+            ApplyDropdownReadability(boardSizeDropdown);
         }
 
         private GameObject EnsureCardRoot()
@@ -506,6 +631,12 @@ namespace FungusToast.Unity.UI.Testing
             };
 
             RefreshVisualState();
+        }
+
+        private void OnBoardSizeChanged(int index)
+        {
+            selectedBoardSize = DevelopmentTestingBoardSizePresets.GetSizeAt(index);
+            NotifyLayoutInvalidated();
         }
 
         private void NotifyLayoutInvalidated()

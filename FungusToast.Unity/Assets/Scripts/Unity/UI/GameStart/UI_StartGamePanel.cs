@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Tilemaps;
+using FungusToast.Core.Config;
 using FungusToast.Unity;
 using FungusToast.Unity.UI.Testing;
 using System; // added for strict validation exceptions
@@ -52,9 +53,12 @@ namespace FungusToast.Unity.UI.GameStart
         private RectTransform setupContentRoot;
         private RectTransform titleSectionRoot;
         private RectTransform playerCountSectionRoot;
+        private RectTransform boardSizeSectionRoot;
         private RectTransform testingCardSectionRoot;
         private RectTransform actionButtonStackRoot;
         private RectTransform moldSelectionSectionRoot;
+        private TMP_Dropdown boardSizeDropdown;
+        private int selectedBoardSize = DevelopmentTestingBoardSizePresets.DefaultSize;
         private TextMeshProUGUI setupTitleLabel;
         private string defaultTitleText;
         private TextMeshProUGUI moldSelectionTitleLabel;
@@ -77,6 +81,7 @@ namespace FungusToast.Unity.UI.GameStart
 
             EnsureRuntimeLayoutScaffold();
             ApplyStyle();
+            EnsureBoardSizeSection();
             InitializeTestingCard();
 
             if (backButton != null)
@@ -200,6 +205,7 @@ namespace FungusToast.Unity.UI.GameStart
                 Parent = testingCardSectionRoot,
                 ButtonTemplate = backButton != null ? backButton : startGameButton,
                 DropdownTemplate = ResolveDropdownTemplate(),
+                SupportsBoardSizeOverride = false,
                 SupportsForcedAdaptation = false,
                 CardName = "UI_StartGameTestingCard",
                 ControlPrefix = "UI_StartGameTesting",
@@ -248,12 +254,14 @@ namespace FungusToast.Unity.UI.GameStart
 
             ConfigureSetupContentRoot(setupContentRoot);
             ResolveSetupSectionReferences();
+            EnsureBoardSizeSection();
             EnsureMoldSelectionSection();
 
             var orderedSections = new List<RectTransform>();
             TryAddSetupSection(orderedSections, titleSectionRoot);
             TryAddSetupSection(orderedSections, playerCountSectionRoot);
             TryAddSetupSection(orderedSections, humanPlayerSectionRoot != null ? humanPlayerSectionRoot.GetComponent<RectTransform>() : null);
+            TryAddSetupSection(orderedSections, boardSizeSectionRoot);
             TryAddSetupSection(orderedSections, moldSelectionSectionRoot);
             TryAddSetupSection(orderedSections, testingCardSectionRoot);
 
@@ -279,6 +287,7 @@ namespace FungusToast.Unity.UI.GameStart
         {
             titleSectionRoot ??= FindNamedRectTransform("UI_HowManyPlayersText");
             playerCountSectionRoot ??= FindNamedRectTransform("UI_PlayerCountButtonGroupWrapper");
+            boardSizeSectionRoot ??= FindNamedRectTransform("UI_StartGameBoardSizeSection");
             testingCardSectionRoot ??= FindNamedRectTransform("UI_StartGameTestingSection");
             if (setupTitleLabel == null && titleSectionRoot != null)
             {
@@ -349,6 +358,41 @@ namespace FungusToast.Unity.UI.GameStart
             ConfigureTestingCardSection(testingCardSectionRoot);
         }
 
+        private void EnsureBoardSizeSection()
+        {
+            if (setupContentRoot == null)
+            {
+                return;
+            }
+
+            if (boardSizeSectionRoot == null)
+            {
+                var existing = FindNamedRectTransform("UI_StartGameBoardSizeSection");
+                if (existing != null)
+                {
+                    boardSizeSectionRoot = existing;
+                }
+                else
+                {
+                    var sectionObject = new GameObject(
+                        "UI_StartGameBoardSizeSection",
+                        typeof(RectTransform),
+                        typeof(Image),
+                        typeof(VerticalLayoutGroup),
+                        typeof(ContentSizeFitter),
+                        typeof(LayoutElement));
+                    boardSizeSectionRoot = sectionObject.GetComponent<RectTransform>();
+                    boardSizeSectionRoot.SetParent(setupContentRoot, false);
+                }
+            }
+
+            boardSizeSectionRoot.SetParent(setupContentRoot, false);
+            ConfigureBoardSizeSection(boardSizeSectionRoot);
+            EnsureBoardSizeLabel();
+            EnsureBoardSizeDropdown();
+            RefreshBoardSizeDropdown();
+        }
+
         private void EnsureMoldSelectionSection()
         {
             if (setupContentRoot == null)
@@ -372,6 +416,85 @@ namespace FungusToast.Unity.UI.GameStart
             ConfigureMoldSelectionSection(moldSelectionSectionRoot);
             EnsureMoldSelectionHeader();
             EnsureMoldSelectionGrid();
+        }
+
+        private void EnsureBoardSizeLabel()
+        {
+            if (boardSizeSectionRoot == null)
+            {
+                return;
+            }
+
+            var existing = boardSizeSectionRoot.Find("UI_StartGameBoardSizeLabel");
+            GameObject labelObject = existing != null
+                ? existing.gameObject
+                : new GameObject("UI_StartGameBoardSizeLabel", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+
+            if (existing == null)
+            {
+                labelObject.transform.SetParent(boardSizeSectionRoot, false);
+            }
+
+            var label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = "Board Size";
+            label.color = UIStyleTokens.Text.Primary;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 15f;
+            label.fontSizeMax = 20f;
+            label.alignment = TextAlignmentOptions.Left;
+
+            var element = labelObject.GetComponent<LayoutElement>();
+            element.minHeight = 22f;
+            element.preferredHeight = 26f;
+        }
+
+        private void EnsureBoardSizeDropdown()
+        {
+            if (boardSizeSectionRoot == null || boardSizeDropdown != null)
+            {
+                if (boardSizeDropdown != null)
+                {
+                    ConfigureBoardSizeDropdown();
+                }
+
+                return;
+            }
+
+            var existing = boardSizeSectionRoot.Find("UI_StartGameBoardSizeDropdown");
+            if (existing != null)
+            {
+                boardSizeDropdown = existing.GetComponent<TMP_Dropdown>();
+            }
+            else
+            {
+                TMP_Dropdown template = ResolveDropdownTemplate();
+                if (template == null)
+                {
+                    return;
+                }
+
+                var dropdownObject = Instantiate(template.gameObject, boardSizeSectionRoot);
+                dropdownObject.name = "UI_StartGameBoardSizeDropdown";
+                boardSizeDropdown = dropdownObject.GetComponent<TMP_Dropdown>();
+            }
+
+            if (boardSizeDropdown == null)
+            {
+                return;
+            }
+
+            var dropdownElement = boardSizeDropdown.GetComponent<LayoutElement>();
+            if (dropdownElement == null)
+            {
+                dropdownElement = boardSizeDropdown.gameObject.AddComponent<LayoutElement>();
+            }
+
+            dropdownElement.minHeight = 40f;
+            dropdownElement.preferredHeight = 44f;
+            dropdownElement.minWidth = 470f;
+            dropdownElement.preferredWidth = 500f;
+
+            ConfigureBoardSizeDropdown();
         }
 
         private void ConfigureMoldSelectionSection(RectTransform sectionRoot)
@@ -552,6 +675,48 @@ namespace FungusToast.Unity.UI.GameStart
             element.preferredWidth = 500f;
             element.minHeight = 56f;
             element.preferredHeight = -1f;
+        }
+
+        private static void ConfigureBoardSizeSection(RectTransform sectionRoot)
+        {
+            if (sectionRoot == null)
+            {
+                return;
+            }
+
+            sectionRoot.anchorMin = new Vector2(0.5f, 1f);
+            sectionRoot.anchorMax = new Vector2(0.5f, 1f);
+            sectionRoot.pivot = new Vector2(0.5f, 0.5f);
+            sectionRoot.anchoredPosition = Vector2.zero;
+            sectionRoot.localScale = Vector3.one;
+
+            var surface = sectionRoot.GetComponent<Image>();
+            if (surface != null)
+            {
+                var panelColor = UIStyleTokens.Surface.PanelPrimary;
+                panelColor.a = 0.92f;
+                surface.color = panelColor;
+                surface.raycastTarget = false;
+            }
+
+            var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
+            layoutGroup.padding = new RectOffset(12, 12, 8, 8);
+            layoutGroup.childAlignment = TextAnchor.UpperLeft;
+            layoutGroup.spacing = 4f;
+            layoutGroup.childForceExpandWidth = false;
+            layoutGroup.childForceExpandHeight = false;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = true;
+
+            var fitter = sectionRoot.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var element = sectionRoot.GetComponent<LayoutElement>();
+            element.minWidth = 500f;
+            element.preferredWidth = 500f;
+            element.minHeight = 80f;
+            element.preferredHeight = 86f;
         }
 
         private RectTransform FindNamedRectTransform(string objectName)
@@ -819,6 +984,11 @@ namespace FungusToast.Unity.UI.GameStart
             {
                 playerSummaryLabel.color = UIStyleTokens.Text.Secondary;
             }
+
+            if (boardSizeDropdown != null)
+            {
+                ApplyDropdownReadability(boardSizeDropdown);
+            }
         }
 
         private void UpdateSetupStepState()
@@ -834,6 +1004,11 @@ namespace FungusToast.Unity.UI.GameStart
             if (humanPlayerSectionRoot != null)
             {
                 humanPlayerSectionRoot.SetActive(!isMoldSelectionStep && selectedPlayerCount.HasValue);
+            }
+
+            if (boardSizeSectionRoot != null)
+            {
+                boardSizeSectionRoot.gameObject.SetActive(!isMoldSelectionStep);
             }
 
             if (testingCardSectionRoot != null)
@@ -1176,6 +1351,12 @@ namespace FungusToast.Unity.UI.GameStart
                 return;
             }
 
+            var manager = GameManager.Instance;
+            if (manager == null)
+            {
+                return;
+            }
+
             var selectedMolds = new List<int>();
             for (int i = 0; i < selectedHumanMoldIndices.Count; i++)
             {
@@ -1185,11 +1366,12 @@ namespace FungusToast.Unity.UI.GameStart
                 }
             }
 
-            GameManager.Instance?.SetHotseatConfig(selectedHumanPlayerCount, selectedMolds);
-            testingCardController?.ApplyToGameManager(GameManager.Instance);
+            manager.SetHotseatConfig(selectedHumanPlayerCount, selectedMolds);
+            ApplySoloBoardSize(manager);
+            testingCardController?.ApplyToGameManager(manager);
 
-            GameManager.Instance.InitializeGame(selectedPlayerCount.Value);
-            GameManager.Instance.cameraCenterer.CenterCameraSmooth();
+            manager.InitializeGame(selectedPlayerCount.Value);
+            manager.cameraCenterer.CenterCameraSmooth();
             gameObject.SetActive(false);
 
             if (magnifyingGlassUI != null)
@@ -1203,6 +1385,105 @@ namespace FungusToast.Unity.UI.GameStart
             }
 
             MagnifyingGlassFollowMouse.gameStarted = true;
+        }
+
+        private void ConfigureBoardSizeDropdown()
+        {
+            if (boardSizeDropdown == null)
+            {
+                return;
+            }
+
+            boardSizeDropdown.onValueChanged = new TMP_Dropdown.DropdownEvent();
+            boardSizeDropdown.onValueChanged.AddListener(OnBoardSizeSelected);
+            ApplyDropdownReadability(boardSizeDropdown);
+        }
+
+        private void RefreshBoardSizeDropdown()
+        {
+            if (boardSizeDropdown == null)
+            {
+                return;
+            }
+
+            selectedBoardSize = DevelopmentTestingBoardSizePresets.ClampToSupportedSize(selectedBoardSize);
+            boardSizeDropdown.ClearOptions();
+            boardSizeDropdown.AddOptions(DevelopmentTestingBoardSizePresets.BuildLabels());
+            boardSizeDropdown.value = DevelopmentTestingBoardSizePresets.GetIndex(selectedBoardSize);
+            boardSizeDropdown.RefreshShownValue();
+            ApplyDropdownReadability(boardSizeDropdown);
+        }
+
+        private void OnBoardSizeSelected(int index)
+        {
+            selectedBoardSize = DevelopmentTestingBoardSizePresets.GetSizeAt(index);
+            RefreshTestingSectionLayout();
+        }
+
+        private static void ApplySoloBoardSize(GameManager manager)
+        {
+            if (manager == null)
+            {
+                return;
+            }
+
+            int boardSize = Instance != null
+                ? DevelopmentTestingBoardSizePresets.ClampToSupportedSize(Instance.selectedBoardSize)
+                : GameBalance.BoardWidth;
+
+            manager.boardWidth = boardSize;
+            manager.boardHeight = boardSize;
+        }
+
+        private static void ApplyDropdownReadability(TMP_Dropdown dropdown)
+        {
+            if (dropdown == null)
+            {
+                return;
+            }
+
+            if (dropdown.captionText != null)
+            {
+                dropdown.captionText.color = UIStyleTokens.Button.TextDefault;
+                dropdown.captionText.enableAutoSizing = false;
+                dropdown.captionText.fontSize = 18f;
+                dropdown.captionText.fontSizeMin = 18f;
+                dropdown.captionText.fontSizeMax = 18f;
+            }
+
+            if (dropdown.itemText != null)
+            {
+                dropdown.itemText.color = UIStyleTokens.Button.TextDefault;
+                dropdown.itemText.enableAutoSizing = false;
+                dropdown.itemText.fontSize = 18f;
+                dropdown.itemText.fontSizeMin = 18f;
+                dropdown.itemText.fontSizeMax = 18f;
+            }
+
+            if (dropdown.template != null)
+            {
+                var scrollRect = dropdown.template.GetComponentInChildren<ScrollRect>(true);
+                if (scrollRect != null)
+                {
+                    scrollRect.scrollSensitivity = 1.5f;
+                }
+
+                var templateLabels = dropdown.template.GetComponentsInChildren<TextMeshProUGUI>(true);
+                for (int index = 0; index < templateLabels.Length; index++)
+                {
+                    var templateLabel = templateLabels[index];
+                    if (templateLabel == null)
+                    {
+                        continue;
+                    }
+
+                    templateLabel.enableAutoSizing = false;
+                    templateLabel.fontSize = 18f;
+                    templateLabel.fontSizeMin = 18f;
+                    templateLabel.fontSizeMax = 18f;
+                    templateLabel.color = UIStyleTokens.Button.TextDefault;
+                }
+            }
         }
 
         private void RefreshTestingSectionLayout()
