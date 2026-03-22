@@ -10,6 +10,7 @@ Use this file for the full hierarchy, secondary references, and discoverability 
 These are the main task-entry documents and are also referenced from `.github/copilot-instructions.md`.
 
 - `BUILD_INSTRUCTIONS.md` — canonical CLI build commands and platform notes
+- `TESTING_HELPER.md` — unit test stack, testing conventions, and canonical test commands
 - `SIMULATION_HELPER.md` — simulation workflows, reproducibility, fairness testing, and output conventions
 - `AI_STRATEGY_AUTHORING.md` — AI roster organization, metadata, and strategy authoring patterns
 - `NEW_MUTATION_HELPER.md` — mutation authoring workflow
