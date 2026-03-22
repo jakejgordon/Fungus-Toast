@@ -9,6 +9,7 @@ namespace FungusToast.Core.Tests.Mutations;
 internal sealed class TestSimulationObserver : ISimulationObserver
 {
     public int? LastMutationPointsSpent { get; private set; }
+    public int? LastMutationPointIncome { get; private set; }
     public int? LastApicalYieldBonus { get; private set; }
     public string? LastUpgradeSource { get; private set; }
     public int UpgradeEventCount { get; private set; }
@@ -42,7 +43,7 @@ internal sealed class TestSimulationObserver : ISimulationObserver
     public void ReportNecrosporeDrop(int playerId, int count) { }
     public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims) { }
     public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
-    public void RecordMutationPointIncome(int playerId, int newMutationPoints) { }
+    public void RecordMutationPointIncome(int playerId, int newMutationPoints) => LastMutationPointIncome = newMutationPoints;
     public void RecordBankedPoints(int playerId, int pointsBanked) { }
     public void RecordHyphalSurgeGrowth(int playerId) { }
     public void RecordHyphalVectoringGrowth(int playerId, int cellsPlaced) { }
