@@ -87,9 +87,9 @@ public class StartingSporeUtilityTests
         {
             Assert.InRange(entry.X, 0, 159);
             Assert.InRange(entry.Y, 0, 159);
-            Assert.True(entry.UncontestedTileCount >= 0);
-            Assert.True(entry.EarlyUncontestedTileCount >= 0);
-            Assert.True(entry.TieTileCount >= 0);
+            Assert.InRange(entry.UncontestedTileCount, 0, int.MaxValue);
+            Assert.InRange(entry.EarlyUncontestedTileCount, 0, int.MaxValue);
+            Assert.InRange(entry.TieTileCount, 0, int.MaxValue);
             Assert.InRange(entry.FavorRank, 1, 5);
         });
     }
