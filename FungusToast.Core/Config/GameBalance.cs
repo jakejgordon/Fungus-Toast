@@ -93,22 +93,22 @@ namespace FungusToast.Core.Config
         public const int HyphalSurgeDurationRounds = 2;
         public const int HyphalSurgePointIncreasePerLevel = 1;
 
-        // Hyphal Vectoring (Tier 2 MycelialSurges)
-        public const int HyphalVectoringBaseTiles = 4;
-        public const int HyphalVectoringTilesPerLevel = 1;
-        public const int HyphalVectoringCandidateCellsToCheck = 50; // Number of candidate cells to check for origin selection
-        public const int HyphalVectoringMaxLevel = 5;
-        public const int HyphalVectoringPointsPerActivation = 9;
-        public const int HyphalVectoringSurgeDuration = 4;
-        public const int HyphalVectoringSurgePointIncreasePerLevel = 1;
+        // Directed vector surge tuning shared by Beacon-targeted projections
+        public const int DirectedVectorBaseTiles = 4;
+        public const int DirectedVectorTilesPerLevel = 1;
+        public const int DirectedVectorCandidateCellsToCheck = 50; // Number of candidate cells to check for origin selection
+        public const int DirectedVectorMaxLevel = 5;
+        public const int DirectedVectorPointsPerActivation = 9;
+        public const int DirectedVectorSurgeDuration = 4;
+        public const int DirectedVectorSurgePointIncreasePerLevel = 1;
 
         // Chemotactic Beacon (Tier 2 MycelialSurges)
-        public const float ChemotacticBeaconTowardGrowthMultiplier = 2.0f;
-        public const float ChemotacticBeaconAwayGrowthMultiplier = 0.5f;
-        public const int ChemotacticBeaconMaxLevel = 5;
-        public const int ChemotacticBeaconPointsPerActivation = 8;
-        public const int ChemotacticBeaconSurgeDuration = 5;
-        public const int ChemotacticBeaconPointIncreasePerLevel = 1;
+        public const int ChemotacticBeaconBaseTiles = DirectedVectorBaseTiles;
+        public const int ChemotacticBeaconTilesPerLevel = DirectedVectorTilesPerLevel;
+        public const int ChemotacticBeaconMaxLevel = DirectedVectorMaxLevel;
+        public const int ChemotacticBeaconPointsPerActivation = DirectedVectorPointsPerActivation;
+        public const int ChemotacticBeaconSurgeDuration = DirectedVectorSurgeDuration;
+        public const int ChemotacticBeaconPointIncreasePerLevel = DirectedVectorSurgePointIncreasePerLevel;
 
         // Chitin Fortification (Tier 2 MycelialSurges)
             public const int ChitinFortificationCellsPerLevel = 4; // X: cells fortified per level

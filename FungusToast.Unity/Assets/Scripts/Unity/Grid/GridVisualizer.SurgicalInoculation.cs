@@ -564,8 +564,8 @@ namespace FungusToast.Unity.Grid.Helpers
 		private static readonly Color NutrientPatchColor = new(1f, 1f, 1f, 0.92f);
 		private static readonly Color AdaptogenPatchTextColor = new(0.8f, 0.97f, 1f, 1f);
 		private static readonly Color SporemealPatchTextColor = new(0.92f, 1f, 0.8f, 1f);
-		private static readonly Color HyphalVectoringToastColor = new(0.96f, 0.99f, 0.78f, 1f);
-		private static readonly Color HyphalVectoringPulseColor = new(1f, 0.95f, 0.58f, 0.92f);
+		private static readonly Color DirectedVectorToastColor = new(0.99f, 1f, 0.8f, 1f);
+		private static readonly Color DirectedVectorPulseColor = new(1f, 0.92f, 0.38f, 0.96f);
 
 		private readonly Func<GameBoard> _getBoard;
 		private readonly Func<Tilemap> _getMoldTilemap;
@@ -882,7 +882,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 		}
 
-		public IEnumerator RunHyphalVectoringSurgePresentation(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds)
+		public IEnumerator RunDirectedVectorSurgePresentation(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds)
 		{
 			var pulseTilemap = GetTransientPulseTilemap();
 			var overlayTilemap = _getOverlayTilemap();
@@ -897,25 +897,25 @@ namespace FungusToast.Unity.Grid.Helpers
 				yield break;
 			}
 
-			TextMeshPro toast = CreateHyphalVectoringToastText(orderedTileIds, overlayTilemap);
+			TextMeshPro toast = CreateDirectedVectorToastText(orderedTileIds, overlayTilemap);
 			try
 			{
 				if (originTileId >= 0)
 				{
 					Vector3Int originPos = _getPositionForTileId(originTileId);
-					yield return PulseTiles(pulseTilemap, new[] { originPos }, UIEffectConstants.HyphalVectoringOriginPulseDurationSeconds, HyphalVectoringPulseColor, 1f, UIEffectConstants.HyphalVectoringPulseScale);
+					yield return PulseTiles(pulseTilemap, new[] { originPos }, UIEffectConstants.DirectedVectorOriginPulseDurationSeconds, DirectedVectorPulseColor, 1f, UIEffectConstants.DirectedVectorPulseScale);
 				}
 
-				foreach (var chunk in BuildHyphalVectoringChunks(orderedTileIds))
+				foreach (var chunk in BuildDirectedVectorChunks(orderedTileIds))
 				{
 					var chunkPositions = chunk.Select(_getPositionForTileId).ToArray();
-					_startCoroutine(PulseTiles(pulseTilemap, chunkPositions, UIEffectConstants.HyphalVectoringChunkPulseDurationSeconds, HyphalVectoringPulseColor, 0.92f, UIEffectConstants.HyphalVectoringPulseScale));
-					yield return new WaitForSeconds(UIEffectConstants.HyphalVectoringChunkStaggerSeconds);
+					_startCoroutine(PulseTiles(pulseTilemap, chunkPositions, UIEffectConstants.DirectedVectorChunkPulseDurationSeconds, DirectedVectorPulseColor, 1f, UIEffectConstants.DirectedVectorPulseScale));
+					yield return new WaitForSeconds(UIEffectConstants.DirectedVectorChunkStaggerSeconds);
 				}
 
 				if (toast != null)
 				{
-					yield return AnimateFloatingToast(toast, UIEffectConstants.HyphalVectoringToastDurationSeconds, HyphalVectoringToastColor, UIEffectConstants.HyphalVectoringToastRiseWorld, useAnimatedScale: false);
+					yield return AnimateFloatingToast(toast, UIEffectConstants.DirectedVectorToastDurationSeconds, DirectedVectorToastColor, UIEffectConstants.DirectedVectorToastRiseWorld, useAnimatedScale: false);
 				}
 			}
 			finally
@@ -933,7 +933,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			for (int i = toastParent.childCount - 1; i >= 0; i--)
 			{
 				Transform child = toastParent.GetChild(i);
-				if (child != null && (child.name == "NutrientPatchToast" || child.name == "HyphalVectoringToast"))
+				if (child != null && (child.name == "NutrientPatchToast" || child.name == "DirectedVectorToast"))
 				{
 					UnityEngine.Object.Destroy(child.gameObject);
 				}
@@ -945,7 +945,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			return _getPingOverlayTilemap() ?? _getHoverOverlayTilemap() ?? _getOverlayTilemap();
 		}
 
-		private static IEnumerable<List<int>> BuildHyphalVectoringChunks(IReadOnlyList<int> orderedTileIds)
+		private static IEnumerable<List<int>> BuildDirectedVectorChunks(IReadOnlyList<int> orderedTileIds)
 		{
 			int tileCount = orderedTileIds.Count;
 			if (tileCount == 0)
@@ -953,7 +953,7 @@ namespace FungusToast.Unity.Grid.Helpers
 				yield break;
 			}
 
-			int chunkCount = tileCount <= 2 ? tileCount : Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(tileCount)), UIEffectConstants.HyphalVectoringChunkCountMin, UIEffectConstants.HyphalVectoringChunkCountMax);
+			int chunkCount = tileCount <= 2 ? tileCount : Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(tileCount)), UIEffectConstants.DirectedVectorChunkCountMin, UIEffectConstants.DirectedVectorChunkCountMax);
 			int chunkSize = Mathf.CeilToInt(tileCount / (float)Mathf.Max(1, chunkCount));
 
 			for (int index = 0; index < tileCount; index += chunkSize)
@@ -1076,9 +1076,9 @@ namespace FungusToast.Unity.Grid.Helpers
 			};
 		}
 
-		private static string BuildHyphalVectoringToastText(int tileCount)
+		private static string BuildDirectedVectorToastText(int tileCount)
 		{
-			return tileCount == 1 ? "Hyphal Vectoring!" : $"Hyphal Vectoring x{tileCount}!";
+			return tileCount == 1 ? "Chemotactic Beacon!" : $"Chemotactic Beacon x{tileCount}!";
 		}
 
 		private TextMeshPro CreateNutrientToastText(Vector3Int destinationPos, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount, Tilemap overlayTilemap)
@@ -1107,7 +1107,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			return tmp;
 		}
 
-		private TextMeshPro CreateHyphalVectoringToastText(IReadOnlyList<int> affectedTileIds, Tilemap overlayTilemap)
+		private TextMeshPro CreateDirectedVectorToastText(IReadOnlyList<int> affectedTileIds, Tilemap overlayTilemap)
 		{
 			if (affectedTileIds == null || affectedTileIds.Count == 0)
 			{
@@ -1121,19 +1121,19 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 
 			averageWorld /= affectedTileIds.Count;
-			var textObject = new GameObject("HyphalVectoringToast", typeof(TextMeshPro));
+			var textObject = new GameObject("DirectedVectorToast", typeof(TextMeshPro));
 			textObject.transform.SetParent(_getToastParent(), false);
 
 			var tmp = textObject.GetComponent<TextMeshPro>();
-			tmp.text = BuildHyphalVectoringToastText(affectedTileIds.Count);
-			tmp.fontSize = UIEffectConstants.HyphalVectoringToastFontSize;
+			tmp.text = BuildDirectedVectorToastText(affectedTileIds.Count);
+			tmp.fontSize = UIEffectConstants.DirectedVectorToastFontSize;
 			tmp.alignment = TextAlignmentOptions.Center;
 			tmp.textWrappingMode = TextWrappingModes.NoWrap;
 			tmp.fontStyle = FontStyles.Bold;
-			tmp.color = HyphalVectoringToastColor;
+			tmp.color = DirectedVectorToastColor;
 			tmp.outlineWidth = 0.32f;
 			tmp.outlineColor = new Color(0.18f, 0.11f, 0.02f, 1f);
-			tmp.transform.position = averageWorld + new Vector3(0f, UIEffectConstants.HyphalVectoringToastStartHeightWorld, 0f);
+			tmp.transform.position = averageWorld + new Vector3(0f, UIEffectConstants.DirectedVectorToastStartHeightWorld, 0f);
 			tmp.transform.localScale = Vector3.one * GetNutrientToastScaleMultiplier();
 
 			var renderer = tmp.GetComponent<MeshRenderer>();

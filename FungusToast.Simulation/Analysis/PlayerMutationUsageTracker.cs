@@ -171,21 +171,21 @@ namespace FungusToast.Simulation.Analysis
                         effects["Hyphal Surge Growths"] = player.HyphalSurgeGrowths;
                     break;
 
-                case MutationIds.HyphalVectoring:
-                    if (player.HyphalVectoringGrowths > 0)
-                        effects["Growths"] = player.HyphalVectoringGrowths;
-                    if (player.HyphalVectoringInfested > 0)
-                        effects["Infested"] = player.HyphalVectoringInfested;
-                    if (player.HyphalVectoringReclaimed > 0)
-                        effects["Reclaimed"] = player.HyphalVectoringReclaimed;
-                    if (player.HyphalVectoringCatabolicGrowth > 0)
-                        effects["Catabolic Growth"] = player.HyphalVectoringCatabolicGrowth;
-                    if (player.HyphalVectoringAlreadyOwned > 0)
-                        effects["Already Owned"] = player.HyphalVectoringAlreadyOwned;
-                    if (player.HyphalVectoringColonized > 0)
-                        effects["Colonized"] = player.HyphalVectoringColonized;
-                    if (player.HyphalVectoringInvalid > 0)
-                        effects["Invalid"] = player.HyphalVectoringInvalid;
+                case MutationIds.ChemotacticBeacon:
+                    if (player.DirectedVectorGrowths > 0)
+                        effects["Growths"] = player.DirectedVectorGrowths;
+                    if (player.DirectedVectorInfested > 0)
+                        effects["Infested"] = player.DirectedVectorInfested;
+                    if (player.DirectedVectorReclaimed > 0)
+                        effects["Reclaimed"] = player.DirectedVectorReclaimed;
+                    if (player.DirectedVectorCatabolicGrowth > 0)
+                        effects["Catabolic Growth"] = player.DirectedVectorCatabolicGrowth;
+                    if (player.DirectedVectorAlreadyOwned > 0)
+                        effects["Already Owned"] = player.DirectedVectorAlreadyOwned;
+                    if (player.DirectedVectorColonized > 0)
+                        effects["Colonized"] = player.DirectedVectorColonized;
+                    if (player.DirectedVectorInvalid > 0)
+                        effects["Invalid"] = player.DirectedVectorInvalid;
                     break;
 
                 case MutationIds.PutrefactiveRejuvenation:

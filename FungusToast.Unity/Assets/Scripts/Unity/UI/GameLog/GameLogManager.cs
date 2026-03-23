@@ -575,7 +575,8 @@ namespace FungusToast.Unity.UI.GameLog
             GrowthSource.SporicidalBloom => "Sporicidal Bloom",
             GrowthSource.MycotoxinTracer => "Mycotoxin Tracer",
             GrowthSource.PutrefactiveCascade => "Putrefactive Cascade",
-            GrowthSource.HyphalVectoring => "Hyphal Vectoring",
+            GrowthSource.HyphalVectoring => "Chemotactic Beacon",
+            GrowthSource.ChemotacticBeacon => "Chemotactic Beacon",
             GrowthSource.MimeticResilience => "Mimetic Resilience",
             GrowthSource.SurgicalInoculation => "Surgical Inoculation",
             GrowthSource.Ballistospore => "Ballistospore Discharge",
@@ -620,7 +621,7 @@ namespace FungusToast.Unity.UI.GameLog
             DeathReason.PutrefactiveMycotoxin => "Putrefactive Mycotoxin",
             DeathReason.SporicidalBloom => "Sporicidal Bloom",
             DeathReason.MycotoxinPotentiation => "Mycotoxin Potentiation",
-            DeathReason.HyphalVectoring => "Hyphal Vectoring",
+            DeathReason.HyphalVectoring => "Chemotactic Beacon",
             DeathReason.JettingMycelium => "Jetting Mycelium",
             DeathReason.Infested => "Infested",
             DeathReason.Poisoned => "Poisoned",
@@ -995,8 +996,8 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade) { }
         public void RecordBankedPoints(int playerId, int pointsBanked) { }
         public void RecordHyphalSurgeGrowth(int playerId) { }
-        public void RecordHyphalVectoringGrowth(int playerId, int cellsPlaced) { }
-        public void RecordHyphalVectoringSurge(int playerId, int cellsPlaced)
+        public void RecordDirectedVectorGrowth(int playerId, int cellsPlaced) { }
+        public void RecordDirectedVectorSurge(int playerId, int cellsPlaced)
         {
             if (!IsHuman(playerId) || cellsPlaced <= 0)
             {
@@ -1006,8 +1007,8 @@ namespace FungusToast.Unity.UI.GameLog
             AddPlayerEvent(
                 playerId,
                 cellsPlaced == 1
-                    ? "Hyphal Vectoring surged 1 tile toward the center"
-                    : $"Hyphal Vectoring surged {cellsPlaced} tiles toward the center",
+                    ? "Chemotactic Beacon projected 1 tile toward its marker"
+                    : $"Chemotactic Beacon projected {cellsPlaced} tiles toward its marker",
                 GameLogCategory.Lucky);
         }
         public void ReportJettingMyceliumReclaimed(int playerId, int reclaimed) { if (IsHuman(playerId) && reclaimed > 0) Inc(EventKinds.Reclaimed, playerId, GrowthSource.JettingMycelium, reclaimed); }
@@ -1018,12 +1019,12 @@ namespace FungusToast.Unity.UI.GameLog
         public void ReportJettingMyceliumToxified(int playerId, int toxified) { if (IsHuman(playerId) && toxified > 0) Inc(EventKinds.Toxified, playerId, GrowthSource.JettingMycelium, toxified); }
         public void ReportJettingMyceliumPoisoned(int playerId, int poisoned) { if (IsHuman(playerId) && poisoned > 0) Inc(EventKinds.Poisoned, playerId, GrowthSource.JettingMycelium, poisoned); }
         public void ReportJettingMyceliumInfested(int playerId, int infested) { if (IsHuman(playerId) && infested > 0) Inc(EventKinds.Infested, playerId, GrowthSource.JettingMycelium, infested); }
-        public void ReportHyphalVectoringReclaimed(int playerId, int reclaimed) { if (IsHuman(playerId) && reclaimed > 0) Inc(EventKinds.Reclaimed, playerId, GrowthSource.HyphalVectoring, reclaimed); }
-        public void ReportHyphalVectoringCatabolicGrowth(int playerId, int catabolicGrowth) { }
-        public void ReportHyphalVectoringAlreadyOwned(int playerId, int alreadyOwned) { }
-        public void ReportHyphalVectoringColonized(int playerId, int colonized) { if (IsHuman(playerId) && colonized > 0) Inc(EventKinds.Colonized, playerId, GrowthSource.HyphalVectoring, colonized); }
-        public void ReportHyphalVectoringInvalid(int playerId, int invalid) { }
-        public void ReportHyphalVectoringInfested(int playerId, int infested) { if (IsHuman(playerId) && infested > 0) Inc(EventKinds.Infested, playerId, GrowthSource.HyphalVectoring, infested); }
+        public void ReportDirectedVectorReclaimed(int playerId, int reclaimed) { if (IsHuman(playerId) && reclaimed > 0) Inc(EventKinds.Reclaimed, playerId, GrowthSource.ChemotacticBeacon, reclaimed); }
+        public void ReportDirectedVectorCatabolicGrowth(int playerId, int catabolicGrowth) { }
+        public void ReportDirectedVectorAlreadyOwned(int playerId, int alreadyOwned) { }
+        public void ReportDirectedVectorColonized(int playerId, int colonized) { if (IsHuman(playerId) && colonized > 0) Inc(EventKinds.Colonized, playerId, GrowthSource.ChemotacticBeacon, colonized); }
+        public void ReportDirectedVectorInvalid(int playerId, int invalid) { }
+        public void ReportDirectedVectorInfested(int playerId, int infested) { if (IsHuman(playerId) && infested > 0) Inc(EventKinds.Infested, playerId, GrowthSource.ChemotacticBeacon, infested); }
         public void RecordStandardGrowth(int playerId) { }
         public void RecordNeutralizingMantleEffect(int playerId, int toxinsNeutralized) { }
         public void RecordBastionedCells(int playerId, int count) { AddResistanceGain(playerId, count, "Mycelial Bastion"); }

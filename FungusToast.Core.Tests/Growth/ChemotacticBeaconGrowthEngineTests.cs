@@ -1,4 +1,5 @@
 using FungusToast.Core.Board;
+using FungusToast.Core.Death;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
@@ -10,71 +11,135 @@ namespace FungusToast.Core.Tests.Growth;
 public class ChemotacticBeaconGrowthEngineTests
 {
     [Fact]
-    public void ExecuteGrowthCycle_with_active_beacon_biases_growth_toward_marker_over_many_seeds()
+    public void ProcessChemotacticBeacon_projects_hyphal_vectoring_length_toward_marker()
     {
-        const int iterations = 1000;
-        int towardWithBeacon = 0;
-        int awayWithBeacon = 0;
-        int towardWithoutBeacon = 0;
-        int awayWithoutBeacon = 0;
+        var setup = CreateBeaconBoard(level: 1, beaconTileId: 29);
 
-        for (int seed = 0; seed < iterations; seed++)
-        {
-            var withBeaconBoard = CreateGrowthTestBoard(withBeacon: true);
-            GrowthEngine.ExecuteGrowthCycle(withBeaconBoard.board, withBeaconBoard.players, new Random(seed), new RoundContext(), new TestSimulationObserver());
-            CountOutcomes(withBeaconBoard.board, withBeaconBoard.player.PlayerId, ref towardWithBeacon, ref awayWithBeacon);
+        MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
 
-            var withoutBeaconBoard = CreateGrowthTestBoard(withBeacon: false);
-            GrowthEngine.ExecuteGrowthCycle(withoutBeaconBoard.board, withoutBeaconBoard.players, new Random(seed), new RoundContext(), new TestSimulationObserver());
-            CountOutcomes(withoutBeaconBoard.board, withoutBeaconBoard.player.PlayerId, ref towardWithoutBeacon, ref awayWithoutBeacon);
-        }
-
-        Assert.True(towardWithBeacon > towardWithoutBeacon,
-            $"Expected Beacon to increase toward growth. With Beacon: {towardWithBeacon}, without Beacon: {towardWithoutBeacon}.");
-        Assert.True(awayWithBeacon < awayWithoutBeacon,
-            $"Expected Beacon to reduce away growth. With Beacon: {awayWithBeacon}, without Beacon: {awayWithoutBeacon}.");
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 3, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 5, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 6, 2);
+        Assert.Equal(GrowthSource.ChemotacticBeacon, setup.board.GetTile(6, 2)?.FungalCell?.SourceOfGrowth);
     }
 
-    private static (GameBoard board, List<Player> players, Player player) CreateGrowthTestBoard(bool withBeacon)
+    [Fact]
+    public void ProcessChemotacticBeacon_skips_friendly_living_cells_but_continues_the_line()
     {
-        var board = new GameBoard(width: 5, height: 5, playerCount: 1);
+        var setup = CreateBeaconBoard(level: 1, beaconTileId: 29);
+        setup.board.PlaceFungalCell(new FungalCell(setup.player.PlayerId, setup.board.GetTile(3, 2)!.TileId, GrowthSource.HyphalSurge, lastOwnerPlayerId: null));
+
+        MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
+
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 3, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 5, 2);
+        Assert.Equal(GrowthSource.HyphalSurge, setup.board.GetTile(3, 2)?.FungalCell?.SourceOfGrowth);
+        Assert.Equal(GrowthSource.ChemotacticBeacon, setup.board.GetTile(4, 2)?.FungalCell?.SourceOfGrowth);
+        Assert.Equal(GrowthSource.ChemotacticBeacon, setup.board.GetTile(5, 2)?.FungalCell?.SourceOfGrowth);
+    }
+
+    [Fact]
+    public void ProcessChemotacticBeacon_uses_vector_origin_selection_when_starting_spore_is_unusable()
+    {
+        var setup = CreateBeaconBoard(level: 1, beaconTileId: 29);
+        var startingTile = Assert.IsType<BoardTile>(setup.board.GetTile(1, 2));
+        var startingCell = Assert.IsType<FungalCell>(startingTile.FungalCell);
+        setup.board.KillFungalCell(startingCell, FungusToast.Core.Death.DeathReason.Unknown, killerPlayerId: null);
+        setup.board.PlaceFungalCell(new FungalCell(setup.player.PlayerId, setup.board.GetTile(4, 2)!.TileId, GrowthSource.HyphalSurge, lastOwnerPlayerId: null));
+
+        MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
+
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 5, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 6, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 7, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 8, 2);
+        Assert.Null(setup.board.GetTile(2, 2)?.FungalCell);
+    }
+
+    [Fact]
+    public void ApplyDirectedVectorLine_skips_friendly_dead_cells_without_spending_quota()
+    {
+        var setup = CreateBeaconBoard(level: 1, beaconTileId: 29);
+        var observer = new TestSimulationObserver();
+
+        setup.board.PlaceFungalCell(new FungalCell(setup.player.PlayerId, setup.board.GetTile(3, 2)!.TileId, GrowthSource.HyphalSurge, lastOwnerPlayerId: null));
+        var friendlyDeadCell = Assert.IsType<FungalCell>(setup.board.GetTile(3, 2)?.FungalCell);
+        setup.board.KillFungalCell(friendlyDeadCell, DeathReason.Unknown);
+
+        var outcome = DirectedVectorHelper.ApplyDirectedVectorLine(
+            setup.player,
+            setup.board,
+            new Random(1),
+            startX: 1,
+            startY: 2,
+            targetX: 9,
+            targetY: 2,
+            totalTiles: 5,
+            observer,
+            GrowthSource.ChemotacticBeacon,
+            DeathReason.HyphalVectoring,
+            stopAtTargetTile: false);
+
+        Assert.True(setup.board.GetTile(3, 2)?.FungalCell?.IsDead);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 5, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 6, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 7, 2);
+        Assert.Equal(1, outcome.Invalid);
+        Assert.Equal(5, outcome.PlacedCount);
+    }
+
+    [Fact]
+    public void ApplyDirectedVectorLine_can_colonize_nutrient_patch_tiles()
+    {
+        var setup = CreateBeaconBoard(level: 1, beaconTileId: 29);
+        var observer = new TestSimulationObserver();
+        bool placedPatch = setup.board.PlaceNutrientPatch(tileId: setup.board.GetTile(4, 2)!.TileId, NutrientPatch.CreateAdaptogenCluster(clusterId: 1, clusterTileCount: 1));
+        Assert.True(placedPatch);
+
+        var outcome = DirectedVectorHelper.ApplyDirectedVectorLine(
+            setup.player,
+            setup.board,
+            new Random(1),
+            startX: 1,
+            startY: 2,
+            targetX: 9,
+            targetY: 2,
+            totalTiles: 4,
+            observer,
+            GrowthSource.ChemotacticBeacon,
+            DeathReason.HyphalVectoring,
+            stopAtTargetTile: false);
+
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2);
+        Assert.False(setup.board.GetTile(4, 2)?.HasNutrientPatch);
+        Assert.Contains(setup.board.GetTile(4, 2)!.TileId, outcome.AffectedTileIds);
+    }
+
+    private static (GameBoard board, List<Player> players, Player player) CreateBeaconBoard(int level, int beaconTileId)
+    {
+        var board = new GameBoard(width: 10, height: 5, playerCount: 1);
         var player = new Player(playerId: 0, playerName: "Beacon Tester", playerType: PlayerTypeEnum.AI)
         {
             MutationPoints = 99
         };
         board.Players.Add(player);
 
-        board.PlaceInitialSpore(player.PlayerId, x: 2, y: 2);
-        board.PlaceNutrientPatch(tileId: 7, NutrientPatch.CreateAdaptogenCluster(clusterId: 1, clusterTileCount: 1));
-        board.PlaceNutrientPatch(tileId: 17, NutrientPatch.CreateAdaptogenCluster(clusterId: 2, clusterTileCount: 1));
-
-        player.SetMutationLevel(MutationIds.MycelialBloom, newLevel: 100, currentRound: 1);
-
-        if (withBeacon)
-        {
-            player.SetMutationLevel(MutationIds.MycelialBloom, newLevel: 100, currentRound: 1);
-            player.SetMutationLevel(MutationIds.ChemotacticBeacon, newLevel: 1, currentRound: 1);
-            player.ActiveSurges[MutationIds.ChemotacticBeacon] = new Player.ActiveSurgeInfo(MutationIds.ChemotacticBeacon, level: 1, duration: 5);
-            bool placed = board.TryPlaceChemobeacon(player.PlayerId, tileId: 14, mutationId: MutationIds.ChemotacticBeacon, turnsRemaining: 5);
-            Assert.True(placed);
-        }
+        board.PlaceInitialSpore(player.PlayerId, x: 1, y: 2);
+        player.SetMutationLevel(MutationIds.ChemotacticBeacon, newLevel: level, currentRound: 1);
+        player.ActiveSurges[MutationIds.ChemotacticBeacon] = new Player.ActiveSurgeInfo(MutationIds.ChemotacticBeacon, level: level, duration: FungusToast.Core.Config.GameBalance.ChemotacticBeaconSurgeDuration);
+        bool placed = board.TryPlaceChemobeacon(player.PlayerId, tileId: beaconTileId, mutationId: MutationIds.ChemotacticBeacon, turnsRemaining: FungusToast.Core.Config.GameBalance.ChemotacticBeaconSurgeDuration);
+        Assert.True(placed);
 
         return (board, new List<Player> { player }, player);
     }
 
-    private static void CountOutcomes(GameBoard board, int playerId, ref int towardCount, ref int awayCount)
+    private static void AssertOwnedByPlayer(GameBoard board, int playerId, int x, int y)
     {
-        var towardTile = Assert.IsType<BoardTile>(board.GetTile(3, 2));
-        var awayTile = Assert.IsType<BoardTile>(board.GetTile(1, 2));
-
-        if (towardTile.FungalCell?.OwnerPlayerId == playerId)
-        {
-            towardCount++;
-        }
-
-        if (awayTile.FungalCell?.OwnerPlayerId == playerId)
-        {
-            awayCount++;
-        }
+        Assert.Equal(playerId, board.GetTile(x, y)?.FungalCell?.OwnerPlayerId);
     }
 }

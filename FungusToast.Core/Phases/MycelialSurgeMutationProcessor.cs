@@ -15,10 +15,7 @@ namespace FungusToast.Core.Phases
     /// </summary>
     public static class MycelialSurgeMutationProcessor
     {
-        /// <summary>
-        /// Processes Hyphal Vectoring surge effect for all eligible players.
-        /// </summary>
-        public static void ProcessHyphalVectoring(
+        public static void ProcessChemotacticBeacon(
             GameBoard board,
             List<Player> players,
             Random rng,
@@ -26,101 +23,58 @@ namespace FungusToast.Core.Phases
         {
             foreach (var player in players)
             {
-                int level = player.GetMutationLevel(MutationIds.HyphalVectoring);
-                if (level <= 0 || !player.IsSurgeActive(MutationIds.HyphalVectoring))
+                int level = player.GetMutationLevel(MutationIds.ChemotacticBeacon);
+                if (level <= 0 || !player.IsSurgeActive(MutationIds.ChemotacticBeacon) || !ChemotacticBeaconHelper.TryGetActiveMarker(board, player, out var marker) || marker == null)
                     continue;
 
-                int centerX = board.Width / 2;
-                int centerY = board.Height / 2;
-                int totalTiles = GameBalance.HyphalVectoringBaseTiles +
-                                 level * GameBalance.HyphalVectoringTilesPerLevel;
+                int totalTiles = GetChemotacticBeaconTileCount(level);
+                if (totalTiles <= 0)
+                    continue;
 
-                var origin = HyphalVectoringHelper.TrySelectHyphalVectorOrigin(player, board, rng, centerX, centerY, totalTiles);
-
+                var (targetX, targetY) = board.GetXYFromTileId(marker.TileId);
+                var origin = DirectedVectorHelper.TrySelectVectorOrigin(player, board, rng, targetX, targetY, totalTiles);
                 if (!origin.HasValue || origin.Value.tile == null)
-                {
-                    Console.WriteLine($"[HyphalVectoring] Player {player.PlayerId}: no valid origin found.");
                     continue;
-                }
 
-                // Outcome tallies
-                int infested = 0;
-                int reclaimed = 0;
-                int catabolicGrowth = 0;
-                int alreadyOwned = 0;
-                int colonized = 0;
-                int invalid = 0;
-                var affectedTileIds = new List<int>(totalTiles);
+                var outcome = DirectedVectorHelper.ApplyDirectedVectorLine(
+                    player,
+                    board,
+                    rng,
+                    origin.Value.tile.X,
+                    origin.Value.tile.Y,
+                    targetX,
+                    targetY,
+                    totalTiles,
+                    observer,
+                    GrowthSource.ChemotacticBeacon,
+                    Death.DeathReason.HyphalVectoring,
+                    stopAtTargetTile: true);
 
-                int placed = 0;
-                int currentTileId = origin.Value.tile.TileId;
-                int dx = Math.Sign(centerX - origin.Value.tile.X);
-                int dy = Math.Sign(centerY - origin.Value.tile.Y);
+                ReportDirectedVectorOutcome(observer, player.PlayerId, outcome);
 
-                for (int i = 0; i < totalTiles; i++)
-                {
-                    var (x, y) = board.GetXYFromTileId(currentTileId);
-                    // Step towards the center
-                    x += dx;
-                    y += dy;
-                    if (x < 0 || y < 0 || x >= board.Width || y >= board.Height)
-                        break;
-                    int targetTileId = y * board.Width + x;
-                    var targetTile = board.GetTileById(targetTileId);
-                    if (targetTile == null) { invalid++; continue; }
+                if (outcome.AffectedTileIds.Count > 0)
+                    board.OnDirectedVectorSurge(player.PlayerId, origin.Value.tile.TileId, outcome.AffectedTileIds);
+            }
+        }
 
-                    var prevCell = targetTile.FungalCell;
-                    if (prevCell != null && prevCell.IsAlive && prevCell.OwnerPlayerId == player.PlayerId)
-                    {
-                        // Skip over friendly living mold
-                        alreadyOwned++;
-                        currentTileId = targetTileId;
-                        continue;
-                    }
+        private static int GetChemotacticBeaconTileCount(int level)
+            => GameBalance.ChemotacticBeaconBaseTiles + level * GameBalance.ChemotacticBeaconTilesPerLevel;
 
-                    FungalCellTakeoverResult takeoverResult;
-                    if (prevCell != null)
-                    {
-                        // Use board.TakeoverCell to handle both cell state and board updates.
-                        takeoverResult = board.TakeoverCell(targetTileId, player.PlayerId, allowToxin: true, GrowthSource.HyphalVectoring, players: board.Players, rng: rng, observer: observer);
-                        switch (takeoverResult)
-                        {
-                            case FungalCellTakeoverResult.Infested: infested++; affectedTileIds.Add(targetTileId); break;
-                            case FungalCellTakeoverResult.Reclaimed: reclaimed++; affectedTileIds.Add(targetTileId); break;
-                            case FungalCellTakeoverResult.Overgrown: catabolicGrowth++; affectedTileIds.Add(targetTileId); break;
-                            case FungalCellTakeoverResult.AlreadyOwned: alreadyOwned++; break;
-                            case FungalCellTakeoverResult.Invalid: invalid++; break;
-                        }
-                    }
-                    else
-                    {
-                        // Place a new living cell if empty
-                        if (!board.IsTileBlockedForOccupation(targetTileId))
-                        {
-                            var newCell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: targetTileId, source: GrowthSource.HyphalVectoring, lastOwnerPlayerId: null);
-                            board.PlaceFungalCell(newCell); // Use board.PlaceFungalCell instead of targetTile.PlaceFungalCell for proper tracking
-                            colonized++;
-                            affectedTileIds.Add(targetTileId);
-                        }
-                    }
+        private static void ReportDirectedVectorOutcome(
+            ISimulationObserver observer,
+            int playerId,
+            DirectedVectorHelper.VectorLineOutcome outcome)
+        {
+            if (outcome.Infested > 0) observer.ReportDirectedVectorInfested(playerId, outcome.Infested);
+            if (outcome.Reclaimed > 0) observer.ReportDirectedVectorReclaimed(playerId, outcome.Reclaimed);
+            if (outcome.CatabolicGrowth > 0) observer.ReportDirectedVectorCatabolicGrowth(playerId, outcome.CatabolicGrowth);
+            if (outcome.AlreadyOwned > 0) observer.ReportDirectedVectorAlreadyOwned(playerId, outcome.AlreadyOwned);
+            if (outcome.Colonized > 0) observer.ReportDirectedVectorColonized(playerId, outcome.Colonized);
+            if (outcome.Invalid > 0) observer.ReportDirectedVectorInvalid(playerId, outcome.Invalid);
 
-                    placed++;
-                    currentTileId = targetTileId;
-                }
-
-                // Report results to simulation observer
-                if (infested > 0) observer.ReportHyphalVectoringInfested(player.PlayerId, infested);
-                if (reclaimed > 0) observer.ReportHyphalVectoringReclaimed(player.PlayerId, reclaimed);
-                if (catabolicGrowth > 0) observer.ReportHyphalVectoringCatabolicGrowth(player.PlayerId, catabolicGrowth);
-                if (alreadyOwned > 0) observer.ReportHyphalVectoringAlreadyOwned(player.PlayerId, alreadyOwned);
-                if (colonized > 0) observer.ReportHyphalVectoringColonized(player.PlayerId, colonized);
-                if (invalid > 0) observer.ReportHyphalVectoringInvalid(player.PlayerId, invalid);
-
-                if (placed > 0)
-                    observer.RecordHyphalVectoringGrowth(player.PlayerId, placed);
-
-                if (affectedTileIds.Count > 0)
-                    board.OnHyphalVectoringSurge(player.PlayerId, origin.Value.tile.TileId, affectedTileIds);
+            if (outcome.PlacedCount > 0)
+            {
+                observer.RecordDirectedVectorGrowth(playerId, outcome.PlacedCount);
             }
         }
 
@@ -181,14 +135,13 @@ namespace FungusToast.Core.Phases
             }
         }
 
-        // Phase event handlers
-        public static void OnPostGrowthPhase_HyphalVectoring(
+        public static void OnPostGrowthPhase_ChemotacticBeacon(
             GameBoard board,
             List<Player> players,
             Random rng,
             ISimulationObserver observer)
         {
-            ProcessHyphalVectoring(board, players, rng, observer);
+            ProcessChemotacticBeacon(board, players, rng, observer);
         }
 
         /// <summary>

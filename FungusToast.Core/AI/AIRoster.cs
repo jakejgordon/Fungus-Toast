@@ -246,14 +246,14 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
             ),
             new ParameterizedSpendingStrategy(
-                strategyName: "SurgeFreq_10_Hyphal",
+                strategyName: "SurgeFreq_10_Beacon",
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
                     new TargetMutationGoal(MutationIds.HyphalSurge),
-                    new TargetMutationGoal(MutationIds.HyphalVectoring)
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon)
                 },
-                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.HyphalVectoring },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon },
                 surgeAttemptTurnFrequency: 10,
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy),
@@ -404,9 +404,9 @@ namespace FungusToast.Core.AI
                 {
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
                     new TargetMutationGoal(MutationIds.HyphalSurge),
-                    new TargetMutationGoal(MutationIds.HyphalVectoring)
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon)
                 },
-                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.HyphalVectoring },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon },
                 surgeAttemptTurnFrequency: 10,
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy),
@@ -570,9 +570,9 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.CreepingMold),
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
                     new TargetMutationGoal(MutationIds.HyphalSurge),
-                    new TargetMutationGoal(MutationIds.HyphalVectoring)
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon)
                 },
-                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.HyphalVectoring },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon },
                 surgeAttemptTurnFrequency: 5,
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
             ),
@@ -594,10 +594,10 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.MycotropicInduction),
                     new TargetMutationGoal(MutationIds.CreepingMold),
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
-                    new TargetMutationGoal(MutationIds.HyphalVectoring),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon),
                     new TargetMutationGoal(MutationIds.HyphalSurge)
                 },
-                surgePriorityIds: new List<int> { MutationIds.HyphalVectoring, MutationIds.HyphalSurge },
+                surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon, MutationIds.HyphalSurge },
                 surgeAttemptTurnFrequency: 7,
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
             ),
@@ -824,16 +824,16 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
             ),
 
-            // 16) Campaign mirror: AI7 hyphal surge/vectoring line
+            // 16) Campaign mirror: AI7 hyphal surge/beacon line
             new ParameterizedSpendingStrategy(
-                strategyName: "TST_CampaignMirror_AI7_Hyphal",
+                strategyName: "TST_CampaignMirror_AI7_Beacon",
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
                     new TargetMutationGoal(MutationIds.HyphalSurge),
-                    new TargetMutationGoal(MutationIds.HyphalVectoring)
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon)
                 },
-                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.HyphalVectoring },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon },
                 surgeAttemptTurnFrequency: 10,
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy

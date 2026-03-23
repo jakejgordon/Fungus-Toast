@@ -10,20 +10,42 @@ using System.Numerics;
 
 namespace FungusToast.Core.Growth
 {
-    public static class HyphalVectoringHelper
+    public static class DirectedVectorHelper
     {
-        //TODO make it select the ile closest to the center that is not blocked by friendly mold AND has the longest available straight path toward (and possibly through) the center.
+        public sealed class VectorLineOutcome
+        {
+            public int Infested { get; set; }
+            public int Reclaimed { get; set; }
+            public int CatabolicGrowth { get; set; }
+            public int AlreadyOwned { get; set; }
+            public int Colonized { get; set; }
+            public int Invalid { get; set; }
+            public List<int> AffectedTileIds { get; } = new();
+            public int PlacedCount => Infested + Reclaimed + CatabolicGrowth + Colonized;
+        }
+
+        //TODO make it select the tile closest to the requested target that is not blocked by friendly mold AND has the longest available straight path toward (and possibly through) that target.
         /// <summary>
-        /// Attempts to select a valid Hyphal Vector origin cell and tile for the given player and board.
-        /// Prioritizes selection based on: 1) Fewest friendly living cells in path, 2) Most enemy cells to infest, 3) Closest to center.
+        /// Attempts to select a valid directed-vector origin cell and tile for the given player and board.
+        /// Prioritizes selection based on: 1) Fewest friendly living cells in path, 2) Most enemy cells to infest, 3) Closest to target.
         /// Outputs debug info as appropriate.
         /// </summary>
-        public static (FungalCell cell, BoardTile tile)? TrySelectHyphalVectorOrigin(
+        public static (FungalCell cell, BoardTile tile)? TrySelectDirectedVectorOrigin(
             Player player,
             GameBoard board,
             Random rng,
             int centerX,
             int centerY,
+            int totalTiles,
+            int maxDebugLines = 5)
+            => TrySelectVectorOrigin(player, board, rng, centerX, centerY, totalTiles, maxDebugLines);
+
+        public static (FungalCell cell, BoardTile tile)? TrySelectVectorOrigin(
+            Player player,
+            GameBoard board,
+            Random rng,
+            int targetX,
+            int targetY,
             int totalTiles,
             int maxDebugLines = 5)
         {
@@ -38,18 +60,18 @@ namespace FungusToast.Core.Growth
             foreach (var cell in livingCells)
             {
                 var tile = board.GetTileById(cell.TileId)!;
-                var evaluation = EvaluateCellForHyphalVectoring(tile, board, player.PlayerId, centerX, centerY, totalTiles);
+                var evaluation = EvaluateCellForVectoring(tile, board, player.PlayerId, targetX, targetY, totalTiles);
                 evaluatedCells.Add((cell, tile, evaluation));
             }
 
             // Sort by our prioritization criteria:
             // 1. Fewest friendly living cells in path (ascending)
             // 2. Most enemy cells to infest (descending) 
-            // 3. Closest to center (ascending distance)
+            // 3. Closest to target (ascending distance)
             var sortedCells = evaluatedCells
                 .OrderBy(x => x.eval.FriendlyLivingInPath)     // Priority 1: Fewest friendly
                 .ThenByDescending(x => x.eval.EnemyLivingInPath) // Priority 2: Most enemies
-                .ThenBy(x => x.eval.DistanceToCenter)          // Priority 3: Closest to center
+                .ThenBy(x => x.eval.DistanceToTarget)          // Priority 3: Closest to target
                 .ToList();
 
             // First, try to find cells with completely unblocked paths (original behavior for optimal cases)
@@ -58,12 +80,12 @@ namespace FungusToast.Core.Growth
             if (unblockedCells.Count > 0)
             {
                 var chosen = unblockedCells[0]; // Take the best one based on our sorting
-                debugLines.Add($"  ✓ Selected unblocked origin at distance {chosen.eval.DistanceToCenter:F1} with {chosen.eval.EnemyLivingInPath} enemy targets");
+                debugLines.Add($"  ✓ Selected unblocked origin at distance {chosen.eval.DistanceToTarget:F1} with {chosen.eval.EnemyLivingInPath} enemy targets");
                 return (chosen.cell, chosen.tile);
             }
 
             // Fallback: Allow paths with friendly cells, but prefer the best options
-            int maxCandidateCells = Math.Min(GameBalance.HyphalVectoringCandidateCellsToCheck, sortedCells.Count);
+            int maxCandidateCells = Math.Min(GameBalance.DirectedVectorCandidateCellsToCheck, sortedCells.Count);
             var bestCandidates = sortedCells.Take(maxCandidateCells).ToList();
 
             if (bestCandidates.Count > 0)
@@ -76,7 +98,7 @@ namespace FungusToast.Core.Growth
                     .ToList();
 
                 var chosen = tiedForBest[rng.Next(tiedForBest.Count)];
-                debugLines.Add($"  ✓ Selected fallback origin at distance {chosen.eval.DistanceToCenter:F1} with {chosen.eval.FriendlyLivingInPath} friendly and {chosen.eval.EnemyLivingInPath} enemy in path");
+                debugLines.Add($"  ✓ Selected fallback origin at distance {chosen.eval.DistanceToTarget:F1} with {chosen.eval.FriendlyLivingInPath} friendly and {chosen.eval.EnemyLivingInPath} enemy in path");
                 return (chosen.cell, chosen.tile);
             }
 
@@ -84,18 +106,18 @@ namespace FungusToast.Core.Growth
         }
 
         /// <summary>
-        /// Evaluates a cell's suitability for Hyphal Vectoring origin selection.
+        /// Evaluates a cell's suitability for directed-vector origin selection.
         /// </summary>
-        private static CellEvaluation EvaluateCellForHyphalVectoring(
+        private static CellEvaluation EvaluateCellForVectoring(
             BoardTile tile, 
             GameBoard board, 
             int playerId, 
-            int centerX, 
-            int centerY, 
+            int targetX, 
+            int targetY, 
             int totalTiles)
         {
-            double distance = GetDistance(tile.X, tile.Y, centerX, centerY);
-            var path = GetLineToCenter(tile.X, tile.Y, centerX, centerY, totalTiles);
+            double distance = GetDistance(tile.X, tile.Y, targetX, targetY);
+            var path = GetLineToTarget(tile.X, tile.Y, targetX, targetY, totalTiles);
             
             int friendlyLiving = 0;
             int enemyLiving = 0;
@@ -114,18 +136,18 @@ namespace FungusToast.Core.Growth
             
             return new CellEvaluation
             {
-                DistanceToCenter = distance,
+                DistanceToTarget = distance,
                 FriendlyLivingInPath = friendlyLiving,
                 EnemyLivingInPath = enemyLiving
             };
         }
 
         /// <summary>
-        /// Represents the evaluation metrics for a cell being considered as Hyphal Vectoring origin.
+        /// Represents the evaluation metrics for a cell being considered as a directed-vector origin.
         /// </summary>
         private struct CellEvaluation
         {
-            public double DistanceToCenter;
+            public double DistanceToTarget;
             public int FriendlyLivingInPath;
             public int EnemyLivingInPath;
         }
@@ -143,10 +165,18 @@ namespace FungusToast.Core.Growth
         /// Returns a straight line of (x, y) points from (fromX, fromY) to (toX, toY), length up to maxLength.
         /// </summary>
         public static List<(int x, int y)> GetLineToCenter(int fromX, int fromY, int toX, int toY, int maxLength)
+            => GetLineToTarget(fromX, fromY, toX, toY, maxLength);
+
+        public static List<(int x, int y)> GetLineToTarget(int fromX, int fromY, int toX, int toY, int maxLength)
         {
             var line = new List<(int x, int y)>();
             int dx = toX - fromX;
             int dy = toY - fromY;
+
+            if (dx == 0 && dy == 0)
+            {
+                return line;
+            }
 
             float stepX = dx / (float)Math.Max(Math.Abs(dx), Math.Abs(dy));
             float stepY = dy / (float)Math.Max(Math.Abs(dx), Math.Abs(dy));
@@ -169,57 +199,119 @@ namespace FungusToast.Core.Growth
         }
 
         /// <summary>
-        /// Projects a line of hyphal growth from the specified start coordinates toward the center,
-        /// overwriting all cells (dead, toxin, enemy living, empty) in its path with new living cells belonging to the player.
-        /// If a friendly living cell is encountered, it is left untouched and counted toward the total,
-        /// and the projection continues to the next tile. Always creates the requested number of cells,
-        /// skipping but not stopping for friendly living cells.
-        /// Returns the number of tiles processed (i.e., the number of living cells created or skipped).
+        /// Projects a line of growth from the specified start coordinates toward the requested target.
+        /// Friendly living cells remain part of the projected line and count toward its visible reach.
+        /// Friendly dead cells are skipped entirely so they do not spend the vector's quota.
+        /// Empty tiles, nutrient patches, enemy living cells, enemy dead cells, and toxin tiles remain valid targets.
         /// </summary>
-        public static int ApplyHyphalVectorLine(
+        public static VectorLineOutcome ApplyDirectedVectorLine(
             Player player,
             GameBoard board,
             Random rng,
             int startX,
             int startY,
-            int centerX,
-            int centerY,
+            int targetX,
+            int targetY,
             int totalTiles,
-            ISimulationObserver observer)
+            ISimulationObserver observer,
+            GrowthSource source,
+            DeathReason deathReason,
+            bool stopAtTargetTile)
         {
-            var path = GetLineToCenter(startX, startY, centerX, centerY, totalTiles);
-            int processed = 0;
+            var outcome = new VectorLineOutcome();
+            if (totalTiles <= 0)
+            {
+                return outcome;
+            }
+
+            int completedLineTiles = 0;
+            int maxPathLength = board.Width * board.Height;
+            var path = GetLineToTarget(startX, startY, targetX, targetY, maxPathLength);
 
             foreach (var (x, y) in path)
             {
+                if (completedLineTiles >= totalTiles)
+                {
+                    break;
+                }
+
                 var tile = board.GetTile(x, y);
                 if (tile == null)
-                    continue;
+                    break;
+
+                if (stopAtTargetTile && tile.TileId == (targetY * board.Width + targetX))
+                {
+                    break;
+                }
 
                 var cell = tile.FungalCell;
 
                 // If the tile has a friendly living cell, skip overwriting, but still count it
                 if (cell is { IsAlive: true, OwnerPlayerId: var oid } && oid == player.PlayerId)
                 {
-                    processed++;
+                    outcome.AlreadyOwned++;
+                    completedLineTiles++;
                     continue;
                 }
 
-                // If it's an enemy living cell, kill it (this will fire board events and remove control)
-                if (cell is { IsAlive: true })
+                // Friendly dead cells should not consume vector quota.
+                if (cell is { IsDead: true, OwnerPlayerId: var deadOwnerId } && deadOwnerId == player.PlayerId)
                 {
-                    board.KillFungalCell(cell, DeathReason.HyphalVectoring, player.PlayerId);
-                    observer.RecordAttributedKill(player.PlayerId, DeathReason.HyphalVectoring, 1);
+                    outcome.Invalid++;
+                    continue;
                 }
 
-                // Overwrite whatever was there with a new living cell (if it's not already your living cell)
-                var newCell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: tile.TileId, source: GrowthSource.HyphalVectoring, lastOwnerPlayerId: null);
-                board.PlaceFungalCell(newCell); // Use board.PlaceFungalCell for proper tracking
+                FungalCellTakeoverResult takeoverResult;
+                if (cell != null)
+                {
+                    takeoverResult = board.TakeoverCell(tile.TileId, player.PlayerId, allowToxin: true, source, players: board.Players, rng: rng, observer: observer);
+                    switch (takeoverResult)
+                    {
+                        case FungalCellTakeoverResult.Infested:
+                            outcome.Infested++;
+                            outcome.AffectedTileIds.Add(tile.TileId);
+                            completedLineTiles++;
+                            observer.RecordAttributedKill(player.PlayerId, deathReason, 1);
+                            break;
+                        case FungalCellTakeoverResult.Reclaimed:
+                            outcome.Reclaimed++;
+                            outcome.AffectedTileIds.Add(tile.TileId);
+                            completedLineTiles++;
+                            break;
+                        case FungalCellTakeoverResult.Overgrown:
+                            outcome.CatabolicGrowth++;
+                            outcome.AffectedTileIds.Add(tile.TileId);
+                            completedLineTiles++;
+                            break;
+                        case FungalCellTakeoverResult.AlreadyOwned:
+                            outcome.AlreadyOwned++;
+                            completedLineTiles++;
+                            break;
+                        case FungalCellTakeoverResult.Invalid:
+                            outcome.Invalid++;
+                            break;
+                    }
+                }
+                else if (!board.IsTileBlockedForOccupation(tile.TileId))
+                {
+                    var newCell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: tile.TileId, source: source, lastOwnerPlayerId: null);
+                    board.PlaceFungalCell(newCell);
+                    outcome.Colonized++;
+                    outcome.AffectedTileIds.Add(tile.TileId);
+                    completedLineTiles++;
+                }
+                else
+                {
+                    outcome.Invalid++;
+                }
 
-                processed++;
+                if (stopAtTargetTile && (x == targetX && y == targetY))
+                {
+                    break;
+                }
             }
 
-            return processed;
+            return outcome;
         }
 
     }

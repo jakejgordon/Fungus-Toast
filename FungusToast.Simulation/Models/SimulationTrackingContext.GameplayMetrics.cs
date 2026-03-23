@@ -323,78 +323,78 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetAllHyphalSurgeGrowthCounts() => new(hyphalSurgeGrowths);
 
         // ────────────────
-        // Hyphal Vectoring Growths
+        // Directed Vector Growths
         // ────────────────
 
-        private readonly Dictionary<int, int> hyphalVectoringGrowths = new();
-        public void RecordHyphalVectoringGrowth(int playerId, int cellCount)
+        private readonly Dictionary<int, int> directedVectorGrowths = new();
+        public void RecordDirectedVectorGrowth(int playerId, int cellCount)
         {
-            if (!hyphalVectoringGrowths.ContainsKey(playerId))
-                hyphalVectoringGrowths[playerId] = 0;
-            hyphalVectoringGrowths[playerId] += cellCount;
+            if (!directedVectorGrowths.ContainsKey(playerId))
+                directedVectorGrowths[playerId] = 0;
+            directedVectorGrowths[playerId] += cellCount;
         }
-        public int GetHyphalVectoringGrowthCount(int playerId)
-            => hyphalVectoringGrowths.TryGetValue(playerId, out var val) ? val : 0;
-        public Dictionary<int, int> GetAllHyphalVectoringGrowthCounts() => new(hyphalVectoringGrowths);
+        public int GetDirectedVectorGrowthCount(int playerId)
+            => directedVectorGrowths.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllDirectedVectorGrowthCounts() => new(directedVectorGrowths);
 
         // ────────────────
-        // Hyphal Vectoring Outcomes
+        // Directed Vector Outcomes
         // ────────────────
-        private readonly Dictionary<int, int> hyphalVectoringInfested = new();
-        private readonly Dictionary<int, int> hyphalVectoringReclaimed = new();
-        private readonly Dictionary<int, int> hyphalVectoringCatabolicGrowth = new();
-        private readonly Dictionary<int, int> hyphalVectoringAlreadyOwned = new();
-        private readonly Dictionary<int, int> hyphalVectoringColonized = new();
-        private readonly Dictionary<int, int> hyphalVectoringInvalid = new();
+        private readonly Dictionary<int, int> directedVectorInfested = new();
+        private readonly Dictionary<int, int> directedVectorReclaimed = new();
+        private readonly Dictionary<int, int> directedVectorCatabolicGrowth = new();
+        private readonly Dictionary<int, int> directedVectorAlreadyOwned = new();
+        private readonly Dictionary<int, int> directedVectorColonized = new();
+        private readonly Dictionary<int, int> directedVectorInvalid = new();
 
-        public void ReportHyphalVectoringInfested(int playerId, int count)
+        public void ReportDirectedVectorInfested(int playerId, int count)
         {
-            if (!hyphalVectoringInfested.ContainsKey(playerId))
-                hyphalVectoringInfested[playerId] = 0;
-            hyphalVectoringInfested[playerId] += count;
+            if (!directedVectorInfested.ContainsKey(playerId))
+                directedVectorInfested[playerId] = 0;
+            directedVectorInfested[playerId] += count;
         }
-        public void ReportHyphalVectoringReclaimed(int playerId, int count)
+        public void ReportDirectedVectorReclaimed(int playerId, int count)
         {
-            if (!hyphalVectoringReclaimed.ContainsKey(playerId))
-                hyphalVectoringReclaimed[playerId] = 0;
-            hyphalVectoringReclaimed[playerId] += count;
+            if (!directedVectorReclaimed.ContainsKey(playerId))
+                directedVectorReclaimed[playerId] = 0;
+            directedVectorReclaimed[playerId] += count;
         }
-        public void ReportHyphalVectoringCatabolicGrowth(int playerId, int count)
+        public void ReportDirectedVectorCatabolicGrowth(int playerId, int count)
         {
-            if (!hyphalVectoringCatabolicGrowth.ContainsKey(playerId))
-                hyphalVectoringCatabolicGrowth[playerId] = 0;
-            hyphalVectoringCatabolicGrowth[playerId] += count;
+            if (!directedVectorCatabolicGrowth.ContainsKey(playerId))
+                directedVectorCatabolicGrowth[playerId] = 0;
+            directedVectorCatabolicGrowth[playerId] += count;
         }
-        public void ReportHyphalVectoringAlreadyOwned(int playerId, int count)
+        public void ReportDirectedVectorAlreadyOwned(int playerId, int count)
         {
-            if (!hyphalVectoringAlreadyOwned.ContainsKey(playerId))
-                hyphalVectoringAlreadyOwned[playerId] = 0;
-            hyphalVectoringAlreadyOwned[playerId] += count;
+            if (!directedVectorAlreadyOwned.ContainsKey(playerId))
+                directedVectorAlreadyOwned[playerId] = 0;
+            directedVectorAlreadyOwned[playerId] += count;
         }
-        public void ReportHyphalVectoringColonized(int playerId, int count)
+        public void ReportDirectedVectorColonized(int playerId, int count)
         {
-            if (!hyphalVectoringColonized.ContainsKey(playerId))
-                hyphalVectoringColonized[playerId] = 0;
-            hyphalVectoringColonized[playerId] += count;
+            if (!directedVectorColonized.ContainsKey(playerId))
+                directedVectorColonized[playerId] = 0;
+            directedVectorColonized[playerId] += count;
         }
-        public void ReportHyphalVectoringInvalid(int playerId, int count)
+        public void ReportDirectedVectorInvalid(int playerId, int count)
         {
-            if (!hyphalVectoringInvalid.ContainsKey(playerId))
-                hyphalVectoringInvalid[playerId] = 0;
-            hyphalVectoringInvalid[playerId] += count;
+            if (!directedVectorInvalid.ContainsKey(playerId))
+                directedVectorInvalid[playerId] = 0;
+            directedVectorInvalid[playerId] += count;
         }
-        public int GetHyphalVectoringInfested(int playerId) => hyphalVectoringInfested.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetHyphalVectoringReclaimed(int playerId) => hyphalVectoringReclaimed.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetHyphalVectoringCatabolicGrowth(int playerId) => hyphalVectoringCatabolicGrowth.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetHyphalVectoringAlreadyOwned(int playerId) => hyphalVectoringAlreadyOwned.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetHyphalVectoringColonized(int playerId) => hyphalVectoringColonized.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetHyphalVectoringInvalid(int playerId) => hyphalVectoringInvalid.TryGetValue(playerId, out var val) ? val : 0;
-        public Dictionary<int, int> GetAllHyphalVectoringInfested() => new(hyphalVectoringInfested);
-        public Dictionary<int, int> GetAllHyphalVectoringReclaimed() => new(hyphalVectoringReclaimed);
-        public Dictionary<int, int> GetAllHyphalVectoringCatabolicGrowth() => new(hyphalVectoringCatabolicGrowth);
-        public Dictionary<int, int> GetAllHyphalVectoringAlreadyOwned() => new(hyphalVectoringAlreadyOwned);
-        public Dictionary<int, int> GetAllHyphalVectoringColonized() => new(hyphalVectoringColonized);
-        public Dictionary<int, int> GetAllHyphalVectoringInvalid() => new(hyphalVectoringInvalid);
+        public int GetDirectedVectorInfested(int playerId) => directedVectorInfested.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetDirectedVectorReclaimed(int playerId) => directedVectorReclaimed.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetDirectedVectorCatabolicGrowth(int playerId) => directedVectorCatabolicGrowth.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetDirectedVectorAlreadyOwned(int playerId) => directedVectorAlreadyOwned.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetDirectedVectorColonized(int playerId) => directedVectorColonized.TryGetValue(playerId, out var val) ? val : 0;
+        public int GetDirectedVectorInvalid(int playerId) => directedVectorInvalid.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllDirectedVectorInfested() => new(directedVectorInfested);
+        public Dictionary<int, int> GetAllDirectedVectorReclaimed() => new(directedVectorReclaimed);
+        public Dictionary<int, int> GetAllDirectedVectorCatabolicGrowth() => new(directedVectorCatabolicGrowth);
+        public Dictionary<int, int> GetAllDirectedVectorAlreadyOwned() => new(directedVectorAlreadyOwned);
+        public Dictionary<int, int> GetAllDirectedVectorColonized() => new(directedVectorColonized);
+        public Dictionary<int, int> GetAllDirectedVectorInvalid() => new(directedVectorInvalid);
 
         // ────────────────
         // Jetting Mycelium Outcomes

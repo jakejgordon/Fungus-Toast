@@ -137,15 +137,11 @@ namespace FungusToast.Core.Growth
             {
                 if (!tile.IsOccupied && !board.IsTileBlockedForOccupation(tile.TileId) && tile.TileId != sourceTile.TileId)
                 {
-                    float chance = ChemotacticBeaconHelper.ApplyDirectionalBias(board, owner, sourceTile, tile, baseChance * edgeMultiplier);
-                    float adjustedSurgeBonus = ChemotacticBeaconHelper.ApplyDirectionalBias(board, owner, sourceTile, tile, surgeBonus);
-                    targets.Add(new GrowthTarget(tile, chance, null, adjustedSurgeBonus));
+                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier, null, surgeBonus));
                 }
                 else if (hasMaxCreepingMold && tile.FungalCell != null && tile.FungalCell.IsToxin)
                 {
-                    float chance = ChemotacticBeaconHelper.ApplyDirectionalBias(board, owner, sourceTile, tile, baseChance * edgeMultiplier);
-                    float adjustedSurgeBonus = ChemotacticBeaconHelper.ApplyDirectionalBias(board, owner, sourceTile, tile, surgeBonus);
-                    targets.Add(new GrowthTarget(tile, chance, null, adjustedSurgeBonus));
+                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier, null, surgeBonus));
                 }
             }
             var diagonalDirs = new (int dx, int dy, DiagonalDirection dir, int mutationId)[]
@@ -168,8 +164,7 @@ namespace FungusToast.Core.Growth
                 var maybeTile = board.GetTile(nx, ny);
                 if (maybeTile is { IsOccupied: false, TileId: var id } && !board.IsTileBlockedForOccupation(id) && id != sourceTile.TileId)
                 {
-                    float adjustedChance = ChemotacticBeaconHelper.ApplyDirectionalBias(board, owner, sourceTile, maybeTile, chance);
-                    targets.Add(new GrowthTarget(maybeTile, adjustedChance, dir, 0f));
+                    targets.Add(new GrowthTarget(maybeTile, chance, dir, 0f));
                 }
             }
             return targets;

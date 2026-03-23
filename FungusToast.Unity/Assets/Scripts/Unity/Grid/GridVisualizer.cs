@@ -596,7 +596,7 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        public void PlayHyphalVectoringSurgePresentation(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds)
+        public void PlayDirectedVectorSurgePresentation(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds)
         {
             if (affectedTileIds == null || affectedTileIds.Count == 0)
             {
@@ -605,7 +605,7 @@ namespace FungusToast.Unity.Grid
 
             if (presentationEffects != null)
             {
-                StartCoroutine(presentationEffects.RunHyphalVectoringSurgePresentation(playerId, originTileId, affectedTileIds));
+                StartCoroutine(presentationEffects.RunDirectedVectorSurgePresentation(playerId, originTileId, affectedTileIds));
             }
         }
 

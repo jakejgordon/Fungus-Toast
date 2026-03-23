@@ -10,13 +10,6 @@ namespace FungusToast.Core.Growth
 {
     public static class ChemotacticBeaconHelper
     {
-        public enum DirectionalRelation
-        {
-            Toward,
-            Neutral,
-            Away
-        }
-
         public static bool TryGetActiveMarker(GameBoard board, Player player, out GameBoard.ChemobeaconMarker? marker)
         {
             marker = null;
@@ -27,58 +20,6 @@ namespace FungusToast.Core.Growth
 
             marker = board.GetChemobeacon(player.PlayerId);
             return marker != null;
-        }
-
-        public static float ApplyDirectionalBias(GameBoard board, Player player, BoardTile sourceTile, BoardTile targetTile, float chance)
-        {
-            if (chance <= 0f || sourceTile == null || targetTile == null)
-            {
-                return 0f;
-            }
-
-            if (!TryGetActiveMarker(board, player, out var marker) || marker == null)
-            {
-                return chance;
-            }
-
-            DirectionalRelation relation = GetDirectionalRelation(sourceTile, targetTile, board, marker.TileId);
-            float multiplier = relation switch
-            {
-                DirectionalRelation.Toward => GameBalance.ChemotacticBeaconTowardGrowthMultiplier,
-                DirectionalRelation.Away => GameBalance.ChemotacticBeaconAwayGrowthMultiplier,
-                _ => 1f
-            };
-
-            return Math.Clamp(chance * multiplier, 0f, 1f);
-        }
-
-        public static DirectionalRelation GetDirectionalRelation(BoardTile sourceTile, BoardTile targetTile, GameBoard board, int markerTileId)
-        {
-            var markerTile = board.GetTileById(markerTileId);
-            if (markerTile == null)
-            {
-                return DirectionalRelation.Neutral;
-            }
-
-            int sourceDistance = sourceTile.DistanceTo(markerTile);
-            int targetDistance = targetTile.DistanceTo(markerTile);
-            if (targetDistance < sourceDistance)
-            {
-                return DirectionalRelation.Toward;
-            }
-
-            if (targetDistance > sourceDistance)
-            {
-                return DirectionalRelation.Away;
-            }
-
-            return DirectionalRelation.Neutral;
-        }
-
-        public static bool DoesMoveStayAsCloseOrCloserToMarker(BoardTile sourceTile, BoardTile targetTile, GameBoard board, int markerTileId)
-        {
-            DirectionalRelation relation = GetDirectionalRelation(sourceTile, targetTile, board, markerTileId);
-            return relation == DirectionalRelation.Toward || relation == DirectionalRelation.Neutral;
         }
 
         public static int? TrySelectAITargetTile(Player player, GameBoard board)

@@ -1,4 +1,5 @@
 using FungusToast.Core.Board;
+using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 
@@ -53,13 +54,13 @@ public class PlayerTargetedSurgeTests
         var mutation = RequireMutation(MutationIds.ChemotacticBeacon);
         player.SetMutationLevel(MutationIds.MycelialBloom, newLevel: 7, currentRound: 1);
 
-        var activated = player.TryActivateReservedTargetedSurge(mutation, board, targetTileId: 6, observer, currentRound: 2, reservedActivationCost: 8);
+        var activated = player.TryActivateReservedTargetedSurge(mutation, board, targetTileId: 6, observer, currentRound: 2, reservedActivationCost: GameBalance.ChemotacticBeaconPointsPerActivation);
 
         Assert.True(activated, $"Expected reserved targeted surge activation to succeed on an open tile.");
         Assert.Equal(50, player.MutationPoints);
         Assert.True(player.IsSurgeActive(mutation.Id));
         Assert.True(board.HasChemobeacon(player.PlayerId));
-        Assert.Equal(8, observer.LastMutationPointsSpent);
+        Assert.Equal(GameBalance.ChemotacticBeaconPointsPerActivation, observer.LastMutationPointsSpent);
     }
 
     [Fact]

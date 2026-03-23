@@ -46,7 +46,7 @@ internal sealed class TestSimulationObserver : ISimulationObserver
     public void RecordMutationPointIncome(int playerId, int newMutationPoints) => LastMutationPointIncome = newMutationPoints;
     public void RecordBankedPoints(int playerId, int pointsBanked) { }
     public void RecordHyphalSurgeGrowth(int playerId) { }
-    public void RecordHyphalVectoringGrowth(int playerId, int cellsPlaced) { }
+    public void RecordDirectedVectorGrowth(int playerId, int cellsPlaced) { }
     public void ReportJettingMyceliumInfested(int playerId, int infested) { }
     public void ReportJettingMyceliumReclaimed(int playerId, int reclaimed) { }
     public void ReportJettingMyceliumCatabolicGrowth(int playerId, int catabolicGrowth) { }
@@ -55,12 +55,12 @@ internal sealed class TestSimulationObserver : ISimulationObserver
     public void ReportJettingMyceliumColonized(int playerId, int colonized) { }
     public void ReportJettingMyceliumToxified(int playerId, int toxified) { }
     public void ReportJettingMyceliumPoisoned(int playerId, int poisoned) { }
-    public void ReportHyphalVectoringInfested(int playerId, int infested) { }
-    public void ReportHyphalVectoringReclaimed(int playerId, int reclaimed) { }
-    public void ReportHyphalVectoringCatabolicGrowth(int playerId, int catabolicGrowth) { }
-    public void ReportHyphalVectoringAlreadyOwned(int playerId, int alreadyOwned) { }
-    public void ReportHyphalVectoringColonized(int playerId, int colonized) { }
-    public void ReportHyphalVectoringInvalid(int playerId, int invalid) { }
+    public void ReportDirectedVectorInfested(int playerId, int infested) { }
+    public void ReportDirectedVectorReclaimed(int playerId, int reclaimed) { }
+    public void ReportDirectedVectorCatabolicGrowth(int playerId, int catabolicGrowth) { }
+    public void ReportDirectedVectorAlreadyOwned(int playerId, int alreadyOwned) { }
+    public void ReportDirectedVectorColonized(int playerId, int colonized) { }
+    public void ReportDirectedVectorInvalid(int playerId, int invalid) { }
     public void RecordStandardGrowth(int playerId) { }
     public void RecordNeutralizingMantleEffect(int playerId, int toxinsNeutralized) { }
     public void RecordBastionedCells(int playerId, int count) { }

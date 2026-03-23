@@ -570,9 +570,9 @@ namespace FungusToast.Unity.UI
             sb.AppendLine(EmphasizedLine("Status", "Chemobeacon", UIStyleTokens.Accent.Spore));
             sb.AppendLine(DetailLine("Owner", $"Player {chemobeacon.PlayerId + 1}", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine(DetailLine("Rounds Remaining", chemobeacon.TurnsRemaining.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.State.Warning));
-            sb.AppendLine(DetailLine("Effect", $"Closer growth multiplies by {GameBalance.ChemotacticBeaconTowardGrowthMultiplier:0.##}x", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
-            sb.AppendLine(DetailLine("Effect", "Same-distance growth is unchanged", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
-            sb.AppendLine(DetailLine("Effect", $"Farther growth multiplies by {GameBalance.ChemotacticBeaconAwayGrowthMultiplier:0.##}x", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine(DetailLine("Effect", $"Projects {GameBalance.ChemotacticBeaconBaseTiles} + {GameBalance.ChemotacticBeaconTilesPerLevel}/level living cells toward the marker", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
+            sb.AppendLine(DetailLine("Effect", "Replaces toxins, dead cells, enemy cells, and empty tiles in its path", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine(DetailLine("Effect", "Skips over friendly living cells", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine();
             sb.AppendLine(DetailLine("Tile", $"({tile.X}, {tile.Y})", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine(DetailLine("Occupancy", "Blocked while active", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger));
@@ -712,7 +712,7 @@ namespace FungusToast.Unity.UI
             DeathReason.PutrefactiveMycotoxin     => "Putrefactive Mycotoxin",
             DeathReason.SporicidalBloom           => "Sporicidal Bloom",
             DeathReason.MycotoxinPotentiation     => "Mycotoxin Potentiation",
-            DeathReason.HyphalVectoring           => "Hyphal Vectoring",
+            DeathReason.HyphalVectoring           => "Chemotactic Beacon",
             DeathReason.JettingMycelium           => "Jetting Mycelium",
             DeathReason.Infested                  => "Infested",
             DeathReason.Poisoned                  => "Poisoned",

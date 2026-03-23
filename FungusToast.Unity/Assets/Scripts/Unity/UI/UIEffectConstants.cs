@@ -154,59 +154,59 @@ namespace FungusToast.Unity.UI
         public const float HyphalBridgeBannerHoldSeconds = 1.1f;
 
         /// <summary>
-        /// Hold duration for the Hyphal Vectoring surge banner.
+        /// Hold duration for the directed-vector surge banner.
         /// </summary>
-        public const float HyphalVectoringBannerHoldSeconds = 0.7f;
+        public const float DirectedVectorBannerHoldSeconds = 1.05f;
 
         /// <summary>
-        /// Lifetime of the floating Hyphal Vectoring toast.
+        /// Lifetime of the floating directed-vector toast.
         /// </summary>
-        public const float HyphalVectoringToastDurationSeconds = 1.35f;
+        public const float DirectedVectorToastDurationSeconds = 2.025f;
 
         /// <summary>
-        /// World-space height at which the Hyphal Vectoring toast begins.
+        /// World-space height at which the directed-vector toast begins.
         /// </summary>
-        public const float HyphalVectoringToastStartHeightWorld = 0.28f;
+        public const float DirectedVectorToastStartHeightWorld = 0.42f;
 
         /// <summary>
-        /// World-space vertical travel applied to the Hyphal Vectoring toast.
+        /// World-space vertical travel applied to the directed-vector toast.
         /// </summary>
-        public const float HyphalVectoringToastRiseWorld = 0.72f;
+        public const float DirectedVectorToastRiseWorld = 1.08f;
 
         /// <summary>
-        /// Font size used for the floating Hyphal Vectoring toast.
+        /// Font size used for the floating directed-vector toast.
         /// </summary>
-        public const float HyphalVectoringToastFontSize = 5.8f;
+        public const float DirectedVectorToastFontSize = 8.7f;
 
         /// <summary>
         /// Duration of the origin emphasis pulse.
         /// </summary>
-        public const float HyphalVectoringOriginPulseDurationSeconds = 0.2f;
+        public const float DirectedVectorOriginPulseDurationSeconds = 0.3f;
 
         /// <summary>
-        /// Duration of each Hyphal Vectoring chunk pulse.
+        /// Duration of each directed-vector chunk pulse.
         /// </summary>
-        public const float HyphalVectoringChunkPulseDurationSeconds = 0.24f;
+        public const float DirectedVectorChunkPulseDurationSeconds = 0.36f;
 
         /// <summary>
-        /// Delay between Hyphal Vectoring chunk pulses.
+        /// Delay between directed-vector chunk pulses.
         /// </summary>
-        public const float HyphalVectoringChunkStaggerSeconds = 0.09f;
+        public const float DirectedVectorChunkStaggerSeconds = 0.135f;
 
         /// <summary>
-        /// Minimum number of chunk beats used for larger Hyphal Vectoring paths.
+        /// Minimum number of chunk beats used for larger directed-vector paths.
         /// </summary>
-        public const int HyphalVectoringChunkCountMin = 3;
+        public const int DirectedVectorChunkCountMin = 3;
 
         /// <summary>
-        /// Maximum number of chunk beats used for larger Hyphal Vectoring paths.
+        /// Maximum number of chunk beats used for larger directed-vector paths.
         /// </summary>
-        public const int HyphalVectoringChunkCountMax = 6;
+        public const int DirectedVectorChunkCountMax = 6;
 
         /// <summary>
-        /// Peak scale for the Hyphal Vectoring overlay pulse.
+        /// Peak scale for the directed-vector overlay pulse.
         /// </summary>
-        public const float HyphalVectoringPulseScale = 1.22f;
+        public const float DirectedVectorPulseScale = 1.33f;
 
         /// <summary>
         /// Total duration for the Conidial Relay presentation animation.

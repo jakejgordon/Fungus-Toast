@@ -129,7 +129,7 @@ namespace FungusToast.Core.Mutations.Factories
                 tier: MutationTier.Tier6
             ),
             new MutationPrerequisite(MutationIds.PutrefactiveRejuvenation, 1),
-            new MutationPrerequisite(MutationIds.HyphalVectoring, 1));
+            new MutationPrerequisite(MutationIds.ChemotacticBeacon, 1));
         }
     }
 }

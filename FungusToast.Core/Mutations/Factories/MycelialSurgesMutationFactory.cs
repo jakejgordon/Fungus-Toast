@@ -34,36 +34,14 @@ namespace FungusToast.Core.Mutations.Factories
             );
 
             helper.MakeChild(new Mutation(
-                id: MutationIds.HyphalVectoring,
-                name: "Hyphal Vectoring",
-                description:
-                    $"For {GameBalance.HyphalVectoringSurgeDuration} turns after activation, projects a line of {GameBalance.HyphalVectoringBaseTiles} + {GameBalance.HyphalVectoringTilesPerLevel}/level living cells toward the toast center at Growth Phase end. " +
-                    $"Replaces toxins, dead cells, enemy cells, and empty tiles in its path; skips over friendly living cells. " +
-                    $"Each activation costs {GameBalance.HyphalVectoringPointsPerActivation} mutation points plus {GameBalance.HyphalVectoringSurgePointIncreasePerLevel} per level.",
-                flavorText: "Hyphal networks realign toward the center of the substrate, bulldozing through opposition with deliberate, uncompromising purpose.",
-                type: MutationType.HyphalVectoring,
-                effectPerLevel: GameBalance.HyphalVectoringTilesPerLevel,
-                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
-                maxLevel: GameBalance.HyphalVectoringMaxLevel,
-                category: MutationCategory.MycelialSurges,
-                tier: MutationTier.Tier2,
-                isSurge: true,
-                surgeDuration: GameBalance.HyphalVectoringSurgeDuration,
-                pointsPerActivation: GameBalance.HyphalVectoringPointsPerActivation,
-                pointIncreasePerLevel: GameBalance.HyphalVectoringSurgePointIncreasePerLevel
-            ),
-            new MutationPrerequisite(MutationIds.MycelialBloom, 7)
-            );
-
-            helper.MakeChild(new Mutation(
                 id: MutationIds.ChemotacticBeacon,
                 name: "Chemotactic Beacon",
                 description:
-                    $"On activation, mark one empty non-nutrient tile as a Chemobeacon for {GameBalance.ChemotacticBeaconSurgeDuration} rounds. Growth that ends closer multiplies by {GameBalance.ChemotacticBeaconTowardGrowthMultiplier:0.##}x, growth that ends at the same distance is unchanged, and growth that ends farther away multiplies by {GameBalance.ChemotacticBeaconAwayGrowthMultiplier:0.##}x.",
+                    $"On activation, mark one empty non-nutrient tile as a Chemobeacon for {GameBalance.ChemotacticBeaconSurgeDuration} turns. At Growth Phase end, projects a line of {GameBalance.ChemotacticBeaconBaseTiles} + {GameBalance.ChemotacticBeaconTilesPerLevel}/level living cells toward the marker. Replaces toxins, dead cells, enemy cells, and empty tiles in its path; skips over friendly living cells.",
                 flavorText: "A volatile lure condenses over bare toast, exhaling a phantom food trail that bends the colony's advance while the beacon itself slowly evaporates.",
                 type: MutationType.ChemotacticBeacon,
-                effectPerLevel: GameBalance.ChemotacticBeaconTowardGrowthMultiplier - 1f,
-                pointsPerUpgrade: GameBalance.ChemotacticBeaconPointsPerActivation,
+                effectPerLevel: GameBalance.ChemotacticBeaconTilesPerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
                 maxLevel: GameBalance.ChemotacticBeaconMaxLevel,
                 category: MutationCategory.MycelialSurges,
                 tier: MutationTier.Tier2,

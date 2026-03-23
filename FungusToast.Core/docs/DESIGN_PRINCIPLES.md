@@ -76,7 +76,7 @@ The mutation upgrade tree is organized into **five distinct categories**, each r
 - **Strategic Role**: Tactical abilities that can turn the tide of battle when timed correctly
 - **Key Mutations**: 
   - **Hyphal Surge**: Temporary growth chance boost
-  - **Hyphal Vectoring**: Projects a line of cells toward the board center
+  - **Chemotactic Beacon**: Projects a line of cells toward a player-placed marker
 - **Unique Mechanics**:
   - Base activation cost + (level × cost increase factor)
   - Cannot upgrade while surge is active

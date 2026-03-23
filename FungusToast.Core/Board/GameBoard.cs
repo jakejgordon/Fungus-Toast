@@ -36,9 +36,9 @@ namespace FungusToast.Core.Board
             }
         }
 
-        public sealed class HyphalVectoringSurgeEventArgs
+        public sealed class DirectedVectorSurgeEventArgs
         {
-            public HyphalVectoringSurgeEventArgs(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds)
+            public DirectedVectorSurgeEventArgs(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds)
             {
                 PlayerId = playerId;
                 OriginTileId = originTileId;
@@ -97,7 +97,7 @@ namespace FungusToast.Core.Board
         public delegate void CatabolicRebirthEventHandler(object sender, CatabolicRebirthEventArgs e);
         public delegate void PreGrowthPhaseEventHandler();
         public delegate void ResistanceAppliedBatchEventHandler(int playerId, GrowthSource source, IReadOnlyList<int> tileIds);
-        public delegate void HyphalVectoringSurgeEventHandler(HyphalVectoringSurgeEventArgs e);
+        public delegate void DirectedVectorSurgeEventHandler(DirectedVectorSurgeEventArgs e);
         public delegate void RegenerativeHyphaeReclaimedEventHandler(int playerId, int tileId);
         public delegate void PostDecayPhaseEventHandler(); // NEW
         public delegate void ChemobeaconMarkerEventHandler(int playerId, int tileId);
@@ -132,7 +132,7 @@ namespace FungusToast.Core.Board
         public event CatabolicRebirthEventHandler? CatabolicRebirth;
         public event PreGrowthPhaseEventHandler? PreGrowthPhase;
         public event ResistanceAppliedBatchEventHandler? ResistanceAppliedBatch;
-        public event HyphalVectoringSurgeEventHandler? HyphalVectoringSurge;
+        public event DirectedVectorSurgeEventHandler? DirectedVectorSurge;
         public event RegenerativeHyphaeReclaimedEventHandler? RegenerativeHyphaeReclaimed;
         public event PostDecayPhaseEventHandler? PostDecayPhase; // NEW
         public event ChemobeaconMarkerEventHandler? ChemobeaconPlaced;
@@ -179,7 +179,7 @@ namespace FungusToast.Core.Board
         protected virtual void OnBeforeGrowthAttempt(GrowthAttemptEventArgs e) => BeforeGrowthAttempt?.Invoke(this, e);
         protected virtual void OnAfterGrowthAttempt(GrowthAttemptEventArgs e) => AfterGrowthAttempt?.Invoke(this, e);
         public virtual void OnResistanceAppliedBatch(int playerId, GrowthSource source, List<int> tileIds) => ResistanceAppliedBatch?.Invoke(playerId, source, tileIds);
-        public virtual void OnHyphalVectoringSurge(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds) => HyphalVectoringSurge?.Invoke(new HyphalVectoringSurgeEventArgs(playerId, originTileId, affectedTileIds));
+        public virtual void OnDirectedVectorSurge(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds) => DirectedVectorSurge?.Invoke(new DirectedVectorSurgeEventArgs(playerId, originTileId, affectedTileIds));
         protected virtual void OnChemobeaconPlaced(int playerId, int tileId) => ChemobeaconPlaced?.Invoke(playerId, tileId);
         protected virtual void OnChemobeaconExpired(int playerId, int tileId) => ChemobeaconExpired?.Invoke(playerId, tileId);
         #endregion

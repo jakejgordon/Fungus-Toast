@@ -35,7 +35,7 @@ namespace FungusToast.Core.Metrics
         void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade);
         void RecordBankedPoints(int playerId, int pointsBanked);
         void RecordHyphalSurgeGrowth(int playerId);
-        void RecordHyphalVectoringGrowth(int playerId, int cellsPlaced);
+        void RecordDirectedVectorGrowth(int playerId, int cellsPlaced);
         void ReportJettingMyceliumInfested(int playerId, int infested);
         void ReportJettingMyceliumReclaimed(int playerId, int reclaimed);
         void ReportJettingMyceliumCatabolicGrowth(int playerId, int catabolicGrowth);
@@ -44,12 +44,12 @@ namespace FungusToast.Core.Metrics
         void ReportJettingMyceliumColonized(int playerId, int colonized);
         void ReportJettingMyceliumToxified(int playerId, int toxified);
         void ReportJettingMyceliumPoisoned(int playerId, int poisoned);
-        void ReportHyphalVectoringInfested(int playerId, int infested);
-        void ReportHyphalVectoringReclaimed(int playerId, int reclaimed);
-        void ReportHyphalVectoringCatabolicGrowth(int playerId, int catabolicGrowth);
-        void ReportHyphalVectoringAlreadyOwned(int playerId, int alreadyOwned);
-        void ReportHyphalVectoringColonized(int playerId, int colonized);
-        void ReportHyphalVectoringInvalid(int playerId, int invalid);
+        void ReportDirectedVectorInfested(int playerId, int infested);
+        void ReportDirectedVectorReclaimed(int playerId, int reclaimed);
+        void ReportDirectedVectorCatabolicGrowth(int playerId, int catabolicGrowth);
+        void ReportDirectedVectorAlreadyOwned(int playerId, int alreadyOwned);
+        void ReportDirectedVectorColonized(int playerId, int colonized);
+        void ReportDirectedVectorInvalid(int playerId, int invalid);
         void RecordStandardGrowth(int playerId);
         void RecordNeutralizingMantleEffect(int playerId, int toxinsNeutralized);
         void RecordBastionedCells(int playerId, int count);

@@ -43,13 +43,13 @@ public class PlayerSurgeStateTests
     {
         var player = CreatePlayer();
         player.ActiveSurges[MutationIds.HyphalSurge] = new Player.ActiveSurgeInfo(mutationId: MutationIds.HyphalSurge, level: 1, duration: 2);
-        player.ActiveSurges[MutationIds.HyphalVectoring] = new Player.ActiveSurgeInfo(mutationId: MutationIds.HyphalVectoring, level: 1, duration: 2);
+        player.ActiveSurges[MutationIds.ChemotacticBeacon] = new Player.ActiveSurgeInfo(mutationId: MutationIds.ChemotacticBeacon, level: 1, duration: 2);
 
         player.RemoveActiveSurge(MutationIds.HyphalSurge);
 
         Assert.False(player.IsSurgeActive(MutationIds.HyphalSurge));
-        Assert.True(player.IsSurgeActive(MutationIds.HyphalVectoring));
-        Assert.Equal(2, player.GetSurgeTurnsRemaining(MutationIds.HyphalVectoring));
+        Assert.True(player.IsSurgeActive(MutationIds.ChemotacticBeacon));
+        Assert.Equal(2, player.GetSurgeTurnsRemaining(MutationIds.ChemotacticBeacon));
     }
 
     private static Player CreatePlayer()

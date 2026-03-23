@@ -47,6 +47,11 @@ namespace FungusToast.Core.Growth
         /// Growth from Hyphal Vectoring surge
         /// </summary>
         HyphalVectoring,
+
+        /// <summary>
+        /// Growth from Chemotactic Beacon surge
+        /// </summary>
+        ChemotacticBeacon,
         
         /// <summary>
         /// Growth from Surgical Inoculation mycovariant

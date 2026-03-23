@@ -20,7 +20,7 @@ namespace FungusToast.Core.Mutations
                     MutationCategory.Growth,
                     MutationCategory.GeneticDrift
                 },
-                [MutationIds.HyphalVectoring] = new HashSet<MutationCategory>
+                [MutationIds.ChemotacticBeacon] = new HashSet<MutationCategory>
                 {
                     MutationCategory.Growth
                 },
