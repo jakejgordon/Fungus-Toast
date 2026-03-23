@@ -9,6 +9,12 @@ namespace FungusToast.Unity.Cameras
         public float minZoom = 5f;
         public float maxZoom = 100f;
 
+        [Header("Input Stability")]
+        [Tooltip("Caps the timestep used for pan input so animation hitches do not fling the camera across the board.")]
+        [SerializeField] private float maxPanInputDeltaTime = 1f / 45f;
+        [Tooltip("Caps how far camera panning can move in a single frame, even if input spikes during heavy animations.")]
+        [SerializeField] private float maxPanDistancePerFrame = 0.75f;
+
         [Header("Camera Bounds")]
         [Tooltip("Maximum distance camera can move from board center (in world units). For 100x100 boards, try 75-100.")]
         public float maxDistanceFromCenter = 75f;
@@ -38,6 +44,7 @@ namespace FungusToast.Unity.Cameras
             float scroll = Input.GetAxis("Mouse ScrollWheel");
             if (Camera.main != null)
             {
+                float panDeltaTime = GetPanDeltaTime();
                 float size = Camera.main.orthographicSize;
 
                 // --- Zoom to mouse cursor logic ---
@@ -80,7 +87,8 @@ namespace FungusToast.Unity.Cameras
                 {
                     // Scale movement by camera size for consistent feel
                     float scaledSpeed = moveSpeed * Camera.main.orthographicSize;
-                    Vector3 newPosition = Camera.main.transform.position + move * scaledSpeed * Time.deltaTime;
+                    Vector3 frameDelta = Vector3.ClampMagnitude(move * scaledSpeed * panDeltaTime, maxPanDistancePerFrame);
+                    Vector3 newPosition = Camera.main.transform.position + frameDelta;
                     Camera.main.transform.position = ClampCameraPosition(newPosition);
                 }
 
@@ -89,12 +97,18 @@ namespace FungusToast.Unity.Cameras
                 {
                     // Right-drag panning also scaled by camera size
                     float dragSpeed = moveSpeed * Camera.main.orthographicSize;
-                    float dx = -Input.GetAxis("Mouse X") * dragSpeed * Time.deltaTime;
-                    float dy = -Input.GetAxis("Mouse Y") * dragSpeed * Time.deltaTime;
-                    Vector3 newPosition = Camera.main.transform.position + new Vector3(dx, dy, 0);
+                    float dx = -Input.GetAxis("Mouse X") * dragSpeed * panDeltaTime;
+                    float dy = -Input.GetAxis("Mouse Y") * dragSpeed * panDeltaTime;
+                    Vector3 frameDelta = Vector3.ClampMagnitude(new Vector3(dx, dy, 0), maxPanDistancePerFrame);
+                    Vector3 newPosition = Camera.main.transform.position + frameDelta;
                     Camera.main.transform.position = ClampCameraPosition(newPosition);
                 }
             }
+        }
+
+        private float GetPanDeltaTime()
+        {
+            return Mathf.Min(Time.unscaledDeltaTime, maxPanInputDeltaTime);
         }
 
         /// <summary>
