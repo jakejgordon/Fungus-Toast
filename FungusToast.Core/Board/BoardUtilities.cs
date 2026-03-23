@@ -143,6 +143,7 @@ namespace FungusToast.Core.Board
         {
             // Initialize counters for all players
             var livingCounts = allPlayers.ToDictionary(p => p.PlayerId, p => 0);
+            var resistantCounts = allPlayers.ToDictionary(p => p.PlayerId, p => 0);
             var deadCounts = allPlayers.ToDictionary(p => p.PlayerId, p => 0);
             var toxinCounts = allPlayers.ToDictionary(p => p.PlayerId, p => 0);
 
@@ -160,6 +161,11 @@ namespace FungusToast.Core.Board
                         if (cell.IsAlive)
                         {
                             livingCounts[playerId]++;
+
+                            if (cell.IsResistant)
+                            {
+                                resistantCounts[playerId]++;
+                            }
                         }
                         else if (cell.IsDead)
                         {
@@ -180,6 +186,7 @@ namespace FungusToast.Core.Board
                 summaries[player.PlayerId] = new PlayerBoardSummary(
                     player.PlayerId,
                     livingCounts[player.PlayerId],
+                    resistantCounts[player.PlayerId],
                     deadCounts[player.PlayerId],
                     toxinCounts[player.PlayerId]
                 );

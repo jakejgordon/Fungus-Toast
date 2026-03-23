@@ -76,11 +76,14 @@ public class BoardUtilitiesTests
     }
 
     [Fact]
-    public void GetPlayerBoardSummaries_counts_living_dead_and_toxin_cells_per_player()
+    public void GetPlayerBoardSummaries_counts_living_resistant_dead_and_toxin_cells_per_player()
     {
         var board = CreateBoardWithPlayers(2);
         board.PlaceInitialSpore(playerId: 0, x: 1, y: 1);
         board.PlaceInitialSpore(playerId: 1, x: 3, y: 3);
+
+        var resistantCell = board.GetTileAt(1, 1).FungalCell;
+        resistantCell.MakeResistant();
 
         var deadCell = new FungalCell(ownerPlayerId: 0, tileId: 7, source: GrowthSource.InitialSpore, lastOwnerPlayerId: null);
         deadCell.Kill(FungusToast.Core.Death.DeathReason.Age);
@@ -92,9 +95,11 @@ public class BoardUtilitiesTests
         var summaries = BoardUtilities.GetPlayerBoardSummaries(board.Players, board);
 
         Assert.Equal(1, summaries[0].LivingCells);
+        Assert.Equal(1, summaries[0].ResistantCells);
         Assert.Equal(1, summaries[0].DeadCells);
         Assert.Equal(0, summaries[0].ToxinCells);
         Assert.Equal(1, summaries[1].LivingCells);
+        Assert.Equal(0, summaries[1].ResistantCells);
         Assert.Equal(0, summaries[1].DeadCells);
         Assert.Equal(1, summaries[1].ToxinCells);
     }

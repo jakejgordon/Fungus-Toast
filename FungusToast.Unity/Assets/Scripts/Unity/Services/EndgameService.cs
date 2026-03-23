@@ -202,6 +202,7 @@ namespace FungusToast.Unity
                         playerId = player.PlayerId,
                         playerName = player.PlayerName,
                         livingCells = summary.LivingCells,
+                        resistantCells = summary.ResistantCells,
                         deadCells = summary.DeadCells,
                         toxinCells = summary.ToxinCells
                     });

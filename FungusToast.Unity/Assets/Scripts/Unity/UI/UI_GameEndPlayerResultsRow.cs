@@ -13,6 +13,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image iconImage;
         [SerializeField] private TextMeshProUGUI nameText;
         [SerializeField] private TextMeshProUGUI livingText;
+        private TextMeshProUGUI resistantText = null!;
         [SerializeField] private TextMeshProUGUI deadText;
         [SerializeField] private TextMeshProUGUI toxinText;
         [SerializeField] private Button detailsButton;
@@ -40,24 +41,31 @@ namespace FungusToast.Unity.UI
             if (rankText != null) rankText.color = UIStyleTokens.Text.Primary;
             if (nameText != null) nameText.color = UIStyleTokens.Text.Primary;
             if (livingText != null) livingText.color = UIStyleTokens.Text.Secondary;
+            if (resistantText != null) resistantText.color = UIStyleTokens.State.Success;
             if (deadText != null) deadText.color = UIStyleTokens.Text.Muted;
             if (toxinText != null) toxinText.color = UIStyleTokens.Text.Muted;
 
             ConfigureText(rankText, TextAlignmentOptions.Center, 23f, allowAutoSize: false);
             ConfigureText(nameText, TextAlignmentOptions.Left, 23f, allowAutoSize: true);
             ConfigureText(livingText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
+            EnsureResistantText();
             ConfigureText(deadText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
             EnsureToxinText();
             EnsureDetailsButton();
         }
 
         /* -------- public API -------- */
-        public void Populate(int rank, Sprite icon, string playerName, int living, int dead, int toxins, Action onDetailsRequested = null)
+        public void Populate(int rank, Sprite icon, string playerName, int living, int resistant, int dead, int toxins, Action onDetailsRequested = null)
         {
             rankText.text = rank.ToString();
             iconImage.sprite = icon;
             nameText.text = playerName;
             livingText.text = FormatCount(living);
+            if (resistantText != null)
+            {
+                resistantText.text = FormatCount(resistant);
+            }
+
             deadText.text = FormatCount(dead);
             if (toxinText != null)
             {
@@ -65,6 +73,35 @@ namespace FungusToast.Unity.UI
             }
 
             ConfigureDetailsButton(onDetailsRequested);
+        }
+
+        private void EnsureResistantText()
+        {
+            if (resistantText != null || deadText == null)
+            {
+                return;
+            }
+
+            var clone = Instantiate(deadText.gameObject, deadText.transform.parent);
+            clone.name = "UI_PlayerResultsResistantText";
+            clone.transform.SetSiblingIndex(deadText.transform.GetSiblingIndex());
+
+            resistantText = clone.GetComponent<TextMeshProUGUI>();
+            if (resistantText != null)
+            {
+                resistantText.color = UIStyleTokens.State.Success;
+                ConfigureText(resistantText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
+                resistantText.text = string.Empty;
+            }
+
+            var layout = clone.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = clone.AddComponent<LayoutElement>();
+            }
+
+            layout.preferredWidth = 140f;
+            layout.flexibleWidth = -1f;
         }
 
         private void EnsureToxinText()

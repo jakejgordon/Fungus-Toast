@@ -37,6 +37,7 @@ namespace FungusToast.Unity.Campaign
         public int playerId;
         public string playerName;
         public int livingCells;
+        public int resistantCells;
         public int deadCells;
         public int toxinCells;
     }

@@ -330,6 +330,7 @@ namespace FungusToast.Unity.UI
                     icon,
                     p.PlayerName,
                     summary.LivingCells,
+                    summary.ResistantCells,
                     summary.DeadCells,
                     summary.ToxinCells,
                     () => ShowPlayerDetails(capturedPlayer, capturedRank, capturedIcon));
@@ -422,6 +423,7 @@ namespace FungusToast.Unity.UI
                     icon,
                     rowData.playerName,
                     rowData.livingCells,
+                    rowData.resistantCells,
                     rowData.deadCells,
                     rowData.toxinCells,
                     player != null ? () => ShowPlayerDetails(player, capturedRank, capturedIcon) : null);
@@ -601,6 +603,7 @@ namespace FungusToast.Unity.UI
             CreateHeaderCell(header.transform, string.Empty, 60f, TextAlignmentOptions.Center, false);
             CreateHeaderCell(header.transform, "Player", 260f, TextAlignmentOptions.Left, true);
             CreateHeaderCell(header.transform, "Alive", 140f, TextAlignmentOptions.Right, false);
+            CreateHeaderCell(header.transform, "Resistant", 140f, TextAlignmentOptions.Right, false);
             CreateHeaderCell(header.transform, "Dead", 140f, TextAlignmentOptions.Right, false);
             CreateHeaderCell(header.transform, "Toxins", 140f, TextAlignmentOptions.Right, false);
             CreateHeaderCell(header.transform, "Details", 132f, TextAlignmentOptions.Center, false);
@@ -1897,6 +1900,7 @@ namespace FungusToast.Unity.UI
 
             return name.IndexOf("GameEndHeader_", StringComparison.OrdinalIgnoreCase) >= 0
                 || name.IndexOf("AliveHeaderText", StringComparison.OrdinalIgnoreCase) >= 0
+                || name.IndexOf("ResistantHeaderText", StringComparison.OrdinalIgnoreCase) >= 0
                 || name.IndexOf("DeadHeaderText", StringComparison.OrdinalIgnoreCase) >= 0
                 || name.IndexOf("ToxinHeaderText", StringComparison.OrdinalIgnoreCase) >= 0
                 || name.IndexOf("PlayerSummariesPanelHeaderRow", StringComparison.OrdinalIgnoreCase) >= 0;
@@ -1911,6 +1915,7 @@ namespace FungusToast.Unity.UI
 
             return string.Equals(text, "Player", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(text, "Alive", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(text, "Resistant", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(text, "Dead", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(text, "Toxins", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(text, "Details", StringComparison.OrdinalIgnoreCase);
