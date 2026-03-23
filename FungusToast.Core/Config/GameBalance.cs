@@ -112,7 +112,7 @@ namespace FungusToast.Core.Config
         public const int ChemotacticBeaconPointIncreasePerLevel = 1;
 
         // Chitin Fortification (Tier 2 MycelialSurges)
-        public const int ChitinFortificationCellsPerLevel = 2; // X: cells fortified per level
+            public const int ChitinFortificationCellsPerLevel = 4; // X: cells fortified per level
         public const int ChitinFortificationDurationRounds = 3; // Y: rounds of protection
         public const int ChitinFortificationMaxLevel = 10;
         public const int ChitinFortificationPointsPerActivation = 2;
