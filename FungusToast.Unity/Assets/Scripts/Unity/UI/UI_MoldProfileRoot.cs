@@ -244,17 +244,7 @@ namespace FungusToast.Unity.UI
             EnsureCellsResolved();
             Refresh();
 
-            // Center Player Icon
-            if (centerPlayerIcon != null)
-            {
-                try
-                {
-                    var sprite = GameManager.Instance?.gridVisualizer?.GetTileForPlayer(player.PlayerId)?.sprite;
-                    if (sprite != null) { centerPlayerIcon.sprite = sprite; centerPlayerIcon.enabled = true; }
-                    else centerPlayerIcon.enabled = false;
-                }
-                catch { centerPlayerIcon.enabled = false; }
-            }
+            ConfigureCenterPlayerIcon(player);
         }
 
         public void Refresh()
@@ -290,19 +280,46 @@ namespace FungusToast.Unity.UI
             trackedPlayer = player;
             allPlayers = players;
 
-            // Center Player Icon
-            if (centerPlayerIcon != null)
-            {
-                try
-                {
-                    var sprite = GameManager.Instance?.gridVisualizer?.GetTileForPlayer(player.PlayerId)?.sprite;
-                    if (sprite != null) { centerPlayerIcon.sprite = sprite; centerPlayerIcon.enabled = true; }
-                    else centerPlayerIcon.enabled = false;
-                }
-                catch { centerPlayerIcon.enabled = false; }
-            }
+            ConfigureCenterPlayerIcon(player);
 
             Refresh();
+        }
+
+        private void ConfigureCenterPlayerIcon(Player player)
+        {
+            if (centerPlayerIcon == null)
+            {
+                return;
+            }
+
+            try
+            {
+                var grid = GameManager.Instance?.gridVisualizer;
+                var sprite = grid?.GetTileForPlayer(player.PlayerId)?.sprite;
+                centerPlayerIcon.sprite = sprite;
+                centerPlayerIcon.enabled = sprite != null;
+
+                var hoverHandler = centerPlayerIcon.GetComponent<PlayerMoldIconHoverHandler>();
+                if (hoverHandler == null)
+                {
+                    hoverHandler = centerPlayerIcon.gameObject.AddComponent<PlayerMoldIconHoverHandler>();
+                }
+
+                hoverHandler.playerId = player.PlayerId;
+                hoverHandler.gridVisualizer = grid;
+                hoverHandler.enabled = sprite != null && grid != null;
+                centerPlayerIcon.raycastTarget = hoverHandler.enabled;
+            }
+            catch
+            {
+                centerPlayerIcon.enabled = false;
+
+                var hoverHandler = centerPlayerIcon.GetComponent<PlayerMoldIconHoverHandler>();
+                if (hoverHandler != null)
+                {
+                    hoverHandler.enabled = false;
+                }
+            }
         }
 
         private void EnsureCellsResolved()
