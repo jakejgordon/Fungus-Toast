@@ -570,8 +570,9 @@ namespace FungusToast.Unity.UI
             sb.AppendLine(EmphasizedLine("Status", "Chemobeacon", UIStyleTokens.Accent.Spore));
             sb.AppendLine(DetailLine("Owner", $"Player {chemobeacon.PlayerId + 1}", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine(DetailLine("Rounds Remaining", chemobeacon.TurnsRemaining.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.State.Warning));
-            sb.AppendLine(DetailLine("Effect", $"Closer or neutral growth gains +{GameBalance.ChemotacticBeaconTowardGrowthBonus:P0}", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
-            sb.AppendLine(DetailLine("Effect", $"Farther growth loses {GameBalance.ChemotacticBeaconBaseNonTargetPenalty:P0} at base, easing by {GameBalance.ChemotacticBeaconPenaltyReductionPerLevel:P0}/level", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine(DetailLine("Effect", $"Closer growth multiplies by {GameBalance.ChemotacticBeaconTowardGrowthMultiplier:0.##}x", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
+            sb.AppendLine(DetailLine("Effect", "Same-distance growth is unchanged", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine(DetailLine("Effect", $"Farther growth multiplies by {GameBalance.ChemotacticBeaconAwayGrowthMultiplier:0.##}x", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine();
             sb.AppendLine(DetailLine("Tile", $"({tile.X}, {tile.Y})", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine(DetailLine("Occupancy", "Blocked while active", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger));

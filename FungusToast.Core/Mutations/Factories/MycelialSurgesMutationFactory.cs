@@ -59,10 +59,10 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.ChemotacticBeacon,
                 name: "Chemotactic Beacon",
                 description:
-                    $"On activation, mark one empty non-nutrient tile as a Chemobeacon for {GameBalance.ChemotacticBeaconSurgeDuration} rounds. Growth that ends closer or equally close gains {helper.FormatPercent(GameBalance.ChemotacticBeaconTowardGrowthBonus)}; growth that ends farther away loses {helper.FormatPercent(GameBalance.ChemotacticBeaconBaseNonTargetPenalty)} minus {helper.FormatPercent(GameBalance.ChemotacticBeaconPenaltyReductionPerLevel)}/level.",
+                    $"On activation, mark one empty non-nutrient tile as a Chemobeacon for {GameBalance.ChemotacticBeaconSurgeDuration} rounds. Growth that ends closer multiplies by {GameBalance.ChemotacticBeaconTowardGrowthMultiplier:0.##}x, growth that ends at the same distance is unchanged, and growth that ends farther away multiplies by {GameBalance.ChemotacticBeaconAwayGrowthMultiplier:0.##}x.",
                 flavorText: "A volatile lure condenses over bare toast, exhaling a phantom food trail that bends the colony's advance while the beacon itself slowly evaporates.",
                 type: MutationType.ChemotacticBeacon,
-                effectPerLevel: GameBalance.ChemotacticBeaconPenaltyReductionPerLevel,
+                effectPerLevel: GameBalance.ChemotacticBeaconTowardGrowthMultiplier - 1f,
                 pointsPerUpgrade: GameBalance.ChemotacticBeaconPointsPerActivation,
                 maxLevel: GameBalance.ChemotacticBeaconMaxLevel,
                 category: MutationCategory.MycelialSurges,

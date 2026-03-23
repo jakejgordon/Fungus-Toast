@@ -138,12 +138,14 @@ namespace FungusToast.Core.Growth
                 if (!tile.IsOccupied && !board.IsTileBlockedForOccupation(tile.TileId) && tile.TileId != sourceTile.TileId)
                 {
                     float chance = ChemotacticBeaconHelper.ApplyDirectionalBias(board, owner, sourceTile, tile, baseChance * edgeMultiplier);
-                    targets.Add(new GrowthTarget(tile, chance, null, surgeBonus));
+                    float adjustedSurgeBonus = ChemotacticBeaconHelper.ApplyDirectionalBias(board, owner, sourceTile, tile, surgeBonus);
+                    targets.Add(new GrowthTarget(tile, chance, null, adjustedSurgeBonus));
                 }
                 else if (hasMaxCreepingMold && tile.FungalCell != null && tile.FungalCell.IsToxin)
                 {
                     float chance = ChemotacticBeaconHelper.ApplyDirectionalBias(board, owner, sourceTile, tile, baseChance * edgeMultiplier);
-                    targets.Add(new GrowthTarget(tile, chance, null, surgeBonus));
+                    float adjustedSurgeBonus = ChemotacticBeaconHelper.ApplyDirectionalBias(board, owner, sourceTile, tile, surgeBonus);
+                    targets.Add(new GrowthTarget(tile, chance, null, adjustedSurgeBonus));
                 }
             }
             var diagonalDirs = new (int dx, int dy, DiagonalDirection dir, int mutationId)[]
