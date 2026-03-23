@@ -11,6 +11,8 @@ using TMPro;
 
 public class MagnifyingGlassFollowMouse : MonoBehaviour
 {
+    private const float UnitsPerPixelComparisonEpsilon = 0.0001f;
+
     [Header("Grid Reference")]
     // Assign this in the Inspector to your GridVisualizer instance
     public FungusToast.Unity.Grid.GridVisualizer gridVisualizer;
@@ -35,6 +37,9 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     [Header("Debug")]
     public bool enableDebugLogs = false; // Disable debugging by default
 
+    [Header("Camera References")]
+    [SerializeField] private Camera magnifierCamera;
+
     // Static flag to indicate if the game has started
     public static bool gameStarted = false;
 
@@ -57,6 +62,8 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     void Start()
     {
         // Tooltip will be created dynamically when needed
+
+        ResolveMagnifierCamera();
         
         // Auto-detect magnifying glass radius from visual root if enabled
         if (autoDetectRadius && visualRoot != null)
@@ -144,7 +151,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         bool pointerOverUI = EventSystem.current.IsPointerOverGameObject();
 
         // Decide if we show magnifier visuals (independent from tooltip logic)
-        bool showVisuals = visualsAllowed && overBread && !pointerOverUI;
+        bool showVisuals = visualsAllowed && overBread && !pointerOverUI && MagnifierProvidesAdditionalZoom();
 
         if (showVisuals)
         {
@@ -184,6 +191,57 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
                 }
             }
         }
+    }
+
+    void ResolveMagnifierCamera()
+    {
+        if (magnifierCamera != null)
+            return;
+
+        MagnifierCameraFollowMouse magnifierFollow = FindFirstObjectByType<MagnifierCameraFollowMouse>();
+        if (magnifierFollow != null)
+        {
+            magnifierCamera = magnifierFollow.GetComponent<Camera>();
+        }
+    }
+
+    bool MagnifierProvidesAdditionalZoom()
+    {
+        if (Camera.main == null)
+            return false;
+
+        ResolveMagnifierCamera();
+        if (magnifierCamera == null)
+            return true;
+
+        if (!Camera.main.orthographic || !magnifierCamera.orthographic)
+            return true;
+
+        float mainCameraUnitsPerPixel = (2f * Camera.main.orthographicSize) / Mathf.Max(1f, Camera.main.pixelHeight);
+        float magnifierDiameterInPixels = GetMagnifierDiameterInScreenPixels();
+
+        if (magnifierDiameterInPixels <= 0f)
+            return true;
+
+        float magnifierUnitsPerPixel = (2f * magnifierCamera.orthographicSize) / magnifierDiameterInPixels;
+        return magnifierUnitsPerPixel < mainCameraUnitsPerPixel - UnitsPerPixelComparisonEpsilon;
+    }
+
+    float GetMagnifierDiameterInScreenPixels()
+    {
+        if (visualRoot == null)
+            return 0f;
+
+        RectTransform rectTransform = visualRoot.GetComponent<RectTransform>();
+        if (rectTransform == null)
+            return 0f;
+
+        Vector3[] corners = new Vector3[4];
+        rectTransform.GetWorldCorners(corners);
+
+        float width = Vector3.Distance(corners[0], corners[3]);
+        float height = Vector3.Distance(corners[0], corners[1]);
+        return Mathf.Min(width, height);
     }
 
     bool IsMouseOverBread()
