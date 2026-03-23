@@ -33,10 +33,10 @@ public class BoardUtilitiesTests
     public void CategorizePlayersByColonySize_splits_other_players_into_larger_and_smaller_or_equal_groups()
     {
         var board = CreateBoardWithPlayers(3);
-        board.PlaceInitialSpore(playerId: 0, x: 1, y: 1); // 1 living
-        board.PlaceInitialSpore(playerId: 1, x: 3, y: 1); // 2 living
+        board.PlaceInitialSpore(playerId: 0, x: 1, y: 1);
+        board.PlaceInitialSpore(playerId: 1, x: 3, y: 1);
         board.SpawnSporeForPlayer(board.Players[1], tileId: 9, GrowthSource.HyphalOutgrowth);
-        board.PlaceInitialSpore(playerId: 2, x: 1, y: 3); // 1 living
+        board.PlaceInitialSpore(playerId: 2, x: 1, y: 3);
 
         var (larger, smaller) = BoardUtilities.CategorizePlayersByColonySize(board.Players[0], board.Players, board);
 
@@ -62,10 +62,10 @@ public class BoardUtilitiesTests
     public void BuildAllColonySizeCategorizations_returns_expected_relative_groups_for_all_players()
     {
         var board = CreateBoardWithPlayers(3);
-        board.PlaceInitialSpore(playerId: 0, x: 1, y: 1); // 1 living
-        board.PlaceInitialSpore(playerId: 1, x: 3, y: 1); // 2 living
+        board.PlaceInitialSpore(playerId: 0, x: 1, y: 1);
+        board.PlaceInitialSpore(playerId: 1, x: 3, y: 1);
         board.SpawnSporeForPlayer(board.Players[1], tileId: 9, GrowthSource.HyphalOutgrowth);
-        board.PlaceInitialSpore(playerId: 2, x: 1, y: 3); // 1 living
+        board.PlaceInitialSpore(playerId: 2, x: 1, y: 3);
 
         var categorizations = BoardUtilities.BuildAllColonySizeCategorizations(board.Players, board);
 
@@ -76,14 +76,11 @@ public class BoardUtilitiesTests
     }
 
     [Fact]
-    public void GetPlayerBoardSummaries_counts_living_resistant_dead_and_toxin_cells_per_player()
+    public void GetPlayerBoardSummaries_counts_living_dead_and_toxin_cells_per_player()
     {
         var board = CreateBoardWithPlayers(2);
         board.PlaceInitialSpore(playerId: 0, x: 1, y: 1);
         board.PlaceInitialSpore(playerId: 1, x: 3, y: 3);
-
-        var resistantCell = board.GetTileAt(1, 1).FungalCell;
-        resistantCell.MakeResistant();
 
         var deadCell = new FungalCell(ownerPlayerId: 0, tileId: 7, source: GrowthSource.InitialSpore, lastOwnerPlayerId: null);
         deadCell.Kill(FungusToast.Core.Death.DeathReason.Age);
@@ -95,11 +92,9 @@ public class BoardUtilitiesTests
         var summaries = BoardUtilities.GetPlayerBoardSummaries(board.Players, board);
 
         Assert.Equal(1, summaries[0].LivingCells);
-        Assert.Equal(1, summaries[0].ResistantCells);
         Assert.Equal(1, summaries[0].DeadCells);
         Assert.Equal(0, summaries[0].ToxinCells);
         Assert.Equal(1, summaries[1].LivingCells);
-        Assert.Equal(0, summaries[1].ResistantCells);
         Assert.Equal(0, summaries[1].DeadCells);
         Assert.Equal(1, summaries[1].ToxinCells);
     }
