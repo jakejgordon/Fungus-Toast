@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -27,6 +28,25 @@ namespace FungusToast.Unity.Grid.Helpers
         public void DrawRingHighlight(Vector3Int centerPos, float radius, float thickness, Color color, Tilemap targetTilemap)
         {
             ClearRingHighlight(targetTilemap);
+            DrawRingHighlightWithoutClearing(centerPos, radius, thickness, color, targetTilemap);
+        }
+
+        public void DrawRingHighlights(IEnumerable<Vector3Int> centerPositions, float radius, float thickness, Color color, Tilemap targetTilemap)
+        {
+            ClearRingHighlight(targetTilemap);
+            if (centerPositions == null)
+            {
+                return;
+            }
+
+            foreach (var centerPos in centerPositions)
+            {
+                DrawRingHighlightWithoutClearing(centerPos, radius, thickness, color, targetTilemap);
+            }
+        }
+
+        private void DrawRingHighlightWithoutClearing(Vector3Int centerPos, float radius, float thickness, Color color, Tilemap targetTilemap)
+        {
             if (radius <= 0f) return;
             float outerSq = radius * radius;
             float inner = Mathf.Max(0f, radius - thickness);
@@ -99,6 +119,66 @@ namespace FungusToast.Unity.Grid.Helpers
             }
 
             DrawRingHighlight(centerPos, minVisibleRadius * 0.65f, ringThickness * 0.5f, new Color(1f, 0.95f, 0.3f, 0.95f), targetTilemap);
+            yield return null;
+            ClearRingHighlight(targetTilemap);
+        }
+
+        public IEnumerator StartingTilePingAnimation(IEnumerable<Vector3Int> centerPositions, Tilemap targetTilemap, float duration, float expandPortion, float maxRadius, float ringThickness)
+        {
+            if (centerPositions == null)
+            {
+                yield break;
+            }
+
+            List<Vector3Int> centers = centerPositions.Distinct().ToList();
+            if (centers.Count == 0)
+            {
+                yield break;
+            }
+
+            float contractPortion = 1f - expandPortion;
+            float minVisibleRadius = 0.5f;
+
+            float startTime = Time.time;
+            while (true)
+            {
+                float elapsed = Time.time - startTime;
+                if (elapsed > duration) break;
+                float t = Mathf.Clamp01(elapsed / duration);
+
+                float radius;
+                float thickness = ringThickness;
+
+                if (t <= expandPortion)
+                {
+                    float phaseT = t / expandPortion;
+                    float eased = 1f - Mathf.Pow(1f - phaseT, 3f);
+                    radius = Mathf.Lerp(minVisibleRadius, maxRadius, eased);
+                }
+                else
+                {
+                    float phaseT = (t - expandPortion) / contractPortion;
+                    float eased = phaseT * phaseT * phaseT;
+                    radius = Mathf.Lerp(maxRadius, minVisibleRadius, eased);
+                    thickness = Mathf.Lerp(ringThickness, ringThickness * 0.35f, eased);
+                }
+
+                float alpha;
+                const float fadeInEnd = 0.06f;
+                const float fadeOutStart = 0.85f;
+                if (t < fadeInEnd)
+                    alpha = Mathf.InverseLerp(0f, fadeInEnd, t);
+                else if (t > fadeOutStart)
+                    alpha = Mathf.InverseLerp(1f, fadeOutStart, t);
+                else
+                    alpha = 1f;
+
+                Color ringColor = new Color(1f, 0.85f, 0.15f, alpha);
+                DrawRingHighlights(centers, radius, thickness, ringColor, targetTilemap);
+                yield return null;
+            }
+
+            DrawRingHighlights(centers, minVisibleRadius * 0.65f, ringThickness * 0.5f, new Color(1f, 0.95f, 0.3f, 0.95f), targetTilemap);
             yield return null;
             ClearRingHighlight(targetTilemap);
         }

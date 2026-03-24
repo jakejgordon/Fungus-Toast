@@ -88,6 +88,10 @@ namespace FungusToast.Unity.UI
 
             IEnumerable<int> tileIds = GetMatchingTileIds(board);
             gridVisualizer.HighlightTiles(tileIds);
+            if (overlayType == BoardOverlayLegendType.Chemobeacon)
+            {
+                gridVisualizer.TriggerChemobeaconPing();
+            }
         }
 
         public void OnPointerExit(PointerEventData eventData)

@@ -692,16 +692,51 @@ namespace FungusToast.Unity.Grid
             Vector3Int center = new Vector3Int(sx, sy, 0);
             var targetTilemap = ringHelper.ChoosePingTarget();
             if (targetTilemap == null || solidHighlightTile == null) return;
-            if (startingTilePingCoroutine != null)
-            {
-                StopCoroutine(startingTilePingCoroutine);
-                ringHelper.ClearRingHighlight(lastPingTilemap != null ? lastPingTilemap : targetTilemap);
-                startingTilePingCoroutine = null;
-                EndAnimation();
-            }
+            CancelActivePing(targetTilemap);
             lastPingTilemap = targetTilemap;
             BeginAnimation();
             startingTilePingCoroutine = StartCoroutine(RunStartingTilePing(center, targetTilemap));
+        }
+
+        public void TriggerChemobeaconPing()
+        {
+            var active = ActiveBoard;
+            var targetTilemap = ringHelper.ChoosePingTarget();
+            if (active == null || targetTilemap == null || solidHighlightTile == null)
+            {
+                return;
+            }
+
+            List<Vector3Int> chemobeaconCenters = active.GetActiveChemobeacons()
+                .Select(marker =>
+                {
+                    var (x, y) = active.GetXYFromTileId(marker.TileId);
+                    return new Vector3Int(x, y, 0);
+                })
+                .Distinct()
+                .ToList();
+            if (chemobeaconCenters.Count == 0)
+            {
+                return;
+            }
+
+            CancelActivePing(targetTilemap);
+            lastPingTilemap = targetTilemap;
+            BeginAnimation();
+            startingTilePingCoroutine = StartCoroutine(RunBatchPing(chemobeaconCenters, targetTilemap));
+        }
+
+        private void CancelActivePing(Tilemap fallbackTilemap)
+        {
+            if (startingTilePingCoroutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(startingTilePingCoroutine);
+            ringHelper.ClearRingHighlight(lastPingTilemap != null ? lastPingTilemap : fallbackTilemap);
+            startingTilePingCoroutine = null;
+            EndAnimation();
         }
 
         private IEnumerator RunStartingTilePing(Vector3Int center, Tilemap targetTilemap)
@@ -711,6 +746,16 @@ namespace FungusToast.Unity.Grid
             var active = ActiveBoard; float maxRadius = Mathf.Min(10f, Mathf.Max(active.Width, active.Height) * 0.25f);
             float ringThickness = 0.6f;
             yield return ringHelper.StartingTilePingAnimation(center, targetTilemap, duration, expandPortion, maxRadius, ringThickness);
+            EndAnimation();
+        }
+
+        private IEnumerator RunBatchPing(IReadOnlyList<Vector3Int> centers, Tilemap targetTilemap)
+        {
+            float duration = 1.0f;
+            float expandPortion = 0.5f;
+            var active = ActiveBoard; float maxRadius = Mathf.Min(10f, Mathf.Max(active.Width, active.Height) * 0.25f);
+            float ringThickness = 0.6f;
+            yield return ringHelper.StartingTilePingAnimation(centers, targetTilemap, duration, expandPortion, maxRadius, ringThickness);
             EndAnimation();
         }
 

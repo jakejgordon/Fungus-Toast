@@ -3375,6 +3375,7 @@ MonoBehaviour:
   autoDetectRadius: 1
   manualRadius: 128
   enableDebugLogs: 0
+  magnifierCamera: {fileID: 0}
   minBoardSizeForMagnifier: 30
 --- !u!225 &325918931
 CanvasGroup:
@@ -104811,13 +104812,16 @@ Tilemap:
       m_AllTileFlags: 1073741825
   m_AnimatedTiles: {}
   m_TileAssetArray:
-  - m_RefCount: 10000
+  - serializedVersion: 2
+    m_RefCount: 10000
     m_Data: {fileID: 11400000, guid: 320d89d12948e6245a2bc7e3a2112079, type: 2}
   m_TileSpriteArray:
-  - m_RefCount: 10000
+  - serializedVersion: 2
+    m_RefCount: 10000
     m_Data: {fileID: 21300000, guid: af736ef1001e73346b7ac97bca147c3f, type: 3}
   m_TileMatrixArray:
-  - m_RefCount: 10000
+  - serializedVersion: 2
+    m_RefCount: 10000
     m_Data:
       e00: 1
       e01: 0
@@ -104836,7 +104840,8 @@ Tilemap:
       e32: 0
       e33: 1
   m_TileColorArray:
-  - m_RefCount: 10000
+  - serializedVersion: 2
+    m_RefCount: 10000
     m_Data: {r: 1, g: 1, b: 1, a: 1}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
@@ -110988,6 +110993,12 @@ MonoBehaviour:
   mycovariantHeaderLabel: Mycovariants
   mycovariantHeaderTooltip: Mycovariants are game-only traits your mold carries for
     the current match.
+  boardOverlayLegendSectionRoot: {fileID: 0}
+  boardOverlayLegendHeaderText: {fileID: 0}
+  boardOverlayLegendIconGridRoot: {fileID: 0}
+  boardOverlayLegendHeaderLabel: Common Symbols
+  boardOverlayLegendHeaderTooltip: Hover a symbol to highlight every matching tile
+    on the toast and learn what that overlay means.
   zeroChanceColor: {r: 1, g: 1, b: 1, a: 0.35}
   finalZeroGreen: {r: 0.4, g: 1, b: 0.4, a: 1}
   growthPreviewHeaderLabel: Growth Chance Per Living Cell
@@ -116632,6 +116643,8 @@ MonoBehaviour:
   moveSpeed: 2
   minZoom: 5
   maxZoom: 100
+  maxPanInputDeltaTime: 0.033333335
+  maxPanDistancePerFrame: 0.75
   maxDistanceFromCenter: 75
   gameManager: {fileID: 548818017}
   cameraCenterer: {fileID: 743098981}
@@ -119181,6 +119194,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
