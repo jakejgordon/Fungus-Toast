@@ -564,6 +564,27 @@ namespace FungusToast.Unity.Grid
         public void ShowHoverEffect(Vector3Int cellPos) => hoverHelper?.ShowHoverEffect(cellPos);
         public void ClearHoverEffect() => hoverHelper?.ClearHoverEffect();
 
+        /// <summary>
+        /// Shows a pulsing hover preview of the living-cell line and toxin cone that Jetting Mycelium
+        /// would produce from the given tile IDs. Living cells pulse cyan/teal; toxin tiles pulse orange.
+        /// Call <see cref="ClearJettingMyceliumPreview"/> to remove the overlay.
+        /// </summary>
+        public void ShowJettingMyceliumPreview(IEnumerable<int> livingLineTileIds, IEnumerable<int> toxinConeTileIds)
+        {
+            if (hoverHelper == null) return;
+            var active = ActiveBoard;
+            if (active == null) return;
+
+            var livingPositions = livingLineTileIds.Select(id => GetPositionForTileId(id));
+            var toxinPositions  = toxinConeTileIds.Select(id => GetPositionForTileId(id));
+            hoverHelper.ShowPreviewTiles(livingPositions, toxinPositions);
+        }
+
+        /// <summary>
+        /// Removes the Jetting Mycelium hover preview overlay.
+        /// </summary>
+        public void ClearJettingMyceliumPreview() => hoverHelper?.ClearPreviewTiles();
+
         public void HighlightPlayerTiles(int playerId, bool includeStartingTilePing = false)
         {
             var active = ActiveBoard; if (active == null) return;

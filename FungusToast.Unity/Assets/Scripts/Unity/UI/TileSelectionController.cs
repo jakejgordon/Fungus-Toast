@@ -23,6 +23,7 @@ namespace FungusToast.Unity.UI
         private Action<int> onTileSelected; // For generic board tile selection
         private Color highlightColorA = new Color(0.2f, 0.8f, 1f, 1f);
         private Color highlightColorB = new Color(0.7f, 1f, 1f, 1f);
+        private Action<int> _hoverPreviewCallback;
 
         private void Awake()
         {
@@ -240,6 +241,10 @@ namespace FungusToast.Unity.UI
             onTileSelected = null;
             onCancelled = null;
             selectableTileIds.Clear();
+            _hoverPreviewCallback?.Invoke(-1);
+            _hoverPreviewCallback = null;
+            if (hoverHighlighter != null)
+                hoverHighlighter.OnSelectableTileHovered = null;
         }
 
         public bool IsSelectable(int tileId)
@@ -258,5 +263,17 @@ namespace FungusToast.Unity.UI
         }
 
         public bool HasActiveSelection => selectionActive;
+
+        /// <summary>
+        /// Registers a callback that is invoked whenever a selectable tile is newly hovered
+        /// (called with the tileId) or the hover is cleared (called with -1).
+        /// The callback is automatically cleared when the selection ends.
+        /// </summary>
+        public void SetHoverPreviewCallback(Action<int> onHoverTileId)
+        {
+            _hoverPreviewCallback = onHoverTileId;
+            if (hoverHighlighter != null)
+                hoverHighlighter.OnSelectableTileHovered = onHoverTileId;
+        }
     }
 }
