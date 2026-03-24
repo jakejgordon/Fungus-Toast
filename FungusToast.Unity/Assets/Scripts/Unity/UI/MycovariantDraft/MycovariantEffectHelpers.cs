@@ -89,6 +89,20 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 bool selectionResolved = false;
                 bool executed = false;
 
+                TileSelectionController.Instance.SetHoverPreviewCallback((tileId) =>
+                {
+                    if (tileId < 0)
+                    {
+                        gridVisualizer.ClearJettingMyceliumPreview();
+                    }
+                    else
+                    {
+                        var livingLine = board.GetTileLine(tileId, direction, MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles, false);
+                        var toxinCone  = board.GetTileCone(tileId, direction);
+                        gridVisualizer.ShowJettingMyceliumPreview(livingLine, toxinCone);
+                    }
+                });
+
                 TileSelectionController.Instance.PromptSelectLivingCell(
                     player.PlayerId,
                     (cell) =>
@@ -105,6 +119,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                             gameLogRouter
                         );
+                        gridVisualizer.ClearJettingMyceliumPreview();
                         gridVisualizer.RenderBoard(board);
                         gridVisualizer.ClearHighlights();
                         gameManager.HideSelectionPrompt();
@@ -114,6 +129,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     },
                     () =>
                     {
+                        gridVisualizer.ClearJettingMyceliumPreview();
                         gridVisualizer.ClearHighlights();
                         gameManager.HideSelectionPrompt();
                         done = true;

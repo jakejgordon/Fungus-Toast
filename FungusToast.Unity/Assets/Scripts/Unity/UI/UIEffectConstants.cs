@@ -595,5 +595,31 @@ namespace FungusToast.Unity.UI
         /// Duration (in seconds) for smooth camera restore to initial framing at draft start.
         /// </summary>
         public const float DraftCameraRecenteringDurationSeconds = 0.5f;
+
+        // ==================== JETTING MYCELIUM HOVER PREVIEW ====================
+        /// <summary>
+        /// Pulse cycle duration (seconds) for the Jetting Mycelium placement preview overlay.
+        /// </summary>
+        public const float JettingMyceliumPreviewPulseDurationSeconds = 0.8f;
+
+        /// <summary>
+        /// Dim color for the living-cell projection preview (cyan/teal, low alpha).
+        /// </summary>
+        public static readonly Color JettingMyceliumPreviewLivingDimColor    = new Color(0.3f, 1f,   0.5f, 0.2f);
+
+        /// <summary>
+        /// Bright color for the living-cell projection preview (cyan/teal, high alpha).
+        /// </summary>
+        public static readonly Color JettingMyceliumPreviewLivingBrightColor = new Color(0.5f, 1f,   0.7f, 0.8f);
+
+        /// <summary>
+        /// Dim color for the toxin-cone preview (orange/amber, low alpha).
+        /// </summary>
+        public static readonly Color JettingMyceliumPreviewToxinDimColor     = new Color(1f,   0.5f, 0f,   0.2f);
+
+        /// <summary>
+        /// Bright color for the toxin-cone preview (orange/amber, high alpha).
+        /// </summary>
+        public static readonly Color JettingMyceliumPreviewToxinBrightColor  = new Color(1f,   0.7f, 0.1f, 0.8f);
     }
 }

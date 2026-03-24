@@ -1,7 +1,8 @@
-using UnityEngine;
-using UnityEngine.Tilemaps;
+using System;
 using System.Collections.Generic;
 using FungusToast.Unity.UI;
+using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace FungusToast.Unity.Grid
 {
@@ -17,6 +18,12 @@ namespace FungusToast.Unity.Grid
 
         private Vector3Int? lastHoveredCell = null;
         private HashSet<int> selectionTiles = new();
+
+        /// <summary>
+        /// Invoked when a selectable tile is newly hovered (positive tileId) or hover is cleared (-1).
+        /// Only fired while there is an active tile selection (selectionTiles.Count > 0).
+        /// </summary>
+        public Action<int> OnSelectableTileHovered;
 
         void Start()
         {
@@ -34,10 +41,9 @@ namespace FungusToast.Unity.Grid
 
             if (GameManager.Instance != null && GameManager.Instance.IsPauseMenuOpen)
             {
-                gridVisualizer?.ClearHoverEffect();
+                ClearHoverAndNotify();
                 if (crosshairInstance != null)
                     crosshairInstance.SetActive(false);
-                lastHoveredCell = null;
                 return;
             }
 
@@ -46,10 +52,9 @@ namespace FungusToast.Unity.Grid
 
             if (!IsCellOnBoard(cellPos))
             {
-                gridVisualizer?.ClearHoverEffect();
+                ClearHoverAndNotify();
                 if (crosshairInstance != null)
                     crosshairInstance.SetActive(false);
-                lastHoveredCell = null;
                 return;
             }
 
@@ -60,6 +65,11 @@ namespace FungusToast.Unity.Grid
                 if (lastHoveredCell != cellPos)
                 {
                     gridVisualizer?.ShowHoverEffect(cellPos);
+                    if (selectionTiles.Count > 0)
+                    {
+                        int tileId = TileIdFromCell(cellPos);
+                        OnSelectableTileHovered?.Invoke(tileId);
+                    }
                 }
 
                 if (crosshairInstance != null)
@@ -72,10 +82,9 @@ namespace FungusToast.Unity.Grid
             }
             else
             {
-                gridVisualizer?.ClearHoverEffect();
+                ClearHoverAndNotify();
                 if (crosshairInstance != null)
                     crosshairInstance.SetActive(false);
-                lastHoveredCell = null;
             }
 
             if (Input.GetMouseButtonDown(0) && gridVisualizer.toastTilemap.HasTile(cellPos))
@@ -132,6 +141,18 @@ namespace FungusToast.Unity.Grid
         }
 
         void TriggerPressedAnimation(Vector3Int cell) { }
+
+        /// <summary>
+        /// Clears the hover effect and, if a selectable tile was previously hovered,
+        /// invokes <see cref="OnSelectableTileHovered"/> with -1 to signal hover cleared.
+        /// </summary>
+        private void ClearHoverAndNotify()
+        {
+            if (lastHoveredCell.HasValue)
+                OnSelectableTileHovered?.Invoke(-1);
+            gridVisualizer?.ClearHoverEffect();
+            lastHoveredCell = null;
+        }
 
         bool IsCellOnBoard(Vector3Int cellPos)
         {
