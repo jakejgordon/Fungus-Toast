@@ -47,7 +47,8 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.PutrefactiveMycotoxin,
                 name: "Putrefactive Mycotoxin",
-                description: $"Each level adds a {helper.FormatPercent(GameBalance.PutrefactiveMycotoxinEffectPerLevel)} death chance to enemy cells orthogonally adjacent to your living fungal cells.",
+                description: $"Each level adds a {helper.FormatPercent(GameBalance.PutrefactiveMycotoxinEffectPerLevel)} death chance to enemy cells orthogonally adjacent to your living fungal cells.\n" +
+                             $"<b>Max Level Bonus:</b> Your active Chemotactic Beacon also applies this kill chance within <b>2 tiles</b>, including diagonals.",
                 flavorText: "Secretes lipid-bound mycotoxins through adjacent cell walls, disrupting membrane integrity.",
                 type: MutationType.AdjacentFungicide,
                 effectPerLevel: GameBalance.PutrefactiveMycotoxinEffectPerLevel,

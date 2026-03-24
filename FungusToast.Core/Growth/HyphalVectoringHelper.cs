@@ -314,5 +314,156 @@ namespace FungusToast.Core.Growth
             return outcome;
         }
 
+        /// <summary>
+        /// Projects Chemotactic Beacon growth from the player's starting spore toward the beacon marker.
+        /// Only valid growth targets consume quota, and those targets are assigned in earliest-to-latest path order.
+        /// </summary>
+        public static VectorLineOutcome ApplyChemotacticBeaconPathGrowth(
+            Player player,
+            GameBoard board,
+            Random rng,
+            int startTileId,
+            int targetTileId,
+            int totalTiles,
+            ISimulationObserver observer,
+            GrowthSource source,
+            DeathReason deathReason)
+        {
+            var outcome = new VectorLineOutcome();
+            if (totalTiles <= 0 || startTileId < 0 || targetTileId < 0)
+            {
+                return outcome;
+            }
+
+            var startTile = board.GetTileById(startTileId);
+            var targetTile = board.GetTileById(targetTileId);
+            if (startTile == null || targetTile == null)
+            {
+                return outcome;
+            }
+
+            int selectedGrowthTargets = 0;
+            int maxPathLength = board.Width * board.Height;
+            var path = GetLineToTarget(startTile.X, startTile.Y, targetTile.X, targetTile.Y, maxPathLength);
+
+            foreach (var (x, y) in path)
+            {
+                if (selectedGrowthTargets >= totalTiles)
+                {
+                    break;
+                }
+
+                var tile = board.GetTile(x, y);
+                if (tile == null)
+                {
+                    break;
+                }
+
+                if (tile.TileId == targetTileId)
+                {
+                    break;
+                }
+
+                if (!IsChemotacticBeaconGrowthTarget(tile, board, player.PlayerId, out bool alreadyOwned))
+                {
+                    if (alreadyOwned)
+                    {
+                        outcome.AlreadyOwned++;
+                    }
+                    else
+                    {
+                        outcome.Invalid++;
+                    }
+
+                    continue;
+                }
+
+                selectedGrowthTargets++;
+                ApplyDirectedVectorGrowthToTile(player, board, rng, tile, observer, source, deathReason, outcome);
+            }
+
+            return outcome;
+        }
+
+        private static bool IsChemotacticBeaconGrowthTarget(BoardTile tile, GameBoard board, int playerId, out bool alreadyOwned)
+        {
+            alreadyOwned = false;
+            if (tile == null)
+            {
+                return false;
+            }
+
+            var cell = tile.FungalCell;
+            if (cell == null)
+            {
+                return !board.IsTileBlockedForOccupation(tile.TileId);
+            }
+
+            if (cell.OwnerPlayerId == playerId)
+            {
+                alreadyOwned = cell.IsAlive;
+                return false;
+            }
+
+            if (cell.IsResistant)
+            {
+                return false;
+            }
+
+            return cell.IsAlive || cell.IsDead || cell.IsToxin;
+        }
+
+        private static void ApplyDirectedVectorGrowthToTile(
+            Player player,
+            GameBoard board,
+            Random rng,
+            BoardTile tile,
+            ISimulationObserver observer,
+            GrowthSource source,
+            DeathReason deathReason,
+            VectorLineOutcome outcome)
+        {
+            var cell = tile.FungalCell;
+            if (cell != null)
+            {
+                FungalCellTakeoverResult takeoverResult = board.TakeoverCell(tile.TileId, player.PlayerId, allowToxin: true, source, players: board.Players, rng: rng, observer: observer);
+                switch (takeoverResult)
+                {
+                    case FungalCellTakeoverResult.Infested:
+                        outcome.Infested++;
+                        outcome.AffectedTileIds.Add(tile.TileId);
+                        observer.RecordAttributedKill(player.PlayerId, deathReason, 1);
+                        break;
+                    case FungalCellTakeoverResult.Reclaimed:
+                        outcome.Reclaimed++;
+                        outcome.AffectedTileIds.Add(tile.TileId);
+                        break;
+                    case FungalCellTakeoverResult.Overgrown:
+                        outcome.CatabolicGrowth++;
+                        outcome.AffectedTileIds.Add(tile.TileId);
+                        break;
+                    case FungalCellTakeoverResult.AlreadyOwned:
+                        outcome.AlreadyOwned++;
+                        break;
+                    case FungalCellTakeoverResult.Invalid:
+                        outcome.Invalid++;
+                        break;
+                }
+
+                return;
+            }
+
+            if (board.IsTileBlockedForOccupation(tile.TileId))
+            {
+                outcome.Invalid++;
+                return;
+            }
+
+            var newCell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: tile.TileId, source: source, lastOwnerPlayerId: null);
+            board.PlaceFungalCell(newCell);
+            outcome.Colonized++;
+            outcome.AffectedTileIds.Add(tile.TileId);
+        }
+
     }
 }

@@ -580,6 +580,8 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Action<Vector3Int, float, float, Color, Tilemap> _drawRing;
 		private readonly Action<Tilemap> _clearRing;
 		private readonly Func<IEnumerator, Coroutine> _startCoroutine;
+		private readonly Action<int> _revealPreAnimationPreviewTile;
+		private readonly Action<int> _renderTileFromBoard;
 		private readonly Action _beginAnimation;
 		private readonly Action _endAnimation;
 
@@ -597,6 +599,8 @@ namespace FungusToast.Unity.Grid.Helpers
 			Action<Vector3Int, float, float, Color, Tilemap> drawRing,
 			Action<Tilemap> clearRing,
 			Func<IEnumerator, Coroutine> startCoroutine,
+			Action<int> revealPreAnimationPreviewTile,
+			Action<int> renderTileFromBoard,
 			Action beginAnimation,
 			Action endAnimation)
 		{
@@ -613,6 +617,8 @@ namespace FungusToast.Unity.Grid.Helpers
 			_drawRing = drawRing;
 			_clearRing = clearRing;
 			_startCoroutine = startCoroutine;
+			_revealPreAnimationPreviewTile = revealPreAnimationPreviewTile;
+			_renderTileFromBoard = renderTileFromBoard;
 			_beginAnimation = beginAnimation;
 			_endAnimation = endAnimation;
 		}
@@ -884,9 +890,10 @@ namespace FungusToast.Unity.Grid.Helpers
 
 		public IEnumerator RunDirectedVectorSurgePresentation(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds)
 		{
+			var board = _getBoard();
 			var pulseTilemap = GetTransientPulseTilemap();
 			var overlayTilemap = _getOverlayTilemap();
-			if (pulseTilemap == null || _getSolidHighlightTile() == null || overlayTilemap == null)
+			if (board == null || pulseTilemap == null || _getSolidHighlightTile() == null || overlayTilemap == null)
 			{
 				yield break;
 			}
@@ -897,17 +904,30 @@ namespace FungusToast.Unity.Grid.Helpers
 				yield break;
 			}
 
+			var presentationTileIds = BuildDirectedVectorPresentationTileIds(board, playerId, originTileId, orderedTileIds);
+			int presentationStartTileId = presentationTileIds.Count > 0 ? presentationTileIds[0] : originTileId;
+			var sweepTileIds = presentationTileIds.Count > 1
+				? presentationTileIds.Skip(1).ToList()
+				: orderedTileIds;
+			var growthTargetTileIds = new HashSet<int>(orderedTileIds);
+
 			TextMeshPro toast = CreateDirectedVectorToastText(orderedTileIds, overlayTilemap);
 			try
 			{
-				if (originTileId >= 0)
+				if (presentationStartTileId >= 0)
 				{
-					Vector3Int originPos = _getPositionForTileId(originTileId);
+					Vector3Int originPos = _getPositionForTileId(presentationStartTileId);
 					yield return PulseTiles(pulseTilemap, new[] { originPos }, UIEffectConstants.DirectedVectorOriginPulseDurationSeconds, DirectedVectorPulseColor, 1f, UIEffectConstants.DirectedVectorPulseScale);
 				}
 
-				foreach (var chunk in BuildDirectedVectorChunks(orderedTileIds))
+				foreach (var chunk in BuildDirectedVectorChunks(sweepTileIds))
 				{
+					var revealTileIds = chunk.Where(growthTargetTileIds.Contains).ToList();
+					if (revealTileIds.Count > 0)
+					{
+						_startCoroutine(AnimateDirectedVectorGrowthReveal(revealTileIds));
+					}
+
 					var chunkPositions = chunk.Select(_getPositionForTileId).ToArray();
 					_startCoroutine(PulseTiles(pulseTilemap, chunkPositions, UIEffectConstants.DirectedVectorChunkPulseDurationSeconds, DirectedVectorPulseColor, 1f, UIEffectConstants.DirectedVectorPulseScale));
 					yield return new WaitForSeconds(UIEffectConstants.DirectedVectorChunkStaggerSeconds);
@@ -920,11 +940,235 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 			finally
 			{
+				for (int i = 0; i < orderedTileIds.Count; i++)
+				{
+					_revealPreAnimationPreviewTile?.Invoke(orderedTileIds[i]);
+					_renderTileFromBoard?.Invoke(orderedTileIds[i]);
+				}
+
 				if (toast != null)
 				{
 					UnityEngine.Object.Destroy(toast.gameObject);
 				}
 			}
+		}
+
+		private IEnumerator AnimateDirectedVectorGrowthReveal(IReadOnlyList<int> tileIds)
+		{
+			var board = _getBoard();
+			var moldTilemap = _getMoldTilemap();
+			var overlayTilemap = _getOverlayTilemap();
+			if (board == null || moldTilemap == null || overlayTilemap == null || tileIds == null || tileIds.Count == 0)
+			{
+				yield break;
+			}
+
+			var states = new List<(Vector3Int pos, bool hasMold, Color moldColor, bool hasOverlay, Color overlayColor)>();
+			var seenTileIds = new HashSet<int>();
+
+			for (int i = 0; i < tileIds.Count; i++)
+			{
+				int tileId = tileIds[i];
+				if (!seenTileIds.Add(tileId))
+				{
+					continue;
+				}
+
+				_revealPreAnimationPreviewTile?.Invoke(tileId);
+				_renderTileFromBoard?.Invoke(tileId);
+
+				Vector3Int pos = _getPositionForTileId(tileId);
+				bool hasMold = moldTilemap.HasTile(pos);
+				bool hasOverlay = overlayTilemap.HasTile(pos);
+				if (!hasMold && !hasOverlay)
+				{
+					continue;
+				}
+
+				Color moldColor = hasMold ? moldTilemap.GetColor(pos) : Color.white;
+				Color overlayColor = hasOverlay ? overlayTilemap.GetColor(pos) : Color.white;
+				states.Add((pos, hasMold, moldColor, hasOverlay, overlayColor));
+
+				if (hasMold)
+				{
+					moldTilemap.SetTileFlags(pos, TileFlags.None);
+					moldTilemap.SetColor(pos, new Color(moldColor.r, moldColor.g, moldColor.b, 0f));
+				}
+
+				if (hasOverlay)
+				{
+					overlayTilemap.SetTileFlags(pos, TileFlags.None);
+					overlayTilemap.SetColor(pos, new Color(overlayColor.r, overlayColor.g, overlayColor.b, 0f));
+				}
+			}
+
+			if (states.Count == 0)
+			{
+				yield break;
+			}
+
+			float duration = Mathf.Max(0.01f, UIEffectConstants.DirectedVectorChunkPulseDurationSeconds * 0.8f);
+
+			_beginAnimation();
+			try
+			{
+				float elapsed = 0f;
+				while (elapsed < duration)
+				{
+					elapsed += Time.deltaTime;
+					float t = Mathf.Clamp01(elapsed / duration);
+					float eased = 1f - Mathf.Pow(1f - t, 3f);
+
+					for (int i = 0; i < states.Count; i++)
+					{
+						var state = states[i];
+						if (state.hasMold)
+						{
+							moldTilemap.SetColor(state.pos, new Color(state.moldColor.r, state.moldColor.g, state.moldColor.b, state.moldColor.a * eased));
+						}
+
+						if (state.hasOverlay)
+						{
+							overlayTilemap.SetColor(state.pos, new Color(state.overlayColor.r, state.overlayColor.g, state.overlayColor.b, state.overlayColor.a * eased));
+						}
+					}
+
+					yield return null;
+				}
+			}
+			finally
+			{
+				for (int i = 0; i < states.Count; i++)
+				{
+					var state = states[i];
+					if (state.hasMold)
+					{
+						moldTilemap.SetColor(state.pos, state.moldColor);
+					}
+
+					if (state.hasOverlay)
+					{
+						overlayTilemap.SetColor(state.pos, state.overlayColor);
+					}
+				}
+
+				_endAnimation();
+			}
+		}
+
+		private static List<int> BuildDirectedVectorPresentationTileIds(GameBoard board, int playerId, int originTileId, IReadOnlyList<int> affectedTileIds)
+		{
+			var result = new List<int>();
+			var seenTileIds = new HashSet<int>();
+
+			if (affectedTileIds == null || affectedTileIds.Count == 0)
+			{
+				return result;
+			}
+
+			int finalLandingTileId = affectedTileIds[affectedTileIds.Count - 1];
+			int startTileId = board.Players.FirstOrDefault(player => player.PlayerId == playerId)?.StartingTileId ?? originTileId;
+
+			AppendSegment(board, startTileId, originTileId, includeStart: true, result, seenTileIds);
+			AppendSegment(board, originTileId, finalLandingTileId, includeStart: startTileId == originTileId, result, seenTileIds);
+
+			if (result.Count == 0)
+			{
+				foreach (int tileId in affectedTileIds)
+				{
+					if (tileId >= 0 && seenTileIds.Add(tileId))
+					{
+						result.Add(tileId);
+					}
+				}
+			}
+
+			return result;
+		}
+
+		private static void AppendSegment(GameBoard board, int startTileId, int endTileId, bool includeStart, List<int> result, HashSet<int> seenTileIds)
+		{
+			if (board == null || startTileId < 0 || endTileId < 0)
+			{
+				return;
+			}
+
+			var path = GetInclusiveDirectedVectorPath(board, startTileId, endTileId);
+			for (int index = 0; index < path.Count; index++)
+			{
+				if (!includeStart && index == 0)
+				{
+					continue;
+				}
+
+				int tileId = path[index];
+				if (seenTileIds.Add(tileId))
+				{
+					result.Add(tileId);
+				}
+			}
+		}
+
+		private static List<int> GetInclusiveDirectedVectorPath(GameBoard board, int startTileId, int endTileId)
+		{
+			var pathTileIds = new List<int>();
+			if (board == null || startTileId < 0 || endTileId < 0)
+			{
+				return pathTileIds;
+			}
+
+			var (startX, startY) = board.GetXYFromTileId(startTileId);
+			var (endX, endY) = board.GetXYFromTileId(endTileId);
+			pathTileIds.Add(startTileId);
+
+			if (startTileId == endTileId)
+			{
+				return pathTileIds;
+			}
+
+			int dx = endX - startX;
+			int dy = endY - startY;
+			int maxSteps = Math.Max(Math.Abs(dx), Math.Abs(dy));
+			if (maxSteps <= 0)
+			{
+				return pathTileIds;
+			}
+
+			float stepX = dx / (float)maxSteps;
+			float stepY = dy / (float)maxSteps;
+			float cx = startX + 0.5f;
+			float cy = startY + 0.5f;
+
+			for (int step = 0; step < maxSteps; step++)
+			{
+				cx += stepX;
+				cy += stepY;
+
+				int ix = (int)Math.Floor(cx);
+				int iy = (int)Math.Floor(cy);
+				var tile = board.GetTile(ix, iy);
+				if (tile == null)
+				{
+					break;
+				}
+
+				if (pathTileIds[pathTileIds.Count - 1] != tile.TileId)
+				{
+					pathTileIds.Add(tile.TileId);
+				}
+
+				if (tile.TileId == endTileId)
+				{
+					break;
+				}
+			}
+
+			if (pathTileIds[pathTileIds.Count - 1] != endTileId)
+			{
+				pathTileIds.Add(endTileId);
+			}
+
+			return pathTileIds;
 		}
 
 		public void DestroyLingeringToasts()
@@ -1076,9 +1320,9 @@ namespace FungusToast.Unity.Grid.Helpers
 			};
 		}
 
-		private static string BuildDirectedVectorToastText(int tileCount)
+		private static string BuildDirectedVectorToastText()
 		{
-			return tileCount == 1 ? "Chemotactic Beacon!" : $"Chemotactic Beacon x{tileCount}!";
+			return "Chemotactic vectoring toward beacon!";
 		}
 
 		private TextMeshPro CreateNutrientToastText(Vector3Int destinationPos, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount, Tilemap overlayTilemap)
@@ -1125,7 +1369,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			textObject.transform.SetParent(_getToastParent(), false);
 
 			var tmp = textObject.GetComponent<TextMeshPro>();
-			tmp.text = BuildDirectedVectorToastText(affectedTileIds.Count);
+			tmp.text = BuildDirectedVectorToastText();
 			tmp.fontSize = UIEffectConstants.DirectedVectorToastFontSize;
 			tmp.alignment = TextAlignmentOptions.Center;
 			tmp.textWrappingMode = TextWrappingModes.NoWrap;

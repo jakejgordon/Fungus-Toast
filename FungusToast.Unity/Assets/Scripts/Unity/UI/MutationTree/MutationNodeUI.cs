@@ -432,7 +432,7 @@ namespace FungusToast.Unity.UI.MutationTree
             // Show maxed state prominently
             if (currentLevel >= mutation.MaxLevel)
             {
-                sb.AppendLine($"<color=#{ToHex(MutationTreeColors.MaxedGold)}><b>✦ FULLY UPGRADED ✦</b></color>");
+                sb.AppendLine($"<color=#{ToHex(MutationTreeColors.MaxedGold)}><b>* FULLY UPGRADED *</b></color>");
                 sb.AppendLine();
             }
 

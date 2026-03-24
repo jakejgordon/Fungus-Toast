@@ -166,7 +166,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// World-space height at which the directed-vector toast begins.
         /// </summary>
-        public const float DirectedVectorToastStartHeightWorld = 0.42f;
+        public const float DirectedVectorToastStartHeightWorld = 0.9f;
 
         /// <summary>
         /// World-space vertical travel applied to the directed-vector toast.
@@ -181,17 +181,17 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Duration of the origin emphasis pulse.
         /// </summary>
-        public const float DirectedVectorOriginPulseDurationSeconds = 0.3f;
+        public const float DirectedVectorOriginPulseDurationSeconds = 0.375f;
 
         /// <summary>
         /// Duration of each directed-vector chunk pulse.
         /// </summary>
-        public const float DirectedVectorChunkPulseDurationSeconds = 0.36f;
+        public const float DirectedVectorChunkPulseDurationSeconds = 0.45f;
 
         /// <summary>
         /// Delay between directed-vector chunk pulses.
         /// </summary>
-        public const float DirectedVectorChunkStaggerSeconds = 0.135f;
+        public const float DirectedVectorChunkStaggerSeconds = 0.16875f;
 
         /// <summary>
         /// Minimum number of chunk beats used for larger directed-vector paths.

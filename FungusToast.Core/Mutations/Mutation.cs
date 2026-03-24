@@ -122,6 +122,18 @@ namespace FungusToast.Core.Mutations
         /// </summary>
         public float GetTotalEffect(int level) => level * EffectPerLevel;
 
+        public void AppendDescription(string additionalText)
+        {
+            if (string.IsNullOrWhiteSpace(additionalText))
+            {
+                return;
+            }
+
+            Description = string.IsNullOrWhiteSpace(Description)
+                ? additionalText
+                : $"{Description}\n{additionalText}";
+        }
+
         /// <summary>
         /// For surge mutations, computes the actual mutation point cost for the next activation, based on current level.
         /// </summary>

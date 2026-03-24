@@ -37,6 +37,15 @@ namespace FungusToast.Core.Mutations
             GeneticDriftMutationFactory.CreateMutations(allMutations, rootMutations, helper);
             MycelialSurgesMutationFactory.CreateMutations(allMutations, rootMutations, helper);
 
+            foreach (var mutation in allMutations.Values)
+            {
+                string buffingMutations = MutationSynergyCatalog.DescribeBuffingMutations(mutation.Id, allMutations);
+                if (!string.IsNullOrWhiteSpace(buffingMutations))
+                {
+                    mutation.AppendDescription($"Buffed by: {buffingMutations}.");
+                }
+            }
+
             return (allMutations, rootMutations);
         }
 

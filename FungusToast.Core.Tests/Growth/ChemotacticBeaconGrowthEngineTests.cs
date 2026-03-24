@@ -34,15 +34,18 @@ public class ChemotacticBeaconGrowthEngineTests
         MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
 
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 3, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 5, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 6, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 7, 2);
         Assert.Equal(GrowthSource.HyphalSurge, setup.board.GetTile(3, 2)?.FungalCell?.SourceOfGrowth);
         Assert.Equal(GrowthSource.ChemotacticBeacon, setup.board.GetTile(4, 2)?.FungalCell?.SourceOfGrowth);
         Assert.Equal(GrowthSource.ChemotacticBeacon, setup.board.GetTile(5, 2)?.FungalCell?.SourceOfGrowth);
     }
 
     [Fact]
-    public void ProcessChemotacticBeacon_uses_vector_origin_selection_when_starting_spore_is_unusable()
+    public void ProcessChemotacticBeacon_uses_the_starting_spore_path_even_when_other_friendly_cells_are_closer()
     {
         var setup = CreateBeaconBoard(level: 1, beaconTileId: 29);
         var startingTile = Assert.IsType<BoardTile>(setup.board.GetTile(1, 2));
@@ -52,11 +55,38 @@ public class ChemotacticBeaconGrowthEngineTests
 
         MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
 
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 3, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 5, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 6, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 7, 2);
+        Assert.Null(setup.board.GetTile(8, 2)?.FungalCell);
+    }
+
+    [Fact]
+    public void ProcessChemotacticBeacon_assigns_earliest_valid_targets_without_spending_quota_on_skipped_tiles()
+    {
+        var setup = CreateBeaconBoard(level: 1, beaconTileId: 29);
+        setup.board.PlaceFungalCell(new FungalCell(setup.player.PlayerId, setup.board.GetTile(3, 2)!.TileId, GrowthSource.HyphalSurge, lastOwnerPlayerId: null));
+        setup.board.PlaceFungalCell(new FungalCell(setup.player.PlayerId, setup.board.GetTile(4, 2)!.TileId, GrowthSource.HyphalSurge, lastOwnerPlayerId: null));
+
+        var friendlyDeadCell = new FungalCell(setup.player.PlayerId, setup.board.GetTile(5, 2)!.TileId, GrowthSource.HyphalSurge, lastOwnerPlayerId: null);
+        setup.board.PlaceFungalCell(friendlyDeadCell);
+        setup.board.KillFungalCell(friendlyDeadCell, DeathReason.Unknown);
+
+        setup.board.PlaceFungalCell(new FungalCell(ownerPlayerId: 99, tileId: setup.board.GetTile(6, 2)!.TileId, source: GrowthSource.HyphalSurge, lastOwnerPlayerId: null));
+        setup.board.PlaceFungalCell(new FungalCell(ownerPlayerId: 98, tileId: setup.board.GetTile(7, 2)!.TileId, source: GrowthSource.Manual, toxinExpirationAge: 3, lastOwnerPlayerId: null));
+
+        MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
+
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 3, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2);
+        Assert.True(setup.board.GetTile(5, 2)?.FungalCell?.IsDead);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 6, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 7, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 8, 2);
-        Assert.Null(setup.board.GetTile(2, 2)?.FungalCell);
     }
 
     [Fact]

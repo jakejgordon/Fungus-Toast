@@ -40,6 +40,15 @@ namespace FungusToast.Core.Mutations
                 },
             };
 
+        private static readonly Dictionary<int, List<int>> BuffingMutationIdsByMutationId =
+            new()
+            {
+                [MutationIds.ChemotacticBeacon] = new List<int>
+                {
+                    MutationIds.PutrefactiveMycotoxin
+                }
+            };
+
         public static IReadOnlyCollection<MutationCategory> GetSuggestedBackboneCategories(int mutationId)
         {
             if (SuggestedBackboneCategoriesByMutationId.TryGetValue(mutationId, out var categories))
@@ -59,6 +68,31 @@ namespace FungusToast.Core.Mutations
             }
 
             return string.Join(", ", categories.Select(c => c.ToString()));
+        }
+
+        public static IReadOnlyCollection<int> GetBuffingMutationIds(int mutationId)
+        {
+            if (BuffingMutationIdsByMutationId.TryGetValue(mutationId, out var mutationIds))
+            {
+                return mutationIds;
+            }
+
+            return new List<int>();
+        }
+
+        public static string DescribeBuffingMutations(int mutationId, IReadOnlyDictionary<int, Mutation> allMutations)
+        {
+            var mutationIds = GetBuffingMutationIds(mutationId);
+            if (mutationIds.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var mutationNames = mutationIds
+                .Select(id => allMutations.TryGetValue(id, out var mutation) ? mutation.Name : null)
+                .Where(name => !string.IsNullOrWhiteSpace(name));
+
+            return string.Join(", ", mutationNames!);
         }
     }
 }

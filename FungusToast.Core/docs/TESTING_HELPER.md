@@ -54,6 +54,22 @@ dotnet build FungusToast.Core/FungusToast.Core.csproj
 dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj
 ```
 
+## Change Validation Expectation
+
+When you change core gameplay functionality, mutations, mycovariants, or adaptations:
+
+- run the relevant automated tests and verify the changed behavior directly
+- add or update targeted regression tests for the mechanic you changed
+- if coverage for that mechanic is missing, add the missing tests as part of the same change instead of leaving the gap behind
+
+Minimum expectation for most deterministic core changes:
+
+```sh
+dotnet test FungusToast.Core.Tests/FungusToast.Core.Tests.csproj
+dotnet build FungusToast.Core/FungusToast.Core.csproj
+dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj
+```
+
 ## Coverage Notes
 
 `coverlet.collector` integrates through `dotnet test --collect:"XPlat Code Coverage"`.

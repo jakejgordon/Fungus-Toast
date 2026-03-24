@@ -63,6 +63,25 @@ namespace FungusToast.Core.Phases
                 }
             }
 
+            foreach (var marker in board.GetActiveChemobeacons())
+            {
+                if (!playersById.TryGetValue(marker.PlayerId, out var beaconOwner)) continue;
+                if (beaconOwner.PlayerId == target.OwnerPlayerId) continue;
+                if (!IsPutrefactiveBeaconAuraActive(beaconOwner, target, marker, board)) continue;
+
+                float baseEffect = beaconOwner.GetMutationEffect(MutationType.AdjacentFungicide);
+
+                int cascadeLevel = beaconOwner.GetMutationLevel(MutationIds.PutrefactiveCascade);
+                float cascadeBonus = cascadeLevel * GameBalance.PutrefactiveCascadeEffectivenessBonus;
+                float totalEffect = baseEffect + cascadeBonus;
+
+                if (totalEffect > 0f)
+                {
+                    effects.Add((beaconOwner.PlayerId, totalEffect, marker.TileId));
+                    chance += totalEffect;
+                }
+            }
+
             if (chance <= 0f)
                 return false;
 
@@ -85,6 +104,34 @@ namespace FungusToast.Core.Phases
             }
 
             return true;
+        }
+
+        private static bool IsPutrefactiveBeaconAuraActive(
+            Player beaconOwner,
+            FungalCell target,
+            GameBoard.ChemobeaconMarker marker,
+            GameBoard board)
+        {
+            if (beaconOwner.GetMutationLevel(MutationIds.PutrefactiveMycotoxin) < GameBalance.PutrefactiveMycotoxinMaxLevel)
+            {
+                return false;
+            }
+
+            if (!beaconOwner.IsSurgeActive(MutationIds.ChemotacticBeacon))
+            {
+                return false;
+            }
+
+            var targetTile = board.GetTileById(target.TileId);
+            var markerTile = board.GetTileById(marker.TileId);
+            if (targetTile == null || markerTile == null)
+            {
+                return false;
+            }
+
+            int dx = Math.Abs(targetTile.X - markerTile.X);
+            int dy = Math.Abs(targetTile.Y - markerTile.Y);
+            return Math.Max(dx, dy) <= 2;
         }
 
         /// <summary>

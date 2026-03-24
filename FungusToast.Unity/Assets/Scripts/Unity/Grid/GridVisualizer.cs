@@ -173,6 +173,8 @@ namespace FungusToast.Unity.Grid
                 (center, radius, thickness, color, tilemap) => InternalDrawRing(center, radius, thickness, color, tilemap),
                 tilemap => InternalClearRing(tilemap),
                 coroutine => StartCoroutine(coroutine),
+                RevealPreAnimationPreviewTile,
+                RenderTileFromBoard,
                 BeginAnimation,
                 EndAnimation);
             selectionHelper = new SelectionHighlightHelper(SelectionHighlightTileMap, SelectedTileMap, solidHighlightTile);
@@ -601,6 +603,18 @@ namespace FungusToast.Unity.Grid
             if (affectedTileIds == null || affectedTileIds.Count == 0)
             {
                 return;
+            }
+
+            var hiddenTileIds = affectedTileIds.Where(tileId => tileId >= 0).Distinct().ToList();
+            if (hiddenTileIds.Count == 0)
+            {
+                return;
+            }
+
+            RegisterPreAnimationHiddenPreviewTiles(hiddenTileIds);
+            for (int i = 0; i < hiddenTileIds.Count; i++)
+            {
+                RenderTileFromBoard(hiddenTileIds[i]);
             }
 
             if (presentationEffects != null)

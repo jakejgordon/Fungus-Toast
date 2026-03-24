@@ -31,29 +31,24 @@ namespace FungusToast.Core.Phases
                 if (totalTiles <= 0)
                     continue;
 
-                var (targetX, targetY) = board.GetXYFromTileId(marker.TileId);
-                var origin = DirectedVectorHelper.TrySelectVectorOrigin(player, board, rng, targetX, targetY, totalTiles);
-                if (!origin.HasValue || origin.Value.tile == null)
+                if (!player.StartingTileId.HasValue)
                     continue;
 
-                var outcome = DirectedVectorHelper.ApplyDirectedVectorLine(
+                var outcome = DirectedVectorHelper.ApplyChemotacticBeaconPathGrowth(
                     player,
                     board,
                     rng,
-                    origin.Value.tile.X,
-                    origin.Value.tile.Y,
-                    targetX,
-                    targetY,
+                    player.StartingTileId.Value,
+                    marker.TileId,
                     totalTiles,
                     observer,
                     GrowthSource.ChemotacticBeacon,
-                    Death.DeathReason.HyphalVectoring,
-                    stopAtTargetTile: true);
+                    Death.DeathReason.HyphalVectoring);
 
                 ReportDirectedVectorOutcome(observer, player.PlayerId, outcome);
 
                 if (outcome.AffectedTileIds.Count > 0)
-                    board.OnDirectedVectorSurge(player.PlayerId, origin.Value.tile.TileId, outcome.AffectedTileIds);
+                    board.OnDirectedVectorSurge(player.PlayerId, player.StartingTileId.Value, outcome.AffectedTileIds);
             }
         }
 

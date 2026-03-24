@@ -77,6 +77,16 @@ public class Tier3MutationTests
         var prereq = Assert.Single(mutation.Prerequisites);
         Assert.Equal(MutationIds.MycotoxinPotentiation, prereq.MutationId);
         Assert.Equal(1, prereq.RequiredLevel);
+        Assert.Contains("<b>Max Level Bonus:</b>", mutation.Description);
+        Assert.Contains("Chemotactic Beacon", mutation.Description);
+    }
+
+    [Fact]
+    public void ChemotacticBeacon_description_lists_putrefactive_mycotoxin_as_a_buff_source()
+    {
+        var mutation = RequireMutation(MutationIds.ChemotacticBeacon);
+
+        Assert.Contains("Buffed by: Putrefactive Mycotoxin.", mutation.Description);
     }
 
     [Fact]
@@ -108,6 +118,174 @@ public class Tier3MutationTests
         Assert.Equal(2 * GameBalance.PutrefactiveMycotoxinEffectPerLevel, chance, precision: 6);
         Assert.Equal(attacker.PlayerId, killerPlayerId);
         Assert.Equal(board.GetTile(1, 2)?.TileId, attackerTileId);
+    }
+
+    [Fact]
+    public void CheckPutrefactiveMycotoxin_treats_max_level_chemotactic_beacon_as_a_range_two_toxin_source()
+    {
+        var board = new GameBoard(width: 7, height: 7, playerCount: 2);
+        var defender = CreatePlayer(0);
+        var attacker = CreatePlayer(1);
+        board.Players.Add(defender);
+        board.Players.Add(attacker);
+
+        board.PlaceInitialSpore(playerId: defender.PlayerId, x: 3, y: 3);
+        attacker.SetMutationLevel(MutationIds.PutrefactiveMycotoxin, newLevel: GameBalance.PutrefactiveMycotoxinMaxLevel, currentRound: 1);
+        attacker.SetMutationLevel(MutationIds.ChemotacticBeacon, newLevel: 1, currentRound: 1);
+        attacker.ActiveSurges[MutationIds.ChemotacticBeacon] = new Player.ActiveSurgeInfo(MutationIds.ChemotacticBeacon, level: 1, duration: GameBalance.ChemotacticBeaconSurgeDuration);
+        Assert.True(board.TryPlaceChemobeacon(attacker.PlayerId, tileId: board.GetTile(5, 5)!.TileId, mutationId: MutationIds.ChemotacticBeacon, turnsRemaining: GameBalance.ChemotacticBeaconSurgeDuration));
+
+        var target = Assert.IsType<FungalCell>(board.GetTile(3, 3)?.FungalCell);
+        var triggered = FungicideMutationProcessor.CheckPutrefactiveMycotoxin(
+            target,
+            board,
+            board.Players,
+            roll: 0.0,
+            out var chance,
+            out var killerPlayerId,
+            out var attackerTileId,
+            rng: new Random(0),
+            observer: new TestSimulationObserver());
+
+        Assert.True(triggered);
+        Assert.Equal(GameBalance.PutrefactiveMycotoxinMaxLevel * GameBalance.PutrefactiveMycotoxinEffectPerLevel, chance, precision: 6);
+        Assert.Equal(attacker.PlayerId, killerPlayerId);
+        Assert.Equal(board.GetTile(5, 5)?.TileId, attackerTileId);
+    }
+
+    [Fact]
+    public void CheckPutrefactiveMycotoxin_counts_diagonal_tiles_within_beacon_aura_range()
+    {
+        var board = new GameBoard(width: 7, height: 7, playerCount: 2);
+        var defender = CreatePlayer(0);
+        var attacker = CreatePlayer(1);
+        board.Players.Add(defender);
+        board.Players.Add(attacker);
+
+        board.PlaceInitialSpore(playerId: defender.PlayerId, x: 3, y: 3);
+        attacker.SetMutationLevel(MutationIds.PutrefactiveMycotoxin, newLevel: GameBalance.PutrefactiveMycotoxinMaxLevel, currentRound: 1);
+        attacker.SetMutationLevel(MutationIds.ChemotacticBeacon, newLevel: 1, currentRound: 1);
+        attacker.ActiveSurges[MutationIds.ChemotacticBeacon] = new Player.ActiveSurgeInfo(MutationIds.ChemotacticBeacon, level: 1, duration: GameBalance.ChemotacticBeaconSurgeDuration);
+        Assert.True(board.TryPlaceChemobeacon(attacker.PlayerId, tileId: board.GetTile(1, 1)!.TileId, mutationId: MutationIds.ChemotacticBeacon, turnsRemaining: GameBalance.ChemotacticBeaconSurgeDuration));
+
+        var target = Assert.IsType<FungalCell>(board.GetTile(3, 3)?.FungalCell);
+        var triggered = FungicideMutationProcessor.CheckPutrefactiveMycotoxin(
+            target,
+            board,
+            board.Players,
+            roll: 0.0,
+            out var chance,
+            out var killerPlayerId,
+            out var attackerTileId,
+            rng: new Random(0),
+            observer: new TestSimulationObserver());
+
+        Assert.True(triggered);
+        Assert.Equal(GameBalance.PutrefactiveMycotoxinMaxLevel * GameBalance.PutrefactiveMycotoxinEffectPerLevel, chance, precision: 6);
+        Assert.Equal(attacker.PlayerId, killerPlayerId);
+        Assert.Equal(board.GetTile(1, 1)?.TileId, attackerTileId);
+    }
+
+    [Fact]
+    public void CheckPutrefactiveMycotoxin_ignores_chemotactic_beacon_aura_below_max_level()
+    {
+        var board = new GameBoard(width: 7, height: 7, playerCount: 2);
+        var defender = CreatePlayer(0);
+        var attacker = CreatePlayer(1);
+        board.Players.Add(defender);
+        board.Players.Add(attacker);
+
+        board.PlaceInitialSpore(playerId: defender.PlayerId, x: 3, y: 3);
+        attacker.SetMutationLevel(MutationIds.PutrefactiveMycotoxin, newLevel: GameBalance.PutrefactiveMycotoxinMaxLevel - 1, currentRound: 1);
+        attacker.SetMutationLevel(MutationIds.ChemotacticBeacon, newLevel: 1, currentRound: 1);
+        attacker.ActiveSurges[MutationIds.ChemotacticBeacon] = new Player.ActiveSurgeInfo(MutationIds.ChemotacticBeacon, level: 1, duration: GameBalance.ChemotacticBeaconSurgeDuration);
+        Assert.True(board.TryPlaceChemobeacon(attacker.PlayerId, tileId: board.GetTile(5, 5)!.TileId, mutationId: MutationIds.ChemotacticBeacon, turnsRemaining: GameBalance.ChemotacticBeaconSurgeDuration));
+
+        var target = Assert.IsType<FungalCell>(board.GetTile(3, 3)?.FungalCell);
+        var triggered = FungicideMutationProcessor.CheckPutrefactiveMycotoxin(
+            target,
+            board,
+            board.Players,
+            roll: 0.0,
+            out var chance,
+            out var killerPlayerId,
+            out var attackerTileId,
+            rng: new Random(0),
+            observer: new TestSimulationObserver());
+
+        Assert.False(triggered);
+        Assert.Equal(0f, chance, precision: 6);
+        Assert.Null(killerPlayerId);
+        Assert.Null(attackerTileId);
+    }
+
+    [Fact]
+    public void CheckPutrefactiveMycotoxin_ignores_chemotactic_beacon_aura_beyond_range_two()
+    {
+        var board = new GameBoard(width: 8, height: 8, playerCount: 2);
+        var defender = CreatePlayer(0);
+        var attacker = CreatePlayer(1);
+        board.Players.Add(defender);
+        board.Players.Add(attacker);
+
+        board.PlaceInitialSpore(playerId: defender.PlayerId, x: 3, y: 3);
+        attacker.SetMutationLevel(MutationIds.PutrefactiveMycotoxin, newLevel: GameBalance.PutrefactiveMycotoxinMaxLevel, currentRound: 1);
+        attacker.SetMutationLevel(MutationIds.ChemotacticBeacon, newLevel: 1, currentRound: 1);
+        attacker.ActiveSurges[MutationIds.ChemotacticBeacon] = new Player.ActiveSurgeInfo(MutationIds.ChemotacticBeacon, level: 1, duration: GameBalance.ChemotacticBeaconSurgeDuration);
+        Assert.True(board.TryPlaceChemobeacon(attacker.PlayerId, tileId: board.GetTile(0, 0)!.TileId, mutationId: MutationIds.ChemotacticBeacon, turnsRemaining: GameBalance.ChemotacticBeaconSurgeDuration));
+
+        var target = Assert.IsType<FungalCell>(board.GetTile(3, 3)?.FungalCell);
+        var triggered = FungicideMutationProcessor.CheckPutrefactiveMycotoxin(
+            target,
+            board,
+            board.Players,
+            roll: 0.0,
+            out var chance,
+            out var killerPlayerId,
+            out var attackerTileId,
+            rng: new Random(0),
+            observer: new TestSimulationObserver());
+
+        Assert.False(triggered);
+        Assert.Equal(0f, chance, precision: 6);
+        Assert.Null(killerPlayerId);
+        Assert.Null(attackerTileId);
+    }
+
+    [Fact]
+    public void CheckPutrefactiveMycotoxin_combines_adjacent_and_beacon_sources_into_total_chance()
+    {
+        var board = new GameBoard(width: 7, height: 7, playerCount: 2);
+        var defender = CreatePlayer(0);
+        var attacker = CreatePlayer(1);
+        board.Players.Add(defender);
+        board.Players.Add(attacker);
+
+        board.PlaceInitialSpore(playerId: defender.PlayerId, x: 3, y: 3);
+        board.PlaceInitialSpore(playerId: attacker.PlayerId, x: 3, y: 4);
+        attacker.SetMutationLevel(MutationIds.PutrefactiveMycotoxin, newLevel: GameBalance.PutrefactiveMycotoxinMaxLevel, currentRound: 1);
+        attacker.SetMutationLevel(MutationIds.ChemotacticBeacon, newLevel: 1, currentRound: 1);
+        attacker.ActiveSurges[MutationIds.ChemotacticBeacon] = new Player.ActiveSurgeInfo(MutationIds.ChemotacticBeacon, level: 1, duration: GameBalance.ChemotacticBeaconSurgeDuration);
+        Assert.True(board.TryPlaceChemobeacon(attacker.PlayerId, tileId: board.GetTile(5, 5)!.TileId, mutationId: MutationIds.ChemotacticBeacon, turnsRemaining: GameBalance.ChemotacticBeaconSurgeDuration));
+
+        var target = Assert.IsType<FungalCell>(board.GetTile(3, 3)?.FungalCell);
+        var triggered = FungicideMutationProcessor.CheckPutrefactiveMycotoxin(
+            target,
+            board,
+            board.Players,
+            roll: GameBalance.PutrefactiveMycotoxinMaxLevel * GameBalance.PutrefactiveMycotoxinEffectPerLevel,
+            out var chance,
+            out var killerPlayerId,
+            out var attackerTileId,
+            rng: new Random(0),
+            observer: new TestSimulationObserver());
+
+        float singleSourceChance = GameBalance.PutrefactiveMycotoxinMaxLevel * GameBalance.PutrefactiveMycotoxinEffectPerLevel;
+
+        Assert.True(triggered);
+        Assert.Equal(singleSourceChance * 2f, chance, precision: 6);
+        Assert.Equal(attacker.PlayerId, killerPlayerId);
+        Assert.Equal(board.GetTile(5, 5)?.TileId, attackerTileId);
     }
 
     [Fact]
