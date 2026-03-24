@@ -41,6 +41,13 @@ namespace FungusToast.Unity.UI
         [SerializeField] private string mycovariantHeaderLabel = "Mycovariants";
         [SerializeField, TextArea] private string mycovariantHeaderTooltip = "Mycovariants are game-only traits your mold carries for the current match.";
 
+        [Header("Board Overlay Legend")]
+        [SerializeField] private RectTransform boardOverlayLegendSectionRoot;
+        [SerializeField] private TextMeshProUGUI boardOverlayLegendHeaderText;
+        [SerializeField] private RectTransform boardOverlayLegendIconGridRoot;
+        [SerializeField] private string boardOverlayLegendHeaderLabel = "Common Symbols";
+        [SerializeField, TextArea] private string boardOverlayLegendHeaderTooltip = "Hover a symbol to highlight every matching tile on the toast and learn what that overlay means.";
+
         [Header("Formatting / Visuals")]
         [SerializeField] private Color zeroChanceColor = new Color(1f,1f,1f,0.35f);
         [SerializeField] private Color finalZeroGreen = new Color(0.4f, 1f, 0.4f, 1f);
@@ -63,6 +70,7 @@ namespace FungusToast.Unity.UI
 
         private readonly List<GameObject> adaptationIconObjects = new();
         private readonly List<GameObject> mycovariantIconObjects = new();
+        private readonly List<GameObject> boardOverlayLegendObjects = new();
 
         private bool cellsResolved = false;
         private bool deferredRefreshRequested = false;
@@ -106,8 +114,11 @@ namespace FungusToast.Unity.UI
             }
 
             ApplyGrowthPreviewHeaderText();
+            EnsureBoardOverlayLegendSectionExists();
             EnsureAdaptationSectionExists();
             EnsureMycovariantSectionExists();
+            UpdateSectionSiblingOrder();
+            ApplyBoardOverlayLegendSectionStyle();
             ApplyAdaptationSectionStyle();
             ApplyMycovariantSectionStyle();
             ApplyLayoutBehavior();
@@ -260,6 +271,7 @@ namespace FungusToast.Unity.UI
 
             EnsureCellsResolved();
             UpdateGrowthChances();
+            RefreshBoardOverlayLegend();
             RefreshAdaptations();
             RefreshMycovariants();
             deferredRefreshRequested = false;
@@ -366,6 +378,21 @@ namespace FungusToast.Unity.UI
             RefreshIconSection(adaptationSectionRoot, adaptationIconGridRoot, adaptationIconObjects, adaptations, CreateAdaptationIcon);
         }
 
+        private void RefreshBoardOverlayLegend()
+        {
+            EnsureBoardOverlayLegendSectionExists();
+
+            var overlayTypes = new[]
+            {
+                BoardOverlayLegendType.ResistanceShield,
+                BoardOverlayLegendType.Toxin,
+                BoardOverlayLegendType.DeadCell,
+                BoardOverlayLegendType.Chemobeacon
+            };
+
+            RefreshIconSection(boardOverlayLegendSectionRoot, boardOverlayLegendIconGridRoot, boardOverlayLegendObjects, overlayTypes, CreateBoardOverlayLegendIcon);
+        }
+
         private void RefreshMycovariants()
         {
             EnsureMycovariantSectionExists();
@@ -428,17 +455,32 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            var hostRoot = ResolveAdaptationSectionHostRoot(rootTransform);
             adaptationSectionRoot = CreateSectionRoot(rootTransform, "UI_AdaptationSection");
-            if (hostRoot != null)
-            {
-                adaptationSectionRoot.SetSiblingIndex(hostRoot.GetSiblingIndex() + 1);
-            }
 
             adaptationHeaderText = CreateSectionHeader(adaptationSectionRoot, "UI_AdaptationHeaderText", adaptationHeaderLabel, adaptationHeaderTooltip);
             adaptationIconGridRoot = CreateIconGrid(adaptationSectionRoot, "UI_AdaptationIconGrid");
 
             ApplyAdaptationSectionStyle();
+        }
+
+        private void EnsureBoardOverlayLegendSectionExists()
+        {
+            if (boardOverlayLegendSectionRoot != null && boardOverlayLegendIconGridRoot != null && boardOverlayLegendHeaderText != null)
+            {
+                return;
+            }
+
+            var rootTransform = transform as RectTransform;
+            if (rootTransform == null)
+            {
+                return;
+            }
+
+            boardOverlayLegendSectionRoot = CreateSectionRoot(rootTransform, "UI_BoardOverlayLegendSection");
+            boardOverlayLegendHeaderText = CreateSectionHeader(boardOverlayLegendSectionRoot, "UI_BoardOverlayLegendHeaderText", boardOverlayLegendHeaderLabel, boardOverlayLegendHeaderTooltip);
+            boardOverlayLegendIconGridRoot = CreateIconGrid(boardOverlayLegendSectionRoot, "UI_BoardOverlayLegendIconGrid");
+
+            ApplyBoardOverlayLegendSectionStyle();
         }
 
         private void EnsureMycovariantSectionExists()
@@ -457,15 +499,38 @@ namespace FungusToast.Unity.UI
             }
 
             mycovariantSectionRoot = CreateSectionRoot(rootTransform, "UI_MycovariantSection");
-            if (adaptationSectionRoot != null)
-            {
-                mycovariantSectionRoot.SetSiblingIndex(adaptationSectionRoot.GetSiblingIndex() + 1);
-            }
 
             mycovariantHeaderText = CreateSectionHeader(mycovariantSectionRoot, "UI_MycovariantHeaderText", mycovariantHeaderLabel, mycovariantHeaderTooltip);
             mycovariantIconGridRoot = CreateIconGrid(mycovariantSectionRoot, "UI_MycovariantIconGrid");
 
             ApplyMycovariantSectionStyle();
+        }
+
+        private void UpdateSectionSiblingOrder()
+        {
+            var rootTransform = transform as RectTransform;
+            if (rootTransform == null)
+            {
+                return;
+            }
+
+            var hostRoot = ResolveAdaptationSectionHostRoot(rootTransform);
+            int nextIndex = hostRoot != null ? hostRoot.GetSiblingIndex() + 1 : rootTransform.childCount;
+
+            if (boardOverlayLegendSectionRoot != null)
+            {
+                boardOverlayLegendSectionRoot.SetSiblingIndex(nextIndex++);
+            }
+
+            if (adaptationSectionRoot != null)
+            {
+                adaptationSectionRoot.SetSiblingIndex(nextIndex++);
+            }
+
+            if (mycovariantSectionRoot != null)
+            {
+                mycovariantSectionRoot.SetSiblingIndex(nextIndex);
+            }
         }
 
         private RectTransform ResolveAdaptationSectionHostRoot(RectTransform fallbackRoot)
@@ -490,6 +555,11 @@ namespace FungusToast.Unity.UI
         private void ApplyAdaptationSectionStyle()
         {
             ApplySectionStyle(adaptationSectionRoot, adaptationHeaderText, adaptationIconGridRoot, adaptationHeaderLabel);
+        }
+
+        private void ApplyBoardOverlayLegendSectionStyle()
+        {
+            ApplySectionStyle(boardOverlayLegendSectionRoot, boardOverlayLegendHeaderText, boardOverlayLegendIconGridRoot, boardOverlayLegendHeaderLabel);
         }
 
         private void ApplyMycovariantSectionStyle()
@@ -581,6 +651,28 @@ namespace FungusToast.Unity.UI
             trigger.SetAutoPlacementOffsetX(20f);
         }
 
+        private void CreateBoardOverlayLegendIcon(BoardOverlayLegendType overlayType)
+        {
+            if (boardOverlayLegendIconGridRoot == null)
+            {
+                return;
+            }
+
+            var grid = GameManager.Instance?.gridVisualizer;
+            var iconObject = CreateIconObject($"UI_BoardOverlayLegend_{overlayType}", boardOverlayLegendIconGridRoot, boardOverlayLegendObjects, GetBoardOverlayLegendSprite(overlayType, grid));
+
+            var provider = iconObject.AddComponent<BoardOverlayLegendTooltipProvider>();
+            provider.Initialize(overlayType);
+
+            var hoverHandler = iconObject.AddComponent<BoardOverlayLegendHoverHandler>();
+            hoverHandler.Initialize(overlayType, grid);
+            hoverHandler.enabled = grid != null;
+
+            var trigger = iconObject.AddComponent<TooltipTrigger>();
+            trigger.SetDynamicProvider(provider);
+            trigger.SetAutoPlacementOffsetX(20f);
+        }
+
         private void CreateMycovariantIcon(PlayerMycovariant playerMycovariant)
         {
             if (mycovariantIconGridRoot == null || playerMycovariant?.Mycovariant == null)
@@ -621,6 +713,18 @@ namespace FungusToast.Unity.UI
             image.color = Color.white;
 
             return iconObject;
+        }
+
+        private static Sprite GetBoardOverlayLegendSprite(BoardOverlayLegendType overlayType, FungusToast.Unity.Grid.GridVisualizer grid)
+        {
+            return overlayType switch
+            {
+                BoardOverlayLegendType.ResistanceShield => grid?.goldShieldOverlayTile != null ? grid.goldShieldOverlayTile.sprite : null,
+                BoardOverlayLegendType.Toxin => grid?.toxinOverlayTile != null ? grid.toxinOverlayTile.sprite : null,
+                BoardOverlayLegendType.DeadCell => grid?.deadTile != null ? grid.deadTile.sprite : null,
+                BoardOverlayLegendType.Chemobeacon => grid?.GetChemobeaconLegendSprite(),
+                _ => null
+            };
         }
 
         private static RectTransform CreateSectionRoot(RectTransform parent, string objectName)

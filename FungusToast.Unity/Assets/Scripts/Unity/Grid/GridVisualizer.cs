@@ -656,6 +656,11 @@ namespace FungusToast.Unity.Grid
                 : baseTile;
         }
 
+        public Sprite GetChemobeaconLegendSprite()
+        {
+            return overlayRenderer?.GetChemobeaconLegendSprite();
+        }
+
         private Color GetSurfaceColor(int x, int y, int boardWidth, int boardHeight)
         {
             return boardMediumRenderer != null
