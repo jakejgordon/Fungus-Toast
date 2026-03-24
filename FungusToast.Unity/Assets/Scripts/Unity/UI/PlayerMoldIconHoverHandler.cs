@@ -1,9 +1,20 @@
+using System.Collections.Generic;
+using System.Linq;
+using FungusToast.Core.Board;
+using FungusToast.Unity.Grid;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using FungusToast.Unity.Grid;
 
 namespace FungusToast.Unity.UI
 {
+    public enum BoardOverlayLegendType
+    {
+        ResistanceShield,
+        Toxin,
+        DeadCell,
+        Chemobeacon
+    }
+
     public class PlayerMoldIconHoverHandler : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         public int playerId;
@@ -24,6 +35,11 @@ namespace FungusToast.Unity.UI
             if (FungusToast.Unity.GameManager.Instance != null && FungusToast.Unity.GameManager.Instance.IsDraftPhaseActive)
                 return;
 
+            RestoreSelectionHighlightsOrClear(gridVisualizer);
+        }
+
+        internal static void RestoreSelectionHighlightsOrClear(GridVisualizer gridVisualizer)
+        {
             if (MultiCellSelectionController.Instance != null && MultiCellSelectionController.Instance.HasActiveSelection)
             {
                 MultiCellSelectionController.Instance.ReapplySelectionHighlights();
@@ -42,8 +58,64 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            gridVisualizer.ClearHighlights();
+            gridVisualizer?.ClearHighlights();
         }
     }
 
+    public class BoardOverlayLegendHoverHandler : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    {
+        private BoardOverlayLegendType overlayType;
+        private GridVisualizer gridVisualizer;
+
+        public void Initialize(BoardOverlayLegendType type, GridVisualizer grid)
+        {
+            overlayType = type;
+            gridVisualizer = grid;
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (FungusToast.Unity.GameManager.Instance != null && FungusToast.Unity.GameManager.Instance.IsDraftPhaseActive)
+            {
+                return;
+            }
+
+            var board = gridVisualizer?.ActiveBoard;
+            if (board == null)
+            {
+                return;
+            }
+
+            IEnumerable<int> tileIds = GetMatchingTileIds(board);
+            gridVisualizer.HighlightTiles(tileIds);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (FungusToast.Unity.GameManager.Instance != null && FungusToast.Unity.GameManager.Instance.IsDraftPhaseActive)
+            {
+                return;
+            }
+
+            PlayerMoldIconHoverHandler.RestoreSelectionHighlightsOrClear(gridVisualizer);
+        }
+
+        private IEnumerable<int> GetMatchingTileIds(GameBoard board)
+        {
+            return overlayType switch
+            {
+                BoardOverlayLegendType.ResistanceShield => board.AllTiles()
+                    .Where(tile => tile.FungalCell != null && tile.FungalCell.IsResistant)
+                    .Select(tile => tile.TileId),
+                BoardOverlayLegendType.Toxin => board.AllTiles()
+                    .Where(tile => tile.FungalCell != null && tile.FungalCell.IsToxin)
+                    .Select(tile => tile.TileId),
+                BoardOverlayLegendType.DeadCell => board.AllTiles()
+                    .Where(tile => tile.FungalCell != null && tile.FungalCell.IsDead)
+                    .Select(tile => tile.TileId),
+                BoardOverlayLegendType.Chemobeacon => board.GetActiveChemobeacons().Select(marker => marker.TileId),
+                _ => Enumerable.Empty<int>()
+            };
+        }
+    }
 }

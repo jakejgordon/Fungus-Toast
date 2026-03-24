@@ -229,6 +229,12 @@ namespace FungusToast.Unity.Grid.Helpers
 			_nutrientPulseTileIds.Remove(tileId);
 		}
 
+		public Sprite GetChemobeaconLegendSprite()
+		{
+			EnsureGeneratedChemobeaconEmblemTile();
+			return _generatedChemobeaconEmblemSprite;
+		}
+
 		public void ResetRuntimeState()
 		{
 			_nutrientPulseTileIds.Clear();
