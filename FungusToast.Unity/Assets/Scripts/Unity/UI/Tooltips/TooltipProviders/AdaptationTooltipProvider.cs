@@ -1,6 +1,5 @@
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Mycovariants;
-using FungusToast.Unity.UI;
 using FungusToast.Unity.UI.Tooltips;
 
 namespace FungusToast.Unity.UI.Tooltips.TooltipProviders

@@ -719,9 +719,9 @@ namespace FungusToast.Unity.UI
         {
             return overlayType switch
             {
-                BoardOverlayLegendType.ResistanceShield => grid?.goldShieldOverlayTile != null ? grid.goldShieldOverlayTile.sprite : null,
-                BoardOverlayLegendType.Toxin => grid?.toxinOverlayTile != null ? grid.toxinOverlayTile.sprite : null,
-                BoardOverlayLegendType.DeadCell => grid?.deadTile != null ? grid.deadTile.sprite : null,
+                BoardOverlayLegendType.ResistanceShield => grid?.goldShieldOverlayTile?.sprite,
+                BoardOverlayLegendType.Toxin => grid?.toxinOverlayTile?.sprite,
+                BoardOverlayLegendType.DeadCell => grid?.deadTile?.sprite,
                 BoardOverlayLegendType.Chemobeacon => grid?.GetChemobeaconLegendSprite(),
                 _ => null
             };
