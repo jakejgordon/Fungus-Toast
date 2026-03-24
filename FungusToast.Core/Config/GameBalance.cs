@@ -109,6 +109,10 @@ namespace FungusToast.Core.Config
         public const int ChemotacticBeaconPointsPerActivation = DirectedVectorPointsPerActivation;
         public const int ChemotacticBeaconSurgeDuration = DirectedVectorSurgeDuration;
         public const int ChemotacticBeaconPointIncreasePerLevel = DirectedVectorSurgePointIncreasePerLevel;
+        public const int ChemotacticBeaconAiBridgeBufferTiles = 10;
+        public const int ChemotacticBeaconAiNutrientPathScore = 10;
+        public const int ChemotacticBeaconAiEnemyLivingPathScore = 1;
+        public const int ChemotacticBeaconAiDistancePenaltyPerTile = 2;
 
         // Chitin Fortification (Tier 2 MycelialSurges)
             public const int ChitinFortificationCellsPerLevel = 4; // X: cells fortified per level

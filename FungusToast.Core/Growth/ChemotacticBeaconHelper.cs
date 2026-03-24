@@ -10,6 +10,32 @@ namespace FungusToast.Core.Growth
 {
     public static class ChemotacticBeaconHelper
     {
+        private sealed class BeaconPlacementCandidate
+        {
+            public BeaconPlacementCandidate(
+                BoardTile tile,
+                int pathLength,
+                int nutrientTilesCrossed,
+                int enemyLivingTilesCrossed,
+                int distancePenalty)
+            {
+                Tile = tile;
+                PathLength = pathLength;
+                NutrientTilesCrossed = nutrientTilesCrossed;
+                EnemyLivingTilesCrossed = enemyLivingTilesCrossed;
+                DistancePenalty = distancePenalty;
+            }
+
+            public BoardTile Tile { get; }
+            public int PathLength { get; }
+            public int NutrientTilesCrossed { get; }
+            public int EnemyLivingTilesCrossed { get; }
+            public int DistancePenalty { get; }
+            public int Score => (NutrientTilesCrossed * GameBalance.ChemotacticBeaconAiNutrientPathScore)
+                + (EnemyLivingTilesCrossed * GameBalance.ChemotacticBeaconAiEnemyLivingPathScore)
+                - (DistancePenalty * GameBalance.ChemotacticBeaconAiDistancePenaltyPerTile);
+        }
+
         public static bool TryGetActiveMarker(GameBoard board, Player player, out GameBoard.ChemobeaconMarker? marker)
         {
             marker = null;
@@ -23,6 +49,9 @@ namespace FungusToast.Core.Growth
         }
 
         public static int? TrySelectAITargetTile(Player player, GameBoard board)
+            => TrySelectAITargetTile(player, board, player?.GetMutationLevel(MutationIds.ChemotacticBeacon) ?? 0, GameBalance.ChemotacticBeaconSurgeDuration);
+
+        public static int? TrySelectAITargetTile(Player player, GameBoard board, int projectedLevel, int surgeDuration)
         {
             if (player == null || board == null)
             {
@@ -42,42 +71,83 @@ namespace FungusToast.Core.Growth
             {
                 return validTiles
                     .OrderBy(tile => tile.TileId)
-                    .Select(tile => (int?)tile.TileId)
-                    .FirstOrDefault();
-            }
-
-            var nutrientTiles = board.AllNutrientPatchTiles().ToList();
-            if (nutrientTiles.Count == 0)
-            {
-                return validTiles
-                    .OrderBy(tile => tile.DistanceTo(anchor))
                     .ThenBy(tile => tile.TileId)
                     .Select(tile => (int?)tile.TileId)
                     .FirstOrDefault();
             }
 
-            var nearestNutrient = nutrientTiles
-                .OrderBy(tile => tile.DistanceTo(anchor))
-                .ThenBy(tile => tile.TileId)
-                .First();
+            int idealDistance = CalculateIdealDistance(projectedLevel, surgeDuration);
+            var bestCandidate = validTiles
+                .Select(tile => EvaluateCandidateTile(tile, anchor, player.PlayerId, board, idealDistance))
+                .Where(candidate => candidate != null)
+                .OrderByDescending(candidate => candidate!.Score)
+                .ThenBy(candidate => candidate!.DistancePenalty)
+                .ThenByDescending(candidate => candidate!.PathLength)
+                .ThenByDescending(candidate => candidate!.NutrientTilesCrossed)
+                .ThenByDescending(candidate => candidate!.EnemyLivingTilesCrossed)
+                .ThenBy(candidate => candidate!.Tile.TileId)
+                .FirstOrDefault();
 
-            int reflectedX = Math.Clamp(nearestNutrient.X + (nearestNutrient.X - anchor.X), 0, board.Width - 1);
-            int reflectedY = Math.Clamp(nearestNutrient.Y + (nearestNutrient.Y - anchor.Y), 0, board.Height - 1);
+            return bestCandidate?.Tile.TileId;
+        }
 
-            int dxAway = nearestNutrient.X - anchor.X;
-            int dyAway = nearestNutrient.Y - anchor.Y;
+        private static int CalculateIdealDistance(int projectedLevel, int surgeDuration)
+        {
+            int clampedLevel = Math.Max(0, projectedLevel);
+            int clampedDuration = Math.Max(0, surgeDuration);
+            int cellsPerRound = GameBalance.ChemotacticBeaconBaseTiles + (clampedLevel * GameBalance.ChemotacticBeaconTilesPerLevel);
+            return (clampedDuration * cellsPerRound) + GameBalance.ChemotacticBeaconAiBridgeBufferTiles;
+        }
 
-            var oppositeSideCandidates = validTiles
-                .Where(tile => IsOnOppositeSideOfNutrient(tile, nearestNutrient, dxAway, dyAway))
-                .ToList();
+        private static BeaconPlacementCandidate? EvaluateCandidateTile(
+            BoardTile candidateTile,
+            BoardTile anchor,
+            int playerId,
+            GameBoard board,
+            int idealDistance)
+        {
+            int dx = candidateTile.X - anchor.X;
+            int dy = candidateTile.Y - anchor.Y;
+            int pathLength = Math.Max(Math.Abs(dx), Math.Abs(dy));
+            if (pathLength <= 0)
+            {
+                return null;
+            }
 
-            var scoredCandidates = (oppositeSideCandidates.Count > 0 ? oppositeSideCandidates : validTiles)
-                .OrderBy(tile => Math.Abs(tile.X - reflectedX) + Math.Abs(tile.Y - reflectedY))
-                .ThenByDescending(tile => Math.Abs(tile.X - anchor.X) + Math.Abs(tile.Y - anchor.Y))
-                .ThenBy(tile => tile.TileId)
-                .ToList();
+            var path = DirectedVectorHelper.GetLineToTarget(anchor.X, anchor.Y, candidateTile.X, candidateTile.Y, pathLength);
+            if (path.Count == 0)
+            {
+                return null;
+            }
 
-            return scoredCandidates.Count > 0 ? scoredCandidates[0].TileId : null;
+            int nutrientTilesCrossed = 0;
+            int enemyLivingTilesCrossed = 0;
+            for (int index = 0; index < path.Count - 1; index++)
+            {
+                var (x, y) = path[index];
+                var pathTile = board.GetTile(x, y);
+                if (pathTile == null)
+                {
+                    break;
+                }
+
+                if (pathTile.HasNutrientPatch)
+                {
+                    nutrientTilesCrossed++;
+                }
+
+                if (pathTile.FungalCell is { IsAlive: true, OwnerPlayerId: var ownerId } && ownerId != playerId)
+                {
+                    enemyLivingTilesCrossed++;
+                }
+            }
+
+            return new BeaconPlacementCandidate(
+                candidateTile,
+                pathLength,
+                nutrientTilesCrossed,
+                enemyLivingTilesCrossed,
+                Math.Abs(pathLength - idealDistance));
         }
 
         private static BoardTile? GetAnchorTile(Player player, GameBoard board)
@@ -104,14 +174,6 @@ namespace FungusToast.Core.Growth
             int avgX = (int)Math.Round(livingTiles.Average(tile => tile.X), MidpointRounding.AwayFromZero);
             int avgY = (int)Math.Round(livingTiles.Average(tile => tile.Y), MidpointRounding.AwayFromZero);
             return board.GetTile(avgX, avgY) ?? livingTiles.OrderBy(tile => tile.TileId).First();
-        }
-
-        private static bool IsOnOppositeSideOfNutrient(BoardTile candidate, BoardTile nutrientTile, int dxAway, int dyAway)
-        {
-            int candidateDx = candidate.X - nutrientTile.X;
-            int candidateDy = candidate.Y - nutrientTile.Y;
-            int dot = candidateDx * dxAway + candidateDy * dyAway;
-            return dot >= 0;
         }
     }
 }

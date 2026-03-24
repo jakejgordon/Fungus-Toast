@@ -35,7 +35,8 @@ namespace FungusToast.Core.AI
         {
             if (mutation.Id == MutationIds.ChemotacticBeacon)
             {
-                int? targetTileId = ChemotacticBeaconHelper.TrySelectAITargetTile(player, board);
+                int projectedLevel = Math.Min(player.GetMutationLevel(mutation.Id) + 1, mutation.MaxLevel);
+                int? targetTileId = ChemotacticBeaconHelper.TrySelectAITargetTile(player, board, projectedLevel, mutation.SurgeDuration);
                 return targetTileId.HasValue
                     && player.TryActivateTargetedSurge(mutation, board, targetTileId.Value, simulationObserver, currentRound);
             }
