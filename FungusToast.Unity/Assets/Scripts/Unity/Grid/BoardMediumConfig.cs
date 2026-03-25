@@ -38,20 +38,20 @@ namespace FungusToast.Unity.Grid
         public Color crustMidColor = new(0.79f, 0.47f, 0.16f, 1f);
         public Color crustOuterColor = new(0.42f, 0.2f, 0.05f, 1f);
         [Range(0f, 1f)] public float crustTopDarkening = 0.18f;
-        [Range(0f, 0.2f)] public float crustColorVariation = 0.06f;
+        [Range(0f, 0.2f)] public float crustColorVariation = 0.11f;
 
         [Header("Bread Interior Colors")]
         public Color breadInteriorColor = new(0.93f, 0.82f, 0.62f, 1f);
         public Color breadShadeColor = new(0.88f, 0.74f, 0.53f, 1f);
-        [Range(0f, 0.15f)] public float breadColorVariation = 0.025f;
+        [Range(0f, 0.15f)] public float breadColorVariation = 0.08f;
 
         [Header("Tile Rendering")]
         [Range(1f, 1.08f)] public float playableSurfaceTileScale = 1.01f;
         [Range(1f, 1.12f)] public float crustTileScale = 1.03f;
 
         [Header("Inner Browning")]
-        public bool tintPerimeterTiles = false;
-        [Min(1)] public int perimeterTintDepth = 1;
+        public bool tintPerimeterTiles = true;
+        [Min(1)] public int perimeterTintDepth = 2;
         public Color perimeterTint = new(0.88f, 0.78f, 0.56f, 1f);
 
         public int GetCrustThickness(int boardWidth, int boardHeight)

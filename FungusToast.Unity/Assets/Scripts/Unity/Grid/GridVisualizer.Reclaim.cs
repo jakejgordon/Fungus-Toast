@@ -48,7 +48,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		public Color GetSurfaceColor(int x, int y, int boardWidth, int boardHeight)
 		{
 			var activeMedium = _getActiveMedium();
-			if (activeMedium == null || !activeMedium.ShouldOverridePlayableSurface || !activeMedium.IsPerimeterTintEnabled)
+			if (activeMedium == null || !activeMedium.IsPerimeterTintEnabled)
 			{
 				return Color.white;
 			}
@@ -197,7 +197,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			};
 
 			var pixels = new Color32[textureWidth * textureHeight];
-			float outerFeather = 1.75f / pixelsPerUnit;
+			float outerFeather = 4f / pixelsPerUnit;
 
 			for (int py = 0; py < textureHeight; py++)
 			{
@@ -355,24 +355,31 @@ namespace FungusToast.Unity.Grid.Helpers
 				? 1f
 				: Mathf.Clamp01((outerEdgeDistance - visualCrustThickness) / Mathf.Max(0.001f, visualCrustThickness * 1.4f));
 			Color breadColor = Color.Lerp(activeMedium.breadShadeColor, activeMedium.breadInteriorColor, interiorMix);
-			Color finalColor = outerEdgeDistance < visualCrustThickness
-				? crustGradientColor
-				: breadColor;
+
+			float blendZoneHalf = visualCrustThickness * 0.12f;
+			float crustToBreadBlend = Mathf.SmoothStep(0f, 1f,
+				Mathf.Clamp01((outerEdgeDistance - (visualCrustThickness - blendZoneHalf)) / Mathf.Max(0.001f, blendZoneHalf * 2f)));
+			Color finalColor = Color.Lerp(crustGradientColor, breadColor, crustToBreadBlend);
 
 			float variationStrength = Mathf.Clamp(activeMedium.crustColorVariation, 0f, 0.2f);
 			if (variationStrength > 0f)
 			{
-				float variation = EvaluateCoordinateNoise(activeMedium, Mathf.RoundToInt(x * 12f), Mathf.RoundToInt(y * 12f));
+				float coarseVariation = EvaluateCoordinateNoise(activeMedium, Mathf.RoundToInt(x * 5f), Mathf.RoundToInt(y * 5f));
+				float fineVariation = EvaluateCoordinateNoise(activeMedium, Mathf.RoundToInt(x * 14f) + 73, Mathf.RoundToInt(y * 13f) + 101);
+				float variation = coarseVariation * 0.6f + fineVariation * 0.4f;
 				float brightness = 1f + ((variation * 2f) - 1f) * variationStrength;
 				finalColor *= brightness;
 				finalColor.a = 1f;
 			}
 
 			float breadVariationStrength = Mathf.Clamp(activeMedium.breadColorVariation, 0f, 0.15f);
-			if (breadVariationStrength > 0f && outerEdgeDistance >= visualCrustThickness)
+			if (breadVariationStrength > 0f && outerEdgeDistance >= visualCrustThickness * 0.9f)
 			{
-				float variation = EvaluateCoordinateNoise(activeMedium, Mathf.RoundToInt(x * 6f) + 187, Mathf.RoundToInt(y * 10f) + 911);
-				float brightness = 1f + ((variation * 2f) - 1f) * breadVariationStrength;
+				float coarseVariation = EvaluateCoordinateNoise(activeMedium, Mathf.RoundToInt(x * 3f) + 187, Mathf.RoundToInt(y * 4f) + 911);
+				float fineVariation = EvaluateCoordinateNoise(activeMedium, Mathf.RoundToInt(x * 9f) + 421, Mathf.RoundToInt(y * 8f) + 647);
+				float variation = coarseVariation * 0.65f + fineVariation * 0.35f;
+				float breadBlendWeight = Mathf.Clamp01((outerEdgeDistance - visualCrustThickness * 0.9f) / Mathf.Max(0.001f, visualCrustThickness * 0.3f));
+				float brightness = 1f + ((variation * 2f) - 1f) * breadVariationStrength * breadBlendWeight;
 				finalColor *= brightness;
 				finalColor.a = 1f;
 			}
