@@ -617,12 +617,12 @@ namespace FungusToast.Core.Board
             RemoveCellInternal(tileId, removeControl: false);
             OnCellDeath(ownerId, tileId, reason, killerPlayerId, cell, attackerTileId);
         }
-        public bool TryReclaimDeadCell(int playerId, int tileId, GrowthSource reclaimGrowthSource)
+        public bool TryReclaimDeadCell(int playerId, int tileId, GrowthSource reclaimGrowthSource, bool requireSameOwner = true)
         {
             var tile = GetTileById(tileId);
             if (tile?.FungalCell == null || !tile.FungalCell.IsDead) return false;
             var cell = tile.FungalCell;
-            if (cell.OwnerPlayerId != playerId) return false;
+            if (requireSameOwner && cell.OwnerPlayerId != playerId) return false;
             cell.Reclaim(playerId, reclaimGrowthSource);
             cell.MarkAsNewlyGrown();
             cell.SetBirthRound(CurrentRound);

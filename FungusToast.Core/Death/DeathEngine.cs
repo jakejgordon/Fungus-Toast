@@ -49,7 +49,7 @@ namespace FungusToast.Core.Death
 
         /// <summary>
         /// Handles the board occupancy trigger for Necrophytic Bloom.
-        /// For each player with the mutation, fires an initial burst of spores for *each* dead cell they have.
+        /// When the board first reaches the activation threshold, enables Necrophytic Bloom for the rest of the game.
         /// </summary>
         private static void ApplyNecrophyticBloomTrigger(
             List<Player> players,
@@ -70,7 +70,7 @@ namespace FungusToast.Core.Death
 
         /// <summary>
         /// Handles all living cells, rolling for probabilistic deaths. After Necrophytic Bloom activates,
-        /// each cell death for a player with the mutation triggers per-death spores with damping.
+        /// each cell death for a player with the mutation triggers a board-scaled reclaim burst.
         /// </summary>
         private static void EvaluateProbabilisticDeaths(
             GameBoard board,
@@ -78,6 +78,7 @@ namespace FungusToast.Core.Death
             Random rng,
             ISimulationObserver simulationObserver)
         {
+            var newlyDeadCellsByPlayerId = new Dictionary<int, int>();
             var livingCellCounts = players.ToDictionary(
                 p => p.PlayerId,
                 p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive));
@@ -119,16 +120,35 @@ namespace FungusToast.Core.Death
                     // Trigger spore on death, if relevant
                     board.TryTriggerSporeOnDeath(owner, rng, simulationObserver);
 
-                    // Per-death Necrophytic Bloom effect - use cached ratio and decay phase context
                     if (board.NecrophyticBloomActivated &&
-                        owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0 &&
-                        board.CachedDecayPhaseContext != null)
+                        owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
                     {
-                        // Use cached occupied percent and decay phase context for optimized competitive targeting
-                        GeneticDriftMutationProcessor.TriggerNecrophyticBloomOnCellDeath(owner, board, players, rng, board.CachedOccupiedTileRatio, simulationObserver, board.CachedDecayPhaseContext);
+                        newlyDeadCellsByPlayerId.TryGetValue(owner.PlayerId, out int currentDeaths);
+                        newlyDeadCellsByPlayerId[owner.PlayerId] = currentDeaths + 1;
                     }
                 }
                 // NOTE: Cell aging is now handled in AgeCells method, not here
+            }
+
+            if (!board.NecrophyticBloomActivated || board.CachedDecayPhaseContext == null)
+            {
+                return;
+            }
+
+            foreach (var player in players)
+            {
+                if (!newlyDeadCellsByPlayerId.TryGetValue(player.PlayerId, out int deathCount) || deathCount <= 0)
+                {
+                    continue;
+                }
+
+                GeneticDriftMutationProcessor.TriggerNecrophyticBloomForNewDeaths(
+                    player,
+                    board,
+                    deathCount,
+                    rng,
+                    simulationObserver,
+                    board.CachedDecayPhaseContext);
             }
         }
 

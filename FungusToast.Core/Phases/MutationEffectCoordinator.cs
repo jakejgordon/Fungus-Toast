@@ -100,16 +100,6 @@ namespace FungusToast.Core.Phases
             // 3. Putrefactive Cascade (directional kill chains - should happen last to avoid affecting other mutations)
             FungicideMutationProcessor.OnCellDeath_PutrefactiveCascade(eventArgs, board, players, rng, observer);
 
-            // 4. Necrophytic Bloom per-death trigger (if activated) - use cached ratio for performance
-            if (board.NecrophyticBloomActivated)
-            {
-                var owner = players.FirstOrDefault(p => p.PlayerId == eventArgs.OwnerPlayerId);
-                if (owner != null && owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
-                {
-                    // Use cached occupied percent and decay phase context for optimized competitive targeting
-                    GeneticDriftMutationProcessor.TriggerNecrophyticBloomOnCellDeath(owner, board, players, rng, board.CachedOccupiedTileRatio, observer, decayPhaseContext);
-                }
-            }
         }
 
         /// <summary>
@@ -134,25 +124,6 @@ namespace FungusToast.Core.Phases
             // 3. Putrefactive Cascade (directional kill chains - should happen last to avoid affecting other mutations)
             FungicideMutationProcessor.OnCellDeath_PutrefactiveCascade(eventArgs, board, players, rng, observer);
 
-            // 4. Necrophytic Bloom per-death trigger (if activated) - use cached context if available
-            if (board.NecrophyticBloomActivated)
-            {
-                var owner = players.FirstOrDefault(p => p.PlayerId == eventArgs.OwnerPlayerId);
-                if (owner != null && owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
-                {
-                    if (board.CachedDecayPhaseContext != null)
-                    {
-                        // Use cached context for optimal performance
-                        GeneticDriftMutationProcessor.TriggerNecrophyticBloomOnCellDeath(owner, board, players, rng, board.CachedOccupiedTileRatio, observer, board.CachedDecayPhaseContext);
-                    }
-                    else
-                    {
-                        // Create a temporary context for this call - not optimal but needed for compatibility
-                        var tempContext = new DecayPhaseContext(board, players);
-                        GeneticDriftMutationProcessor.TriggerNecrophyticBloomOnCellDeath(owner, board, players, rng, board.CachedOccupiedTileRatio, observer, tempContext);
-                    }
-                }
-            }
         }
 
         // Pre-Growth Phase Events
