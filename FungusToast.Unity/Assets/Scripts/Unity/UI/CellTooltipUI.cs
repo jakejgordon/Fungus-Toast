@@ -514,6 +514,7 @@ namespace FungusToast.Unity.UI
             {
                 NutrientRewardType.MutationPoints => $"+{nutrientPatch.RewardAmount} Mutation {(nutrientPatch.RewardAmount == 1 ? "Point" : "Points")}",
                 NutrientRewardType.FreeGrowth => $"{nutrientPatch.RewardAmount} Free {(nutrientPatch.RewardAmount == 1 ? "Growth" : "Growths")}",
+                NutrientRewardType.MycovariantDraft => nutrientPatch.RewardAmount == 1 ? "1 Mycovariant Draft" : $"{nutrientPatch.RewardAmount} Mycovariant Drafts",
                 _ => nutrientPatch.Description
             };
 

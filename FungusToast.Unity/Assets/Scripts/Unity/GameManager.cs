@@ -120,6 +120,7 @@ namespace FungusToast.Unity
         private bool isInDraftPhase = false; 
         public bool IsDraftPhaseActive => isInDraftPhase; 
         private int lastCompletedMycovariantDraftRound = -1;
+        private bool activeDraftCountsTowardRoundCompletion;
         public int LastCompletedMycovariantDraftRound => lastCompletedMycovariantDraftRound;
         private Dictionary<(int playerId, int mutationId), List<int>> FirstUpgradeRounds = new();
 
@@ -722,7 +723,7 @@ namespace FungusToast.Unity
             int round = Board.CurrentRound;
             float occ = Board.GetOccupiedTileRatio() *100f;
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ);
-            if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound))
+            if (HasQueuedDraftPhaseForCurrentRound())
             {
                 StartCoroutine(DelayedStartDraft());
                 return;
@@ -866,20 +867,83 @@ namespace FungusToast.Unity
             phaseProgressTracker?.SetMutationPhaseLabel(isInDraftPhase ? "DRAFT" : "MUTATION");
         }
 
+        private bool HasQueuedDraftPhaseForCurrentRound()
+        {
+            if (Board == null)
+            {
+                return false;
+            }
+
+            return Board.HasPendingHypervariationDrafts
+                || (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound)
+                    && lastCompletedMycovariantDraftRound != Board.CurrentRound);
+        }
+
+        private bool TryStartQueuedDraftPhaseForCurrentRound()
+        {
+            if (Board == null)
+            {
+                return false;
+            }
+
+            while (Board.TryDequeuePendingHypervariationDraftPlayerId(out int playerId))
+            {
+                Player? draftPlayer = Board.Players.FirstOrDefault(player => player.PlayerId == playerId);
+                if (draftPlayer == null)
+                {
+                    continue;
+                }
+
+                StartMycovariantDraftPhase(
+                    customDraftOrder: new List<Player> { draftPlayer },
+                    phaseBannerMessage: "Hypervariation Draft!",
+                    draftTitle: "Hypervariation Draft",
+                    draftBlurb: "Hypervariation has destabilized this colony. Draft one mycovariant for the player who claimed the patch.",
+                    draftStartMessage: $"Hypervariation draft triggered. Only {draftPlayer.PlayerName} drafts this round.",
+                    humanTurnBannerText: "Your Hypervariation draft awaits!",
+                    aiTurnBannerPrefix: "Hypervariation Drafting",
+                    countsTowardRoundCompletion: false);
+                return true;
+            }
+
+            if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(Board.CurrentRound)
+                && lastCompletedMycovariantDraftRound != Board.CurrentRound)
+            {
+                StartMycovariantDraftPhase();
+                return true;
+            }
+
+            return false;
+        }
+
         public void StartMycovariantDraftPhase()
         {
+            StartMycovariantDraftPhase(null, null, null, null, null, null, null, true);
+        }
+
+        private void StartMycovariantDraftPhase(
+            List<Player>? customDraftOrder,
+            string? phaseBannerMessage,
+            string? draftTitle,
+            string? draftBlurb,
+            string? draftStartMessage,
+            string? humanTurnBannerText,
+            string? aiTurnBannerPrefix,
+            bool countsTowardRoundCompletion)
+        {
             isInDraftPhase = true;
+            activeDraftCountsTowardRoundCompletion = countsTowardRoundCompletion;
             RefreshRightSidebarTopStats();
             TooltipManager.Instance?.CancelAll();
             // Mark draft phase segment boundary so prior aggregation (e.g., decay phase) is queued
             gameUIManager.GameLogManager?.OnLogSegmentStart("DraftPhase");
-            var order = testingModeEnabled && testingModeForceHumanFirst
+            var order = customDraftOrder ?? (testingModeEnabled && testingModeForceHumanFirst
                 ? Board.Players
                     .OrderBy(p => p.PlayerType == PlayerTypeEnum.Human ?0 :1)
                     .ThenBy(p => Board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
                     .ToList()
-                : MycovariantDraftManager.BuildDraftOrder(Board.Players, Board);
-            if (testingModeEnabled && testingModeForceHumanFirst)
+                : MycovariantDraftManager.BuildDraftOrder(Board.Players, Board));
+            if (customDraftOrder == null && testingModeEnabled && testingModeForceHumanFirst)
             {
                 testingModeForceHumanFirst = false;
             }
@@ -888,8 +952,13 @@ namespace FungusToast.Unity
                 persistentPoolManager,
                 order,
                 rng,
-                MycovariantGameBalance.MycovariantSelectionDraftSize);
-            if (testingModeEnabled)
+                MycovariantGameBalance.MycovariantSelectionDraftSize,
+                draftTitle,
+                draftBlurb,
+                draftStartMessage,
+                humanTurnBannerText,
+                aiTurnBannerPrefix);
+            if (countsTowardRoundCompletion && testingModeEnabled)
             {
                 var tMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
                 var name = tMyco?.Name ?? "Unknown";
@@ -898,8 +967,11 @@ namespace FungusToast.Unity
             }
             else
             {
-                gameUIManager.PhaseBanner.Show("Mycovariant Draft Phase!",2f);
-                gameUIManager.GameLogRouter?.OnDraftPhaseStart();
+                gameUIManager.PhaseBanner.Show(phaseBannerMessage ?? "Mycovariant Draft Phase!",2f);
+                if (countsTowardRoundCompletion)
+                {
+                    gameUIManager.GameLogRouter?.OnDraftPhaseStart();
+                }
             }
             phaseProgressTracker?.HighlightDraftPhase();
             gameUIManager.MutationUIManager.gameObject.SetActive(false);
@@ -910,13 +982,21 @@ namespace FungusToast.Unity
         public void OnMycovariantDraftComplete()
         {
             isInDraftPhase = false;
-            lastCompletedMycovariantDraftRound = Board?.CurrentRound ?? -1;
+            if (activeDraftCountsTowardRoundCompletion)
+            {
+                lastCompletedMycovariantDraftRound = Board?.CurrentRound ?? -1;
+            }
+            activeDraftCountsTowardRoundCompletion = false;
             RefreshRightSidebarTopStats();
             TooltipManager.Instance?.CancelAll();
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.LeftSidebar?.gameObject.SetActive(true);
             mycovariantDraftController.gameObject.SetActive(false);
+            if (TryStartQueuedDraftPhaseForCurrentRound())
+            {
+                return;
+            }
             if (testingModeEnabled)
             {
                 StartNextRound();
@@ -937,7 +1017,7 @@ namespace FungusToast.Unity
         {
             yield return new WaitForSeconds(2.5f);
             yield return StartCoroutine(fastForwardService.WaitForFadeInAnimationsToComplete(gridVisualizer));
-            StartMycovariantDraftPhase();
+            TryStartQueuedDraftPhaseForCurrentRound();
         }
 
         public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)
