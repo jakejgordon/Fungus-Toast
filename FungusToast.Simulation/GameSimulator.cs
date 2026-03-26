@@ -37,6 +37,7 @@ namespace FungusToast.Simulation.GameSimulation
             var allMutations = MutationRegistry.GetAll().ToList();
             var allMycovariants = MycovariantRepository.All;
             var mycovariantPoolManager = new MycovariantPoolManager();
+            mycovariantPoolManager.InitializePool(allMycovariants, rng);
 
             var simTracking = context ?? new SimulationTrackingContext();
 
@@ -63,9 +64,27 @@ namespace FungusToast.Simulation.GameSimulation
             while (board.CurrentRound < GameBalance.MaxNumberOfRoundsBeforeGameEndTrigger && !gameEnded)
             {
                 // Mycovariant Draft Phase
+                if (enableMycovariantDraft)
+                {
+                    while (board.TryDequeuePendingHypervariationDraftPlayerId(out int playerId))
+                    {
+                        Player? draftPlayer = players.FirstOrDefault(player => player.PlayerId == playerId);
+                        if (draftPlayer == null)
+                        {
+                            continue;
+                        }
+
+                        MycovariantDraftManager.RunDraft(
+                            new List<Player> { draftPlayer },
+                            mycovariantPoolManager,
+                            board,
+                            rng,
+                            simTracking);
+                    }
+                }
+
                 if (enableMycovariantDraft && MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(board.CurrentRound))
                 {
-                    mycovariantPoolManager.InitializePool(allMycovariants, rng);
                     MycovariantDraftManager.RunDraft(players, mycovariantPoolManager, board, rng, simTracking);
                 }
 

@@ -73,7 +73,8 @@ namespace FungusToast.Unity
                     yield return RunSilentDecayPhase(board);
                     yield return RunSilentMutationPhase(board, mutationMgr, ui);
                     foreach (var p in board.Players) p.TickDownActiveSurges(); board.SynchronizeChemobeaconsWithSurges(board.Players); board.IncrementRound(); iterations++;
-                    if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(board.CurrentRound)) RunSilentDraft(board, ui, testingMycoId);
+                    RunSilentPendingHypervariationDrafts(board, ui, testingMycoId);
+                    if (MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(board.CurrentRound)) RunSilentDraft(board, ui, board.Players, testingMycoId, countsTowardRoundCompletion: true);
                 }
                 onComplete?.Invoke();
                 // Restore original player types and strategies before UI updates
@@ -100,12 +101,29 @@ namespace FungusToast.Unity
             }
         }
 
-        private void RunSilentDraft(GameBoard board, GameUIManager ui, int? testingMycoId)
+        private void RunSilentPendingHypervariationDrafts(GameBoard board, GameUIManager ui, int? testingMycoId)
+        {
+            while (board.TryDequeuePendingHypervariationDraftPlayerId(out int playerId))
+            {
+                Player? draftPlayer = board.Players.FirstOrDefault(player => player.PlayerId == playerId);
+                if (draftPlayer == null)
+                {
+                    continue;
+                }
+
+                RunSilentDraft(board, ui, new List<Player> { draftPlayer }, testingMycoId, countsTowardRoundCompletion: false);
+            }
+        }
+
+        private void RunSilentDraft(GameBoard board, GameUIManager ui, IReadOnlyList<Player> draftPlayers, int? testingMycoId, bool countsTowardRoundCompletion)
         {
             Func<Player, List<Mycovariant>, Mycovariant> custom = null; var pool = gameManager.GetPersistentPool(); var rng = gameManager.GetRng();
             if (testingMycoId.HasValue) { var testingMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycoId.Value); if (testingMyco != null && !testingMyco.IsUniversal) { pool.TemporarilyRemoveFromPool(testingMycoId.Value); custom = (player, choices) => choices.Where(c => c.Id != testingMycoId.Value).OrderByDescending(m => m.GetBaseAIScore(player, board)).ThenBy(_ => rng.Next()).FirstOrDefault() ?? choices.First(); } }
-            MycovariantDraftManager.RunDraft(board.Players, pool, board, rng, ui.GameLogRouter, MycovariantGameBalance.MycovariantSelectionDraftSize, custom);
-            gameManager.MarkMycovariantDraftCompleteForRound(board.CurrentRound);
+            MycovariantDraftManager.RunDraft(draftPlayers.ToList(), pool, board, rng, ui.GameLogRouter, MycovariantGameBalance.MycovariantSelectionDraftSize, custom);
+            if (countsTowardRoundCompletion)
+            {
+                gameManager.MarkMycovariantDraftCompleteForRound(board.CurrentRound);
+            }
             if (testingMycoId.HasValue) { var testingMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycoId.Value); if (testingMyco != null && !testingMyco.IsUniversal) pool.RestoreToPool(testingMycoId.Value); }
         }
 

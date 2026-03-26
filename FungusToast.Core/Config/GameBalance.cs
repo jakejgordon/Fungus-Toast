@@ -26,6 +26,9 @@ namespace FungusToast.Core.Config
         public const int NutrientPatchMutationPointReward = 1;
         public const int NutrientPatchClusterMinimumSize = 4;
         public const int NutrientPatchClusterMaximumSize = 12;
+        public const int HypervariationPatchClusterMinimumSize = 4;
+        public const int HypervariationPatchClusterMaximumSize = 6;
+        public const double HypervariationPatchChance = 0.12d;
 
         // --- NEW: Dynamic random decay scaling (starting at round 10 adds +0.1% per round) ---
         public const int RandomDecayScalingStartRound = 10; // Round at which incremental scaling begins

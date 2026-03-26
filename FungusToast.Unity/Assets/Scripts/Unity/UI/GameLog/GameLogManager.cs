@@ -804,6 +804,7 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 NutrientRewardType.MutationPoints => $"Claimed an Adaptogen Patch for {rewardAmount} mutation {(rewardAmount == 1 ? "point" : "points")}",
                 NutrientRewardType.FreeGrowth => $"Claimed a Sporemeal Patch and spread through {rewardAmount} extra {(rewardAmount == 1 ? "tile" : "tiles")}",
+                NutrientRewardType.MycovariantDraft => "Claimed a Hypervariation Patch and secured a Hypervariation draft for next round",
                 _ => $"Claimed a {patchType} Patch"
             };
 

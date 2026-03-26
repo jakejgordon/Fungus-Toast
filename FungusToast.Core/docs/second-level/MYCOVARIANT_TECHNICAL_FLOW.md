@@ -62,6 +62,11 @@ There are two execution contexts:
 - **Silent draft / simulation**: core execution path.
 - **Unity draft UI**: resolver/helper-driven path for interactive behavior.
 
+Hypervariation nutrient patches also enter the draft system through this same integration path:
+- the patch is claimed during growth,
+- the reward is queued instead of interrupting the growth phase,
+- and the one-player Hypervariation draft is resolved at the next normal draft timing before mutation resumes.
+
 For active Mycovariants that require selection/input:
 - Ensure simulation/AI path resolves safely in core.
 - Ensure Unity draft human path resolves via UI helper.

@@ -104,6 +104,23 @@ Typical location:
 
 Use for campaign balance, not main simulation balance, unless the tested mode includes Adaptations.
 
+### 9) Nutrient patch pacing and rewards
+Typical location:
+- `FungusToast.Core/Config/GameBalance.cs`
+- `FungusToast.Core/Board/NutrientPatchPlacementUtility.cs`
+- `FungusToast.Core/Board/NutrientPatch.cs`
+
+Use when:
+- patch density or total board coverage feels too high or too low,
+- a specific nutrient reward is too common or too rare,
+- or a special patch should obey a tighter cluster-size window than the default nutrient patch rules.
+
+Current nutrient-specific levers include:
+- global nutrient density and total tile budget
+- default nutrient cluster size range
+- Hypervariation rarity (`HypervariationPatchChance`)
+- Hypervariation cluster size window (`HypervariationPatchClusterMinimumSize` to `HypervariationPatchClusterMaximumSize`)
+
 ## Non-Primary Levers
 
 ### AI strategy config

@@ -466,7 +466,7 @@ namespace FungusToast.Unity.Grid.Helpers
 				alpha = Mathf.Max(alpha, helix * 0.8f);
 				alpha = Mathf.Max(alpha, ladder * 0.72f);
 			}
-			else
+			else if (patchType == NutrientPatchType.Sporemeal)
 			{
 				float runnerStem = 1f - Mathf.SmoothStep(0.02f, 0.085f, Mathf.Abs(x));
 				float branchNorthEast = 1f - Mathf.SmoothStep(0.02f, 0.085f, Mathf.Abs((y - 0.18f) - (x * 0.92f)));
@@ -485,6 +485,30 @@ namespace FungusToast.Unity.Grid.Helpers
 				color = Color.Lerp(color, sporeColor, sporeburst * 0.56f);
 				alpha = Mathf.Max(alpha, runner * 0.76f);
 				alpha = Mathf.Max(alpha, sporeburst * 0.44f);
+			}
+			else
+			{
+				float corona = 1f - Mathf.SmoothStep(0.06f, 0.16f, Mathf.Abs(radius - 0.34f));
+				float starburst = Mathf.Pow(Mathf.Abs(Mathf.Cos(Mathf.Atan2(y, x) * 4f)), 2.4f);
+				starburst *= 1f - Mathf.SmoothStep(0.18f, 0.82f, radius);
+				float nucleus = 1f - Mathf.SmoothStep(0.04f, 0.2f, radius);
+				float orbitNorth = 1f - Mathf.SmoothStep(0.03f, 0.11f, Vector2.Distance(new Vector2(x, y), new Vector2(0f, 0.7f)));
+				float orbitSouth = 1f - Mathf.SmoothStep(0.03f, 0.11f, Vector2.Distance(new Vector2(x, y), new Vector2(0f, -0.7f)));
+				float orbitEast = 1f - Mathf.SmoothStep(0.03f, 0.11f, Vector2.Distance(new Vector2(x, y), new Vector2(0.7f, 0f)));
+				float orbitWest = 1f - Mathf.SmoothStep(0.03f, 0.11f, Vector2.Distance(new Vector2(x, y), new Vector2(-0.7f, 0f)));
+				float orbitals = Mathf.Max(Mathf.Max(orbitNorth, orbitSouth), Mathf.Max(orbitEast, orbitWest));
+
+				Color coronaColor = new(0.72f, 0.44f, 0.98f, 1f);
+				Color starColor = new(0.96f, 0.78f, 1f, 1f);
+				Color nucleusColor = new(0.99f, 0.94f, 1f, 1f);
+				color = Color.Lerp(color, coronaColor, corona * 0.88f);
+				color = Color.Lerp(color, starColor, starburst * 0.82f);
+				color = Color.Lerp(color, nucleusColor, nucleus * 0.92f);
+				color = Color.Lerp(color, starColor, orbitals * 0.7f);
+				alpha = Mathf.Max(alpha, corona * 0.72f);
+				alpha = Mathf.Max(alpha, starburst * 0.78f);
+				alpha = Mathf.Max(alpha, nucleus * 0.84f);
+				alpha = Mathf.Max(alpha, orbitals * 0.58f);
 			}
 
 			color.a = Mathf.Clamp01(alpha);
@@ -570,6 +594,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private static readonly Color NutrientPatchColor = new(1f, 1f, 1f, 0.92f);
 		private static readonly Color AdaptogenPatchTextColor = new(0.8f, 0.97f, 1f, 1f);
 		private static readonly Color SporemealPatchTextColor = new(0.92f, 1f, 0.8f, 1f);
+		private static readonly Color HypervariationPatchTextColor = new(0.95f, 0.84f, 1f, 1f);
 		private static readonly Color DirectedVectorToastColor = new(0.99f, 1f, 0.8f, 1f);
 		private static readonly Color DirectedVectorPulseColor = new(1f, 0.92f, 0.38f, 0.96f);
 
@@ -1313,7 +1338,13 @@ namespace FungusToast.Unity.Grid.Helpers
 
 		private static Color GetNutrientToastColor(NutrientPatchType patchType)
 		{
-			return patchType == NutrientPatchType.Adaptogen ? AdaptogenPatchTextColor : SporemealPatchTextColor;
+			return patchType switch
+			{
+				NutrientPatchType.Adaptogen => AdaptogenPatchTextColor,
+				NutrientPatchType.Sporemeal => SporemealPatchTextColor,
+				NutrientPatchType.Hypervariation => HypervariationPatchTextColor,
+				_ => AdaptogenPatchTextColor
+			};
 		}
 
 		private static string BuildNutrientToastText(NutrientRewardType rewardType, int rewardAmount)
@@ -1322,6 +1353,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			{
 				NutrientRewardType.MutationPoints => rewardAmount == 1 ? "+1 Mutation Point!" : $"+{rewardAmount} Mutation Points!",
 				NutrientRewardType.FreeGrowth => rewardAmount == 1 ? "1 Cell Grown!" : $"{rewardAmount} Cells Grown!",
+				NutrientRewardType.MycovariantDraft => "Mycovariant Draft!",
 				_ => "Nutrient Claimed!"
 			};
 		}

@@ -59,6 +59,7 @@ namespace FungusToast.Core.Board
         // Occupancy index (authoritative for all occupied tiles)
         private readonly Dictionary<int, FungalCell> tileIdToCell = new();
         private readonly Dictionary<int, ChemobeaconMarker> chemobeaconsByPlayerId = new();
+        private readonly Queue<int> pendingHypervariationDraftPlayerIds = new();
 
         public int CurrentRound { get; private set; } = 1;
         public int CurrentGrowthCycle { get; private set; } = 0;
@@ -67,6 +68,8 @@ namespace FungusToast.Core.Board
         public float CachedOccupiedTileRatio { get; private set; } = 0f;
         public DecayPhaseContext? CachedDecayPhaseContext { get; private set; } = null;
         public int TotalTiles => Width * Height;
+        public bool HasPendingHypervariationDrafts => pendingHypervariationDraftPlayerIds.Count > 0;
+        internal int PendingHypervariationDraftCount => pendingHypervariationDraftPlayerIds.Count;
 
         #region Delegates
         public delegate void CellColonizedEventHandler(int playerId, int tileId, GrowthSource source);
@@ -207,6 +210,17 @@ namespace FungusToast.Core.Board
         public (int x, int y) GetXYFromTileId(int tileId) => (tileId % Width, tileId / Width);
         public BoardTile? GetTile(int x, int y) => (x >= 0 && y >= 0 && x < Width && y < Height) ? Grid[x, y] : null;
         public BoardTile? GetTileById(int tileId) { var (x, y) = GetXYFromTileId(tileId); return GetTile(x, y); }
+        public bool TryDequeuePendingHypervariationDraftPlayerId(out int playerId)
+        {
+            if (pendingHypervariationDraftPlayerIds.Count > 0)
+            {
+                playerId = pendingHypervariationDraftPlayerIds.Dequeue();
+                return true;
+            }
+
+            playerId = -1;
+            return false;
+        }
         #endregion
 
         #region Neighbor Queries
@@ -658,6 +672,7 @@ namespace FungusToast.Core.Board
             {
                 NutrientRewardType.MutationPoints => nutrientPatch.RewardAmount,
                 NutrientRewardType.FreeGrowth => ApplySporemealGrowth(playerId, cell.TileId, clusterTileIds),
+                NutrientRewardType.MycovariantDraft => QueueHypervariationDraft(playerId),
                 _ => 0
             };
 
@@ -713,6 +728,7 @@ namespace FungusToast.Core.Board
                     OnMutationPointsEarned(playerId, effectiveRewardAmount);
                     break;
                 case NutrientRewardType.FreeGrowth:
+                case NutrientRewardType.MycovariantDraft:
                     break;
             }
 
@@ -726,6 +742,17 @@ namespace FungusToast.Core.Board
                 nutrientPatch.PatchType,
                 nutrientPatch.RewardType,
                 effectiveRewardAmount));
+        }
+
+        private int QueueHypervariationDraft(int playerId)
+        {
+            if (playerId < 0 || playerId >= Players.Count)
+            {
+                return 0;
+            }
+
+            pendingHypervariationDraftPlayerIds.Enqueue(playerId);
+            return 1;
         }
         #endregion
 

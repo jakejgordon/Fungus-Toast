@@ -54,6 +54,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private MycovariantPoolManager poolManager;
         private System.Random rng;
         private int draftChoicesCount;
+        private string draftHeaderTitle = "Choose a Mycovariant";
+        private string draftHeaderBlurb = "Select a unique mycovariant mutation.";
+        private string draftStartMessage = string.Empty;
+        private string humanTurnBannerText = "Your turn to draft a Mycovariant!";
+        private string aiTurnBannerPrefix = "AI Drafting";
 
         private DraftUIState uiState = DraftUIState.Idle;
         private readonly Queue<string> draftMessageLines = new();
@@ -69,23 +74,33 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             MycovariantPoolManager poolManager,
             List<Player> draftOrder,
             System.Random rng,
-            int draftChoicesCount)
+            int draftChoicesCount,
+            string draftTitle = "Choose a Mycovariant",
+            string draftBlurb = "Select a unique mycovariant mutation.",
+            string draftStartMessage = null,
+            string humanTurnBannerText = "Your turn to draft a Mycovariant!",
+            string aiTurnBannerPrefix = "AI Drafting")
         {
             this.poolManager = poolManager;
             this.rng = rng;
             this.draftOrder = draftOrder;
             draftIndex = 0;
             this.draftChoicesCount = draftChoicesCount;
+            draftHeaderTitle = string.IsNullOrWhiteSpace(draftTitle) ? "Choose a Mycovariant" : draftTitle;
+            draftHeaderBlurb = string.IsNullOrWhiteSpace(draftBlurb) ? "Select a unique mycovariant mutation." : draftBlurb;
+            this.draftStartMessage = string.IsNullOrWhiteSpace(draftStartMessage)
+                ? $"Draft started. {draftOrder.Count} player{(draftOrder.Count == 1 ? "" : "s")} picking in order."
+                : draftStartMessage;
+            this.humanTurnBannerText = string.IsNullOrWhiteSpace(humanTurnBannerText) ? "Your turn to draft a Mycovariant!" : humanTurnBannerText;
+            this.aiTurnBannerPrefix = string.IsNullOrWhiteSpace(aiTurnBannerPrefix) ? "AI Drafting" : aiTurnBannerPrefix;
             isFinishingDraftPhase = false;
 
             EnsureDraftMessageUI();
             ClearDraftMessages();
-            AddDraftMessage($"Draft started. {draftOrder.Count} player{(draftOrder.Count == 1 ? "" : "s")} picking in order.");
+            AddDraftMessage(this.draftStartMessage);
             TryAnnounceAscusPrimacyDraftPriority();
 
-            SetDraftHeader(
-                "Choose a Mycovariant",
-                "Select a unique mycovariant mutation.");
+            SetDraftHeader(draftHeaderTitle, draftHeaderBlurb);
 
             isCampaignAdaptationDraft = false;
             onAdaptationPicked = null;
@@ -161,7 +176,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             AddDraftMessage(BuildTurnAnnouncement(currentPlayer));
 
-            draftOrderRow?.SetDraftOrder(draftOrder, draftIndex);
+            if (draftOrderRow != null)
+            {
+                draftOrderRow.gameObject.SetActive(draftOrder.Count > 1);
+                draftOrderRow.SetDraftOrder(draftOrder, draftIndex);
+            }
 
             int? forcedMycovariantId = null;
             if (GameManager.Instance.IsTestingModeEnabled && currentPlayer.PlayerType == PlayerTypeEnum.Human)
@@ -185,9 +204,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private void UpdateDraftBanner()
         {
             if (currentPlayer.PlayerType == PlayerTypeEnum.AI)
-                draftBannerText.text = $"AI Drafting: {currentPlayer.PlayerName}";
+                draftBannerText.text = $"{aiTurnBannerPrefix}: {currentPlayer.PlayerName}";
             else
-                draftBannerText.text = $"Your turn to draft a Mycovariant!";
+                draftBannerText.text = humanTurnBannerText;
         }
 
         private void SetDraftHeader(string title, string blurb)
@@ -354,7 +373,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             currentPlayer = draftOrder[draftIndex];
             UpdateDraftBanner();
 
-            draftOrderRow?.SetDraftOrder(draftOrder, draftIndex);
+            if (draftOrderRow != null)
+            {
+                draftOrderRow.gameObject.SetActive(draftOrder.Count > 1);
+                draftOrderRow.SetDraftOrder(draftOrder, draftIndex);
+            }
 
             draftChoices = new List<Mycovariant>();
             foreach (Transform child in choiceContainer)

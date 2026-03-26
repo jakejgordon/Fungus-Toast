@@ -78,9 +78,11 @@ namespace FungusToast.Core.Board
                         continue;
                     }
 
-                    NutrientPatch clusterPatch = rng.NextDouble() < 0.5d
-                        ? NutrientPatch.CreateAdaptogenCluster(nextClusterId++, clusterTileIds.Count)
-                        : NutrientPatch.CreateSporemealCluster(nextClusterId++, clusterTileIds.Count);
+                    NutrientPatch clusterPatch = CreateClusterPatch(
+                        nextClusterId++,
+                        clusterTileIds.Count,
+                        rng.NextDouble(),
+                        rng.NextDouble());
                     foreach (int clusterTileId in clusterTileIds)
                     {
                         if (board.PlaceNutrientPatch(clusterTileId, clusterPatch))
@@ -105,6 +107,24 @@ namespace FungusToast.Core.Board
 
             observer?.RecordNutrientPatchesPlaced(placedTileCount);
             return placedTileCount;
+        }
+
+        internal static NutrientPatch CreateClusterPatch(
+            int clusterId,
+            int clusterTileCount,
+            double patchRoll,
+            double fallbackRewardRoll)
+        {
+            if (clusterTileCount >= GameBalance.HypervariationPatchClusterMinimumSize
+                && clusterTileCount <= GameBalance.HypervariationPatchClusterMaximumSize
+                && patchRoll < GameBalance.HypervariationPatchChance)
+            {
+                return NutrientPatch.CreateHypervariationCluster(clusterId, clusterTileCount);
+            }
+
+            return fallbackRewardRoll < 0.5d
+                ? NutrientPatch.CreateAdaptogenCluster(clusterId, clusterTileCount)
+                : NutrientPatch.CreateSporemealCluster(clusterId, clusterTileCount);
         }
 
         private static List<int> TryBuildCluster(
