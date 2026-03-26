@@ -12,7 +12,10 @@ namespace FungusToast.Unity.UI
         ResistanceShield,
         Toxin,
         DeadCell,
-        Chemobeacon
+        Chemobeacon,
+        AdaptogenPatch,
+        SporemealPatch,
+        HypervariationPatch
     }
 
     public class PlayerMoldIconHoverHandler : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
@@ -118,6 +121,15 @@ namespace FungusToast.Unity.UI
                     .Where(tile => tile.FungalCell != null && tile.FungalCell.IsDead)
                     .Select(tile => tile.TileId),
                 BoardOverlayLegendType.Chemobeacon => board.GetActiveChemobeacons().Select(marker => marker.TileId),
+                BoardOverlayLegendType.AdaptogenPatch => board.AllNutrientPatchTiles()
+                    .Where(tile => tile.NutrientPatch?.PatchType == NutrientPatchType.Adaptogen)
+                    .Select(tile => tile.TileId),
+                BoardOverlayLegendType.SporemealPatch => board.AllNutrientPatchTiles()
+                    .Where(tile => tile.NutrientPatch?.PatchType == NutrientPatchType.Sporemeal)
+                    .Select(tile => tile.TileId),
+                BoardOverlayLegendType.HypervariationPatch => board.AllNutrientPatchTiles()
+                    .Where(tile => tile.NutrientPatch?.PatchType == NutrientPatchType.Hypervariation)
+                    .Select(tile => tile.TileId),
                 _ => Enumerable.Empty<int>()
             };
         }

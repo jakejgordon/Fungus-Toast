@@ -1,3 +1,4 @@
+using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.UI.Tooltips;
@@ -61,8 +62,22 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
                 BoardOverlayLegendType.Toxin => "<b>Toxin</b>\n<i>Board Overlay</i>\n\nShows a toxin cell occupying the tile as a poisonous hazard.",
                 BoardOverlayLegendType.DeadCell => "<b>Dead Cell</b>\n<i>Board Overlay</i>\n\nShows a dead cell that no longer grows, but may still matter to reclaim effects.",
                 BoardOverlayLegendType.Chemobeacon => "<b>Chemobeacon</b>\n<i>Board Overlay</i>\n\nShows an active chemobeacon that attracts growth and blocks normal occupation while it remains on the board.",
+                BoardOverlayLegendType.AdaptogenPatch => BuildNutrientPatchTooltip(NutrientPatch.CreateAdaptogenCluster(clusterId: 0, clusterTileCount: 4)),
+                BoardOverlayLegendType.SporemealPatch => BuildNutrientPatchTooltip(NutrientPatch.CreateSporemealCluster(clusterId: 0, clusterTileCount: 4)),
+                BoardOverlayLegendType.HypervariationPatch => BuildNutrientPatchTooltip(NutrientPatch.CreateHypervariationCluster(clusterId: 0, clusterTileCount: 4)),
                 _ => "<b>Board Overlay</b>\nUnset"
             };
         }
+
+        private static string BuildNutrientPatchTooltip(NutrientPatch nutrientPatch)
+        {
+            if (nutrientPatch == null)
+            {
+                return "<b>Nutrient Patch</b>\nUnset";
+            }
+
+            return $"<b>{nutrientPatch.DisplayName}</b>\n<i>Board Overlay</i>\n\n{nutrientPatch.Description}";
+        }
+    }
     }
 }

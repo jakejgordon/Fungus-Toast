@@ -387,7 +387,10 @@ namespace FungusToast.Unity.UI
                 BoardOverlayLegendType.ResistanceShield,
                 BoardOverlayLegendType.Toxin,
                 BoardOverlayLegendType.DeadCell,
-                BoardOverlayLegendType.Chemobeacon
+                BoardOverlayLegendType.Chemobeacon,
+                BoardOverlayLegendType.AdaptogenPatch,
+                BoardOverlayLegendType.SporemealPatch,
+                BoardOverlayLegendType.HypervariationPatch
             };
 
             RefreshIconSection(boardOverlayLegendSectionRoot, boardOverlayLegendIconGridRoot, boardOverlayLegendObjects, overlayTypes, CreateBoardOverlayLegendIcon);
@@ -723,6 +726,9 @@ namespace FungusToast.Unity.UI
                 BoardOverlayLegendType.Toxin => grid?.toxinOverlayTile?.sprite,
                 BoardOverlayLegendType.DeadCell => grid?.deadTile?.sprite,
                 BoardOverlayLegendType.Chemobeacon => grid?.GetChemobeaconLegendSprite(),
+                BoardOverlayLegendType.AdaptogenPatch => grid?.GetNutrientPatchLegendSprite(FungusToast.Core.Board.NutrientPatchType.Adaptogen),
+                BoardOverlayLegendType.SporemealPatch => grid?.GetNutrientPatchLegendSprite(FungusToast.Core.Board.NutrientPatchType.Sporemeal),
+                BoardOverlayLegendType.HypervariationPatch => grid?.GetNutrientPatchLegendSprite(FungusToast.Core.Board.NutrientPatchType.Hypervariation),
                 _ => null
             };
         }
