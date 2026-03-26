@@ -90,6 +90,7 @@ Core gameplay state changes are exposed through events and observer hooks so mul
 
 - **Phase hooks on `GameBoard`** expose round-level orchestration points such as `MutationPhaseStart`, `PreGrowthPhase`, `PreGrowthCycle`, `PostGrowthPhase`, `PostGrowthPhaseCompleted`, `DecayPhase`, and `PostDecayPhase`.
 - **State-transition events on `GameBoard`** expose board-level actions such as `CellColonized`, `CellReclaimed`, `CellInfested`, `CellToxified`, `CellPoisoned`, `CellOvergrown`, `CellDeath`, `ToxinPlaced`, and `ToxinExpired`.
+- **Board-resource events** such as `NutrientPatchConsumed` expose one-shot board rewards including nutrient patch claims.
 - **Attempt lifecycle events** such as `BeforeGrowthAttempt` and `AfterGrowthAttempt` allow growth to be intercepted or annotated without moving resolution out of Core.
 - **Observers** record simulation-facing metrics through `ISimulationObserver` while board events continue to serve UI and other consumers.
 
@@ -146,7 +147,10 @@ This document defines why those patterns exist. The exact implementation recipes
 - current round and growth-cycle counters
 - cached decay-phase context used by mutation processors
 - chemobeacon and other board-scoped transient state
+- nutrient patch cluster ownership and reward resolution
 - event dispatch for cell, toxin, nutrient, surge, and phase-level transitions
+
+Nutrient patches are board-scoped resource clusters. When a living cell first enters any tile in a cluster, `GameBoard` resolves the cluster reward and emits nutrient-patch events with the patch type and reward metadata.
 
 ### Configuration ownership
 

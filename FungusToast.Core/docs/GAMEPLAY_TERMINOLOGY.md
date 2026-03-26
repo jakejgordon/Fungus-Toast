@@ -86,3 +86,15 @@ One growth-resolution pass within the Growth Phase. Multiple growth cycles occur
 ### Surge
 
 A manually activated mutation effect with a limited duration and escalating activation cost.
+
+### Nutrient patch
+
+A multi-tile board resource cluster claimed by the first living cell that grows onto any tile in that cluster. The cluster resolves as one reward event rather than as separate per-tile pickups.
+
+### Adaptogen patch
+
+A nutrient patch type that grants Mutation Points equal to the claimed cluster size.
+
+### Sporemeal patch
+
+A nutrient patch type that grants free growth across the rest of the claimed cluster instead of mutation-point income.

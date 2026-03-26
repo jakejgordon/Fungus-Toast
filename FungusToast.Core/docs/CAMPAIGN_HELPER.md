@@ -47,6 +47,8 @@ Configured in:
 
 Each level points to a `BoardPreset` asset and can independently enable or disable nutrient patches via `enableNutrientPatches`.
 
+Nutrient patches are optional board resource clusters: `Adaptogen` patches grant mutation-point income, while `Sporemeal` patches grant free growth across the rest of the claimed cluster.
+
 ### 2) Board + AI lineup per level
 Configured in assets under:
 - `FungusToast.Unity/Assets/Configs/Board Presets/`
