@@ -29,6 +29,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
     public class MycovariantDraftController : MonoBehaviour
     {
+        private const string DefaultDraftTitle = "Choose a Mycovariant";
+        private const string DefaultDraftBlurb = "Select a unique mycovariant mutation.";
+        private const string DefaultHumanTurnBannerText = "Your turn to draft a Mycovariant!";
+        private const string DefaultAiTurnBannerPrefix = "AI Drafting";
+
         [Header("UI References")]
         [SerializeField] private GameObject draftPanel; // Main draft panel root
         [SerializeField] private CanvasGroup interactionBlocker; // semi-transparent overlay, blocks raycasts
@@ -54,11 +59,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private MycovariantPoolManager poolManager;
         private System.Random rng;
         private int draftChoicesCount;
-        private string draftHeaderTitle = "Choose a Mycovariant";
-        private string draftHeaderBlurb = "Select a unique mycovariant mutation.";
+        private string draftHeaderTitle = DefaultDraftTitle;
+        private string draftHeaderBlurb = DefaultDraftBlurb;
         private string draftStartMessage = string.Empty;
-        private string humanTurnBannerText = "Your turn to draft a Mycovariant!";
-        private string aiTurnBannerPrefix = "AI Drafting";
+        private string humanTurnBannerText = DefaultHumanTurnBannerText;
+        private string aiTurnBannerPrefix = DefaultAiTurnBannerPrefix;
 
         private DraftUIState uiState = DraftUIState.Idle;
         private readonly Queue<string> draftMessageLines = new();
@@ -75,24 +80,24 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             List<Player> draftOrder,
             System.Random rng,
             int draftChoicesCount,
-            string draftTitle = "Choose a Mycovariant",
-            string draftBlurb = "Select a unique mycovariant mutation.",
+            string draftTitle = DefaultDraftTitle,
+            string draftBlurb = DefaultDraftBlurb,
             string draftStartMessage = null,
-            string humanTurnBannerText = "Your turn to draft a Mycovariant!",
-            string aiTurnBannerPrefix = "AI Drafting")
+            string humanTurnBannerText = DefaultHumanTurnBannerText,
+            string aiTurnBannerPrefix = DefaultAiTurnBannerPrefix)
         {
             this.poolManager = poolManager;
             this.rng = rng;
             this.draftOrder = draftOrder;
             draftIndex = 0;
             this.draftChoicesCount = draftChoicesCount;
-            draftHeaderTitle = string.IsNullOrWhiteSpace(draftTitle) ? "Choose a Mycovariant" : draftTitle;
-            draftHeaderBlurb = string.IsNullOrWhiteSpace(draftBlurb) ? "Select a unique mycovariant mutation." : draftBlurb;
+            draftHeaderTitle = string.IsNullOrWhiteSpace(draftTitle) ? DefaultDraftTitle : draftTitle;
+            draftHeaderBlurb = string.IsNullOrWhiteSpace(draftBlurb) ? DefaultDraftBlurb : draftBlurb;
             this.draftStartMessage = string.IsNullOrWhiteSpace(draftStartMessage)
                 ? $"Draft started. {draftOrder.Count} player{(draftOrder.Count == 1 ? "" : "s")} picking in order."
                 : draftStartMessage;
-            this.humanTurnBannerText = string.IsNullOrWhiteSpace(humanTurnBannerText) ? "Your turn to draft a Mycovariant!" : humanTurnBannerText;
-            this.aiTurnBannerPrefix = string.IsNullOrWhiteSpace(aiTurnBannerPrefix) ? "AI Drafting" : aiTurnBannerPrefix;
+            this.humanTurnBannerText = string.IsNullOrWhiteSpace(humanTurnBannerText) ? DefaultHumanTurnBannerText : humanTurnBannerText;
+            this.aiTurnBannerPrefix = string.IsNullOrWhiteSpace(aiTurnBannerPrefix) ? DefaultAiTurnBannerPrefix : aiTurnBannerPrefix;
             isFinishingDraftPhase = false;
 
             EnsureDraftMessageUI();
