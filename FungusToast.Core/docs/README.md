@@ -21,7 +21,8 @@ These are the main task-entry documents and are also referenced from `.github/co
 - `GAME_BALANCE_CONSTANTS.md` — canonical gameplay balance levers and tuning guidance
 - `UI_ARCHITECTURE_HELPER.md` — Unity UI architecture, service extraction, tooltips, and pooling
 - `UI_STYLE_GUIDE.md` — UI semantic styling rules
-- `DESIGN_PRINCIPLES.md` — architecture and terminology context
+- `ARCHITECTURE_OVERVIEW.md` — technical architecture, layer ownership, and runtime patterns
+- `GAMEPLAY_TERMINOLOGY.md` — canonical gameplay verbs and domain terminology
 
 ## 2. second-level / Supporting Docs
 
@@ -34,6 +35,9 @@ These are intentionally second-hop documents: they are discovered from entry doc
 - `second-level/MYCOVARIANT_AUTHORING_STYLE.md` — concise mechanics/copy style rules
 - `second-level/MYCOVARIANT_TECHNICAL_FLOW.md` — end-to-end technical implementation flow
 - `second-level/MYCOVARIANT_PR_CHECKLIST.md` — pre-review completion checklist
+
+### Mutations
+- `second-level/MUTATION_PREREQUISITE_GUIDELINES.md` — mutation-category philosophy and prerequisite design rules
 
 ### Shared naming
 - `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` — naming constraints shared across content systems

@@ -1,6 +1,6 @@
 # Fungus Toast Simulation Helper
 
-> **📚 Related Documentation**: For technical architecture and design principles, see [DESIGN_PRINCIPLES.md](DESIGN_PRINCIPLES.md). For the full documentation hierarchy, see [README.md](README.md).
+> **📚 Related Documentation**: For technical architecture context, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md). For the full documentation hierarchy, see [README.md](README.md).
 
 This document contains the most effective commands for running different simulation scenarios and debugging the Fungus Toast game.
 

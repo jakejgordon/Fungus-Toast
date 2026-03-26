@@ -1,6 +1,8 @@
 ﻿# NEW_MUTATION_HELPER.md
 
 > **🤖 AI Assistant Guide**: Step-by-step implementation pattern for adding new mutations to Fungus Toast
+>
+> **📚 Related Documentation**: For mutation-category philosophy and prerequisite design rules, see [second-level/MUTATION_PREREQUISITE_GUIDELINES.md](second-level/MUTATION_PREREQUISITE_GUIDELINES.md). For canonical gameplay terminology, see [GAMEPLAY_TERMINOLOGY.md](GAMEPLAY_TERMINOLOGY.md). For the full documentation hierarchy, see [README.md](README.md).
 
 ## Overview
 

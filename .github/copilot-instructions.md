@@ -18,7 +18,8 @@ This file is the top-level router for AI-assisted development in this repository
 - **Gameplay balance levers and canonical constants:** `FungusToast.Core/docs/GAME_BALANCE_CONSTANTS.md`
 - **Unity UI architecture and service patterns:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`
 - **Unity UI style rules:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`
-- **Technical architecture context:** `FungusToast.Core/docs/DESIGN_PRINCIPLES.md`
+- **Technical architecture context:** `FungusToast.Core/docs/ARCHITECTURE_OVERVIEW.md`
+- **Canonical gameplay terminology and state verbs:** `FungusToast.Core/docs/GAMEPLAY_TERMINOLOGY.md`
 - **Analytics workflow for simulation exports:** `FungusToast.Analytics/README.md`
 - **Unity-front-end-only overview:** `FungusToast.Unity/.github/instructions/project-overview.instructions.md`
 - **Complete documentation map / secondary references:** `FungusToast.Core/docs/README.md`
@@ -44,11 +45,7 @@ Main projects:
   - `FungusToast.Unity.csproj`
 - No magic constants for tunable gameplay/UI values. Use the appropriate constants file.
 - Prefer minimal, scoped changes over opportunistic refactors.
-- When touching Unity UI, prefer existing architecture patterns:
-  - `GameUIManager` facade
-  - extracted services
-  - tooltip system
-  - object pooling
+- When touching Unity UI, follow the established patterns in `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - When adding new docs, link them into the documentation hierarchy so they are discoverable.
 
 ## Build and Validation Expectations
@@ -93,10 +90,7 @@ Choose the smallest checklist that matches the change:
 
 - Prefer `FungusToast.Core` for rules, data models, and deterministic mechanics.
 - Only use `FungusToast.Unity` for view/controllers, interaction flow, and presentation concerns.
-- When `GameManager` grows, prefer service extraction instead of adding more singleton reach-ins.
-- Use `ITooltipContentProvider` + `TooltipTrigger` for tooltips.
-- Use `ObjectPool<T>` for frequently reused UI elements.
-- Add new cross-layer gameplay tracking through `GameBoard` events plus `ISimulationObserver` so Simulation and Unity stay aligned.
+- Prefer the existing architecture patterns documented in `ARCHITECTURE_OVERVIEW.md` and `UI_ARCHITECTURE_HELPER.md` rather than inventing new ones.
 - Reuse the documentation hierarchy instead of inventing fresh patterns when a helper already exists.
 
 ## Documentation Ownership
@@ -116,7 +110,8 @@ Use this precedence order when multiple docs seem relevant:
 - Adaptation/campaign work → `ADAPTATION_HELPER.md` and `CAMPAIGN_HELPER.md`
 - AI strategy work → `AI_STRATEGY_AUTHORING.md`
 - UI/service/tooltip/pooling work → `UI_ARCHITECTURE_HELPER.md` and `UI_STYLE_GUIDE.md`
-- Deep architecture questions → `DESIGN_PRINCIPLES.md`
+- Deep architecture questions → `ARCHITECTURE_OVERVIEW.md`
+- Canonical gameplay terms and state-transition verbs → `GAMEPLAY_TERMINOLOGY.md`
 - Export analysis → `FungusToast.Analytics/README.md`
 
 ## New Documentation Rule
