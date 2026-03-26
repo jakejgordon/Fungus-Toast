@@ -89,6 +89,92 @@ public class NecrophyticBloomTests
     }
 
     [Fact]
+    public void BuildNecrophyticBloomTargetPool_with_competitive_antagonism_removes_most_smaller_colony_dead_targets()
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 3);
+        var current = new Player(playerId: 0, playerName: "P0", playerType: PlayerTypeEnum.AI);
+        var larger = new Player(playerId: 1, playerName: "P1", playerType: PlayerTypeEnum.AI);
+        var smaller = new Player(playerId: 2, playerName: "P2", playerType: PlayerTypeEnum.AI);
+        board.Players.AddRange(new[] { current, larger, smaller });
+
+        current.SetMutationLevel(MutationIds.NecrophyticBloom, newLevel: 1, currentRound: 1);
+        current.SetMutationLevel(MutationIds.CompetitiveAntagonism, newLevel: 1, currentRound: 1);
+        current.ActiveSurges[MutationIds.CompetitiveAntagonism] = new Player.ActiveSurgeInfo(MutationIds.CompetitiveAntagonism, level: 1, duration: 2);
+
+        board.SpawnSporeForPlayer(current, tileId: 0, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(current, tileId: 1, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(current, tileId: 2, GrowthSource.Manual);
+
+        // Make player 1 a larger colony and player 2 a smaller colony by living-cell count.
+        board.SpawnSporeForPlayer(larger, tileId: 3, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(larger, tileId: 4, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(larger, tileId: 7, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(larger, tileId: 8, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(smaller, tileId: 9, GrowthSource.Manual);
+
+        CreateDeadCell(board, larger, tileId: 5);
+        CreateDeadCell(board, larger, tileId: 6);
+        CreateDeadCell(board, smaller, tileId: 10);
+        CreateDeadCell(board, smaller, tileId: 11);
+        CreateDeadCell(board, smaller, tileId: 12);
+        CreateDeadCell(board, smaller, tileId: 13);
+
+        var pool = GeneticDriftMutationProcessor.BuildNecrophyticBloomTargetPool(
+            board,
+            current,
+            level: 1,
+            rng: new DeterministicHighRollRandom(),
+            decayPhaseContext: new DecayPhaseContext(board, board.Players));
+
+        Assert.Contains(5, pool);
+        Assert.Contains(6, pool);
+        Assert.Single(new[] { 10, 11, 12, 13 }.Where(pool.Contains));
+    }
+
+    [Fact]
+    public void GetNecrophyticBloomSuccessfulTargets_with_competitive_antagonism_keeps_larger_colony_dead_targets_and_prunes_smaller_ones()
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 3);
+        var current = new Player(playerId: 0, playerName: "P0", playerType: PlayerTypeEnum.AI);
+        var larger = new Player(playerId: 1, playerName: "P1", playerType: PlayerTypeEnum.AI);
+        var smaller = new Player(playerId: 2, playerName: "P2", playerType: PlayerTypeEnum.AI);
+        board.Players.AddRange(new[] { current, larger, smaller });
+
+        current.SetMutationLevel(MutationIds.NecrophyticBloom, newLevel: 1, currentRound: 1);
+        current.SetMutationLevel(MutationIds.CompetitiveAntagonism, newLevel: 1, currentRound: 1);
+        current.ActiveSurges[MutationIds.CompetitiveAntagonism] = new Player.ActiveSurgeInfo(MutationIds.CompetitiveAntagonism, level: 1, duration: 2);
+
+        board.SpawnSporeForPlayer(current, tileId: 0, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(current, tileId: 1, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(current, tileId: 2, GrowthSource.Manual);
+
+        // Make player 1 a larger colony and player 2 a smaller colony by living-cell count.
+        board.SpawnSporeForPlayer(larger, tileId: 3, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(larger, tileId: 4, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(larger, tileId: 7, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(larger, tileId: 8, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(smaller, tileId: 9, GrowthSource.Manual);
+
+        CreateDeadCell(board, larger, tileId: 5);
+        CreateDeadCell(board, larger, tileId: 6);
+        CreateDeadCell(board, smaller, tileId: 10);
+        CreateDeadCell(board, smaller, tileId: 11);
+        CreateDeadCell(board, smaller, tileId: 12);
+        CreateDeadCell(board, smaller, tileId: 13);
+
+        var successfulTargets = GeneticDriftMutationProcessor.GetNecrophyticBloomSuccessfulTargets(
+            board,
+            current,
+            level: 1,
+            rng: new DeterministicHighRollRandom(),
+            decayPhaseContext: new DecayPhaseContext(board, board.Players));
+
+        Assert.Contains(5, successfulTargets);
+        Assert.Contains(6, successfulTargets);
+        Assert.Single(new[] { 10, 11, 12, 13 }.Where(successfulTargets.Contains));
+    }
+
+    [Fact]
     public void CalculateNecrophyticBloomBurstReclaims_matches_expected_ratio_without_variance()
     {
         int reclaims = GeneticDriftMutationProcessor.CalculateNecrophyticBloomBurstReclaims(
