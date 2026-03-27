@@ -401,7 +401,7 @@ public class Tier5MutationTests
         public void RecordRegenerativeHyphaeReclaim(int playerId) { }
         public void ReportSporicidalSporeDrop(int playerId, int count) { }
         public void ReportNecrosporeDrop(int playerId, int count) { }
-        public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims) { }
+        public void RecordNecrophyticBloomPatchCreation(int playerId, int createdPatchCount) { }
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
         public void RecordMutationPointIncome(int playerId, int newMutationPoints) { }
         public void RecordBankedPoints(int playerId, int pointsBanked) { }
