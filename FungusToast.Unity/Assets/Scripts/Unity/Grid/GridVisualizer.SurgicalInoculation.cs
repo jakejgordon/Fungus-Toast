@@ -13,7 +13,8 @@ namespace FungusToast.Unity.Grid.Helpers
 {
 	internal sealed class GridOverlayRenderer
 	{
-		private static readonly Color NutrientPatchColor = new(1f, 1f, 1f, 0.92f);
+		private static readonly Color NutrientPatchPulseMinColor = new(0.96f, 0.96f, 0.96f, 0.94f);
+		private static readonly Color NutrientPatchPulseMaxColor = new(1f, 1f, 1f, 1f);
 
 		private readonly Func<GameBoard> _getBoard;
 		private readonly Func<Tilemap> _getMoldTilemap;
@@ -417,38 +418,77 @@ namespace FungusToast.Unity.Grid.Helpers
 			float y = (((py + 0.5f) / textureSize) * 2f) - 1f;
 			float radius = Mathf.Sqrt((x * x) + (y * y));
 			float diamond = (Mathf.Abs(x) * 0.88f) + (Mathf.Abs(y) * 0.88f);
-			float outerBody = 1f - Mathf.SmoothStep(0.64f, 0.9f, diamond);
-			float core = 1f - Mathf.SmoothStep(0.12f, 0.32f, radius);
-			float ring = 1f - Mathf.SmoothStep(0.02f, 0.11f, Mathf.Abs(radius - 0.43f));
-			float verticalVein = 1f - Mathf.SmoothStep(0.015f, 0.075f, Mathf.Abs(x));
-			float horizontalVein = 1f - Mathf.SmoothStep(0.015f, 0.075f, Mathf.Abs(y));
+			float outerBody = 1f - Mathf.SmoothStep(0.6f, 0.88f, diamond);
+			float core = 1f - Mathf.SmoothStep(0.11f, 0.34f, radius);
+			float ring = 1f - Mathf.SmoothStep(0.02f, 0.1f, Mathf.Abs(radius - 0.43f));
+			float verticalVein = 1f - Mathf.SmoothStep(0.015f, 0.07f, Mathf.Abs(x));
+			float horizontalVein = 1f - Mathf.SmoothStep(0.015f, 0.07f, Mathf.Abs(y));
 			float veins = Mathf.Max(verticalVein * core, horizontalVein * core * 0.82f);
 
-			float satelliteNorth = 1f - Mathf.SmoothStep(0.03f, 0.12f, Vector2.Distance(new Vector2(x, y), new Vector2(0f, 0.58f)));
-			float satelliteSouth = 1f - Mathf.SmoothStep(0.03f, 0.12f, Vector2.Distance(new Vector2(x, y), new Vector2(0f, -0.58f)));
-			float satelliteEast = 1f - Mathf.SmoothStep(0.03f, 0.12f, Vector2.Distance(new Vector2(x, y), new Vector2(0.58f, 0f)));
-			float satelliteWest = 1f - Mathf.SmoothStep(0.03f, 0.12f, Vector2.Distance(new Vector2(x, y), new Vector2(-0.58f, 0f)));
+			float satelliteNorth = 1f - Mathf.SmoothStep(0.03f, 0.13f, Vector2.Distance(new Vector2(x, y), new Vector2(0f, 0.58f)));
+			float satelliteSouth = 1f - Mathf.SmoothStep(0.03f, 0.13f, Vector2.Distance(new Vector2(x, y), new Vector2(0f, -0.58f)));
+			float satelliteEast = 1f - Mathf.SmoothStep(0.03f, 0.13f, Vector2.Distance(new Vector2(x, y), new Vector2(0.58f, 0f)));
+			float satelliteWest = 1f - Mathf.SmoothStep(0.03f, 0.13f, Vector2.Distance(new Vector2(x, y), new Vector2(-0.58f, 0f)));
 			float satellites = Mathf.Max(Mathf.Max(satelliteNorth, satelliteSouth), Mathf.Max(satelliteEast, satelliteWest));
 
-			float alpha = Mathf.Max(outerBody * 0.94f, core * 0.88f);
-			alpha = Mathf.Max(alpha, ring * 0.72f);
-			alpha = Mathf.Max(alpha, satellites * 0.66f);
+			float alpha = Mathf.Max(outerBody * 0.98f, core * 0.94f);
+			alpha = Mathf.Max(alpha, ring * 0.82f);
+			alpha = Mathf.Max(alpha, satellites * 0.76f);
 			if (alpha <= 0.01f)
 			{
 				return new Color(0f, 0f, 0f, 0f);
 			}
 
-			Color outerColor = new(0.42f, 0.25f, 0.08f, 1f);
-			Color bodyColor = new(0.86f, 0.63f, 0.16f, 1f);
-			Color ringColor = new(0.96f, 0.8f, 0.33f, 1f);
-			Color coreColor = new(0.99f, 0.93f, 0.72f, 1f);
-			Color veinColor = new(1f, 0.98f, 0.88f, 1f);
+			float innerBody = 1f - Mathf.SmoothStep(0.42f, 0.66f, diamond);
+			float innerCore = 1f - Mathf.SmoothStep(0.08f, 0.26f, radius);
+			float innerRing = 1f - Mathf.SmoothStep(0.015f, 0.055f, Mathf.Abs(radius - 0.43f));
+			float innerSatelliteNorth = 1f - Mathf.SmoothStep(0.02f, 0.085f, Vector2.Distance(new Vector2(x, y), new Vector2(0f, 0.58f)));
+			float innerSatelliteSouth = 1f - Mathf.SmoothStep(0.02f, 0.085f, Vector2.Distance(new Vector2(x, y), new Vector2(0f, -0.58f)));
+			float innerSatelliteEast = 1f - Mathf.SmoothStep(0.02f, 0.085f, Vector2.Distance(new Vector2(x, y), new Vector2(0.58f, 0f)));
+			float innerSatelliteWest = 1f - Mathf.SmoothStep(0.02f, 0.085f, Vector2.Distance(new Vector2(x, y), new Vector2(-0.58f, 0f)));
+			float innerSatellites = Mathf.Max(Mathf.Max(innerSatelliteNorth, innerSatelliteSouth), Mathf.Max(innerSatelliteEast, innerSatelliteWest));
+			float innerAlpha = Mathf.Max(innerBody * 0.98f, innerCore * 0.96f);
+			innerAlpha = Mathf.Max(innerAlpha, innerRing * 0.8f);
+			innerAlpha = Mathf.Max(innerAlpha, innerSatellites * 0.74f);
+			float outline = Mathf.Clamp01(alpha - innerAlpha);
 
-			Color color = Color.Lerp(outerColor, bodyColor, Mathf.Clamp01(outerBody * 0.92f));
+			Color outlineColor;
+			Color bodyColor;
+			Color ringColor;
+			Color coreColor;
+			Color veinColor;
+
+			switch (patchType)
+			{
+				case NutrientPatchType.Adaptogen:
+						outlineColor = new Color(0.2f, 0.03f, 0.05f, 1f);
+						bodyColor = new Color(0.76f, 0.18f, 0.14f, 1f);
+						ringColor = new Color(0.98f, 0.42f, 0.16f, 1f);
+						coreColor = new Color(1f, 0.92f, 0.84f, 1f);
+						veinColor = new Color(1f, 0.96f, 0.92f, 1f);
+					break;
+				case NutrientPatchType.Sporemeal:
+					outlineColor = new Color(0.08f, 0.18f, 0.04f, 1f);
+					bodyColor = new Color(0.42f, 0.78f, 0.12f, 1f);
+					ringColor = new Color(0.78f, 0.96f, 0.24f, 1f);
+					coreColor = new Color(0.96f, 1f, 0.76f, 1f);
+					veinColor = new Color(0.92f, 1f, 0.82f, 1f);
+					break;
+				default:
+					outlineColor = new Color(0.18f, 0.06f, 0.24f, 1f);
+					bodyColor = new Color(0.66f, 0.2f, 0.9f, 1f);
+					ringColor = new Color(0.92f, 0.52f, 1f, 1f);
+					coreColor = new Color(1f, 0.9f, 1f, 1f);
+					veinColor = new Color(0.97f, 0.82f, 1f, 1f);
+					break;
+			}
+
+			Color color = Color.Lerp(outlineColor, bodyColor, Mathf.Clamp01(outerBody * 0.94f));
 			color = Color.Lerp(color, ringColor, ring * 0.85f);
 			color = Color.Lerp(color, coreColor, core * 0.9f);
 			color = Color.Lerp(color, veinColor, veins * 0.75f);
 			color = Color.Lerp(color, ringColor, satellites * 0.55f);
+			color = Color.Lerp(outlineColor, color, Mathf.Clamp01(1f - (outline * 1.35f)));
 
 			if (patchType == NutrientPatchType.Adaptogen)
 			{
@@ -459,12 +499,12 @@ namespace FungusToast.Unity.Grid.Helpers
 					* (0.5f + (0.5f * Mathf.Cos(y * 18f)))
 					* (1f - Mathf.SmoothStep(0.2f, 0.72f, Mathf.Abs(y)));
 
-				Color helixColor = new(0.35f, 0.84f, 1f, 1f);
-				Color ladderColor = new(0.84f, 0.98f, 1f, 1f);
+				Color helixColor = new(1f, 0.78f, 0.24f, 1f);
+				Color ladderColor = new(1f, 0.97f, 0.92f, 1f);
 				color = Color.Lerp(color, helixColor, helix * 0.92f);
 				color = Color.Lerp(color, ladderColor, ladder * 0.85f);
-				alpha = Mathf.Max(alpha, helix * 0.8f);
-				alpha = Mathf.Max(alpha, ladder * 0.72f);
+				alpha = Mathf.Max(alpha, helix * 0.88f);
+				alpha = Mathf.Max(alpha, ladder * 0.8f);
 			}
 			else if (patchType == NutrientPatchType.Sporemeal)
 			{
@@ -479,12 +519,12 @@ namespace FungusToast.Unity.Grid.Helpers
 				float sporeburst = 1f - Mathf.SmoothStep(0.015f, 0.07f, Mathf.Abs(radius - 0.28f));
 				sporeburst *= 0.5f + (0.5f * Mathf.Cos((Mathf.Atan2(y, x) * 6f)));
 
-				Color runnerColor = new(0.72f, 0.9f, 0.42f, 1f);
-				Color sporeColor = new(0.98f, 1f, 0.84f, 1f);
+				Color runnerColor = new(0.54f, 0.92f, 0.18f, 1f);
+				Color sporeColor = new(0.98f, 1f, 0.7f, 1f);
 				color = Color.Lerp(color, runnerColor, runner * 0.82f);
 				color = Color.Lerp(color, sporeColor, sporeburst * 0.56f);
-				alpha = Mathf.Max(alpha, runner * 0.76f);
-				alpha = Mathf.Max(alpha, sporeburst * 0.44f);
+				alpha = Mathf.Max(alpha, runner * 0.84f);
+				alpha = Mathf.Max(alpha, sporeburst * 0.52f);
 			}
 			else
 			{
@@ -498,17 +538,17 @@ namespace FungusToast.Unity.Grid.Helpers
 				float orbitWest = 1f - Mathf.SmoothStep(0.03f, 0.11f, Vector2.Distance(new Vector2(x, y), new Vector2(-0.7f, 0f)));
 				float orbitals = Mathf.Max(Mathf.Max(orbitNorth, orbitSouth), Mathf.Max(orbitEast, orbitWest));
 
-				Color coronaColor = new(0.72f, 0.44f, 0.98f, 1f);
-				Color starColor = new(0.96f, 0.78f, 1f, 1f);
+				Color coronaColor = new(0.82f, 0.36f, 1f, 1f);
+				Color starColor = new(1f, 0.72f, 1f, 1f);
 				Color nucleusColor = new(0.99f, 0.94f, 1f, 1f);
 				color = Color.Lerp(color, coronaColor, corona * 0.88f);
 				color = Color.Lerp(color, starColor, starburst * 0.82f);
 				color = Color.Lerp(color, nucleusColor, nucleus * 0.92f);
 				color = Color.Lerp(color, starColor, orbitals * 0.7f);
-				alpha = Mathf.Max(alpha, corona * 0.72f);
-				alpha = Mathf.Max(alpha, starburst * 0.78f);
-				alpha = Mathf.Max(alpha, nucleus * 0.84f);
-				alpha = Mathf.Max(alpha, orbitals * 0.58f);
+				alpha = Mathf.Max(alpha, corona * 0.8f);
+				alpha = Mathf.Max(alpha, starburst * 0.84f);
+				alpha = Mathf.Max(alpha, nucleus * 0.9f);
+				alpha = Mathf.Max(alpha, orbitals * 0.66f);
 			}
 
 			color.a = Mathf.Clamp01(alpha);
@@ -525,8 +565,9 @@ namespace FungusToast.Unity.Grid.Helpers
 		private Color GetNutrientPulseColor(int tileId)
 		{
 			float pulse = GetNutrientPulseFactor(tileId);
-			float alpha = Mathf.Lerp(UIEffectConstants.NutrientPatchPulseAlphaMin, UIEffectConstants.NutrientPatchPulseAlphaMax, pulse);
-			return new Color(NutrientPatchColor.r, NutrientPatchColor.g, NutrientPatchColor.b, alpha);
+			Color color = Color.Lerp(NutrientPatchPulseMinColor, NutrientPatchPulseMaxColor, pulse);
+			color.a = Mathf.Lerp(UIEffectConstants.NutrientPatchPulseAlphaMin, 1f, pulse);
+			return color;
 		}
 
 		private static float GetNutrientPulseFactor(int tileId)

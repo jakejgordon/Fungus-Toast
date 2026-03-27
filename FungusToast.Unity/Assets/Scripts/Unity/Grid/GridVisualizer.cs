@@ -254,6 +254,7 @@ namespace FungusToast.Unity.Grid
 
             boardMediumRenderer?.ClearDecorativeCrustTilemap();
             boardMediumRenderer?.ResetGeneratedCrustVisual();
+            boardMediumRenderer?.ResetBoardBackgroundVisual();
         }
         public void SetBoardMedium(BoardMediumConfig boardMedium) => runtimeBoardMedium = boardMedium;
         public void ClearBoardMediumOverride() => runtimeBoardMedium = null;

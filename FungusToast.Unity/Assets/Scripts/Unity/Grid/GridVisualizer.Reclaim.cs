@@ -18,9 +18,14 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Func<Transform> _getVisualParent;
 
 		private SpriteRenderer _generatedCrustRenderer;
+		private SpriteRenderer _backgroundRenderer;
+		private SpriteRenderer _boardEdgeFadeRenderer;
 		private Sprite _generatedCrustSprite;
+		private Sprite _boardEdgeFadeSprite;
 		private Texture2D _generatedCrustTexture;
+		private Texture2D _boardEdgeFadeTexture;
 		private string _generatedCrustCacheKey;
+		private string _boardEdgeFadeCacheKey;
 
 		public GridBoardMediumRenderer(
 			Func<BoardMediumConfig> getActiveMedium,
@@ -48,6 +53,11 @@ namespace FungusToast.Unity.Grid.Helpers
 		public Color GetSurfaceColor(int x, int y, int boardWidth, int boardHeight)
 		{
 			var activeMedium = _getActiveMedium();
+			if (activeMedium != null && activeMedium.ShouldHidePlayableSurfaceTiles)
+			{
+				return Color.clear;
+			}
+
 			if (activeMedium == null || !activeMedium.ShouldOverridePlayableSurface || !activeMedium.IsPerimeterTintEnabled)
 			{
 				return Color.white;
@@ -68,6 +78,11 @@ namespace FungusToast.Unity.Grid.Helpers
 		public int GetCrustThickness(GameBoard activeBoard)
 		{
 			var activeMedium = _getActiveMedium();
+			if (activeMedium != null && activeMedium.ShouldRenderBoardBackground)
+			{
+				return 0;
+			}
+
 			return activeMedium?.GetCrustThickness(activeBoard.Width, activeBoard.Height) ?? 0;
 		}
 
@@ -97,13 +112,25 @@ namespace FungusToast.Unity.Grid.Helpers
 			if (activeBoard == null || activeMedium == null)
 			{
 				ResetGeneratedCrustVisual();
+				ResetBoardBackgroundVisual();
 				return;
 			}
+
+			if (activeMedium.ShouldRenderBoardBackground)
+			{
+				ClearDecorativeCrustTilemap();
+				ResetGeneratedCrustVisual();
+				RenderBoardBackground(activeBoard, activeMedium);
+				return;
+			}
+
+			ResetBoardBackgroundVisual();
 
 			float visualCrustThickness = activeMedium.GetVisualCrustThickness(activeBoard.Width, activeBoard.Height);
 			if (visualCrustThickness <= 0f)
 			{
 				ResetGeneratedCrustVisual();
+				ClearDecorativeCrustTilemap();
 				return;
 			}
 
@@ -123,14 +150,123 @@ namespace FungusToast.Unity.Grid.Helpers
 			_generatedCrustCacheKey = null;
 		}
 
+		public void ResetBoardBackgroundVisual()
+		{
+			if (_backgroundRenderer == null)
+			{
+				ResetBoardEdgeFadeVisual();
+				return;
+			}
+
+			_backgroundRenderer.sprite = null;
+			_backgroundRenderer.enabled = false;
+			_backgroundRenderer.color = Color.white;
+			_backgroundRenderer.transform.localPosition = Vector3.zero;
+			_backgroundRenderer.transform.localRotation = Quaternion.identity;
+			_backgroundRenderer.transform.localScale = Vector3.one;
+			ResetBoardEdgeFadeVisual();
+		}
+
+		public void ResetBoardEdgeFadeVisual()
+		{
+			if (_boardEdgeFadeRenderer != null)
+			{
+				_boardEdgeFadeRenderer.sprite = null;
+				_boardEdgeFadeRenderer.enabled = false;
+				_boardEdgeFadeRenderer.color = Color.white;
+				_boardEdgeFadeRenderer.transform.localPosition = Vector3.zero;
+				_boardEdgeFadeRenderer.transform.localRotation = Quaternion.identity;
+				_boardEdgeFadeRenderer.transform.localScale = Vector3.one;
+			}
+
+			DestroyBoardEdgeFadeAssets();
+			_boardEdgeFadeCacheKey = null;
+		}
+
 		public void Dispose()
 		{
 			ResetGeneratedCrustVisual();
+			ResetBoardBackgroundVisual();
 
 			if (_generatedCrustRenderer != null)
 			{
 				_generatedCrustRenderer = null;
 			}
+
+			if (_backgroundRenderer != null)
+			{
+				_backgroundRenderer = null;
+			}
+
+			if (_boardEdgeFadeRenderer != null)
+			{
+				_boardEdgeFadeRenderer = null;
+			}
+		}
+
+		private void RenderBoardBackground(GameBoard activeBoard, BoardMediumConfig activeMedium)
+		{
+			if (activeMedium.backgroundSprite == null)
+			{
+				ResetBoardBackgroundVisual();
+				return;
+			}
+
+			if (_backgroundRenderer == null)
+			{
+				_backgroundRenderer = CreateBoardBackgroundRenderer();
+			}
+
+			if (_backgroundRenderer == null)
+			{
+				return;
+			}
+
+			Transform visualParent = _getVisualParent();
+			if (_backgroundRenderer.transform.parent != visualParent)
+			{
+				_backgroundRenderer.transform.SetParent(visualParent, false);
+			}
+
+			_backgroundRenderer.sprite = activeMedium.backgroundSprite;
+			_backgroundRenderer.color = activeMedium.backgroundColor;
+			PositionBoardBackgroundRenderer(activeBoard, activeMedium, activeMedium.backgroundSprite);
+			_backgroundRenderer.enabled = true;
+			EnsureBoardEdgeFadeVisual(activeBoard, activeMedium);
+		}
+
+		private void EnsureBoardEdgeFadeVisual(GameBoard activeBoard, BoardMediumConfig activeMedium)
+		{
+			if (!activeMedium.ShouldRenderBoardEdgeFade)
+			{
+				ResetBoardEdgeFadeVisual();
+				return;
+			}
+
+			string cacheKey = BuildBoardEdgeFadeCacheKey(activeBoard, activeMedium);
+			if (_boardEdgeFadeRenderer == null)
+			{
+				_boardEdgeFadeRenderer = CreateBoardEdgeFadeRenderer();
+			}
+
+			if (_boardEdgeFadeRenderer == null)
+			{
+				return;
+			}
+
+			Transform visualParent = _getVisualParent();
+			if (_boardEdgeFadeRenderer.transform.parent != visualParent)
+			{
+				_boardEdgeFadeRenderer.transform.SetParent(visualParent, false);
+			}
+
+			if (_boardEdgeFadeCacheKey != cacheKey || _boardEdgeFadeSprite == null || _boardEdgeFadeTexture == null)
+			{
+				RebuildBoardEdgeFadeSprite(activeBoard, activeMedium, cacheKey);
+			}
+
+			PositionBoardEdgeFadeRenderer(activeBoard);
+			_boardEdgeFadeRenderer.enabled = _boardEdgeFadeSprite != null;
 		}
 
 		private void EnsureGeneratedCrustVisual(GameBoard activeBoard, BoardMediumConfig activeMedium, float visualCrustThickness)
@@ -179,6 +315,148 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 
 			return spriteRenderer;
+		}
+
+		private SpriteRenderer CreateBoardBackgroundRenderer()
+		{
+			var backgroundObject = new GameObject("BreadBackgroundVisual");
+			backgroundObject.transform.SetParent(_getVisualParent(), false);
+			var spriteRenderer = backgroundObject.AddComponent<SpriteRenderer>();
+
+			var toastTilemap = _getToastTilemap();
+			if (toastTilemap != null)
+			{
+				var tilemapRenderer = toastTilemap.GetComponent<TilemapRenderer>();
+				if (tilemapRenderer != null)
+				{
+					spriteRenderer.sortingLayerID = tilemapRenderer.sortingLayerID;
+					spriteRenderer.sortingOrder = tilemapRenderer.sortingOrder - 1;
+				}
+			}
+
+			return spriteRenderer;
+		}
+
+		private SpriteRenderer CreateBoardEdgeFadeRenderer()
+		{
+			var fadeObject = new GameObject("BoardEdgeFadeVisual");
+			fadeObject.transform.SetParent(_getVisualParent(), false);
+			var spriteRenderer = fadeObject.AddComponent<SpriteRenderer>();
+
+			var toastTilemap = _getToastTilemap();
+			if (toastTilemap != null)
+			{
+				var tilemapRenderer = toastTilemap.GetComponent<TilemapRenderer>();
+				if (tilemapRenderer != null)
+				{
+					spriteRenderer.sortingLayerID = tilemapRenderer.sortingLayerID;
+					spriteRenderer.sortingOrder = tilemapRenderer.sortingOrder;
+				}
+			}
+
+			return spriteRenderer;
+		}
+
+		private void PositionBoardBackgroundRenderer(GameBoard activeBoard, BoardMediumConfig activeMedium, Sprite sprite)
+		{
+			if (_backgroundRenderer == null || sprite == null)
+			{
+				return;
+			}
+
+			Rect safeArea = activeMedium.GetBackgroundSafeAreaNormalized();
+			float spriteWidth = Mathf.Max(0.001f, sprite.rect.width / sprite.pixelsPerUnit);
+			float spriteHeight = Mathf.Max(0.001f, sprite.rect.height / sprite.pixelsPerUnit);
+			float safeWidth = Mathf.Max(0.01f, spriteWidth * safeArea.width);
+			float safeHeight = Mathf.Max(0.01f, spriteHeight * safeArea.height);
+			float scale = Mathf.Max(activeBoard.Width / safeWidth, activeBoard.Height / safeHeight);
+			scale *= Mathf.Max(0.01f, activeMedium.backgroundScaleMultiplier);
+
+			float safeCenterX = ((safeArea.xMin + safeArea.xMax) * 0.5f) - 0.5f;
+			float safeCenterY = ((safeArea.yMin + safeArea.yMax) * 0.5f) - 0.5f;
+			Vector3 safeCenterOffset = new Vector3(safeCenterX * spriteWidth * scale, safeCenterY * spriteHeight * scale, 0f);
+			Vector3 boardCenter = new Vector3(activeBoard.Width * 0.5f, activeBoard.Height * 0.5f, 0f);
+
+			_backgroundRenderer.transform.localPosition = boardCenter - safeCenterOffset;
+			_backgroundRenderer.transform.localRotation = Quaternion.identity;
+			_backgroundRenderer.transform.localScale = new Vector3(scale, scale, 1f);
+		}
+
+		private void PositionBoardEdgeFadeRenderer(GameBoard activeBoard)
+		{
+			if (_boardEdgeFadeRenderer == null)
+			{
+				return;
+			}
+
+			_boardEdgeFadeRenderer.transform.localPosition = new Vector3(activeBoard.Width * 0.5f, activeBoard.Height * 0.5f, 0f);
+			_boardEdgeFadeRenderer.transform.localRotation = Quaternion.identity;
+			_boardEdgeFadeRenderer.transform.localScale = Vector3.one;
+		}
+
+		private void RebuildBoardEdgeFadeSprite(GameBoard activeBoard, BoardMediumConfig activeMedium, string cacheKey)
+		{
+			DestroyBoardEdgeFadeAssets();
+
+			int pixelsPerUnit = GetBackdropPixelsPerUnit(activeBoard, 0f);
+			int textureWidth = Mathf.Max(1, Mathf.CeilToInt(activeBoard.Width * pixelsPerUnit));
+			int textureHeight = Mathf.Max(1, Mathf.CeilToInt(activeBoard.Height * pixelsPerUnit));
+
+			_boardEdgeFadeTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false)
+			{
+				filterMode = FilterMode.Bilinear,
+				wrapMode = TextureWrapMode.Clamp,
+				alphaIsTransparency = true
+			};
+
+			var pixels = new Color32[textureWidth * textureHeight];
+			float fadeWidth = Mathf.Max(0.001f, activeMedium.boardEdgeFadeWidthTiles);
+			Color fadeColor = activeMedium.boardEdgeFadeColor;
+			float noiseStrength = Mathf.Clamp(activeMedium.boardEdgeFadeNoiseStrength, 0f, 0.2f);
+
+			for (int py = 0; py < textureHeight; py++)
+			{
+				float y = (py + 0.5f) / pixelsPerUnit;
+				for (int px = 0; px < textureWidth; px++)
+				{
+					float x = (px + 0.5f) / pixelsPerUnit;
+					float distanceToEdge = Mathf.Min(x, y, activeBoard.Width - x, activeBoard.Height - y);
+					float fade = 1f - Mathf.Clamp01(distanceToEdge / fadeWidth);
+					fade = Mathf.SmoothStep(0f, 1f, fade);
+					if (fade <= 0.001f)
+					{
+						continue;
+					}
+
+					float noise = 1f;
+					if (noiseStrength > 0f)
+					{
+						noise += (((EvaluateCoordinateNoise(activeMedium, Mathf.RoundToInt(x * 11f) + 37, Mathf.RoundToInt(y * 11f) + 71) * 2f) - 1f) * noiseStrength);
+					}
+
+					float alpha = Mathf.Clamp01(fadeColor.a * fade * noise);
+					if (alpha <= 0.001f)
+					{
+						continue;
+					}
+
+					Color color = new Color(fadeColor.r, fadeColor.g, fadeColor.b, alpha);
+					pixels[(py * textureWidth) + px] = color;
+				}
+			}
+
+			_boardEdgeFadeTexture.SetPixels32(pixels);
+			_boardEdgeFadeTexture.Apply(false, false);
+			_boardEdgeFadeSprite = Sprite.Create(
+				_boardEdgeFadeTexture,
+				new Rect(0f, 0f, textureWidth, textureHeight),
+				new Vector2(0.5f, 0.5f),
+				pixelsPerUnit,
+				0,
+				SpriteMeshType.FullRect);
+			_boardEdgeFadeRenderer.sprite = _boardEdgeFadeSprite;
+			_boardEdgeFadeRenderer.color = Color.white;
+			_boardEdgeFadeCacheKey = cacheKey;
 		}
 
 		private void RebuildGeneratedCrustSprite(GameBoard activeBoard, BoardMediumConfig activeMedium, float visualCrustThickness, string cacheKey)
@@ -280,6 +558,17 @@ namespace FungusToast.Unity.Grid.Helpers
 				activeMedium.maxVisualCrustThickness);
 		}
 
+		private static string BuildBoardEdgeFadeCacheKey(GameBoard activeBoard, BoardMediumConfig activeMedium)
+		{
+			return string.Join("|",
+				activeBoard.Width,
+				activeBoard.Height,
+				activeMedium.mediumId,
+				activeMedium.boardEdgeFadeColor,
+				activeMedium.boardEdgeFadeWidthTiles,
+				activeMedium.boardEdgeFadeNoiseStrength);
+		}
+
 		private void DestroyGeneratedCrustAssets()
 		{
 			if (_generatedCrustSprite != null)
@@ -292,6 +581,21 @@ namespace FungusToast.Unity.Grid.Helpers
 			{
 				UnityEngine.Object.Destroy(_generatedCrustTexture);
 				_generatedCrustTexture = null;
+			}
+		}
+
+		private void DestroyBoardEdgeFadeAssets()
+		{
+			if (_boardEdgeFadeSprite != null)
+			{
+				UnityEngine.Object.Destroy(_boardEdgeFadeSprite);
+				_boardEdgeFadeSprite = null;
+			}
+
+			if (_boardEdgeFadeTexture != null)
+			{
+				UnityEngine.Object.Destroy(_boardEdgeFadeTexture);
+				_boardEdgeFadeTexture = null;
 			}
 		}
 

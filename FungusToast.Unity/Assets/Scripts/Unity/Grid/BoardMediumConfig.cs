@@ -18,6 +18,21 @@ namespace FungusToast.Unity.Grid
         public TileBase[] boardSurfaceVariantTiles;
         [Range(0f, 1f)] public float surfaceVariantDensity = 0f;
 
+        [Header("Bread Photo Background")]
+        public bool renderBoardBackground = false;
+        public Sprite backgroundSprite;
+        public Color backgroundColor = Color.white;
+        public bool hidePlayableSurfaceTiles = true;
+        [Range(0f, 0.49f)] public float backgroundInsetLeftNormalized = 0.16f;
+        [Range(0f, 0.49f)] public float backgroundInsetRightNormalized = 0.16f;
+        [Range(0f, 0.49f)] public float backgroundInsetBottomNormalized = 0.14f;
+        [Range(0f, 0.49f)] public float backgroundInsetTopNormalized = 0.2f;
+        [Min(0.01f)] public float backgroundScaleMultiplier = 1f;
+        public bool renderBoardEdgeFade = true;
+        public Color boardEdgeFadeColor = new(0.35f, 0.2f, 0.08f, 0.2f);
+        [Range(0.5f, 6f)] public float boardEdgeFadeWidthTiles = 2.5f;
+        [Range(0f, 0.2f)] public float boardEdgeFadeNoiseStrength = 0.035f;
+
         [Header("Crust")]
         public bool renderCrust = true;
         public TileBase crustEdgeTile;
@@ -61,7 +76,7 @@ namespace FungusToast.Unity.Grid
 
         public float GetVisualCrustThickness(int boardWidth, int boardHeight)
         {
-            if (!renderCrust)
+            if (!ShouldRenderCrust)
             {
                 return 0;
             }
@@ -80,6 +95,22 @@ namespace FungusToast.Unity.Grid
 
         public bool IsPerimeterTintEnabled => tintPerimeterTiles && perimeterTint.a > 0f;
         public bool ShouldOverridePlayableSurface => overridePlayableSurface && boardSurfaceTile != null;
+        public bool ShouldRenderBoardBackground => renderBoardBackground && backgroundSprite != null;
+        public bool ShouldHidePlayableSurfaceTiles => ShouldRenderBoardBackground && hidePlayableSurfaceTiles;
+        public bool ShouldRenderCrust => renderCrust && !ShouldRenderBoardBackground;
+        public bool ShouldRenderBoardEdgeFade => ShouldRenderBoardBackground && renderBoardEdgeFade && boardEdgeFadeColor.a > 0f && boardEdgeFadeWidthTiles > 0f;
+
+        public Rect GetBackgroundSafeAreaNormalized()
+        {
+            float left = Mathf.Clamp01(backgroundInsetLeftNormalized);
+            float right = Mathf.Clamp01(backgroundInsetRightNormalized);
+            float bottom = Mathf.Clamp01(backgroundInsetBottomNormalized);
+            float top = Mathf.Clamp01(backgroundInsetTopNormalized);
+
+            float width = Mathf.Max(0.01f, 1f - left - right);
+            float height = Mathf.Max(0.01f, 1f - bottom - top);
+            return new Rect(left, bottom, width, height);
+        }
 
         public TileBase GetSurfaceTile(int x, int y)
         {
