@@ -57,7 +57,7 @@ Configured in assets under:
 - `presetId`
 - `boardWidth`, `boardHeight`
 - `mutationTierMax`
-- `aiPlayers`: ordered list of strategy names (for campaign this should be `AI1..AI13`)
+- `aiPlayers`: ordered list of strategy names (campaign should ultimately use curated Proven strategy IDs, not rely on legacy `AI1..AI13` names)
 
 Runtime usage:
 - In campaign mode, `PlayerInitializer` reads `BoardPreset.aiPlayers` and resolves each `strategyName` via:
@@ -68,24 +68,49 @@ If lineup is invalid/incomplete, a random campaign fallback is used.
 
 ## Difficulty Buckets (Convention)
 
-There is no baked-in weak/moderate/hard enum yet, so use this naming convention when authoring board presets:
+There is no baked-in weak/moderate/hard enum yet, so difficulty should be driven by strategy catalog metadata (`DifficultyBands`) and curated review.
 
-- Weak AI:
-  - `AI6` (tier-capped strategy)
+Current working convention:
+
+- Easy / Training:
+  - `AI6`
   - `AI12`
   - `AI13`
-- Moderate AI:
+- Medium / Normal:
   - `AI7`
   - `AI8`
   - `AI9`
   - `AI11`
-- Hard AI:
+  - `TST_AnabolicBeaconNecroRegressionCascade`
+  - `TST_AnabolicCreepingNecroRegressionCascade`
+- Hard / Elite:
   - `AI1`
   - `AI2`
   - `AI3`
   - `AI10`
+  - `TST_CreepingNecroRegressionCascade`
+  - `TST_BalancedControl_AnabolicFirst`
 
 These buckets are tuning heuristics and can change as balance data evolves.
+
+## Campaign strategy naming direction
+
+Legacy campaign strategies currently use simple IDs like `AI1..AI13`.
+For curated campaign work, prefer a descriptive stable naming convention:
+
+- `CMP_<Theme>_<CorePlan>_<Difficulty>`
+
+Examples:
+- `CMP_Control_AnabolicCreeping_Hard`
+- `CMP_Bloom_CreepingRegression_Elite`
+- `CMP_TierCap_GrowthResilience_Easy`
+
+Guidelines:
+- `CMP_` prefix for campaign-curated identities
+- concise theme/archetype first (`Control`, `Bloom`, `Economy`, `Surge`, `Defense`, `TierCap`)
+- core plan second (`AnabolicCreeping`, `CreepingRegression`, `LateSpike`, etc.)
+- difficulty suffix last (`Easy`, `Normal`, `Hard`, `Elite`, `Boss`)
+- keep names stable once referenced by `BoardPreset` assets
 
 ## Runtime Flow Touchpoints
 

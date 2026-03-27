@@ -245,18 +245,52 @@ namespace FungusToast.Core.AI
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
             ),
+            // Experimental beacon/regression cascade line for balance testing
             new ParameterizedSpendingStrategy(
-                strategyName: "SurgeFreq_10_Beacon",
+                strategyName: "TST_AnabolicBeaconNecroRegressionCascade",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
-                    new TargetMutationGoal(MutationIds.HyphalSurge),
-                    new TargetMutationGoal(MutationIds.ChemotacticBeacon)
+                    new TargetMutationGoal(MutationIds.AnabolicInversion, 1),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, GameBalance.ChemotacticBeaconMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
                 },
-                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon },
-                surgeAttemptTurnFrequency: 10,
+                surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
+                surgeAttemptTurnFrequency: 5,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
+            ),
+            // Experimental creeping/bloom/regression cascade line with anabolic opener
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_AnabolicCreepingNecroRegressionCascade",
                 prioritizeHighTier: true,
-                economyBias: EconomyBias.MaxEconomy),
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion, 1),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
+            ),
+            // Experimental creeping/bloom/regression cascade line without anabolic opener
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_CreepingNecroRegressionCascade",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
+            ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Anabolic>Grow>CatabR>PutreRegen",
                 prioritizeHighTier: true,
@@ -995,6 +1029,9 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI13_AnabolicFirst"] = StrategyTheme.Control,
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyTheme.Control,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyTheme.EconomyRamp,
+                ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyTheme.Control,
+                ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyTheme.Control,
+                ["TST_CreepingNecroRegressionCascade"] = StrategyTheme.Control,
                 ["Grow>Defend>Kill"] = StrategyTheme.Defense,
                 ["Grow>Kill>Reclaim(Econ)"] = StrategyTheme.EconomyRamp,
                 ["Grow>Kill>Reclaim(Econ/Reclaim)"] = StrategyTheme.Reclamation,
@@ -1007,6 +1044,9 @@ namespace FungusToast.Core.AI
         private static readonly Dictionary<string, StrategyStatus> ExplicitStrategyStatusesByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
+                ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyStatus.Proven,
+                ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyStatus.Proven,
+                ["TST_CreepingNecroRegressionCascade"] = StrategyStatus.Proven,
             };
 
         private static readonly Dictionary<string, StrategyPowerTier> ExplicitPowerTiersByName =
@@ -1031,6 +1071,9 @@ namespace FungusToast.Core.AI
                 ["AI2"] = StrategyPowerTier.Strong,
                 ["AI3"] = StrategyPowerTier.Strong,
                 ["AI10"] = StrategyPowerTier.Strong,
+                ["TST_CreepingNecroRegressionCascade"] = StrategyPowerTier.Strong,
+                ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyPowerTier.Standard,
+                ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyPowerTier.Standard,
                 ["TST_LateGameSpike"] = StrategyPowerTier.Spike,
                 ["Power Mutations Max Econ"] = StrategyPowerTier.Spike,
                 ["Best_MaxEcon_Surge10_HyphalSurge"] = StrategyPowerTier.Spike,
@@ -1058,6 +1101,9 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI7_Hyphal"] = StrategyRole.Experimental,
                 ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyRole.Experimental,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyRole.Experimental,
+                ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyRole.Experimental,
+                ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyRole.Experimental,
+                ["TST_CreepingNecroRegressionCascade"] = StrategyRole.Boss,
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyRole.Experimental,
                 ["AI1"] = StrategyRole.Boss,
                 ["AI2"] = StrategyRole.Boss,
@@ -1076,6 +1122,9 @@ namespace FungusToast.Core.AI
                 ["TST_BalancedControl_MaxEconomy"] = StrategyLifecycle.NeedsTuning,
                 ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyLifecycle.NeedsTuning,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyLifecycle.NeedsTuning,
+                ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyLifecycle.Active,
+                ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyLifecycle.Active,
+                ["TST_CreepingNecroRegressionCascade"] = StrategyLifecycle.Active,
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyLifecycle.Active,
                 ["TST_FortressResilience"] = StrategyLifecycle.NeedsTuning,
                 ["TST_OpportunisticCounterplay"] = StrategyLifecycle.NeedsTuning,
@@ -1104,6 +1153,9 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI13_AnabolicFirst"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["TST_AnabolicBeaconNecroRegressionCascade"] = new[] { DifficultyBand.Normal },
+                ["TST_AnabolicCreepingNecroRegressionCascade"] = new[] { DifficultyBand.Normal },
+                ["TST_CreepingNecroRegressionCascade"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
             };
 
         private static readonly Dictionary<string, CounterTag[]> ExplicitFavoredAgainstByName =
