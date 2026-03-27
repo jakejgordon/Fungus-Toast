@@ -117672,6 +117672,12 @@ MonoBehaviour:
   campaignPanel: {fileID: 1114499026}
   hotseatButton: {fileID: 1959796935}
   campaignButton: {fileID: 1450973920}
+  contentRoot: {fileID: 679560467}
+  titleLogoImage: {fileID: 2099012202}
+  titleText: {fileID: 1112309357}
+  hotseatDescriptionText: {fileID: 2072126646}
+  campaignDescriptionText: {fileID: 1467730301}
+  wideTitleLogoSprite: {fileID: 21300000, guid: c8071e25a05e01c41b6d7b9a8ff2187f, type: 3}
 --- !u!1 &1550400849
 GameObject:
   m_ObjectHideFlags: 0

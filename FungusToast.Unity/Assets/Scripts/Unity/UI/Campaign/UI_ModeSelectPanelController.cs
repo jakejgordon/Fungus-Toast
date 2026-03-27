@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using FungusToast.Unity;
 using FungusToast.Unity.UI.GameStart; // for UI_StartGamePanel
 
 namespace FungusToast.Unity.UI.Campaign
@@ -9,20 +11,87 @@ namespace FungusToast.Unity.UI.Campaign
     /// </summary>
     public class UI_ModeSelectPanelController : MonoBehaviour
     {
+        private const float ExpandedContentWidth = 760f;
+        private const float ExpandedButtonWidth = 620f;
+        private const float ExpandedDescriptionWidth = 620f;
+        private const float WideLogoWidth = 520f;
+        private const float WideLogoHeight = 223f;
+        private const float TitleHeight = 44f;
+        private const float SummaryHeight = 68f;
+        private const float FooterHeight = 24f;
+        private const float SecondaryButtonHeight = 52f;
+        private const float SecondaryButtonWidth = 240f;
+        private const string AlphaHeadingText = "Alpha test build";
+        private const string AlphaSummaryCopy = "Alpha build for testing. Hotseat and campaign are both available; progression and balance are still in flux.";
+
         [Header("Panels")] 
-        [SerializeField] private UI_StartGamePanel startGamePanel; // existing start / player config panel
-        [SerializeField] private GameObject campaignPanel; // UI_CampaignPanel root
+        [SerializeField] private UI_StartGamePanel startGamePanel = null; // existing start / player config panel
+        [SerializeField] private GameObject campaignPanel = null; // UI_CampaignPanel root
 
         [Header("Buttons")] 
-        [SerializeField] private Button hotseatButton;
-        [SerializeField] private Button campaignButton;
+        [SerializeField] private Button hotseatButton = null;
+        [SerializeField] private Button campaignButton = null;
+
+        [Header("Layout")]
+        [SerializeField] private RectTransform contentRoot = null;
+        [SerializeField] private Image titleLogoImage = null;
+        [SerializeField] private TextMeshProUGUI titleText = null;
+        [SerializeField] private TextMeshProUGUI hotseatDescriptionText = null;
+        [SerializeField] private TextMeshProUGUI campaignDescriptionText = null;
+        [SerializeField] private Sprite wideTitleLogoSprite = null;
+
+        private TextMeshProUGUI alphaSummaryText;
+        private TextMeshProUGUI versionText;
+        private Button quitButton;
 
         private void Awake()
         {
+            ResolveSceneReferences();
+            ConfigureLayout();
+            EnsureReleaseUi();
             ApplyStyle();
 
             if (hotseatButton != null) hotseatButton.onClick.AddListener(OnHotseatClicked);
             if (campaignButton != null) campaignButton.onClick.AddListener(OnCampaignClicked);
+            if (quitButton != null) quitButton.onClick.AddListener(OnQuitClicked);
+        }
+
+        private void ResolveSceneReferences()
+        {
+            if (contentRoot == null)
+            {
+                contentRoot = FindChildComponent<RectTransform>("UI_ModeSelectContent");
+            }
+
+            if (titleLogoImage == null)
+            {
+                titleLogoImage = FindChildComponent<Image>("UI_ModeSelectContent/UI_ModeSelectTitleLogo");
+            }
+
+            if (titleText == null)
+            {
+                titleText = FindChildComponent<TextMeshProUGUI>("UI_ModeSelectContent/UI_ModeSelectTitle");
+            }
+
+            if (hotseatButton == null)
+            {
+                hotseatButton = FindChildComponent<Button>("UI_ModeSelectContent/UI_ModeSelectHotseatButton");
+            }
+
+            if (campaignButton == null)
+            {
+                campaignButton = FindChildComponent<Button>("UI_ModeSelectContent/UI_ModeSelectCampaignButton");
+            }
+
+            if (hotseatDescriptionText == null)
+            {
+                hotseatDescriptionText = FindChildComponent<TextMeshProUGUI>("UI_ModeSelectContent/UI_ModeSelectHotseatDescriptionText");
+            }
+
+            if (campaignDescriptionText == null)
+            {
+                campaignDescriptionText = FindChildComponent<TextMeshProUGUI>("UI_ModeSelectContent/UI_ModeSelectCampaignDescriptionText");
+            }
         }
 
         private void ApplyStyle()
@@ -30,12 +99,30 @@ namespace FungusToast.Unity.UI.Campaign
             UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.Canvas);
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
 
+            if (titleText != null)
+            {
+                titleText.color = UIStyleTokens.Text.Primary;
+            }
+
+            if (alphaSummaryText != null)
+            {
+                alphaSummaryText.color = UIStyleTokens.Text.Secondary;
+            }
+
+            if (versionText != null)
+            {
+                versionText.color = UIStyleTokens.Text.Muted;
+            }
+
             UIStyleTokens.Button.ApplyStyle(hotseatButton);
             UIStyleTokens.Button.ApplyStyle(campaignButton);
+            UIStyleTokens.Button.ApplyPanelSecondaryStyle(quitButton);
         }
 
         private void OnEnable()
         {
+            UpdateVersionLabel();
+
             // Ensure subordinate panels start hidden so only mode select is visible.
             if (startGamePanel != null) startGamePanel.gameObject.SetActive(false);
             if (campaignPanel != null) campaignPanel.SetActive(false);
@@ -55,6 +142,228 @@ namespace FungusToast.Unity.UI.Campaign
             if (campaignPanel != null)
                 campaignPanel.SetActive(true);
             gameObject.SetActive(false);
+        }
+
+        private void OnQuitClicked()
+        {
+            GameManager manager = FindAnyObjectByType<GameManager>();
+            if (manager != null)
+            {
+                manager.QuitGame();
+                return;
+            }
+
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
+
+        private void ConfigureLayout()
+        {
+            if (contentRoot != null)
+            {
+                contentRoot.sizeDelta = new Vector2(ExpandedContentWidth, contentRoot.sizeDelta.y);
+            }
+
+            ResizeRectTransform(hotseatButton != null ? hotseatButton.GetComponent<RectTransform>() : null, ExpandedButtonWidth, 90f);
+            ResizeRectTransform(campaignButton != null ? campaignButton.GetComponent<RectTransform>() : null, ExpandedButtonWidth, 90f);
+            ResizeRectTransform(hotseatDescriptionText != null ? hotseatDescriptionText.rectTransform : null, ExpandedDescriptionWidth, 50f);
+            ResizeRectTransform(campaignDescriptionText != null ? campaignDescriptionText.rectTransform : null, ExpandedDescriptionWidth, 50f);
+
+            if (titleLogoImage != null)
+            {
+                if (wideTitleLogoSprite != null)
+                {
+                    titleLogoImage.sprite = wideTitleLogoSprite;
+                }
+
+                titleLogoImage.preserveAspect = true;
+                ResizeRectTransform(titleLogoImage.rectTransform, WideLogoWidth, WideLogoHeight);
+            }
+
+            if (titleText != null)
+            {
+                titleText.text = AlphaHeadingText;
+                titleText.enableAutoSizing = true;
+                titleText.fontSizeMin = 22f;
+                titleText.fontSizeMax = 32f;
+                titleText.fontSize = 28f;
+                titleText.alignment = TextAlignmentOptions.Center;
+                ResizeRectTransform(titleText.rectTransform, ExpandedDescriptionWidth, TitleHeight);
+            }
+        }
+
+        private void EnsureReleaseUi()
+        {
+            if (contentRoot == null)
+            {
+                return;
+            }
+
+            if (alphaSummaryText == null)
+            {
+                alphaSummaryText = CreateLabel(
+                    "UI_ModeSelectAlphaSummary",
+                    AlphaSummaryCopy,
+                    22f,
+                    SummaryHeight,
+                    UIStyleTokens.Text.Secondary);
+                alphaSummaryText.enableAutoSizing = true;
+                alphaSummaryText.fontSizeMin = 18f;
+                alphaSummaryText.fontSizeMax = 22f;
+                alphaSummaryText.transform.SetSiblingIndex(Mathf.Min(2, contentRoot.childCount - 1));
+            }
+            else
+            {
+                alphaSummaryText.text = AlphaSummaryCopy;
+            }
+
+            if (quitButton == null && ShouldShowQuitButton())
+            {
+                quitButton = CreateButton("UI_ModeSelectQuitButton", "Quit to Desktop");
+                quitButton.transform.SetAsLastSibling();
+            }
+
+            if (quitButton != null)
+            {
+                quitButton.gameObject.SetActive(ShouldShowQuitButton());
+            }
+
+            if (versionText == null)
+            {
+                versionText = CreateLabel(
+                    "UI_ModeSelectVersionText",
+                    BuildVersionLabel(),
+                    18f,
+                    FooterHeight,
+                    UIStyleTokens.Text.Muted);
+                versionText.enableAutoSizing = false;
+                versionText.transform.SetAsLastSibling();
+            }
+
+            UpdateVersionLabel();
+        }
+
+        private void UpdateVersionLabel()
+        {
+            if (versionText != null)
+            {
+                versionText.text = BuildVersionLabel();
+            }
+        }
+
+        private static void ResizeRectTransform(RectTransform rectTransform, float width, float height)
+        {
+            if (rectTransform == null)
+            {
+                return;
+            }
+
+            rectTransform.sizeDelta = new Vector2(width, height);
+        }
+
+        private TextMeshProUGUI CreateLabel(string objectName, string textValue, float fontSize, float preferredHeight, Color color)
+        {
+            GameObject labelObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(contentRoot, false);
+            labelObject.layer = gameObject.layer;
+
+            RectTransform rectTransform = labelObject.GetComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(ExpandedDescriptionWidth, preferredHeight);
+
+            LayoutElement layoutElement = labelObject.GetComponent<LayoutElement>();
+            layoutElement.preferredWidth = ExpandedDescriptionWidth;
+            layoutElement.preferredHeight = preferredHeight;
+            layoutElement.flexibleWidth = 0f;
+            layoutElement.flexibleHeight = 0f;
+
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = textValue;
+            label.font = ResolveSharedFont();
+            label.fontSize = fontSize;
+            label.alignment = TextAlignmentOptions.Center;
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.raycastTarget = false;
+            label.color = color;
+
+            return label;
+        }
+
+        private Button CreateButton(string objectName, string labelText)
+        {
+            GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(Image), typeof(Button));
+            buttonObject.transform.SetParent(contentRoot, false);
+            buttonObject.layer = gameObject.layer;
+
+            RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(SecondaryButtonWidth, SecondaryButtonHeight);
+
+            LayoutElement layoutElement = buttonObject.GetComponent<LayoutElement>();
+            layoutElement.preferredWidth = SecondaryButtonWidth;
+            layoutElement.preferredHeight = SecondaryButtonHeight;
+            layoutElement.flexibleWidth = 0f;
+            layoutElement.flexibleHeight = 0f;
+
+            Image background = buttonObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Surface.PanelElevated;
+
+            Button button = buttonObject.GetComponent<Button>();
+            button.targetGraphic = background;
+
+            GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(buttonObject.transform, false);
+            labelObject.layer = gameObject.layer;
+
+            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = labelText;
+            label.font = ResolveSharedFont();
+            label.fontSize = 22f;
+            label.alignment = TextAlignmentOptions.Center;
+            label.raycastTarget = false;
+
+            return button;
+        }
+
+        private TMP_FontAsset ResolveSharedFont()
+        {
+            if (titleText != null && titleText.font != null)
+            {
+                return titleText.font;
+            }
+
+            TextMeshProUGUI sample = GetComponentInChildren<TextMeshProUGUI>(true);
+            if (sample != null && sample.font != null)
+            {
+                return sample.font;
+            }
+
+            return TMP_Settings.defaultFontAsset;
+        }
+
+        private T FindChildComponent<T>(string relativePath) where T : Component
+        {
+            Transform child = transform.Find(relativePath);
+            return child != null ? child.GetComponent<T>() : null;
+        }
+
+        private static bool ShouldShowQuitButton()
+        {
+            return Application.platform != RuntimePlatform.WebGLPlayer;
+        }
+
+        private static string BuildVersionLabel()
+        {
+            return string.IsNullOrWhiteSpace(Application.version)
+                ? "Version not set"
+                : $"Version {Application.version}";
         }
     }
 }
