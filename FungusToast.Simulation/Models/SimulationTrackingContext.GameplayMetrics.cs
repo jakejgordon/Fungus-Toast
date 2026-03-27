@@ -232,27 +232,19 @@ namespace FungusToast.Simulation.Models
         public Dictionary<int, int> GetNecrosporulationSporeDropCounts() => new(necrosporulationSporeDrops);
 
         // ────────────────
-        // Necrophytic Bloom Spores & Reclaims
+        // Necrophytic Bloom Composting
         // ────────────────
 
-        private readonly Dictionary<int, int> necrophyticBloomSpores = new();
-        private readonly Dictionary<int, int> necrophyticBloomReclaims = new();
-        public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims)
+        private readonly Dictionary<int, int> necrophyticBloomPatchesCreated = new();
+        public void RecordNecrophyticBloomPatchCreation(int playerId, int createdPatchCount)
         {
-            if (!necrophyticBloomSpores.ContainsKey(playerId))
-                necrophyticBloomSpores[playerId] = 0;
-            necrophyticBloomSpores[playerId] += sporesDropped;
-
-            if (!necrophyticBloomReclaims.ContainsKey(playerId))
-                necrophyticBloomReclaims[playerId] = 0;
-            necrophyticBloomReclaims[playerId] += successfulReclaims;
+            if (!necrophyticBloomPatchesCreated.ContainsKey(playerId))
+                necrophyticBloomPatchesCreated[playerId] = 0;
+            necrophyticBloomPatchesCreated[playerId] += createdPatchCount;
         }
-        public int GetNecrophyticBloomSporeDropCount(int playerId)
-            => necrophyticBloomSpores.TryGetValue(playerId, out var val) ? val : 0;
-        public int GetNecrophyticBloomReclaims(int playerId)
-            => necrophyticBloomReclaims.TryGetValue(playerId, out var val) ? val : 0;
-        public Dictionary<int, int> GetAllNecrophyticBloomSpores() => new(necrophyticBloomSpores);
-        public Dictionary<int, int> GetAllNecrophyticBloomReclaims() => new(necrophyticBloomReclaims);
+        public int GetNecrophyticBloomPatchCreationCount(int playerId)
+            => necrophyticBloomPatchesCreated.TryGetValue(playerId, out var val) ? val : 0;
+        public Dictionary<int, int> GetAllNecrophyticBloomPatchCreations() => new(necrophyticBloomPatchesCreated);
 
         // ────────────────
         // Toxin Catabolism

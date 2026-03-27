@@ -509,6 +509,7 @@ namespace FungusToast.Unity.UI
         {
             sb.AppendLine(EmphasizedLine("Status", nutrientPatch.DisplayName, UIStyleTokens.State.Warning));
             sb.AppendLine(DetailLine("Cluster Size", nutrientPatch.ClusterTileCount.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine(DetailLine("Source", GetNutrientPatchSourceLabel(nutrientPatch.Source), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
 
             string rewardText = nutrientPatch.RewardType switch
             {
@@ -522,6 +523,15 @@ namespace FungusToast.Unity.UI
             sb.AppendLine(DetailLine("Trigger", "First living growth onto this cluster claims it", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine();
             sb.AppendLine(DetailLine("Notes", nutrientPatch.Description, UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+        }
+
+        private static string GetNutrientPatchSourceLabel(NutrientPatchSource source)
+        {
+            return source switch
+            {
+                NutrientPatchSource.NecrophyticBloom => "Necrophytic Bloom",
+                _ => "Starting Board"
+            };
         }
 
         private void AppendNutrientTileInfo(BoardTile tile, GameBoard board)

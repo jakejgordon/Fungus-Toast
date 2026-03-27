@@ -75,6 +75,10 @@ A fungal cell currently occupying a tile and participating in growth, death, and
 
 A tile representing fungal remains rather than an active colony cell. Dead cells may be reclaimed or otherwise interacted with by mutations.
 
+### Compost / Composting
+
+The conversion of a dead cell into a nutrient patch. Use `Compost` or `Composting` for this transformation. Do not use `Compositing`.
+
 ### Toxin tile
 
 A tile occupied by toxin rather than a living cell. Toxin tiles may block or transform later growth depending on the mechanic.

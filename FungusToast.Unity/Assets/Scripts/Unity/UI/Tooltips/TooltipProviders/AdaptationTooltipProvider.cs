@@ -79,5 +79,4 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             return $"<b>{nutrientPatch.DisplayName}</b>\n<i>Board Overlay</i>\n\n{nutrientPatch.Description}";
         }
     }
-    }
 }

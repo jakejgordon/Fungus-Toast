@@ -321,6 +321,8 @@ namespace FungusToast.Unity.Grid
             => StartCoroutine(PlayNutrientPatchConsumptionAnimation(nutrientTileId, destinationTileId, patchType, rewardType, rewardAmount));
         public IEnumerator PlayMycotoxicLashAnimation(IReadOnlyList<int> tileIds)
             => presentationEffects != null ? presentationEffects.PlayMycotoxicLashAnimation(tileIds) : null;
+        public IEnumerator PlayNecrophyticBloomCompostAnimation(IReadOnlyList<int> tileIds, NutrientPatchType patchType)
+            => presentationEffects != null ? presentationEffects.PlayNecrophyticBloomCompostAnimation(tileIds, patchType) : null;
 
         public IEnumerator PlayRetrogradeBloomAnimation(int anchorTileId)
             => presentationEffects != null ? presentationEffects.PlayRetrogradeBloomAnimation(anchorTileId) : null;
@@ -684,7 +686,8 @@ namespace FungusToast.Unity.Grid
 
         public Sprite GetNutrientPatchLegendSprite(NutrientPatchType patchType)
         {
-            return overlayRenderer?.GetNutrientPatchTile(patchType)?.sprite;
+            TileBase tileBase = overlayRenderer?.GetNutrientPatchTile(patchType);
+            return tileBase is Tile tile ? tile.sprite : null;
         }
 
         private Color GetSurfaceColor(int x, int y, int boardWidth, int boardHeight)

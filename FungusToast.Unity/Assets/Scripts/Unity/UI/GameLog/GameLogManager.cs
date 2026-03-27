@@ -992,7 +992,20 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordRegenerativeHyphaeReclaim(int playerId) { }
         public void ReportSporicidalSporeDrop(int playerId, int count) { }
         public void ReportNecrosporeDrop(int playerId, int count) { }
-        public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims) { if (IsHuman(playerId) && successfulReclaims > 0) Inc(EventKinds.Reclaimed, playerId, GrowthSource.NecrophyticBloom, successfulReclaims); }
+        public void RecordNecrophyticBloomPatchCreation(int playerId, int createdPatchCount)
+        {
+            if (!IsHuman(playerId) || createdPatchCount <= 0)
+            {
+                return;
+            }
+
+            AddPlayerEvent(
+                playerId,
+                createdPatchCount == 1
+                    ? "Necrophytic Bloom composted a dead region into a nutrient patch"
+                    : $"Necrophytic Bloom composted {createdPatchCount} dead regions into nutrient patches",
+                GameLogCategory.Lucky);
+        }
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
         public void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade) { }
         public void RecordBankedPoints(int playerId, int pointsBanked) { }

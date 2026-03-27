@@ -75,12 +75,13 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.NecrophyticBloom,
                 name: "Necrophytic Bloom",
                 description:
-                    $"Activates once {helper.FormatPercent(GameBalance.NecrophyticBloomActivationThreshold, 1)} of the board is occupied. " +
-                    $"Each of your dead non-toxin cells releases spores equal to {helper.FormatPercent(GameBalance.NecrophyticBloomSporesPerDeathPerLevel, 3)} of the board per level, with a minimum burst of {GameBalance.NecrophyticBloomBaseSpores} spores, reclaiming any dead non-toxin cell they land on. " +
-                    $"After activation, each newly dead cell releases the same burst. Friendly living cells and toxin tiles are excluded from targeting, and each level removes {helper.FormatPercent(GameBalance.NecrophyticBloomInvalidTargetReductionPerLevel)} of the remaining invalid targets.",
-                flavorText: "When population pressure nears collapse, the mycelium initiates necrophytic recovery — resurrecting fallen cells and seeding the surface in desperate bloom.",
+                    $"At the end of each Decay Phase, each orthogonally connected region of your dead non-toxin cells with at least {GameBalance.NecrophyticBloomBaseClusterThreshold} cells has a {helper.FormatPercent(GameBalance.NecrophyticBloomBaseCompostChance, 1)} chance to compost into a neutral nutrient patch. " +
+                    $"Composted patches contain {GameBalance.NecrophyticBloomPatchTileReduction} fewer tiles than the dead region they came from. " +
+                    $"Each additional level reduces the minimum region size by {GameBalance.NecrophyticBloomClusterThresholdReductionPerLevel} and increases the compost chance by {helper.FormatPercent(GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel, 1)}. " +
+                    $"At max level, Necrophytic Bloom can also create Hypervariation Development patches when the normal nutrient patch roll allows it.",
+                flavorText: "The colony learns to compost its dead into concentrated nourishment, turning loss into contested resources.",
                 type: MutationType.NecrophyticBloomSporeDrop,
-                effectPerLevel: GameBalance.NecrophyticBloomSporesPerDeathPerLevel,
+                effectPerLevel: GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4) + 1,
                 maxLevel: GameBalance.NecrophyticBloomMaxLevel,
                 category: MutationCategory.GeneticDrift,

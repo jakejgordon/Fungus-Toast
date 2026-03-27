@@ -247,16 +247,6 @@ namespace FungusToast.Core.Phases
             GeneticDriftMutationProcessor.OnMutationPhaseStart_AnabolicInversion(board, players, rng, observer);
         }
 
-        // Special Events
-        public static void OnNecrophyticBloomActivated(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver observer)
-        {
-            GeneticDriftMutationProcessor.OnNecrophyticBloomActivated(board, players, rng, observer);
-        }
-
         public static void OnToxinExpired_CatabolicRebirth(
             ToxinExpiredEventArgs eventArgs,
             GameBoard board,

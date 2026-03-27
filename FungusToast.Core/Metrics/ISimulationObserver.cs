@@ -29,7 +29,7 @@ namespace FungusToast.Core.Metrics
 
         void ReportSporicidalSporeDrop(int playerId, int count);
         void ReportNecrosporeDrop(int playerId, int count);
-        void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims);
+        void RecordNecrophyticBloomPatchCreation(int playerId, int createdPatchCount);
         void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped);
         void RecordMutationPointIncome(int playerId, int newMutationPoints);
         void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade);

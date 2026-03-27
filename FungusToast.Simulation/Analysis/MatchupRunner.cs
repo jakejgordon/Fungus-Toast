@@ -190,8 +190,7 @@ namespace FungusToast.Simulation.Analysis
                 pr.ReclaimedCells = context.GetReclaimedCells(pr.PlayerId);
                 pr.SporocidalSpores = context.GetSporocidalSporeDropCount(pr.PlayerId);
                 pr.NecrosporulationSpores = context.GetNecrosporeDropCount(pr.PlayerId);
-                pr.NecrophyticSpores = context.GetNecrophyticBloomSporeDropCount(pr.PlayerId);      // updated
-                pr.NecrophyticReclaims = context.GetNecrophyticBloomReclaims(pr.PlayerId);  // updated
+                pr.NecrophyticBloomPatchesCreated = context.GetNecrophyticBloomPatchCreationCount(pr.PlayerId);
                 pr.MycotoxinTracerSpores = context.GetMycotoxinSporeDropCount(pr.PlayerId);
             }
         }

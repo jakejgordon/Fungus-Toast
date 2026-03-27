@@ -13,7 +13,7 @@ namespace FungusToast.Core.Death
     /// <summary>
     /// Orchestrates the Decay Phase for the entire board.
     /// Performs no mutation mathematics—delegates that to MutationEffectCoordinator.
-    /// All stateful triggers (such as Necrophytic Bloom activation) are tracked per-game via GameBoard.
+    /// All stateful triggers are tracked per-game via GameBoard.
     /// </summary>
     public static class DeathEngine
     {
@@ -40,37 +40,15 @@ namespace FungusToast.Core.Death
             // Fire consolidated DecayPhase event for all decay-phase mutations (including Mycotoxin Tracer)
             board.OnDecayPhase(failedGrowthsByPlayerId);
 
-            ApplyNecrophyticBloomTrigger(shuffledPlayers, board, rng, simulationObserver);
             EvaluateProbabilisticDeaths(board, shuffledPlayers, rng, simulationObserver);
+            ResolveNecrophyticBloomComposting(board, shuffledPlayers, rng, simulationObserver);
 
             // Clear the decay phase context at the end
             board.ClearCachedDecayPhaseContext();
         }
 
         /// <summary>
-        /// Handles the board occupancy trigger for Necrophytic Bloom.
-        /// When the board first reaches the activation threshold, enables Necrophytic Bloom for the rest of the game.
-        /// </summary>
-        private static void ApplyNecrophyticBloomTrigger(
-            List<Player> players,
-            GameBoard board,
-            Random rng,
-            ISimulationObserver simulationObserver)
-        {
-            // Use cached ratio instead of recalculating
-            float occupiedPercent = board.CachedOccupiedTileRatio;
-
-            if (!board.NecrophyticBloomActivated &&
-                occupiedPercent >= GameBalance.NecrophyticBloomActivationThreshold)
-            {
-                board.NecrophyticBloomActivated = true;
-                board.OnNecrophyticBloomActivatedEvent();
-            }
-        }
-
-        /// <summary>
-        /// Handles all living cells, rolling for probabilistic deaths. After Necrophytic Bloom activates,
-        /// each cell death for a player with the mutation triggers a board-scaled reclaim burst.
+        /// Handles all living cells, rolling for probabilistic deaths.
         /// </summary>
         private static void EvaluateProbabilisticDeaths(
             GameBoard board,
@@ -78,7 +56,6 @@ namespace FungusToast.Core.Death
             Random rng,
             ISimulationObserver simulationObserver)
         {
-            var newlyDeadCellsByPlayerId = new Dictionary<int, int>();
             var livingCellCounts = players.ToDictionary(
                 p => p.PlayerId,
                 p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive));
@@ -119,36 +96,25 @@ namespace FungusToast.Core.Death
 
                     // Trigger spore on death, if relevant
                     board.TryTriggerSporeOnDeath(owner, rng, simulationObserver);
-
-                    if (board.NecrophyticBloomActivated &&
-                        owner.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
-                    {
-                        newlyDeadCellsByPlayerId.TryGetValue(owner.PlayerId, out int currentDeaths);
-                        newlyDeadCellsByPlayerId[owner.PlayerId] = currentDeaths + 1;
-                    }
                 }
                 // NOTE: Cell aging is now handled in AgeCells method, not here
             }
+        }
 
-            if (!board.NecrophyticBloomActivated || board.CachedDecayPhaseContext == null)
-            {
-                return;
-            }
-
+        private static void ResolveNecrophyticBloomComposting(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver simulationObserver)
+        {
             foreach (var player in players)
             {
-                if (!newlyDeadCellsByPlayerId.TryGetValue(player.PlayerId, out int deathCount) || deathCount <= 0)
+                if (player.GetMutationLevel(MutationIds.NecrophyticBloom) <= 0)
                 {
                     continue;
                 }
 
-                GeneticDriftMutationProcessor.TriggerNecrophyticBloomForNewDeaths(
-                    player,
-                    board,
-                    deathCount,
-                    rng,
-                    simulationObserver,
-                    board.CachedDecayPhaseContext);
+                GeneticDriftMutationProcessor.ResolveNecrophyticBloomComposting(player, board, rng, simulationObserver);
             }
         }
 
