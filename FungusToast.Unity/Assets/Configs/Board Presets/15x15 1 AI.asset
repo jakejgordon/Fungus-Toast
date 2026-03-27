@@ -16,4 +16,4 @@ MonoBehaviour:
   boardWidth: 15
   boardHeight: 15
   aiPlayers:
-  - strategyName: AI12
+  - strategyName: TST_Training_Overextender

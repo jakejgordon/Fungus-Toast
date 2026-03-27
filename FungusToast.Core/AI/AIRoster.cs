@@ -536,6 +536,65 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.CatabolicRebirth)
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
+            ),
+            // Campaign balance harness: safe player-proxy baseline
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_CampaignPlayer_SafeBaseline",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 2),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Economy, MycovariantCategory.Resistance)
+            ),
+            // Training mold: slow resilient defense with visible resistant cells
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Training_ResilientMycelium",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 5),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, 5)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChitinFortification },
+                surgeAttemptTurnFrequency: 8,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Growth)
+            ),
+            // Training mold: reckless growth that overextends and burns points on a bad tendril plan
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Training_Overextender",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.CreepingMold, 2),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 5),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 2)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
+            ),
+            // Training mold: slow fungicide/resilience turtle that eventually shows adjacent poison
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Training_ToxicTurtle",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 3),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinCatabolism)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Economy)
             )
         };
 
@@ -1035,6 +1094,10 @@ namespace FungusToast.Core.AI
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyTheme.Control,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyTheme.Control,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyTheme.Control,
+                ["TST_CampaignPlayer_SafeBaseline"] = StrategyTheme.Control,
+                ["TST_Training_ResilientMycelium"] = StrategyTheme.Defense,
+                ["TST_Training_Overextender"] = StrategyTheme.Mobility,
+                ["TST_Training_ToxicTurtle"] = StrategyTheme.Attrition,
                 ["Grow>Defend>Kill"] = StrategyTheme.Defense,
                 ["Grow>Kill>Reclaim(Econ)"] = StrategyTheme.EconomyRamp,
                 ["Grow>Kill>Reclaim(Econ/Reclaim)"] = StrategyTheme.Reclamation,
@@ -1050,6 +1113,10 @@ namespace FungusToast.Core.AI
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyStatus.Proven,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyStatus.Proven,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyStatus.Proven,
+                ["TST_CampaignPlayer_SafeBaseline"] = StrategyStatus.Testing,
+                ["TST_Training_ResilientMycelium"] = StrategyStatus.Testing,
+                ["TST_Training_Overextender"] = StrategyStatus.Testing,
+                ["TST_Training_ToxicTurtle"] = StrategyStatus.Testing,
             };
 
         private static readonly Dictionary<string, StrategyPowerTier> ExplicitPowerTiersByName =
@@ -1107,6 +1174,10 @@ namespace FungusToast.Core.AI
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyRole.Experimental,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyRole.Experimental,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyRole.Boss,
+                ["TST_CampaignPlayer_SafeBaseline"] = StrategyRole.Experimental,
+                ["TST_Training_ResilientMycelium"] = StrategyRole.Training,
+                ["TST_Training_Overextender"] = StrategyRole.Training,
+                ["TST_Training_ToxicTurtle"] = StrategyRole.Training,
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyRole.Experimental,
                 ["AI1"] = StrategyRole.Boss,
                 ["AI2"] = StrategyRole.Boss,
@@ -1128,6 +1199,10 @@ namespace FungusToast.Core.AI
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyLifecycle.Active,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyLifecycle.Active,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyLifecycle.Active,
+                ["TST_CampaignPlayer_SafeBaseline"] = StrategyLifecycle.Active,
+                ["TST_Training_ResilientMycelium"] = StrategyLifecycle.Active,
+                ["TST_Training_Overextender"] = StrategyLifecycle.Active,
+                ["TST_Training_ToxicTurtle"] = StrategyLifecycle.Active,
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyLifecycle.Active,
                 ["TST_FortressResilience"] = StrategyLifecycle.NeedsTuning,
                 ["TST_OpportunisticCounterplay"] = StrategyLifecycle.NeedsTuning,
@@ -1159,6 +1234,10 @@ namespace FungusToast.Core.AI
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = new[] { DifficultyBand.Normal },
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = new[] { DifficultyBand.Normal },
                 ["TST_CreepingNecroRegressionCascade"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["TST_CampaignPlayer_SafeBaseline"] = new[] { DifficultyBand.Normal },
+                ["TST_Training_ResilientMycelium"] = new[] { DifficultyBand.Easy },
+                ["TST_Training_Overextender"] = new[] { DifficultyBand.Easy },
+                ["TST_Training_ToxicTurtle"] = new[] { DifficultyBand.Easy },
             };
 
         private static readonly Dictionary<string, CampaignDifficulty> ExplicitCampaignDifficultyByName =
@@ -1179,6 +1258,10 @@ namespace FungusToast.Core.AI
                 ["Grow>Kill>Reclaim(Econ)"] = CampaignDifficulty.Medium,
                 ["Grow>Kill>Reclaim(Econ/Reclaim)"] = CampaignDifficulty.Medium,
                 ["Creeping>Necrosporulation"] = CampaignDifficulty.Medium,
+                ["TST_CampaignPlayer_SafeBaseline"] = CampaignDifficulty.Medium,
+                ["TST_Training_ResilientMycelium"] = CampaignDifficulty.Training,
+                ["TST_Training_Overextender"] = CampaignDifficulty.Easy,
+                ["TST_Training_ToxicTurtle"] = CampaignDifficulty.Easy,
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = CampaignDifficulty.Medium,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = CampaignDifficulty.Medium,
                 ["TST_BalancedControl_AnabolicFirst"] = CampaignDifficulty.Hard,

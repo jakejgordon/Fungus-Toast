@@ -200,11 +200,247 @@ The live implementation backlog for Fungus-Toast should be kept in:
 
 Keep this document focused on durable campaign design/curation decisions rather than the day-to-day running task list.
 
+## Campaign AI evaluation approach
+
+Static difficulty labels are not enough, because campaign AI strength can vary a lot by:
+- board size
+- player count
+- nutrient patches
+- opponent mix
+- later, starting Adaptations
+
+So campaign placement should use **contextual fit**, not just a single universal difficulty label.
+
+### Representative scenario buckets
+
+Use a small set of reusable campaign-like test scenarios to characterize AIs before locking them to levels:
+
+1. **S1: Tiny duel**
+   - ~10x10 to 15x15
+   - 2 players
+   - nutrients off
+   - purpose: onboarding / tutorial fit
+
+2. **S2: Small skirmish**
+   - ~20x20 to 30x30
+   - 3-4 players
+   - nutrients off
+   - purpose: early multi-opponent fit
+
+3. **S3: Medium growth field**
+   - ~40x40 to 75x75
+   - 5-6 players
+   - nutrients on
+   - purpose: first real campaign complexity band
+
+4. **S4: Mid-large pressure field**
+   - ~90x90 to 110x110
+   - 6-7 players
+   - nutrients on
+   - purpose: mid-campaign pressure testing
+
+5. **S5: Large late-game field**
+   - ~120x120 to 140x140
+   - 7-8 players
+   - nutrients on
+   - purpose: hard/elite candidate testing
+
+6. **S6: Endgame gauntlet**
+   - ~150x150 to 160x160
+   - 8 players
+   - nutrients on
+   - purpose: final-level / boss-support fit
+
+### Evaluation matrix
+
+For each campaign-eligible AI, maintain a matrix with:
+- current strategy ID
+- proposed campaign name / mold display name later
+- theme
+- default `CampaignDifficulty`
+- readability (design judgment)
+- volatility (design judgment + later simulation evidence)
+- scenario fit notes for S1-S6
+- proxy-facing difficulty observations
+- keep / review / boss-only / retire recommendation
+
+### Practical process
+
+1. characterize individual AIs in representative scenario buckets
+2. classify where each AI seems to fit best
+3. assemble level pools from AIs with compatible contextual fit
+4. validate actual level lineups with the player-proxy harness
+5. retest only the levels or AIs that look suspicious
+
+This should produce a much more robust campaign curve than relying on one static difficulty label per AI.
+
+## First-pass campaign AI evaluation matrix
+
+This is an intentionally rough first-pass matrix for discussion. It combines current metadata, simulation results, and design judgment. It should be revised as we gather more campaign-harness evidence.
+
+Legend:
+- **Readability**: how easily a player can understand the mold's gameplan from play/board state
+- **Volatility**: how swingy or inconsistent the mold is likely to feel across runs
+- **Scenario fit**: rough fit across S1-S6 (`poor`, `ok`, `good`, `best`)
+
+| Strategy | Theme | CampaignDifficulty | Readability | Volatility | S1 Tiny Duel | S2 Small Skirmish | S3 Medium Growth | S4 Mid-Large Pressure | S5 Large Hard | S6 Endgame | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| AI6 | TierCap / defense | Training | High | Low | best | good | ok | poor | poor | poor | Great tutorial mold; simple and readable. |
+| AI12 | Control | Easy | High | Low | good | best | good | ok | poor | poor | Good early bridge mold. |
+| Growth/Resilience | TierCap / defense | Easy | High | Low | good | good | good | ok | poor | poor | Solid readable filler; may be slightly stronger than pure onboarding molds. |
+| AI7 | Surge tempo | Medium | Medium | Medium | poor | ok | best | good | ok | poor | Better once board/player count supports tempo patterns. |
+| AI8 | Control | Medium | Medium | Medium | poor | good | best | good | ok | poor | Good mid-campaign generalist. |
+| AI9 | Control / cascade | Medium | Medium | Medium | poor | ok | good | best | good | ok | Better when the board is large enough for escalation. |
+| AI11 | Surge tempo | Medium | Medium | Medium/High | poor | ok | good | best | good | ok | More chaotic/swingy than simpler control lines. |
+| Grow>Kill>Reclaim(Econ) | Economy / reclamation | Medium | Medium | Medium | poor | ok | good | best | good | ok | Good generalist pressure/economy hybrid. |
+| Grow>Kill>Reclaim(Econ/Reclaim) | Reclamation | Medium | Medium | Medium | poor | ok | good | good | good | ok | Similar fit to the econ variant; may be redundant. |
+| Creeping>Necrosporulation | Bloom | Medium | High | Medium | poor | ok | good | best | good | ok | Readable bloom identity; good for teaching themed opponents. |
+| TST_AnabolicBeaconNecroRegressionCascade | Bloom / control | Medium | Medium | Medium/High | poor | poor | ok | good | ok | poor | More complex line; probably not for early campaign. |
+| TST_AnabolicCreepingNecroRegressionCascade | Bloom / control | Medium | Medium | Medium | poor | poor | good | good | good | ok | Better mid/late than early; more coherent than beacon version. |
+| AI13 | Control | Hard | Medium | Medium | poor | poor | ok | good | best | good | Hard control option; likely overlaps some with modern control lines. |
+| TST_BalancedControl_AnabolicFirst | Control | Hard | Medium | Low/Medium | poor | poor | ok | good | best | good | Strong stable hard control candidate. |
+| Power Mutations Max Econ | Economy spike | Hard | Low/Medium | High | poor | poor | ok | good | best | best | Strong late-game / spike identity; probably too swingy for early use. |
+| AI1 | Bloom / pressure | Elite | Medium | Medium/High | poor | poor | poor | ok | best | best | Elite late-game anchor. |
+| AI2 | Bloom / reclamation | Elite | Medium | Medium | poor | poor | poor | ok | best | best | Strong elite anchor; performed very well in late campaign sweep. |
+| AI3 | Control / cascade | Elite | Low/Medium | High | poor | poor | poor | ok | good | best | Strong but probably lower-readability than simpler molds. |
+| AI10 | Bloom / late spike | Elite | Medium | High | poor | poor | poor | ok | good | best | Good endgame support/boss-adjacent mold. |
+| TST_CreepingNecroRegressionCascade | Bloom / control | Elite | Medium | Medium | poor | poor | ok | good | best | best | Best proven Bloom line from recent sims; strong late-campaign candidate. |
+
+### Initial takeaways
+
+- **Best early-campaign candidates**: `AI6`, `AI12`, `Growth/Resilience`
+- **Best medium-band candidates**: `AI7`, `AI8`, `AI9`, `AI11`, `Grow>Kill>Reclaim(Econ)`, `Creeping>Necrosporulation`
+- **Best hard-band candidates**: `AI13`, `TST_BalancedControl_AnabolicFirst`, `Power Mutations Max Econ`, `TST_CreepingNecroRegressionCascade`
+- **Best elite/endgame anchors**: `AI1`, `AI2`, `AI3`, `AI10`, `TST_CreepingNecroRegressionCascade`
+- **Most likely overlap to resolve later**:
+  - `AI13` vs `TST_BalancedControl_AnabolicFirst`
+  - `Grow>Kill>Reclaim(Econ)` vs `Grow>Kill>Reclaim(Econ/Reclaim)`
+- **Most likely weak early-campaign fits despite being campaign-eligible**:
+  - `TST_AnabolicBeaconNecroRegressionCascade`
+  - `Power Mutations Max Econ`
+  - elite anchors (`AI1`, `AI2`, `AI3`, `AI10`)
+
+## Recommended keep / review / drop decisions
+
+### Keep in the curated campaign pool
+
+#### Early / onboarding
+- `AI6`
+- `AI12`
+- `Growth/Resilience`
+
+#### Medium / core campaign pool
+- `AI7`
+- `AI8`
+- `AI9`
+- `AI11`
+- `Grow>Kill>Reclaim(Econ)`
+- `Creeping>Necrosporulation`
+- `TST_AnabolicCreepingNecroRegressionCascade`
+
+#### Hard / late-campaign pool
+- `AI13`
+- `TST_BalancedControl_AnabolicFirst`
+- `Power Mutations Max Econ`
+- `TST_CreepingNecroRegressionCascade`
+
+#### Elite / endgame anchors
+- `AI1`
+- `AI2`
+- `AI3`
+- `AI10`
+
+### Keep for review, but not core pool yet
+- `Grow>Kill>Reclaim(Econ/Reclaim)`
+  - likely redundant with `Grow>Kill>Reclaim(Econ)` unless it proves meaningfully different in campaign feel
+- `TST_AnabolicBeaconNecroRegressionCascade`
+  - campaign-eligible, but probably too complex / too weakly differentiated for early inclusion
+
+### Review before inclusion
+- `AI4`
+- `AI5`
+  - still not characterized enough to safely place in the campaign curve
+
+### Drop from the first alpha campaign pass
+- none permanently retired yet
+- but do **not** try to use every eligible AI in the first alpha campaign curation pass
+
+## Recommended redundancy calls
+
+### Keep both for now
+- `AI13`
+- `TST_BalancedControl_AnabolicFirst`
+
+Reason:
+- they likely overlap, but they serve an important purpose as stable hard control options
+- we should only collapse them after campaign feel-testing shows they are too similar in practice
+
+### Prefer keeping this one in the core pool
+- keep: `Grow>Kill>Reclaim(Econ)`
+- review only: `Grow>Kill>Reclaim(Econ/Reclaim)`
+
+Reason:
+- the econ variant is the cleaner generalist inclusion
+- the reclaim-heavy variant can stay as a reserve if we later need more reclamation flavor
+
+### Prefer keeping this one in the core pool
+- keep: `TST_AnabolicCreepingNecroRegressionCascade`
+- review only: `TST_AnabolicBeaconNecroRegressionCascade`
+
+Reason:
+- the anabolic-creeping version seems like the cleaner medium-campaign Bloom/control candidate
+- the beacon version feels more niche and less obviously useful for first-pass campaign curation
+
+## Cleaner first-alpha campaign pool
+
+If we want a practical first shipping pool before the full random-pool system exists, I would use this:
+
+### Training / easy
+- `AI6`
+- `AI12`
+- `Growth/Resilience`
+
+### Medium
+- `AI7`
+- `AI8`
+- `AI9`
+- `AI11`
+- `Grow>Kill>Reclaim(Econ)`
+- `Creeping>Necrosporulation`
+- `TST_AnabolicCreepingNecroRegressionCascade`
+
+### Hard
+- `AI13`
+- `TST_BalancedControl_AnabolicFirst`
+- `Power Mutations Max Econ`
+- `TST_CreepingNecroRegressionCascade`
+
+### Elite
+- `AI1`
+- `AI2`
+- `AI3`
+- `AI10`
+
+This gives a pool that is:
+- broad enough to feel varied
+- small enough to reason about
+- less cluttered by near-duplicates and unreviewed strategies
+
+## First-alpha progression guidance
+
+Using the cleaned-up pool, the progression should roughly become:
+- **Campaign0-2:** training/easy only
+- **Campaign3-5:** easy + medium
+- **Campaign6-8:** medium-heavy with occasional hard preview
+- **Campaign9-11:** medium + hard
+- **Campaign12-14:** hard + elite, with occasional medium support
+
+That should produce a cleaner curve than trying to cram every campaign-eligible AI into the first alpha.
+
 ## Next steps
 
-1. Confirm or adjust the working themes/difficulty labels in the candidate table.
-2. Decide whether AI4 and AI5 stay in the campaign pool.
-3. Resolve likely redundant pairs.
-4. Refine the target level-by-level pool progression for Campaign0-14.
-5. After that, do the actual `CMP_*` rename migration and update Unity board presets.
-6. Then implement the campaign AI pool system and campaign-balance simulation harness.
+1. Review and adjust the keep/review/drop recommendations.
+2. Decide whether `AI4` and `AI5` need dedicated characterization runs before alpha.
+3. Use the cleaned-up pool to refine the target Campaign0-14 progression.
+4. After that, do the actual `CMP_*` rename migration and update Unity board presets.
+5. Then implement the campaign AI pool system.

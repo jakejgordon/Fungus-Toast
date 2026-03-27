@@ -16,4 +16,4 @@ MonoBehaviour:
   boardWidth: 10
   boardHeight: 10
   aiPlayers:
-  - strategyName: AI6
+  - strategyName: TST_Training_ResilientMycelium
