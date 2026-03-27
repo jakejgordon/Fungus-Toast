@@ -500,7 +500,7 @@ public class Tier4MutationTests
         public void RecordNecrotoxicConversionReclaim(int playerId, int necrotoxicConversions) { }
         public void RecordCatabolicRebirthResurrection(int playerId, int resurrectedCells) { }
         public void ReportNecrosporeDrop(int playerId, int count) { }
-        public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims) { }
+        public void RecordNecrophyticBloomPatchCreation(int playerId, int createdPatchCount) { }
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
         public void RecordMutationPointIncome(int playerId, int newMutationPoints) { }
         public void RecordBankedPoints(int playerId, int pointsBanked) { }
