@@ -405,7 +405,7 @@ namespace FungusToast.Core.Phases
             {
                 // Use the board's safe TryReclaimDeadCell method instead of calling FungalCell.Reclaim directly
                 // This method handles all the validation, board state updates, and event firing properly
-                bool success = board.TryReclaimDeadCell(killerPlayerId, deadCell.TileId, GrowthSource.NecrotoxicConversion);
+                bool success = board.TryReclaimDeadCell(killerPlayerId, deadCell.TileId, GrowthSource.NecrotoxicConversion, requireSameOwner: false);
                 
                 if (success)
                 {

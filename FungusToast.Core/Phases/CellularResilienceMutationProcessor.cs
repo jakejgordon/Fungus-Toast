@@ -151,9 +151,11 @@ namespace FungusToast.Core.Phases
 
             foreach (var deadTile in deadEnemyNeighbors)
             {
-                // Try to reclaim the dead cell using the helper (supports Reclamation Rhizomorphs retry)
-                bool success = ReclaimCellHelper.TryReclaimDeadCell(
-                    board, owner, deadTile.TileId, (float)baseChance, rng, GrowthSource.NecrohyphalInfiltration, observer);
+                bool success = false;
+                if (rng.NextDouble() < baseChance)
+                {
+                    success = board.TryReclaimDeadCell(owner.PlayerId, deadTile.TileId, GrowthSource.NecrohyphalInfiltration, requireSameOwner: false);
+                }
                 if (success)
                 {
                     // Track which tiles have already been reclaimed
@@ -266,9 +268,11 @@ namespace FungusToast.Core.Phases
 
                 foreach (var deadTile in nextTargets)
                 {
-                    // Try to reclaim the dead cell using the helper (supports Reclamation Rhizomorphs retry)
-                    bool success = ReclaimCellHelper.TryReclaimDeadCell(
-                        board, owner, deadTile.TileId, (float)cascadeChance, rng, GrowthSource.NecrohyphalInfiltration, observer);
+                    bool success = false;
+                    if (rng.NextDouble() < cascadeChance)
+                    {
+                        success = board.TryReclaimDeadCell(owner.PlayerId, deadTile.TileId, GrowthSource.NecrohyphalInfiltration, requireSameOwner: false);
+                    }
                     if (success)
                     {
                         alreadyReclaimed.Add(deadTile.TileId);
