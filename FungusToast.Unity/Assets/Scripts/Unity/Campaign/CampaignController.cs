@@ -23,7 +23,7 @@ namespace FungusToast.Unity.Campaign
         public bool HasActiveRun => State != null;
         public CampaignProgression.LevelSpec CurrentLevelSpec => (State != null && State.levelIndex < progression.MaxLevels) ? progression.Get(State.levelIndex) : null;
         public BoardPreset CurrentBoardPreset => CurrentLevelSpec?.boardPreset;
-        public IReadOnlyList<string> CurrentResolvedAiStrategyNames => State?.resolvedAiStrategyNames ?? Array.Empty<string>();
+        public IReadOnlyList<string> CurrentResolvedAiStrategyNames => State != null ? State.resolvedAiStrategyNames : Array.Empty<string>();
         public bool IsAwaitingAdaptationSelection => State != null && State.pendingAdaptationSelection;
         public bool IsCompleted => State != null && State.campaignCompleted;
         public CampaignVictorySnapshot PendingVictorySnapshot => State?.pendingVictorySnapshot;
