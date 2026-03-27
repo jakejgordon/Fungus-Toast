@@ -437,6 +437,33 @@ Using the cleaned-up pool, the progression should roughly become:
 
 That should produce a cleaner curve than trying to cram every campaign-eligible AI into the first alpha.
 
+## Earliest recommended campaign introduction levels
+
+This is a working guardrail for future tuning and for the upcoming pool system. Do not introduce these molds earlier than the levels below unless we are intentionally stress-testing difficulty.
+
+| Strategy | Earliest recommended level | Notes |
+|---|---:|---|
+| `CMP_TierCap_GrowthResilience_Easy` | 4 | Soft bridge mold; useful when a level needs to get slightly harder without spiking. |
+| `CMP_Economy_KillReclaim_Medium` | 5 | First strong modern medium generalist. |
+| `CMP_Bloom_CreepingNecro_Medium` | 6 | First readable Bloom-style medium. |
+| `CMP_Bloom_AnabolicRegression_Medium` | 8 | Better as a later-medium mold once players are handling layered opponents. |
+| `CMP_Bloom_BeaconRegression_Medium` | 9 | Sharper/more complex medium; avoid early introduction. |
+| `CMP_Economy_LateSpike_Hard` | 10 | Good first hard introduction candidate. |
+| `AI13` | 10 | Legacy hard control option; use carefully if kept alongside modern hard controls. |
+| `CMP_Control_AnabolicFirst_Hard` | 11 | Too punishing as an early hard preview. |
+| `CMP_Bloom_CreepingRegression_Elite` | 12 | Modern elite Bloom/control anchor. |
+| `AI10` | 12 | Elite late-spike pressure mold. |
+| `AI3` | 12 | Elite control/cascade; lower readability than simpler molds. |
+| `AI2` | 13 | Very strong elite anchor. |
+| `AI1` | 13 | Spiky elite pressure mold; too punishing when introduced too early. |
+
+### Rule of thumb by band
+- **Campaign0-4:** training / easy only
+- **Campaign5-7:** core mediums only
+- **Campaign8-9:** stronger or sharper mediums, but still avoid true hard spikes unless carefully cushioned
+- **Campaign10-11:** first real hard molds
+- **Campaign12-14:** hard + elite territory
+
 ## Next steps
 
 1. Review and adjust the keep/review/drop recommendations.

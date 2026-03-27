@@ -52,7 +52,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** 6-player starting-position tuning with clean fixed-slot validation, plus simulation tooling to support reproducible fairness tests
+- **Current focus:** campaign difficulty tuning with safe-proxy validation and curated campaign AI roster promotion
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
@@ -115,6 +115,22 @@ Use the following minimal workflow to preserve working memory across sessions:
 - **Open questions:** Remaining player counts below 5 have not been validated in this pass.
 - **Next steps:** Commit/push the selected 5-player layout and continue only if additional player-count tuning is desired.
 
+### 2026-03-27 (campaign modernization pass)
+- **Focus:** Promote curated modern molds into the actual campaign roster and retune Campaign5-10 using the safe-proxy harness.
+- **Changed:** Added `CMP_*` campaign-safe aliases to `AIRoster`, tagged them with campaign metadata, and rewired Campaign5-10 board presets to use the curated roster instead of legacy placeholder `AI4/AI5` or overly spiky elite inserts.
+- **Learned:** The real blocker was roster mismatch, not just preset composition: the balance harness only validated the `Campaign` set, so medium modern molds had to be promoted there first. Hard molds introduced before Campaign10 were consistently too sharp for the safe baseline in 20-game screens.
+- **Evidence:** See `/home/jakejgordon/Fungus-Toast/docs/campaign-modernization-2026-03-27.md` for commands, lineups, and per-level proxy results. Final proxy results were Campaign5 `25% (5/20)`, Campaign6 `25% (5/20)`, Campaign7 `5% (1/20)`, Campaign8 `10% (2/20)`, Campaign9 `5% (1/20)`, Campaign10 `10% (2/20)`.
+- **Open questions:** Campaign7 and Campaign9 still look a little harsher than the surrounding curve; decide whether to soften them further or accept them as current checkpoints pending broader campaign pass data.
+- **Next steps:** If continuing this thread, rerun Campaign7-10 at a larger sample size (50-100 games) after deciding whether to swap one medium mold in 7/9 for a weaker training/easy curve shaper.
+
+### 2026-03-27 (late-campaign continuation / blocker)
+- **Focus:** Continue safe-proxy campaign tuning upward into Campaign11-Campaign14.
+- **Changed:** Screened the currently authored late levels plus two softened curated candidate sets for Campaign12-14. Did not rewrite late board presets because the harness evidence did not justify picking a new lineup yet.
+- **Learned:** Campaign11 is at least survivable in short samples, but Campaign12-14 remain a real blocker. Even after removing duplicate elite anchors and substituting mostly medium/hard curated molds that obey the earliest-introduction guidance, the safe proxy still went `0/10` on every tested Campaign12-14 lineup.
+- **Evidence:** Baseline short screen results were Campaign11 `20.0% (2/10), avg living 1101.4, avg dead 1039.1`; Campaign12 `0.0% (0/10), avg living 1196.8, avg dead 982.2`; Campaign13 `0.0% (0/10), avg living 1191.4, avg dead 1213.4`; Campaign14 `0.0% (0/10), avg living 1368.1, avg dead 1227.9`. Additional candidate screens are recorded in `docs/campaign-modernization-2026-03-27.md`, and every Campaign12-14 candidate there also stayed at `0/10`.
+- **Open questions:** Is the blocker the proxy itself, fixed-slot late-board variance, or an implicit target-band mismatch where `0-5%` is actually acceptable for current late campaign?
+- **Next steps:** Before more preset churn, either (1) review/upgrade the safe player-proxy for late-game testing, or (2) explicitly decide acceptable proxy bands for Campaign12-14 and then rerun the best late candidates at a larger sample size.
+
 ### 2026-03-21 (4-player assumption / 3-player start)
 - **Focus:** Record the 4-player symmetry assumption and move on to 3-player tuning.
 - **Changed:** Added a symmetric 4-player fast-path reference for square boards and documented the assumption that 4-player square placement is geometrically even enough to treat as solved unless future evidence says otherwise.
@@ -140,6 +156,23 @@ Use the following minimal workflow to preserve working memory across sessions:
   - 2-8 players now use precomputed/scaled layouts
   - only other player counts fall back to search
 - **Next steps:** No further starting-position search is needed for the common square-board player counts unless future gameplay evidence suggests a new imbalance.
+
+### 2026-03-27 (campaign levels 5-7 retune)
+- **Focus:** Continue mid-campaign lineup tuning for Campaign5-Campaign7 using the existing `scripts/run_campaign_balance.py` / safe-player-proxy workflow.
+- **Changed:**
+  - `Campaign5` (`50x50 5 AI`): replaced `AI6` with `AI4`.
+  - `Campaign6` (`75x75 4 AI`): replaced `AI11` with `AI4`.
+  - `Campaign7` (`90x90 6 AI`): replaced the back half `AI11, AI8, AI6` with `AI5, AI4, AI12` after longer validation showed the lighter swap was still too soft.
+- **Learned:**
+  - The documented medium-campaign candidates like `Grow>Kill>Reclaim(Econ)` and `Creeping>Necrosporulation` are not currently available in the simulation's `Campaign` strategy set, so the campaign-balance harness can only validate the legacy `AI1`-`AI13`/training roster unless those newer molds are added to `RawCampaignStrategies`.
+  - Leaving `AI6` in Campaign5/7 created misleading results because it is still a training-tier mold, not a stable mid-campaign opponent.
+  - `AI13` was too spiky for this band: it reliably crushed Campaign7 validation and turned the level into an early wall rather than a cleaner ramp.
+- **Evidence (50-game validation, safe proxy = `TST_CampaignPlayer_SafeBaseline`):**
+  - `Campaign5` (`AI7, AI8, AI9, AI4, AI12`): proxy `12.0%` (`6/50`), avg alive `248.5`, avg dead `166.9`.
+  - `Campaign6` (`AI7, AI8, AI9, AI4`): proxy `22.0%` (`11/50`), avg alive `648.8`, avg dead `442.4`.
+  - `Campaign7` strongest validated legal candidate (`AI7, AI8, AI9, AI5, AI4, AI12`): proxy `8.0%` (`4/50`), avg alive `641.4`, avg dead `409.6`.
+- **Open questions:** If Campaign7 should stay closer to a 10-15% proxy band without leaning on legacy `AI12`, the next step is probably to add the newer curated medium molds into `RawCampaignStrategies` so the harness can validate the intended roster, not just the legacy IDs.
+- **Next steps:** Re-run the campaign-balance harness after any further strategy-set expansion, especially for Campaign7 where the best currently legal roster is serviceable but still skewed toward `AI12`.
 
 ## Session Checkpoint Template
 

@@ -16,9 +16,9 @@ MonoBehaviour:
   boardWidth: 120
   boardHeight: 120
   aiPlayers:
-  - strategyName: AI1
-  - strategyName: AI2
-  - strategyName: AI7
-  - strategyName: AI8
-  - strategyName: AI9
   - strategyName: AI11
+  - strategyName: CMP_Economy_KillReclaim_Medium
+  - strategyName: CMP_Bloom_CreepingNecro_Medium
+  - strategyName: CMP_Bloom_BeaconRegression_Medium
+  - strategyName: CMP_Control_AnabolicFirst_Hard
+  - strategyName: CMP_Economy_LateSpike_Hard
