@@ -14,6 +14,7 @@ This file is the top-level router for AI-assisted development in this repository
 - **Mycovariant authoring:** `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`
 - **Adaptation authoring:** `FungusToast.Core/docs/ADAPTATION_HELPER.md`
 - **Campaign systems and progression context:** `FungusToast.Core/docs/CAMPAIGN_HELPER.md`
+- **Campaign modernization / recent curated roster tuning results:** `docs/campaign-modernization-2026-03-27.md`
 - **Dominance diagnosis / controlled balance investigation:** `FungusToast.Core/docs/DOMINANCE_DIAGNOSIS_WORKFLOW.md`
 - **Gameplay balance levers and canonical constants:** `FungusToast.Core/docs/GAME_BALANCE_CONSTANTS.md`
 - **Unity UI architecture and service patterns:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`

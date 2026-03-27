@@ -15,11 +15,10 @@ MonoBehaviour:
   presetId: Campaign9
   boardWidth: 110
   boardHeight: 110
-  mutationTierMax: 5
   aiPlayers:
-  - strategyName: AI1
-  - strategyName: AI7
-  - strategyName: AI8
   - strategyName: AI9
   - strategyName: AI11
-  - strategyName: AI8
+  - strategyName: CMP_Economy_KillReclaim_Medium
+  - strategyName: CMP_Bloom_CreepingNecro_Medium
+  - strategyName: CMP_Bloom_BeaconRegression_Medium
+  - strategyName: CMP_Bloom_AnabolicRegression_Medium

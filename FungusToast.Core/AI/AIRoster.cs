@@ -76,6 +76,7 @@ namespace FungusToast.Core.AI
             StrategyRole role,
             StrategyLifecycle lifecycle,
             IReadOnlyCollection<DifficultyBand> difficultyBands,
+            CampaignDifficulty? campaignDifficulty,
             StrategyPool pools,
             IReadOnlyCollection<CounterTag> favoredAgainst,
             IReadOnlyCollection<CounterTag> weakAgainst,
@@ -90,6 +91,7 @@ namespace FungusToast.Core.AI
             Role = role;
             Lifecycle = lifecycle;
             DifficultyBands = difficultyBands;
+            CampaignDifficulty = campaignDifficulty;
             Pools = pools;
             FavoredAgainst = favoredAgainst;
             WeakAgainst = weakAgainst;
@@ -105,6 +107,7 @@ namespace FungusToast.Core.AI
         public StrategyRole Role { get; }
         public StrategyLifecycle Lifecycle { get; }
         public IReadOnlyCollection<DifficultyBand> DifficultyBands { get; }
+        public CampaignDifficulty? CampaignDifficulty { get; }
         public StrategyPool Pools { get; }
         public IReadOnlyCollection<CounterTag> FavoredAgainst { get; }
         public IReadOnlyCollection<CounterTag> WeakAgainst { get; }
@@ -533,6 +536,165 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.CatabolicRebirth)
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
+            ),
+            // Curated campaign aliases for modern roster use in board presets and campaign-balance harness.
+            new ParameterizedSpendingStrategy(
+                strategyName: "CMP_TierCap_GrowthResilience_Easy",
+                prioritizeHighTier: true,
+                maxTier: MutationTier.Tier3,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.CellularResilience
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "CMP_Economy_KillReclaim_Medium",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "CMP_Bloom_CreepingNecro_Medium",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "CMP_Bloom_BeaconRegression_Medium",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "CMP_Bloom_AnabolicRegression_Medium",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "CMP_Control_AnabolicFirst_Hard",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "CMP_Economy_LateSpike_Hard",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "CMP_Bloom_CreepingRegression_Elite",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            // Campaign balance harness: safe player-proxy baseline
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_CampaignPlayer_SafeBaseline",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 2),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Economy, MycovariantCategory.Resistance)
+            ),
+            // Training mold: slow resilient defense with visible resistant cells
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Training_ResilientMycelium",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 5),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, 5)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChitinFortification },
+                surgeAttemptTurnFrequency: 8,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Growth)
+            ),
+            // Training mold: reckless growth that overextends and burns points on a bad tendril plan
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Training_Overextender",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.CreepingMold, 2),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 5),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 2)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
+            ),
+            // Training mold: slow fungicide/resilience turtle that eventually shows adjacent poison
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Training_ToxicTurtle",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 3),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinCatabolism)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Economy)
             )
         };
 
@@ -1032,6 +1194,18 @@ namespace FungusToast.Core.AI
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyTheme.Control,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyTheme.Control,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyTheme.Control,
+                ["CMP_TierCap_GrowthResilience_Easy"] = StrategyTheme.TierCap,
+                ["CMP_Economy_KillReclaim_Medium"] = StrategyTheme.EconomyRamp,
+                ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
+                ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
+                ["CMP_Bloom_AnabolicRegression_Medium"] = StrategyTheme.Control,
+                ["CMP_Control_AnabolicFirst_Hard"] = StrategyTheme.Control,
+                ["CMP_Economy_LateSpike_Hard"] = StrategyTheme.LateGameSpike,
+                ["CMP_Bloom_CreepingRegression_Elite"] = StrategyTheme.Control,
+                ["TST_CampaignPlayer_SafeBaseline"] = StrategyTheme.Control,
+                ["TST_Training_ResilientMycelium"] = StrategyTheme.Defense,
+                ["TST_Training_Overextender"] = StrategyTheme.Mobility,
+                ["TST_Training_ToxicTurtle"] = StrategyTheme.Attrition,
                 ["Grow>Defend>Kill"] = StrategyTheme.Defense,
                 ["Grow>Kill>Reclaim(Econ)"] = StrategyTheme.EconomyRamp,
                 ["Grow>Kill>Reclaim(Econ/Reclaim)"] = StrategyTheme.Reclamation,
@@ -1047,6 +1221,10 @@ namespace FungusToast.Core.AI
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyStatus.Proven,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyStatus.Proven,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyStatus.Proven,
+                ["TST_CampaignPlayer_SafeBaseline"] = StrategyStatus.Testing,
+                ["TST_Training_ResilientMycelium"] = StrategyStatus.Testing,
+                ["TST_Training_Overextender"] = StrategyStatus.Testing,
+                ["TST_Training_ToxicTurtle"] = StrategyStatus.Testing,
             };
 
         private static readonly Dictionary<string, StrategyPowerTier> ExplicitPowerTiersByName =
@@ -1072,8 +1250,15 @@ namespace FungusToast.Core.AI
                 ["AI3"] = StrategyPowerTier.Strong,
                 ["AI10"] = StrategyPowerTier.Strong,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyPowerTier.Strong,
+                ["CMP_Bloom_CreepingRegression_Elite"] = StrategyPowerTier.Strong,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyPowerTier.Standard,
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyPowerTier.Standard,
+                ["CMP_Bloom_BeaconRegression_Medium"] = StrategyPowerTier.Standard,
+                ["CMP_Bloom_AnabolicRegression_Medium"] = StrategyPowerTier.Standard,
+                ["CMP_Economy_KillReclaim_Medium"] = StrategyPowerTier.Standard,
+                ["CMP_Bloom_CreepingNecro_Medium"] = StrategyPowerTier.Standard,
+                ["CMP_TierCap_GrowthResilience_Easy"] = StrategyPowerTier.Weak,
+                ["CMP_Control_AnabolicFirst_Hard"] = StrategyPowerTier.Strong,
                 ["TST_LateGameSpike"] = StrategyPowerTier.Spike,
                 ["Power Mutations Max Econ"] = StrategyPowerTier.Spike,
                 ["Best_MaxEcon_Surge10_HyphalSurge"] = StrategyPowerTier.Spike,
@@ -1104,6 +1289,18 @@ namespace FungusToast.Core.AI
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyRole.Experimental,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyRole.Experimental,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyRole.Boss,
+                ["CMP_TierCap_GrowthResilience_Easy"] = StrategyRole.Training,
+                ["CMP_Economy_KillReclaim_Medium"] = StrategyRole.Experimental,
+                ["CMP_Bloom_CreepingNecro_Medium"] = StrategyRole.Experimental,
+                ["CMP_Bloom_BeaconRegression_Medium"] = StrategyRole.Experimental,
+                ["CMP_Bloom_AnabolicRegression_Medium"] = StrategyRole.Experimental,
+                ["CMP_Control_AnabolicFirst_Hard"] = StrategyRole.Experimental,
+                ["CMP_Economy_LateSpike_Hard"] = StrategyRole.Boss,
+                ["CMP_Bloom_CreepingRegression_Elite"] = StrategyRole.Boss,
+                ["TST_CampaignPlayer_SafeBaseline"] = StrategyRole.Experimental,
+                ["TST_Training_ResilientMycelium"] = StrategyRole.Training,
+                ["TST_Training_Overextender"] = StrategyRole.Training,
+                ["TST_Training_ToxicTurtle"] = StrategyRole.Training,
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyRole.Experimental,
                 ["AI1"] = StrategyRole.Boss,
                 ["AI2"] = StrategyRole.Boss,
@@ -1125,6 +1322,18 @@ namespace FungusToast.Core.AI
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyLifecycle.Active,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyLifecycle.Active,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyLifecycle.Active,
+                ["CMP_TierCap_GrowthResilience_Easy"] = StrategyLifecycle.Active,
+                ["CMP_Economy_KillReclaim_Medium"] = StrategyLifecycle.Active,
+                ["CMP_Bloom_CreepingNecro_Medium"] = StrategyLifecycle.Active,
+                ["CMP_Bloom_BeaconRegression_Medium"] = StrategyLifecycle.Active,
+                ["CMP_Bloom_AnabolicRegression_Medium"] = StrategyLifecycle.Active,
+                ["CMP_Control_AnabolicFirst_Hard"] = StrategyLifecycle.Active,
+                ["CMP_Economy_LateSpike_Hard"] = StrategyLifecycle.Active,
+                ["CMP_Bloom_CreepingRegression_Elite"] = StrategyLifecycle.Active,
+                ["TST_CampaignPlayer_SafeBaseline"] = StrategyLifecycle.Active,
+                ["TST_Training_ResilientMycelium"] = StrategyLifecycle.Active,
+                ["TST_Training_Overextender"] = StrategyLifecycle.Active,
+                ["TST_Training_ToxicTurtle"] = StrategyLifecycle.Active,
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyLifecycle.Active,
                 ["TST_FortressResilience"] = StrategyLifecycle.NeedsTuning,
                 ["TST_OpportunisticCounterplay"] = StrategyLifecycle.NeedsTuning,
@@ -1155,7 +1364,56 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = new[] { DifficultyBand.Normal },
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = new[] { DifficultyBand.Normal },
+                ["CMP_TierCap_GrowthResilience_Easy"] = new[] { DifficultyBand.Easy },
+                ["CMP_Economy_KillReclaim_Medium"] = new[] { DifficultyBand.Normal },
+                ["CMP_Bloom_CreepingNecro_Medium"] = new[] { DifficultyBand.Normal },
+                ["CMP_Bloom_BeaconRegression_Medium"] = new[] { DifficultyBand.Normal },
+                ["CMP_Bloom_AnabolicRegression_Medium"] = new[] { DifficultyBand.Normal },
+                ["CMP_Control_AnabolicFirst_Hard"] = new[] { DifficultyBand.Hard },
+                ["CMP_Economy_LateSpike_Hard"] = new[] { DifficultyBand.Hard },
+                ["CMP_Bloom_CreepingRegression_Elite"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_CreepingNecroRegressionCascade"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["TST_CampaignPlayer_SafeBaseline"] = new[] { DifficultyBand.Normal },
+                ["TST_Training_ResilientMycelium"] = new[] { DifficultyBand.Easy },
+                ["TST_Training_Overextender"] = new[] { DifficultyBand.Easy },
+                ["TST_Training_ToxicTurtle"] = new[] { DifficultyBand.Easy },
+            };
+
+        private static readonly Dictionary<string, CampaignDifficulty> ExplicitCampaignDifficultyByName =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["AI6"] = CampaignDifficulty.Training,
+                ["AI12"] = CampaignDifficulty.Easy,
+                ["AI13"] = CampaignDifficulty.Hard,
+                ["AI7"] = CampaignDifficulty.Medium,
+                ["AI8"] = CampaignDifficulty.Medium,
+                ["AI9"] = CampaignDifficulty.Medium,
+                ["AI11"] = CampaignDifficulty.Medium,
+                ["AI1"] = CampaignDifficulty.Elite,
+                ["AI2"] = CampaignDifficulty.Elite,
+                ["AI3"] = CampaignDifficulty.Elite,
+                ["AI10"] = CampaignDifficulty.Elite,
+                ["Growth/Resilience"] = CampaignDifficulty.Easy,
+                ["Grow>Kill>Reclaim(Econ)"] = CampaignDifficulty.Medium,
+                ["Grow>Kill>Reclaim(Econ/Reclaim)"] = CampaignDifficulty.Medium,
+                ["Creeping>Necrosporulation"] = CampaignDifficulty.Medium,
+                ["TST_CampaignPlayer_SafeBaseline"] = CampaignDifficulty.Medium,
+                ["TST_Training_ResilientMycelium"] = CampaignDifficulty.Training,
+                ["TST_Training_Overextender"] = CampaignDifficulty.Easy,
+                ["TST_Training_ToxicTurtle"] = CampaignDifficulty.Easy,
+                ["TST_AnabolicBeaconNecroRegressionCascade"] = CampaignDifficulty.Medium,
+                ["TST_AnabolicCreepingNecroRegressionCascade"] = CampaignDifficulty.Medium,
+                ["CMP_TierCap_GrowthResilience_Easy"] = CampaignDifficulty.Easy,
+                ["CMP_Economy_KillReclaim_Medium"] = CampaignDifficulty.Medium,
+                ["CMP_Bloom_CreepingNecro_Medium"] = CampaignDifficulty.Medium,
+                ["CMP_Bloom_BeaconRegression_Medium"] = CampaignDifficulty.Medium,
+                ["CMP_Bloom_AnabolicRegression_Medium"] = CampaignDifficulty.Medium,
+                ["TST_BalancedControl_AnabolicFirst"] = CampaignDifficulty.Hard,
+                ["CMP_Control_AnabolicFirst_Hard"] = CampaignDifficulty.Hard,
+                ["Power Mutations Max Econ"] = CampaignDifficulty.Hard,
+                ["CMP_Economy_LateSpike_Hard"] = CampaignDifficulty.Hard,
+                ["CMP_Bloom_CreepingRegression_Elite"] = CampaignDifficulty.Elite,
+                ["TST_CreepingNecroRegressionCascade"] = CampaignDifficulty.Elite,
             };
 
         private static readonly Dictionary<string, CounterTag[]> ExplicitFavoredAgainstByName =
@@ -1397,6 +1655,7 @@ namespace FungusToast.Core.AI
             var role = GetRoleForStrategy(strategy, strategySet);
             var lifecycle = GetLifecycleForStrategy(strategy, strategySet);
             var difficultyBands = GetDifficultyBandsForStrategy(strategy, strategySet);
+            var campaignDifficulty = GetCampaignDifficultyForStrategy(strategy, strategySet);
             var pools = GetPoolsForStrategy(strategySet);
             var favoredAgainst = GetFavoredAgainstForStrategy(strategy);
             var weakAgainst = GetWeakAgainstForStrategy(strategy);
@@ -1412,6 +1671,7 @@ namespace FungusToast.Core.AI
                 role,
                 lifecycle,
                 difficultyBands,
+                campaignDifficulty,
                 pools,
                 favoredAgainst,
                 weakAgainst,
@@ -1430,6 +1690,7 @@ namespace FungusToast.Core.AI
                 profile.Role,
                 profile.Lifecycle,
                 profile.DifficultyBands,
+                profile.CampaignDifficulty,
                 profile.Pools,
                 profile.Intent,
                 profile.Notes,
@@ -1536,6 +1797,20 @@ namespace FungusToast.Core.AI
             {
                 StrategySetEnum.Campaign => new[] { DifficultyBand.Normal },
                 _ => Array.Empty<DifficultyBand>()
+            };
+        }
+
+        public static CampaignDifficulty? GetCampaignDifficultyForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
+        {
+            if (ExplicitCampaignDifficultyByName.TryGetValue(strategy.StrategyName, out var explicitDifficulty))
+            {
+                return explicitDifficulty;
+            }
+
+            return strategySet switch
+            {
+                StrategySetEnum.Campaign => CampaignDifficulty.Medium,
+                _ => null
             };
         }
 

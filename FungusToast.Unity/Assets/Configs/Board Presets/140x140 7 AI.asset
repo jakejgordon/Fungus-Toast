@@ -15,7 +15,6 @@ MonoBehaviour:
   presetId: Campaign12
   boardWidth: 140
   boardHeight: 140
-  mutationTierMax: 6
   aiPlayers:
   - strategyName: AI1
   - strategyName: AI2

@@ -19,19 +19,22 @@ namespace FungusToast.Unity
         private readonly Func<int> getConfiguredHumanCount;
         private readonly Func<GameMode> getGameMode;
         private readonly Func<BoardPreset> getCampaignBoardPreset;
+        private readonly Func<IReadOnlyList<string>> getResolvedCampaignAiStrategyNames;
 
         public PlayerInitializer(
             GridVisualizer gridVisualizer,
             GameUIManager ui,
             Func<int> getConfiguredHumanCount,
             Func<GameMode> getGameMode,
-            Func<BoardPreset> getCampaignBoardPreset)
+            Func<BoardPreset> getCampaignBoardPreset,
+            Func<IReadOnlyList<string>> getResolvedCampaignAiStrategyNames)
         {
             this.gridVisualizer = gridVisualizer;
             this.ui = ui;
             this.getConfiguredHumanCount = getConfiguredHumanCount;
             this.getGameMode = getGameMode;
             this.getCampaignBoardPreset = getCampaignBoardPreset;
+            this.getResolvedCampaignAiStrategyNames = getResolvedCampaignAiStrategyNames;
         }
 
         // totalPlayers: authoritative total player count for this game (from GameManager)
@@ -104,30 +107,31 @@ namespace FungusToast.Unity
             if (getGameMode() == GameMode.Campaign)
             {
                 var preset = getCampaignBoardPreset();
-                if (preset != null && preset.aiPlayers != null && preset.aiPlayers.Count > 0)
+                var configuredNames = getResolvedCampaignAiStrategyNames?.Invoke() ?? Array.Empty<string>();
+                if (preset != null && configuredNames.Count > 0)
                 {
                     var resolved = new List<IMutationSpendingStrategy>();
-                    for (int i = 0; i < preset.aiPlayers.Count && resolved.Count < remaining; i++)
+                    for (int i = 0; i < configuredNames.Count && resolved.Count < remaining; i++)
                     {
-                        var aiSpec = preset.aiPlayers[i];
-                        if (aiSpec == null || string.IsNullOrWhiteSpace(aiSpec.strategyName))
+                        string strategyName = configuredNames[i];
+                        if (string.IsNullOrWhiteSpace(strategyName))
                         {
                             continue;
                         }
 
-                        if (AIRoster.CampaignStrategiesByName.TryGetValue(aiSpec.strategyName, out var campaignStrategy))
+                        if (AIRoster.CampaignStrategiesByName.TryGetValue(strategyName, out var campaignStrategy))
                         {
                             resolved.Add(campaignStrategy);
                             continue;
                         }
 
-                        if (AIRoster.ProvenStrategiesByName.TryGetValue(aiSpec.strategyName, out var provenStrategy))
+                        if (AIRoster.ProvenStrategiesByName.TryGetValue(strategyName, out var provenStrategy))
                         {
                             resolved.Add(provenStrategy);
                             continue;
                         }
 
-                        Debug.LogWarning($"[PlayerInitializer] Unknown campaign AI strategy '{aiSpec.strategyName}'.");
+                        Debug.LogWarning($"[PlayerInitializer] Unknown campaign AI strategy '{strategyName}'.");
                     }
 
                     if (resolved.Count == remaining)
@@ -135,7 +139,7 @@ namespace FungusToast.Unity
                         return resolved;
                     }
 
-                    Debug.LogWarning("[PlayerInitializer] Campaign preset AI lineup was incomplete; filling with random campaign strategies.");
+                    Debug.LogWarning($"[PlayerInitializer] Campaign preset '{preset.presetId}' resolved {resolved.Count}/{remaining} AI strategies; filling with random campaign strategies.");
                     var fallbackCampaign = AIRoster.GetStrategies(remaining, StrategySetEnum.Campaign)
                         .OrderBy(_ => UnityEngine.Random.value)
                         .ToList();

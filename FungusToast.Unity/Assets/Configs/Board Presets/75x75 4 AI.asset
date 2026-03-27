@@ -15,9 +15,8 @@ MonoBehaviour:
   presetId: Campaign6
   boardWidth: 75
   boardHeight: 75
-  mutationTierMax: 4
   aiPlayers:
   - strategyName: AI7
   - strategyName: AI8
   - strategyName: AI9
-  - strategyName: AI11
+  - strategyName: CMP_Bloom_CreepingNecro_Medium

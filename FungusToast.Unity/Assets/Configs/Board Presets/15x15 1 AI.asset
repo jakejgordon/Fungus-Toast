@@ -15,6 +15,9 @@ MonoBehaviour:
   presetId: Campaign1
   boardWidth: 15
   boardHeight: 15
-  mutationTierMax: 2
-  aiPlayers:
-  - strategyName: AI12
+  aiPlayers: []
+  pooledAiPlayerCount: 1
+  aiStrategyPool:
+  - TST_Training_Overextender
+  - AI12
+  - Growth/Resilience

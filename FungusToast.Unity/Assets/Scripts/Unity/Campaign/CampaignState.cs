@@ -12,7 +12,6 @@ namespace FungusToast.Unity.Campaign
         public string runId; // GUID string
         public int levelIndex; // current level (0-based)
         public List<string> selectedAdaptationIds = new(); // unique adaptation ids picked during this run
-        public int unlockedMutationTierMax; // enforced ceiling on mutation tiers
         public string boardPresetId; // preset identifier for board size/layout
         public int seed; // RNG seed for reproducibility
         public int boardWidth; // persisted board width for current level
@@ -21,6 +20,7 @@ namespace FungusToast.Unity.Campaign
         public bool pendingAdaptationSelection; // true when player must pick adaptation before continuing
         public bool campaignCompleted; // true after final victory
         public CampaignVictorySnapshot pendingVictorySnapshot; // serialized scoreboard snapshot for pending adaptation resumes
+        public List<string> resolvedAiStrategyNames = new(); // active AI lineup for current level; persisted so pooled levels resume consistently
     }
 
     [Serializable]
