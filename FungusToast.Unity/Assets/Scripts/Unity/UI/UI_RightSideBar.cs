@@ -14,6 +14,9 @@ namespace FungusToast.Unity.UI
 {
     public class UI_RightSidebar : MonoBehaviour
     {
+        private const string ScoreboardCoachmarkSeenKey = "Onboarding.ScoreboardWinConditionSeen";
+        private const string ScoreboardCoachmarkTitleText = "How to Win";
+        private const string ScoreboardCoachmarkBodyText = "This scoreboard is the clearest way to see who is ahead.\n\nWatch the Alive column. When the toast fills up and the game ends, the colony with the most living cells wins.";
         private const float TopStatsScale = 1.18f;
         private const float SummaryHeaderScale = 1.10f;
         private const float SummaryIconColumnWidth = 50f;
@@ -32,6 +35,12 @@ namespace FungusToast.Unity.UI
         private GridVisualizer gridVisualizer;
         private GameBoard board;
         private int? perspectivePlayerId;
+        private RectTransform scoreboardCoachmarkRoot;
+        private CanvasGroup scoreboardCoachmarkCanvasGroup;
+        private TextMeshProUGUI scoreboardCoachmarkTitleTextLabel;
+        private TextMeshProUGUI scoreboardCoachmarkBodyTextLabel;
+        private Button scoreboardCoachmarkCloseButton;
+        private bool hasDismissedScoreboardCoachmarkThisGame;
 
         private Dictionary<int, PlayerSummaryRow> playerSummaryRows = new();
 
@@ -141,6 +150,7 @@ namespace FungusToast.Unity.UI
                 {
                     label.alignment = TextAlignmentOptions.Midline;
                 }
+
             }
         }
 
@@ -221,6 +231,8 @@ namespace FungusToast.Unity.UI
         public void SetBoard(GameBoard gameBoard)
         {
             board = gameBoard;
+            hasDismissedScoreboardCoachmarkThisGame = false;
+            HideScoreboardCoachmarkImmediate(false);
         }
 
         public void InitializePlayerSummaries(List<Player> players)
@@ -352,6 +364,191 @@ namespace FungusToast.Unity.UI
             {
                 endgameCountdownText.text = message;
                 endgameCountdownText.gameObject.SetActive(!string.IsNullOrEmpty(message));
+            }
+        }
+
+        public void TryShowScoreboardWinConditionCoachmark(int currentRound)
+        {
+            if (currentRound < 2 || hasDismissedScoreboardCoachmarkThisGame)
+            {
+                return;
+            }
+
+            var gameManager = GameManager.Instance;
+            bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
+            if (!forceFirstGame && PlayerPrefs.GetInt(ScoreboardCoachmarkSeenKey, 0) != 0)
+            {
+                return;
+            }
+
+            if (gameManager != null && gameManager.IsFastForwarding)
+            {
+                return;
+            }
+
+            EnsureScoreboardCoachmarkUi();
+            if (scoreboardCoachmarkRoot == null || scoreboardCoachmarkCanvasGroup == null)
+            {
+                return;
+            }
+
+            scoreboardCoachmarkBodyTextLabel.text = ScoreboardCoachmarkBodyText;
+            scoreboardCoachmarkRoot.gameObject.SetActive(true);
+            scoreboardCoachmarkRoot.SetAsLastSibling();
+            scoreboardCoachmarkCanvasGroup.alpha = 1f;
+            scoreboardCoachmarkCanvasGroup.blocksRaycasts = true;
+            scoreboardCoachmarkCanvasGroup.interactable = true;
+        }
+
+        private void EnsureScoreboardCoachmarkUi()
+        {
+            if (scoreboardCoachmarkRoot != null)
+            {
+                return;
+            }
+
+            if (transform == null)
+            {
+                return;
+            }
+
+            var rootObject = new GameObject("UI_ScoreboardCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
+            rootObject.transform.SetParent(transform, false);
+
+            scoreboardCoachmarkRoot = rootObject.GetComponent<RectTransform>();
+            scoreboardCoachmarkRoot.anchorMin = new Vector2(0f, 1f);
+            scoreboardCoachmarkRoot.anchorMax = new Vector2(0f, 1f);
+            scoreboardCoachmarkRoot.pivot = new Vector2(1f, 1f);
+            scoreboardCoachmarkRoot.anchoredPosition = new Vector2(-16f, -160f);
+            scoreboardCoachmarkRoot.sizeDelta = new Vector2(360f, 190f);
+
+            scoreboardCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
+            scoreboardCoachmarkCanvasGroup.alpha = 0f;
+            scoreboardCoachmarkCanvasGroup.blocksRaycasts = false;
+            scoreboardCoachmarkCanvasGroup.interactable = false;
+
+            var background = rootObject.GetComponent<Image>();
+            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Info, 0.16f);
+            backgroundColor.a = 0.98f;
+            background.color = backgroundColor;
+            background.raycastTarget = true;
+
+            var outline = rootObject.GetComponent<Outline>();
+            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.8f);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(rootObject.transform, false);
+
+            var titleRect = titleObject.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0.5f, 1f);
+            titleRect.offsetMin = new Vector2(14f, -48f);
+            titleRect.offsetMax = new Vector2(-52f, -12f);
+
+            scoreboardCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
+            scoreboardCoachmarkTitleTextLabel.text = ScoreboardCoachmarkTitleText;
+            scoreboardCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
+            scoreboardCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
+            scoreboardCoachmarkTitleTextLabel.fontSize = 24f;
+            scoreboardCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
+            scoreboardCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            scoreboardCoachmarkTitleTextLabel.overflowMode = TextOverflowModes.Ellipsis;
+            scoreboardCoachmarkTitleTextLabel.raycastTarget = false;
+
+            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
+            bodyObject.transform.SetParent(rootObject.transform, false);
+
+            var bodyRect = bodyObject.GetComponent<RectTransform>();
+            bodyRect.anchorMin = new Vector2(0f, 0f);
+            bodyRect.anchorMax = new Vector2(1f, 1f);
+            bodyRect.offsetMin = new Vector2(14f, 14f);
+            bodyRect.offsetMax = new Vector2(-14f, -50f);
+
+            scoreboardCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
+            scoreboardCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
+            scoreboardCoachmarkBodyTextLabel.fontSize = 19f;
+            scoreboardCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
+            scoreboardCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
+            scoreboardCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
+            scoreboardCoachmarkBodyTextLabel.raycastTarget = false;
+
+            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            closeObject.transform.SetParent(rootObject.transform, false);
+
+            var closeRect = closeObject.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(1f, 1f);
+            closeRect.anchorMax = new Vector2(1f, 1f);
+            closeRect.pivot = new Vector2(1f, 1f);
+            closeRect.sizeDelta = new Vector2(34f, 34f);
+            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+
+            var closeImage = closeObject.GetComponent<Image>();
+            closeImage.color = UIStyleTokens.Surface.PanelElevated;
+
+            scoreboardCoachmarkCloseButton = closeObject.GetComponent<Button>();
+            UIStyleTokens.Button.ApplyStyle(scoreboardCoachmarkCloseButton);
+            scoreboardCoachmarkCloseButton.onClick.RemoveAllListeners();
+            scoreboardCoachmarkCloseButton.onClick.AddListener(OnScoreboardCoachmarkDismissed);
+
+            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            closeLabelObject.transform.SetParent(closeObject.transform, false);
+
+            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
+            closeLabelRect.anchorMin = Vector2.zero;
+            closeLabelRect.anchorMax = Vector2.one;
+            closeLabelRect.offsetMin = Vector2.zero;
+            closeLabelRect.offsetMax = Vector2.zero;
+
+            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
+            closeLabel.text = "X";
+            closeLabel.color = UIStyleTokens.Text.Primary;
+            closeLabel.fontStyle = FontStyles.Bold;
+            closeLabel.fontSize = 20f;
+            closeLabel.alignment = TextAlignmentOptions.Center;
+            closeLabel.raycastTarget = false;
+
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                scoreboardCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
+                scoreboardCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
+                closeLabel.font = TMP_Settings.defaultFontAsset;
+            }
+
+            rootObject.SetActive(false);
+        }
+
+        private void OnScoreboardCoachmarkDismissed()
+        {
+            hasDismissedScoreboardCoachmarkThisGame = true;
+            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
+            if (!forceFirstGame)
+            {
+                PlayerPrefs.SetInt(ScoreboardCoachmarkSeenKey, 1);
+                PlayerPrefs.Save();
+            }
+
+            HideScoreboardCoachmarkImmediate(false);
+        }
+
+        private void HideScoreboardCoachmarkImmediate(bool resetSessionDismissal)
+        {
+            if (resetSessionDismissal)
+            {
+                hasDismissedScoreboardCoachmarkThisGame = false;
+            }
+
+            if (scoreboardCoachmarkCanvasGroup != null)
+            {
+                scoreboardCoachmarkCanvasGroup.alpha = 0f;
+                scoreboardCoachmarkCanvasGroup.blocksRaycasts = false;
+                scoreboardCoachmarkCanvasGroup.interactable = false;
+            }
+
+            if (scoreboardCoachmarkRoot != null)
+            {
+                scoreboardCoachmarkRoot.gameObject.SetActive(false);
             }
         }
 

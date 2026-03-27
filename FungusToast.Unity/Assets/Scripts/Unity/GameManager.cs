@@ -811,6 +811,10 @@ namespace FungusToast.Unity
             }
 
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
+            if (humanPlayers.Count > 0)
+            {
+                gameUIManager.RightSidebar?.TryShowScoreboardWinConditionCoachmark(Board.CurrentRound);
+            }
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
             gameUIManager.GameLogRouter?.OnPhaseStart("Mutation");
             if (!pendingAlphaMutationOnboarding)
