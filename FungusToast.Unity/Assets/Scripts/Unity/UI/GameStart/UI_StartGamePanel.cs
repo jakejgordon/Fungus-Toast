@@ -99,11 +99,22 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void OnEnable()
         {
+            ResetSelectionState();
             EnsureRuntimeLayoutScaffold();
             testingCardController?.RefreshDropdownOptions();
             testingCardController?.RefreshVisualState();
             RefreshTestingSectionLayout();
             UpdateSetupStepState();
+        }
+
+        private void ResetSelectionState()
+        {
+            selectedPlayerCount = null;
+            selectedHumanPlayerCount = 1;
+            ResetMoldSelectionState();
+            UpdateButtonVisuals();
+            UpdateHumanPlayerButtonVisuals();
+            UpdatePlayerSummaryLabel();
         }
 
         private void ValidateSerializedRefs()
