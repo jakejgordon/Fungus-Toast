@@ -203,7 +203,8 @@ namespace FungusToast.Unity
                 gameUIManager,
                 () => configuredHumanPlayerCount,
                 () => CurrentGameMode,
-                () => campaignController?.CurrentBoardPreset);
+                () => campaignController?.CurrentBoardPreset,
+                () => campaignController?.CurrentResolvedAiStrategyNames);
             hotseatTurnManager = new HotseatTurnManager(
                 gameUIManager,
                 hotseatTurnPrompt,
@@ -272,7 +273,7 @@ namespace FungusToast.Unity
                 boardHeight = preset.boardHeight;
             }
             gridVisualizer?.SetBoardMedium(preset?.boardMedium);
-            int totalPlayers =1 + (preset?.aiPlayers?.Count ??0);
+            int totalPlayers = 1 + (campaignController.GetCurrentAiPlayerCount());
             SetHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
             InitializeGame(totalPlayers);
         }
@@ -302,7 +303,7 @@ namespace FungusToast.Unity
                 boardHeight = preset.boardHeight;
             }
             gridVisualizer?.SetBoardMedium(preset?.boardMedium);
-            int totalPlayers =1 + (preset?.aiPlayers?.Count ??0);
+            int totalPlayers = 1 + campaignController.GetCurrentAiPlayerCount();
             SetHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
             InitializeGame(totalPlayers);
         }
@@ -319,7 +320,7 @@ namespace FungusToast.Unity
                     boardHeight = presetFallback.boardHeight;
                 }
 
-                int totalPlayersFallback = 1 + (presetFallback?.aiPlayers?.Count ?? 0);
+                int totalPlayersFallback = 1 + campaignController.GetCurrentAiPlayerCount();
                 SetHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
                 InitializeGame(totalPlayersFallback);
                 return;

@@ -20,6 +20,7 @@ namespace FungusToast.Unity.Campaign
         public bool pendingAdaptationSelection; // true when player must pick adaptation before continuing
         public bool campaignCompleted; // true after final victory
         public CampaignVictorySnapshot pendingVictorySnapshot; // serialized scoreboard snapshot for pending adaptation resumes
+        public List<string> resolvedAiStrategyNames = new(); // active AI lineup for current level; persisted so pooled levels resume consistently
     }
 
     [Serializable]

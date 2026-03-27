@@ -56,14 +56,17 @@ Configured in assets under:
 `BoardPreset` fields:
 - `presetId`
 - `boardWidth`, `boardHeight`
-- `aiPlayers`: ordered list of strategy names (campaign should ultimately use curated Proven strategy IDs, not rely on legacy `AI1..AI13` names)
+- `aiPlayers`: ordered fixed lineup of AI specs; preserves current behavior and remains the preferred option when a level wants exact opponents
+- `pooledAiPlayerCount`: optional active AI count when using a strategy pool instead of a fixed lineup
+- `aiStrategyPool`: optional pool of eligible strategy IDs for the level
 
 Runtime usage:
-- In campaign mode, `PlayerInitializer` reads `BoardPreset.aiPlayers` and resolves each `strategyName` via:
+- In campaign mode, fixed lineups still win: if `BoardPreset.aiPlayers` is populated, `PlayerInitializer` resolves those exact names via:
   - `AIRoster.CampaignStrategiesByName`
   - fallback: `AIRoster.ProvenStrategiesByName`
+- If the fixed lineup is empty but `aiStrategyPool` is populated, `CampaignController` deterministically selects `pooledAiPlayerCount` unique strategy names from the eligible pool for that run/level and persists the resolved lineup in campaign save state so resume does not reshuffle opponents.
 
-If lineup is invalid/incomplete, a random campaign fallback is used.
+If the resolved lineup is invalid/incomplete, a random campaign fallback is used.
 
 ## Difficulty Buckets
 

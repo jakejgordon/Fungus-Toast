@@ -15,5 +15,9 @@ MonoBehaviour:
   presetId: Campaign1
   boardWidth: 15
   boardHeight: 15
-  aiPlayers:
-  - strategyName: TST_Training_Overextender
+  aiPlayers: []
+  pooledAiPlayerCount: 1
+  aiStrategyPool:
+  - TST_Training_Overextender
+  - AI12
+  - Growth/Resilience

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core.AI;
 using FungusToast.Core.Campaign;
 using UnityEngine;
 
@@ -22,6 +23,7 @@ namespace FungusToast.Unity.Campaign
         public bool HasActiveRun => State != null;
         public CampaignProgression.LevelSpec CurrentLevelSpec => (State != null && State.levelIndex < progression.MaxLevels) ? progression.Get(State.levelIndex) : null;
         public BoardPreset CurrentBoardPreset => CurrentLevelSpec?.boardPreset;
+        public IReadOnlyList<string> CurrentResolvedAiStrategyNames => State?.resolvedAiStrategyNames ?? Array.Empty<string>();
         public bool IsAwaitingAdaptationSelection => State != null && State.pendingAdaptationSelection;
         public bool IsCompleted => State != null && State.campaignCompleted;
         public CampaignVictorySnapshot PendingVictorySnapshot => State?.pendingVictorySnapshot;
@@ -44,7 +46,8 @@ namespace FungusToast.Unity.Campaign
                 humanMoldIndex = Mathf.Max(0, humanMoldIndex),
                 pendingAdaptationSelection = false,
                 campaignCompleted = false,
-                pendingVictorySnapshot = null
+                pendingVictorySnapshot = null,
+                resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, 0)
             };
             CampaignSaveService.Save(State);
             Debug.Log($"[CampaignController] New campaign started. RunId={State.runId} Preset={preset.presetId}");
@@ -61,10 +64,13 @@ namespace FungusToast.Unity.Campaign
             }
             State = loaded;
             State.selectedAdaptationIds ??= new List<string>();
+            State.resolvedAiStrategyNames ??= new List<string>();
             if (!State.pendingAdaptationSelection)
             {
                 State.pendingVictorySnapshot = null;
             }
+
+            EnsureResolvedAiLineup();
             Debug.Log($"[CampaignController] Resumed campaign RunId={State.runId} Level={State.levelIndex} PresetId={State.boardPresetId}");
         }
 
@@ -265,6 +271,7 @@ namespace FungusToast.Unity.Campaign
             State.boardWidth = preset.boardWidth;
             State.boardHeight = preset.boardHeight;
             State.campaignCompleted = false;
+            State.resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, targetIndex);
             // Seed retained across victories for reproducibility
             CampaignSaveService.Save(State);
             Debug.Log($"[CampaignController] Advanced to level {State.levelIndex}. Preset={preset.presetId}");
@@ -297,8 +304,111 @@ namespace FungusToast.Unity.Campaign
             State.pendingAdaptationSelection = false;
             State.campaignCompleted = false;
             State.pendingVictorySnapshot = null;
+            State.resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, 0);
             CampaignSaveService.Save(State);
             Debug.Log($"[CampaignController] Run reset after defeat. New RunId={State.runId} Preset={preset.presetId}");
+        }
+
+        public int GetCurrentAiPlayerCount()
+        {
+            if (State?.resolvedAiStrategyNames != null && State.resolvedAiStrategyNames.Count > 0)
+            {
+                return State.resolvedAiStrategyNames.Count;
+            }
+
+            return CurrentBoardPreset?.GetConfiguredAiPlayerCount() ?? 0;
+        }
+
+        private void EnsureResolvedAiLineup()
+        {
+            var preset = CurrentBoardPreset;
+            if (preset == null)
+            {
+                return;
+            }
+
+            State.resolvedAiStrategyNames ??= new List<string>();
+            if (State.resolvedAiStrategyNames.Count > 0)
+            {
+                return;
+            }
+
+            State.resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, State.levelIndex);
+            CampaignSaveService.Save(State);
+        }
+
+        private List<string> BuildResolvedAiStrategyNames(BoardPreset preset, int levelIndex)
+        {
+            var resolved = new List<string>();
+            if (preset == null)
+            {
+                return resolved;
+            }
+
+            if (preset.aiPlayers != null && preset.aiPlayers.Count > 0)
+            {
+                foreach (var aiSpec in preset.aiPlayers)
+                {
+                    if (aiSpec != null && !string.IsNullOrWhiteSpace(aiSpec.strategyName))
+                    {
+                        resolved.Add(aiSpec.strategyName);
+                    }
+                }
+
+                return resolved;
+            }
+
+            if (preset.aiStrategyPool == null || preset.aiStrategyPool.Count == 0 || preset.pooledAiPlayerCount <= 0)
+            {
+                return resolved;
+            }
+
+            var uniqueEligible = preset.aiStrategyPool
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Distinct(StringComparer.Ordinal)
+                .Where(IsKnownCampaignStrategyName)
+                .ToList();
+
+            if (uniqueEligible.Count == 0)
+            {
+                Debug.LogWarning($"[CampaignController] Preset '{preset.presetId}' has an AI pool but no resolvable strategies.");
+                return resolved;
+            }
+
+            int desiredCount = Mathf.Min(preset.pooledAiPlayerCount, uniqueEligible.Count);
+            int presetHash = GetStableStringHash(preset.presetId);
+            int seed = State != null
+                ? unchecked((State.seed * 397) ^ levelIndex ^ presetHash)
+                : unchecked(levelIndex ^ presetHash);
+            var random = new System.Random(seed);
+            var shuffled = uniqueEligible.OrderBy(_ => random.Next()).ToList();
+            resolved.AddRange(shuffled.Take(desiredCount));
+            return resolved;
+        }
+
+        private static bool IsKnownCampaignStrategyName(string strategyName)
+        {
+            return AIRoster.CampaignStrategiesByName.ContainsKey(strategyName)
+                || AIRoster.ProvenStrategiesByName.ContainsKey(strategyName);
+        }
+
+        private static int GetStableStringHash(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return 0;
+            }
+
+            unchecked
+            {
+                int hash = 23;
+                foreach (char c in value)
+                {
+                    hash = (hash * 31) + c;
+                }
+
+                return hash;
+            }
         }
     }
 }

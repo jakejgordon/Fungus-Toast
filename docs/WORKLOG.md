@@ -47,6 +47,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 - Active Fungus-Toast implementation backlog now lives in `/home/jakejgordon/.openclaw/workspace/FUNGUS_TOAST_TASKS.md` rather than repo `/docs`.
 - Campaign/UI idea: enemy molds should eventually have fun thematic names shown in UI instead of generic labels like `Player 2`. Prefer names that hint at strategy theme and ideally feel slightly scientific / mold-like (e.g. names that imply rapid growth, toxin pressure, reclamation, etc.). This should support campaign readability by helping players understand what kind of opponent they are facing.
 - Added three early-campaign training molds to the roster and first five campaign presets: `TST_Training_ResilientMycelium`, `TST_Training_Overextender`, and `TST_Training_ToxicTurtle`. Current early campaign pass uses them heavily in Campaign0-4 to improve readability and onboarding.
+- Converted Campaign0 and Campaign1 presets to use the new AI-pool path for Unity validation. Both still spawn 1 AI, but now draw deterministically from a small curated pool instead of a fixed lineup.
 - TODO: Investigate Mimetic Resilience presentation bug in Unity. Current core tests suggest the 20% eligibility gate is functioning, so focus next on the visual pipeline: `GrowthSource.MimeticResilience` is currently routed through the generic post-growth resistance pulse path instead of a reclaim-specific deferred-overlay sequence. Desired order: old cell fades out, new cell fades in, field pulse plays, then shield appears on the new resistant cell at the end.
 
 ## Active Thread
@@ -70,6 +71,13 @@ Use the following minimal workflow to preserve working memory across sessions:
 11. ⏳ Add/document the symmetric 2-player fast-path and confirm `1-8` startup placement behavior.
 
 ## Current Handoff
+
+### 2026-03-27 (campaign AI pool support)
+- **Focus:** Start backlog implementation for campaign board presets that can draw opponents from a strategy pool without tying pool size to active AI count.
+- **Changed:** Added optional `BoardPreset.aiStrategyPool` + `pooledAiPlayerCount`, preserved existing fixed `aiPlayers` behavior, and wired campaign state/controller/runtime so pooled levels resolve a stable per-run/per-level lineup that persists across resume instead of reshuffling.
+- **Learned:** The risky part was not the pool itself but reproducibility: game startup inferred player count from `aiPlayers.Count`, so pooled support also needed explicit active-AI count plumbing plus persisted resolved names in `CampaignState`.
+- **Open questions:** No preset assets have been migrated to use pools yet, and Unity-side validation still needs a real editor pass once someone authors a pooled level asset.
+- **Next steps:** Create or convert one campaign preset to use `aiStrategyPool` and verify the authored UX in Unity (inspector serialization + start/resume consistency).
 
 ### 2026-03-21
 - **Focus:** Reconstruct lost OpenClaw context and preserve current Fungus-Toast thread.
