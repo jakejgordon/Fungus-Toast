@@ -3,6 +3,7 @@
 ## Current policy direction
 
 - Only strategies with `StrategyStatus = Proven` should be eligible for campaign use.
+- Campaign curation should use formal `CampaignDifficulty` metadata rather than relying only on naming/documentation convention.
 - Early campaign should bias toward easier and more readable opponents.
 - Starting at level 4, nutrient patches should be enabled.
 - Starting around level 7, some AIs should eventually receive theme-appropriate starting Adaptations (not yet implemented).
@@ -66,22 +67,22 @@ This is the current recommended audit starting point for `StrategySetEnum = Camp
 | AI3 | `CMP_Control_DriftCascade_Elite` | Control / cascade | Hard/Elite | Keep | Boss-capable anchor | Distinct enough to keep if theme feels right in Unity. |
 | AI4 | `CMP_Reclaim_CreepingRebirth_Normal` | Reclamation | Medium? | Review | Mid-campaign option | Needs explicit difficulty audit before blessing. |
 | AI5 | `CMP_Bloom_CreepingRejuvenation_Normal` | Bloom / attrition | Medium? | Review | Mid-campaign option | Needs explicit difficulty audit before blessing. |
-| AI6 | `CMP_TierCap_GrowthResilience_Easy` | TierCap / defense | Easy | Keep | Early training | Good readable low-pressure opener. |
-| AI7 | `CMP_Surge_BeaconTempo_Normal` | Surge tempo | Medium | Keep | Mid diversity | Good for introducing tempo play. |
-| AI8 | `CMP_Control_AnabolicRebirth_Normal` | Control | Medium | Keep | Mid diversity | Reasonable medium control shell. |
-| AI9 | `CMP_Control_TendrilCascade_Normal` | Control / cascade | Medium | Keep | Mid diversity | Multi-goal control line with visible escalation. |
+| AI6 | `CMP_TierCap_GrowthResilience_Training` | TierCap / defense | Training | Keep | Early training | Good readable low-pressure opener. |
+| AI7 | `CMP_Surge_BeaconTempo_Medium` | Surge tempo | Medium | Keep | Mid diversity | Good for introducing tempo play. |
+| AI8 | `CMP_Control_AnabolicRebirth_Medium` | Control | Medium | Keep | Mid diversity | Reasonable medium control shell. |
+| AI9 | `CMP_Control_TendrilCascade_Medium` | Control / cascade | Medium | Keep | Mid diversity | Multi-goal control line with visible escalation. |
 | AI10 | `CMP_Bloom_DriftCascade_Elite` | Bloom / late spike | Hard/Elite | Keep | Boss-capable anchor | Strong legacy hard opponent. |
-| AI11 | `CMP_Surge_GrowthTempo_Normal` | Surge tempo | Medium | Keep | Mid diversity | Good for surge-heavy campaign slots. |
+| AI11 | `CMP_Surge_GrowthTempo_Medium` | Surge tempo | Medium | Keep | Mid diversity | Good for surge-heavy campaign slots. |
 | AI12 | `CMP_Control_AnabolicCreeping_Easy` | Control | Easy | Keep | Early training | Solid easy bridge strategy. |
 | AI13 | `CMP_Control_AnabolicCreeping_Hard` | Control | Hard/Elite | Keep | Late-control option | Metadata currently says hard; campaign feel should confirm. |
-| TST_BalancedControl_AnabolicFirst | `CMP_Control_AnabolicCreeping_Hard` | Control | Hard | Keep | Hard pool | Strong proven modern control shell. |
-| Grow>Kill>Reclaim(Econ) | `CMP_Economy_KillReclaim_Normal` | Economy / reclamation | Medium | Keep | Mid diversity | Good generalist economy-pressure option. |
-| Grow>Kill>Reclaim(Econ/Reclaim) | `CMP_Reclaim_KillReclaim_Normal` | Reclamation | Medium | Keep | Mid diversity | Similar family to above; keep only if both feel distinct enough. |
-| Creeping>Necrosporulation | `CMP_Bloom_CreepingNecro_Normal` | Bloom | Medium | Keep | Mid diversity | Readable themed bloom shell. |
+| TST_BalancedControl_AnabolicFirst | `CMP_Control_AnabolicFirst_Hard` | Control | Hard | Keep | Hard pool | Strong proven modern control shell. |
+| Grow>Kill>Reclaim(Econ) | `CMP_Economy_KillReclaim_Medium` | Economy / reclamation | Medium | Keep | Mid diversity | Good generalist economy-pressure option. |
+| Grow>Kill>Reclaim(Econ/Reclaim) | `CMP_Reclaim_KillReclaim_Medium` | Reclamation | Medium | Keep | Mid diversity | Similar family to above; keep only if both feel distinct enough. |
+| Creeping>Necrosporulation | `CMP_Bloom_CreepingNecro_Medium` | Bloom | Medium | Keep | Mid diversity | Readable themed bloom shell. |
 | Power Mutations Max Econ | `CMP_Economy_LateSpike_Hard` | Late spike / economy | Hard | Keep | Hard pool / boss support | High-ceiling power strategy. |
-| Growth/Resilience | `CMP_TierCap_GrowthResilience_Normal` | TierCap / defense | Easy/Medium | Keep | Early-to-mid filler | Simulation says viable; campaign feel should decide final lane. |
-| TST_AnabolicBeaconNecroRegressionCascade | `CMP_Bloom_BeaconRegression_Normal` | Bloom / control | Medium | Keep | Medium pool | Proven and campaign-eligible. |
-| TST_AnabolicCreepingNecroRegressionCascade | `CMP_Bloom_AnabolicRegression_Normal` | Bloom / control | Medium | Keep | Medium pool | Proven and campaign-eligible. |
+| Growth/Resilience | `CMP_TierCap_GrowthResilience_Easy` | TierCap / defense | Easy | Keep | Early-to-mid filler | Simulation says viable; campaign feel should decide final lane. |
+| TST_AnabolicBeaconNecroRegressionCascade | `CMP_Bloom_BeaconRegression_Medium` | Bloom / control | Medium | Keep | Medium pool | Proven and campaign-eligible. |
+| TST_AnabolicCreepingNecroRegressionCascade | `CMP_Bloom_AnabolicRegression_Medium` | Bloom / control | Medium | Keep | Medium pool | Proven and campaign-eligible. |
 | TST_CreepingNecroRegressionCascade | `CMP_Bloom_CreepingRegression_Elite` | Bloom / control | Hard/Elite | Keep | Hard pool / boss support | Best-performing proven Bloom strategy from latest tests. |
 
 ## Important cleanup observations
@@ -144,10 +145,66 @@ This is the current recommended audit starting point for `StrategySetEnum = Camp
 - Power Mutations Max Econ
 - TST_CreepingNecroRegressionCascade
 
+## Target Campaign0–14 progression draft
+
+This is the first intentional target plan for future level pools. It is not yet implemented as random-pool data; it is the design baseline we should curate toward.
+
+| Level | Board / Tier intent | Nutrient patches | Intended pool mix | Candidate pool |
+|---|---|---|---|---|
+| Campaign0 | very small / onboarding | Off | 1 training | `AI6` |
+| Campaign1 | very small / onboarding+ | Off | 1 easy | `AI12`, `Growth/Resilience` |
+| Campaign2 | small / first multi-AI | Off | 1 training + 1 easy/hard teaser | `AI6`, `AI12`, `AI13` |
+| Campaign3 | small / first medium intro | Off | 1 easy + 1 medium + 1 easy | `AI12`, `Growth/Resilience`, `AI8`, `AI7` |
+| Campaign4 | larger / nutrient intro | On | 1 easy + 2 medium + 1 easy | `AI12`, `Growth/Resilience`, `AI7`, `AI8`, `AI9` |
+| Campaign5 | larger / more archetype variety | On | 1 easy + 3 medium + 1 medium/easy | `AI7`, `AI8`, `AI9`, `AI11`, `Grow>Kill>Reclaim(Econ)`, `Creeping>Necrosporulation`, `Growth/Resilience` |
+| Campaign6 | mid-board / stable medium field | On | 4-5 medium | `AI7`, `AI8`, `AI9`, `AI11`, `Grow>Kill>Reclaim(Econ)`, `Grow>Kill>Reclaim(Econ/Reclaim)`, `Creeping>Necrosporulation` |
+| Campaign7 | mid-board / adaptation era begins | On | 3-4 medium + 1 hard | `AI7`, `AI8`, `AI9`, `AI11`, `TST_AnabolicBeaconNecroRegressionCascade`, `TST_AnabolicCreepingNecroRegressionCascade`, `AI13`, `TST_BalancedControl_AnabolicFirst` |
+| Campaign8 | mid-large / stronger themes | On | 3 medium + 2 hard | `AI8`, `AI9`, `AI11`, `Grow>Kill>Reclaim(Econ)`, `Creeping>Necrosporulation`, `AI13`, `TST_BalancedControl_AnabolicFirst`, `Power Mutations Max Econ` |
+| Campaign9 | large / hard pool arrives | On | 2 medium + 3 hard | `AI9`, `AI11`, `TST_AnabolicBeaconNecroRegressionCascade`, `TST_AnabolicCreepingNecroRegressionCascade`, `AI13`, `TST_BalancedControl_AnabolicFirst`, `Power Mutations Max Econ`, `AI1` |
+| Campaign10 | large / hard mix deepens | On | 2 medium + 4 hard | `AI11`, `Grow>Kill>Reclaim(Econ)`, `Grow>Kill>Reclaim(Econ/Reclaim)`, `AI1`, `AI2`, `AI13`, `TST_BalancedControl_AnabolicFirst`, `Power Mutations Max Econ` |
+| Campaign11 | larger / elite previews | On | 2 medium + 4 hard/elite | `Creeping>Necrosporulation`, `TST_AnabolicCreepingNecroRegressionCascade`, `AI1`, `AI2`, `AI3`, `AI13`, `TST_BalancedControl_AnabolicFirst`, `TST_CreepingNecroRegressionCascade` |
+| Campaign12 | late game / elite mix | On | 1-2 medium + 5 hard/elite | `AI1`, `AI2`, `AI3`, `AI10`, `AI13`, `Power Mutations Max Econ`, `TST_CreepingNecroRegressionCascade`, plus one medium support pick |
+| Campaign13 | pre-boss gauntlet | On | mostly hard/elite with one medium flex | `AI1`, `AI2`, `AI3`, `AI10`, `AI13`, `TST_BalancedControl_AnabolicFirst`, `Power Mutations Max Econ`, `TST_CreepingNecroRegressionCascade`, optional `AI11`/`Grow>Kill>Reclaim(Econ)` |
+| Campaign14 | final standard level before boss design | On | mostly hard/elite with medium support | `AI1`, `AI2`, `AI3`, `AI10`, `AI13`, `TST_BalancedControl_AnabolicFirst`, `Power Mutations Max Econ`, `TST_CreepingNecroRegressionCascade`, one medium support |
+
+## Boss level direction
+
+Not yet implemented, but target shape should be:
+
+- support pool: medium + hard AI strategies only
+- one curated boss mold identity
+- boss starts with 4-5 synergistic theme-appropriate Adaptations
+- likely boss archetype candidates:
+  - `CMP_Bloom_CreepingRegression_Elite`
+  - `CMP_Economy_LateSpike_Hard`
+  - `CMP_Control_DriftCascade_Elite`
+
+## Rename migration plan
+
+Do the naming migration in one controlled pass:
+
+1. finalize the keep/review list
+2. assign final `CMP_*` IDs
+3. rename strategy IDs in `AIRoster`
+4. update every Unity `BoardPreset.aiPlayers` reference in the same change
+5. run build + campaign asset sanity check
+6. only then begin level-pool authoring on the renamed IDs
+
+This avoids half-migrated states where campaign assets reference stale strategy names.
+
+## Active backlog location
+
+The live implementation backlog for Fungus-Toast should be kept in:
+
+- `/home/jakejgordon/.openclaw/workspace/FUNGUS_TOAST_TASKS.md`
+
+Keep this document focused on durable campaign design/curation decisions rather than the day-to-day running task list.
+
 ## Next steps
 
 1. Confirm or adjust the working themes/difficulty labels in the candidate table.
 2. Decide whether AI4 and AI5 stay in the campaign pool.
 3. Resolve likely redundant pairs.
-4. Draft a target level-by-level pool progression for Campaign0-14.
-5. After that, implement a per-level random pool system instead of fixed lineups.
+4. Refine the target level-by-level pool progression for Campaign0-14.
+5. After that, do the actual `CMP_*` rename migration and update Unity board presets.
+6. Then implement the campaign AI pool system and campaign-balance simulation harness.

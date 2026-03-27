@@ -76,6 +76,7 @@ namespace FungusToast.Core.AI
             StrategyRole role,
             StrategyLifecycle lifecycle,
             IReadOnlyCollection<DifficultyBand> difficultyBands,
+            CampaignDifficulty? campaignDifficulty,
             StrategyPool pools,
             IReadOnlyCollection<CounterTag> favoredAgainst,
             IReadOnlyCollection<CounterTag> weakAgainst,
@@ -90,6 +91,7 @@ namespace FungusToast.Core.AI
             Role = role;
             Lifecycle = lifecycle;
             DifficultyBands = difficultyBands;
+            CampaignDifficulty = campaignDifficulty;
             Pools = pools;
             FavoredAgainst = favoredAgainst;
             WeakAgainst = weakAgainst;
@@ -105,6 +107,7 @@ namespace FungusToast.Core.AI
         public StrategyRole Role { get; }
         public StrategyLifecycle Lifecycle { get; }
         public IReadOnlyCollection<DifficultyBand> DifficultyBands { get; }
+        public CampaignDifficulty? CampaignDifficulty { get; }
         public StrategyPool Pools { get; }
         public IReadOnlyCollection<CounterTag> FavoredAgainst { get; }
         public IReadOnlyCollection<CounterTag> WeakAgainst { get; }
@@ -1158,6 +1161,31 @@ namespace FungusToast.Core.AI
                 ["TST_CreepingNecroRegressionCascade"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
             };
 
+        private static readonly Dictionary<string, CampaignDifficulty> ExplicitCampaignDifficultyByName =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["AI6"] = CampaignDifficulty.Training,
+                ["AI12"] = CampaignDifficulty.Easy,
+                ["AI13"] = CampaignDifficulty.Hard,
+                ["AI7"] = CampaignDifficulty.Medium,
+                ["AI8"] = CampaignDifficulty.Medium,
+                ["AI9"] = CampaignDifficulty.Medium,
+                ["AI11"] = CampaignDifficulty.Medium,
+                ["AI1"] = CampaignDifficulty.Elite,
+                ["AI2"] = CampaignDifficulty.Elite,
+                ["AI3"] = CampaignDifficulty.Elite,
+                ["AI10"] = CampaignDifficulty.Elite,
+                ["Growth/Resilience"] = CampaignDifficulty.Easy,
+                ["Grow>Kill>Reclaim(Econ)"] = CampaignDifficulty.Medium,
+                ["Grow>Kill>Reclaim(Econ/Reclaim)"] = CampaignDifficulty.Medium,
+                ["Creeping>Necrosporulation"] = CampaignDifficulty.Medium,
+                ["TST_AnabolicBeaconNecroRegressionCascade"] = CampaignDifficulty.Medium,
+                ["TST_AnabolicCreepingNecroRegressionCascade"] = CampaignDifficulty.Medium,
+                ["TST_BalancedControl_AnabolicFirst"] = CampaignDifficulty.Hard,
+                ["Power Mutations Max Econ"] = CampaignDifficulty.Hard,
+                ["TST_CreepingNecroRegressionCascade"] = CampaignDifficulty.Elite,
+            };
+
         private static readonly Dictionary<string, CounterTag[]> ExplicitFavoredAgainstByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
@@ -1397,6 +1425,7 @@ namespace FungusToast.Core.AI
             var role = GetRoleForStrategy(strategy, strategySet);
             var lifecycle = GetLifecycleForStrategy(strategy, strategySet);
             var difficultyBands = GetDifficultyBandsForStrategy(strategy, strategySet);
+            var campaignDifficulty = GetCampaignDifficultyForStrategy(strategy, strategySet);
             var pools = GetPoolsForStrategy(strategySet);
             var favoredAgainst = GetFavoredAgainstForStrategy(strategy);
             var weakAgainst = GetWeakAgainstForStrategy(strategy);
@@ -1412,6 +1441,7 @@ namespace FungusToast.Core.AI
                 role,
                 lifecycle,
                 difficultyBands,
+                campaignDifficulty,
                 pools,
                 favoredAgainst,
                 weakAgainst,
@@ -1430,6 +1460,7 @@ namespace FungusToast.Core.AI
                 profile.Role,
                 profile.Lifecycle,
                 profile.DifficultyBands,
+                profile.CampaignDifficulty,
                 profile.Pools,
                 profile.Intent,
                 profile.Notes,
@@ -1536,6 +1567,20 @@ namespace FungusToast.Core.AI
             {
                 StrategySetEnum.Campaign => new[] { DifficultyBand.Normal },
                 _ => Array.Empty<DifficultyBand>()
+            };
+        }
+
+        public static CampaignDifficulty? GetCampaignDifficultyForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
+        {
+            if (ExplicitCampaignDifficultyByName.TryGetValue(strategy.StrategyName, out var explicitDifficulty))
+            {
+                return explicitDifficulty;
+            }
+
+            return strategySet switch
+            {
+                StrategySetEnum.Campaign => CampaignDifficulty.Medium,
+                _ => null
             };
         }
 

@@ -53,6 +53,16 @@ namespace FungusToast.Core.AI
         Elite
     }
 
+    public enum CampaignDifficulty
+    {
+        Training,
+        Easy,
+        Medium,
+        Hard,
+        Elite,
+        Boss
+    }
+
     [Flags]
     public enum StrategyPool
     {
@@ -110,6 +120,7 @@ namespace FungusToast.Core.AI
             StrategyRole role,
             StrategyLifecycle lifecycle,
             IReadOnlyCollection<DifficultyBand> difficultyBands,
+            CampaignDifficulty? campaignDifficulty,
             StrategyPool pools,
             string intent,
             string notes,
@@ -124,6 +135,7 @@ namespace FungusToast.Core.AI
             Role = role;
             Lifecycle = lifecycle;
             DifficultyBands = difficultyBands;
+            CampaignDifficulty = campaignDifficulty;
             Pools = pools;
             Intent = intent;
             Notes = notes;
@@ -139,6 +151,7 @@ namespace FungusToast.Core.AI
         public StrategyRole Role { get; }
         public StrategyLifecycle Lifecycle { get; }
         public IReadOnlyCollection<DifficultyBand> DifficultyBands { get; }
+        public CampaignDifficulty? CampaignDifficulty { get; }
         public StrategyPool Pools { get; }
         public string Intent { get; }
         public string Notes { get; }
@@ -153,6 +166,7 @@ namespace FungusToast.Core.AI
         public IReadOnlyCollection<StrategyRole> Roles { get; set; } = Array.Empty<StrategyRole>();
         public IReadOnlyCollection<StrategyLifecycle> Lifecycles { get; set; } = Array.Empty<StrategyLifecycle>();
         public IReadOnlyCollection<DifficultyBand> DifficultyBands { get; set; } = Array.Empty<DifficultyBand>();
+        public IReadOnlyCollection<CampaignDifficulty> CampaignDifficulties { get; set; } = Array.Empty<CampaignDifficulty>();
         public IReadOnlyCollection<StrategyPool> Pools { get; set; } = Array.Empty<StrategyPool>();
 
         public bool IsEmpty => Archetypes.Count == 0
@@ -160,6 +174,7 @@ namespace FungusToast.Core.AI
             && Roles.Count == 0
             && Lifecycles.Count == 0
             && DifficultyBands.Count == 0
+            && CampaignDifficulties.Count == 0
             && Pools.Count == 0;
 
         public bool Matches(StrategyCatalogEntry entry)
@@ -185,6 +200,11 @@ namespace FungusToast.Core.AI
             }
 
             if (DifficultyBands.Count > 0 && !entry.DifficultyBands.Any(DifficultyBands.Contains))
+            {
+                return false;
+            }
+
+            if (CampaignDifficulties.Count > 0 && (!entry.CampaignDifficulty.HasValue || !CampaignDifficulties.Contains(entry.CampaignDifficulty.Value)))
             {
                 return false;
             }

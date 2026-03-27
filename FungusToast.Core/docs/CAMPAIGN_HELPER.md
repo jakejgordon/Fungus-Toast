@@ -24,7 +24,7 @@ Important fields:
 - `pendingAdaptationSelection`: true between level victory and adaptation selection
 - `campaignCompleted`: true after final victory
 - `pendingVictorySnapshot`: persisted endgame snapshot shown when resuming into a pending adaptation pick
-- `boardPresetId`, `boardWidth`, `boardHeight`, `unlockedMutationTierMax`
+- `boardPresetId`, `boardWidth`, `boardHeight`
 
 Save file:
 - `Application.persistentDataPath/campaign_save.json`
@@ -56,7 +56,6 @@ Configured in assets under:
 `BoardPreset` fields:
 - `presetId`
 - `boardWidth`, `boardHeight`
-- `mutationTierMax`
 - `aiPlayers`: ordered list of strategy names (campaign should ultimately use curated Proven strategy IDs, not rely on legacy `AI1..AI13` names)
 
 Runtime usage:
@@ -66,11 +65,13 @@ Runtime usage:
 
 If lineup is invalid/incomplete, a random campaign fallback is used.
 
-## Difficulty Buckets (Convention)
+## Difficulty Buckets
 
-There is no baked-in weak/moderate/hard enum yet, so difficulty should be driven by strategy catalog metadata (`DifficultyBands`) and curated review.
+Campaign difficulty now has a formal metadata enum: `CampaignDifficulty`.
+Use that as the primary campaign-facing difficulty signal.
+`DifficultyBands` still exist as broader catalog/simulation tags, but campaign curation should prefer `CampaignDifficulty` for level pool decisions.
 
-Current working convention:
+Current working difficulty mapping:
 
 - Easy / Training:
   - `AI6`
@@ -140,7 +141,7 @@ Adaptation draft UI reuse:
 
 ### Tune difficulty
 1. Change strategy names in relevant `BoardPreset.aiPlayers` lists.
-2. Optionally adjust board sizes and `mutationTierMax`.
+2. Optionally adjust board sizes and nutrient-patch settings.
 3. Validate in Unity; campaign simulation is not supported yet.
 
 ## Notes

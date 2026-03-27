@@ -7,7 +7,7 @@ using FungusToast.Unity.Grid;
 namespace FungusToast.Unity.Campaign
 {
     /// <summary>
-    /// Authoritative definition of a campaign board configuration including size, mutation tier cap, and AI lineup.
+    /// Authoritative definition of a campaign board configuration including size and AI lineup.
     /// </summary>
     [CreateAssetMenu(menuName = "Configs/BoardPreset", fileName = "BoardPreset")]
     public class BoardPreset : ScriptableObject
@@ -21,9 +21,6 @@ namespace FungusToast.Unity.Campaign
 
         [Header("Board Visuals")]
         public BoardMediumConfig boardMedium;
-
-        [Header("Mutation Tier Cap")]
-        public int mutationTierMax = 2; // highest tier unlocked when using this preset
 
         [Header("AI Lineup")]
         public List<AIPlayerSpec> aiPlayers = new(); // ordered AI specifications

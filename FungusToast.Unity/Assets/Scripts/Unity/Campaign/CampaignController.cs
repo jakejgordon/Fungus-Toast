@@ -37,7 +37,6 @@ namespace FungusToast.Unity.Campaign
             {
                 runId = Guid.NewGuid().ToString(),
                 levelIndex = 0,
-                unlockedMutationTierMax = preset.mutationTierMax,
                 boardPresetId = preset.presetId,
                 seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue),
                 boardWidth = preset.boardWidth,
@@ -263,7 +262,6 @@ namespace FungusToast.Unity.Campaign
             var preset = spec.boardPreset;
             State.levelIndex = targetIndex;
             State.boardPresetId = preset.presetId;
-            State.unlockedMutationTierMax = preset.mutationTierMax;
             State.boardWidth = preset.boardWidth;
             State.boardHeight = preset.boardHeight;
             State.campaignCompleted = false;
@@ -294,7 +292,6 @@ namespace FungusToast.Unity.Campaign
             State.selectedAdaptationIds.Clear();
             State.seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
             State.boardPresetId = preset.presetId;
-            State.unlockedMutationTierMax = preset.mutationTierMax;
             State.boardWidth = preset.boardWidth;
             State.boardHeight = preset.boardHeight;
             State.pendingAdaptationSelection = false;

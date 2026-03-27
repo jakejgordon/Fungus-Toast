@@ -12,7 +12,6 @@ namespace FungusToast.Unity.Campaign
         public string runId; // GUID string
         public int levelIndex; // current level (0-based)
         public List<string> selectedAdaptationIds = new(); // unique adaptation ids picked during this run
-        public int unlockedMutationTierMax; // enforced ceiling on mutation tiers
         public string boardPresetId; // preset identifier for board size/layout
         public int seed; // RNG seed for reproducibility
         public int boardWidth; // persisted board width for current level

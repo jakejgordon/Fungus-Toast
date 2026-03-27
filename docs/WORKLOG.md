@@ -44,6 +44,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - This file should stay concise and current.
 - Detailed balance or simulation findings should live in the most relevant project docs, while this file tracks the active thread and the next handoff.
+- Active Fungus-Toast implementation backlog now lives in `/home/jakejgordon/.openclaw/workspace/FUNGUS_TOAST_TASKS.md` rather than repo `/docs`.
 - TODO: Investigate Mimetic Resilience presentation bug in Unity. Current core tests suggest the 20% eligibility gate is functioning, so focus next on the visual pipeline: `GrowthSource.MimeticResilience` is currently routed through the generic post-growth resistance pulse path instead of a reclaim-specific deferred-overlay sequence. Desired order: old cell fades out, new cell fades in, field pulse plays, then shield appears on the new resistant cell at the end.
 
 ## Active Thread
