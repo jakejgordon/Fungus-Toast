@@ -43,8 +43,13 @@ namespace FungusToast.Core.Mutations.Factories
         {
             if (decimals < 0) decimals = 0;
             if (decimals > 6) decimals = 6;
-            string format = "P" + decimals; // e.g. P2
-            return value.ToString(format, CultureInfo.InvariantCulture);
+
+            float percentValue = value * 100f;
+            if (decimals == 0)
+                return ((int)System.Math.Round(percentValue)).ToString(CultureInfo.InvariantCulture) + "%";
+
+            string format = "0." + new string('0', decimals);
+            return percentValue.ToString(format, CultureInfo.InvariantCulture) + "%";
         }
 
         public Mutation MakeRoot(Mutation m)

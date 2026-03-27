@@ -289,6 +289,40 @@ public class Tier3MutationTests
     }
 
     [Fact]
+    public void AnabolicInversion_is_tier3_genetic_drift_and_requires_adaptive_expression_level_three()
+    {
+        var mutation = RequireMutation(MutationIds.AnabolicInversion);
+
+        Assert.Equal(MutationCategory.GeneticDrift, mutation.Category);
+        Assert.Equal(MutationTier.Tier3, mutation.Tier);
+        Assert.Equal(MutationType.BonusMutationPointChance, mutation.Type);
+        var prereq = Assert.Single(mutation.Prerequisites);
+        Assert.Equal(MutationIds.AdaptiveExpression, prereq.MutationId);
+        Assert.Equal(3, prereq.RequiredLevel);
+        Assert.Contains("When you trail in living cells", mutation.Description);
+        Assert.Contains("Max Level Bonus", mutation.Description);
+        Assert.Contains("Mycotoxin Catabolism", mutation.Description);
+    }
+
+    [Fact]
+    public void MimeticResilience_is_tier3_mycelial_surge_and_requires_homeostatic_harmony_five_and_mycotoxin_tracer_three()
+    {
+        var mutation = RequireMutation(MutationIds.MimeticResilience);
+
+        Assert.Equal(MutationCategory.MycelialSurges, mutation.Category);
+        Assert.Equal(MutationTier.Tier3, mutation.Tier);
+        Assert.True(mutation.IsSurge);
+        Assert.Equal(MutationType.MimeticResilience, mutation.Type);
+        Assert.Equal(2, mutation.Prerequisites.Count);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.HomeostaticHarmony && p.RequiredLevel == 5);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinTracer && p.RequiredLevel == 3);
+        Assert.Contains("20.0%+ more living cells", mutation.Description);
+        Assert.Contains("1.0%+ board control", mutation.Description);
+        Assert.DoesNotContain(" %", mutation.Description);
+        Assert.Contains("Prefers infesting enemy cells over empty placement", mutation.Description);
+    }
+
+    [Fact]
     public void CompetitiveAntagonism_is_tier3_mycelial_surge_and_requires_mycotoxin_tracer_level_fifteen()
     {
         var mutation = RequireMutation(MutationIds.CompetitiveAntagonism);
@@ -300,6 +334,55 @@ public class Tier3MutationTests
         var prereq = Assert.Single(mutation.Prerequisites);
         Assert.Equal(MutationIds.MycotoxinTracer, prereq.MutationId);
         Assert.Equal(15, prereq.RequiredLevel);
+    }
+
+    [Fact]
+    public void OnPostGrowthPhase_mimetic_resilience_prefers_enemy_living_cells_and_emits_resistance_batch_event()
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 2);
+        var actingPlayer = CreatePlayer(0);
+        var targetPlayer = CreatePlayer(1);
+        board.Players.Add(actingPlayer);
+        board.Players.Add(targetPlayer);
+
+        SeedLivingCells(board, actingPlayer, new[] { 0, 1, 2, 3, 4 });
+        actingPlayer.SetMutationLevel(MutationIds.MimeticResilience, newLevel: 1, currentRound: 1);
+        actingPlayer.ActiveSurges[MutationIds.MimeticResilience] = new Player.ActiveSurgeInfo(MutationIds.MimeticResilience, level: 1, duration: GameBalance.MimeticResilienceSurgeDuration);
+
+        // Keep exactly one enemy living target within the resistant source radius so the outcome is deterministic.
+        SeedLivingCells(board, targetPlayer, new[] { 6, 20, 21, 22, 23, 24 });
+        var resistantSource = Assert.IsType<FungalCell>(board.GetCell(6));
+        resistantSource.MakeResistant();
+
+        var contestedEnemyTileId = 12;
+        var contestedEnemyCell = new FungalCell(ownerPlayerId: targetPlayer.PlayerId, tileId: contestedEnemyTileId, source: GrowthSource.InitialSpore, lastOwnerPlayerId: null);
+        board.PlaceFungalCell(contestedEnemyCell);
+        targetPlayer.AddControlledTile(contestedEnemyTileId);
+
+        int? resistancePlayerId = null;
+        GrowthSource? resistanceSourceType = null;
+        IReadOnlyList<int>? resistanceTileIds = null;
+        board.ResistanceAppliedBatch += (playerId, source, tileIds) =>
+        {
+            resistancePlayerId = playerId;
+            resistanceSourceType = source;
+            resistanceTileIds = tileIds;
+        };
+
+        MycelialSurgeMutationProcessor.OnPostGrowthPhase_MimeticResilience(
+            board,
+            board.Players,
+            new AlwaysZeroRandom(),
+            new TestSimulationObserver());
+
+        var convertedCell = Assert.IsType<FungalCell>(board.GetCell(contestedEnemyTileId));
+        Assert.Equal(actingPlayer.PlayerId, convertedCell.OwnerPlayerId);
+        Assert.True(convertedCell.IsAlive);
+        Assert.True(convertedCell.IsResistant);
+        Assert.Equal(GrowthSource.MimeticResilience, convertedCell.SourceOfGrowth);
+        Assert.Equal(actingPlayer.PlayerId, resistancePlayerId);
+        Assert.Equal(GrowthSource.MimeticResilience, resistanceSourceType);
+        Assert.Equal(new[] { contestedEnemyTileId }, resistanceTileIds);
     }
 
     [Fact]
@@ -320,6 +403,32 @@ public class Tier3MutationTests
         var targets = MycelialSurgeMutationProcessor.GetCompetitiveAntagonismTargets(current, board.Players, board);
 
         Assert.Equal(new[] { largest.PlayerId, larger.PlayerId }, targets.Select(p => p.PlayerId).ToArray());
+    }
+
+    [Fact]
+    public void IsCompetitiveAntagonismActive_requires_both_mutation_level_and_active_surge()
+    {
+        var player = CreatePlayer();
+
+        Assert.False(MycelialSurgeMutationProcessor.IsCompetitiveAntagonismActive(player));
+
+        player.SetMutationLevel(MutationIds.CompetitiveAntagonism, newLevel: 1, currentRound: 1);
+        Assert.False(MycelialSurgeMutationProcessor.IsCompetitiveAntagonismActive(player));
+
+        player.ActiveSurges[MutationIds.CompetitiveAntagonism] = new Player.ActiveSurgeInfo(MutationIds.CompetitiveAntagonism, level: 1, duration: GameBalance.CompetitiveAntagonismSurgeDuration);
+        Assert.True(MycelialSurgeMutationProcessor.IsCompetitiveAntagonismActive(player));
+    }
+
+    [Fact]
+    public void GetCompetitiveAntagonismLevel_returns_zero_without_active_surge_and_mutation_level_when_active()
+    {
+        var player = CreatePlayer();
+        player.SetMutationLevel(MutationIds.CompetitiveAntagonism, newLevel: 2, currentRound: 1);
+
+        Assert.Equal(0, MycelialSurgeMutationProcessor.GetCompetitiveAntagonismLevel(player));
+
+        player.ActiveSurges[MutationIds.CompetitiveAntagonism] = new Player.ActiveSurgeInfo(MutationIds.CompetitiveAntagonism, level: 2, duration: GameBalance.CompetitiveAntagonismSurgeDuration);
+        Assert.Equal(2, MycelialSurgeMutationProcessor.GetCompetitiveAntagonismLevel(player));
     }
 
     private static void SeedLivingCells(GameBoard board, Player player, IEnumerable<int> tileIds)

@@ -93,6 +93,23 @@ public class PlayerMutationRngTests
     }
 
     [Fact]
+    public void RollAnabolicInversionBonus_returns_zero_when_player_is_at_or_above_average_and_proc_roll_misses_base_level_bonus()
+    {
+        var player = CreatePlayer();
+        var other = CreatePlayer(1);
+        var board = new GameBoard(width: 3, height: 3, playerCount: 2);
+        player.SetMutationLevel(MutationIds.AnabolicInversion, newLevel: 1, currentRound: 1);
+
+        var bonus = player.RollAnabolicInversionBonus(
+            new List<Player> { player, other },
+            new SequenceRandomSource(0.31),
+            board,
+            new Dictionary<int, int> { [0] = 3, [1] = 3 });
+
+        Assert.Equal(0, bonus);
+    }
+
+    [Fact]
     public void RollAnabolicInversionBonus_returns_one_when_proc_hits_but_reward_roll_is_lowest_band()
     {
         var player = CreatePlayer();
