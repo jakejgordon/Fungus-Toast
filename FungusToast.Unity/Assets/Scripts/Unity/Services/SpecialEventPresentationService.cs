@@ -255,6 +255,22 @@ namespace FungusToast.Unity
                         specialEvent.NutrientRewardType ?? NutrientRewardType.MutationPoints,
                         specialEvent.RewardAmount > 0 ? specialEvent.RewardAmount : specialEvent.AffectedTileIds.Distinct().Count());
                     break;
+                case SpecialBoardEventKind.NecrophyticBloomComposted:
+                    int compostedTiles = specialEvent.AffectedTileIds?.Distinct().Count() ?? 0;
+                    if (compostedTiles <= 0)
+                    {
+                        yield break;
+                    }
+
+                    uiManager.PhaseBanner?.Show(
+                        compostedTiles == 1
+                            ? "Necrophytic Bloom composted a dead region!"
+                            : $"Necrophytic Bloom composted {compostedTiles} tiles into nutrients!",
+                        UIEffectConstants.NecrophyticBloomBannerHoldSeconds);
+                    yield return gridVisualizer.PlayNecrophyticBloomCompostAnimation(
+                        specialEvent.AffectedTileIds.Distinct().ToList(),
+                        specialEvent.NutrientPatchType ?? NutrientPatchType.Adaptogen);
+                    break;
             }
         }
 

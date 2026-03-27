@@ -726,6 +726,84 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 		}
 
+		public IEnumerator PlayNecrophyticBloomCompostAnimation(IReadOnlyList<int> tileIds, NutrientPatchType patchType)
+		{
+			var board = _getBoard();
+			var overlayTilemap = _getOverlayTilemap();
+			TileBase nutrientTile = _getNutrientPatchTile(patchType);
+			if (board == null || overlayTilemap == null || nutrientTile == null || tileIds == null || tileIds.Count == 0)
+			{
+				yield break;
+			}
+
+			var positions = tileIds
+				.Distinct()
+				.Select(_getPositionForTileId)
+				.ToList();
+			if (positions.Count == 0)
+			{
+				yield break;
+			}
+
+			Vector3 clusterCenterWorld = Vector3.zero;
+			for (int i = 0; i < positions.Count; i++)
+			{
+				clusterCenterWorld += overlayTilemap.GetCellCenterWorld(positions[i]);
+			}
+			clusterCenterWorld /= positions.Count;
+
+			foreach (var pos in positions)
+			{
+				overlayTilemap.SetTile(pos, nutrientTile);
+				overlayTilemap.SetTileFlags(pos, TileFlags.None);
+			}
+
+			float duration = UIEffectConstants.NecrophyticBloomCompostAnimationDurationSeconds;
+			_beginAnimation();
+			try
+			{
+				float elapsed = 0f;
+				while (elapsed < duration)
+				{
+					elapsed += Time.deltaTime;
+					float u = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
+					float pullT = Mathf.Clamp01(u / 0.35f);
+					float revealT = Mathf.Clamp01((u - 0.25f) / 0.75f);
+					float alpha = 1f - revealT;
+					float scale = Mathf.Lerp(UIEffectConstants.NecrophyticBloomCompostStartScale, UIEffectConstants.NecrophyticBloomCompostEndScale, revealT);
+
+					for (int i = 0; i < positions.Count; i++)
+					{
+						Vector3 posWorld = overlayTilemap.GetCellCenterWorld(positions[i]);
+						Vector3 toCenter = clusterCenterWorld - posWorld;
+						Vector3 translation = toCenter.sqrMagnitude > 0.0001f
+							? toCenter.normalized * UIEffectConstants.NecrophyticBloomCompostPullWorld * (1f - pullT)
+							: Vector3.zero;
+						overlayTilemap.SetTransformMatrix(positions[i], Matrix4x4.TRS(translation, Quaternion.identity, new Vector3(scale, scale, 1f)));
+						overlayTilemap.SetColor(positions[i], new Color(0f, 0f, 0f, alpha));
+					}
+
+					yield return null;
+				}
+			}
+			finally
+			{
+				foreach (var pos in positions)
+				{
+					overlayTilemap.SetTile(pos, null);
+					overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+					overlayTilemap.SetColor(pos, Color.white);
+				}
+
+				foreach (int tileId in tileIds.Distinct())
+				{
+					_renderTileFromBoard?.Invoke(tileId);
+				}
+
+				_endAnimation();
+			}
+		}
+
 		public IEnumerator PlayRetrogradeBloomAnimation(int anchorTileId)
 		{
 			var board = _getBoard();

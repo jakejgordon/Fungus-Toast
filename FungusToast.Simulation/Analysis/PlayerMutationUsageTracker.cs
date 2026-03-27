@@ -99,10 +99,8 @@ namespace FungusToast.Simulation.Analysis
                     break;
 
                 case MutationIds.NecrophyticBloom:
-                    if (player.NecrophyticSpores > 0)
-                        effects["Spore Drops"] = player.NecrophyticSpores;
-                    if (player.NecrophyticReclaims > 0)
-                        effects["Reclaims"] = player.NecrophyticReclaims;
+                    if (player.NecrophyticBloomPatchesCreated > 0)
+                        effects["Patches Created"] = player.NecrophyticBloomPatchesCreated;
                     break;
 
                 case MutationIds.MycotoxinTracer:

@@ -32,7 +32,6 @@ namespace FungusToast.Core.Events
                 GameBoard.CellInfestedEventHandler cellInfestedHandler,
                 GameBoard.CellReclaimedEventHandler cellReclaimedHandler,
                 GameBoard.CellOvergrownEventHandler cellOvergrownHandler,
-                GameBoard.NecrophyticBloomActivatedEventHandler necrophyticBloomActivatedHandler,
                 GameBoard.MutationPhaseStartEventHandler mutationPhaseStartHandler,
                 GameBoard.ToxinPlacedEventHandler toxinPlacedHandler,
                 GameBoard.ToxinExpiredEventHandler toxinExpiredHandler)
@@ -48,7 +47,6 @@ namespace FungusToast.Core.Events
                 CellInfestedHandler = cellInfestedHandler;
                 CellReclaimedHandler = cellReclaimedHandler;
                 CellOvergrownHandler = cellOvergrownHandler;
-                NecrophyticBloomActivatedHandler = necrophyticBloomActivatedHandler;
                 MutationPhaseStartHandler = mutationPhaseStartHandler;
                 ToxinPlacedHandler = toxinPlacedHandler;
                 ToxinExpiredHandler = toxinExpiredHandler;
@@ -65,7 +63,6 @@ namespace FungusToast.Core.Events
             public GameBoard.CellInfestedEventHandler CellInfestedHandler { get; }
             public GameBoard.CellReclaimedEventHandler CellReclaimedHandler { get; }
             public GameBoard.CellOvergrownEventHandler CellOvergrownHandler { get; }
-            public GameBoard.NecrophyticBloomActivatedEventHandler NecrophyticBloomActivatedHandler { get; }
             public GameBoard.MutationPhaseStartEventHandler MutationPhaseStartHandler { get; }
             public GameBoard.ToxinPlacedEventHandler ToxinPlacedHandler { get; }
             public GameBoard.ToxinExpiredEventHandler ToxinExpiredHandler { get; }
@@ -173,13 +170,6 @@ namespace FungusToast.Core.Events
             };
             board.CellOvergrown += cellOvergrownHandler;
 
-            // Necrophytic Bloom (initial burst on activation)
-            GameBoard.NecrophyticBloomActivatedEventHandler necrophyticBloomActivatedHandler = () =>
-            {
-                MutationEffectCoordinator.OnNecrophyticBloomActivated(board, players, rng, observer);
-            };
-            board.NecrophyticBloomActivatedEvent += necrophyticBloomActivatedHandler;
-
             // Mutator Phenotype (mutation phase start auto-upgrade effect)
             GameBoard.MutationPhaseStartEventHandler mutationPhaseStartHandler = () =>
             {
@@ -220,7 +210,6 @@ namespace FungusToast.Core.Events
                 cellInfestedHandler,
                 cellReclaimedHandler,
                 cellOvergrownHandler,
-                necrophyticBloomActivatedHandler,
                 mutationPhaseStartHandler,
                 toxinPlacedHandler,
                 toxinExpiredHandler);
@@ -249,7 +238,6 @@ namespace FungusToast.Core.Events
             board.CellInfested -= subscriptions.CellInfestedHandler;
             board.CellReclaimed -= subscriptions.CellReclaimedHandler;
             board.CellOvergrown -= subscriptions.CellOvergrownHandler;
-            board.NecrophyticBloomActivatedEvent -= subscriptions.NecrophyticBloomActivatedHandler;
             board.MutationPhaseStart -= subscriptions.MutationPhaseStartHandler;
             board.ToxinPlaced -= subscriptions.ToxinPlacedHandler;
             board.ToxinExpired -= subscriptions.ToxinExpiredHandler;

@@ -17,7 +17,8 @@ namespace FungusToast.Core.Events
         SporeSalvoTriggered = 7,
         VesicleBurstTriggered = 8,
         HyphalBridgeTriggered = 9,
-        NutrientPatchConsumed = 10
+        NutrientPatchConsumed = 10,
+        NecrophyticBloomComposted = 11
     }
 
     public sealed class SpecialBoardEventArgs : EventArgs
@@ -29,6 +30,7 @@ namespace FungusToast.Core.Events
         public IReadOnlyList<int> AffectedTileIds { get; }
         public NutrientPatchType? NutrientPatchType { get; }
         public NutrientRewardType? NutrientRewardType { get; }
+        public NutrientPatchSource? NutrientPatchSource { get; }
         public int RewardAmount { get; }
 
         public SpecialBoardEventArgs(
@@ -39,7 +41,8 @@ namespace FungusToast.Core.Events
             IEnumerable<int>? affectedTileIds = null,
             NutrientPatchType? nutrientPatchType = null,
             NutrientRewardType? nutrientRewardType = null,
-            int rewardAmount = 0)
+            int rewardAmount = 0,
+            NutrientPatchSource? nutrientPatchSource = null)
         {
             EventKind = eventKind;
             PlayerId = playerId;
@@ -48,6 +51,7 @@ namespace FungusToast.Core.Events
             AffectedTileIds = new ReadOnlyCollection<int>((affectedTileIds ?? Enumerable.Empty<int>()).ToList());
             NutrientPatchType = nutrientPatchType;
             NutrientRewardType = nutrientRewardType;
+            NutrientPatchSource = nutrientPatchSource;
             RewardAmount = rewardAmount;
         }
     }

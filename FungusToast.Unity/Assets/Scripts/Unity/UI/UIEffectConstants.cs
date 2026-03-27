@@ -217,6 +217,11 @@ namespace FungusToast.Unity.UI
         /// Total duration of the Mycotoxic Lash special-death emphasis step.
         /// </summary>
         public const float MycotoxicLashAnimationDurationSeconds = 1f;
+        public const float NecrophyticBloomCompostAnimationDurationSeconds = 0.95f;
+        public const float NecrophyticBloomCompostPullWorld = 0.18f;
+        public const float NecrophyticBloomCompostStartScale = 1.16f;
+        public const float NecrophyticBloomCompostEndScale = 0.9f;
+        public const float NecrophyticBloomBannerHoldSeconds = 0.65f;
 
         /// <summary>
         /// Total duration of the Retrograde Bloom board pulse.

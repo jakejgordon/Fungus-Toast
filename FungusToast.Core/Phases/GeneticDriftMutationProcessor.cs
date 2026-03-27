@@ -300,276 +300,132 @@ namespace FungusToast.Core.Phases
             return toxinsMetabolized;
         }
 
-        internal static int CalculateNecrophyticBloomSporesPerDeath(int totalTiles, int level)
+        internal static int CalculateNecrophyticBloomClusterThreshold(int level)
         {
-            if (level <= 0 || totalTiles <= 0)
+            if (level <= 0)
             {
-                return 0;
+                return int.MaxValue;
             }
 
-            int scaledSpores = (int)Math.Floor(totalTiles * GameBalance.NecrophyticBloomSporesPerDeathPerLevel * level);
-            return Math.Max(GameBalance.NecrophyticBloomBaseSpores, scaledSpores);
+            int threshold = GameBalance.NecrophyticBloomBaseClusterThreshold
+                - ((level - 1) * GameBalance.NecrophyticBloomClusterThresholdReductionPerLevel);
+            return Math.Max(1, threshold);
         }
 
-        internal static List<int> BuildNecrophyticBloomTargetPool(
-            GameBoard board,
-            Player currentPlayer,
-            int level,
-            Random rng,
-            DecayPhaseContext? decayPhaseContext)
+        internal static float CalculateNecrophyticBloomCompostChance(int level)
         {
-            var validTargets = new List<int>();
-            var invalidTargets = new List<int>();
-            var smallerColonyDeadTargets = new List<int>();
-            HashSet<int>? smallerColonyPlayerIds = null;
-
-            bool hasCompetitiveAntagonism = decayPhaseContext != null && currentPlayer.IsSurgeActive(MutationIds.CompetitiveAntagonism);
-            if (hasCompetitiveAntagonism)
+            if (level <= 0)
             {
-                var (_, smallerColonies) = decayPhaseContext!.GetColonySizeCategorization(currentPlayer);
-                smallerColonyPlayerIds = smallerColonies.Select(p => p.PlayerId).ToHashSet();
+                return 0f;
             }
+
+            return Math.Clamp(
+                GameBalance.NecrophyticBloomBaseCompostChance
+                + ((level - 1) * GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel),
+                0f,
+                1f);
+        }
+
+            internal static int CalculateNecrophyticBloomPatchTileCount(int consumedClusterTileCount)
+            {
+                return Math.Max(1, consumedClusterTileCount - GameBalance.NecrophyticBloomPatchTileReduction);
+            }
+
+        internal static List<List<int>> GetNecrophyticBloomDeadClusters(GameBoard board, int playerId)
+        {
+            var visitedTileIds = new HashSet<int>();
+            var clusters = new List<List<int>>();
 
             foreach (var tile in board.AllTiles())
             {
                 var cell = tile.FungalCell;
-
-                if (cell?.IsToxin == true)
+                if (cell?.IsDead != true
+                    || cell.IsToxin
+                    || cell.OwnerPlayerId != playerId
+                    || !visitedTileIds.Add(tile.TileId))
                 {
                     continue;
                 }
 
-                if (cell?.IsAlive == true && cell.OwnerPlayerId == currentPlayer.PlayerId)
-                {
-                    continue;
-                }
+                var clusterTileIds = new List<int>();
+                var frontier = new Queue<int>();
+                frontier.Enqueue(tile.TileId);
 
-                if (cell?.IsDead == true)
+                while (frontier.Count > 0)
                 {
-                    validTargets.Add(tile.TileId);
+                    int frontierTileId = frontier.Dequeue();
+                    clusterTileIds.Add(frontierTileId);
 
-                    if (hasCompetitiveAntagonism &&
-                        cell.OwnerPlayerId.HasValue &&
-                        smallerColonyPlayerIds != null &&
-                        smallerColonyPlayerIds.Contains(cell.OwnerPlayerId.Value))
+                    foreach (var neighbor in board.GetOrthogonalNeighbors(frontierTileId))
                     {
-                        smallerColonyDeadTargets.Add(tile.TileId);
+                        var neighborCell = neighbor.FungalCell;
+                        if (neighborCell?.IsDead != true
+                            || neighborCell.IsToxin
+                            || neighborCell.OwnerPlayerId != playerId
+                            || !visitedTileIds.Add(neighbor.TileId))
+                        {
+                            continue;
+                        }
+
+                        frontier.Enqueue(neighbor.TileId);
                     }
-
-                    continue;
                 }
 
-                invalidTargets.Add(tile.TileId);
+                clusters.Add(clusterTileIds);
             }
 
-            if (smallerColonyDeadTargets.Count > 0)
-            {
-                int smallerColonyTilesToRemove = (int)Math.Floor(
-                    smallerColonyDeadTargets.Count * GameBalance.CompetitiveAntagonismNecrophyticBloomSmallerColonyReduction);
-                RemoveRandomTargets(validTargets, smallerColonyDeadTargets, smallerColonyTilesToRemove, rng);
-            }
-
-            int invalidTargetsToRemove = (int)Math.Floor(
-                invalidTargets.Count * Math.Clamp(level * GameBalance.NecrophyticBloomInvalidTargetReductionPerLevel, 0f, 1f));
-            RemoveRandomTargets(invalidTargets, invalidTargets, invalidTargetsToRemove, rng);
-
-            var targetPool = new List<int>(validTargets.Count + invalidTargets.Count);
-            targetPool.AddRange(validTargets);
-            targetPool.AddRange(invalidTargets);
-            return targetPool;
+            return clusters;
         }
 
-        internal static List<int> GetNecrophyticBloomSuccessfulTargets(
-            GameBoard board,
-            Player currentPlayer,
-            int level,
-            Random rng,
-            DecayPhaseContext? decayPhaseContext)
-        {
-            var successfulTargets = new List<int>();
-            var smallerColonyDeadTargets = new List<int>();
-            HashSet<int>? smallerColonyPlayerIds = null;
-
-            bool hasCompetitiveAntagonism = decayPhaseContext != null && currentPlayer.IsSurgeActive(MutationIds.CompetitiveAntagonism);
-            if (hasCompetitiveAntagonism)
-            {
-                var (_, smallerColonies) = decayPhaseContext!.GetColonySizeCategorization(currentPlayer);
-                smallerColonyPlayerIds = smallerColonies.Select(p => p.PlayerId).ToHashSet();
-            }
-
-            foreach (var tile in board.AllTiles())
-            {
-                var cell = tile.FungalCell;
-                if (cell?.IsDead != true || cell.IsToxin)
-                {
-                    continue;
-                }
-
-                successfulTargets.Add(tile.TileId);
-
-                if (hasCompetitiveAntagonism &&
-                    cell.OwnerPlayerId.HasValue &&
-                    smallerColonyPlayerIds != null &&
-                    smallerColonyPlayerIds.Contains(cell.OwnerPlayerId.Value))
-                {
-                    smallerColonyDeadTargets.Add(tile.TileId);
-                }
-            }
-
-            if (smallerColonyDeadTargets.Count > 0)
-            {
-                int smallerColonyTilesToRemove = (int)Math.Floor(
-                    smallerColonyDeadTargets.Count * GameBalance.CompetitiveAntagonismNecrophyticBloomSmallerColonyReduction);
-                RemoveRandomTargets(successfulTargets, smallerColonyDeadTargets, smallerColonyTilesToRemove, rng);
-            }
-
-            return successfulTargets;
-        }
-
-        internal static int CalculateNecrophyticBloomBurstReclaims(
-            int sporesToRelease,
-            int candidateTileCount,
-            int successfulTargetCount,
-            Random rng)
-        {
-            if (sporesToRelease <= 0 || candidateTileCount <= 0 || successfulTargetCount <= 0)
-            {
-                return 0;
-            }
-
-            float expectedReclaims = sporesToRelease * (successfulTargetCount / (float)candidateTileCount);
-            float modifier = 1f;
-            if (GameBalance.NecrophyticBloomInitialBurstReclaimVariance > 0f)
-            {
-                modifier += ((float)rng.NextDouble() * 2f - 1f) * GameBalance.NecrophyticBloomInitialBurstReclaimVariance;
-            }
-
-            int reclaims = (int)Math.Floor(expectedReclaims * modifier);
-            return Math.Clamp(reclaims, 0, successfulTargetCount);
-        }
-
-        private static void RemoveRandomTargets(List<int> targetPool, List<int> removableTargets, int count, Random rng)
-        {
-            if (count <= 0 || targetPool.Count == 0 || removableTargets.Count == 0)
-            {
-                return;
-            }
-
-            var candidates = removableTargets.Distinct().Where(targetPool.Contains).ToList();
-            for (int index = 0; index < count && candidates.Count > 0; index++)
-            {
-                int removeIndex = rng.Next(candidates.Count);
-                int tileId = candidates[removeIndex];
-                candidates.RemoveAt(removeIndex);
-                targetPool.Remove(tileId);
-            }
-        }
-
-        private static void ResolveNecrophyticBloomBurst(
+        public static int ResolveNecrophyticBloomComposting(
             Player player,
             GameBoard board,
-            int sporesToRelease,
             Random rng,
-            ISimulationObserver observer,
-            DecayPhaseContext? decayPhaseContext,
-            bool recordCompetitiveAntagonism)
+            ISimulationObserver observer)
         {
-            if (sporesToRelease <= 0)
-            {
-                return;
-            }
-
             int level = player.GetMutationLevel(MutationIds.NecrophyticBloom);
             if (level <= 0)
             {
-                return;
+                return 0;
             }
 
-            var targetTileIds = BuildNecrophyticBloomTargetPool(board, player, level, rng, decayPhaseContext);
-            var successfulTargetTileIds = GetNecrophyticBloomSuccessfulTargets(board, player, level, rng, decayPhaseContext);
+            int clusterThreshold = CalculateNecrophyticBloomClusterThreshold(level);
+            float compostChance = CalculateNecrophyticBloomCompostChance(level);
+            bool allowHypervariation = level >= GameBalance.NecrophyticBloomMaxLevel;
 
-            if (recordCompetitiveAntagonism && player.IsSurgeActive(MutationIds.CompetitiveAntagonism))
+            int createdPatchCount = 0;
+            int nextClusterId = board.GetNextNutrientClusterId();
+
+            foreach (var clusterTileIds in GetNecrophyticBloomDeadClusters(board, player.PlayerId))
             {
-                int targetsAffected = Math.Min(sporesToRelease, targetTileIds.Count);
-                if (targetsAffected > 0)
+                if (clusterTileIds.Count < clusterThreshold || rng.NextDouble() > compostChance)
                 {
-                    observer.RecordCompetitiveAntagonismTargeting(player.PlayerId, targetsAffected);
+                    continue;
                 }
-            }
 
-            if (targetTileIds.Count == 0 || successfulTargetTileIds.Count == 0)
-            {
-                observer.ReportNecrophyticBloomSporeDrop(player.PlayerId, sporesToRelease, 0);
-                return;
-            }
+                NutrientPatch nutrientPatch = NutrientPatchPlacementUtility.CreateClusterPatch(
+                    nextClusterId,
+                    CalculateNecrophyticBloomPatchTileCount(clusterTileIds.Count),
+                    rng.NextDouble(),
+                    rng.NextDouble(),
+                    NutrientPatchSource.NecrophyticBloom,
+                    allowHypervariation);
 
-            int reclaimCount = CalculateNecrophyticBloomBurstReclaims(
-                sporesToRelease,
-                targetTileIds.Count,
-                successfulTargetTileIds.Count,
-                rng);
-
-            int reclaims = 0;
-            for (int i = 0; i < reclaimCount && successfulTargetTileIds.Count > 0; i++)
-            {
-                int targetIndex = rng.Next(successfulTargetTileIds.Count);
-                int targetTileId = successfulTargetTileIds[targetIndex];
-                successfulTargetTileIds.RemoveAt(targetIndex);
-                if (board.TryReclaimDeadCell(player.PlayerId, targetTileId, Growth.GrowthSource.NecrophyticBloom, requireSameOwner: false))
+                if (!board.ConvertDeadClusterToNutrientPatch(clusterTileIds, nutrientPatch, player.PlayerId))
                 {
-                    reclaims++;
+                    continue;
                 }
+
+                nextClusterId++;
+                createdPatchCount++;
             }
 
-            observer.ReportNecrophyticBloomSporeDrop(player.PlayerId, sporesToRelease, reclaims);
-        }
-
-        /// <summary>
-        /// Handles the initial spore burst from Necrophytic Bloom when it first activates.
-        /// </summary>
-        public static void TriggerNecrophyticBloomInitialBurst(
-            Player player,
-            GameBoard board,
-            Random rng,
-            ISimulationObserver observer,
-            DecayPhaseContext? decayPhaseContext)
-        {
-            int level = player.GetMutationLevel(MutationIds.NecrophyticBloom);
-            if (level <= 0) return;
-
-            var deadCells = board.GetAllCellsOwnedBy(player.PlayerId)
-                                 .Where(cell => cell.IsDead && !cell.IsToxin)
-                                 .ToList();
-
-            int sporesPerDeadCell = CalculateNecrophyticBloomSporesPerDeath(board.TotalTiles, level);
-            int totalSpores = sporesPerDeadCell * deadCells.Count;
-
-            ResolveNecrophyticBloomBurst(player, board, totalSpores, rng, observer, decayPhaseContext, recordCompetitiveAntagonism: false);
-        }
-
-        /// <summary>
-        /// Resolves Necrophytic Bloom once for all newly dead cells a player created during the current decay phase.
-        /// </summary>
-        public static void TriggerNecrophyticBloomForNewDeaths(
-            Player owner,
-            GameBoard board,
-            int newlyDeadCellCount,
-            Random rng,
-            ISimulationObserver observer,
-            DecayPhaseContext decayPhaseContext)
-        {
-            if (newlyDeadCellCount <= 0)
+            if (createdPatchCount > 0)
             {
-                return;
+                observer.RecordNecrophyticBloomPatchCreation(player.PlayerId, createdPatchCount);
             }
 
-            int level = owner.GetMutationLevel(MutationIds.NecrophyticBloom);
-            if (level <= 0) return;
-
-            int sporesPerDeadCell = CalculateNecrophyticBloomSporesPerDeath(board.TotalTiles, level);
-            int totalSpores = sporesPerDeadCell * newlyDeadCellCount;
-
-            ResolveNecrophyticBloomBurst(owner, board, totalSpores, rng, observer, decayPhaseContext, recordCompetitiveAntagonism: true);
+            return createdPatchCount;
         }
 
         /// <summary>
@@ -627,21 +483,6 @@ namespace FungusToast.Core.Phases
             foreach (var player in players)
             {
                 ApplyMycotoxinCatabolism(player, board, rng, roundContext, observer, livingCounts);
-            }
-        }
-
-        public static void OnNecrophyticBloomActivated(
-            GameBoard board,
-            List<Player> players,
-            Random rng,
-            ISimulationObserver observer)
-        {
-            foreach (var p in players)
-            {
-                if (p.GetMutationLevel(MutationIds.NecrophyticBloom) > 0)
-                {
-                    TriggerNecrophyticBloomInitialBurst(p, board, rng, observer, board.CachedDecayPhaseContext);
-                }
             }
         }
 

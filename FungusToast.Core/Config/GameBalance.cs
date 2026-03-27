@@ -179,11 +179,11 @@ namespace FungusToast.Core.Config
         public const int SporicidalBloomMaxLevel = 5;
 
         // Necrophytic Bloom (Tier 4 GeneticDrift)
-        public const float NecrophyticBloomActivationThreshold = .20f;
-        public const int NecrophyticBloomBaseSpores = 2; // Minimum spores released per eligible dead cell.
-        public const float NecrophyticBloomSporesPerDeathPerLevel = 1f / 640f; // 0.15625% of the board per level.
-        public const float NecrophyticBloomInvalidTargetReductionPerLevel = 0.075f; // Removes 7.5% of remaining invalid targets per level.
-        public const float NecrophyticBloomInitialBurstReclaimVariance = 0.20f; // Adds up to +/-20% variance to the initial burst reclaim count.
+        public const int NecrophyticBloomBaseClusterThreshold = 10;
+        public const float NecrophyticBloomBaseCompostChance = 0.20f;
+        public const int NecrophyticBloomClusterThresholdReductionPerLevel = 1;
+        public const float NecrophyticBloomCompostChanceIncreasePerLevel = 0.05f;
+        public const int NecrophyticBloomPatchTileReduction = 2;
         public const int NecrophyticBloomMaxLevel = 5;
 
         // Necrohyphal Infiltration (Tier 5 CellularResilience)

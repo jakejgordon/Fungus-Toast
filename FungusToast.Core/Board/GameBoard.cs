@@ -430,6 +430,16 @@ namespace FungusToast.Core.Board
         }
         public int GetNutrientPatchCount() => AllNutrientPatchTiles().Count();
 
+        public int GetNextNutrientClusterId()
+        {
+            int maxClusterId = AllNutrientPatchTiles()
+                .Select(tile => tile.NutrientPatch?.ClusterId ?? 0)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            return maxClusterId + 1;
+        }
+
         public IReadOnlyList<int> GetNutrientClusterTileIds(int tileId)
         {
             NutrientPatch? nutrientPatch = GetTileById(tileId)?.NutrientPatch;
@@ -478,6 +488,62 @@ namespace FungusToast.Core.Board
             }
 
             tile.PlaceNutrientPatch(nutrientPatch);
+            return true;
+        }
+
+        public bool ConvertDeadClusterToNutrientPatch(IReadOnlyList<int> clusterTileIds, NutrientPatch nutrientPatch, int triggeringPlayerId)
+        {
+            if (clusterTileIds == null || clusterTileIds.Count == 0 || nutrientPatch == null)
+            {
+                return false;
+            }
+
+            var uniqueTileIds = clusterTileIds.Distinct().ToList();
+            foreach (int tileId in uniqueTileIds)
+            {
+                var tile = GetTileById(tileId);
+                if (tile == null
+                    || tile.HasNutrientPatch
+                    || tile.FungalCell?.IsDead != true
+                    || tile.FungalCell.IsToxin
+                    || IsTileBlockedForOccupation(tileId))
+                {
+                    return false;
+                }
+            }
+
+            foreach (int tileId in uniqueTileIds)
+            {
+                RemoveCellInternal(tileId, removeControl: true);
+            }
+
+            int patchTileCount = Math.Min(nutrientPatch.ClusterTileCount, uniqueTileIds.Count);
+            if (patchTileCount <= 0)
+            {
+                return false;
+            }
+
+            var nutrientTileIds = uniqueTileIds.Take(patchTileCount).ToList();
+            foreach (int tileId in nutrientTileIds)
+            {
+                if (!PlaceNutrientPatch(tileId, nutrientPatch))
+                {
+                    return false;
+                }
+            }
+
+            int anchorTileId = nutrientTileIds[0];
+            OnSpecialBoardEventTriggered(new SpecialBoardEventArgs(
+                SpecialBoardEventKind.NecrophyticBloomComposted,
+                triggeringPlayerId,
+                anchorTileId,
+                anchorTileId,
+                nutrientTileIds,
+                nutrientPatch.PatchType,
+                nutrientPatch.RewardType,
+                nutrientPatch.RewardAmount,
+                nutrientPatch.Source));
+
             return true;
         }
         public bool TryRelocateStartingSpore(Player player, int targetTileId)
@@ -741,7 +807,8 @@ namespace FungusToast.Core.Board
                 affectedTileIds ?? new[] { nutrientTileId, destinationTileId },
                 nutrientPatch.PatchType,
                 nutrientPatch.RewardType,
-                effectiveRewardAmount));
+                effectiveRewardAmount,
+                nutrientPatch.Source));
         }
 
         private int QueueHypervariationDraft(int playerId)

@@ -14,10 +14,8 @@ internal sealed class TestSimulationObserver : ISimulationObserver
     public string? LastUpgradeSource { get; private set; }
     public int UpgradeEventCount { get; private set; }
     public int NecrophyticBloomReportCount { get; private set; }
-    public int LastNecrophyticBloomSporesDropped { get; private set; }
-    public int LastNecrophyticBloomSuccessfulReclaims { get; private set; }
-    public Dictionary<int, int> NecrophyticBloomSporesByPlayer { get; } = new();
-    public Dictionary<int, int> NecrophyticBloomReclaimsByPlayer { get; } = new();
+    public int LastNecrophyticBloomPatchCount { get; private set; }
+    public Dictionary<int, int> NecrophyticBloomPatchesByPlayer { get; } = new();
 
     public void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade) => LastMutationPointsSpent = pointsPerUpgrade;
     public void RecordApicalYieldBonus(int playerId, string mutationName, int bonusPoints) => LastApicalYieldBonus = bonusPoints;
@@ -46,19 +44,14 @@ internal sealed class TestSimulationObserver : ISimulationObserver
     public void RecordRegenerativeHyphaeReclaim(int playerId) { }
     public void ReportSporicidalSporeDrop(int playerId, int count) { }
     public void ReportNecrosporeDrop(int playerId, int count) { }
-    public void ReportNecrophyticBloomSporeDrop(int playerId, int sporesDropped, int successfulReclaims)
+    public void RecordNecrophyticBloomPatchCreation(int playerId, int createdPatchCount)
     {
         NecrophyticBloomReportCount++;
-        LastNecrophyticBloomSporesDropped = sporesDropped;
-        LastNecrophyticBloomSuccessfulReclaims = successfulReclaims;
+        LastNecrophyticBloomPatchCount = createdPatchCount;
 
-        if (!NecrophyticBloomSporesByPlayer.ContainsKey(playerId))
-            NecrophyticBloomSporesByPlayer[playerId] = 0;
-        NecrophyticBloomSporesByPlayer[playerId] += sporesDropped;
-
-        if (!NecrophyticBloomReclaimsByPlayer.ContainsKey(playerId))
-            NecrophyticBloomReclaimsByPlayer[playerId] = 0;
-        NecrophyticBloomReclaimsByPlayer[playerId] += successfulReclaims;
+        if (!NecrophyticBloomPatchesByPlayer.ContainsKey(playerId))
+            NecrophyticBloomPatchesByPlayer[playerId] = 0;
+        NecrophyticBloomPatchesByPlayer[playerId] += createdPatchCount;
     }
     public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
     public void RecordMutationPointIncome(int playerId, int newMutationPoints) => LastMutationPointIncome = newMutationPoints;
