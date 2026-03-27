@@ -91,9 +91,21 @@ namespace FungusToast.Unity.UI
 
             IEnumerable<int> tileIds = GetMatchingTileIds(board);
             gridVisualizer.HighlightTiles(tileIds);
-            if (overlayType == BoardOverlayLegendType.Chemobeacon)
+
+            switch (overlayType)
             {
-                gridVisualizer.TriggerChemobeaconPing();
+                case BoardOverlayLegendType.Chemobeacon:
+                    gridVisualizer.TriggerChemobeaconPing();
+                    break;
+                case BoardOverlayLegendType.AdaptogenPatch:
+                    gridVisualizer.TriggerNutrientPatchPing(NutrientPatchType.Adaptogen);
+                    break;
+                case BoardOverlayLegendType.SporemealPatch:
+                    gridVisualizer.TriggerNutrientPatchPing(NutrientPatchType.Sporemeal);
+                    break;
+                case BoardOverlayLegendType.HypervariationPatch:
+                    gridVisualizer.TriggerNutrientPatchPing(NutrientPatchType.Hypervariation);
+                    break;
             }
         }
 
