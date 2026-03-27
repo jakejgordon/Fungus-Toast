@@ -117677,7 +117677,7 @@ MonoBehaviour:
   titleText: {fileID: 1112309357}
   hotseatDescriptionText: {fileID: 2072126646}
   campaignDescriptionText: {fileID: 1467730301}
-  wideTitleLogoSprite: {fileID: 21300000, guid: c8071e25a05e01c41b6d7b9a8ff2187f, type: 3}
+  wideTitleLogoSprite: {fileID: -8837426643450192954, guid: c8071e25a05e01c41b6d7b9a8ff2187f, type: 3}
 --- !u!1 &1550400849
 GameObject:
   m_ObjectHideFlags: 0
@@ -123421,7 +123421,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -3941995717107636536, guid: 04ed12d3f264d5b43adb1c3c72149c48, type: 3}
+  m_Sprite: {fileID: -8837426643450192954, guid: c8071e25a05e01c41b6d7b9a8ff2187f, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
