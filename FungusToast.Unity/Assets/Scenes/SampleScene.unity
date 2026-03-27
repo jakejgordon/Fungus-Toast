@@ -107183,6 +107183,7 @@ MonoBehaviour:
   testingForcedGameResult: 0
   fastForwardRounds: 0
   testingSkipToEndgameAfterFastForward: 0
+  testingTreatAsFirstGame: 0
   gridVisualizer: {fileID: 989759029}
   cameraCenterer: {fileID: 743098981}
   mutationManager: {fileID: 355076243}

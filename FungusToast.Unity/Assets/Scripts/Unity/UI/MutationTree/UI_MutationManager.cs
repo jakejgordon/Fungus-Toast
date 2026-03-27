@@ -17,6 +17,10 @@ namespace FungusToast.Unity.UI.MutationTree
 {
     public class UI_MutationManager : MonoBehaviour
     {
+        private const string MutationTreeGuidanceSeenKey = "Onboarding.AlphaMutationTreeGuidanceSeen";
+        private const string SpendPointsTooltipText = "Open your upgrades and spend your mutation points now.";
+        private const string StorePointsTooltipText = "Store your unspent mutation points.\nThey carry over to the next turn,\nso you can save for stronger upgrades.";
+        private const string FirstTreeGuidanceToastText = "Hover upgrades to inspect them, then click an affordable one to buy it.\n\nIf you want stronger upgrades later, use Store Mutation Points at the top of this panel.";
         private const float SpendButtonMinWidth = 220f;
         private const float SpendButtonMinHeight = 40f;
         private const float StoreButtonMinWidth = 220f;
@@ -61,6 +65,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private Vector3 originalCounterScale;
         private bool isTreeOpen = false;
         private bool isSliding = false;
+        private bool hasDismissedTreeGuidanceThisGame;
+        private TooltipTrigger spendPointsTooltipTrigger;
 
         private Player humanPlayer;
         private bool humanTurnEnded = false;
@@ -109,6 +115,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             ApplyActionStyles();
             RestoreActionRowLayout();
+            WireSpendPointsTooltip();
 
             // ── Store Points button tooltip ──
             WireStorePointsTooltip();
@@ -149,6 +156,7 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationButtons.Clear();
             directDependentsByMutationId.Clear();
             pendingTargetedSurgeSelection = null;
+            hasDismissedTreeGuidanceThisGame = false;
 
             if (mutationTreePanel != null)
             {
@@ -564,6 +572,8 @@ namespace FungusToast.Unity.UI.MutationTree
             // ── Play shimmer on affordable nodes after panel opens ──
             if (humanPlayer != null && humanPlayer.MutationPoints > 0)
                 StartCoroutine(PlayAffordableShimmer());
+
+            ShowFirstTreeGuidanceToast();
         }
 
         private IEnumerator SlideOutTree()
@@ -870,7 +880,58 @@ namespace FungusToast.Unity.UI.MutationTree
             if (trigger == null)
                 trigger = storePointsButton.gameObject.AddComponent<TooltipTrigger>();
 
-            trigger.SetStaticText("Store your unspent mutation points.\nThey will carry over to the next turn,\nallowing you to save up for expensive upgrades.");
+            trigger.SetStaticText(StorePointsTooltipText);
+        }
+
+        private void WireSpendPointsTooltip()
+        {
+            if (spendPointsButton == null)
+            {
+                return;
+            }
+
+            spendPointsTooltipTrigger = spendPointsButton.GetComponent<TooltipTrigger>();
+            if (spendPointsTooltipTrigger == null)
+            {
+                spendPointsTooltipTrigger = spendPointsButton.gameObject.AddComponent<TooltipTrigger>();
+            }
+
+            spendPointsTooltipTrigger.SetStaticText(SpendPointsTooltipText);
+            spendPointsTooltipTrigger.SetAutoPlacementOffsetX(60f);
+        }
+
+        private void ShowFirstTreeGuidanceToast()
+        {
+            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
+            if (hasDismissedTreeGuidanceThisGame)
+            {
+                return;
+            }
+
+            if (!forceFirstGame && PlayerPrefs.GetInt(MutationTreeGuidanceSeenKey, 0) != 0)
+            {
+                return;
+            }
+
+            var toastPresenter = GameManager.Instance?.GameUI?.MutationTreeToastPresenter;
+            if (toastPresenter == null)
+            {
+                return;
+            }
+
+            toastPresenter.ShowModalIfTreeOpen(FirstTreeGuidanceToastText, OnFirstTreeGuidanceDismissed);
+        }
+
+        private void OnFirstTreeGuidanceDismissed()
+        {
+            hasDismissedTreeGuidanceThisGame = true;
+
+            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
+            if (!forceFirstGame)
+            {
+                PlayerPrefs.SetInt(MutationTreeGuidanceSeenKey, 1);
+                PlayerPrefs.Save();
+            }
         }
 
         /// <summary>

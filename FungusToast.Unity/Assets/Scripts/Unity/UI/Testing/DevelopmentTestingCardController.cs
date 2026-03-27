@@ -101,6 +101,7 @@ namespace FungusToast.Unity.UI.Testing
         public int? MycovariantId { get; }
         public int FastForwardRounds { get; }
         public bool SkipToEndGame { get; }
+        public bool ForceFirstGame { get; }
         public ForcedGameResultMode ForcedResult { get; }
         public string ForcedAdaptationId { get; }
 
@@ -110,6 +111,7 @@ namespace FungusToast.Unity.UI.Testing
             int? mycovariantId,
             int fastForwardRounds,
             bool skipToEndGame,
+            bool forceFirstGame,
             ForcedGameResultMode forcedResult,
             string forcedAdaptationId)
         {
@@ -118,6 +120,7 @@ namespace FungusToast.Unity.UI.Testing
             MycovariantId = mycovariantId;
             FastForwardRounds = fastForwardRounds;
             SkipToEndGame = skipToEndGame;
+            ForceFirstGame = forceFirstGame;
             ForcedResult = forcedResult;
             ForcedAdaptationId = forcedAdaptationId ?? string.Empty;
         }
@@ -152,6 +155,7 @@ namespace FungusToast.Unity.UI.Testing
         private GameObject mycovariantRow;
         private TMP_Dropdown mycovariantDropdown;
         private Button fastForwardButton;
+        private Button firstGameButton;
         private Button skipToEndButton;
         private Button forcedResultButton;
         private GameObject adaptationRow;
@@ -159,6 +163,7 @@ namespace FungusToast.Unity.UI.Testing
 
         private bool testingEnabled;
         private bool skipToEnd;
+        private bool forceFirstGame;
         private int fastForwardRounds;
         private int selectedBoardSize = DevelopmentTestingBoardSizePresets.DefaultSize;
         private ForcedGameResultMode forcedResult = ForcedGameResultMode.Natural;
@@ -197,6 +202,7 @@ namespace FungusToast.Unity.UI.Testing
                 "Forced Mycovariant",
                 out mycovariantDropdown);
             fastForwardButton = EnsureSettingButton($"{options.ControlPrefix}FastForwardButton", OnFastForwardClicked);
+            firstGameButton = EnsureSettingButton($"{options.ControlPrefix}FirstGameButton", OnFirstGameClicked);
             skipToEndButton = EnsureSettingButton($"{options.ControlPrefix}SkipToEndButton", OnSkipToEndClicked);
             forcedResultButton = EnsureSettingButton($"{options.ControlPrefix}ForcedResultButton", OnForcedResultClicked);
 
@@ -214,9 +220,10 @@ namespace FungusToast.Unity.UI.Testing
             SetSiblingIndex(boardSizeRow != null ? boardSizeRow.transform : null, 1);
             SetSiblingIndex(mycovariantRow != null ? mycovariantRow.transform : null, 2);
             SetSiblingIndex(fastForwardButton != null ? fastForwardButton.transform : null, 3);
-            SetSiblingIndex(skipToEndButton != null ? skipToEndButton.transform : null, 4);
-            SetSiblingIndex(forcedResultButton != null ? forcedResultButton.transform : null, 5);
-            SetSiblingIndex(adaptationRow != null ? adaptationRow.transform : null, 6);
+            SetSiblingIndex(firstGameButton != null ? firstGameButton.transform : null, 4);
+            SetSiblingIndex(skipToEndButton != null ? skipToEndButton.transform : null, 5);
+            SetSiblingIndex(forcedResultButton != null ? forcedResultButton.transform : null, 6);
+            SetSiblingIndex(adaptationRow != null ? adaptationRow.transform : null, 7);
 
             RefreshDropdownOptions();
             RefreshVisualState();
@@ -282,6 +289,7 @@ namespace FungusToast.Unity.UI.Testing
             }
 
             UpdateButtonState(fastForwardButton, testingEnabled, testingEnabled);
+            UpdateButtonState(firstGameButton, testingEnabled, testingEnabled);
             UpdateButtonState(skipToEndButton, testingEnabled, testingEnabled);
             UpdateButtonState(forcedResultButton, testingEnabled && skipToEnd, testingEnabled && skipToEnd);
 
@@ -317,6 +325,7 @@ namespace FungusToast.Unity.UI.Testing
 
             SetButtonLabel(testingToggleButton, $"Development Testing: {(testingEnabled ? "On" : "Off")}");
             SetButtonLabel(fastForwardButton, $"Fast Forward Rounds: {fastForwardRounds}");
+            SetButtonLabel(firstGameButton, $"First Game?: {(forceFirstGame ? "Yes" : "No")}");
             SetButtonLabel(skipToEndButton, $"Skip to End Game: {(skipToEnd ? "On" : "Off")}");
             SetButtonLabel(forcedResultButton, $"Forced Result: {FormatForcedResult(forcedResult)}");
 
@@ -341,7 +350,7 @@ namespace FungusToast.Unity.UI.Testing
         {
             if (!testingEnabled)
             {
-                return new DevelopmentTestingConfiguration(false, null, null, 0, false, ForcedGameResultMode.Natural, string.Empty);
+                return new DevelopmentTestingConfiguration(false, null, null, 0, false, false, ForcedGameResultMode.Natural, string.Empty);
             }
 
             int? selectedMycovariantId = null;
@@ -370,6 +379,7 @@ namespace FungusToast.Unity.UI.Testing
                 selectedMycovariantId,
                 fastForwardRounds,
                 skipToEnd,
+                forceFirstGame,
                 skipToEnd ? forcedResult : ForcedGameResultMode.Natural,
                 selectedAdaptationId);
         }
@@ -392,6 +402,7 @@ namespace FungusToast.Unity.UI.Testing
                 configuration.MycovariantId,
                 configuration.FastForwardRounds,
                 configuration.SkipToEndGame,
+                configuration.ForceFirstGame,
                 configuration.ForcedResult,
                 configuration.ForcedAdaptationId);
         }
@@ -600,6 +611,7 @@ namespace FungusToast.Unity.UI.Testing
             if (!testingEnabled)
             {
                 skipToEnd = false;
+                forceFirstGame = false;
                 fastForwardRounds = 0;
                 forcedResult = ForcedGameResultMode.Natural;
             }
@@ -611,6 +623,12 @@ namespace FungusToast.Unity.UI.Testing
         {
             fastForwardRounds = DevelopmentTestingFastForwardPresets.GetNext(fastForwardRounds);
 
+            RefreshVisualState();
+        }
+
+        private void OnFirstGameClicked()
+        {
+            forceFirstGame = !forceFirstGame;
             RefreshVisualState();
         }
 

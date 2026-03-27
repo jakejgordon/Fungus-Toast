@@ -171,6 +171,7 @@ Notes:
 - Background: `Surface.PanelSecondary` with high text contrast.
 - Header text: `Text.Primary`; body text: `Text.Secondary`.
 - Semantic values may use `State.*` accents sparingly.
+- Use tooltips for short, just-in-time clarification only. If the player must stop and read multiple sentences to understand a first-run action, use a modal instead of a tooltip.
 
 ### 5.6 Mutation Nodes
 - Keep category identity via `Category.*` accents.
@@ -188,6 +189,9 @@ Notes:
 - Reuse semantic tokens (`State.Success/Warning/Danger`) consistently.
 - Dismissible read-only modals should expose a visible top-right dismiss control. An `X` button remains the standard desktop convention when paired with backdrop click and `Escape` support.
 - Footer `Close` buttons are optional for read-only detail modals. Prefer the top-right dismiss control when vertical space is constrained.
+- Use toasts for brief, non-blocking confirmations that can be safely missed, such as lightweight gain notifications or transient mutation feedback.
+- Use dismissible modals for first-run onboarding, must-read instructional copy, or any message longer than a short sentence. Do not rely on auto-fading toasts for core gameplay teaching.
+- If a first-run modal is shown from within a panel such as the mutation tree, it should remain visible until explicit dismissal and should not reappear again after the player dismisses it.
 
 ---
 
@@ -206,6 +210,7 @@ Notes:
 ### 6.3 Mutation Tree
 - Keep category accents and dark tree baseline; align text/button states with global tokens.
 - Store/bank actions use primary action style; less critical actions use secondary.
+- First-run mutation-tree guidance should use a dismissible modal, not a toast, because the player is being taught a core turn decision.
 
 ### 6.4 Tooltips + Logs
 - Unify tooltip/log text sizing and line-height for readability.

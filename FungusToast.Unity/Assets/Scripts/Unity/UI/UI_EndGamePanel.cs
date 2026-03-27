@@ -1988,6 +1988,7 @@ namespace FungusToast.Unity.UI
                 postVictoryForcedMycovariantId,
                 postVictoryFastForwardRounds,
                 postVictorySkipToEnd,
+                false,
                 forcedResult);
         }
 

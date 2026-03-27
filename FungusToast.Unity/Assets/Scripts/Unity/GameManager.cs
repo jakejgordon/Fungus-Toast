@@ -34,6 +34,9 @@ namespace FungusToast.Unity
 {
     public class GameManager : MonoBehaviour
     {
+        private const string AlphaMutationOnboardingSeenKey = "Onboarding.AlphaMutationPhaseSeen";
+        private const string AlphaMutationOnboardingBannerText = "Goal: control the largest share of the toast.\nSpend mutation points for upgrades now or store them to save for stronger upgrades later.\nAfter that, your colony grows automatically.";
+
         #region Inspector Fields
 
         [Header("Board Settings")] 
@@ -49,6 +52,7 @@ namespace FungusToast.Unity
         public ForcedGameResultMode testingForcedGameResult = ForcedGameResultMode.Natural;
         public int fastForwardRounds =0; 
         public bool testingSkipToEndgameAfterFastForward = false;
+        public bool testingTreatAsFirstGame = false;
 
         [Header("References")] 
         public GridVisualizer gridVisualizer; 
@@ -127,11 +131,13 @@ namespace FungusToast.Unity
         public bool IsTestingModeEnabled => testingModeEnabled; 
         public int? TestingMycovariantId => testingMycovariantId;
         public ForcedGameResultMode TestingForcedGameResult => testingForcedGameResult;
+        public bool ShouldForceFirstGameExperience => testingModeEnabled && testingTreatAsFirstGame;
 
         private bool isFastForwarding = false; 
         public bool IsFastForwarding => isFastForwarding; 
         private bool _fastForwardStarted = false;
         private bool initialMutationPointsAssigned = false;
+        private bool pendingAlphaMutationOnboarding;
         private float nextUiStuckCheckTime;
         private bool isPauseMenuOpen;
         private UI_PauseMenuPanel pauseMenuPanel;
@@ -790,6 +796,8 @@ namespace FungusToast.Unity
                 gameUIManager.GameLogManager?.EmitPendingSegmentSummariesFor(humanPlayers[0].PlayerId);
             }
 
+            pendingAlphaMutationOnboarding = ShouldQueueAlphaMutationOnboarding();
+
             hotseatTurnManager.BeginHumanMutationPhase();
 
             // Fail-safe: campaign continuation can traverse custom UI steps; ensure mutation controls are re-armed.
@@ -804,7 +812,10 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
             gameUIManager.GameLogRouter?.OnPhaseStart("Mutation");
-            gameUIManager.PhaseBanner.Show("Mutation Phase Begins!",2f);
+            if (!pendingAlphaMutationOnboarding)
+            {
+                gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
+            }
             if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
             {
                 StartCoroutine(specialEventPresentationService.PresentPendingImmediate());
@@ -856,6 +867,40 @@ namespace FungusToast.Unity
         public void SpendAllMutationPointsForAIPlayers()
         {
             mutationPointService.SpendAllMutationPointsForAIPlayers();
+        }
+
+        public void TryShowPendingAlphaMutationOnboarding(Player player)
+        {
+            if (!pendingAlphaMutationOnboarding || player == null || player.MutationPoints <= 0)
+            {
+                return;
+            }
+
+            pendingAlphaMutationOnboarding = false;
+            gameUIManager.PhaseBanner.Show(AlphaMutationOnboardingBannerText, 5.5f);
+            if (!ShouldForceFirstGameExperience)
+            {
+                PlayerPrefs.SetInt(AlphaMutationOnboardingSeenKey, 1);
+                PlayerPrefs.Save();
+            }
+        }
+
+        private bool ShouldQueueAlphaMutationOnboarding()
+        {
+            if (ShouldForceFirstGameExperience)
+            {
+                return Board != null
+                    && Board.CurrentRound == 1
+                    && humanPlayers.Count > 0
+                    && !isFastForwarding;
+            }
+
+            return Board != null
+                && Board.CurrentRound == 1
+                && humanPlayers.Count > 0
+                && !isFastForwarding
+                && !testingModeEnabled
+                && PlayerPrefs.GetInt(AlphaMutationOnboardingSeenKey, 0) == 0;
         }
 
         #endregion
@@ -1296,6 +1341,7 @@ namespace FungusToast.Unity
             int? mycovariantId,
             int fastForwardRounds =0,
             bool skipToEndgameAfterFastForward = false,
+            bool forceFirstGame = false,
             ForcedGameResultMode forcedGameResult = ForcedGameResultMode.Natural,
             string forcedAdaptationId = "")
         {
@@ -1306,6 +1352,7 @@ namespace FungusToast.Unity
             testingForcedGameResult = forcedGameResult;
             this.fastForwardRounds = fastForwardRounds;
             testingSkipToEndgameAfterFastForward = skipToEndgameAfterFastForward;
+            testingTreatAsFirstGame = forceFirstGame;
         }
 
         public void DisableTestingMode()
@@ -1317,6 +1364,7 @@ namespace FungusToast.Unity
             testingForcedGameResult = ForcedGameResultMode.Natural;
             fastForwardRounds =0;
             testingSkipToEndgameAfterFastForward = false;
+            testingTreatAsFirstGame = false;
         }
 
         internal void RequestFastForwardIfNeeded()
