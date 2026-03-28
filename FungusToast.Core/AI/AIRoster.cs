@@ -579,6 +579,19 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Resistance)
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "CMP_Reclaim_InfiltrationSurge_Easy",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, GameBalance.NecrohyphalInfiltrationMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, GameBalance.HyphalSurgeMaxLevel)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
+                surgeAttemptTurnFrequency: 8,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Reclamation, MycovariantCategory.Growth)
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "CMP_Growth_Pressure_Medium",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -1255,6 +1268,7 @@ namespace FungusToast.Core.AI
                 ["CMP_TierCap_GrowthResilience_Easy"] = StrategyTheme.TierCap,
                 ["CMP_Reclaim_Scavenger_Easy"] = StrategyTheme.Reclamation,
                 ["CMP_Surge_Pulsar_Easy"] = StrategyTheme.SurgeTempo,
+                ["CMP_Reclaim_InfiltrationSurge_Easy"] = StrategyTheme.Reclamation,
                 ["CMP_Growth_Pressure_Medium"] = StrategyTheme.Offense,
                 ["CMP_Bloom_FortifyMimic_Medium"] = StrategyTheme.Attrition,
                 ["CMP_Economy_KillReclaim_Medium"] = StrategyTheme.EconomyRamp,
@@ -1285,6 +1299,7 @@ namespace FungusToast.Core.AI
                 ["TST_CreepingNecroRegressionCascade"] = StrategyStatus.Proven,
                 ["CMP_Reclaim_Scavenger_Easy"] = StrategyStatus.Proven,
                 ["CMP_Surge_Pulsar_Easy"] = StrategyStatus.Proven,
+                ["CMP_Reclaim_InfiltrationSurge_Easy"] = StrategyStatus.Proven,
                 ["CMP_Growth_Pressure_Medium"] = StrategyStatus.Proven,
                 ["CMP_Bloom_FortifyMimic_Medium"] = StrategyStatus.Proven,
                 ["TST_CampaignPlayer_SafeBaseline"] = StrategyStatus.Testing,
@@ -1326,6 +1341,7 @@ namespace FungusToast.Core.AI
                 ["CMP_TierCap_GrowthResilience_Easy"] = StrategyPowerTier.Weak,
                 ["CMP_Reclaim_Scavenger_Easy"] = StrategyPowerTier.Weak,
                 ["CMP_Surge_Pulsar_Easy"] = StrategyPowerTier.Standard,
+                ["CMP_Reclaim_InfiltrationSurge_Easy"] = StrategyPowerTier.Weak,
                 ["CMP_Growth_Pressure_Medium"] = StrategyPowerTier.Standard,
                 ["CMP_Bloom_FortifyMimic_Medium"] = StrategyPowerTier.Standard,
                 ["CMP_Control_AnabolicFirst_Hard"] = StrategyPowerTier.Strong,
@@ -1362,6 +1378,7 @@ namespace FungusToast.Core.AI
                 ["CMP_TierCap_GrowthResilience_Easy"] = StrategyRole.Training,
                 ["CMP_Reclaim_Scavenger_Easy"] = StrategyRole.Training,
                 ["CMP_Surge_Pulsar_Easy"] = StrategyRole.Experimental,
+                ["CMP_Reclaim_InfiltrationSurge_Easy"] = StrategyRole.Training,
                 ["CMP_Growth_Pressure_Medium"] = StrategyRole.Experimental,
                 ["CMP_Bloom_FortifyMimic_Medium"] = StrategyRole.Experimental,
                 ["CMP_Economy_KillReclaim_Medium"] = StrategyRole.Experimental,
@@ -1399,6 +1416,7 @@ namespace FungusToast.Core.AI
                 ["CMP_TierCap_GrowthResilience_Easy"] = StrategyLifecycle.Active,
                 ["CMP_Reclaim_Scavenger_Easy"] = StrategyLifecycle.Active,
                 ["CMP_Surge_Pulsar_Easy"] = StrategyLifecycle.Active,
+                ["CMP_Reclaim_InfiltrationSurge_Easy"] = StrategyLifecycle.Active,
                 ["CMP_Growth_Pressure_Medium"] = StrategyLifecycle.Active,
                 ["CMP_Bloom_FortifyMimic_Medium"] = StrategyLifecycle.Active,
                 ["CMP_Economy_KillReclaim_Medium"] = StrategyLifecycle.Active,
@@ -1445,6 +1463,7 @@ namespace FungusToast.Core.AI
                 ["CMP_TierCap_GrowthResilience_Easy"] = new[] { DifficultyBand.Easy },
                 ["CMP_Reclaim_Scavenger_Easy"] = new[] { DifficultyBand.Easy },
                 ["CMP_Surge_Pulsar_Easy"] = new[] { DifficultyBand.Normal },
+                ["CMP_Reclaim_InfiltrationSurge_Easy"] = new[] { DifficultyBand.Easy },
                 ["CMP_Growth_Pressure_Medium"] = new[] { DifficultyBand.Normal },
                 ["CMP_Bloom_FortifyMimic_Medium"] = new[] { DifficultyBand.Normal },
                 ["CMP_Economy_KillReclaim_Medium"] = new[] { DifficultyBand.Normal },
@@ -1488,6 +1507,7 @@ namespace FungusToast.Core.AI
                 ["CMP_TierCap_GrowthResilience_Easy"] = CampaignDifficulty.Easy,
                 ["CMP_Reclaim_Scavenger_Easy"] = CampaignDifficulty.Easy,
                 ["CMP_Surge_Pulsar_Easy"] = CampaignDifficulty.Medium,
+                ["CMP_Reclaim_InfiltrationSurge_Easy"] = CampaignDifficulty.Easy,
                 ["CMP_Growth_Pressure_Medium"] = CampaignDifficulty.Medium,
                 ["CMP_Bloom_FortifyMimic_Medium"] = CampaignDifficulty.Medium,
                 ["CMP_Economy_KillReclaim_Medium"] = CampaignDifficulty.Medium,

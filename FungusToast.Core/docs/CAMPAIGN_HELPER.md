@@ -2,7 +2,7 @@
 
 See also: [README.md](README.md) for the full documentation hierarchy and [ADAPTATION_HELPER.md](ADAPTATION_HELPER.md) for Adaptation-specific workflow.
 
-This guide documents the current Campaign mode vision and where to configure progression, AI lineup, and adaptation rewards.
+This guide documents the current Campaign mode vision and where to configure progression, AI lineup/pools, campaign tiers, and adaptation rewards.
 
 ## Vision
 
@@ -49,7 +49,7 @@ Each level points to a `BoardPreset` asset and can independently enable or disab
 
 Nutrient patches are optional board resource clusters: `Adaptogen` patches grant mutation-point income, while `Sporemeal` patches grant free growth across the rest of the claimed cluster.
 
-### 2) Board + AI lineup per level
+### 2) Board + AI lineup or pool per level
 Configured in assets under:
 - `FungusToast.Unity/Assets/Configs/Board Presets/`
 
@@ -68,34 +68,64 @@ Runtime usage:
 
 If the resolved lineup is invalid/incomplete, a random campaign fallback is used.
 
-## Difficulty Buckets
+Current authored usage:
+- Campaign0 and Campaign1 are the first levels intentionally converted to pooled selection while still spawning exactly 1 AI each.
+- Later levels are currently still authored primarily as fixed lineups while campaign tuning continues.
+
+## Official internal terminology
+
+### Campaign Tier
+A **Campaign Tier** is the internal difficulty grouping for a set of campaign levels that broadly share the same eligible AI pool and difficulty expectations.
+
+Current intended tier language:
+- `Training Tier`
+- `Easy Tier`
+- `Medium Tier`
+- `Hard Tier`
+- `Elite Tier`
+- optional later: `Boss Tier`
+
+Use **Campaign Tier** for the conceptual difficulty grouping or level band.
+
+Examples:
+- `Campaign0-2` are mainly in the `Training/Easy Tier` space
+- `Campaign5-9` are mainly in the `Medium Tier`
+- `Campaign12-14` are in `Hard/Elite Tier` territory
+
+### AI Pool
+An **AI Pool** is the actual set of eligible campaign strategy IDs that a level or campaign tier can draw from.
+
+Examples:
+- a `Medium Tier` pool may contain several curated `CMP_*` medium molds
+- a specific `BoardPreset` may override the broader tier pool with a curated fixed lineup or a smaller per-level pool
+
+### Fixed lineup vs pooled lineup
+- **Fixed lineup**: exact `aiPlayers` list is authored in the preset and used as-is
+- **Pooled lineup**: `aiStrategyPool` is authored and the runtime deterministically picks `pooledAiPlayerCount` unique opponents for that run/level
+
+## Difficulty metadata and current campaign tiers
 
 Campaign difficulty now has a formal metadata enum: `CampaignDifficulty`.
 Use that as the primary campaign-facing difficulty signal.
-`DifficultyBands` still exist as broader catalog/simulation tags, but campaign curation should prefer `CampaignDifficulty` for level pool decisions.
+`DifficultyBands` still exist as broader catalog/simulation tags, but campaign curation should prefer `CampaignDifficulty` for level-pool decisions.
 
-Current working difficulty mapping:
-
-- Easy / Training:
-  - `AI6`
-  - `AI12`
+Current internal Campaign Tier intent:
+- **Training/Easy Tier**
+  - training molds like `TST_Training_ResilientMycelium`, `TST_Training_Overextender`, `TST_Training_ToxicTurtle`
+  - easy curated molds like `CMP_TierCap_GrowthResilience_Easy`, `CMP_Reclaim_Scavenger_Easy`
+  - select legacy easy bridges like `AI6`, `AI12`
+- **Medium Tier**
+  - legacy mediums like `AI7`, `AI8`, `AI9`, `AI11`
+  - curated mediums like `CMP_Economy_KillReclaim_Medium`, `CMP_Bloom_CreepingNecro_Medium`, `CMP_Bloom_AnabolicRegression_Medium`, `CMP_Bloom_BeaconRegression_Medium`, `CMP_Bloom_FortifyMimic_Medium`, `CMP_Growth_Pressure_Medium`, `CMP_Surge_Pulsar_Easy` (promoted upward in intent; medium-tier use)
+- **Hard Tier**
+  - `CMP_Control_AnabolicFirst_Hard`
+  - `CMP_Economy_LateSpike_Hard`
   - `AI13`
-- Medium / Normal:
-  - `AI7`
-  - `AI8`
-  - `AI9`
-  - `AI11`
-  - `TST_AnabolicBeaconNecroRegressionCascade`
-  - `TST_AnabolicCreepingNecroRegressionCascade`
-- Hard / Elite:
-  - `AI1`
-  - `AI2`
-  - `AI3`
-  - `AI10`
-  - `TST_CreepingNecroRegressionCascade`
-  - `TST_BalancedControl_AnabolicFirst`
+- **Elite Tier**
+  - `AI1`, `AI2`, `AI3`, `AI10`
+  - `CMP_Bloom_CreepingRegression_Elite`
 
-These buckets are tuning heuristics and can change as balance data evolves.
+These are working curation heuristics and can change as balance data evolves.
 
 ## Campaign strategy naming direction
 
@@ -108,12 +138,13 @@ Examples:
 - `CMP_Control_AnabolicCreeping_Hard`
 - `CMP_Bloom_CreepingRegression_Elite`
 - `CMP_TierCap_GrowthResilience_Easy`
+- `CMP_Bloom_FortifyMimic_Medium`
 
 Guidelines:
 - `CMP_` prefix for campaign-curated identities
-- concise theme/archetype first (`Control`, `Bloom`, `Economy`, `Surge`, `Defense`, `TierCap`)
+- concise theme/archetype first (`Control`, `Bloom`, `Economy`, `Surge`, `Defense`, `TierCap`, `Reclaim`)
 - core plan second (`AnabolicCreeping`, `CreepingRegression`, `LateSpike`, etc.)
-- difficulty suffix last (`Easy`, `Normal`, `Hard`, `Elite`, `Boss`)
+- difficulty suffix last (`Easy`, `Medium`, `Hard`, `Elite`, `Boss`)
 - keep names stable once referenced by `BoardPreset` assets
 
 ## Runtime Flow Touchpoints
@@ -143,9 +174,10 @@ Adaptation draft UI reuse:
 3. Wire gameplay effects through core/runtime hooks when needed.
 
 ### Tune difficulty
-1. Change strategy names in relevant `BoardPreset.aiPlayers` lists.
+1. Adjust the relevant fixed lineup (`BoardPreset.aiPlayers`) or curated AI pool (`aiStrategyPool` + `pooledAiPlayerCount`).
 2. Optionally adjust board sizes and nutrient-patch settings.
-3. Validate in Unity; campaign simulation is not supported yet.
+3. Use campaign-safe `CMP_*` identities where possible so simulation tooling and curated docs stay aligned.
+4. Validate in Unity; CLI-side campaign validation now also exists via `scripts/run_campaign_balance.py` using the safe player proxy.
 
 ## Notes
 

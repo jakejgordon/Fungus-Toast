@@ -151,6 +151,69 @@ Result:
 - Hard molds arrive too early if introduced before Campaign10 in this pass; even one hard mold at Campaign8 drove the proxy to `0/20`.
 - The medium roster is now actually wired into campaign presets, but Campaign7 and Campaign9 still look slightly overtuned for the safe baseline and are good candidates for another pass if we want a smoother progression.
 
+## Early-campaign continuation — reclaim/surge easy mold
+
+Follow-up goal: add a new easy campaign-safe mold around Jake's suggested plan (`Necrohyphal Infiltration` max first, then `Hyphal Surge`), validate it on the same safe-proxy harness, and keep pushing the early Campaign0-4 curve toward a less erratic ramp.
+
+### Implementation changes
+
+- Added `CMP_Reclaim_InfiltrationSurge_Easy` to `FungusToast.Core/AI/AIRoster.cs`.
+- Strategy shape:
+  - `prioritizeHighTier: true`
+  - `economyBias: MinorEconomy`
+  - target goals: `Necrohyphal Infiltration` to `GameBalance.NecrohyphalInfiltrationMaxLevel`, then `Hyphal Surge` to `GameBalance.HyphalSurgeMaxLevel`
+  - preferred mycovariant categories: `Reclamation`, then `Growth`
+- Marked it as campaign `Easy`, `Training`, `Weak`, `Active`.
+- Extended `scripts/run_campaign_balance.py` so pooled presets resolve a deterministic lineup from `aiStrategyPool` using the same stable-hash / seed flow as `CampaignController`.
+- Added the new mold to the `Campaign1` (`15x15 1 AI`) authored pool.
+- Replaced `AI12` with `CMP_Reclaim_InfiltrationSurge_Easy` in `Campaign4` (`40x40 4 AI`) after a direct swap screen.
+
+### Exact authored Campaign0-4 screen
+
+Command pattern:
+
+```bash
+python3 scripts/run_campaign_balance.py --games 20 --seed 20260327 --level <0-4>
+```
+
+Results (`TST_CampaignPlayer_SafeBaseline` proxy):
+
+| Level | Authored lineup resolved by harness | Proxy result |
+|---|---|---|
+| Campaign0 | `TST_Training_ResilientMycelium` | `90.0%` (`18/20`), avg living `50.8`, avg dead `14.9` |
+| Campaign1 | `TST_Training_Overextender` (pooled level resolved to this pick for seed `20260327`) | `60.0%` (`12/20`), avg living `69.4`, avg dead `20.9` |
+| Campaign2 | `TST_Training_ResilientMycelium`, `TST_Training_Overextender` | `65.0%` (`13/20`), avg living `105.9`, avg dead `32.5` |
+| Campaign3 | `TST_Training_ResilientMycelium`, `TST_Training_Overextender`, `TST_Training_ToxicTurtle` | `55.0%` (`11/20`), avg living `166.9`, avg dead `113.9` |
+| Campaign4 (before swap) | `TST_Training_ResilientMycelium`, `TST_Training_Overextender`, `TST_Training_ToxicTurtle`, `AI12` | `5.0%` (`1/20`), avg living `172.2`, avg dead `133.8` |
+
+Immediate read: the first four levels are noisy but climb reasonably; the real outlier was Campaign4, where `AI12` turned the nutrient-introduction board into a brick wall.
+
+### Direct screens for the new mold
+
+Commands:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 15 --height 15 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,CMP_Reclaim_InfiltrationSurge_Easy --seed 20260421 --experiment-id cmp_reclaim_infiltrationsurge_w15_g20_seed20260421 --no-keyboard --players 2 --no-nutrient-patches
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 20 --height 20 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,TST_Training_ResilientMycelium,CMP_Reclaim_InfiltrationSurge_Easy --seed 20260422 --experiment-id cmp_reclaim_infiltrationsurge_w20_g20_seed20260422 --no-keyboard --players 3 --no-nutrient-patches
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 40 --height 40 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,TST_Training_ResilientMycelium,TST_Training_Overextender,TST_Training_ToxicTurtle,CMP_Reclaim_InfiltrationSurge_Easy --seed 20260423 --experiment-id cmp_reclaim_infiltrationsurge_campaign4swap_w40_g20_seed20260423 --no-keyboard --players 5
+```
+
+Results:
+
+| Scenario | Lineup | Proxy result |
+|---|---|---|
+| 15x15 duel | `CMP_Reclaim_InfiltrationSurge_Easy` | `85.0%` (`17/20`), avg living `103.2`, avg dead `29.2` |
+| 20x20 early skirmish | `TST_Training_ResilientMycelium`, `CMP_Reclaim_InfiltrationSurge_Easy` | `95.0%` (`19/20`), avg living `146.2`, avg dead `39.5` |
+| 40x40 Campaign4 swap | `TST_Training_ResilientMycelium`, `TST_Training_Overextender`, `TST_Training_ToxicTurtle`, `CMP_Reclaim_InfiltrationSurge_Easy` | `35.0%` (`7/20`), avg living `201.7`, avg dead `150.6` |
+
+Takeaways:
+
+- `CMP_Reclaim_InfiltrationSurge_Easy` is clearly an *easy* mold, not a Campaign2 pressure piece; it is too soft for the 20x20 two-AI board.
+- That softness is useful on Campaign1 pool duty and as a direct replacement for `AI12` on Campaign4, where the old lineup was much harsher than the surrounding curve.
+- Best current placement from this pass: `Campaign1` pool member and `Campaign4` fixed easy anchor. Do **not** promote it upward into Campaign2/3 fixed lineups without a different surrounding mix.
+
 ## Late-campaign continuation screen — Campaign11-14
 
 Follow-up goal: continue the same safe-proxy tuning upward into the higher authored campaign levels without introducing molds earlier than the guardrails in `docs/CAMPAIGN_AI_CURATION.md`.

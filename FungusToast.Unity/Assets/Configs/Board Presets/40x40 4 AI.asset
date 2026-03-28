@@ -19,4 +19,4 @@ MonoBehaviour:
   - strategyName: TST_Training_ResilientMycelium
   - strategyName: TST_Training_Overextender
   - strategyName: TST_Training_ToxicTurtle
-  - strategyName: AI12
+  - strategyName: CMP_Reclaim_InfiltrationSurge_Easy

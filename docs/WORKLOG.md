@@ -77,8 +77,16 @@ Use the following minimal workflow to preserve working memory across sessions:
 - **Focus:** Start backlog implementation for campaign board presets that can draw opponents from a strategy pool without tying pool size to active AI count.
 - **Changed:** Added optional `BoardPreset.aiStrategyPool` + `pooledAiPlayerCount`, preserved existing fixed `aiPlayers` behavior, and wired campaign state/controller/runtime so pooled levels resolve a stable per-run/per-level lineup that persists across resume instead of reshuffling.
 - **Learned:** The risky part was not the pool itself but reproducibility: game startup inferred player count from `aiPlayers.Count`, so pooled support also needed explicit active-AI count plumbing plus persisted resolved names in `CampaignState`.
-- **Open questions:** No preset assets have been migrated to use pools yet, and Unity-side validation still needs a real editor pass once someone authors a pooled level asset.
-- **Next steps:** Create or convert one campaign preset to use `aiStrategyPool` and verify the authored UX in Unity (inspector serialization + start/resume consistency).
+- **Open questions:** Unity-side validation still needs a real editor pass on pooled level assets.
+- **Next steps:** Use the new pooled authoring path in early campaign presets and validate exact resolved lineups with the safe-proxy harness.
+
+### 2026-03-27 (early-campaign reclaim/surge pass)
+- **Focus:** Add Jake's new easy campaign mold and continue early-campaign tuning with the safe proxy.
+- **Changed:** Added `CMP_Reclaim_InfiltrationSurge_Easy` to the campaign roster (`Necrohyphal Infiltration` maxed first, then `Hyphal Surge`), extended `scripts/run_campaign_balance.py` so pooled campaign presets resolve deterministic AI lineups from `aiStrategyPool`, added the new mold to the `Campaign1` pool, and replaced `AI12` with it in `Campaign4` after validation.
+- **Learned:** The new mold is a good *easy/training-adjacent* fit on small boards but too soft for `Campaign2`-style 20x20 multi-AI screens. The bigger problem was `Campaign4`: current authored `AI12` made the level a cliff (`5%` proxy win rate), while the new reclaim/surge mold softens it back into a plausible early-campaign band.
+- **Evidence:** 20-game safe-proxy screens (`TST_CampaignPlayer_SafeBaseline`) with seed `20260327` for authored levels produced: `Campaign0 90.0% (18/20), avg living 50.8, avg dead 14.9`; `Campaign1 60.0% (12/20), avg living 69.4, avg dead 20.9` (pool resolved to `TST_Training_Overextender` for this seed); `Campaign2 65.0% (13/20), avg living 105.9, avg dead 32.5`; `Campaign3 55.0% (11/20), avg living 166.9, avg dead 113.9`; `Campaign4` old lineup with `AI12` `5.0% (1/20), avg living 172.2, avg dead 133.8`. Direct candidate screens: `15x15` duel vs `CMP_Reclaim_InfiltrationSurge_Easy` -> `85.0% (17/20), avg living 103.2, avg dead 29.2`; `20x20` with `TST_Training_ResilientMycelium + CMP_Reclaim_InfiltrationSurge_Easy` -> `95.0% (19/20), avg living 146.2, avg dead 39.5`; `Campaign4` swap replacing `AI12` with `CMP_Reclaim_InfiltrationSurge_Easy` -> `35.0% (7/20), avg living 201.7, avg dead 150.6`.
+- **Open questions:** `Campaign0-3` now look broadly sane in short screens, but `Campaign4` should be rerun at 50-100 games to make sure the new softer lineup stays in-band instead of just being high-variance.
+- **Next steps:** If continuing the same thread, rerun `Campaign4` at a larger sample and then decide whether `Campaign3` also wants one more easing pass or is acceptable as the first real nutrient-era pressure step.
 
 ### 2026-03-21
 - **Focus:** Reconstruct lost OpenClaw context and preserve current Fungus-Toast thread.

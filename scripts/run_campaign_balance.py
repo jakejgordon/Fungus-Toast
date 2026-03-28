@@ -53,7 +53,7 @@ def build_guid_map(directory: Path) -> Dict[str, Path]:
 
 
 def parse_board_preset(path: Path) -> dict:
-    preset = {"path": str(path), "aiPlayers": []}
+    preset = {"path": str(path), "aiPlayers": [], "aiStrategyPool": [], "pooledAiPlayerCount": 0}
     for raw in path.read_text().splitlines():
         line = raw.strip()
         if line.startswith("presetId:"):
@@ -62,13 +62,56 @@ def parse_board_preset(path: Path) -> dict:
             preset["boardWidth"] = int(line.split(":", 1)[1].strip())
         elif line.startswith("boardHeight:"):
             preset["boardHeight"] = int(line.split(":", 1)[1].strip())
+        elif line.startswith("pooledAiPlayerCount:"):
+            preset["pooledAiPlayerCount"] = int(line.split(":", 1)[1].strip())
         elif line.startswith("- strategyName:"):
             preset["aiPlayers"].append(line.split(":", 1)[1].strip())
+        elif line.startswith("-") and not line.startswith("- strategyName:"):
+            value = line[1:].strip()
+            if value:
+                preset["aiStrategyPool"].append(value)
     return preset
 
 
+def stable_string_hash(value: str) -> int:
+    if not value:
+        return 0
+
+    h = 23
+    for c in value:
+        h = ((h * 31) + ord(c)) & 0xFFFFFFFF
+    if h >= 0x80000000:
+        h -= 0x100000000
+    return h
+
+
+def resolve_campaign_ai_names(level_index: int, preset: dict, seed: int) -> List[str]:
+    if preset["aiPlayers"]:
+        return list(preset["aiPlayers"])
+
+    pool = []
+    seen = set()
+    for name in preset.get("aiStrategyPool", []):
+        if name and name not in seen:
+            seen.add(name)
+            pool.append(name)
+
+    desired_count = min(preset.get("pooledAiPlayerCount", 0), len(pool))
+    if desired_count <= 0:
+        return []
+
+    preset_hash = stable_string_hash(preset.get("presetId", ""))
+    campaign_seed = ((seed * 397) ^ level_index ^ preset_hash) & 0xFFFFFFFF
+    import random
+    rng = random.Random(campaign_seed)
+    shuffled = list(pool)
+    shuffled.sort(key=lambda _: rng.random())
+    return shuffled[:desired_count]
+
+
 def run_level(level: dict, preset: dict, games: int, seed: int, dry_run: bool) -> int:
-    lineup = [PLAYER_PROXY] + preset["aiPlayers"]
+    resolved_ai = resolve_campaign_ai_names(level["levelIndex"], preset, seed)
+    lineup = [PLAYER_PROXY] + resolved_ai
     experiment_id = f"campaign_balance_lvl{level['levelIndex']:02d}_{preset['presetId']}_g{games}_seed{seed}"
     cmd = [
         "dotnet",

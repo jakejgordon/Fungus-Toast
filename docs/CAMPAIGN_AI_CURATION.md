@@ -152,10 +152,10 @@ This is the first intentional target plan for future level pools. It is not yet 
 | Level | Board / Tier intent | Nutrient patches | Intended pool mix | Candidate pool |
 |---|---|---|---|---|
 | Campaign0 | very small / onboarding | Off | 1 training | `AI6` |
-| Campaign1 | very small / onboarding+ | Off | 1 easy | `AI12`, `Growth/Resilience` |
+| Campaign1 | very small / onboarding+ | Off | 1 easy | `AI12`, `Growth/Resilience`, `CMP_Reclaim_InfiltrationSurge_Easy` |
 | Campaign2 | small / first multi-AI | Off | 1 training + 1 easy/hard teaser | `AI6`, `AI12`, `AI13` |
 | Campaign3 | small / first medium intro | Off | 1 easy + 1 medium + 1 easy | `AI12`, `Growth/Resilience`, `AI8`, `AI7` |
-| Campaign4 | larger / nutrient intro | On | 1 easy + 2 medium + 1 easy | `AI12`, `Growth/Resilience`, `AI7`, `AI8`, `AI9` |
+| Campaign4 | larger / nutrient intro | On | 1 easy + 2 medium + 1 easy | `CMP_Reclaim_InfiltrationSurge_Easy`, `Growth/Resilience`, `AI7`, `AI8`, `AI9` |
 | Campaign5 | larger / more archetype variety | On | 1 easy + 3 medium + 1 medium/easy | `AI7`, `AI8`, `AI9`, `AI11`, `Grow>Kill>Reclaim(Econ)`, `Creeping>Necrosporulation`, `Growth/Resilience` |
 | Campaign6 | mid-board / stable medium field | On | 4-5 medium | `AI7`, `AI8`, `AI9`, `AI11`, `Grow>Kill>Reclaim(Econ)`, `Grow>Kill>Reclaim(Econ/Reclaim)`, `Creeping>Necrosporulation` |
 | Campaign7 | mid-board / adaptation era begins | On | 3-4 medium + 1 hard | `AI7`, `AI8`, `AI9`, `AI11`, `TST_AnabolicBeaconNecroRegressionCascade`, `TST_AnabolicCreepingNecroRegressionCascade`, `AI13`, `TST_BalancedControl_AnabolicFirst` |
