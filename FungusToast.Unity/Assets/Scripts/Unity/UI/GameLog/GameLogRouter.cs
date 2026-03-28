@@ -296,6 +296,25 @@ namespace FungusToast.Unity.UI.GameLog
             if (IsSilentMode) return;
             playerActivityLogManager?.RecordNecrophyticBloomPatchCreation(playerId, createdPatchCount);
         }
+
+        public void RecordNecrophyticBloomPatchCreated(
+            int playerId,
+            int anchorTileId,
+            int patchTileCount,
+            NutrientPatchType patchType,
+            NutrientRewardType rewardType,
+            int rewardAmount)
+        {
+            if (IsSilentMode) return;
+
+            playerActivityLogManager?.RecordNecrophyticBloomPatchCreated(
+                playerId,
+                anchorTileId,
+                patchTileCount,
+                patchType,
+                rewardType,
+                rewardAmount);
+        }
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
         public void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade) { }
         public void RecordBankedPoints(int playerId, int pointsBanked) { }

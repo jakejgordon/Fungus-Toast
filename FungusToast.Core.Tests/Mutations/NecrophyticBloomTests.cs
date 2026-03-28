@@ -44,6 +44,29 @@ public class NecrophyticBloomTests
     }
 
     [Fact]
+    public void SelectNecrophyticBloomClusterTilesToConsume_caps_oversized_clusters_to_a_contiguous_subset()
+    {
+        var setup = CreateBoard(width: 4, height: 3);
+
+        for (int tileId = 0; tileId < 12; tileId++)
+        {
+            CreateDeadCell(setup.board, setup.player, tileId);
+        }
+
+        List<int> clusterTileIds = GeneticDriftMutationProcessor
+            .GetNecrophyticBloomDeadClusters(setup.board, setup.player.PlayerId)
+            .Single();
+
+        List<int> consumedTileIds = GeneticDriftMutationProcessor
+            .SelectNecrophyticBloomClusterTilesToConsume(setup.board, clusterTileIds);
+
+        Assert.Equal(GameBalance.NecrophyticBloomMaxPatchSize, consumedTileIds.Count);
+        Assert.Equal(consumedTileIds.Distinct().Count(), consumedTileIds.Count);
+        Assert.All(consumedTileIds, tileId => Assert.Contains(tileId, clusterTileIds));
+        Assert.True(AreTilesOrthogonallyConnected(setup.board, consumedTileIds), "Expected consumed Necrophytic Bloom tiles to remain contiguous.");
+    }
+
+    [Fact]
     public void GetNecrophyticBloomDeadClusters_groups_only_friendly_dead_non_toxin_regions()
     {
         var setup = CreateBoard(width: 4, height: 4);
@@ -147,6 +170,36 @@ public class NecrophyticBloomTests
         Assert.Equal(GameBalance.NecrophyticBloomMaxPatchesPerRound, setup.observer.NecrophyticBloomPatchesByPlayer[setup.player.PlayerId]);
     }
 
+    [Fact]
+    public void ResolveNecrophyticBloomComposting_consumes_only_ten_cells_from_oversized_clusters()
+    {
+        var setup = CreateBoard(width: 12, height: 1);
+        setup.player.SetMutationLevel(MutationIds.NecrophyticBloom, newLevel: 1, currentRound: 1);
+
+        for (int tileId = 0; tileId < 12; tileId++)
+        {
+            CreateDeadCell(setup.board, setup.player, tileId);
+        }
+
+        int createdPatchCount = GeneticDriftMutationProcessor.ResolveNecrophyticBloomComposting(
+            setup.player,
+            setup.board,
+            new DeterministicLowRollRandom(),
+            setup.observer);
+
+        Assert.Equal(1, createdPatchCount);
+        Assert.Equal(1, setup.observer.NecrophyticBloomReportCount);
+        Assert.Equal(1, setup.observer.NecrophyticBloomPatchesByPlayer[setup.player.PlayerId]);
+        Assert.All(Enumerable.Range(0, 10), tileId => Assert.Null(setup.board.GetCell(tileId)));
+        Assert.All(Enumerable.Range(10, 2), tileId => Assert.True(setup.board.GetCell(tileId)?.IsDead == true, $"Expected tile {tileId} to remain a dead cell."));
+        Assert.Equal(
+            GeneticDriftMutationProcessor.CalculateNecrophyticBloomPatchTileCount(GameBalance.NecrophyticBloomMaxPatchSize),
+            setup.board.AllNutrientPatchTiles().Count());
+        Assert.All(Enumerable.Range(0, 8), tileId => Assert.Equal(NutrientPatchSource.NecrophyticBloom, setup.board.GetTileById(tileId)?.NutrientPatch?.Source));
+        Assert.All(Enumerable.Range(8, 2), tileId => Assert.Null(setup.board.GetTileById(tileId)?.NutrientPatch));
+        Assert.All(Enumerable.Range(10, 2), tileId => Assert.Null(setup.board.GetTileById(tileId)?.NutrientPatch));
+    }
+
     private static (GameBoard board, List<Player> players, Player player, Player enemy, TestSimulationObserver observer) CreateBoard(int width, int height)
     {
         var board = new GameBoard(width, height, playerCount: 2);
@@ -170,6 +223,38 @@ public class NecrophyticBloomTests
         board.SpawnSporeForPlayer(player, tileId, GrowthSource.Manual);
         var cell = Assert.IsType<FungalCell>(board.GetCell(tileId));
         board.KillFungalCell(cell, DeathReason.Unknown);
+    }
+
+    private static bool AreTilesOrthogonallyConnected(GameBoard board, IReadOnlyCollection<int> tileIds)
+    {
+        if (tileIds.Count == 0)
+        {
+            return true;
+        }
+
+        var remainingTileIds = tileIds.ToHashSet();
+        var visitedTileIds = new HashSet<int>();
+        var frontier = new Queue<int>();
+        int startTileId = remainingTileIds.Min();
+
+        frontier.Enqueue(startTileId);
+        visitedTileIds.Add(startTileId);
+
+        while (frontier.Count > 0)
+        {
+            int tileId = frontier.Dequeue();
+            foreach (int neighborTileId in board.GetOrthogonalNeighbors(tileId)
+                .Select(tile => tile.TileId)
+                .Where(remainingTileIds.Contains))
+            {
+                if (visitedTileIds.Add(neighborTileId))
+                {
+                    frontier.Enqueue(neighborTileId);
+                }
+            }
+        }
+
+        return visitedTileIds.Count == remainingTileIds.Count;
     }
 
     private sealed class DeterministicHighRollRandom : Random

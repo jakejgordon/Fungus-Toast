@@ -262,6 +262,14 @@ namespace FungusToast.Unity
                         yield break;
                     }
 
+                    uiManager.GameLogRouter?.RecordNecrophyticBloomPatchCreated(
+                        specialEvent.PlayerId,
+                        specialEvent.SourceTileId,
+                        compostedTiles,
+                        specialEvent.NutrientPatchType ?? NutrientPatchType.Adaptogen,
+                        specialEvent.NutrientRewardType ?? NutrientRewardType.MutationPoints,
+                        specialEvent.RewardAmount > 0 ? specialEvent.RewardAmount : compostedTiles);
+
                     uiManager.PhaseBanner?.Show(
                         compostedTiles == 1
                             ? "Necrophytic Bloom composted a dead region!"

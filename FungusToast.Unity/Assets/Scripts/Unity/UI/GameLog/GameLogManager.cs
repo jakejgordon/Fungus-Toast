@@ -994,17 +994,49 @@ namespace FungusToast.Unity.UI.GameLog
         public void ReportNecrosporeDrop(int playerId, int count) { }
         public void RecordNecrophyticBloomPatchCreation(int playerId, int createdPatchCount)
         {
-            if (!IsHuman(playerId) || createdPatchCount <= 0)
+            // Detailed Necrophytic Bloom messages are emitted from the special-event presentation path,
+            // where patch type, reward, size, and anchor location are all available.
+        }
+
+        public void RecordNecrophyticBloomPatchCreated(
+            int playerId,
+            int anchorTileId,
+            int patchTileCount,
+            NutrientPatchType patchType,
+            NutrientRewardType rewardType,
+            int rewardAmount)
+        {
+            if (!IsHuman(playerId) || patchTileCount <= 0)
             {
                 return;
             }
 
-            AddPlayerEvent(
-                playerId,
-                createdPatchCount == 1
-                    ? "Necrophytic Bloom composted a dead region into a nutrient patch"
-                    : $"Necrophytic Bloom composted {createdPatchCount} dead regions into nutrient patches",
-                GameLogCategory.Lucky);
+            string locationSummary = BuildTileCoordinateSummary(anchorTileId);
+            string patchLabel = patchType switch
+            {
+                NutrientPatchType.Adaptogen => "Adaptogen Patch",
+                NutrientPatchType.Sporemeal => "Sporemeal Patch",
+                NutrientPatchType.Hypervariation => "Hypervariation Patch",
+                _ => $"{patchType} Patch"
+            };
+
+            string rewardSummary = rewardType switch
+            {
+                NutrientRewardType.MutationPoints => $"worth {rewardAmount} mutation {(rewardAmount == 1 ? "point" : "points")}",
+                NutrientRewardType.FreeGrowth => $"worth {rewardAmount} bonus growth {(rewardAmount == 1 ? "tile" : "tiles")}",
+                NutrientRewardType.MycovariantDraft => "granting a Hypervariation draft next round",
+                _ => string.Empty
+            };
+
+            string sizeSummary = patchTileCount == 1
+                ? "covering 1 tile"
+                : $"covering {patchTileCount} tiles";
+
+            string message = string.IsNullOrEmpty(rewardSummary)
+                ? $"Necrophytic Bloom created a {patchLabel} at {locationSummary}, {sizeSummary}"
+                : $"Necrophytic Bloom created a {patchLabel} at {locationSummary}, {sizeSummary}, {rewardSummary}";
+
+            AddPlayerEvent(playerId, message, GameLogCategory.Lucky);
         }
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
         public void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade) { }
@@ -1096,6 +1128,17 @@ namespace FungusToast.Unity.UI.GameLog
         public void AddNormalEntry(string message, int? playerId = null) => AddPlayerEvent(playerId ?? activePlayerId, message, GameLogCategory.Normal);
         public void AddLuckyEntry(string message, int? playerId = null) => AddPlayerEvent(playerId ?? activePlayerId, message, GameLogCategory.Lucky);
         public void AddUnluckyEntry(string message, int? playerId = null) => AddPlayerEvent(playerId ?? activePlayerId, message, GameLogCategory.Unlucky);
+
+        private string BuildTileCoordinateSummary(int tileId)
+        {
+            if (board == null || tileId < 0)
+            {
+                return "an unknown tile";
+            }
+
+            var (x, y) = board.GetXYFromTileId(tileId);
+            return $"({x}, {y})";
+        }
 
         #endregion
     }

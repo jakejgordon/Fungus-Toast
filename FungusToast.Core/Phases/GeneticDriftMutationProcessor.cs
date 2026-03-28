@@ -326,11 +326,70 @@ namespace FungusToast.Core.Phases
                 1f);
         }
 
-            internal static int CalculateNecrophyticBloomPatchTileCount(int consumedClusterTileCount)
+        internal static int CalculateNecrophyticBloomPatchTileCount(int consumedClusterTileCount)
+        {
+            int tileCount = Math.Max(1, consumedClusterTileCount - GameBalance.NecrophyticBloomPatchTileReduction);
+            return Math.Min(tileCount, GameBalance.NecrophyticBloomMaxPatchSize);
+        }
+
+        internal static List<int> SelectNecrophyticBloomClusterTilesToConsume(GameBoard board, IReadOnlyList<int> clusterTileIds)
+        {
+            if (board == null || clusterTileIds == null || clusterTileIds.Count == 0)
             {
-                int tileCount = Math.Max(1, consumedClusterTileCount - GameBalance.NecrophyticBloomPatchTileReduction);
-                return Math.Min(tileCount, GameBalance.NecrophyticBloomMaxPatchSize);
+                return new List<int>();
             }
+
+            if (clusterTileIds.Count <= GameBalance.NecrophyticBloomMaxPatchSize)
+            {
+                return clusterTileIds.ToList();
+            }
+
+            int maxConsumedTileCount = GameBalance.NecrophyticBloomMaxPatchSize;
+            int seedTileId = clusterTileIds[0];
+            var clusterTileIdSet = clusterTileIds.ToHashSet();
+            var visitedTileIds = new HashSet<int> { seedTileId };
+            var frontier = new Queue<int>();
+            var selectedTileIds = new List<int>(maxConsumedTileCount);
+
+            frontier.Enqueue(seedTileId);
+
+            while (frontier.Count > 0 && selectedTileIds.Count < maxConsumedTileCount)
+            {
+                int tileId = frontier.Dequeue();
+                selectedTileIds.Add(tileId);
+
+                foreach (int neighborTileId in board.GetOrthogonalNeighbors(tileId)
+                    .Select(tile => tile.TileId)
+                    .Where(clusterTileIdSet.Contains)
+                    .OrderBy(tileId => tileId))
+                {
+                    if (visitedTileIds.Add(neighborTileId))
+                    {
+                        frontier.Enqueue(neighborTileId);
+                    }
+                }
+            }
+
+            if (selectedTileIds.Count == maxConsumedTileCount)
+            {
+                return selectedTileIds;
+            }
+
+            foreach (int tileId in clusterTileIds)
+            {
+                if (selectedTileIds.Count >= maxConsumedTileCount)
+                {
+                    break;
+                }
+
+                if (visitedTileIds.Add(tileId))
+                {
+                    selectedTileIds.Add(tileId);
+                }
+            }
+
+            return selectedTileIds;
+        }
 
         internal static List<List<int>> GetNecrophyticBloomDeadClusters(GameBoard board, int playerId)
         {
@@ -404,15 +463,21 @@ namespace FungusToast.Core.Phases
                     continue;
                 }
 
+                List<int> consumedClusterTileIds = SelectNecrophyticBloomClusterTilesToConsume(board, clusterTileIds);
+                if (consumedClusterTileIds.Count == 0)
+                {
+                    continue;
+                }
+
                 NutrientPatch nutrientPatch = NutrientPatchPlacementUtility.CreateClusterPatch(
                     nextClusterId,
-                    CalculateNecrophyticBloomPatchTileCount(clusterTileIds.Count),
+                    CalculateNecrophyticBloomPatchTileCount(consumedClusterTileIds.Count),
                     rng.NextDouble(),
                     rng.NextDouble(),
                     NutrientPatchSource.NecrophyticBloom,
                     allowHypervariation);
 
-                if (!board.ConvertDeadClusterToNutrientPatch(clusterTileIds, nutrientPatch, player.PlayerId))
+                if (!board.ConvertDeadClusterToNutrientPatch(consumedClusterTileIds, nutrientPatch, player.PlayerId))
                 {
                     continue;
                 }
