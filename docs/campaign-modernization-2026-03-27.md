@@ -214,6 +214,70 @@ Takeaways:
 - That softness is useful on Campaign1 pool duty and as a direct replacement for `AI12` on Campaign4, where the old lineup was much harsher than the surrounding curve.
 - Best current placement from this pass: `Campaign1` pool member and `Campaign4` fixed easy anchor. Do **not** promote it upward into Campaign2/3 fixed lineups without a different surrounding mix.
 
+## Early-campaign poolification continuation — Campaign2-4
+
+Follow-up goal: finish the early-campaign pooled-authoring migration by converting `Campaign2`, `Campaign3`, and `Campaign4` from fixed lineups into real curated pools aligned with the current training/easy design, then rerun `Campaign0-4` against the safe proxy to inspect the resulting opening arc.
+
+### Authored pool changes
+
+- `Campaign2` (`20x20 2 AI`) now uses:
+  - pooled count: `2`
+  - pool: `TST_Training_ResilientMycelium`, `TST_Training_Overextender`, `CMP_TierCap_GrowthResilience_Easy`, `CMP_Reclaim_Scavenger_Easy`
+- `Campaign3` (`30x30 3 AI`) now uses:
+  - pooled count: `3`
+  - pool: `TST_Training_ResilientMycelium`, `TST_Training_Overextender`, `TST_Training_ToxicTurtle`, `CMP_TierCap_GrowthResilience_Easy`, `CMP_Reclaim_Scavenger_Easy`, `CMP_Defense_ReclaimShell_Easy`
+- `Campaign4` (`40x40 4 AI`) now uses:
+  - pooled count: `4`
+  - pool: `TST_Training_ResilientMycelium`, `TST_Training_Overextender`, `TST_Training_ToxicTurtle`, `CMP_Reclaim_InfiltrationSurge_Easy`, `CMP_TierCap_GrowthResilience_Easy`, `CMP_Reclaim_Scavenger_Easy`, `CMP_Defense_ReclaimShell_Easy`
+
+Design intent for this pass:
+- keep the first real multi-AI boards in the `Training/Easy Tier`
+- use real curated pool variety rather than hardcoded exact lineups
+- avoid dropping clearly-too-soft `CMP_Reclaim_InfiltrationSurge_Easy` into `Campaign2/3` guaranteed slots, while still allowing it to appear later in the early band
+
+### Validation workflow
+
+Build smoke:
+
+```bash
+dotnet build FungusToast.Core/FungusToast.Core.csproj
+dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj
+```
+
+Resolved-lineup sanity check:
+
+```bash
+python3 scripts/run_campaign_balance.py --games 1 --seed 20260327 --level 2 --dry-run
+python3 scripts/run_campaign_balance.py --games 1 --seed 20260327 --level 3 --dry-run
+python3 scripts/run_campaign_balance.py --games 1 --seed 20260327 --level 4 --dry-run
+```
+
+50-game safe-proxy pass:
+
+```bash
+python3 scripts/run_campaign_balance.py --games 50 --seed 20260327 --level 0
+python3 scripts/run_campaign_balance.py --games 50 --seed 20260327 --level 1
+python3 scripts/run_campaign_balance.py --games 50 --seed 20260327 --level 2
+python3 scripts/run_campaign_balance.py --games 50 --seed 20260327 --level 3
+python3 scripts/run_campaign_balance.py --games 50 --seed 20260327 --level 4
+```
+
+### Resolved lineups and results (`TST_CampaignPlayer_SafeBaseline`)
+
+| Level | Resolved authored lineup for seed `20260327` | Proxy result |
+|---|---|---|
+| Campaign0 | `AI6` | `48.0%` (`24/50`), avg living `37.7`, avg dead `14.1` |
+| Campaign1 | `AI12` | `74.0%` (`37/50`), avg living `91.7`, avg dead `30.8` |
+| Campaign2 | `TST_Training_Overextender`, `CMP_TierCap_GrowthResilience_Easy` | `74.0%` (`37/50`), avg living `101.4`, avg dead `30.5` |
+| Campaign3 | `CMP_Reclaim_Scavenger_Easy`, `CMP_TierCap_GrowthResilience_Easy`, `TST_Training_ResilientMycelium` | `44.0%` (`22/50`), avg living `199.7`, avg dead `88.8` |
+| Campaign4 | `TST_Training_Overextender`, `CMP_TierCap_GrowthResilience_Easy`, `CMP_Reclaim_Scavenger_Easy`, `TST_Training_ToxicTurtle` | `28.0%` (`14/50`), avg living `189.5`, avg dead `175.9` |
+
+### Takeaways
+
+- This did what it most needed to do: it removed the old fixed `Campaign4` cliff. The earlier fixed-lineup evidence had the safe proxy falling from `55.0%` on `Campaign3` to `5.0%` on `Campaign4`; the pooled version for this seed lands at `44.0%` then `28.0%`, which is much more believable as an opening ramp.
+- The opening arc is **not** yet perfectly smooth. `Campaign1` still resolves `AI12` for seed `20260327`, and `Campaign2` happened to resolve a softer pair, so those two levels both landed at `74.0%` rather than stepping down cleanly.
+- This means the next balancing question is no longer “are Campaign2-4 still overfitted fixed lineups?” — that part is solved. The remaining question is whether the *pool contents* need one more pass, especially around `Campaign1` (`AI12`) and perhaps `Campaign2` if we want less overlap with the duel tier.
+
 ## Roster expansion continuation — weak/easy variety + conservative medium aliases
 
 Follow-up goal: keep expanding the curated campaign roster with 1-2 more truly weak/easy molds for the early duel pool plus named medium aliases that can start replacing raw legacy `AI7` / `AI8` / `AI11` IDs in the first-medium authored levels.
@@ -445,3 +509,88 @@ Results (`TST_CampaignPlayer_SafeBaseline` proxy):
 ### Pool takeaway
 
 The `Campaign1` pool still sits safely in the onboarding band after removing the stale ID: `AI12` remains beatable in the tiny duel, and `CMP_TierCap_GrowthResilience_Easy` is an even softer curated replacement for the old unnamed `Growth/Resilience` slot.
+
+## Campaign3 volatility reduction pass
+
+Follow-up goal: reduce run-to-run volatility in the pooled `Campaign3` (`30x30 3 AI`) level without flattening the early-campaign arc into either a freebie or a wall.
+
+### Problem observed
+
+The first pooled `Campaign3` pass used this 6-entry pool:
+
+- `TST_Training_ResilientMycelium`
+- `TST_Training_Overextender`
+- `TST_Training_ToxicTurtle`
+- `CMP_TierCap_GrowthResilience_Easy`
+- `CMP_Reclaim_Scavenger_Easy`
+- `CMP_Defense_ReclaimShell_Easy`
+
+Short multi-seed safe-proxy screens showed that this pool was too swingy depending on which three opponents the resolver picked. In 20-game screens, resolved lineups landed anywhere from roughly `25%` to `70%` proxy wins, which is too wide for a small early-campaign level.
+
+The worst swings looked tied to the two extra training molds (`TST_Training_Overextender` and `TST_Training_ToxicTurtle`): they made some seeds too soft and others oddly spiky, while also pushing the level away from the intended "readable easy bridge" feel.
+
+### Authored pool change
+
+`Campaign3` now uses this tighter 5-entry pool:
+
+- `TST_Training_ResilientMycelium`
+- `AI12`
+- `CMP_TierCap_GrowthResilience_Easy`
+- `CMP_Reclaim_Scavenger_Easy`
+- `CMP_Defense_ReclaimShell_Easy`
+
+Removed from the old pool:
+
+- `TST_Training_Overextender`
+- `TST_Training_ToxicTurtle`
+
+Why this shape:
+
+- keep one very readable true-training mold (`TST_Training_ResilientMycelium`)
+- add `AI12` as the cleaner early bridge opponent instead of relying on the noisier extra training molds
+- keep the curated easy trio so the level still feels distinct from Campaign2 and ramps toward Campaign4
+
+### Validation workflow
+
+Command pattern:
+
+```bash
+python3 scripts/run_campaign_balance.py --games 20 --seed <seed> --level 3
+python3 scripts/run_campaign_balance.py --games 50 --seed <seed> --level 3
+```
+
+### 20-game pooled multi-seed screen (`TST_CampaignPlayer_SafeBaseline`)
+
+| Seed | Resolved lineup | Proxy result |
+|---|---|---|
+| `20260327` | `CMP_Defense_ReclaimShell_Easy`, `CMP_Reclaim_Scavenger_Easy`, `TST_Training_ResilientMycelium` | `40.0%` (`8/20`), avg living `184.1`, avg dead `96.9` |
+| `20260328` | `TST_Training_ResilientMycelium`, `AI12`, `CMP_Defense_ReclaimShell_Easy` | `60.0%` (`12/20`), avg living `212.6`, avg dead `74.1` |
+| `20260329` | `CMP_Defense_ReclaimShell_Easy`, `AI12`, `CMP_Reclaim_Scavenger_Easy` | `40.0%` (`8/20`), avg living `168.2`, avg dead `83.4` |
+| `20260330` | `CMP_TierCap_GrowthResilience_Easy`, `CMP_Reclaim_Scavenger_Easy`, `CMP_Defense_ReclaimShell_Easy` | `40.0%` (`8/20`), avg living `177.9`, avg dead `101.3` |
+| `20260331` | `CMP_Reclaim_Scavenger_Easy`, `AI12`, `TST_Training_ResilientMycelium` | `35.0%` (`7/20`), avg living `186.2`, avg dead `84.1` |
+| `20260401` | `CMP_Reclaim_Scavenger_Easy`, `CMP_Defense_ReclaimShell_Easy`, `AI12` | `45.0%` (`9/20`), avg living `174.3`, avg dead `90.4` |
+
+Observed short-screen range: `35%` to `60%`.
+
+### 50-game confirmation screen (`TST_CampaignPlayer_SafeBaseline`)
+
+| Seed | Resolved lineup | Proxy result |
+|---|---|---|
+| `20260327` | `CMP_Defense_ReclaimShell_Easy`, `CMP_Reclaim_Scavenger_Easy`, `TST_Training_ResilientMycelium` | `52.0%` (`26/50`), avg living `186.4`, avg dead `102.3` |
+| `20260328` | `TST_Training_ResilientMycelium`, `AI12`, `CMP_Defense_ReclaimShell_Easy` | `62.0%` (`31/50`), avg living `210.7`, avg dead `75.2` |
+| `20260330` | `CMP_TierCap_GrowthResilience_Easy`, `CMP_Reclaim_Scavenger_Easy`, `CMP_Defense_ReclaimShell_Easy` | `38.0%` (`19/50`), avg living `183.3`, avg dead `95.2` |
+| `20260401` | `CMP_Reclaim_Scavenger_Easy`, `CMP_Defense_ReclaimShell_Easy`, `AI12` | `40.0%` (`20/50`), avg living `169.5`, avg dead `95.5` |
+
+Observed confirmation range: `38%` to `62%`.
+
+### Conclusion
+
+This does not make `Campaign3` perfectly flat, but it is materially less erratic than the previous 6-entry pool while keeping the level in the intended early-campaign bridge band.
+
+Current read:
+
+- acceptable low end: the all-curated-easy trio still leaves the proxy comfortably above `Campaign4`-style danger territory
+- acceptable high end: the `ResilientMycelium + AI12 + ReclaimShell` seed is soft, but no longer in the old "free win" territory
+- overall shape is now much closer to a deliberate Campaign2 -> Campaign3 -> Campaign4 ramp instead of a lottery between very soft and weirdly sharp outcomes
+
+If this lane continues later, the next refinement would be to define explicit early-band target success windows and then decide whether the `62%` high seed should be trimmed further, likely by swapping `TST_Training_ResilientMycelium` for a slightly firmer easy mold.
