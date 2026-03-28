@@ -14,6 +14,15 @@ namespace FungusToast.Unity.UI.MutationTree
 {
     public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ITooltipContentProvider
     {
+        private const float MutationNameMinimumFontSize = 10f;
+        private const float MutationNameHorizontalPadding = 8f;
+
+        // Upgrade-cost badge layout constants (must match prefab values)
+        private const float UpgradeCostIconWidth = 24f;
+        private const float UpgradeCostPaddingH = 4f;   // 2 left + 2 right in HorizontalLayoutGroup
+        private const float UpgradeCostSpacing = 2f;
+        private const float UpgradeCostMinTextWidth = 15f;
+
         [Header("UI References")]
         [SerializeField] private Button upgradeButton;
         [SerializeField] private TextMeshProUGUI mutationNameText;
@@ -73,6 +82,7 @@ namespace FungusToast.Unity.UI.MutationTree
             this.player = player;
             this.uiManager = uiManager;
 
+            ConfigureMutationNameFit();
             mutationNameText.text = mutation.Name;
 
             // ── Tier stripe — disabled; visual hierarchy handled by progress fill ──
@@ -213,6 +223,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 {
                     upgradeCostGroup.SetActive(true);
                     upgradeCostText.text = $"x{upgradeCost}";
+                    ConfigureUpgradeCostBadge();
                 }
                 else
                 {
@@ -712,6 +723,81 @@ namespace FungusToast.Unity.UI.MutationTree
 
             maxBadge = badgeGO;
             maxBadge.SetActive(false);
+        }
+
+        /// <summary>
+        /// Enables auto-sizing on the upgrade-cost badge so multi-digit costs
+        /// (e.g. "x10") fit without overlapping the icon. Uses Unity's layout
+        /// system rather than manual pixel calculations.
+        /// </summary>
+        private void ConfigureUpgradeCostBadge()
+        {
+            if (upgradeCostText == null || upgradeCostGroup == null) return;
+
+            var groupRect = (RectTransform)upgradeCostGroup.transform;
+
+            // Turn on childControlWidth so the layout group sizes each child
+            // to its preferred width (TMP text reports actual text width,
+            // Image reports sprite native size).
+            var layoutGroup = upgradeCostGroup.GetComponent<HorizontalLayoutGroup>();
+            if (layoutGroup != null)
+            {
+                layoutGroup.childControlWidth = true;
+                layoutGroup.childForceExpandWidth = false;
+            }
+
+            // Pin the icon to a fixed width via LayoutElement so the layout
+            // group doesn't shrink or stretch it.
+            if (groupRect.childCount > 0)
+            {
+                var iconTransform = groupRect.GetChild(0);
+                var iconLayout = iconTransform.GetComponent<LayoutElement>();
+                if (iconLayout == null)
+                    iconLayout = iconTransform.gameObject.AddComponent<LayoutElement>();
+                iconLayout.preferredWidth = UpgradeCostIconWidth;
+                iconLayout.minWidth = UpgradeCostIconWidth;
+            }
+
+            // Auto-size the group container to fit icon + spacing + text + padding.
+            var fitter = upgradeCostGroup.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+                fitter = upgradeCostGroup.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(groupRect);
+        }
+
+        private void ConfigureMutationNameFit()
+        {
+            if (mutationNameText == null)
+                return;
+
+            var textContainer = mutationNameText.transform.parent as RectTransform;
+            if (textContainer != null)
+            {
+                var anchorMin = textContainer.anchorMin;
+                var anchorMax = textContainer.anchorMax;
+                anchorMin.x = 0f;
+                anchorMax.x = 1f;
+                textContainer.anchorMin = anchorMin;
+                textContainer.anchorMax = anchorMax;
+                textContainer.offsetMin = new Vector2(MutationNameHorizontalPadding, textContainer.offsetMin.y);
+                textContainer.offsetMax = new Vector2(-MutationNameHorizontalPadding, textContainer.offsetMax.y);
+
+                var fitter = textContainer.GetComponent<ContentSizeFitter>();
+                if (fitter != null)
+                {
+                    fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+                    fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+                }
+            }
+
+            float targetSize = mutationNameText.enableAutoSizing ? mutationNameText.fontSizeMax : mutationNameText.fontSize;
+            mutationNameText.enableAutoSizing = true;
+            mutationNameText.textWrappingMode = TextWrappingModes.Normal;
+            mutationNameText.overflowMode = TextOverflowModes.Truncate;
+            mutationNameText.fontSizeMax = targetSize;
+            mutationNameText.fontSizeMin = Mathf.Min(targetSize, MutationNameMinimumFontSize);
         }
 
         private static string ToHex(Color color)
