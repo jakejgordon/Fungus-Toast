@@ -15,8 +15,11 @@ MonoBehaviour:
   presetId: Campaign6
   boardWidth: 75
   boardHeight: 75
-  aiPlayers:
-  - strategyName: CMP_Surge_BeaconTempo_Medium
-  - strategyName: CMP_Control_AnabolicRebirth_Medium
-  - strategyName: AI9
-  - strategyName: CMP_Bloom_CreepingNecro_Medium
+  aiPlayers: []
+  pooledAiPlayerCount: 4
+  aiStrategyPool:
+  - CMP_Surge_BeaconTempo_Medium
+  - CMP_Control_AnabolicRebirth_Medium
+  - AI9
+  - CMP_Bloom_CreepingNecro_Medium
+  - CMP_TierCap_GrowthResilience_Easy

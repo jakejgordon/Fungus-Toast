@@ -254,6 +254,14 @@ Use the following minimal workflow to preserve working memory across sessions:
 - **Open questions:** If Campaign7 should stay closer to a 10-15% proxy band without leaning on legacy `AI12`, the next step is probably to add the newer curated medium molds into `RawCampaignStrategies` so the harness can validate the intended roster, not just the legacy IDs.
 - **Next steps:** Re-run the campaign-balance harness after any further strategy-set expansion, especially for Campaign7 where the best currently legal roster is serviceable but still skewed toward `AI12`.
 
+### 2026-03-27 (Campaign5-6 asset poolification)
+- **Focus:** Convert the low-risk mid-campaign bridge candidates from prototype pool math into real authored board-preset pools and validate them on the safe proxy.
+- **Changed:** `Campaign5` (`50x50 5 AI.asset`) now resolves 5 opponents from a 6-entry curated pool by adding `CMP_Reclaim_Scavenger_Easy`; `Campaign6` (`75x75 4 AI.asset`) now resolves 4 opponents from a 5-entry curated pool by adding `CMP_TierCap_GrowthResilience_Easy`. `Campaign7` was intentionally left fixed.
+- **Learned:** The prototype held up on the actual pooled assets. Over two 20-game seeds each, both `Campaign5` and `Campaign6` landed at the same aggregate safe-proxy band: `25.0%` won (`10/40`). Campaign5 stayed flat at `25%` across both seeds, while Campaign6 moved from `20%` to `30%`, which is acceptable short-run spread for now but worth a larger recheck later.
+- **Evidence:** `python3 scripts/run_campaign_balance.py --level 5 --games 20 --seed 20260327`; `--level 5 --games 20 --seed 20260328`; `--level 6 --games 20 --seed 20260327`; `--level 6 --games 20 --seed 20260328`. Aggregated safe-proxy results: `Campaign5` -> `25.0% (10/40), avg living 247.9, avg dead 175.3`; `Campaign6` -> `25.0% (10/40), avg living 678.9, avg dead 464.3`.
+- **Open questions:** The next pass should probably run 50-100 game confirmations on pooled `Campaign5-6` and then revisit whether `Campaign7` needs an actual softer lineup rather than more pool-only variety.
+- **Next steps:** Keep `Campaign7` fixed, treat pooled `Campaign5-6` as the current authored baseline, and expand validation rather than churning those two boards again immediately.
+
 ## Session Checkpoint Template
 
 ### YYYY-MM-DD

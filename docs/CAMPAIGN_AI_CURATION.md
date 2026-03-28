@@ -90,6 +90,9 @@ This is the current recommended audit starting point for `StrategySetEnum = Camp
 - The current campaign assets still reference legacy `AI1..AI13` IDs.
 - Several of the working theme labels above are inferred from mutation goals and should be reviewed in Unity feel-testing.
 - `AI4` and `AI5` were the biggest uncertainty cases; fresh authored-board safe-proxy screens on 2026-03-27 say **do not use them to bulk up the Campaign5-7 bridge**. They either fail to help or actively make that band harsher.
+- Campaign5 is now authored as a curated 5-of-6 pool on the real board asset, adding `CMP_Reclaim_Scavenger_Easy` to the existing five-opponent lineup. Early asset-backed safe-proxy validation across seeds `20260327` and `20260328` landed at `25.0%` won (`10/40`), avg living cells `247.9`, avg dead cells `175.3`.
+- Campaign6 is now authored as a curated 4-of-5 pool on the real board asset, adding `CMP_TierCap_GrowthResilience_Easy` to the existing four-opponent lineup. Early asset-backed safe-proxy validation across seeds `20260327` and `20260328` landed at `25.0%` won (`10/40`), avg living cells `678.9`, avg dead cells `464.3`.
+- Campaign7 remains fixed for now; the earlier pooled bridge prototype still left that board in a harsh ~`4-6%` proxy band, so more variety there needs a real softening pass rather than simple add-one-easy pooling.
 - There is likely overlap between `AI13` and `TST_BalancedControl_AnabolicFirst`; we may want to keep both for now, then consolidate later if they feel redundant.
 - `Grow>Kill>Reclaim(Econ)` and `Grow>Kill>Reclaim(Econ/Reclaim)` may also be too similar to both keep in the final curated campaign pool.
 
