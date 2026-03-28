@@ -473,6 +473,121 @@ Resolved / authored results:
 | Campaign8 | `AI8, AI9, AI11, CMP_Economy_KillReclaim_Medium, CMP_Bloom_CreepingNecro_Medium, CMP_Bloom_BeaconRegression_Medium` | `10.0%` (`2/20`), avg living `696.7`, avg dead `583.2` |
 | Campaign9 | `AI9, AI11, CMP_Economy_KillReclaim_Medium, CMP_Bloom_CreepingNecro_Medium, CMP_Bloom_FortifyMimic_Medium, CMP_Bloom_AnabolicRegression_Medium` | `10.0%` (`2/20`), avg living `837.5`, avg dead `762.4` |
 
+### Campaign9 follow-up — Beacon over Anabolic
+
+Follow-up goal: re-open `Campaign9` because it still looked slightly harsher than the surrounding curve and test only conservative medium-only swaps on the exact authored board.
+
+Screening commands:
+
+```bash
+python3 scripts/run_campaign_balance.py --games 20 --seed 20260328 --level 9
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 110 --height 110 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI9,CMP_Control_AnabolicRebirth_Medium,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_FortifyMimic_Medium,CMP_Bloom_AnabolicRegression_Medium --seed 20260328 --experiment-id campaign9_swap_ai11_to_cmp_control_anabolicrebirth --no-keyboard --players 7
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 110 --height 110 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI9,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_BeaconRegression_Medium,CMP_Bloom_AnabolicRegression_Medium --seed 20260328 --experiment-id campaign9_swap_fortify_to_beacon --no-keyboard --players 7
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 110 --height 110 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI9,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_FortifyMimic_Medium,CMP_Bloom_BeaconRegression_Medium --seed 20260328 --experiment-id campaign9_swap_anabolic_to_beacon --no-keyboard --players 7
+```
+
+20-game screen results (`TST_CampaignPlayer_SafeBaseline` proxy):
+
+| Variant | Proxy result |
+|---|---|
+| Current authored lineup | `0.0%` (`0/20`), avg living `844.6`, avg dead `785.4` |
+| `AI11 -> CMP_Control_AnabolicRebirth_Medium` | `5.0%` (`1/20`), avg living `805.9`, avg dead `625.0` |
+| `CMP_Bloom_FortifyMimic_Medium -> CMP_Bloom_BeaconRegression_Medium` | `5.0%` (`1/20`), avg living `822.3`, avg dead `605.7` |
+| `CMP_Bloom_AnabolicRegression_Medium -> CMP_Bloom_BeaconRegression_Medium` | `10.0%` (`2/20`), avg living `854.8`, avg dead `842.7` |
+
+Only the Beacon-over-Anabolic swap looked worth confirming, so the follow-up was:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 50 --width 110 --height 110 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI9,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_FortifyMimic_Medium,CMP_Bloom_AnabolicRegression_Medium --seed 20260329 --experiment-id campaign9_current_confirm_g50 --no-keyboard --players 7
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 50 --width 110 --height 110 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI9,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_FortifyMimic_Medium,CMP_Bloom_BeaconRegression_Medium --seed 20260329 --experiment-id campaign9_beacon_over_anabolic_confirm_g50 --no-keyboard --players 7
+```
+
+50-game confirmation results:
+
+| Variant | Proxy result |
+|---|---|
+| Current authored lineup | `6.0%` (`3/50`), avg living `803.1`, avg dead `694.6` |
+| `CMP_Bloom_AnabolicRegression_Medium -> CMP_Bloom_BeaconRegression_Medium` | `8.0%` (`4/50`), avg living `790.1`, avg dead `782.2` |
+
+Conclusion:
+
+- The improvement is modest, not dramatic, but it is the only conservative Campaign9 swap in this pass that actually held up.
+- `Campaign9` now uses:
+  - `AI9`
+  - `AI11`
+  - `CMP_Economy_KillReclaim_Medium`
+  - `CMP_Bloom_CreepingNecro_Medium`
+  - `CMP_Bloom_FortifyMimic_Medium`
+  - `CMP_Bloom_BeaconRegression_Medium`
+- `CMP_Bloom_AnabolicRegression_Medium` is removed from `Campaign9` for now.
+
+## Campaign10 follow-up — one hard anchor instead of two
+
+Follow-up goal: give `Campaign10` a real exact-authored-board pass and only take a conservative softening if the current two-hard lineup had genuinely drifted too far below the intended safe-proxy band.
+
+### Exact authored board screened
+
+Board preset: `120x120 6 AI.asset` (`Campaign10`)
+
+Initial authored lineup at time of screen:
+- `AI11`
+- `CMP_Economy_KillReclaim_Medium`
+- `CMP_Bloom_CreepingNecro_Medium`
+- `CMP_Bloom_BeaconRegression_Medium`
+- `CMP_Control_AnabolicFirst_Hard`
+- `CMP_Economy_LateSpike_Hard`
+
+### Screening commands
+
+```bash
+python3 scripts/run_campaign_balance.py --games 20 --seed 20260328 --level 10
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 120 --height 120 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_BeaconRegression_Medium,CMP_Control_AnabolicRebirth_Medium,CMP_Economy_LateSpike_Hard --seed 20260328 --experiment-id campaign10_swap_controlhard_to_controlmedium_screen_g20 --no-keyboard --players 7
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 120 --height 120 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_BeaconRegression_Medium,CMP_Control_AnabolicFirst_Hard,CMP_Economy_TempoReclaim_Medium --seed 20260328 --experiment-id campaign10_swap_latespikehard_to_temporeclaim_screen_g20 --no-keyboard --players 7
+```
+
+### 20-game screen results (`TST_CampaignPlayer_SafeBaseline` proxy)
+
+| Variant | Proxy result |
+|---|---|
+| Current authored lineup | `0.0%` (`0/20`), avg living `890.8`, avg dead `718.3` |
+| `CMP_Control_AnabolicFirst_Hard -> CMP_Control_AnabolicRebirth_Medium` | `20.0%` (`4/20`), avg living `1132.5`, avg dead `1016.8` |
+| `CMP_Economy_LateSpike_Hard -> CMP_Economy_TempoReclaim_Medium` | `10.0%` (`2/20`), avg living `1013.1`, avg dead `798.4` |
+
+Only the control-hard swap looked worth confirming.
+
+### 50-game confirmation
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 50 --width 120 --height 120 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_BeaconRegression_Medium,CMP_Control_AnabolicFirst_Hard,CMP_Economy_LateSpike_Hard --seed 20260329 --experiment-id campaign10_current_confirm_g50 --no-keyboard --players 7
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 50 --width 120 --height 120 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_BeaconRegression_Medium,CMP_Control_AnabolicRebirth_Medium,CMP_Economy_LateSpike_Hard --seed 20260329 --experiment-id campaign10_controlhard_to_controlmedium_confirm_g50 --no-keyboard --players 7
+```
+
+Results:
+
+| Variant | Proxy result |
+|---|---|
+| Current authored lineup | `4.0%` (`2/50`), avg living `930.0`, avg dead `699.1` |
+| `CMP_Control_AnabolicFirst_Hard -> CMP_Control_AnabolicRebirth_Medium` | `16.0%` (`8/50`), avg living `1104.9`, avg dead `996.2` |
+
+### Conclusion
+
+- The single-slot softening held up cleanly in the longer confirmation run.
+- `Campaign10` now uses:
+  - `AI11`
+  - `CMP_Economy_KillReclaim_Medium`
+  - `CMP_Bloom_CreepingNecro_Medium`
+  - `CMP_Bloom_BeaconRegression_Medium`
+  - `CMP_Control_AnabolicRebirth_Medium`
+  - `CMP_Economy_LateSpike_Hard`
+- Keep `CMP_Economy_LateSpike_Hard` as the lone hard identity here; the evidence says adding `CMP_Control_AnabolicFirst_Hard` on top was overstacking the board for the safe proxy.
+
 ### Placement conclusions from this continuation
 
 - **Promote now:** `CMP_Reclaim_Scavenger_Easy`, `CMP_Surge_Pulsar_Easy` as valid `Campaign1` pool members.
