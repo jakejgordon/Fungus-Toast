@@ -446,6 +446,49 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public const float SurgicalInoculationRingPulseDurationSeconds = 0.18f;
 
+        // ==================== PLAYER HOVER EMPHASIS ====================
+        /// <summary>
+        /// Total duration of the one-shot colony emphasis pulse triggered by player-identity hovers.
+        /// </summary>
+        public const float PlayerHoverColonyPulseDurationSeconds = 0.34f;
+        /// <summary>
+        /// Maximum scale used for sparse player-colony hover pulses.
+        /// </summary>
+        public const float PlayerHoverColonyPulseSparseMaxScale = 1.8f;
+        /// <summary>
+        /// Maximum scale used for dense player-colony hover pulses.
+        /// </summary>
+        public const float PlayerHoverColonyPulseDenseMaxScale = 1.3f;
+        /// <summary>
+        /// Maximum halo scale used for sparse player-colony hover pulses.
+        /// </summary>
+        public const float PlayerHoverColonyHaloSparseMaxScale = 1.95f;
+        /// <summary>
+        /// Maximum halo alpha used for sparse player-colony hover pulses.
+        /// </summary>
+        public const float PlayerHoverColonyHaloSparseMaxAlpha = 0.92f;
+        /// <summary>
+        /// Maximum halo scale used for dense player-colony hover pulses.
+        /// </summary>
+        public const float PlayerHoverColonyHaloDenseMaxScale = 1.35f;
+        /// <summary>
+        /// Maximum halo alpha used for dense player-colony hover pulses.
+        /// </summary>
+        public const float PlayerHoverColonyHaloDenseMaxAlpha = 0.58f;
+        /// <summary>
+        /// Colony sizes at or below this threshold receive the strongest hover emphasis.
+        /// </summary>
+        public const int PlayerHoverSparseColonyThreshold = 6;
+        /// <summary>
+        /// Colony sizes at or above this threshold receive the gentlest hover emphasis.
+        /// </summary>
+        public const int PlayerHoverDenseColonyThreshold = 36;
+
+        /// <summary>
+        /// High-contrast halo color for player-colony hover emphasis.
+        /// </summary>
+        public static readonly Color PlayerHoverColonyHaloColor = new Color(1f, 0.98f, 0.78f, 1f);
+
         // ==================== MYCELIAL BASTION PULSE ====================
         /// <summary>
         /// Duration (in seconds) for mycelial bastion pulse animation.

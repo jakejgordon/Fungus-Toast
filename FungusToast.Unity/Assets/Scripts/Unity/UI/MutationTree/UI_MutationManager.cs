@@ -233,6 +233,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 playerMoldIcon.enabled = false;
             }
 
+            ConfigurePlayerHoverTargets(player.PlayerId, playerMoldIcon.enabled);
+
             PopulateAllMutations();
             
             // Final safety check before starting coroutine
@@ -797,6 +799,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 Debug.LogWarning("[UI_MutationManager] GridVisualizer null during ReinitializeForPlayer");
             }
 
+            ConfigurePlayerHoverTargets(player.PlayerId, playerMoldIcon.enabled);
+
             PopulateAllMutations();
             // Force enable controls regardless of previous turn state
             SetSpendPointsButtonInteractable(true);
@@ -898,6 +902,20 @@ namespace FungusToast.Unity.UI.MutationTree
 
             spendPointsTooltipTrigger.SetStaticText(SpendPointsTooltipText);
             spendPointsTooltipTrigger.SetAutoPlacementOffsetX(60f);
+        }
+
+        private void ConfigurePlayerHoverTargets(int playerId, bool hasVisibleIcon)
+        {
+            var iconHoverHandler = PlayerMoldIconHoverHandler.Attach(playerMoldIcon != null ? playerMoldIcon.gameObject : null, playerId, gridVisualizer);
+            if (iconHoverHandler != null)
+            {
+                iconHoverHandler.enabled = hasVisibleIcon && gridVisualizer != null;
+            }
+
+            if (playerMoldIcon != null)
+            {
+                playerMoldIcon.raycastTarget = hasVisibleIcon && gridVisualizer != null;
+            }
         }
 
         private void ShowFirstTreeGuidanceToast()

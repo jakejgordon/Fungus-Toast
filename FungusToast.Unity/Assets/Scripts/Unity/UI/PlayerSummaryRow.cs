@@ -251,13 +251,7 @@ namespace FungusToast.Unity.UI
             if (moldIconImage == null)
                 return;
 
-            // Add or reuse the hover handler
-            hoverHandler = moldIconImage.GetComponent<PlayerMoldIconHoverHandler>();
-            if (hoverHandler == null)
-                hoverHandler = moldIconImage.gameObject.AddComponent<PlayerMoldIconHoverHandler>();
-
-            hoverHandler.playerId = playerId;
-            hoverHandler.gridVisualizer = gridVisualizer;
+            hoverHandler = PlayerMoldIconHoverHandler.Attach(moldIconImage.gameObject, playerId, gridVisualizer);
 
             // --- Wire tooltip provider on the icon ---
             var tooltipTrigger = moldIconImage.GetComponent<TooltipTrigger>();

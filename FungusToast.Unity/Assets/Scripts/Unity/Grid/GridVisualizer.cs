@@ -70,6 +70,18 @@ namespace FungusToast.Unity.Grid
         private Coroutine pulseHighlightCoroutine;
         private Color pulseColorA = new(1f, 1f, 0.1f, 1f);
         private Color pulseColorB = new(0.1f, 1f, 1f, 1f);
+        private readonly List<PlayerHoverEmphasisSnapshot> playerHoverEmphasisSnapshots = new();
+        private Coroutine playerHoverEmphasisCoroutine;
+
+        private sealed class PlayerHoverEmphasisSnapshot
+        {
+            public Vector3Int Position;
+            public Color MoldColor;
+            public Matrix4x4 MoldTransform;
+            public TileBase HoverTile;
+            public Color HoverColor;
+            public Matrix4x4 HoverTransform;
+        }
 
         // Animation effect tracking
         private readonly HashSet<int> preAnimationHiddenPreviewTileIds = new();
@@ -593,8 +605,10 @@ namespace FungusToast.Unity.Grid
             var active = ActiveBoard; if (active == null) return;
             var ids = active.AllTiles()
                 .Where(t => t.FungalCell != null && t.FungalCell.OwnerPlayerId == playerId && (t.FungalCell.CellType == FungalCellType.Alive || t.FungalCell.CellType == FungalCellType.Toxin))
-                .Select(t => t.TileId);
+                .Select(t => t.TileId)
+                .ToList();
             HighlightTiles(ids, pulseColorA, pulseColorB);
+            StartPlayerHoverEmphasis(ids);
             if (includeStartingTilePing) TriggerStartingTilePing(playerId);
         }
 
@@ -661,6 +675,8 @@ namespace FungusToast.Unity.Grid
                 StopCoroutine(pulseHighlightCoroutine);
                 pulseHighlightCoroutine = null;
             }
+
+            StopPlayerHoverEmphasis(true);
         }
         public void ClearAllHighlights()
         {
@@ -824,6 +840,152 @@ namespace FungusToast.Unity.Grid
             if (active != null && playerId >= 0 && playerId < active.Players.Count)
                 return active.Players[playerId].StartingTileId;
             return null;
+        }
+
+        private void StartPlayerHoverEmphasis(IReadOnlyList<int> tileIds)
+        {
+            StopPlayerHoverEmphasis(true);
+
+            if (tileIds == null || tileIds.Count == 0 || moldTilemap == null)
+            {
+                return;
+            }
+
+            var hoverTilemap = HoverOverlayTileMap != null ? HoverOverlayTileMap : PingOverlayTileMap;
+            bool canRenderHalo = hoverTilemap != null && solidHighlightTile != null;
+
+            for (int i = 0; i < tileIds.Count; i++)
+            {
+                Vector3Int pos = GetPositionForTileId(tileIds[i]);
+                if (!moldTilemap.HasTile(pos))
+                {
+                    continue;
+                }
+
+                var snapshot = new PlayerHoverEmphasisSnapshot
+                {
+                    Position = pos,
+                    MoldColor = moldTilemap.GetColor(pos),
+                    MoldTransform = moldTilemap.GetTransformMatrix(pos),
+                    HoverTile = canRenderHalo ? hoverTilemap.GetTile(pos) : null,
+                    HoverColor = canRenderHalo ? hoverTilemap.GetColor(pos) : Color.white,
+                    HoverTransform = canRenderHalo ? hoverTilemap.GetTransformMatrix(pos) : Matrix4x4.identity
+                };
+
+                playerHoverEmphasisSnapshots.Add(snapshot);
+
+                if (canRenderHalo)
+                {
+                    hoverTilemap.SetTile(pos, solidHighlightTile);
+                    hoverTilemap.SetTileFlags(pos, TileFlags.None);
+                }
+
+                moldTilemap.SetTileFlags(pos, TileFlags.None);
+            }
+
+            if (playerHoverEmphasisSnapshots.Count == 0)
+            {
+                return;
+            }
+
+            playerHoverEmphasisCoroutine = StartCoroutine(RunPlayerHoverEmphasis(hoverTilemap));
+        }
+
+        private void StopPlayerHoverEmphasis(bool restoreVisuals)
+        {
+            if (playerHoverEmphasisCoroutine != null)
+            {
+                StopCoroutine(playerHoverEmphasisCoroutine);
+                playerHoverEmphasisCoroutine = null;
+            }
+
+            if (!restoreVisuals || playerHoverEmphasisSnapshots.Count == 0)
+            {
+                playerHoverEmphasisSnapshots.Clear();
+                return;
+            }
+
+            var hoverTilemap = HoverOverlayTileMap != null ? HoverOverlayTileMap : PingOverlayTileMap;
+            for (int i = 0; i < playerHoverEmphasisSnapshots.Count; i++)
+            {
+                var snapshot = playerHoverEmphasisSnapshots[i];
+                if (moldTilemap != null && moldTilemap.HasTile(snapshot.Position))
+                {
+                    moldTilemap.SetTileFlags(snapshot.Position, TileFlags.None);
+                    moldTilemap.SetColor(snapshot.Position, snapshot.MoldColor);
+                    moldTilemap.SetTransformMatrix(snapshot.Position, snapshot.MoldTransform);
+                }
+
+                if (hoverTilemap != null)
+                {
+                    hoverTilemap.SetTileFlags(snapshot.Position, TileFlags.None);
+                    hoverTilemap.SetTile(snapshot.Position, snapshot.HoverTile);
+                    hoverTilemap.SetColor(snapshot.Position, snapshot.HoverColor);
+                    hoverTilemap.SetTransformMatrix(snapshot.Position, snapshot.HoverTransform);
+                }
+            }
+
+            playerHoverEmphasisSnapshots.Clear();
+        }
+
+        private IEnumerator RunPlayerHoverEmphasis(Tilemap hoverTilemap)
+        {
+            int colonySize = playerHoverEmphasisSnapshots.Count;
+            float emphasisT = Mathf.InverseLerp(
+                UIEffectConstants.PlayerHoverSparseColonyThreshold,
+                UIEffectConstants.PlayerHoverDenseColonyThreshold,
+                colonySize);
+
+            float moldScale = Mathf.Lerp(
+                UIEffectConstants.PlayerHoverColonyPulseSparseMaxScale,
+                UIEffectConstants.PlayerHoverColonyPulseDenseMaxScale,
+                emphasisT);
+            float haloScale = Mathf.Lerp(
+                UIEffectConstants.PlayerHoverColonyHaloSparseMaxScale,
+                UIEffectConstants.PlayerHoverColonyHaloDenseMaxScale,
+                emphasisT);
+            float haloAlpha = Mathf.Lerp(
+                UIEffectConstants.PlayerHoverColonyHaloSparseMaxAlpha,
+                UIEffectConstants.PlayerHoverColonyHaloDenseMaxAlpha,
+                emphasisT);
+
+            float duration = Mathf.Max(0.01f, UIEffectConstants.PlayerHoverColonyPulseDurationSeconds);
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float wave = Mathf.Sin(t * Mathf.PI);
+                float eased = wave * wave;
+                float currentMoldScale = Mathf.Lerp(1f, moldScale, eased);
+                float currentHaloScale = Mathf.Lerp(1f, haloScale, eased);
+                float currentHaloAlpha = Mathf.Lerp(0.1f, haloAlpha, eased);
+
+                for (int i = 0; i < playerHoverEmphasisSnapshots.Count; i++)
+                {
+                    var snapshot = playerHoverEmphasisSnapshots[i];
+                    if (moldTilemap != null && moldTilemap.HasTile(snapshot.Position))
+                    {
+                        Color liftedColor = Color.Lerp(snapshot.MoldColor, Color.white, 0.22f * eased);
+                        liftedColor.a = Mathf.Max(snapshot.MoldColor.a, Mathf.Lerp(snapshot.MoldColor.a, 1f, 0.28f * eased));
+                        moldTilemap.SetColor(snapshot.Position, liftedColor);
+                        moldTilemap.SetTransformMatrix(snapshot.Position, Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(currentMoldScale, currentMoldScale, 1f)));
+                    }
+
+                    if (hoverTilemap != null)
+                    {
+                        Color haloColor = UIEffectConstants.PlayerHoverColonyHaloColor;
+                        haloColor.a = currentHaloAlpha;
+                        hoverTilemap.SetColor(snapshot.Position, haloColor);
+                        hoverTilemap.SetTransformMatrix(snapshot.Position, Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(currentHaloScale, currentHaloScale, 1f)));
+                    }
+                }
+
+                yield return null;
+            }
+
+            playerHoverEmphasisCoroutine = null;
+            StopPlayerHoverEmphasis(true);
         }
         #endregion
         #endregion

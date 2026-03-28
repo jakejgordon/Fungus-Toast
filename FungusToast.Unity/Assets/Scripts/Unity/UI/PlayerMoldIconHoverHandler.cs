@@ -4,6 +4,7 @@ using FungusToast.Core.Board;
 using FungusToast.Unity.Grid;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI
 {
@@ -23,9 +24,42 @@ namespace FungusToast.Unity.UI
         public int playerId;
         public GridVisualizer gridVisualizer;
 
+        public void Initialize(int hoveredPlayerId, GridVisualizer visualizer)
+        {
+            playerId = hoveredPlayerId;
+            gridVisualizer = visualizer;
+            enabled = playerId >= 0 && gridVisualizer != null;
+        }
+
+        public static PlayerMoldIconHoverHandler Attach(GameObject target, int hoveredPlayerId, GridVisualizer visualizer)
+        {
+            if (target == null)
+            {
+                return null;
+            }
+
+            var handler = target.GetComponent<PlayerMoldIconHoverHandler>();
+            if (handler == null)
+            {
+                handler = target.AddComponent<PlayerMoldIconHoverHandler>();
+            }
+
+            handler.Initialize(hoveredPlayerId, visualizer);
+
+            if (target.TryGetComponent<Graphic>(out var graphic))
+            {
+                graphic.raycastTarget = handler.enabled;
+            }
+
+            return handler;
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             // Disable highlight while draft is active to avoid clobbering draft selection highlights
+            if (!enabled || gridVisualizer == null)
+                return;
+
             if (FungusToast.Unity.GameManager.Instance != null && FungusToast.Unity.GameManager.Instance.IsDraftPhaseActive)
                 return;
 
@@ -35,6 +69,9 @@ namespace FungusToast.Unity.UI
         public void OnPointerExit(PointerEventData eventData)
         {
             // Do not clear highlights during draft - draft UI controls highlights then
+            if (!enabled || gridVisualizer == null)
+                return;
+
             if (FungusToast.Unity.GameManager.Instance != null && FungusToast.Unity.GameManager.Instance.IsDraftPhaseActive)
                 return;
 

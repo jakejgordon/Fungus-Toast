@@ -311,14 +311,7 @@ namespace FungusToast.Unity.UI
                 centerPlayerIcon.sprite = sprite;
                 centerPlayerIcon.enabled = sprite != null;
 
-                var hoverHandler = centerPlayerIcon.GetComponent<PlayerMoldIconHoverHandler>();
-                if (hoverHandler == null)
-                {
-                    hoverHandler = centerPlayerIcon.gameObject.AddComponent<PlayerMoldIconHoverHandler>();
-                }
-
-                hoverHandler.playerId = player.PlayerId;
-                hoverHandler.gridVisualizer = grid;
+                var hoverHandler = PlayerMoldIconHoverHandler.Attach(centerPlayerIcon.gameObject, player.PlayerId, grid);
                 hoverHandler.enabled = sprite != null && grid != null;
                 centerPlayerIcon.raycastTarget = hoverHandler.enabled;
             }
