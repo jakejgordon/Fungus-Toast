@@ -22,3 +22,7 @@ MonoBehaviour:
   - AI12
   - Growth/Resilience
   - CMP_Reclaim_InfiltrationSurge_Easy
+  - CMP_Reclaim_Scavenger_Easy
+  - CMP_Surge_Pulsar_Easy
+  - CMP_Defense_ResilientShell_Easy
+  - CMP_Defense_ReclaimShell_Easy

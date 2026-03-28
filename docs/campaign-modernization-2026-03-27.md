@@ -214,6 +214,65 @@ Takeaways:
 - That softness is useful on Campaign1 pool duty and as a direct replacement for `AI12` on Campaign4, where the old lineup was much harsher than the surrounding curve.
 - Best current placement from this pass: `Campaign1` pool member and `Campaign4` fixed easy anchor. Do **not** promote it upward into Campaign2/3 fixed lineups without a different surrounding mix.
 
+## Roster expansion continuation — weak/easy variety + conservative medium aliases
+
+Follow-up goal: keep expanding the curated campaign roster with 1-2 more truly weak/easy molds for the early duel pool plus named medium aliases that can start replacing raw legacy `AI7` / `AI8` / `AI11` IDs in the first-medium authored levels.
+
+### Added molds
+
+New curated entries added to `FungusToast.Core/AI/AIRoster.cs` in this pass:
+
+- `CMP_Defense_ResilientShell_Easy`
+- `CMP_Defense_ReclaimShell_Easy`
+- `CMP_Surge_BeaconTempo_Medium`
+- `CMP_Control_AnabolicRebirth_Medium`
+- `CMP_Surge_GrowthTempo_Medium`
+
+A stronger easy draft (`CMP_Attrition_ToxicTurtle_Easy`) was screened and rejected rather than kept in campaign pools.
+
+### Authored placement changes
+
+- `Campaign1` (`15x15 1 AI`) pool now includes `CMP_Defense_ResilientShell_Easy` and `CMP_Defense_ReclaimShell_Easy` for extra weak-only variety.
+- Campaign5/6/7 authored boards now use `CMP_Surge_BeaconTempo_Medium` and `CMP_Control_AnabolicRebirth_Medium` in the slots previously occupied by `AI7` and `AI8`.
+- Campaign8 now uses `CMP_Control_AnabolicRebirth_Medium` and `CMP_Surge_GrowthTempo_Medium` in the corresponding `AI8` / `AI11` slots.
+
+### Validation commands
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 15 --height 15 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,CMP_Defense_ResilientShell_Easy --seed 20260327 --experiment-id cmp_defense_resilientshell_w15_g20_seed20260327 --no-keyboard --players 2 --no-nutrient-patches
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 15 --height 15 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,CMP_Defense_ReclaimShell_Easy --seed 20260327 --experiment-id cmp_defense_reclaimshell_w15_g20_seed20260327 --no-keyboard --players 2 --no-nutrient-patches
+
+python3 scripts/run_campaign_balance.py --games 20 --seed 20260327 --level 5
+python3 scripts/run_campaign_balance.py --games 20 --seed 20260327 --level 6
+python3 scripts/run_campaign_balance.py --games 20 --seed 20260327 --level 8
+```
+
+### Results
+
+#### Direct weak/easy screens
+
+| Candidate | Proxy result |
+|---|---|
+| `CMP_Defense_ResilientShell_Easy` | `0.0%` (`0/20`), avg living `65.7`, avg dead `5.1` |
+| `CMP_Defense_ReclaimShell_Easy` | `35.0%` (`7/20`), avg living `78.1`, avg dead `12.2` |
+| `CMP_Attrition_ToxicTurtle_Easy` *(rejected)* | `65.0%` (`13/20`), avg living `64.7`, avg dead `16.4` |
+
+#### Authored campaign screens after medium alias placement
+
+| Level | Authored lineup resolved by harness | Proxy result |
+|---|---|---|
+| Campaign5 | `CMP_Surge_BeaconTempo_Medium`, `CMP_Control_AnabolicRebirth_Medium`, `AI9`, `CMP_Economy_KillReclaim_Medium`, `CMP_TierCap_GrowthResilience_Easy` | `30.0%` (`6/20`), avg living `272.9`, avg dead `181.4` |
+| Campaign6 | `CMP_Surge_BeaconTempo_Medium`, `CMP_Control_AnabolicRebirth_Medium`, `AI9`, `CMP_Bloom_CreepingNecro_Medium` | `25.0%` (`5/20`), avg living `665.6`, avg dead `447.9` |
+| Campaign8 | `CMP_Control_AnabolicRebirth_Medium`, `AI9`, `CMP_Surge_GrowthTempo_Medium`, `CMP_Economy_KillReclaim_Medium`, `CMP_Bloom_CreepingNecro_Medium`, `CMP_Bloom_BeaconRegression_Medium` | `10.0%` (`2/20`), avg living `694.8`, avg dead `584.5` |
+
+Takeaways:
+
+- `Campaign1` can safely gain more variety without sneaking in another pressure spike; the two defense molds stay in the weak/easy lane and the rejected toxin turtle does not.
+- The first-medium band now has stable named `CMP_*` molds in real authored boards instead of raw `AI7` / `AI8` / `AI11` IDs, and the proxy results stayed in-family with prior conservative medium screens.
+- `CMP_Surge_GrowthTempo_Medium` is clearly not an early-medium bully on Campaign8; it remains a safe conservative medium alias for the later part of the first-medium band.
+- Guardrail preserved: `CMP_Bloom_FortifyMimic_Medium` still does not appear before Campaign9.
+
 ## Late-campaign continuation screen — Campaign11-14
 
 Follow-up goal: continue the same safe-proxy tuning upward into the higher authored campaign levels without introducing molds earlier than the guardrails in `docs/CAMPAIGN_AI_CURATION.md`.
@@ -290,3 +349,69 @@ That means the next useful step is probably **not** more blind preset swapping. 
 3. late-campaign target success bands need to explicitly allow `~0-5%` for the current proxy instead of assuming a nonzero rate is required.
 
 Because of that, I did **not** rewrite Campaign11-14 assets in this continuation pass. The evidence says we need either a proxy-strength review or a design decision on late-campaign target bands before further authored preset churn is likely to pay off.
+
+## Early/medium pool continuation — curated underused molds
+
+Follow-up goal: keep filling the actual early/medium authored campaign pools with the newer `CMP_*` molds that were already in `AIRoster` but not yet well placed in board presets.
+
+### Direct characterization screens
+
+Commands:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 15 --height 15 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,CMP_Reclaim_Scavenger_Easy --seed 20260430 --experiment-id cmp_reclaim_scavenger_w15_g20_seed20260430 --no-keyboard --players 2 --no-nutrient-patches
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 15 --height 15 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,CMP_Surge_Pulsar_Easy --seed 20260431 --experiment-id cmp_surge_pulsar_w15_g20_seed20260431 --no-keyboard --players 2 --no-nutrient-patches
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 50 --height 50 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI7,AI8,AI9,CMP_Economy_KillReclaim_Medium,CMP_Growth_Pressure_Medium --seed 20260432 --experiment-id cmp_growth_pressure_campaign5swap_w50_g20_seed20260432 --no-keyboard
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 100 --height 100 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI8,AI9,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_FortifyMimic_Medium --seed 20260433 --experiment-id cmp_bloom_fortifymimic_campaign8_w100_g20_seed20260433 --no-keyboard
+```
+
+Results (`TST_CampaignPlayer_SafeBaseline` proxy):
+
+| Scenario | Lineup / candidate | Proxy result |
+|---|---|---|
+| 15x15 duel | `CMP_Reclaim_Scavenger_Easy` | `55.0%` (`11/20`), avg living `93.3`, avg dead `44.6` |
+| 15x15 duel | `CMP_Surge_Pulsar_Easy` | `70.0%` (`14/20`), avg living `91.3`, avg dead `24.8` |
+| 50x50 Campaign5 swap | `... , CMP_Growth_Pressure_Medium` | `0.0%` (`0/20`), avg living `225.7`, avg dead `188.9` |
+| 100x100 Campaign8 authored variant | `... , CMP_Bloom_FortifyMimic_Medium` | `0.0%` (`0/20`), avg living `727.5`, avg dead `606.1` |
+
+Immediate read:
+
+- `CMP_Reclaim_Scavenger_Easy` is a real usable easy opponent, not just a roster placeholder.
+- `CMP_Surge_Pulsar_Easy` is softer than that but still reasonable for an early pooled duel slot.
+- `CMP_Growth_Pressure_Medium` is too punishing for first-medium placement at `Campaign5`.
+- `CMP_Bloom_FortifyMimic_Medium` overshot the intended `Campaign8` band and should not be the first introduction there.
+
+### Authored preset changes from this pass
+
+- `Campaign1` (`15x15 1 AI`) pool expanded to include:
+  - `CMP_Reclaim_Scavenger_Easy`
+  - `CMP_Surge_Pulsar_Easy`
+- `Campaign8` (`100x100 6 AI`) reverted from `CMP_Bloom_FortifyMimic_Medium` back to `CMP_Bloom_BeaconRegression_Medium`
+
+### Confirmation screens after the asset changes
+
+Commands:
+
+```bash
+python3 scripts/run_campaign_balance.py --games 20 --seed 20260327 --level 1
+python3 scripts/run_campaign_balance.py --games 20 --seed 20260327 --level 8
+python3 scripts/run_campaign_balance.py --games 20 --seed 20260327 --level 9
+```
+
+Resolved / authored results:
+
+| Level | Resolved/authored lineup | Proxy result |
+|---|---|---|
+| Campaign1 | resolved to `TST_Training_Overextender` for seed `20260327` | `60.0%` (`12/20`), avg living `69.4`, avg dead `20.9` |
+| Campaign8 | `AI8, AI9, AI11, CMP_Economy_KillReclaim_Medium, CMP_Bloom_CreepingNecro_Medium, CMP_Bloom_BeaconRegression_Medium` | `10.0%` (`2/20`), avg living `696.7`, avg dead `583.2` |
+| Campaign9 | `AI9, AI11, CMP_Economy_KillReclaim_Medium, CMP_Bloom_CreepingNecro_Medium, CMP_Bloom_FortifyMimic_Medium, CMP_Bloom_AnabolicRegression_Medium` | `10.0%` (`2/20`), avg living `837.5`, avg dead `762.4` |
+
+### Placement conclusions from this continuation
+
+- **Promote now:** `CMP_Reclaim_Scavenger_Easy`, `CMP_Surge_Pulsar_Easy` as valid `Campaign1` pool members.
+- **Hold back:** `CMP_Growth_Pressure_Medium` from `Campaign5`; it looks more like a later medium / hard-preview candidate.
+- **Delay first introduction:** `CMP_Bloom_FortifyMimic_Medium` should not be introduced at `Campaign8`; keep it at `Campaign9+` for now if used at all.
+- **Keep current softer Campaign8:** `CMP_Bloom_BeaconRegression_Medium` restored the level to the previously acceptable `10%` proxy band.
