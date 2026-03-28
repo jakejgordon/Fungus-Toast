@@ -28,6 +28,10 @@ Assets/Plugins/Editor/JetBrains*
 Assets/AddressableAssetsData/*/*.bin*
 Assets/StreamingAssets/aa.meta
 Assets/StreamingAssets/aa/*
+FungusToast.Unity/Assets/Resources/PerformanceTestRunInfo.json
+FungusToast.Unity/Assets/Resources/PerformanceTestRunInfo.json.meta
+FungusToast.Unity/Assets/Resources/PerformanceTestRunSettings.json
+FungusToast.Unity/Assets/Resources/PerformanceTestRunSettings.json.meta
 
 # Optional: exclude if you installed TextMesh Pro manually
 # Assets/TextMesh Pro/
