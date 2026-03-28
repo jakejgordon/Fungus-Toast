@@ -459,7 +459,8 @@ This is a working guardrail for future tuning and for the upcoming pool system. 
 | `CMP_Reclaim_Scavenger_Easy` | 1 | Safe early duel-pool mold; direct 15x15 safe-proxy screen landed near the current Campaign1 band. |
 | `CMP_Surge_Pulsar_Easy` | 1 | Soft early duel-pool mold; weaker than Scavenger, but safe to include in the first easy pool. |
 | `CMP_TierCap_GrowthResilience_Easy` | 4 | Soft bridge mold; useful when a level needs to get slightly harder without spiking. |
-| `CMP_Economy_KillReclaim_Medium` | 5 | First strong modern medium generalist. |
+| `CMP_Economy_KillReclaim_Medium` | 5 | First strong modern medium generalist. On the authored `Campaign8` board it was the main current bully in a 20-game seed-`20260336` follow-up, winning `80%` of games while the safe proxy stayed at `10.0% (2/20)`. |
+| `CMP_Economy_TempoReclaim_Medium` | 8 | Reserve medium candidate only. A direct `Campaign8` authored-board swap for `CMP_Economy_KillReclaim_Medium` looked viable in a 20-game seed-`20260336` screen (`10.0% (2/20)` with a flatter win spread), but the 50-game confirmation did **not** hold: current authored baseline finished at `8.0% (4/50), avg living 706.4, avg dead 578.2`, while the TempoReclaim swap slipped to `6.0% (3/50), avg living 690.4, avg dead 617.8`. Do not use it as the Campaign8 replacement. |
 | `CMP_Bloom_CreepingNecro_Medium` | 6 | First readable Bloom-style medium. |
 | `CMP_Bloom_AnabolicRegression_Medium` | 8 | Better as a later-medium mold once players are handling layered opponents. Follow-up screens kept it out of `Campaign6-7`: `Campaign6` swap test landed at only `20.0% (4/20)` proxy wins, and a `Campaign7` 50-game confirmation replacing the easy filler still held the proxy at `6.0% (3/50)`, effectively no softer than the current authored lineup. |
 | `CMP_Bloom_BeaconRegression_Medium` | 8 | Still sharp, but it held the current Campaign8 proxy near `10%`; acceptable as the first stronger medium insert. |
