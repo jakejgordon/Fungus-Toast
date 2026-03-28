@@ -122,7 +122,9 @@ This is the current recommended audit starting point for `StrategySetEnum = Camp
 - AI6
 - AI12
 - Growth/Resilience
-- possibly a future true weak/random-style strategy
+- CMP_Defense_ResilientShell_Easy
+- CMP_Defense_ReclaimShell_Easy
+- CMP_Reclaim_InfiltrationSurge_Easy
 
 ### Medium / normal
 - AI7
@@ -152,7 +154,7 @@ This is the first intentional target plan for future level pools. It is not yet 
 | Level | Board / Tier intent | Nutrient patches | Intended pool mix | Candidate pool |
 |---|---|---|---|---|
 | Campaign0 | very small / onboarding | Off | 1 training | `AI6` |
-| Campaign1 | very small / onboarding+ | Off | 1 easy | `AI12`, `Growth/Resilience`, `CMP_Reclaim_InfiltrationSurge_Easy` |
+| Campaign1 | very small / onboarding+ | Off | 1 easy | `AI12`, `Growth/Resilience`, `CMP_Reclaim_InfiltrationSurge_Easy`, `CMP_Defense_ResilientShell_Easy`, `CMP_Defense_ReclaimShell_Easy` |
 | Campaign2 | small / first multi-AI | Off | 1 training + 1 easy/hard teaser | `AI6`, `AI12`, `AI13` |
 | Campaign3 | small / first medium intro | Off | 1 easy + 1 medium + 1 easy | `AI12`, `Growth/Resilience`, `AI8`, `AI7` |
 | Campaign4 | larger / nutrient intro | On | 1 easy + 2 medium + 1 easy | `CMP_Reclaim_InfiltrationSurge_Easy`, `Growth/Resilience`, `AI7`, `AI8`, `AI9` |
@@ -443,11 +445,15 @@ This is a working guardrail for future tuning and for the upcoming pool system. 
 
 | Strategy | Earliest recommended level | Notes |
 |---|---:|---|
+| `CMP_Reclaim_Scavenger_Easy` | 1 | Safe early duel-pool mold; direct 15x15 safe-proxy screen landed near the current Campaign1 band. |
+| `CMP_Surge_Pulsar_Easy` | 1 | Soft early duel-pool mold; weaker than Scavenger, but safe to include in the first easy pool. |
 | `CMP_TierCap_GrowthResilience_Easy` | 4 | Soft bridge mold; useful when a level needs to get slightly harder without spiking. |
 | `CMP_Economy_KillReclaim_Medium` | 5 | First strong modern medium generalist. |
 | `CMP_Bloom_CreepingNecro_Medium` | 6 | First readable Bloom-style medium. |
 | `CMP_Bloom_AnabolicRegression_Medium` | 8 | Better as a later-medium mold once players are handling layered opponents. |
-| `CMP_Bloom_BeaconRegression_Medium` | 9 | Sharper/more complex medium; avoid early introduction. |
+| `CMP_Bloom_BeaconRegression_Medium` | 8 | Still sharp, but it held the current Campaign8 proxy near `10%`; acceptable as the first stronger medium insert. |
+| `CMP_Bloom_FortifyMimic_Medium` | 9 | Campaign8 first-introduction test overshot badly; keep it later than Beacon for now. |
+| `CMP_Growth_Pressure_Medium` | 9 | Too sharp for Campaign5 in direct swap testing; reserve for later medium / hard-preview use. |
 | `CMP_Economy_LateSpike_Hard` | 10 | Good first hard introduction candidate. |
 | `AI13` | 10 | Legacy hard control option; use carefully if kept alongside modern hard controls. |
 | `CMP_Control_AnabolicFirst_Hard` | 11 | Too punishing as an early hard preview. |

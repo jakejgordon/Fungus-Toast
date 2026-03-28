@@ -20,5 +20,9 @@ MonoBehaviour:
   aiStrategyPool:
   - TST_Training_Overextender
   - AI12
-  - Growth/Resilience
+  - CMP_TierCap_GrowthResilience_Easy
   - CMP_Reclaim_InfiltrationSurge_Easy
+  - CMP_Reclaim_Scavenger_Easy
+  - CMP_Surge_Pulsar_Easy
+  - CMP_Defense_ResilientShell_Easy
+  - CMP_Defense_ReclaimShell_Easy
