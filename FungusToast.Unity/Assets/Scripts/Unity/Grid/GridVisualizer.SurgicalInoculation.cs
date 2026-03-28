@@ -631,10 +631,11 @@ namespace FungusToast.Unity.Grid.Helpers
 	internal sealed class GridSpecialPresentationEffects
 	{
 		private static readonly Color NutrientPatchColor = new(1f, 1f, 1f, 0.92f);
-		private static readonly Color AdaptogenPatchTextColor = new(0.8f, 0.97f, 1f, 1f);
-		private static readonly Color SporemealPatchTextColor = new(0.92f, 1f, 0.8f, 1f);
-		private static readonly Color HypervariationPatchTextColor = new(0.95f, 0.84f, 1f, 1f);
-		private static readonly Color DirectedVectorToastColor = new(0.99f, 1f, 0.8f, 1f);
+		private static readonly Color AdaptogenPatchTextColor = new(0.05f, 0.31f, 0.5f, 1f);
+		private static readonly Color SporemealPatchTextColor = new(0.12f, 0.35f, 0.11f, 1f);
+		private static readonly Color HypervariationPatchTextColor = new(0.35f, 0.12f, 0.42f, 1f);
+		private static readonly Color DirectedVectorToastColor = new(0.45f, 0.08f, 0.12f, 1f);
+		private static readonly Color BoardToastOutlineColor = new(0.02f, 0.01f, 0f, 1f);
 		private static readonly Color DirectedVectorPulseColor = new(1f, 0.92f, 0.38f, 0.96f);
 
 		private readonly Func<GameBoard> _getBoard;
@@ -1059,7 +1060,7 @@ namespace FungusToast.Unity.Grid.Helpers
 				: orderedTileIds;
 			var growthTargetTileIds = new HashSet<int>(orderedTileIds);
 
-			TextMeshPro toast = CreateDirectedVectorToastText(orderedTileIds, overlayTilemap);
+			TextMeshPro toast = CreateDirectedVectorToastText(presentationStartTileId, orderedTileIds, overlayTilemap);
 			try
 			{
 				if (presentationStartTileId >= 0)
@@ -1468,16 +1469,39 @@ namespace FungusToast.Unity.Grid.Helpers
 		{
 			return rewardType switch
 			{
-				NutrientRewardType.MutationPoints => rewardAmount == 1 ? "+1 Mutation Point!" : $"+{rewardAmount} Mutation Points!",
-				NutrientRewardType.FreeGrowth => rewardAmount == 1 ? "1 Cell Grown!" : $"{rewardAmount} Cells Grown!",
-				NutrientRewardType.MycovariantDraft => "Mycovariant Draft!",
-				_ => "Nutrient Claimed!"
+				NutrientRewardType.MutationPoints => $"Mutation +{Math.Max(1, rewardAmount)}!",
+				NutrientRewardType.FreeGrowth => $"Growth +{Math.Max(1, rewardAmount)}!",
+				NutrientRewardType.MycovariantDraft => "Draft Ready!",
+				_ => "Nutrients!"
 			};
 		}
 
 		private static string BuildDirectedVectorToastText()
 		{
-			return "Chemotactic vectoring toward beacon!";
+			return "Chemotactic vectoring!";
+		}
+
+		private static void ApplyBoardToastStyle(TextMeshPro tmp, float fontSize, Color textColor)
+		{
+			if (tmp == null)
+			{
+				return;
+			}
+
+			if (TMP_Settings.defaultFontAsset != null)
+			{
+				tmp.font = TMP_Settings.defaultFontAsset;
+			}
+
+			tmp.fontSize = fontSize;
+			tmp.alignment = TextAlignmentOptions.Center;
+			tmp.textWrappingMode = TextWrappingModes.NoWrap;
+			tmp.fontStyle = FontStyles.Bold;
+			tmp.characterSpacing = 1.2f;
+			tmp.extraPadding = true;
+			tmp.color = textColor;
+			tmp.outlineWidth = 0.4f;
+			tmp.outlineColor = BoardToastOutlineColor;
 		}
 
 		private TextMeshPro CreateNutrientToastText(Vector3Int destinationPos, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount, Tilemap overlayTilemap)
@@ -1487,13 +1511,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
 			var tmp = textObject.GetComponent<TextMeshPro>();
 			tmp.text = BuildNutrientToastText(rewardType, rewardAmount);
-			tmp.fontSize = UIEffectConstants.NutrientPatchToastFontSize;
-			tmp.alignment = TextAlignmentOptions.Center;
-			tmp.textWrappingMode = TextWrappingModes.NoWrap;
-			tmp.fontStyle = FontStyles.Bold;
-			tmp.color = GetNutrientToastColor(patchType);
-			tmp.outlineWidth = 0.32f;
-			tmp.outlineColor = new Color(0.24f, 0.12f, 0.02f, 1f);
+			ApplyBoardToastStyle(tmp, UIEffectConstants.NutrientPatchToastFontSize, GetNutrientToastColor(patchType));
 			tmp.transform.position = overlayTilemap.GetCellCenterWorld(destinationPos) + new Vector3(0f, UIEffectConstants.NutrientPatchToastStartHeightWorld, 0f);
 			tmp.transform.localScale = Vector3.one * (GetNutrientToastScaleMultiplier() * UIEffectConstants.NutrientPatchToastMinScaleMultiplier);
 
@@ -1506,33 +1524,28 @@ namespace FungusToast.Unity.Grid.Helpers
 			return tmp;
 		}
 
-		private TextMeshPro CreateDirectedVectorToastText(IReadOnlyList<int> affectedTileIds, Tilemap overlayTilemap)
+		private TextMeshPro CreateDirectedVectorToastText(int originTileId, IReadOnlyList<int> affectedTileIds, Tilemap overlayTilemap)
 		{
-			if (affectedTileIds == null || affectedTileIds.Count == 0)
+			if (affectedTileIds == null || affectedTileIds.Count == 0 || overlayTilemap == null)
 			{
 				return null;
 			}
 
-			Vector3 averageWorld = Vector3.zero;
-			foreach (int tileId in affectedTileIds)
-			{
-				averageWorld += overlayTilemap.GetCellCenterWorld(_getPositionForTileId(tileId));
-			}
+			int resolvedOriginTileId = originTileId >= 0 ? originTileId : affectedTileIds[0];
+			int destinationTileId = affectedTileIds[affectedTileIds.Count - 1];
+			Vector3 originWorld = overlayTilemap.GetCellCenterWorld(_getPositionForTileId(resolvedOriginTileId));
+			Vector3 destinationWorld = overlayTilemap.GetCellCenterWorld(_getPositionForTileId(destinationTileId));
+			float verticalOffset = destinationWorld.y < originWorld.y
+				? UIEffectConstants.DirectedVectorToastStartHeightWorld
+				: -UIEffectConstants.DirectedVectorToastStartHeightWorld;
 
-			averageWorld /= affectedTileIds.Count;
 			var textObject = new GameObject("DirectedVectorToast", typeof(TextMeshPro));
 			textObject.transform.SetParent(_getToastParent(), false);
 
 			var tmp = textObject.GetComponent<TextMeshPro>();
 			tmp.text = BuildDirectedVectorToastText();
-			tmp.fontSize = UIEffectConstants.DirectedVectorToastFontSize;
-			tmp.alignment = TextAlignmentOptions.Center;
-			tmp.textWrappingMode = TextWrappingModes.NoWrap;
-			tmp.fontStyle = FontStyles.Bold;
-			tmp.color = DirectedVectorToastColor;
-			tmp.outlineWidth = 0.32f;
-			tmp.outlineColor = new Color(0.18f, 0.11f, 0.02f, 1f);
-			tmp.transform.position = averageWorld + new Vector3(0f, UIEffectConstants.DirectedVectorToastStartHeightWorld, 0f);
+			ApplyBoardToastStyle(tmp, UIEffectConstants.DirectedVectorToastFontSize, DirectedVectorToastColor);
+			tmp.transform.position = originWorld + new Vector3(0f, verticalOffset, 0f);
 			tmp.transform.localScale = Vector3.one * GetNutrientToastScaleMultiplier();
 
 			var renderer = tmp.GetComponent<MeshRenderer>();

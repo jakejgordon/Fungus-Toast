@@ -212,9 +212,7 @@ namespace FungusToast.Unity
                     if (!multipleSurges)
                     {
                         gameManager.GameUI?.PhaseBanner?.Show(
-                            surge.AffectedTileCount == 1
-                                ? "Chemotactic Beacon projects 1 tile toward the marker!"
-                                : $"Chemotactic Beacon projects {surge.AffectedTileCount} tiles toward the marker!",
+                            "Chemotactic vectoring!",
                             UIEffectConstants.DirectedVectorBannerHoldSeconds);
                     }
                 }
@@ -222,7 +220,7 @@ namespace FungusToast.Unity
                 if (multipleSurges)
                 {
                     gameManager.GameUI?.PhaseBanner?.Show(
-                        "Chemotactic Beacon projections ripple toward their markers!",
+                        "Chemotactic vectoring!",
                         UIEffectConstants.DirectedVectorBannerHoldSeconds);
                 }
 
