@@ -17,6 +17,7 @@ This file is the top-level router for AI-assisted development in this repository
 - **Campaign modernization / recent curated roster tuning results:** `docs/campaign-modernization-2026-03-27.md`
 - **Dominance diagnosis / controlled balance investigation:** `FungusToast.Core/docs/DOMINANCE_DIAGNOSIS_WORKFLOW.md`
 - **Gameplay balance levers and canonical constants:** `FungusToast.Core/docs/GAME_BALANCE_CONSTANTS.md`
+- **Sound design, storage, and trigger guidance:** `FungusToast.Core/docs/SOUNDS.md`
 - **Unity UI architecture and service patterns:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`
 - **Unity UI style rules:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`
 - **Technical architecture context:** `FungusToast.Core/docs/ARCHITECTURE_OVERVIEW.md`
@@ -111,6 +112,7 @@ Use this precedence order when multiple docs seem relevant:
 - Adaptation/campaign work → `ADAPTATION_HELPER.md` and `CAMPAIGN_HELPER.md`
 - AI strategy work → `AI_STRATEGY_AUTHORING.md`
 - UI/service/tooltip/pooling work → `UI_ARCHITECTURE_HELPER.md` and `UI_STYLE_GUIDE.md`
+- Sound planning / audio trigger work → `SOUNDS.md`, `UI_ARCHITECTURE_HELPER.md`, and `ARCHITECTURE_OVERVIEW.md`
 - Deep architecture questions → `ARCHITECTURE_OVERVIEW.md`
 - Canonical gameplay terms and state-transition verbs → `GAMEPLAY_TERMINOLOGY.md`
 - Export analysis → `FungusToast.Analytics/README.md`
