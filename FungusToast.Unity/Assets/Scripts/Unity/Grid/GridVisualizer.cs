@@ -756,6 +756,35 @@ namespace FungusToast.Unity.Grid
             startingTilePingCoroutine = StartCoroutine(RunBatchPing(chemobeaconCenters, targetTilemap));
         }
 
+        public void TriggerNutrientPatchPing(NutrientPatchType patchType)
+        {
+            var active = ActiveBoard;
+            var targetTilemap = ringHelper.ChoosePingTarget();
+            if (active == null || targetTilemap == null || solidHighlightTile == null)
+            {
+                return;
+            }
+
+            List<Vector3Int> centers = active.AllNutrientPatchTiles()
+                .Where(tile => tile.NutrientPatch?.PatchType == patchType)
+                .Select(tile =>
+                {
+                    var (x, y) = active.GetXYFromTileId(tile.TileId);
+                    return new Vector3Int(x, y, 0);
+                })
+                .Distinct()
+                .ToList();
+            if (centers.Count == 0)
+            {
+                return;
+            }
+
+            CancelActivePing(targetTilemap);
+            lastPingTilemap = targetTilemap;
+            BeginAnimation();
+            startingTilePingCoroutine = StartCoroutine(RunBatchPing(centers, targetTilemap));
+        }
+
         private void CancelActivePing(Tilemap fallbackTilemap)
         {
             if (startingTilePingCoroutine == null)
