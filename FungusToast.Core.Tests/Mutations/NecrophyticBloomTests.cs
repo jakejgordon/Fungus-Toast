@@ -36,6 +36,14 @@ public class NecrophyticBloomTests
     }
 
     [Fact]
+    public void CalculateNecrophyticBloomPatchTileCount_caps_at_max_patch_size()
+    {
+        Assert.Equal(GameBalance.NecrophyticBloomMaxPatchSize, GeneticDriftMutationProcessor.CalculateNecrophyticBloomPatchTileCount(20));
+        Assert.Equal(GameBalance.NecrophyticBloomMaxPatchSize, GeneticDriftMutationProcessor.CalculateNecrophyticBloomPatchTileCount(50));
+        Assert.Equal(GameBalance.NecrophyticBloomMaxPatchSize, GeneticDriftMutationProcessor.CalculateNecrophyticBloomPatchTileCount(GameBalance.NecrophyticBloomMaxPatchSize + GameBalance.NecrophyticBloomPatchTileReduction + 1));
+    }
+
+    [Fact]
     public void GetNecrophyticBloomDeadClusters_groups_only_friendly_dead_non_toxin_regions()
     {
         var setup = CreateBoard(width: 4, height: 4);
@@ -108,6 +116,35 @@ public class NecrophyticBloomTests
         Assert.Equal(1, setup.observer.NecrophyticBloomPatchesByPlayer[setup.player.PlayerId]);
         Assert.NotNull(setup.board.GetTileById(1)?.NutrientPatch);
         Assert.Equal(4, setup.board.AllNutrientPatchTiles().Count());
+    }
+
+    [Fact]
+    public void ResolveNecrophyticBloomComposting_limits_patches_to_max_per_round()
+    {
+        // Create a board wide enough to hold 3 disconnected qualifying clusters
+        var setup = CreateBoard(width: 20, height: 2);
+        setup.player.SetMutationLevel(MutationIds.NecrophyticBloom, newLevel: GameBalance.NecrophyticBloomMaxLevel, currentRound: 1);
+
+        // Cluster 1: tiles 0–5 (6 contiguous cells, row 0)
+        for (int i = 0; i <= 5; i++)
+            CreateDeadCell(setup.board, setup.player, tileId: i);
+
+        // Cluster 2: tiles 7–12 (6 contiguous cells, row 0, separated from cluster 1 by tile 6)
+        for (int i = 7; i <= 12; i++)
+            CreateDeadCell(setup.board, setup.player, tileId: i);
+
+        // Cluster 3: tiles 14–19 (6 contiguous cells, row 0, separated from cluster 2 by tile 13)
+        for (int i = 14; i <= 19; i++)
+            CreateDeadCell(setup.board, setup.player, tileId: i);
+
+        int createdPatchCount = GeneticDriftMutationProcessor.ResolveNecrophyticBloomComposting(
+            setup.player,
+            setup.board,
+            new DeterministicLowRollRandom(),
+            setup.observer);
+
+        Assert.Equal(GameBalance.NecrophyticBloomMaxPatchesPerRound, createdPatchCount);
+        Assert.Equal(GameBalance.NecrophyticBloomMaxPatchesPerRound, setup.observer.NecrophyticBloomPatchesByPlayer[setup.player.PlayerId]);
     }
 
     private static (GameBoard board, List<Player> players, Player player, Player enemy, TestSimulationObserver observer) CreateBoard(int width, int height)
