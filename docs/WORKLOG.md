@@ -165,6 +165,14 @@ Use the following minimal workflow to preserve working memory across sessions:
 - **Open questions:** `Campaign1` now has a healthier easy pool on paper, but the safe harness only resolves one pool member per seed; if we want stronger confidence in the whole duel pool, the next step is a small multi-seed sweep rather than one more one-off duel. On the medium side, `CMP_Bloom_FortifyMimic_Medium` probably belongs later than `Campaign8`, and `CMP_Growth_Pressure_Medium` likely needs a Campaign9+ or hard-preview slot instead of first-medium duty.
 - **Next steps:** If continuing, do a short multi-seed `Campaign1` pool sweep, then characterize whether `CMP_Bloom_FortifyMimic_Medium` or `CMP_Growth_Pressure_Medium` fit better at `Campaign9`, `Campaign10`, or only as later hard-transition molds.
 
+### 2026-03-27 (Campaign1 pool integrity pass)
+- **Focus:** Audit the full `Campaign1` pooled duel roster instead of trusting a single resolved seed.
+- **Changed:** Fixed a parser bug in `scripts/run_campaign_balance.py` where pooled board-preset parsing could accidentally treat the Unity YAML header (`--- !u!114 ...`) as a fake AI pool entry. Also replaced stale `Growth/Resilience` in `FungusToast.Unity/Assets/Configs/Board Presets/15x15 1 AI.asset` with the actual campaign-safe alias `CMP_TierCap_GrowthResilience_Easy`.
+- **Learned:** `Campaign1` had two quiet integrity problems: one in the harness and one in the asset. The old pool entry `Growth/Resilience` is not present in the `Campaign` strategy set at all, so the authored duel pool was carrying a dead ID; the intended curated alias is softer and valid.
+- **Evidence:** Direct 50-game no-nutrient duel screens with safe proxy `TST_CampaignPlayer_SafeBaseline`: `AI12` -> `68.0% (34/50), avg living 90.2, avg dead 28.0`; `CMP_TierCap_GrowthResilience_Easy` -> `74.0% (37/50), avg living 100.0, avg dead 30.8`.
+- **Open questions:** The rest of the `Campaign1` pool now looks sane on paper, but a true multi-seed per-member authored-level sweep would still be the cleanest way to measure how often each pool member appears and whether any one candidate produces outlier variance.
+- **Next steps:** If continuing this lane, run a scripted multi-seed `Campaign1` harness sweep now that pooled parsing is fixed, then decide whether `AI12` should stay in the duel pool or give way to another softer curated easy mold.
+
 ### 2026-03-21 (4-player assumption / 3-player start)
 - **Focus:** Record the 4-player symmetry assumption and move on to 3-player tuning.
 - **Changed:** Added a symmetric 4-player fast-path reference for square boards and documented the assumption that 4-player square placement is geometrically even enough to treat as solved unless future evidence says otherwise.

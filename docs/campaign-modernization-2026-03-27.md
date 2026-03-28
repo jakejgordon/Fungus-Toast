@@ -415,3 +415,33 @@ Resolved / authored results:
 - **Hold back:** `CMP_Growth_Pressure_Medium` from `Campaign5`; it looks more like a later medium / hard-preview candidate.
 - **Delay first introduction:** `CMP_Bloom_FortifyMimic_Medium` should not be introduced at `Campaign8`; keep it at `Campaign9+` for now if used at all.
 - **Keep current softer Campaign8:** `CMP_Bloom_BeaconRegression_Medium` restored the level to the previously acceptable `10%` proxy band.
+
+## Campaign1 pool integrity follow-up
+
+Follow-up goal: verify the entire authored `Campaign1` pool instead of trusting one resolved seed, and fix any stale harness/pool issues uncovered during that audit.
+
+### Issues found and fixed
+
+- `scripts/run_campaign_balance.py` had a pooled-preset parsing bug: once inside `aiStrategyPool`, it treated any later YAML line beginning with `-` as a pool entry, including the Unity header line `--- !u!114 &11400000` on some assets. The parser now tracks whether it is inside `aiPlayers` vs `aiStrategyPool` and only records entries from the active block.
+- The authored `Campaign1` pool still referenced legacy `Growth/Resilience`, which is **not** a valid member of the simulation `Campaign` strategy set. Replaced that stale ID in `15x15 1 AI.asset` with the curated alias `CMP_TierCap_GrowthResilience_Easy`.
+
+### Additional direct pool screens
+
+Commands:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 50 --width 15 --height 15 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI12 --seed 20260440 --experiment-id cmp_ai12_w15_g50_seed20260440 --no-keyboard --players 2 --no-nutrient-patches
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 50 --width 15 --height 15 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,CMP_TierCap_GrowthResilience_Easy --seed 20260441 --experiment-id cmp_tiercap_growthresilience_w15_g50_seed20260441 --no-keyboard --players 2 --no-nutrient-patches
+```
+
+Results (`TST_CampaignPlayer_SafeBaseline` proxy):
+
+| Candidate | Proxy result |
+|---|---|
+| `AI12` | `68.0%` (`34/50`), avg living `90.2`, avg dead `28.0` |
+| `CMP_TierCap_GrowthResilience_Easy` | `74.0%` (`37/50`), avg living `100.0`, avg dead `30.8` |
+
+### Pool takeaway
+
+The `Campaign1` pool still sits safely in the onboarding band after removing the stale ID: `AI12` remains beatable in the tiny duel, and `CMP_TierCap_GrowthResilience_Easy` is an even softer curated replacement for the old unnamed `Growth/Resilience` slot.

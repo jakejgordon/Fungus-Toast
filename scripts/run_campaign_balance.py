@@ -54,22 +54,46 @@ def build_guid_map(directory: Path) -> Dict[str, Path]:
 
 def parse_board_preset(path: Path) -> dict:
     preset = {"path": str(path), "aiPlayers": [], "aiStrategyPool": [], "pooledAiPlayerCount": 0}
+    in_ai_players = False
+    in_ai_pool = False
+
     for raw in path.read_text().splitlines():
         line = raw.strip()
+        if not line:
+            continue
+
         if line.startswith("presetId:"):
             preset["presetId"] = line.split(":", 1)[1].strip()
+            in_ai_players = False
+            in_ai_pool = False
         elif line.startswith("boardWidth:"):
             preset["boardWidth"] = int(line.split(":", 1)[1].strip())
+            in_ai_players = False
+            in_ai_pool = False
         elif line.startswith("boardHeight:"):
             preset["boardHeight"] = int(line.split(":", 1)[1].strip())
+            in_ai_players = False
+            in_ai_pool = False
+        elif line.startswith("aiPlayers:"):
+            in_ai_players = True
+            in_ai_pool = False
         elif line.startswith("pooledAiPlayerCount:"):
             preset["pooledAiPlayerCount"] = int(line.split(":", 1)[1].strip())
-        elif line.startswith("- strategyName:"):
+            in_ai_players = False
+            in_ai_pool = False
+        elif line.startswith("aiStrategyPool:"):
+            in_ai_players = False
+            in_ai_pool = True
+        elif in_ai_players and line.startswith("- strategyName:"):
             preset["aiPlayers"].append(line.split(":", 1)[1].strip())
-        elif line.startswith("-") and not line.startswith("- strategyName:"):
+        elif in_ai_pool and line.startswith("-"):
             value = line[1:].strip()
             if value:
                 preset["aiStrategyPool"].append(value)
+        elif not raw.startswith(" ") and not raw.startswith("\t"):
+            in_ai_players = False
+            in_ai_pool = False
+
     return preset
 
 
