@@ -32,7 +32,7 @@ All mutation copy (name, description, flavor text) must follow these rules to ke
 |------|--------|
 | **Length** | 1–3 sentences, **≤ 220 rendered characters** (interpolated values count toward the cap) |
 | **Sentence order** | **Trigger / timing → Effect / scaling → Max-level bonus** |
-| **Max-level clause** | Use `<b>Max Level Bonus:</b>` on a new line when the max-level effect is mechanically distinct |
+| **Max-level clause** | Use `<b>Max Level Bonus:</b>` on a new line when the max-level effect is mechanically distinct. Example from Necrophytic Bloom: `"...\n<b>Max Level Bonus:</b> Can also create Hypervariation Development patches."` |
 | **Jargon** | No unexplained scientific terms — if a bio word appears in the Name, restate the mechanic in plain language in the Description |
 | **Formatting** | Use `<b>…</b>` for emphasis on key numbers/bonuses; use `\n` for line breaks before Max Level Bonus; avoid bullet lists and multi-paragraph blocks |
 | **Encoding** | No special Unicode bullets or en-dashes that can corrupt — use plain hyphens and standard ASCII punctuation |

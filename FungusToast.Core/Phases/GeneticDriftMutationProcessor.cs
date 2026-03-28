@@ -328,7 +328,8 @@ namespace FungusToast.Core.Phases
 
             internal static int CalculateNecrophyticBloomPatchTileCount(int consumedClusterTileCount)
             {
-                return Math.Max(1, consumedClusterTileCount - GameBalance.NecrophyticBloomPatchTileReduction);
+                int tileCount = Math.Max(1, consumedClusterTileCount - GameBalance.NecrophyticBloomPatchTileReduction);
+                return Math.Min(tileCount, GameBalance.NecrophyticBloomMaxPatchSize);
             }
 
         internal static List<List<int>> GetNecrophyticBloomDeadClusters(GameBoard board, int playerId)
@@ -418,6 +419,11 @@ namespace FungusToast.Core.Phases
 
                 nextClusterId++;
                 createdPatchCount++;
+
+                if (createdPatchCount >= GameBalance.NecrophyticBloomMaxPatchesPerRound)
+                {
+                    break;
+                }
             }
 
             if (createdPatchCount > 0)

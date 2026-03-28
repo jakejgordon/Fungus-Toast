@@ -75,10 +75,9 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.NecrophyticBloom,
                 name: "Necrophytic Bloom",
                 description:
-                    $"At the end of each Decay Phase, each orthogonally connected region of your dead non-toxin cells with at least {GameBalance.NecrophyticBloomBaseClusterThreshold} cells has a {helper.FormatPercent(GameBalance.NecrophyticBloomBaseCompostChance, 1)} chance to compost into a neutral nutrient patch. " +
-                    $"Composted patches contain {GameBalance.NecrophyticBloomPatchTileReduction} fewer tiles than the dead region they came from. " +
-                    $"Each additional level reduces the minimum region size by {GameBalance.NecrophyticBloomClusterThresholdReductionPerLevel} and increases the compost chance by {helper.FormatPercent(GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel, 1)}. " +
-                    $"At max level, Necrophytic Bloom can also create Hypervariation Development patches when the normal nutrient patch roll allows it.",
+                    $"At Decay Phase end, dead non-toxin regions of at least {GameBalance.NecrophyticBloomBaseClusterThreshold} cells have a {helper.FormatPercent(GameBalance.NecrophyticBloomBaseCompostChance, 1)} chance to compost into a neutral nutrient patch (max {GameBalance.NecrophyticBloomMaxPatchSize} tiles; max {GameBalance.NecrophyticBloomMaxPatchesPerRound} per round). " +
+                    $"Each level reduces the minimum size by {GameBalance.NecrophyticBloomClusterThresholdReductionPerLevel} and raises the chance by {helper.FormatPercent(GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel, 1)}.\n" +
+                    $"<b>Max Level Bonus:</b> Can also create Hypervariation Development patches.",
                 flavorText: "The colony learns to compost its dead into concentrated nourishment, turning loss into contested resources.",
                 type: MutationType.NecrophyticBloomSporeDrop,
                 effectPerLevel: GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel,
