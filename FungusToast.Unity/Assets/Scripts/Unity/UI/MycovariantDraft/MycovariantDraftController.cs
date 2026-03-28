@@ -11,7 +11,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -34,6 +33,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private const string DefaultHumanTurnBannerText = "Your turn to draft a Mycovariant!";
         private const string DefaultAiTurnBannerPrefix = "AI Drafting";
 
+        private const float FeedEntryFontSize = 18f;
+        private const float FeedIconSize = 36f;
+        private const float FeedRowSpacing = 8f;
+        private const int FeedRowPadding = 8;
+        private const float FeedIconSpacerWidth = 8f;
+
         [Header("UI References")]
         [SerializeField] private GameObject draftPanel; // Main draft panel root
         [SerializeField] private CanvasGroup interactionBlocker; // semi-transparent overlay, blocks raycasts
@@ -47,9 +52,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         [Header("Draft Message Feed (Left Panel)")]
         [SerializeField] private GameObject draftMessagePanel;
         [SerializeField] private TextMeshProUGUI draftMessageTitleText;
-        [SerializeField] private TextMeshProUGUI draftMessageBodyText;
-        [SerializeField] private int draftMessageMaxLines = 14;
-        [SerializeField] private float draftCompletionHoldSeconds = 2f;
+        [SerializeField] private float draftCompletionHoldSeconds = 3f;
 
         private List<Mycovariant> draftChoices;
         private Player currentPlayer;
@@ -66,7 +69,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private string aiTurnBannerPrefix = DefaultAiTurnBannerPrefix;
 
         private DraftUIState uiState = DraftUIState.Idle;
-        private readonly Queue<string> draftMessageLines = new();
+        private ScrollRect draftFeedScrollRect;
+        private Transform draftFeedContentTransform;
+        private TextMeshProUGUI currentPlayerEntryText;
+        private int draftFeedEntryCount;
         private bool isFinishingDraftPhase;
         private bool isCampaignAdaptationDraft;
         private Action<AdaptationDefinition> onAdaptationPicked;
@@ -178,8 +184,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
             currentPlayer = draftOrder[draftIndex];
             UpdateDraftBanner();
-
-            AddDraftMessage(BuildTurnAnnouncement(currentPlayer));
 
             if (draftOrderRow != null)
             {
@@ -294,7 +298,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             GameManager.Instance.GameUI.GameLogRouter?.OnDraftPick(currentPlayer.PlayerName, picked.Name);
 
-            AddDraftMessage(BuildPickAnnouncement(currentPlayer, picked));
+            AddPlayerFeedEntry(currentPlayer, BuildPickAnnouncement(currentPlayer, picked));
 
             GameManager.Instance.ResolveMycovariantDraftPick(currentPlayer, picked);
 
@@ -613,7 +617,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private void EnsureDraftMessageUI()
         {
-            if (draftMessagePanel != null && draftMessageBodyText != null)
+            if (draftMessagePanel != null && draftFeedScrollRect != null)
                 return;
 
             Transform parent = draftPanel != null ? draftPanel.transform.parent : transform;
@@ -654,55 +658,198 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 titleRect.offsetMax = new Vector2(-14f, -10f);
             }
 
-            if (draftMessageBodyText == null)
+            if (draftFeedScrollRect == null)
             {
-                var bodyGO = new GameObject("DraftMessageBody", typeof(RectTransform));
-                bodyGO.transform.SetParent(draftMessagePanel.transform, false);
-                draftMessageBodyText = bodyGO.AddComponent<TextMeshProUGUI>();
-                draftMessageBodyText.fontSize = 20f;
-                draftMessageBodyText.color = UIStyleTokens.Text.Secondary;
-                draftMessageBodyText.alignment = TextAlignmentOptions.TopLeft;
-                draftMessageBodyText.textWrappingMode = TextWrappingModes.Normal;
-                draftMessageBodyText.overflowMode = TextOverflowModes.Overflow;
-                draftMessageBodyText.text = string.Empty;
+                var scrollGO = new GameObject("DraftFeedScrollView", typeof(RectTransform));
+                scrollGO.transform.SetParent(draftMessagePanel.transform, false);
 
-                var bodyRect = bodyGO.GetComponent<RectTransform>();
-                bodyRect.anchorMin = new Vector2(0f, 0f);
-                bodyRect.anchorMax = new Vector2(1f, 1f);
-                bodyRect.offsetMin = new Vector2(14f, 14f);
-                bodyRect.offsetMax = new Vector2(-14f, -52f);
+                draftFeedScrollRect = scrollGO.AddComponent<ScrollRect>();
+                draftFeedScrollRect.horizontal = false;
+                draftFeedScrollRect.vertical = true;
+                draftFeedScrollRect.scrollSensitivity = 30f;
+                draftFeedScrollRect.movementType = ScrollRect.MovementType.Clamped;
+
+                var scrollRectTransform = scrollGO.GetComponent<RectTransform>();
+                scrollRectTransform.anchorMin = new Vector2(0f, 0f);
+                scrollRectTransform.anchorMax = new Vector2(1f, 1f);
+                scrollRectTransform.offsetMin = new Vector2(0f, 0f);
+                scrollRectTransform.offsetMax = new Vector2(0f, -52f);
+
+                var viewportGO = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(Mask));
+                viewportGO.transform.SetParent(scrollGO.transform, false);
+
+                var vpImage = viewportGO.GetComponent<Image>();
+                vpImage.color = new Color(0f, 0f, 0f, 0.01f);
+
+                var vpMask = viewportGO.GetComponent<Mask>();
+                vpMask.showMaskGraphic = false;
+
+                var vpRect = viewportGO.GetComponent<RectTransform>();
+                vpRect.anchorMin = Vector2.zero;
+                vpRect.anchorMax = Vector2.one;
+                vpRect.offsetMin = Vector2.zero;
+                vpRect.offsetMax = Vector2.zero;
+                vpRect.pivot = new Vector2(0f, 1f);
+
+                draftFeedScrollRect.viewport = vpRect;
+
+                var contentGO = new GameObject("Content", typeof(RectTransform));
+                contentGO.transform.SetParent(viewportGO.transform, false);
+
+                var contentRect = contentGO.GetComponent<RectTransform>();
+                contentRect.anchorMin = new Vector2(0f, 1f);
+                contentRect.anchorMax = new Vector2(1f, 1f);
+                contentRect.pivot = new Vector2(0f, 1f);
+                contentRect.offsetMin = new Vector2(0f, 0f);
+                contentRect.offsetMax = new Vector2(0f, 0f);
+
+                var contentLayout = contentGO.AddComponent<VerticalLayoutGroup>();
+                contentLayout.childControlWidth = true;
+                contentLayout.childControlHeight = true;
+                contentLayout.childForceExpandWidth = true;
+                contentLayout.childForceExpandHeight = false;
+                contentLayout.spacing = 0f;
+                contentLayout.padding = new RectOffset(0, 0, 0, 0);
+
+                var contentSizer = contentGO.AddComponent<ContentSizeFitter>();
+                contentSizer.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+                contentSizer.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+                draftFeedContentTransform = contentGO.transform;
+                draftFeedScrollRect.content = contentRect;
             }
         }
 
         private void ClearDraftMessages()
         {
-            draftMessageLines.Clear();
-            RefreshDraftMessageText();
+            if (draftFeedContentTransform != null)
+            {
+                foreach (Transform child in draftFeedContentTransform)
+                    Destroy(child.gameObject);
+            }
+            draftFeedEntryCount = 0;
+            currentPlayerEntryText = null;
         }
 
         private void AddDraftMessage(string message)
         {
-            if (string.IsNullOrWhiteSpace(message))
-                return;
-
-            draftMessageLines.Enqueue($"• {message}");
-            while (draftMessageLines.Count > draftMessageMaxLines)
-                draftMessageLines.Dequeue();
-
-            RefreshDraftMessageText();
+            AddGenericFeedEntry(message);
         }
 
-        private void RefreshDraftMessageText()
+        private void AddGenericFeedEntry(string message)
         {
-            if (draftMessageBodyText == null)
+            if (string.IsNullOrWhiteSpace(message) || draftFeedContentTransform == null)
                 return;
 
-            var sb = new StringBuilder();
-            foreach (var line in draftMessageLines)
+            currentPlayerEntryText = null;
+            CreateFeedRow(null, message);
+            StartCoroutine(ScrollToBottomNextFrame());
+        }
+
+        private void AddPlayerFeedEntry(Player player, string message)
+        {
+            if (string.IsNullOrWhiteSpace(message) || draftFeedContentTransform == null)
+                return;
+
+            var sprite = gridVisualizer != null
+                ? gridVisualizer.GetTileForPlayer(player.PlayerId)?.sprite
+                : null;
+
+            var row = CreateFeedRow(sprite, message);
+            currentPlayerEntryText = row.GetComponentInChildren<TextMeshProUGUI>();
+            StartCoroutine(ScrollToBottomNextFrame());
+        }
+
+        private void AppendToCurrentPlayerEntry(string appendText)
+        {
+            if (string.IsNullOrWhiteSpace(appendText))
+                return;
+
+            if (currentPlayerEntryText != null)
             {
-                sb.AppendLine(line);
+                currentPlayerEntryText.text += "\n" + appendText;
+                StartCoroutine(ScrollToBottomNextFrame());
             }
-            draftMessageBodyText.text = sb.ToString().TrimEnd();
+            else
+            {
+                AddGenericFeedEntry(appendText);
+            }
+        }
+
+        private GameObject CreateFeedRow(Sprite icon, string message)
+        {
+            bool isEven = draftFeedEntryCount % 2 == 0;
+            Color bgColor = isEven ? UIStyleTokens.Surface.PanelSecondary : UIStyleTokens.Surface.PanelPrimary;
+            draftFeedEntryCount++;
+
+            var rowGO = new GameObject($"DraftFeedRow{draftFeedEntryCount}", typeof(RectTransform), typeof(Image));
+            rowGO.transform.SetParent(draftFeedContentTransform, false);
+
+            var rowImage = rowGO.GetComponent<Image>();
+            rowImage.color = bgColor;
+
+            var rowLayout = rowGO.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = false;
+            rowLayout.spacing = FeedRowSpacing;
+            rowLayout.padding = new RectOffset(FeedRowPadding, FeedRowPadding, FeedRowPadding, FeedRowPadding);
+
+            var rowSizer = rowGO.AddComponent<ContentSizeFitter>();
+            rowSizer.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            rowSizer.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            if (icon != null)
+            {
+                var iconGO = new GameObject("PlayerIcon", typeof(RectTransform), typeof(Image));
+                iconGO.transform.SetParent(rowGO.transform, false);
+
+                var iconImage = iconGO.GetComponent<Image>();
+                iconImage.sprite = icon;
+                iconImage.preserveAspect = true;
+
+                var iconLayout = iconGO.AddComponent<LayoutElement>();
+                iconLayout.minWidth = FeedIconSize;
+                iconLayout.preferredWidth = FeedIconSize;
+                iconLayout.minHeight = FeedIconSize;
+                iconLayout.preferredHeight = FeedIconSize;
+                iconLayout.flexibleWidth = 0f;
+                iconLayout.flexibleHeight = 0f;
+            }
+            else
+            {
+                var spacerGO = new GameObject("IconSpacer", typeof(RectTransform));
+                spacerGO.transform.SetParent(rowGO.transform, false);
+
+                var spacerLayout = spacerGO.AddComponent<LayoutElement>();
+                spacerLayout.minWidth = FeedIconSpacerWidth;
+                spacerLayout.preferredWidth = FeedIconSpacerWidth;
+                spacerLayout.flexibleWidth = 0f;
+            }
+
+            var textGO = new GameObject("EntryText", typeof(RectTransform));
+            textGO.transform.SetParent(rowGO.transform, false);
+
+            var textComp = textGO.AddComponent<TextMeshProUGUI>();
+            textComp.text = message;
+            textComp.fontSize = FeedEntryFontSize;
+            textComp.color = UIStyleTokens.Text.Secondary;
+            textComp.alignment = TextAlignmentOptions.TopLeft;
+            textComp.textWrappingMode = TextWrappingModes.Normal;
+            textComp.overflowMode = TextOverflowModes.Overflow;
+
+            var textLayout = textGO.AddComponent<LayoutElement>();
+            textLayout.flexibleWidth = 1f;
+
+            return rowGO;
+        }
+
+        private IEnumerator ScrollToBottomNextFrame()
+        {
+            yield return null;
+            if (draftFeedScrollRect != null)
+                draftFeedScrollRect.normalizedPosition = new Vector2(0f, 0f);
         }
 
         private void TryAnnounceAscusPrimacyDraftPriority()
@@ -728,53 +875,37 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             if (playerMyco == null)
             {
-                AddDraftMessage($"Mycelial pulse: {picked.Name} resolved.");
+                AppendToCurrentPlayerEntry($"Mycelial pulse: {picked.Name} resolved.");
                 return;
             }
 
             string countSummary = BuildEffectCountSummary(playerMyco);
             if (!string.IsNullOrEmpty(countSummary))
             {
-                AddDraftMessage($"Impact: {countSummary}.");
+                AppendToCurrentPlayerEntry($"Impact: {countSummary}.");
                 return;
             }
 
             if (picked.Id == MycovariantIds.PlasmidBountyId)
             {
-                AddDraftMessage($"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyMutationPointAward} mutation points.");
+                AppendToCurrentPlayerEntry($"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyMutationPointAward} mutation points.");
             }
             else if (picked.Id == MycovariantIds.PlasmidBountyIIId)
             {
-                AddDraftMessage($"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyIIMutationPointAward} mutation points.");
+                AppendToCurrentPlayerEntry($"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyIIMutationPointAward} mutation points.");
             }
             else if (picked.Id == MycovariantIds.PlasmidBountyIIIId)
             {
-                AddDraftMessage($"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyIIIMutationPointAward} mutation points.");
+                AppendToCurrentPlayerEntry($"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyIIIMutationPointAward} mutation points.");
             }
             else if (picked.Type == MycovariantType.Passive)
             {
-                AddDraftMessage("Passive trait established for the rest of the game.");
+                AppendToCurrentPlayerEntry("Passive trait established for the rest of the game.");
             }
             else
             {
-                AddDraftMessage($"Effect resolved: {picked.Name}.");
+                AppendToCurrentPlayerEntry($"Effect resolved: {picked.Name}.");
             }
-        }
-
-        private static string BuildTurnAnnouncement(Player player)
-        {
-            if (player.PlayerType == PlayerTypeEnum.AI)
-            {
-                string[] aiLines =
-                {
-                    $"{player.PlayerName} is scanning the mycelial options...",
-                    $"{player.PlayerName} is plotting a fungal gambit...",
-                    $"{player.PlayerName} is weighing spore-risk and reward..."
-                };
-                return aiLines[UnityEngine.Random.Range(0, aiLines.Length)];
-            }
-
-            return "Your turn: choose a Mycovariant and shape the colony's fate.";
         }
 
         private static string BuildPickAnnouncement(Player player, Mycovariant picked)
