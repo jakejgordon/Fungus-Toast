@@ -285,8 +285,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_generatedChemobeaconEmblemTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false)
 			{
 				filterMode = FilterMode.Bilinear,
-				wrapMode = TextureWrapMode.Clamp,
-				alphaIsTransparency = true
+				wrapMode = TextureWrapMode.Clamp
 			};
 
 			var pixels = new Color32[textureSize * textureSize];
@@ -379,8 +378,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			var generatedNutrientTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false)
 			{
 				filterMode = FilterMode.Bilinear,
-				wrapMode = TextureWrapMode.Clamp,
-				alphaIsTransparency = true
+				wrapMode = TextureWrapMode.Clamp
 			};
 
 			var pixels = new Color32[textureSize * textureSize];

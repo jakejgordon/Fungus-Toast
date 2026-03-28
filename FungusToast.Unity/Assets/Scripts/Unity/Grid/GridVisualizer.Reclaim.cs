@@ -405,8 +405,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_boardEdgeFadeTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false)
 			{
 				filterMode = FilterMode.Bilinear,
-				wrapMode = TextureWrapMode.Clamp,
-				alphaIsTransparency = true
+				wrapMode = TextureWrapMode.Clamp
 			};
 
 			var pixels = new Color32[textureWidth * textureHeight];
@@ -470,8 +469,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_generatedCrustTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false)
 			{
 				filterMode = FilterMode.Bilinear,
-				wrapMode = TextureWrapMode.Clamp,
-				alphaIsTransparency = true
+				wrapMode = TextureWrapMode.Clamp
 			};
 
 			var pixels = new Color32[textureWidth * textureHeight];
