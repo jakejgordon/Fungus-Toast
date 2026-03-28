@@ -507,7 +507,7 @@ namespace FungusToast.Core.AI
                 surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
                 surgeAttemptTurnFrequency: 7,
                 economyBias: EconomyBias.MaxEconomy,
-                maxTier: MutationTier.Tier4
+                maxTier: MutationTier.Tier5
             ),
             // AI12
             new ParameterizedSpendingStrategy(

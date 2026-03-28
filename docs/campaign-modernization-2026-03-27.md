@@ -473,6 +473,58 @@ Resolved / authored results:
 | Campaign8 | `AI8, AI9, AI11, CMP_Economy_KillReclaim_Medium, CMP_Bloom_CreepingNecro_Medium, CMP_Bloom_BeaconRegression_Medium` | `10.0%` (`2/20`), avg living `696.7`, avg dead `583.2` |
 | Campaign9 | `AI9, AI11, CMP_Economy_KillReclaim_Medium, CMP_Bloom_CreepingNecro_Medium, CMP_Bloom_FortifyMimic_Medium, CMP_Bloom_AnabolicRegression_Medium` | `10.0%` (`2/20`), avg living `837.5`, avg dead `762.4` |
 
+### Campaign9 follow-up — Beacon over Anabolic
+
+Follow-up goal: re-open `Campaign9` because it still looked slightly harsher than the surrounding curve and test only conservative medium-only swaps on the exact authored board.
+
+Screening commands:
+
+```bash
+python3 scripts/run_campaign_balance.py --games 20 --seed 20260328 --level 9
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 110 --height 110 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI9,CMP_Control_AnabolicRebirth_Medium,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_FortifyMimic_Medium,CMP_Bloom_AnabolicRegression_Medium --seed 20260328 --experiment-id campaign9_swap_ai11_to_cmp_control_anabolicrebirth --no-keyboard --players 7
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 110 --height 110 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI9,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_BeaconRegression_Medium,CMP_Bloom_AnabolicRegression_Medium --seed 20260328 --experiment-id campaign9_swap_fortify_to_beacon --no-keyboard --players 7
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 20 --width 110 --height 110 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI9,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_FortifyMimic_Medium,CMP_Bloom_BeaconRegression_Medium --seed 20260328 --experiment-id campaign9_swap_anabolic_to_beacon --no-keyboard --players 7
+```
+
+20-game screen results (`TST_CampaignPlayer_SafeBaseline` proxy):
+
+| Variant | Proxy result |
+|---|---|
+| Current authored lineup | `0.0%` (`0/20`), avg living `844.6`, avg dead `785.4` |
+| `AI11 -> CMP_Control_AnabolicRebirth_Medium` | `5.0%` (`1/20`), avg living `805.9`, avg dead `625.0` |
+| `CMP_Bloom_FortifyMimic_Medium -> CMP_Bloom_BeaconRegression_Medium` | `5.0%` (`1/20`), avg living `822.3`, avg dead `605.7` |
+| `CMP_Bloom_AnabolicRegression_Medium -> CMP_Bloom_BeaconRegression_Medium` | `10.0%` (`2/20`), avg living `854.8`, avg dead `842.7` |
+
+Only the Beacon-over-Anabolic swap looked worth confirming, so the follow-up was:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 50 --width 110 --height 110 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI9,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_FortifyMimic_Medium,CMP_Bloom_AnabolicRegression_Medium --seed 20260329 --experiment-id campaign9_current_confirm_g50 --no-keyboard --players 7
+
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- --games 50 --width 110 --height 110 --strategy-set Campaign --strategy-names TST_CampaignPlayer_SafeBaseline,AI9,AI11,CMP_Economy_KillReclaim_Medium,CMP_Bloom_CreepingNecro_Medium,CMP_Bloom_FortifyMimic_Medium,CMP_Bloom_BeaconRegression_Medium --seed 20260329 --experiment-id campaign9_beacon_over_anabolic_confirm_g50 --no-keyboard --players 7
+```
+
+50-game confirmation results:
+
+| Variant | Proxy result |
+|---|---|
+| Current authored lineup | `6.0%` (`3/50`), avg living `803.1`, avg dead `694.6` |
+| `CMP_Bloom_AnabolicRegression_Medium -> CMP_Bloom_BeaconRegression_Medium` | `8.0%` (`4/50`), avg living `790.1`, avg dead `782.2` |
+
+Conclusion:
+
+- The improvement is modest, not dramatic, but it is the only conservative Campaign9 swap in this pass that actually held up.
+- `Campaign9` now uses:
+  - `AI9`
+  - `AI11`
+  - `CMP_Economy_KillReclaim_Medium`
+  - `CMP_Bloom_CreepingNecro_Medium`
+  - `CMP_Bloom_FortifyMimic_Medium`
+  - `CMP_Bloom_BeaconRegression_Medium`
+- `CMP_Bloom_AnabolicRegression_Medium` is removed from `Campaign9` for now.
+
 ### Placement conclusions from this continuation
 
 - **Promote now:** `CMP_Reclaim_Scavenger_Easy`, `CMP_Surge_Pulsar_Easy` as valid `Campaign1` pool members.
