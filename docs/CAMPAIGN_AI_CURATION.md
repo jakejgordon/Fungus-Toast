@@ -89,7 +89,7 @@ This is the current recommended audit starting point for `StrategySetEnum = Camp
 
 - The current campaign assets still reference legacy `AI1..AI13` IDs.
 - Several of the working theme labels above are inferred from mutation goals and should be reviewed in Unity feel-testing.
-- `AI4` and `AI5` are the biggest uncertainty cases and should be audited before they are treated as permanent campaign pool members.
+- `AI4` and `AI5` were the biggest uncertainty cases; fresh authored-board safe-proxy screens on 2026-03-27 say **do not use them to bulk up the Campaign5-7 bridge**. They either fail to help or actively make that band harsher.
 - There is likely overlap between `AI13` and `TST_BalancedControl_AnabolicFirst`; we may want to keep both for now, then consolidate later if they feel redundant.
 - `Grow>Kill>Reclaim(Econ)` and `Grow>Kill>Reclaim(Econ/Reclaim)` may also be too similar to both keep in the final curated campaign pool.
 
@@ -361,7 +361,15 @@ Legend:
 ### Review before inclusion
 - `AI4`
 - `AI5`
-  - still not characterized enough to safely place in the campaign curve
+  - now partially characterized: both look wrong for the current `Campaign5-7` bridge and should stay out of that band unless a later context-specific screen finds a better home.
+  - authored-board 20-game safe-proxy screens with seed `20260327`:
+    - `Campaign5` replacing the easy filler with `AI4` -> `25.0% (5/20)`, avg living `246.3`, avg dead `172.8`
+    - `Campaign5` replacing the easy filler with `AI5` -> `30.0% (6/20)`, avg living `238.6`, avg dead `165.5`
+    - `Campaign6` replacing `CMP_Bloom_CreepingNecro_Medium` with `AI4` -> `25.0% (5/20)`, avg living `657.5`, avg dead `431.2`
+    - `Campaign6` replacing `CMP_Bloom_CreepingNecro_Medium` with `AI5` -> `25.0% (5/20)`, avg living `615.0`, avg dead `472.4`
+    - `Campaign7` replacing `CMP_TierCap_GrowthResilience_Easy` with `AI4` -> `5.0% (1/20)`, avg living `646.0`, avg dead `393.4`
+    - `Campaign7` replacing `CMP_TierCap_GrowthResilience_Easy` with `AI5` -> `5.0% (1/20)`, avg living `639.5`, avg dead `428.9`
+  - practical read: `AI4` is roughly side-grade-to-sharper in `Campaign5-6` and still too hard for `Campaign7`; `AI5` is outright dominant on the `Campaign6` board and also not a safe `Campaign7` filler.
 
 ### Drop from the first alpha campaign pass
 - none permanently retired yet
@@ -450,11 +458,39 @@ This is a working guardrail for future tuning and for the upcoming pool system. 
 | `CMP_TierCap_GrowthResilience_Easy` | 4 | Soft bridge mold; useful when a level needs to get slightly harder without spiking. |
 | `CMP_Economy_KillReclaim_Medium` | 5 | First strong modern medium generalist. |
 | `CMP_Bloom_CreepingNecro_Medium` | 6 | First readable Bloom-style medium. |
-| `CMP_Bloom_AnabolicRegression_Medium` | 8 | Better as a later-medium mold once players are handling layered opponents. |
+| `CMP_Bloom_AnabolicRegression_Medium` | 8 | Better as a later-medium mold once players are handling layered opponents. Follow-up screens kept it out of `Campaign6-7`: `Campaign6` swap test landed at only `20.0% (4/20)` proxy wins, and a `Campaign7` 50-game confirmation replacing the easy filler still held the proxy at `6.0% (3/50)`, effectively no softer than the current authored lineup. |
 | `CMP_Bloom_BeaconRegression_Medium` | 8 | Still sharp, but it held the current Campaign8 proxy near `10%`; acceptable as the first stronger medium insert. |
+| `CMP_Surge_GrowthTempo_Medium` | 9 | Reserve for later medium / hard-preview use. A `Campaign6` swap screen still landed at only `15.0% (3/20)` proxy wins, so it is not a good answer for filling the early-to-medium bridge yet. |
 | `CMP_Bloom_FortifyMimic_Medium` | 9 | Campaign8 first-introduction test overshot badly; keep it later than Beacon for now. |
 | `CMP_Growth_Pressure_Medium` | 9 | Too sharp for Campaign5 in direct swap testing; reserve for later medium / hard-preview use. |
 | `CMP_Economy_LateSpike_Hard` | 10 | Good first hard introduction candidate. |
+
+### Campaign5-7 pooled bridge follow-up (2026-03-27 late)
+
+First-pass pooled screens were run by taking the current authored fixed lineup for each level, adding one already-screened easy bridge mold, then enumerating the omit-one resolved subsets (10 games each, seed `20260327`) with the safe proxy on the exact authored board.
+
+- **Campaign5** (`50x50`, 5 AI): current lineup plus `CMP_Reclaim_Scavenger_Easy` produced a plausible pool band.
+  - Resolved variants landed between `10.0%` and `30.0%` proxy wins, averaging about `18.3%` across the six omit-one subsets.
+  - Best short-screen survivors were:
+    - omit `CMP_Control_AnabolicRebirth_Medium` -> `30.0% (3/10), avg living 262.1, avg dead 195.8`
+    - omit `CMP_Reclaim_Scavenger_Easy` (the current fixed lineup) -> `30.0% (3/10), avg living 232.9, avg dead 215.3`
+  - Practical read: poolification here looks **viable**, but not obviously better than the current fixed lineup yet.
+
+- **Campaign6** (`75x75`, 4 AI): current lineup plus `CMP_TierCap_GrowthResilience_Easy` also stayed in a reasonable bridge band.
+  - Resolved variants landed between `20.0%` and `30.0%`, averaging about `24.0%` across the five omit-one subsets.
+  - Short-screen highs were:
+    - omit `CMP_Bloom_CreepingNecro_Medium` -> `30.0% (3/10), avg living 663.8, avg dead 505.7`
+    - omit `CMP_TierCap_GrowthResilience_Easy` (the current fixed lineup) -> `30.0% (3/10), avg living 656.5, avg dead 466.7`
+  - Practical read: poolification here also looks **viable**, with no evidence yet that the easy bridge breaks the level.
+
+- **Campaign7** (`90x90`, 6 AI): adding a single easy bridge did **not** solve the harshness problem.
+  - Current lineup plus `CMP_Reclaim_Scavenger_Easy` resolved between `0.0%` and `10.0%`, averaging only about `4.3%` across seven omit-one subsets.
+  - Current lineup plus `CMP_Surge_Pulsar_Easy` resolved between `0.0%` and `10.0%`, averaging only about `5.7%` across seven omit-one subsets.
+  - Representative results:
+    - Scavenger pool, omit `CMP_Surge_BeaconTempo_Medium` -> `10.0% (1/10), avg living 668.0, avg dead 442.7`
+    - Pulsar pool, omit `AI9` -> `10.0% (1/10), avg living 651.4, avg dead 458.2`
+    - several other resolved subsets for both pools stayed at `0.0% (0/10)`.
+  - Practical read: if `Campaign7` is going to be pooled, it probably needs a **more structural softening** than just adding one extra easy mold to the current medium-heavy shell.
 | `AI13` | 10 | Legacy hard control option; use carefully if kept alongside modern hard controls. |
 | `CMP_Control_AnabolicFirst_Hard` | 11 | Too punishing as an early hard preview. |
 | `CMP_Bloom_CreepingRegression_Elite` | 12 | Modern elite Bloom/control anchor. |
