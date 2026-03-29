@@ -262,6 +262,8 @@ namespace FungusToast.Unity.UI
             if (provider == null)
                 provider = moldIconImage.gameObject.AddComponent<PlayerSummaryTooltipProvider>();
 
+            tooltipTrigger.SetPinOnClick(true);
+
             // Resolve the Player instance from the GameManager's board
             var board = GameManager.Instance?.Board;
             var players = board?.Players;

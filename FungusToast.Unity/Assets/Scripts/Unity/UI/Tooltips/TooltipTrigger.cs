@@ -21,9 +21,11 @@ namespace FungusToast.Unity.UI.Tooltips
         [SerializeField] private bool followPointer = false; // reserved for future use
         [SerializeField] private TooltipPlacement placement = TooltipPlacement.Auto; // NEW: developer-selected placement
         [SerializeField] private float autoPlacementOffsetX = 0f;
+        [SerializeField] private bool pinOnClick = false; // if true, clicking the element pins/unpins the tooltip
 
         private bool touchMode;
         private bool tooltipVisible;
+        private bool isPinned = false;
 
         private void Awake()
         {
@@ -47,6 +49,7 @@ namespace FungusToast.Unity.UI.Tooltips
             if (TooltipManager.Instance != null)
                 TooltipManager.Instance.Cancel(this);
             tooltipVisible = false;
+            isPinned = false;
         }
 
         private void OnDestroy()
@@ -54,6 +57,7 @@ namespace FungusToast.Unity.UI.Tooltips
             if (TooltipManager.Instance != null)
                 TooltipManager.Instance.Cancel(this);
             tooltipVisible = false;
+            isPinned = false;
         }
 
         /// <summary>
@@ -96,6 +100,7 @@ namespace FungusToast.Unity.UI.Tooltips
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (isPinned) return; // pinned tooltips stay visible until clicked again
             if (TooltipManager.Instance != null)
                 TooltipManager.Instance.Cancel(this);
             tooltipVisible = false;
@@ -103,12 +108,40 @@ namespace FungusToast.Unity.UI.Tooltips
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            if (!touchMode) return;
-            if (!isHelpIcon) return; // only toggle tap for help icons
-            ToggleTouchTooltip();
+            if (touchMode && isHelpIcon)
+            {
+                ToggleTouchTooltip();
+                return;
+            }
+            if (!touchMode && pinOnClick)
+            {
+                TogglePin();
+                return;
+            }
         }
 
         public void OnPointerUp(PointerEventData eventData) { }
+
+        private void TogglePin()
+        {
+            if (isPinned)
+            {
+                isPinned = false;
+                if (TooltipManager.Instance != null)
+                    TooltipManager.Instance.Cancel(this);
+                tooltipVisible = false;
+            }
+            else
+            {
+                isPinned = true;
+                if (TooltipManager.Instance != null)
+                {
+                    TooltipManager.Instance.showDelay = 0f;
+                    TooltipManager.Instance.ShowAfterDelay(this, BuildRequest());
+                }
+                tooltipVisible = true;
+            }
+        }
 
         private void ToggleTouchTooltip()
         {
@@ -181,5 +214,6 @@ namespace FungusToast.Unity.UI.Tooltips
         }
 
         public void SetStaticText(string text) => staticText = text;
+        public void SetPinOnClick(bool value) => pinOnClick = value;
     }
 }

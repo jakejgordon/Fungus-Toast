@@ -6,6 +6,7 @@ using FungusToast.Core.Players;
 using FungusToast.Core.Config;
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
+using FungusToast.Core.Campaign;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI;
 using FungusToast.Unity.Campaign;
@@ -73,6 +74,11 @@ namespace FungusToast.Unity
             if (remaining > 0)
             {
                 var aiStrats = ResolveAIStrategiesForCurrentMode(remaining);
+                var preset = getGameMode() == GameMode.Campaign ? getCampaignBoardPreset() : null;
+                var resolvedStrategyNames = getGameMode() == GameMode.Campaign
+                    ? (getResolvedCampaignAiStrategyNames?.Invoke() ?? Array.Empty<string>())
+                    : Array.Empty<string>();
+
                 for (int i = 0; i < aiStrats.Count && i < remaining; i++)
                 {
                     int id = humanPlayers.Count + i;
@@ -80,6 +86,8 @@ namespace FungusToast.Unity
                     ai.SetBaseMutationPoints(baseMP);
                     ai.SetMutationStrategy(aiStrats[i]);
                     players.Add(ai);
+
+                    ApplyStartingAdaptations(ai, i, preset, resolvedStrategyNames);
                 }
             }
 
@@ -95,6 +103,39 @@ namespace FungusToast.Unity
 
             ui.RightSidebar?.SetGridVisualizer(gridVisualizer);
             ui.RightSidebar?.InitializePlayerSummaries(board.Players);
+        }
+
+        private void ApplyStartingAdaptations(Player ai, int aiIndex, BoardPreset preset, IReadOnlyList<string> resolvedStrategyNames)
+        {
+            if (preset == null) return;
+
+            List<string> adaptationIds = null;
+            string strategyName = aiIndex < resolvedStrategyNames.Count ? resolvedStrategyNames[aiIndex] : null;
+
+            if (preset.UsesFixedAiLineup && aiIndex < preset.aiPlayers.Count)
+            {
+                adaptationIds = preset.aiPlayers[aiIndex].startingAdaptationIds;
+            }
+            else if (preset.UsesAiPool && strategyName != null)
+            {
+                var entry = preset.poolAdaptationOverrides?.Find(e => e.strategyName == strategyName);
+                adaptationIds = entry?.startingAdaptationIds;
+            }
+
+            if (adaptationIds == null || adaptationIds.Count == 0) return;
+
+            foreach (var adaptationId in adaptationIds)
+            {
+                if (AdaptationRepository.TryGetById(adaptationId, out var def))
+                {
+                    ai.TryAddAdaptation(def);
+                    Debug.Log($"[PlayerInitializer] Applied adaptation {adaptationId} to AI {strategyName ?? ai.Name}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[PlayerInitializer] Unknown adaptation ID {adaptationId} for AI {strategyName ?? ai.Name}. Skipping.");
+                }
+            }
         }
 
         private List<IMutationSpendingStrategy> ResolveAIStrategiesForCurrentMode(int remaining)

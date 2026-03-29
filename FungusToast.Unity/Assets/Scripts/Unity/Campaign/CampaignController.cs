@@ -22,7 +22,15 @@ namespace FungusToast.Unity.Campaign
 
         public bool HasActiveRun => State != null;
         public CampaignProgression.LevelSpec CurrentLevelSpec => (State != null && State.levelIndex < progression.MaxLevels) ? progression.Get(State.levelIndex) : null;
-        public BoardPreset CurrentBoardPreset => CurrentLevelSpec?.boardPreset;
+        public BoardPreset CurrentBoardPreset
+        {
+            get
+            {
+                var spec = CurrentLevelSpec;
+                if (spec == null) return null;
+                return FindOrResolveBoardPreset(spec, State.levelIndex);
+            }
+        }
         public IReadOnlyList<string> CurrentResolvedAiStrategyNames => State != null ? State.resolvedAiStrategyNames : Array.Empty<string>();
         public bool IsAwaitingAdaptationSelection => State != null && State.pendingAdaptationSelection;
         public bool IsCompleted => State != null && State.campaignCompleted;
@@ -33,14 +41,17 @@ namespace FungusToast.Unity.Campaign
         {
             if (progression.MaxLevels == 0) throw new InvalidOperationException("CampaignProgression has no levels defined.");
             var firstSpec = progression.Get(0);
-            var preset = firstSpec.boardPreset;
+            // Seed must be set before ResolveBoardPreset can use it for boss pool selection.
+            int newSeed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+            State = new CampaignState { seed = newSeed };
+            var preset = ResolveBoardPreset(firstSpec, 0);
             if (preset == null) throw new InvalidOperationException("Level0 has no BoardPreset assigned.");
             State = new CampaignState
             {
                 runId = Guid.NewGuid().ToString(),
                 levelIndex = 0,
                 boardPresetId = preset.presetId,
-                seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue),
+                seed = newSeed,
                 boardWidth = preset.boardWidth,
                 boardHeight = preset.boardHeight,
                 humanMoldIndex = Mathf.Max(0, humanMoldIndex),
@@ -260,12 +271,16 @@ namespace FungusToast.Unity.Campaign
                 return;
             }
             var spec = progression.Get(targetIndex);
-            if (spec.boardPreset == null)
+            var preset = ResolveBoardPreset(spec, targetIndex);
+            if (preset == null)
             {
                 Debug.LogError($"[CampaignController] Level {targetIndex} has no BoardPreset – aborting advance.");
                 return;
             }
-            var preset = spec.boardPreset;
+            if (spec.HasBossPool)
+            {
+                Debug.Log($"[CampaignController] Boss level {targetIndex}: selected preset {preset.presetId} from pool of {spec.bossBoardPresets.Count}");
+            }
             State.levelIndex = targetIndex;
             State.boardPresetId = preset.presetId;
             State.boardWidth = preset.boardWidth;
@@ -321,7 +336,10 @@ namespace FungusToast.Unity.Campaign
 
         private void EnsureResolvedAiLineup()
         {
-            var preset = CurrentBoardPreset;
+            var spec = CurrentLevelSpec;
+            if (spec == null) return;
+
+            var preset = FindOrResolveBoardPreset(spec, State.levelIndex);
             if (preset == null)
             {
                 return;
@@ -335,6 +353,33 @@ namespace FungusToast.Unity.Campaign
 
             State.resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, State.levelIndex);
             CampaignSaveService.Save(State);
+        }
+
+        private BoardPreset ResolveBoardPreset(CampaignProgression.LevelSpec spec, int levelIndex)
+        {
+            if (spec.HasBossPool)
+            {
+                int seed = unchecked((State.seed * 397) ^ levelIndex);
+                var random = new System.Random(seed);
+                int idx = random.Next(spec.bossBoardPresets.Count);
+                return spec.bossBoardPresets[idx];
+            }
+            return spec.boardPreset;
+        }
+
+        private BoardPreset FindOrResolveBoardPreset(CampaignProgression.LevelSpec spec, int levelIndex)
+        {
+            if (!string.IsNullOrEmpty(State?.boardPresetId))
+            {
+                if (spec.HasBossPool)
+                {
+                    var match = spec.bossBoardPresets.FirstOrDefault(p => p != null && p.presetId == State.boardPresetId);
+                    if (match != null) return match;
+                }
+                if (spec.boardPreset != null && spec.boardPreset.presetId == State.boardPresetId)
+                    return spec.boardPreset;
+            }
+            return ResolveBoardPreset(spec, levelIndex);
         }
 
         private List<string> BuildResolvedAiStrategyNames(BoardPreset preset, int levelIndex)

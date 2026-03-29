@@ -44,12 +44,24 @@ namespace FungusToast.Unity.Campaign
             return Mathf.Max(0, pooledAiPlayerCount);
         }
 
+        [Header("AI Pool Adaptation Overrides")]
+        public List<AiPoolAdaptationEntry> poolAdaptationOverrides = new();
+
         /// <summary>Specification for one AI player in the preset.</summary>
         [Serializable]
         public class AIPlayerSpec
         {
             public string strategyName; // must match AIRoster strategy name; resolved at runtime
             public Vector2Int? startingCoordinate; // optional forced starting tile (null => auto placement)
+            public List<string> startingAdaptationIds = new();
+        }
+
+        /// <summary>Maps a pool strategy name to the adaptations that strategy starts with.</summary>
+        [Serializable]
+        public class AiPoolAdaptationEntry
+        {
+            public string strategyName; // must match a name in aiStrategyPool
+            public List<string> startingAdaptationIds = new();
         }
     }
 }

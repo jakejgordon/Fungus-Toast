@@ -84,7 +84,8 @@ namespace FungusToast.Simulation
                 exportParquet: config.ExportParquet,
                 enableNutrientPatches: config.EnableNutrientPatches,
                 enableMycovariantDraft: config.EnableMycovariantDraft,
-                startingPositionOverride: config.StartingPositionOverride);
+                startingPositionOverride: config.StartingPositionOverride,
+                startingAdaptationIds: config.StartingAdaptationIds);
         }
 
         private static void RunStratifiedBatch(SimulationConfig config, string experimentId)
@@ -299,7 +300,8 @@ namespace FungusToast.Simulation
                 PlayerCounts = null,
                 BoardSizes = null,
                 StrategySets = null,
-                StrategyFilter = new StrategyCatalogFilter()
+                StrategyFilter = new StrategyCatalogFilter(),
+                StartingAdaptationIds = null
             };
 
             for (int i = 0; i < args.Length; i++)
@@ -590,6 +592,21 @@ namespace FungusToast.Simulation
                     case "--fixed-slots":
                         config.SlotAssignmentPolicy = SlotAssignmentPolicy.Fixed;
                         break;
+                    case "--starting-adaptations":
+                        if (i + 1 < args.Length)
+                        {
+                            var slotGroups = args[i + 1].Split('|');
+                            var adaptationIds = new List<List<string>>();
+                            foreach (var group in slotGroups)
+                            {
+                                var ids = group.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                                    .ToList();
+                                adaptationIds.Add(ids);
+                            }
+                            config.StartingAdaptationIds = adaptationIds;
+                            i++;
+                        }
+                        break;
                 }
             }
 
@@ -702,6 +719,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --no-nutrient-patches    Disable nutrient patch placement");
             Console.WriteLine("  --no-mycovariants        Disable mycovariant drafting");
             Console.WriteLine("  --starting-positions     Override start positions as x1:y1,x2:y2,...");
+            Console.WriteLine("  --starting-adaptations   Per-slot adaptation IDs; pipe-delimited slots, comma-delimited IDs (e.g. \"|adaptation_3,adaptation_4||adaptation_1\")");
             Console.WriteLine("  --rotate-slots           Rotate strategy-to-player slot assignment each game");
             Console.WriteLine("  --fixed-slots            Keep strategy-to-player slot assignment fixed (default)");
             Console.WriteLine("  --help                   Show this help message");
@@ -752,6 +770,7 @@ namespace FungusToast.Simulation
             public List<StrategySetEnum>? StrategySets { get; set; }
             public List<string>? ExplicitStrategyNames { get; set; }
             public StrategyCatalogFilter StrategyFilter { get; set; } = new();
+            public List<List<string>>? StartingAdaptationIds { get; set; } // per-slot; outer index = player slot 0..N-1
 
             public bool IsBatchMode =>
                 (PlayerCounts != null && PlayerCounts.Count > 0) ||

@@ -77,7 +77,8 @@ namespace FungusToast.Simulation.Analysis
             SlotAssignmentPolicy slotAssignmentPolicy = SlotAssignmentPolicy.Fixed,
             bool enableNutrientPatches = true,
             bool enableMycovariantDraft = true,
-            IReadOnlyList<(int x, int y)>? startingPositionOverride = null)
+            IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
+            IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null)
         {
             var results = new List<GameResult>();
             var startTime = DateTime.UtcNow;
@@ -118,7 +119,8 @@ namespace FungusToast.Simulation.Analysis
                     shuffleStartingSpores: slotAssignmentPolicy != SlotAssignmentPolicy.Fixed,
                     enableNutrientPatches: enableNutrientPatches,
                     enableMycovariantDraft: enableMycovariantDraft,
-                    startingPositionOverride: startingPositionOverride
+                    startingPositionOverride: startingPositionOverride,
+                    startingAdaptationIds: startingAdaptationIds
                 );
 
                 results.Add(result);

@@ -23,7 +23,8 @@ namespace FungusToast.Simulation
             bool exportParquet = true,
             bool enableNutrientPatches = true,
             bool enableMycovariantDraft = true,
-            IReadOnlyList<(int x, int y)>? startingPositionOverride = null)
+            IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
+            IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null)
         {
             // Use TestingStrategies as default if none provided
             strategies ??= AIRoster.TestingStrategies;
@@ -44,7 +45,8 @@ namespace FungusToast.Simulation
                 slotAssignmentPolicy: slotAssignmentPolicy,
                 enableNutrientPatches: enableNutrientPatches,
                 enableMycovariantDraft: enableMycovariantDraft,
-                startingPositionOverride: startingPositionOverride);
+                startingPositionOverride: startingPositionOverride,
+                startingAdaptationIds: startingAdaptationIds);
 
             PrintParityInvariantSummary(results.GameResults);
 
