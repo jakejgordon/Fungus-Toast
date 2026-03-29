@@ -66,11 +66,19 @@ namespace FungusToast.Core.Death
 
             foreach (BoardTile tile in livingNonResistantTiles)
             {
-                FungalCell cell = tile.FungalCell!;
-                Player owner = players.First(p => p.PlayerId == cell.OwnerPlayerId);
+                // Re-validate at iteration time: reactive effects (MarginalClamp, NecrotoxicConversion,
+                // SaprophageRing, Necrosporulation, etc.) fired during earlier iterations can null out,
+                // kill, or replace a tile's cell before we process it.
+                FungalCell? cell = tile.FungalCell;
+                if (cell == null || !cell.IsAlive || cell.IsResistant || cell.OwnerPlayerId == null)
+                    continue;
+
+                Player? owner = players.FirstOrDefault(p => p.PlayerId == cell.OwnerPlayerId);
+                if (owner == null)
+                    continue;
 
                 // Prevent killing a player's last cell
-                if (livingCellCounts[owner.PlayerId] <= 1)
+                if (!livingCellCounts.TryGetValue(owner.PlayerId, out int livingCount) || livingCount <= 1)
                     continue;
 
                 double roll = rng.NextDouble();
