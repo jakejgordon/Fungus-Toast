@@ -43,6 +43,10 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             string mycoList = GetMycovariantsList(player);
             sb.AppendLine($"<b>Mycovariants:</b> {mycoList}");
 
+            // Adaptations list
+            string adaptationList = GetAdaptationsList(player);
+            sb.AppendLine($"<b>Adaptations:</b> {adaptationList}");
+
             return sb.ToString().TrimEnd();
         }
 
@@ -81,6 +85,22 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
 
             var names = p.PlayerMycovariants
                 .Select(pm => pm.Mycovariant?.Name)
+                .Where(n => !string.IsNullOrEmpty(n))
+                .ToList();
+
+            if (names.Count == 0)
+                return "None";
+
+            return string.Join(", ", names);
+        }
+
+        private static string GetAdaptationsList(Player p)
+        {
+            if (p.PlayerAdaptations == null || p.PlayerAdaptations.Count == 0)
+                return "None";
+
+            var names = p.PlayerAdaptations
+                .Select(pa => pa.Adaptation?.Name)
                 .Where(n => !string.IsNullOrEmpty(n))
                 .ToList();
 

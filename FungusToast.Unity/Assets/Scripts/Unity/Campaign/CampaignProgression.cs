@@ -27,6 +27,14 @@ namespace FungusToast.Unity.Campaign
             public BoardPreset boardPreset;
             /// <summary>Whether nutrient patches should be placed on this campaign level.</summary>
             public bool enableNutrientPatches = true;
+
+            /// <summary>
+            /// Optional pool of boss board presets for the final level. If populated, one is chosen at random when advancing to this level.
+            /// When empty, boardPreset is used as usual.
+            /// </summary>
+            public List<BoardPreset> bossBoardPresets = new();
+
+            public bool HasBossPool => bossBoardPresets != null && bossBoardPresets.Count > 0;
         }
 
         /// <summary>

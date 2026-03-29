@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core.Campaign;
 
 namespace FungusToast.Core.AI
 {
@@ -125,7 +126,8 @@ namespace FungusToast.Core.AI
             string intent,
             string notes,
             IReadOnlyCollection<CounterTag>? favoredAgainst = null,
-            IReadOnlyCollection<CounterTag>? weakAgainst = null)
+            IReadOnlyCollection<CounterTag>? weakAgainst = null,
+            IReadOnlyCollection<AdaptationSynergySet>? suggestedAdaptationSets = null)
         {
             StrategyName = strategyName;
             StrategySet = strategySet;
@@ -141,6 +143,7 @@ namespace FungusToast.Core.AI
             Notes = notes;
             FavoredAgainst = favoredAgainst ?? Array.Empty<CounterTag>();
             WeakAgainst = weakAgainst ?? Array.Empty<CounterTag>();
+            SuggestedAdaptationSets = suggestedAdaptationSets ?? Array.Empty<AdaptationSynergySet>();
         }
 
         public string StrategyName { get; }
@@ -157,6 +160,7 @@ namespace FungusToast.Core.AI
         public string Notes { get; }
         public IReadOnlyCollection<CounterTag> FavoredAgainst { get; }
         public IReadOnlyCollection<CounterTag> WeakAgainst { get; }
+        public IReadOnlyCollection<AdaptationSynergySet> SuggestedAdaptationSets { get; }
     }
 
     public sealed class StrategyCatalogFilter

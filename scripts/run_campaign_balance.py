@@ -5,7 +5,7 @@ import argparse
 import re
 import subprocess
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 ROOT = Path(__file__).resolve().parents[1]
 PROGRESSION = ROOT / "FungusToast.Unity/Assets/Configs/Campaign/CampaignProgression.asset"
@@ -53,9 +53,20 @@ def build_guid_map(directory: Path) -> Dict[str, Path]:
 
 
 def parse_board_preset(path: Path) -> dict:
-    preset = {"path": str(path), "aiPlayers": [], "aiStrategyPool": [], "pooledAiPlayerCount": 0}
+    preset = {
+        "path": str(path),
+        "aiPlayers": [],
+        "aiPlayerAdaptations": [],  # list of lists, aligned with aiPlayers
+        "aiStrategyPool": [],
+        "pooledAiPlayerCount": 0,
+        "poolAdaptationOverrides": {},  # dict: strategyName -> [adaptation_ids]
+    }
     in_ai_players = False
+    in_ai_player_adaptations = False
     in_ai_pool = False
+    in_pool_overrides = False
+    in_pool_override_adaptations = False
+    current_pool_override: Optional[dict] = None
 
     for raw in path.read_text().splitlines():
         line = raw.strip()
@@ -66,26 +77,73 @@ def parse_board_preset(path: Path) -> dict:
             preset["presetId"] = line.split(":", 1)[1].strip()
             in_ai_players = False
             in_ai_pool = False
+            in_pool_overrides = False
+            in_ai_player_adaptations = False
+            in_pool_override_adaptations = False
         elif line.startswith("boardWidth:"):
             preset["boardWidth"] = int(line.split(":", 1)[1].strip())
             in_ai_players = False
             in_ai_pool = False
+            in_pool_overrides = False
+            in_ai_player_adaptations = False
+            in_pool_override_adaptations = False
         elif line.startswith("boardHeight:"):
             preset["boardHeight"] = int(line.split(":", 1)[1].strip())
             in_ai_players = False
             in_ai_pool = False
+            in_pool_overrides = False
+            in_ai_player_adaptations = False
+            in_pool_override_adaptations = False
         elif line.startswith("aiPlayers:"):
             in_ai_players = True
+            in_ai_player_adaptations = False
             in_ai_pool = False
+            in_pool_overrides = False
+            in_pool_override_adaptations = False
         elif line.startswith("pooledAiPlayerCount:"):
             preset["pooledAiPlayerCount"] = int(line.split(":", 1)[1].strip())
             in_ai_players = False
+            in_ai_player_adaptations = False
             in_ai_pool = False
+            in_pool_overrides = False
+            in_pool_override_adaptations = False
         elif line.startswith("aiStrategyPool:"):
             in_ai_players = False
+            in_ai_player_adaptations = False
             in_ai_pool = True
+            in_pool_overrides = False
+            in_pool_override_adaptations = False
+        elif line.startswith("poolAdaptationOverrides:"):
+            in_ai_players = False
+            in_ai_player_adaptations = False
+            in_ai_pool = False
+            in_pool_overrides = True
+            in_pool_override_adaptations = False
+            if current_pool_override:
+                preset["poolAdaptationOverrides"][current_pool_override["name"]] = current_pool_override["ids"]
+                current_pool_override = None
         elif in_ai_players and line.startswith("- strategyName:"):
             preset["aiPlayers"].append(line.split(":", 1)[1].strip())
+            preset["aiPlayerAdaptations"].append([])
+            in_ai_player_adaptations = False
+        elif in_ai_players and line.startswith("startingAdaptationIds:"):
+            in_ai_player_adaptations = True
+        elif in_ai_players and in_ai_player_adaptations and line.startswith("- "):
+            value = line[2:].strip()
+            if value and preset["aiPlayerAdaptations"]:
+                preset["aiPlayerAdaptations"][-1].append(value)
+        elif in_pool_overrides and line.startswith("- strategyName:"):
+            if current_pool_override:
+                preset["poolAdaptationOverrides"][current_pool_override["name"]] = current_pool_override["ids"]
+            name = line.split(":", 1)[1].strip()
+            current_pool_override = {"name": name, "ids": []}
+            in_pool_override_adaptations = False
+        elif in_pool_overrides and current_pool_override is not None and line.startswith("startingAdaptationIds:"):
+            in_pool_override_adaptations = True
+        elif in_pool_overrides and current_pool_override is not None and in_pool_override_adaptations and line.startswith("- "):
+            value = line[2:].strip()
+            if value:
+                current_pool_override["ids"].append(value)
         elif in_ai_pool and line.startswith("-"):
             value = line[1:].strip()
             if value:
@@ -93,6 +151,12 @@ def parse_board_preset(path: Path) -> dict:
         elif not raw.startswith(" ") and not raw.startswith("\t"):
             in_ai_players = False
             in_ai_pool = False
+            in_ai_player_adaptations = False
+            in_pool_override_adaptations = False
+
+    # Finalize any pending pool override
+    if current_pool_override:
+        preset["poolAdaptationOverrides"][current_pool_override["name"]] = current_pool_override["ids"]
 
     return preset
 
@@ -133,9 +197,26 @@ def resolve_campaign_ai_names(level_index: int, preset: dict, seed: int) -> List
     return shuffled[:desired_count]
 
 
+def resolve_ai_adaptations(level_index: int, preset: dict, resolved_ai_names: List[str]) -> List[List[str]]:
+    """Return per-AI adaptation lists aligned with resolved_ai_names."""
+    if preset["aiPlayers"]:
+        # Fixed lineup: aiPlayerAdaptations is already slot-aligned
+        ai_adaptations = preset.get("aiPlayerAdaptations", [])
+        return [list(ai_adaptations[i]) if i < len(ai_adaptations) else [] for i in range(len(resolved_ai_names))]
+    else:
+        # Pool: look up each resolved name in poolAdaptationOverrides
+        overrides = preset.get("poolAdaptationOverrides", {})
+        return [list(overrides.get(name, [])) for name in resolved_ai_names]
+
+
 def run_level(level: dict, preset: dict, games: int, seed: int, dry_run: bool) -> int:
     resolved_ai = resolve_campaign_ai_names(level["levelIndex"], preset, seed)
     lineup = [PLAYER_PROXY] + resolved_ai
+
+    # Resolve adaptations: slot 0 = proxy = no adaptations; then one list per AI
+    ai_adaptations = resolve_ai_adaptations(level["levelIndex"], preset, resolved_ai)
+    full_adaptations = [[]] + ai_adaptations
+
     experiment_id = f"campaign_balance_lvl{level['levelIndex']:02d}_{preset['presetId']}_g{games}_seed{seed}"
     cmd = [
         "dotnet",
@@ -164,9 +245,18 @@ def run_level(level: dict, preset: dict, games: int, seed: int, dry_run: bool) -
     if not level.get("enableNutrientPatches", True):
         cmd.append("--no-nutrient-patches")
 
+    # Add --starting-adaptations if any slot has at least one adaptation
+    if any(ids for ids in full_adaptations):
+        adaptation_arg = "|".join(",".join(ids) for ids in full_adaptations)
+        cmd.extend(["--starting-adaptations", adaptation_arg])
+
     print(f"\n=== Campaign level {level['levelIndex']} :: {preset['presetId']} ===")
     print(f"Board: {preset['boardWidth']}x{preset['boardHeight']} | Players: {len(lineup)} | Nutrients: {'On' if level.get('enableNutrientPatches', True) else 'Off'}")
     print(f"Lineup: {', '.join(lineup)}")
+    if any(ids for ids in full_adaptations):
+        for i, (name, ids) in enumerate(zip(lineup, full_adaptations)):
+            if ids:
+                print(f"  Adaptations slot {i} ({name}): {', '.join(ids)}")
     print("Command:")
     print(" ".join(cmd))
     if dry_run:

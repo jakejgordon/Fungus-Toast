@@ -1,6 +1,7 @@
 ﻿using FungusToast.Core;
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Events;
 using FungusToast.Core.Metrics;
@@ -29,11 +30,12 @@ namespace FungusToast.Simulation.GameSimulation
             bool shuffleStartingSpores = true,
             bool enableNutrientPatches = true,
             bool enableMycovariantDraft = true,
-            IReadOnlyList<(int x, int y)>? startingPositionOverride = null
+            IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
+            IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null
         )
         {
             var rng = new Random(seed);
-            var (players, board) = InitializeGame(strategies, rng, context, boardWidth, boardHeight, shuffleStartingSpores, enableNutrientPatches, startingPositionOverride);
+            var (players, board) = InitializeGame(strategies, rng, context, boardWidth, boardHeight, shuffleStartingSpores, enableNutrientPatches, startingPositionOverride, startingAdaptationIds);
             var allMutations = MutationRegistry.GetAll().ToList();
             var allMycovariants = MycovariantRepository.All;
             var mycovariantPoolManager = new MycovariantPoolManager();
@@ -204,7 +206,7 @@ namespace FungusToast.Simulation.GameSimulation
 
 
 
-        private static (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng, ISimulationObserver observer, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight, bool shuffleStartingSpores = true, bool enableNutrientPatches = true, IReadOnlyList<(int x, int y)>? startingPositionOverride = null)
+        private static (List<Player> players, GameBoard board) InitializeGame(List<IMutationSpendingStrategy> strategies, Random rng, ISimulationObserver observer, int boardWidth = GameBalance.BoardWidth, int boardHeight = GameBalance.BoardHeight, bool shuffleStartingSpores = true, bool enableNutrientPatches = true, IReadOnlyList<(int x, int y)>? startingPositionOverride = null, IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null)
         {
             int playerCount = strategies.Count;
             var players = new List<Player>();
@@ -236,6 +238,21 @@ namespace FungusToast.Simulation.GameSimulation
             {
                 NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(board, players, rng, observer);
             }
+            if (startingAdaptationIds != null)
+            {
+                for (int i = 0; i < players.Count; i++)
+                {
+                    if (i >= startingAdaptationIds.Count) break;
+                    foreach (var id in startingAdaptationIds[i])
+                    {
+                        if (AdaptationRepository.TryGetById(id, out var def))
+                            players[i].TryAddAdaptation(def);
+                        else
+                            Console.WriteLine($"[Simulation] Warning: Unknown adaptation id '{id}' for player slot {i}. Skipping.");
+                    }
+                }
+            }
+
             AdaptationEffectProcessor.OnStartingSporesEstablished(board, players);
 
             return (players, board);

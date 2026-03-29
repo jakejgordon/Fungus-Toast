@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Logging;
 using FungusToast.Core.Mutations;
@@ -351,7 +352,21 @@ namespace FungusToast.Core.AI
                 surgeAttemptTurnFrequency: 7,
                 economyBias: EconomyBias.MaxEconomy,
                 maxTier: MutationTier.Tier4
-            )
+            ),
+            // Campaign balance harness: safe player-proxy baseline (also in RawCampaignStrategies)
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_CampaignPlayer_SafeBaseline",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 2),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Economy, MycovariantCategory.Resistance)
+            ),
         };
 
         /// <summary>
@@ -1911,9 +1926,103 @@ namespace FungusToast.Core.AI
                 notes);
         }
 
+        private static readonly IReadOnlyDictionary<string, IReadOnlyList<AdaptationSynergySet>> SuggestedAdaptationSetsByStrategyName =
+            new Dictionary<string, IReadOnlyList<AdaptationSynergySet>>(StringComparer.OrdinalIgnoreCase)
+            {
+                // ── ELITE COMBOS (3 adaptations each) ──
+
+                ["CMP_Bloom_CreepingRegression_Elite"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "The Necrotoxin Gauntlet",
+                        "Opens with toxins on all enemy spores, poisons kill adjacently on decay, and expired toxins chain-spread. Three stages of the same kill vector layered together.",
+                        new[] { AdaptationIds.SporeSalvo, AdaptationIds.MycotoxicHalo, AdaptationIds.VesicleBurst })
+                },
+                ["AI10"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "The Necrotoxin Gauntlet",
+                        "Opens with toxins on all enemy spores, poisons kill adjacently on decay, and expired toxins chain-spread. Three stages of the same kill vector layered together.",
+                        new[] { AdaptationIds.SporeSalvo, AdaptationIds.MycotoxicHalo, AdaptationIds.VesicleBurst })
+                },
+
+                ["CMP_Defense_ResilientShell_Easy"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "Iron Shell",
+                        "Every grown cell gets Resistance (first per round), edge cells always resist, and dying cells beside resistant ones leave clean tiles. The board gradually becomes an untouchable fortress.",
+                        new[] { AdaptationIds.AegisHyphae, AdaptationIds.CrustalCallus, AdaptationIds.SaprophageRing })
+                },
+                ["AI3"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "Iron Shell",
+                        "Every grown cell gets Resistance (first per round), edge cells always resist, and dying cells beside resistant ones leave clean tiles. The board gradually becomes an untouchable fortress.",
+                        new[] { AdaptationIds.AegisHyphae, AdaptationIds.CrustalCallus, AdaptationIds.SaprophageRing })
+                },
+
+                ["CMP_Economy_LateSpike_Hard"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "The Economancer",
+                        "Surges cost less, maxing mutations earns bonus MP, and Retrograde Bloom hands a free T5 upgrade while sacrificing T1 junk. Explosive late-game mutation acceleration.",
+                        new[] { AdaptationIds.HyphalEconomy, AdaptationIds.ApicalYield, AdaptationIds.RetrogradeBloom })
+                },
+                ["AI1"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "The Economancer",
+                        "Surges cost less, maxing mutations earns bonus MP, and Retrograde Bloom hands a free T5 upgrade while sacrificing T1 junk. Explosive late-game mutation acceleration.",
+                        new[] { AdaptationIds.HyphalEconomy, AdaptationIds.ApicalYield, AdaptationIds.RetrogradeBloom })
+                },
+                ["AI2"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "The Economancer",
+                        "Surges cost less, maxing mutations earns bonus MP, and Retrograde Bloom hands a free T5 upgrade while sacrificing T1 junk. Explosive late-game mutation acceleration.",
+                        new[] { AdaptationIds.HyphalEconomy, AdaptationIds.ApicalYield, AdaptationIds.RetrogradeBloom })
+                },
+
+                // ── BOSS COMBOS (6 adaptations each) ──
+
+                ["TST_CreepingNecroRegressionCascade"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "Thanatophyte",
+                        "Opens with toxins on all enemies, gets instant kills on new toxin drops, toxins kill adjacently on decay, expired toxins chain-spread, bridges into the enemy cluster early, and earns bonus MP to fund the cascade. Every vector of the toxin kill chain is supercharged.",
+                        new[] { AdaptationIds.SporeSalvo, AdaptationIds.MycotoxicHalo, AdaptationIds.MycotoxicLash, AdaptationIds.VesicleBurst, AdaptationIds.HyphalBridge, AdaptationIds.ApicalYield })
+                },
+                ["TST_AnabolicCreepingNecroRegressionCascade"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "Thanatophyte",
+                        "Opens with toxins on all enemies, gets instant kills on new toxin drops, toxins kill adjacently on decay, expired toxins chain-spread, bridges into the enemy cluster early, and earns bonus MP to fund the cascade. Every vector of the toxin kill chain is supercharged.",
+                        new[] { AdaptationIds.SporeSalvo, AdaptationIds.MycotoxicHalo, AdaptationIds.MycotoxicLash, AdaptationIds.VesicleBurst, AdaptationIds.HyphalBridge, AdaptationIds.ApicalYield })
+                },
+
+                ["TST_AnabolicBeaconNecroRegressionCascade"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "Rhizolith",
+                        "Grows resistant cells every round, edge cells always resist, dead cells next to resistant ones vanish leaving no corpse lane, border threats are cleared on contact, and two repositioning tools ensure territorial coverage. Nearly impossible to contain once established.",
+                        new[] { AdaptationIds.AegisHyphae, AdaptationIds.CrustalCallus, AdaptationIds.SaprophageRing, AdaptationIds.MarginalClamp, AdaptationIds.DistalSpore, AdaptationIds.ConidialRelay })
+                },
+
+                ["CMP_Control_AnabolicFirst_Hard"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "Voltaic Bloom",
+                        "Starts with aggro toxin placement, drafts mycovariants first every round, surges cost less + maxing mutations earns MP + Retrograde Bloom fires a free T5. The economic engine compounds until the board drowns in high-tier mutations.",
+                        new[] { AdaptationIds.HyphalEconomy, AdaptationIds.ApicalYield, AdaptationIds.RetrogradeBloom, AdaptationIds.AscusPrimacy, AdaptationIds.MycotoxicHalo, AdaptationIds.SporeSalvo })
+                },
+            };
+
         private static StrategyCatalogEntry BuildCatalogEntry(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
             var profile = BuildStrategyProfile(strategy, strategySet);
+            var suggestedAdaptationSets = SuggestedAdaptationSetsByStrategyName.TryGetValue(profile.StrategyName, out var sets)
+                ? sets
+                : null;
             return new StrategyCatalogEntry(
                 profile.StrategyName,
                 profile.StrategySet,
@@ -1928,7 +2037,8 @@ namespace FungusToast.Core.AI
                 profile.Intent,
                 profile.Notes,
                 profile.FavoredAgainst,
-                profile.WeakAgainst);
+                profile.WeakAgainst,
+                suggestedAdaptationSets);
         }
 
         public static StrategyTheme GetThemeForStrategy(IMutationSpendingStrategy strategy)
