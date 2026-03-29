@@ -129,11 +129,11 @@ namespace FungusToast.Unity
                 if (AdaptationRepository.TryGetById(adaptationId, out var def))
                 {
                     ai.TryAddAdaptation(def);
-                    Debug.Log($"[PlayerInitializer] Applied adaptation {adaptationId} to AI {strategyName ?? ai.Name}");
+                    Debug.Log($"[PlayerInitializer] Applied adaptation {adaptationId} to AI {strategyName ?? ai.PlayerName}");
                 }
                 else
                 {
-                    Debug.LogWarning($"[PlayerInitializer] Unknown adaptation ID {adaptationId} for AI {strategyName ?? ai.Name}. Skipping.");
+                    Debug.LogWarning($"[PlayerInitializer] Unknown adaptation ID {adaptationId} for AI {strategyName ?? ai.PlayerName}. Skipping.");
                 }
             }
         }
