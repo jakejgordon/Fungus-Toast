@@ -47,8 +47,10 @@ namespace FungusToast.Unity.UI.MutationTree
         [Header("UI Wiring")]
         [SerializeField] private TextMeshProUGUI mutationPointsCounterText;
         [SerializeField] private Button storePointsButton;
-        [SerializeField] private AudioClip mutationUpgradeSuccessClip;
+        [SerializeField] private AudioClip mutationUpgradeSuccessClip = null;
         [SerializeField, Range(0f, 1f)] private float mutationUpgradeSuccessVolume = 1f;
+        [SerializeField] private AudioClip mutationStorePointsClip = null;
+        [SerializeField, Range(0f, 1f)] private float mutationStorePointsVolume = 1f;
 
         [Header("Tree Sliding Settings")]
         public float slideDuration = 0.5f;
@@ -486,6 +488,23 @@ namespace FungusToast.Unity.UI.MutationTree
             soundEffectAudioSource.PlayOneShot(mutationUpgradeSuccessClip, effectiveVolume);
         }
 
+        private void PlayMutationStorePointsSound()
+        {
+            if (mutationStorePointsClip == null)
+            {
+                return;
+            }
+
+            EnsureSoundEffectAudioSource();
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(mutationStorePointsVolume);
+            if (effectiveVolume <= 0f)
+            {
+                return;
+            }
+
+            soundEffectAudioSource.PlayOneShot(mutationStorePointsClip, effectiveVolume);
+        }
+
         public void RefreshSpendPointsButtonUI()
         {
             if (spendPointsButton == null || buttonOutline == null || humanPlayer == null)
@@ -695,6 +714,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (humanPlayer != null)
             {
                 humanPlayer.WantsToBankPointsThisTurn = true;
+                PlayMutationStorePointsSound();
                 EndHumanMutationPhase();
             }
         }

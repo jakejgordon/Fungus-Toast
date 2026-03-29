@@ -12,18 +12,18 @@ Delete it after the sound backlog is complete or once the final decisions have b
 
 ## Priority Order
 
-| Priority | Sound effect | Recommended duration | Status | Notes |
-| --- | --- | --- | --- | --- |
-| 1 | Mutation upgrade success | `0.25s` to `0.45s` | `implemented` | First live cue. Already wired to successful mutation upgrades. |
-| 2 | Store mutation points | `0.18s` to `0.35s` | `ready` | Soft deliberate confirmation, not reward-like. |
-| 3 | Mutation phase start | `0.60s` to `1.00s` | `ready` | Highest-value phase cue because it frames player decision time. |
-| 4 | Growth phase start | `0.60s` to `1.00s` | `ready` | Should pair with the existing growth banner. |
-| 5 | Decay phase start | `0.50s` to `0.90s` | `ready` | Shorter and darker than growth. |
-| 6 | Drafting phase start | `0.80s` to `1.20s` | `ready` | Slightly more ceremonial because it is rarer. |
-| 7 | Growth cycle tick | `0.08s` to `0.18s` | `ready` | Must stay subtle to avoid fatigue. |
-| 8 | Invalid mutation click | `0.08s` to `0.20s` | `planned` | Quiet negative cue only if it does not become annoying. |
-| 9 | Round complete transition | `0.50s` to `0.90s` | `planned` | Useful once phase language is stable. |
-| 10 | Nutrient patch claim / board reward | `0.20s` to `0.50s` | `planned` | Good reward cue after core loop sounds are in. |
+| Priority | Sound effect | Recommended file name | Recommended duration | Status | Notes |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Mutation upgrade success | `sfx_ui_mutation_upgrade_success_01.wav` | `0.25s` to `0.45s` | `implemented` | First live cue. Already wired to successful mutation upgrades. |
+| 2 | Store mutation points | `sfx_ui_mutation_store_points_01.wav` | `0.18s` to `0.35s` | `ready` | Soft deliberate confirmation, not reward-like. |
+| 3 | Mutation phase start | `sfx_phase_mutation_start_01.wav` | `0.60s` to `1.00s` | `ready` | Highest-value phase cue because it frames player decision time. |
+| 4 | Growth phase start | `sfx_phase_growth_start_01.wav` | `0.60s` to `1.00s` | `ready` | Should pair with the existing growth banner. |
+| 5 | Decay phase start | `sfx_phase_decay_start_01.wav` | `0.50s` to `0.90s` | `ready` | Shorter and darker than growth. |
+| 6 | Drafting phase start | `sfx_phase_draft_start_01.wav` | `0.80s` to `1.20s` | `ready` | Slightly more ceremonial because it is rarer. |
+| 7 | Growth cycle tick | `sfx_phase_growth_cycle_tick_01.wav` | `0.08s` to `0.18s` | `ready` | Must stay subtle to avoid fatigue. |
+| 8 | Invalid mutation click | `sfx_ui_mutation_invalid_01.wav` | `0.08s` to `0.20s` | `planned` | Quiet negative cue only if it does not become annoying. |
+| 9 | Round complete transition | `sfx_phase_round_complete_01.wav` | `0.50s` to `0.90s` | `planned` | Useful once phase language is stable. |
+| 10 | Nutrient patch claim / board reward | `sfx_board_nutrient_claim_01.wav` | `0.20s` to `0.50s` | `planned` | Good reward cue after core loop sounds are in. |
 
 ## Current Working Order
 

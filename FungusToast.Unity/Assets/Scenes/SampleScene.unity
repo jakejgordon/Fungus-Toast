@@ -116708,6 +116708,8 @@ MonoBehaviour:
   storePointsButton: {fileID: 1388654716}
   mutationUpgradeSuccessClip: {fileID: 8300000, guid: 871d52f60a2a4cb9a31fcffbaa5a87d7, type: 3}
   mutationUpgradeSuccessVolume: 1
+  mutationStorePointsClip: {fileID: 8300000, guid: 56a96171dbfe1444788af0082dffa3f7, type: 3}
+  mutationStorePointsVolume: 1
   slideDuration: 0.5
   hiddenPosition: {x: -1920, y: 0}
   visiblePosition: {x: 0, y: 0}
