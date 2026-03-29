@@ -352,7 +352,21 @@ namespace FungusToast.Core.AI
                 surgeAttemptTurnFrequency: 7,
                 economyBias: EconomyBias.MaxEconomy,
                 maxTier: MutationTier.Tier4
-            )
+            ),
+            // Campaign balance harness: safe player-proxy baseline (also in RawCampaignStrategies)
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_CampaignPlayer_SafeBaseline",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 2),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Economy, MycovariantCategory.Resistance)
+            ),
         };
 
         /// <summary>
