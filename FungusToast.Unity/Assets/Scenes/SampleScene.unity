@@ -280,6 +280,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 6
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1 &9829475
 GameObject:
   m_ObjectHideFlags: 0
@@ -1114,6 +1115,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 4
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!114 &123252513
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3120,6 +3122,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 5
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1 &291473328 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 200007940375941483, guid: 6bfae62bd7629fe46a110eb496737e9c, type: 3}
@@ -3979,6 +3982,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 0
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1 &354172057
 GameObject:
   m_ObjectHideFlags: 0
@@ -105446,6 +105450,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 0
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1 &456577069
 GameObject:
   m_ObjectHideFlags: 0
@@ -106054,6 +106059,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 6
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1 &476987854
 GameObject:
   m_ObjectHideFlags: 0
@@ -107199,6 +107205,8 @@ MonoBehaviour:
   selectionPromptCancelButton: {fileID: 0}
   selectionPromptCancelButtonText: {fileID: 0}
   modeSelectPanel: {fileID: 1539722632}
+  mutationPhaseStartClip: {fileID: 8300000, guid: e06edae16b552c140b6e01b40f246962, type: 3}
+  mutationPhaseStartVolume: 1
   configuredHumanPlayerCount: 1
   campaignProgression: {fileID: 11400000, guid: ddba19d3898f54445b37abdc3b92a2b7, type: 2}
   magnifyingGlass: {fileID: 325918930}
@@ -108590,6 +108598,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 0
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1 &663369134
 GameObject:
   m_ObjectHideFlags: 0
@@ -108691,6 +108700,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 0
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1 &674020807 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 200007940375941483, guid: 6bfae62bd7629fe46a110eb496737e9c, type: 3}
@@ -110234,6 +110244,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 4
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1001 &843578373
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -112651,6 +112662,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 0
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1001 &1054936763
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -113039,6 +113051,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 7
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!114 &1060487507
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -116155,6 +116168,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 7
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1001 &1346197130
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -120550,6 +120564,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 0
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1 &1790918258
 GameObject:
   m_ObjectHideFlags: 0
@@ -121561,6 +121576,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 4
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1 &1927571114
 GameObject:
   m_ObjectHideFlags: 0
@@ -121724,6 +121740,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 0
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1 &1950176974
 GameObject:
   m_ObjectHideFlags: 0
@@ -123622,6 +123639,7 @@ MonoBehaviour:
   followPointer: 0
   placement: 0
   autoPlacementOffsetX: 0
+  pinOnClick: 0
 --- !u!1 &2109980232
 GameObject:
   m_ObjectHideFlags: 0

@@ -173,6 +173,8 @@ namespace FungusToast.Unity
         [SerializeField] private Button selectionPromptCancelButton;
         [SerializeField] private TextMeshProUGUI selectionPromptCancelButtonText;
         [SerializeField] private GameObject modeSelectPanel; // NEW: root of mode select UI
+        [SerializeField] private AudioClip mutationPhaseStartClip = null;
+        [SerializeField, Range(0f, 1f)] private float mutationPhaseStartVolume = 1f;
 
         [Header("Hotseat Config")] 
         public int configuredHumanPlayerCount =1; 
@@ -244,6 +246,7 @@ namespace FungusToast.Unity
         private float nextUiStuckCheckTime;
         private bool isPauseMenuOpen;
         private UI_PauseMenuPanel pauseMenuPanel;
+        private AudioSource soundEffectAudioSource;
 
         // Services
         private PlayerInitializer playerInitializer; 
@@ -305,6 +308,7 @@ namespace FungusToast.Unity
 
         private void BootstrapServices()
         {
+            EnsureSoundEffectAudioSource();
             BootstrapPauseMenu();
 
             playerInitializer = new PlayerInitializer(
@@ -922,6 +926,7 @@ namespace FungusToast.Unity
             gameUIManager.GameLogRouter?.OnPhaseStart("Mutation");
             if (!pendingAlphaMutationOnboarding)
             {
+                PlayMutationPhaseStartSound();
                 gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
             }
             if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
@@ -933,6 +938,41 @@ namespace FungusToast.Unity
         }
 
         #endregion
+
+        private void EnsureSoundEffectAudioSource()
+        {
+            if (soundEffectAudioSource != null)
+            {
+                return;
+            }
+
+            soundEffectAudioSource = GetComponent<AudioSource>();
+            if (soundEffectAudioSource == null)
+            {
+                soundEffectAudioSource = gameObject.AddComponent<AudioSource>();
+            }
+
+            soundEffectAudioSource.playOnAwake = false;
+            soundEffectAudioSource.loop = false;
+            soundEffectAudioSource.spatialBlend = 0f;
+        }
+
+        private void PlayMutationPhaseStartSound()
+        {
+            if (mutationPhaseStartClip == null)
+            {
+                return;
+            }
+
+            EnsureSoundEffectAudioSource();
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(mutationPhaseStartVolume);
+            if (effectiveVolume <= 0f)
+            {
+                return;
+            }
+
+            soundEffectAudioSource.PlayOneShot(mutationPhaseStartClip, effectiveVolume);
+        }
 
         #region Hotseat Callbacks
 

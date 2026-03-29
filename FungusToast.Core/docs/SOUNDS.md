@@ -38,6 +38,34 @@ Recommended naming:
 
 Keep variations grouped by suffix (`_01`, `_02`, `_03`) rather than inventing new names for the same cue family.
 
+### Batch Converting iPhone `.m4a` Files to `.wav`
+
+When recording rough sound ideas on iPhone, batch-convert the `.m4a` files into mono `44.1 kHz` `16-bit` `.wav` files before importing them into Unity.
+
+Recommended workflow:
+
+1. Open PowerShell in the folder containing the `.m4a` files.
+2. Create a subfolder named `Fungus Toast WAVs` if it does not already exist.
+3. Run the following command:
+
+```powershell
+Get-ChildItem -Filter *.m4a | ForEach-Object {
+  ffmpeg -i $_.FullName -map 0:a:0 -vn -ac 1 -ar 44100 -sample_fmt s16 -map_metadata -1 "Fungus Toast WAVs\$($_.BaseName).wav"
+}
+```
+
+What this does:
+
+- converts each `.m4a` file in the current folder
+- keeps audio only
+- outputs mono audio
+- resamples to `44100 Hz`
+- writes `16-bit` PCM `.wav` files
+- strips metadata
+- saves the converted files into the `Fungus Toast WAVs` subfolder using the same base filename
+
+Use the converted `.wav` files as the editing/import source for Fungus Toast rather than importing the original phone recordings directly.
+
 ## 3. Recommended Code Location
 
 If a reusable sound layer is added, follow the existing Unity service pattern from `UI_ARCHITECTURE_HELPER.md`.
