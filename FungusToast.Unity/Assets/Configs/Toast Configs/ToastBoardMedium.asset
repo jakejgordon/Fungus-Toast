@@ -21,10 +21,10 @@ MonoBehaviour:
   backgroundSprite: {fileID: 21300000, guid: bcbf244cff6779842b733307ec77410d, type: 3}
   backgroundColor: {r: 1, g: 1, b: 1, a: 1}
   hidePlayableSurfaceTiles: 1
-  backgroundInsetLeftNormalized: 0.08
-  backgroundInsetRightNormalized: 0.08
-  backgroundInsetBottomNormalized: 0.1
-  backgroundInsetTopNormalized: 0.08
+  backgroundInsetLeftNormalized: 0.06
+  backgroundInsetRightNormalized: 0.10
+  backgroundInsetBottomNormalized: 0.08
+  backgroundInsetTopNormalized: 0.10
   backgroundScaleMultiplier: 1
   renderBoardEdgeFade: 1
   boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.1}
