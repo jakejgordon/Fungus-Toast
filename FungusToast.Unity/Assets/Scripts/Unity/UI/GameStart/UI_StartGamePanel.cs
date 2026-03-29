@@ -54,6 +54,7 @@ namespace FungusToast.Unity.UI.GameStart
         private RectTransform titleSectionRoot;
         private RectTransform playerCountSectionRoot;
         private RectTransform boardSizeSectionRoot;
+        private RectTransform audioSettingsSectionRoot;
         private RectTransform testingCardSectionRoot;
         private RectTransform actionButtonStackRoot;
         private RectTransform moldSelectionSectionRoot;
@@ -69,6 +70,8 @@ namespace FungusToast.Unity.UI.GameStart
         private readonly List<Image> moldSelectionIcons = new();
         private readonly List<TextMeshProUGUI> moldSelectionLabels = new();
         private readonly List<int?> selectedHumanMoldIndices = new();
+        private Button soundEffectsToggleButton;
+        private Button soundEffectsVolumeButton;
         private SetupStep currentStep = SetupStep.CountSelection;
         private int currentHumanMoldSelectionIndex;
 
@@ -103,6 +106,7 @@ namespace FungusToast.Unity.UI.GameStart
             EnsureRuntimeLayoutScaffold();
             testingCardController?.RefreshDropdownOptions();
             testingCardController?.RefreshVisualState();
+            RefreshAudioSettingsControls();
             RefreshTestingSectionLayout();
             UpdateSetupStepState();
         }
@@ -266,6 +270,7 @@ namespace FungusToast.Unity.UI.GameStart
             ConfigureSetupContentRoot(setupContentRoot);
             ResolveSetupSectionReferences();
             EnsureBoardSizeSection();
+            EnsureAudioSettingsSection();
             EnsureMoldSelectionSection();
 
             var orderedSections = new List<RectTransform>();
@@ -273,6 +278,7 @@ namespace FungusToast.Unity.UI.GameStart
             TryAddSetupSection(orderedSections, playerCountSectionRoot);
             TryAddSetupSection(orderedSections, humanPlayerSectionRoot != null ? humanPlayerSectionRoot.GetComponent<RectTransform>() : null);
             TryAddSetupSection(orderedSections, boardSizeSectionRoot);
+            TryAddSetupSection(orderedSections, audioSettingsSectionRoot);
             TryAddSetupSection(orderedSections, moldSelectionSectionRoot);
             TryAddSetupSection(orderedSections, testingCardSectionRoot);
 
@@ -402,6 +408,40 @@ namespace FungusToast.Unity.UI.GameStart
             EnsureBoardSizeLabel();
             EnsureBoardSizeDropdown();
             RefreshBoardSizeDropdown();
+        }
+
+        private void EnsureAudioSettingsSection()
+        {
+            if (setupContentRoot == null)
+            {
+                return;
+            }
+
+            if (audioSettingsSectionRoot == null)
+            {
+                var existing = FindNamedRectTransform("UI_StartGameAudioSettingsSection");
+                if (existing != null)
+                {
+                    audioSettingsSectionRoot = existing;
+                }
+                else
+                {
+                    var sectionObject = new GameObject(
+                        "UI_StartGameAudioSettingsSection",
+                        typeof(RectTransform),
+                        typeof(Image),
+                        typeof(VerticalLayoutGroup),
+                        typeof(ContentSizeFitter),
+                        typeof(LayoutElement));
+                    audioSettingsSectionRoot = sectionObject.GetComponent<RectTransform>();
+                    audioSettingsSectionRoot.SetParent(setupContentRoot, false);
+                }
+            }
+
+            audioSettingsSectionRoot.SetParent(setupContentRoot, false);
+            ConfigureAudioSettingsSection(audioSettingsSectionRoot);
+            EnsureAudioSettingsControls();
+            RefreshAudioSettingsControls();
         }
 
         private void EnsureMoldSelectionSection()
@@ -732,6 +772,127 @@ namespace FungusToast.Unity.UI.GameStart
             element.preferredHeight = 86f;
         }
 
+        private void EnsureAudioSettingsControls()
+        {
+            if (audioSettingsSectionRoot == null)
+            {
+                return;
+            }
+
+            EnsureAudioSettingsLabel();
+            soundEffectsToggleButton = EnsureAudioSettingsButton(
+                soundEffectsToggleButton,
+                "UI_StartGameSoundEffectsToggleButton",
+                OnSoundEffectsToggleClicked,
+                1);
+            soundEffectsVolumeButton = EnsureAudioSettingsButton(
+                soundEffectsVolumeButton,
+                "UI_StartGameSoundEffectsVolumeButton",
+                OnSoundEffectsVolumeClicked,
+                2);
+        }
+
+        private void EnsureAudioSettingsLabel()
+        {
+            if (audioSettingsSectionRoot == null)
+            {
+                return;
+            }
+
+            var existing = audioSettingsSectionRoot.Find("UI_StartGameAudioSettingsLabel");
+            GameObject labelObject = existing != null
+                ? existing.gameObject
+                : new GameObject("UI_StartGameAudioSettingsLabel", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+
+            if (existing == null)
+            {
+                labelObject.transform.SetParent(audioSettingsSectionRoot, false);
+            }
+
+            var label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = "Sound Effects";
+            label.color = UIStyleTokens.Text.Primary;
+            label.enableAutoSizing = false;
+            label.fontSize = 20f;
+            label.alignment = TextAlignmentOptions.Center;
+
+            var element = labelObject.GetComponent<LayoutElement>();
+            element.minWidth = 470f;
+            element.preferredWidth = 470f;
+            element.minHeight = 26f;
+            element.preferredHeight = 30f;
+        }
+
+        private Button EnsureAudioSettingsButton(Button existingButton, string objectName, UnityEngine.Events.UnityAction onClick, int siblingIndex)
+        {
+            Button button = existingButton;
+            if (button == null && audioSettingsSectionRoot != null)
+            {
+                var existing = audioSettingsSectionRoot.Find(objectName);
+                if (existing != null)
+                {
+                    button = existing.GetComponent<Button>();
+                }
+            }
+
+            if (button == null)
+            {
+                Button template = backButton != null ? backButton : startGameButton;
+                var buttonObject = Instantiate(template.gameObject, audioSettingsSectionRoot);
+                buttonObject.name = objectName;
+                button = buttonObject.GetComponent<Button>();
+            }
+
+            button.transform.SetParent(audioSettingsSectionRoot, false);
+            button.transform.SetSiblingIndex(siblingIndex);
+            button.onClick = new Button.ButtonClickedEvent();
+            button.onClick.AddListener(onClick);
+            EnsureActionButtonLayout(button);
+            return button;
+        }
+
+        private static void ConfigureAudioSettingsSection(RectTransform sectionRoot)
+        {
+            if (sectionRoot == null)
+            {
+                return;
+            }
+
+            sectionRoot.anchorMin = new Vector2(0.5f, 1f);
+            sectionRoot.anchorMax = new Vector2(0.5f, 1f);
+            sectionRoot.pivot = new Vector2(0.5f, 0.5f);
+            sectionRoot.anchoredPosition = Vector2.zero;
+            sectionRoot.localScale = Vector3.one;
+
+            var surface = sectionRoot.GetComponent<Image>();
+            if (surface != null)
+            {
+                var panelColor = UIStyleTokens.Surface.PanelPrimary;
+                panelColor.a = 0.92f;
+                surface.color = panelColor;
+                surface.raycastTarget = false;
+            }
+
+            var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
+            layoutGroup.padding = new RectOffset(12, 12, 10, 10);
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+            layoutGroup.spacing = 8f;
+            layoutGroup.childForceExpandWidth = false;
+            layoutGroup.childForceExpandHeight = false;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = true;
+
+            var fitter = sectionRoot.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var element = sectionRoot.GetComponent<LayoutElement>();
+            element.minWidth = 500f;
+            element.preferredWidth = 500f;
+            element.minHeight = 150f;
+            element.preferredHeight = -1f;
+        }
+
         private RectTransform FindNamedRectTransform(string objectName)
         {
             if (string.IsNullOrWhiteSpace(objectName))
@@ -1024,6 +1185,11 @@ namespace FungusToast.Unity.UI.GameStart
                 boardSizeSectionRoot.gameObject.SetActive(!isMoldSelectionStep);
             }
 
+            if (audioSettingsSectionRoot != null)
+            {
+                audioSettingsSectionRoot.gameObject.SetActive(!isMoldSelectionStep);
+            }
+
             if (testingCardSectionRoot != null)
             {
                 testingCardSectionRoot.gameObject.SetActive(!isMoldSelectionStep);
@@ -1047,7 +1213,26 @@ namespace FungusToast.Unity.UI.GameStart
             SetButtonText(startGameButton, isMoldSelectionStep ? GetMoldStepPrimaryButtonText() : "Choose Mold");
             SetButtonText(backButton, isMoldSelectionStep ? "Back" : "Back");
             startGameButton.interactable = isMoldSelectionStep ? IsCurrentHumanMoldSelected() : selectedPlayerCount.HasValue;
+            RefreshAudioSettingsControls();
             RefreshTestingSectionLayout();
+        }
+
+        private void OnSoundEffectsToggleClicked()
+        {
+            SoundEffectsSettings.ToggleEnabled();
+            RefreshAudioSettingsControls();
+        }
+
+        private void OnSoundEffectsVolumeClicked()
+        {
+            SoundEffectsSettings.CycleVolumeForward();
+            RefreshAudioSettingsControls();
+        }
+
+        private void RefreshAudioSettingsControls()
+        {
+            SetButtonText(soundEffectsToggleButton, $"Sound Effects: {(SoundEffectsSettings.Enabled ? "On" : "Off")}");
+            SetButtonText(soundEffectsVolumeButton, $"SFX Volume: {Mathf.RoundToInt(SoundEffectsSettings.Volume * 100f)}%");
         }
 
         private void ResetMoldSelectionState()

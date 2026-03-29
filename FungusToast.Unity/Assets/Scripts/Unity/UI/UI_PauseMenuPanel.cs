@@ -18,7 +18,7 @@ namespace FungusToast.Unity.UI
         private const float HudButtonWidth = 24f;
         private const float HudButtonHeight = 24f;
         private const float CardWidth = 420f;
-        private const float CardHeight = 360f;
+        private const float CardHeight = 540f;
 
         private GameUIManager gameUI;
         private Action onOpenRequested;
@@ -37,8 +37,11 @@ namespace FungusToast.Unity.UI
         private TextMeshProUGUI titleLabel;
         private TextMeshProUGUI subtitleLabel;
         private GameObject primaryActionsRoot;
+        private GameObject soundSettingsRoot;
         private GameObject confirmationRoot;
         private TextMeshProUGUI confirmationLabel;
+        private Button soundEffectsToggleButton;
+        private Button soundEffectsVolumeButton;
 
         private PendingAction pendingAction;
         private bool gameplayVisible;
@@ -99,6 +102,7 @@ namespace FungusToast.Unity.UI
             overlayCanvasGroup.alpha = 1f;
             overlayCanvasGroup.interactable = true;
             overlayCanvasGroup.blocksRaycasts = true;
+            RefreshSoundSettingsButtons();
             IsOpen = true;
         }
 
@@ -270,9 +274,10 @@ namespace FungusToast.Unity.UI
             primaryLayout.spacing = 10f;
             primaryLayout.childAlignment = TextAnchor.UpperCenter;
             primaryLayout.childControlWidth = true;
-            primaryLayout.childControlHeight = false;
+            primaryLayout.childControlHeight = true;
             primaryLayout.childForceExpandWidth = true;
             primaryLayout.childForceExpandHeight = false;
+            ConfigureContentSection(primaryActionsRoot, minHeight: 188f);
 
             Button resumeButton = CreateActionButton(primaryActionsRoot.transform, "Resume");
             resumeButton.onClick.AddListener(() => onResumeRequested?.Invoke());
@@ -283,14 +288,35 @@ namespace FungusToast.Unity.UI
             Button exitButton = CreateActionButton(primaryActionsRoot.transform, "Exit Game");
             exitButton.onClick.AddListener(RequestExitConfirmation);
 
+            soundSettingsRoot = CreateUiObject("SoundSettings", card.transform);
+            VerticalLayoutGroup soundLayout = soundSettingsRoot.AddComponent<VerticalLayoutGroup>();
+            soundLayout.spacing = 10f;
+            soundLayout.childAlignment = TextAnchor.UpperCenter;
+            soundLayout.childControlWidth = true;
+            soundLayout.childControlHeight = true;
+            soundLayout.childForceExpandWidth = true;
+            soundLayout.childForceExpandHeight = false;
+            ConfigureContentSection(soundSettingsRoot, minHeight: 150f);
+
+            TextMeshProUGUI soundLabel = CreateLabel(soundSettingsRoot.transform, "Sound Effects", 22f, FontStyles.Bold);
+            soundLabel.alignment = TextAlignmentOptions.Center;
+            soundLabel.color = UIStyleTokens.Text.Primary;
+
+            soundEffectsToggleButton = CreateActionButton(soundSettingsRoot.transform, string.Empty);
+            soundEffectsToggleButton.onClick.AddListener(OnSoundEffectsToggleClicked);
+
+            soundEffectsVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty);
+            soundEffectsVolumeButton.onClick.AddListener(OnSoundEffectsVolumeClicked);
+
             confirmationRoot = CreateUiObject("Confirmation", card.transform);
             VerticalLayoutGroup confirmationLayout = confirmationRoot.AddComponent<VerticalLayoutGroup>();
             confirmationLayout.spacing = 12f;
             confirmationLayout.childAlignment = TextAnchor.UpperCenter;
             confirmationLayout.childControlWidth = true;
-            confirmationLayout.childControlHeight = false;
+            confirmationLayout.childControlHeight = true;
             confirmationLayout.childForceExpandWidth = true;
             confirmationLayout.childForceExpandHeight = false;
+            ConfigureContentSection(confirmationRoot, minHeight: 172f);
 
             confirmationLabel = CreateLabel(confirmationRoot.transform, string.Empty, 21f, FontStyles.Normal);
             confirmationLabel.alignment = TextAlignmentOptions.Center;
@@ -312,6 +338,8 @@ namespace FungusToast.Unity.UI
 
             Button cancelButton = CreateActionButton(confirmationButtons.transform, "Cancel");
             cancelButton.onClick.AddListener(CancelPendingAction);
+
+            RefreshSoundSettingsButtons();
         }
 
         private void ApplyPanelState()
@@ -369,6 +397,38 @@ namespace FungusToast.Unity.UI
             }
         }
 
+        private void OnSoundEffectsToggleClicked()
+        {
+            SoundEffectsSettings.ToggleEnabled();
+            RefreshSoundSettingsButtons();
+        }
+
+        private void OnSoundEffectsVolumeClicked()
+        {
+            SoundEffectsSettings.CycleVolumeForward();
+            RefreshSoundSettingsButtons();
+        }
+
+        private void RefreshSoundSettingsButtons()
+        {
+            SetButtonLabel(soundEffectsToggleButton, $"Sound Effects: {(SoundEffectsSettings.Enabled ? "On" : "Off")}");
+            SetButtonLabel(soundEffectsVolumeButton, $"SFX Volume: {Mathf.RoundToInt(SoundEffectsSettings.Volume * 100f)}%");
+        }
+
+        private static void SetButtonLabel(Button button, string labelText)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (label != null)
+            {
+                label.text = labelText;
+            }
+        }
+
         private Button CreateActionButton(Transform parent, string labelText)
         {
             GameObject buttonObject = CreateUiObject(labelText.Replace(" ", string.Empty) + "Button", parent);
@@ -395,6 +455,33 @@ namespace FungusToast.Unity.UI
             label.alignment = TextAlignmentOptions.Center;
             label.color = UIStyleTokens.Button.TextDefault;
             return button;
+        }
+
+        private static void ConfigureContentSection(GameObject section, float minHeight)
+        {
+            if (section == null)
+            {
+                return;
+            }
+
+            ContentSizeFitter fitter = section.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                fitter = section.AddComponent<ContentSizeFitter>();
+            }
+
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            LayoutElement layout = section.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = section.AddComponent<LayoutElement>();
+            }
+
+            layout.minHeight = minHeight;
+            layout.preferredHeight = -1f;
+            layout.flexibleHeight = 0f;
         }
 
         private TextMeshProUGUI CreateLabel(Transform parent, string text, float fontSize, FontStyles fontStyle)

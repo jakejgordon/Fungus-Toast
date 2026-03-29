@@ -8,6 +8,7 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using UnityEngine.Tilemaps;
 using FungusToast.Unity.Grid;
+using FungusToast.Unity;
 using FungusToast.Unity.UI.MutationTree;
 using FungusToast.Unity.UI.Tooltips;
 using System.Linq;
@@ -476,7 +477,13 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             EnsureSoundEffectAudioSource();
-            soundEffectAudioSource.PlayOneShot(mutationUpgradeSuccessClip, mutationUpgradeSuccessVolume);
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(mutationUpgradeSuccessVolume);
+            if (effectiveVolume <= 0f)
+            {
+                return;
+            }
+
+            soundEffectAudioSource.PlayOneShot(mutationUpgradeSuccessClip, effectiveVolume);
         }
 
         public void RefreshSpendPointsButtonUI()
