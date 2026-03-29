@@ -46,6 +46,8 @@ namespace FungusToast.Unity.UI.MutationTree
         [Header("UI Wiring")]
         [SerializeField] private TextMeshProUGUI mutationPointsCounterText;
         [SerializeField] private Button storePointsButton;
+        [SerializeField] private AudioClip mutationUpgradeSuccessClip;
+        [SerializeField, Range(0f, 1f)] private float mutationUpgradeSuccessVolume = 1f;
 
         [Header("Tree Sliding Settings")]
         public float slideDuration = 0.5f;
@@ -67,6 +69,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private bool isSliding = false;
         private bool hasDismissedTreeGuidanceThisGame;
         private TooltipTrigger spendPointsTooltipTrigger;
+        private AudioSource soundEffectAudioSource;
 
         private Player humanPlayer;
         private bool humanTurnEnded = false;
@@ -98,6 +101,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
             else
                 Debug.LogError("mutationTreePanel is NULL at Awake()!");
+
+            EnsureSoundEffectAudioSource();
         }
 
         private void Start()
@@ -322,6 +327,7 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 RefreshSpendPointsButtonUI();
                 RefreshAllMutationButtons(); // <-- Ensures hourglass overlays update
+                PlayMutationUpgradeSuccessSound();
                 TryEndHumanTurn();
                 onResolved?.Invoke(true);
                 return;
@@ -409,6 +415,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
                         RefreshSpendPointsButtonUI();
                         RefreshAllMutationButtons();
+                        PlayMutationUpgradeSuccessSound();
                         TryEndHumanTurn();
                     }
                     else
@@ -441,6 +448,35 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             onResolved?.Invoke(success);
+        }
+
+        private void EnsureSoundEffectAudioSource()
+        {
+            if (soundEffectAudioSource != null)
+            {
+                return;
+            }
+
+            soundEffectAudioSource = GetComponent<AudioSource>();
+            if (soundEffectAudioSource == null)
+            {
+                soundEffectAudioSource = gameObject.AddComponent<AudioSource>();
+            }
+
+            soundEffectAudioSource.playOnAwake = false;
+            soundEffectAudioSource.loop = false;
+            soundEffectAudioSource.spatialBlend = 0f;
+        }
+
+        private void PlayMutationUpgradeSuccessSound()
+        {
+            if (mutationUpgradeSuccessClip == null)
+            {
+                return;
+            }
+
+            EnsureSoundEffectAudioSource();
+            soundEffectAudioSource.PlayOneShot(mutationUpgradeSuccessClip, mutationUpgradeSuccessVolume);
         }
 
         public void RefreshSpendPointsButtonUI()

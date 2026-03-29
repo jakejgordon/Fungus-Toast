@@ -116706,6 +116706,8 @@ MonoBehaviour:
   dockButtonText: {fileID: 1677498023}
   mutationPointsCounterText: {fileID: 541730892}
   storePointsButton: {fileID: 1388654716}
+  mutationUpgradeSuccessClip: {fileID: 8300000, guid: 871d52f60a2a4cb9a31fcffbaa5a87d7, type: 3}
+  mutationUpgradeSuccessVolume: 1
   slideDuration: 0.5
   hiddenPosition: {x: -1920, y: 0}
   visiblePosition: {x: 0, y: 0}
@@ -120070,8 +120072,6 @@ MonoBehaviour:
   gridVisualizer: {fileID: 989759029}
   draftMessagePanel: {fileID: 0}
   draftMessageTitleText: {fileID: 0}
-  draftMessageBodyText: {fileID: 0}
-  draftMessageMaxLines: 14
   draftCompletionHoldSeconds: 2
 --- !u!1 &1737927982
 GameObject:
