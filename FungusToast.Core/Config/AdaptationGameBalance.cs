@@ -16,5 +16,7 @@ namespace FungusToast.Core.Config
         public const int ApicalYieldMutationPointAward = 2;
         public const int CrustalCallusEdgeDistance = 1;
         public const float VesicleBurstExpiredToxinPopChance = 0.075f;
+        public const float RhizomorphicHungerGrowthBonus = 0.10f;
+        public const int RhizomorphicHungerClusterSizeBonus = 1;
     }
 }

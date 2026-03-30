@@ -101,7 +101,12 @@ namespace FungusToast.Core.Campaign
                         AdaptationIds.VesicleBurst,
                         "Vesicle Burst",
                         $"For the rest of the campaign, each of your expired toxins has a {vesicleBurstPercent}% chance to pop and drop friendly toxins into every orthogonally adjacent tile that is empty or occupied by a non-resistant enemy cell, corpse, or toxin.",
-                        "vesicle_burst")
+                        "vesicle_burst"),
+                    new AdaptationDefinition(
+                        AdaptationIds.RhizomorphicHunger,
+                        "Rhizomorphic Hunger",
+                        $"Your colony hunts nutrients with predatory efficiency. Orthogonal growth attempts targeting a nutrient patch tile gain +{(int)(AdaptationGameBalance.RhizomorphicHungerGrowthBonus * 100)}% growth chance. When you claim a nutrient patch, its reward is calculated as if the patch were one tile larger than it actually is.",
+                        "rhizomorphic_hunger")
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;

@@ -256,11 +256,12 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.MaxEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.AnabolicInversion, 1),
-                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, GameBalance.ChemotacticBeaconMaxLevel),
+                    new TargetMutationGoal(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 15),
                     new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
                     new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
-                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, GameBalance.ChemotacticBeaconMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
                 },
                 surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
                 surgeAttemptTurnFrequency: 5,
@@ -2005,7 +2006,7 @@ namespace FungusToast.Core.AI
                     new AdaptationSynergySet(
                         "Rhizolith",
                         "Grows resistant cells every round, edge cells always resist, dead cells next to resistant ones vanish leaving no corpse lane, border threats are cleared on contact, and two repositioning tools ensure territorial coverage. Nearly impossible to contain once established.",
-                        new[] { AdaptationIds.AegisHyphae, AdaptationIds.CrustalCallus, AdaptationIds.SaprophageRing, AdaptationIds.MarginalClamp, AdaptationIds.DistalSpore, AdaptationIds.ConidialRelay })
+                        new[] { AdaptationIds.AegisHyphae, AdaptationIds.CrustalCallus, AdaptationIds.RhizomorphicHunger, AdaptationIds.MarginalClamp, AdaptationIds.DistalSpore, AdaptationIds.ConidialRelay })
                 },
 
                 ["CMP_Control_AnabolicFirst_Hard"] = new[]
