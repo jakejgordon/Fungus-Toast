@@ -56,7 +56,6 @@ Use the following minimal workflow to preserve working memory across sessions:
 - Campaign3 volatility reduction pass: replaced `TST_Training_Overextender` and `TST_Training_ToxicTurtle` in the `30x30 3 AI` pool with `AI12`, leaving a tighter 5-entry bridge pool (`TST_Training_ResilientMycelium`, `AI12`, `CMP_TierCap_GrowthResilience_Easy`, `CMP_Reclaim_Scavenger_Easy`, `CMP_Defense_ReclaimShell_Easy`). Multi-seed safe-proxy validation improved the observed pooled range from roughly `25-70%` in short screens to `35-60%` in 20-game runs and `38-62%` in 50-game confirmations.
 - Reclassified `CMP_Surge_Pulsar` upward to Medium. Also reclassified the Bloom/fortify/mimic mold upward as `CMP_Bloom_FortifyMimic_Medium` and introduced it into the later-medium campaign band (Campaign8+), instead of trying to force it into the easy bucket.
 - TODO: Investigate Mimetic Resilience presentation bug in Unity. Current core tests suggest the 20% eligibility gate is functioning, so focus next on the visual pipeline: `GrowthSource.MimeticResilience` is currently routed through the generic post-growth resistance pulse path instead of a reclaim-specific deferred-overlay sequence. Desired order: old cell fades out, new cell fades in, field pulse plays, then shield appears on the new resistant cell at the end.
-- Temporary audio backlog tracker: `docs/sound-effects-checklist-temp-2026-03-29.md`. Remove it once the sound pass is complete.
 
 ## Active Thread
 

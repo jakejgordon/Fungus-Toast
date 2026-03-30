@@ -107211,6 +107211,8 @@ MonoBehaviour:
   growthPhaseStartVolume: 1
   decayPhaseStartClip: {fileID: 8300000, guid: 93b352b3820bd714f9686cf25ed7993b, type: 3}
   decayPhaseStartVolume: 1
+  draftPhaseStartClip: {fileID: 8300000, guid: ecefc9ffb9bc2204596a5b66a58c0dfd, type: 3}
+  draftPhaseStartVolume: 1
   configuredHumanPlayerCount: 1
   campaignProgression: {fileID: 11400000, guid: ddba19d3898f54445b37abdc3b92a2b7, type: 2}
   magnifyingGlass: {fileID: 325918930}
@@ -120092,6 +120094,10 @@ MonoBehaviour:
   choiceContainer: {fileID: 1610402562}
   cardPrefab: {fileID: 8528227567745809826, guid: 7dede3b59e08fd54e953ba71f543bf16, type: 3}
   gridVisualizer: {fileID: 989759029}
+  draftPickConfirmClip: {fileID: 8300000, guid: fc865796a92e45942a5bc7d436e2c6e4, type: 3}
+  draftPickConfirmVolume: 1
+  adaptationDraftPickConfirmClip: {fileID: 8300000, guid: d2d5b39dbec9a6946a2ba6ef7f8f3e34, type: 3}
+  adaptationDraftPickConfirmVolume: 1
   draftMessagePanel: {fileID: 0}
   draftMessageTitleText: {fileID: 0}
   draftCompletionHoldSeconds: 2

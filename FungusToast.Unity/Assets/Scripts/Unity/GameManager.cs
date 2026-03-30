@@ -179,6 +179,8 @@ namespace FungusToast.Unity
         [SerializeField, Range(0f, 1f)] private float growthPhaseStartVolume = 1f;
         [SerializeField] private AudioClip decayPhaseStartClip = null;
         [SerializeField, Range(0f, 1f)] private float decayPhaseStartVolume = 1f;
+        [SerializeField] private AudioClip draftPhaseStartClip = null;
+        [SerializeField, Range(0f, 1f)] private float draftPhaseStartVolume = 1f;
 
         [Header("Hotseat Config")] 
         public int configuredHumanPlayerCount =1; 
@@ -1014,6 +1016,23 @@ namespace FungusToast.Unity
             soundEffectAudioSource.PlayOneShot(decayPhaseStartClip, effectiveVolume);
         }
 
+        private void PlayDraftPhaseStartSound()
+        {
+            if (draftPhaseStartClip == null)
+            {
+                return;
+            }
+
+            EnsureSoundEffectAudioSource();
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(draftPhaseStartVolume);
+            if (effectiveVolume <= 0f)
+            {
+                return;
+            }
+
+            soundEffectAudioSource.PlayOneShot(draftPhaseStartClip, effectiveVolume);
+        }
+
         #region Hotseat Callbacks
 
         public void OnHumanMutationTurnFinished(Player player)
@@ -1195,11 +1214,13 @@ namespace FungusToast.Unity
             {
                 var tMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
                 var name = tMyco?.Name ?? "Unknown";
+                PlayDraftPhaseStartSound();
                 gameUIManager.PhaseBanner.Show($"Testing: {name}",2f);
                 gameUIManager.GameLogRouter?.OnDraftPhaseStart(name);
             }
             else
             {
+                PlayDraftPhaseStartSound();
                 gameUIManager.PhaseBanner.Show(phaseBannerMessage ?? "Mycovariant Draft Phase!",2f);
                 if (countsTowardRoundCompletion)
                 {

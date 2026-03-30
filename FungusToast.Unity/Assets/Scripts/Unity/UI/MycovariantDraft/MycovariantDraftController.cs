@@ -48,6 +48,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         [SerializeField] private Transform choiceContainer; // Parent for card prefabs
         [SerializeField] private MycovariantCard cardPrefab; // Assign in inspector
         [SerializeField] private GridVisualizer gridVisualizer;
+        [SerializeField] private AudioClip draftPickConfirmClip = null;
+        [SerializeField, Range(0f, 1f)] private float draftPickConfirmVolume = 1f;
+        [SerializeField] private AudioClip adaptationDraftPickConfirmClip = null;
+        [SerializeField, Range(0f, 1f)] private float adaptationDraftPickConfirmVolume = 1f;
 
         [Header("Draft Message Feed (Left Panel)")]
         [SerializeField] private GameObject draftMessagePanel;
@@ -76,6 +80,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private bool isFinishingDraftPhase;
         private bool isCampaignAdaptationDraft;
         private Action<AdaptationDefinition> onAdaptationPicked;
+        private AudioSource soundEffectAudioSource;
 
         private bool _cameraRecenteredThisDraftPhase = false;
 
@@ -296,6 +301,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             if (uiState != DraftUIState.HumanTurn && uiState != DraftUIState.AITurn)
                 return;
 
+            PlayDraftPickConfirmSound();
             GameManager.Instance.GameUI.GameLogRouter?.OnDraftPick(currentPlayer.PlayerName, picked.Name);
 
             AddPlayerFeedEntry(currentPlayer, BuildPickAnnouncement(currentPlayer, picked));
@@ -551,6 +557,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
 
             SetDraftState(DraftUIState.AnimatingPick);
+            PlayAdaptationDraftPickConfirmSound();
             AddDraftMessage($"Adaptation acquired: {picked.Name}.");
 
             var callback = onAdaptationPicked;
@@ -559,6 +566,60 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             HideDraftUI();
             callback?.Invoke(picked);
+        }
+
+        private void EnsureSoundEffectAudioSource()
+        {
+            if (soundEffectAudioSource != null)
+            {
+                return;
+            }
+
+            var soundEffectHost = GameManager.Instance != null ? GameManager.Instance.gameObject : gameObject;
+
+            soundEffectAudioSource = soundEffectHost.GetComponent<AudioSource>();
+            if (soundEffectAudioSource == null)
+            {
+                soundEffectAudioSource = soundEffectHost.AddComponent<AudioSource>();
+            }
+
+            soundEffectAudioSource.playOnAwake = false;
+            soundEffectAudioSource.loop = false;
+            soundEffectAudioSource.spatialBlend = 0f;
+        }
+
+        private void PlayDraftPickConfirmSound()
+        {
+            if (draftPickConfirmClip == null)
+            {
+                return;
+            }
+
+            EnsureSoundEffectAudioSource();
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(draftPickConfirmVolume);
+            if (effectiveVolume <= 0f)
+            {
+                return;
+            }
+
+            soundEffectAudioSource.PlayOneShot(draftPickConfirmClip, effectiveVolume);
+        }
+
+        private void PlayAdaptationDraftPickConfirmSound()
+        {
+            if (adaptationDraftPickConfirmClip == null)
+            {
+                return;
+            }
+
+            EnsureSoundEffectAudioSource();
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(adaptationDraftPickConfirmVolume);
+            if (effectiveVolume <= 0f)
+            {
+                return;
+            }
+
+            soundEffectAudioSource.PlayOneShot(adaptationDraftPickConfirmClip, effectiveVolume);
         }
 
         private void ShowDraftUI()
