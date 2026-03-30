@@ -40,9 +40,10 @@ namespace FungusToast.Core.Phases
 
             // Dynamic random decay scaling based on round (starts adding after configured start round)
             float additionalRandom = GameBalance.GetAdditionalRandomDecayChance(board.CurrentRound);
+            float mycelialBloomPenalty = owner.GetMutationLevel(MutationIds.MycelialBloom) * GameBalance.MycelialBloomRandomDecayPenaltyPerLevel;
 
-            // Random component (cannot go below zero) � includes dynamic scaling, then subtracts harmony reduction
-            float basePlusScaling = GameBalance.BaseRandomDecayChance + additionalRandom;
+            // Random component includes base decay, round scaling, and Mycelial Bloom's growth-for-fragility tradeoff.
+            float basePlusScaling = GameBalance.BaseRandomDecayChance + additionalRandom + mycelialBloomPenalty;
             float randomChance = Math.Max(0f, basePlusScaling - harmonyReduction);
 
             // Age component only after threshold is exceeded

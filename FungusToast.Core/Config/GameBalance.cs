@@ -48,6 +48,7 @@ namespace FungusToast.Core.Config
         
         // Mycelial Bloom (Tier 1 Growth)
         public const float MycelialBloomEffectPerLevel = 0.0025f;
+        public const float MycelialBloomRandomDecayPenaltyPerLevel = 0.001f;
         public const int MycelialBloomMaxLevel = 150;
 
         // Homeostatic Harmony (Tier 1 CellularResilience)

@@ -17,7 +17,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeRoot(new Mutation(
                 id: MutationIds.MycelialBloom,
                 name: "Mycelial Bloom",
-                description: $"Each level grants a {helper.FormatPercent(GameBalance.MycelialBloomEffectPerLevel)} increased chance to grow in the four cardinal directions.",
+                description: $"Each level grants a {helper.FormatPercent(GameBalance.MycelialBloomEffectPerLevel)} increased chance to grow in the four cardinal directions, but also adds {helper.FormatPercent(GameBalance.MycelialBloomRandomDecayPenaltyPerLevel)} random death chance.",
                 flavorText: "Hyphal strands thicken and surge outward, driven by nutrient cues and quorum signals.",
                 type: MutationType.GrowthChance,
                 effectPerLevel: GameBalance.MycelialBloomEffectPerLevel,
