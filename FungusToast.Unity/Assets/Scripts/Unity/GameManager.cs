@@ -175,6 +175,10 @@ namespace FungusToast.Unity
         [SerializeField] private GameObject modeSelectPanel; // NEW: root of mode select UI
         [SerializeField] private AudioClip mutationPhaseStartClip = null;
         [SerializeField, Range(0f, 1f)] private float mutationPhaseStartVolume = 1f;
+        [SerializeField] private AudioClip growthPhaseStartClip = null;
+        [SerializeField, Range(0f, 1f)] private float growthPhaseStartVolume = 1f;
+        [SerializeField] private AudioClip decayPhaseStartClip = null;
+        [SerializeField, Range(0f, 1f)] private float decayPhaseStartVolume = 1f;
 
         [Header("Hotseat Config")] 
         public int configuredHumanPlayerCount =1; 
@@ -752,6 +756,7 @@ namespace FungusToast.Unity
             gameUIManager.GameLogManager?.OnLogSegmentStart("GrowthPhase");
             growthPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
             gridVisualizer.ClearNewlyGrownFlagsForNextGrowthPhase();
+            PlayGrowthPhaseStartSound();
             gameUIManager.PhaseBanner.Show("Growth Phase Begins!",2f);
             phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
             StartCoroutine(BeginGrowthPhaseAfterPreGrowthEffects());
@@ -807,6 +812,7 @@ namespace FungusToast.Unity
             gameUIManager.GameLogRouter?.OnPhaseStart("Decay");
             gameUIManager.GameLogManager?.OnLogSegmentStart("DecayPhase");
             decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
+            PlayDecayPhaseStartSound();
             gameUIManager.PhaseBanner.Show("Decay Phase Begins!",2f);
             phaseProgressTracker?.HighlightDecayPhase();
             decayPhaseRunner.StartDecayPhase(
@@ -972,6 +978,40 @@ namespace FungusToast.Unity
             }
 
             soundEffectAudioSource.PlayOneShot(mutationPhaseStartClip, effectiveVolume);
+        }
+
+        private void PlayGrowthPhaseStartSound()
+        {
+            if (growthPhaseStartClip == null)
+            {
+                return;
+            }
+
+            EnsureSoundEffectAudioSource();
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(growthPhaseStartVolume);
+            if (effectiveVolume <= 0f)
+            {
+                return;
+            }
+
+            soundEffectAudioSource.PlayOneShot(growthPhaseStartClip, effectiveVolume);
+        }
+
+        private void PlayDecayPhaseStartSound()
+        {
+            if (decayPhaseStartClip == null)
+            {
+                return;
+            }
+
+            EnsureSoundEffectAudioSource();
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(decayPhaseStartVolume);
+            if (effectiveVolume <= 0f)
+            {
+                return;
+            }
+
+            soundEffectAudioSource.PlayOneShot(decayPhaseStartClip, effectiveVolume);
         }
 
         #region Hotseat Callbacks

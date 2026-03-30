@@ -16,6 +16,9 @@ namespace FungusToast.Unity.Phases
 {
     public class GrowthPhaseRunner : MonoBehaviour
     {
+        [SerializeField] private AudioClip growthCycleStartClip = null;
+        [SerializeField, Range(0f, 1f)] private float growthCycleStartVolume = 1f;
+
         private GrowthPhaseProcessor processor;
         private GameBoard board;
         private GridVisualizer gridVisualizer;
@@ -26,6 +29,7 @@ namespace FungusToast.Unity.Phases
         private SpecialEventPresentationService specialEventPresentationService;
         public Dictionary<int, int> FailedGrowthsByPlayerId { get; private set; } = new();
         private int runVersion = 0;
+        private AudioSource soundEffectAudioSource;
 
         private int phaseCycle = 0; // 1–5 for UI display
 
@@ -36,6 +40,7 @@ namespace FungusToast.Unity.Phases
             runVersion++;
             this.board = board;
             this.gridVisualizer = gridVisualizer;
+            EnsureSoundEffectAudioSource();
             this.observer = GameManager.Instance.GameUI.GameLogRouter;
             this.specialEventPresentationService = GameManager.Instance.SpecialEventPresentationService;
             this.processor = new GrowthPhaseProcessor(board, players, rng, observer);
@@ -107,6 +112,7 @@ namespace FungusToast.Unity.Phases
             }
 
             phaseCycle++;
+            PlayGrowthCycleStartSound();
 
             var failedThisCycle = processor.ExecuteSingleCycle(roundContext);
             MergeFailedGrowths(failedThisCycle);
@@ -145,6 +151,41 @@ namespace FungusToast.Unity.Phases
                 else
                     FailedGrowthsByPlayerId[kvp.Key] = kvp.Value;
             }
+        }
+
+        private void EnsureSoundEffectAudioSource()
+        {
+            if (soundEffectAudioSource != null)
+            {
+                return;
+            }
+
+            soundEffectAudioSource = GetComponent<AudioSource>();
+            if (soundEffectAudioSource == null)
+            {
+                soundEffectAudioSource = gameObject.AddComponent<AudioSource>();
+            }
+
+            soundEffectAudioSource.playOnAwake = false;
+            soundEffectAudioSource.loop = false;
+            soundEffectAudioSource.spatialBlend = 0f;
+        }
+
+        private void PlayGrowthCycleStartSound()
+        {
+            if (growthCycleStartClip == null)
+            {
+                return;
+            }
+
+            EnsureSoundEffectAudioSource();
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(growthCycleStartVolume);
+            if (effectiveVolume <= 0f)
+            {
+                return;
+            }
+
+            soundEffectAudioSource.PlayOneShot(growthCycleStartClip, effectiveVolume);
         }
 
     }

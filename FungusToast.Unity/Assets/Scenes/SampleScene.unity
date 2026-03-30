@@ -107207,6 +107207,10 @@ MonoBehaviour:
   modeSelectPanel: {fileID: 1539722632}
   mutationPhaseStartClip: {fileID: 8300000, guid: e06edae16b552c140b6e01b40f246962, type: 3}
   mutationPhaseStartVolume: 1
+  growthPhaseStartClip: {fileID: 8300000, guid: 5bc9ed4756ce8224587179badd93bd1a, type: 3}
+  growthPhaseStartVolume: 1
+  decayPhaseStartClip: {fileID: 8300000, guid: 93b352b3820bd714f9686cf25ed7993b, type: 3}
+  decayPhaseStartVolume: 1
   configuredHumanPlayerCount: 1
   campaignProgression: {fileID: 11400000, guid: ddba19d3898f54445b37abdc3b92a2b7, type: 2}
   magnifyingGlass: {fileID: 325918930}
@@ -107969,6 +107973,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 988c3bcefa7124f468830921d9fb809f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  growthCycleStartClip: {fileID: 8300000, guid: b243f0453b2be3d408071f95d1eac6e2, type: 3}
+  growthCycleStartVolume: 1
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
