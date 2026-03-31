@@ -209,13 +209,23 @@ def resolve_ai_adaptations(level_index: int, preset: dict, resolved_ai_names: Li
         return [list(overrides.get(name, [])) for name in resolved_ai_names]
 
 
+def proxy_adaptations_for_level(level_index: int) -> List[str]:
+    """Return the N-1 adaptations the proxy player should have when entering level N.
+    Uses the first N-1 adaptation IDs in canonical numeric order as a deterministic
+    stand-in for the adaptations a human player accumulates by winning levels 0..N-1."""
+    count = max(0, level_index - 1)  # N-1 adaptations when entering level N
+    return [f"adaptation_{i}" for i in range(1, count + 1)]
+
+
 def run_level(level: dict, preset: dict, games: int, seed: int, dry_run: bool) -> int:
     resolved_ai = resolve_campaign_ai_names(level["levelIndex"], preset, seed)
     lineup = [PLAYER_PROXY] + resolved_ai
 
-    # Resolve adaptations: slot 0 = proxy = no adaptations; then one list per AI
+    # Slot 0 = proxy: give them N-1 adaptations where N is the level index.
+    # Slots 1+ = AI players: adaptations from the board preset.
+    proxy_adaptations = proxy_adaptations_for_level(level["levelIndex"])
     ai_adaptations = resolve_ai_adaptations(level["levelIndex"], preset, resolved_ai)
-    full_adaptations = [[]] + ai_adaptations
+    full_adaptations = [proxy_adaptations] + ai_adaptations
 
     experiment_id = f"campaign_balance_lvl{level['levelIndex']:02d}_{preset['presetId']}_g{games}_seed{seed}"
     cmd = [
