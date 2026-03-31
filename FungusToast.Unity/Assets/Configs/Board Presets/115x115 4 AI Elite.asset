@@ -10,15 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dac0b2d101f4c114d91c1aa9449bd5eb, type: 3}
-  m_Name: 120x120 6 AI
+  m_Name: 115x115 4 AI Elite
   m_EditorClassIdentifier: 
-  presetId: Campaign11
-  boardWidth: 120
-  boardHeight: 120
+  presetId: Campaign10
+  boardWidth: 115
+  boardHeight: 115
   aiPlayers:
-  - strategyName: AI11
-  - strategyName: CMP_Economy_KillReclaim_Medium
-  - strategyName: CMP_Bloom_CreepingNecro_Medium
-  - strategyName: CMP_Bloom_BeaconRegression_Medium
+  - strategyName: CMP_AnabolicBeaconRhizolith_Elite
+    startingAdaptationIds:
+    - adaptation_6
+    - adaptation_10
+    - adaptation_8
+  - strategyName: CMP_Surge_BeaconTempo_Medium
+    startingAdaptationIds: []
   - strategyName: CMP_Control_AnabolicRebirth_Medium
-  - strategyName: CMP_Economy_LateSpike_Hard
+    startingAdaptationIds: []
+  - strategyName: CMP_Control_AnabolicFirst_Hard
+    startingAdaptationIds: []
