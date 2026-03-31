@@ -527,3 +527,35 @@ First-pass pooled screens were run by taking the current authored fixed lineup f
 3. Use the cleaned-up pool to refine the target Campaign0-14 progression.
 4. After that, do the actual `CMP_*` rename migration and update Unity board presets.
 5. Then implement the campaign AI pool system.
+
+## Level 10 Elite: Rhizolith (2026-03-31)
+
+**New level inserted between old Campaign9 and Campaign10 (now Campaign11).**
+Campaign now has 16 levels (0–15).
+
+### Board
+- 115×115, 5 players total (campaign player + 4 AI), nutrient patches on
+
+### Lineup
+| Slot | Strategy | Adaptations |
+|---|---|---|
+| 0 (player) | TST_CampaignPlayer_SafeBaseline | 9 (adaptation_1..9) |
+| 1 (elite) | CMP_AnabolicBeaconRhizolith_Elite | AegisHyphae, CrustalCallus, MarginalClamp |
+| 2 | CMP_Surge_BeaconTempo_Medium | — |
+| 3 | CMP_Control_AnabolicRebirth_Medium | — |
+| 4 | CMP_Economy_LateSpike_Hard | — |
+
+### Balance result (50 games, seed 20260401)
+| Strategy | Win % |
+|---|---|
+| TST_CampaignPlayer_SafeBaseline | **56%** ✅ (target: 30–60%) |
+| CMP_Surge_BeaconTempo_Medium | 16% |
+| CMP_AnabolicBeaconRhizolith_Elite | 10% |
+| CMP_Economy_LateSpike_Hard | 10% |
+| CMP_Control_AnabolicRebirth_Medium | 8% |
+
+### Notes
+- Proxy adaptations now baked into `run_campaign_balance.py`: slot 0 gets N-1 adaptations for level N.
+- `CMP_AnabolicBeaconRhizolith_Elite` is a campaign-registered mirror of `TST_AnabolicBeaconNecroRegressionCascade`.
+- `CMP_Control_AnabolicFirst_Hard` was too dominant (85% when used) — replaced with `CMP_Economy_LateSpike_Hard`.
+- Fixed `SporicidalBloom` crash (`ToxinHelper.ConvertToToxin` now returns silently on alive cell instead of throwing).
