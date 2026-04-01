@@ -20,5 +20,6 @@ namespace FungusToast.Core.Config
         public const int RhizomorphicHungerClusterSizeBonus = 1;
         public const int MycelialCrescendoFirstTriggerRound = 6;
         public const int MycelialCrescendoSecondTriggerRound = 16;
+        public const float OssifiedAdvanceOrthogonalBonus = 0.025f;
     }
 }

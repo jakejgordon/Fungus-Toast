@@ -111,7 +111,12 @@ namespace FungusToast.Core.Campaign
                         AdaptationIds.MycelialCrescendo,
                         "Mycelial Crescendo",
                         $"At round {AdaptationGameBalance.MycelialCrescendoFirstTriggerRound} and round {AdaptationGameBalance.MycelialCrescendoSecondTriggerRound}, your colony erupts with unsolicited evolutionary pressure — a random inactive Mycelial Surge activates for free.",
-                        "mycelial_crescendo")
+                        "mycelial_crescendo"),
+                    new AdaptationDefinition(
+                        AdaptationIds.OssifiedAdvance,
+                        "Ossified Advance",
+                        $"For the rest of the campaign, each of your resistant cells gains +{(int)(AdaptationGameBalance.OssifiedAdvanceOrthogonalBonus * 100)}% orthogonal growth chance.",
+                        "ossified_advance")
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;

@@ -132,6 +132,8 @@ namespace FungusToast.Core.Growth
             bool hasMaxCreepingMold = owner.GetMutationLevel(MutationIds.CreepingMold) == GameBalance.CreepingMoldMaxLevel;
             float edgeMultiplier = GetEdgeGrowthMultiplier(owner, sourceTile, board);
             bool hasRhizomorphicHunger = owner.HasAdaptation(AdaptationIds.RhizomorphicHunger);
+            bool hasOssifiedAdvance = owner.HasAdaptation(AdaptationIds.OssifiedAdvance);
+            bool sourceIsResistant = sourceTile.FungalCell?.IsResistant == true;
             foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
             {
                 if (!tile.IsOccupied && !board.IsTileBlockedForOccupation(tile.TileId) && tile.TileId != sourceTile.TileId)
@@ -139,7 +141,10 @@ namespace FungusToast.Core.Growth
                     float nutrientBonus = (hasRhizomorphicHunger && tile.HasNutrientPatch)
                         ? AdaptationGameBalance.RhizomorphicHungerGrowthBonus
                         : 0f;
-                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier + nutrientBonus, null, surgeBonus));
+                    float ossifiedBonus = (hasOssifiedAdvance && sourceIsResistant)
+                        ? AdaptationGameBalance.OssifiedAdvanceOrthogonalBonus
+                        : 0f;
+                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier + nutrientBonus + ossifiedBonus, null, surgeBonus));
                 }
                 else if (hasMaxCreepingMold && tile.FungalCell != null && tile.FungalCell.IsToxin)
                 {

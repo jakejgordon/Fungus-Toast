@@ -102,6 +102,9 @@ namespace FungusToast.Unity.UI.Campaign
                         case "mycelial_crescendo":
                             DrawMycelialCrescendo(texture, drawAccent, highlight);
                             break;
+                        case "ossified_advance":
+                            DrawOssifiedAdvance(texture, drawAccent, highlight);
+                            break;
                         default:
                             DrawFallback(texture, drawAccent, highlight);
                             break;
@@ -130,6 +133,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "hyphal_bridge" => Color.Lerp(UIStyleTokens.Accent.Moss, UIStyleTokens.Surface.PanelPrimary, 0.42f),
                 "vesicle_burst" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Accent.Putrefaction, 0.3f),
                 "mycelial_crescendo" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.Surface.PanelPrimary, 0.40f),
+                "ossified_advance" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.45f),
                 _ => UIStyleTokens.Surface.PanelPrimary
             };
         }
@@ -154,6 +158,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "hyphal_bridge" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.State.Info, 0.25f),
                 "vesicle_burst" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Accent.Putrefaction, 0.35f),
                 "mycelial_crescendo" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.State.Warning, 0.25f),
+                "ossified_advance" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Text.Primary, 0.18f),
                 _ => UIStyleTokens.Text.Primary
             };
         }
@@ -354,6 +359,24 @@ namespace FungusToast.Unity.UI.Campaign
             DrawLine(texture, 27, 14, 32, 18, accent, 1);
             DrawLine(texture, 13, 14, 8, 10, accent, 1);
             DrawLine(texture, 13, 14, 8, 18, accent, 1);
+        }
+
+        private static void DrawOssifiedAdvance(Texture2D texture, Color accent, Color highlight)
+        {
+            // Armored cell body — thick outer ring representing resistance
+            DrawRing(texture, 20, 20, 12, 3, accent);
+            // Inner resistant core
+            FillCircle(texture, 20, 20, 5, highlight);
+            // Four orthogonal growth spurs radiating outward from the fortified cell
+            DrawLine(texture, 20, 25, 20, 33, accent, 2); // North
+            DrawLine(texture, 20, 15, 20, 7,  accent, 2); // South
+            DrawLine(texture, 25, 20, 33, 20, accent, 2); // East
+            DrawLine(texture, 15, 20, 7,  20, accent, 2); // West
+            // Arrow tips on each spur
+            FillCircle(texture, 20, 33, 2, highlight);
+            FillCircle(texture, 20, 7,  2, highlight);
+            FillCircle(texture, 33, 20, 2, highlight);
+            FillCircle(texture, 7,  20, 2, highlight);
         }
 
         private static void DrawFallback(Texture2D texture, Color accent, Color highlight)

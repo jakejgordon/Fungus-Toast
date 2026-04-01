@@ -182,6 +182,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Surge activated for free by the Mycelial Crescendo adaptation.
         /// </summary>
-        MycelialCrescendo
+        MycelialCrescendo,
+
+        /// <summary>
+        /// Orthogonal growth bonus from resistant cells via the Ossified Advance adaptation.
+        /// </summary>
+        OssifiedAdvance
     }
 }
