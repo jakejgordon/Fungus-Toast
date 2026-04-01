@@ -19,21 +19,58 @@ Output files are generated with timestamped filenames even when no `--output` pa
 
 ## Minimum Balance Reporting Standard
 
-For balance discussions, report these per-player metrics at minimum:
+For balance discussions, post-simulation summaries should always report these per-player metrics:
 
-1. `WinRate` (% of games won)
-2. `Avg Alive` (average living cells at game end)
-3. `Avg End Toxins` (average toxin cells owned at game end)
+1. `Win %`
+2. `Avg Living Cells`
+3. `Avg Dead Cells`
+4. `Avg Toxins`
 
-Where to find them:
+Canonical source:
 
-- Console output: `=== Per-Player Summary ===`
-- Parquet export: `players.parquet`
+- `players.parquet`
 
-For end-state composition questions such as "where did this strategy's living cells come from?", use:
+Preferred rendered columns:
 
-- Parquet export: `living_cell_sources.parquet`
-- Grain: one row per `(game, player, growth source)` with `LivingCellCount`
+- `Player`
+- `Win %`
+- `Avg Living Cells`
+- `Avg Dead Cells`
+- `Avg Toxins`
+
+Default sort:
+
+- `Win %` descending
+- then `Avg Living Cells` descending
+
+These values are also emitted by the offline analytics workflow as:
+
+- `post_simulation_player_summary.csv`
+
+For end-state composition questions such as "where did this strategy's living cells come from?", render a table with:
+
+- `Player`
+- `Total Living`
+- `Growth Source`
+- `Count`
+- `% From Growth Source`
+
+Canonical source:
+
+- `living_cell_sources.parquet`
+- grain: one row per `(game, player, growth source)` with `LivingCellCount`
+
+Required aggregation and sort order:
+
+- Aggregate `Total Living` from `players.parquet`
+- Aggregate source `Count` from `living_cell_sources.parquet`
+- Compute `% From Growth Source = Count / Total Living`
+- Sort by `Total Living` descending at the player level
+- Then sort by `Count` descending within each player
+
+These values are also emitted by the offline analytics workflow as:
+
+- `growth_source_summary.csv`
 
 Fallback if older output files do not include per-player end-toxin values:
 
@@ -116,6 +153,28 @@ When automated terminal execution fails:
 2. **Ask for the output file path** once the simulation completes
 3. **Use a file-read tool** (for example `read_file`) to read and analyze simulation results
 4. **Expected output path format:** `FungusToast.Simulation\bin\Debug\net8.0\SimulationOutput\Simulation_output_YYYY-MM-DDTHH-mm-ss.txt`
+
+### Standard post-simulation analysis workflow
+
+When the user asks for a simulation summary after a run, default to this workflow:
+
+1. Read the Parquet export folder for the experiment.
+2. Produce the per-player summary with `Win %`, `Avg Living Cells`, `Avg Dead Cells`, and `Avg Toxins`.
+3. If the user asks about living-cell origins, also render the growth-source table using the required columns and sort order above.
+4. Prefer the offline analytics helper when available so the summary can be generated quickly and consistently.
+
+Recommended command:
+
+```powershell
+cd FungusToast.Analytics
+python analyze_balance.py --run-folder "..\FungusToast.Simulation\bin\Debug\net8.0\SimulationParquet\<experiment-id>"
+```
+
+Standard analysis artifacts now include:
+
+- `post_simulation_player_summary.csv`
+- `growth_source_summary.csv`
+- `balance_recommendations.md`
 
 ### Common Manual Execution Issues:
 

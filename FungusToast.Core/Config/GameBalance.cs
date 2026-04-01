@@ -192,8 +192,8 @@ namespace FungusToast.Core.Config
         public const int NecrophyticBloomMaxLevel = 5;
 
         // Necrohyphal Infiltration (Tier 5 CellularResilience)
-        public const float NecrohyphalInfiltrationChancePerLevel = 0.006f;
-        public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.08f;
+        public const float NecrohyphalInfiltrationChancePerLevel = 0.005f;
+        public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.075f;
         public const int NecrohyphalInfiltrationMaxLevel = 5;
 
         // Necrotoxic Conversion (Tier 5 Fungicide)

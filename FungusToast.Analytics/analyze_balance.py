@@ -107,6 +107,102 @@ def _empty_nutrient_summary() -> pd.DataFrame:
     return pd.DataFrame(columns=cols)
 
 
+def _empty_player_summary() -> pd.DataFrame:
+    cols = [
+        "player",
+        "strategy_theme",
+        "games",
+        "wins",
+        "win_pct",
+        "avg_living_cells",
+        "avg_dead_cells",
+        "avg_toxins",
+    ]
+    return pd.DataFrame(columns=cols)
+
+
+def _empty_growth_source_summary() -> pd.DataFrame:
+    cols = [
+        "player",
+        "total_living",
+        "growth_source",
+        "count",
+        "pct_from_growth_source",
+    ]
+    return pd.DataFrame(columns=cols)
+
+
+def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
+    required_columns = {
+        "strategy_name",
+        "strategy_theme",
+        "game_index",
+        "is_winner",
+        "living_cells",
+        "dead_cells",
+        "end_game_toxin_cells",
+    }
+    if players.empty or not required_columns.issubset(players.columns):
+        return _empty_player_summary()
+
+    grouped = players.groupby(["strategy_name", "strategy_theme"], as_index=False).agg(
+        games=("game_index", "count"),
+        wins=("is_winner", "sum"),
+        avg_living_cells=("living_cells", "mean"),
+        avg_dead_cells=("dead_cells", "mean"),
+        avg_toxins=("end_game_toxin_cells", "mean"),
+    )
+    grouped["player"] = grouped["strategy_name"]
+    grouped["win_pct"] = grouped["wins"] / grouped["games"].clip(lower=1) * 100.0
+
+    ordered = grouped[
+        [
+            "player",
+            "strategy_theme",
+            "games",
+            "wins",
+            "win_pct",
+            "avg_living_cells",
+            "avg_dead_cells",
+            "avg_toxins",
+        ]
+    ].sort_values(["win_pct", "avg_living_cells", "player"], ascending=[False, False, True])
+
+    return ordered.reset_index(drop=True)
+
+
+def build_growth_source_summary(players: pd.DataFrame, living_cell_sources: pd.DataFrame) -> pd.DataFrame:
+    required_player_columns = {"strategy_name", "living_cells"}
+    required_source_columns = {"strategy_name", "growth_source_display_name", "living_cell_count"}
+    if (
+        players.empty
+        or living_cell_sources.empty
+        or not required_player_columns.issubset(players.columns)
+        or not required_source_columns.issubset(living_cell_sources.columns)
+    ):
+        return _empty_growth_source_summary()
+
+    total_living = players.groupby("strategy_name", as_index=False).agg(total_living=("living_cells", "sum"))
+    grouped = living_cell_sources.groupby(["strategy_name", "growth_source_display_name"], as_index=False).agg(
+        count=("living_cell_count", "sum")
+    )
+    grouped = grouped.merge(total_living, on="strategy_name", how="left")
+    grouped["total_living"] = grouped["total_living"].fillna(0)
+    grouped["pct_from_growth_source"] = np.where(
+        grouped["total_living"] > 0,
+        grouped["count"] / grouped["total_living"] * 100.0,
+        0.0,
+    )
+    grouped["player"] = grouped["strategy_name"]
+    grouped["growth_source"] = grouped["growth_source_display_name"]
+
+    ordered = grouped[
+        ["player", "total_living", "growth_source", "count", "pct_from_growth_source"]
+    ].sort_values(["total_living", "count", "player", "growth_source"], ascending=[False, False, True, True])
+
+    return ordered.reset_index(drop=True)
+
+
 def build_mutation_by_opponent_theme(players: pd.DataFrame, mutations: pd.DataFrame) -> pd.DataFrame:
     if players.empty or mutations.empty or "dominant_opponent_theme" not in players.columns:
         return pd.DataFrame(
@@ -551,6 +647,8 @@ def _filter_scores_for_report(
 
 
 def write_markdown_report(
+    player_summary: pd.DataFrame,
+    growth_source_summary: pd.DataFrame,
     mutation_scores: pd.DataFrame,
     mycovariant_scores: pd.DataFrame,
     mutation_by_opponent_theme: pd.DataFrame,
@@ -583,6 +681,8 @@ def write_markdown_report(
     top_synergies = mutation_synergies.head(12)
     top_interactions = myco_mutation_interactions.head(12)
     top_nutrient_strategies = nutrient_summary.head(12)
+    full_player_summary = player_summary.copy()
+    full_growth_source_summary = growth_source_summary.copy()
 
     def _table(df: pd.DataFrame, cols: list[str]) -> str:
         if df.empty:
@@ -598,6 +698,10 @@ def write_markdown_report(
         "- For mutations, includes low-tier timing/intensity metrics via first-upgrade timing and level milestones.",
         f"- Report filtering: confidence >= {min_confidence:.2f}, picks >= {min_picks}, eligible_samples >= {min_eligible_samples}.",
         "",
+        "## Post-Simulation Player Summary",
+        _table(full_player_summary.round(2), ["player", "win_pct", "avg_living_cells", "avg_dead_cells", "avg_toxins"]),
+        "## Growth Source Composition",
+        _table(full_growth_source_summary.round(2), ["player", "total_living", "growth_source", "count", "pct_from_growth_source"]),
         "## Mutations - OP Candidates",
         _table(top_mut_op, ["mutation_name", "mutation_tier", "mutation_category", "eligible_samples", "picks", "pick_rate_eligible", "win_lift_shrunk", "avg_level", "avg_first_upgrade_round", "early_level_intensity", "reached_l3_rate", "balance_score", "recommendation"]),
         "## Mutations - UP Candidates",
@@ -640,11 +744,17 @@ def main() -> None:
     players = pd.read_parquet(run_folder / "players.parquet")
     mutations = pd.read_parquet(run_folder / "mutations.parquet")
     mycovariants = pd.read_parquet(run_folder / "mycovariants.parquet")
+    living_cell_sources_path = run_folder / "living_cell_sources.parquet"
+    living_cell_sources = pd.read_parquet(living_cell_sources_path) if living_cell_sources_path.exists() else pd.DataFrame()
 
     players = _normalize_columns(players)
     mutations = _normalize_columns(mutations)
     mycovariants = _normalize_columns(mycovariants)
+    if not living_cell_sources.empty:
+        living_cell_sources = _normalize_columns(living_cell_sources)
 
+    player_summary = build_player_summary(players)
+    growth_source_summary = build_growth_source_summary(players, living_cell_sources)
     mutation_scores = build_mutation_scores(players, mutations)
     mycovariant_scores = build_mycovariant_scores(players, mycovariants)
     mutation_by_opponent_theme = build_mutation_by_opponent_theme(players, mutations)
@@ -657,6 +767,8 @@ def main() -> None:
     )
     nutrient_summary = build_nutrient_summary(players)
 
+    player_summary.to_csv(output_dir / "post_simulation_player_summary.csv", index=False)
+    growth_source_summary.to_csv(output_dir / "growth_source_summary.csv", index=False)
     mutation_scores.to_csv(output_dir / "mutation_recommendations.csv", index=False)
     mycovariant_scores.to_csv(output_dir / "mycovariant_recommendations.csv", index=False)
     mutation_by_opponent_theme.to_csv(output_dir / "mutation_by_opponent_theme.csv", index=False)
@@ -664,6 +776,8 @@ def main() -> None:
     myco_mutation_interactions.to_csv(output_dir / "mycovariant_mutation_interactions.csv", index=False)
     nutrient_summary.to_csv(output_dir / "nutrient_economy_summary.csv", index=False)
     write_markdown_report(
+        player_summary,
+        growth_source_summary,
         mutation_scores,
         mycovariant_scores,
         mutation_by_opponent_theme,
