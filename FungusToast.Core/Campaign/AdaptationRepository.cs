@@ -106,7 +106,12 @@ namespace FungusToast.Core.Campaign
                         AdaptationIds.RhizomorphicHunger,
                         "Rhizomorphic Hunger",
                         $"Your colony hunts nutrients with predatory efficiency. Orthogonal growth attempts targeting a nutrient patch tile gain +{(int)(AdaptationGameBalance.RhizomorphicHungerGrowthBonus * 100)}% growth chance. When you claim a nutrient patch, its reward is calculated as if the patch were one tile larger than it actually is.",
-                        "rhizomorphic_hunger")
+                        "rhizomorphic_hunger"),
+                    new AdaptationDefinition(
+                        AdaptationIds.MycelialCrescendo,
+                        "Mycelial Crescendo",
+                        $"At round {AdaptationGameBalance.MycelialCrescendoFirstTriggerRound} and round {AdaptationGameBalance.MycelialCrescendoSecondTriggerRound}, your colony erupts with unsolicited evolutionary pressure — a random inactive Mycelial Surge activates for free.",
+                        "mycelial_crescendo")
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;

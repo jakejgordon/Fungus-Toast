@@ -71,6 +71,20 @@ namespace FungusToast.Core.Phases
                     }
                 }
             }
+
+            if (board.CurrentRound == AdaptationGameBalance.MycelialCrescendoFirstTriggerRound
+                || board.CurrentRound == AdaptationGameBalance.MycelialCrescendoSecondTriggerRound)
+            {
+                foreach (var player in players)
+                {
+                    if (!player.HasAdaptation(AdaptationIds.MycelialCrescendo))
+                    {
+                        continue;
+                    }
+
+                    TryApplyMycelialCrescendo(player, board, rng, observer);
+                }
+            }
         }
 
         public static void OnPostGrowthPhaseCompleted(
@@ -380,6 +394,48 @@ namespace FungusToast.Core.Phases
                     adaptation.MarkTriggered();
                 }
             }
+        }
+
+        private static void TryApplyMycelialCrescendo(
+            Player player,
+            GameBoard board,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            var eligibleSurges = MutationRegistry.All.Values
+                .Where(mutation =>
+                    mutation.IsSurge
+                    && mutation.Category == MutationCategory.MycelialSurges
+                    && !player.IsSurgeActive(mutation.Id)
+                    && player.GetMutationLevel(mutation.Id) > 0
+                    && player.GetMutationLevel(mutation.Id) < mutation.MaxLevel)
+                .ToList();
+
+            if (eligibleSurges.Count == 0)
+            {
+                return;
+            }
+
+            var chosenSurge = eligibleSurges[rng.Next(eligibleSurges.Count)];
+            int cost = player.GetMutationPointCost(chosenSurge);
+            player.MutationPoints += cost;
+
+            if (!player.TryUpgradeMutation(chosenSurge, observer, board.CurrentRound))
+            {
+                player.MutationPoints -= cost;
+                return;
+            }
+
+            observer.RecordMycelialCrescendoSurge(player.PlayerId, chosenSurge.Name);
+
+            int sourceTileId = player.StartingTileId ?? -1;
+            board.OnSpecialBoardEventTriggered(
+                new SpecialBoardEventArgs(
+                    SpecialBoardEventKind.MycelialCrescendoTriggered,
+                    player.PlayerId,
+                    sourceTileId,
+                    sourceTileId,
+                    surgeName: chosenSurge.Name));
         }
 
         private static bool TryApplyConidialRelay(Player player, GameBoard board, Random rng)

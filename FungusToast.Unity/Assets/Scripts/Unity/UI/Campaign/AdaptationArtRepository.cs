@@ -99,6 +99,9 @@ namespace FungusToast.Unity.UI.Campaign
                         case "vesicle_burst":
                             DrawVesicleBurst(texture, drawAccent, highlight);
                             break;
+                        case "mycelial_crescendo":
+                            DrawMycelialCrescendo(texture, drawAccent, highlight);
+                            break;
                         default:
                             DrawFallback(texture, drawAccent, highlight);
                             break;
@@ -126,6 +129,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "spore_salvo" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Surface.PanelPrimary, 0.48f),
                 "hyphal_bridge" => Color.Lerp(UIStyleTokens.Accent.Moss, UIStyleTokens.Surface.PanelPrimary, 0.42f),
                 "vesicle_burst" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Accent.Putrefaction, 0.3f),
+                "mycelial_crescendo" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.Surface.PanelPrimary, 0.40f),
                 _ => UIStyleTokens.Surface.PanelPrimary
             };
         }
@@ -149,6 +153,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "spore_salvo" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.State.Danger, 0.35f),
                 "hyphal_bridge" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.State.Info, 0.25f),
                 "vesicle_burst" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Accent.Putrefaction, 0.35f),
+                "mycelial_crescendo" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.State.Warning, 0.25f),
                 _ => UIStyleTokens.Text.Primary
             };
         }
@@ -328,6 +333,27 @@ namespace FungusToast.Unity.UI.Campaign
             DrawLine(texture, 20, 23, 20, 27, highlight, 1);
             DrawLine(texture, 13, 20, 17, 20, highlight, 1);
             DrawLine(texture, 23, 20, 27, 20, highlight, 1);
+        }
+
+        private static void DrawMycelialCrescendo(Texture2D texture, Color accent, Color highlight)
+        {
+            // Outer burst ring representing the surge wave
+            DrawRing(texture, 20, 20, 13, 2, accent);
+            // Inner ring — tighter energy band
+            DrawRing(texture, 20, 20, 7, 1, highlight);
+            // Glowing core
+            FillCircle(texture, 20, 20, 3, highlight);
+            // Two surge nodes — one for each trigger round (6 and 16)
+            FillCircle(texture, 20, 7, 3, accent);
+            FillCircle(texture, 20, 33, 3, accent);
+            // Energy lines connecting core to nodes
+            DrawLine(texture, 20, 17, 20, 10, highlight, 1);
+            DrawLine(texture, 20, 23, 20, 30, highlight, 1);
+            // Forked lateral bursts suggesting radiating surge energy
+            DrawLine(texture, 27, 14, 32, 10, accent, 1);
+            DrawLine(texture, 27, 14, 32, 18, accent, 1);
+            DrawLine(texture, 13, 14, 8, 10, accent, 1);
+            DrawLine(texture, 13, 14, 8, 18, accent, 1);
         }
 
         private static void DrawFallback(Texture2D texture, Color accent, Color highlight)

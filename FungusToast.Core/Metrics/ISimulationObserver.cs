@@ -94,5 +94,6 @@ namespace FungusToast.Core.Metrics
         void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints);
         void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected);
         void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset);
+        void RecordMycelialCrescendoSurge(int playerId, string surgeName);
     }
 }

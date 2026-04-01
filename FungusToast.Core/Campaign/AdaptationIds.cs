@@ -18,5 +18,6 @@ namespace FungusToast.Core.Campaign
         public const string VesicleBurst = "adaptation_14";
         public const string HyphalBridge = "adaptation_15";
         public const string RhizomorphicHunger = "adaptation_16";
+        public const string MycelialCrescendo = "adaptation_17";
     }
 }

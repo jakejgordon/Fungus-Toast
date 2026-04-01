@@ -255,6 +255,12 @@ namespace FungusToast.Unity
                         specialEvent.NutrientRewardType ?? NutrientRewardType.MutationPoints,
                         specialEvent.RewardAmount > 0 ? specialEvent.RewardAmount : specialEvent.AffectedTileIds.Distinct().Count());
                     break;
+                case SpecialBoardEventKind.MycelialCrescendoTriggered:
+                    uiManager.GameLogRouter?.RecordMycelialCrescendoSurge(specialEvent.PlayerId, specialEvent.SurgeName ?? "a surge");
+                    uiManager.PhaseBanner?.Show(
+                        "Mycelial Crescendo erupts a free surge!",
+                        UIEffectConstants.MycelialCrescendoBannerHoldSeconds);
+                    break;
                 case SpecialBoardEventKind.NecrophyticBloomComposted:
                     int compostedTiles = specialEvent.AffectedTileIds?.Distinct().Count() ?? 0;
                     if (compostedTiles <= 0)
@@ -289,7 +295,8 @@ namespace FungusToast.Unity
                 || eventKind == SpecialBoardEventKind.DistalSporeTriggered
                 || eventKind == SpecialBoardEventKind.SporeSalvoTriggered
                 || eventKind == SpecialBoardEventKind.HyphalBridgeTriggered
-                || eventKind == SpecialBoardEventKind.NutrientPatchConsumed;
+                || eventKind == SpecialBoardEventKind.NutrientPatchConsumed
+                || eventKind == SpecialBoardEventKind.MycelialCrescendoTriggered;
         }
 
         private List<SpecialBoardEventArgs> CollectSporeSalvoBatch(SpecialBoardEventArgs firstEvent)

@@ -378,6 +378,12 @@ namespace FungusToast.Unity.UI.GameLog
         }
         public void RecordHypersystemicDiagonalReclaim(int playerId) { }
         public void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected) { }
+
+        public void RecordMycelialCrescendoSurge(int playerId, string surgeName)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordMycelialCrescendoSurge(playerId, surgeName);
+        }
         #endregion
     }
 }

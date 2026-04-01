@@ -18,5 +18,7 @@ namespace FungusToast.Core.Config
         public const float VesicleBurstExpiredToxinPopChance = 0.075f;
         public const float RhizomorphicHungerGrowthBonus = 0.10f;
         public const int RhizomorphicHungerClusterSizeBonus = 1;
+        public const int MycelialCrescendoFirstTriggerRound = 6;
+        public const int MycelialCrescendoSecondTriggerRound = 16;
     }
 }

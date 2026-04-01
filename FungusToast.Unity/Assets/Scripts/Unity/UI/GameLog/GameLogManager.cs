@@ -907,6 +907,7 @@ namespace FungusToast.Unity.UI.GameLog
                 GameLogCategory.Lucky);
         }
         public void RecordDistalSporeDeployment(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Distal Spore rooted a resistant cell in the far corner", GameLogCategory.Lucky); }
+        public void RecordMycelialCrescendoSurge(int playerId, string surgeName) { if (IsHuman(playerId)) AddPlayerEvent(playerId, $"Mycelial Crescendo erupts — {surgeName} activates for free!", GameLogCategory.Lucky); }
         public void RecordAscusPrimacyDraftPriority(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Ascus Primacy allows you to draft first!", GameLogCategory.Lucky); }
         public void RecordAegisHyphaeResistance(int playerId, int cellsFortified)
         {

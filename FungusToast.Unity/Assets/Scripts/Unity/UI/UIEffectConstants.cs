@@ -129,6 +129,11 @@ namespace FungusToast.Unity.UI
         public const float RetrogradeBloomBannerHoldSeconds = 0.75f;
 
         /// <summary>
+        /// Hold duration for the Mycelial Crescendo free surge banner.
+        /// </summary>
+        public const float MycelialCrescendoBannerHoldSeconds = 0.75f;
+
+        /// <summary>
         /// Hold duration for the Aegis Hyphae post-growth banner.
         /// </summary>
         public const float AegisHyphaeBannerHoldSeconds = 0.55f;

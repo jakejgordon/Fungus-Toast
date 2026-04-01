@@ -18,7 +18,8 @@ namespace FungusToast.Core.Events
         VesicleBurstTriggered = 8,
         HyphalBridgeTriggered = 9,
         NutrientPatchConsumed = 10,
-        NecrophyticBloomComposted = 11
+        NecrophyticBloomComposted = 11,
+        MycelialCrescendoTriggered = 12,
     }
 
     public sealed class SpecialBoardEventArgs : EventArgs
@@ -32,6 +33,7 @@ namespace FungusToast.Core.Events
         public NutrientRewardType? NutrientRewardType { get; }
         public NutrientPatchSource? NutrientPatchSource { get; }
         public int RewardAmount { get; }
+        public string? SurgeName { get; }
 
         public SpecialBoardEventArgs(
             SpecialBoardEventKind eventKind,
@@ -42,7 +44,8 @@ namespace FungusToast.Core.Events
             NutrientPatchType? nutrientPatchType = null,
             NutrientRewardType? nutrientRewardType = null,
             int rewardAmount = 0,
-            NutrientPatchSource? nutrientPatchSource = null)
+            NutrientPatchSource? nutrientPatchSource = null,
+            string? surgeName = null)
         {
             EventKind = eventKind;
             PlayerId = playerId;
@@ -53,6 +56,7 @@ namespace FungusToast.Core.Events
             NutrientRewardType = nutrientRewardType;
             NutrientPatchSource = nutrientPatchSource;
             RewardAmount = rewardAmount;
+            SurgeName = surgeName;
         }
     }
 }

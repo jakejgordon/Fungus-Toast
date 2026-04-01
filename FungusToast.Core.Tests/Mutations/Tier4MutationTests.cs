@@ -552,5 +552,6 @@ public class Tier4MutationTests
         public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints) { }
         public void RecordCompetitiveAntagonismTargeting(int playerId, int targetsAffected) { }
         public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset) { }
+        public void RecordMycelialCrescendoSurge(int playerId, string surgeName) { }
     }
 }

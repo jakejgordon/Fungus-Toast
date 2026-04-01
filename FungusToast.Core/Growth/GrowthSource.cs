@@ -177,6 +177,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Free chained growth granted by claiming a Sporemeal Patch.
         /// </summary>
-        SporemealPatch
+        SporemealPatch,
+
+        /// <summary>
+        /// Surge activated for free by the Mycelial Crescendo adaptation.
+        /// </summary>
+        MycelialCrescendo
     }
 }
