@@ -2,6 +2,7 @@
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Death;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
@@ -65,6 +66,10 @@ namespace FungusToast.Simulation.Models
                     LivingCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsAlive),
                     DeadCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => !c.IsAlive),
                     EndGameToxinCells = board.GetAllCellsOwnedBy(player.PlayerId).Count(c => c.IsToxin),
+                    LivingCellsBySource = board.GetAllCellsOwnedBy(player.PlayerId)
+                        .Where(c => c.IsAlive)
+                        .GroupBy(c => c.SourceOfGrowth ?? GrowthSource.Unknown)
+                        .ToDictionary(g => g.Key, g => g.Count()),
 
                     // --- Death reason statistics ---
                     DeadCellDeathReasons = new List<DeathReason>(), // Populated below!

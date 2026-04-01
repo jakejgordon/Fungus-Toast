@@ -1,4 +1,5 @@
 using FungusToast.Core.AI;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Simulation.Models;
 using Parquet.Serialization;
@@ -18,25 +19,28 @@ namespace FungusToast.Simulation.Export
 
             var gameRows = BuildGameRows(batchResult, metadata);
             var playerRows = BuildPlayerRows(batchResult, metadata);
+            var livingCellSourceRows = BuildLivingCellSourceRows(batchResult, metadata);
             var mutationRows = BuildMutationRows(batchResult, metadata);
             var mycovariantRows = BuildMycovariantRows(batchResult, metadata);
             var upgradeEventRows = BuildUpgradeEventRows(batchResult, metadata);
 
             string gamesPath = Path.Combine(runFolder, "games.parquet");
             string playersPath = Path.Combine(runFolder, "players.parquet");
+            string livingCellSourcesPath = Path.Combine(runFolder, "living_cell_sources.parquet");
             string mutationsPath = Path.Combine(runFolder, "mutations.parquet");
             string mycovariantsPath = Path.Combine(runFolder, "mycovariants.parquet");
             string upgradeEventsPath = Path.Combine(runFolder, "upgrade_events.parquet");
 
             bool wroteGames = WriteParquet(gamesPath, gameRows);
             bool wrotePlayers = WriteParquet(playersPath, playerRows);
+            bool wroteLivingCellSources = WriteParquet(livingCellSourcesPath, livingCellSourceRows);
             bool wroteMutations = WriteParquet(mutationsPath, mutationRows);
             bool wroteMycovariants = WriteParquet(mycovariantsPath, mycovariantRows);
             bool wroteUpgradeEvents = WriteParquet(upgradeEventsPath, upgradeEventRows);
 
             var manifest = new
             {
-                schemaVersion = "v4",
+                schemaVersion = "v5",
                 metadata.ExperimentId,
                 metadata.RunTimestampUtc,
                 strategySet = metadata.StrategySet.ToString(),
@@ -54,6 +58,7 @@ namespace FungusToast.Simulation.Export
                 {
                     games = wroteGames ? Path.GetFileName(gamesPath) : null,
                     players = wrotePlayers ? Path.GetFileName(playersPath) : null,
+                    livingCellSources = wroteLivingCellSources ? Path.GetFileName(livingCellSourcesPath) : null,
                     mutations = wroteMutations ? Path.GetFileName(mutationsPath) : null,
                     mycovariants = wroteMycovariants ? Path.GetFileName(mycovariantsPath) : null,
                     upgradeEvents = wroteUpgradeEvents ? Path.GetFileName(upgradeEventsPath) : null
@@ -62,6 +67,7 @@ namespace FungusToast.Simulation.Export
                 {
                     games = gameRows.Count,
                     players = playerRows.Count,
+                    livingCellSources = livingCellSourceRows.Count,
                     mutations = mutationRows.Count,
                     mycovariants = mycovariantRows.Count,
                     upgradeEvents = upgradeEventRows.Count
@@ -181,6 +187,40 @@ namespace FungusToast.Simulation.Export
                         EffectiveSelfDeathChance = player.EffectiveSelfDeathChance,
                         AvgAIScoreAtDraft = player.AvgAIScoreAtDraft
                     });
+                }
+            }
+
+            return rows;
+        }
+
+        private static List<LivingCellSourceExportRow> BuildLivingCellSourceRows(SimulationBatchResult batchResult, SimulationRunMetadata metadata)
+        {
+            var rows = new List<LivingCellSourceExportRow>();
+
+            foreach (var game in batchResult.GameResults)
+            {
+                foreach (var player in game.PlayerResults)
+                {
+                    var lineupEntry = metadata.SelectedStrategies
+                        .FirstOrDefault(s => string.Equals(s.StrategyName, player.StrategyName, StringComparison.OrdinalIgnoreCase));
+
+                    foreach (var livingSource in player.LivingCellsBySource.OrderBy(kvp => kvp.Key.ToString(), StringComparer.Ordinal))
+                    {
+                        rows.Add(new LivingCellSourceExportRow
+                        {
+                            ExperimentId = metadata.ExperimentId,
+                            GameIndex = game.GameIndex,
+                            GameSeed = game.GameSeed,
+                            PlayerId = player.PlayerId,
+                            AssignedSlot = player.PlayerId,
+                            SelectedLineupOrder = lineupEntry?.LineupOrder ?? 0,
+                            StrategyName = player.StrategyName,
+                            StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
+                            GrowthSource = livingSource.Key.ToString(),
+                            GrowthSourceDisplayName = GrowthSourceDisplayNames.GetDisplayName(livingSource.Key),
+                            LivingCellCount = livingSource.Value
+                        });
+                    }
                 }
             }
 

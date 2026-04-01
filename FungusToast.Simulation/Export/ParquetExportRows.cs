@@ -1,5 +1,20 @@
 namespace FungusToast.Simulation.Export
 {
+    public sealed class LivingCellSourceExportRow
+    {
+        public string ExperimentId { get; set; } = string.Empty;
+        public int GameIndex { get; set; }
+        public int GameSeed { get; set; }
+        public int PlayerId { get; set; }
+        public int AssignedSlot { get; set; }
+        public int SelectedLineupOrder { get; set; }
+        public string StrategyName { get; set; } = string.Empty;
+        public string StrategyTheme { get; set; } = string.Empty;
+        public string GrowthSource { get; set; } = string.Empty;
+        public string GrowthSourceDisplayName { get; set; } = string.Empty;
+        public int LivingCellCount { get; set; }
+    }
+
     public sealed class GameExportRow
     {
         public string ExperimentId { get; set; } = string.Empty;

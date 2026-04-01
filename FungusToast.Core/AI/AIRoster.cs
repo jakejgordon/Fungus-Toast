@@ -901,7 +901,9 @@ namespace FungusToast.Core.AI
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
-                    new TargetMutationGoal(MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel)
+                    new TargetMutationGoal(MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, GameBalance.NecrohyphalInfiltrationMaxLevel)
                 }
             ),
             new ParameterizedSpendingStrategy(
@@ -921,7 +923,9 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.ChitinFortification, 1),
                     new TargetMutationGoal(MutationIds.MimeticResilience, 1),
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
-                    new TargetMutationGoal(MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel)
+                    new TargetMutationGoal(MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, GameBalance.NecrohyphalInfiltrationMaxLevel)
                 },
                 surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChitinFortification, MutationIds.MimeticResilience },
                 surgeAttemptTurnFrequency: 6
@@ -947,7 +951,9 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel),
-                    new TargetMutationGoal(MutationIds.NecrotoxicConversion, GameBalance.NecrotoxicConversionMaxLevel)
+                    new TargetMutationGoal(MutationIds.NecrotoxicConversion, GameBalance.NecrotoxicConversionMaxLevel),
+                    new TargetMutationGoal(MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.CompetitiveAntagonism, GameBalance.CompetitiveAntagonismMaxLevel)
                 },
                 surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon, MutationIds.MimeticResilience, MutationIds.CompetitiveAntagonism },
                 surgeAttemptTurnFrequency: 5
@@ -969,7 +975,9 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
                     new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
-                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel)
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, GameBalance.MycotropicInductionMaxLevel)
                 }
             ),
             new ParameterizedSpendingStrategy(
@@ -991,7 +999,9 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.ChemotacticBeacon, 1),
                     new TargetMutationGoal(MutationIds.MimeticResilience, 1),
                     new TargetMutationGoal(MutationIds.CompetitiveAntagonism, 1),
-                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel)
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel)
                 },
                 surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon, MutationIds.MimeticResilience, MutationIds.CompetitiveAntagonism },
                 surgeAttemptTurnFrequency: 6
@@ -1015,7 +1025,9 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.HyphalSurge, 2),
                     new TargetMutationGoal(MutationIds.ChemotacticBeacon, 2),
                     new TargetMutationGoal(MutationIds.CreepingMold, 1),
-                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5)
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel)
                 },
                 surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon, MutationIds.ChitinFortification },
                 surgeAttemptTurnFrequency: 5
@@ -1040,7 +1052,9 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
                     new TargetMutationGoal(MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
                     new TargetMutationGoal(MutationIds.NecrotoxicConversion, GameBalance.NecrotoxicConversionMaxLevel),
-                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
                 },
                 surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
                 surgeAttemptTurnFrequency: 5
@@ -1067,7 +1081,9 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.HyphalSurge, 2),
                     new TargetMutationGoal(MutationIds.MycotropicInduction, GameBalance.MycotropicInductionMaxLevel),
                     new TargetMutationGoal(MutationIds.Necrosporulation, 1),
-                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 3)
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 3),
+                    new TargetMutationGoal(MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel)
                 },
                 surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon, MutationIds.ChitinFortification },
                 surgeAttemptTurnFrequency: 5

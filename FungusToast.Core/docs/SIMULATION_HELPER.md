@@ -30,6 +30,11 @@ Where to find them:
 - Console output: `=== Per-Player Summary ===`
 - Parquet export: `players.parquet`
 
+For end-state composition questions such as "where did this strategy's living cells come from?", use:
+
+- Parquet export: `living_cell_sources.parquet`
+- Grain: one row per `(game, player, growth source)` with `LivingCellCount`
+
 Fallback if older output files do not include per-player end-toxin values:
 
 - Use game-level `Avg Lingering Toxic Tiles` from `=== Game-Level Stats ===` and note that it is not per-player.

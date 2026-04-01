@@ -1,5 +1,6 @@
 ﻿using FungusToast.Core.AI;
 using FungusToast.Core.Death;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using System.Collections.Generic;
 
@@ -20,6 +21,7 @@ namespace FungusToast.Simulation.Models
         public int LivingCells { get; set; }
         public int DeadCells { get; set; }
         public int EndGameToxinCells { get; set; }
+        public Dictionary<GrowthSource, int> LivingCellsBySource { get; set; } = new();
 
         // ──────────────
         // DEATH REASONS (GAME END)

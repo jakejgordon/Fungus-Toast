@@ -95,7 +95,7 @@ namespace FungusToast.Core.Config
         // Hyphal Surge (Tier 2 MycelialSurges)
         public const float HyphalSurgeEffectPerLevel = .013f;
         public const int HyphalSurgeMaxLevel = 10;
-        public const int HyphalSurgePointsPerActivation = 8;
+        public const int HyphalSurgePointsPerActivation = 7;
         public const int HyphalSurgeDurationRounds = 2;
         public const int HyphalSurgePointIncreasePerLevel = 1;
 
@@ -155,12 +155,12 @@ namespace FungusToast.Core.Config
         public const float MimeticResilienceMinimumBoardControlThreshold = 0.01f; // 1%
         public const float MimeticResilienceMinimumCellAdvantageThreshold = 0.20f; // 20%
         public const int MimeticResilienceMaxLevel = 3;
-        public const int MimeticResiliencePointsPerActivation = 9;
+        public const int MimeticResiliencePointsPerActivation = 7;
         public const int MimeticResilienceSurgeDuration = 5;
         public const int MimeticResiliencePointIncreasePerLevel = 1;
 
         // Competitive Antagonism (Tier 3 MycelialSurge) 
-        public const int CompetitiveAntagonismPointsPerActivation = 4;
+        public const int CompetitiveAntagonismPointsPerActivation = 3;
         public const int CompetitiveAntagonismSurgeDuration = 5;
         public const int CompetitiveAntagonismPointIncreasePerLevel = 1;
         public const int CompetitiveAntagonismMaxLevel = 5;
@@ -192,12 +192,12 @@ namespace FungusToast.Core.Config
         public const int NecrophyticBloomMaxLevel = 5;
 
         // Necrohyphal Infiltration (Tier 5 CellularResilience)
-        public const float NecrohyphalInfiltrationChancePerLevel = 0.005f;
-        public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.02f;
+        public const float NecrohyphalInfiltrationChancePerLevel = 0.006f;
+        public const float NecrohyphalInfiltrationCascadeChancePerLevel = 0.08f;
         public const int NecrohyphalInfiltrationMaxLevel = 5;
 
         // Necrotoxic Conversion (Tier 5 Fungicide)
-        public const float NecrotoxicConversionReclaimChancePerLevel = .05f;
+        public const float NecrotoxicConversionReclaimChancePerLevel = .06f;
         public const int NecrotoxicConversionMaxLevel = 5;
 
         // Putrefactive Rejuvenation (Tier 5 Fungicide)
