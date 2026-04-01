@@ -15,6 +15,33 @@ namespace FungusToast.Core.Phases
     /// </summary>
     public static class GrowthMutationProcessor
     {
+        public static float GetEffectiveOrthogonalGrowthChance(Player player, int additionalTendrilLevels = 0)
+        {
+            float standardGrowthChance = GameBalance.BaseGrowthChance + player.GetMutationEffect(MutationType.GrowthChance);
+            int totalTendrilLevels = GetTotalTendrilLevels(player) + Math.Max(0, additionalTendrilLevels);
+            float tendrilPenalty = totalTendrilLevels * GameBalance.TendrilOrthogonalGrowthPenaltyPerLevel;
+            return Math.Max(GameBalance.TendrilOrthogonalGrowthMinimumChance, standardGrowthChance - tendrilPenalty);
+        }
+
+        public static float GetEffectiveDirectionalDiagonalGrowthChance(Player player, DiagonalDirection direction)
+        {
+            float baseDiagonalChance = player.GetDiagonalGrowthChance(direction);
+            if (baseDiagonalChance <= 0f)
+            {
+                return 0f;
+            }
+
+            return baseDiagonalChance * GetTendrilDiagonalGrowthMultiplier(player);
+        }
+
+        public static int GetTotalTendrilLevels(Player player)
+        {
+            return player.GetMutationLevel(MutationIds.TendrilNorthwest)
+                + player.GetMutationLevel(MutationIds.TendrilNortheast)
+                + player.GetMutationLevel(MutationIds.TendrilSoutheast)
+                + player.GetMutationLevel(MutationIds.TendrilSouthwest);
+        }
+
         /// <summary>
         /// Gets the diagonal growth multiplier for tendril mutations (Mycotropic Induction).
         /// </summary>
@@ -98,14 +125,12 @@ namespace FungusToast.Core.Phases
         /// </summary>
         public static (float baseChance, float surgeBonus) GetGrowthChancesWithHyphalSurge(Player player)
         {
-            float baseChance = GameBalance.BaseGrowthChance + player.GetMutationEffect(MutationType.GrowthChance);
+            float baseChance = GetEffectiveOrthogonalGrowthChance(player);
 
             int hyphalSurgeId = MutationIds.HyphalSurge;
             float surgeBonus = 0f;
             if (player.IsSurgeActive(hyphalSurgeId))
             {
-                int surgeLevel = player.GetMutationLevel(hyphalSurgeId);
-                surgeBonus = surgeLevel * GameBalance.HyphalSurgeEffectPerLevel;
                 surgeBonus = player.GetMutationEffect(MutationType.HyphalSurge);
             }
             return (baseChance, surgeBonus);

@@ -108,9 +108,7 @@ namespace FungusToast.Core.Growth
                 return false;
 
             (float baseChance, float surgeBonus) = GrowthMutationProcessor.GetGrowthChancesWithHyphalSurge(owner);
-            float diagonalMultiplier = GrowthMutationProcessor.GetTendrilDiagonalGrowthMultiplier(owner);
-            float edgeMultiplier = GetEdgeGrowthMultiplier(owner, sourceTile, board);
-            var allTargets = GetAllGrowthTargets(board, sourceTile, owner, baseChance, surgeBonus, diagonalMultiplier);
+            var allTargets = GetAllGrowthTargets(board, sourceTile, owner, baseChance, surgeBonus);
             Shuffle(allTargets, rng);
             foreach (var target in allTargets)
             {
@@ -127,8 +125,7 @@ namespace FungusToast.Core.Growth
             BoardTile sourceTile,
             Player owner,
             float baseChance,
-            float surgeBonus,
-            float diagonalMultiplier)
+            float surgeBonus)
         {
             var targets = new List<GrowthTarget>();
             bool hasMaxCreepingMold = owner.GetMutationLevel(MutationIds.CreepingMold) == GameBalance.CreepingMoldMaxLevel;
@@ -155,9 +152,7 @@ namespace FungusToast.Core.Growth
             {
                 if (owner.GetMutationLevel(mutationId) <= 0)
                     continue;
-                float baseDiagonal = owner.GetDiagonalGrowthChance(dir);
-                if (baseDiagonal <= 0f) continue;
-                float chance = baseDiagonal * diagonalMultiplier * edgeMultiplier;
+                float chance = GrowthMutationProcessor.GetEffectiveDirectionalDiagonalGrowthChance(owner, dir) * edgeMultiplier;
                 if (chance <= 0f) continue;
                 int nx = sourceTile.X + dx;
                 int ny = sourceTile.Y + dy;

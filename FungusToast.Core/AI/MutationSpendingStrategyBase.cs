@@ -1,4 +1,6 @@
 ﻿using FungusToast.Core.Mutations;
+using FungusToast.Core.Config;
+using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Core.Board;
 using FungusToast.Core.Metrics;
@@ -48,6 +50,14 @@ namespace FungusToast.Core.AI
                 .Except(ownedTendrils)
                 .ToList();
 
+            bool wouldUndercutOrthogonalGrowth = ownedTendrils.Count > 0
+                && GrowthMutationProcessor.GetEffectiveOrthogonalGrowthChance(player, additionalTendrilLevels: 1) <= GameBalance.BaseGrowthChance;
+
+            if (wouldUndercutOrthogonalGrowth)
+            {
+                return null;
+            }
+
             if (ownedTendrils.Count == 0)
             {
                 return GetHighestScoringTendril(tendrilMutations, board, player.PlayerId, directionMap);
@@ -55,7 +65,7 @@ namespace FungusToast.Core.AI
 
             if (unownedTendrils.Count > 0)
             {
-                return unownedTendrils[rng.Next(unownedTendrils.Count)];
+                return GetHighestScoringTendril(unownedTendrils, board, player.PlayerId, directionMap);
             }
 
             var ordered = GetOrderedByScore(tendrilMutations, board, player.PlayerId, directionMap);

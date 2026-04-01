@@ -2,6 +2,7 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 
 namespace FungusToast.Core.Tests.Mutations;
@@ -33,6 +34,46 @@ public class PlayerMutationEffectTests
         Assert.Equal(0f, player.GetDiagonalGrowthChance(DiagonalDirection.Northeast));
         Assert.Equal(southeast.GetTotalEffect(1), player.GetDiagonalGrowthChance(DiagonalDirection.Southeast), precision: 6);
         Assert.Equal(0f, player.GetDiagonalGrowthChance(DiagonalDirection.Southwest));
+    }
+
+    [Fact]
+    public void GetEffectiveOrthogonalGrowthChance_applies_stacked_tendril_penalty()
+    {
+        var player = CreatePlayer();
+        player.SetMutationLevel(MutationIds.MycelialBloom, newLevel: 10, currentRound: 1);
+        player.SetMutationLevel(MutationIds.TendrilNorthwest, newLevel: 2, currentRound: 1);
+        player.SetMutationLevel(MutationIds.TendrilSoutheast, newLevel: 3, currentRound: 1);
+
+        var orthogonalGrowthChance = GrowthMutationProcessor.GetEffectiveOrthogonalGrowthChance(player);
+
+        Assert.Equal(0.02f, orthogonalGrowthChance, precision: 6);
+    }
+
+    [Fact]
+    public void GetEffectiveOrthogonalGrowthChance_clamps_to_tendril_floor()
+    {
+        var player = CreatePlayer();
+        player.SetMutationLevel(MutationIds.MycelialBloom, newLevel: 10, currentRound: 1);
+        player.SetMutationLevel(MutationIds.TendrilNorthwest, newLevel: 5, currentRound: 1);
+        player.SetMutationLevel(MutationIds.TendrilNortheast, newLevel: 5, currentRound: 1);
+        player.SetMutationLevel(MutationIds.TendrilSoutheast, newLevel: 5, currentRound: 1);
+        player.SetMutationLevel(MutationIds.TendrilSouthwest, newLevel: 5, currentRound: 1);
+
+        var orthogonalGrowthChance = GrowthMutationProcessor.GetEffectiveOrthogonalGrowthChance(player);
+
+        Assert.Equal(GameBalance.TendrilOrthogonalGrowthMinimumChance, orthogonalGrowthChance, precision: 6);
+    }
+
+    [Fact]
+    public void GetEffectiveDirectionalDiagonalGrowthChance_applies_mycotropic_induction_multiplier()
+    {
+        var player = CreatePlayer();
+        player.SetMutationLevel(MutationIds.TendrilNorthwest, newLevel: 2, currentRound: 1);
+        player.SetMutationLevel(MutationIds.MycotropicInduction, newLevel: 3, currentRound: 1);
+
+        var diagonalGrowthChance = GrowthMutationProcessor.GetEffectiveDirectionalDiagonalGrowthChance(player, DiagonalDirection.Northwest);
+
+        Assert.Equal(0.07f, diagonalGrowthChance, precision: 6);
     }
 
     [Fact]

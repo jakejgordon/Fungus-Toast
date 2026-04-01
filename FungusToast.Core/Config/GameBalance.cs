@@ -67,7 +67,9 @@ namespace FungusToast.Core.Config
         public const int MutatorPhenotypeMaxLevel = 10;
 
         // Tendrils (Tier 2 Growth)
-        public const float TendrilDiagonalGrowthEffectPerLevel = 0.01f;
+        public const float TendrilDiagonalGrowthEffectPerLevel = 0.018f;
+        public const float TendrilOrthogonalGrowthPenaltyPerLevel = 0.004f;
+        public const float TendrilOrthogonalGrowthMinimumChance = 0.005f;
         public const int TendrilDiagonalGrowthMaxLevel = 10;
 
         // Chronoresilient Cytoplasm (Tier 2 CellularResilience)

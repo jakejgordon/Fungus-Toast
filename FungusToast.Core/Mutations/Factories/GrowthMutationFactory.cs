@@ -89,7 +89,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: id,
                 name: $"Tendril {direction}",
-                description: $"Each level grants a {helper.FormatPercent(GameBalance.TendrilDiagonalGrowthEffectPerLevel)} chance to grow in the {direction.ToLower()} direction.",
+                description: $"Each level grants a {helper.FormatPercent(GameBalance.TendrilDiagonalGrowthEffectPerLevel)} chance to grow in the {direction.ToLower()} direction, but reduces orthogonal growth chance by {helper.FormatPercent(GameBalance.TendrilOrthogonalGrowthPenaltyPerLevel)}.",
                 flavorText: $"Polarity vectors align hyphal tip extension toward {direction.ToLower()} moisture gradients.",
                 type: type,
                 effectPerLevel: GameBalance.TendrilDiagonalGrowthEffectPerLevel,

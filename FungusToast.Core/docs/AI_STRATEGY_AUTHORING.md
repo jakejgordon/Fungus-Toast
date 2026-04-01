@@ -62,6 +62,28 @@ The `Testing` set includes a themed roster intended for robust balance analysis:
 | `TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst` | Control | Testing mirror of campaign AI12 progression |
 | `TST_CampaignMirror_AI13_BalancedControl_MaxEconomy` | Control | Testing mirror of campaign AI13 progression |
 
+## Canonical 8-Player Archetype Harness
+
+For ongoing 8-player balance tuning, the `Testing` roster now includes a fixed archetype harness:
+
+- `TST_Arch01_GrowthResilience`
+- `TST_Arch02_ResilienceGrowth`
+- `TST_Arch03_FungicideSurge`
+- `TST_Arch04_DriftGrowth`
+- `TST_Arch05_DriftResilience`
+- `TST_Arch06_SurgeGrowth`
+- `TST_Arch07_DriftFungicide`
+- `TST_Arch08_SurgeResilience`
+
+Use these via explicit `--strategy-names` when you want a stable 8-player comparison harness that does not drift as the broader Testing roster evolves.
+
+## Goal-Level Authoring Rules
+
+- Omit `TargetLevel` only when the intent is to max out a mutation.
+- Use `new TargetMutationGoal(MutationIds.X, 1)` when the intent is a single pickup rather than a max target.
+- For repeated appearances of the same mutation in a goal list, use explicit ascending targets to represent staged revisits. Example: level 1 early, then level 2 later.
+- Prefer `GameBalance.*MaxLevel` constants when writing explicit max targets for readability in long archetype chains.
+
 ## Surge Coherence Audit (Built-In)
 
 `AIRoster` runs a startup audit (`AuditSurgeBackboneSynergy`) for `Testing` strategies.
@@ -85,6 +107,7 @@ Authoring implication:
 7. For comparison runs, prefer a fixed `--seed`, record the `--selection-policy`, and keep the manifest's selected lineup with the results.
 8. For canonical balance experiments, prefer explicit `--strategy-names` instead of sampled rosters so roster composition does not drift with future roster edits.
 9. Explicit strategy-name experiments are single-roster by design: all names must come from the chosen `--strategy-set`, so do not mix `Proven`/`Testing`/`Campaign`/`Mycovariants` names in one run.
+10. If a design doc says a mutation name without `Max` or `Level N`, treat that as ambiguous and resolve it before implementation; for the current archetype harness, unlabeled steps were encoded as one upgrade.
 
 ## Recommended Simulation Pattern
 
@@ -98,5 +121,19 @@ dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
   --strategy-sets Testing \
   --selection-policy CoverageBalanced \
   --seed 12345 \
+  --no-keyboard
+```
+
+Canonical 8-player archetype run:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
+  --games 100 \
+  --players 8 \
+  --strategy-set Testing \
+  --strategy-names TST_Arch01_GrowthResilience,TST_Arch02_ResilienceGrowth,TST_Arch03_FungicideSurge,TST_Arch04_DriftGrowth,TST_Arch05_DriftResilience,TST_Arch06_SurgeGrowth,TST_Arch07_DriftFungicide,TST_Arch08_SurgeResilience \
+  --seed 12345 \
+  --rotate-slots \
+  --experiment-id testing_archetype_harness \
   --no-keyboard
 ```

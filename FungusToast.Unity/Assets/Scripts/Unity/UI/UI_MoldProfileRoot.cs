@@ -1,4 +1,5 @@
 using FungusToast.Core; // for MutationType enum
+using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations; // keep if other mutation id helpers needed
@@ -838,16 +839,18 @@ namespace FungusToast.Unity.UI
         private static bool IsCardinal(GrowthPreviewDirection dir)
             => dir == GrowthPreviewDirection.North || dir == GrowthPreviewDirection.East || dir == GrowthPreviewDirection.South || dir == GrowthPreviewDirection.West;
 
-        private static float GetDiagonalBaseEffect(Player player, GrowthPreviewDirection dir)
+        private static bool TryGetDiagonalDirection(GrowthPreviewDirection dir, out DiagonalDirection diagonalDirection)
         {
-            return dir switch
+            diagonalDirection = dir switch
             {
-                GrowthPreviewDirection.Northwest => player.GetMutationEffect(MutationType.GrowthDiagonal_NW),
-                GrowthPreviewDirection.Northeast => player.GetMutationEffect(MutationType.GrowthDiagonal_NE),
-                GrowthPreviewDirection.Southeast => player.GetMutationEffect(MutationType.GrowthDiagonal_SE),
-                GrowthPreviewDirection.Southwest => player.GetMutationEffect(MutationType.GrowthDiagonal_SW),
-                _ => 0f
+                GrowthPreviewDirection.Northwest => DiagonalDirection.Northwest,
+                GrowthPreviewDirection.Northeast => DiagonalDirection.Northeast,
+                GrowthPreviewDirection.Southeast => DiagonalDirection.Southeast,
+                GrowthPreviewDirection.Southwest => DiagonalDirection.Southwest,
+                _ => default
             };
+
+            return !IsCardinal(dir);
         }
 
         private void GetDirectionalGrowthChance(Player player, GrowthPreviewDirection dir, out float baseChance, out float surgeBonus)
@@ -860,9 +863,9 @@ namespace FungusToast.Unity.UI
             }
             else
             {
-                float raw = GetDiagonalBaseEffect(player, dir);
-                float multiplier = GrowthMutationProcessor.GetTendrilDiagonalGrowthMultiplier(player);
-                baseChance = raw * multiplier;
+                baseChance = TryGetDiagonalDirection(dir, out var diagonalDirection)
+                    ? GrowthMutationProcessor.GetEffectiveDirectionalDiagonalGrowthChance(player, diagonalDirection)
+                    : 0f;
                 surgeBonus = 0f;
             }
         }

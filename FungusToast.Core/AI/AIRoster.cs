@@ -874,6 +874,191 @@ namespace FungusToast.Core.AI
         /// </summary>
         private static readonly List<IMutationSpendingStrategy> RawTestingStrategies = new List<IMutationSpendingStrategy>
         {
+            // Canonical 8-player archetype harness for ongoing balance tuning.
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Arch01_GrowthResilience",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.CellularResilience
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Arch02_ResilienceGrowth",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.CellularResilience,
+                    MutationCategory.Growth,
+                    MutationCategory.MycelialSurges
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.Necrosporulation, GameBalance.NecrosporulationMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 1),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 1),
+                    new TargetMutationGoal(MutationIds.MimeticResilience, 1),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChitinFortification, MutationIds.MimeticResilience },
+                surgeAttemptTurnFrequency: 6
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Arch03_FungicideSurge",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Fungicide,
+                    MutationCategory.MycelialSurges,
+                    MutationCategory.CellularResilience
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 5),
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 7),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 1),
+                    new TargetMutationGoal(MutationIds.MimeticResilience, 1),
+                    new TargetMutationGoal(MutationIds.SporicidalBloom, 3),
+                    new TargetMutationGoal(MutationIds.CompetitiveAntagonism, 1),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrotoxicConversion, GameBalance.NecrotoxicConversionMaxLevel)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon, MutationIds.MimeticResilience, MutationIds.CompetitiveAntagonism },
+                surgeAttemptTurnFrequency: 5
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Arch04_DriftGrowth",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.GeneticDrift,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion, GameBalance.AnabolicInversionMaxLevel),
+                    new TargetMutationGoal(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, GameBalance.AdaptiveExpressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Arch05_DriftResilience",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.GeneticDrift,
+                    MutationCategory.CellularResilience,
+                    MutationCategory.MycelialSurges
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion, GameBalance.AnabolicInversionMaxLevel),
+                    new TargetMutationGoal(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel),
+                    new TargetMutationGoal(MutationIds.Necrosporulation, GameBalance.NecrosporulationMaxLevel),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, GameBalance.AdaptiveExpressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 1),
+                    new TargetMutationGoal(MutationIds.MimeticResilience, 1),
+                    new TargetMutationGoal(MutationIds.CompetitiveAntagonism, 1),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon, MutationIds.MimeticResilience, MutationIds.CompetitiveAntagonism },
+                surgeAttemptTurnFrequency: 6
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Arch06_SurgeGrowth",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.MycelialSurges,
+                    MutationCategory.Growth,
+                    MutationCategory.CellularResilience
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 1),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 1),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 1),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 2),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 2),
+                    new TargetMutationGoal(MutationIds.CreepingMold, 1),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon, MutationIds.ChitinFortification },
+                surgeAttemptTurnFrequency: 5
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Arch07_DriftFungicide",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.GeneticDrift,
+                    MutationCategory.Fungicide,
+                    MutationCategory.MycelialSurges
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 5),
+                    new TargetMutationGoal(MutationIds.AnabolicInversion, GameBalance.AnabolicInversionMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 5),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 1),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 15),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrotoxicConversion, GameBalance.NecrotoxicConversionMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
+                surgeAttemptTurnFrequency: 5
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Arch08_SurgeResilience",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.MycelialSurges,
+                    MutationCategory.CellularResilience,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 1),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 1),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 1),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 2),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 2),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 2),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, GameBalance.MycotropicInductionMaxLevel),
+                    new TargetMutationGoal(MutationIds.Necrosporulation, 1),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 3)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon, MutationIds.ChitinFortification },
+                surgeAttemptTurnFrequency: 5
+            ),
+
             // 1) Hyper-economy ramp into late pressure
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_HyperEconomyRamp",
@@ -1346,6 +1531,14 @@ namespace FungusToast.Core.AI
             {
                 ["TST_HyperEconomyRamp"] = StrategyTheme.EconomyRamp,
                 ["TST_EarlyReclaimerSwarm"] = StrategyTheme.Reclamation,
+                ["TST_Arch01_GrowthResilience"] = StrategyTheme.Defense,
+                ["TST_Arch02_ResilienceGrowth"] = StrategyTheme.Defense,
+                ["TST_Arch03_FungicideSurge"] = StrategyTheme.Offense,
+                ["TST_Arch04_DriftGrowth"] = StrategyTheme.EconomyRamp,
+                ["TST_Arch05_DriftResilience"] = StrategyTheme.Counterplay,
+                ["TST_Arch06_SurgeGrowth"] = StrategyTheme.SurgeTempo,
+                ["TST_Arch07_DriftFungicide"] = StrategyTheme.Counterplay,
+                ["TST_Arch08_SurgeResilience"] = StrategyTheme.SurgeTempo,
                 ["TST_BalancedControl_AnabolicFirst"] = StrategyTheme.Control,
                 ["TST_HyphalSurgeTempo"] = StrategyTheme.SurgeTempo,
                 ["TST_FortressResilience"] = StrategyTheme.Defense,
@@ -1423,6 +1616,14 @@ namespace FungusToast.Core.AI
         private static readonly Dictionary<string, StrategyPowerTier> ExplicitPowerTiersByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
+                ["TST_Arch01_GrowthResilience"] = StrategyPowerTier.Standard,
+                ["TST_Arch02_ResilienceGrowth"] = StrategyPowerTier.Standard,
+                ["TST_Arch03_FungicideSurge"] = StrategyPowerTier.Spike,
+                ["TST_Arch04_DriftGrowth"] = StrategyPowerTier.Strong,
+                ["TST_Arch05_DriftResilience"] = StrategyPowerTier.Standard,
+                ["TST_Arch06_SurgeGrowth"] = StrategyPowerTier.Standard,
+                ["TST_Arch07_DriftFungicide"] = StrategyPowerTier.Strong,
+                ["TST_Arch08_SurgeResilience"] = StrategyPowerTier.Standard,
                 ["TST_BalancedControl_AnabolicFirst"] = StrategyPowerTier.Strong,
                 ["TST_BalancedControl_MaxEconomy"] = StrategyPowerTier.Strong,
                 ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyPowerTier.Strong,
@@ -1472,6 +1673,14 @@ namespace FungusToast.Core.AI
         private static readonly Dictionary<string, StrategyRole> ExplicitRolesByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
+                ["TST_Arch01_GrowthResilience"] = StrategyRole.Experimental,
+                ["TST_Arch02_ResilienceGrowth"] = StrategyRole.Experimental,
+                ["TST_Arch03_FungicideSurge"] = StrategyRole.Experimental,
+                ["TST_Arch04_DriftGrowth"] = StrategyRole.Experimental,
+                ["TST_Arch05_DriftResilience"] = StrategyRole.Experimental,
+                ["TST_Arch06_SurgeGrowth"] = StrategyRole.Experimental,
+                ["TST_Arch07_DriftFungicide"] = StrategyRole.Experimental,
+                ["TST_Arch08_SurgeResilience"] = StrategyRole.Experimental,
                 ["TST_HyperEconomyRamp"] = StrategyRole.Experimental,
                 ["TST_EarlyReclaimerSwarm"] = StrategyRole.Experimental,
                 ["TST_ToxinSiege"] = StrategyRole.Experimental,
@@ -1530,6 +1739,14 @@ namespace FungusToast.Core.AI
         private static readonly Dictionary<string, StrategyLifecycle> ExplicitLifecycleByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
+                ["TST_Arch01_GrowthResilience"] = StrategyLifecycle.Active,
+                ["TST_Arch02_ResilienceGrowth"] = StrategyLifecycle.Active,
+                ["TST_Arch03_FungicideSurge"] = StrategyLifecycle.Active,
+                ["TST_Arch04_DriftGrowth"] = StrategyLifecycle.Active,
+                ["TST_Arch05_DriftResilience"] = StrategyLifecycle.Active,
+                ["TST_Arch06_SurgeGrowth"] = StrategyLifecycle.Active,
+                ["TST_Arch07_DriftFungicide"] = StrategyLifecycle.Active,
+                ["TST_Arch08_SurgeResilience"] = StrategyLifecycle.Active,
                 ["TST_BalancedControl_AnabolicFirst"] = StrategyLifecycle.NeedsTuning,
                 ["TST_BalancedControl_MaxEconomy"] = StrategyLifecycle.NeedsTuning,
                 ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyLifecycle.NeedsTuning,
@@ -1569,6 +1786,14 @@ namespace FungusToast.Core.AI
         private static readonly Dictionary<string, DifficultyBand[]> ExplicitDifficultyBandsByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
+                ["TST_Arch01_GrowthResilience"] = new[] { DifficultyBand.Normal },
+                ["TST_Arch02_ResilienceGrowth"] = new[] { DifficultyBand.Normal },
+                ["TST_Arch03_FungicideSurge"] = new[] { DifficultyBand.Hard },
+                ["TST_Arch04_DriftGrowth"] = new[] { DifficultyBand.Hard },
+                ["TST_Arch05_DriftResilience"] = new[] { DifficultyBand.Normal },
+                ["TST_Arch06_SurgeGrowth"] = new[] { DifficultyBand.Normal },
+                ["TST_Arch07_DriftFungicide"] = new[] { DifficultyBand.Hard },
+                ["TST_Arch08_SurgeResilience"] = new[] { DifficultyBand.Normal },
                 ["AI6"] = new[] { DifficultyBand.Easy },
                 ["AI12"] = new[] { DifficultyBand.Easy },
                 ["AI13"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },

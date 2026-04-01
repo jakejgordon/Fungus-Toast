@@ -71,6 +71,20 @@ public class Tier2MutationTests
     }
 
     [Fact]
+    public void TendrilNorthwest_is_tier2_growth_requires_mycelial_bloom_ten_and_describes_the_tradeoff()
+    {
+        var mutation = RequireMutation(MutationIds.TendrilNorthwest);
+
+        Assert.Equal(MutationCategory.Growth, mutation.Category);
+        Assert.Equal(MutationTier.Tier2, mutation.Tier);
+        Assert.Equal(MutationType.GrowthDiagonal_NW, mutation.Type);
+        var prereq = Assert.Single(mutation.Prerequisites);
+        Assert.Equal(MutationIds.MycelialBloom, prereq.MutationId);
+        Assert.Equal(10, prereq.RequiredLevel);
+        Assert.Contains("reduces orthogonal growth chance", mutation.Description);
+    }
+
+    [Fact]
     public void MycotoxinPotentiation_is_tier2_fungicide_and_requires_mycotoxin_tracer_level_five()
     {
         var mutation = RequireMutation(MutationIds.MycotoxinPotentiation);
