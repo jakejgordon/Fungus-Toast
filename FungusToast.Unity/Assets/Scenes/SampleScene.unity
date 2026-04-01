@@ -107213,6 +107213,12 @@ MonoBehaviour:
   decayPhaseStartVolume: 1
   draftPhaseStartClip: {fileID: 8300000, guid: ecefc9ffb9bc2204596a5b66a58c0dfd, type: 3}
   draftPhaseStartVolume: 1
+  gameplayMusicClip: {fileID: 8300000, guid: 8de36b481d57a144e81d193ca26b2c14, type: 3}
+  gameplayMusicVolume: 1
+  gameplayMusicInitialDelaySeconds: 1.5
+  gameplayMusicReplayDelaySeconds: 4
+  gameplayMusicFadeInSeconds: 1
+  gameplayMusicMixerGroup: {fileID: 0}
   configuredHumanPlayerCount: 1
   campaignProgression: {fileID: 11400000, guid: ddba19d3898f54445b37abdc3b92a2b7, type: 2}
   magnifyingGlass: {fileID: 325918930}

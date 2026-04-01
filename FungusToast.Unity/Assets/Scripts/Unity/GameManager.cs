@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.UI;
 using FungusToast.Unity.Campaign; // NEW: campaign namespace
 
@@ -135,6 +136,74 @@ namespace FungusToast.Unity
         }
     }
 
+    public static class MusicSettings
+    {
+        private const string VolumeKey = "Audio.Music.Volume";
+
+        private static readonly float[] VolumeSteps = { 0f, 0.25f, 0.5f, 0.75f, 1f };
+
+        private static bool loaded;
+        private static float volume = 0.75f;
+
+        public static float Volume
+        {
+            get
+            {
+                EnsureLoaded();
+                return volume;
+            }
+        }
+
+        public static void CycleVolumeForward()
+        {
+            EnsureLoaded();
+
+            int currentIndex = 0;
+            for (int index = 0; index < VolumeSteps.Length; index++)
+            {
+                if (Mathf.Approximately(VolumeSteps[index], volume))
+                {
+                    currentIndex = index;
+                    break;
+                }
+            }
+
+            int nextIndex = (currentIndex + 1) % VolumeSteps.Length;
+            SetVolume(VolumeSteps[nextIndex]);
+        }
+
+        public static void SetVolume(float value)
+        {
+            EnsureLoaded();
+            float clampedValue = Mathf.Clamp01(value);
+            if (Mathf.Approximately(volume, clampedValue))
+            {
+                return;
+            }
+
+            volume = clampedValue;
+            PlayerPrefs.SetFloat(VolumeKey, volume);
+            PlayerPrefs.Save();
+        }
+
+        public static float GetEffectiveVolume(float baseVolume)
+        {
+            EnsureLoaded();
+            return Mathf.Clamp01(baseVolume) * volume;
+        }
+
+        private static void EnsureLoaded()
+        {
+            if (loaded)
+            {
+                return;
+            }
+
+            volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 0.75f));
+            loaded = true;
+        }
+    }
+
     public class GameManager : MonoBehaviour
     {
         private const string AlphaMutationOnboardingSeenKey = "Onboarding.AlphaMutationPhaseSeen";
@@ -181,6 +250,12 @@ namespace FungusToast.Unity
         [SerializeField, Range(0f, 1f)] private float decayPhaseStartVolume = 1f;
         [SerializeField] private AudioClip draftPhaseStartClip = null;
         [SerializeField, Range(0f, 1f)] private float draftPhaseStartVolume = 1f;
+        [SerializeField] private AudioClip gameplayMusicClip = null;
+        [SerializeField, Range(0f, 1f)] private float gameplayMusicVolume = 1f;
+        [SerializeField, Min(0f)] private float gameplayMusicInitialDelaySeconds = 1.5f;
+        [SerializeField, Min(0f)] private float gameplayMusicReplayDelaySeconds = 4f;
+        [SerializeField, Min(0f)] private float gameplayMusicFadeInSeconds = 1f;
+        [SerializeField] private AudioMixerGroup gameplayMusicMixerGroup = null;
 
         [Header("Hotseat Config")] 
         public int configuredHumanPlayerCount =1; 
@@ -251,6 +326,7 @@ namespace FungusToast.Unity
         private bool pendingAlphaMutationOnboarding;
         private float nextUiStuckCheckTime;
         private bool isPauseMenuOpen;
+        private bool hasApplicationFocus = true;
         private UI_PauseMenuPanel pauseMenuPanel;
         private AudioSource soundEffectAudioSource;
 
@@ -262,6 +338,7 @@ namespace FungusToast.Unity
         private EndgameService endgameService;
         private MutationPointService mutationPointService;
         private SpecialEventPresentationService specialEventPresentationService;
+        private BackgroundMusicService backgroundMusicService;
 
         #endregion
 
@@ -308,6 +385,32 @@ namespace FungusToast.Unity
             RecoverGameplayUiIfStuck();
         }
 
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            hasApplicationFocus = hasFocus;
+
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            if (!hasFocus)
+            {
+                backgroundMusicService?.Pause();
+                return;
+            }
+
+            if (!isPauseMenuOpen)
+            {
+                backgroundMusicService?.Resume();
+            }
+        }
+
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            OnApplicationFocus(!pauseStatus);
+        }
+
         #endregion
 
         #region Bootstrap
@@ -316,6 +419,8 @@ namespace FungusToast.Unity
         {
             EnsureSoundEffectAudioSource();
             BootstrapPauseMenu();
+            backgroundMusicService = new BackgroundMusicService(this, transform, () => isPauseMenuOpen || !hasApplicationFocus);
+            ConfigureBackgroundMusicService();
 
             playerInitializer = new PlayerInitializer(
                 gridVisualizer,
@@ -513,6 +618,7 @@ namespace FungusToast.Unity
         {
             // Clear any lingering scene coroutines/UI overlays from the previous game before bootstrapping a new board.
             ResetRuntimeStateForGameTransition();
+            ConfigureBackgroundMusicService();
             gameUIManager?.MutationUIManager?.ResetForNewGameState();
             gameUIManager.EndGamePanel?.gameObject.SetActive(false);
             ForceClosePauseMenu();
@@ -553,6 +659,7 @@ namespace FungusToast.Unity
             gridVisualizer.RenderBoard(Board);
             InitializeHumanSidebarUiForCurrentPlayer();
 
+            backgroundMusicService?.StartGameplayMusic();
             StartCoroutine(PlayStartingSporeIntroAndContinue());
 
             gameUIManager.LeftSidebar?.gameObject.SetActive(true);
@@ -1377,6 +1484,7 @@ namespace FungusToast.Unity
         private void ResetRuntimeStateForGameTransition()
         {
             var currentBoard = Board;
+            backgroundMusicService?.StopGameplayMusic();
 
             UnsubscribeFromPlayerMutationEvents();
 
@@ -1406,6 +1514,7 @@ namespace FungusToast.Unity
         public void QuitGame()
         {
             ForceClosePauseMenu();
+            backgroundMusicService?.StopGameplayMusic();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
@@ -1651,6 +1760,7 @@ namespace FungusToast.Unity
             {
                 gameUIManager.PhaseBanner.Show("New Game Settings",2f);
             }
+
             phaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
             phaseProgressTracker?.HighlightMutationPhase();
@@ -1860,6 +1970,7 @@ namespace FungusToast.Unity
             gameUIManager?.MutationUIManager?.ForceCloseTreePanel();
             isPauseMenuOpen = true;
             Time.timeScale = 0f;
+            backgroundMusicService?.Pause();
             pauseMenuPanel?.Show();
         }
 
@@ -1872,7 +1983,19 @@ namespace FungusToast.Unity
         {
             isPauseMenuOpen = false;
             Time.timeScale = 1f;
+            backgroundMusicService?.Resume();
             pauseMenuPanel?.Hide();
+        }
+
+        private void ConfigureBackgroundMusicService()
+        {
+            backgroundMusicService?.ConfigureGameplayMusic(
+                gameplayMusicClip,
+                gameplayMusicVolume,
+                gameplayMusicInitialDelaySeconds,
+                gameplayMusicReplayDelaySeconds,
+                gameplayMusicFadeInSeconds,
+                gameplayMusicMixerGroup);
         }
 
         #endregion

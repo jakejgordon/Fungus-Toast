@@ -72,6 +72,7 @@ namespace FungusToast.Unity.UI.GameStart
         private readonly List<int?> selectedHumanMoldIndices = new();
         private Button soundEffectsToggleButton;
         private Button soundEffectsVolumeButton;
+        private Button musicVolumeButton;
         private SetupStep currentStep = SetupStep.CountSelection;
         private int currentHumanMoldSelectionIndex;
 
@@ -790,6 +791,11 @@ namespace FungusToast.Unity.UI.GameStart
                 "UI_StartGameSoundEffectsVolumeButton",
                 OnSoundEffectsVolumeClicked,
                 2);
+            musicVolumeButton = EnsureAudioSettingsButton(
+                musicVolumeButton,
+                "UI_StartGameMusicVolumeButton",
+                OnMusicVolumeClicked,
+                3);
         }
 
         private void EnsureAudioSettingsLabel()
@@ -810,7 +816,7 @@ namespace FungusToast.Unity.UI.GameStart
             }
 
             var label = labelObject.GetComponent<TextMeshProUGUI>();
-            label.text = "Sound Effects";
+            label.text = "Audio";
             label.color = UIStyleTokens.Text.Primary;
             label.enableAutoSizing = false;
             label.fontSize = 20f;
@@ -889,7 +895,7 @@ namespace FungusToast.Unity.UI.GameStart
             var element = sectionRoot.GetComponent<LayoutElement>();
             element.minWidth = 500f;
             element.preferredWidth = 500f;
-            element.minHeight = 150f;
+            element.minHeight = 206f;
             element.preferredHeight = -1f;
         }
 
@@ -1229,10 +1235,17 @@ namespace FungusToast.Unity.UI.GameStart
             RefreshAudioSettingsControls();
         }
 
+        private void OnMusicVolumeClicked()
+        {
+            MusicSettings.CycleVolumeForward();
+            RefreshAudioSettingsControls();
+        }
+
         private void RefreshAudioSettingsControls()
         {
             SetButtonText(soundEffectsToggleButton, $"Sound Effects: {(SoundEffectsSettings.Enabled ? "On" : "Off")}");
             SetButtonText(soundEffectsVolumeButton, $"SFX Volume: {Mathf.RoundToInt(SoundEffectsSettings.Volume * 100f)}%");
+            SetButtonText(musicVolumeButton, $"Music Volume: {Mathf.RoundToInt(MusicSettings.Volume * 100f)}%");
         }
 
         private void ResetMoldSelectionState()

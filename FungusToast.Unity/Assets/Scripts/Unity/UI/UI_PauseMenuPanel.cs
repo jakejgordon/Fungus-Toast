@@ -18,7 +18,7 @@ namespace FungusToast.Unity.UI
         private const float HudButtonWidth = 24f;
         private const float HudButtonHeight = 24f;
         private const float CardWidth = 420f;
-        private const float CardHeight = 540f;
+        private const float CardHeight = 700f;
 
         private GameUIManager gameUI;
         private Action onOpenRequested;
@@ -42,6 +42,7 @@ namespace FungusToast.Unity.UI
         private TextMeshProUGUI confirmationLabel;
         private Button soundEffectsToggleButton;
         private Button soundEffectsVolumeButton;
+        private Button musicVolumeButton;
 
         private PendingAction pendingAction;
         private bool gameplayVisible;
@@ -277,7 +278,7 @@ namespace FungusToast.Unity.UI
             primaryLayout.childControlHeight = true;
             primaryLayout.childForceExpandWidth = true;
             primaryLayout.childForceExpandHeight = false;
-            ConfigureContentSection(primaryActionsRoot, minHeight: 188f);
+            ConfigureContentSection(primaryActionsRoot, minHeight: 200f);
 
             Button resumeButton = CreateActionButton(primaryActionsRoot.transform, "Resume");
             resumeButton.onClick.AddListener(() => onResumeRequested?.Invoke());
@@ -296,9 +297,9 @@ namespace FungusToast.Unity.UI
             soundLayout.childControlHeight = true;
             soundLayout.childForceExpandWidth = true;
             soundLayout.childForceExpandHeight = false;
-            ConfigureContentSection(soundSettingsRoot, minHeight: 150f);
+            ConfigureContentSection(soundSettingsRoot, minHeight: 240f);
 
-            TextMeshProUGUI soundLabel = CreateLabel(soundSettingsRoot.transform, "Sound Effects", 22f, FontStyles.Bold);
+            TextMeshProUGUI soundLabel = CreateLabel(soundSettingsRoot.transform, "Audio", 22f, FontStyles.Bold);
             soundLabel.alignment = TextAlignmentOptions.Center;
             soundLabel.color = UIStyleTokens.Text.Primary;
 
@@ -307,6 +308,9 @@ namespace FungusToast.Unity.UI
 
             soundEffectsVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty);
             soundEffectsVolumeButton.onClick.AddListener(OnSoundEffectsVolumeClicked);
+
+            musicVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty);
+            musicVolumeButton.onClick.AddListener(OnMusicVolumeClicked);
 
             confirmationRoot = CreateUiObject("Confirmation", card.transform);
             VerticalLayoutGroup confirmationLayout = confirmationRoot.AddComponent<VerticalLayoutGroup>();
@@ -409,10 +413,17 @@ namespace FungusToast.Unity.UI
             RefreshSoundSettingsButtons();
         }
 
+        private void OnMusicVolumeClicked()
+        {
+            MusicSettings.CycleVolumeForward();
+            RefreshSoundSettingsButtons();
+        }
+
         private void RefreshSoundSettingsButtons()
         {
             SetButtonLabel(soundEffectsToggleButton, $"Sound Effects: {(SoundEffectsSettings.Enabled ? "On" : "Off")}");
             SetButtonLabel(soundEffectsVolumeButton, $"SFX Volume: {Mathf.RoundToInt(SoundEffectsSettings.Volume * 100f)}%");
+            SetButtonLabel(musicVolumeButton, $"Music Volume: {Mathf.RoundToInt(MusicSettings.Volume * 100f)}%");
         }
 
         private static void SetButtonLabel(Button button, string labelText)
