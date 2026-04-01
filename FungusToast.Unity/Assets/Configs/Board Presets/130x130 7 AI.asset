@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dac0b2d101f4c114d91c1aa9449bd5eb, type: 3}
   m_Name: 130x130 7 AI
   m_EditorClassIdentifier: 
-  presetId: Campaign11
+  presetId: Campaign12
   boardWidth: 130
   boardHeight: 130
   aiPlayers:

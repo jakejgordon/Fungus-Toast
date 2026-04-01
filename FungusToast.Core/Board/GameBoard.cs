@@ -734,9 +734,17 @@ namespace FungusToast.Core.Board
                 GetTileById(clusterTileId)?.ClearNutrientPatch();
             }
 
+            // Rhizomorphic Hunger: treat patch as one cluster size bigger for reward calculation
+            bool hasRhizomorphicHunger = playerId >= 0 && playerId < Players.Count
+                && Players[playerId].HasAdaptation(Campaign.AdaptationIds.RhizomorphicHunger);
+            int effectiveClusterSize = nutrientPatch.ClusterTileCount
+                + (hasRhizomorphicHunger ? Config.AdaptationGameBalance.RhizomorphicHungerClusterSizeBonus : 0);
+
             int effectiveRewardAmount = nutrientPatch.RewardType switch
             {
-                NutrientRewardType.MutationPoints => nutrientPatch.RewardAmount,
+                NutrientRewardType.MutationPoints => hasRhizomorphicHunger
+                    ? effectiveClusterSize
+                    : nutrientPatch.RewardAmount,
                 NutrientRewardType.FreeGrowth => ApplySporemealGrowth(playerId, cell.TileId, clusterTileIds),
                 NutrientRewardType.MycovariantDraft => QueueHypervariationDraft(playerId),
                 _ => 0

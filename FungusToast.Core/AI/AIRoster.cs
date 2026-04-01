@@ -256,11 +256,10 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.MaxEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.AnabolicInversion, 1),
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 20),
                     new TargetMutationGoal(MutationIds.ChemotacticBeacon, GameBalance.ChemotacticBeaconMaxLevel),
                     new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
                     new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
-                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
                 },
                 surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
                 surgeAttemptTurnFrequency: 5,
@@ -807,6 +806,21 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade)
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "CMP_AnabolicBeaconRhizolith_Elite",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 20),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, GameBalance.ChemotacticBeaconMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
+                surgeAttemptTurnFrequency: 5,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
             ),
             // Campaign balance harness: safe player-proxy baseline
             new ParameterizedSpendingStrategy(
@@ -1577,6 +1591,7 @@ namespace FungusToast.Core.AI
                 ["CMP_Control_AnabolicFirst_Hard"] = StrategyTheme.Control,
                 ["CMP_Economy_LateSpike_Hard"] = StrategyTheme.LateGameSpike,
                 ["CMP_Bloom_CreepingRegression_Elite"] = StrategyTheme.Control,
+                ["CMP_AnabolicBeaconRhizolith_Elite"] = StrategyTheme.Control,
                 ["TST_CampaignPlayer_SafeBaseline"] = StrategyTheme.Control,
                 ["TST_Training_ResilientMycelium"] = StrategyTheme.Defense,
                 ["TST_Training_Overextender"] = StrategyTheme.Mobility,
@@ -1645,6 +1660,7 @@ namespace FungusToast.Core.AI
                 ["AI10"] = StrategyPowerTier.Strong,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyPowerTier.Strong,
                 ["CMP_Bloom_CreepingRegression_Elite"] = StrategyPowerTier.Strong,
+                ["CMP_AnabolicBeaconRhizolith_Elite"] = StrategyPowerTier.Strong,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyPowerTier.Standard,
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyPowerTier.Standard,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyPowerTier.Standard,
@@ -1721,6 +1737,7 @@ namespace FungusToast.Core.AI
                 ["CMP_Control_AnabolicFirst_Hard"] = StrategyRole.Experimental,
                 ["CMP_Economy_LateSpike_Hard"] = StrategyRole.Boss,
                 ["CMP_Bloom_CreepingRegression_Elite"] = StrategyRole.Boss,
+                ["CMP_AnabolicBeaconRhizolith_Elite"] = StrategyRole.Boss,
                 ["TST_CampaignPlayer_SafeBaseline"] = StrategyRole.Experimental,
                 ["TST_Training_ResilientMycelium"] = StrategyRole.Training,
                 ["TST_Training_Overextender"] = StrategyRole.Training,
@@ -1773,6 +1790,7 @@ namespace FungusToast.Core.AI
                 ["CMP_Control_AnabolicFirst_Hard"] = StrategyLifecycle.Active,
                 ["CMP_Economy_LateSpike_Hard"] = StrategyLifecycle.Active,
                 ["CMP_Bloom_CreepingRegression_Elite"] = StrategyLifecycle.Active,
+                ["CMP_AnabolicBeaconRhizolith_Elite"] = StrategyLifecycle.Active,
                 ["TST_CampaignPlayer_SafeBaseline"] = StrategyLifecycle.Active,
                 ["TST_Training_ResilientMycelium"] = StrategyLifecycle.Active,
                 ["TST_Training_Overextender"] = StrategyLifecycle.Active,
@@ -1834,6 +1852,7 @@ namespace FungusToast.Core.AI
                 ["CMP_Control_AnabolicFirst_Hard"] = new[] { DifficultyBand.Hard },
                 ["CMP_Economy_LateSpike_Hard"] = new[] { DifficultyBand.Hard },
                 ["CMP_Bloom_CreepingRegression_Elite"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["CMP_AnabolicBeaconRhizolith_Elite"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_CreepingNecroRegressionCascade"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_CampaignPlayer_SafeBaseline"] = new[] { DifficultyBand.Normal },
                 ["TST_Training_ResilientMycelium"] = new[] { DifficultyBand.Easy },
@@ -1886,6 +1905,7 @@ namespace FungusToast.Core.AI
                 ["Power Mutations Max Econ"] = CampaignDifficulty.Hard,
                 ["CMP_Economy_LateSpike_Hard"] = CampaignDifficulty.Hard,
                 ["CMP_Bloom_CreepingRegression_Elite"] = CampaignDifficulty.Elite,
+                ["CMP_AnabolicBeaconRhizolith_Elite"] = CampaignDifficulty.Elite,
                 ["TST_CreepingNecroRegressionCascade"] = CampaignDifficulty.Elite,
             };
 
@@ -2230,7 +2250,7 @@ namespace FungusToast.Core.AI
                     new AdaptationSynergySet(
                         "Rhizolith",
                         "Grows resistant cells every round, edge cells always resist, dead cells next to resistant ones vanish leaving no corpse lane, border threats are cleared on contact, and two repositioning tools ensure territorial coverage. Nearly impossible to contain once established.",
-                        new[] { AdaptationIds.AegisHyphae, AdaptationIds.CrustalCallus, AdaptationIds.SaprophageRing, AdaptationIds.MarginalClamp, AdaptationIds.DistalSpore, AdaptationIds.ConidialRelay })
+                        new[] { AdaptationIds.AegisHyphae, AdaptationIds.CrustalCallus, AdaptationIds.RhizomorphicHunger, AdaptationIds.MarginalClamp, AdaptationIds.DistalSpore, AdaptationIds.ConidialRelay })
                 },
 
                 ["CMP_Control_AnabolicFirst_Hard"] = new[]

@@ -248,6 +248,10 @@ namespace FungusToast.Core.Phases
                 for (int i = 0; i < sporesToDrop; i++)
                 {
                     var target = availableTiles[rng.Next(availableTiles.Count)];
+
+                    // Re-read cell state at iteration time: reactive effects fired by earlier
+                    // iterations (NecrotoxicConversion, NecrophoricAdaptation, etc.) can change
+                    // tile occupancy between snapshot and iteration.
                     var cell = target.FungalCell;
 
                     if (cell != null && cell.IsAlive)
@@ -256,8 +260,14 @@ namespace FungusToast.Core.Phases
                         ToxinHelper.KillAndToxify(board, target.TileId, toxinLifespan, DeathReason.SporicidalBloom, GrowthSource.SporicidalBloom, player);
                         kills++;
                     }
-                    else
+                    else if (cell == null || !cell.IsAlive)
                     {
+                        // Re-check at call site: skip if the tile has been reclaimed as alive
+                        // since the branch check above (e.g., via NecrotoxicConversion).
+                        var currentCell = target.FungalCell;
+                        if (currentCell != null && currentCell.IsAlive)
+                            continue;
+
                         // Empty tile or existing toxin: place/refresh toxin
                         ToxinHelper.ConvertToToxin(board, target.TileId, toxinLifespan, GrowthSource.SporicidalBloom, player);
                         toxified++;

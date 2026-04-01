@@ -31,7 +31,7 @@ namespace FungusToast.Core.Death
             if (cell != null)
             {
                 if (cell.IsAlive)
-                    throw new InvalidOperationException("Cannot convert a living cell to toxin. Kill it first.");
+                    return; // Cell was reclaimed alive by a reactive effect (e.g. NecrotoxicConversion) after caller checked — skip safely.
 
                 // Mark for toxin drop animation
                 cell.MarkAsReceivingToxinDrop();

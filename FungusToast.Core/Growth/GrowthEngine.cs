@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.Board;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Events;
 using FungusToast.Core.Metrics;
@@ -130,11 +131,15 @@ namespace FungusToast.Core.Growth
             var targets = new List<GrowthTarget>();
             bool hasMaxCreepingMold = owner.GetMutationLevel(MutationIds.CreepingMold) == GameBalance.CreepingMoldMaxLevel;
             float edgeMultiplier = GetEdgeGrowthMultiplier(owner, sourceTile, board);
+            bool hasRhizomorphicHunger = owner.HasAdaptation(AdaptationIds.RhizomorphicHunger);
             foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
             {
                 if (!tile.IsOccupied && !board.IsTileBlockedForOccupation(tile.TileId) && tile.TileId != sourceTile.TileId)
                 {
-                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier, null, surgeBonus));
+                    float nutrientBonus = (hasRhizomorphicHunger && tile.HasNutrientPatch)
+                        ? AdaptationGameBalance.RhizomorphicHungerGrowthBonus
+                        : 0f;
+                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier + nutrientBonus, null, surgeBonus));
                 }
                 else if (hasMaxCreepingMold && tile.FungalCell != null && tile.FungalCell.IsToxin)
                 {
