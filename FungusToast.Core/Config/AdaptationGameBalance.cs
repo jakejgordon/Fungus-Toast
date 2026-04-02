@@ -21,5 +21,9 @@ namespace FungusToast.Core.Config
         public const int MycelialCrescendoFirstTriggerRound = 6;
         public const int MycelialCrescendoSecondTriggerRound = 16;
         public const float OssifiedAdvanceOrthogonalBonus = 0.025f;
+        public const int ConidiaAscentTriggerRound = 17;
+        public const int ConidiaAscentSourceBlockSize = 3;
+        public const int ConidiaAscentDestinationBlockSize = 2;
+        public const int ConidiaAscentLaunchSubsquareOffset = 1;
     }
 }

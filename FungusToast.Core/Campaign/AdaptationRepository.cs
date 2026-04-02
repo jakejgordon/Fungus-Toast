@@ -116,7 +116,12 @@ namespace FungusToast.Core.Campaign
                         AdaptationIds.OssifiedAdvance,
                         "Ossified Advance",
                         $"For the rest of the campaign, each of your resistant cells gains +{(int)(AdaptationGameBalance.OssifiedAdvanceOrthogonalBonus * 100)}% orthogonal growth chance.",
-                        "ossified_advance")
+                        "ossified_advance"),
+                    new AdaptationDefinition(
+                        AdaptationIds.ConidiaAscent,
+                        "Conidia Ascent",
+                        $"At the start of round {AdaptationGameBalance.ConidiaAscentTriggerRound}, if you have a full 3x3 block of killable living cells and any completely empty 2x2 opening, that colony fragment blasts away. The 3x3 source block dies and a new 2x2 colony roots in a random open patch.",
+                        "conidia_ascent")
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;

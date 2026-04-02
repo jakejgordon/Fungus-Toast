@@ -99,6 +99,7 @@ namespace FungusToast.Unity.Grid
         private Animation.SurgicalInoculationAnimator _surgicalAnimator; // ensure correct reference
         private Animation.StartingSporeArrivalAnimator _startingSporeAnimator; // NEW: starting spores
         private Animation.CompositeLaunchArcAnimator _launchArcAnimator;
+        private Animation.ConidiaAscentAnimator _conidiaAscentAnimator;
 
         // Animation tracking so external code can wait for all visual animations to finish
         private int _activeAnimationCount = 0;
@@ -197,6 +198,7 @@ namespace FungusToast.Unity.Grid
             _surgicalAnimator = new Animation.SurgicalInoculationAnimator(this);
             _startingSporeAnimator = new Animation.StartingSporeArrivalAnimator(this); // NEW
             _launchArcAnimator = new Animation.CompositeLaunchArcAnimator(this);
+            _conidiaAscentAnimator = new Animation.ConidiaAscentAnimator(this);
         }
 
         private void OnDestroy()
@@ -329,6 +331,10 @@ namespace FungusToast.Unity.Grid
                     restoreBoardStateOnFinish: false,
                     durationScale: 1f,
                     allowOverlayFallback: false)
+                : null;
+        public IEnumerator PlayConidiaAscentAnimation(int playerId, int sourceTileId, int destinationTileId, IReadOnlyList<int> deadZoneTileIds)
+            => _conidiaAscentAnimator != null
+                ? _conidiaAscentAnimator.Play(playerId, sourceTileId, destinationTileId, deadZoneTileIds)
                 : null;
         public void PlayNutrientPatchConsumptionAnimationAsync(int nutrientTileId, int destinationTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
             => StartCoroutine(PlayNutrientPatchConsumptionAnimation(nutrientTileId, destinationTileId, patchType, rewardType, rewardAmount));

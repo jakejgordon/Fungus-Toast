@@ -187,6 +187,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Orthogonal growth bonus from resistant cells via the Ossified Advance adaptation.
         /// </summary>
-        OssifiedAdvance
+        OssifiedAdvance,
+
+        /// <summary>
+        /// Colony fragment launched by the Conidia Ascent adaptation.
+        /// </summary>
+        ConidiaAscent
     }
 }

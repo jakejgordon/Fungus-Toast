@@ -85,6 +85,23 @@ namespace FungusToast.Core.Phases
                     TryApplyMycelialCrescendo(player, board, rng, observer);
                 }
             }
+
+            if (board.CurrentRound == AdaptationGameBalance.ConidiaAscentTriggerRound)
+            {
+                foreach (var player in players)
+                {
+                    var adaptation = player.GetAdaptation(AdaptationIds.ConidiaAscent);
+                    if (adaptation == null || adaptation.HasTriggered)
+                    {
+                        continue;
+                    }
+
+                    if (TryApplyConidiaAscent(player, board, rng))
+                    {
+                        adaptation.MarkTriggered();
+                    }
+                }
+            }
         }
 
         public static void OnPostGrowthPhaseCompleted(
@@ -467,6 +484,91 @@ namespace FungusToast.Core.Phases
             }
 
             return false;
+        }
+
+        private static bool TryApplyConidiaAscent(Player player, GameBoard board, Random rng)
+        {
+            if (board == null)
+            {
+                return false;
+            }
+
+            var sourceAnchor = FindFirstConidiaAscentSourceAnchor(board, player.PlayerId);
+            if (sourceAnchor == null)
+            {
+                return false;
+            }
+
+            var destinationAnchors = GetConidiaAscentDestinationAnchors(board);
+            if (destinationAnchors.Count == 0)
+            {
+                return false;
+            }
+
+            var destinationAnchor = destinationAnchors[rng.Next(destinationAnchors.Count)];
+            var sourceTileIds = GetBlockTileIds(board, sourceAnchor.Value.x, sourceAnchor.Value.y, AdaptationGameBalance.ConidiaAscentSourceBlockSize);
+            var destinationTileIds = GetBlockTileIds(board, destinationAnchor.x, destinationAnchor.y, AdaptationGameBalance.ConidiaAscentDestinationBlockSize);
+            int sourceLaunchTileId = GetTileId(
+                sourceAnchor.Value.x + AdaptationGameBalance.ConidiaAscentLaunchSubsquareOffset,
+                sourceAnchor.Value.y + AdaptationGameBalance.ConidiaAscentLaunchSubsquareOffset,
+                board.Width);
+            int destinationTileId = GetTileId(destinationAnchor.x, destinationAnchor.y, board.Width);
+
+            foreach (int tileId in sourceTileIds)
+            {
+                var cell = board.GetCell(tileId);
+                if (cell == null || !cell.IsAlive || cell.OwnerPlayerId != player.PlayerId || cell.IsResistant)
+                {
+                    return false;
+                }
+            }
+
+            foreach (int tileId in sourceTileIds)
+            {
+                var cell = board.GetCell(tileId);
+                if (cell != null)
+                {
+                    board.KillFungalCell(cell, DeathReason.ConidiaAscent, player.PlayerId, sourceLaunchTileId);
+                }
+            }
+
+            var placedTileIds = new List<int>(destinationTileIds.Count);
+            foreach (int tileId in destinationTileIds)
+            {
+                if (!board.SpawnSporeForPlayer(player, tileId, GrowthSource.ConidiaAscent))
+                {
+                    foreach (int placedTileId in placedTileIds)
+                    {
+                        board.RemoveCellInternal(placedTileId, removeControl: true);
+                    }
+
+                    return false;
+                }
+
+                var placedCell = board.GetCell(tileId);
+                if (placedCell?.IsAlive != true || placedCell.OwnerPlayerId != player.PlayerId)
+                {
+                    foreach (int placedTileId in placedTileIds)
+                    {
+                        board.RemoveCellInternal(placedTileId, removeControl: true);
+                    }
+
+                    board.RemoveCellInternal(tileId, removeControl: true);
+                    return false;
+                }
+
+                placedCell.ClearNewlyGrownFlag();
+                placedTileIds.Add(tileId);
+            }
+
+            board.OnSpecialBoardEventTriggered(
+                new SpecialBoardEventArgs(
+                    SpecialBoardEventKind.ConidiaAscentTriggered,
+                    player.PlayerId,
+                    sourceLaunchTileId,
+                    destinationTileId,
+                    sourceTileIds));
+            return true;
         }
 
         private static bool TryApplyHyphalBridge(
@@ -863,6 +965,90 @@ namespace FungusToast.Core.Phases
             }
 
             return cell.OwnerPlayerId != ownerPlayerId;
+        }
+
+        private static (int x, int y)? FindFirstConidiaAscentSourceAnchor(GameBoard board, int playerId)
+        {
+            int blockSize = AdaptationGameBalance.ConidiaAscentSourceBlockSize;
+            for (int y = 0; y <= board.Height - blockSize; y++)
+            {
+                for (int x = 0; x <= board.Width - blockSize; x++)
+                {
+                    if (IsValidConidiaAscentSourceBlock(board, playerId, x, y, blockSize))
+                    {
+                        return (x, y);
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsValidConidiaAscentSourceBlock(GameBoard board, int playerId, int startX, int startY, int blockSize)
+        {
+            foreach (int tileId in GetBlockTileIds(board, startX, startY, blockSize))
+            {
+                var cell = board.GetCell(tileId);
+                if (cell == null || !cell.IsAlive || cell.OwnerPlayerId != playerId || cell.IsResistant)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static List<(int x, int y)> GetConidiaAscentDestinationAnchors(GameBoard board)
+        {
+            int blockSize = AdaptationGameBalance.ConidiaAscentDestinationBlockSize;
+            var anchors = new List<(int x, int y)>();
+
+            for (int y = 0; y <= board.Height - blockSize; y++)
+            {
+                for (int x = 0; x <= board.Width - blockSize; x++)
+                {
+                    if (IsConidiaAscentDestinationOpen(board, x, y, blockSize))
+                    {
+                        anchors.Add((x, y));
+                    }
+                }
+            }
+
+            return anchors;
+        }
+
+        private static bool IsConidiaAscentDestinationOpen(GameBoard board, int startX, int startY, int blockSize)
+        {
+            foreach (int tileId in GetBlockTileIds(board, startX, startY, blockSize))
+            {
+                var tile = board.GetTileById(tileId);
+                if (tile == null || tile.IsOccupiedForSporePlacement)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static List<int> GetBlockTileIds(GameBoard board, int startX, int startY, int blockSize)
+        {
+            var tileIds = new List<int>(blockSize * blockSize);
+
+            for (int y = startY; y < startY + blockSize; y++)
+            {
+                for (int x = startX; x < startX + blockSize; x++)
+                {
+                    tileIds.Add(GetTileId(x, y, board.Width));
+                }
+            }
+
+            return tileIds;
+        }
+
+        private static int GetTileId(int x, int y, int boardWidth)
+        {
+            return (y * boardWidth) + x;
         }
 
         private static List<int> GetHyphalBridgeTileIds(

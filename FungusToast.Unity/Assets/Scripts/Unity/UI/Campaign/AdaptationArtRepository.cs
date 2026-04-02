@@ -105,6 +105,9 @@ namespace FungusToast.Unity.UI.Campaign
                         case "ossified_advance":
                             DrawOssifiedAdvance(texture, drawAccent, highlight);
                             break;
+                        case "conidia_ascent":
+                            DrawConidiaAscent(texture, drawAccent, highlight);
+                            break;
                         default:
                             DrawFallback(texture, drawAccent, highlight);
                             break;
@@ -134,6 +137,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "vesicle_burst" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Accent.Putrefaction, 0.3f),
                 "mycelial_crescendo" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.Surface.PanelPrimary, 0.40f),
                 "ossified_advance" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.45f),
+                "conidia_ascent" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.35f),
                 _ => UIStyleTokens.Surface.PanelPrimary
             };
         }
@@ -159,6 +163,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "vesicle_burst" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Accent.Putrefaction, 0.35f),
                 "mycelial_crescendo" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.State.Warning, 0.25f),
                 "ossified_advance" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Text.Primary, 0.18f),
+                "conidia_ascent" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.State.Info, 0.45f),
                 _ => UIStyleTokens.Text.Primary
             };
         }
@@ -377,6 +382,27 @@ namespace FungusToast.Unity.UI.Campaign
             FillCircle(texture, 20, 7,  2, highlight);
             FillCircle(texture, 33, 20, 2, highlight);
             FillCircle(texture, 7,  20, 2, highlight);
+        }
+
+        private static void DrawConidiaAscent(Texture2D texture, Color accent, Color highlight)
+        {
+            FillCircle(texture, 11, 28, 2, highlight);
+            FillCircle(texture, 17, 28, 2, highlight);
+            FillCircle(texture, 11, 22, 2, highlight);
+            FillCircle(texture, 17, 22, 2, highlight);
+            FillCircle(texture, 5, 34, 2, accent);
+            FillCircle(texture, 11, 34, 2, accent);
+            FillCircle(texture, 17, 34, 2, accent);
+            FillCircle(texture, 5, 28, 2, accent);
+            FillCircle(texture, 5, 22, 2, accent);
+            DrawLine(texture, 19, 20, 27, 12, accent, 2);
+            DrawLine(texture, 27, 12, 33, 8, highlight, 2);
+            FillCircle(texture, 29, 24, 2, accent);
+            FillCircle(texture, 35, 18, 2, highlight);
+            FillCircle(texture, 29, 18, 2, highlight);
+            FillCircle(texture, 35, 12, 2, highlight);
+            DrawLine(texture, 20, 18, 24, 18, accent, 1);
+            DrawLine(texture, 23, 15, 27, 15, highlight, 1);
         }
 
         private static void DrawFallback(Texture2D texture, Color accent, Color highlight)

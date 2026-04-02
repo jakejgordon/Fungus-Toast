@@ -197,6 +197,16 @@ namespace FungusToast.Unity
                         specialEvent.SourceTileId,
                         specialEvent.AffectedTileIds.ToList());
                     break;
+                case SpecialBoardEventKind.ConidiaAscentTriggered:
+                    uiManager.PhaseBanner?.Show(
+                        BuildConidiaAscentBannerText(),
+                        UIEffectConstants.ConidiaAscentBannerHoldSeconds);
+                    yield return gridVisualizer.PlayConidiaAscentAnimation(
+                        specialEvent.PlayerId,
+                        specialEvent.SourceTileId,
+                        specialEvent.DestinationTileId,
+                        specialEvent.AffectedTileIds.Distinct().ToList());
+                    break;
                 case SpecialBoardEventKind.DistalSporeTriggered:
                     uiManager.GameLogRouter?.RecordDistalSporeDeployment(specialEvent.PlayerId);
                     uiManager.PhaseBanner?.Show(
@@ -291,6 +301,7 @@ namespace FungusToast.Unity
         private static bool IsImmediateEvent(SpecialBoardEventKind eventKind)
         {
             return eventKind == SpecialBoardEventKind.RetrogradeBloomTriggered
+                || eventKind == SpecialBoardEventKind.ConidiaAscentTriggered
                 || eventKind == SpecialBoardEventKind.MarginalClampTriggered
                 || eventKind == SpecialBoardEventKind.DistalSporeTriggered
                 || eventKind == SpecialBoardEventKind.SporeSalvoTriggered
@@ -617,6 +628,11 @@ namespace FungusToast.Unity
             return bridgeCells == 1
                 ? "Hyphal Bridge roots 1 bridge cell!"
                 : $"Hyphal Bridge roots {bridgeCells} bridge cells!";
+        }
+
+        private static string BuildConidiaAscentBannerText()
+        {
+            return "Conidia Ascent launches a new colony!";
         }
     }
 }

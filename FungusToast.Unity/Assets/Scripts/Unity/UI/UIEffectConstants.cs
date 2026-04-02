@@ -159,6 +159,11 @@ namespace FungusToast.Unity.UI
         public const float HyphalBridgeBannerHoldSeconds = 1.1f;
 
         /// <summary>
+        /// Hold duration for the Conidia Ascent launch banner.
+        /// </summary>
+        public const float ConidiaAscentBannerHoldSeconds = 0.95f;
+
+        /// <summary>
         /// Hold duration for the directed-vector surge banner.
         /// </summary>
         public const float DirectedVectorBannerHoldSeconds = 1.05f;
@@ -217,6 +222,66 @@ namespace FungusToast.Unity.UI
         /// Total duration for the Conidial Relay presentation animation.
         /// </summary>
         public const float ConidialRelayTotalDurationSeconds = 1.5f;
+
+        /// <summary>
+        /// Delay before the abandoned 3x3 source patch is revealed as dead.
+        /// </summary>
+        public const float ConidiaAscentDeadZoneRevealDelaySeconds = 0.22f;
+
+        /// <summary>
+        /// Duration of the accelerating launch phase.
+        /// </summary>
+        public const float ConidiaAscentLaunchDurationSeconds = 0.85f;
+
+        /// <summary>
+        /// Duration of the returning descent arc.
+        /// </summary>
+        public const float ConidiaAscentReturnDurationSeconds = 0.95f;
+
+        /// <summary>
+        /// Maximum scale reached as the payload climbs toward the camera before exiting the screen.
+        /// </summary>
+        public const float ConidiaAscentAscentMaxScale = 1.72f;
+
+        /// <summary>
+        /// Additional world-space height above the board before the payload begins its return arc.
+        /// </summary>
+        public const float ConidiaAscentOffscreenHeightWorld = 2.8f;
+
+        /// <summary>
+        /// Extra world-space arc height applied while the payload descends back toward the board.
+        /// </summary>
+        public const float ConidiaAscentReturnArcHeightWorld = 1.9f;
+
+        /// <summary>
+        /// Lateral sway applied during ascent so the launch does not feel mechanically linear.
+        /// </summary>
+        public const float ConidiaAscentAscentSwayWorld = 0.18f;
+
+        /// <summary>
+        /// Maximum tilt applied to the ascending payload.
+        /// </summary>
+        public const float ConidiaAscentAscentTiltDegrees = 14f;
+
+        /// <summary>
+        /// Duration used to fade the landed 2x2 colony into view.
+        /// </summary>
+        public const float ConidiaAscentDestinationRevealDurationSeconds = 0.18f;
+
+        /// <summary>
+        /// Duration of the landing pop.
+        /// </summary>
+        public const float ConidiaAscentLandingPopDurationSeconds = 0.16f;
+
+        /// <summary>
+        /// Duration of the landing settle after the pop.
+        /// </summary>
+        public const float ConidiaAscentLandingSettleDurationSeconds = 0.14f;
+
+        /// <summary>
+        /// Peak scale used for the landing pop before the payload settles into the destination patch.
+        /// </summary>
+        public const float ConidiaAscentLandingPopScale = 1.08f;
 
         /// <summary>
         /// Total duration of the Mycotoxic Lash special-death emphasis step.

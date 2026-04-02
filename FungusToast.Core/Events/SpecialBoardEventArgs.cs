@@ -20,6 +20,7 @@ namespace FungusToast.Core.Events
         NutrientPatchConsumed = 10,
         NecrophyticBloomComposted = 11,
         MycelialCrescendoTriggered = 12,
+        ConidiaAscentTriggered = 13,
     }
 
     public sealed class SpecialBoardEventArgs : EventArgs

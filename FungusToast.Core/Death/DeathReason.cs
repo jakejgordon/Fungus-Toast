@@ -19,6 +19,7 @@ namespace FungusToast.Core.Death
         PutrefactiveCascade,
         PutrefactiveCascadePoison,
         CytolyticBurst,
-        DistalSpore
+        DistalSpore,
+        ConidiaAscent
     }
 }
