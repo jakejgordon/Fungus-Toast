@@ -14,6 +14,8 @@ namespace FungusToast.Unity.UI.Campaign
         private const float ExpandedContentWidth = 760f;
         private const float ExpandedButtonWidth = 620f;
         private const float ExpandedDescriptionWidth = 620f;
+        private const float CreditsCardWidth = 860f;
+        private const float CreditsTextWidth = 700f;
         private const float WideLogoWidth = 520f;
         private const float WideLogoHeight = 223f;
         private const float TitleHeight = 44f;
@@ -23,6 +25,11 @@ namespace FungusToast.Unity.UI.Campaign
         private const float SecondaryButtonWidth = 240f;
         private const string AlphaHeadingText = "Alpha test build";
         private const string AlphaSummaryCopy = "Alpha build for testing. Hotseat and campaign are both available; progression and balance are still in flux.";
+        private const string CreditsHeadingText = "Special Credits";
+        private const string ArtworkHeadingText = "Artwork";
+        private const string ArtworkCreditCopy = "Special thanks to my teenage son Matthew for doing many of the graphics.";
+        private const string MusicHeadingText = "Music";
+        private const string MusicCreditCopy = "Thanks to Chris Howard for the first music track of Fungus Toast. It sounds great!";
 
         [Header("Panels")] 
         [SerializeField] private UI_StartGamePanel startGamePanel = null; // existing start / player config panel
@@ -42,6 +49,9 @@ namespace FungusToast.Unity.UI.Campaign
 
         private TextMeshProUGUI alphaSummaryText;
         private TextMeshProUGUI versionText;
+        private GameObject creditsPanel;
+        private Button creditsButton;
+        private Button creditsBackButton;
         private Button quitButton;
 
         private void Awake()
@@ -116,12 +126,15 @@ namespace FungusToast.Unity.UI.Campaign
 
             UIStyleTokens.Button.ApplyStyle(hotseatButton);
             UIStyleTokens.Button.ApplyStyle(campaignButton);
+            UIStyleTokens.Button.ApplyPanelSecondaryStyle(creditsButton);
+            UIStyleTokens.Button.ApplyPanelSecondaryStyle(creditsBackButton);
             UIStyleTokens.Button.ApplyPanelSecondaryStyle(quitButton);
         }
 
         private void OnEnable()
         {
             UpdateVersionLabel();
+            ShowMainMenuContent();
 
             // Ensure subordinate panels start hidden so only mode select is visible.
             if (startGamePanel != null) startGamePanel.gameObject.SetActive(false);
@@ -158,6 +171,16 @@ namespace FungusToast.Unity.UI.Campaign
 #else
             Application.Quit();
 #endif
+        }
+
+        private void OnCreditsClicked()
+        {
+            ShowCreditsContent();
+        }
+
+        private void OnCreditsBackClicked()
+        {
+            ShowMainMenuContent();
         }
 
         private void ConfigureLayout()
@@ -220,6 +243,12 @@ namespace FungusToast.Unity.UI.Campaign
                 alphaSummaryText.text = AlphaSummaryCopy;
             }
 
+            if (creditsButton == null)
+            {
+                creditsButton = CreateButton("UI_ModeSelectCreditsButton", "Special Credits");
+                creditsButton.onClick.AddListener(OnCreditsClicked);
+            }
+
             if (quitButton == null && ShouldShowQuitButton())
             {
                 quitButton = CreateButton("UI_ModeSelectQuitButton", "Quit to Desktop");
@@ -244,6 +273,23 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             UpdateVersionLabel();
+
+            if (creditsButton != null)
+            {
+                creditsButton.transform.SetAsLastSibling();
+            }
+
+            if (quitButton != null)
+            {
+                quitButton.transform.SetAsLastSibling();
+            }
+
+            if (versionText != null)
+            {
+                versionText.transform.SetAsLastSibling();
+            }
+
+            EnsureCreditsPanel();
         }
 
         private void UpdateVersionLabel()
@@ -289,6 +335,229 @@ namespace FungusToast.Unity.UI.Campaign
             label.color = color;
 
             return label;
+        }
+
+        private void EnsureCreditsPanel()
+        {
+            if (creditsPanel != null)
+            {
+                return;
+            }
+
+            creditsPanel = new GameObject("UI_ModeSelectCreditsPanel", typeof(RectTransform), typeof(VerticalLayoutGroup));
+            creditsPanel.transform.SetParent(transform, false);
+            creditsPanel.layer = gameObject.layer;
+            creditsPanel.SetActive(false);
+
+            RectTransform panelRect = creditsPanel.GetComponent<RectTransform>();
+            panelRect.anchorMin = Vector2.zero;
+            panelRect.anchorMax = Vector2.one;
+            panelRect.offsetMin = Vector2.zero;
+            panelRect.offsetMax = Vector2.zero;
+
+            VerticalLayoutGroup panelLayout = creditsPanel.GetComponent<VerticalLayoutGroup>();
+            panelLayout.padding = new RectOffset(72, 72, 72, 72);
+            panelLayout.spacing = 24f;
+            panelLayout.childAlignment = TextAnchor.MiddleCenter;
+            panelLayout.childControlWidth = false;
+            panelLayout.childControlHeight = false;
+            panelLayout.childForceExpandWidth = false;
+            panelLayout.childForceExpandHeight = false;
+
+            GameObject cardObject = new GameObject(
+                "UI_ModeSelectCreditsCard",
+                typeof(RectTransform),
+                typeof(LayoutElement),
+                typeof(Image),
+                typeof(VerticalLayoutGroup),
+                typeof(ContentSizeFitter));
+            cardObject.transform.SetParent(creditsPanel.transform, false);
+            cardObject.layer = gameObject.layer;
+
+            RectTransform cardRect = cardObject.GetComponent<RectTransform>();
+            cardRect.sizeDelta = new Vector2(CreditsCardWidth, 0f);
+
+            LayoutElement cardLayoutElement = cardObject.GetComponent<LayoutElement>();
+            cardLayoutElement.preferredWidth = CreditsCardWidth;
+            cardLayoutElement.flexibleWidth = 0f;
+            cardLayoutElement.flexibleHeight = 0f;
+
+            Image cardBackground = cardObject.GetComponent<Image>();
+            cardBackground.color = UIStyleTokens.Surface.PanelPrimary;
+
+            VerticalLayoutGroup cardLayout = cardObject.GetComponent<VerticalLayoutGroup>();
+            cardLayout.padding = new RectOffset(44, 44, 40, 40);
+            cardLayout.spacing = 14f;
+            cardLayout.childAlignment = TextAnchor.UpperCenter;
+            cardLayout.childControlWidth = true;
+            cardLayout.childControlHeight = false;
+            cardLayout.childForceExpandWidth = false;
+            cardLayout.childForceExpandHeight = false;
+
+            ContentSizeFitter cardFitter = cardObject.GetComponent<ContentSizeFitter>();
+            cardFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            cardFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            TextMeshProUGUI titleLabel = CreateCreditsLabel(
+                cardObject.transform,
+                "UI_ModeSelectCreditsTitle",
+                CreditsHeadingText,
+                34f,
+                56f,
+                UIStyleTokens.Text.Primary,
+                FontStyles.Bold);
+            titleLabel.enableAutoSizing = true;
+            titleLabel.fontSizeMin = 26f;
+            titleLabel.fontSizeMax = 34f;
+
+            TextMeshProUGUI artworkHeading = CreateCreditsLabel(
+                cardObject.transform,
+                "UI_ModeSelectArtworkHeading",
+                ArtworkHeadingText,
+                24f,
+                34f,
+                UIStyleTokens.Accent.Spore,
+                FontStyles.Bold);
+            artworkHeading.fontStyle = FontStyles.Bold;
+
+            TextMeshProUGUI artworkCopy = CreateCreditsLabel(
+                cardObject.transform,
+                "UI_ModeSelectArtworkCopy",
+                ArtworkCreditCopy,
+                22f,
+                72f,
+                UIStyleTokens.Text.Secondary,
+                FontStyles.Normal);
+            artworkCopy.enableAutoSizing = true;
+            artworkCopy.fontSizeMin = 18f;
+            artworkCopy.fontSizeMax = 22f;
+
+            TextMeshProUGUI musicHeading = CreateCreditsLabel(
+                cardObject.transform,
+                "UI_ModeSelectMusicHeading",
+                MusicHeadingText,
+                24f,
+                34f,
+                UIStyleTokens.Accent.Spore,
+                FontStyles.Bold);
+            musicHeading.fontStyle = FontStyles.Bold;
+
+            TextMeshProUGUI musicCopy = CreateCreditsLabel(
+                cardObject.transform,
+                "UI_ModeSelectMusicCopy",
+                MusicCreditCopy,
+                22f,
+                72f,
+                UIStyleTokens.Text.Secondary,
+                FontStyles.Normal);
+            musicCopy.enableAutoSizing = true;
+            musicCopy.fontSizeMin = 18f;
+            musicCopy.fontSizeMax = 22f;
+
+            creditsBackButton = CreateCreditsButton(cardObject.transform, "UI_ModeSelectCreditsBackButton", "Back to Menu");
+        }
+
+        private TextMeshProUGUI CreateCreditsLabel(
+            Transform parent,
+            string objectName,
+            string textValue,
+            float fontSize,
+            float preferredHeight,
+            Color color,
+            FontStyles fontStyle)
+        {
+            GameObject labelObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(parent, false);
+            labelObject.layer = gameObject.layer;
+
+            RectTransform rectTransform = labelObject.GetComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(CreditsTextWidth, preferredHeight);
+
+            LayoutElement layoutElement = labelObject.GetComponent<LayoutElement>();
+            layoutElement.preferredWidth = CreditsTextWidth;
+            layoutElement.preferredHeight = preferredHeight;
+            layoutElement.flexibleWidth = 0f;
+            layoutElement.flexibleHeight = 0f;
+
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = textValue;
+            label.font = ResolveSharedFont();
+            label.fontSize = fontSize;
+            label.fontStyle = fontStyle;
+            label.alignment = TextAlignmentOptions.Center;
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.raycastTarget = false;
+            label.color = color;
+
+            return label;
+        }
+
+        private Button CreateCreditsButton(Transform parent, string objectName, string labelText)
+        {
+            GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(Image), typeof(Button));
+            buttonObject.transform.SetParent(parent, false);
+            buttonObject.layer = gameObject.layer;
+
+            RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(SecondaryButtonWidth, SecondaryButtonHeight);
+
+            LayoutElement layoutElement = buttonObject.GetComponent<LayoutElement>();
+            layoutElement.preferredWidth = SecondaryButtonWidth;
+            layoutElement.preferredHeight = SecondaryButtonHeight;
+            layoutElement.flexibleWidth = 0f;
+            layoutElement.flexibleHeight = 0f;
+
+            Image background = buttonObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Surface.PanelElevated;
+
+            Button button = buttonObject.GetComponent<Button>();
+            button.targetGraphic = background;
+            button.onClick.AddListener(OnCreditsBackClicked);
+
+            GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(buttonObject.transform, false);
+            labelObject.layer = gameObject.layer;
+
+            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = labelText;
+            label.font = ResolveSharedFont();
+            label.fontSize = 22f;
+            label.alignment = TextAlignmentOptions.Center;
+            label.raycastTarget = false;
+
+            return button;
+        }
+
+        private void ShowMainMenuContent()
+        {
+            if (contentRoot != null)
+            {
+                contentRoot.gameObject.SetActive(true);
+            }
+
+            if (creditsPanel != null)
+            {
+                creditsPanel.SetActive(false);
+            }
+        }
+
+        private void ShowCreditsContent()
+        {
+            if (contentRoot != null)
+            {
+                contentRoot.gameObject.SetActive(false);
+            }
+
+            if (creditsPanel != null)
+            {
+                creditsPanel.SetActive(true);
+            }
         }
 
         private Button CreateButton(string objectName, string labelText)
