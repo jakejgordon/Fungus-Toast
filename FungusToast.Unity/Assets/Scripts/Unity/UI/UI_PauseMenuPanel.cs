@@ -19,6 +19,8 @@ namespace FungusToast.Unity.UI
         private const float HudButtonHeight = 24f;
         private const float CardWidth = 420f;
         private const float CardHeight = 700f;
+        private const float CardPadding = 24f;
+        private const float ContentSpacing = 14f;
 
         private GameUIManager gameUI;
         private Action onOpenRequested;
@@ -253,32 +255,40 @@ namespace FungusToast.Unity.UI
             Image cardImage = card.AddComponent<Image>();
             cardImage.color = UIStyleTokens.Surface.PanelPrimary;
 
-            VerticalLayoutGroup cardLayout = card.AddComponent<VerticalLayoutGroup>();
-            cardLayout.padding = new RectOffset(24, 24, 24, 24);
-            cardLayout.spacing = 16f;
-            cardLayout.childAlignment = TextAnchor.UpperCenter;
-            cardLayout.childControlWidth = true;
-            cardLayout.childControlHeight = false;
-            cardLayout.childForceExpandWidth = true;
-            cardLayout.childForceExpandHeight = false;
+            GameObject contentRoot = CreateUiObject("PauseMenuContent", card.transform);
+            RectTransform contentRect = contentRoot.GetComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0.5f, 1f);
+            contentRect.anchorMax = new Vector2(0.5f, 1f);
+            contentRect.pivot = new Vector2(0.5f, 1f);
+            contentRect.anchoredPosition = new Vector2(0f, -CardPadding);
+            contentRect.sizeDelta = new Vector2(CardWidth - (CardPadding * 2f), 0f);
 
-            titleLabel = CreateLabel(card.transform, "Pause Menu", 38f, FontStyles.Bold);
+            VerticalLayoutGroup contentLayout = contentRoot.AddComponent<VerticalLayoutGroup>();
+            contentLayout.padding = new RectOffset(0, 0, 0, 0);
+            contentLayout.spacing = ContentSpacing;
+            contentLayout.childAlignment = TextAnchor.UpperCenter;
+            contentLayout.childControlWidth = true;
+            contentLayout.childControlHeight = true;
+            contentLayout.childForceExpandWidth = false;
+            contentLayout.childForceExpandHeight = false;
+
+            ContentSizeFitter contentFitter = contentRoot.AddComponent<ContentSizeFitter>();
+            contentFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            LayoutElement contentElement = contentRoot.AddComponent<LayoutElement>();
+            contentElement.minWidth = CardWidth - (CardPadding * 2f);
+            contentElement.preferredWidth = CardWidth - (CardPadding * 2f);
+
+            titleLabel = CreateLabel(contentRoot.transform, "Pause Menu", 38f, FontStyles.Bold);
             titleLabel.alignment = TextAlignmentOptions.Center;
             titleLabel.color = UIStyleTokens.Text.Primary;
 
-            subtitleLabel = CreateLabel(card.transform, "Gameplay is paused.", 22f, FontStyles.Normal);
+            subtitleLabel = CreateLabel(contentRoot.transform, "Gameplay is paused.", 22f, FontStyles.Normal);
             subtitleLabel.alignment = TextAlignmentOptions.Center;
             subtitleLabel.color = UIStyleTokens.Text.Secondary;
 
-            primaryActionsRoot = CreateUiObject("PrimaryActions", card.transform);
-            VerticalLayoutGroup primaryLayout = primaryActionsRoot.AddComponent<VerticalLayoutGroup>();
-            primaryLayout.spacing = 10f;
-            primaryLayout.childAlignment = TextAnchor.UpperCenter;
-            primaryLayout.childControlWidth = true;
-            primaryLayout.childControlHeight = true;
-            primaryLayout.childForceExpandWidth = true;
-            primaryLayout.childForceExpandHeight = false;
-            ConfigureContentSection(primaryActionsRoot, minHeight: 200f);
+            primaryActionsRoot = CreateVerticalSection(contentRoot.transform, "PrimaryActions", 10f);
 
             Button resumeButton = CreateActionButton(primaryActionsRoot.transform, "Resume");
             resumeButton.onClick.AddListener(() => onResumeRequested?.Invoke());
@@ -289,15 +299,7 @@ namespace FungusToast.Unity.UI
             Button exitButton = CreateActionButton(primaryActionsRoot.transform, "Exit Game");
             exitButton.onClick.AddListener(RequestExitConfirmation);
 
-            soundSettingsRoot = CreateUiObject("SoundSettings", card.transform);
-            VerticalLayoutGroup soundLayout = soundSettingsRoot.AddComponent<VerticalLayoutGroup>();
-            soundLayout.spacing = 10f;
-            soundLayout.childAlignment = TextAnchor.UpperCenter;
-            soundLayout.childControlWidth = true;
-            soundLayout.childControlHeight = true;
-            soundLayout.childForceExpandWidth = true;
-            soundLayout.childForceExpandHeight = false;
-            ConfigureContentSection(soundSettingsRoot, minHeight: 240f);
+            soundSettingsRoot = CreateVerticalSection(contentRoot.transform, "SoundSettings", 10f);
 
             TextMeshProUGUI soundLabel = CreateLabel(soundSettingsRoot.transform, "Audio", 22f, FontStyles.Bold);
             soundLabel.alignment = TextAlignmentOptions.Center;
@@ -312,15 +314,7 @@ namespace FungusToast.Unity.UI
             musicVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty);
             musicVolumeButton.onClick.AddListener(OnMusicVolumeClicked);
 
-            confirmationRoot = CreateUiObject("Confirmation", card.transform);
-            VerticalLayoutGroup confirmationLayout = confirmationRoot.AddComponent<VerticalLayoutGroup>();
-            confirmationLayout.spacing = 12f;
-            confirmationLayout.childAlignment = TextAnchor.UpperCenter;
-            confirmationLayout.childControlWidth = true;
-            confirmationLayout.childControlHeight = true;
-            confirmationLayout.childForceExpandWidth = true;
-            confirmationLayout.childForceExpandHeight = false;
-            ConfigureContentSection(confirmationRoot, minHeight: 172f);
+            confirmationRoot = CreateVerticalSection(contentRoot.transform, "Confirmation", 12f);
 
             confirmationLabel = CreateLabel(confirmationRoot.transform, string.Empty, 21f, FontStyles.Normal);
             confirmationLabel.alignment = TextAlignmentOptions.Center;
@@ -468,37 +462,33 @@ namespace FungusToast.Unity.UI
             return button;
         }
 
-        private static void ConfigureContentSection(GameObject section, float minHeight)
+        private static GameObject CreateVerticalSection(Transform parent, string name, float spacing)
         {
-            if (section == null)
-            {
-                return;
-            }
+            GameObject section = CreateUiObject(name, parent);
 
-            ContentSizeFitter fitter = section.GetComponent<ContentSizeFitter>();
-            if (fitter == null)
-            {
-                fitter = section.AddComponent<ContentSizeFitter>();
-            }
+            VerticalLayoutGroup layoutGroup = section.AddComponent<VerticalLayoutGroup>();
+            layoutGroup.spacing = spacing;
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = true;
+            layoutGroup.childForceExpandWidth = false;
+            layoutGroup.childForceExpandHeight = false;
 
+            ContentSizeFitter fitter = section.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            LayoutElement layout = section.GetComponent<LayoutElement>();
-            if (layout == null)
-            {
-                layout = section.AddComponent<LayoutElement>();
-            }
-
-            layout.minHeight = minHeight;
-            layout.preferredHeight = -1f;
+            LayoutElement layout = section.AddComponent<LayoutElement>();
             layout.flexibleHeight = 0f;
+
+            return section;
         }
 
         private TextMeshProUGUI CreateLabel(Transform parent, string text, float fontSize, FontStyles fontStyle)
         {
             GameObject labelObject = CreateUiObject("Label", parent);
             TextMeshProUGUI label = labelObject.AddComponent<TextMeshProUGUI>();
+            LayoutElement layout = labelObject.AddComponent<LayoutElement>();
             label.text = text;
             label.fontSize = fontSize;
             label.fontStyle = fontStyle;
@@ -515,7 +505,11 @@ namespace FungusToast.Unity.UI
             labelRect.anchorMin = new Vector2(0f, 1f);
             labelRect.anchorMax = new Vector2(1f, 1f);
             labelRect.pivot = new Vector2(0.5f, 1f);
-            labelRect.sizeDelta = new Vector2(0f, fontSize + 18f);
+            float preferredHeight = fontSize + 18f;
+            labelRect.sizeDelta = new Vector2(0f, preferredHeight);
+            layout.minHeight = preferredHeight;
+            layout.preferredHeight = preferredHeight;
+            layout.flexibleHeight = 0f;
             return label;
         }
 
