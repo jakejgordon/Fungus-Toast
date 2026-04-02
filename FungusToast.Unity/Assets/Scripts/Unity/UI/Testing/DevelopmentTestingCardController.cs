@@ -143,6 +143,17 @@ namespace FungusToast.Unity.UI.Testing
 
     public sealed class DevelopmentTestingCardController
     {
+        private const float CardVerticalSpacing = 4f;
+        private const int CardHorizontalPadding = 12;
+        private const int CardVerticalPadding = 6;
+        private const float SettingButtonMinHeight = 40f;
+        private const float SettingButtonPreferredHeight = 44f;
+        private const float DropdownRowMinHeight = 64f;
+        private const float DropdownRowPreferredHeight = 70f;
+        private const float DropdownControlMinHeight = 34f;
+        private const float DropdownControlPreferredHeight = 38f;
+        private const float DropdownLabelMinHeight = 18f;
+        private const float DropdownLabelPreferredHeight = 22f;
         private const float TestingDropdownFontSize = 18f;
         private const float TestingDropdownScrollSensitivity = 1.5f;
 
@@ -442,7 +453,7 @@ namespace FungusToast.Unity.UI.Testing
             var cardElement = card.GetComponent<LayoutElement>();
             cardElement.minWidth = Mathf.Max(0f, options.CardWidth - 40f);
             cardElement.preferredWidth = options.CardWidth;
-            cardElement.minHeight = 56f;
+            cardElement.minHeight = 44f;
 
             var cardBackground = card.GetComponent<Image>();
             var panelColor = UIStyleTokens.Surface.PanelPrimary;
@@ -456,8 +467,8 @@ namespace FungusToast.Unity.UI.Testing
             cardLayout.childControlHeight = true;
             cardLayout.childForceExpandWidth = false;
             cardLayout.childForceExpandHeight = false;
-            cardLayout.spacing = 6f;
-            cardLayout.padding = new RectOffset(12, 12, 8, 8);
+            cardLayout.spacing = CardVerticalSpacing;
+            cardLayout.padding = new RectOffset(CardHorizontalPadding, CardHorizontalPadding, CardVerticalPadding, CardVerticalPadding);
         }
 
         private Button EnsureSettingButton(string name, UnityEngine.Events.UnityAction action)
@@ -542,8 +553,8 @@ namespace FungusToast.Unity.UI.Testing
                     dropdownElement = dropdownObject.AddComponent<LayoutElement>();
                 }
 
-                dropdownElement.minHeight = 40f;
-                dropdownElement.preferredHeight = 44f;
+                dropdownElement.minHeight = DropdownControlMinHeight;
+                dropdownElement.preferredHeight = DropdownControlPreferredHeight;
                 dropdownElement.minWidth = options.SettingWidth - 10f;
                 dropdownElement.preferredWidth = options.SettingWidth;
             }
@@ -563,12 +574,12 @@ namespace FungusToast.Unity.UI.Testing
             rowLayout.childControlHeight = true;
             rowLayout.childForceExpandWidth = false;
             rowLayout.childForceExpandHeight = false;
-            rowLayout.spacing = 4f;
+            rowLayout.spacing = CardVerticalSpacing;
             rowLayout.padding = new RectOffset(2, 2, 0, 0);
 
             var rowElement = row.GetComponent<LayoutElement>();
-            rowElement.minHeight = 80f;
-            rowElement.preferredHeight = 86f;
+            rowElement.minHeight = DropdownRowMinHeight;
+            rowElement.preferredHeight = DropdownRowPreferredHeight;
 
             var existingLabel = row.transform.Find(labelName);
             GameObject labelObject;
@@ -586,13 +597,13 @@ namespace FungusToast.Unity.UI.Testing
             label.text = labelText;
             label.color = UIStyleTokens.Text.Primary;
             label.enableAutoSizing = true;
-            label.fontSizeMin = 15f;
-            label.fontSizeMax = 20f;
+            label.fontSizeMin = 14f;
+            label.fontSizeMax = 18f;
             label.alignment = TextAlignmentOptions.Left;
 
             var labelElement = labelObject.GetComponent<LayoutElement>();
-            labelElement.minHeight = 22f;
-            labelElement.preferredHeight = 26f;
+            labelElement.minHeight = DropdownLabelMinHeight;
+            labelElement.preferredHeight = DropdownLabelPreferredHeight;
         }
 
         private void ConfigureDropdown(TMP_Dropdown dropdown)
@@ -675,8 +686,8 @@ namespace FungusToast.Unity.UI.Testing
                 element = button.gameObject.AddComponent<LayoutElement>();
             }
 
-            element.minHeight = 52f;
-            element.preferredHeight = 56f;
+            element.minHeight = SettingButtonMinHeight;
+            element.preferredHeight = SettingButtonPreferredHeight;
             element.minWidth = width;
             element.preferredWidth = width;
             element.flexibleWidth = 0f;
