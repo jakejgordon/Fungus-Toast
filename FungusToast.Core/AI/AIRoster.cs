@@ -856,7 +856,7 @@ namespace FungusToast.Core.AI
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_Training_ResilientMycelium",
                 prioritizeHighTier: true,
-                economyBias: EconomyBias.,
+                economyBias: EconomyBias.MinorEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
