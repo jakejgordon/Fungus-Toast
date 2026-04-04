@@ -21,10 +21,10 @@ MonoBehaviour:
     enableNutrientPatches: 0
   - levelIndex: 2
     boardPreset: {fileID: 11400000, guid: 4649fe9908134e13a9834f8a4d3b059c, type: 2}
-    enableNutrientPatches: 1
+    enableNutrientPatches: 0
   - levelIndex: 3
     boardPreset: {fileID: 11400000, guid: a4b225dd806b42ebab821b9ccd0c36e7, type: 2}
-    enableNutrientPatches: 1
+    enableNutrientPatches: 0
   - levelIndex: 4
     boardPreset: {fileID: 11400000, guid: 5fa80eb3b8cb449c9ef9dc60194ac3c7, type: 2}
     enableNutrientPatches: 1

@@ -15,10 +15,8 @@ MonoBehaviour:
   presetId: Campaign2
   boardWidth: 20
   boardHeight: 20
-  aiPlayers: []
-  pooledAiPlayerCount: 2
-  aiStrategyPool:
-  - TST_Training_ResilientMycelium
+  aiPlayers:
   - TST_Training_Overextender
-  - CMP_TierCap_GrowthResilience_Easy
-  - CMP_Reclaim_Scavenger_Easy
+  - TST_Training_ToxicTurtle
+  pooledAiPlayerCount: 0
+  aiStrategyPool: []
