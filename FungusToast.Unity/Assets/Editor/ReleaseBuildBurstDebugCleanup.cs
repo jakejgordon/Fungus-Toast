@@ -37,33 +37,26 @@ public sealed class ReleaseBuildBurstDebugCleanup : IPostprocessBuildWithReport
             return;
         }
 
-        string outputName = Directory.Exists(normalizedOutputPath)
-            ? Path.GetFileName(normalizedOutputPath)
-            : Path.GetFileNameWithoutExtension(normalizedOutputPath);
+        string[] burstDebugDirectories = Directory.GetDirectories(
+            outputDirectory,
+            "*_BurstDebugInformation_DoNotShip",
+            SearchOption.TopDirectoryOnly);
 
-        if (string.IsNullOrWhiteSpace(outputName))
+        foreach (string burstDebugDirectory in burstDebugDirectories)
         {
-            return;
-        }
-
-        string burstDebugDirectory = Path.Combine(outputDirectory, outputName + "_BurstDebugInformation_DoNotShip");
-        if (!Directory.Exists(burstDebugDirectory))
-        {
-            return;
-        }
-
-        try
-        {
-            Directory.Delete(burstDebugDirectory, recursive: true);
-            Debug.Log($"Deleted Burst debug information directory for release build: {burstDebugDirectory}");
-        }
-        catch (IOException exception)
-        {
-            Debug.LogWarning($"Failed to delete Burst debug information directory '{burstDebugDirectory}': {exception.Message}");
-        }
-        catch (UnauthorizedAccessException exception)
-        {
-            Debug.LogWarning($"Failed to delete Burst debug information directory '{burstDebugDirectory}': {exception.Message}");
+            try
+            {
+                Directory.Delete(burstDebugDirectory, recursive: true);
+                Debug.Log($"Deleted Burst debug information directory for release build: {burstDebugDirectory}");
+            }
+            catch (IOException exception)
+            {
+                Debug.LogWarning($"Failed to delete Burst debug information directory '{burstDebugDirectory}': {exception.Message}");
+            }
+            catch (UnauthorizedAccessException exception)
+            {
+                Debug.LogWarning($"Failed to delete Burst debug information directory '{burstDebugDirectory}': {exception.Message}");
+            }
         }
     }
 }

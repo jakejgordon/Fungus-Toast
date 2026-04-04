@@ -51,6 +51,7 @@ These are useful for narrower tasks and should remain discoverable here even whe
 - `second-level/PLAYER_ACTIVITY_LOG_HELPER.md` — player activity log semantics and aggregation
 - `second-level/FUTURE_IMPROVEMENTS.md` — backlog / longer-horizon ideas
 - `second-level/UI_POLISH_TASKLIST.md` — UI polish tracker
+- `BUILD_INSTRUCTIONS.md` local itch.io release section — Windows-first Unity + Butler release workflow
 
 ## 4. Tracking / Operational Docs
 

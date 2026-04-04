@@ -1,0 +1,5 @@
+{
+  "itchTarget": "your-itch-user/your-game-slug",
+  "channel": "windows-stable",
+  "buildOutputPath": "Builds/itch/windows"
+}

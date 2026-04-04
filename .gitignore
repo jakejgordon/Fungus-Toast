@@ -60,6 +60,9 @@ FungusToast.Unity/Assets/Resources/PerformanceTestRunSettings.json.meta
 .vs/
 .gradle/
 ExportedObj/
+
+# Local release/publishing configuration
+scripts/itch-release.local.json
 .consulo/
 
 *.unityproj
