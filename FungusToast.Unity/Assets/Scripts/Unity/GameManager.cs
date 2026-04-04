@@ -251,9 +251,10 @@ namespace FungusToast.Unity
         [SerializeField] private AudioClip draftPhaseStartClip = null;
         [SerializeField, Range(0f, 1f)] private float draftPhaseStartVolume = 1f;
         [SerializeField] private AudioClip gameplayMusicClip = null;
+        [SerializeField] private AudioClip[] additionalGameplayMusicClips = new AudioClip[0];
         [SerializeField, Range(0f, 1f)] private float gameplayMusicVolume = 1f;
         [SerializeField, Min(0f)] private float gameplayMusicInitialDelaySeconds = 1.5f;
-        [SerializeField, Min(0f)] private float gameplayMusicReplayDelaySeconds = 4f;
+        [SerializeField, Min(0f)] private float gameplayMusicReplayDelaySeconds = 5f;
         [SerializeField, Min(0f)] private float gameplayMusicFadeInSeconds = 1f;
         [SerializeField] private AudioMixerGroup gameplayMusicMixerGroup = null;
 
@@ -1990,12 +1991,39 @@ namespace FungusToast.Unity
         private void ConfigureBackgroundMusicService()
         {
             backgroundMusicService?.ConfigureGameplayMusic(
-                gameplayMusicClip,
+                BuildGameplayMusicPlaylist(),
                 gameplayMusicVolume,
                 gameplayMusicInitialDelaySeconds,
                 gameplayMusicReplayDelaySeconds,
                 gameplayMusicFadeInSeconds,
                 gameplayMusicMixerGroup);
+        }
+
+        private AudioClip[] BuildGameplayMusicPlaylist()
+        {
+            List<AudioClip> playlist = new();
+
+            if (gameplayMusicClip != null)
+            {
+                playlist.Add(gameplayMusicClip);
+            }
+
+            if (additionalGameplayMusicClips == null)
+            {
+                return playlist.ToArray();
+            }
+
+            foreach (AudioClip clip in additionalGameplayMusicClips)
+            {
+                if (clip == null || playlist.Contains(clip))
+                {
+                    continue;
+                }
+
+                playlist.Add(clip);
+            }
+
+            return playlist.ToArray();
         }
 
         #endregion

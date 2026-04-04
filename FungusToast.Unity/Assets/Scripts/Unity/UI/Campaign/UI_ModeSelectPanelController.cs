@@ -29,7 +29,7 @@ namespace FungusToast.Unity.UI.Campaign
         private const string ArtworkHeadingText = "Artwork";
         private const string ArtworkCreditCopy = "Special thanks to my teenage son Matthew for doing many of the graphics.";
         private const string MusicHeadingText = "Music";
-        private const string MusicCreditCopy = "Thanks to Chris Howard for the first music track of Fungus Toast. It sounds great!";
+        private const string MusicCreditCopy = "Thanks to Chris Howard for the music track of Fungus Toast. It sounds great!";
 
         [Header("Panels")] 
         [SerializeField] private UI_StartGamePanel startGamePanel = null; // existing start / player config panel

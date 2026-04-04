@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -13,11 +14,14 @@ namespace FungusToast.Unity
         private readonly MonoBehaviour coroutineHost;
         private readonly Transform audioRoot;
         private readonly Func<bool> getIsPaused;
+        private readonly List<AudioClip> shuffledGameplayClips = new();
 
         private AudioSource musicAudioSource;
-        private AudioClip gameplayClip;
+        private AudioClip[] gameplayClips = Array.Empty<AudioClip>();
+        private AudioClip lastPlayedClip;
         private AudioMixerGroup mixerGroup;
         private Coroutine playbackRoutine;
+        private int nextGameplayClipIndex;
 
         private float baseVolume = 0.28f;
         private float initialDelaySeconds = 1.5f;
@@ -34,14 +38,16 @@ namespace FungusToast.Unity
         }
 
         public void ConfigureGameplayMusic(
-            AudioClip clip,
+            AudioClip[] clips,
             float volume,
             float initialDelay,
             float replayDelay,
             float fadeInDuration,
             AudioMixerGroup outputMixerGroup)
         {
-            gameplayClip = clip;
+            gameplayClips = SanitizeGameplayClips(clips);
+            shuffledGameplayClips.Clear();
+            nextGameplayClipIndex = 0;
             baseVolume = Mathf.Clamp01(volume);
             initialDelaySeconds = Mathf.Max(0f, initialDelay);
             replayDelaySeconds = Mathf.Max(0f, replayDelay);
@@ -52,17 +58,20 @@ namespace FungusToast.Unity
             musicAudioSource.outputAudioMixerGroup = mixerGroup;
             musicAudioSource.volume = shouldPlay ? GetCurrentVolume() : 0f;
 
-            if (gameplayClip != null && gameplayClip.loadState == AudioDataLoadState.Unloaded)
+            foreach (AudioClip clip in gameplayClips)
             {
-                gameplayClip.LoadAudioData();
+                if (clip.loadState == AudioDataLoadState.Unloaded)
+                {
+                    clip.LoadAudioData();
+                }
             }
         }
 
         public void StartGameplayMusic()
         {
-            if (gameplayClip == null)
+            if (gameplayClips.Length == 0)
             {
-                Debug.LogWarning("[BackgroundMusicService] Gameplay music clip is not assigned.");
+                Debug.LogWarning("[BackgroundMusicService] Gameplay music playlist is empty.");
                 StopGameplayMusic();
                 return;
             }
@@ -77,6 +86,8 @@ namespace FungusToast.Unity
                 coroutineHost.StopCoroutine(playbackRoutine);
             }
 
+            shuffledGameplayClips.Clear();
+            nextGameplayClipIndex = 0;
             playbackRoutine = coroutineHost.StartCoroutine(RunGameplayMusicLoop());
         }
 
@@ -137,32 +148,34 @@ namespace FungusToast.Unity
 
             while (shouldPlay)
             {
-                if (gameplayClip == null)
+                AudioClip nextClip = GetNextGameplayClip();
+                if (nextClip == null)
                 {
+                    Debug.LogWarning("[BackgroundMusicService] Gameplay music playlist contains no playable clips.");
                     playbackRoutine = null;
                     yield break;
                 }
 
                 EnsureAudioSource();
 
-                if (gameplayClip.loadState == AudioDataLoadState.Unloaded)
+                if (nextClip.loadState == AudioDataLoadState.Unloaded)
                 {
-                    gameplayClip.LoadAudioData();
+                    nextClip.LoadAudioData();
                 }
 
-                while (shouldPlay && gameplayClip.loadState == AudioDataLoadState.Loading)
+                while (shouldPlay && nextClip.loadState == AudioDataLoadState.Loading)
                 {
                     yield return null;
                 }
 
-                if (gameplayClip.loadState == AudioDataLoadState.Failed)
+                if (nextClip.loadState == AudioDataLoadState.Failed)
                 {
-                    Debug.LogWarning("[BackgroundMusicService] Gameplay music audio data failed to load.");
-                    playbackRoutine = null;
-                    yield break;
+                    Debug.LogWarning($"[BackgroundMusicService] Gameplay music audio data failed to load for clip '{nextClip.name}'.");
+                    yield return WaitForUnpausedDelay(replayDelaySeconds);
+                    continue;
                 }
 
-                musicAudioSource.clip = gameplayClip;
+                musicAudioSource.clip = nextClip;
                 musicAudioSource.loop = false;
                 musicAudioSource.volume = fadeInSeconds > 0f ? 0f : GetCurrentVolume();
                 musicAudioSource.Play();
@@ -322,7 +335,7 @@ namespace FungusToast.Unity
 
         private bool HasTrackFinishedNaturally()
         {
-            if (musicAudioSource == null || gameplayClip == null)
+            if (musicAudioSource == null)
             {
                 return false;
             }
@@ -333,6 +346,71 @@ namespace FungusToast.Unity
             }
 
             return musicAudioSource.time >= musicAudioSource.clip.length - EndOfTrackGraceSeconds;
+        }
+
+        private AudioClip[] SanitizeGameplayClips(AudioClip[] clips)
+        {
+            if (clips == null || clips.Length == 0)
+            {
+                return Array.Empty<AudioClip>();
+            }
+
+            List<AudioClip> filteredClips = new();
+            foreach (AudioClip clip in clips)
+            {
+                if (clip == null)
+                {
+                    continue;
+                }
+
+                filteredClips.Add(clip);
+            }
+
+            return filteredClips.ToArray();
+        }
+
+        private AudioClip GetNextGameplayClip()
+        {
+            if (gameplayClips.Length == 0)
+            {
+                return null;
+            }
+
+            if (gameplayClips.Length == 1)
+            {
+                lastPlayedClip = gameplayClips[0];
+                return gameplayClips[0];
+            }
+
+            if (nextGameplayClipIndex >= shuffledGameplayClips.Count)
+            {
+                RefillShuffleBag();
+            }
+
+            AudioClip nextClip = shuffledGameplayClips[nextGameplayClipIndex];
+            nextGameplayClipIndex++;
+            lastPlayedClip = nextClip;
+            return nextClip;
+        }
+
+        private void RefillShuffleBag()
+        {
+            shuffledGameplayClips.Clear();
+            shuffledGameplayClips.AddRange(gameplayClips);
+
+            for (int index = shuffledGameplayClips.Count - 1; index > 0; index--)
+            {
+                int swapIndex = UnityEngine.Random.Range(0, index + 1);
+                (shuffledGameplayClips[index], shuffledGameplayClips[swapIndex]) = (shuffledGameplayClips[swapIndex], shuffledGameplayClips[index]);
+            }
+
+            if (lastPlayedClip != null && shuffledGameplayClips.Count > 1 && ReferenceEquals(shuffledGameplayClips[0], lastPlayedClip))
+            {
+                int swapIndex = UnityEngine.Random.Range(1, shuffledGameplayClips.Count);
+                (shuffledGameplayClips[0], shuffledGameplayClips[swapIndex]) = (shuffledGameplayClips[swapIndex], shuffledGameplayClips[0]);
+            }
+
+            nextGameplayClipIndex = 0;
         }
     }
 }
