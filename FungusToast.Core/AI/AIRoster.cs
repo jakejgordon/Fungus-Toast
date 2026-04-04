@@ -839,24 +839,23 @@ namespace FungusToast.Core.AI
             // Training mold: reckless growth in one tendril 
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_Training_Overextender",
-                prioritizeHighTier: true,
-                economyBias: EconomyBias.MinorEconomy,
+                prioritizeHighTier: false,
+                economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
-                    new TargetMutationGoal(MutationIds.CreepingMold, 2),
-                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
+                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 10),
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
-                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 5),
-                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 2)
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 5)
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
             ),
             // Training mold: slow resilient defense with visible resistant cells
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_Training_ResilientMycelium",
-                prioritizeHighTier: true,
-                economyBias: EconomyBias.MinorEconomy,
+                prioritizeHighTier: false,
+                economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
@@ -867,35 +866,20 @@ namespace FungusToast.Core.AI
                 surgeAttemptTurnFrequency: 8,
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Growth)
             ),
-            // Training mold: reckless growth that overextends and burns points on a bad tendril plan
-            new ParameterizedSpendingStrategy(
-                strategyName: "TST_Training_Overextender",
-                prioritizeHighTier: true,
-                economyBias: EconomyBias.MinorEconomy,
-                targetMutationGoals: new List<TargetMutationGoal>
-                {
-                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
-                    new TargetMutationGoal(MutationIds.CreepingMold, 2),
-                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
-                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
-                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 5),
-                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 2)
-                },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
-            ),
             // Training mold: slow fungicide/resilience turtle that eventually shows adjacent poison
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_Training_ToxicTurtle",
-                prioritizeHighTier: true,
-                economyBias: EconomyBias.MinorEconomy,
+                prioritizeHighTier: false,
+                economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 15),
                     new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 3),
                     new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
                     new TargetMutationGoal(MutationIds.MycotoxinCatabolism)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Economy)
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Fungicide, MycovariantCategory.Resistance)
             )
         };
 
