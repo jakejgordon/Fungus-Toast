@@ -26,6 +26,15 @@ This order ensures all dependencies are built correctly and avoids circular depe
 
 For Windows-first local releases to itch.io, use the release helper script at `scripts/publish_itch_release.ps1`.
 
+### Deployment Version Confirmation
+
+Before any deployment or itch.io publish, confirm the intended semantic version with the requester.
+
+- Use `Major.Minor.BugFix` format.
+- Confirm which level should increment before running the deployment.
+- Do not assume the next version automatically, even for routine uploads.
+- Use the confirmed version string for the build and the `--userversion` value passed to butler.
+
 Typical first-time setup:
 
 1. Install butler and confirm `butler version` works, or set `BUTLER_PATH` to your `butler.exe`.
