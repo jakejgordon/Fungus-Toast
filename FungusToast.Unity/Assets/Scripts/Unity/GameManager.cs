@@ -401,10 +401,7 @@ namespace FungusToast.Unity
                 return;
             }
 
-            if (!isPauseMenuOpen)
-            {
-                backgroundMusicService?.Resume();
-            }
+            backgroundMusicService?.Resume();
         }
 
         private void OnApplicationPause(bool pauseStatus)
@@ -420,7 +417,7 @@ namespace FungusToast.Unity
         {
             EnsureSoundEffectAudioSource();
             BootstrapPauseMenu();
-            backgroundMusicService = new BackgroundMusicService(this, transform, () => isPauseMenuOpen || !hasApplicationFocus);
+            backgroundMusicService = new BackgroundMusicService(this, transform, () => !hasApplicationFocus);
             ConfigureBackgroundMusicService();
 
             playerInitializer = new PlayerInitializer(
@@ -1875,7 +1872,10 @@ namespace FungusToast.Unity
                 OpenPauseMenu,
                 ResumeGameplay,
                 ReturnToMainMenu,
-                QuitGame);
+                QuitGame,
+                SkipToNextTrack,
+                GetCurrentGameplayTrackName,
+                GetNextGameplayTrackName);
 
             gameUIManager?.RegisterPauseMenuPanel(pauseMenuPanel);
             pauseMenuPanel.SetGameplayVisibility(false);
@@ -1971,7 +1971,6 @@ namespace FungusToast.Unity
             gameUIManager?.MutationUIManager?.ForceCloseTreePanel();
             isPauseMenuOpen = true;
             Time.timeScale = 0f;
-            backgroundMusicService?.Pause();
             pauseMenuPanel?.Show();
         }
 
@@ -1984,8 +1983,24 @@ namespace FungusToast.Unity
         {
             isPauseMenuOpen = false;
             Time.timeScale = 1f;
-            backgroundMusicService?.Resume();
             pauseMenuPanel?.Hide();
+        }
+
+        public void SkipToNextTrack()
+        {
+            backgroundMusicService?.SkipToNextTrack();
+        }
+
+        public string GetCurrentGameplayTrackName()
+        {
+            AudioClip clip = backgroundMusicService?.GetCurrentGameplayTrack();
+            return clip != null ? clip.name : string.Empty;
+        }
+
+        public string GetNextGameplayTrackName()
+        {
+            AudioClip clip = backgroundMusicService?.GetNextGameplayTrack();
+            return clip != null ? clip.name : string.Empty;
         }
 
         private void ConfigureBackgroundMusicService()

@@ -2,7 +2,7 @@
 
 > Purpose: define where sound belongs in Fungus Toast, where assets and sound code should live, and the default implementation plan for the first gameplay sound cues.
 > Audience: Unity developers and GitHub Copilot.
-> Scope (v1): short-form gameplay SFX and phase-transition cues. Music, ambience, and voice are out of scope for this document unless they affect storage or service architecture.
+> Scope (v1): short-form gameplay SFX, phase-transition cues, and the current gameplay-music wiring workflow. Menu music, ambience, and voice remain out of scope unless they affect storage or service architecture.
 
 ## 1. Ownership and Layer Boundary
 
@@ -35,8 +35,13 @@ Recommended naming:
 - `sfx_phase_decay_start_01.wav`
 - `sfx_phase_draft_start_01.wav`
 - `sfx_phase_growth_cycle_tick_01.wav`
+- `music_enoki_of_c_01.mp3`
+- `music_spororific_lounge_01.mp3`
+- `music_fun_guses_lament_01.mp3`
 
 Keep variations grouped by suffix (`_01`, `_02`, `_03`) rather than inventing new names for the same cue family.
+
+For gameplay music, use the same lowercase underscore pattern with a `music_` prefix and a version suffix.
 
 ### Batch Converting iPhone `.m4a` Files to `.wav`
 
@@ -123,6 +128,82 @@ These cues are currently wired in-game:
 - `sfx_phase_growth_cycle_tick_01.wav`
 
 These are all Unity-side one-shot SFX and they currently respect the shared SFX enable/volume settings exposed in the main menu and in-game pause menu.
+
+### Gameplay music
+
+Gameplay music is now handled by the Unity-side `BackgroundMusicService` rather than a single looping clip.
+
+Current behavior:
+
+- gameplay tracks are assigned through serialized `AudioClip` references on `GameManager`
+- the active gameplay playlist advances automatically when a track ends naturally
+- there is currently a `5` second unpaused delay between tracks
+- playback uses a shuffle-bag style rotation so each configured gameplay track plays once before the order resets
+- music still respects the existing gameplay music volume settings, pause state, and fade-in behavior
+- the player can skip immediately to the next queued gameplay track from both the gameplay HUD and the in-game pause menu
+- the in-game pause menu does not stop gameplay music, so music volume changes can be auditioned in real time while the menu is open
+
+Currently assigned in the active gameplay scene playlist:
+
+- `music_enoki_of_c_01.mp3`
+- `music_spororific_lounge_01.mp3`
+- `music_fun_guses_lament_01.mp3`
+
+### Standard workflow for adding a new gameplay music track
+
+This is the default workflow to follow when a new gameplay music file has already been imported into Unity and the next request is to "wire it up."
+
+Normal user workflow:
+
+1. The user adds the new music asset under `FungusToast.Unity/Assets/Audio/Music` using the established naming convention.
+2. The user asks Copilot to wire the track into gameplay music.
+3. Copilot updates the Unity-side wiring and then updates this document if the active playlist changed.
+
+For the normal "add one more gameplay track" case, do the following:
+
+1. Confirm the new asset exists under `FungusToast.Unity/Assets/Audio/Music`.
+2. Check the asset's `.meta` import settings and align them with the existing gameplay music tracks.
+3. Wire the new clip into the active gameplay playlist in `FungusToast.Unity/Assets/Scenes/SampleScene.unity`.
+4. Do not change `BackgroundMusicService` or `GameManager` code unless the playback behavior itself needs to change.
+5. Update the gameplay music section of this document so it stays accurate.
+
+For the standard "wire up the existing music UX" case, preserve the current player-facing controls unless the request says otherwise:
+
+- keep the Next Track button available from the gameplay HUD and the in-game pause menu
+- keep the tooltip meaningful by showing the current track name and the next queued track name
+- keep pause-menu music playback enabled so volume changes can be heard immediately while the menu is open
+
+Current implementation details for standard gameplay-track wiring:
+
+- `GameManager` owns the serialized playlist inputs through `gameplayMusicClip` and `additionalGameplayMusicClips`
+- `GameManager.BuildGameplayMusicPlaylist()` combines those serialized references into the runtime playlist
+- `BackgroundMusicService.ConfigureGameplayMusic(...)` consumes that playlist and already handles sequencing, fade-in, pause awareness, and shuffle-bag rotation
+- the active scene wiring currently lives in `FungusToast.Unity/Assets/Scenes/SampleScene.unity`
+
+Default rule for future gameplay-track additions:
+
+- if the request is only to add another track to the existing gameplay rotation, prefer scene and importer updates over code changes
+- only edit `FungusToast.Unity/Assets/Scripts/Unity/GameManager.cs` or `FungusToast.Unity/Assets/Scripts/Unity/Services/BackgroundMusicService.cs` when the requested behavior changes
+
+Canonical import settings for gameplay music assets:
+
+- `loadType: 0`
+- `sampleRateSetting: 0`
+- `sampleRateOverride: 44100`
+- `compressionFormat: 1`
+- `quality: 1`
+- `preloadAudioData: 1`
+- `loadInBackground: 1`
+- `forceToMono: 0`
+- `normalize: 1`
+- `3D: 0`
+
+Practical guidance:
+
+- if Unity imports a new music file with `preloadAudioData: 0`, `loadInBackground: 0`, or `3D: 1`, fix the `.meta` to match the existing gameplay tracks
+- prefer matching the import profile of `music_enoki_of_c_01` unless there is a deliberate reason not to
+- when wiring a new clip into the active playlist, preserve the existing track assignments and append the new track unless the user asked to replace or reorder the playlist
+- treat the scene YAML as authoritative for what is actually live in the current gameplay playlist
 
 ## 6. Initial Sound Plan
 

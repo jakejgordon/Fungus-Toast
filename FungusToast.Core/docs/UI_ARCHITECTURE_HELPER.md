@@ -1,6 +1,6 @@
 # Unity UI Architecture Helper
 
-> **📚 Related Documentation**: For animation timing, see [second-level/ANIMATION_HELPER.md](second-level/ANIMATION_HELPER.md). For game flow and runtime architecture, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md). For the full documentation hierarchy, see [README.md](README.md).
+> **📚 Related Documentation**: For animation timing, see [second-level/ANIMATION_HELPER.md](second-level/ANIMATION_HELPER.md). For game flow and runtime architecture, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md). For visual tokens, component recipes, and screen-level styling rules, see [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md). For the full documentation hierarchy, see [README.md](README.md).
 
 This document describes the established UI patterns in FungusToast.Unity. Follow these conventions when adding or modifying UI components.
 

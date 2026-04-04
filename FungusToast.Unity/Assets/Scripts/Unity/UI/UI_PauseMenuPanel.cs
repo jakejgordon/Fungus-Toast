@@ -6,7 +6,7 @@ using FungusToast.Unity.UI.Tooltips;
 
 namespace FungusToast.Unity.UI
 {
-    public class UI_PauseMenuPanel : MonoBehaviour
+    public class UI_PauseMenuPanel : MonoBehaviour, ITooltipContentProvider
     {
         private enum PendingAction
         {
@@ -27,12 +27,17 @@ namespace FungusToast.Unity.UI
         private Action onResumeRequested;
         private Action onReturnToMainMenuRequested;
         private Action onExitRequested;
+        private Action onNextTrackRequested;
+        private Func<string> getCurrentTrackName;
+        private Func<string> getNextTrackName;
 
         private Canvas rootCanvas;
         private TMP_FontAsset sharedFont;
 
         private GameObject hudButtonRoot;
         private Button hudMenuButton;
+        private GameObject nextTrackHudButtonRoot;
+        private Button nextTrackHudButton;
 
         private GameObject overlayRoot;
         private CanvasGroup overlayCanvasGroup;
@@ -45,6 +50,7 @@ namespace FungusToast.Unity.UI
         private Button soundEffectsToggleButton;
         private Button soundEffectsVolumeButton;
         private Button musicVolumeButton;
+        private Button nextTrackMenuButton;
 
         private PendingAction pendingAction;
         private bool gameplayVisible;
@@ -57,13 +63,19 @@ namespace FungusToast.Unity.UI
             Action openRequested,
             Action resumeRequested,
             Action returnToMainMenuRequested,
-            Action exitRequested)
+            Action exitRequested,
+            Action nextTrackRequested,
+            Func<string> currentTrackNameProvider,
+            Func<string> nextTrackNameProvider)
         {
             gameUI = ui;
             onOpenRequested = openRequested;
             onResumeRequested = resumeRequested;
             onReturnToMainMenuRequested = returnToMainMenuRequested;
             onExitRequested = exitRequested;
+            onNextTrackRequested = nextTrackRequested;
+            getCurrentTrackName = currentTrackNameProvider;
+            getNextTrackName = nextTrackNameProvider;
 
             EnsureBuilt();
         }
@@ -76,6 +88,11 @@ namespace FungusToast.Unity.UI
             if (hudButtonRoot != null)
             {
                 hudButtonRoot.SetActive(isVisible);
+            }
+
+            if (nextTrackHudButtonRoot != null)
+            {
+                nextTrackHudButtonRoot.SetActive(isVisible);
             }
 
             if (!isVisible)
@@ -135,9 +152,16 @@ namespace FungusToast.Unity.UI
             ApplyPanelState();
         }
 
+        public string GetTooltipText()
+        {
+            string currentTrack = FormatTrackName(getCurrentTrackName?.Invoke(), "Waiting to start");
+            string nextTrack = FormatTrackName(getNextTrackName?.Invoke(), "Unavailable");
+            return $"Skip to the next track immediately.\nCurrent: {currentTrack}\nNext: {nextTrack}";
+        }
+
         private void EnsureBuilt()
         {
-            if (overlayRoot != null && hudButtonRoot != null)
+            if (overlayRoot != null && hudButtonRoot != null && nextTrackHudButtonRoot != null)
             {
                 return;
             }
@@ -156,6 +180,11 @@ namespace FungusToast.Unity.UI
                 BuildHudButton(rootCanvas.transform);
             }
 
+            if (nextTrackHudButtonRoot == null)
+            {
+                BuildNextTrackHudButton(rootCanvas.transform);
+            }
+
             if (overlayRoot == null)
             {
                 BuildOverlay(rootCanvas.transform);
@@ -164,6 +193,11 @@ namespace FungusToast.Unity.UI
             if (hudButtonRoot != null)
             {
                 hudButtonRoot.SetActive(gameplayVisible);
+            }
+
+            if (nextTrackHudButtonRoot != null)
+            {
+                nextTrackHudButtonRoot.SetActive(gameplayVisible);
             }
 
             ApplyPanelState();
@@ -229,6 +263,37 @@ namespace FungusToast.Unity.UI
             label.color = UIStyleTokens.Button.TextDefault;
         }
 
+        private void BuildNextTrackHudButton(Transform parent)
+        {
+            nextTrackHudButtonRoot = CreateUiObject("NextTrackHudButton", parent);
+            RectTransform rootRect = nextTrackHudButtonRoot.GetComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(1f, 1f);
+            rootRect.anchorMax = new Vector2(1f, 1f);
+            rootRect.pivot = new Vector2(1f, 1f);
+            rootRect.sizeDelta = new Vector2(HudButtonWidth, HudButtonHeight);
+            rootRect.anchoredPosition = new Vector2(-40f, -6f);
+
+            Image background = nextTrackHudButtonRoot.AddComponent<Image>();
+            background.color = UIStyleTokens.Button.BackgroundDefault;
+
+            nextTrackHudButton = nextTrackHudButtonRoot.AddComponent<Button>();
+            UIStyleTokens.Button.ApplyStyle(nextTrackHudButton);
+            nextTrackHudButton.onClick.AddListener(OnNextTrackClicked);
+
+            TooltipTrigger tooltip = nextTrackHudButtonRoot.AddComponent<TooltipTrigger>();
+            tooltip.SetDynamicProvider(this);
+
+            TextMeshProUGUI label = CreateLabel(nextTrackHudButtonRoot.transform, ">>", 18f, FontStyles.Bold);
+            RectTransform labelRect = label.rectTransform;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            label.alignment = TextAlignmentOptions.Center;
+            label.color = UIStyleTokens.Button.TextDefault;
+            label.margin = new Vector4(-6f, -5f, -6f, -5f);
+        }
+
         private void BuildOverlay(Transform parent)
         {
             overlayRoot = CreateUiObject("PauseMenuOverlay", parent);
@@ -284,7 +349,7 @@ namespace FungusToast.Unity.UI
             titleLabel.alignment = TextAlignmentOptions.Center;
             titleLabel.color = UIStyleTokens.Text.Primary;
 
-            subtitleLabel = CreateLabel(contentRoot.transform, "Gameplay is paused.", 22f, FontStyles.Normal);
+            subtitleLabel = CreateLabel(contentRoot.transform, string.Empty, 22f, FontStyles.Normal);
             subtitleLabel.alignment = TextAlignmentOptions.Center;
             subtitleLabel.color = UIStyleTokens.Text.Secondary;
 
@@ -313,6 +378,12 @@ namespace FungusToast.Unity.UI
 
             musicVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty);
             musicVolumeButton.onClick.AddListener(OnMusicVolumeClicked);
+
+            nextTrackMenuButton = CreateActionButton(soundSettingsRoot.transform, "Next Track");
+            nextTrackMenuButton.onClick.AddListener(OnNextTrackClicked);
+
+            TooltipTrigger nextTrackTooltip = nextTrackMenuButton.gameObject.AddComponent<TooltipTrigger>();
+            nextTrackTooltip.SetDynamicProvider(this);
 
             confirmationRoot = CreateVerticalSection(contentRoot.transform, "Confirmation", 12f);
 
@@ -353,7 +424,7 @@ namespace FungusToast.Unity.UI
 
             if (!showConfirmation)
             {
-                subtitleLabel.text = "Gameplay is paused.";
+                subtitleLabel.text = string.Empty;
                 return;
             }
 
@@ -413,11 +484,22 @@ namespace FungusToast.Unity.UI
             RefreshSoundSettingsButtons();
         }
 
+        private void OnNextTrackClicked()
+        {
+            onNextTrackRequested?.Invoke();
+        }
+
         private void RefreshSoundSettingsButtons()
         {
             SetButtonLabel(soundEffectsToggleButton, $"Sound Effects: {(SoundEffectsSettings.Enabled ? "On" : "Off")}");
             SetButtonLabel(soundEffectsVolumeButton, $"SFX Volume: {Mathf.RoundToInt(SoundEffectsSettings.Volume * 100f)}%");
             SetButtonLabel(musicVolumeButton, $"Music Volume: {Mathf.RoundToInt(MusicSettings.Volume * 100f)}%");
+            SetButtonLabel(nextTrackMenuButton, "Next Track");
+        }
+
+        private static string FormatTrackName(string trackName, string fallback)
+        {
+            return string.IsNullOrWhiteSpace(trackName) ? fallback : trackName;
         }
 
         private static void SetButtonLabel(Button button, string labelText)

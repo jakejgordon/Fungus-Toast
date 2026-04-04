@@ -4,6 +4,7 @@
 > Audience: Human developers and GitHub Copilot.
 > Scope (v1): Full UI coverage (menus, in-game HUD, mutation tree, logs, tooltips, overlays/endgame).
 > Enforcement (v1): Soft guidance (strong defaults + checklist), not hard blockers.
+> Related implementation patterns: See [UI_ARCHITECTURE_HELPER.md](UI_ARCHITECTURE_HELPER.md) for the canonical Unity UI service, tooltip, pooling, and façade patterns that new UI work should reuse.
 
 ## 1) Design Intent
 

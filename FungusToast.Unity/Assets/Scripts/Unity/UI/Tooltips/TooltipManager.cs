@@ -48,6 +48,14 @@ namespace FungusToast.Unity.UI.Tooltips
             }
             Transform parent = canvasRect != null ? canvasRect : transform;
             var go = Instantiate(tooltipPrefab, parent, false);
+            Canvas tooltipCanvas = go.GetComponent<Canvas>();
+            if (tooltipCanvas == null)
+            {
+                tooltipCanvas = go.AddComponent<Canvas>();
+            }
+
+            tooltipCanvas.overrideSorting = true;
+            tooltipCanvas.sortingOrder = short.MaxValue;
             view = go.GetComponent<TooltipView>();
             go.SetActive(false);
         }
@@ -89,6 +97,12 @@ namespace FungusToast.Unity.UI.Tooltips
             {
                 pendingShow = false;
                 InternalShow();
+                return;
+            }
+
+            if (currentSource != null && !pendingShow && view != null && view.gameObject.activeSelf)
+            {
+                RefreshVisibleTooltip();
             }
         }
 
@@ -96,10 +110,23 @@ namespace FungusToast.Unity.UI.Tooltips
         {
             if (view == null) return;
             view.PrepareForLayout();
+            view.transform.SetAsLastSibling();
             string text = currentRequest.ResolveText();
             view.SetText(text, currentRequest.MaxWidth);
             Position(view.RectTransform, currentRequest);
             view.ShowImmediate();
+        }
+
+        private void RefreshVisibleTooltip()
+        {
+            if (view == null)
+            {
+                return;
+            }
+
+            string text = currentRequest.ResolveText();
+            view.SetText(text, currentRequest.MaxWidth);
+            Position(view.RectTransform, currentRequest);
         }
 
         private void Position(RectTransform tooltipRect, TooltipRequest request)

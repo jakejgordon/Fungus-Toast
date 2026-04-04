@@ -22,6 +22,7 @@ namespace FungusToast.Unity
         private AudioMixerGroup mixerGroup;
         private Coroutine playbackRoutine;
         private int nextGameplayClipIndex;
+        private bool skipToNextRequested;
 
         private float baseVolume = 0.28f;
         private float initialDelaySeconds = 1.5f;
@@ -48,6 +49,8 @@ namespace FungusToast.Unity
             gameplayClips = SanitizeGameplayClips(clips);
             shuffledGameplayClips.Clear();
             nextGameplayClipIndex = 0;
+            lastPlayedClip = null;
+            skipToNextRequested = false;
             baseVolume = Mathf.Clamp01(volume);
             initialDelaySeconds = Mathf.Max(0f, initialDelay);
             replayDelaySeconds = Mathf.Max(0f, replayDelay);
@@ -88,6 +91,8 @@ namespace FungusToast.Unity
 
             shuffledGameplayClips.Clear();
             nextGameplayClipIndex = 0;
+            lastPlayedClip = null;
+            skipToNextRequested = false;
             playbackRoutine = coroutineHost.StartCoroutine(RunGameplayMusicLoop());
         }
 
@@ -95,6 +100,7 @@ namespace FungusToast.Unity
         {
             shouldPlay = false;
             audioSourcePaused = false;
+            skipToNextRequested = false;
 
             if (playbackRoutine != null)
             {
@@ -110,6 +116,32 @@ namespace FungusToast.Unity
             musicAudioSource.Stop();
             musicAudioSource.clip = null;
             musicAudioSource.volume = 0f;
+        }
+
+        public void SkipToNextTrack()
+        {
+            if (!shouldPlay || gameplayClips.Length == 0)
+            {
+                return;
+            }
+
+            skipToNextRequested = true;
+            audioSourcePaused = false;
+
+            if (musicAudioSource != null && musicAudioSource.isPlaying)
+            {
+                musicAudioSource.Stop();
+            }
+        }
+
+        public AudioClip GetCurrentGameplayTrack()
+        {
+            return musicAudioSource != null ? musicAudioSource.clip : null;
+        }
+
+        public AudioClip GetNextGameplayTrack()
+        {
+            return PeekNextGameplayClip();
         }
 
         public void Pause()
@@ -186,8 +218,16 @@ namespace FungusToast.Unity
                     yield return FadeInCurrentClip();
                 }
 
+                bool skippedCurrentTrack = false;
                 while (shouldPlay)
                 {
+                    if (skipToNextRequested)
+                    {
+                        skipToNextRequested = false;
+                        skippedCurrentTrack = true;
+                        break;
+                    }
+
                     if (getIsPaused())
                     {
                         if (!audioSourcePaused && musicAudioSource.isPlaying)
@@ -234,6 +274,11 @@ namespace FungusToast.Unity
                     break;
                 }
 
+                if (skippedCurrentTrack)
+                {
+                    continue;
+                }
+
                 yield return WaitForUnpausedDelay(replayDelaySeconds);
             }
 
@@ -246,6 +291,11 @@ namespace FungusToast.Unity
             while (elapsed < fadeInSeconds)
             {
                 if (!shouldPlay)
+                {
+                    yield break;
+                }
+
+                if (skipToNextRequested)
                 {
                     yield break;
                 }
@@ -289,6 +339,12 @@ namespace FungusToast.Unity
             {
                 if (!shouldPlay)
                 {
+                    yield break;
+                }
+
+                if (skipToNextRequested)
+                {
+                    skipToNextRequested = false;
                     yield break;
                 }
 
@@ -382,15 +438,44 @@ namespace FungusToast.Unity
                 return gameplayClips[0];
             }
 
+            EnsureShuffleBagAvailable();
+
+            AudioClip nextClip = shuffledGameplayClips[nextGameplayClipIndex];
+            nextGameplayClipIndex++;
+            lastPlayedClip = nextClip;
+
             if (nextGameplayClipIndex >= shuffledGameplayClips.Count)
             {
                 RefillShuffleBag();
             }
 
-            AudioClip nextClip = shuffledGameplayClips[nextGameplayClipIndex];
-            nextGameplayClipIndex++;
-            lastPlayedClip = nextClip;
             return nextClip;
+        }
+
+        private AudioClip PeekNextGameplayClip()
+        {
+            if (gameplayClips.Length == 0)
+            {
+                return null;
+            }
+
+            if (gameplayClips.Length == 1)
+            {
+                return gameplayClips[0];
+            }
+
+            EnsureShuffleBagAvailable();
+            return shuffledGameplayClips[nextGameplayClipIndex];
+        }
+
+        private void EnsureShuffleBagAvailable()
+        {
+            if (nextGameplayClipIndex < shuffledGameplayClips.Count)
+            {
+                return;
+            }
+
+            RefillShuffleBag();
         }
 
         private void RefillShuffleBag()

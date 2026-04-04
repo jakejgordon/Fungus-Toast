@@ -836,11 +836,27 @@ namespace FungusToast.Core.AI
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Economy, MycovariantCategory.Resistance)
             ),
+            // Training mold: reckless growth in one tendril 
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Training_Overextender",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.CreepingMold, 2),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 5),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 2)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
+            ),
             // Training mold: slow resilient defense with visible resistant cells
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_Training_ResilientMycelium",
                 prioritizeHighTier: true,
-                economyBias: EconomyBias.MinorEconomy,
+                economyBias: EconomyBias.,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
