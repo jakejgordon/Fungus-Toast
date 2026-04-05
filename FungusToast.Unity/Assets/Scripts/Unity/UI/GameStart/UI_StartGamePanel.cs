@@ -1281,6 +1281,7 @@ namespace FungusToast.Unity.UI.GameStart
 
             currentStep = SetupStep.MoldSelection;
             currentHumanMoldSelectionIndex = FindNextHumanWithoutSelection();
+            AssignDefaultMoldSelectionForCurrentHuman();
             UpdateSetupStepState();
         }
 
@@ -1302,6 +1303,39 @@ namespace FungusToast.Unity.UI.GameStart
             }
 
             return Mathf.Max(0, selectedHumanMoldIndices.Count - 1);
+        }
+
+        private void AssignDefaultMoldSelectionForCurrentHuman()
+        {
+            if (currentHumanMoldSelectionIndex < 0 || currentHumanMoldSelectionIndex >= selectedHumanMoldIndices.Count)
+            {
+                return;
+            }
+
+            if (selectedHumanMoldIndices[currentHumanMoldSelectionIndex].HasValue)
+            {
+                return;
+            }
+
+            int defaultMoldIndex = FindFirstAvailableMoldIndex();
+            if (defaultMoldIndex >= 0)
+            {
+                selectedHumanMoldIndices[currentHumanMoldSelectionIndex] = defaultMoldIndex;
+            }
+        }
+
+        private int FindFirstAvailableMoldIndex()
+        {
+            int availableMoldCount = GetAvailableMoldCount();
+            for (int moldIndex = 0; moldIndex < availableMoldCount; moldIndex++)
+            {
+                if (!IsMoldTakenByOtherHuman(moldIndex))
+                {
+                    return moldIndex;
+                }
+            }
+
+            return -1;
         }
 
         private void RefreshMoldSelectionUi()
@@ -1552,6 +1586,7 @@ namespace FungusToast.Unity.UI.GameStart
             if (currentHumanMoldSelectionIndex < selectedHumanPlayerCount - 1)
             {
                 currentHumanMoldSelectionIndex++;
+                AssignDefaultMoldSelectionForCurrentHuman();
                 UpdateSetupStepState();
                 return;
             }
