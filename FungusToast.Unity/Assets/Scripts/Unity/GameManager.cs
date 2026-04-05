@@ -250,6 +250,8 @@ namespace FungusToast.Unity
         [SerializeField, Range(0f, 1f)] private float decayPhaseStartVolume = 1f;
         [SerializeField] private AudioClip draftPhaseStartClip = null;
         [SerializeField, Range(0f, 1f)] private float draftPhaseStartVolume = 1f;
+        [SerializeField] private AudioClip startingSporeDropClip = null;
+        [SerializeField, Range(0f, 1f)] private float startingSporeDropVolume = 1f;
         [SerializeField] private AudioClip gameplayMusicClip = null;
         [SerializeField] private AudioClip[] additionalGameplayMusicClips = new AudioClip[0];
         [SerializeField, Range(0f, 1f)] private float gameplayMusicVolume = 1f;
@@ -1153,6 +1155,23 @@ namespace FungusToast.Unity
             soundEffectAudioSource.PlayOneShot(draftPhaseStartClip, effectiveVolume);
         }
 
+        private void PlayStartingSporeDropSound()
+        {
+            if (startingSporeDropClip == null)
+            {
+                return;
+            }
+
+            EnsureSoundEffectAudioSource();
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(startingSporeDropVolume);
+            if (effectiveVolume <= 0f)
+            {
+                return;
+            }
+
+            soundEffectAudioSource.PlayOneShot(startingSporeDropClip, effectiveVolume);
+        }
+
         #region Hotseat Callbacks
 
         public void OnHumanMutationTurnFinished(Player player)
@@ -1721,7 +1740,7 @@ namespace FungusToast.Unity
             gameUIManager.LoadingScreen?.SetStatus("Spores are landing…");
             if (startingIds.Count >0 && !testingModeEnabled)
             {
-                yield return gridVisualizer.PlayStartingSporeArrivalAnimation(startingIds);
+                yield return gridVisualizer.PlayStartingSporeArrivalAnimation(startingIds, PlayStartingSporeDropSound);
             }
             // Only fade out loading screen if we are NOT about to fast-forward;
             // fast-forward will take over the loading screen with progress text.

@@ -122,6 +122,7 @@ These cues are currently wired in-game:
 
 - `sfx_ui_mutation_upgrade_success_01.wav`
 - `sfx_ui_mutation_store_points_01.wav`
+- `sfx_ui_starting_spore_drop_01.wav`
 - `sfx_phase_mutation_start_01.wav`
 - `sfx_phase_growth_start_01.wav`
 - `sfx_phase_decay_start_01.wav`
@@ -215,6 +216,7 @@ The first sound pass should cover the following cues.
 | Targeted upgrade success | `UI_MutationManager.ResolveChemotacticBeaconUpgrade(...)` | Play only after `TryActivateReservedTargetedSurge(...)` returns success | `0.25s` to `0.60s` | Implemented through the targeted success path. Do not play when the player reserves cost or enters tile-selection mode. |
 | Store mutation points | `UI_MutationManager.OnStoreMutationPointsClicked()` | Play after `WantsToBankPointsThisTurn = true` and before ending the mutation turn | `0.18s` to `0.40s` | Implemented. This should read as a deliberate hold/save action, not a reward fanfare. |
 | Mutation phase start | `GameManager.StartNextRound()` | Play alongside the mutation banner when `PhaseBanner.Show("Mutation Phase Begins!", 2f)` fires | `0.60s` to `1.10s` | Implemented. Skip if a higher-priority onboarding banner replaces the normal mutation banner. |
+| Starting spore drop | `GameManager.PlayStartingSporeIntroAndContinue()` via `StartingSporeArrivalAnimator.Play(...)` | Play immediately when each starting spore arrival animation begins | `0.15s` to `0.35s` | Implemented. This cue is intentionally short and may overlap slightly across rapid staggered starting drops. |
 | Growth phase start | `GameManager.StartGrowthPhase()` or `GrowthPhaseRunner.StartGrowthPhase()` | Prefer the same moment the growth banner is shown | `0.60s` to `1.10s` | Implemented from `GameManager.StartGrowthPhase()`. Use one growth-phase cue, not duplicate cues in both methods. |
 | Decay phase start | `GameManager.StartDecayPhase()` | Play alongside `PhaseBanner.Show("Decay Phase Begins!", 2f)` | `0.55s` to `1.00s` | Implemented. Slightly darker tone than growth. Keep it short; decay is frequent. |
 | Drafting phase start | `GameManager.StartMycovariantDraftPhase(...)` | Play with the draft-phase banner after the controller is initialized | `0.80s` to `1.40s` | Planned. This cue can be a bit more ceremonial than standard phases because it is less frequent and more strategically important. |

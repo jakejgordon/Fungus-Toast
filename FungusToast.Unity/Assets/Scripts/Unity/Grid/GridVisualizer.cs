@@ -1,3 +1,4 @@
+using System;
 using FungusToast.Core;
 using FungusToast.Core.Board;
 using FungusToast.Core.Events;
@@ -294,8 +295,8 @@ namespace FungusToast.Unity.Grid
             => _reclaimAnimator.PlayBatch(tileIds, scaleMultiplier, explicitTotalSeconds);
         public IEnumerator SurgicalInoculationArcAnimation(int playerId, int targetTileId, Sprite sprite)
             => _surgicalAnimator.RunArcAndDrop(playerId, targetTileId, sprite);
-        public IEnumerator PlayStartingSporeArrivalAnimation(IEnumerable<int> startingTileIds)
-            => _startingSporeAnimator != null ? _startingSporeAnimator.Play(startingTileIds) : null;
+        public IEnumerator PlayStartingSporeArrivalAnimation(IEnumerable<int> startingTileIds, Action onSporeDropStarted = null)
+            => _startingSporeAnimator != null ? _startingSporeAnimator.Play(startingTileIds, onSporeDropStarted) : null;
         public IEnumerator PlayConidialRelayAnimation(int playerId, int sourceTileId, int destinationTileId)
             => _launchArcAnimator != null ? _launchArcAnimator.Play(playerId, sourceTileId, destinationTileId) : null;
         public IEnumerator PlayDistalSporeAnimation(int playerId, int sourceTileId, int destinationTileId)

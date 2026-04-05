@@ -21,7 +21,7 @@ namespace FungusToast.Unity.Grid.Animation
         private const float ArcScaleGlobalMultiplier = 0.5f; // NEW: shrink arc visual (peak + entire profile) ~50%
         private const float DropStartScaleMultiplier = 0.5f; // NEW: shrink initial huge drop scale ~50%
 
-        public IEnumerator Play(IEnumerable<int> startingTileIds)
+        public IEnumerator Play(IEnumerable<int> startingTileIds, System.Action onSporeDropStarted = null)
         {
             var ids = startingTileIds?.Distinct().ToList();
             if (ids == null || ids.Count == 0) yield break;
@@ -35,6 +35,7 @@ namespace FungusToast.Unity.Grid.Animation
 
             foreach (var tileId in ids)
             {
+                onSporeDropStarted?.Invoke();
                 _viz.StartCoroutine(AnimateSingleArrival(tileId, startCell, shieldSprite));
                 yield return new WaitForSeconds(0.18f);
             }
