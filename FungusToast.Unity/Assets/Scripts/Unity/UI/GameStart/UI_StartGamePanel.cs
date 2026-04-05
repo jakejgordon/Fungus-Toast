@@ -59,6 +59,7 @@ namespace FungusToast.Unity.UI.GameStart
         private RectTransform titleSectionRoot;
         private RectTransform playerCountSectionRoot;
         private RectTransform advancedSettingsSectionRoot;
+        private RectTransform advancedSettingsContentRoot;
         private RectTransform boardSizeSectionRoot;
         private RectTransform audioSettingsSectionRoot;
         private RectTransform testingCardSectionRoot;
@@ -117,6 +118,7 @@ namespace FungusToast.Unity.UI.GameStart
             RefreshAudioSettingsControls();
             RefreshTestingSectionLayout();
             UpdateSetupStepState();
+            RefreshStartMenuLayout();
         }
 
         private void OnDisable()
@@ -240,7 +242,9 @@ namespace FungusToast.Unity.UI.GameStart
                 ControlPrefix = "UI_StartGameTesting",
                 LogPrefix = "UI_StartGamePanel",
                 LayoutInvalidated = RefreshTestingSectionLayout,
-                TestingEnabledChanged = OnTestingEnabledChanged
+                TestingEnabledChanged = OnTestingEnabledChanged,
+                UseCardBackground = false,
+                UseSecondaryButtonStyle = true
             });
             testingCardController.Build();
             HideLegacyTestingControls();
@@ -294,10 +298,8 @@ namespace FungusToast.Unity.UI.GameStart
             TryAddSetupSection(orderedSections, playerCountSectionRoot);
             TryAddSetupSection(orderedSections, humanPlayerSectionRoot != null ? humanPlayerSectionRoot.GetComponent<RectTransform>() : null);
             TryAddSetupSection(orderedSections, advancedSettingsSectionRoot);
-            TryAddSetupSection(orderedSections, boardSizeSectionRoot);
             TryAddSetupSection(orderedSections, audioSettingsSectionRoot);
             TryAddSetupSection(orderedSections, moldSelectionSectionRoot);
-            TryAddSetupSection(orderedSections, testingCardSectionRoot);
 
             for (int index = 0; index < orderedSections.Count; index++)
             {
@@ -372,7 +374,41 @@ namespace FungusToast.Unity.UI.GameStart
             advancedSettingsSectionRoot.SetParent(setupContentRoot, false);
             ConfigureAdvancedSettingsSection(advancedSettingsSectionRoot);
             EnsureAdvancedSettingsControls();
+            EnsureAdvancedSettingsContentRoot();
             RefreshAdvancedSettingsControls();
+        }
+
+        private void EnsureAdvancedSettingsContentRoot()
+        {
+            if (advancedSettingsSectionRoot == null)
+            {
+                return;
+            }
+
+            if (advancedSettingsContentRoot == null)
+            {
+                var existing = advancedSettingsSectionRoot.Find("UI_StartGameAdvancedContent") as RectTransform;
+                if (existing != null)
+                {
+                    advancedSettingsContentRoot = existing;
+                }
+                else
+                {
+                    var contentObject = new GameObject(
+                        "UI_StartGameAdvancedContent",
+                        typeof(RectTransform),
+                        typeof(Image),
+                        typeof(VerticalLayoutGroup),
+                        typeof(ContentSizeFitter),
+                        typeof(LayoutElement));
+                    advancedSettingsContentRoot = contentObject.GetComponent<RectTransform>();
+                    advancedSettingsContentRoot.SetParent(advancedSettingsSectionRoot, false);
+                }
+            }
+
+            advancedSettingsContentRoot.SetParent(advancedSettingsSectionRoot, false);
+            advancedSettingsContentRoot.SetSiblingIndex(1);
+            ConfigureAdvancedSettingsContentRoot(advancedSettingsContentRoot);
         }
 
         private void ConfigureCenteredButtonRow(RectTransform sectionRoot, string rowName)
@@ -397,7 +433,7 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void EnsureTestingCardSection()
         {
-            if (setupContentRoot == null)
+            if (advancedSettingsContentRoot == null)
             {
                 return;
             }
@@ -418,17 +454,17 @@ namespace FungusToast.Unity.UI.GameStart
                         typeof(ContentSizeFitter),
                         typeof(LayoutElement));
                     testingCardSectionRoot = sectionObject.GetComponent<RectTransform>();
-                    testingCardSectionRoot.SetParent(setupContentRoot, false);
+                    testingCardSectionRoot.SetParent(advancedSettingsContentRoot, false);
                 }
             }
 
-            testingCardSectionRoot.SetParent(setupContentRoot, false);
+            testingCardSectionRoot.SetParent(advancedSettingsContentRoot, false);
             ConfigureTestingCardSection(testingCardSectionRoot);
         }
 
         private void EnsureBoardSizeSection()
         {
-            if (setupContentRoot == null)
+            if (advancedSettingsContentRoot == null)
             {
                 return;
             }
@@ -450,11 +486,11 @@ namespace FungusToast.Unity.UI.GameStart
                         typeof(ContentSizeFitter),
                         typeof(LayoutElement));
                     boardSizeSectionRoot = sectionObject.GetComponent<RectTransform>();
-                    boardSizeSectionRoot.SetParent(setupContentRoot, false);
+                    boardSizeSectionRoot.SetParent(advancedSettingsContentRoot, false);
                 }
             }
 
-            boardSizeSectionRoot.SetParent(setupContentRoot, false);
+            boardSizeSectionRoot.SetParent(advancedSettingsContentRoot, false);
             ConfigureBoardSizeSection(boardSizeSectionRoot);
             EnsureBoardSizeLabel();
             EnsureBoardSizeDropdown();
@@ -797,14 +833,12 @@ namespace FungusToast.Unity.UI.GameStart
             var surface = sectionRoot.GetComponent<Image>();
             if (surface != null)
             {
-                var panelColor = UIStyleTokens.Surface.PanelPrimary;
-                panelColor.a = 0.92f;
-                surface.color = panelColor;
+                surface.color = Color.clear;
                 surface.raycastTarget = false;
             }
 
             var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
-            layoutGroup.padding = new RectOffset(12, 12, 8, 8);
+            layoutGroup.padding = new RectOffset(0, 0, 0, 0);
             layoutGroup.childAlignment = TextAnchor.UpperCenter;
             layoutGroup.spacing = 4f;
             layoutGroup.childForceExpandWidth = false;
@@ -819,8 +853,8 @@ namespace FungusToast.Unity.UI.GameStart
             var element = sectionRoot.GetComponent<LayoutElement>();
             element.minWidth = 500f;
             element.preferredWidth = 500f;
-            element.minHeight = 80f;
-            element.preferredHeight = 86f;
+            element.minHeight = 62f;
+            element.preferredHeight = -1f;
         }
 
         private void EnsureAudioSettingsControls()
@@ -967,7 +1001,7 @@ namespace FungusToast.Unity.UI.GameStart
             var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
             layoutGroup.padding = new RectOffset(0, 0, 0, 0);
             layoutGroup.childAlignment = TextAnchor.UpperCenter;
-            layoutGroup.spacing = 0f;
+            layoutGroup.spacing = 8f;
             layoutGroup.childForceExpandWidth = false;
             layoutGroup.childForceExpandHeight = false;
             layoutGroup.childControlWidth = true;
@@ -984,6 +1018,48 @@ namespace FungusToast.Unity.UI.GameStart
             element.preferredHeight = -1f;
         }
 
+        private static void ConfigureAdvancedSettingsContentRoot(RectTransform sectionRoot)
+        {
+            if (sectionRoot == null)
+            {
+                return;
+            }
+
+            sectionRoot.anchorMin = new Vector2(0.5f, 1f);
+            sectionRoot.anchorMax = new Vector2(0.5f, 1f);
+            sectionRoot.pivot = new Vector2(0.5f, 0.5f);
+            sectionRoot.anchoredPosition = Vector2.zero;
+            sectionRoot.localScale = Vector3.one;
+
+            var surface = sectionRoot.GetComponent<Image>();
+            if (surface != null)
+            {
+                var panelColor = UIStyleTokens.Surface.PanelPrimary;
+                panelColor.a = 0.92f;
+                surface.color = panelColor;
+                surface.raycastTarget = false;
+            }
+
+            var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
+            layoutGroup.padding = new RectOffset(12, 12, 10, 10);
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+            layoutGroup.spacing = 8f;
+            layoutGroup.childForceExpandWidth = false;
+            layoutGroup.childForceExpandHeight = false;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = true;
+
+            var fitter = sectionRoot.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var element = sectionRoot.GetComponent<LayoutElement>();
+            element.minWidth = 500f;
+            element.preferredWidth = 500f;
+            element.minHeight = 80f;
+            element.preferredHeight = -1f;
+        }
+
         private static void ConfigureAudioSettingsSection(RectTransform sectionRoot)
         {
             if (sectionRoot == null)
@@ -995,6 +1071,7 @@ namespace FungusToast.Unity.UI.GameStart
             sectionRoot.anchorMax = new Vector2(0.5f, 1f);
             sectionRoot.pivot = new Vector2(0.5f, 0.5f);
             sectionRoot.anchoredPosition = Vector2.zero;
+            sectionRoot.sizeDelta = new Vector2(500f, sectionRoot.sizeDelta.y);
             sectionRoot.localScale = Vector3.one;
 
             var surface = sectionRoot.GetComponent<Image>();
@@ -1318,6 +1395,11 @@ namespace FungusToast.Unity.UI.GameStart
                 advancedSettingsSectionRoot.gameObject.SetActive(!isMoldSelectionStep);
             }
 
+            if (advancedSettingsContentRoot != null)
+            {
+                advancedSettingsContentRoot.gameObject.SetActive(!isMoldSelectionStep && isAdvancedOptionsExpanded);
+            }
+
             if (boardSizeSectionRoot != null)
             {
                 boardSizeSectionRoot.gameObject.SetActive(!isMoldSelectionStep && isAdvancedOptionsExpanded);
@@ -1354,16 +1436,14 @@ namespace FungusToast.Unity.UI.GameStart
             startGameButton.interactable = isMoldSelectionStep ? IsCurrentHumanMoldSelected() : selectedPlayerCount.HasValue;
             RefreshAudioSettingsControls();
             RefreshTestingSectionLayout();
+            RefreshStartMenuLayout();
         }
 
         private void OnAdvancedSettingsToggleClicked()
         {
             isAdvancedOptionsExpanded = !isAdvancedOptionsExpanded;
-            if (!isAdvancedOptionsExpanded && testingCardController != null && testingCardController.IsTestingEnabled)
-            {
-                isAdvancedOptionsExpanded = true;
-            }
 
+            ApplyAdvancedVisibility();
             SavePersistedMenuState();
             UpdateSetupStepState();
         }
@@ -1393,11 +1473,6 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void OnTestingEnabledChanged(bool isEnabled)
         {
-            if (isEnabled)
-            {
-                isAdvancedOptionsExpanded = true;
-            }
-
             SavePersistedMenuState();
             UpdateSetupStepState();
         }
@@ -1405,18 +1480,38 @@ namespace FungusToast.Unity.UI.GameStart
         private void LoadPersistedMenuState()
         {
             bool testingEnabled = PlayerPrefs.GetInt(DevelopmentTestingEnabledPrefsKey, 0) != 0;
-            isAdvancedOptionsExpanded = PlayerPrefs.GetInt(AdvancedOptionsExpandedPrefsKey, 0) != 0 || testingEnabled;
+            isAdvancedOptionsExpanded = PlayerPrefs.GetInt(AdvancedOptionsExpandedPrefsKey, 0) != 0;
             testingCardController?.SetTestingEnabled(testingEnabled);
+            ApplyAdvancedVisibility();
             RefreshAdvancedSettingsControls();
         }
 
         private void SavePersistedMenuState()
         {
             bool testingEnabled = testingCardController != null && testingCardController.IsTestingEnabled;
-            bool advancedExpanded = isAdvancedOptionsExpanded || testingEnabled;
-            PlayerPrefs.SetInt(AdvancedOptionsExpandedPrefsKey, advancedExpanded ? 1 : 0);
+            PlayerPrefs.SetInt(AdvancedOptionsExpandedPrefsKey, isAdvancedOptionsExpanded ? 1 : 0);
             PlayerPrefs.SetInt(DevelopmentTestingEnabledPrefsKey, testingEnabled ? 1 : 0);
             PlayerPrefs.Save();
+        }
+
+        private void ApplyAdvancedVisibility()
+        {
+            bool showAdvancedContent = currentStep == SetupStep.CountSelection && isAdvancedOptionsExpanded;
+
+            if (advancedSettingsContentRoot != null)
+            {
+                advancedSettingsContentRoot.gameObject.SetActive(showAdvancedContent);
+            }
+
+            if (boardSizeSectionRoot != null)
+            {
+                boardSizeSectionRoot.gameObject.SetActive(showAdvancedContent);
+            }
+
+            if (testingCardSectionRoot != null)
+            {
+                testingCardSectionRoot.gameObject.SetActive(showAdvancedContent);
+            }
         }
 
         private void ResetMoldSelectionState()
@@ -1924,6 +2019,45 @@ namespace FungusToast.Unity.UI.GameStart
                         LayoutRebuilder.ForceRebuildLayoutImmediate(grandparentRect);
                     }
                 }
+            }
+        }
+
+        private void RefreshStartMenuLayout()
+        {
+            if (moldSelectionSectionRoot != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(moldSelectionSectionRoot);
+            }
+
+            if (advancedSettingsContentRoot != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(advancedSettingsContentRoot);
+            }
+
+            if (advancedSettingsSectionRoot != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(advancedSettingsSectionRoot);
+            }
+
+            if (audioSettingsSectionRoot != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(audioSettingsSectionRoot);
+            }
+
+            if (actionButtonStackRoot != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(actionButtonStackRoot);
+            }
+
+            if (setupContentRoot != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(setupContentRoot);
+            }
+
+            var panelRect = GetComponent<RectTransform>();
+            if (panelRect != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(panelRect);
             }
         }
 

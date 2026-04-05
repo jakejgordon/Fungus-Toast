@@ -139,6 +139,8 @@ namespace FungusToast.Unity.UI.Testing
         public string LogPrefix { get; set; } = "DevelopmentTestingCardController";
         public Action LayoutInvalidated { get; set; }
         public Action<bool> TestingEnabledChanged { get; set; }
+        public bool UseCardBackground { get; set; } = true;
+        public bool UseSecondaryButtonStyle { get; set; }
         public float CardWidth { get; set; } = 500f;
         public float SettingWidth { get; set; } = 470f;
     }
@@ -321,7 +323,7 @@ namespace FungusToast.Unity.UI.Testing
 
         public void RefreshVisualState()
         {
-            UpdateButtonState(testingToggleButton, true, true);
+            UpdateButtonState(testingToggleButton, true, true, options.UseSecondaryButtonStyle);
 
             if (boardSizeRow != null)
             {
@@ -333,10 +335,10 @@ namespace FungusToast.Unity.UI.Testing
                 mycovariantRow.SetActive(testingEnabled);
             }
 
-            UpdateButtonState(fastForwardButton, testingEnabled, testingEnabled);
-            UpdateButtonState(firstGameButton, testingEnabled, testingEnabled);
-            UpdateButtonState(skipToEndButton, testingEnabled, testingEnabled);
-            UpdateButtonState(forcedResultButton, testingEnabled && skipToEnd, testingEnabled && skipToEnd);
+            UpdateButtonState(fastForwardButton, testingEnabled, testingEnabled, options.UseSecondaryButtonStyle);
+            UpdateButtonState(firstGameButton, testingEnabled, testingEnabled, options.UseSecondaryButtonStyle);
+            UpdateButtonState(skipToEndButton, testingEnabled, testingEnabled, options.UseSecondaryButtonStyle);
+            UpdateButtonState(forcedResultButton, testingEnabled && skipToEnd, testingEnabled && skipToEnd, options.UseSecondaryButtonStyle);
 
             if (adaptationRow != null)
             {
@@ -377,7 +379,7 @@ namespace FungusToast.Unity.UI.Testing
             NotifyLayoutInvalidated();
         }
 
-        private static void UpdateButtonState(Button button, bool isVisible, bool isInteractable)
+        private static void UpdateButtonState(Button button, bool isVisible, bool isInteractable, bool useSecondaryButtonStyle)
         {
             if (button == null)
             {
@@ -388,7 +390,9 @@ namespace FungusToast.Unity.UI.Testing
             button.interactable = isInteractable;
             UIStyleTokens.Button.SetButtonLabelColor(
                 button,
-                isInteractable ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled);
+                useSecondaryButtonStyle
+                    ? (isInteractable ? UIStyleTokens.Text.Primary : UIStyleTokens.Text.Disabled)
+                    : (isInteractable ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled));
         }
 
         public DevelopmentTestingConfiguration GetConfiguration()
@@ -491,7 +495,7 @@ namespace FungusToast.Unity.UI.Testing
 
             var cardBackground = card.GetComponent<Image>();
             var panelColor = UIStyleTokens.Surface.PanelPrimary;
-            panelColor.a = 0.92f;
+            panelColor.a = options.UseCardBackground ? 0.92f : 0f;
             cardBackground.color = panelColor;
             cardBackground.raycastTarget = false;
 
@@ -543,8 +547,17 @@ namespace FungusToast.Unity.UI.Testing
 
         private void ConfigureSettingButton(Button button)
         {
-            UIStyleTokens.Button.ApplyStyle(button);
-            UIStyleTokens.Button.SetButtonLabelColor(button, UIStyleTokens.Button.TextDefault);
+            if (options.UseSecondaryButtonStyle)
+            {
+                UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
+                UIStyleTokens.Button.SetButtonLabelColor(button, UIStyleTokens.Text.Primary);
+            }
+            else
+            {
+                UIStyleTokens.Button.ApplyStyle(button);
+                UIStyleTokens.Button.SetButtonLabelColor(button, UIStyleTokens.Button.TextDefault);
+            }
+
             EnsureButtonLayout(button, options.SettingWidth);
 
             var label = button.GetComponentInChildren<TextMeshProUGUI>(true);
@@ -554,7 +567,7 @@ namespace FungusToast.Unity.UI.Testing
                 label.fontSizeMin = 15f;
                 label.fontSizeMax = 24f;
                 label.alignment = TextAlignmentOptions.Center;
-                label.color = UIStyleTokens.Button.TextDefault;
+                label.color = options.UseSecondaryButtonStyle ? UIStyleTokens.Text.Primary : UIStyleTokens.Button.TextDefault;
             }
         }
 
