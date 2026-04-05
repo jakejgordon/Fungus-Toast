@@ -253,7 +253,7 @@ namespace FungusToast.Unity
         [SerializeField] private AudioClip gameplayMusicClip = null;
         [SerializeField] private AudioClip[] additionalGameplayMusicClips = new AudioClip[0];
         [SerializeField, Range(0f, 1f)] private float gameplayMusicVolume = 1f;
-        [SerializeField, Min(0f)] private float gameplayMusicInitialDelaySeconds = 1.5f;
+        [SerializeField, Min(0f)] private float gameplayMusicInitialDelaySeconds = 10f;
         [SerializeField, Min(0f)] private float gameplayMusicReplayDelaySeconds = 5f;
         [SerializeField, Min(0f)] private float gameplayMusicFadeInSeconds = 1f;
         [SerializeField] private AudioMixerGroup gameplayMusicMixerGroup = null;
