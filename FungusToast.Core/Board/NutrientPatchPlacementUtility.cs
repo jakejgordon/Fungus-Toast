@@ -13,7 +13,8 @@ namespace FungusToast.Core.Board
             GameBoard board,
             List<Player> players,
             Random rng,
-            ISimulationObserver? observer = null)
+            ISimulationObserver? observer = null,
+            IReadOnlyCollection<NutrientPatchType>? allowedPatchTypes = null)
         {
             if (board == null || players == null || rng == null)
             {
@@ -82,7 +83,10 @@ namespace FungusToast.Core.Board
                         nextClusterId++,
                         clusterTileIds.Count,
                         rng.NextDouble(),
-                        rng.NextDouble());
+                        rng.NextDouble(),
+                        source: NutrientPatchSource.StartingBoard,
+                        allowHypervariation: IsPatchTypeAllowed(NutrientPatchType.Hypervariation, allowedPatchTypes),
+                        allowedPatchTypes: allowedPatchTypes);
                     foreach (int clusterTileId in clusterTileIds)
                     {
                         if (board.PlaceNutrientPatch(clusterTileId, clusterPatch))
@@ -115,7 +119,8 @@ namespace FungusToast.Core.Board
             double patchRoll,
             double fallbackRewardRoll,
             NutrientPatchSource source = NutrientPatchSource.StartingBoard,
-            bool allowHypervariation = true)
+            bool allowHypervariation = true,
+            IReadOnlyCollection<NutrientPatchType>? allowedPatchTypes = null)
         {
             if (allowHypervariation
                 && clusterTileCount >= GameBalance.HypervariationPatchClusterMinimumSize
@@ -125,9 +130,32 @@ namespace FungusToast.Core.Board
                 return NutrientPatch.CreateHypervariationCluster(clusterId, clusterTileCount, source);
             }
 
-            return fallbackRewardRoll < 0.5d
-                ? NutrientPatch.CreateAdaptogenCluster(clusterId, clusterTileCount, source)
-                : NutrientPatch.CreateSporemealCluster(clusterId, clusterTileCount, source);
+            bool allowAdaptogen = IsPatchTypeAllowed(NutrientPatchType.Adaptogen, allowedPatchTypes);
+            bool allowSporemeal = IsPatchTypeAllowed(NutrientPatchType.Sporemeal, allowedPatchTypes);
+
+            if (allowAdaptogen && allowSporemeal)
+            {
+                return fallbackRewardRoll < 0.5d
+                    ? NutrientPatch.CreateAdaptogenCluster(clusterId, clusterTileCount, source)
+                    : NutrientPatch.CreateSporemealCluster(clusterId, clusterTileCount, source);
+            }
+
+            if (allowSporemeal)
+            {
+                return NutrientPatch.CreateSporemealCluster(clusterId, clusterTileCount, source);
+            }
+
+            if (allowAdaptogen)
+            {
+                return NutrientPatch.CreateAdaptogenCluster(clusterId, clusterTileCount, source);
+            }
+
+            return NutrientPatch.CreateSporemealCluster(clusterId, clusterTileCount, source);
+        }
+
+        private static bool IsPatchTypeAllowed(NutrientPatchType patchType, IReadOnlyCollection<NutrientPatchType>? allowedPatchTypes)
+        {
+            return allowedPatchTypes == null || allowedPatchTypes.Count == 0 || allowedPatchTypes.Contains(patchType);
         }
 
         private static List<int> TryBuildCluster(

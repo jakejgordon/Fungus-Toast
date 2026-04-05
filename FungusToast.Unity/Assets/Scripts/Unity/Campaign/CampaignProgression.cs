@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FungusToast.Core.Board;
 using UnityEngine;
 
 namespace FungusToast.Unity.Campaign
@@ -27,6 +28,10 @@ namespace FungusToast.Unity.Campaign
             public BoardPreset boardPreset;
             /// <summary>Whether nutrient patches should be placed on this campaign level.</summary>
             public bool enableNutrientPatches = true;
+            /// <summary>
+            /// Optional allowlist of nutrient patch types for this level. Empty means use the default full set.
+            /// </summary>
+            public List<NutrientPatchType> allowedNutrientPatchTypes = new();
 
             /// <summary>
             /// Optional pool of boss board presets for the final level. If populated, one is chosen at random when advancing to this level.
