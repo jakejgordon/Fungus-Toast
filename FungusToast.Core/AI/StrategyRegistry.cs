@@ -27,6 +27,19 @@ namespace FungusToast.Core.AI
                 .Select(strategy => new RegisteredStrategy(strategy, entryFactory(strategy)))
                 .ToList();
 
+            var duplicateNames = registered
+                .GroupBy(entry => entry.Strategy.StrategyName, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (duplicateNames.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    $"Duplicate strategy names found in {strategySet}: {string.Join(", ", duplicateNames)}");
+            }
+
             EntriesBySet[strategySet] = registered;
         }
 
@@ -39,9 +52,22 @@ namespace FungusToast.Core.AI
 
         public static Dictionary<string, IMutationSpendingStrategy> GetStrategyDictionary(StrategySetEnum strategySet)
         {
-            return EntriesBySet.TryGetValue(strategySet, out var entries)
-                ? entries.ToDictionary(e => e.Strategy.StrategyName, e => e.Strategy, StringComparer.OrdinalIgnoreCase)
-                : new Dictionary<string, IMutationSpendingStrategy>(StringComparer.OrdinalIgnoreCase);
+            if (!EntriesBySet.TryGetValue(strategySet, out var entries))
+            {
+                return new Dictionary<string, IMutationSpendingStrategy>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            var strategies = new Dictionary<string, IMutationSpendingStrategy>(StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in entries)
+            {
+                if (!strategies.TryAdd(entry.Strategy.StrategyName, entry.Strategy))
+                {
+                    throw new InvalidOperationException(
+                        $"Duplicate strategy name '{entry.Strategy.StrategyName}' found while building {strategySet} strategy dictionary.");
+                }
+            }
+
+            return strategies;
         }
 
         public static IReadOnlyList<StrategyCatalogEntry> GetCatalogEntries(StrategySetEnum strategySet)

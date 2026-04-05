@@ -24,6 +24,7 @@ using FungusToast.Unity.UI.GameLog; // added for EnablePlayerSpecificFiltering
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -35,6 +36,62 @@ using FungusToast.Unity.Campaign; // NEW: campaign namespace
 
 namespace FungusToast.Unity
 {
+    public static class AlphaDataResetService
+    {
+        private const string AppliedResetTokenKey = "System.AlphaDataResetToken";
+        private const string CurrentResetToken = "alpha-reset-2026-04-05";
+
+        public static void ApplyIfNeeded()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            var appliedToken = PlayerPrefs.GetString(AppliedResetTokenKey, string.Empty);
+            if (string.Equals(appliedToken, CurrentResetToken, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            Debug.Log($"[AlphaDataReset] Applying one-time alpha data reset token '{CurrentResetToken}'.");
+
+            try
+            {
+                ClearPersistentDataDirectory();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"[AlphaDataReset] Failed to fully clear persistent data directory: {exception.Message}\n{exception}");
+            }
+
+            PlayerPrefs.DeleteAll();
+            PlayerPrefs.SetString(AppliedResetTokenKey, CurrentResetToken);
+            PlayerPrefs.Save();
+
+            Debug.Log("[AlphaDataReset] Cleared PlayerPrefs and persistent data for alpha compatibility.");
+        }
+
+        private static void ClearPersistentDataDirectory()
+        {
+            var persistentDataPath = Application.persistentDataPath;
+            if (string.IsNullOrWhiteSpace(persistentDataPath) || !Directory.Exists(persistentDataPath))
+            {
+                return;
+            }
+
+            foreach (var filePath in Directory.GetFiles(persistentDataPath))
+            {
+                File.Delete(filePath);
+            }
+
+            foreach (var directoryPath in Directory.GetDirectories(persistentDataPath))
+            {
+                Directory.Delete(directoryPath, recursive: true);
+            }
+        }
+    }
+
     public class GameManager : MonoBehaviour
     {
         private const string AlphaMutationOnboardingSeenKey = "Onboarding.AlphaMutationPhaseSeen";
@@ -189,6 +246,7 @@ namespace FungusToast.Unity
                 return;
             }
             Instance = this;
+            AlphaDataResetService.ApplyIfNeeded();
             rng = new System.Random();
             BootstrapServices();
             // Create campaign controller if progression present
