@@ -60,7 +60,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** campaign difficulty tuning with safe-proxy validation; early revisit on 2026-04-04 found Campaign5 is the main opening/mid bridge cliff and was conservatively softened by replacing `CMP_Surge_BeaconTempo_Medium` with `TST_Training_ResilientMycelium`
+- **Current focus:** campaign difficulty tuning with safe-proxy validation; early revisit on 2026-04-04 found Campaign5 is the main opening/mid bridge cliff and was conservatively softened by replacing `CMP_Surge_BeaconTempo_Medium` with `TST_Training_ResilientMycelium`. First-pass proxy target bands are now also defined for Campaign0-10 so future tuning can be judged against a concrete decline curve.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
@@ -80,6 +80,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Current Handoff
 
 - 2026-04-04 early/mid campaign recheck with the current deterministic `X-1` proxy-adaptation harness produced: `Campaign0 100%`, `Campaign1 100%`, `Campaign2 100%`, `Campaign3 100%`, `Campaign4 52%`, `Campaign5 10%`, `Campaign6 20%` safe-proxy win rate on 50-game checks.
+- First-pass safe-proxy acceptance curve for Campaign0-10 is now explicitly defined as: `Campaign0-2 90-100%`, `Campaign3 70-90%`, `Campaign4 50-70%`, `Campaign5 35-55%`, `Campaign6 25-45%`, `Campaign7 15-35%`, `Campaign8 10-25%`, `Campaign9 5-15%`, `Campaign10 0-10%`. Intent is a roughly linear decline for the conservative non-reactive proxy, with near-zero by ~Campaign10 acceptable.
 - Additional direct swap tests showed the Campaign5 cliff is not explained by `CMP_Economy_KillReclaim_Medium` alone; `CMP_Surge_BeaconTempo_Medium` was the major sharpener. Swapping BeaconTempo into the Campaign4 board collapsed the proxy from `52%` to `6%`, while replacing BeaconTempo on Campaign5 improved the proxy into the `14-18%` band depending on replacement/seed.
 - Practical better-not-perfect decision taken: update the actual `Campaign5` pool asset by replacing `CMP_Surge_BeaconTempo_Medium` with `TST_Training_ResilientMycelium`. Tested evidence for the chosen replacement on the real `50x50 5 AI` board with current harness settings: seed `20260421` -> `18.0% (9/50)` safe-proxy wins. Alternative softer-but-weaker conservative replacement `CMP_Defense_ReclaimShell_Easy` landed at `16.0%` on one seed and `14.0%` on confirmation.
 - Campaign6 was left unchanged for now after a conservative harder-side experiment (`CMP_Surge_BeaconTempo_Medium -> CMP_Economy_KillReclaim_Medium`) dropped it from `20%` to `14%`, which moved the curve in the wrong direction.
