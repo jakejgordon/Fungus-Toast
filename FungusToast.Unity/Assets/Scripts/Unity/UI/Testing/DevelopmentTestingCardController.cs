@@ -138,6 +138,7 @@ namespace FungusToast.Unity.UI.Testing
         public string ControlPrefix { get; set; } = "UI_DevelopmentTesting";
         public string LogPrefix { get; set; } = "DevelopmentTestingCardController";
         public Action LayoutInvalidated { get; set; }
+        public Action<bool> TestingEnabledChanged { get; set; }
         public float CardWidth { get; set; } = 500f;
         public float SettingWidth { get; set; } = 470f;
     }
@@ -193,6 +194,8 @@ namespace FungusToast.Unity.UI.Testing
 
         public GameObject RootObject => cardRoot;
 
+        public bool IsTestingEnabled => testingEnabled;
+
         public void Build()
         {
             cardRoot = EnsureCardRoot();
@@ -241,6 +244,24 @@ namespace FungusToast.Unity.UI.Testing
 
             RefreshDropdownOptions();
             RefreshVisualState();
+        }
+
+        public void SetTestingEnabled(bool value)
+        {
+            if (testingEnabled == value)
+            {
+                RefreshVisualState();
+                return;
+            }
+
+            testingEnabled = value;
+            if (!testingEnabled)
+            {
+                ResetTestingState();
+            }
+
+            RefreshVisualState();
+            NotifyTestingEnabledChanged();
         }
 
         public void RefreshDropdownOptions()
@@ -631,16 +652,15 @@ namespace FungusToast.Unity.UI.Testing
 
         private void OnTestingToggleClicked()
         {
-            testingEnabled = !testingEnabled;
-            if (!testingEnabled)
-            {
-                skipToEnd = false;
-                forceFirstGame = false;
-                fastForwardRounds = 0;
-                forcedResult = ForcedGameResultMode.Natural;
-            }
+            SetTestingEnabled(!testingEnabled);
+        }
 
-            RefreshVisualState();
+        private void ResetTestingState()
+        {
+            skipToEnd = false;
+            forceFirstGame = false;
+            fastForwardRounds = 0;
+            forcedResult = ForcedGameResultMode.Natural;
         }
 
         private void OnFastForwardClicked()
@@ -684,6 +704,11 @@ namespace FungusToast.Unity.UI.Testing
         private void NotifyLayoutInvalidated()
         {
             options.LayoutInvalidated?.Invoke();
+        }
+
+        private void NotifyTestingEnabledChanged()
+        {
+            options.TestingEnabledChanged?.Invoke(testingEnabled);
         }
 
         private static void EnsureButtonLayout(Button button, float width)
