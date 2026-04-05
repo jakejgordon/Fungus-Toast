@@ -16,6 +16,7 @@ MonoBehaviour:
   boardWidth: 10
   boardHeight: 10
   aiPlayers:
-  - TST_Training_ResilientMycelium
+  - strategyName: TST_Training_ResilientMycelium
+    startingAdaptationIds: []
   pooledAiPlayerCount: 0
   aiStrategyPool: []
