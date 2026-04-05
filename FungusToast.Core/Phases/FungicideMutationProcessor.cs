@@ -249,6 +249,13 @@ namespace FungusToast.Core.Phases
                 {
                     var target = availableTiles[rng.Next(availableTiles.Count)];
 
+                    bool adjacentToFriendlyLivingCell = board.GetOrthogonalNeighbors(target.TileId)
+                        .Any(neighbor => neighbor.FungalCell is { IsAlive: true, OwnerPlayerId: var ownerId } && ownerId == player.PlayerId);
+                    if (adjacentToFriendlyLivingCell)
+                    {
+                        continue;
+                    }
+
                     // Re-read cell state at iteration time: reactive effects fired by earlier
                     // iterations (NecrotoxicConversion, NecrophoricAdaptation, etc.) can change
                     // tile occupancy between snapshot and iteration.
@@ -275,9 +282,10 @@ namespace FungusToast.Core.Phases
                 }
 
                 // Report total spores dropped for this player (once per player per round)
-                if (sporesToDrop > 0)
+                int actualDrops = kills + toxified;
+                if (actualDrops > 0)
                 {
-                    observer.ReportSporicidalSporeDrop(player.PlayerId, sporesToDrop);
+                    observer.ReportSporicidalSporeDrop(player.PlayerId, actualDrops);
                 }
             }
         }
