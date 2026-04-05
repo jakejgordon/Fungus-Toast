@@ -228,6 +228,8 @@ namespace FungusToast.Unity.Grid
             }
 
             UnsubscribeFromBoardEvents();
+            cellStateAnimationController?.ClearPendingTileTransitions();
+            cellStateAnimationController?.ClearPendingToxinImpactSnapshots();
             cellStateAnimationController?.ClearPendingToxinExpirySnapshots();
             cellStateAnimationController?.StopAndClearToxinExpiryAnimations();
             presentationEffects?.DestroyLingeringToasts();
@@ -236,7 +238,10 @@ namespace FungusToast.Unity.Grid
 
             if (this.board != null)
             {
-				this.board.CellDeath += HandleCellDeath;
+                this.board.ToxinPlaced += HandleToxinPlaced;
+                this.board.CellReclaimed += HandleCellReclaimed;
+                this.board.CellInfested += HandleCellInfested;
+                this.board.CellOvergrown += HandleCellOvergrown;
                 this.board.ToxinExpired += HandleToxinExpired;
                 this.board.ChemobeaconPlaced += HandleChemobeaconPlaced;
                 this.board.ChemobeaconExpired += HandleChemobeaconExpired;
@@ -361,14 +366,17 @@ namespace FungusToast.Unity.Grid
         {
             if (board != null)
             {
-                board.CellDeath -= HandleCellDeath;
+                board.ToxinPlaced -= HandleToxinPlaced;
+                board.CellReclaimed -= HandleCellReclaimed;
+                board.CellInfested -= HandleCellInfested;
+                board.CellOvergrown -= HandleCellOvergrown;
                 board.ToxinExpired -= HandleToxinExpired;
                 board.ChemobeaconPlaced -= HandleChemobeaconPlaced;
                 board.ChemobeaconExpired -= HandleChemobeaconExpired;
             }
         }
 
-        private void HandleCellDeath(object sender, FungalCellDiedEventArgs e)
+        private void HandleToxinPlaced(object sender, ToxinPlacedEventArgs e)
         {
             if (!ReferenceEquals(sender, board))
             {
@@ -376,6 +384,36 @@ namespace FungusToast.Unity.Grid
             }
 
             cellStateAnimationController?.CaptureToxinImpactSnapshot(e.TileId);
+        }
+
+        private void HandleCellReclaimed(int playerId, int tileId, GrowthSource source)
+        {
+            if (board == null)
+            {
+                return;
+            }
+
+            cellStateAnimationController?.QueueReclaimTransition(tileId);
+        }
+
+        private void HandleCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource source)
+        {
+            if (board == null)
+            {
+                return;
+            }
+
+            cellStateAnimationController?.QueueInfestTransition(tileId);
+        }
+
+        private void HandleCellOvergrown(int playerId, int tileId, int oldOwnerId, GrowthSource source)
+        {
+            if (board == null)
+            {
+                return;
+            }
+
+            cellStateAnimationController?.QueueOvergrowTransition(tileId);
         }
 
         private void HandleChemobeaconPlaced(int playerId, int tileId)

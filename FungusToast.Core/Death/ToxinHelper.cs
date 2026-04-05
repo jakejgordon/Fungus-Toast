@@ -109,6 +109,7 @@ namespace FungusToast.Core.Death
                 return;
 
             // 3. Now convert the cell to toxin with the specified growth source
+            cell.MarkAsReceivingToxinDrop();
             cell.ConvertToToxin(toxinLifespan, growthSource, owner);
 
             // 4. Place the toxin cell on the board

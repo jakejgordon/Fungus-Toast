@@ -134,6 +134,8 @@ namespace FungusToast.Unity.Phases
 
             activeGridVisualizer.RenderBoard(activeBoard);
 
+			yield return activeGridVisualizer.WaitForAllAnimations();
+
             if (septalAlarmResistanceTiles.Count > 0)
             {
                 activeGridVisualizer.PlayResistancePulseBatchScaled(septalAlarmResistanceTiles, 0.45f);

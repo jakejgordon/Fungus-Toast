@@ -46,7 +46,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Duration (in seconds) for toxin drop animation.
         /// </summary>
-        public const float ToxinDropAnimationDurationSeconds = 0.9f; // was 0.8f, +0.1s for more hang time
+        public const float ToxinDropAnimationDurationSeconds = 1.3f;
 
         /// <summary>
         /// Duration (in seconds) for the expired-toxin dissolve animation.
@@ -116,7 +116,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Delay (in seconds) after rendering the board during decay phase before proceeding.
         /// </summary>
-        public const float TimeAfterDecayRender = 0.5f;
+        public const float TimeAfterDecayRender = 0.7f;
 
         /// <summary>
         /// Hold duration passed to the phase banner so the total Conidial Relay overlay reads for roughly 1.5 seconds including fade in/out.
@@ -434,7 +434,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Portion of the total drop duration spent on the approach (falling) phase [0..1].
         /// </summary>
-        public const float ToxinDropApproachPortion = 0.65f;
+        public const float ToxinDropApproachPortion = 0.78f;
         /// <summary>
         /// Impact squash scale on X (wider on impact).
         /// </summary>
