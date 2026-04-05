@@ -124,8 +124,6 @@ namespace FungusToast.Unity
 
         #region State Fields / Services
 
-        private bool isCountdownActive = false; 
-        private int roundsRemainingUntilGameEnd =0; 
         private bool gameEnded = false; 
         private System.Random rng; 
         private MycovariantPoolManager persistentPoolManager;
@@ -171,6 +169,10 @@ namespace FungusToast.Unity
         private SoundEffectService soundEffectService;
         private PauseMenuService pauseMenuService;
         private SelectionPromptService selectionPromptService;
+        private GameTransitionService gameTransitionService;
+        private GameStartService gameStartService;
+        private PlayerPerspectiveService playerPerspectiveService;
+        private PlayerMoldAssignmentService playerMoldAssignmentService;
 
         #endregion
 
@@ -199,7 +201,7 @@ namespace FungusToast.Unity
             if (Application.isPlaying)
             {
                 pauseMenuService?.ForceClose();
-                ShowStartGamePanel();
+                gameTransitionService?.ShowStartGamePanel();
             }
         }
 
@@ -264,6 +266,53 @@ namespace FungusToast.Unity
                 SelectionPromptText,
                 selectionPromptCancelButton,
                 selectionPromptCancelButtonText);
+            gameTransitionService = new GameTransitionService(
+                gameUIManager,
+                modeSelectPanel,
+                startGamePanel,
+                () => Board,
+                () => backgroundMusicService?.StopGameplayMusic(),
+                UnsubscribeFromPlayerMutationEvents,
+                currentBoard =>
+                {
+                    GameRulesEventSubscriber.UnsubscribeAll(currentBoard);
+                    GameUIEventSubscriber.Unsubscribe(currentBoard, gameUIManager);
+                    AnalyticsEventSubscriber.Unsubscribe(currentBoard, gameUIManager?.GameLogRouter);
+                },
+                StopAllCoroutines,
+                mycovariantDraftController,
+                growthPhaseRunner,
+                decayPhaseRunner,
+                gridVisualizer,
+                specialEventPresentationService,
+                postGrowthVisualSequence,
+                pauseMenuService,
+                ResetManagerStateForMainMenuReturn);
+            gameStartService = new GameStartService(
+                () => campaignController,
+                gridVisualizer,
+                gameUIManager,
+                modeSelectPanel,
+                startGamePanel,
+                mycovariantDraftController,
+                mode => CurrentGameMode = mode,
+                () => CurrentGameMode,
+                () => rng,
+                () => testingModeEnabled,
+                () => testingForcedAdaptationId,
+                (width, height) =>
+                {
+                    boardWidth = width;
+                    boardHeight = height;
+                },
+                (humanCount, humanMoldIndices) => SetHotseatConfig(humanCount, humanMoldIndices),
+                InitializeGame,
+                StopAllCoroutines);
+            playerPerspectiveService = new PlayerPerspectiveService(gameUIManager);
+            playerMoldAssignmentService = new PlayerMoldAssignmentService(
+                gridVisualizer,
+                () => configuredHumanPlayerCount,
+                () => configuredHumanMoldIndices);
             backgroundMusicService = new BackgroundMusicService(this, transform, () => !hasApplicationFocus);
             ConfigureBackgroundMusicService();
 
@@ -320,149 +369,33 @@ namespace FungusToast.Unity
         // PUBLIC API to start modes (called by future UI panels)
         public void StartHotseatGame(int numberOfPlayers)
         {
-            CurrentGameMode = GameMode.Hotseat;
-            gridVisualizer?.ClearBoardMediumOverride();
-            gridVisualizer?.ClearPlayerMoldAssignments();
-            InitializeGame(numberOfPlayers);
+            gameStartService?.StartHotseatGame(numberOfPlayers);
         }
 
         public void StartCampaignNew(int humanMoldIndex = 0)
         {
-            if (campaignController == null)
-            {
-                Debug.LogError("[GameManager] Cannot start campaign: CampaignProgression not assigned.");
-                return;
-            }
-            campaignController.StartNew(humanMoldIndex);
-            CurrentGameMode = GameMode.Campaign;
-            var preset = campaignController.CurrentBoardPreset;
-            if (preset != null)
-            {
-                boardWidth = preset.boardWidth;
-                boardHeight = preset.boardHeight;
-            }
-            gridVisualizer?.SetBoardMedium(preset?.boardMedium);
-            int totalPlayers = 1 + (campaignController.GetCurrentAiPlayerCount());
-            SetHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
-            InitializeGame(totalPlayers);
+            gameStartService?.StartCampaignNew(humanMoldIndex);
         }
 
         public void StartCampaignResume()
         {
-            if (campaignController == null)
-            {
-                Debug.LogError("[GameManager] Cannot resume campaign: CampaignProgression not assigned.");
-                return;
-            }
-            campaignController.Resume();
-            CurrentGameMode = GameMode.Campaign;
-
-            if (campaignController.IsAwaitingAdaptationSelection
-                && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot)
-                && pendingSnapshot != null)
-            {
-                ShowPendingCampaignVictoryScreen(pendingSnapshot);
-                return;
-            }
-
-            var preset = campaignController.CurrentBoardPreset;
-            if (preset != null)
-            {
-                boardWidth = preset.boardWidth;
-                boardHeight = preset.boardHeight;
-            }
-            gridVisualizer?.SetBoardMedium(preset?.boardMedium);
-            int totalPlayers = 1 + campaignController.GetCurrentAiPlayerCount();
-            SetHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
-            InitializeGame(totalPlayers);
-        }
-
-        private void ShowPendingCampaignVictoryScreen(CampaignVictorySnapshot snapshot)
-        {
-            if (snapshot == null || gameUIManager?.EndGamePanel == null)
-            {
-                Debug.LogWarning("[GameManager] Pending campaign victory snapshot missing; continuing directly into gameplay.");
-                var presetFallback = campaignController.CurrentBoardPreset;
-                if (presetFallback != null)
-                {
-                    boardWidth = presetFallback.boardWidth;
-                    boardHeight = presetFallback.boardHeight;
-                }
-
-                int totalPlayersFallback = 1 + campaignController.GetCurrentAiPlayerCount();
-                SetHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
-                InitializeGame(totalPlayersFallback);
-                return;
-            }
-
-            StopAllCoroutines();
-            mycovariantDraftController?.StopAllCoroutines();
-
-            modeSelectPanel?.SetActive(false);
-            startGamePanel?.gameObject.SetActive(false);
-
-            gameUIManager.LoadingScreen?.gameObject.SetActive(false);
-            gameUIManager.LeftSidebar?.gameObject.SetActive(false);
-            gameUIManager.RightSidebar?.gameObject.SetActive(true);
-            gameUIManager.MutationUIManager?.gameObject.SetActive(false);
-
-            gameUIManager.EndGamePanel.ShowCampaignPendingVictorySnapshot(snapshot);
+            gameStartService?.StartCampaignResume();
         }
 
         // Accessor for external panels
-        public bool HasCampaignSave() => campaignController != null && CampaignSaveService.Exists();
+        public bool HasCampaignSave() => gameStartService != null && gameStartService.HasCampaignSave();
         public bool IsCampaignAwaitingAdaptationSelection() =>
-            CurrentGameMode == GameMode.Campaign && campaignController != null && campaignController.IsAwaitingAdaptationSelection;
+            gameStartService != null && gameStartService.IsCampaignAwaitingAdaptationSelection();
 
         public bool TryStartCampaignAdaptationDraft(Action onSelectionComplete)
         {
-            if (CurrentGameMode != GameMode.Campaign || campaignController == null || !campaignController.IsAwaitingAdaptationSelection)
-            {
-                return false;
-            }
-
-            var choices = campaignController.GetAdaptationDraftChoices(
-                rng,
-                3,
-                testingModeEnabled ? testingForcedAdaptationId : string.Empty);
-            if (choices.Count == 0)
-            {
-                Debug.Log("[GameManager] No remaining adaptations; advancing campaign level without reward.");
-                bool advanced = campaignController.TryAdvanceWithoutAdaptationReward();
-                if (advanced)
-                {
-                    onSelectionComplete?.Invoke();
-                }
-                return advanced;
-            }
-
-            if (mycovariantDraftController == null)
-            {
-                Debug.LogError("[GameManager] Cannot start campaign adaptation draft: MycovariantDraftController is missing.");
-                return false;
-            }
-
-            mycovariantDraftController.StartCampaignAdaptationDraft(
-                choices,
-                selected =>
-                {
-                    bool applied = campaignController.TrySelectAdaptationAndAdvance(selected.Id);
-                    if (!applied)
-                    {
-                        Debug.LogError($"[GameManager] Failed to apply selected adaptation '{selected.Id}'.");
-                        return;
-                    }
-
-                    onSelectionComplete?.Invoke();
-                });
-
-            return true;
+            return gameStartService != null && gameStartService.TryStartCampaignAdaptationDraft(onSelectionComplete);
         }
 
         public void InitializeGame(int numberOfPlayers)
         {
             // Clear any lingering scene coroutines/UI overlays from the previous game before bootstrapping a new board.
-            ResetRuntimeStateForGameTransition();
+            gameTransitionService?.ResetRuntimeStateForGameTransition();
             ConfigureBackgroundMusicService();
             gameUIManager?.MutationUIManager?.ResetForNewGameState();
             gameUIManager.EndGamePanel?.gameObject.SetActive(false);
@@ -470,8 +403,6 @@ namespace FungusToast.Unity
 
             gameUIManager.LoadingScreen?.Show("Preparing the toast…");
             gameEnded = false;
-            isCountdownActive = false;
-            roundsRemainingUntilGameEnd =0;
             lastCompletedMycovariantDraftRound = -1;
             endgameService.Reset();
             specialEventPresentationService?.Reset();
@@ -487,7 +418,7 @@ namespace FungusToast.Unity
             GameUIEventSubscriber.Subscribe(Board, gameUIManager, specialEventPresentationService);
             AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
 
-            ApplyConfiguredPlayerMoldAssignments(playerCount);
+            playerMoldAssignmentService?.ApplyConfiguredPlayerMoldAssignments(playerCount);
 
             playerInitializer.InitializePlayers(Board, players, humanPlayers, out humanPlayer, playerCount);
             ApplyCampaignAdaptations();
@@ -502,7 +433,7 @@ namespace FungusToast.Unity
             gridVisualizer.Initialize(Board);
             PlaceStartingSpores();
             gridVisualizer.RenderBoard(Board);
-            InitializeHumanSidebarUiForCurrentPlayer();
+            playerPerspectiveService?.InitializeGameplayPerspective(humanPlayer, Board, players, gridVisualizer);
 
             backgroundMusicService?.StartGameplayMusic();
             StartCoroutine(PlayStartingSporeIntroAndContinue());
@@ -534,12 +465,6 @@ namespace FungusToast.Unity
             phaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
             phaseProgressTracker?.HighlightMutationPhase();
-            gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
-            gameUIManager.RightSidebar?.SetBoard(Board);
-            gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
-            gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
-            gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
-            gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
 
             if (cameraCenterer != null)
             {
@@ -553,76 +478,6 @@ namespace FungusToast.Unity
             {
                 magnifyingGlass.ApplyBoardSizeGate(Board.Width, Board.Height);
             }
-        }
-
-        private void ApplyConfiguredPlayerMoldAssignments(int totalPlayers)
-        {
-            if (gridVisualizer == null)
-            {
-                return;
-            }
-
-            var assignments = ResolveConfiguredPlayerMoldAssignments(totalPlayers);
-            if (assignments.Count == 0)
-            {
-                gridVisualizer.ClearPlayerMoldAssignments();
-                return;
-            }
-
-            gridVisualizer.SetPlayerMoldAssignments(assignments);
-        }
-
-        private List<int> ResolveConfiguredPlayerMoldAssignments(int totalPlayers)
-        {
-            var assignments = new List<int>();
-            int availableMolds = gridVisualizer != null ? gridVisualizer.PlayerMoldTileCount : 0;
-            if (availableMolds <= 0 || totalPlayers <= 0)
-            {
-                return assignments;
-            }
-
-            int humanCount = Mathf.Clamp(configuredHumanPlayerCount, 1, totalPlayers);
-            var remainingMolds = Enumerable.Range(0, availableMolds).ToList();
-
-            for (int humanIndex = 0; humanIndex < humanCount; humanIndex++)
-            {
-                int moldIndex = TakeConfiguredOrFallbackHumanMoldIndex(humanIndex, remainingMolds);
-                assignments.Add(moldIndex);
-                remainingMolds.Remove(moldIndex);
-            }
-
-            for (int playerIndex = humanCount; playerIndex < totalPlayers; playerIndex++)
-            {
-                if (remainingMolds.Count > 0)
-                {
-                    assignments.Add(remainingMolds[0]);
-                    remainingMolds.RemoveAt(0);
-                    continue;
-                }
-
-                assignments.Add(playerIndex % availableMolds);
-            }
-
-            return assignments;
-        }
-
-        private int TakeConfiguredOrFallbackHumanMoldIndex(int humanIndex, List<int> remainingMolds)
-        {
-            if (remainingMolds == null || remainingMolds.Count == 0)
-            {
-                return 0;
-            }
-
-            if (humanIndex < configuredHumanMoldIndices.Count)
-            {
-                int configuredMoldIndex = configuredHumanMoldIndices[humanIndex];
-                if (remainingMolds.Contains(configuredMoldIndex))
-                {
-                    return configuredMoldIndex;
-                }
-            }
-
-            return remainingMolds[0];
         }
 
         private void InitGameLogs()
@@ -1190,53 +1045,22 @@ namespace FungusToast.Unity
 
         public void ShowStartGamePanel()
         {
-            pauseMenuService?.ForceClose();
-
-            if (gameUIManager != null)
-            {
-                gameUIManager.LoadingScreen?.gameObject.SetActive(false);
-                gameUIManager.LeftSidebar?.gameObject.SetActive(false);
-                gameUIManager.RightSidebar?.gameObject.SetActive(false);
-                gameUIManager.MutationUIManager?.gameObject.SetActive(false);
-                gameUIManager.EndGamePanel?.gameObject.SetActive(false);
-                pauseMenuService?.SetGameplayVisibility(false);
-
-                // Clear log data so stale entries don't persist into the next game
-                gameUIManager.GlobalGameLogManager?.ClearLog();
-                gameUIManager.GameLogManager?.ClearLog();
-                if (gameUIManager.GlobalGameLogManager != null && gameUIManager.GlobalGameLogPanel != null)
-                {
-                    gameUIManager.GlobalGameLogPanel.Initialize(gameUIManager.GlobalGameLogManager);
-                }
-                if (gameUIManager.GameLogManager != null && gameUIManager.GameLogPanel != null)
-                {
-                    gameUIManager.GameLogPanel.Initialize(gameUIManager.GameLogManager);
-                }
-            }
-            // Prefer showing mode select panel if present; fallback to legacy start panel
-            if (modeSelectPanel != null)
-            {
-                modeSelectPanel.SetActive(true);
-                if (startGamePanel != null)
-                {
-                    startGamePanel.gameObject.SetActive(false);
-                }
-            }
-            else if (startGamePanel != null)
-            {
-                startGamePanel.gameObject.SetActive(true);
-            }
+            gameTransitionService?.ShowStartGamePanel();
         }
 
         public void ReturnToMainMenu()
         {
-            pauseMenuService?.ForceClose();
-            ResetRuntimeStateForGameTransition();
-            TooltipManager.Instance?.CancelAll();
+            gameTransitionService?.ReturnToMainMenu();
+        }
 
+        public void QuitGame()
+        {
+            gameTransitionService?.QuitGame();
+        }
+
+        private void ResetManagerStateForMainMenuReturn()
+        {
             gameEnded = false;
-            isCountdownActive = false;
-            roundsRemainingUntilGameEnd = 0;
             isInDraftPhase = false;
             isFastForwarding = false;
             _fastForwardStarted = false;
@@ -1248,52 +1072,6 @@ namespace FungusToast.Unity
             humanPlayers.Clear();
             humanPlayer = null;
             Board = null;
-
-            gridVisualizer?.ClearAllHighlights();
-            gridVisualizer?.ClearHoverEffect();
-
-            ShowStartGamePanel();
-        }
-
-        private void ResetRuntimeStateForGameTransition()
-        {
-            var currentBoard = Board;
-            backgroundMusicService?.StopGameplayMusic();
-
-            UnsubscribeFromPlayerMutationEvents();
-
-            if (currentBoard != null)
-            {
-                postGrowthVisualSequence?.ResetForGameTransition(currentBoard);
-                GameRulesEventSubscriber.UnsubscribeAll(currentBoard);
-                GameUIEventSubscriber.Unsubscribe(currentBoard, gameUIManager);
-                AnalyticsEventSubscriber.Unsubscribe(currentBoard, gameUIManager?.GameLogRouter);
-            }
-
-            StopAllCoroutines();
-            mycovariantDraftController?.ResetForGameTransition();
-            growthPhaseRunner?.ResetForGameTransition();
-            decayPhaseRunner?.ResetForGameTransition();
-            gridVisualizer?.ResetForGameTransition();
-            specialEventPresentationService?.Reset();
-            gameUIManager?.MutationUIManager?.ResetForNewGameState();
-            gameUIManager?.MutationTreeToastPresenter?.ResetForGameTransition();
-            gameUIManager?.GameLogManager?.ResetForGameTransition();
-            gameUIManager?.GlobalGameLogManager?.ResetForGameTransition();
-            gameUIManager?.ClearBoard();
-            gameUIManager?.GameLogRouter?.DisableSilentMode();
-            TooltipManager.Instance?.CancelAll();
-        }
-
-        public void QuitGame()
-        {
-            pauseMenuService?.ForceClose();
-            backgroundMusicService?.StopGameplayMusic();
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
         }
 
         public void ShowSelectionPrompt(string message, bool showCancelButton = false, string cancelButtonLabel = "Cancel", Action onCancel = null)
@@ -1308,30 +1086,7 @@ namespace FungusToast.Unity
 
         public void SetActiveHumanPlayer(Player player)
         {
-            if (player == null)
-            {
-                return;
-            }
-            var logManager = gameUIManager?.GameLogManager;
-            var playerLogPanel = gameUIManager?.GameLogPanel;
-
-            // 1. Update GameLogManager active player first so GetRecentEntries works during panel rebuild
-            logManager?.SetActiveHumanPlayer(player.PlayerId, Board);
-            // 1a. Emit any pending summaries (e.g., growth/decay/draft) for this player now that they are active (before rebuild)
-            logManager?.EmitPendingSegmentSummariesFor(player.PlayerId);
-
-            // 2. Enable filtering (this may trigger a rebuild) AFTER active id is set
-            if (humanPlayers.Count > 1)
-            {
-                playerLogPanel?.EnablePlayerSpecificFiltering();
-            }
-
-            // 3. Set panel active player (header + rebuild if filtering)
-            playerLogPanel?.SetActivePlayer(player.PlayerId, player.PlayerName);
-
-            // 4. Update primary human reference
-            humanPlayer = player;
-            gameUIManager?.RightSidebar?.SetPerspectivePlayer(player);
+            playerPerspectiveService?.SetActiveHumanPlayer(player, Board, humanPlayers.Count, activePlayer => humanPlayer = activePlayer);
         }
 
         #endregion
@@ -1417,7 +1172,7 @@ namespace FungusToast.Unity
             mycovariantDraftController?.gameObject.SetActive(false);
             cameraCenterer?.CaptureInitialFraming();
             InitGameLogs();
-            InitializeHumanSidebarUiForCurrentPlayer();
+            playerPerspectiveService?.InitializeGameplayPerspective(humanPlayer, Board, players, gridVisualizer);
             if (testingModeEnabled)
             {
                 if (fastForwardRounds >0 && !_fastForwardStarted)
@@ -1458,24 +1213,6 @@ namespace FungusToast.Unity
             {
                 Debug.Log("[GameManager] Starting initial round mutation phase via StartNextRound()");
                 StartNextRound();
-            }
-        }
-
-        private void InitializeHumanSidebarUiForCurrentPlayer()
-        {
-            if (humanPlayer == null || gameUIManager == null)
-            {
-                return;
-            }
-
-            gameUIManager.MoldProfileRoot?.Initialize(humanPlayer, Board?.Players);
-
-            if (gameUIManager.MutationUIManager != null)
-            {
-                gameUIManager.MutationUIManager.ReinitializeForPlayer(humanPlayer, keepPanelClosed: true);
-                gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-                gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
-                gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
             }
         }
 

@@ -5,7 +5,12 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Campaign;
+using FungusToast.Unity.Grid;
+using FungusToast.Unity.Phases;
 using FungusToast.Unity.UI;
+using FungusToast.Unity.UI.GameStart;
+using FungusToast.Unity.UI.MycovariantDraft;
+using FungusToast.Unity.UI.Tooltips;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -523,6 +528,495 @@ namespace FungusToast.Unity
             {
                 selectionPromptCancelButton.onClick.AddListener(() => onCancel());
             }
+        }
+    }
+
+    public sealed class GameTransitionService
+    {
+        private readonly GameUIManager gameUIManager;
+        private readonly GameObject modeSelectPanel;
+        private readonly UI_StartGamePanel startGamePanel;
+        private readonly Func<GameBoard> getBoard;
+        private readonly Action stopGameplayMusic;
+        private readonly Action unsubscribeFromPlayerMutationEvents;
+        private readonly Action<GameBoard> unsubscribeBoardSubscribers;
+        private readonly Action stopAllCoroutines;
+        private readonly MycovariantDraftController mycovariantDraftController;
+        private readonly GrowthPhaseRunner growthPhaseRunner;
+        private readonly DecayPhaseRunner decayPhaseRunner;
+        private readonly GridVisualizer gridVisualizer;
+        private readonly SpecialEventPresentationService specialEventPresentationService;
+        private readonly PostGrowthVisualSequence postGrowthVisualSequence;
+        private readonly PauseMenuService pauseMenuService;
+        private readonly Action resetManagerStateForMenuReturn;
+
+        public GameTransitionService(
+            GameUIManager gameUIManager,
+            GameObject modeSelectPanel,
+            UI_StartGamePanel startGamePanel,
+            Func<GameBoard> getBoard,
+            Action stopGameplayMusic,
+            Action unsubscribeFromPlayerMutationEvents,
+            Action<GameBoard> unsubscribeBoardSubscribers,
+            Action stopAllCoroutines,
+            MycovariantDraftController mycovariantDraftController,
+            GrowthPhaseRunner growthPhaseRunner,
+            DecayPhaseRunner decayPhaseRunner,
+            GridVisualizer gridVisualizer,
+            SpecialEventPresentationService specialEventPresentationService,
+            PostGrowthVisualSequence postGrowthVisualSequence,
+            PauseMenuService pauseMenuService,
+            Action resetManagerStateForMenuReturn)
+        {
+            this.gameUIManager = gameUIManager;
+            this.modeSelectPanel = modeSelectPanel;
+            this.startGamePanel = startGamePanel;
+            this.getBoard = getBoard;
+            this.stopGameplayMusic = stopGameplayMusic;
+            this.unsubscribeFromPlayerMutationEvents = unsubscribeFromPlayerMutationEvents;
+            this.unsubscribeBoardSubscribers = unsubscribeBoardSubscribers;
+            this.stopAllCoroutines = stopAllCoroutines;
+            this.mycovariantDraftController = mycovariantDraftController;
+            this.growthPhaseRunner = growthPhaseRunner;
+            this.decayPhaseRunner = decayPhaseRunner;
+            this.gridVisualizer = gridVisualizer;
+            this.specialEventPresentationService = specialEventPresentationService;
+            this.postGrowthVisualSequence = postGrowthVisualSequence;
+            this.pauseMenuService = pauseMenuService;
+            this.resetManagerStateForMenuReturn = resetManagerStateForMenuReturn;
+        }
+
+        public void ResetRuntimeStateForGameTransition()
+        {
+            var currentBoard = getBoard();
+            stopGameplayMusic?.Invoke();
+            unsubscribeFromPlayerMutationEvents?.Invoke();
+
+            if (currentBoard != null)
+            {
+                postGrowthVisualSequence?.ResetForGameTransition(currentBoard);
+                unsubscribeBoardSubscribers?.Invoke(currentBoard);
+            }
+
+            stopAllCoroutines?.Invoke();
+            mycovariantDraftController?.ResetForGameTransition();
+            growthPhaseRunner?.ResetForGameTransition();
+            decayPhaseRunner?.ResetForGameTransition();
+            gridVisualizer?.ResetForGameTransition();
+            specialEventPresentationService?.Reset();
+            gameUIManager?.MutationUIManager?.ResetForNewGameState();
+            gameUIManager?.MutationTreeToastPresenter?.ResetForGameTransition();
+            gameUIManager?.GameLogManager?.ResetForGameTransition();
+            gameUIManager?.GlobalGameLogManager?.ResetForGameTransition();
+            gameUIManager?.ClearBoard();
+            gameUIManager?.GameLogRouter?.DisableSilentMode();
+            TooltipManager.Instance?.CancelAll();
+        }
+
+        public void ShowStartGamePanel()
+        {
+            pauseMenuService?.ForceClose();
+
+            if (gameUIManager != null)
+            {
+                gameUIManager.LoadingScreen?.gameObject.SetActive(false);
+                gameUIManager.LeftSidebar?.gameObject.SetActive(false);
+                gameUIManager.RightSidebar?.gameObject.SetActive(false);
+                gameUIManager.MutationUIManager?.gameObject.SetActive(false);
+                gameUIManager.EndGamePanel?.gameObject.SetActive(false);
+                pauseMenuService?.SetGameplayVisibility(false);
+
+                gameUIManager.GlobalGameLogManager?.ClearLog();
+                gameUIManager.GameLogManager?.ClearLog();
+                if (gameUIManager.GlobalGameLogManager != null && gameUIManager.GlobalGameLogPanel != null)
+                {
+                    gameUIManager.GlobalGameLogPanel.Initialize(gameUIManager.GlobalGameLogManager);
+                }
+
+                if (gameUIManager.GameLogManager != null && gameUIManager.GameLogPanel != null)
+                {
+                    gameUIManager.GameLogPanel.Initialize(gameUIManager.GameLogManager);
+                }
+            }
+
+            if (modeSelectPanel != null)
+            {
+                modeSelectPanel.SetActive(true);
+                if (startGamePanel != null)
+                {
+                    startGamePanel.gameObject.SetActive(false);
+                }
+            }
+            else if (startGamePanel != null)
+            {
+                startGamePanel.gameObject.SetActive(true);
+            }
+        }
+
+        public void ReturnToMainMenu()
+        {
+            pauseMenuService?.ForceClose();
+            ResetRuntimeStateForGameTransition();
+            resetManagerStateForMenuReturn?.Invoke();
+            gridVisualizer?.ClearAllHighlights();
+            gridVisualizer?.ClearHoverEffect();
+            ShowStartGamePanel();
+        }
+
+        public void QuitGame()
+        {
+            pauseMenuService?.ForceClose();
+            stopGameplayMusic?.Invoke();
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
+    }
+
+    public sealed class GameStartService
+    {
+        private readonly Func<CampaignController> getCampaignController;
+        private readonly GridVisualizer gridVisualizer;
+        private readonly GameUIManager gameUIManager;
+        private readonly GameObject modeSelectPanel;
+        private readonly UI_StartGamePanel startGamePanel;
+        private readonly MycovariantDraftController mycovariantDraftController;
+        private readonly Action<GameMode> setGameMode;
+        private readonly Func<GameMode> getGameMode;
+        private readonly Func<System.Random> getRng;
+        private readonly Func<bool> getTestingModeEnabled;
+        private readonly Func<string> getForcedAdaptationId;
+        private readonly Action<int, int> setBoardDimensions;
+        private readonly Action<int, IReadOnlyList<int>> setHotseatConfig;
+        private readonly Action<int> initializeGame;
+        private readonly Action stopAllCoroutines;
+
+        public GameStartService(
+            Func<CampaignController> getCampaignController,
+            GridVisualizer gridVisualizer,
+            GameUIManager gameUIManager,
+            GameObject modeSelectPanel,
+            UI_StartGamePanel startGamePanel,
+            MycovariantDraftController mycovariantDraftController,
+            Action<GameMode> setGameMode,
+            Func<GameMode> getGameMode,
+            Func<System.Random> getRng,
+            Func<bool> getTestingModeEnabled,
+            Func<string> getForcedAdaptationId,
+            Action<int, int> setBoardDimensions,
+            Action<int, IReadOnlyList<int>> setHotseatConfig,
+            Action<int> initializeGame,
+            Action stopAllCoroutines)
+        {
+            this.getCampaignController = getCampaignController;
+            this.gridVisualizer = gridVisualizer;
+            this.gameUIManager = gameUIManager;
+            this.modeSelectPanel = modeSelectPanel;
+            this.startGamePanel = startGamePanel;
+            this.mycovariantDraftController = mycovariantDraftController;
+            this.setGameMode = setGameMode;
+            this.getGameMode = getGameMode;
+            this.getRng = getRng;
+            this.getTestingModeEnabled = getTestingModeEnabled;
+            this.getForcedAdaptationId = getForcedAdaptationId;
+            this.setBoardDimensions = setBoardDimensions;
+            this.setHotseatConfig = setHotseatConfig;
+            this.initializeGame = initializeGame;
+            this.stopAllCoroutines = stopAllCoroutines;
+        }
+
+        public bool HasCampaignSave()
+        {
+            return getCampaignController() != null && CampaignSaveService.Exists();
+        }
+
+        public bool IsCampaignAwaitingAdaptationSelection()
+        {
+            var campaignController = getCampaignController();
+            return getGameMode() == GameMode.Campaign
+                && campaignController != null
+                && campaignController.IsAwaitingAdaptationSelection;
+        }
+
+        public bool TryStartCampaignAdaptationDraft(Action onSelectionComplete)
+        {
+            var campaignController = getCampaignController();
+            if (getGameMode() != GameMode.Campaign || campaignController == null || !campaignController.IsAwaitingAdaptationSelection)
+            {
+                return false;
+            }
+
+            var choices = campaignController.GetAdaptationDraftChoices(
+                getRng(),
+                3,
+                getTestingModeEnabled() ? getForcedAdaptationId() : string.Empty);
+            if (choices.Count == 0)
+            {
+                Debug.Log("[GameManager] No remaining adaptations; advancing campaign level without reward.");
+                bool advanced = campaignController.TryAdvanceWithoutAdaptationReward();
+                if (advanced)
+                {
+                    onSelectionComplete?.Invoke();
+                }
+
+                return advanced;
+            }
+
+            if (mycovariantDraftController == null)
+            {
+                Debug.LogError("[GameManager] Cannot start campaign adaptation draft: MycovariantDraftController is missing.");
+                return false;
+            }
+
+            mycovariantDraftController.StartCampaignAdaptationDraft(
+                choices,
+                selected =>
+                {
+                    bool applied = campaignController.TrySelectAdaptationAndAdvance(selected.Id);
+                    if (!applied)
+                    {
+                        Debug.LogError($"[GameManager] Failed to apply selected adaptation '{selected.Id}'.");
+                        return;
+                    }
+
+                    onSelectionComplete?.Invoke();
+                });
+
+            return true;
+        }
+
+        public void StartHotseatGame(int numberOfPlayers)
+        {
+            setGameMode(GameMode.Hotseat);
+            gridVisualizer?.ClearBoardMediumOverride();
+            gridVisualizer?.ClearPlayerMoldAssignments();
+            initializeGame(numberOfPlayers);
+        }
+
+        public void StartCampaignNew(int humanMoldIndex = 0)
+        {
+            var campaignController = getCampaignController();
+            if (campaignController == null)
+            {
+                Debug.LogError("[GameManager] Cannot start campaign: CampaignProgression not assigned.");
+                return;
+            }
+
+            campaignController.StartNew(humanMoldIndex);
+            setGameMode(GameMode.Campaign);
+            StartCampaignGameplay(campaignController);
+        }
+
+        public void StartCampaignResume()
+        {
+            var campaignController = getCampaignController();
+            if (campaignController == null)
+            {
+                Debug.LogError("[GameManager] Cannot resume campaign: CampaignProgression not assigned.");
+                return;
+            }
+
+            campaignController.Resume();
+            setGameMode(GameMode.Campaign);
+
+            if (campaignController.IsAwaitingAdaptationSelection
+                && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot)
+                && pendingSnapshot != null)
+            {
+                ShowPendingCampaignVictoryScreen(campaignController, pendingSnapshot);
+                return;
+            }
+
+            StartCampaignGameplay(campaignController);
+        }
+
+        private void StartCampaignGameplay(CampaignController campaignController)
+        {
+            var preset = campaignController.CurrentBoardPreset;
+            if (preset != null)
+            {
+                setBoardDimensions(preset.boardWidth, preset.boardHeight);
+            }
+
+            gridVisualizer?.SetBoardMedium(preset?.boardMedium);
+            int totalPlayers = 1 + campaignController.GetCurrentAiPlayerCount();
+            setHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
+            initializeGame(totalPlayers);
+        }
+
+        private void ShowPendingCampaignVictoryScreen(CampaignController campaignController, CampaignVictorySnapshot snapshot)
+        {
+            if (snapshot == null || gameUIManager?.EndGamePanel == null)
+            {
+                Debug.LogWarning("[GameManager] Pending campaign victory snapshot missing; continuing directly into gameplay.");
+                StartCampaignGameplay(campaignController);
+                return;
+            }
+
+            stopAllCoroutines?.Invoke();
+            mycovariantDraftController?.StopAllCoroutines();
+
+            modeSelectPanel?.SetActive(false);
+            startGamePanel?.gameObject.SetActive(false);
+
+            gameUIManager.LoadingScreen?.gameObject.SetActive(false);
+            gameUIManager.LeftSidebar?.gameObject.SetActive(false);
+            gameUIManager.RightSidebar?.gameObject.SetActive(true);
+            gameUIManager.MutationUIManager?.gameObject.SetActive(false);
+
+            gameUIManager.EndGamePanel.ShowCampaignPendingVictorySnapshot(snapshot);
+        }
+    }
+
+    public sealed class PlayerPerspectiveService
+    {
+        private readonly GameUIManager gameUIManager;
+
+        public PlayerPerspectiveService(GameUIManager gameUIManager)
+        {
+            this.gameUIManager = gameUIManager;
+        }
+
+        public void InitializeGameplayPerspective(Player humanPlayer, GameBoard board, IReadOnlyList<Player> players, GridVisualizer gridVisualizer)
+        {
+            if (humanPlayer == null || gameUIManager == null || board == null)
+            {
+                return;
+            }
+
+            InitializeHumanSidebarUi(humanPlayer, board);
+            gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
+            gameUIManager.RightSidebar?.SetBoard(board);
+            gameUIManager.RightSidebar?.InitializePlayerSummaries(board.Players);
+            gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
+            gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(board, humanPlayer);
+            gameUIManager.RightSidebar?.UpdateRandomDecayChance(board.CurrentRound);
+        }
+
+        public void SetActiveHumanPlayer(Player player, GameBoard board, int humanPlayerCount, Action<Player> setPrimaryHuman)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            var logManager = gameUIManager?.GameLogManager;
+            var playerLogPanel = gameUIManager?.GameLogPanel;
+
+            logManager?.SetActiveHumanPlayer(player.PlayerId, board);
+            logManager?.EmitPendingSegmentSummariesFor(player.PlayerId);
+
+            if (humanPlayerCount > 1)
+            {
+                playerLogPanel?.EnablePlayerSpecificFiltering();
+            }
+
+            playerLogPanel?.SetActivePlayer(player.PlayerId, player.PlayerName);
+            setPrimaryHuman?.Invoke(player);
+            gameUIManager?.RightSidebar?.SetPerspectivePlayer(player);
+        }
+
+        private void InitializeHumanSidebarUi(Player humanPlayer, GameBoard board)
+        {
+            gameUIManager.MoldProfileRoot?.Initialize(humanPlayer, board?.Players);
+
+            if (gameUIManager.MutationUIManager != null)
+            {
+                gameUIManager.MutationUIManager.ReinitializeForPlayer(humanPlayer, keepPanelClosed: true);
+                gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
+                gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
+                gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
+            }
+        }
+    }
+
+    public sealed class PlayerMoldAssignmentService
+    {
+        private readonly GridVisualizer gridVisualizer;
+        private readonly Func<int> getConfiguredHumanPlayerCount;
+        private readonly Func<IReadOnlyList<int>> getConfiguredHumanMoldIndices;
+
+        public PlayerMoldAssignmentService(
+            GridVisualizer gridVisualizer,
+            Func<int> getConfiguredHumanPlayerCount,
+            Func<IReadOnlyList<int>> getConfiguredHumanMoldIndices)
+        {
+            this.gridVisualizer = gridVisualizer;
+            this.getConfiguredHumanPlayerCount = getConfiguredHumanPlayerCount;
+            this.getConfiguredHumanMoldIndices = getConfiguredHumanMoldIndices;
+        }
+
+        public void ApplyConfiguredPlayerMoldAssignments(int totalPlayers)
+        {
+            if (gridVisualizer == null)
+            {
+                return;
+            }
+
+            var assignments = ResolveConfiguredPlayerMoldAssignments(totalPlayers);
+            if (assignments.Count == 0)
+            {
+                gridVisualizer.ClearPlayerMoldAssignments();
+                return;
+            }
+
+            gridVisualizer.SetPlayerMoldAssignments(assignments);
+        }
+
+        private List<int> ResolveConfiguredPlayerMoldAssignments(int totalPlayers)
+        {
+            var assignments = new List<int>();
+            int availableMolds = gridVisualizer.PlayerMoldTileCount;
+            if (availableMolds <= 0 || totalPlayers <= 0)
+            {
+                return assignments;
+            }
+
+            int humanCount = Mathf.Clamp(getConfiguredHumanPlayerCount(), 1, totalPlayers);
+            var remainingMolds = Enumerable.Range(0, availableMolds).ToList();
+
+            for (int humanIndex = 0; humanIndex < humanCount; humanIndex++)
+            {
+                int moldIndex = TakeConfiguredOrFallbackHumanMoldIndex(humanIndex, remainingMolds);
+                assignments.Add(moldIndex);
+                remainingMolds.Remove(moldIndex);
+            }
+
+            for (int playerIndex = humanCount; playerIndex < totalPlayers; playerIndex++)
+            {
+                if (remainingMolds.Count > 0)
+                {
+                    assignments.Add(remainingMolds[0]);
+                    remainingMolds.RemoveAt(0);
+                    continue;
+                }
+
+                assignments.Add(playerIndex % availableMolds);
+            }
+
+            return assignments;
+        }
+
+        private int TakeConfiguredOrFallbackHumanMoldIndex(int humanIndex, List<int> remainingMolds)
+        {
+            if (remainingMolds == null || remainingMolds.Count == 0)
+            {
+                return 0;
+            }
+
+            var configuredHumanMoldIndices = getConfiguredHumanMoldIndices();
+            if (humanIndex < configuredHumanMoldIndices.Count)
+            {
+                int configuredMoldIndex = configuredHumanMoldIndices[humanIndex];
+                if (remainingMolds.Contains(configuredMoldIndex))
+                {
+                    return configuredMoldIndex;
+                }
+            }
+
+            return remainingMolds[0];
         }
     }
 }
