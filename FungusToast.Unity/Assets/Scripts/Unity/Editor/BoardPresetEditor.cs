@@ -101,7 +101,7 @@ namespace FungusToast.Unity.Editor
 
                 if (catalog != null)
                 {
-                    EditorGUILayout.LabelField("Display", catalog.DisplayName);
+                    EditorGUILayout.LabelField("Strategy", catalog.StrategyName);
                 }
 
                 if (profile != null)
