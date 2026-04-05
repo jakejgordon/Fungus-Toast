@@ -6,6 +6,224 @@ using UnityEngine.Audio;
 
 namespace FungusToast.Unity
 {
+    public static class SoundEffectsSettings
+    {
+        private const string EnabledKey = "Audio.Sfx.Enabled";
+        private const string VolumeKey = "Audio.Sfx.Volume";
+
+        private static readonly float[] VolumeSteps = { 0f, 0.25f, 0.5f, 0.75f, 1f };
+
+        private static bool loaded;
+        private static bool enabled = true;
+        private static float volume = 1f;
+
+        public static bool Enabled
+        {
+            get
+            {
+                EnsureLoaded();
+                return enabled;
+            }
+        }
+
+        public static float Volume
+        {
+            get
+            {
+                EnsureLoaded();
+                return volume;
+            }
+        }
+
+        public static void ToggleEnabled()
+        {
+            SetEnabled(!Enabled);
+        }
+
+        public static void SetEnabled(bool value)
+        {
+            EnsureLoaded();
+            if (enabled == value)
+            {
+                return;
+            }
+
+            enabled = value;
+            PlayerPrefs.SetInt(EnabledKey, enabled ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
+        public static void CycleVolumeForward()
+        {
+            EnsureLoaded();
+
+            int currentIndex = 0;
+            for (int index = 0; index < VolumeSteps.Length; index++)
+            {
+                if (Mathf.Approximately(VolumeSteps[index], volume))
+                {
+                    currentIndex = index;
+                    break;
+                }
+            }
+
+            int nextIndex = (currentIndex + 1) % VolumeSteps.Length;
+            SetVolume(VolumeSteps[nextIndex]);
+        }
+
+        public static void SetVolume(float value)
+        {
+            EnsureLoaded();
+            float clampedValue = Mathf.Clamp01(value);
+            if (Mathf.Approximately(volume, clampedValue))
+            {
+                return;
+            }
+
+            volume = clampedValue;
+            PlayerPrefs.SetFloat(VolumeKey, volume);
+            PlayerPrefs.Save();
+        }
+
+        public static float GetEffectiveVolume(float baseVolume)
+        {
+            EnsureLoaded();
+            if (!enabled)
+            {
+                return 0f;
+            }
+
+            return Mathf.Clamp01(baseVolume) * volume;
+        }
+
+        private static void EnsureLoaded()
+        {
+            if (loaded)
+            {
+                return;
+            }
+
+            enabled = PlayerPrefs.GetInt(EnabledKey, 1) != 0;
+            volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 1f));
+            loaded = true;
+        }
+    }
+
+    public static class MusicSettings
+    {
+        private const string VolumeKey = "Audio.Music.Volume";
+
+        private static readonly float[] VolumeSteps = { 0f, 0.25f, 0.5f, 0.75f, 1f };
+
+        private static bool loaded;
+        private static float volume = 0.75f;
+
+        public static float Volume
+        {
+            get
+            {
+                EnsureLoaded();
+                return volume;
+            }
+        }
+
+        public static void CycleVolumeForward()
+        {
+            EnsureLoaded();
+
+            int currentIndex = 0;
+            for (int index = 0; index < VolumeSteps.Length; index++)
+            {
+                if (Mathf.Approximately(VolumeSteps[index], volume))
+                {
+                    currentIndex = index;
+                    break;
+                }
+            }
+
+            int nextIndex = (currentIndex + 1) % VolumeSteps.Length;
+            SetVolume(VolumeSteps[nextIndex]);
+        }
+
+        public static void SetVolume(float value)
+        {
+            EnsureLoaded();
+            float clampedValue = Mathf.Clamp01(value);
+            if (Mathf.Approximately(volume, clampedValue))
+            {
+                return;
+            }
+
+            volume = clampedValue;
+            PlayerPrefs.SetFloat(VolumeKey, volume);
+            PlayerPrefs.Save();
+        }
+
+        public static float GetEffectiveVolume(float baseVolume)
+        {
+            EnsureLoaded();
+            return Mathf.Clamp01(baseVolume) * volume;
+        }
+
+        private static void EnsureLoaded()
+        {
+            if (loaded)
+            {
+                return;
+            }
+
+            volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 0.75f));
+            loaded = true;
+        }
+    }
+
+    public class SoundEffectService
+    {
+        private readonly GameObject audioHost;
+
+        private AudioSource soundEffectAudioSource;
+
+        public SoundEffectService(GameObject audioHost)
+        {
+            this.audioHost = audioHost;
+        }
+
+        public void PlayOneShot(AudioClip clip, float baseVolume)
+        {
+            if (clip == null)
+            {
+                return;
+            }
+
+            EnsureAudioSource();
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(baseVolume);
+            if (effectiveVolume <= 0f)
+            {
+                return;
+            }
+
+            soundEffectAudioSource.PlayOneShot(clip, effectiveVolume);
+        }
+
+        private void EnsureAudioSource()
+        {
+            if (soundEffectAudioSource != null)
+            {
+                return;
+            }
+
+            soundEffectAudioSource = audioHost.GetComponent<AudioSource>();
+            if (soundEffectAudioSource == null)
+            {
+                soundEffectAudioSource = audioHost.AddComponent<AudioSource>();
+            }
+
+            soundEffectAudioSource.playOnAwake = false;
+            soundEffectAudioSource.loop = false;
+            soundEffectAudioSource.spatialBlend = 0f;
+        }
+    }
+
     public class BackgroundMusicService
     {
         private const string AudioSourceObjectName = "BackgroundMusicAudioSource";

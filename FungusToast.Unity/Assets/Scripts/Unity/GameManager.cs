@@ -33,177 +33,6 @@ using FungusToast.Unity.Campaign; // NEW: campaign namespace
 
 namespace FungusToast.Unity
 {
-    public static class SoundEffectsSettings
-    {
-        private const string EnabledKey = "Audio.Sfx.Enabled";
-        private const string VolumeKey = "Audio.Sfx.Volume";
-
-        private static readonly float[] VolumeSteps = { 0f, 0.25f, 0.5f, 0.75f, 1f };
-
-        private static bool loaded;
-        private static bool enabled = true;
-        private static float volume = 1f;
-
-        public static bool Enabled
-        {
-            get
-            {
-                EnsureLoaded();
-                return enabled;
-            }
-        }
-
-        public static float Volume
-        {
-            get
-            {
-                EnsureLoaded();
-                return volume;
-            }
-        }
-
-        public static void ToggleEnabled()
-        {
-            SetEnabled(!Enabled);
-        }
-
-        public static void SetEnabled(bool value)
-        {
-            EnsureLoaded();
-            if (enabled == value)
-            {
-                return;
-            }
-
-            enabled = value;
-            PlayerPrefs.SetInt(EnabledKey, enabled ? 1 : 0);
-            PlayerPrefs.Save();
-        }
-
-        public static void CycleVolumeForward()
-        {
-            EnsureLoaded();
-
-            int currentIndex = 0;
-            for (int index = 0; index < VolumeSteps.Length; index++)
-            {
-                if (Mathf.Approximately(VolumeSteps[index], volume))
-                {
-                    currentIndex = index;
-                    break;
-                }
-            }
-
-            int nextIndex = (currentIndex + 1) % VolumeSteps.Length;
-            SetVolume(VolumeSteps[nextIndex]);
-        }
-
-        public static void SetVolume(float value)
-        {
-            EnsureLoaded();
-            float clampedValue = Mathf.Clamp01(value);
-            if (Mathf.Approximately(volume, clampedValue))
-            {
-                return;
-            }
-
-            volume = clampedValue;
-            PlayerPrefs.SetFloat(VolumeKey, volume);
-            PlayerPrefs.Save();
-        }
-
-        public static float GetEffectiveVolume(float baseVolume)
-        {
-            EnsureLoaded();
-            if (!enabled)
-            {
-                return 0f;
-            }
-
-            return Mathf.Clamp01(baseVolume) * volume;
-        }
-
-        private static void EnsureLoaded()
-        {
-            if (loaded)
-            {
-                return;
-            }
-
-            enabled = PlayerPrefs.GetInt(EnabledKey, 1) != 0;
-            volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 1f));
-            loaded = true;
-        }
-    }
-
-    public static class MusicSettings
-    {
-        private const string VolumeKey = "Audio.Music.Volume";
-
-        private static readonly float[] VolumeSteps = { 0f, 0.25f, 0.5f, 0.75f, 1f };
-
-        private static bool loaded;
-        private static float volume = 0.75f;
-
-        public static float Volume
-        {
-            get
-            {
-                EnsureLoaded();
-                return volume;
-            }
-        }
-
-        public static void CycleVolumeForward()
-        {
-            EnsureLoaded();
-
-            int currentIndex = 0;
-            for (int index = 0; index < VolumeSteps.Length; index++)
-            {
-                if (Mathf.Approximately(VolumeSteps[index], volume))
-                {
-                    currentIndex = index;
-                    break;
-                }
-            }
-
-            int nextIndex = (currentIndex + 1) % VolumeSteps.Length;
-            SetVolume(VolumeSteps[nextIndex]);
-        }
-
-        public static void SetVolume(float value)
-        {
-            EnsureLoaded();
-            float clampedValue = Mathf.Clamp01(value);
-            if (Mathf.Approximately(volume, clampedValue))
-            {
-                return;
-            }
-
-            volume = clampedValue;
-            PlayerPrefs.SetFloat(VolumeKey, volume);
-            PlayerPrefs.Save();
-        }
-
-        public static float GetEffectiveVolume(float baseVolume)
-        {
-            EnsureLoaded();
-            return Mathf.Clamp01(baseVolume) * volume;
-        }
-
-        private static void EnsureLoaded()
-        {
-            if (loaded)
-            {
-                return;
-            }
-
-            volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 0.75f));
-            loaded = true;
-        }
-    }
-
     public class GameManager : MonoBehaviour
     {
         private const string AlphaMutationOnboardingSeenKey = "Onboarding.AlphaMutationPhaseSeen";
@@ -331,7 +160,6 @@ namespace FungusToast.Unity
         private bool isPauseMenuOpen;
         private bool hasApplicationFocus = true;
         private UI_PauseMenuPanel pauseMenuPanel;
-        private AudioSource soundEffectAudioSource;
 
         // Services
         private PlayerInitializer playerInitializer; 
@@ -342,6 +170,7 @@ namespace FungusToast.Unity
         private MutationPointService mutationPointService;
         private SpecialEventPresentationService specialEventPresentationService;
         private BackgroundMusicService backgroundMusicService;
+        private SoundEffectService soundEffectService;
 
         #endregion
 
@@ -417,7 +246,7 @@ namespace FungusToast.Unity
 
         private void BootstrapServices()
         {
-            EnsureSoundEffectAudioSource();
+            soundEffectService = new SoundEffectService(gameObject);
             BootstrapPauseMenu();
             backgroundMusicService = new BackgroundMusicService(this, transform, () => !hasApplicationFocus);
             ConfigureBackgroundMusicService();
@@ -880,7 +709,7 @@ namespace FungusToast.Unity
             gameUIManager.GameLogManager?.OnLogSegmentStart("GrowthPhase");
             growthPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
             gridVisualizer.ClearNewlyGrownFlagsForNextGrowthPhase();
-            PlayGrowthPhaseStartSound();
+            soundEffectService?.PlayOneShot(growthPhaseStartClip, growthPhaseStartVolume);
             gameUIManager.PhaseBanner.Show("Growth Phase Begins!",2f);
             phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
             StartCoroutine(BeginGrowthPhaseAfterPreGrowthEffects());
@@ -936,7 +765,7 @@ namespace FungusToast.Unity
             gameUIManager.GameLogRouter?.OnPhaseStart("Decay");
             gameUIManager.GameLogManager?.OnLogSegmentStart("DecayPhase");
             decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
-            PlayDecayPhaseStartSound();
+            soundEffectService?.PlayOneShot(decayPhaseStartClip, decayPhaseStartVolume);
             gameUIManager.PhaseBanner.Show("Decay Phase Begins!",2f);
             phaseProgressTracker?.HighlightDecayPhase();
             decayPhaseRunner.StartDecayPhase(
@@ -1056,7 +885,7 @@ namespace FungusToast.Unity
             gameUIManager.GameLogRouter?.OnPhaseStart("Mutation");
             if (!pendingAlphaMutationOnboarding)
             {
-                PlayMutationPhaseStartSound();
+                soundEffectService?.PlayOneShot(mutationPhaseStartClip, mutationPhaseStartVolume);
                 gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
             }
             if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
@@ -1068,109 +897,6 @@ namespace FungusToast.Unity
         }
 
         #endregion
-
-        private void EnsureSoundEffectAudioSource()
-        {
-            if (soundEffectAudioSource != null)
-            {
-                return;
-            }
-
-            soundEffectAudioSource = GetComponent<AudioSource>();
-            if (soundEffectAudioSource == null)
-            {
-                soundEffectAudioSource = gameObject.AddComponent<AudioSource>();
-            }
-
-            soundEffectAudioSource.playOnAwake = false;
-            soundEffectAudioSource.loop = false;
-            soundEffectAudioSource.spatialBlend = 0f;
-        }
-
-        private void PlayMutationPhaseStartSound()
-        {
-            if (mutationPhaseStartClip == null)
-            {
-                return;
-            }
-
-            EnsureSoundEffectAudioSource();
-            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(mutationPhaseStartVolume);
-            if (effectiveVolume <= 0f)
-            {
-                return;
-            }
-
-            soundEffectAudioSource.PlayOneShot(mutationPhaseStartClip, effectiveVolume);
-        }
-
-        private void PlayGrowthPhaseStartSound()
-        {
-            if (growthPhaseStartClip == null)
-            {
-                return;
-            }
-
-            EnsureSoundEffectAudioSource();
-            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(growthPhaseStartVolume);
-            if (effectiveVolume <= 0f)
-            {
-                return;
-            }
-
-            soundEffectAudioSource.PlayOneShot(growthPhaseStartClip, effectiveVolume);
-        }
-
-        private void PlayDecayPhaseStartSound()
-        {
-            if (decayPhaseStartClip == null)
-            {
-                return;
-            }
-
-            EnsureSoundEffectAudioSource();
-            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(decayPhaseStartVolume);
-            if (effectiveVolume <= 0f)
-            {
-                return;
-            }
-
-            soundEffectAudioSource.PlayOneShot(decayPhaseStartClip, effectiveVolume);
-        }
-
-        private void PlayDraftPhaseStartSound()
-        {
-            if (draftPhaseStartClip == null)
-            {
-                return;
-            }
-
-            EnsureSoundEffectAudioSource();
-            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(draftPhaseStartVolume);
-            if (effectiveVolume <= 0f)
-            {
-                return;
-            }
-
-            soundEffectAudioSource.PlayOneShot(draftPhaseStartClip, effectiveVolume);
-        }
-
-        private void PlayStartingSporeDropSound()
-        {
-            if (startingSporeDropClip == null)
-            {
-                return;
-            }
-
-            EnsureSoundEffectAudioSource();
-            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(startingSporeDropVolume);
-            if (effectiveVolume <= 0f)
-            {
-                return;
-            }
-
-            soundEffectAudioSource.PlayOneShot(startingSporeDropClip, effectiveVolume);
-        }
 
         #region Hotseat Callbacks
 
@@ -1353,13 +1079,13 @@ namespace FungusToast.Unity
             {
                 var tMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
                 var name = tMyco?.Name ?? "Unknown";
-                PlayDraftPhaseStartSound();
+                soundEffectService?.PlayOneShot(draftPhaseStartClip, draftPhaseStartVolume);
                 gameUIManager.PhaseBanner.Show($"Testing: {name}",2f);
                 gameUIManager.GameLogRouter?.OnDraftPhaseStart(name);
             }
             else
             {
-                PlayDraftPhaseStartSound();
+                soundEffectService?.PlayOneShot(draftPhaseStartClip, draftPhaseStartVolume);
                 gameUIManager.PhaseBanner.Show(phaseBannerMessage ?? "Mycovariant Draft Phase!",2f);
                 if (countsTowardRoundCompletion)
                 {
@@ -1740,7 +1466,9 @@ namespace FungusToast.Unity
             gameUIManager.LoadingScreen?.SetStatus("Spores are landing…");
             if (startingIds.Count >0 && !testingModeEnabled)
             {
-                yield return gridVisualizer.PlayStartingSporeArrivalAnimation(startingIds, PlayStartingSporeDropSound);
+                yield return gridVisualizer.PlayStartingSporeArrivalAnimation(
+                    startingIds,
+                    () => soundEffectService?.PlayOneShot(startingSporeDropClip, startingSporeDropVolume));
             }
             // Only fade out loading screen if we are NOT about to fast-forward;
             // fast-forward will take over the loading screen with progress text.
