@@ -60,7 +60,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** campaign difficulty tuning with safe-proxy validation and curated campaign AI roster promotion; latest pass confirmed authored Campaign14 is harsher than 11-13 and still under review after one conservative softening failed to help
+- **Current focus:** campaign difficulty tuning with safe-proxy validation; early revisit on 2026-04-04 found Campaign5 is the main opening/mid bridge cliff and was conservatively softened by replacing `CMP_Surge_BeaconTempo_Medium` with `TST_Training_ResilientMycelium`
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
@@ -78,6 +78,12 @@ Use the following minimal workflow to preserve working memory across sessions:
 11. ⏳ Add/document the symmetric 2-player fast-path and confirm `1-8` startup placement behavior.
 
 ## Current Handoff
+
+- 2026-04-04 early/mid campaign recheck with the current deterministic `X-1` proxy-adaptation harness produced: `Campaign0 100%`, `Campaign1 100%`, `Campaign2 100%`, `Campaign3 100%`, `Campaign4 52%`, `Campaign5 10%`, `Campaign6 20%` safe-proxy win rate on 50-game checks.
+- Additional direct swap tests showed the Campaign5 cliff is not explained by `CMP_Economy_KillReclaim_Medium` alone; `CMP_Surge_BeaconTempo_Medium` was the major sharpener. Swapping BeaconTempo into the Campaign4 board collapsed the proxy from `52%` to `6%`, while replacing BeaconTempo on Campaign5 improved the proxy into the `14-18%` band depending on replacement/seed.
+- Practical better-not-perfect decision taken: update the actual `Campaign5` pool asset by replacing `CMP_Surge_BeaconTempo_Medium` with `TST_Training_ResilientMycelium`. Tested evidence for the chosen replacement on the real `50x50 5 AI` board with current harness settings: seed `20260421` -> `18.0% (9/50)` safe-proxy wins. Alternative softer-but-weaker conservative replacement `CMP_Defense_ReclaimShell_Easy` landed at `16.0%` on one seed and `14.0%` on confirmation.
+- Campaign6 was left unchanged for now after a conservative harder-side experiment (`CMP_Surge_BeaconTempo_Medium -> CMP_Economy_KillReclaim_Medium`) dropped it from `20%` to `14%`, which moved the curve in the wrong direction.
+
 
 ### 2026-03-27 (campaign AI pool support)
 - **Focus:** Start backlog implementation for campaign board presets that can draw opponents from a strategy pool without tying pool size to active AI count.
