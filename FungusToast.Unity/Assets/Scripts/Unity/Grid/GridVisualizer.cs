@@ -143,7 +143,10 @@ namespace FungusToast.Unity.Grid
                     }
                 },
                 BeginAnimation,
-                EndAnimation);
+                EndAnimation,
+                RegisterPreAnimationHiddenPreviewTiles,
+                RevealPreAnimationPreviewTile,
+                RenderTileFromBoard);
             resistanceOverlayController = new GridResistanceOverlayController(
                 () => ActiveBoard,
                 () => overlayTilemap,
@@ -233,6 +236,7 @@ namespace FungusToast.Unity.Grid
 
             if (this.board != null)
             {
+				this.board.CellDeath += HandleCellDeath;
                 this.board.ToxinExpired += HandleToxinExpired;
                 this.board.ChemobeaconPlaced += HandleChemobeaconPlaced;
                 this.board.ChemobeaconExpired += HandleChemobeaconExpired;
@@ -357,10 +361,21 @@ namespace FungusToast.Unity.Grid
         {
             if (board != null)
             {
+                board.CellDeath -= HandleCellDeath;
                 board.ToxinExpired -= HandleToxinExpired;
                 board.ChemobeaconPlaced -= HandleChemobeaconPlaced;
                 board.ChemobeaconExpired -= HandleChemobeaconExpired;
             }
+        }
+
+        private void HandleCellDeath(object sender, FungalCellDiedEventArgs e)
+        {
+            if (!ReferenceEquals(sender, board))
+            {
+                return;
+            }
+
+            cellStateAnimationController?.CaptureToxinImpactSnapshot(e.TileId);
         }
 
         private void HandleChemobeaconPlaced(int playerId, int tileId)

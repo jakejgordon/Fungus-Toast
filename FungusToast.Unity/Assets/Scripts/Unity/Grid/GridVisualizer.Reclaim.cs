@@ -734,6 +734,24 @@ namespace FungusToast.Unity.Grid.Helpers
 			public Color OverlayColor { get; }
 		}
 
+		private sealed class ToxinImpactVisualSnapshot
+		{
+			public ToxinImpactVisualSnapshot(int tileId, TileBase moldTile, Color moldColor, TileBase overlayTile, Color overlayColor)
+			{
+				TileId = tileId;
+				MoldTile = moldTile;
+				MoldColor = moldColor;
+				OverlayTile = overlayTile;
+				OverlayColor = overlayColor;
+			}
+
+			public int TileId { get; }
+			public TileBase MoldTile { get; }
+			public Color MoldColor { get; }
+			public TileBase OverlayTile { get; }
+			public Color OverlayColor { get; }
+		}
+
 		private readonly Func<GameBoard> _getBoard;
 		private readonly Func<Tilemap> _getMoldTilemap;
 		private readonly Func<Tilemap> _getOverlayTilemap;
@@ -745,6 +763,9 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Action<Coroutine> _stopCoroutine;
 		private readonly Action _beginAnimation;
 		private readonly Action _endAnimation;
+		private readonly Action<IEnumerable<int>> _registerPreAnimationHiddenPreviewTiles;
+		private readonly Action<int> _revealPreAnimationPreviewTile;
+		private readonly Action<int> _renderTileFromBoard;
 
 		private readonly HashSet<int> _newlyGrownTileIds = new();
 		private readonly HashSet<int> _newlyGrownAnimationPlayedTileIds = new();
@@ -753,6 +774,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Dictionary<int, Coroutine> _deathAnimationCoroutines = new();
 		private readonly HashSet<int> _toxinDropTileIds = new();
 		private readonly Dictionary<int, Coroutine> _toxinDropCoroutines = new();
+		private readonly Dictionary<int, ToxinImpactVisualSnapshot> _pendingToxinImpactSnapshots = new();
 		private readonly Dictionary<int, ExpiringToxinVisualSnapshot> _pendingToxinExpirySnapshots = new();
 		private readonly Dictionary<int, Coroutine> _toxinExpiryCoroutines = new();
 		private readonly Dictionary<int, Coroutine> _chemobeaconExpiryCoroutines = new();
@@ -768,7 +790,10 @@ namespace FungusToast.Unity.Grid.Helpers
 			Func<IEnumerator, Coroutine> startCoroutine,
 			Action<Coroutine> stopCoroutine,
 			Action beginAnimation,
-			Action endAnimation)
+			Action endAnimation,
+			Action<IEnumerable<int>> registerPreAnimationHiddenPreviewTiles,
+			Action<int> revealPreAnimationPreviewTile,
+			Action<int> renderTileFromBoard)
 		{
 			_getBoard = getBoard;
 			_getMoldTilemap = getMoldTilemap;
@@ -781,12 +806,16 @@ namespace FungusToast.Unity.Grid.Helpers
 			_stopCoroutine = stopCoroutine;
 			_beginAnimation = beginAnimation;
 			_endAnimation = endAnimation;
+			_registerPreAnimationHiddenPreviewTiles = registerPreAnimationHiddenPreviewTiles;
+			_revealPreAnimationPreviewTile = revealPreAnimationPreviewTile;
+			_renderTileFromBoard = renderTileFromBoard;
 		}
 
 		public void PrepareForBoardRender(GameBoard board, bool suppressAnimations)
 		{
 			if (suppressAnimations)
 			{
+				ClearPendingToxinImpactSnapshots();
 				ClearPendingToxinExpirySnapshots();
 			}
 
@@ -859,6 +888,19 @@ namespace FungusToast.Unity.Grid.Helpers
 					}
 				}
 			}
+
+			var stagedImpactTileIds = _toxinDropTileIds
+				.Where(tileId => _pendingToxinImpactSnapshots.ContainsKey(tileId))
+				.ToList();
+			if (stagedImpactTileIds.Count > 0)
+			{
+				_registerPreAnimationHiddenPreviewTiles?.Invoke(stagedImpactTileIds);
+			}
+
+			foreach (var staleTileId in _pendingToxinImpactSnapshots.Keys.Except(_toxinDropTileIds).ToList())
+			{
+				_pendingToxinImpactSnapshots.Remove(staleTileId);
+			}
 		}
 
 		public void StartQueuedAnimations()
@@ -893,6 +935,11 @@ namespace FungusToast.Unity.Grid.Helpers
 			_pendingToxinExpirySnapshots.Clear();
 		}
 
+		public void ClearPendingToxinImpactSnapshots()
+		{
+			_pendingToxinImpactSnapshots.Clear();
+		}
+
 		public void StopAndClearToxinExpiryAnimations()
 		{
 			foreach (int tileId in _toxinExpiryCoroutines.Keys.ToList())
@@ -915,6 +962,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
 		public void ResetRuntimeState()
 		{
+			ClearPendingToxinImpactSnapshots();
 			ClearPendingToxinExpirySnapshots();
 			StopAndClearFadeInAnimations();
 			StopAndClearDeathAnimations();
@@ -931,6 +979,54 @@ namespace FungusToast.Unity.Grid.Helpers
 		public void Dispose()
 		{
 			ResetRuntimeState();
+		}
+
+		public bool CaptureToxinImpactSnapshot(int tileId)
+		{
+			var board = _getBoard();
+			var moldTilemap = _getMoldTilemap();
+			var overlayTilemap = _getOverlayTilemap();
+			if (board == null || moldTilemap == null || overlayTilemap == null)
+			{
+				return false;
+			}
+
+			var tile = board.GetTileById(tileId);
+			if (tile?.FungalCell == null)
+			{
+				return false;
+			}
+
+			var pos = _getPositionForTileId(tileId);
+
+			TileBase moldTile = moldTilemap.GetTile(pos);
+			if (moldTile == null && tile.FungalCell.OwnerPlayerId is int ownerPlayerId)
+			{
+				moldTile = _getTileForPlayer(ownerPlayerId);
+			}
+
+			if (moldTile == null)
+			{
+				return false;
+			}
+
+			Color moldColor = moldTilemap.GetColor(pos);
+			if (moldColor.a <= 0f)
+			{
+				moldColor = Color.white;
+			}
+
+			TileBase overlayTile = overlayTilemap.GetTile(pos);
+			Color overlayColor = overlayTile != null ? overlayTilemap.GetColor(pos) : Color.white;
+
+			_pendingToxinImpactSnapshots[tileId] = new ToxinImpactVisualSnapshot(
+				tileId,
+				moldTile,
+				moldColor,
+				overlayTile,
+				overlayColor);
+
+			return true;
 		}
 
 		public void CaptureToxinExpirySnapshot(ToxinExpiredEventArgs eventArgs)
@@ -1164,6 +1260,11 @@ namespace FungusToast.Unity.Grid.Helpers
 		{
 			foreach (int tileId in _dyingTileIds)
 			{
+				if (_toxinDropTileIds.Contains(tileId))
+				{
+					continue;
+				}
+
 				StopTrackedAnimation(_deathAnimationCoroutines, tileId);
 				_deathAnimationCoroutines[tileId] = _startCoroutine(DeathAnimation(tileId));
 			}
@@ -1287,6 +1388,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			var board = _getBoard();
 			var moldTilemap = _getMoldTilemap();
 			var overlayTilemap = _getOverlayTilemap();
+			var transientTilemap = _getTransientTilemap();
 			if (board == null || moldTilemap == null || overlayTilemap == null)
 			{
 				_toxinDropCoroutines.Remove(tileId);
@@ -1301,21 +1403,55 @@ namespace FungusToast.Unity.Grid.Helpers
 			var cell = tile?.FungalCell;
 			if (cell == null)
 			{
+				_pendingToxinImpactSnapshots.Remove(tileId);
 				_toxinDropCoroutines.Remove(tileId);
 				yield break;
 			}
 
+			_pendingToxinImpactSnapshots.TryGetValue(tileId, out var impactSnapshot);
+			var dropTilemap = impactSnapshot != null && transientTilemap != null
+				? transientTilemap
+				: overlayTilemap;
+
 			_beginAnimation();
 			try
 			{
-				if (!overlayTilemap.HasTile(pos) && _getToxinOverlayTile() != null)
+				if (impactSnapshot != null)
 				{
-					overlayTilemap.SetTile(pos, _getToxinOverlayTile());
-					overlayTilemap.SetTileFlags(pos, TileFlags.None);
-					overlayTilemap.SetColor(pos, Color.clear);
+					if (impactSnapshot.MoldTile != null)
+					{
+						moldTilemap.SetTile(pos, impactSnapshot.MoldTile);
+						moldTilemap.SetTileFlags(pos, TileFlags.None);
+						moldTilemap.SetColor(pos, impactSnapshot.MoldColor);
+						moldTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+						moldTilemap.RefreshTile(pos);
+					}
+
+					if (impactSnapshot.OverlayTile != null)
+					{
+						overlayTilemap.SetTile(pos, impactSnapshot.OverlayTile);
+						overlayTilemap.SetTileFlags(pos, TileFlags.None);
+						overlayTilemap.SetColor(pos, impactSnapshot.OverlayColor);
+						overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+						overlayTilemap.RefreshTile(pos);
+					}
+					else
+					{
+						overlayTilemap.SetTile(pos, null);
+						overlayTilemap.SetColor(pos, Color.white);
+						overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+					}
 				}
 
-				if (moldTilemap.HasTile(pos))
+				if (!dropTilemap.HasTile(pos) && _getToxinOverlayTile() != null)
+				{
+					dropTilemap.SetTile(pos, _getToxinOverlayTile());
+					dropTilemap.SetTileFlags(pos, TileFlags.None);
+					dropTilemap.SetColor(pos, Color.clear);
+					dropTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+				}
+
+				if (impactSnapshot == null && moldTilemap.HasTile(pos))
 				{
 					var moldColor = moldTilemap.GetColor(pos);
 					moldColor.a = 0f;
@@ -1323,7 +1459,7 @@ namespace FungusToast.Unity.Grid.Helpers
 				}
 
 				float startYOffset = UIEffectConstants.ToxinDropStartYOffset;
-				ApplyOverlayTransform(overlayTilemap, pos, new Vector3(0f, startYOffset, 0f), Vector3.one);
+				ApplyOverlayTransform(dropTilemap, pos, new Vector3(0f, startYOffset, 0f), Vector3.one);
 
 				float approachPortion = Mathf.Clamp01(UIEffectConstants.ToxinDropApproachPortion);
 				float approachDuration = duration * approachPortion;
@@ -1334,7 +1470,7 @@ namespace FungusToast.Unity.Grid.Helpers
 					float t = Mathf.Clamp01(approachElapsed / approachDuration);
 					float eased = t * t * t;
 					float yOffset = Mathf.Lerp(startYOffset, 0f, eased);
-					ApplyOverlayTransform(overlayTilemap, pos, new Vector3(0f, yOffset, 0f), Vector3.one);
+					ApplyOverlayTransform(dropTilemap, pos, new Vector3(0f, yOffset, 0f), Vector3.one);
 					yield return null;
 				}
 
@@ -1351,13 +1487,20 @@ namespace FungusToast.Unity.Grid.Helpers
 					float t = Mathf.Clamp01(impactElapsed / impactDuration);
 					float sx = Mathf.Lerp(1f, squashX, 1f - (1f - t) * (1f - t));
 					float sy = Mathf.Lerp(1f, squashY, 1f - (1f - t) * (1f - t));
-					ApplyOverlayTransform(overlayTilemap, pos, Vector3.zero, new Vector3(sx, sy, 1f));
+					ApplyOverlayTransform(dropTilemap, pos, Vector3.zero, new Vector3(sx, sy, 1f));
 
-					if (overlayTilemap.HasTile(pos))
+					if (dropTilemap.HasTile(pos))
 					{
-						Color overlayColor = overlayTilemap.GetColor(pos);
+						Color overlayColor = dropTilemap.GetColor(pos);
 						overlayColor.a = Mathf.Lerp(0f, 1f, t);
-						overlayTilemap.SetColor(pos, overlayColor);
+						dropTilemap.SetColor(pos, overlayColor);
+					}
+
+					if (impactSnapshot != null && moldTilemap.HasTile(pos))
+					{
+						Color livingImpactColor = Color.Lerp(impactSnapshot.MoldColor, new Color(0.92f, 0.7f, 0.65f, impactSnapshot.MoldColor.a), t);
+						moldTilemap.SetColor(pos, livingImpactColor);
+						moldTilemap.SetTransformMatrix(pos, Matrix4x4.Scale(new Vector3(Mathf.Lerp(1f, 0.96f, t), Mathf.Lerp(1f, 0.92f, t), 1f)));
 					}
 
 					yield return null;
@@ -1370,25 +1513,59 @@ namespace FungusToast.Unity.Grid.Helpers
 					float t = Mathf.Clamp01(settleElapsed / settleDuration);
 					float sx = Mathf.Lerp(squashX, 1f, t);
 					float sy = Mathf.Lerp(squashY, 1f, t);
-					ApplyOverlayTransform(overlayTilemap, pos, Vector3.zero, new Vector3(sx, sy, 1f));
+					ApplyOverlayTransform(dropTilemap, pos, Vector3.zero, new Vector3(sx, sy, 1f));
+
+					if (impactSnapshot != null && moldTilemap.HasTile(pos))
+					{
+						float eased = 1f - Mathf.Pow(1f - t, 2f);
+						var collapseScale = Matrix4x4.Scale(new Vector3(Mathf.Lerp(0.96f, 0.84f, eased), Mathf.Lerp(0.92f, 0.84f, eased), 1f));
+						Color collapseColor = impactSnapshot.MoldColor;
+						collapseColor.r = Mathf.Lerp(collapseColor.r, collapseColor.r * 0.75f, eased);
+						collapseColor.g = Mathf.Lerp(collapseColor.g, collapseColor.g * 0.75f, eased);
+						collapseColor.b = Mathf.Lerp(collapseColor.b, collapseColor.b * 0.75f, eased);
+						collapseColor.a = Mathf.Lerp(impactSnapshot.MoldColor.a, 0f, eased);
+						moldTilemap.SetColor(pos, collapseColor);
+						moldTilemap.SetTransformMatrix(pos, collapseScale);
+
+						if (impactSnapshot.OverlayTile != null && overlayTilemap.HasTile(pos))
+						{
+							Color snapshotOverlayColor = impactSnapshot.OverlayColor;
+							snapshotOverlayColor.a = Mathf.Lerp(impactSnapshot.OverlayColor.a, 0f, eased);
+							overlayTilemap.SetColor(pos, snapshotOverlayColor);
+						}
+					}
 					yield return null;
 				}
 
-				ApplyOverlayTransform(overlayTilemap, pos, Vector3.zero, Vector3.one);
-				if (overlayTilemap.HasTile(pos))
+				ApplyOverlayTransform(dropTilemap, pos, Vector3.zero, Vector3.one);
+				if (dropTilemap.HasTile(pos))
 				{
-					overlayTilemap.SetColor(pos, Color.white);
+					dropTilemap.SetColor(pos, Color.white);
 				}
 
-				if (moldTilemap.HasTile(pos))
+				if (impactSnapshot == null && moldTilemap.HasTile(pos))
 				{
 					moldTilemap.SetColor(pos, new Color(0.8f, 0.8f, 0.8f, 0.8f));
 				}
+				else if (impactSnapshot != null)
+				{
+					if (transientTilemap != null)
+					{
+						transientTilemap.SetTile(pos, null);
+						transientTilemap.SetColor(pos, Color.white);
+						transientTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+					}
+
+					_revealPreAnimationPreviewTile?.Invoke(tileId);
+					_renderTileFromBoard?.Invoke(tileId);
+				}
 
 				cell.ClearToxinDropFlag();
+				cell.ClearDyingFlag();
 			}
 			finally
 			{
+				_pendingToxinImpactSnapshots.Remove(tileId);
 				_toxinDropCoroutines.Remove(tileId);
 				_endAnimation();
 			}
