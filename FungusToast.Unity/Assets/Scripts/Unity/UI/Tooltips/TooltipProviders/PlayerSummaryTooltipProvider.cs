@@ -3,6 +3,7 @@ using System.Text;
 using UnityEngine;
 using FungusToast.Core.Players;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Common;
 using FungusToast.Unity.UI.Tooltips;
 
 namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
@@ -31,9 +32,13 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
                 return "Player: (unset)";
 
             var sb = new StringBuilder();
+            bool showStrategyName = GameManager.Instance != null && GameManager.Instance.IsTestingModeEnabled;
 
             // Player Name
             sb.AppendLine($"<b>Player Name:</b> {player.PlayerName}");
+
+            if (showStrategyName)
+                sb.AppendLine($"<b>Strategy:</b> {GetStrategyDisplayText(player)}");
 
             // Highest Mutation: pick by highest tier then highest level
             string highestMutationText = GetHighestMutationText(player);
@@ -48,6 +53,16 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             sb.AppendLine($"<b>Adaptations:</b> {adaptationList}");
 
             return sb.ToString().TrimEnd();
+        }
+
+        private static string GetStrategyDisplayText(Player p)
+        {
+            if (p.PlayerType == PlayerTypeEnum.Human)
+                return "Human Player";
+
+            return string.IsNullOrWhiteSpace(p.MutationStrategy?.StrategyName)
+                ? "Unassigned"
+                : p.MutationStrategy.StrategyName;
         }
 
         private static string GetHighestMutationText(Player p)
