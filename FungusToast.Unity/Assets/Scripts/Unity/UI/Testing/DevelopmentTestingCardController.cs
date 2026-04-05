@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.Campaign;
@@ -171,6 +172,8 @@ namespace FungusToast.Unity.UI.Testing
         private Button forcedResultButton;
         private GameObject adaptationRow;
         private TMP_Dropdown adaptationDropdown;
+        private List<Mycovariant> sortedMycovariants = new List<Mycovariant>();
+        private List<AdaptationDefinition> sortedAdaptations = new List<AdaptationDefinition>();
 
         private bool testingEnabled;
         private bool skipToEnd;
@@ -254,10 +257,15 @@ namespace FungusToast.Unity.UI.Testing
 
             if (mycovariantDropdown != null)
             {
+                sortedMycovariants = MycovariantRepository.All
+                    .OrderBy(mycovariant => mycovariant.Name, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(mycovariant => mycovariant.Id)
+                    .ToList();
+
                 var mycovariantOptions = new List<string> { "Select Mycovariant..." };
-                for (int index = 0; index < MycovariantRepository.All.Count; index++)
+                for (int index = 0; index < sortedMycovariants.Count; index++)
                 {
-                    var mycovariant = MycovariantRepository.All[index];
+                    var mycovariant = sortedMycovariants[index];
                     mycovariantOptions.Add($"{mycovariant.Name} (ID: {mycovariant.Id})");
                 }
 
@@ -270,10 +278,15 @@ namespace FungusToast.Unity.UI.Testing
 
             if (adaptationDropdown != null)
             {
+                sortedAdaptations = AdaptationRepository.All
+                    .OrderBy(adaptation => adaptation.Name, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(adaptation => adaptation.Id, StringComparer.Ordinal)
+                    .ToList();
+
                 var adaptationOptions = new List<string> { "Select Adaptation..." };
-                for (int index = 0; index < AdaptationRepository.All.Count; index++)
+                for (int index = 0; index < sortedAdaptations.Count; index++)
                 {
-                    var adaptation = AdaptationRepository.All[index];
+                    var adaptation = sortedAdaptations[index];
                     adaptationOptions.Add($"{adaptation.Name} (ID: {adaptation.Id})");
                 }
 
@@ -368,9 +381,9 @@ namespace FungusToast.Unity.UI.Testing
             if (mycovariantDropdown != null && mycovariantDropdown.value > 0)
             {
                 int mycovariantIndex = mycovariantDropdown.value - 1;
-                if (mycovariantIndex >= 0 && mycovariantIndex < MycovariantRepository.All.Count)
+                if (mycovariantIndex >= 0 && mycovariantIndex < sortedMycovariants.Count)
                 {
-                    selectedMycovariantId = MycovariantRepository.All[mycovariantIndex].Id;
+                    selectedMycovariantId = sortedMycovariants[mycovariantIndex].Id;
                 }
             }
 
@@ -378,9 +391,9 @@ namespace FungusToast.Unity.UI.Testing
             if (skipToEnd && adaptationDropdown != null && adaptationDropdown.value > 0)
             {
                 int adaptationIndex = adaptationDropdown.value - 1;
-                if (adaptationIndex >= 0 && adaptationIndex < AdaptationRepository.All.Count)
+                if (adaptationIndex >= 0 && adaptationIndex < sortedAdaptations.Count)
                 {
-                    selectedAdaptationId = AdaptationRepository.All[adaptationIndex].Id;
+                    selectedAdaptationId = sortedAdaptations[adaptationIndex].Id;
                 }
             }
 
