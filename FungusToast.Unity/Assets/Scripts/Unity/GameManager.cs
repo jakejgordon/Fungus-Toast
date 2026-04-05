@@ -660,6 +660,7 @@ namespace FungusToast.Unity
         private IEnumerator BeginGrowthPhaseAfterPreGrowthEffects()
         {
             var chitinFortificationTileIds = new List<int>();
+            var conduitProjections = new List<GameBoard.ConduitProjectionEventArgs>();
 
             void BufferPreGrowthResistanceAnimation(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
             {
@@ -677,7 +678,18 @@ namespace FungusToast.Unity
                 }
             }
 
+            void BufferConduitProjection(GameBoard.ConduitProjectionEventArgs e)
+            {
+                if (e == null || e.AffectedTileIds == null || e.AffectedTileIds.Count == 0)
+                {
+                    return;
+                }
+
+                conduitProjections.Add(e);
+            }
+
             Board.ResistanceAppliedBatch += BufferPreGrowthResistanceAnimation;
+            Board.ConduitProjection += BufferConduitProjection;
             try
             {
                 Board.OnPreGrowthPhase();
@@ -685,14 +697,37 @@ namespace FungusToast.Unity
             finally
             {
                 Board.ResistanceAppliedBatch -= BufferPreGrowthResistanceAnimation;
+                Board.ConduitProjection -= BufferConduitProjection;
             }
 
-            if (!isFastForwarding && chitinFortificationTileIds.Count > 0)
+            if (!isFastForwarding && (chitinFortificationTileIds.Count > 0 || conduitProjections.Count > 0))
             {
-                gridVisualizer.DeferResistanceOverlayReveal(chitinFortificationTileIds);
+                if (chitinFortificationTileIds.Count > 0)
+                {
+                    gridVisualizer.DeferResistanceOverlayReveal(chitinFortificationTileIds);
+                }
+
+                if (conduitProjections.Count > 0)
+                {
+                    gridVisualizer.RegisterPreAnimationHiddenPreviewTiles(
+                        conduitProjections
+                            .SelectMany(projection => projection.AffectedTileIds)
+                            .Where(tileId => tileId >= 0)
+                            .Distinct());
+                }
+
                 gridVisualizer.RenderBoard(Board, suppressAnimations: true);
-                gridVisualizer.PlayResistancePulseBatchScaled(chitinFortificationTileIds, 0.5f);
-                yield return gridVisualizer.WaitForAllAnimations();
+
+                if (chitinFortificationTileIds.Count > 0)
+                {
+                    gridVisualizer.PlayResistancePulseBatchScaled(chitinFortificationTileIds, 0.5f);
+                    yield return gridVisualizer.WaitForAllAnimations();
+                }
+
+                for (int i = 0; i < conduitProjections.Count; i++)
+                {
+                    yield return gridVisualizer.PlayConduitProjectionPresentation(conduitProjections[i]);
+                }
             }
 
             growthPhaseRunner.StartGrowthPhase();

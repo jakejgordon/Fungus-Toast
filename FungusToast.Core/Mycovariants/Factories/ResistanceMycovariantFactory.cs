@@ -131,7 +131,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.AggressotropicConduitIId,
             Name = "Aggressotropic Conduit I",
-            Description = $"For the rest of the game, before each growth phase, trace from your starting spore toward the enemy start with the most living cells. Resolve up to {MycovariantGameBalance.AggressotropicConduitIReplacementsPerPhase} actionable tiles on that path; the last resolved tile becomes Resistant. Skips friendly living and enemy Resistant cells. Stacks with Aggressotropic Conduit II/III.",
+            Description = CreateAggressotropicConduitDescription(MycovariantGameBalance.AggressotropicConduitIReplacementsPerPhase),
             FlavorText = "A probing arterial strand advances toward dominant rival biomass, crystallizing a hardened foothold at its leading edge.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
@@ -145,7 +145,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.AggressotropicConduitIIId,
             Name = "Aggressotropic Conduit II",
-            Description = $"For the rest of the game, before each growth phase, trace from your starting spore toward the enemy start with the most living cells (random tie-break). Resolve up to {MycovariantGameBalance.AggressotropicConduitIIReplacementsPerPhase} actionable tiles on that path; the last resolved tile becomes Resistant. Skips friendly living and enemy Resistant cells. Stacks with Aggressotropic Conduit I/III.",
+            Description = CreateAggressotropicConduitDescription(MycovariantGameBalance.AggressotropicConduitIIReplacementsPerPhase),
             FlavorText = "The invasive corridor thickens, boring deeper toward hostile dominance while fortifying its terminal node.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
@@ -159,7 +159,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.AggressotropicConduitIIIId,
             Name = "Aggressotropic Conduit III",
-            Description = $"For the rest of the game, before each growth phase, trace from your starting spore toward the enemy start with the most living cells (random tie-break). Resolve up to {MycovariantGameBalance.AggressotropicConduitIIIReplacementsPerPhase} actionable tiles on that path; the last resolved tile becomes Resistant. Skips friendly living and enemy Resistant cells. Stacks with Aggressotropic Conduit I/II.",
+            Description = CreateAggressotropicConduitDescription(MycovariantGameBalance.AggressotropicConduitIIIReplacementsPerPhase),
             FlavorText = "A fully committed invasive artery, tunneling decisively toward the heart of rival dominance and sealing its spearpoint in impervious tissue.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
@@ -168,5 +168,8 @@ namespace FungusToast.Core.Mycovariants
             SynergyWith = MycovariantSynergyListFactory.GetResistanceSynergyMycovariantIdsExcluding(MycovariantIds.AggressotropicConduitIIIId),
             AIScore = (player, board) => 6f
         };
+
+        private static string CreateAggressotropicConduitDescription(int tilesPerPhase)
+            => $"Before each growth phase, grow up to {tilesPerPhase} tiles from your starting spore toward the enemy starting spore with the most living cells (random tie-break). The last cell placed becomes Resistant. Skips your living cells and enemy Resistant cells. Stacks with other Aggressotropic Mycovariants.";
     }
 }

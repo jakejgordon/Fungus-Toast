@@ -721,6 +721,16 @@ namespace FungusToast.Unity.Grid
             }
         }
 
+        public IEnumerator PlayConduitProjectionPresentation(GameBoard.ConduitProjectionEventArgs projection)
+        {
+            if (projection == null || presentationEffects == null)
+            {
+                yield break;
+            }
+
+            yield return presentationEffects.RunConduitProjectionPresentation(projection);
+        }
+
         public void ShowSelectedTiles(IEnumerable<int> tileIds, Color? selectedColor = null)
         {
             var active = ActiveBoard; if (active == null) return;

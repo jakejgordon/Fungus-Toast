@@ -1170,6 +1170,7 @@ public static class MycovariantEffectProcessor
         if (line.Count <= 1) return; // No actionable tiles beyond start
 
         int infestations = 0, colonizations = 0, reclaims = 0, toxinsReplaced = 0;
+        var actedTileIds = new List<int>();
 
         for (int i = 1; i < line.Count && quota > 0; i++)
         {
@@ -1180,8 +1181,15 @@ public static class MycovariantEffectProcessor
             var existing = tile.FungalCell;
             if (ShouldSkipTile(existing, player.PlayerId)) continue;
 
+            int beforeQuota = quota;
             ApplyConduitAction(board, player.PlayerId, tileId, existing, ref quota, rng, observer, ref infestations, ref colonizations, ref reclaims, ref toxinsReplaced, GrowthSource.CornerConduit);
+            if (quota < beforeQuota)
+            {
+                actedTileIds.Add(tileId);
+            }
         }
+
+        RaiseConduitProjectionEvent(board, player.PlayerId, GrowthSource.CornerConduit, startTile, line, actedTileIds);
 
         if (infestations > 0) myco.IncrementEffectCount(MycovariantEffectType.CornerConduitInfestations, infestations);
         if (colonizations > 0) myco.IncrementEffectCount(MycovariantEffectType.CornerConduitColonizations, colonizations);
@@ -1333,5 +1341,41 @@ public static class MycovariantEffectProcessor
         if (colonizations > 0) attributionMyco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitColonizations, colonizations);
         if (reclaims > 0) attributionMyco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitReclaims, reclaims);
         if (toxinsReplaced > 0) attributionMyco.IncrementEffectCount(MycovariantEffectType.AggressotropicConduitToxinsReplaced, toxinsReplaced);
+
+        RaiseConduitProjectionEvent(board, player.PlayerId, GrowthSource.AggressotropicConduit, startTile, line, actedTileIds);
     }
+
+    private static void RaiseConduitProjectionEvent(
+        GameBoard board,
+        int playerId,
+        GrowthSource source,
+        int originTileId,
+        IReadOnlyList<(int x, int y)> line,
+        IReadOnlyList<int> actedTileIds)
+    {
+        if (board == null || line == null || actedTileIds == null || actedTileIds.Count == 0)
+        {
+            return;
+        }
+
+        int finalLandingTileId = actedTileIds[actedTileIds.Count - 1];
+        var pathTileIds = new List<int>();
+        foreach (var (x, y) in line)
+        {
+            int tileId = y * board.Width + x;
+            pathTileIds.Add(tileId);
+            if (tileId == finalLandingTileId)
+            {
+                break;
+            }
+        }
+
+        if (pathTileIds.Count == 0 || pathTileIds[pathTileIds.Count - 1] != finalLandingTileId)
+        {
+            pathTileIds.Add(finalLandingTileId);
+        }
+
+        board.OnConduitProjection(playerId, source, originTileId, pathTileIds, actedTileIds, finalLandingTileId);
+    }
+
 }

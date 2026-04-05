@@ -46,7 +46,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.CornerConduitIId,
             Name = "Corner Conduit I",
-            Description = $"For the rest of the game, before each growth phase, trace a path to the nearest corner and resolve up to {MycovariantGameBalance.CornerConduitIReplacementsPerPhase} actionable tiles (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skip friendly living and enemy Resistant cells.",
+            Description = CreateCornerConduitDescription(MycovariantGameBalance.CornerConduitIReplacementsPerPhase),
             FlavorText = "Hyphae prioritize a direct arterial route to a strategic corner, exploiting vulnerabilities along the corridor.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
@@ -59,7 +59,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.CornerConduitIIId,
             Name = "Corner Conduit II",
-            Description = $"For the rest of the game, before each growth phase, trace a path to the nearest corner and resolve up to {MycovariantGameBalance.CornerConduitIIReplacementsPerPhase} actionable tiles (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skip friendly living and enemy Resistant cells.",
+            Description = CreateCornerConduitDescription(MycovariantGameBalance.CornerConduitIIReplacementsPerPhase),
             FlavorText = "Hyphal arterial routing intensifies, widening strategic throughput toward a dominant corner nexus.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
@@ -72,7 +72,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.CornerConduitIIIId,
             Name = "Corner Conduit III",
-            Description = $"For the rest of the game, before each growth phase, trace a path to the nearest corner and resolve up to {MycovariantGameBalance.CornerConduitIIIReplacementsPerPhase} actionable tiles (Empty=Colonize, Dead=Reclaim, Enemy=Infest, Toxin=Overgrow). Skip friendly living and enemy Resistant cells.",
+            Description = CreateCornerConduitDescription(MycovariantGameBalance.CornerConduitIIIReplacementsPerPhase),
             FlavorText = "A fully vascularized hyphal highway surges toward strategic dominance, overwhelming resistance in a focused advance.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
@@ -98,6 +98,9 @@ namespace FungusToast.Core.Mycovariants
             },
             AIScore = (player, board) => MycovariantEffectProcessor.EvaluateHyphalDrawScore(player, board)
         };
+
+        private static string CreateCornerConduitDescription(int tilesPerPhase)
+            => $"Before each growth phase, grow up to {tilesPerPhase} tiles from your starting spore toward the nearest corner. Skips your living cells and enemy Resistant cells.";
 
         private static float CornerConduitScore(Players.Player player, Board.GameBoard board, float high, float mid, float low)
         {

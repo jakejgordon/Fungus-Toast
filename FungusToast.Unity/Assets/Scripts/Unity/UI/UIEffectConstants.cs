@@ -85,6 +85,7 @@ namespace FungusToast.Unity.UI
         public const float NutrientPatchToastDurationSeconds = 3.3f;
         public const float NutrientPatchToastFontSize = 7.4f;
         public const float BoardToastScaleMultiplier = 2f;
+        public const float BoardToastMinZoomScaleMultiplier = 0.32f;
         public const float NutrientPatchToastZoomReferenceOrthographicSize = 18f;
         public const float NutrientPatchToastMaxScaleMultiplier = 4.1f;
         public const float NutrientPatchToastPopScaleMultiplier = 1.38f;
@@ -186,7 +187,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Font size used for the floating directed-vector toast.
         /// </summary>
-        public const float DirectedVectorToastFontSize = 9.6f;
+        public const float DirectedVectorToastFontSize = 7.8f;
 
         /// <summary>
         /// Duration of the origin emphasis pulse.

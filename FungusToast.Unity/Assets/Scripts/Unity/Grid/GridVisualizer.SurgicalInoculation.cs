@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core;
 using FungusToast.Core.Board;
+using FungusToast.Core.Growth;
 using FungusToast.Unity.UI;
 using TMPro;
 using UnityEngine;
@@ -1102,6 +1103,71 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 		}
 
+		public IEnumerator RunConduitProjectionPresentation(GameBoard.ConduitProjectionEventArgs projection)
+		{
+			var board = _getBoard();
+			var pulseTilemap = GetTransientPulseTilemap();
+			var overlayTilemap = _getOverlayTilemap();
+			if (board == null || projection == null || pulseTilemap == null || _getSolidHighlightTile() == null || overlayTilemap == null)
+			{
+				yield break;
+			}
+
+			var affectedTileIds = projection.AffectedTileIds?.Where(tileId => tileId >= 0).Distinct().ToList() ?? new List<int>();
+			if (affectedTileIds.Count == 0)
+			{
+				yield break;
+			}
+
+			var pathTileIds = projection.PathTileIds?.Where(tileId => tileId >= 0).Distinct().ToList() ?? new List<int>();
+			if (pathTileIds.Count == 0)
+			{
+				pathTileIds.AddRange(affectedTileIds);
+			}
+
+			int presentationStartTileId = pathTileIds.Count > 0 ? pathTileIds[0] : projection.OriginTileId;
+			var sweepTileIds = pathTileIds.Count > 1
+				? pathTileIds.Skip(1).ToList()
+				: affectedTileIds;
+
+			TextMeshPro toast = CreateBoardToastText(projection.Source, presentationStartTileId, projection.FinalLandingTileId, overlayTilemap);
+			try
+			{
+				if (presentationStartTileId >= 0)
+				{
+					Vector3Int originPos = _getPositionForTileId(presentationStartTileId);
+					yield return PulseTiles(pulseTilemap, new[] { originPos }, UIEffectConstants.DirectedVectorOriginPulseDurationSeconds, DirectedVectorPulseColor, 1f, UIEffectConstants.DirectedVectorPulseScale);
+				}
+
+				foreach (var chunk in BuildDirectedVectorChunks(sweepTileIds))
+				{
+					var chunkPositions = chunk.Select(_getPositionForTileId).ToArray();
+					_startCoroutine(PulseTiles(pulseTilemap, chunkPositions, UIEffectConstants.DirectedVectorChunkPulseDurationSeconds, DirectedVectorPulseColor, 1f, UIEffectConstants.DirectedVectorPulseScale));
+					yield return new WaitForSeconds(UIEffectConstants.DirectedVectorChunkStaggerSeconds);
+				}
+
+				yield return AnimateDirectedVectorGrowthReveal(affectedTileIds);
+
+				if (toast != null)
+				{
+					yield return AnimateFloatingToast(toast, UIEffectConstants.DirectedVectorToastDurationSeconds, DirectedVectorToastColor, UIEffectConstants.DirectedVectorToastRiseWorld, useAnimatedScale: false);
+				}
+			}
+			finally
+			{
+				for (int i = 0; i < affectedTileIds.Count; i++)
+				{
+					_revealPreAnimationPreviewTile?.Invoke(affectedTileIds[i]);
+					_renderTileFromBoard?.Invoke(affectedTileIds[i]);
+				}
+
+				if (toast != null)
+				{
+					UnityEngine.Object.Destroy(toast.gameObject);
+				}
+			}
+		}
+
 		private IEnumerator AnimateDirectedVectorGrowthReveal(IReadOnlyList<int> tileIds)
 		{
 			var board = _getBoard();
@@ -1429,7 +1495,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 		}
 
-		private static float GetNutrientToastScaleMultiplier()
+		private static float GetBoardToastScaleMultiplier()
 		{
 			Camera mainCamera = Camera.main;
 			if (mainCamera == null || !mainCamera.orthographic)
@@ -1438,13 +1504,14 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 
 			float normalizedZoom = mainCamera.orthographicSize / UIEffectConstants.NutrientPatchToastZoomReferenceOrthographicSize;
-			float zoomScale = Mathf.Sqrt(Mathf.Max(1f, normalizedZoom));
-			return Mathf.Clamp(zoomScale, 1f, UIEffectConstants.NutrientPatchToastMaxScaleMultiplier) * UIEffectConstants.BoardToastScaleMultiplier;
+			float boundedZoom = Mathf.Max(0.01f, normalizedZoom);
+			float zoomScale = boundedZoom < 1f ? boundedZoom : Mathf.Sqrt(boundedZoom);
+			return Mathf.Clamp(zoomScale, UIEffectConstants.BoardToastMinZoomScaleMultiplier, UIEffectConstants.NutrientPatchToastMaxScaleMultiplier) * UIEffectConstants.BoardToastScaleMultiplier;
 		}
 
 		private static float GetAnimatedNutrientToastScaleMultiplier(float textT)
 		{
-			float baseScale = GetNutrientToastScaleMultiplier();
+			float baseScale = GetBoardToastScaleMultiplier();
 			float popIn = 1f - Mathf.Pow(1f - Mathf.Clamp01(textT / 0.18f), 3f);
 			float settle = Mathf.Clamp01((textT - 0.18f) / 0.26f);
 			float minScale = UIEffectConstants.NutrientPatchToastMinScaleMultiplier;
@@ -1476,10 +1543,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			};
 		}
 
-		private static string BuildDirectedVectorToastText()
-		{
-			return "Chemotactic vectoring!";
-		}
+		private static string BuildGrowthSourceToastText(GrowthSource source) => GrowthSourceDisplayNames.GetDisplayName(source);
 
 		private static void ApplyBoardToastStyle(TextMeshPro tmp, float fontSize, Color textColor)
 		{
@@ -1513,7 +1577,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			tmp.text = BuildNutrientToastText(rewardType, rewardAmount);
 			ApplyBoardToastStyle(tmp, UIEffectConstants.NutrientPatchToastFontSize, GetNutrientToastColor(patchType));
 			tmp.transform.position = overlayTilemap.GetCellCenterWorld(destinationPos) + new Vector3(0f, UIEffectConstants.NutrientPatchToastStartHeightWorld, 0f);
-			tmp.transform.localScale = Vector3.one * (GetNutrientToastScaleMultiplier() * UIEffectConstants.NutrientPatchToastMinScaleMultiplier);
+			tmp.transform.localScale = Vector3.one * (GetBoardToastScaleMultiplier() * UIEffectConstants.NutrientPatchToastMinScaleMultiplier);
 
 			var renderer = tmp.GetComponent<MeshRenderer>();
 			if (renderer != null)
@@ -1526,27 +1590,37 @@ namespace FungusToast.Unity.Grid.Helpers
 
 		private TextMeshPro CreateDirectedVectorToastText(int originTileId, IReadOnlyList<int> affectedTileIds, Tilemap overlayTilemap)
 		{
-			if (affectedTileIds == null || affectedTileIds.Count == 0 || overlayTilemap == null)
+			if (affectedTileIds == null || affectedTileIds.Count == 0)
 			{
 				return null;
 			}
 
-			int resolvedOriginTileId = originTileId >= 0 ? originTileId : affectedTileIds[0];
-			int destinationTileId = affectedTileIds[affectedTileIds.Count - 1];
+			return CreateBoardToastText(GrowthSource.ChemotacticBeacon, originTileId, affectedTileIds[affectedTileIds.Count - 1], overlayTilemap);
+		}
+
+		private TextMeshPro CreateBoardToastText(GrowthSource source, int originTileId, int destinationTileId, Tilemap overlayTilemap)
+		{
+			if (overlayTilemap == null || destinationTileId < 0)
+			{
+				return null;
+			}
+
+			int resolvedOriginTileId = originTileId >= 0 ? originTileId : destinationTileId;
 			Vector3 originWorld = overlayTilemap.GetCellCenterWorld(_getPositionForTileId(resolvedOriginTileId));
 			Vector3 destinationWorld = overlayTilemap.GetCellCenterWorld(_getPositionForTileId(destinationTileId));
+			Vector3 anchorWorld = Vector3.Lerp(originWorld, destinationWorld, 0.5f);
 			float verticalOffset = destinationWorld.y < originWorld.y
 				? UIEffectConstants.DirectedVectorToastStartHeightWorld
-				: -UIEffectConstants.DirectedVectorToastStartHeightWorld;
+				: UIEffectConstants.DirectedVectorToastStartHeightWorld;
 
 			var textObject = new GameObject("DirectedVectorToast", typeof(TextMeshPro));
 			textObject.transform.SetParent(_getToastParent(), false);
 
 			var tmp = textObject.GetComponent<TextMeshPro>();
-			tmp.text = BuildDirectedVectorToastText();
+			tmp.text = BuildGrowthSourceToastText(source);
 			ApplyBoardToastStyle(tmp, UIEffectConstants.DirectedVectorToastFontSize, DirectedVectorToastColor);
-			tmp.transform.position = originWorld + new Vector3(0f, verticalOffset, 0f);
-			tmp.transform.localScale = Vector3.one * GetNutrientToastScaleMultiplier();
+			tmp.transform.position = anchorWorld + new Vector3(0f, verticalOffset, 0f);
+			tmp.transform.localScale = Vector3.one * GetBoardToastScaleMultiplier();
 
 			var renderer = tmp.GetComponent<MeshRenderer>();
 			if (renderer != null)
@@ -1572,7 +1646,7 @@ namespace FungusToast.Unity.Grid.Helpers
 				elapsed += Time.deltaTime;
 				float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
 				toast.transform.position = Vector3.Lerp(start, end, t);
-				toast.transform.localScale = Vector3.one * (useAnimatedScale ? GetAnimatedNutrientToastScaleMultiplier(t) : GetNutrientToastScaleMultiplier());
+				toast.transform.localScale = Vector3.one * (useAnimatedScale ? GetAnimatedNutrientToastScaleMultiplier(t) : GetBoardToastScaleMultiplier());
 				Color textColor = baseColor;
 				float fadeT = Mathf.Clamp01((t - 0.48f) / 0.52f);
 				textColor.a = 1f - fadeT;
