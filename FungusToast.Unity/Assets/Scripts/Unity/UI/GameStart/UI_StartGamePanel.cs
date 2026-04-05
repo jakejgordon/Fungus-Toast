@@ -1116,7 +1116,7 @@ namespace FungusToast.Unity.UI.GameStart
                 return testingOptionsSectionRoot.GetComponentInChildren<TMP_Dropdown>(true);
             }
 
-            return FindFirstObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
+            return FindAnyObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
         }
 
         private void HideLegacyTestingControls()

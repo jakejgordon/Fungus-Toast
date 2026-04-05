@@ -16,6 +16,8 @@ using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI;
 using FungusToast.Core.Phases;
 
+#nullable enable
+
 namespace FungusToast.Unity
 {
     public static class GameManagerExtensions
@@ -33,9 +35,9 @@ namespace FungusToast.Unity
         private readonly GameManager gameManager;
         private readonly Func<bool> getFastForwardFlag; private readonly Action<bool> setFastForwardFlag; private readonly Func<bool> gameEndedFunc;
         /// <summary>Optional callback invoked with progress text each iteration (e.g., to update a loading screen).</summary>
-        private Action<string> onProgress;
+        private Action<string>? onProgress;
         /// <summary>Optional callback invoked when fast-forward finishes (e.g., to fade out a loading screen).</summary>
-        private Action onComplete;
+        private Action? onComplete;
         public FastForwardService(GameManager gm, Func<bool> getter, Action<bool> setter, Func<bool> gameEnded) { gameManager = gm; getFastForwardFlag = getter; setFastForwardFlag = setter; gameEndedFunc = gameEnded; }
         /// <summary>Wire optional progress/completion callbacks (call once after construction).</summary>
         public void SetProgressCallbacks(Action<string> progress, Action complete) { onProgress = progress; onComplete = complete; }
@@ -49,7 +51,7 @@ namespace FungusToast.Unity
             bool treatAsTargetRound = requestedValue > startingRound; int targetRound = treatAsTargetRound ? requestedValue : (startingRound + requestedValue); if (targetRound < startingRound) targetRound = startingRound; int desiredRounds = targetRound - startingRound; int iterations = 0;
             // NEW: Capture and convert ALL human players (previous code only handled primary human)
             var humanPlayers = board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human).ToList();
-            var originalStates = new List<(Player player, PlayerTypeEnum type, IMutationSpendingStrategy strategy)>();
+            var originalStates = new List<(Player player, PlayerTypeEnum type, IMutationSpendingStrategy? strategy)>();
             // A single fallback strategy is sufficient; assign to any human lacking a strategy
             var fallbackStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
             foreach (var hp in humanPlayers)
@@ -117,7 +119,7 @@ namespace FungusToast.Unity
 
         private void RunSilentDraft(GameBoard board, GameUIManager ui, IReadOnlyList<Player> draftPlayers, int? testingMycoId, bool countsTowardRoundCompletion)
         {
-            Func<Player, List<Mycovariant>, Mycovariant> custom = null; var pool = gameManager.GetPersistentPool(); var rng = gameManager.GetRng();
+            Func<Player, List<Mycovariant>, Mycovariant>? custom = null; var pool = gameManager.GetPersistentPool(); var rng = gameManager.GetRng();
             if (testingMycoId.HasValue) { var testingMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycoId.Value); if (testingMyco != null && !testingMyco.IsUniversal) { pool.TemporarilyRemoveFromPool(testingMycoId.Value); custom = (player, choices) => choices.Where(c => c.Id != testingMycoId.Value).OrderByDescending(m => m.GetBaseAIScore(player, board)).ThenBy(_ => rng.Next()).FirstOrDefault() ?? choices.First(); } }
             MycovariantDraftManager.RunDraft(draftPlayers.ToList(), pool, board, rng, ui.GameLogRouter, MycovariantGameBalance.MycovariantSelectionDraftSize, custom);
             if (countsTowardRoundCompletion)

@@ -198,7 +198,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         if (magnifierCamera != null)
             return;
 
-        MagnifierCameraFollowMouse magnifierFollow = FindFirstObjectByType<MagnifierCameraFollowMouse>();
+        MagnifierCameraFollowMouse magnifierFollow = FindAnyObjectByType<MagnifierCameraFollowMouse>();
         if (magnifierFollow != null)
         {
             magnifierCamera = magnifierFollow.GetComponent<Camera>();
@@ -400,7 +400,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     void CreateTooltipInstance()
     {
         // Find the UI Canvas
-        Canvas uiCanvas = FindFirstObjectByType<Canvas>();
+        Canvas uiCanvas = FindAnyObjectByType<Canvas>();
         if (uiCanvas == null)
         {
             Debug.LogError("[Tooltip] No Canvas found! Tooltip cannot be created.");

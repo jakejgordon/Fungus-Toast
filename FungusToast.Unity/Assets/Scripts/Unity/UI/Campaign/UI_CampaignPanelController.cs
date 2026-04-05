@@ -444,7 +444,7 @@ namespace FungusToast.Unity.UI.Campaign
                 }
             }
 
-            return FindFirstObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
+            return FindAnyObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
         }
 
         private void ApplyStyle()

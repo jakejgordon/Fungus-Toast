@@ -215,7 +215,7 @@ namespace FungusToast.Unity.UI
                 }
             }
 
-            Canvas anyCanvas = FindFirstObjectByType<Canvas>();
+            Canvas anyCanvas = FindAnyObjectByType<Canvas>();
             return anyCanvas != null ? anyCanvas.rootCanvas : null;
         }
 

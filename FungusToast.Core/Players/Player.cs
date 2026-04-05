@@ -128,7 +128,7 @@ namespace FungusToast.Core.Players
         public void SetBaseMutationPoints(int amount) => baseMutationPoints = amount;
         public int GetBaseMutationPointIncome() => baseMutationPoints;
         public int GetMutationPointIncome() => GetBaseMutationPointIncome();
-        public void SetMutationStrategy(IMutationSpendingStrategy strat) => MutationStrategy = strat;
+        public void SetMutationStrategy(IMutationSpendingStrategy? strat) => MutationStrategy = strat;
 
         /* ---------------- Growth / death chance --------------- */
 

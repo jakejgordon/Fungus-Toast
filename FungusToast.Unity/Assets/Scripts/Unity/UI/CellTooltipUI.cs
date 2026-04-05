@@ -55,10 +55,6 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image tooltipBackgroundImage;
         [SerializeField, Range(0.5f, 1f)] private float tooltipBackgroundAlpha = 0.96f;
 
-        // Kept so prefab fields are not orphaned; no longer used at runtime.
-        [HideInInspector, SerializeField] private float rowBackgroundAlpha = 0.35f;
-        [HideInInspector, SerializeField] private bool normalizeTooltipStructureOnAwake = true;
-
         // ── Constants ──────────────────────────────────────────────────────
         private const float TooltipWidth = 332f;
         private const float LeftPadding = 28f;

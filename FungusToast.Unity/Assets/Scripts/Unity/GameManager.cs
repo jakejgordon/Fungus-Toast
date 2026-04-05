@@ -31,6 +31,8 @@ using UnityEngine.Audio;
 using UnityEngine.UI;
 using FungusToast.Unity.Campaign; // NEW: campaign namespace
 
+#nullable enable
+
 namespace FungusToast.Unity
 {
     public class GameManager : MonoBehaviour
@@ -71,30 +73,30 @@ namespace FungusToast.Unity
         [SerializeField] private Button selectionPromptCancelButton;
         [SerializeField] private TextMeshProUGUI selectionPromptCancelButtonText;
         [SerializeField] private GameObject modeSelectPanel; // NEW: root of mode select UI
-        [SerializeField] private AudioClip mutationPhaseStartClip = null;
+        [SerializeField] private AudioClip? mutationPhaseStartClip = null;
         [SerializeField, Range(0f, 1f)] private float mutationPhaseStartVolume = 1f;
-        [SerializeField] private AudioClip growthPhaseStartClip = null;
+        [SerializeField] private AudioClip? growthPhaseStartClip = null;
         [SerializeField, Range(0f, 1f)] private float growthPhaseStartVolume = 1f;
-        [SerializeField] private AudioClip decayPhaseStartClip = null;
+        [SerializeField] private AudioClip? decayPhaseStartClip = null;
         [SerializeField, Range(0f, 1f)] private float decayPhaseStartVolume = 1f;
-        [SerializeField] private AudioClip draftPhaseStartClip = null;
+        [SerializeField] private AudioClip? draftPhaseStartClip = null;
         [SerializeField, Range(0f, 1f)] private float draftPhaseStartVolume = 1f;
-        [SerializeField] private AudioClip startingSporeDropClip = null;
+        [SerializeField] private AudioClip? startingSporeDropClip = null;
         [SerializeField, Range(0f, 1f)] private float startingSporeDropVolume = 1f;
-        [SerializeField] private AudioClip gameplayMusicClip = null;
+        [SerializeField] private AudioClip? gameplayMusicClip = null;
         [SerializeField] private AudioClip[] additionalGameplayMusicClips = new AudioClip[0];
         [SerializeField, Range(0f, 1f)] private float gameplayMusicVolume = 1f;
         [SerializeField, Min(0f)] private float gameplayMusicInitialDelaySeconds = 10f;
         [SerializeField, Min(0f)] private float gameplayMusicReplayDelaySeconds = 5f;
         [SerializeField, Min(0f)] private float gameplayMusicFadeInSeconds = 1f;
-        [SerializeField] private AudioMixerGroup gameplayMusicMixerGroup = null;
+        [SerializeField] private AudioMixerGroup? gameplayMusicMixerGroup = null;
 
         [Header("Hotseat Config")] 
         public int configuredHumanPlayerCount =1; 
         public int ConfiguredHumanPlayerCount => configuredHumanPlayerCount; 
         private readonly List<int> configuredHumanMoldIndices = new();
         public void SetHotseatConfig(int humanCount) => SetHotseatConfig(humanCount, null);
-        public void SetHotseatConfig(int humanCount, IReadOnlyList<int> humanMoldIndices)
+        public void SetHotseatConfig(int humanCount, IReadOnlyList<int>? humanMoldIndices)
         {
             configuredHumanPlayerCount = Mathf.Max(1, humanCount);
             configuredHumanMoldIndices.Clear();
@@ -118,7 +120,7 @@ namespace FungusToast.Unity
 
         // NEW: current mode
         public GameMode CurrentGameMode { get; private set; } = GameMode.Hotseat;
-        private CampaignController campaignController; // lazy created
+        private CampaignController? campaignController; // lazy created
 
         #endregion
 
@@ -126,16 +128,16 @@ namespace FungusToast.Unity
 
         private bool gameEnded = false; 
         private System.Random rng; 
-        private MycovariantPoolManager persistentPoolManager;
+        private MycovariantPoolManager persistentPoolManager = null!;
 
-        public GameBoard Board { get; private set; } 
+        public GameBoard Board { get; private set; } = null!;
         public GameUIManager GameUI => gameUIManager; 
         public SpecialEventPresentationService SpecialEventPresentationService => specialEventPresentationService;
         public static GameManager Instance { get; private set; }
 
         private readonly List<Player> players = new(); 
         private readonly List<Player> humanPlayers = new(); 
-        private Player humanPlayer; // primary
+        private Player humanPlayer = null!; // primary
 
         private bool isInDraftPhase = false; 
         public bool IsDraftPhaseActive => isInDraftPhase; 
@@ -277,7 +279,11 @@ namespace FungusToast.Unity
                 {
                     GameRulesEventSubscriber.UnsubscribeAll(currentBoard);
                     GameUIEventSubscriber.Unsubscribe(currentBoard, gameUIManager);
-                    AnalyticsEventSubscriber.Unsubscribe(currentBoard, gameUIManager?.GameLogRouter);
+                    var observer = gameUIManager?.GameLogRouter;
+                    if (observer != null)
+                    {
+                        AnalyticsEventSubscriber.Unsubscribe(currentBoard, observer);
+                    }
                 },
                 StopAllCoroutines,
                 mycovariantDraftController,
@@ -394,29 +400,36 @@ namespace FungusToast.Unity
 
         public void InitializeGame(int numberOfPlayers)
         {
+            var ui = gameUIManager;
+            if (ui == null)
+            {
+                Debug.LogError("[GameManager] Cannot initialize game: GameUIManager reference is missing.");
+                return;
+            }
+
             // Clear any lingering scene coroutines/UI overlays from the previous game before bootstrapping a new board.
             gameTransitionService?.ResetRuntimeStateForGameTransition();
             ConfigureBackgroundMusicService();
-            gameUIManager?.MutationUIManager?.ResetForNewGameState();
-            gameUIManager.EndGamePanel?.gameObject.SetActive(false);
+            ui.MutationUIManager?.ResetForNewGameState();
+            ui.EndGamePanel?.gameObject.SetActive(false);
             pauseMenuService?.ForceClose();
 
-            gameUIManager.LoadingScreen?.Show("Preparing the toast…");
+            ui.LoadingScreen?.Show("Preparing the toast…");
             gameEnded = false;
             lastCompletedMycovariantDraftRound = -1;
             endgameService.Reset();
             specialEventPresentationService?.Reset();
             playerCount = numberOfPlayers;
-            gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
+            ui.MutationUIManager?.SetSpendPointsButtonInteractable(false);
 
             Board = new GameBoard(boardWidth, boardHeight, playerCount);
-            gameUIManager.SetBoard(Board); // expose board to UI components via façade
+            ui.SetBoard(Board); // expose board to UI components via façade
             rng = new System.Random();
             postGrowthVisualSequence.Register(Board); // board post-growth events
 
-            GameRulesEventSubscriber.SubscribeAll(Board, players, rng, gameUIManager.GameLogRouter);
-            GameUIEventSubscriber.Subscribe(Board, gameUIManager, specialEventPresentationService);
-            AnalyticsEventSubscriber.Subscribe(Board, gameUIManager.GameLogRouter);
+            GameRulesEventSubscriber.SubscribeAll(Board, players, rng, ui.GameLogRouter);
+            GameUIEventSubscriber.Subscribe(Board, ui, specialEventPresentationService);
+            AnalyticsEventSubscriber.Subscribe(Board, ui.GameLogRouter);
 
             playerMoldAssignmentService?.ApplyConfiguredPlayerMoldAssignments(playerCount);
 
@@ -716,22 +729,31 @@ namespace FungusToast.Unity
                 mutationManager.ResetMutationPoints(Board.Players);
             }
 
-            gameUIManager.GameLogRouter?.OnRoundStart(Board.CurrentRound);
-            gameUIManager.GameLogManager?.OnLogSegmentStart("MutationPhaseStart");
+            var board = Board!;
+            var ui = gameUIManager;
+            if (ui == null)
+            {
+                Debug.LogError("[GameManager] Cannot start mutation phase: GameUIManager reference is missing.");
+                return;
+            }
 
-            if (!(Board.CurrentRound ==1 && initialMutationPointsAssigned))
+            ui.GameLogRouter?.OnRoundStart(board.CurrentRound);
+            ui.GameLogManager?.OnLogSegmentStart("MutationPhaseStart");
+
+            if (!(board.CurrentRound == 1 && initialMutationPointsAssigned))
             {
                 AssignMutationPoints();
             }
             else
             {
-                Board.OnMutationPhaseStart();
+                board.OnMutationPhaseStart();
             }
 
             if (humanPlayers.Count >0)
             {
-                SetActiveHumanPlayer(humanPlayers[0]);
-                gameUIManager.GameLogManager?.EmitPendingSegmentSummariesFor(humanPlayers[0].PlayerId);
+                var activeHuman = humanPlayers[0]!;
+                SetActiveHumanPlayer(activeHuman);
+                ui.GameLogManager?.EmitPendingSegmentSummariesFor(activeHuman.PlayerId);
             }
 
             pendingAlphaMutationOnboarding = ShouldQueueAlphaMutationOnboarding();
@@ -742,18 +764,18 @@ namespace FungusToast.Unity
             if (humanPlayers.Count > 0)
             {
                 var activeHuman = humanPlayers[0];
-                gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(true);
-                gameUIManager.MutationUIManager.RefreshSpendPointsButtonUI();
-                gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(activeHuman.MutationPoints > 0);
+                ui.MutationUIManager?.SetSpendPointsButtonVisible(true);
+                ui.MutationUIManager?.RefreshSpendPointsButtonUI();
+                ui.MutationUIManager?.SetSpendPointsButtonInteractable(activeHuman.MutationPoints > 0);
             }
 
-            gameUIManager.RightSidebar?.UpdatePlayerSummaries(Board.Players);
+            ui.RightSidebar?.UpdatePlayerSummaries(board.Players);
             if (humanPlayers.Count > 0)
             {
-                gameUIManager.RightSidebar?.TryShowScoreboardWinConditionCoachmark(Board.CurrentRound);
+                ui.RightSidebar?.TryShowScoreboardWinConditionCoachmark(board.CurrentRound);
             }
-            gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
-            gameUIManager.GameLogRouter?.OnPhaseStart("Mutation");
+            ui.RightSidebar?.UpdateRandomDecayChance(board.CurrentRound);
+            ui.GameLogRouter?.OnPhaseStart("Mutation");
             if (!pendingAlphaMutationOnboarding)
             {
                 soundEffectService?.PlayOneShot(mutationPhaseStartClip, mutationPhaseStartVolume);
@@ -1070,11 +1092,11 @@ namespace FungusToast.Unity
             FirstUpgradeRounds?.Clear();
             players.Clear();
             humanPlayers.Clear();
-            humanPlayer = null;
-            Board = null;
+            humanPlayer = null!;
+            Board = null!;
         }
 
-        public void ShowSelectionPrompt(string message, bool showCancelButton = false, string cancelButtonLabel = "Cancel", Action onCancel = null)
+        public void ShowSelectionPrompt(string message, bool showCancelButton = false, string cancelButtonLabel = "Cancel", Action? onCancel = null)
         {
             selectionPromptService?.Show(message, showCancelButton, cancelButtonLabel, onCancel);
         }
@@ -1340,13 +1362,13 @@ namespace FungusToast.Unity
 
         public string GetCurrentGameplayTrackName()
         {
-            AudioClip clip = backgroundMusicService?.GetCurrentGameplayTrack();
+            AudioClip? clip = backgroundMusicService?.GetCurrentGameplayTrack();
             return clip != null ? clip.name : string.Empty;
         }
 
         public string GetNextGameplayTrackName()
         {
-            AudioClip clip = backgroundMusicService?.GetNextGameplayTrack();
+            AudioClip? clip = backgroundMusicService?.GetNextGameplayTrack();
             return clip != null ? clip.name : string.Empty;
         }
 
