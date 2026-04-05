@@ -47,6 +47,7 @@ namespace FungusToast.Unity.UI
         private void Awake()
         {
             ApplyStyle();
+            UpdateRoundAndOccupancyTooltip();
         }
 
         private void ApplyStyle()
@@ -233,6 +234,7 @@ namespace FungusToast.Unity.UI
             board = gameBoard;
             hasDismissedScoreboardCoachmarkThisGame = false;
             HideScoreboardCoachmarkImmediate(false);
+            UpdateRoundAndOccupancyTooltip();
         }
 
         public void InitializePlayerSummaries(List<Player> players)
@@ -557,6 +559,25 @@ namespace FungusToast.Unity.UI
             string mycovariantDraftTiming = BuildMycovariantDraftTimingText(round);
             roundAndOccupancyText.text = $"<b>Round:</b> {round}\n<b>Occupancy:</b> {occupancy:F2}%\n<b>Mycovariant Draft:</b> {mycovariantDraftTiming}";
             UpdateRandomDecayChance(round); // update dynamic label each round update
+        }
+
+        private void UpdateRoundAndOccupancyTooltip()
+        {
+            if (roundAndOccupancyText == null)
+            {
+                return;
+            }
+
+            var trigger = roundAndOccupancyText.GetComponent<TooltipTrigger>();
+            if (trigger == null)
+            {
+                return;
+            }
+
+            int boardArea = board?.TotalTiles ?? (GameBalance.BoardWidth * GameBalance.BoardHeight);
+            float threshold = GameBalance.GetGameEndTileOccupancyThreshold(boardArea);
+            trigger.SetStaticText(
+                $"The Round number increases after each Decay Phase. Occupancy % represents the percentage of the board that is occupied. Once the board reaches {threshold:P0} occupancy, a {GameBalance.TurnsAfterEndGameTileOccupancyThresholdMet}-round end-of-game countdown starts.");
         }
 
         private static string BuildMycovariantDraftTimingText(int currentRound)

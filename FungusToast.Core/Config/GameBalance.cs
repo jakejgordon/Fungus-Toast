@@ -13,7 +13,11 @@ namespace FungusToast.Core.Config
         public const int AgeAtWhichDecayChanceIncreases = 10;
         public const float AgeDeathFactorPerGrowthCycle = 0.008f;
         public const int StartingMutationPoints = 5;
-        public const float GameEndTileOccupancyThreshold = 0.90f;
+        public const int SmallBoardGameEndAreaUpperBound = 2500;
+        public const int MediumBoardGameEndAreaUpperBound = 10000;
+        public const float SmallBoardGameEndTileOccupancyThreshold = 0.80f;
+        public const float MediumBoardGameEndTileOccupancyThreshold = 0.85f;
+        public const float LargeBoardGameEndTileOccupancyThreshold = 0.90f;
         public const int TurnsAfterEndGameTileOccupancyThresholdMet = 3;
         public const float MaxEnemyDecayPressurePerCell = 0.25f;
         public const int DefaultSurgeAIAttemptTurnFrequency = 5;
@@ -40,8 +44,23 @@ namespace FungusToast.Core.Config
         public static float GetAdditionalRandomDecayChance(int currentRound)
         {
             if (currentRound < RandomDecayScalingStartRound) return 0f;
-            int roundsElapsed = currentRound - RandomDecayScalingStartRound + 1; // inclusive of start round
+            var roundsElapsed = currentRound - RandomDecayScalingStartRound + 1; // inclusive of start round
             return roundsElapsed * RandomDecayAdditionalChancePerRound;
+        }
+
+        public static float GetGameEndTileOccupancyThreshold(int boardArea)
+        {
+            if (boardArea < SmallBoardGameEndAreaUpperBound)
+            {
+                return SmallBoardGameEndTileOccupancyThreshold;
+            }
+
+            if (boardArea < MediumBoardGameEndAreaUpperBound)
+            {
+                return MediumBoardGameEndTileOccupancyThreshold;
+            }
+
+            return LargeBoardGameEndTileOccupancyThreshold;
         }
 
         // ==================== MUTATION-SPECIFIC CONSTANTS ====================

@@ -347,7 +347,7 @@ namespace FungusToast.Core.Board
         public List<FungalCell> GetAllCellsOwnedBy(int playerId) => tileIdToCell.Values.Where(c => c.OwnerPlayerId == playerId).ToList();
         public List<int> GetAllTileIds() => tileIdToCell.Keys.ToList();
         public float GetOccupiedTileRatio() { int occupied = ComputeOccupiedTileCount(); return occupied == 0 ? 0f : (float)occupied / TotalTiles; }
-        public bool ShouldTriggerEndgame() => GetOccupiedTileRatio() >= GameBalance.GameEndTileOccupancyThreshold;
+        public bool ShouldTriggerEndgame() => GetOccupiedTileRatio() >= GameBalance.GetGameEndTileOccupancyThreshold(TotalTiles);
         public IReadOnlyCollection<ChemobeaconMarker> GetActiveChemobeacons() => chemobeaconsByPlayerId.Values.ToList();
         public ChemobeaconMarker? GetChemobeacon(int playerId)
             => chemobeaconsByPlayerId.TryGetValue(playerId, out var marker) ? marker : null;

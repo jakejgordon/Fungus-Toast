@@ -54,24 +54,37 @@ public class GameBoardQueryHelperTests
         Assert.Equal(3f / 25f, board.GetOccupiedTileRatio(), precision: 6);
     }
 
-    [Fact]
-    public void ShouldTriggerEndgame_becomes_true_when_occupied_ratio_reaches_configured_threshold()
+    [Theory]
+    [InlineData(10, 10, 0.80f)]
+    [InlineData(50, 50, 0.85f)]
+    [InlineData(100, 100, 0.90f)]
+    public void GetGameEndTileOccupancyThreshold_returns_expected_value_for_board_area(int width, int height, float expectedThreshold)
     {
-        var board = CreateBoard(width: 10, height: 10, playerCount: 1);
+        Assert.Equal(expectedThreshold, GameBalance.GetGameEndTileOccupancyThreshold(width * height), precision: 6);
+    }
 
-        for (int tileId = 0; tileId < 89; tileId++)
+    [Theory]
+    [InlineData(10, 10, 79, 80, 0.80f)]
+    [InlineData(60, 60, 3059, 3060, 0.85f)]
+    [InlineData(100, 100, 8999, 9000, 0.90f)]
+    public void ShouldTriggerEndgame_becomes_true_when_occupied_ratio_reaches_board_size_threshold(int width, int height, int occupiedTilesBeforeThreshold, int occupiedTilesAtThreshold, float expectedThreshold)
+    {
+        var board = CreateBoard(width, height, playerCount: 1);
+
+        for (int tileId = 0; tileId < occupiedTilesBeforeThreshold; tileId++)
         {
             board.SpawnSporeForPlayer(board.Players[0], tileId, GrowthSource.Manual);
         }
 
-        Assert.Equal(89f / 100f, board.GetOccupiedTileRatio(), precision: 6);
-        Assert.False(board.ShouldTriggerEndgame(), $"Expected endgame threshold of {GameBalance.GameEndTileOccupancyThreshold:P0} not to trigger at 89% occupancy.");
+        Assert.Equal(expectedThreshold, GameBalance.GetGameEndTileOccupancyThreshold(board.TotalTiles), precision: 6);
+        Assert.Equal((float)occupiedTilesBeforeThreshold / board.TotalTiles, board.GetOccupiedTileRatio(), precision: 6);
+        Assert.False(board.ShouldTriggerEndgame(), $"Expected endgame threshold of {expectedThreshold:P0} not to trigger at {(float)occupiedTilesBeforeThreshold / board.TotalTiles:P0} occupancy.");
 
-        var ninetiethPlaced = board.SpawnSporeForPlayer(board.Players[0], tileId: 89, GrowthSource.Manual);
+        bool thresholdTilePlaced = board.SpawnSporeForPlayer(board.Players[0], tileId: occupiedTilesBeforeThreshold, GrowthSource.Manual);
 
-        Assert.True(ninetiethPlaced, "Expected the 90th tile placement to succeed on an empty board.");
-        Assert.Equal(GameBalance.GameEndTileOccupancyThreshold, board.GetOccupiedTileRatio(), precision: 6);
-        Assert.True(board.ShouldTriggerEndgame(), $"Expected endgame threshold of {GameBalance.GameEndTileOccupancyThreshold:P0} to trigger at 90% occupancy.");
+        Assert.True(thresholdTilePlaced, $"Expected tile placement {occupiedTilesAtThreshold} to succeed on an empty board.");
+        Assert.Equal(expectedThreshold, board.GetOccupiedTileRatio(), precision: 6);
+        Assert.True(board.ShouldTriggerEndgame(), $"Expected endgame threshold of {expectedThreshold:P0} to trigger at {(float)occupiedTilesAtThreshold / board.TotalTiles:P0} occupancy.");
     }
 
     [Fact]
