@@ -12,6 +12,9 @@ namespace FungusToast.Unity.UI.GameStart
 {
     public class UI_StartGamePanel : MonoBehaviour
     {
+        private const int DefaultHotseatPlayerCount = 8;
+        private const int DefaultHotseatHumanPlayerCount = 1;
+
         private enum SetupStep
         {
             CountSelection,
@@ -46,8 +49,8 @@ namespace FungusToast.Unity.UI.GameStart
         // Magnifier visuals (child of magnifyingGlassUI)
         [SerializeField] private GameObject magnifierVisualRoot;
 
-        private int? selectedPlayerCount = null;
-        private int selectedHumanPlayerCount = 1; // always defaults to 1 when total players picked
+        private int? selectedPlayerCount = DefaultHotseatPlayerCount;
+        private int selectedHumanPlayerCount = DefaultHotseatHumanPlayerCount;
         public int SelectedHumanPlayerCount => selectedHumanPlayerCount; // expose for future game manager refactor
         private DevelopmentTestingCardController testingCardController;
         private RectTransform setupContentRoot;
@@ -114,9 +117,10 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void ResetSelectionState()
         {
-            selectedPlayerCount = null;
-            selectedHumanPlayerCount = 1;
+            selectedPlayerCount = DefaultHotseatPlayerCount;
+            selectedHumanPlayerCount = DefaultHotseatHumanPlayerCount;
             ResetMoldSelectionState();
+            ConfigureHumanPlayerButtons();
             UpdateButtonVisuals();
             UpdateHumanPlayerButtonVisuals();
             UpdatePlayerSummaryLabel();
@@ -1727,7 +1731,7 @@ namespace FungusToast.Unity.UI.GameStart
             ResetMoldSelectionState();
             UpdateButtonVisuals();
             // Reset human player count to default (1) or clamp if fewer than previous selection
-            selectedHumanPlayerCount = 1;
+            selectedHumanPlayerCount = DefaultHotseatHumanPlayerCount;
             UpdatePlayerButtonVisuals();
             ConfigureHumanPlayerButtons();
             UpdateHumanPlayerButtonVisuals();
