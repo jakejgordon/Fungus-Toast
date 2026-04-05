@@ -76,6 +76,26 @@ Fallback if older output files do not include per-player end-toxin values:
 
 - Use game-level `Avg Lingering Toxic Tiles` from `=== Game-Level Stats ===` and note that it is not per-player.
 
+## Campaign Balance Harness Note
+
+For campaign-balance validation, `scripts/run_campaign_balance.py` is the preferred entry point rather than hand-assembling raw `dotnet run` commands.
+
+Important behavior: the harness now applies the campaign player's starting Adaptations automatically.
+For the safe proxy (`TST_CampaignPlayer_SafeBaseline`), slot 0 receives `X - 1` starting adaptations when simulating campaign level `X`, because the player would normally have earned one adaptation after each previous campaign win.
+
+Implementation detail: this is currently deterministic, not random.
+The harness uses the canonical prefix `adaptation_1..adaptation_(X-1)` as a stand-in for an accumulated campaign run.
+So the current simulation rule is **not** "X-1 random adaptations"; it is "the first X-1 canonical campaign-player adaptations."
+
+Concrete examples:
+- Campaign0 gives the proxy no starting adaptations
+- Campaign1 gives the proxy no starting adaptations
+- Campaign2 gives the proxy `adaptation_1`
+- Campaign4 gives the proxy `adaptation_1,adaptation_2,adaptation_3`
+- Campaign5 gives the proxy `adaptation_1,adaptation_2,adaptation_3,adaptation_4`
+
+If you are comparing results against older notes, check whether those runs predate this change; old numbers may be harsher because the proxy was missing its intended starting adaptations.
+
 ## Running Simulations
 
 ### Using the PowerShell Script (Recommended)

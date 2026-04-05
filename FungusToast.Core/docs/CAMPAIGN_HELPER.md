@@ -47,7 +47,21 @@ Configured in:
 
 Each level points to a `BoardPreset` asset and can independently enable or disable nutrient patches via `enableNutrientPatches`.
 
-Nutrient patches are optional board resource clusters: `Adaptogen` patches grant mutation-point income, while `Sporemeal` patches grant free growth across the rest of the claimed cluster.
+Levels can also optionally restrict which nutrient patch types are allowed via `allowedNutrientPatchTypes`.
+- Empty list = use the default full patch set
+- Non-empty list = only those patch types may spawn on the starting board for that level
+
+Nutrient patches are optional board resource clusters:
+- `Sporemeal` grants free growth across the rest of the claimed cluster
+- `Adaptogen` grants mutation-point income
+- `Hypervariation` grants a one-player mycovariant draft at the next normal draft timing
+
+Current campaign onboarding rollout is intentionally staged:
+- Campaign0-3: no nutrient patches
+- Campaign4: `Sporemeal` only
+- Campaign5: `Sporemeal` + `Adaptogen`
+- Campaign6: `Sporemeal` + `Adaptogen` + `Hypervariation`
+- Campaign7+: no nutrient-type restrictions
 
 ### 2) Board + AI lineup or pool per level
 Configured in assets under:

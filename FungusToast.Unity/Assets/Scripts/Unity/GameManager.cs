@@ -838,7 +838,12 @@ namespace FungusToast.Unity
             StartingSporeUtility.PlaceStartingSpores(Board, players, rng);
             if (ShouldPlaceStartingNutrientPatches())
             {
-                NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(Board, players, rng, gameUIManager.GameLogRouter);
+                NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(
+                    Board,
+                    players,
+                    rng,
+                    gameUIManager.GameLogRouter,
+                    GetAllowedCampaignNutrientPatchTypes());
             }
 
             int round = Board.CurrentRound;
@@ -854,6 +859,16 @@ namespace FungusToast.Unity
             }
 
             return campaignController?.CurrentLevelSpec?.enableNutrientPatches ?? true;
+        }
+
+        private IReadOnlyCollection<NutrientPatchType>? GetAllowedCampaignNutrientPatchTypes()
+        {
+            if (CurrentGameMode != GameMode.Campaign)
+            {
+                return null;
+            }
+
+            return campaignController?.CurrentLevelSpec?.allowedNutrientPatchTypes;
         }
 
         public void StartGrowthPhase()
