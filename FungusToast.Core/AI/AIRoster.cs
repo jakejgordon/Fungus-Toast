@@ -120,7 +120,7 @@ namespace FungusToast.Core.AI
         /// <summary>
         /// All curated, proven AI strategies for use in UI and simulation.
         /// </summary>
-        private static readonly List<IMutationSpendingStrategy> RawProvenStrategies = new List<IMutationSpendingStrategy>
+        private static readonly List<IMutationSpendingStrategy> _rawProvenStrategies = new List<IMutationSpendingStrategy>
         {
             // Economic focus for mycovariants
             new ParameterizedSpendingStrategy(
@@ -371,7 +371,7 @@ namespace FungusToast.Core.AI
         /// <summary>
         /// Campaign strategies: mirror ProvenStrategies but with simple names AI1..AI N for UI draft/select purposes.
         /// </summary>
-        private static readonly List<IMutationSpendingStrategy> RawCampaignStrategies = new List<IMutationSpendingStrategy>
+        private static readonly List<IMutationSpendingStrategy> _rawCampaignStrategies = new List<IMutationSpendingStrategy>
         {
             // AI1
             new ParameterizedSpendingStrategy(
@@ -886,7 +886,7 @@ namespace FungusToast.Core.AI
         /// <summary>
         /// Testing strategies for specific scenarios (not included in proven strategies)
         /// </summary>
-        private static readonly List<IMutationSpendingStrategy> RawTestingStrategies = new List<IMutationSpendingStrategy>
+        private static readonly List<IMutationSpendingStrategy> _rawTestingStrategies = new List<IMutationSpendingStrategy>
         {
             // Canonical 8-player archetype harness for ongoing balance tuning.
             new ParameterizedSpendingStrategy(
@@ -1556,7 +1556,7 @@ namespace FungusToast.Core.AI
             )
         };
 
-        private static readonly Dictionary<string, StrategyTheme> ExplicitStrategyThemesByName =
+        private static readonly Dictionary<string, StrategyTheme> _explicitStrategyThemesByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["TST_HyperEconomyRamp"] = StrategyTheme.EconomyRamp,
@@ -1621,7 +1621,7 @@ namespace FungusToast.Core.AI
                 ["Growth/Resilience"] = StrategyTheme.TierCap,
             };
 
-        private static readonly Dictionary<string, StrategyStatus> ExplicitStrategyStatusesByName =
+        private static readonly Dictionary<string, StrategyStatus> _explicitStrategyStatusesByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyStatus.Proven,
@@ -1644,7 +1644,7 @@ namespace FungusToast.Core.AI
                 ["TST_Training_ToxicTurtle"] = StrategyStatus.Testing,
             };
 
-        private static readonly Dictionary<string, StrategyPowerTier> ExplicitPowerTiersByName =
+        private static readonly Dictionary<string, StrategyPowerTier> _explicitPowerTiersByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["TST_Arch01_GrowthResilience"] = StrategyPowerTier.Standard,
@@ -1702,7 +1702,7 @@ namespace FungusToast.Core.AI
                 ["SurgeFreq_10_Hyphal"] = StrategyPowerTier.Spike,
             };
 
-        private static readonly Dictionary<string, StrategyRole> ExplicitRolesByName =
+        private static readonly Dictionary<string, StrategyRole> _explicitRolesByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["TST_Arch01_GrowthResilience"] = StrategyRole.Experimental,
@@ -1769,7 +1769,7 @@ namespace FungusToast.Core.AI
                 ["AI13"] = StrategyRole.Training,
             };
 
-        private static readonly Dictionary<string, StrategyLifecycle> ExplicitLifecycleByName =
+        private static readonly Dictionary<string, StrategyLifecycle> _explicitLifecycleByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["TST_Arch01_GrowthResilience"] = StrategyLifecycle.Active,
@@ -1817,7 +1817,7 @@ namespace FungusToast.Core.AI
                 ["TST_RebirthAttrition"] = StrategyLifecycle.NeedsTuning,
             };
 
-        private static readonly Dictionary<string, DifficultyBand[]> ExplicitDifficultyBandsByName =
+        private static readonly Dictionary<string, DifficultyBand[]> _explicitDifficultyBandsByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["TST_Arch01_GrowthResilience"] = new[] { DifficultyBand.Normal },
@@ -1876,7 +1876,7 @@ namespace FungusToast.Core.AI
                 ["TST_Training_ToxicTurtle"] = new[] { DifficultyBand.Easy },
             };
 
-        private static readonly Dictionary<string, CampaignDifficulty> ExplicitCampaignDifficultyByName =
+        private static readonly Dictionary<string, CampaignDifficulty> _explicitCampaignDifficultyByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["AI6"] = CampaignDifficulty.Training,
@@ -1925,7 +1925,7 @@ namespace FungusToast.Core.AI
                 ["TST_CreepingNecroRegressionCascade"] = CampaignDifficulty.Elite,
             };
 
-        private static readonly Dictionary<string, CounterTag[]> ExplicitFavoredAgainstByName =
+        private static readonly Dictionary<string, CounterTag[]> _explicitFavoredAgainstByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["TST_HyperEconomyRamp"] = new[] { new CounterTag(StrategyArchetype.Control, reason: "Punishes slower setups if left alone.") },
@@ -1933,7 +1933,7 @@ namespace FungusToast.Core.AI
                 ["TST_OpportunisticCounterplay"] = new[] { new CounterTag(StrategyArchetype.LateGameSpike, reason: "Flexible pivoting can punish telegraphed spikes.") },
             };
 
-        private static readonly Dictionary<string, CounterTag[]> ExplicitWeakAgainstByName =
+        private static readonly Dictionary<string, CounterTag[]> _explicitWeakAgainstByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["TST_HyperEconomyRamp"] = new[] { new CounterTag(StrategyArchetype.Offense, reason: "Greedy ramps are vulnerable to early pressure.") },
@@ -1953,9 +1953,9 @@ namespace FungusToast.Core.AI
         static AIRoster()
         {
             StrategyRegistry.Reset();
-            StrategyRegistry.Register(StrategySetEnum.Proven, RawProvenStrategies, strategy => BuildCatalogEntry(strategy, StrategySetEnum.Proven));
-            StrategyRegistry.Register(StrategySetEnum.Testing, RawTestingStrategies, strategy => BuildCatalogEntry(strategy, StrategySetEnum.Testing));
-            StrategyRegistry.Register(StrategySetEnum.Campaign, RawCampaignStrategies, strategy => BuildCatalogEntry(strategy, StrategySetEnum.Campaign));
+            StrategyRegistry.Register(StrategySetEnum.Proven, _rawProvenStrategies, strategy => BuildCatalogEntry(strategy, StrategySetEnum.Proven));
+            StrategyRegistry.Register(StrategySetEnum.Testing, _rawTestingStrategies, strategy => BuildCatalogEntry(strategy, StrategySetEnum.Testing));
+            StrategyRegistry.Register(StrategySetEnum.Campaign, _rawCampaignStrategies, strategy => BuildCatalogEntry(strategy, StrategySetEnum.Campaign));
             StrategyRegistry.Register(StrategySetEnum.Mycovariants, MycovariantPermutations(), strategy => BuildCatalogEntry(strategy, StrategySetEnum.Mycovariants));
 
             ProvenStrategies = StrategyRegistry.GetStrategies(StrategySetEnum.Proven);
@@ -1993,7 +1993,7 @@ namespace FungusToast.Core.AI
                         continue;
                     }
 
-                    bool hasOverlap = backboneCategories.Any(suggested.Contains);
+                    var hasOverlap = backboneCategories.Any(suggested.Contains);
                     if (hasOverlap)
                     {
                         continue;
@@ -2071,8 +2071,8 @@ namespace FungusToast.Core.AI
             var selected = SelectStrategiesByPolicy(sourceStrategies, numberOfPlayers, selectionPolicy, cycleIndex, rng);
             result.AddRange(selected);
 
-            int remaining = numberOfPlayers - result.Count;
-            for (int i = 1; i <= remaining; i++)
+            var remaining = numberOfPlayers - result.Count;
+            for (var i = 1; i <= remaining; i++)
             {
                 result.Add(new RandomMutationSpendingStrategy($"LegacyRandom #{i}"));
             }
@@ -2168,7 +2168,7 @@ namespace FungusToast.Core.AI
             var pools = GetPoolsForStrategy(strategySet);
             var favoredAgainst = GetFavoredAgainstForStrategy(strategy);
             var weakAgainst = GetWeakAgainstForStrategy(strategy);
-            var notes = BuildNotes(strategy, strategySet, powerTier, role, lifecycle);
+            var notes = BuildNotes(strategySet, powerTier, role, lifecycle);
 
             return new StrategyProfile(
                 strategy.StrategyName,
@@ -2187,7 +2187,7 @@ namespace FungusToast.Core.AI
                 notes);
         }
 
-        private static readonly IReadOnlyDictionary<string, IReadOnlyList<AdaptationSynergySet>> SuggestedAdaptationSetsByStrategyName =
+        private static readonly IReadOnlyDictionary<string, IReadOnlyList<AdaptationSynergySet>> _suggestedAdaptationSetsByStrategyName =
             new Dictionary<string, IReadOnlyList<AdaptationSynergySet>>(StringComparer.OrdinalIgnoreCase)
             {
                 // ── ELITE COMBOS (3 adaptations each) ──
@@ -2281,7 +2281,7 @@ namespace FungusToast.Core.AI
         private static StrategyCatalogEntry BuildCatalogEntry(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
             var profile = BuildStrategyProfile(strategy, strategySet);
-            var suggestedAdaptationSets = SuggestedAdaptationSetsByStrategyName.TryGetValue(profile.StrategyName, out var sets)
+            var suggestedAdaptationSets = _suggestedAdaptationSetsByStrategyName.TryGetValue(profile.StrategyName, out var sets)
                 ? sets
                 : null;
             return new StrategyCatalogEntry(
@@ -2304,7 +2304,7 @@ namespace FungusToast.Core.AI
 
         public static StrategyTheme GetThemeForStrategy(IMutationSpendingStrategy strategy)
         {
-            if (ExplicitStrategyThemesByName.TryGetValue(strategy.StrategyName, out var explicitTheme))
+            if (_explicitStrategyThemesByName.TryGetValue(strategy.StrategyName, out var explicitTheme))
             {
                 return explicitTheme;
             }
@@ -2321,7 +2321,7 @@ namespace FungusToast.Core.AI
 
         public static StrategyStatus GetStatusForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
-            if (ExplicitStrategyStatusesByName.TryGetValue(strategy.StrategyName, out var explicitStatus))
+            if (_explicitStrategyStatusesByName.TryGetValue(strategy.StrategyName, out var explicitStatus))
             {
                 return explicitStatus;
             }
@@ -2338,7 +2338,7 @@ namespace FungusToast.Core.AI
 
         public static StrategyPowerTier GetPowerTierForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
-            if (ExplicitPowerTiersByName.TryGetValue(strategy.StrategyName, out var explicitTier))
+            if (_explicitPowerTiersByName.TryGetValue(strategy.StrategyName, out var explicitTier))
             {
                 return explicitTier;
             }
@@ -2360,7 +2360,7 @@ namespace FungusToast.Core.AI
                 return StrategyRole.Baseline;
             }
 
-            if (ExplicitRolesByName.TryGetValue(strategy.StrategyName, out var explicitRole))
+            if (_explicitRolesByName.TryGetValue(strategy.StrategyName, out var explicitRole))
             {
                 return explicitRole;
             }
@@ -2382,7 +2382,7 @@ namespace FungusToast.Core.AI
                 return StrategyLifecycle.Active;
             }
 
-            if (ExplicitLifecycleByName.TryGetValue(strategy.StrategyName, out var explicitLifecycle))
+            if (_explicitLifecycleByName.TryGetValue(strategy.StrategyName, out var explicitLifecycle))
             {
                 return explicitLifecycle;
             }
@@ -2392,7 +2392,7 @@ namespace FungusToast.Core.AI
 
         public static IReadOnlyCollection<DifficultyBand> GetDifficultyBandsForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
-            if (ExplicitDifficultyBandsByName.TryGetValue(strategy.StrategyName, out var explicitBands))
+            if (_explicitDifficultyBandsByName.TryGetValue(strategy.StrategyName, out var explicitBands))
             {
                 return explicitBands;
             }
@@ -2406,7 +2406,7 @@ namespace FungusToast.Core.AI
 
         public static CampaignDifficulty? GetCampaignDifficultyForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
-            if (ExplicitCampaignDifficultyByName.TryGetValue(strategy.StrategyName, out var explicitDifficulty))
+            if (_explicitCampaignDifficultyByName.TryGetValue(strategy.StrategyName, out var explicitDifficulty))
             {
                 return explicitDifficulty;
             }
@@ -2432,20 +2432,19 @@ namespace FungusToast.Core.AI
 
         public static IReadOnlyCollection<CounterTag> GetFavoredAgainstForStrategy(IMutationSpendingStrategy strategy)
         {
-            return ExplicitFavoredAgainstByName.TryGetValue(strategy.StrategyName, out var explicitCounters)
+            return _explicitFavoredAgainstByName.TryGetValue(strategy.StrategyName, out var explicitCounters)
                 ? explicitCounters
                 : Array.Empty<CounterTag>();
         }
 
         public static IReadOnlyCollection<CounterTag> GetWeakAgainstForStrategy(IMutationSpendingStrategy strategy)
         {
-            return ExplicitWeakAgainstByName.TryGetValue(strategy.StrategyName, out var explicitCounters)
+            return _explicitWeakAgainstByName.TryGetValue(strategy.StrategyName, out var explicitCounters)
                 ? explicitCounters
                 : Array.Empty<CounterTag>();
         }
 
         private static string BuildNotes(
-            IMutationSpendingStrategy strategy,
             StrategySetEnum strategySet,
             StrategyPowerTier powerTier,
             StrategyRole role,
@@ -2602,10 +2601,10 @@ namespace FungusToast.Core.AI
                 .ThenBy(s => s.StrategyName, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            int offset = ordered.Count == 0 ? 0 : ((cycleIndex % ordered.Count) + ordered.Count) % ordered.Count;
+            var offset = ordered.Count == 0 ? 0 : ((cycleIndex % ordered.Count) + ordered.Count) % ordered.Count;
             var selected = new List<IMutationSpendingStrategy>(requestedCount);
 
-            for (int i = 0; i < requestedCount; i++)
+            for (var i = 0; i < requestedCount; i++)
             {
                 selected.Add(ordered[(offset + i) % ordered.Count]);
             }
