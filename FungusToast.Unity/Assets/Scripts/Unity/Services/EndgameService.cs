@@ -6,7 +6,9 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Campaign;
 using FungusToast.Unity.UI;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace FungusToast.Unity
 {
@@ -266,6 +268,261 @@ namespace FungusToast.Unity
                 ForcedGameResultMode.ForcedLoss => false,
                 _ => naturalHumanWon
             };
+        }
+    }
+
+    public sealed class PauseMenuService
+    {
+        private readonly GameObject hostObject;
+        private readonly GameUIManager gameUIManager;
+        private readonly Func<bool> canOpenPauseMenu;
+        private readonly Func<bool> tryCancelActiveSelection;
+        private readonly Action onBeforeOpen;
+        private readonly Action onReturnToMainMenuRequested;
+        private readonly Action onExitRequested;
+        private readonly Action onNextTrackRequested;
+        private readonly Func<string> getCurrentTrackName;
+        private readonly Func<string> getNextTrackName;
+
+        private UI_PauseMenuPanel panel;
+
+        public PauseMenuService(
+            GameObject hostObject,
+            GameUIManager gameUIManager,
+            Func<bool> canOpenPauseMenu,
+            Func<bool> tryCancelActiveSelection,
+            Action onBeforeOpen,
+            Action onReturnToMainMenuRequested,
+            Action onExitRequested,
+            Action onNextTrackRequested,
+            Func<string> getCurrentTrackName,
+            Func<string> getNextTrackName)
+        {
+            this.hostObject = hostObject;
+            this.gameUIManager = gameUIManager;
+            this.canOpenPauseMenu = canOpenPauseMenu;
+            this.tryCancelActiveSelection = tryCancelActiveSelection;
+            this.onBeforeOpen = onBeforeOpen;
+            this.onReturnToMainMenuRequested = onReturnToMainMenuRequested;
+            this.onExitRequested = onExitRequested;
+            this.onNextTrackRequested = onNextTrackRequested;
+            this.getCurrentTrackName = getCurrentTrackName;
+            this.getNextTrackName = getNextTrackName;
+        }
+
+        public bool IsOpen { get; private set; }
+
+        public void Initialize()
+        {
+            panel = hostObject.GetComponent<UI_PauseMenuPanel>();
+            if (panel == null)
+            {
+                panel = hostObject.AddComponent<UI_PauseMenuPanel>();
+            }
+
+            panel.SetDependencies(
+                gameUIManager,
+                Open,
+                ResumeGameplay,
+                onReturnToMainMenuRequested,
+                onExitRequested,
+                onNextTrackRequested,
+                getCurrentTrackName,
+                getNextTrackName);
+
+            gameUIManager?.RegisterPauseMenuPanel(panel);
+            panel.SetGameplayVisibility(false);
+        }
+
+        public void SetGameplayVisibility(bool isVisible)
+        {
+            panel?.SetGameplayVisibility(isVisible);
+        }
+
+        public void HandleInput()
+        {
+            if (!Application.isPlaying || !Input.GetKeyDown(KeyCode.Escape))
+            {
+                return;
+            }
+
+            if (IsOpen)
+            {
+                if (panel != null && panel.IsConfirming)
+                {
+                    panel.CancelPendingAction();
+                    return;
+                }
+
+                ResumeGameplay();
+                return;
+            }
+
+            if (tryCancelActiveSelection())
+            {
+                return;
+            }
+
+            if (canOpenPauseMenu())
+            {
+                Open();
+            }
+        }
+
+        public void Open()
+        {
+            if (!canOpenPauseMenu())
+            {
+                return;
+            }
+
+            onBeforeOpen?.Invoke();
+            IsOpen = true;
+            Time.timeScale = 0f;
+            panel?.Show();
+        }
+
+        public void ResumeGameplay()
+        {
+            ForceClose();
+        }
+
+        public void ForceClose()
+        {
+            IsOpen = false;
+            Time.timeScale = 1f;
+            panel?.Hide();
+        }
+    }
+
+    public sealed class SelectionPromptService
+    {
+        private readonly GameObject selectionPromptPanel;
+        private readonly TextMeshProUGUI selectionPromptText;
+
+        private Button selectionPromptCancelButton;
+        private TextMeshProUGUI selectionPromptCancelButtonText;
+
+        public SelectionPromptService(
+            GameObject selectionPromptPanel,
+            TextMeshProUGUI selectionPromptText,
+            Button selectionPromptCancelButton,
+            TextMeshProUGUI selectionPromptCancelButtonText)
+        {
+            this.selectionPromptPanel = selectionPromptPanel;
+            this.selectionPromptText = selectionPromptText;
+            this.selectionPromptCancelButton = selectionPromptCancelButton;
+            this.selectionPromptCancelButtonText = selectionPromptCancelButtonText;
+        }
+
+        public void Show(string message, bool showCancelButton = false, string cancelButtonLabel = "Cancel", Action onCancel = null)
+        {
+            EnsureSelectionPromptCancelButton();
+            if (selectionPromptPanel == null)
+            {
+                return;
+            }
+
+            selectionPromptPanel.SetActive(true);
+            if (selectionPromptText != null)
+            {
+                selectionPromptText.text = message;
+            }
+
+            ConfigureSelectionPromptCancelButton(showCancelButton, cancelButtonLabel, onCancel);
+        }
+
+        public void Hide()
+        {
+            ConfigureSelectionPromptCancelButton(false, "Cancel", null);
+            selectionPromptPanel?.SetActive(false);
+        }
+
+        private void EnsureSelectionPromptCancelButton()
+        {
+            if (selectionPromptPanel == null)
+            {
+                return;
+            }
+
+            if (selectionPromptCancelButton == null)
+            {
+                selectionPromptCancelButton = selectionPromptPanel.GetComponentInChildren<Button>(true);
+            }
+
+            if (selectionPromptCancelButton == null)
+            {
+                var buttonObject = new GameObject("UI_SelectionPromptCancelButton", typeof(RectTransform), typeof(Image), typeof(Button));
+                buttonObject.layer = selectionPromptPanel.layer;
+                buttonObject.transform.SetParent(selectionPromptPanel.transform, false);
+
+                var rectTransform = buttonObject.GetComponent<RectTransform>();
+                rectTransform.anchorMin = new Vector2(1f, 0.5f);
+                rectTransform.anchorMax = new Vector2(1f, 0.5f);
+                rectTransform.pivot = new Vector2(1f, 0.5f);
+                rectTransform.anchoredPosition = new Vector2(-18f, 0f);
+                rectTransform.sizeDelta = new Vector2(170f, 38f);
+
+                var image = buttonObject.GetComponent<Image>();
+                image.color = new Color(0.16f, 0.12f, 0.1f, 0.92f);
+
+                selectionPromptCancelButton = buttonObject.GetComponent<Button>();
+                var colors = selectionPromptCancelButton.colors;
+                colors.normalColor = image.color;
+                colors.highlightedColor = new Color(0.26f, 0.2f, 0.16f, 1f);
+                colors.pressedColor = new Color(0.12f, 0.09f, 0.07f, 1f);
+                colors.selectedColor = colors.highlightedColor;
+                colors.disabledColor = new Color(0.16f, 0.12f, 0.1f, 0.45f);
+                selectionPromptCancelButton.colors = colors;
+
+                var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+                labelObject.layer = selectionPromptPanel.layer;
+                labelObject.transform.SetParent(buttonObject.transform, false);
+
+                var labelRect = labelObject.GetComponent<RectTransform>();
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = Vector2.zero;
+                labelRect.offsetMax = Vector2.zero;
+
+                selectionPromptCancelButtonText = labelObject.GetComponent<TextMeshProUGUI>();
+                selectionPromptCancelButtonText.fontSize = 22f;
+                selectionPromptCancelButtonText.fontStyle = FontStyles.Bold;
+                selectionPromptCancelButtonText.alignment = TextAlignmentOptions.Center;
+                selectionPromptCancelButtonText.color = new Color(0.97f, 0.94f, 0.86f, 1f);
+            }
+
+            if (selectionPromptCancelButtonText == null && selectionPromptCancelButton != null)
+            {
+                selectionPromptCancelButtonText = selectionPromptCancelButton.GetComponentInChildren<TextMeshProUGUI>(true);
+            }
+
+            if (selectionPromptText != null)
+            {
+                selectionPromptText.margin = new Vector4(18f, 0f, 200f, 0f);
+            }
+        }
+
+        private void ConfigureSelectionPromptCancelButton(bool visible, string cancelButtonLabel, Action onCancel)
+        {
+            if (selectionPromptCancelButton == null)
+            {
+                return;
+            }
+
+            selectionPromptCancelButton.onClick.RemoveAllListeners();
+            selectionPromptCancelButton.gameObject.SetActive(visible);
+            selectionPromptCancelButton.interactable = visible;
+
+            if (selectionPromptCancelButtonText != null)
+            {
+                selectionPromptCancelButtonText.text = cancelButtonLabel;
+            }
+
+            if (visible && onCancel != null)
+            {
+                selectionPromptCancelButton.onClick.AddListener(() => onCancel());
+            }
         }
     }
 }
