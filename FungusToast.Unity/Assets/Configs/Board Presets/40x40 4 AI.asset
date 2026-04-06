@@ -16,12 +16,8 @@ MonoBehaviour:
   boardWidth: 40
   boardHeight: 40
   aiPlayers: []
-  pooledAiPlayerCount: 4
+  pooledAiPlayerCount: 3
   aiStrategyPool:
   - TST_Training_ResilientMycelium
   - TST_Training_Overextender
   - TST_Training_ToxicTurtle
-  - CMP_Reclaim_InfiltrationSurge_Easy
-  - CMP_TierCap_GrowthResilience_Easy
-  - CMP_Reclaim_Scavenger_Easy
-  - CMP_Defense_ReclaimShell_Easy

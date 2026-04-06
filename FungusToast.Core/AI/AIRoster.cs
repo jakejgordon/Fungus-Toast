@@ -555,7 +555,7 @@ namespace FungusToast.Core.AI
             new ParameterizedSpendingStrategy(
                 strategyName: "CMP_TierCap_GrowthResilience_Easy",
                 prioritizeHighTier: true,
-                maxTier: MutationTier.Tier3,
+                maxTier: MutationTier.Tier2,
                 priorityMutationCategories: new List<MutationCategory>
                 {
                     MutationCategory.Growth,
@@ -569,6 +569,7 @@ namespace FungusToast.Core.AI
                 maxTier: MutationTier.Tier3,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 5),
                     new TargetMutationGoal(MutationIds.Necrosporulation, 2),
                     new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, 2),
                     new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
@@ -647,7 +648,7 @@ namespace FungusToast.Core.AI
             new ParameterizedSpendingStrategy(
                 strategyName: "CMP_Control_AnabolicRebirth_Medium",
                 prioritizeHighTier: true,
-                economyBias: EconomyBias.ModerateEconomy,
+                economyBias: EconomyBias.MinorEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.AnabolicInversion),

@@ -19,6 +19,10 @@ Output files are generated with timestamped filenames even when no `--output` pa
 
 ## Minimum Balance Reporting Standard
 
+> **Do not rely on live console output alone for balance summaries.**
+> For any balance-reporting or campaign-validation reply, read the exported run artifacts and report from the canonical analysis sources below.
+> If Parquet export is present, use `players.parquet` (or the offline analytics helper that reads it) as the source of truth for the final summary.
+
 For balance discussions, post-simulation summaries should always report these per-player metrics:
 
 1. `Win %`
@@ -182,6 +186,8 @@ When the user asks for a simulation summary after a run, default to this workflo
 2. Produce the per-player summary with `Win %`, `Avg Living Cells`, `Avg Dead Cells`, and `Avg Toxins`.
 3. If the user asks about living-cell origins, also render the growth-source table using the required columns and sort order above.
 4. Prefer the offline analytics helper when available so the summary can be generated quickly and consistently.
+5. Do not give a final balance summary from partial terminal output if the Parquet/artifact-backed summary has not been checked yet.
+6. If multiple Python environments exist, check the repo-local analytics environment before concluding that Parquet tooling is unavailable.
 
 Recommended command:
 
