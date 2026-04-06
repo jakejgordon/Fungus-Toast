@@ -79,7 +79,7 @@ namespace FungusToast.Unity
                 return;
             }
 
-            if (source == GrowthSource.ChitinFortification)
+            if (source == GrowthSource.ChitinFortification || source == GrowthSource.SurgicalInoculation)
             {
                 return;
             }

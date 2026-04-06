@@ -51,7 +51,6 @@ namespace FungusToast.Unity.Grid.Animation
             {
                 _viz.EndAnimation();
             }
-            yield return _viz.ResistantDropAnimation(targetTileId, durationScale: UIEffectConstants.SurgicalInoculationDropDurationScale);
         }
     }
 }
