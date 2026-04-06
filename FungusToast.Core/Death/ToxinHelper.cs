@@ -92,7 +92,7 @@ namespace FungusToast.Core.Death
             var tile = board.GetTileById(tileId);
             var cell = tile?.FungalCell;
 
-            if (cell == null || !cell.IsAlive)
+            if (cell == null || !cell.IsAlive || cell.IsResistant)
                 return;
 
             int oldOwnerId = cell.OwnerPlayerId ?? -1;

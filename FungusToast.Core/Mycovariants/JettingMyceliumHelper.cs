@@ -40,7 +40,11 @@ namespace FungusToast.Core.Mycovariants
                 }
                 else if (prevCell.IsAlive)
                 {
-                    if (prevCell.OwnerPlayerId == player.PlayerId)
+                    if (prevCell.IsResistant)
+                    {
+                        // Resistant cells cannot be infested.
+                    }
+                    else if (prevCell.OwnerPlayerId == player.PlayerId)
                     {
                         // Own living cell - wasted opportunity
                         wastedOnOwn++;
@@ -70,7 +74,7 @@ namespace FungusToast.Core.Mycovariants
                 {
                     // Empty or dead - would be toxified (neutral, no points)
                 }
-                else if (prevCell.IsAlive && prevCell.OwnerPlayerId != player.PlayerId)
+                else if (prevCell.IsAlive && !prevCell.IsResistant && prevCell.OwnerPlayerId != player.PlayerId)
                 {
                     // Enemy living cell - would be killed and toxified
                     poisoned++;

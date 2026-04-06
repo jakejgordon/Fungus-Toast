@@ -148,6 +148,12 @@ public static class MycovariantEffectProcessor
             }
             else if (prevCell.IsAlive && prevCell.OwnerPlayerId != playerId)
             {
+                if (prevCell.IsResistant)
+                {
+                    invalid++;
+                    continue;
+                }
+
                 // Properly kill and toxify using board-level logic
                 ToxinHelper.KillAndToxify(board, coneTileId, toxinLifespan, DeathReason.JettingMycelium, GrowthSource.JettingMycelium, player);
                 poisoned++;
