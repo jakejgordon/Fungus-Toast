@@ -62,6 +62,7 @@ namespace FungusToast.Unity.UI.GameStart
         private RectTransform advancedSettingsContentRoot;
         private RectTransform boardSizeSectionRoot;
         private RectTransform audioSettingsSectionRoot;
+        private RectTransform audioSettingsContentRoot;
         private RectTransform testingCardSectionRoot;
         private RectTransform actionButtonStackRoot;
         private RectTransform moldSelectionSectionRoot;
@@ -527,8 +528,42 @@ namespace FungusToast.Unity.UI.GameStart
 
             audioSettingsSectionRoot.SetParent(setupContentRoot, false);
             ConfigureAudioSettingsSection(audioSettingsSectionRoot);
+            EnsureAudioSettingsContentRoot();
             EnsureAudioSettingsControls();
             RefreshAudioSettingsControls();
+        }
+
+        private void EnsureAudioSettingsContentRoot()
+        {
+            if (audioSettingsSectionRoot == null)
+            {
+                return;
+            }
+
+            if (audioSettingsContentRoot == null)
+            {
+                var existing = audioSettingsSectionRoot.Find("UI_StartGameAudioContent") as RectTransform;
+                if (existing != null)
+                {
+                    audioSettingsContentRoot = existing;
+                }
+                else
+                {
+                    var contentObject = new GameObject(
+                        "UI_StartGameAudioContent",
+                        typeof(RectTransform),
+                        typeof(Image),
+                        typeof(VerticalLayoutGroup),
+                        typeof(ContentSizeFitter),
+                        typeof(LayoutElement));
+                    audioSettingsContentRoot = contentObject.GetComponent<RectTransform>();
+                    audioSettingsContentRoot.SetParent(audioSettingsSectionRoot, false);
+                }
+            }
+
+            audioSettingsContentRoot.SetParent(audioSettingsSectionRoot, false);
+            audioSettingsContentRoot.SetSiblingIndex(0);
+            ConfigureAudioSettingsContentRoot(audioSettingsContentRoot);
         }
 
         private void EnsureMoldSelectionSection()
@@ -859,7 +894,7 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void EnsureAudioSettingsControls()
         {
-            if (audioSettingsSectionRoot == null)
+            if (audioSettingsContentRoot == null)
             {
                 return;
             }
@@ -876,7 +911,7 @@ namespace FungusToast.Unity.UI.GameStart
                 OnMusicVolumeClicked,
                 2);
 
-            var legacyToggle = audioSettingsSectionRoot.Find("UI_StartGameSoundEffectsToggleButton");
+            var legacyToggle = audioSettingsContentRoot.Find("UI_StartGameSoundEffectsToggleButton");
             if (legacyToggle != null)
             {
                 legacyToggle.gameObject.SetActive(false);
@@ -899,19 +934,19 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void EnsureAudioSettingsLabel()
         {
-            if (audioSettingsSectionRoot == null)
+            if (audioSettingsContentRoot == null)
             {
                 return;
             }
 
-            var existing = audioSettingsSectionRoot.Find("UI_StartGameAudioSettingsLabel");
+            var existing = audioSettingsContentRoot.Find("UI_StartGameAudioSettingsLabel");
             GameObject labelObject = existing != null
                 ? existing.gameObject
                 : new GameObject("UI_StartGameAudioSettingsLabel", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
 
             if (existing == null)
             {
-                labelObject.transform.SetParent(audioSettingsSectionRoot, false);
+                labelObject.transform.SetParent(audioSettingsContentRoot, false);
             }
 
             var label = labelObject.GetComponent<TextMeshProUGUI>();
@@ -931,9 +966,9 @@ namespace FungusToast.Unity.UI.GameStart
         private Button EnsureAudioSettingsButton(Button existingButton, string objectName, UnityEngine.Events.UnityAction onClick, int siblingIndex)
         {
             Button button = existingButton;
-            if (button == null && audioSettingsSectionRoot != null)
+            if (button == null && audioSettingsContentRoot != null)
             {
-                var existing = audioSettingsSectionRoot.Find(objectName);
+                var existing = audioSettingsContentRoot.Find(objectName);
                 if (existing != null)
                 {
                     button = existing.GetComponent<Button>();
@@ -943,12 +978,12 @@ namespace FungusToast.Unity.UI.GameStart
             if (button == null)
             {
                 Button template = backButton != null ? backButton : startGameButton;
-                var buttonObject = Instantiate(template.gameObject, audioSettingsSectionRoot);
+                var buttonObject = Instantiate(template.gameObject, audioSettingsContentRoot);
                 buttonObject.name = objectName;
                 button = buttonObject.GetComponent<Button>();
             }
 
-            button.transform.SetParent(audioSettingsSectionRoot, false);
+            button.transform.SetParent(audioSettingsContentRoot, false);
             button.transform.SetSiblingIndex(siblingIndex);
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(onClick);
@@ -1071,7 +1106,49 @@ namespace FungusToast.Unity.UI.GameStart
             sectionRoot.anchorMax = new Vector2(0.5f, 1f);
             sectionRoot.pivot = new Vector2(0.5f, 0.5f);
             sectionRoot.anchoredPosition = Vector2.zero;
-            sectionRoot.sizeDelta = new Vector2(500f, sectionRoot.sizeDelta.y);
+            sectionRoot.localScale = Vector3.one;
+
+            var surface = sectionRoot.GetComponent<Image>();
+            if (surface != null)
+            {
+                surface.color = Color.clear;
+                surface.raycastTarget = false;
+            }
+
+            var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
+            layoutGroup.padding = new RectOffset(12, 12, 10, 10);
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+            layoutGroup.spacing = 8f;
+            layoutGroup.childForceExpandWidth = false;
+            layoutGroup.childForceExpandHeight = false;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = true;
+
+            var fitter = sectionRoot.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var element = sectionRoot.GetComponent<LayoutElement>();
+            element.minWidth = 500f;
+            element.preferredWidth = 500f;
+            element.minHeight = 150f;
+            element.preferredHeight = -1f;
+            element.flexibleWidth = 0f;
+            element.flexibleHeight = 0f;
+        }
+
+        private static void ConfigureAudioSettingsContentRoot(RectTransform sectionRoot)
+        {
+            if (sectionRoot == null)
+            {
+                return;
+            }
+
+            sectionRoot.anchorMin = new Vector2(0.5f, 1f);
+            sectionRoot.anchorMax = new Vector2(0.5f, 1f);
+            sectionRoot.pivot = new Vector2(0.5f, 0.5f);
+            sectionRoot.anchoredPosition = Vector2.zero;
+            sectionRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 500f);
             sectionRoot.localScale = Vector3.one;
 
             var surface = sectionRoot.GetComponent<Image>();
@@ -1101,6 +1178,8 @@ namespace FungusToast.Unity.UI.GameStart
             element.preferredWidth = 500f;
             element.minHeight = 150f;
             element.preferredHeight = -1f;
+            element.flexibleWidth = 0f;
+            element.flexibleHeight = 0f;
         }
 
         private RectTransform FindNamedRectTransform(string objectName)
