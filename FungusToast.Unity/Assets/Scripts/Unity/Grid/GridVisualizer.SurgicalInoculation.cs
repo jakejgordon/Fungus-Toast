@@ -1131,6 +1131,7 @@ namespace FungusToast.Unity.Grid.Helpers
 				: affectedTileIds;
 
 			TextMeshPro toast = CreateBoardToastText(projection.Source, presentationStartTileId, projection.FinalLandingTileId, overlayTilemap);
+			_beginAnimation();
 			try
 			{
 				if (presentationStartTileId >= 0)
@@ -1165,6 +1166,8 @@ namespace FungusToast.Unity.Grid.Helpers
 				{
 					UnityEngine.Object.Destroy(toast.gameObject);
 				}
+
+				_endAnimation();
 			}
 		}
 

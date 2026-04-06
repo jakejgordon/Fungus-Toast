@@ -726,8 +726,15 @@ namespace FungusToast.Unity
 
                 for (int i = 0; i < conduitProjections.Count; i++)
                 {
-                    yield return gridVisualizer.PlayConduitProjectionPresentation(conduitProjections[i]);
+                    StartCoroutine(gridVisualizer.PlayConduitProjectionPresentation(conduitProjections[i]));
+
+                    if (i < conduitProjections.Count - 1)
+                    {
+                        yield return new WaitForSeconds(UIEffectConstants.ConduitProjectionParallelStaggerSeconds);
+                    }
                 }
+
+                yield return gridVisualizer.WaitForAllAnimations();
             }
 
             growthPhaseRunner.StartGrowthPhase();

@@ -205,6 +205,11 @@ namespace FungusToast.Unity.UI
         public const float DirectedVectorChunkStaggerSeconds = 0.16875f;
 
         /// <summary>
+        /// Small offset between starting parallel conduit presentations so overlapping paths remain readable.
+        /// </summary>
+        public const float ConduitProjectionParallelStaggerSeconds = 0.045f;
+
+        /// <summary>
         /// Minimum number of chunk beats used for larger directed-vector paths.
         /// </summary>
         public const int DirectedVectorChunkCountMin = 3;
