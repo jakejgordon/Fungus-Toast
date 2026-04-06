@@ -27,7 +27,21 @@ namespace FungusToast.Unity.Grid.Animation
             if (ids == null || ids.Count == 0) yield break;
             var board = _viz.ActiveBoard; if (board == null) yield break;
             var shieldSprite = _viz.goldShieldOverlayTile != null ? _viz.goldShieldOverlayTile.sprite : null;
-            if (shieldSprite == null) yield break;
+            if (shieldSprite == null)
+            {
+                Debug.LogWarning("[StartingSporeArrivalAnimator] Gold shield overlay tile is missing; falling back to legacy starting spore drops.");
+                foreach (var tileId in ids)
+                {
+                    onSporeDropStarted?.Invoke();
+                    yield return _viz.ResistantDropAnimation(
+                        tileId,
+                        CompositeDropFinalScale,
+                        UI.UIEffectConstants.StartingSporeArrivalDropDurationScale);
+                    yield return new WaitForSeconds(0.18f);
+                }
+
+                yield break;
+            }
 
             int startX = board.Width / 2;
             int startY = board.Height + Mathf.CeilToInt(board.Height * 0.35f);

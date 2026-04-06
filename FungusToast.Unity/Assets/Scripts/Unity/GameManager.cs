@@ -1251,15 +1251,65 @@ namespace FungusToast.Unity
 
         #region Intro Coroutine
 
-        private IEnumerator PlayStartingSporeIntroAndContinue()
+        private List<int> ResolveStartingSporeIntroTileIds()
         {
-            var startingIds = Board.Players
+            if (Board == null)
+            {
+                return new List<int>();
+            }
+
+            List<int> playerStartingIds = Board.Players
                 .Select(p => p.StartingTileId)
                 .Where(id => id.HasValue)
                 .Select(id => id!.Value)
+                .Distinct()
                 .ToList();
+
+            if (playerStartingIds.Count > 0)
+            {
+                return playerStartingIds;
+            }
+
+            List<int> boardStartingIds = Board.AllTiles()
+                .Where(tile =>
+                {
+                    FungalCell? cell = tile.FungalCell;
+                    return cell != null
+                        && cell.IsAlive
+                        && cell.IsResistant
+                        && (cell.SourceOfGrowth ?? GrowthSource.Unknown) == GrowthSource.InitialSpore;
+                })
+                .Select(tile => tile.TileId)
+                .Distinct()
+                .OrderBy(tileId => tileId)
+                .ToList();
+
+            if (boardStartingIds.Count > 0)
+            {
+                Debug.LogWarning("[GameManager] Player starting tile metadata was missing; using board state to drive the starting spore intro.");
+            }
+
+            return boardStartingIds;
+        }
+
+        private bool ShouldSkipStartingSporeIntro()
+        {
+            if (!testingModeEnabled)
+            {
+                return false;
+            }
+
+            return fastForwardRounds > 0
+                || testingSkipToEndgameAfterFastForward
+                || testingMycovariantId.HasValue;
+        }
+
+        private IEnumerator PlayStartingSporeIntroAndContinue()
+        {
+            List<int> startingIds = ResolveStartingSporeIntroTileIds();
+            bool skipStartingSporeIntro = ShouldSkipStartingSporeIntro();
             gameUIManager.LoadingScreen?.SetStatus("Spores are landing…");
-            if (startingIds.Count >0 && !testingModeEnabled)
+            if (startingIds.Count >0 && !skipStartingSporeIntro)
             {
                 yield return gridVisualizer.PlayStartingSporeArrivalAnimation(
                     startingIds,
