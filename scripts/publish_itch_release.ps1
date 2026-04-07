@@ -161,6 +161,25 @@ function Initialize-ButlerApiKey {
     }
 }
 
+function Assert-UnityEditorIsClosed {
+    $runningUnityProcesses = Get-Process -Name 'Unity' -ErrorAction SilentlyContinue |
+        Sort-Object -Property Id
+
+    if ($null -eq $runningUnityProcesses -or $runningUnityProcesses.Count -eq 0) {
+        return
+    }
+
+    $processSummary = ($runningUnityProcesses | ForEach-Object {
+        if ([string]::IsNullOrWhiteSpace($_.MainWindowTitle)) {
+            return ("PID {0}" -f $_.Id)
+        }
+
+        return ("PID {0} ({1})" -f $_.Id, $_.MainWindowTitle)
+    }) -join ', '
+
+    throw ("Unity is currently running: {0}. Close all Unity editor windows and rerun scripts/publish_itch_release.ps1." -f $processSummary)
+}
+
 function Invoke-Step {
     param(
         [Parameter(Mandatory = $true)]
@@ -215,6 +234,10 @@ if (-not $BuildOnly) {
 
 if ($PublishOnly -and $BuildOnly) {
     throw 'Use either -PublishOnly or -BuildOnly, not both.'
+}
+
+if (-not $PublishOnly) {
+    Assert-UnityEditorIsClosed
 }
 
 if (-not $PublishOnly) {
