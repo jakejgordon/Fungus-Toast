@@ -323,7 +323,7 @@ namespace FungusToast.Unity.UI.Testing
 
         public void RefreshVisualState()
         {
-            UpdateButtonState(testingToggleButton, true, true, options.UseSecondaryButtonStyle);
+            UpdateButtonState(testingToggleButton, true, true);
 
             if (boardSizeRow != null)
             {
@@ -335,10 +335,10 @@ namespace FungusToast.Unity.UI.Testing
                 mycovariantRow.SetActive(testingEnabled);
             }
 
-            UpdateButtonState(fastForwardButton, testingEnabled, testingEnabled, options.UseSecondaryButtonStyle);
-            UpdateButtonState(firstGameButton, testingEnabled, testingEnabled, options.UseSecondaryButtonStyle);
-            UpdateButtonState(skipToEndButton, testingEnabled, testingEnabled, options.UseSecondaryButtonStyle);
-            UpdateButtonState(forcedResultButton, testingEnabled && skipToEnd, testingEnabled && skipToEnd, options.UseSecondaryButtonStyle);
+            UpdateButtonState(fastForwardButton, testingEnabled, testingEnabled);
+            UpdateButtonState(firstGameButton, testingEnabled, testingEnabled);
+            UpdateButtonState(skipToEndButton, testingEnabled, testingEnabled);
+            UpdateButtonState(forcedResultButton, testingEnabled && skipToEnd, testingEnabled && skipToEnd);
 
             if (adaptationRow != null)
             {
@@ -379,7 +379,7 @@ namespace FungusToast.Unity.UI.Testing
             NotifyLayoutInvalidated();
         }
 
-        private static void UpdateButtonState(Button button, bool isVisible, bool isInteractable, bool useSecondaryButtonStyle)
+        private void UpdateButtonState(Button button, bool isVisible, bool isInteractable)
         {
             if (button == null)
             {
@@ -390,7 +390,7 @@ namespace FungusToast.Unity.UI.Testing
             button.interactable = isInteractable;
             UIStyleTokens.Button.SetButtonLabelColor(
                 button,
-                useSecondaryButtonStyle
+                options.UseSecondaryButtonStyle
                     ? (isInteractable ? UIStyleTokens.Text.Primary : UIStyleTokens.Text.Disabled)
                     : (isInteractable ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled));
         }

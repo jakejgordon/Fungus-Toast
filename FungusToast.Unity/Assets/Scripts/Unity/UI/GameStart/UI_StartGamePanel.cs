@@ -16,6 +16,8 @@ namespace FungusToast.Unity.UI.GameStart
         private const int DefaultHotseatHumanPlayerCount = 1;
         private const string AdvancedOptionsExpandedPrefsKey = "StartGame.AdvancedOptionsExpanded";
         private const string DevelopmentTestingEnabledPrefsKey = "StartGame.DevelopmentTestingEnabled";
+        private const float StartMenuVerticalMargin = 24f;
+        private const float ResponsiveScaleSafetyFactor = 0.97f;
 
         private enum SetupStep
         {
@@ -125,6 +127,11 @@ namespace FungusToast.Unity.UI.GameStart
         private void OnDisable()
         {
             SavePersistedMenuState();
+        }
+
+        private void OnRectTransformDimensionsChange()
+        {
+            RefreshResponsiveStartLayout();
         }
 
         private void ResetSelectionState()
@@ -2138,6 +2145,34 @@ namespace FungusToast.Unity.UI.GameStart
             {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(panelRect);
             }
+
+            RefreshResponsiveStartLayout();
+        }
+
+        private void RefreshResponsiveStartLayout()
+        {
+            if (setupContentRoot == null)
+            {
+                return;
+            }
+
+            RectTransform panelRect = GetComponent<RectTransform>();
+            if (panelRect == null)
+            {
+                return;
+            }
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(setupContentRoot);
+
+            float preferredHeight = LayoutUtility.GetPreferredHeight(setupContentRoot);
+            float availableHeight = Mathf.Max(0f, panelRect.rect.height - (StartMenuVerticalMargin * 2f));
+            float scale = preferredHeight > 0f && availableHeight > 0f
+                ? Mathf.Min(1f, availableHeight / preferredHeight)
+                : 1f;
+
+            scale *= ResponsiveScaleSafetyFactor;
+
+            setupContentRoot.localScale = new Vector3(scale, scale, 1f);
         }
 
         public void OnPlayerCountSelected(int count)

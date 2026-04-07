@@ -21,6 +21,8 @@ namespace FungusToast.Unity.UI.Campaign
         private const float TitleHeight = 44f;
         private const float SummaryHeight = 68f;
         private const float FooterHeight = 24f;
+        private const float MinimumVerticalMargin = 32f;
+        private const float ResponsiveScaleSafetyFactor = 0.97f;
         private const float SecondaryButtonHeight = 52f;
         private const float SecondaryButtonWidth = 240f;
         private const string AlphaHeadingText = "Alpha test build";
@@ -139,6 +141,13 @@ namespace FungusToast.Unity.UI.Campaign
             // Ensure subordinate panels start hidden so only mode select is visible.
             if (startGamePanel != null) startGamePanel.gameObject.SetActive(false);
             if (campaignPanel != null) campaignPanel.SetActive(false);
+
+            RefreshResponsiveLayout();
+        }
+
+        private void OnRectTransformDimensionsChange()
+        {
+            RefreshResponsiveLayout();
         }
 
         private void OnHotseatClicked()
@@ -545,6 +554,8 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 creditsPanel.SetActive(false);
             }
+
+            RefreshResponsiveLayout();
         }
 
         private void ShowCreditsContent()
@@ -558,6 +569,34 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 creditsPanel.SetActive(true);
             }
+
+            RefreshResponsiveLayout();
+        }
+
+        private void RefreshResponsiveLayout()
+        {
+            if (contentRoot == null)
+            {
+                return;
+            }
+
+            RectTransform parentRect = contentRoot.parent as RectTransform;
+            if (parentRect == null)
+            {
+                return;
+            }
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
+
+            float preferredHeight = LayoutUtility.GetPreferredHeight(contentRoot);
+            float availableHeight = Mathf.Max(0f, parentRect.rect.height - (MinimumVerticalMargin * 2f));
+            float scale = preferredHeight > 0f && availableHeight > 0f
+                ? Mathf.Min(1f, availableHeight / preferredHeight)
+                : 1f;
+
+            scale *= ResponsiveScaleSafetyFactor;
+
+            contentRoot.localScale = new Vector3(scale, scale, 1f);
         }
 
         private Button CreateButton(string objectName, string labelText)
