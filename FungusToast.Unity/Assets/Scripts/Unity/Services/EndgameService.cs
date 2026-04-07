@@ -435,11 +435,13 @@ namespace FungusToast.Unity
             }
 
             ConfigureSelectionPromptCancelButton(showCancelButton, cancelButtonLabel, onCancel);
+            ConfigureSelectionPromptRaycasts(showCancelButton);
         }
 
         public void Hide()
         {
             ConfigureSelectionPromptCancelButton(false, "Cancel", null);
+            ConfigureSelectionPromptRaycasts(false);
             selectionPromptPanel?.SetActive(false);
         }
 
@@ -506,6 +508,10 @@ namespace FungusToast.Unity
             {
                 selectionPromptText.margin = new Vector4(18f, 0f, 200f, 0f);
             }
+
+            ConfigureSelectionPromptRaycasts(selectionPromptCancelButton != null
+                && selectionPromptCancelButton.gameObject.activeSelf
+                && selectionPromptCancelButton.interactable);
         }
 
         private void ConfigureSelectionPromptCancelButton(bool visible, string cancelButtonLabel, Action onCancel)
@@ -527,6 +533,41 @@ namespace FungusToast.Unity
             if (visible && onCancel != null)
             {
                 selectionPromptCancelButton.onClick.AddListener(() => onCancel());
+            }
+        }
+
+        private void ConfigureSelectionPromptRaycasts(bool cancelButtonVisible)
+        {
+            if (selectionPromptPanel == null)
+            {
+                return;
+            }
+
+            var promptGraphics = selectionPromptPanel.GetComponentsInChildren<Graphic>(true);
+            foreach (var graphic in promptGraphics)
+            {
+                if (graphic == null)
+                {
+                    continue;
+                }
+
+                graphic.raycastTarget = false;
+            }
+
+            if (selectionPromptCancelButton == null)
+            {
+                return;
+            }
+
+            var cancelGraphics = selectionPromptCancelButton.GetComponentsInChildren<Graphic>(true);
+            foreach (var graphic in cancelGraphics)
+            {
+                if (graphic == null)
+                {
+                    continue;
+                }
+
+                graphic.raycastTarget = cancelButtonVisible;
             }
         }
     }
