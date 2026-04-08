@@ -27,3 +27,5 @@ MonoBehaviour:
     startingAdaptationIds: []
   - strategyName: CMP_Economy_LateSpike_Hard
     startingAdaptationIds: []
+  - strategyName: CMP_Economy_KillReclaim_Medium
+    startingAdaptationIds: []

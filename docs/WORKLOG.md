@@ -90,7 +90,8 @@ Use the following minimal workflow to preserve working memory across sessions:
 - Current accepted Campaign5 validation result (artifact-backed `post_simulation_player_summary.csv`, seed family `20260405/20260410`): proxy `TST_CampaignPlayer_SafeBaseline` finished at `44.0% (22/50)` on the exact authored lineup, which is inside the agreed `35-55%` target band. Practical call: **Campaign5 is good to go**.
 - Campaign6 should currently be treated as an accepted checkpoint / leave-as-is level, not the next urgent tuning target. Earlier pooled validation landed it at `25.0% (10/40)` and later conservative substitution tests only made the curve worse; practical call remains: **leave Campaign6 unchanged for now**.
 - Reporting/process correction: balance summaries should now be treated as artifact-backed by default. `FungusToast.Core/docs/SIMULATION_HELPER.md` was updated to explicitly say not to rely on live console output alone and to prefer `players.parquet` / the offline analytics helper when available.
-- If this thread continues, the next likely campaign difficulty target is **Campaign7**, not Campaign6.
+- 2026-04-07 follow-up validation confirmed that the practical fix for Campaign7 was to remove `CMP_Economy_KillReclaim_Medium` from the `90x90 6 AI` board rather than trying to save it with small starting-spore offsets. Replacing it with `CMP_Reclaim_Scavenger_Easy` yielded an artifact-backed proxy result of `20.0% (10/50)`, which is inside the agreed Campaign7 target band (`15-35%`). Practical call: **Campaign7 is good to go** in this configuration.
+- If this thread continues, the next likely campaign difficulty target is **Campaign8**.
 
 
 ### 2026-03-27 (campaign AI pool support)
