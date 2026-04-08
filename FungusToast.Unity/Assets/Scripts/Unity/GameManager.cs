@@ -608,7 +608,10 @@ namespace FungusToast.Unity
 
         private void PlaceStartingSpores()
         {
-            StartingSporeUtility.PlaceStartingSpores(Board, players, rng);
+            var edgeOffsets = players
+                .Select(player => player.MutationStrategy is ParameterizedSpendingStrategy parameterized ? parameterized.StartingSporeEdgeOffset : 0)
+                .ToArray();
+            StartingSporeUtility.PlaceStartingSpores(Board, players, rng, edgeOffsets: edgeOffsets);
             if (ShouldPlaceStartingNutrientPatches())
             {
                 NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(

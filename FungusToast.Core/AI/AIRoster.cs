@@ -716,6 +716,58 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign7_KillReclaim_Offset1",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy),
+                startingSporeEdgeOffset: 1
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign7_KillReclaim_Offset2",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy),
+                startingSporeEdgeOffset: 2
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign7_KillReclaim_Offset3",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy),
+                startingSporeEdgeOffset: 3
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign7_KillReclaim_Offset8",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy),
+                startingSporeEdgeOffset: 8
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "CMP_Economy_TempoReclaim_Medium",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -1601,6 +1653,10 @@ namespace FungusToast.Core.AI
                 ["CMP_Growth_Pressure_Medium"] = StrategyTheme.Offense,
                 ["CMP_Bloom_FortifyMimic_Medium"] = StrategyTheme.Attrition,
                 ["CMP_Economy_KillReclaim_Medium"] = StrategyTheme.EconomyRamp,
+                ["TST_Campaign7_KillReclaim_Offset1"] = StrategyTheme.EconomyRamp,
+                ["TST_Campaign7_KillReclaim_Offset2"] = StrategyTheme.EconomyRamp,
+                ["TST_Campaign7_KillReclaim_Offset3"] = StrategyTheme.EconomyRamp,
+                ["TST_Campaign7_KillReclaim_Offset8"] = StrategyTheme.EconomyRamp,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
@@ -1683,6 +1739,10 @@ namespace FungusToast.Core.AI
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyPowerTier.Standard,
                 ["CMP_Bloom_AnabolicRegression_Medium"] = StrategyPowerTier.Standard,
                 ["CMP_Economy_KillReclaim_Medium"] = StrategyPowerTier.Standard,
+                ["TST_Campaign7_KillReclaim_Offset1"] = StrategyPowerTier.Standard,
+                ["TST_Campaign7_KillReclaim_Offset2"] = StrategyPowerTier.Standard,
+                ["TST_Campaign7_KillReclaim_Offset3"] = StrategyPowerTier.Standard,
+                ["TST_Campaign7_KillReclaim_Offset8"] = StrategyPowerTier.Standard,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyPowerTier.Standard,
                 ["CMP_TierCap_GrowthResilience_Easy"] = StrategyPowerTier.Weak,
                 ["CMP_Reclaim_Scavenger_Easy"] = StrategyPowerTier.Weak,
@@ -1747,6 +1807,10 @@ namespace FungusToast.Core.AI
                 ["CMP_Growth_Pressure_Medium"] = StrategyRole.Experimental,
                 ["CMP_Bloom_FortifyMimic_Medium"] = StrategyRole.Experimental,
                 ["CMP_Economy_KillReclaim_Medium"] = StrategyRole.Experimental,
+                ["TST_Campaign7_KillReclaim_Offset1"] = StrategyRole.Experimental,
+                ["TST_Campaign7_KillReclaim_Offset2"] = StrategyRole.Experimental,
+                ["TST_Campaign7_KillReclaim_Offset3"] = StrategyRole.Experimental,
+                ["TST_Campaign7_KillReclaim_Offset8"] = StrategyRole.Experimental,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyRole.Experimental,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyRole.Experimental,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyRole.Experimental,
@@ -1800,6 +1864,10 @@ namespace FungusToast.Core.AI
                 ["CMP_Growth_Pressure_Medium"] = StrategyLifecycle.Active,
                 ["CMP_Bloom_FortifyMimic_Medium"] = StrategyLifecycle.Active,
                 ["CMP_Economy_KillReclaim_Medium"] = StrategyLifecycle.Active,
+                ["TST_Campaign7_KillReclaim_Offset1"] = StrategyLifecycle.Active,
+                ["TST_Campaign7_KillReclaim_Offset2"] = StrategyLifecycle.Active,
+                ["TST_Campaign7_KillReclaim_Offset3"] = StrategyLifecycle.Active,
+                ["TST_Campaign7_KillReclaim_Offset8"] = StrategyLifecycle.Active,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyLifecycle.Active,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyLifecycle.Active,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyLifecycle.Active,
@@ -1862,6 +1930,10 @@ namespace FungusToast.Core.AI
                 ["CMP_Growth_Pressure_Medium"] = new[] { DifficultyBand.Normal },
                 ["CMP_Bloom_FortifyMimic_Medium"] = new[] { DifficultyBand.Normal },
                 ["CMP_Economy_KillReclaim_Medium"] = new[] { DifficultyBand.Normal },
+                ["TST_Campaign7_KillReclaim_Offset1"] = new[] { DifficultyBand.Normal },
+                ["TST_Campaign7_KillReclaim_Offset2"] = new[] { DifficultyBand.Normal },
+                ["TST_Campaign7_KillReclaim_Offset3"] = new[] { DifficultyBand.Normal },
+                ["TST_Campaign7_KillReclaim_Offset8"] = new[] { DifficultyBand.Normal },
                 ["CMP_Economy_TempoReclaim_Medium"] = new[] { DifficultyBand.Normal },
                 ["CMP_Bloom_CreepingNecro_Medium"] = new[] { DifficultyBand.Normal },
                 ["CMP_Bloom_BeaconRegression_Medium"] = new[] { DifficultyBand.Normal },
@@ -1913,6 +1985,10 @@ namespace FungusToast.Core.AI
                 ["CMP_Growth_Pressure_Medium"] = CampaignDifficulty.Medium,
                 ["CMP_Bloom_FortifyMimic_Medium"] = CampaignDifficulty.Medium,
                 ["CMP_Economy_KillReclaim_Medium"] = CampaignDifficulty.Medium,
+                ["TST_Campaign7_KillReclaim_Offset1"] = CampaignDifficulty.Medium,
+                ["TST_Campaign7_KillReclaim_Offset2"] = CampaignDifficulty.Medium,
+                ["TST_Campaign7_KillReclaim_Offset3"] = CampaignDifficulty.Medium,
+                ["TST_Campaign7_KillReclaim_Offset8"] = CampaignDifficulty.Medium,
                 ["CMP_Economy_TempoReclaim_Medium"] = CampaignDifficulty.Medium,
                 ["CMP_Bloom_CreepingNecro_Medium"] = CampaignDifficulty.Medium,
                 ["CMP_Bloom_BeaconRegression_Medium"] = CampaignDifficulty.Medium,

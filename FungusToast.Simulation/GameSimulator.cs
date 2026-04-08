@@ -233,7 +233,10 @@ namespace FungusToast.Simulation.GameSimulation
                 board.Players.Add(player);
 
             // Use the shared starting spore placement utility
-            StartingSporeUtility.PlaceStartingSpores(board, players, rng, shuffleStartingSpores, startingPositionOverride);
+            var edgeOffsets = strategies
+                .Select(strategy => strategy is ParameterizedSpendingStrategy parameterized ? parameterized.StartingSporeEdgeOffset : 0)
+                .ToArray();
+            StartingSporeUtility.PlaceStartingSpores(board, players, rng, shuffleStartingSpores, startingPositionOverride, edgeOffsets);
             if (enableNutrientPatches)
             {
                 NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(board, players, rng, observer);
