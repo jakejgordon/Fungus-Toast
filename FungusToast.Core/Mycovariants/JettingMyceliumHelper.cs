@@ -130,5 +130,37 @@ namespace FungusToast.Core.Mycovariants
 
             return bestCell != null ? (bestCell, bestScore) : null;
         }
+
+        /// <summary>
+        /// Finds the best placement for Jetting Mycelium across every living source cell and cardinal direction.
+        /// </summary>
+        public static (FungalCell sourceCell, CardinalDirection direction, float score)? FindBestPlacement(Player player, GameBoard board)
+        {
+            var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
+                .Where(c => c.IsAlive)
+                .ToList();
+
+            if (livingCells.Count == 0) return null;
+
+            float bestScore = -1f;
+            FungalCell? bestCell = null;
+            CardinalDirection bestDirection = CardinalDirection.North;
+
+            foreach (CardinalDirection direction in Enum.GetValues(typeof(CardinalDirection)))
+            {
+                foreach (var cell in livingCells)
+                {
+                    float score = EvaluatePlacement(cell, direction, board, player);
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        bestCell = cell;
+                        bestDirection = direction;
+                    }
+                }
+            }
+
+            return bestCell != null ? (bestCell, bestDirection, bestScore) : null;
+        }
     }
 }

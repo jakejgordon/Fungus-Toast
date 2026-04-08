@@ -5,11 +5,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace FungusToast.Unity.UI
 {
     public class TileSelectionController : MonoBehaviour
     {
+        private enum DirectionalSelectionPhase
+        {
+            None,
+            SelectSource,
+            SelectDirection,
+        }
+
+        private const float DirectionAimDeadZoneWorldUnits = 0.15f;
+        private static readonly Color DirectionalAnchorColor = new Color(1f, 0.35f, 0.85f, 1f);
+        private MagnifyingGlassFollowMouse magnifyingGlass;
+
         public static TileSelectionController Instance { get; private set; }
 
         [SerializeField] private GridVisualizer gridVisualizer;
@@ -24,6 +36,16 @@ namespace FungusToast.Unity.UI
         private Color highlightColorA = new Color(0.2f, 0.8f, 1f, 1f);
         private Color highlightColorB = new Color(0.7f, 1f, 1f, 1f);
         private Action<int> _hoverPreviewCallback;
+        private DirectionalSelectionPhase directionalSelectionPhase = DirectionalSelectionPhase.None;
+        private Action<int, CardinalDirection> onDirectionalSelectionConfirmed;
+        private Action onDirectionalSelectionCancelled;
+        private Action<int, CardinalDirection?> onDirectionalSelectionPreviewChanged;
+        private string directionalSourcePromptMessage;
+        private string directionalAimPromptMessage;
+        private int directionalSelectingPlayerId = -1;
+        private int directionalAnchorTileId = -1;
+        private CardinalDirection? currentDirectionalAim;
+        private bool awaitingDirectionalMouseRelease;
 
         private void Awake()
         {
@@ -34,6 +56,41 @@ namespace FungusToast.Unity.UI
 
             if (gridVisualizer == null)
                 throw new System.Exception($"{nameof(TileSelectionController)} requires a reference to GridVisualizer. Assign it in the Inspector.");
+
+            magnifyingGlass = FindAnyObjectByType<MagnifyingGlassFollowMouse>();
+        }
+
+        private void Update()
+        {
+            if (!selectionActive || directionalSelectionPhase != DirectionalSelectionPhase.SelectDirection)
+            {
+                return;
+            }
+
+            if (awaitingDirectionalMouseRelease)
+            {
+                if (!Input.GetMouseButton(0))
+                {
+                    awaitingDirectionalMouseRelease = false;
+                }
+
+                return;
+            }
+
+            UpdateDirectionalAimPreview();
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                CancelSelection();
+                return;
+            }
+
+            if (Input.GetMouseButtonDown(0)
+                && currentDirectionalAim.HasValue
+                && !(EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
+            {
+                ConfirmDirectionalSelection();
+            }
         }
 
         public void PromptSelectLivingCell(
@@ -79,6 +136,32 @@ namespace FungusToast.Unity.UI
                 hoverHighlighter.SetSelectableTiles(selectableTileIds);
 
             ReapplySelectionHighlights();
+        }
+
+        public void PromptSelectLivingCellAndAimDirection(
+            int playerId,
+            Action<int, CardinalDirection> onConfirmed,
+            Action onCancel = null,
+            Action<int, CardinalDirection?> onPreviewChanged = null,
+            string sourcePromptMessage = null,
+            string aimPromptMessage = null)
+        {
+            var board = GameManager.Instance?.Board;
+            if (board == null)
+            {
+                Debug.LogError("PromptSelectLivingCellAndAimDirection called but GameManager.Instance.Board is null.");
+                onCancel?.Invoke();
+                return;
+            }
+
+            onDirectionalSelectionConfirmed = onConfirmed;
+            onDirectionalSelectionCancelled = onCancel;
+            onDirectionalSelectionPreviewChanged = onPreviewChanged;
+            directionalSelectingPlayerId = playerId;
+            directionalSourcePromptMessage = sourcePromptMessage;
+            directionalAimPromptMessage = aimPromptMessage;
+
+            BeginDirectionalSourceSelection();
         }
 
         public void PromptSelectBoardTile(
@@ -203,6 +286,12 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            if (directionalSelectionPhase == DirectionalSelectionPhase.SelectSource)
+            {
+                BeginDirectionalAim(tileId);
+                return;
+            }
+
             if (onTileSelected != null)
             {
                 onTileSelected(tileId);
@@ -227,15 +316,33 @@ namespace FungusToast.Unity.UI
         public void CancelSelection()
         {
             if (!selectionActive) return;
+
+            if (directionalSelectionPhase == DirectionalSelectionPhase.SelectDirection)
+            {
+                BeginDirectionalSourceSelection();
+                return;
+            }
+
             selectionActive = false;
             gridVisualizer.ClearHighlights();
             if (hoverHighlighter != null) hoverHighlighter.ClearSelectableTiles();
+            var cancelled = onCancelled;
             Reset();
-            onCancelled?.Invoke();
+            cancelled?.Invoke();
         }
 
         private void Reset()
         {
+            if (directionalSelectionPhase != DirectionalSelectionPhase.None)
+            {
+                gridVisualizer.ClearJettingMyceliumPreview();
+                gridVisualizer.ClearSelectedTiles();
+                GameManager.Instance?.HideSelectionPrompt();
+            }
+
+            SetSelectionModeVisualSuppression(false);
+            SetHoverVisualSuppression(false);
+
             selectingPlayerId = -1;
             onCellSelected = null;
             onTileSelected = null;
@@ -245,6 +352,17 @@ namespace FungusToast.Unity.UI
             _hoverPreviewCallback = null;
             if (hoverHighlighter != null)
                 hoverHighlighter.OnSelectableTileHovered = null;
+
+            directionalSelectionPhase = DirectionalSelectionPhase.None;
+            onDirectionalSelectionConfirmed = null;
+            onDirectionalSelectionCancelled = null;
+            onDirectionalSelectionPreviewChanged = null;
+            directionalSourcePromptMessage = null;
+            directionalAimPromptMessage = null;
+            directionalSelectingPlayerId = -1;
+            directionalAnchorTileId = -1;
+            currentDirectionalAim = null;
+            awaitingDirectionalMouseRelease = false;
         }
 
         public bool IsSelectable(int tileId)
@@ -274,6 +392,157 @@ namespace FungusToast.Unity.UI
             _hoverPreviewCallback = onHoverTileId;
             if (hoverHighlighter != null)
                 hoverHighlighter.OnSelectableTileHovered = onHoverTileId;
+        }
+
+        private void BeginDirectionalSourceSelection()
+        {
+            var board = GameManager.Instance?.Board;
+            if (board == null)
+            {
+                var cancelled = onDirectionalSelectionCancelled;
+                Reset();
+                cancelled?.Invoke();
+                return;
+            }
+
+            selectionActive = true;
+            directionalSelectionPhase = DirectionalSelectionPhase.SelectSource;
+            selectingPlayerId = directionalSelectingPlayerId;
+            directionalAnchorTileId = -1;
+            currentDirectionalAim = null;
+            awaitingDirectionalMouseRelease = false;
+            onCellSelected = null;
+            onTileSelected = null;
+            onCancelled = onDirectionalSelectionCancelled;
+
+            selectableTileIds = new HashSet<int>(board.GetAllCellsOwnedBy(directionalSelectingPlayerId)
+                .Where(cell => cell.IsAlive)
+                .Select(cell => cell.TileId));
+
+            highlightColorA = new Color(1f, 0.2f, 0.8f, 1f);
+            highlightColorB = new Color(1f, 0.7f, 1f, 1f);
+
+            gridVisualizer.ClearJettingMyceliumPreview();
+            gridVisualizer.ClearAllHighlights();
+
+            SetSelectionModeVisualSuppression(true);
+            SetHoverVisualSuppression(false);
+
+            if (hoverHighlighter != null)
+            {
+                hoverHighlighter.SetSelectableTiles(selectableTileIds);
+                hoverHighlighter.OnSelectableTileHovered = null;
+            }
+
+            if (!string.IsNullOrEmpty(directionalSourcePromptMessage))
+            {
+                GameManager.Instance.ShowSelectionPrompt(directionalSourcePromptMessage);
+            }
+
+            ReapplySelectionHighlights();
+        }
+
+        private void BeginDirectionalAim(int anchorTileId)
+        {
+            selectionActive = true;
+            directionalSelectionPhase = DirectionalSelectionPhase.SelectDirection;
+            directionalAnchorTileId = anchorTileId;
+            currentDirectionalAim = null;
+            awaitingDirectionalMouseRelease = true;
+            selectableTileIds.Clear();
+            onCellSelected = null;
+            onTileSelected = null;
+            onCancelled = onDirectionalSelectionCancelled;
+
+            gridVisualizer.ClearAllHighlights();
+            gridVisualizer.ShowSelectedTiles(new[] { anchorTileId }, DirectionalAnchorColor);
+
+            SetSelectionModeVisualSuppression(true);
+            SetHoverVisualSuppression(true);
+
+            if (hoverHighlighter != null)
+            {
+                hoverHighlighter.ClearSelectableTiles();
+                hoverHighlighter.OnSelectableTileHovered = null;
+            }
+
+            if (!string.IsNullOrEmpty(directionalAimPromptMessage))
+            {
+                GameManager.Instance.ShowSelectionPrompt(directionalAimPromptMessage);
+            }
+
+            UpdateDirectionalAimPreview();
+        }
+
+        private void UpdateDirectionalAimPreview()
+        {
+            var nextDirection = ResolveDirectionalAimDirection();
+            if (nextDirection == currentDirectionalAim)
+            {
+                return;
+            }
+
+            currentDirectionalAim = nextDirection;
+            gridVisualizer.ClearAllHighlights();
+            gridVisualizer.ShowSelectedTiles(new[] { directionalAnchorTileId }, DirectionalAnchorColor);
+            onDirectionalSelectionPreviewChanged?.Invoke(directionalAnchorTileId, currentDirectionalAim);
+        }
+
+        private CardinalDirection? ResolveDirectionalAimDirection()
+        {
+            var board = GameManager.Instance?.Board;
+            if (board == null || gridVisualizer == null || gridVisualizer.toastTilemap == null || Camera.main == null || directionalAnchorTileId < 0)
+            {
+                return null;
+            }
+
+            Vector3Int anchorCell = new Vector3Int(
+                directionalAnchorTileId % board.Width,
+                directionalAnchorTileId / board.Width,
+                0);
+
+            Vector3 anchorWorld = gridVisualizer.toastTilemap.GetCellCenterWorld(anchorCell);
+            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 delta = new Vector2(mouseWorld.x - anchorWorld.x, mouseWorld.y - anchorWorld.y);
+
+            if (Mathf.Max(Mathf.Abs(delta.x), Mathf.Abs(delta.y)) < DirectionAimDeadZoneWorldUnits)
+            {
+                return currentDirectionalAim;
+            }
+
+            if (Mathf.Abs(delta.x) >= Mathf.Abs(delta.y))
+            {
+                return delta.x >= 0f ? CardinalDirection.East : CardinalDirection.West;
+            }
+
+            return delta.y >= 0f ? CardinalDirection.North : CardinalDirection.South;
+        }
+
+        private void ConfirmDirectionalSelection()
+        {
+            if (!currentDirectionalAim.HasValue)
+            {
+                return;
+            }
+
+            var confirmed = onDirectionalSelectionConfirmed;
+            int anchorTileId = directionalAnchorTileId;
+            CardinalDirection direction = currentDirectionalAim.Value;
+
+            selectionActive = false;
+            onDirectionalSelectionPreviewChanged?.Invoke(anchorTileId, null);
+            Reset();
+            confirmed?.Invoke(anchorTileId, direction);
+        }
+
+        private void SetSelectionModeVisualSuppression(bool suppressed)
+        {
+            magnifyingGlass?.SetSelectionModeVisualSuppression(suppressed);
+        }
+
+        private void SetHoverVisualSuppression(bool suppressed)
+        {
+            hoverHighlighter?.SetHoverVisualSuppression(suppressed);
         }
     }
 }

@@ -22,10 +22,11 @@ namespace FungusToast.Core.Mycovariants
         }
 
         // Directional
-        [Obsolete("Use GetAll() and filter by Id instead.")] public static Mycovariant JettingMyceliumNorth() => DirectionalMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.JettingMyceliumNorthId);
-        [Obsolete] public static Mycovariant JettingMyceliumEast() => DirectionalMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.JettingMyceliumEastId);
-        [Obsolete] public static Mycovariant JettingMyceliumSouth() => DirectionalMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.JettingMyceliumSouthId);
-        [Obsolete] public static Mycovariant JettingMyceliumWest() => DirectionalMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.JettingMyceliumWestId);
+        [Obsolete("Use GetAll() and filter by Id instead.")] public static Mycovariant JettingMycelium() => DirectionalMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.JettingMyceliumId);
+        [Obsolete] public static Mycovariant JettingMyceliumNorth() => JettingMycelium();
+        [Obsolete] public static Mycovariant JettingMyceliumEast() => JettingMycelium();
+        [Obsolete] public static Mycovariant JettingMyceliumSouth() => JettingMycelium();
+        [Obsolete] public static Mycovariant JettingMyceliumWest() => JettingMycelium();
 
         // Economy
         [Obsolete] public static Mycovariant PlasmidBounty() => EconomyMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.PlasmidBountyId);

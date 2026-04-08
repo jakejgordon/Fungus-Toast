@@ -9,20 +9,17 @@ namespace FungusToast.Core.Mycovariants
     {
         public static IEnumerable<Mycovariant> CreateAll()
         {
-            yield return CreateJettingMycelium("North", MycovariantIds.JettingMyceliumNorthId, CardinalDirection.North);
-            yield return CreateJettingMycelium("East", MycovariantIds.JettingMyceliumEastId, CardinalDirection.East);
-            yield return CreateJettingMycelium("South", MycovariantIds.JettingMyceliumSouthId, CardinalDirection.South);
-            yield return CreateJettingMycelium("West", MycovariantIds.JettingMyceliumWestId, CardinalDirection.West);
+            yield return CreateJettingMycelium();
         }
 
-        private static Mycovariant CreateJettingMycelium(string directionLabel, int id, CardinalDirection cardinalDirection)
+        private static Mycovariant CreateJettingMycelium()
         {
             return new Mycovariant
             {
-                Id = id,
-                Name = $"Jetting Mycelium ({directionLabel})",
-                Description = $"One-time on draft: choose a living source cell and launch a spore-jet {directionLabel.ToLower()}: grow {Config.MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles} living tiles, then place a toxin cone widening from {Config.MycovariantGameBalance.JettingMyceliumConeNarrowWidth} to {Config.MycovariantGameBalance.JettingMyceliumConeWideWidth} tiles.",
-                FlavorText = $"The cap ruptures violently. The colony explodes {directionLabel.ToLower()}ward in a widening cloud of toxic spores.",
+                Id = MycovariantIds.JettingMyceliumId,
+                Name = "Jetting Mycelium",
+                Description = $"One-time on draft: choose a living source cell, then aim a spore-jet in a cardinal direction: grow {Config.MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles} living tiles, then place a toxin cone widening from {Config.MycovariantGameBalance.JettingMyceliumConeNarrowWidth} to {Config.MycovariantGameBalance.JettingMyceliumConeWideWidth} tiles.",
+                FlavorText = "The cap ruptures violently. The colony blasts outward in a widening cloud of toxic spores wherever the pilot aims.",
                 Type = MycovariantType.Directional,
                 Category = MycovariantCategory.Fungicide,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -31,20 +28,18 @@ namespace FungusToast.Core.Mycovariants
                     bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI;
                     if (shouldUseCoreLogic)
                     {
-                        var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
-                            .Where(c => c.IsAlive)
-                            .ToList();
-                        if (livingCells.Count > 0)
+                        var bestPlacement = JettingMyceliumHelper.FindBestPlacement(player, board);
+                        if (bestPlacement != null)
                         {
-                            var sourceCell = livingCells[rng.Next(livingCells.Count)];
+                            var placement = bestPlacement.Value;
                             MycovariantEffectProcessor.ResolveJettingMycelium(
-                                playerMyco, player, board, sourceCell.TileId, cardinalDirection, rng, observer);
+                                playerMyco, player, board, placement.sourceCell.TileId, placement.direction, rng, observer);
                         }
                     }
                 },
                 AIScore = (player, board) =>
                 {
-                    var bestPlacement = JettingMyceliumHelper.FindBestPlacement(player, board, cardinalDirection);
+                    var bestPlacement = JettingMyceliumHelper.FindBestPlacement(player, board);
                     if (bestPlacement == null) return 1f;
                     return JettingMyceliumHelper.ScoreToAIScore(bestPlacement.Value.score);
                 }

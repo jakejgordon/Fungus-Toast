@@ -9,7 +9,8 @@ namespace FungusToast.Core.Mycovariants
         public const int PlasmidBountyId = 1000;
         public const int PlasmidBountyIIId = 1001;
         public const int PlasmidBountyIIIId = 1002;
-        public const int JettingMyceliumNorthId = 1005;
+        public const int JettingMyceliumId = 1005;
+        public const int JettingMyceliumNorthId = JettingMyceliumId;
         public const int JettingMyceliumEastId = 1006;
         public const int JettingMyceliumSouthId = 1007;
         public const int JettingMyceliumWestId = 1008;

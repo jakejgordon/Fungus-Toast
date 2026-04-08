@@ -58,6 +58,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 
     [Header("Board Size Gate")] [SerializeField] private int minBoardSizeForMagnifier =30; // minimum width/height required
     private bool visualsAllowed = true; // NEW: whether magnifier visuals may appear (tooltips ignore this)
+    private bool selectionModeVisualsSuppressed;
 
     void Start()
     {
@@ -151,7 +152,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         bool pointerOverUI = EventSystem.current.IsPointerOverGameObject();
 
         // Decide if we show magnifier visuals (independent from tooltip logic)
-        bool showVisuals = visualsAllowed && overBread && !pointerOverUI && MagnifierProvidesAdditionalZoom();
+        bool showVisuals = visualsAllowed && !selectionModeVisualsSuppressed && overBread && !pointerOverUI && MagnifierProvidesAdditionalZoom();
 
         if (showVisuals)
         {
@@ -190,6 +191,16 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
                     hoverCoroutine = null;
                 }
             }
+        }
+    }
+
+    public void SetSelectionModeVisualSuppression(bool suppressed)
+    {
+        selectionModeVisualsSuppressed = suppressed;
+
+        if (suppressed && visualRoot != null && visualRoot.activeSelf)
+        {
+            visualRoot.SetActive(false);
         }
     }
 

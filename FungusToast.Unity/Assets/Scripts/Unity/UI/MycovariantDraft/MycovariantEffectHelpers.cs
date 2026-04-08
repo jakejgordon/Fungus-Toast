@@ -31,9 +31,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 yield break;
             }
 
-            var direction = DirectionFromMycovariantId(picked.Id);
             var board = gameManager.Board;
             var gameLogRouter = gameManager.GameUI.GameLogRouter;
+            const string sourcePromptMessage = "Select one of your living fungal cells to project mycelium from.";
+            const string aimPromptMessage = "Aim Jetting Mycelium, then left click to confirm. Right click or Esc to go back.";
 
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
@@ -41,13 +42,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 // Pre-animation stagger
                 yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
 
-                var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
-                    .Where(c => c.IsAlive)
-                    .ToList();
-                
-                if (livingCells.Count > 0)
+                var bestPlacement = JettingMyceliumHelper.FindBestPlacement(player, board);
+                if (bestPlacement != null)
                 {
-                    var sourceCell = livingCells[UnityEngine.Random.Range(0, livingCells.Count)];
+                    var placement = bestPlacement.Value;
                     var playerMyco = player.PlayerMycovariants
                         .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
                     if (playerMyco != null)
@@ -56,8 +54,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             playerMyco,
                             player,
                             board,
-                            sourceCell.TileId,
-                            direction,
+                            placement.sourceCell.TileId,
+                            placement.direction,
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                             gameLogRouter
                         );
@@ -83,29 +81,14 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     new Color(1f, 0.2f, 0.8f, 1f),
                     new Color(1f, 0.7f, 1f, 1f)
                 );
-                gameManager.ShowSelectionPrompt("Select one of your living fungal cells to project mycelium from.");
 
                 bool done = false;
                 bool selectionResolved = false;
                 bool executed = false;
 
-                TileSelectionController.Instance.SetHoverPreviewCallback((tileId) =>
-                {
-                    if (tileId < 0)
-                    {
-                        gridVisualizer.ClearJettingMyceliumPreview();
-                    }
-                    else
-                    {
-                        var livingLine = board.GetTileLine(tileId, direction, MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles, false);
-                        var toxinCone  = board.GetTileCone(tileId, direction);
-                        gridVisualizer.ShowJettingMyceliumPreview(livingLine, toxinCone);
-                    }
-                });
-
-                TileSelectionController.Instance.PromptSelectLivingCell(
+                TileSelectionController.Instance.PromptSelectLivingCellAndAimDirection(
                     player.PlayerId,
-                    (cell) =>
+                    (tileId, direction) =>
                     {
                         var playerMyco = player.PlayerMycovariants
                             .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
@@ -114,7 +97,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             playerMyco,
                             player,
                             board,
-                            cell.TileId,
+                            tileId,
                             direction,
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                             gameLogRouter
@@ -122,7 +105,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         gridVisualizer.ClearJettingMyceliumPreview();
                         gridVisualizer.RenderBoard(board);
                         gridVisualizer.ClearHighlights();
-                        gameManager.HideSelectionPrompt();
                         done = true;
                         executed = true;
                         selectionResolved = true;
@@ -131,11 +113,23 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     {
                         gridVisualizer.ClearJettingMyceliumPreview();
                         gridVisualizer.ClearHighlights();
-                        gameManager.HideSelectionPrompt();
                         done = true;
                         selectionResolved = true;
                     },
-                    "Select one of your living fungal cells to project mycelium from."
+                    (tileId, direction) =>
+                    {
+                        if (tileId < 0 || !direction.HasValue)
+                        {
+                            gridVisualizer.ClearJettingMyceliumPreview();
+                            return;
+                        }
+
+                        var livingLine = board.GetTileLine(tileId, direction.Value, MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles, false);
+                        var toxinCone = board.GetTileCone(tileId, direction.Value);
+                        gridVisualizer.ShowJettingMyceliumPreview(livingLine, toxinCone);
+                    },
+                    sourcePromptMessage,
+                    aimPromptMessage
                 );
 
                 while (!done) yield return null;
@@ -206,18 +200,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
 
             onComplete?.Invoke();
-        }
-
-        /// <summary>
-        /// Returns the correct CardinalDirection for a Jetting Mycelium mycovariant ID.
-        /// </summary>
-        private static CardinalDirection DirectionFromMycovariantId(int mycovariantId)
-        {
-            if (mycovariantId == MycovariantIds.JettingMyceliumNorthId) return CardinalDirection.North;
-            if (mycovariantId == MycovariantIds.JettingMyceliumEastId) return CardinalDirection.East;
-            if (mycovariantId == MycovariantIds.JettingMyceliumSouthId) return CardinalDirection.South;
-            if (mycovariantId == MycovariantIds.JettingMyceliumWestId) return CardinalDirection.West;
-            throw new ArgumentException("Invalid Jetting Mycelium ID");
         }
 
         /// <summary>

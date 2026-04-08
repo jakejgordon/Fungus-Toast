@@ -28,10 +28,10 @@ namespace FungusToast.Unity.Effects
         }
 
         /// <summary>
-        /// Returns true if the given mycovariant ID is any Jetting Mycelium (all directions).
+        /// Returns true if the given mycovariant ID is Jetting Mycelium, including legacy directional variants.
         /// </summary>
         public static bool IsJettingMycelium(int id) =>
-            id == MycovariantIds.JettingMyceliumNorthId ||
+            id == MycovariantIds.JettingMyceliumId ||
             id == MycovariantIds.JettingMyceliumEastId ||
             id == MycovariantIds.JettingMyceliumSouthId ||
             id == MycovariantIds.JettingMyceliumWestId;
@@ -147,16 +147,5 @@ namespace FungusToast.Unity.Effects
             }
         }
 
-        /// <summary>
-        /// Returns the correct CardinalDirection for a Jetting Mycelium mycovariant ID.
-        /// </summary>
-        public static CardinalDirection DirectionFromMycovariantId(int id)
-        {
-            if (id == MycovariantIds.JettingMyceliumNorthId) return CardinalDirection.North;
-            if (id == MycovariantIds.JettingMyceliumEastId) return CardinalDirection.East;
-            if (id == MycovariantIds.JettingMyceliumSouthId) return CardinalDirection.South;
-            if (id == MycovariantIds.JettingMyceliumWestId) return CardinalDirection.West;
-            throw new ArgumentException("Invalid Jetting Mycelium ID");
-        }
     }
 }

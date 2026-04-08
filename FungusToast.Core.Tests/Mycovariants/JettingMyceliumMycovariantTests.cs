@@ -59,8 +59,8 @@ public class JettingMyceliumMycovariantTests
 
         var playerMyco = new PlayerMycovariant(
             owner.PlayerId,
-            MycovariantIds.JettingMyceliumEastId,
-            new Mycovariant { Id = MycovariantIds.JettingMyceliumEastId, Name = "Jetting Mycelium (East)" });
+            MycovariantIds.JettingMyceliumId,
+            new Mycovariant { Id = MycovariantIds.JettingMyceliumId, Name = "Jetting Mycelium" });
 
         MycovariantEffectProcessor.ResolveJettingMycelium(
             playerMyco,
@@ -77,6 +77,28 @@ public class JettingMyceliumMycovariantTests
         Assert.Equal(0, playerMyco.EffectCounts.GetValueOrDefault(MycovariantEffectType.Infested));
         Assert.Equal(0, playerMyco.EffectCounts.GetValueOrDefault(MycovariantEffectType.Poisoned));
         Assert.Equal(0, playerMyco.EffectCounts.GetValueOrDefault(MycovariantEffectType.Colonized));
+    }
+
+    [Fact]
+    public void FindBestPlacement_prefers_the_highest_scoring_direction()
+    {
+        var board = new GameBoard(width: 12, height: 11, playerCount: 2);
+        var owner = new Player(0, "P0", PlayerTypeEnum.AI);
+        var enemy = new Player(1, "P1", PlayerTypeEnum.AI);
+        board.Players.Add(owner);
+        board.Players.Add(enemy);
+
+        board.PlaceInitialSpore(playerId: owner.PlayerId, x: 1, y: 5);
+        board.PlaceInitialSpore(playerId: enemy.PlayerId, x: 11, y: 10);
+
+        PlaceOwnedLivingCell(board, enemy, GetTileId(board, x: 2, y: 5));
+
+        var bestPlacement = JettingMyceliumHelper.FindBestPlacement(owner, board);
+
+        Assert.NotNull(bestPlacement);
+        Assert.Equal(owner.StartingTileId!.Value, bestPlacement!.Value.sourceCell.TileId);
+        Assert.Equal(CardinalDirection.East, bestPlacement.Value.direction);
+        Assert.True(bestPlacement.Value.score > 0f);
     }
 
     private static void PlaceResistantLivingCell(GameBoard board, Player owner, int tileId)

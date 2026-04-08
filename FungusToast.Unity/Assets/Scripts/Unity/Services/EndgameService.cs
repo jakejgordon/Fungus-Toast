@@ -435,12 +435,14 @@ namespace FungusToast.Unity
             }
 
             ConfigureSelectionPromptCancelButton(showCancelButton, cancelButtonLabel, onCancel);
+            ConfigureSelectionPromptTextLayout(showCancelButton);
             ConfigureSelectionPromptRaycasts(showCancelButton);
         }
 
         public void Hide()
         {
             ConfigureSelectionPromptCancelButton(false, "Cancel", null);
+            ConfigureSelectionPromptTextLayout(false);
             ConfigureSelectionPromptRaycasts(false);
             selectionPromptPanel?.SetActive(false);
         }
@@ -506,7 +508,7 @@ namespace FungusToast.Unity
 
             if (selectionPromptText != null)
             {
-                selectionPromptText.margin = new Vector4(18f, 0f, 200f, 0f);
+                selectionPromptText.alignment = TextAlignmentOptions.Center;
             }
 
             ConfigureSelectionPromptRaycasts(selectionPromptCancelButton != null
@@ -534,6 +536,19 @@ namespace FungusToast.Unity
             {
                 selectionPromptCancelButton.onClick.AddListener(() => onCancel());
             }
+        }
+
+        private void ConfigureSelectionPromptTextLayout(bool cancelButtonVisible)
+        {
+            if (selectionPromptText == null)
+            {
+                return;
+            }
+
+            selectionPromptText.alignment = TextAlignmentOptions.Center;
+            selectionPromptText.margin = cancelButtonVisible
+                ? new Vector4(18f, 0f, 200f, 0f)
+                : Vector4.zero;
         }
 
         private void ConfigureSelectionPromptRaycasts(bool cancelButtonVisible)
