@@ -46,6 +46,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 if (bestPlacement != null)
                 {
                     var placement = bestPlacement.Value;
+                    var livingLine = board.GetTileLine(
+                        placement.sourceCell.TileId,
+                        placement.direction,
+                        MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles,
+                        includeStartingTile: false);
+                    var toxinCone = board.GetTileCone(placement.sourceCell.TileId, placement.direction);
                     var playerMyco = player.PlayerMycovariants
                         .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
                     if (playerMyco != null)
@@ -59,8 +65,42 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                             gameLogRouter
                         );
+
+                        var toxinImpactTileIds = toxinCone
+                            .Where(tileId => board.GetTileById(tileId)?.FungalCell?.IsToxin == true)
+                            .Distinct()
+                            .ToList();
+                        int launchOriginTileId = livingLine
+                            .Where(tileId => board.GetTileById(tileId)?.FungalCell is { IsAlive: true, OwnerPlayerId: var ownerPlayerId } && ownerPlayerId == player.PlayerId)
+                            .DefaultIfEmpty(placement.sourceCell.TileId)
+                            .Last();
+
+                        if (toxinImpactTileIds.Count > 0)
+                        {
+                            gridVisualizer.RegisterPreAnimationHiddenPreviewTiles(toxinImpactTileIds);
+                            ClearToxinDropFlags(board, toxinImpactTileIds);
+                        }
+
                         gridVisualizer.RenderBoard(board);
                         yield return gridVisualizer.WaitForAllAnimations();
+
+                        if (toxinImpactTileIds.Count > 0)
+                        {
+                            var toxinVolley = gridVisualizer.PlayJettingMyceliumToxinVolleyAnimation(
+                                launchOriginTileId,
+                                toxinImpactTileIds,
+                                toxinTileId =>
+                                {
+                                    gridVisualizer.RevealPreAnimationPreviewTile(toxinTileId);
+                                    gridVisualizer.RenderTileFromBoard(toxinTileId);
+                                });
+                            if (toxinVolley != null)
+                            {
+                                yield return toxinVolley;
+                            }
+
+                            yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumPostVolleyHoldSeconds);
+                        }
                     }
                 }
                 // Post-animation stagger
@@ -85,11 +125,19 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 bool done = false;
                 bool selectionResolved = false;
                 bool executed = false;
+                int pendingJettingLaunchOriginTileId = -1;
+                List<int> pendingJettingToxinImpactTileIds = new();
 
                 TileSelectionController.Instance.PromptSelectLivingCellAndAimDirection(
                     player.PlayerId,
                     (tileId, direction) =>
                     {
+                        var livingLine = board.GetTileLine(
+                            tileId,
+                            direction,
+                            MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles,
+                            includeStartingTile: false);
+                        var toxinCone = board.GetTileCone(tileId, direction);
                         var playerMyco = player.PlayerMycovariants
                             .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
 
@@ -102,6 +150,22 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                             gameLogRouter
                         );
+
+                        pendingJettingToxinImpactTileIds = toxinCone
+                            .Where(coneTileId => board.GetTileById(coneTileId)?.FungalCell?.IsToxin == true)
+                            .Distinct()
+                            .ToList();
+                        pendingJettingLaunchOriginTileId = livingLine
+                            .Where(lineTileId => board.GetTileById(lineTileId)?.FungalCell is { IsAlive: true, OwnerPlayerId: var ownerPlayerId } && ownerPlayerId == player.PlayerId)
+                            .DefaultIfEmpty(tileId)
+                            .Last();
+
+                        if (pendingJettingToxinImpactTileIds.Count > 0)
+                        {
+                            gridVisualizer.RegisterPreAnimationHiddenPreviewTiles(pendingJettingToxinImpactTileIds);
+                            ClearToxinDropFlags(board, pendingJettingToxinImpactTileIds);
+                        }
+
                         gridVisualizer.ClearJettingMyceliumPreview();
                         gridVisualizer.RenderBoard(board);
                         gridVisualizer.ClearHighlights();
@@ -138,9 +202,40 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 if (executed)
                 {
                     yield return gridVisualizer.WaitForAllAnimations();
+
+                    if (pendingJettingToxinImpactTileIds.Count > 0)
+                    {
+                        var toxinVolley = gridVisualizer.PlayJettingMyceliumToxinVolleyAnimation(
+                            pendingJettingLaunchOriginTileId,
+                            pendingJettingToxinImpactTileIds,
+                            toxinTileId =>
+                            {
+                                gridVisualizer.RevealPreAnimationPreviewTile(toxinTileId);
+                                gridVisualizer.RenderTileFromBoard(toxinTileId);
+                            });
+                        if (toxinVolley != null)
+                        {
+                            yield return toxinVolley;
+                        }
+
+                        yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumPostVolleyHoldSeconds);
+                    }
                 }
 
                 onComplete?.Invoke();
+            }
+        }
+
+        private static void ClearToxinDropFlags(GameBoard board, IEnumerable<int> tileIds)
+        {
+            if (board == null || tileIds == null)
+            {
+                return;
+            }
+
+            foreach (int tileId in tileIds)
+            {
+                board.GetTileById(tileId)?.FungalCell?.ClearToxinDropFlag();
             }
         }
 

@@ -26,7 +26,8 @@ namespace FungusToast.Unity.Grid.Helpers
             float duration,
             float baseArcHeightWorld,
             float arcHeightPerTile,
-            float scalePerHeightTile)
+            float scalePerHeightTile,
+            float? peakScaleOverride = null)
         {
             if (_referenceTilemap == null || sprite == null)
                 yield break;
@@ -66,7 +67,7 @@ namespace FungusToast.Unity.Grid.Helpers
                 go.transform.position = pos;
 
                 // Scale by apex factor: grow towards mid, shrink back
-                float peakScale = Mathf.Max(1f, UI.UIEffectConstants.SurgicalInoculationArcPeakScale);
+                float peakScale = Mathf.Max(1f, peakScaleOverride ?? UI.UIEffectConstants.SurgicalInoculationArcPeakScale);
                 float scaleEase = 1f - Mathf.Pow(1f - hNorm, 2f); // ease based on height
                 float scale = Mathf.Lerp(1f, peakScale, scaleEase);
                 go.transform.localScale = new Vector3(scale, scale, 1f);

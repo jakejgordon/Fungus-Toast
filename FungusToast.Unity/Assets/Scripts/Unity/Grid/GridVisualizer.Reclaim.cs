@@ -813,6 +813,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Dictionary<int, PendingTileTransition> _pendingTileTransitions = new();
 		private readonly Dictionary<int, Coroutine> _transitionCoroutines = new();
 		private readonly HashSet<int> _toxinDropTileIds = new();
+		private readonly HashSet<int> _suppressedToxinDropTileIdsForNextRender = new();
 		private readonly Dictionary<int, Coroutine> _toxinDropCoroutines = new();
 		private readonly Dictionary<int, ToxinImpactVisualSnapshot> _pendingToxinImpactSnapshots = new();
 		private readonly Dictionary<int, ExpiringToxinVisualSnapshot> _pendingToxinExpirySnapshots = new();
@@ -851,8 +852,27 @@ namespace FungusToast.Unity.Grid.Helpers
 			_renderTileFromBoard = renderTileFromBoard;
 		}
 
+		public void SuppressNextToxinDropAnimations(IEnumerable<int> tileIds)
+		{
+			_suppressedToxinDropTileIdsForNextRender.Clear();
+			if (tileIds == null)
+			{
+				return;
+			}
+
+			foreach (int tileId in tileIds)
+			{
+				_suppressedToxinDropTileIdsForNextRender.Add(tileId);
+			}
+		}
+
 		public void PrepareForBoardRender(GameBoard board, bool suppressAnimations)
 		{
+			HashSet<int> suppressedToxinDropTileIds = _suppressedToxinDropTileIdsForNextRender.Count > 0
+				? new HashSet<int>(_suppressedToxinDropTileIdsForNextRender)
+				: null;
+			_suppressedToxinDropTileIdsForNextRender.Clear();
+
 			if (suppressAnimations)
 			{
 				ClearPendingTileTransitions();
@@ -947,9 +967,20 @@ namespace FungusToast.Unity.Grid.Helpers
 				_revealPreAnimationPreviewTile?.Invoke(staleTileId);
 			}
 
-			foreach (var staleTileId in _pendingToxinImpactSnapshots.Keys.Except(_toxinDropTileIds).ToList())
+			IEnumerable<int> retainedToxinImpactTileIds = _toxinDropTileIds;
+			if (suppressedToxinDropTileIds != null)
+			{
+				retainedToxinImpactTileIds = retainedToxinImpactTileIds.Concat(suppressedToxinDropTileIds);
+			}
+
+			foreach (var staleTileId in _pendingToxinImpactSnapshots.Keys.Except(retainedToxinImpactTileIds).ToList())
 			{
 				_pendingToxinImpactSnapshots.Remove(staleTileId);
+			}
+
+			if (suppressedToxinDropTileIds != null)
+			{
+				_toxinDropTileIds.ExceptWith(suppressedToxinDropTileIds);
 			}
 		}
 

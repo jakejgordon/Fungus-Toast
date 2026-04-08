@@ -456,6 +456,30 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public const float JettingMyceliumHumanPostEffectDelaySeconds = 0.8f;
         /// <summary>
+        /// Small stagger between toxin arc projectiles so Jetting Mycelium reads as a sprayed volley.
+        /// </summary>
+        public const float JettingMyceliumArcVolleyStaggerSeconds = 0.06f;
+        /// <summary>
+        /// Duration of each Jetting Mycelium toxin arc projectile.
+        /// </summary>
+        public const float JettingMyceliumArcDurationSeconds = 0.34f;
+        /// <summary>
+        /// Base arc height for Jetting Mycelium toxin projectiles.
+        /// </summary>
+        public const float JettingMyceliumArcBaseHeightWorld = 0.18f;
+        /// <summary>
+        /// Additional height per tile of Jetting Mycelium toxin travel.
+        /// </summary>
+        public const float JettingMyceliumArcHeightPerTile = 0.03f;
+        /// <summary>
+        /// Peak scale for Jetting Mycelium toxin projectiles.
+        /// </summary>
+        public const float JettingMyceliumArcPeakScale = 1.55f;
+        /// <summary>
+        /// Small hold after the Jetting Mycelium toxin volley so the placement reads before the draft reappears.
+        /// </summary>
+        public const float JettingMyceliumPostVolleyHoldSeconds = 0.3f;
+        /// <summary>
         /// Optional delay after human-triggered Mycelial Bastion resolves to allow custom animations.
         /// </summary>
         public const float MycelialBastionHumanPostEffectDelaySeconds = 0.65f;

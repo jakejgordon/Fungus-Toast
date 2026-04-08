@@ -321,6 +321,10 @@ namespace FungusToast.Unity.Grid
                     overlayScale: UIEffectConstants.SporeSalvoOverlayScale,
                     restoreBoardStateOnFinish: true)
                 : null;
+        public IEnumerator PlayJettingMyceliumToxinVolleyAnimation(int sourceTileId, IReadOnlyList<int> destinationTileIds, Action<int> onImpact = null)
+            => _surgicalAnimator != null && toxinOverlayTile != null
+            ? _surgicalAnimator.RunArcVolley(sourceTileId, destinationTileIds, toxinOverlayTile.sprite, onImpact)
+                : null;
         public IEnumerator PlayHyphalBridgeAnimation(int playerId, int sourceTileId, IReadOnlyList<int> destinationTileIds)
             => _launchArcAnimator != null
                 ? _launchArcAnimator.PlaySequence(
@@ -558,6 +562,9 @@ namespace FungusToast.Unity.Grid
 
         public void TriggerToxinDropAnimation(int tileId)
             => cellStateAnimationController?.TriggerToxinDropAnimation(tileId);
+
+        public void SuppressNextToxinDropAnimations(IEnumerable<int> tileIds)
+            => cellStateAnimationController?.SuppressNextToxinDropAnimations(tileIds);
 
         // NEW: Resistant drop animation for Surgical Inoculation (Option A)
         public IEnumerator ResistantDropAnimation(int tileId, float finalScale = 1f, float durationScale = 1f)
