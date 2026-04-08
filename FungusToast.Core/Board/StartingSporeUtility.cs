@@ -139,7 +139,7 @@ namespace FungusToast.Core.Board
         /// Returns the chosen starting positions for a board size and player count.
         /// Positions are ordered by player slot.
         /// </summary>
-        public static IReadOnlyList<(int x, int y)> GetStartingPositions(int boardWidth, int boardHeight, int playerCount, IReadOnlyList<(int x, int y)>? overridePositions = null)
+        public static IReadOnlyList<(int x, int y)> GetStartingPositions(int boardWidth, int boardHeight, int playerCount, IReadOnlyList<(int x, int y)>? overridePositions = null, IReadOnlyList<int>? edgeOffsets = null)
         {
             if (boardWidth <= 0) throw new ArgumentOutOfRangeException(nameof(boardWidth));
             if (boardHeight <= 0) throw new ArgumentOutOfRangeException(nameof(boardHeight));
@@ -151,9 +151,12 @@ namespace FungusToast.Core.Board
 
             if (overridePositions is { Count: > 0 })
             {
-                return NormalizeOverridePositions(boardWidth, boardHeight, playerCount, overridePositions)
+                var normalized = NormalizeOverridePositions(boardWidth, boardHeight, playerCount, overridePositions)
                     .Select(p => (p.X, p.Y))
                     .ToArray();
+                return edgeOffsets is { Count: > 0 }
+                    ? ApplyEdgeOffsets(normalized, boardWidth, boardHeight, edgeOffsets)
+                    : normalized;
             }
 
             var key = (Width: boardWidth, Height: boardHeight, Players: playerCount);
@@ -166,10 +169,13 @@ namespace FungusToast.Core.Board
             }
 
             var analysis = GetStartingPositionAnalysis(boardWidth, boardHeight, playerCount);
-            return analysis.Entries
+            var positions = analysis.Entries
                 .OrderBy(e => e.SlotIndex)
                 .Select(e => (e.X, e.Y))
                 .ToArray();
+            return edgeOffsets is { Count: > 0 }
+                ? ApplyEdgeOffsets(positions, boardWidth, boardHeight, edgeOffsets)
+                : positions;
         }
 
         public static StartingPositionAnalysis GetStartingPositionAnalysis(int boardWidth, int boardHeight, int playerCount, IReadOnlyList<(int x, int y)>? overridePositions = null)
@@ -241,9 +247,9 @@ namespace FungusToast.Core.Board
         /// <summary>
         /// Places starting spores for all players using the shared layout.
         /// </summary>
-        public static void PlaceStartingSpores(GameBoard board, List<Player> players, Random rng, bool shufflePlayerOrder = true, IReadOnlyList<(int x, int y)>? overridePositions = null)
+        public static void PlaceStartingSpores(GameBoard board, List<Player> players, Random rng, bool shufflePlayerOrder = true, IReadOnlyList<(int x, int y)>? overridePositions = null, IReadOnlyList<int>? edgeOffsets = null)
         {
-            var positions = GetStartingPositions(board.Width, board.Height, players.Count, overridePositions);
+            var positions = GetStartingPositions(board.Width, board.Height, players.Count, overridePositions, edgeOffsets);
 
             var playerIndices = Enumerable.Range(0, players.Count).ToList();
             if (shufflePlayerOrder)
@@ -258,6 +264,32 @@ namespace FungusToast.Core.Board
                 var (x, y) = positions[i];
                 board.PlaceInitialSpore(playerIndices[i], x, y);
             }
+        }
+
+        private static IReadOnlyList<(int x, int y)> ApplyEdgeOffsets(IReadOnlyList<(int x, int y)> positions, int boardWidth, int boardHeight, IReadOnlyList<int> edgeOffsets)
+        {
+            var adjusted = new (int x, int y)[positions.Count];
+            for (int i = 0; i < positions.Count; i++)
+            {
+                var (x, y) = positions[i];
+                int offset = i < edgeOffsets.Count ? Math.Max(0, edgeOffsets[i]) : 0;
+                if (offset == 0)
+                {
+                    adjusted[i] = (x, y);
+                    continue;
+                }
+
+                int centerX = boardWidth / 2;
+                int centerY = boardHeight / 2;
+                int stepX = x == centerX ? 0 : Math.Sign(x - centerX);
+                int stepY = y == centerY ? 0 : Math.Sign(y - centerY);
+                adjusted[i] = (
+                    Math.Clamp(x + (stepX * offset), 0, boardWidth - 1),
+                    Math.Clamp(y + (stepY * offset), 0, boardHeight - 1)
+                );
+            }
+
+            return adjusted;
         }
 
         private static LayoutCandidate FindBestLayout(int boardWidth, int boardHeight, int playerCount)

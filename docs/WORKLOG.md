@@ -60,7 +60,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** campaign difficulty tuning with safe-proxy validation; early revisit on 2026-04-04 found Campaign5 is the main opening/mid bridge cliff and was conservatively softened by replacing `CMP_Surge_BeaconTempo_Medium` with `TST_Training_ResilientMycelium`. First-pass proxy target bands are now also defined for Campaign0-10 so future tuning can be judged against a concrete decline curve.
+- **Current focus:** campaign difficulty validation with safe-proxy reporting now standardized through artifact-backed summaries. Campaign4/5/6 are currently treated as acceptable checkpoints; Campaign7 is the next likely difficulty target if this thread continues.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
@@ -79,11 +79,19 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 ## Current Handoff
 
-- 2026-04-04 early/mid campaign recheck with the current deterministic `X-1` proxy-adaptation harness produced: `Campaign0 100%`, `Campaign1 100%`, `Campaign2 100%`, `Campaign3 100%`, `Campaign4 52%`, `Campaign5 10%`, `Campaign6 20%` safe-proxy win rate on 50-game checks.
 - First-pass safe-proxy acceptance curve for Campaign0-10 is now explicitly defined as: `Campaign0-2 90-100%`, `Campaign3 70-90%`, `Campaign4 50-70%`, `Campaign5 35-55%`, `Campaign6 25-45%`, `Campaign7 15-35%`, `Campaign8 10-25%`, `Campaign9 5-15%`, `Campaign10 0-10%`. Intent is a roughly linear decline for the conservative non-reactive proxy, with near-zero by ~Campaign10 acceptable.
-- Additional direct swap tests showed the Campaign5 cliff is not explained by `CMP_Economy_KillReclaim_Medium` alone; `CMP_Surge_BeaconTempo_Medium` was the major sharpener. Swapping BeaconTempo into the Campaign4 board collapsed the proxy from `52%` to `6%`, while replacing BeaconTempo on Campaign5 improved the proxy into the `14-18%` band depending on replacement/seed.
-- Practical better-not-perfect decision taken: update the actual `Campaign5` pool asset by replacing `CMP_Surge_BeaconTempo_Medium` with `TST_Training_ResilientMycelium`. Tested evidence for the chosen replacement on the real `50x50 5 AI` board with current harness settings: seed `20260421` -> `18.0% (9/50)` safe-proxy wins. Alternative softer-but-weaker conservative replacement `CMP_Defense_ReclaimShell_Easy` landed at `16.0%` on one seed and `14.0%` on confirmation.
-- Campaign6 was left unchanged for now after a conservative harder-side experiment (`CMP_Surge_BeaconTempo_Medium -> CMP_Economy_KillReclaim_Medium`) dropped it from `20%` to `14%`, which moved the curve in the wrong direction.
+- 2026-04-04 early/mid campaign recheck with the deterministic `X-1` proxy-adaptation harness produced: `Campaign0 100%`, `Campaign1 100%`, `Campaign2 100%`, `Campaign3 100%`, `Campaign4 52%`, `Campaign5 10%`, `Campaign6 20%` on 50-game checks. That pass identified Campaign5 as the main opening/mid bridge cliff.
+- 2026-04-05 follow-up work closed the Campaign5 gap and also corrected Campaign4 authoring drift. `Campaign4` (`40x40 4 AI`) now uses exactly the three earlier-introduced training opponents (`TST_Training_ResilientMycelium`, `TST_Training_Overextender`, `TST_Training_ToxicTurtle`) and validated at `76.0% (38/50)` on one 50-game seed — higher than the earlier rough target band, but structurally correct and intentionally forgiving.
+- 2026-04-05 Campaign5 tuning was iterated on the real authored `50x50 5 AI` board using artifact-backed reporting. The current accepted authored state is:
+  - board pool still uses `TST_Training_ResilientMycelium` instead of `CMP_Surge_BeaconTempo_Medium`
+  - `CMP_TierCap_GrowthResilience_Easy` now caps at `MutationTier.Tier2`
+  - `CMP_Control_AnabolicRebirth_Medium` now uses `economyBias: EconomyBias.MinorEconomy`
+  - `CMP_Reclaim_Scavenger_Easy` now starts with `TargetMutationGoal(MutationIds.MycelialBloom, 5)`
+- Current accepted Campaign5 validation result (artifact-backed `post_simulation_player_summary.csv`, seed family `20260405/20260410`): proxy `TST_CampaignPlayer_SafeBaseline` finished at `44.0% (22/50)` on the exact authored lineup, which is inside the agreed `35-55%` target band. Practical call: **Campaign5 is good to go**.
+- Campaign6 should currently be treated as an accepted checkpoint / leave-as-is level, not the next urgent tuning target. Earlier pooled validation landed it at `25.0% (10/40)` and later conservative substitution tests only made the curve worse; practical call remains: **leave Campaign6 unchanged for now**.
+- Reporting/process correction: balance summaries should now be treated as artifact-backed by default. `FungusToast.Core/docs/SIMULATION_HELPER.md` was updated to explicitly say not to rely on live console output alone and to prefer `players.parquet` / the offline analytics helper when available.
+- 2026-04-07 follow-up validation confirmed that the practical fix for Campaign7 was to remove `CMP_Economy_KillReclaim_Medium` from the `90x90 6 AI` board rather than trying to save it with small starting-spore offsets. Replacing it with `CMP_Reclaim_Scavenger_Easy` yielded an artifact-backed proxy result of `20.0% (10/50)`, which is inside the agreed Campaign7 target band (`15-35%`). Practical call: **Campaign7 is good to go** in this configuration.
+- If this thread continues, the next likely campaign difficulty target is **Campaign8**.
 
 
 ### 2026-03-27 (campaign AI pool support)
@@ -277,6 +285,14 @@ Use the following minimal workflow to preserve working memory across sessions:
 - **Evidence:** `python3 scripts/run_campaign_balance.py --level 5 --games 20 --seed 20260327`; `--level 5 --games 20 --seed 20260328`; `--level 6 --games 20 --seed 20260327`; `--level 6 --games 20 --seed 20260328`. Aggregated safe-proxy results: `Campaign5` -> `25.0% (10/40), avg living 247.9, avg dead 175.3`; `Campaign6` -> `25.0% (10/40), avg living 678.9, avg dead 464.3`.
 - **Open questions:** The next pass should probably run 50-100 game confirmations on pooled `Campaign5-6` and then revisit whether `Campaign7` needs an actual softer lineup rather than more pool-only variety.
 - **Next steps:** Keep `Campaign7` fixed, treat pooled `Campaign5-6` as the current authored baseline, and expand validation rather than churning those two boards again immediately.
+
+### 2026-04-05
+- **Focus:** Close out the early/mid campaign bridge by fixing Campaign4 authoring drift, tuning Campaign5 onto the agreed proxy band, and tightening simulation-reporting discipline.
+- **Changed:** Corrected `Campaign4` so the `40x40 4 AI` board now uses the three early training opponents together; retuned `Campaign5` through a mix of board-pool and roster-level changes (`TST_Training_ResilientMycelium` in the board pool instead of `CMP_Surge_BeaconTempo_Medium`, `CMP_TierCap_GrowthResilience_Easy` capped at Tier2, `CMP_Control_AnabolicRebirth_Medium` shifted to `MinorEconomy`, `CMP_Reclaim_Scavenger_Easy` front-loaded with `MycelialBloom` level 5); updated `FungusToast.Core/docs/SIMULATION_HELPER.md` to require artifact-backed balance summaries instead of live-console-only reporting.
+- **Learned:** Campaign5 was the real early/mid cliff; once softened, it landed inside the agreed `35-55%` proxy band. Campaign6 should still be treated as a leave-as-is checkpoint for now, and Campaign7 is the next likely difficulty problem if this thread continues.
+- **Evidence:** `Campaign4` validation on the corrected three-training-opponent lineup landed at `76.0% (38/50)` in one 50-game screen. Final accepted `Campaign5` artifact-backed result on seed family `20260405/20260410` was `44.0% (22/50)` for `TST_CampaignPlayer_SafeBaseline`, with standard summary fields emitted via `post_simulation_player_summary.csv`. Commit/push: `1584742` (`Tune Campaign4-5 balance and harden sim reporting`).
+- **Open questions:** Is `Campaign4`'s current forgiving result acceptable as-is, or should the early-band target table eventually be revisited for levels below Campaign5? For the next tuning pass, does Campaign7 need a structural softening or just a better pool/roster composition pass?
+- **Next steps:** Run an artifact-backed `Campaign7` validation pass and judge it against the agreed `15-35%` proxy band.
 
 ## Session Checkpoint Template
 
