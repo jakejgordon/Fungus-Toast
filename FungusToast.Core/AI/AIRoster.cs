@@ -1984,7 +1984,7 @@ namespace FungusToast.Core.AI
                 ["CMP_Surge_GrowthTempo_Medium"] = CampaignDifficulty.Medium,
                 ["CMP_Growth_Pressure_Medium"] = CampaignDifficulty.Medium,
                 ["CMP_Bloom_FortifyMimic_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Economy_KillReclaim_Medium"] = CampaignDifficulty.Medium,
+                ["CMP_Economy_KillReclaim_Medium"] = CampaignDifficulty.Elite,
                 ["TST_Campaign7_KillReclaim_Offset1"] = CampaignDifficulty.Medium,
                 ["TST_Campaign7_KillReclaim_Offset2"] = CampaignDifficulty.Medium,
                 ["TST_Campaign7_KillReclaim_Offset3"] = CampaignDifficulty.Medium,

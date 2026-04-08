@@ -19,6 +19,6 @@ MonoBehaviour:
   - strategyName: CMP_Control_AnabolicRebirth_Medium
   - strategyName: AI9
   - strategyName: CMP_Surge_GrowthTempo_Medium
-  - strategyName: CMP_Economy_KillReclaim_Medium
+  - strategyName: CMP_Reclaim_Scavenger_Easy
   - strategyName: CMP_Bloom_CreepingNecro_Medium
   - strategyName: CMP_Bloom_BeaconRegression_Medium
