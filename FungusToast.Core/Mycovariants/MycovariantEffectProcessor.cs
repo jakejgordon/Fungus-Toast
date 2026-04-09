@@ -53,6 +53,60 @@ public static class MycovariantEffectProcessor
         public bool HasAnyMovement => Moves.Count > 0;
     }
 
+    public static bool ResolveAscusWager(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+        if (player == null)
+        {
+            playerMyco.MarkTriggered();
+            return false;
+        }
+
+        var eligibleTier5Mutations = MutationRegistry.All.Values
+            .Where(mutation => mutation.Tier == MutationTier.Tier5)
+            .Where(mutation => player.GetMutationLevel(mutation.Id) < mutation.MaxLevel)
+            .ToList();
+        if (eligibleTier5Mutations.Count == 0)
+        {
+            playerMyco.MarkTriggered();
+            return false;
+        }
+
+        var targetMutation = eligibleTier5Mutations[rng.Next(eligibleTier5Mutations.Count)];
+        int oldLevel = player.GetMutationLevel(targetMutation.Id);
+        player.SetMutationLevel(
+            targetMutation.Id,
+            oldLevel + MycovariantGameBalance.AscusWagerTier5LevelsGranted,
+            board.CurrentRound,
+            observer);
+
+        int newLevel = player.GetMutationLevel(targetMutation.Id);
+        int levelsGranted = newLevel - oldLevel;
+        if (levelsGranted > 0)
+        {
+            playerMyco.IncrementEffectCount(MycovariantEffectType.Tier5MutationLevelsGranted, levelsGranted);
+            observer.RecordMutationUpgradeEvent(
+                playerId: player.PlayerId,
+                mutationId: targetMutation.Id,
+                mutationName: targetMutation.Name,
+                mutationTier: targetMutation.Tier,
+                oldLevel: oldLevel,
+                newLevel: newLevel,
+                round: board.CurrentRound,
+                mutationPointsBefore: player.MutationPoints,
+                mutationPointsAfter: player.MutationPoints,
+                pointsSpent: 0,
+                upgradeSource: "mycovariant");
+        }
+
+        playerMyco.MarkTriggered();
+        return levelsGranted > 0;
+    }
+
     public static void ResolveJettingMycelium(
         PlayerMycovariant playerMyco,
         Player player,

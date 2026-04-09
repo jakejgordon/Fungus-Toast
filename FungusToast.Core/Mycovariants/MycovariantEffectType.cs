@@ -38,6 +38,7 @@
         AggressotropicConduitReclaims,
         AggressotropicConduitToxinsReplaced,
         AggressotropicConduitResistantPlacements,
+        Tier5MutationLevelsGranted,
         // Add others as needed
     }
 }
