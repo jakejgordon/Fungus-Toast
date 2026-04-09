@@ -15,8 +15,7 @@ MonoBehaviour:
   presetId: Campaign0
   boardWidth: 10
   boardHeight: 10
-  aiPlayers:
-  - strategyName: TST_Training_ResilientMycelium
-    startingAdaptationIds: []
-  pooledAiPlayerCount: 0
-  aiStrategyPool: []
+  aiPlayers: []
+  pooledAiPlayerCount: 1
+  aiStrategyPool:
+  - TST_Training_ResilientMycelium

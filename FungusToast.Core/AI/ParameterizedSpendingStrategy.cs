@@ -65,12 +65,14 @@ namespace FungusToast.Core.AI
         private readonly List<int> surgePriorityIds;
         private readonly EconomyBias economyBias;
         private readonly List<MycovariantPreference> mycovariantPreferences;
+        private readonly int startingSporeEdgeOffset;
 
         // Metadata exposure for validation/auditing tools.
         public IReadOnlyList<TargetMutationGoal> TargetMutationGoals => targetMutationGoals;
         public IReadOnlyList<int> SurgePriorityIds => surgePriorityIds;
         public IReadOnlyList<MutationCategory>? PriorityMutationCategories => priorityMutationCategories;
         public EconomyBias EconomyProfile => economyBias;
+        public int StartingSporeEdgeOffset => startingSporeEdgeOffset;
 
         // ==== NEW: Dynamic Timing Awareness ====
         private enum GamePhase
@@ -90,7 +92,8 @@ namespace FungusToast.Core.AI
             int surgeAttemptTurnFrequency = GameBalance.DefaultSurgeAIAttemptTurnFrequency,
             EconomyBias economyBias = EconomyBias.Neutral,
             List<MycovariantPreference>? mycovariantPreferences = null,
-            List<int>? preferredMycovariantIds = null)
+            List<int>? preferredMycovariantIds = null,
+            int startingSporeEdgeOffset = 0)
         {
             StrategyName = strategyName;
             this.prioritizeHighTier = prioritizeHighTier;
@@ -101,6 +104,7 @@ namespace FungusToast.Core.AI
             this.surgeAttemptTurnFrequency = surgeAttemptTurnFrequency;
             this.economyBias = economyBias;
             this.mycovariantPreferences = mycovariantPreferences ?? new();
+            this.startingSporeEdgeOffset = Math.Max(0, startingSporeEdgeOffset);
             
             // Convert preferred mycovariant IDs to preferences if provided
             if (preferredMycovariantIds != null)
