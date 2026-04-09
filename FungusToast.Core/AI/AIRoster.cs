@@ -476,7 +476,7 @@ namespace FungusToast.Core.AI
             ),
             // AI9
             new ParameterizedSpendingStrategy(
-                strategyName: "AI9",
+                strategyName: "CMP_Growth_PutridTendrils_Medium",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -485,7 +485,7 @@ namespace FungusToast.Core.AI
                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 2),
                    new TargetMutationGoal(MutationIds.TendrilSoutheast, 2),
                    new TargetMutationGoal(MutationIds.TendrilSouthwest, 2),
-                   new TargetMutationGoal(MutationIds.AnabolicInversion, 2),
+                   new TargetMutationGoal(MutationIds.MycotropicInduction, 2),
                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel),
                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
@@ -506,19 +506,26 @@ namespace FungusToast.Core.AI
             ),
             // AI11
             new ParameterizedSpendingStrategy(
-                strategyName: "AI11",
+                strategyName: "CMP_Growth_WildfireBloom_Medium",
                 prioritizeHighTier: true,
                 priorityMutationCategories: new List<MutationCategory>
                 {
-                    MutationCategory.MycelialSurges,
-                    MutationCategory.Growth
+                    MutationCategory.Growth,
+                    MutationCategory.GeneticDrift,
+                    MutationCategory.MycelialSurges
                 },
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.HyphalSurge),
-                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift)
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, GameBalance.MycotropicInductionMaxLevel),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, GameBalance.ChitinFortificationMaxLevel),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 3),
+                    new TargetMutationGoal(MutationIds.TendrilNortheast, 10),
+                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 10),
+                    new TargetMutationGoal(MutationIds.TendrilSoutheast, 10),
+                    new TargetMutationGoal(MutationIds.TendrilSouthwest, 10),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel)
                 },
-                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChitinFortification },
                 surgeAttemptTurnFrequency: 7,
                 economyBias: EconomyBias.MaxEconomy,
                 maxTier: MutationTier.Tier5
@@ -1902,8 +1909,8 @@ namespace FungusToast.Core.AI
                 ["AI13"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["AI7"] = new[] { DifficultyBand.Normal },
                 ["AI8"] = new[] { DifficultyBand.Normal },
-                ["AI9"] = new[] { DifficultyBand.Normal },
-                ["AI11"] = new[] { DifficultyBand.Normal },
+                ["CMP_Growth_PutridTendrils_Medium"] = new[] { DifficultyBand.Normal },
+                ["CMP_Growth_WildfireBloom_Medium"] = new[] { DifficultyBand.Normal },
                 ["AI1"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["AI2"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["AI3"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
@@ -1957,8 +1964,8 @@ namespace FungusToast.Core.AI
                 ["AI13"] = CampaignDifficulty.Hard,
                 ["AI7"] = CampaignDifficulty.Medium,
                 ["AI8"] = CampaignDifficulty.Medium,
-                ["AI9"] = CampaignDifficulty.Medium,
-                ["AI11"] = CampaignDifficulty.Medium,
+                ["CMP_Growth_PutridTendrils_Medium"] = CampaignDifficulty.Medium,
+                ["CMP_Growth_WildfireBloom_Medium"] = CampaignDifficulty.Medium,
                 ["AI1"] = CampaignDifficulty.Elite,
                 ["AI2"] = CampaignDifficulty.Elite,
                 ["AI3"] = CampaignDifficulty.Elite,
