@@ -11,6 +11,7 @@ namespace FungusToast.Core.Mycovariants
             yield return PlasmidBounty();
             yield return PlasmidBountyII();
             yield return PlasmidBountyIII();
+            yield return AscusWager();
         }
 
         private static Mycovariant PlasmidBounty() =>
@@ -74,6 +75,26 @@ namespace FungusToast.Core.Mycovariants
                 },
                 AIPrioritizeEarly = true,
                 AIScore = (player, board) => 10f
+            };
+
+        private static Mycovariant AscusWager() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.AscusWagerId,
+                Name = "Ascus Wager",
+                Description = $"One-time on draft: gain {MycovariantGameBalance.AscusWagerTier5LevelsGranted} free level of a random Tier 5 mutation, ignoring prerequisites.",
+                FlavorText = "A sealed ascus bursts with reckless promise, gambling the colony's future on a single rare trait.",
+                IconId = "myco_ascus_wager",
+                Type = MycovariantType.Economy,
+                Category = MycovariantCategory.Economy,
+                IsUniversal = false,
+                AutoMarkTriggered = true,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    MycovariantEffectProcessor.ResolveAscusWager(playerMyco, board, rng, observer);
+                },
+                AIPrioritizeEarly = true,
+                AIScore = (player, board) => MycovariantGameBalance.AscusWagerAIScore
             };
     }
 }

@@ -35,6 +35,7 @@ namespace FungusToast.Core.Mycovariants
         [Obsolete] public static Mycovariant PlasmidBounty() { return EconomyMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.PlasmidBountyId); }
         [Obsolete] public static Mycovariant PlasmidBountyII() { return EconomyMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.PlasmidBountyIIId); }
         [Obsolete] public static Mycovariant PlasmidBountyIII() { return EconomyMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.PlasmidBountyIIIId); }
+        [Obsolete] public static Mycovariant AscusWager() { return EconomyMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.AscusWagerId); }
 
         // Reclamation
         [Obsolete] public static Mycovariant NecrophoricAdaptation() { return ReclamationMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.NecrophoricAdaptation); }

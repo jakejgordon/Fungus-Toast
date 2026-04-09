@@ -40,5 +40,6 @@ namespace FungusToast.Core.Mycovariants
         public const int AggressotropicConduitIIIId = 1029;
         public const int HyphalDrawId = 1030;
         public const int SeptalAlarmId = 1031;
+        public const int AscusWagerId = 1034;
     }
 }
