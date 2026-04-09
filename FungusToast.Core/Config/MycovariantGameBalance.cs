@@ -8,16 +8,15 @@ namespace FungusToast.Core.Config
         public const int MycovariantSelectionDraftSize = 3;
 
         // Shared balance parameters
-        public const int JettingMyceliumNumberOfLivingCellTiles = 4;
         public const int DefaultJettingMyceliumToxinGrowthCycleDuration = 17;
 
-        // Jetting Mycelium cone effect parameters
-        public const int JettingMyceliumConeNarrowLength = 4;  // First 4 toxins: 1 tile wide
-        public const int JettingMyceliumConeMediumLength = 3;  // Next 3 toxins: 3 tiles wide
-        public const int JettingMyceliumConeWideLength = 3;    // Last 3 toxins: 5 tiles wide
-        public const int JettingMyceliumConeNarrowWidth = 1;
-        public const int JettingMyceliumConeMediumWidth = 3;
-        public const int JettingMyceliumConeWideWidth = 5;
+        // Jetting Mycelium tier patterns
+        public const int JettingMyceliumILivingCellTiles = 3;
+        public const int JettingMyceliumIILivingCellTiles = 3;
+        public const int JettingMyceliumIIILivingCellTiles = 4;
+        public static readonly int[] JettingMyceliumIToxinRowWidths = new[] { 3, 3, 5, 7 };
+        public static readonly int[] JettingMyceliumIIToxinRowWidths = new[] { 3, 3, 5, 7, 9 };
+        public static readonly int[] JettingMyceliumIIIToxinRowWidths = new[] { 3, 3, 5, 7, 9, 11 };
 
         public const int PlasmidBountyMutationPointAward = 7;
         public const int PlasmidBountyIIMutationPointAward = 11;

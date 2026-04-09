@@ -9,6 +9,65 @@ namespace FungusToast.Core.Tests.Mycovariants;
 public class JettingMyceliumMycovariantTests
 {
     [Fact]
+    public void Factory_exposes_three_jetting_tiers_with_expected_names_and_universal_flags()
+    {
+        var jettingMycovariants = MycovariantFactory.GetAll()
+            .Where(mycovariant =>
+                mycovariant.Id == MycovariantIds.JettingMyceliumIId ||
+                mycovariant.Id == MycovariantIds.JettingMyceliumIIId ||
+                mycovariant.Id == MycovariantIds.JettingMyceliumIIIId)
+            .OrderBy(mycovariant => mycovariant.Id)
+            .ToList();
+
+        Assert.Collection(
+            jettingMycovariants,
+            tierI =>
+            {
+                Assert.Equal(MycovariantIds.JettingMyceliumIId, tierI.Id);
+                Assert.Equal("Jetting Mycelium I", tierI.Name);
+                Assert.True(tierI.IsUniversal);
+                Assert.Contains("grow 3 living tiles", tierI.Description);
+                Assert.Contains("up to 7 tiles wide", tierI.Description);
+            },
+            tierII =>
+            {
+                Assert.Equal(MycovariantIds.JettingMyceliumIIId, tierII.Id);
+                Assert.Equal("Jetting Mycelium II", tierII.Name);
+                Assert.False(tierII.IsUniversal);
+                Assert.Contains("grow 3 living tiles", tierII.Description);
+                Assert.Contains("up to 9 tiles wide", tierII.Description);
+            },
+            tierIII =>
+            {
+                Assert.Equal(MycovariantIds.JettingMyceliumIIIId, tierIII.Id);
+                Assert.Equal("Jetting Mycelium III", tierIII.Name);
+                Assert.False(tierIII.IsUniversal);
+                Assert.Contains("grow 4 living tiles", tierIII.Description);
+                Assert.Contains("up to 11 tiles wide", tierIII.Description);
+            });
+    }
+
+    [Fact]
+    public void GetTileCone_uses_requested_jetting_row_pattern_after_the_living_line()
+    {
+        var board = new GameBoard(width: 20, height: 20, playerCount: 2);
+
+        int sourceTileId = GetTileId(board, x: 4, y: 10);
+
+        var tierI = board.GetTileCone(sourceTileId, CardinalDirection.East, JettingMyceliumHelper.GetToxinRowWidthsForMycovariant(MycovariantIds.JettingMyceliumIId), JettingMyceliumHelper.GetLivingLengthForMycovariant(MycovariantIds.JettingMyceliumIId));
+        var tierII = board.GetTileCone(sourceTileId, CardinalDirection.East, JettingMyceliumHelper.GetToxinRowWidthsForMycovariant(MycovariantIds.JettingMyceliumIIId), JettingMyceliumHelper.GetLivingLengthForMycovariant(MycovariantIds.JettingMyceliumIIId));
+        var tierIII = board.GetTileCone(sourceTileId, CardinalDirection.East, JettingMyceliumHelper.GetToxinRowWidthsForMycovariant(MycovariantIds.JettingMyceliumIIIId), JettingMyceliumHelper.GetLivingLengthForMycovariant(MycovariantIds.JettingMyceliumIIIId));
+
+        Assert.Equal(new[] { 3, 3, 5, 7 }, GetRowWidthsByColumn(board, tierI));
+        Assert.Equal(new[] { 3, 3, 5, 7, 9 }, GetRowWidthsByColumn(board, tierII));
+        Assert.Equal(new[] { 3, 3, 5, 7, 9, 11 }, GetRowWidthsByColumn(board, tierIII));
+
+        Assert.DoesNotContain(GetTileId(board, x: 5, y: 10), tierI);
+        Assert.DoesNotContain(GetTileId(board, x: 6, y: 10), tierI);
+        Assert.DoesNotContain(GetTileId(board, x: 7, y: 10), tierI);
+    }
+
+    [Fact]
     public void EvaluatePlacement_ignores_resistant_enemy_cells_for_infest_and_toxify_scoring()
     {
         var board = new GameBoard(width: 12, height: 11, playerCount: 2);
@@ -59,8 +118,8 @@ public class JettingMyceliumMycovariantTests
 
         var playerMyco = new PlayerMycovariant(
             owner.PlayerId,
-            MycovariantIds.JettingMyceliumId,
-            new Mycovariant { Id = MycovariantIds.JettingMyceliumId, Name = "Jetting Mycelium" });
+            MycovariantIds.JettingMyceliumIId,
+            new Mycovariant { Id = MycovariantIds.JettingMyceliumIId, Name = "Jetting Mycelium I" });
 
         MycovariantEffectProcessor.ResolveJettingMycelium(
             playerMyco,
@@ -75,8 +134,6 @@ public class JettingMyceliumMycovariantTests
         AssertOwnedResistantLivingCell(board, resistantConeTileId, enemy.PlayerId);
 
         Assert.Equal(0, playerMyco.EffectCounts.GetValueOrDefault(MycovariantEffectType.Infested));
-        Assert.Equal(0, playerMyco.EffectCounts.GetValueOrDefault(MycovariantEffectType.Poisoned));
-        Assert.Equal(0, playerMyco.EffectCounts.GetValueOrDefault(MycovariantEffectType.Colonized));
     }
 
     [Fact]
@@ -126,5 +183,14 @@ public class JettingMyceliumMycovariantTests
     private static int GetTileId(GameBoard board, int x, int y)
     {
         return y * board.Width + x;
+    }
+
+    private static int[] GetRowWidthsByColumn(GameBoard board, IEnumerable<int> tileIds)
+    {
+        return tileIds
+            .GroupBy(tileId => board.GetXYFromTileId(tileId).x)
+            .OrderBy(group => group.Key)
+            .Select(group => group.Count())
+            .ToArray();
     }
 }

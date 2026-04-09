@@ -930,14 +930,19 @@ namespace FungusToast.Core.Board
             return result;
         }
         public List<int> GetTileCone(int startTileId, CardinalDirection direction)
+            => GetTileCone(startTileId, direction, MycovariantGameBalance.JettingMyceliumIToxinRowWidths, 0);
+
+        public List<int> GetTileCone(int startTileId, CardinalDirection direction, IReadOnlyList<int> rowWidths, int distanceOffset = 0)
         {
             var result = new List<int>();
             var (startX, startY) = GetXYFromTileId(startTileId);
             var (dirX, dirY) = GetDirectionVector(direction);
             var (perpX, perpY) = GetPerpendicularVector(direction);
-            AddConeSection(result, startX, startY, dirX, dirY, perpX, perpY, MycovariantGameBalance.JettingMyceliumConeNarrowLength, MycovariantGameBalance.JettingMyceliumConeNarrowWidth, 0);
-            AddConeSection(result, startX, startY, dirX, dirY, perpX, perpY, MycovariantGameBalance.JettingMyceliumConeMediumLength, MycovariantGameBalance.JettingMyceliumConeMediumWidth, MycovariantGameBalance.JettingMyceliumConeNarrowLength);
-            AddConeSection(result, startX, startY, dirX, dirY, perpX, perpY, MycovariantGameBalance.JettingMyceliumConeWideLength, MycovariantGameBalance.JettingMyceliumConeWideWidth, MycovariantGameBalance.JettingMyceliumConeNarrowLength + MycovariantGameBalance.JettingMyceliumConeMediumLength);
+            for (var rowIndex = 0; rowIndex < rowWidths.Count; rowIndex++)
+            {
+                AddConeRow(result, startX, startY, dirX, dirY, perpX, perpY, rowWidths[rowIndex], distanceOffset + rowIndex + 1);
+            }
+
             return result;
         }
         private (int dx, int dy) GetDirectionVector(CardinalDirection direction) => direction switch
@@ -956,22 +961,20 @@ namespace FungusToast.Core.Board
             CardinalDirection.West => (0, 1),
             _ => (0, 0)
         };
-        private void AddConeSection(List<int> result, int startX, int startY, int dirX, int dirY, int perpX, int perpY, int sectionLength, int sectionWidth, int distanceOffset)
+        private void AddConeRow(List<int> result, int startX, int startY, int dirX, int dirY, int perpX, int perpY, int rowWidth, int distanceFromSource)
         {
-            for (int distance = 1; distance <= sectionLength; distance++)
+            int centerX = startX + distanceFromSource * dirX;
+            int centerY = startY + distanceFromSource * dirY;
+            int leftSpan = (rowWidth - 1) / 2;
+            int rightSpan = rowWidth / 2;
+            for (int offset = -leftSpan; offset <= rightSpan; offset++)
             {
-                int centerX = startX + (distance + distanceOffset) * dirX;
-                int centerY = startY + (distance + distanceOffset) * dirY;
-                int halfWidth = sectionWidth / 2;
-                for (int offset = -halfWidth; offset <= halfWidth; offset++)
+                int tileX = centerX + offset * perpX;
+                int tileY = centerY + offset * perpY;
+                if (tileX >= 0 && tileX < Width && tileY >= 0 && tileY < Height)
                 {
-                    int tileX = centerX + offset * perpX;
-                    int tileY = centerY + offset * perpY;
-                    if (tileX >= 0 && tileX < Width && tileY >= 0 && tileY < Height)
-                    {
-                        int tileId = tileY * Width + tileX;
-                        if (!result.Contains(tileId)) result.Add(tileId);
-                    }
+                    int tileId = tileY * Width + tileX;
+                    if (!result.Contains(tileId)) result.Add(tileId);
                 }
             }
         }

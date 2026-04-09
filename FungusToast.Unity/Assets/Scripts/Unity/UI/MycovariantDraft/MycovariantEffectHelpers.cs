@@ -42,16 +42,18 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 // Pre-animation stagger
                 yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
 
-                var bestPlacement = JettingMyceliumHelper.FindBestPlacement(player, board);
+                int livingLength = JettingMyceliumHelper.GetLivingLengthForMycovariant(picked.Id);
+                var toxinRowWidths = JettingMyceliumHelper.GetToxinRowWidthsForMycovariant(picked.Id);
+                var bestPlacement = JettingMyceliumHelper.FindBestPlacement(player, board, picked.Id);
                 if (bestPlacement != null)
                 {
                     var placement = bestPlacement.Value;
                     var livingLine = board.GetTileLine(
                         placement.sourceCell.TileId,
                         placement.direction,
-                        MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles,
+                        livingLength,
                         includeStartingTile: false);
-                    var toxinCone = board.GetTileCone(placement.sourceCell.TileId, placement.direction);
+                    var toxinCone = board.GetTileCone(placement.sourceCell.TileId, placement.direction, toxinRowWidths, livingLength);
                     var playerMyco = player.PlayerMycovariants
                         .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
                     if (playerMyco != null)
@@ -135,9 +137,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         var livingLine = board.GetTileLine(
                             tileId,
                             direction,
-                            MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles,
+                            JettingMyceliumHelper.GetLivingLengthForMycovariant(picked.Id),
                             includeStartingTile: false);
-                        var toxinCone = board.GetTileCone(tileId, direction);
+                        var toxinCone = board.GetTileCone(
+                            tileId,
+                            direction,
+                            JettingMyceliumHelper.GetToxinRowWidthsForMycovariant(picked.Id),
+                            JettingMyceliumHelper.GetLivingLengthForMycovariant(picked.Id));
                         var playerMyco = player.PlayerMycovariants
                             .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
 
@@ -188,8 +194,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             return;
                         }
 
-                        var livingLine = board.GetTileLine(tileId, direction.Value, MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles, false);
-                        var toxinCone = board.GetTileCone(tileId, direction.Value);
+                        var livingLine = board.GetTileLine(tileId, direction.Value, JettingMyceliumHelper.GetLivingLengthForMycovariant(picked.Id), false);
+                        var toxinCone = board.GetTileCone(
+                            tileId,
+                            direction.Value,
+                            JettingMyceliumHelper.GetToxinRowWidthsForMycovariant(picked.Id),
+                            JettingMyceliumHelper.GetLivingLengthForMycovariant(picked.Id));
                         gridVisualizer.ShowJettingMyceliumPreview(livingLine, toxinCone);
                     },
                     sourcePromptMessage,

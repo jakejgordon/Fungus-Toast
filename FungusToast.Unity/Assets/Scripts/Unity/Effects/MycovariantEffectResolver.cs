@@ -31,7 +31,9 @@ namespace FungusToast.Unity.Effects
         /// Returns true if the given mycovariant ID is Jetting Mycelium, including legacy directional variants.
         /// </summary>
         public static bool IsJettingMycelium(int id) =>
-            id == MycovariantIds.JettingMyceliumId ||
+            id == MycovariantIds.JettingMyceliumIId ||
+            id == MycovariantIds.JettingMyceliumIIId ||
+            id == MycovariantIds.JettingMyceliumIIIId ||
             id == MycovariantIds.JettingMyceliumEastId ||
             id == MycovariantIds.JettingMyceliumSouthId ||
             id == MycovariantIds.JettingMyceliumWestId;

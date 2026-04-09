@@ -22,45 +22,48 @@ namespace FungusToast.Core.Mycovariants
         }
 
         // Directional
-        [Obsolete("Use GetAll() and filter by Id instead.")] public static Mycovariant JettingMycelium() => DirectionalMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.JettingMyceliumId);
-        [Obsolete] public static Mycovariant JettingMyceliumNorth() => JettingMycelium();
-        [Obsolete] public static Mycovariant JettingMyceliumEast() => JettingMycelium();
-        [Obsolete] public static Mycovariant JettingMyceliumSouth() => JettingMycelium();
-        [Obsolete] public static Mycovariant JettingMyceliumWest() => JettingMycelium();
+        [Obsolete("Use GetAll() and filter by Id instead.")] public static Mycovariant JettingMycelium() { return JettingMyceliumI(); }
+        [Obsolete("Use GetAll() and filter by Id instead.")] public static Mycovariant JettingMyceliumI() { return DirectionalMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.JettingMyceliumIId); }
+        [Obsolete("Use GetAll() and filter by Id instead.")] public static Mycovariant JettingMyceliumII() { return DirectionalMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.JettingMyceliumIIId); }
+        [Obsolete("Use GetAll() and filter by Id instead.")] public static Mycovariant JettingMyceliumIII() { return DirectionalMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.JettingMyceliumIIIId); }
+        [Obsolete] public static Mycovariant JettingMyceliumNorth() { return JettingMyceliumI(); }
+        [Obsolete] public static Mycovariant JettingMyceliumEast() { return JettingMyceliumI(); }
+        [Obsolete] public static Mycovariant JettingMyceliumSouth() { return JettingMyceliumI(); }
+        [Obsolete] public static Mycovariant JettingMyceliumWest() { return JettingMyceliumI(); }
 
         // Economy
-        [Obsolete] public static Mycovariant PlasmidBounty() => EconomyMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.PlasmidBountyId);
-        [Obsolete] public static Mycovariant PlasmidBountyII() => EconomyMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.PlasmidBountyIIId);
-        [Obsolete] public static Mycovariant PlasmidBountyIII() => EconomyMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.PlasmidBountyIIIId);
+        [Obsolete] public static Mycovariant PlasmidBounty() { return EconomyMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.PlasmidBountyId); }
+        [Obsolete] public static Mycovariant PlasmidBountyII() { return EconomyMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.PlasmidBountyIIId); }
+        [Obsolete] public static Mycovariant PlasmidBountyIII() { return EconomyMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.PlasmidBountyIIIId); }
 
         // Reclamation
-        [Obsolete] public static Mycovariant NecrophoricAdaptation() => ReclamationMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.NecrophoricAdaptation);
-        [Obsolete] public static Mycovariant ReclamationRhizomorphs() => ReclamationMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.ReclamationRhizomorphsId);
+        [Obsolete] public static Mycovariant NecrophoricAdaptation() { return ReclamationMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.NecrophoricAdaptation); }
+        [Obsolete] public static Mycovariant ReclamationRhizomorphs() { return ReclamationMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.ReclamationRhizomorphsId); }
 
         // Fungicide / Defense
-        [Obsolete] public static Mycovariant NeutralizingMantle() => FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.NeutralizingMantleId);
-        [Obsolete] public static Mycovariant EnduringToxaphores() => FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.EnduringToxaphoresId);
-        [Obsolete] public static Mycovariant BallistosporeDischargeI() => FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.BallistosporeDischargeIId);
-        [Obsolete] public static Mycovariant BallistosporeDischargeII() => FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.BallistosporeDischargeIIId);
-        [Obsolete] public static Mycovariant BallistosporeDischargeIII() => FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.BallistosporeDischargeIIIId);
-        [Obsolete] public static Mycovariant CytolyticBurst() => FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.CytolyticBurstId);
-        [Obsolete] public static Mycovariant ChemotacticMycotoxins() => FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.ChemotacticMycotoxinsId);
+        [Obsolete] public static Mycovariant NeutralizingMantle() { return FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.NeutralizingMantleId); }
+        [Obsolete] public static Mycovariant EnduringToxaphores() { return FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.EnduringToxaphoresId); }
+        [Obsolete] public static Mycovariant BallistosporeDischargeI() { return FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.BallistosporeDischargeIId); }
+        [Obsolete] public static Mycovariant BallistosporeDischargeII() { return FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.BallistosporeDischargeIIId); }
+        [Obsolete] public static Mycovariant BallistosporeDischargeIII() { return FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.BallistosporeDischargeIIIId); }
+        [Obsolete] public static Mycovariant CytolyticBurst() { return FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.CytolyticBurstId); }
+        [Obsolete] public static Mycovariant ChemotacticMycotoxins() { return FungicideMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.ChemotacticMycotoxinsId); }
 
         // Resistance / Growth hybrid
-        [Obsolete] public static Mycovariant MycelialBastionI() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.MycelialBastionIId);
-        [Obsolete] public static Mycovariant MycelialBastionII() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.MycelialBastionIIId);
-        [Obsolete] public static Mycovariant MycelialBastionIII() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.MycelialBastionIIIId);
-        [Obsolete] public static Mycovariant SurgicalInoculation() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.SurgicalInoculationId);
-        [Obsolete] public static Mycovariant HyphalResistanceTransfer() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.HyphalResistanceTransferId);
-        [Obsolete] public static Mycovariant SeptalAlarm() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.SeptalAlarmId);
-        [Obsolete] public static Mycovariant AggressotropicConduitI() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.AggressotropicConduitIId);
-        [Obsolete] public static Mycovariant AggressotropicConduitII() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.AggressotropicConduitIIId);
-        [Obsolete] public static Mycovariant AggressotropicConduitIII() => ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.AggressotropicConduitIIIId);
+        [Obsolete] public static Mycovariant MycelialBastionI() { return ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.MycelialBastionIId); }
+        [Obsolete] public static Mycovariant MycelialBastionII() { return ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.MycelialBastionIIId); }
+        [Obsolete] public static Mycovariant MycelialBastionIII() { return ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.MycelialBastionIIIId); }
+        [Obsolete] public static Mycovariant SurgicalInoculation() { return ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.SurgicalInoculationId); }
+        [Obsolete] public static Mycovariant HyphalResistanceTransfer() { return ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.HyphalResistanceTransferId); }
+        [Obsolete] public static Mycovariant SeptalAlarm() { return ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.SeptalAlarmId); }
+        [Obsolete] public static Mycovariant AggressotropicConduitI() { return ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.AggressotropicConduitIId); }
+        [Obsolete] public static Mycovariant AggressotropicConduitII() { return ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.AggressotropicConduitIIId); }
+        [Obsolete] public static Mycovariant AggressotropicConduitIII() { return ResistanceMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.AggressotropicConduitIIIId); }
 
         // Growth
-        [Obsolete] public static Mycovariant PerimeterProliferator() => GrowthMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.PerimeterProliferatorId);
-        [Obsolete] public static Mycovariant CornerConduitI() => GrowthMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.CornerConduitIId);
-        [Obsolete] public static Mycovariant CornerConduitII() => GrowthMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.CornerConduitIIId);
-        [Obsolete] public static Mycovariant CornerConduitIII() => GrowthMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.CornerConduitIIIId);
+        [Obsolete] public static Mycovariant PerimeterProliferator() { return GrowthMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.PerimeterProliferatorId); }
+        [Obsolete] public static Mycovariant CornerConduitI() { return GrowthMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.CornerConduitIId); }
+        [Obsolete] public static Mycovariant CornerConduitII() { return GrowthMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.CornerConduitIIId); }
+        [Obsolete] public static Mycovariant CornerConduitIII() { return GrowthMycovariantFactory.CreateAll().First(m => m.Id == MycovariantIds.CornerConduitIIIId); }
     }
 }

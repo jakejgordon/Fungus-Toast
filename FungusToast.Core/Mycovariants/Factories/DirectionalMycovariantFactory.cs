@@ -9,26 +9,32 @@ namespace FungusToast.Core.Mycovariants
     {
         public static IEnumerable<Mycovariant> CreateAll()
         {
-            yield return CreateJettingMycelium();
+            yield return CreateJettingMycelium(MycovariantIds.JettingMyceliumIId, "Jetting Mycelium I", isUniversal: true);
+            yield return CreateJettingMycelium(MycovariantIds.JettingMyceliumIIId, "Jetting Mycelium II", isUniversal: false);
+            yield return CreateJettingMycelium(MycovariantIds.JettingMyceliumIIIId, "Jetting Mycelium III", isUniversal: false);
         }
 
-        private static Mycovariant CreateJettingMycelium()
+        private static Mycovariant CreateJettingMycelium(int mycovariantId, string name, bool isUniversal)
         {
+            var livingLength = JettingMyceliumHelper.GetLivingLengthForMycovariant(mycovariantId);
+            var maxToxinWidth = JettingMyceliumHelper.GetMaximumToxinWidthForMycovariant(mycovariantId);
+
             return new Mycovariant
             {
-                Id = MycovariantIds.JettingMyceliumId,
-                Name = "Jetting Mycelium",
-                Description = $"One-time on draft: choose a living source cell, then aim a spore-jet in a cardinal direction: grow {Config.MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles} living tiles, then place a toxin cone widening from {Config.MycovariantGameBalance.JettingMyceliumConeNarrowWidth} to {Config.MycovariantGameBalance.JettingMyceliumConeWideWidth} tiles.",
+                Id = mycovariantId,
+                Name = name,
+                Description = $"One-time on draft: choose a living source cell, then aim a spore-jet in a cardinal direction: grow {livingLength} living tiles, then place a widening toxin fan up to {maxToxinWidth} tiles wide.",
                 FlavorText = "The cap ruptures violently. The colony blasts outward in a widening cloud of toxic spores wherever the pilot aims.",
                 Type = MycovariantType.Directional,
                 Category = MycovariantCategory.Fungicide,
+                IsUniversal = isUniversal,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
                     var player = board.Players.First(p => p.PlayerId == playerMyco.PlayerId);
-                    bool shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI;
+                    var shouldUseCoreLogic = player.PlayerType == PlayerTypeEnum.AI;
                     if (shouldUseCoreLogic)
                     {
-                        var bestPlacement = JettingMyceliumHelper.FindBestPlacement(player, board);
+                        var bestPlacement = JettingMyceliumHelper.FindBestPlacement(player, board, mycovariantId);
                         if (bestPlacement != null)
                         {
                             var placement = bestPlacement.Value;
@@ -39,7 +45,7 @@ namespace FungusToast.Core.Mycovariants
                 },
                 AIScore = (player, board) =>
                 {
-                    var bestPlacement = JettingMyceliumHelper.FindBestPlacement(player, board);
+                    var bestPlacement = JettingMyceliumHelper.FindBestPlacement(player, board, mycovariantId);
                     if (bestPlacement == null) return 1f;
                     return JettingMyceliumHelper.ScoreToAIScore(bestPlacement.Value.score);
                 }

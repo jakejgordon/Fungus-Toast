@@ -8,19 +8,53 @@ namespace FungusToast.Core.Mycovariants
 {
     public static class JettingMyceliumHelper
     {
+        public static int GetLivingLengthForMycovariant(int mycovariantId)
+        {
+            return mycovariantId switch
+            {
+                MycovariantIds.JettingMyceliumIIIId => MycovariantGameBalance.JettingMyceliumIIILivingCellTiles,
+                MycovariantIds.JettingMyceliumIIId => MycovariantGameBalance.JettingMyceliumIILivingCellTiles,
+                _ => MycovariantGameBalance.JettingMyceliumILivingCellTiles
+            };
+        }
+
+        public static IReadOnlyList<int> GetToxinRowWidthsForMycovariant(int mycovariantId)
+        {
+            return mycovariantId switch
+            {
+                MycovariantIds.JettingMyceliumIIId => MycovariantGameBalance.JettingMyceliumIIToxinRowWidths,
+                MycovariantIds.JettingMyceliumIIIId => MycovariantGameBalance.JettingMyceliumIIIToxinRowWidths,
+                _ => MycovariantGameBalance.JettingMyceliumIToxinRowWidths
+            };
+        }
+
+        public static int GetMaximumToxinWidthForMycovariant(int mycovariantId)
+        {
+            var rowWidths = GetToxinRowWidthsForMycovariant(mycovariantId);
+            return rowWidths[rowWidths.Count - 1];
+        }
+
         /// <summary>
         /// Evaluates the potential placement of Jetting Mycelium from a given source cell in a specific direction.
         /// Returns a score based on the expected outcomes using the new cone pattern.
         /// </summary>
         public static float EvaluatePlacement(FungalCell sourceCell, CardinalDirection direction, GameBoard board, Player player)
+            => EvaluatePlacement(sourceCell, direction, board, player, MycovariantIds.JettingMyceliumIId);
+
+        /// <summary>
+        /// Evaluates the potential placement of Jetting Mycelium from a given source cell in a specific direction.
+        /// Returns a score based on the expected outcomes for the specified tier.
+        /// </summary>
+        public static float EvaluatePlacement(FungalCell sourceCell, CardinalDirection direction, GameBoard board, Player player, int mycovariantId)
         {
-            int livingLength = MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles;
+            int livingLength = GetLivingLengthForMycovariant(mycovariantId);
+            var toxinRowWidths = GetToxinRowWidthsForMycovariant(mycovariantId);
 
             // Get the straight line for living cells
             var livingLine = board.GetTileLine(sourceCell.TileId, direction, livingLength, includeStartingTile: false);
             
             // Get the cone pattern for toxins
-            var toxinCone = board.GetTileCone(sourceCell.TileId, direction);
+            var toxinCone = board.GetTileCone(sourceCell.TileId, direction, toxinRowWidths, livingLength);
 
             int infested = 0;
             int reclaimed = 0;
@@ -108,6 +142,12 @@ namespace FungusToast.Core.Mycovariants
         /// Finds the best placement for Jetting Mycelium from any of the player's living cells in the given direction.
         /// </summary>
         public static (FungalCell sourceCell, float score)? FindBestPlacement(Player player, GameBoard board, CardinalDirection direction)
+            => FindBestPlacement(player, board, direction, MycovariantIds.JettingMyceliumIId);
+
+        /// <summary>
+        /// Finds the best placement for Jetting Mycelium from any of the player's living cells in the given direction.
+        /// </summary>
+        public static (FungalCell sourceCell, float score)? FindBestPlacement(Player player, GameBoard board, CardinalDirection direction, int mycovariantId)
         {
             var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
                 .Where(c => c.IsAlive)
@@ -120,7 +160,7 @@ namespace FungusToast.Core.Mycovariants
 
             foreach (var cell in livingCells)
             {
-                float score = EvaluatePlacement(cell, direction, board, player);
+                float score = EvaluatePlacement(cell, direction, board, player, mycovariantId);
                 if (score > bestScore)
                 {
                     bestScore = score;
@@ -135,6 +175,12 @@ namespace FungusToast.Core.Mycovariants
         /// Finds the best placement for Jetting Mycelium across every living source cell and cardinal direction.
         /// </summary>
         public static (FungalCell sourceCell, CardinalDirection direction, float score)? FindBestPlacement(Player player, GameBoard board)
+            => FindBestPlacement(player, board, MycovariantIds.JettingMyceliumIId);
+
+        /// <summary>
+        /// Finds the best placement for Jetting Mycelium across every living source cell and cardinal direction.
+        /// </summary>
+        public static (FungalCell sourceCell, CardinalDirection direction, float score)? FindBestPlacement(Player player, GameBoard board, int mycovariantId)
         {
             var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
                 .Where(c => c.IsAlive)
@@ -150,7 +196,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 foreach (var cell in livingCells)
                 {
-                    float score = EvaluatePlacement(cell, direction, board, player);
+                    float score = EvaluatePlacement(cell, direction, board, player, mycovariantId);
                     if (score > bestScore)
                     {
                         bestScore = score;

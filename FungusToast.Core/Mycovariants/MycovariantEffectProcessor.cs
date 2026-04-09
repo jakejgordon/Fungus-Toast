@@ -64,17 +64,18 @@ public static class MycovariantEffectProcessor
     {
         int playerId = playerMyco.PlayerId;
 
-        int livingLength = MycovariantGameBalance.JettingMyceliumNumberOfLivingCellTiles;
+        int livingLength = JettingMyceliumHelper.GetLivingLengthForMycovariant(playerMyco.MycovariantId);
+        var toxinRowWidths = JettingMyceliumHelper.GetToxinRowWidthsForMycovariant(playerMyco.MycovariantId);
 
         // Debug logging to help verify direction fix
         var (sourceX, sourceY) = board.GetXYFromTileId(tileId);
         FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[JettingMycelium] Resolving {direction} cone from tile ({sourceX}, {sourceY}) for player {playerId}");
 
-        // Get the straight line for living cells (first 4 tiles)
+        // Get the straight line for living cells.
         var livingLine = board.GetTileLine(tileId, direction, livingLength, includeStartingTile: false);
         
-        // Get the cone pattern for toxins
-        var toxinCone = board.GetTileCone(tileId, direction);
+        // Get the widening toxin fan after the living line.
+        var toxinCone = board.GetTileCone(tileId, direction, toxinRowWidths, livingLength);
 
         // Debug logging to show the effect pattern
         FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[JettingMycelium] Living line: {livingLine.Count} tiles, Toxin cone: {toxinCone.Count} tiles");
