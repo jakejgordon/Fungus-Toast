@@ -21,6 +21,7 @@ namespace FungusToast.Core.Config
         public const int PlasmidBountyMutationPointAward = 7;
         public const int PlasmidBountyIIMutationPointAward = 11;
         public const int PlasmidBountyIIIMutationPointAward = 15;
+        public const int AscusWagerTier5LevelsGranted = 1;
 
         public const float NeutralizingMantleNeutralizeChance = 0.20f;
 
@@ -83,6 +84,7 @@ namespace FungusToast.Core.Config
         public const float BallistosporeDischargeIAIScore = 3f;
         public const float BallistosporeDischargeIIAIScore = 4f;
         public const float BallistosporeDischargeIIIAIScore = 6f;
+        public const float AscusWagerAIScore = 8f;
 
         public const float CytolyticBurstBaseAIScore = 5f;
 
