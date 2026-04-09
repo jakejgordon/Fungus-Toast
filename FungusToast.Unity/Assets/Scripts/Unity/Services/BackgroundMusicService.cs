@@ -182,6 +182,9 @@ namespace FungusToast.Unity
         private readonly GameObject audioHost;
 
         private AudioSource soundEffectAudioSource;
+        private AudioSource loopingAudioSource;
+        private SoundEffectCoroutineHost coroutineHost;
+        private Coroutine stopLoopCoroutine;
 
         public SoundEffectService(GameObject audioHost)
         {
@@ -205,6 +208,88 @@ namespace FungusToast.Unity
             soundEffectAudioSource.PlayOneShot(clip, effectiveVolume);
         }
 
+        public void PlayLoop(AudioClip clip, float baseVolume)
+        {
+            if (clip == null)
+            {
+                return;
+            }
+
+            EnsureLoopingAudioSource();
+            StopPendingLoopFade();
+
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(baseVolume);
+            if (effectiveVolume <= 0f)
+            {
+                loopingAudioSource.Stop();
+                return;
+            }
+
+            loopingAudioSource.clip = clip;
+            loopingAudioSource.volume = effectiveVolume;
+            loopingAudioSource.loop = true;
+
+            if (!loopingAudioSource.isPlaying)
+            {
+                loopingAudioSource.Play();
+            }
+        }
+
+        public void StopLoop(float fadeOutSeconds = 0f)
+        {
+            if (loopingAudioSource == null)
+            {
+                return;
+            }
+
+            StopPendingLoopFade();
+
+            if (fadeOutSeconds <= 0f || !loopingAudioSource.isPlaying)
+            {
+                loopingAudioSource.Stop();
+                loopingAudioSource.clip = null;
+                loopingAudioSource.volume = 0f;
+                return;
+            }
+
+            EnsureCoroutineHost();
+            stopLoopCoroutine = coroutineHost.StartCoroutine(FadeOutAndStopLoop(fadeOutSeconds));
+        }
+
+        private IEnumerator FadeOutAndStopLoop(float fadeOutSeconds)
+        {
+            float startingVolume = loopingAudioSource.volume;
+            float elapsed = 0f;
+
+            while (elapsed < fadeOutSeconds && loopingAudioSource != null)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / fadeOutSeconds);
+                loopingAudioSource.volume = Mathf.Lerp(startingVolume, 0f, t);
+                yield return null;
+            }
+
+            if (loopingAudioSource != null)
+            {
+                loopingAudioSource.Stop();
+                loopingAudioSource.clip = null;
+                loopingAudioSource.volume = 0f;
+            }
+
+            stopLoopCoroutine = null;
+        }
+
+        private void StopPendingLoopFade()
+        {
+            if (stopLoopCoroutine == null || coroutineHost == null)
+            {
+                return;
+            }
+
+            coroutineHost.StopCoroutine(stopLoopCoroutine);
+            stopLoopCoroutine = null;
+        }
+
         private void EnsureAudioSource()
         {
             if (soundEffectAudioSource != null)
@@ -221,6 +306,39 @@ namespace FungusToast.Unity
             soundEffectAudioSource.playOnAwake = false;
             soundEffectAudioSource.loop = false;
             soundEffectAudioSource.spatialBlend = 0f;
+        }
+
+        private void EnsureLoopingAudioSource()
+        {
+            if (loopingAudioSource != null)
+            {
+                return;
+            }
+
+            GameObject loopSourceObject = new("LoopingSoundEffectAudioSource");
+            loopSourceObject.transform.SetParent(audioHost.transform, false);
+            loopingAudioSource = loopSourceObject.AddComponent<AudioSource>();
+            loopingAudioSource.playOnAwake = false;
+            loopingAudioSource.loop = true;
+            loopingAudioSource.spatialBlend = 0f;
+        }
+
+        private void EnsureCoroutineHost()
+        {
+            if (coroutineHost != null)
+            {
+                return;
+            }
+
+            coroutineHost = audioHost.GetComponent<SoundEffectCoroutineHost>();
+            if (coroutineHost == null)
+            {
+                coroutineHost = audioHost.AddComponent<SoundEffectCoroutineHost>();
+            }
+        }
+
+        private sealed class SoundEffectCoroutineHost : MonoBehaviour
+        {
         }
     }
 

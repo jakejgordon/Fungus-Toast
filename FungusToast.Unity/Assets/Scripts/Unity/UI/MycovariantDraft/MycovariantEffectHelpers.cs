@@ -88,6 +88,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
                         if (toxinImpactTileIds.Count > 0)
                         {
+                            gameManager.PlayJettingMyceliumVolleySound();
                             var toxinVolley = gridVisualizer.PlayJettingMyceliumToxinVolleyAnimation(
                                 launchOriginTileId,
                                 toxinImpactTileIds,
@@ -100,6 +101,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             {
                                 yield return toxinVolley;
                             }
+
+                            gameManager.StopJettingMyceliumVolleySound();
 
                             yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumPostVolleyHoldSeconds);
                         }
@@ -215,6 +218,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
                     if (pendingJettingToxinImpactTileIds.Count > 0)
                     {
+                        gameManager.PlayJettingMyceliumVolleySound();
                         var toxinVolley = gridVisualizer.PlayJettingMyceliumToxinVolleyAnimation(
                             pendingJettingLaunchOriginTileId,
                             pendingJettingToxinImpactTileIds,
@@ -227,6 +231,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         {
                             yield return toxinVolley;
                         }
+
+                        gameManager.StopJettingMyceliumVolleySound();
 
                         yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumPostVolleyHoldSeconds);
                     }

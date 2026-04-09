@@ -107214,6 +107214,13 @@ MonoBehaviour:
   draftPhaseStartVolume: 1
   startingSporeDropClip: {fileID: 8300000, guid: a6e3dd3a7d94f7b4380b7e1e4e3776ce, type: 3}
   startingSporeDropVolume: 1
+  jettingMyceliumLaunchClip: {fileID: 8300000, guid: 5c0ff1a1cccd6554e83d5da25d8eb7aa, type: 3}
+  jettingMyceliumLaunchVolume: 1
+  jettingMyceliumSprayLoopClip: {fileID: 8300000, guid: 0616be5ae8a7bd8408f87eef2076451a, type: 3}
+  jettingMyceliumSprayLoopVolume: 0.85
+  jettingMyceliumReleaseClip: {fileID: 8300000, guid: e86de43f35f570249b5a5371bb6e3990, type: 3}
+  jettingMyceliumReleaseVolume: 0.9
+  jettingMyceliumLoopFadeOutSeconds: 0.05
   gameplayMusicClip: {fileID: 8300000, guid: 8de36b481d57a144e81d193ca26b2c14, type: 3}
   additionalGameplayMusicClips:
   - {fileID: 8300000, guid: cec4e6986fdaeeb4687d2129c64fd70e, type: 3}

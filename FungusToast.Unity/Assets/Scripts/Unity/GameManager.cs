@@ -140,6 +140,13 @@ namespace FungusToast.Unity
         [SerializeField, Range(0f, 1f)] private float draftPhaseStartVolume = 1f;
         [SerializeField] private AudioClip? startingSporeDropClip = null;
         [SerializeField, Range(0f, 1f)] private float startingSporeDropVolume = 1f;
+        [SerializeField] private AudioClip? jettingMyceliumLaunchClip = null;
+        [SerializeField, Range(0f, 1f)] private float jettingMyceliumLaunchVolume = 1f;
+        [SerializeField] private AudioClip? jettingMyceliumSprayLoopClip = null;
+        [SerializeField, Range(0f, 1f)] private float jettingMyceliumSprayLoopVolume = 0.85f;
+        [SerializeField] private AudioClip? jettingMyceliumReleaseClip = null;
+        [SerializeField, Range(0f, 1f)] private float jettingMyceliumReleaseVolume = 0.9f;
+        [SerializeField, Min(0f)] private float jettingMyceliumLoopFadeOutSeconds = 0.05f;
         [SerializeField] private AudioClip? gameplayMusicClip = null;
         [SerializeField] private AudioClip[] additionalGameplayMusicClips = new AudioClip[0];
         [SerializeField, Range(0f, 1f)] private float gameplayMusicVolume = 1f;
@@ -300,6 +307,18 @@ namespace FungusToast.Unity
         private void OnApplicationPause(bool pauseStatus)
         {
             OnApplicationFocus(!pauseStatus);
+        }
+
+        public void PlayJettingMyceliumVolleySound()
+        {
+            soundEffectService?.PlayOneShot(jettingMyceliumLaunchClip, jettingMyceliumLaunchVolume);
+            soundEffectService?.PlayLoop(jettingMyceliumSprayLoopClip, jettingMyceliumSprayLoopVolume);
+        }
+
+        public void StopJettingMyceliumVolleySound()
+        {
+            soundEffectService?.StopLoop(jettingMyceliumLoopFadeOutSeconds);
+            soundEffectService?.PlayOneShot(jettingMyceliumReleaseClip, jettingMyceliumReleaseVolume);
         }
 
         #endregion
