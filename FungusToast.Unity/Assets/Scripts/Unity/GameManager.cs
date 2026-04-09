@@ -115,21 +115,21 @@ namespace FungusToast.Unity
         public bool testingTreatAsFirstGame = false;
 
         [Header("References")] 
-        public GridVisualizer gridVisualizer; 
-        public CameraCenterer cameraCenterer; 
-        [SerializeField] private MutationManager mutationManager; 
-        [SerializeField] private GrowthPhaseRunner growthPhaseRunner; 
-        [SerializeField] private GameUIManager gameUIManager; 
-        [SerializeField] private DecayPhaseRunner decayPhaseRunner; 
-        [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker; 
-        [SerializeField] private MycovariantDraftController mycovariantDraftController; 
-        [SerializeField] private UI_StartGamePanel startGamePanel; 
-        [SerializeField] private UI_HotseatTurnPrompt hotseatTurnPrompt; 
-        public GameObject SelectionPromptPanel; 
-        public TextMeshProUGUI SelectionPromptText; 
-        [SerializeField] private Button selectionPromptCancelButton;
-        [SerializeField] private TextMeshProUGUI selectionPromptCancelButtonText;
-        [SerializeField] private GameObject modeSelectPanel; // NEW: root of mode select UI
+        public GridVisualizer gridVisualizer = null!; 
+        public CameraCenterer cameraCenterer = null!; 
+        [SerializeField] private MutationManager mutationManager = null!; 
+        [SerializeField] private GrowthPhaseRunner growthPhaseRunner = null!; 
+        [SerializeField] private GameUIManager gameUIManager = null!; 
+        [SerializeField] private DecayPhaseRunner decayPhaseRunner = null!; 
+        [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker = null!; 
+        [SerializeField] private MycovariantDraftController mycovariantDraftController = null!; 
+        [SerializeField] private UI_StartGamePanel startGamePanel = null!; 
+        [SerializeField] private UI_HotseatTurnPrompt hotseatTurnPrompt = null!; 
+        public GameObject SelectionPromptPanel = null!; 
+        public TextMeshProUGUI SelectionPromptText = null!; 
+        [SerializeField] private Button selectionPromptCancelButton = null!;
+        [SerializeField] private TextMeshProUGUI selectionPromptCancelButtonText = null!;
+        [SerializeField] private GameObject modeSelectPanel = null!; // NEW: root of mode select UI
         [SerializeField] private AudioClip? mutationPhaseStartClip = null;
         [SerializeField, Range(0f, 1f)] private float mutationPhaseStartVolume = 1f;
         [SerializeField] private AudioClip? growthPhaseStartClip = null;
@@ -170,10 +170,10 @@ namespace FungusToast.Unity
         }
 
         [Header("Campaign Config")] 
-        public CampaignProgression campaignProgression; // assign ScriptableObject in inspector
+        public CampaignProgression? campaignProgression; // assign ScriptableObject in inspector
 
         [Header("Magnifier")]
-        [SerializeField] private MagnifyingGlassFollowMouse magnifyingGlass; // new serialized reference
+        [SerializeField] private MagnifyingGlassFollowMouse? magnifyingGlass; // new serialized reference
 
         // NEW: current mode
         public GameMode CurrentGameMode { get; private set; } = GameMode.Hotseat;
@@ -184,13 +184,13 @@ namespace FungusToast.Unity
         #region State Fields / Services
 
         private bool gameEnded = false; 
-        private System.Random rng; 
+        private System.Random rng = null!; 
         private MycovariantPoolManager persistentPoolManager = null!;
 
         public GameBoard Board { get; private set; } = null!;
         public GameUIManager GameUI => gameUIManager; 
         public SpecialEventPresentationService SpecialEventPresentationService => specialEventPresentationService;
-        public static GameManager Instance { get; private set; }
+        public static GameManager Instance { get; private set; } = null!;
 
         private readonly List<Player> players = new(); 
         private readonly List<Player> humanPlayers = new(); 
@@ -217,21 +217,21 @@ namespace FungusToast.Unity
         private bool hasApplicationFocus = true;
 
         // Services
-        private PlayerInitializer playerInitializer; 
-        private HotseatTurnManager hotseatTurnManager; 
-        private FastForwardService fastForwardService; 
-        private PostGrowthVisualSequence postGrowthVisualSequence;
-        private EndgameService endgameService;
-        private MutationPointService mutationPointService;
-        private SpecialEventPresentationService specialEventPresentationService;
-        private BackgroundMusicService backgroundMusicService;
-        private SoundEffectService soundEffectService;
-        private PauseMenuService pauseMenuService;
-        private SelectionPromptService selectionPromptService;
-        private GameTransitionService gameTransitionService;
-        private GameStartService gameStartService;
-        private PlayerPerspectiveService playerPerspectiveService;
-        private PlayerMoldAssignmentService playerMoldAssignmentService;
+        private PlayerInitializer playerInitializer = null!; 
+        private HotseatTurnManager hotseatTurnManager = null!; 
+        private FastForwardService fastForwardService = null!; 
+        private PostGrowthVisualSequence postGrowthVisualSequence = null!;
+        private EndgameService endgameService = null!;
+        private MutationPointService mutationPointService = null!;
+        private SpecialEventPresentationService specialEventPresentationService = null!;
+        private BackgroundMusicService backgroundMusicService = null!;
+        private SoundEffectService soundEffectService = null!;
+        private PauseMenuService pauseMenuService = null!;
+        private SelectionPromptService selectionPromptService = null!;
+        private GameTransitionService gameTransitionService = null!;
+        private GameStartService gameStartService = null!;
+        private PlayerPerspectiveService playerPerspectiveService = null!;
+        private PlayerMoldAssignmentService playerMoldAssignmentService = null!;
 
         #endregion
 

@@ -107160,7 +107160,6 @@ GameObject:
   - component: {fileID: 548818017}
   - component: {fileID: 548818019}
   - component: {fileID: 548818020}
-  - component: {fileID: 548818021}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -107267,18 +107266,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b5d5f9d8647321f4d9e6a71e5bbd97d4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &548818021
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 548818016}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ad92cd5f68f36cf40853c2a254a55d95, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &549476139
@@ -108404,7 +108391,7 @@ MonoBehaviour:
   - {fileID: 437777570}
   - {fileID: 2129553945}
   - {fileID: 952816454}
-  playerSummaryLabel: {fileID: 0}
+  playerSummaryLabel: {fileID: 1671315638}
   testingOptionsSectionRoot: {fileID: 0}
   testingModeToggle: {fileID: 0}
   mycovariantDropdown: {fileID: 0}
@@ -119173,7 +119160,6 @@ GameObject:
   - component: {fileID: 1655698861}
   - component: {fileID: 1655698860}
   - component: {fileID: 1655698859}
-  - component: {fileID: 1655698863}
   m_Layer: 5
   m_Name: UICanvas
   m_TagString: Untagged
@@ -119280,18 +119266,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &1655698863
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1655698858}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7653c1389dded304a9865db58bc284a1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1666173461
 GameObject:
   m_ObjectHideFlags: 0
