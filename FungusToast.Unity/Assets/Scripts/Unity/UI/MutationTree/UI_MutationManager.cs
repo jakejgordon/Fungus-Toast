@@ -834,7 +834,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
             CaptureOriginalControlScales();
-            Debug.Log($"[UI_MutationManager] ReinitializeForPlayer playerId={player.PlayerId} name={player.PlayerName} mp={player.MutationPoints}");
             humanPlayer = player;
             SetSpendPointsButtonVisible(true);
             // Ensure spend button exists
@@ -881,8 +880,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 mutationPointsCounterText.text = $"Mutation Points: {player.MutationPoints}";
 
             RestoreActionRowLayout();
-
-            Debug.Log($"[UI_MutationManager] After force-enable interactable={spendPointsButton?.interactable} text='{spendPointsButtonText?.text}'");
 
             if (!keepPanelClosed && !isTreeOpen && gameObject.activeInHierarchy && enabled)
             {

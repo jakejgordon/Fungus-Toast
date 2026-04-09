@@ -1386,7 +1386,6 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
             if (!(testingModeEnabled && (fastForwardRounds >0 || testingMycovariantId.HasValue)))
             {
-                Debug.Log("[GameManager] Starting initial round mutation phase via StartNextRound()");
                 StartNextRound();
             }
         }

@@ -37,7 +37,6 @@ namespace FungusToast.Unity.UI.GameLog
         public void EnableSilentMode()
         {
             IsSilentMode = true;
-            UnityEngine.Debug.Log("[GameLogRouter] Silent mode ENABLED - logging suppressed during fast-forward");
         }
 
         /// <summary>
@@ -46,7 +45,6 @@ namespace FungusToast.Unity.UI.GameLog
         public void DisableSilentMode()
         {
             IsSilentMode = false;
-            UnityEngine.Debug.Log("[GameLogRouter] Silent mode DISABLED - logging resumed");
         }
         #endregion
 

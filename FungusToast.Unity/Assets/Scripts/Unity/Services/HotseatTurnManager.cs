@@ -40,7 +40,6 @@ namespace FungusToast.Unity
             }
             currentIndex = 0;
             active = true;
-            Debug.Log($"[HotseatTurnManager] Starting mutation phase for {humanPlayers.Count} human players.");
             StartTurn();
         }
 
@@ -55,7 +54,6 @@ namespace FungusToast.Unity
             var hp = humanPlayers[currentIndex];
             // Show prompt only if more than one human player
             bool showPrompt = humanPlayers.Count > 1 && prompt != null && !isFastForwarding() && !isTesting();
-            Debug.Log($"[HotseatTurnManager] Human turn index={currentIndex} player={hp.PlayerName} showPrompt={showPrompt} promptAssigned={(prompt!=null)}");
             if (showPrompt)
             {
                 PreSwitchPlayerUI(hp);
@@ -78,11 +76,8 @@ namespace FungusToast.Unity
 
         private void InitializeUI(Player hp)
         {
-            Debug.Log($"[HotseatTurnManager] Initializing mutation UI for {hp.PlayerName}");
-            Debug.Log($"[HotseatTurnManager] Calling ReinitializeForPlayer for {hp.PlayerName}");
             ui.MutationUIManager.StartNewMutationPhase();
             ui.MutationUIManager.ReinitializeForPlayer(hp); // new lightweight swap
-            Debug.Log($"[HotseatTurnManager] Returned from ReinitializeForPlayer for {hp.PlayerName}");
             ui.MutationUIManager.SetSpendPointsButtonVisible(true);
             ui.MutationUIManager.RefreshSpendPointsButtonUI();
             // Update mold profile root to new player

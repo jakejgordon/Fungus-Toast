@@ -168,7 +168,6 @@ namespace FungusToast.Unity.UI.GameLog
             if (!isPlayerSpecificPanel)
             {
                 isPlayerSpecificPanel = true;
-                Debug.Log("[UI_GameLogPanel] Player-specific filtering enabled at runtime.");
                 // Rebuild with current player filter if already set
                 if (activePlayerId >= 0 && logManager != null)
                 {
@@ -190,7 +189,6 @@ namespace FungusToast.Unity.UI.GameLog
                 headerText.text = $"{playerName} Activity Log";
             if (isPlayerSpecificPanel)
             {
-                Debug.Log($"[UI_GameLogPanel] Switching active player filter -> {playerName} (Id={playerId})");
                 RebuildForPlayerEntries(logManager?.GetRecentEntries(maxVisibleEntries) ?? Enumerable.Empty<GameLogEntry>());
             }
         }

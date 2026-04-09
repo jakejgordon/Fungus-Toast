@@ -643,8 +643,6 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 EnsurePlayerState(activePlayerId);
             }
-
-            Debug.Log($"[GameLogManager] Active player context switched -> PlayerId={activePlayerId}");
         }
 
         private PlayerLogAggregation Agg(int playerId)
