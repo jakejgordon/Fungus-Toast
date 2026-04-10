@@ -1,0 +1,83 @@
+name: Build macOS release
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: Semantic version to stamp into the macOS build
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-macos:
+    name: Build macOS app
+    runs-on: macos-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: FungusToast.Unity/Library
+          key: Library-macOS-${{ hashFiles('FungusToast.Unity/Assets/**', 'FungusToast.Unity/Packages/**', 'FungusToast.Unity/ProjectSettings/**') }}
+          restore-keys: |
+            Library-macOS-
+
+      - name: Build macOS release with Unity
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: FungusToast.Unity
+          unityVersion: auto
+          targetPlatform: StandaloneOSX
+          buildMethod: ReleaseBuildAutomation.BuildMacOSRelease
+          customParameters: >
+            -releaseOutputPath ../Builds/github/macos
+            -releaseVersion ${{ inputs.releaseVersion }}
+          cacheUnityInstallationOnMac: true
+          allowDirtyBuild: true
+
+      - name: Package macOS release zip
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release_dir="Builds/github/macos"
+          zip_path="Builds/github/fungustoast-macos-${{ inputs.releaseVersion }}.zip"
+
+          if [ ! -d "$release_dir" ]; then
+            echo "Expected release directory '$release_dir' was not produced."
+            exit 1
+          fi
+
+          if ! find "$release_dir" -maxdepth 1 -name '*.app' -print -quit | grep -q .; then
+            echo "Expected a .app bundle in '$release_dir', but none was found."
+            exit 1
+          fi
+
+          mkdir -p "$(dirname "$zip_path")"
+          rm -f "$zip_path"
+          ditto -c -k --sequesterRsrc --keepParent "$release_dir" "$zip_path"
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fungustoast-macos-${{ inputs.releaseVersion }}
+          path: Builds/github/fungustoast-macos-${{ inputs.releaseVersion }}.zip
+          if-no-files-found: error

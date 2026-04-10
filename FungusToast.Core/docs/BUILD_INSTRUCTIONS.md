@@ -76,3 +76,41 @@ Notes:
 - The Unity release script uses the enabled scenes in `FungusToast.Unity/ProjectSettings/EditorBuildSettings.asset`.
 - For local interactive publishing, run `butler login` once before your first upload.
 - For future CI or headless publishing, prefer the `BUTLER_API_KEY` environment variable instead of storing credentials in the repo.
+
+## GitHub-hosted macOS Release Flow
+
+For the public GitHub repository, use the workflow at `.github/workflows/build-macos.yml` to produce a macOS app bundle on `macos-latest` instead of building the distributable mac app on Windows.
+
+This workflow uses `game-ci/unity-builder@v4` and the Unity editor build method `ReleaseBuildAutomation.BuildMacOSRelease` in `FungusToast.Unity/Assets/Editor/ReleaseBuildAutomation.cs`.
+
+### One-time GitHub setup
+
+Add these repository secrets in GitHub:
+
+1. `UNITY_LICENSE`
+2. `UNITY_EMAIL`
+3. `UNITY_PASSWORD`
+
+For a Unity Personal license, create `UNITY_LICENSE` using the GameCI activation flow and keep `UNITY_EMAIL` and `UNITY_PASSWORD` available for reactivation during the workflow.
+
+The workflow reads the Unity version directly from `FungusToast.Unity/ProjectSettings/ProjectVersion.txt`.
+
+### Running the workflow
+
+1. Open the repository on GitHub.
+2. Go to Actions.
+3. Select `Build macOS release`.
+4. Click `Run workflow`.
+5. Enter the semantic version to stamp into the build, for example `1.2.0`.
+
+On success, GitHub uploads an artifact named `fungustoast-macos-<version>` containing a `.zip` built on macOS.
+
+### Why this flow matters
+
+- The macOS app bundle is generated on macOS instead of Windows.
+- The packaging step uses `ditto -c -k --sequesterRsrc --keepParent`, which preserves mac app bundle metadata more reliably for distribution.
+- The workflow writes a `version.txt` file next to the `.app` bundle before packaging.
+
+### Current artifact output
+
+The workflow writes the raw build output to `Builds/github/macos` inside the Actions workspace, then uploads `Builds/github/fungustoast-macos-<version>.zip` as the downloadable artifact.
