@@ -104,7 +104,5 @@ run_logs/
 FungusToast.Simulation/simulation_output.txt
 FungusToast.Simulation/SimulationOutput/
 # Generated Unity bridge artifacts from Core post-build copy/touch step
-FungusToast.Unity/Assets/Plugins/FungusToast.Core.dll
-FungusToast.Unity/Assets/Plugins/FungusToast.Core.pdb
 FungusToast.Unity/Assets/Scripts/Unity/ForceRecompile.cs
 _xxx
