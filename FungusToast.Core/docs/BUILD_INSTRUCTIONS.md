@@ -112,7 +112,7 @@ The workflow reads the Unity version directly from `FungusToast.Unity/ProjectSet
 
 On success, GitHub uploads an artifact named `fungustoast-macos-<version>` containing a `.zip` built on macOS.
 
-If you publish that macOS artifact to itch.io through `ci/deploy-itch.sh`, the script reads the repo-root `version.txt` file for `--userversion` and checks `last-deployed-version.txt` to reject duplicate or downgraded versions. The macOS CI script does not update `last-deployed-version.txt`; the Windows publish flow remains the only script that records a successful deployment in-repo.
+If you publish that macOS artifact to itch.io through Unity Cloud Build, configure the user script path as `ci/deploy-itch.sh` relative to the Unity project root `FungusToast.Unity`. The repo contains a Unity-local wrapper at `FungusToast.Unity/ci/deploy-itch.sh` that forwards to the shared repo-root script at `ci/deploy-itch.sh`. The shared script reads the repo-root `version.txt` file for `--userversion` and checks `last-deployed-version.txt` to reject duplicate or downgraded versions. The macOS CI script does not update `last-deployed-version.txt`; the Windows publish flow remains the only script that records a successful deployment in-repo.
 
 ### Why this flow matters
 
