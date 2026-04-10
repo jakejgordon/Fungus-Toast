@@ -78,13 +78,18 @@ version_is_newer_than() {
 RELEASE_VERSION="$(read_version_file "$VERSION_FILE" "current release version")"
 LAST_DEPLOYED_VERSION="$(read_version_file "$LAST_DEPLOYED_VERSION_FILE" "last deployed version" true)"
 
+if [ -z "${BUILD_PATH:-}" ] && [ -n "${UNITY_PLAYER_PATH:-}" ]; then
+  BUILD_PATH="$UNITY_PLAYER_PATH"
+fi
+
 echo "Starting itch.io deployment..."
 echo "BUILD_PATH=${BUILD_PATH:-}"
+echo "UNITY_PLAYER_PATH=${UNITY_PLAYER_PATH:-}"
 echo "BUILD_NUMBER=${BUILD_NUMBER:-}"
 echo "RELEASE_VERSION=$RELEASE_VERSION"
 
 if [ -z "${BUILD_PATH:-}" ]; then
-  echo "Error: BUILD_PATH is not set. Point it at the macOS build artifact or zip to upload."
+  echo "Error: BUILD_PATH is not set. Point it at the macOS build artifact or zip to upload, or run this in Unity Build Automation so UNITY_PLAYER_PATH is available."
   exit 1
 fi
 
