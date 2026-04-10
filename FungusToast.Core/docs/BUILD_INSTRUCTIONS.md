@@ -28,12 +28,13 @@ For Windows-first local releases to itch.io, use the release helper script at `s
 
 ### Deployment Version Confirmation
 
-Before any deployment or itch.io publish, confirm the intended semantic version with the requester.
+Before any deployment or itch.io publish, confirm the intended semantic version with the requester and update the repo-root `version.txt` file.
 
 - Use `Major.Minor.BugFix` format.
 - Confirm which level should increment before running the deployment.
 - Do not assume the next version automatically, even for routine uploads.
-- Use the confirmed version string for the build and the `--userversion` value passed to butler.
+- Keep the first line of the repo-root `version.txt` file set to the release version that should be stamped into the build and passed to butler as `--userversion`.
+- The repo-root `last-deployed-version.txt` file records the last successful Windows itch.io publish so the scripts can reject accidental duplicate or downgraded deployments.
 
 Typical first-time setup:
 
@@ -46,13 +47,13 @@ Typical first-time setup:
 Build without uploading:
 
 ```powershell
-./scripts/publish_itch_release.ps1 -Version 1.2.0 -BuildOnly
+./scripts/publish_itch_release.ps1 -BuildOnly
 ```
 
 Build and upload:
 
 ```powershell
-./scripts/publish_itch_release.ps1 -Version 1.2.0
+./scripts/publish_itch_release.ps1
 ```
 
 Useful options:
@@ -69,6 +70,7 @@ The script performs these steps:
 3. Runs Unity in batch mode via `ReleaseBuildAutomation.BuildWindowsRelease`.
 4. Produces a clean Windows release folder and writes a `version.txt` file for the build.
 5. Pushes that folder to itch.io with `butler push ... --userversion <version>` unless `-BuildOnly` is supplied.
+6. Updates the repo-root `last-deployed-version.txt` file after a successful non-dry-run Windows publish.
 
 Notes:
 
@@ -76,6 +78,7 @@ Notes:
 - The Unity release script uses the enabled scenes in `FungusToast.Unity/ProjectSettings/EditorBuildSettings.asset`.
 - For local interactive publishing, run `butler login` once before your first upload.
 - For future CI or headless publishing, prefer the `BUTLER_API_KEY` environment variable instead of storing credentials in the repo.
+- The build output's `version.txt` file is separate from the repo-root `version.txt` source of truth.
 
 ## GitHub-hosted macOS Release Flow
 
@@ -104,6 +107,8 @@ The workflow reads the Unity version directly from `FungusToast.Unity/ProjectSet
 5. Enter the semantic version to stamp into the build, for example `1.2.0`.
 
 On success, GitHub uploads an artifact named `fungustoast-macos-<version>` containing a `.zip` built on macOS.
+
+If you publish that macOS artifact to itch.io through `ci/deploy-itch.sh`, the script reads the repo-root `version.txt` file for `--userversion` and checks `last-deployed-version.txt` to reject duplicate or downgraded versions. The macOS CI script does not update `last-deployed-version.txt`; the Windows publish flow remains the only script that records a successful deployment in-repo.
 
 ### Why this flow matters
 

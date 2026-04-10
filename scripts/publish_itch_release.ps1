@@ -1,6 +1,5 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
     [string]$Version,
 
     [string]$ItchTarget,
@@ -29,6 +28,116 @@ $ErrorActionPreference = 'Stop'
 
 function Get-RepoRoot {
     return Split-Path -Parent $PSScriptRoot
+}
+
+function Get-ReleaseVersionFilePath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    return Join-Path $RepoRoot 'version.txt'
+}
+
+function Get-LastDeployedVersionFilePath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    return Join-Path $RepoRoot 'last-deployed-version.txt'
+}
+
+function Test-SemanticVersion {
+    param(
+        [string]$Value
+    )
+
+    return -not [string]::IsNullOrWhiteSpace($Value) -and $Value -match '^\d+\.\d+\.\d+$'
+}
+
+function Read-VersionFileValue {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [Parameter(Mandatory = $true)]
+        [string]$Description,
+        [switch]$AllowMissingOrEmpty
+    )
+
+    if (-not (Test-Path -Path $Path)) {
+        if ($AllowMissingOrEmpty) {
+            return $null
+        }
+
+        throw "Unable to find $Description file at '$Path'."
+    }
+
+    $firstLine = [string](Get-Content -Path $Path -TotalCount 1 | Select-Object -First 1)
+    $value = $firstLine.Trim()
+
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        if ($AllowMissingOrEmpty) {
+            return $null
+        }
+
+        throw "The $Description file at '$Path' is empty."
+    }
+
+    if (-not (Test-SemanticVersion -Value $value)) {
+        throw "The $Description file at '$Path' must contain a semantic version in Major.Minor.BugFix format on the first line."
+    }
+
+    return $value
+}
+
+function Resolve-ReleaseVersion {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+        [string]$ProvidedVersion
+    )
+
+    $releaseVersionFilePath = Get-ReleaseVersionFilePath -RepoRoot $RepoRoot
+    $fileVersion = Read-VersionFileValue -Path $releaseVersionFilePath -Description 'current release version'
+
+    if (-not [string]::IsNullOrWhiteSpace($ProvidedVersion) -and $ProvidedVersion -ne $fileVersion) {
+        throw "The provided -Version '$ProvidedVersion' does not match '$fileVersion' in '$releaseVersionFilePath'. Update version.txt or omit -Version."
+    }
+
+    return $fileVersion
+}
+
+function Assert-ReleaseVersionIsNewerThanLastDeployment {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+        [Parameter(Mandatory = $true)]
+        [string]$ReleaseVersion
+    )
+
+    $lastDeployedVersionFilePath = Get-LastDeployedVersionFilePath -RepoRoot $RepoRoot
+    $lastDeployedVersion = Read-VersionFileValue -Path $lastDeployedVersionFilePath -Description 'last deployed version' -AllowMissingOrEmpty
+
+    if ([string]::IsNullOrWhiteSpace($lastDeployedVersion)) {
+        return
+    }
+
+    if (([version]$ReleaseVersion) -le ([version]$lastDeployedVersion)) {
+        throw "Release version '$ReleaseVersion' is not newer than the last deployed version '$lastDeployedVersion'. Update version.txt before publishing to itch.io."
+    }
+}
+
+function Write-LastDeployedVersion {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+        [Parameter(Mandatory = $true)]
+        [string]$ReleaseVersion
+    )
+
+    $lastDeployedVersionFilePath = Get-LastDeployedVersionFilePath -RepoRoot $RepoRoot
+    [System.IO.File]::WriteAllText($lastDeployedVersionFilePath, $ReleaseVersion + [Environment]::NewLine)
 }
 
 function Get-ProjectUnityVersion {
@@ -193,6 +302,7 @@ function Invoke-Step {
 }
 
 $repoRoot = Get-RepoRoot
+$Version = Resolve-ReleaseVersion -RepoRoot $repoRoot -ProvidedVersion $Version
 $releaseConfig = Resolve-ReleaseConfig -RepoRoot $repoRoot
 
 if ([string]::IsNullOrWhiteSpace($ItchTarget) -and $releaseConfig.Contains('itchTarget')) {
@@ -220,6 +330,8 @@ $expectedUnityVersion = Get-ProjectUnityVersion -ProjectVersionFilePath $project
 $resolvedUnityPath = Resolve-UnityPath -ProvidedPath $UnityPath -ExpectedVersion $expectedUnityVersion
 
 if (-not $BuildOnly) {
+    Assert-ReleaseVersionIsNewerThanLastDeployment -RepoRoot $repoRoot -ReleaseVersion $Version
+
     if ([string]::IsNullOrWhiteSpace($ItchTarget)) {
         throw 'Itch target is required. Pass -ItchTarget or create scripts/itch-release.local.json.'
     }
@@ -348,6 +460,12 @@ Invoke-Step -Description 'Pushing build to itch.io with butler' -Action {
     & $resolvedButlerPath @arguments
     if ($LASTEXITCODE -ne 0) {
         throw 'butler push failed.'
+    }
+}
+
+if (-not $DryRun) {
+    Invoke-Step -Description 'Recording last deployed itch.io version' -Action {
+        Write-LastDeployedVersion -RepoRoot $repoRoot -ReleaseVersion $Version
     }
 }
 
