@@ -18,6 +18,8 @@ dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj
 - Unity projects (such as FungusToast.Unity.csproj and Assembly-CSharp.csproj) are built by the Unity Editor, not by dotnet build.
 - The Core post-build copy/touch step runs only on Windows. On Linux/WSL/macOS, `dotnet build` succeeds but does not copy the DLL into Unity automatically.
 - If you need Unity to pick up fresh Core changes on Linux/WSL/macOS, run `./FungusToast.Core/copy_to_unity.sh` after building. It copies the DLL artifacts into `FungusToast.Unity/Assets/Plugins/` and touches `ForceRecompile.cs`.
+- `FungusToast.Unity/Assets/Plugins/FungusToast.Core.dll` is intentionally checked into git for Unity Cloud Build and other Unity-only CI environments that do not run `dotnet build` before opening the Unity project. This is counter to the usual preference to avoid committing build outputs, but it keeps the cloud Unity build self-contained.
+- When Core code changes, rebuild `FungusToast.Core`, refresh the Unity plugin copy, and commit the updated DLL together with the source change so local Unity and cloud Unity builds stay in sync.
 - If you encounter Unity script errors, copy and paste them into Cursor for troubleshooting.
 
 This order ensures all dependencies are built correctly and avoids circular dependency issues.
@@ -85,6 +87,8 @@ Notes:
 For the public GitHub repository, use the workflow at `.github/workflows/build-macos.yml` to produce a macOS app bundle on `macos-latest` instead of building the distributable mac app on Windows.
 
 This workflow uses `game-ci/unity-builder@v4` and the Unity editor build method `ReleaseBuildAutomation.BuildMacOSRelease` in `FungusToast.Unity/Assets/Editor/ReleaseBuildAutomation.cs`.
+
+Because this workflow builds inside Unity on GitHub-hosted macOS runners and does not perform a preceding `dotnet build FungusToast.Core/FungusToast.Core.csproj`, the checked-in `FungusToast.Unity/Assets/Plugins/FungusToast.Core.dll` is part of the intended setup rather than an accidental binary artifact.
 
 ### One-time GitHub setup
 
