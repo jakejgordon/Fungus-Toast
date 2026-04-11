@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
+using FungusToast.Core.Growth;
+using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Campaign;
+using FungusToast.Unity.Endgame;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.Phases;
 using FungusToast.Unity.UI;
@@ -31,6 +34,7 @@ namespace FungusToast.Unity
         private readonly Func<GameMode> getGameMode;
         private readonly Func<CampaignController> getCampaignController;
         private readonly Func<CampaignProgression> getCampaignProgression;
+        private readonly Func<EndgamePlayerStatisticsSnapshot> getEndgamePlayerStatistics;
         private readonly Func<Dictionary<(int playerId, int mutationId), List<int>>> getFirstUpgradeRounds;
         private readonly Func<bool> getTestingModeEnabled;
         private readonly Func<ForcedGameResultMode> getForcedGameResultMode;
@@ -47,6 +51,7 @@ namespace FungusToast.Unity
             Func<GameMode> getGameMode,
             Func<CampaignController> getCampaignController,
             Func<CampaignProgression> getCampaignProgression,
+            Func<EndgamePlayerStatisticsSnapshot> getEndgamePlayerStatistics,
             Func<Dictionary<(int playerId, int mutationId), List<int>>> getFirstUpgradeRounds,
             Func<bool> getTestingModeEnabled,
             Func<ForcedGameResultMode> getForcedGameResultMode)
@@ -57,6 +62,7 @@ namespace FungusToast.Unity
             this.getGameMode = getGameMode;
             this.getCampaignController = getCampaignController;
             this.getCampaignProgression = getCampaignProgression;
+            this.getEndgamePlayerStatistics = getEndgamePlayerStatistics;
             this.getFirstUpgradeRounds = getFirstUpgradeRounds;
             this.getTestingModeEnabled = getTestingModeEnabled;
             this.getForcedGameResultMode = getForcedGameResultMode;
@@ -162,6 +168,7 @@ namespace FungusToast.Unity
 
             var board = getBoard();
             var humanPlayer = getHumanPlayer();
+            var endgamePlayerStatistics = getEndgamePlayerStatistics();
             var campaignController = getCampaignController();
             var campaignProgression = getCampaignProgression();
 
@@ -234,7 +241,7 @@ namespace FungusToast.Unity
             if (isCampaign)
             {
                 ui.EndGamePanel.ShowResultsWithOutcome(
-                    ranked, board, true, humanWon,
+                    ranked, board, endgamePlayerStatistics, true, humanWon,
                     finalLevelPreAdvance && humanWon, hasNextLevel,
                     humanWon ? completedLevelDisplay : lostLevelDisplay,
                     completedLevelDisplay,
@@ -242,7 +249,7 @@ namespace FungusToast.Unity
             }
             else
             {
-                ui.EndGamePanel.ShowResults(ranked, board);
+                ui.EndGamePanel.ShowResults(ranked, board, endgamePlayerStatistics);
             }
 
             var firstUpgradeRounds = getFirstUpgradeRounds();
@@ -1073,6 +1080,221 @@ namespace FungusToast.Unity
             }
 
             return remainingMolds[0];
+        }
+    }
+}
+
+namespace FungusToast.Unity.Endgame
+{
+    public sealed class EndgamePlayerStatistics
+    {
+        public static EndgamePlayerStatistics Zero { get; } = new EndgamePlayerStatistics(
+            spentMutationPoints: 0,
+            tilesColonized: 0,
+            tilesToxified: 0,
+            cellsReclaimed: 0,
+            cellsOvergrown: 0,
+            cellsInfested: 0,
+            cellsPoisoned: 0);
+
+        public int SpentMutationPoints { get; }
+        public int TilesColonized { get; }
+        public int TilesToxified { get; }
+        public int CellsReclaimed { get; }
+        public int CellsOvergrown { get; }
+        public int CellsInfested { get; }
+        public int CellsPoisoned { get; }
+
+        public EndgamePlayerStatistics(
+            int spentMutationPoints,
+            int tilesColonized,
+            int tilesToxified,
+            int cellsReclaimed,
+            int cellsOvergrown,
+            int cellsInfested,
+            int cellsPoisoned)
+        {
+            SpentMutationPoints = spentMutationPoints;
+            TilesColonized = tilesColonized;
+            TilesToxified = tilesToxified;
+            CellsReclaimed = cellsReclaimed;
+            CellsOvergrown = cellsOvergrown;
+            CellsInfested = cellsInfested;
+            CellsPoisoned = cellsPoisoned;
+        }
+    }
+
+    public sealed class EndgamePlayerStatisticsSnapshot
+    {
+        public static EndgamePlayerStatisticsSnapshot Empty { get; } = new EndgamePlayerStatisticsSnapshot(new Dictionary<int, EndgamePlayerStatistics>());
+
+        private readonly IReadOnlyDictionary<int, EndgamePlayerStatistics> statisticsByPlayerId;
+
+        public EndgamePlayerStatisticsSnapshot(IReadOnlyDictionary<int, EndgamePlayerStatistics> statisticsByPlayerId)
+        {
+            this.statisticsByPlayerId = statisticsByPlayerId ?? new Dictionary<int, EndgamePlayerStatistics>();
+        }
+
+        public EndgamePlayerStatistics GetPlayerStatistics(int playerId)
+        {
+            return statisticsByPlayerId.TryGetValue(playerId, out var statistics)
+                ? statistics
+                : EndgamePlayerStatistics.Zero;
+        }
+    }
+
+    public sealed class EndgamePlayerStatisticsTracker
+    {
+        private sealed class MutableEndgamePlayerStatistics
+        {
+            public int SpentMutationPoints;
+            public int TilesColonized;
+            public int TilesToxified;
+            public int CellsReclaimed;
+            public int CellsOvergrown;
+            public int CellsInfested;
+            public int CellsPoisoned;
+
+            public EndgamePlayerStatistics ToSnapshot()
+            {
+                return new EndgamePlayerStatistics(
+                    SpentMutationPoints,
+                    TilesColonized,
+                    TilesToxified,
+                    CellsReclaimed,
+                    CellsOvergrown,
+                    CellsInfested,
+                    CellsPoisoned);
+            }
+        }
+
+        private readonly Dictionary<int, MutableEndgamePlayerStatistics> statisticsByPlayerId = new();
+        private GameBoard subscribedBoard;
+
+        public void Reset()
+        {
+            Detach();
+            statisticsByPlayerId.Clear();
+        }
+
+        public void Attach(GameBoard board)
+        {
+            if (ReferenceEquals(subscribedBoard, board))
+            {
+                EnsurePlayersInitialized(board?.Players);
+                return;
+            }
+
+            Detach();
+            subscribedBoard = board;
+            if (subscribedBoard == null)
+            {
+                return;
+            }
+
+            EnsurePlayersInitialized(subscribedBoard.Players);
+            subscribedBoard.CellColonized += OnCellColonized;
+            subscribedBoard.CellToxified += OnCellToxified;
+            subscribedBoard.CellReclaimed += OnCellReclaimed;
+            subscribedBoard.CellOvergrown += OnCellOvergrown;
+            subscribedBoard.CellInfested += OnCellInfested;
+            subscribedBoard.CellPoisoned += OnCellPoisoned;
+        }
+
+        public void Detach()
+        {
+            if (subscribedBoard == null)
+            {
+                return;
+            }
+
+            subscribedBoard.CellColonized -= OnCellColonized;
+            subscribedBoard.CellToxified -= OnCellToxified;
+            subscribedBoard.CellReclaimed -= OnCellReclaimed;
+            subscribedBoard.CellOvergrown -= OnCellOvergrown;
+            subscribedBoard.CellInfested -= OnCellInfested;
+            subscribedBoard.CellPoisoned -= OnCellPoisoned;
+            subscribedBoard = null;
+        }
+
+        public void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int amount)
+        {
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            EnsurePlayerInitialized(playerId).SpentMutationPoints += amount;
+        }
+
+        public EndgamePlayerStatisticsSnapshot CreateSnapshot(IEnumerable<Player> players)
+        {
+            EnsurePlayersInitialized(players);
+
+            var snapshot = new Dictionary<int, EndgamePlayerStatistics>();
+            foreach (var entry in statisticsByPlayerId)
+            {
+                snapshot[entry.Key] = entry.Value.ToSnapshot();
+            }
+
+            return new EndgamePlayerStatisticsSnapshot(snapshot);
+        }
+
+        private void OnCellColonized(int playerId, int tileId, GrowthSource source)
+        {
+            EnsurePlayerInitialized(playerId).TilesColonized++;
+        }
+
+        private void OnCellToxified(int playerId, int tileId, GrowthSource source)
+        {
+            EnsurePlayerInitialized(playerId).TilesToxified++;
+        }
+
+        private void OnCellReclaimed(int playerId, int tileId, GrowthSource source)
+        {
+            EnsurePlayerInitialized(playerId).CellsReclaimed++;
+        }
+
+        private void OnCellOvergrown(int playerId, int tileId, int oldOwnerId, GrowthSource source)
+        {
+            EnsurePlayerInitialized(playerId).CellsOvergrown++;
+        }
+
+        private void OnCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource source)
+        {
+            EnsurePlayerInitialized(playerId).CellsInfested++;
+        }
+
+        private void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource source)
+        {
+            EnsurePlayerInitialized(playerId).CellsPoisoned++;
+        }
+
+        private void EnsurePlayersInitialized(IEnumerable<Player> players)
+        {
+            if (players == null)
+            {
+                return;
+            }
+
+            foreach (var player in players)
+            {
+                if (player != null)
+                {
+                    EnsurePlayerInitialized(player.PlayerId);
+                }
+            }
+        }
+
+        private MutableEndgamePlayerStatistics EnsurePlayerInitialized(int playerId)
+        {
+            if (!statisticsByPlayerId.TryGetValue(playerId, out var statistics))
+            {
+                statistics = new MutableEndgamePlayerStatistics();
+                statisticsByPlayerId[playerId] = statistics;
+            }
+
+            return statistics;
         }
     }
 }

@@ -31,6 +31,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.UI;
 using FungusToast.Unity.Campaign; // NEW: campaign namespace
+using FungusToast.Unity.Endgame;
 
 #nullable enable
 
@@ -229,6 +230,7 @@ namespace FungusToast.Unity
         private FastForwardService fastForwardService = null!; 
         private PostGrowthVisualSequence postGrowthVisualSequence = null!;
         private EndgameService endgameService = null!;
+        private EndgamePlayerStatisticsTracker endgamePlayerStatisticsTracker = null!;
         private MutationPointService mutationPointService = null!;
         private SpecialEventPresentationService specialEventPresentationService = null!;
         private BackgroundMusicService backgroundMusicService = null!;
@@ -356,6 +358,7 @@ namespace FungusToast.Unity
                 {
                     GameRulesEventSubscriber.UnsubscribeAll(currentBoard);
                     GameUIEventSubscriber.Unsubscribe(currentBoard, gameUIManager);
+                    endgamePlayerStatisticsTracker?.Detach();
                     var observer = gameUIManager?.GameLogRouter;
                     if (observer != null)
                     {
@@ -419,6 +422,8 @@ namespace FungusToast.Unity
                 progress => { gameUIManager.LoadingScreen?.Show(progress); },
                 () => { gameUIManager.LoadingScreen?.FadeOut(); });
             postGrowthVisualSequence = new PostGrowthVisualSequence(this, gridVisualizer, () => isFastForwarding, StartDecayPhase);
+            endgamePlayerStatisticsTracker = new EndgamePlayerStatisticsTracker();
+            gameUIManager.GameLogRouter.SetEndgamePlayerStatisticsTracker(endgamePlayerStatisticsTracker);
             endgameService = new EndgameService(
                 gameUIManager,
                 () => Board,
@@ -426,6 +431,7 @@ namespace FungusToast.Unity
                 () => CurrentGameMode,
                 () => campaignController,
                 () => campaignProgression,
+                () => endgamePlayerStatisticsTracker.CreateSnapshot(Board?.Players ?? players),
                 () => FirstUpgradeRounds,
                 () => testingModeEnabled,
                 () => testingForcedGameResult);
@@ -495,6 +501,7 @@ namespace FungusToast.Unity
             gameEnded = false;
             lastCompletedMycovariantDraftRound = -1;
             endgameService.Reset();
+            endgamePlayerStatisticsTracker.Reset();
             specialEventPresentationService?.Reset();
             playerCount = numberOfPlayers;
             ui.MutationUIManager?.SetSpendPointsButtonInteractable(false);
@@ -522,6 +529,7 @@ namespace FungusToast.Unity
 
             gridVisualizer.Initialize(Board);
             PlaceStartingSpores();
+            endgamePlayerStatisticsTracker.Attach(Board);
             gridVisualizer.RenderBoard(Board);
             playerPerspectiveService?.InitializeGameplayPerspective(humanPlayer, Board, players, gridVisualizer);
 

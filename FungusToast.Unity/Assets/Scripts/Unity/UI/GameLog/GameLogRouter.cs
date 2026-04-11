@@ -3,6 +3,7 @@ using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Board;
+using FungusToast.Unity.Endgame;
 using FungusToast.Unity.UI.MutationTree;
 
 namespace FungusToast.Unity.UI.GameLog
@@ -17,6 +18,7 @@ namespace FungusToast.Unity.UI.GameLog
         private readonly GameLogManager playerActivityLogManager;
         private readonly GlobalGameLogManager globalEventsLogManager;
         private readonly UI_MutationTreeToastPresenter mutationTreeToastPresenter;
+        private EndgamePlayerStatisticsTracker endgamePlayerStatisticsTracker;
 
         /// <summary>
         /// When true, UI emission is suppressed. Some aggregation still occurs.
@@ -28,6 +30,11 @@ namespace FungusToast.Unity.UI.GameLog
             playerActivityLogManager = playerLog;
             globalEventsLogManager = globalLog;
             mutationTreeToastPresenter = mutationTreeToast;
+        }
+
+        public void SetEndgamePlayerStatisticsTracker(EndgamePlayerStatisticsTracker tracker)
+        {
+            endgamePlayerStatisticsTracker = tracker;
         }
 
         #region Silent Mode
@@ -314,7 +321,10 @@ namespace FungusToast.Unity.UI.GameLog
                 rewardAmount);
         }
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
-        public void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade) { }
+        public void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade)
+        {
+            endgamePlayerStatisticsTracker?.RecordMutationPointsSpent(playerId, mutationTier, pointsPerUpgrade);
+        }
         public void RecordBankedPoints(int playerId, int pointsBanked) { }
         public void RecordHyphalSurgeGrowth(int playerId) { }
         public void RecordDirectedVectorGrowth(int playerId, int cellsPlaced) { }

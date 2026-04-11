@@ -13,6 +13,7 @@ using System;
 using FungusToast.Unity.UI.Campaign;
 using Assets.Scripts.Unity.UI.MycovariantDraft;
 using FungusToast.Unity.Campaign;
+using FungusToast.Unity.Endgame;
 using FungusToast.Unity.UI.Testing;
 using UnityEngine.EventSystems;
 
@@ -86,6 +87,7 @@ namespace FungusToast.Unity.UI
         private RectTransform detailsScrollContent;
         private RectTransform detailsCardRect;
         private Button detailsBackdropButton;
+        private EndgamePlayerStatisticsSnapshot currentPlayerStatistics = EndgamePlayerStatisticsSnapshot.Empty;
 
         /// <summary>
         /// Call once after the panel is created to wire up dependencies without reaching
@@ -206,9 +208,9 @@ namespace FungusToast.Unity.UI
         }
 
         /* ─────────── Public API (generic solo / hotseat) ─────────── */
-        public void ShowResults(List<Player> ranked, GameBoard board)
+        public void ShowResults(List<Player> ranked, GameBoard board, EndgamePlayerStatisticsSnapshot playerStatistics = null)
         {
-            ShowResultsInternal(ranked, board, useCampaignTopSpacer: false);
+            ShowResultsInternal(ranked, board, playerStatistics, useCampaignTopSpacer: false);
             SetLegacyResultsHeaderVisibility(true);
             SetOutcomeBannerVisibility(false);
             ApplyControlReadabilityOverrides();
@@ -225,6 +227,7 @@ namespace FungusToast.Unity.UI
         public void ShowResultsWithOutcome(
             List<Player> ranked,
             GameBoard board,
+            EndgamePlayerStatisticsSnapshot playerStatistics,
             bool isCampaign,
             bool victory,
             bool finalLevel,
@@ -233,7 +236,7 @@ namespace FungusToast.Unity.UI
             int completedLevelDisplay,
             bool adaptationPending)
         {
-            ShowResultsInternal(ranked, board, useCampaignTopSpacer: true);
+            ShowResultsInternal(ranked, board, playerStatistics, useCampaignTopSpacer: true);
             SetLegacyResultsHeaderVisibility(!isCampaign);
             SetOutcomeBannerVisibility(isCampaign);
             requiresAdaptationBeforeContinue = false;
@@ -294,9 +297,10 @@ namespace FungusToast.Unity.UI
         }
 
         /* ─────────── Internal Row Builder ─────────── */
-        private void ShowResultsInternal(List<Player> ranked, GameBoard board, bool useCampaignTopSpacer)
+        private void ShowResultsInternal(List<Player> ranked, GameBoard board, EndgamePlayerStatisticsSnapshot playerStatistics, bool useCampaignTopSpacer)
         {
             HidePlayerDetails();
+            currentPlayerStatistics = playerStatistics ?? EndgamePlayerStatisticsSnapshot.Empty;
 
             /* clear previous rows */
             foreach (Transform child in resultsContainer)
@@ -396,6 +400,7 @@ namespace FungusToast.Unity.UI
         private void ShowSnapshotRows(CampaignVictorySnapshot snapshot)
         {
             HidePlayerDetails();
+            currentPlayerStatistics = EndgamePlayerStatisticsSnapshot.Empty;
 
             foreach (Transform child in resultsContainer)
             {
@@ -882,6 +887,7 @@ namespace FungusToast.Unity.UI
             BuildMutationSection(player);
             BuildMycovariantSection(player);
             BuildAdaptationSection(player);
+            BuildOtherStatisticsSection(currentPlayerStatistics.GetPlayerStatistics(player.PlayerId));
             LayoutRebuilder.ForceRebuildLayoutImmediate(detailsScrollContent);
             detailsScrollRect.verticalNormalizedPosition = 1f;
         }
@@ -992,6 +998,78 @@ namespace FungusToast.Unity.UI
             {
                 CreateAdaptationEntry(section, player.PlayerAdaptations[i]);
             }
+        }
+
+        private readonly struct OtherStatisticDescriptor
+        {
+            public OtherStatisticDescriptor(string label, int value, string tooltip)
+            {
+                Label = label;
+                Value = value;
+                Tooltip = tooltip;
+            }
+
+            public string Label { get; }
+            public int Value { get; }
+            public string Tooltip { get; }
+        }
+
+        private void BuildOtherStatisticsSection(EndgamePlayerStatistics statistics)
+        {
+            var descriptors = new List<OtherStatisticDescriptor>
+            {
+                new OtherStatisticDescriptor(
+                    "Spent Mutation Points",
+                    statistics.SpentMutationPoints,
+                    "Total mutation points this player spent on mutation upgrades and surge activations during the game."),
+                new OtherStatisticDescriptor(
+                    "Tiles Colonized",
+                    statistics.TilesColonized,
+                    "Colonize: place a new living cell in an empty tile."),
+                new OtherStatisticDescriptor(
+                    "Tiles Toxified",
+                    statistics.TilesToxified,
+                    "Toxify: place toxin in an empty or dead tile."),
+                new OtherStatisticDescriptor(
+                    "Cells Reclaimed",
+                    statistics.CellsReclaimed,
+                    "Reclaim: place a new living cell over any dead cell, restoring it to living status by occupying that tile."),
+                new OtherStatisticDescriptor(
+                    "Cells Overgrown",
+                    statistics.CellsOvergrown,
+                    "Overgrow: place a new living cell over a toxin tile, removing the toxin tile by growing into it."),
+                new OtherStatisticDescriptor(
+                    "Cells Infested",
+                    statistics.CellsInfested,
+                    "Infest: place a new living cell over an enemy living cell, killing it and taking the tile."),
+                new OtherStatisticDescriptor(
+                    "Cells Poisoned",
+                    statistics.CellsPoisoned,
+                    "Poison: place toxin over a living cell, killing it and converting it into a toxin tile.")
+            };
+
+            var section = CreateDetailsSectionContainer("Other Statistics");
+            for (int i = 0; i < descriptors.Count; i++)
+            {
+                CreateOtherStatisticEntry(section, descriptors[i]);
+            }
+        }
+
+        private void CreateOtherStatisticEntry(Transform parent, OtherStatisticDescriptor descriptor)
+        {
+            var root = CreateDetailsEntryCard(parent, "OtherStatisticEntry");
+            var row = CreateHorizontalContainer(root.transform, "StatisticRow", 12f);
+            row.childAlignment = TextAnchor.MiddleLeft;
+
+            var nameLabel = CreateTextLabel(row.transform, "Name", 19f, FontStyles.Bold, UIStyleTokens.Text.Primary, TextAlignmentOptions.Left);
+            nameLabel.text = descriptor.Label;
+            var nameLayout = nameLabel.gameObject.AddComponent<LayoutElement>();
+            nameLayout.flexibleWidth = 1f;
+
+            var valueLabel = CreateTextLabel(row.transform, "Value", 19f, FontStyles.Bold, UIStyleTokens.State.Success, TextAlignmentOptions.Right);
+            valueLabel.text = descriptor.Value.ToString();
+
+            AttachStaticTooltip(root.gameObject, descriptor.Tooltip);
         }
 
         private RectTransform CreateDetailsSectionContainer(string title)
