@@ -123,9 +123,9 @@ download_butler() {
 	local butler_path="$butler_dir/butler"
 	local butler_url="https://broth.itch.zone/butler/${butler_archive}/LATEST/archive/default"
 
-	echo "Downloading butler..."
+	echo "Downloading butler..." >&2
 	if curl -L --fail --retry 3 --retry-delay 2 --connect-timeout 15 -o "$butler_zip" "$butler_url"; then
-		unzip -o "$butler_zip" -d "$butler_dir"
+		unzip -o -q "$butler_zip" -d "$butler_dir"
 		chmod +x "$butler_path"
 		printf '%s' "$butler_path"
 		return 0
@@ -134,13 +134,13 @@ download_butler() {
 	local existing_butler=""
 	existing_butler="$(resolve_butler_path || true)"
 	if [ -n "$existing_butler" ]; then
-		echo "Download failed, falling back to existing butler at $existing_butler"
+		echo "Download failed, falling back to existing butler at $existing_butler" >&2
 		printf '%s' "$existing_butler"
 		return 0
 	fi
 
-	echo "Error: Unable to download butler from $butler_url, and no existing butler binary was found."
-	echo "Set BUTLER_PATH to a bundled butler binary or allow access to broth.itch.zone from Unity Cloud Build."
+	echo "Error: Unable to download butler from $butler_url, and no existing butler binary was found." >&2
+	echo "Set BUTLER_PATH to a bundled butler binary or allow access to broth.itch.zone from Unity Cloud Build." >&2
 	exit 1
 }
 
