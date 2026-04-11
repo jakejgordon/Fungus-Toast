@@ -44,6 +44,81 @@ namespace FungusToast.Unity.UI
         public const float CellGrowthSettleDurationSeconds = 0.3f;
 
         /// <summary>
+        /// Duration of the short launch squash before Creeping Mold hops to its new tile.
+        /// </summary>
+        public const float CreepingMoldSourceEmphasisDurationSeconds = 0.1f;
+
+        /// <summary>
+        /// Duration of the Creeping Mold hop flight.
+        /// </summary>
+        public const float CreepingMoldHopDurationSeconds = 0.22f;
+
+        /// <summary>
+        /// Duration of the Creeping Mold landing squash and settle.
+        /// </summary>
+        public const float CreepingMoldLandingDurationSeconds = 0.14f;
+
+        /// <summary>
+        /// Fraction of landing time spent in the impact squash before the sprite settles.
+        /// </summary>
+        public const float CreepingMoldLandingImpactPortion = 0.5f;
+
+        /// <summary>
+        /// Initial scale of the temporary Creeping Mold mover sprite.
+        /// </summary>
+        public const float CreepingMoldSourceStartScale = 0.94f;
+
+        /// <summary>
+        /// Upward lift applied during the Creeping Mold launch anticipation.
+        /// </summary>
+        public const float CreepingMoldSourceLiftWorld = 0.08f;
+
+        /// <summary>
+        /// Horizontal stretch applied as Creeping Mold pushes off from the source tile.
+        /// </summary>
+        public const float CreepingMoldLaunchStretchX = 1.12f;
+
+        /// <summary>
+        /// Vertical squash applied as Creeping Mold pushes off from the source tile.
+        /// </summary>
+        public const float CreepingMoldLaunchStretchY = 0.88f;
+
+        /// <summary>
+        /// Scale used as Creeping Mold leaves the source tile.
+        /// </summary>
+        public const float CreepingMoldLaunchScale = 1.02f;
+
+        /// <summary>
+        /// Peak scale reached during the Creeping Mold hop.
+        /// </summary>
+        public const float CreepingMoldHopPeakScale = 1.1f;
+
+        /// <summary>
+        /// Scale used just before the Creeping Mold landing squash.
+        /// </summary>
+        public const float CreepingMoldLandingScale = 1f;
+
+        /// <summary>
+        /// Base arc height for Creeping Mold hops in world units.
+        /// </summary>
+        public const float CreepingMoldHopBaseHeightWorld = 0.18f;
+
+        /// <summary>
+        /// Additional arc height applied per tile of travel.
+        /// </summary>
+        public const float CreepingMoldHopHeightPerTileWorld = 0.03f;
+
+        /// <summary>
+        /// Horizontal stretch applied on Creeping Mold landing.
+        /// </summary>
+        public const float CreepingMoldLandingStretchX = 1.14f;
+
+        /// <summary>
+        /// Vertical squash applied on Creeping Mold landing.
+        /// </summary>
+        public const float CreepingMoldLandingStretchY = 0.86f;
+
+        /// <summary>
         /// Duration (in seconds) for toxin drop animation.
         /// </summary>
         public const float ToxinDropAnimationDurationSeconds = 1.3f;

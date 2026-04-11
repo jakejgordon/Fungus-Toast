@@ -174,6 +174,41 @@ namespace FungusToast.Unity.Grid.Animation
             }
         }
 
+        public IEnumerator PlayCreepingMoldHopBatch(
+            IReadOnlyList<(int playerId, int sourceTileId, int destinationTileId)> moves,
+            System.Action<int> onDestinationReached = null)
+        {
+            if (moves == null || moves.Count == 0)
+            {
+                yield break;
+            }
+
+            var orderedMoves = moves
+                .Where(move => move.playerId >= 0 && move.sourceTileId >= 0 && move.destinationTileId >= 0 && move.sourceTileId != move.destinationTileId)
+                .Distinct()
+                .ToList();
+            if (orderedMoves.Count == 0)
+            {
+                yield break;
+            }
+
+            int remaining = orderedMoves.Count;
+            foreach (var move in orderedMoves)
+            {
+                viz.StartCoroutine(PlayCreepingMoldHopWithCompletion(
+                    move.playerId,
+                    move.sourceTileId,
+                    move.destinationTileId,
+                    onDestinationReached,
+                    () => remaining--));
+            }
+
+            while (remaining > 0)
+            {
+                yield return null;
+            }
+        }
+
         private IEnumerator PlaySegment(
             int playerId,
             int sourceTileId,
@@ -282,6 +317,167 @@ namespace FungusToast.Unity.Grid.Animation
             {
                 onComplete?.Invoke();
             }
+        }
+
+        private IEnumerator PlayCreepingMoldHopWithCompletion(
+            int playerId,
+            int sourceTileId,
+            int destinationTileId,
+            System.Action<int> onDestinationReached,
+            System.Action onComplete)
+        {
+            try
+            {
+                yield return PlayCreepingMoldHop(playerId, sourceTileId, destinationTileId, onDestinationReached);
+            }
+            finally
+            {
+                onComplete?.Invoke();
+            }
+        }
+
+        private IEnumerator PlayCreepingMoldHop(
+            int playerId,
+            int sourceTileId,
+            int destinationTileId,
+            System.Action<int> onDestinationReached)
+        {
+            var board = viz.ActiveBoard;
+            if (board == null)
+            {
+                RevealCreepingMoldDestination(destinationTileId, onDestinationReached);
+                yield break;
+            }
+
+            var moldTile = viz.GetTileForPlayer(playerId);
+            var moldSprite = moldTile != null ? moldTile.sprite : null;
+            var referenceTilemap = viz.overlayTilemap != null ? viz.overlayTilemap : viz.moldTilemap;
+            if (moldSprite == null || referenceTilemap == null)
+            {
+                RevealCreepingMoldDestination(destinationTileId, onDestinationReached);
+                yield break;
+            }
+
+            var destinationCell = ToCell(board, destinationTileId);
+            var destinationState = CaptureTileVisibility(destinationCell);
+            HideTile(destinationState);
+
+            var compositeRoot = BuildComposite(referenceTilemap, moldSprite, null, 1f);
+            if (compositeRoot == null)
+            {
+                RevealCreepingMoldDestination(destinationTileId, onDestinationReached);
+                yield break;
+            }
+
+            var sourceCell = ToCell(board, sourceTileId);
+            viz.BeginAnimation();
+            try
+            {
+                yield return CreepingMoldSourceEmphasis(compositeRoot, sourceCell, referenceTilemap);
+                yield return CreepingMoldHopFlight(compositeRoot, sourceCell, destinationCell, referenceTilemap);
+                yield return CreepingMoldLanding(compositeRoot, destinationCell, referenceTilemap);
+            }
+            finally
+            {
+                Object.Destroy(compositeRoot);
+                RestoreTile(destinationState, destinationTileId, restoreBoardStateOnFinish: false);
+                RevealCreepingMoldDestination(destinationTileId, onDestinationReached);
+                viz.EndAnimation();
+            }
+        }
+
+        private IEnumerator CreepingMoldSourceEmphasis(GameObject compositeRoot, Vector3Int sourceCell, Tilemap tilemap)
+        {
+            float duration = UI.UIEffectConstants.CreepingMoldSourceEmphasisDurationSeconds;
+            Vector3 sourceWorld = CellCenterWorld(tilemap, sourceCell);
+            Vector3 startScale = Vector3.one * UI.UIEffectConstants.CreepingMoldSourceStartScale;
+            Vector3 endScale = new Vector3(
+                UI.UIEffectConstants.CreepingMoldLaunchStretchX,
+                UI.UIEffectConstants.CreepingMoldLaunchStretchY,
+                1f);
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
+                float eased = 1f - Mathf.Pow(1f - t, 3f);
+                compositeRoot.transform.position = sourceWorld + Vector3.up * Mathf.Lerp(0f, UI.UIEffectConstants.CreepingMoldSourceLiftWorld, eased);
+                compositeRoot.transform.localScale = Vector3.Lerp(startScale, endScale, eased);
+                compositeRoot.transform.localRotation = Quaternion.identity;
+                yield return null;
+            }
+        }
+
+        private IEnumerator CreepingMoldHopFlight(GameObject compositeRoot, Vector3Int sourceCell, Vector3Int destinationCell, Tilemap tilemap)
+        {
+            float duration = UI.UIEffectConstants.CreepingMoldHopDurationSeconds;
+            Vector3 startWorld = CellCenterWorld(tilemap, sourceCell) + Vector3.up * UI.UIEffectConstants.CreepingMoldSourceLiftWorld;
+            Vector3 endWorld = CellCenterWorld(tilemap, destinationCell);
+            float distanceTiles = Vector2.Distance(new Vector2(sourceCell.x, sourceCell.y), new Vector2(destinationCell.x, destinationCell.y));
+            float arcHeight = UI.UIEffectConstants.CreepingMoldHopBaseHeightWorld
+                + (distanceTiles * UI.UIEffectConstants.CreepingMoldHopHeightPerTileWorld);
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
+                float eased = 1f - Mathf.Pow(1f - t, 2f);
+                float heightFactor = 4f * eased * (1f - eased);
+                compositeRoot.transform.position = Vector3.Lerp(startWorld, endWorld, eased) + Vector3.up * (heightFactor * arcHeight);
+                float scale = t <= 0.5f
+                    ? Mathf.Lerp(UI.UIEffectConstants.CreepingMoldLaunchScale, UI.UIEffectConstants.CreepingMoldHopPeakScale, t / 0.5f)
+                    : Mathf.Lerp(UI.UIEffectConstants.CreepingMoldHopPeakScale, UI.UIEffectConstants.CreepingMoldLandingScale, (t - 0.5f) / 0.5f);
+                compositeRoot.transform.localScale = Vector3.one * scale;
+                compositeRoot.transform.localRotation = Quaternion.identity;
+                yield return null;
+            }
+        }
+
+        private IEnumerator CreepingMoldLanding(GameObject compositeRoot, Vector3Int destinationCell, Tilemap tilemap)
+        {
+            float duration = UI.UIEffectConstants.CreepingMoldLandingDurationSeconds;
+            Vector3 destinationWorld = CellCenterWorld(tilemap, destinationCell);
+            Vector3 impactScale = new Vector3(
+                UI.UIEffectConstants.CreepingMoldLandingStretchX,
+                UI.UIEffectConstants.CreepingMoldLandingStretchY,
+                1f);
+
+            float impactDuration = duration * UI.UIEffectConstants.CreepingMoldLandingImpactPortion;
+            float settleDuration = Mathf.Max(0.0001f, duration - impactDuration);
+
+            float elapsed = 0f;
+            while (elapsed < impactDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = impactDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / impactDuration);
+                float eased = 1f - Mathf.Pow(1f - t, 2f);
+                compositeRoot.transform.position = destinationWorld;
+                compositeRoot.transform.localScale = Vector3.Lerp(Vector3.one * UI.UIEffectConstants.CreepingMoldLandingScale, impactScale, eased);
+                yield return null;
+            }
+
+            elapsed = 0f;
+            while (elapsed < settleDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / settleDuration);
+                float eased = 1f - Mathf.Pow(1f - t, 3f);
+                compositeRoot.transform.position = destinationWorld;
+                compositeRoot.transform.localScale = Vector3.Lerp(impactScale, Vector3.one, eased);
+                yield return null;
+            }
+
+            compositeRoot.transform.position = destinationWorld;
+            compositeRoot.transform.localScale = Vector3.one;
+        }
+
+        private void RevealCreepingMoldDestination(int destinationTileId, System.Action<int> onDestinationReached)
+        {
+            viz.RevealPreAnimationPreviewTile(destinationTileId);
+            onDestinationReached?.Invoke(destinationTileId);
+            viz.RenderTileFromBoard(destinationTileId);
         }
 
         private IEnumerator SourceEmphasis(GameObject compositeRoot, Vector3Int sourceCell, Tilemap tilemap, bool preserveSourceCell, float durationScale)

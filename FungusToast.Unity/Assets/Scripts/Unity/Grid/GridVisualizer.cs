@@ -86,6 +86,21 @@ namespace FungusToast.Unity.Grid
 
         // Animation effect tracking
         private readonly HashSet<int> preAnimationHiddenPreviewTileIds = new();
+        private readonly List<CreepingMoldVisualMove> _pendingCreepingMoldMoves = new();
+
+        private readonly struct CreepingMoldVisualMove
+        {
+            public CreepingMoldVisualMove(int playerId, int sourceTileId, int destinationTileId)
+            {
+                PlayerId = playerId;
+                SourceTileId = sourceTileId;
+                DestinationTileId = destinationTileId;
+            }
+
+            public int PlayerId { get; }
+            public int SourceTileId { get; }
+            public int DestinationTileId { get; }
+        }
 
         private SelectionHighlightHelper selectionHelper;
         private RingHighlightHelper ringHelper;
@@ -242,6 +257,7 @@ namespace FungusToast.Unity.Grid
                 this.board.CellReclaimed += HandleCellReclaimed;
                 this.board.CellInfested += HandleCellInfested;
                 this.board.CellOvergrown += HandleCellOvergrown;
+                this.board.CreepingMoldMove += HandleCreepingMoldMove;
                 this.board.ToxinExpired += HandleToxinExpired;
                 this.board.ChemobeaconPlaced += HandleChemobeaconPlaced;
                 this.board.ChemobeaconExpired += HandleChemobeaconExpired;
@@ -263,6 +279,7 @@ namespace FungusToast.Unity.Grid
             cellStateAnimationController?.ResetRuntimeState();
             resistanceOverlayController?.ResetRuntimeState();
             preAnimationHiddenPreviewTileIds.Clear();
+            _pendingCreepingMoldMoves.Clear();
             overlayRenderer?.ResetRuntimeState();
 
             ClearAllHighlights();
@@ -374,10 +391,13 @@ namespace FungusToast.Unity.Grid
                 board.CellReclaimed -= HandleCellReclaimed;
                 board.CellInfested -= HandleCellInfested;
                 board.CellOvergrown -= HandleCellOvergrown;
+                board.CreepingMoldMove -= HandleCreepingMoldMove;
                 board.ToxinExpired -= HandleToxinExpired;
                 board.ChemobeaconPlaced -= HandleChemobeaconPlaced;
                 board.ChemobeaconExpired -= HandleChemobeaconExpired;
             }
+
+            _pendingCreepingMoldMoves.Clear();
         }
 
         private void HandleToxinPlaced(object sender, ToxinPlacedEventArgs e)
@@ -418,6 +438,16 @@ namespace FungusToast.Unity.Grid
             }
 
             cellStateAnimationController?.QueueOvergrowTransition(tileId);
+        }
+
+        private void HandleCreepingMoldMove(int playerId, int fromTileId, int toTileId)
+        {
+            if (board == null || fromTileId < 0 || toTileId < 0 || fromTileId == toTileId)
+            {
+                return;
+            }
+
+            _pendingCreepingMoldMoves.Add(new CreepingMoldVisualMove(playerId, fromTileId, toTileId));
         }
 
         private void HandleChemobeaconPlaced(int playerId, int tileId)
@@ -600,6 +630,22 @@ namespace FungusToast.Unity.Grid
         #region Public Interaction / Rendering API (restored)
         public void RenderBoard(GameBoard board, bool suppressAnimations)
         {
+            var creepingMoldMoves = suppressAnimations
+                ? Array.Empty<CreepingMoldVisualMove>()
+                : ConsumePendingCreepingMoldMoves(board);
+
+            if (suppressAnimations)
+            {
+                _pendingCreepingMoldMoves.Clear();
+            }
+
+            if (creepingMoldMoves.Length > 0)
+            {
+                var hiddenTileIds = creepingMoldMoves.Select(move => move.DestinationTileId).Distinct().ToList();
+                RegisterPreAnimationHiddenPreviewTiles(hiddenTileIds);
+                cellStateAnimationController?.SuppressNextFadeInAnimations(hiddenTileIds);
+            }
+
             cellStateAnimationController?.PrepareForBoardRender(board, suppressAnimations);
             overlayRenderer?.ResetRuntimeState();
 
@@ -634,6 +680,11 @@ namespace FungusToast.Unity.Grid
             if (!suppressAnimations)
             {
                 cellStateAnimationController?.StartQueuedAnimations();
+
+                if (creepingMoldMoves.Length > 0)
+                {
+                    StartCoroutine(PlayCreepingMoldAnimationBatch(creepingMoldMoves));
+                }
             }
         }
 
@@ -641,6 +692,49 @@ namespace FungusToast.Unity.Grid
         public void RenderBoard(GameBoard board)
         {
             RenderBoard(board, false);
+        }
+
+        private CreepingMoldVisualMove[] ConsumePendingCreepingMoldMoves(GameBoard renderBoard)
+        {
+            if (_pendingCreepingMoldMoves.Count == 0 || renderBoard == null)
+            {
+                _pendingCreepingMoldMoves.Clear();
+                return Array.Empty<CreepingMoldVisualMove>();
+            }
+
+            var sanitizedMoves = _pendingCreepingMoldMoves
+                .Where(move => move.SourceTileId >= 0 && move.DestinationTileId >= 0 && move.SourceTileId != move.DestinationTileId)
+                .GroupBy(move => move.DestinationTileId)
+                .Select(group => group.Last())
+                .Where(move =>
+                {
+                    var destinationTile = renderBoard.GetTileById(move.DestinationTileId);
+                    var destinationCell = destinationTile?.FungalCell;
+                    return destinationCell?.IsAlive == true && destinationCell.OwnerPlayerId == move.PlayerId;
+                })
+                .ToArray();
+
+            _pendingCreepingMoldMoves.Clear();
+            return sanitizedMoves;
+        }
+
+        private IEnumerator PlayCreepingMoldAnimationBatch(IReadOnlyList<CreepingMoldVisualMove> moves)
+        {
+            if (_launchArcAnimator == null || moves == null || moves.Count == 0)
+            {
+                yield break;
+            }
+
+            var launchMoves = moves
+                .Select(move => (move.PlayerId, move.SourceTileId, move.DestinationTileId))
+                .ToList();
+
+            yield return _launchArcAnimator.PlayCreepingMoldHopBatch(
+                launchMoves,
+                destinationTileId =>
+                {
+                    cellStateAnimationController?.CompleteGrowthAnimation(destinationTileId);
+                });
         }
 
         public void ShowHoverEffect(Vector3Int cellPos) => hoverHelper?.ShowHoverEffect(cellPos);

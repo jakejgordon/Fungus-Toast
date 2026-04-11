@@ -190,6 +190,7 @@ namespace FungusToast.Core.Board
         protected virtual void OnMutationPointsSpent(int playerId, MutationTier tier, int amount) => MutationPointsSpent?.Invoke(playerId, tier, amount);
         protected virtual void OnTendrilGrowth(int playerId, int tileId, DiagonalDirection direction) => TendrilGrowth?.Invoke(playerId, tileId, direction);
         protected virtual void OnCreepingMoldMove(int playerId, int fromTileId, int toTileId) => CreepingMoldMove?.Invoke(playerId, fromTileId, toTileId);
+        internal void RaiseCreepingMoldMove(int playerId, int fromTileId, int toTileId) => OnCreepingMoldMove(playerId, fromTileId, toTileId);
         protected virtual void OnNutrientPatchConsumed(int playerId, int nutrientTileId, int destinationTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
             => NutrientPatchConsumed?.Invoke(playerId, nutrientTileId, destinationTileId, patchType, rewardType, rewardAmount);
         protected virtual void OnToxinExpiredInternal(ToxinExpiredEventArgs e) => ToxinExpired?.Invoke(this, e);

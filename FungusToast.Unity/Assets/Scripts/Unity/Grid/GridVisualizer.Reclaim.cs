@@ -807,6 +807,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
 		private readonly HashSet<int> _newlyGrownTileIds = new();
 		private readonly HashSet<int> _newlyGrownAnimationPlayedTileIds = new();
+		private readonly HashSet<int> _suppressedFadeInTileIdsForNextRender = new();
 		private readonly Dictionary<int, Coroutine> _fadeInCoroutines = new();
 		private readonly HashSet<int> _dyingTileIds = new();
 		private readonly Dictionary<int, Coroutine> _deathAnimationCoroutines = new();
@@ -866,8 +867,27 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 		}
 
+		public void SuppressNextFadeInAnimations(IEnumerable<int> tileIds)
+		{
+			_suppressedFadeInTileIdsForNextRender.Clear();
+			if (tileIds == null)
+			{
+				return;
+			}
+
+			foreach (int tileId in tileIds)
+			{
+				_suppressedFadeInTileIdsForNextRender.Add(tileId);
+			}
+		}
+
 		public void PrepareForBoardRender(GameBoard board, bool suppressAnimations)
 		{
+			HashSet<int> suppressedFadeInTileIds = _suppressedFadeInTileIdsForNextRender.Count > 0
+				? new HashSet<int>(_suppressedFadeInTileIdsForNextRender)
+				: null;
+			_suppressedFadeInTileIdsForNextRender.Clear();
+
 			HashSet<int> suppressedToxinDropTileIds = _suppressedToxinDropTileIdsForNextRender.Count > 0
 				? new HashSet<int>(_suppressedToxinDropTileIdsForNextRender)
 				: null;
@@ -981,6 +1001,11 @@ namespace FungusToast.Unity.Grid.Helpers
 			if (suppressedToxinDropTileIds != null)
 			{
 				_toxinDropTileIds.ExceptWith(suppressedToxinDropTileIds);
+			}
+
+			if (suppressedFadeInTileIds != null)
+			{
+				_newlyGrownTileIds.ExceptWith(suppressedFadeInTileIds);
 			}
 		}
 
@@ -1248,6 +1273,13 @@ namespace FungusToast.Unity.Grid.Helpers
 			_toxinDropTileIds.Add(tileId);
 			StopTrackedAnimation(_toxinDropCoroutines, tileId);
 			_toxinDropCoroutines[tileId] = _startCoroutine(ToxinDropAnimation(tileId));
+		}
+
+		public void CompleteGrowthAnimation(int tileId)
+		{
+			_newlyGrownTileIds.Remove(tileId);
+			_newlyGrownAnimationPlayedTileIds.Add(tileId);
+			StopTrackedAnimation(_fadeInCoroutines, tileId);
 		}
 
 		private void StartPendingToxinExpiryAnimations()

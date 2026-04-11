@@ -186,6 +186,10 @@ namespace FungusToast.Unity
         private IEnumerator RunSequence()
         {
             if (isFastForwarding()) { ClearBuffers(); sequenceRunning = false; startDecayPhase(); yield break; }
+
+            yield return grid.WaitForAllAnimations();
+            grid.RenderBoard(gameManager.Board, suppressAnimations: true);
+
             // (Currently regen + resistance placeholders; actual population of buffers would be wired similarly to original code)
             if (regenReclaimBuffer.Count > 0)
             {
