@@ -47,7 +47,7 @@ namespace FungusToast.Core.Mycovariants
             ReclamationGroup.Where(id => id != excludeId).ToList();
 
         // ----------------- Toxin (Enhancement / Persistence / Mobility) Group -----------------
-        // Focuses on toxin longevity / relocation � core enablers other toxin deployers commonly reference.
+        // Focuses on toxin longevity / relocation - core enablers other toxin deployers commonly reference.
         private static readonly List<int> ToxinEnhancementGroup = new()
         {
             MycovariantIds.ChemotacticMycotoxinsId,

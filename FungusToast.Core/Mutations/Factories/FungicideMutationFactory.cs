@@ -17,7 +17,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeRoot(new Mutation(
                 id: MutationIds.MycotoxinTracer,
                 name: "Mycotoxin Tracer",
-                description: "At the start of each decay phase, release toxin spores based on three factors: a random base amount that scales with level (with diminishing returns), a random bonus from failed growth attempts, and an early-game bonus when failed growths are high relative to your living cells. Total spores are capped by board size. Spores place toxins on empty tiles adjacent to enemy cells, blocking their growth and reclamation.",
+                description: "At the start of each Decay Phase, scatter toxin tiles along enemy borders to block expansion. Each level increases expected toxin output: failed growths generate more tracer spores, and you gain an additional boost when your colony is small and struggling to spread. Baseline toxin output also rises at key level milestones. Toxins land on random empty tiles next to living enemies, are capped by board size, block normal growth, and cannot be reclaimed.",
                 flavorText: "Microscopic chemical trails seep outward, clouding enemy borders in dormant inhibition fields.",
                 type: MutationType.FungicideToxinSpores,
                 effectPerLevel: GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel,
@@ -102,7 +102,7 @@ namespace FungusToast.Core.Mutations.Factories
                 description: $"When your mold kills an adjacent enemy cell, friendly living cells within <b>{GameBalance.PutrefactiveRejuvenationEffectRadius}</b> tiles lose <b>{GameBalance.PutrefactiveRejuvenationAgeReductionPerLevel}</b> age per level. " +
                              $"Each level also boosts Putrefactive Mycotoxin effectiveness by <b>{helper.FormatPercent(GameBalance.PutrefactiveRejuvenationMycotoxinBonusPerLevel)}</b>.\n" +
                              $"<b>Max Level Bonus:</b> Rejuvenation radius is doubled.",
-                flavorText: "The colony's most advanced toxins not only destroy rivals, but catalyze a surge of rejuvenation�siphoning the essence of the fallen to extend its own life.",
+                flavorText: "The colony's most advanced toxins not only destroy rivals, but catalyze a surge of rejuvenation, siphoning the essence of the fallen to extend its own life.",
                 type: MutationType.PutrefactiveRejuvenation,
                 effectPerLevel: GameBalance.PutrefactiveRejuvenationAgeReductionPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
