@@ -253,14 +253,7 @@ namespace FungusToast.Unity.UI
             TooltipTrigger tooltip = hudButtonRoot.AddComponent<TooltipTrigger>();
             tooltip.SetStaticText("Open the pause menu.");
 
-            TextMeshProUGUI label = CreateLabel(hudButtonRoot.transform, "≡", 16f, FontStyles.Bold);
-            RectTransform labelRect = label.rectTransform;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-            label.alignment = TextAlignmentOptions.Center;
-            label.color = UIStyleTokens.Button.TextDefault;
+            CreateHamburgerIcon(hudButtonRoot.transform);
         }
 
         private void BuildNextTrackHudButton(Transform parent)
@@ -593,6 +586,32 @@ namespace FungusToast.Unity.UI
             layout.preferredHeight = preferredHeight;
             layout.flexibleHeight = 0f;
             return label;
+        }
+
+        private static void CreateHamburgerIcon(Transform parent)
+        {
+            GameObject iconRoot = CreateUiObject("HamburgerIcon", parent);
+            RectTransform iconRect = iconRoot.GetComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            iconRect.pivot = new Vector2(0.5f, 0.5f);
+            iconRect.sizeDelta = new Vector2(12f, 10f);
+            iconRect.anchoredPosition = Vector2.zero;
+
+            for (int barIndex = 0; barIndex < 3; barIndex++)
+            {
+                GameObject barObject = CreateUiObject($"Bar{barIndex + 1}", iconRoot.transform);
+                Image bar = barObject.AddComponent<Image>();
+                bar.color = UIStyleTokens.Button.TextDefault;
+                bar.raycastTarget = false;
+
+                RectTransform barRect = barObject.GetComponent<RectTransform>();
+                barRect.anchorMin = new Vector2(0.5f, 0.5f);
+                barRect.anchorMax = new Vector2(0.5f, 0.5f);
+                barRect.pivot = new Vector2(0.5f, 0.5f);
+                barRect.sizeDelta = new Vector2(12f, 2f);
+                barRect.anchoredPosition = new Vector2(0f, 4f - (barIndex * 4f));
+            }
         }
 
         private static GameObject CreateUiObject(string name, Transform parent)
