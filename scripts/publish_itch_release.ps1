@@ -36,7 +36,7 @@ function Get-ReleaseVersionFilePath {
         [string]$RepoRoot
     )
 
-    return Join-Path $RepoRoot 'version.txt'
+    return Join-Path (Join-Path $RepoRoot 'FungusToast.Unity') 'version.txt'
 }
 
 function Get-LastDeployedVersionFilePath {
@@ -45,7 +45,7 @@ function Get-LastDeployedVersionFilePath {
         [string]$RepoRoot
     )
 
-    return Join-Path $RepoRoot 'last-deployed-version.txt'
+    return Join-Path (Join-Path $RepoRoot 'FungusToast.Unity') 'last-deployed-version.txt'
 }
 
 function Test-SemanticVersion {
@@ -102,7 +102,7 @@ function Resolve-ReleaseVersion {
     $fileVersion = Read-VersionFileValue -Path $releaseVersionFilePath -Description 'current release version'
 
     if (-not [string]::IsNullOrWhiteSpace($ProvidedVersion) -and $ProvidedVersion -ne $fileVersion) {
-        throw "The provided -Version '$ProvidedVersion' does not match '$fileVersion' in '$releaseVersionFilePath'. Update version.txt or omit -Version."
+        throw "The provided -Version '$ProvidedVersion' does not match '$fileVersion' in '$releaseVersionFilePath'. Update FungusToast.Unity/version.txt or omit -Version."
     }
 
     return $fileVersion
@@ -124,7 +124,7 @@ function Assert-ReleaseVersionIsNewerThanLastDeployment {
     }
 
     if (([version]$ReleaseVersion) -le ([version]$lastDeployedVersion)) {
-        throw "Release version '$ReleaseVersion' is not newer than the last deployed version '$lastDeployedVersion'. Update version.txt before publishing to itch.io."
+        throw "Release version '$ReleaseVersion' is not newer than the last deployed version '$lastDeployedVersion'. Update FungusToast.Unity/version.txt before publishing to itch.io."
     }
 }
 
