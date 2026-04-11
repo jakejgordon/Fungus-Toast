@@ -39,6 +39,7 @@ These are intentionally second-hop documents: they are discovered from entry doc
 
 ### Mutations
 - `second-level/MUTATION_PREREQUISITE_GUIDELINES.md` — mutation-category philosophy and prerequisite design rules
+- `second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` — simulation-export wiring, observer extensions, and tracking-context implementation map
 
 ### Shared naming
 - `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` — naming constraints shared across content systems

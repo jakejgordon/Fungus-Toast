@@ -30,23 +30,35 @@ The standard post-simulation outputs are:
 - `post_simulation_player_summary.csv`: one row per player/strategy with `Win %`, `Avg Living Cells`, `Avg Dead Cells`, and `Avg Toxins`
 - `growth_source_summary.csv`: one row per `(player, growth source)` with `Total Living`, `Count`, and `% From Growth Source`, sorted by highest `Total Living` player first and then by `Count` descending
 
+For routine simulation summaries, prefer reading `post_simulation_player_summary.csv` directly after running `analyze_balance.py` rather than re-deriving the per-player table by hand from raw parquet files.
+
 The markdown report includes those standard tables plus ranked OP/UP candidates, matchup-theme sensitivity, mutation synergy candidates, mycovariant-mutation interaction candidates, and nutrient economy summaries showing which strategies are benefiting most from clustered nutrients.
 ## Usage
 
+Preferred default in this repo: run the script with the checked-in analytics virtual environment instead of assuming a global Python has the required packages. This should be the default artifact-processing path so the parquet workflow does not need to be rediscovered each session.
+
+Windows / PowerShell:
+
 ```powershell
-python analyze_balance.py --run-folder "..\FungusToast.Simulation\bin\Debug\net8.0\SimulationParquet\exp_20260306T170000"
+.\.venv\Scripts\python.exe analyze_balance.py --run-folder "..\FungusToast.Simulation\bin\Debug\net8.0\SimulationParquet\exp_20260306T170000"
+```
+
+WSL / Linux:
+
+```bash
+./.venv/bin/python analyze_balance.py --run-folder "../FungusToast.Simulation/bin/Debug/net8.0/SimulationParquet/exp_20260306T170000"
 ```
 
 Optional output directory:
 
 ```powershell
-python analyze_balance.py --run-folder "<path>" --output-dir "<path>"
+.\.venv\Scripts\python.exe analyze_balance.py --run-folder "<path>" --output-dir "<path>"
 ```
 
 Optional confidence and interaction thresholds:
 
 ```powershell
-python analyze_balance.py --run-folder "<path>" --min-confidence 0.5 --min-picks 20 --min-eligible-samples 100 --min-pair-samples 15 --min-combo-samples 15
+.\.venv\Scripts\python.exe analyze_balance.py --run-folder "<path>" --min-confidence 0.5 --min-picks 20 --min-eligible-samples 100 --min-pair-samples 15 --min-combo-samples 15
 ```
 
 ## Outputs
@@ -103,7 +115,7 @@ dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- `
 Use stricter thresholds for decision-grade calls:
 
 ```powershell
-python analyze_balance.py `
+.\.venv\Scripts\python.exe analyze_balance.py `
 	--run-folder "<parquet run folder>" `
 	--min-confidence 0.6 `
 	--min-picks 150 `
