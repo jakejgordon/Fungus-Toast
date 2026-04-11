@@ -272,7 +272,7 @@ namespace FungusToast.Core.Board
             for (int i = 0; i < positions.Count; i++)
             {
                 var (x, y) = positions[i];
-                int offset = i < edgeOffsets.Count ? Math.Max(0, edgeOffsets[i]) : 0;
+                int offset = i < edgeOffsets.Count ? edgeOffsets[i] : 0;
                 if (offset == 0)
                 {
                     adjusted[i] = (x, y);

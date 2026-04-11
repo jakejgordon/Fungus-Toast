@@ -104,7 +104,7 @@ namespace FungusToast.Core.AI
             this.surgeAttemptTurnFrequency = surgeAttemptTurnFrequency;
             this.economyBias = economyBias;
             this.mycovariantPreferences = mycovariantPreferences ?? new();
-            this.startingSporeEdgeOffset = Math.Max(0, startingSporeEdgeOffset);
+            this.startingSporeEdgeOffset = startingSporeEdgeOffset;
             
             // Convert preferred mycovariant IDs to preferences if provided
             if (preferredMycovariantIds != null)

@@ -397,7 +397,8 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
                     new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Reclamation)
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Reclamation),
+                startingSporeEdgeOffset: 6
             ),
             // AI3
             new ParameterizedSpendingStrategy(
@@ -461,7 +462,8 @@ namespace FungusToast.Core.AI
                 surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon },
                 surgeAttemptTurnFrequency: 10,
                 prioritizeHighTier: true,
-                economyBias: EconomyBias.MaxEconomy),
+                economyBias: EconomyBias.MaxEconomy,
+                startingSporeEdgeOffset: -10),
             // AI8
             new ParameterizedSpendingStrategy(
                 strategyName: "AI8",
@@ -473,7 +475,8 @@ namespace FungusToast.Core.AI
                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
-                }
+                },
+                startingSporeEdgeOffset: -8
             ),
             // AI9
             new ParameterizedSpendingStrategy(
@@ -503,7 +506,8 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy),
+                startingSporeEdgeOffset: -15
             ),
             // AI10 test permutation: more direct toxin/regression pressure
             new ParameterizedSpendingStrategy(
@@ -887,7 +891,8 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.Necrosporulation),
                     new TargetMutationGoal(MutationIds.CatabolicRebirth)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation),
+                startingSporeEdgeOffset: 8
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "CMP_Economy_LateSpike_Hard",
@@ -958,6 +963,21 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Training_Overextender_Offset1",
+                prioritizeHighTier: false,
+                economyBias: EconomyBias.IgnoreEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 10),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 5)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth),
+                startingSporeEdgeOffset: 1
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_Training_Overextender_Offset2",
                 prioritizeHighTier: false,
                 economyBias: EconomyBias.IgnoreEconomy,
@@ -1003,6 +1023,21 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Growth)
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Training_ResilientMycelium_Offset1",
+                prioritizeHighTier: false,
+                economyBias: EconomyBias.IgnoreEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 5),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, 5)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChitinFortification },
+                surgeAttemptTurnFrequency: 8,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Growth),
+                startingSporeEdgeOffset: 1
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_Training_ResilientMycelium_Offset3",
                 prioritizeHighTier: false,
                 economyBias: EconomyBias.IgnoreEconomy,
@@ -1031,6 +1066,21 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.MycotoxinCatabolism)
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Fungicide, MycovariantCategory.Resistance)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Training_ToxicTurtle_Offset1",
+                prioritizeHighTier: false,
+                economyBias: EconomyBias.IgnoreEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 15),
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 3),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinCatabolism)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Fungicide, MycovariantCategory.Resistance),
+                startingSporeEdgeOffset: 1
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_Training_ToxicTurtle_Offset2",
