@@ -16,7 +16,7 @@ MonoBehaviour:
   boardWidth: 15
   boardHeight: 15
   aiPlayers:
-  - strategyName: TST_Training_Overextender_Offset3
+  - strategyName: TST_Training_Overextender_Offset2
     startingAdaptationIds: []
   pooledAiPlayerCount: 0
   aiStrategyPool: []
