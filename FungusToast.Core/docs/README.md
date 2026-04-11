@@ -42,6 +42,7 @@ These are intentionally second-hop documents: they are discovered from entry doc
 
 ### Shared naming
 - `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` — naming constraints shared across content systems
+- `second-level/UNIT_ASSET_NAMING_CONVENTIONS.md` — naming rules for new Unity source assets such as sprites, icons, and audio files
 
 ## 3. Specialized / Secondary References
 

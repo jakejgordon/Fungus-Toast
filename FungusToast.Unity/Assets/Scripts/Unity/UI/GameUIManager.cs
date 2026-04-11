@@ -35,6 +35,8 @@ namespace FungusToast.Unity.UI
 
         [Header("Pause Menu")]
         [SerializeField] private UI_PauseMenuPanel pauseMenuPanel;
+        [SerializeField] private Sprite pauseMenuButtonIcon;
+        [SerializeField] private Sprite nextTrackButtonIcon;
 
         [Header("Phase Transitions")]
         [SerializeField] private UI_PhaseBanner phaseBanner;
@@ -85,6 +87,8 @@ namespace FungusToast.Unity.UI
         public UI_LoadingScreen LoadingScreen => loadingScreen;
         public UI_EndGamePanel EndGamePanel => endGamePanel;
         public UI_PauseMenuPanel PauseMenuPanel => pauseMenuPanel;
+        public Sprite PauseMenuButtonIcon => pauseMenuButtonIcon;
+        public Sprite NextTrackButtonIcon => nextTrackButtonIcon;
         public UI_PhaseBanner PhaseBanner => phaseBanner;
         public UI_MoldProfileRoot MoldProfileRoot => moldProfileRoot;
 

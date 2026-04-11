@@ -15,8 +15,11 @@ namespace FungusToast.Unity.UI
             ExitGame
         }
 
-        private const float HudButtonWidth = 24f;
-        private const float HudButtonHeight = 24f;
+        private const float HudButtonWidth = 28f;
+        private const float HudButtonHeight = 28f;
+        private const float HudButtonIconSize = 20f;
+        private const float ActionButtonIconSize = 28f;
+        private const float ActionButtonContentSpacing = 12f;
         private const float CardWidth = 420f;
         private const float CardHeight = 700f;
         private const float CardPadding = 24f;
@@ -253,7 +256,20 @@ namespace FungusToast.Unity.UI
             TooltipTrigger tooltip = hudButtonRoot.AddComponent<TooltipTrigger>();
             tooltip.SetStaticText("Open the pause menu.");
 
-            CreateHamburgerIcon(hudButtonRoot.transform);
+            Sprite pauseMenuIcon = gameUI != null ? gameUI.PauseMenuButtonIcon : null;
+            if (pauseMenuIcon != null)
+            {
+                CreateIconImage(hudButtonRoot.transform, "PauseMenuIcon", pauseMenuIcon, HudButtonIconSize, Vector2.zero);
+            }
+            else
+            {
+                if (gameUI == null)
+                {
+                    Debug.LogWarning("UI_PauseMenuPanel: Building pause HUD button without a GameUIManager. Using hamburger fallback.");
+                }
+
+                CreateHamburgerIcon(hudButtonRoot.transform);
+            }
         }
 
         private void BuildNextTrackHudButton(Transform parent)
@@ -276,15 +292,28 @@ namespace FungusToast.Unity.UI
             TooltipTrigger tooltip = nextTrackHudButtonRoot.AddComponent<TooltipTrigger>();
             tooltip.SetDynamicProvider(this);
 
-            TextMeshProUGUI label = CreateLabel(nextTrackHudButtonRoot.transform, ">>", 18f, FontStyles.Bold);
-            RectTransform labelRect = label.rectTransform;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-            label.alignment = TextAlignmentOptions.Center;
-            label.color = UIStyleTokens.Button.TextDefault;
-            label.margin = new Vector4(-6f, -5f, -6f, -5f);
+            Sprite nextTrackIcon = gameUI != null ? gameUI.NextTrackButtonIcon : null;
+            if (nextTrackIcon != null)
+            {
+                CreateIconImage(nextTrackHudButtonRoot.transform, "NextTrackIcon", nextTrackIcon, HudButtonIconSize, Vector2.zero);
+            }
+            else
+            {
+                if (gameUI == null)
+                {
+                    Debug.LogWarning("UI_PauseMenuPanel: Building next-track HUD button without a GameUIManager. Using text fallback.");
+                }
+
+                TextMeshProUGUI label = CreateLabel(nextTrackHudButtonRoot.transform, ">>", 18f, FontStyles.Bold);
+                RectTransform labelRect = label.rectTransform;
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = Vector2.zero;
+                labelRect.offsetMax = Vector2.zero;
+                label.alignment = TextAlignmentOptions.Center;
+                label.color = UIStyleTokens.Button.TextDefault;
+                label.margin = new Vector4(-6f, -5f, -6f, -5f);
+            }
         }
 
         private void BuildOverlay(Transform parent)
@@ -351,7 +380,7 @@ namespace FungusToast.Unity.UI
             Button resumeButton = CreateActionButton(primaryActionsRoot.transform, "Resume");
             resumeButton.onClick.AddListener(() => onResumeRequested?.Invoke());
 
-            Button mainMenuButton = CreateActionButton(primaryActionsRoot.transform, "Main Menu");
+            Button mainMenuButton = CreateActionButton(primaryActionsRoot.transform, "Main Menu", gameUI != null ? gameUI.PauseMenuButtonIcon : null);
             mainMenuButton.onClick.AddListener(RequestMainMenuConfirmation);
 
             Button exitButton = CreateActionButton(primaryActionsRoot.transform, "Exit Game");
@@ -372,7 +401,7 @@ namespace FungusToast.Unity.UI
             musicVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty);
             musicVolumeButton.onClick.AddListener(OnMusicVolumeClicked);
 
-            nextTrackMenuButton = CreateActionButton(soundSettingsRoot.transform, "Next Track");
+            nextTrackMenuButton = CreateActionButton(soundSettingsRoot.transform, "Next Track", gameUI != null ? gameUI.NextTrackButtonIcon : null);
             nextTrackMenuButton.onClick.AddListener(OnNextTrackClicked);
 
             TooltipTrigger nextTrackTooltip = nextTrackMenuButton.gameObject.AddComponent<TooltipTrigger>();
@@ -509,7 +538,7 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        private Button CreateActionButton(Transform parent, string labelText)
+        private Button CreateActionButton(Transform parent, string labelText, Sprite icon = null)
         {
             GameObject buttonObject = CreateUiObject(labelText.Replace(" ", string.Empty) + "Button", parent);
             RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
@@ -526,14 +555,46 @@ namespace FungusToast.Unity.UI
             Button button = buttonObject.AddComponent<Button>();
             UIStyleTokens.Button.ApplyStyle(button);
 
-            TextMeshProUGUI label = CreateLabel(buttonObject.transform, labelText, 24f, FontStyles.Bold);
-            RectTransform labelRect = label.rectTransform;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-            label.alignment = TextAlignmentOptions.Center;
-            label.color = UIStyleTokens.Button.TextDefault;
+            if (icon != null)
+            {
+                GameObject contentRoot = CreateUiObject("ButtonContent", buttonObject.transform);
+                RectTransform contentRect = contentRoot.GetComponent<RectTransform>();
+                contentRect.anchorMin = new Vector2(0.5f, 0.5f);
+                contentRect.anchorMax = new Vector2(0.5f, 0.5f);
+                contentRect.pivot = new Vector2(0.5f, 0.5f);
+                contentRect.anchoredPosition = Vector2.zero;
+
+                HorizontalLayoutGroup contentLayout = contentRoot.AddComponent<HorizontalLayoutGroup>();
+                contentLayout.spacing = ActionButtonContentSpacing;
+                contentLayout.childAlignment = TextAnchor.MiddleCenter;
+                contentLayout.childControlWidth = true;
+                contentLayout.childControlHeight = true;
+                contentLayout.childForceExpandWidth = false;
+                contentLayout.childForceExpandHeight = false;
+
+                ContentSizeFitter contentFitter = contentRoot.AddComponent<ContentSizeFitter>();
+                contentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+                contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+                CreateIconLayoutImage(contentRoot.transform, "ButtonIcon", icon, ActionButtonIconSize);
+
+                TextMeshProUGUI iconLabel = CreateActionButtonContentLabel(contentRoot.transform, labelText);
+                iconLabel.alignment = TextAlignmentOptions.Center;
+                iconLabel.color = UIStyleTokens.Button.TextDefault;
+            }
+            else
+            {
+                TextMeshProUGUI label = CreateLabel(buttonObject.transform, labelText, 24f, FontStyles.Bold);
+                RectTransform labelRect = label.rectTransform;
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = Vector2.zero;
+                labelRect.offsetMax = Vector2.zero;
+                label.alignment = TextAlignmentOptions.Center;
+                label.color = UIStyleTokens.Button.TextDefault;
+                label.margin = Vector4.zero;
+            }
+
             return button;
         }
 
@@ -588,6 +649,37 @@ namespace FungusToast.Unity.UI
             return label;
         }
 
+        private TextMeshProUGUI CreateActionButtonContentLabel(Transform parent, string text)
+        {
+            GameObject labelObject = CreateUiObject("Label", parent);
+            TextMeshProUGUI label = labelObject.AddComponent<TextMeshProUGUI>();
+            LayoutElement layout = labelObject.AddComponent<LayoutElement>();
+
+            label.text = text;
+            label.fontSize = 24f;
+            label.fontStyle = FontStyles.Bold;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.color = UIStyleTokens.Button.TextDefault;
+            label.raycastTarget = false;
+
+            if (sharedFont != null)
+            {
+                label.font = sharedFont;
+            }
+
+            RectTransform labelRect = label.rectTransform;
+            labelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            labelRect.pivot = new Vector2(0.5f, 0.5f);
+            labelRect.sizeDelta = new Vector2(0f, 42f);
+
+            layout.minHeight = 42f;
+            layout.preferredHeight = 42f;
+            layout.flexibleHeight = 0f;
+            layout.flexibleWidth = 0f;
+            return label;
+        }
+
         private static void CreateHamburgerIcon(Transform parent)
         {
             GameObject iconRoot = CreateUiObject("HamburgerIcon", parent);
@@ -612,6 +704,65 @@ namespace FungusToast.Unity.UI
                 barRect.sizeDelta = new Vector2(12f, 2f);
                 barRect.anchoredPosition = new Vector2(0f, 4f - (barIndex * 4f));
             }
+        }
+
+        private static Image CreateIconImage(
+            Transform parent,
+            string name,
+            Sprite icon,
+            float size,
+            Vector2 anchoredPosition,
+            bool anchorLeft = false)
+        {
+            GameObject iconObject = CreateUiObject(name, parent);
+            Image iconImage = iconObject.AddComponent<Image>();
+            iconImage.sprite = icon;
+            iconImage.color = UIStyleTokens.Button.TextDefault;
+            iconImage.preserveAspect = true;
+            iconImage.raycastTarget = false;
+
+            RectTransform iconRect = iconObject.GetComponent<RectTransform>();
+            if (anchorLeft)
+            {
+                iconRect.anchorMin = new Vector2(0f, 0.5f);
+                iconRect.anchorMax = new Vector2(0f, 0.5f);
+                iconRect.pivot = new Vector2(0f, 0.5f);
+            }
+            else
+            {
+                iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+                iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+                iconRect.pivot = new Vector2(0.5f, 0.5f);
+            }
+
+            iconRect.sizeDelta = new Vector2(size, size);
+            iconRect.anchoredPosition = anchoredPosition;
+            return iconImage;
+        }
+
+        private static Image CreateIconLayoutImage(Transform parent, string name, Sprite icon, float size)
+        {
+            GameObject iconObject = CreateUiObject(name, parent);
+            Image iconImage = iconObject.AddComponent<Image>();
+            iconImage.sprite = icon;
+            iconImage.color = UIStyleTokens.Button.TextDefault;
+            iconImage.preserveAspect = true;
+            iconImage.raycastTarget = false;
+
+            LayoutElement layout = iconObject.AddComponent<LayoutElement>();
+            layout.minWidth = size;
+            layout.preferredWidth = size;
+            layout.minHeight = size;
+            layout.preferredHeight = size;
+            layout.flexibleWidth = 0f;
+            layout.flexibleHeight = 0f;
+
+            RectTransform iconRect = iconObject.GetComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            iconRect.pivot = new Vector2(0.5f, 0.5f);
+            iconRect.sizeDelta = new Vector2(size, size);
+            return iconImage;
         }
 
         private static GameObject CreateUiObject(string name, Transform parent)

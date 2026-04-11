@@ -150,6 +150,30 @@ Notes:
 - Selected state uses `Button.Bg.Selected`.
 - Readability rule: button labels on light or selected button backgrounds must use high-contrast dark text (`Button.Text.Default` or `Text.OnAccent`). Do not use `Text.Secondary` or `Text.Muted` for interactive button labels.
 
+### 5.1.1 Buttons With Icons
+- Use icons only when they reinforce a familiar action or improve scan speed. Good candidates include menu, play, pause, skip, close, back, add, delete, download, and settings.
+- Prefer text plus icon over icon-only for large menu and overlay buttons. Icon-only buttons are appropriate for compact HUD controls, toolbars, and other space-constrained surfaces.
+- Keep icon and label the same visual color unless a semantic state explicitly requires otherwise.
+- Keep icon spacing tight and intentional. The icon should read as part of the button content, not as a detached decoration.
+- In related button stacks or groups, be consistent. If icons are introduced for one large sibling action, either use icons for all sibling actions that benefit from them or remove icons from the set.
+- Do not add icons to low-recognition or ambiguous actions just to decorate the button.
+
+### 5.1.2 Large Button Icon Alignment
+- For large buttons in menus, pause overlays, modal action lists, and other full-width stacks, do not pin the icon to the extreme left edge while keeping the label centered. This creates a split focal point and makes the button feel visually unbalanced.
+- Default Fungus Toast pattern for large labeled buttons: treat the icon and label as one compound content group. Keep the icon leading the label with a modest gap, and center that combined group within the button when the button set is primarily menu-like.
+- If a screen uses left-aligned button labels as a deliberate list/navigation pattern, then both icon and label should share the same leading inset. Do not mix a left-edge icon with a centered label.
+- Large buttons should not leave large unused gutters between icon and text. If the icon feels stranded on one side of the button, the layout is wrong even if the hit area is technically correct.
+- In a vertical stack of large buttons, use one alignment model throughout the stack:
+	1. centered compound content for menu/action-choice stacks
+	2. shared leading inset for list-like navigation stacks
+- Avoid mixing centered text-only buttons with edge-anchored icon buttons in the same stack unless there is a strong semantic reason and the contrast in treatment is intentional.
+
+### 5.1.3 Large Button Icon Sizing
+- For standard large buttons in the `52-64px` height range, icon art should usually read at roughly `18-24px` after padding, depending on shape density.
+- Size the rendered icon box from the visible icon content, not from a source asset's empty transparent canvas.
+- Source assets for button icons should be tightly cropped. Do not rely on runtime scale increases to compensate for excessive transparent borders.
+- Reserve enough inset so the icon does not touch the button edge, but keep the inset smaller than the visual gap caused by a stranded edge-aligned icon.
+
 ### 5.2 Secondary/Tertiary Buttons
 - Prefer lower contrast fill with clear border/label.
 - Reserve primary style for the main call to action only.
@@ -202,6 +226,7 @@ Notes:
 - Use one consistent panel + button language across all pre-game screens.
 - Selected options should share one universal selected style.
 - Explanatory helper text uses `Text.Secondary`.
+- In large menu-style buttons, prefer centered icon-plus-label groupings over left-edge icon placement unless the entire button stack is intentionally left-aligned like a navigation list.
 
 ### 6.2 In-Game HUD + Sidebars
 - Left and right sidebars should share the same surface hierarchy.
@@ -220,6 +245,12 @@ Notes:
 ### 6.5 Endgame + Hotseat + Loading
 - Use same overlay, title, and button conventions as other major modal surfaces.
 - Keep result hierarchy obvious: winner/outcome first, details second.
+
+### 6.6 Pause Menu / Main Menu Action Stacks
+- Treat large pause-menu and main-menu buttons as a menu/action-choice stack, not as a dense enterprise list.
+- Default to centered compound icon-plus-label content for these buttons.
+- If icons are used for actions like `Main Menu` and `Next Track`, ensure the icons are optically balanced with the text and do not consume only a tiny fraction of the button.
+- Keep exported icon art tightly cropped and verify the in-Unity rendered result, not just the source PNG.
 
 ---
 
