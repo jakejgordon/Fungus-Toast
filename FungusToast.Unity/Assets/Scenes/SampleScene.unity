@@ -107226,6 +107226,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: cec4e6986fdaeeb4687d2129c64fd70e, type: 3}
   - {fileID: 8300000, guid: c69ff8d43f2d2df47b9f23c1d08503a6, type: 3}
   - {fileID: 8300000, guid: fa70256f6b0580442bc383ec17dcd9ac, type: 3}
+  - {fileID: 8300000, guid: b9bcdf3afed74d840bcd4e662dd134fa, type: 3}
   gameplayMusicVolume: 1
   gameplayMusicInitialDelaySeconds: 10
   gameplayMusicReplayDelaySeconds: 5

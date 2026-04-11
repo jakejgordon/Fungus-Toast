@@ -150,6 +150,7 @@ Currently assigned in the active gameplay scene playlist:
 - `music_spororific_lounge_01.mp3`
 - `music_fun_guses_lament_01.mp3`
 - `music_mycorizing_01.mp3`
+- `music_break_from_the_mold_01.mp3`
 
 ### Standard workflow for adding a new gameplay music track
 
