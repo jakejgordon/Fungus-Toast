@@ -44,32 +44,32 @@ read_version_file() {
 	printf '%s' "$value"
 }
 
-version_is_newer_than() {
+version_is_older_than() {
 	local current_version="$1"
-	local previous_version="$2"
+	local minimum_version="$2"
 	local current_major current_minor current_patch
-	local previous_major previous_minor previous_patch
+	local minimum_major minimum_minor minimum_patch
 
 	IFS=. read -r current_major current_minor current_patch <<< "$current_version"
-	IFS=. read -r previous_major previous_minor previous_patch <<< "$previous_version"
+	IFS=. read -r minimum_major minimum_minor minimum_patch <<< "$minimum_version"
 
-	if (( current_major > previous_major )); then
+	if (( current_major < minimum_major )); then
 		return 0
 	fi
 
-	if (( current_major < previous_major )); then
+	if (( current_major > minimum_major )); then
 		return 1
 	fi
 
-	if (( current_minor > previous_minor )); then
+	if (( current_minor < minimum_minor )); then
 		return 0
 	fi
 
-	if (( current_minor < previous_minor )); then
+	if (( current_minor > minimum_minor )); then
 		return 1
 	fi
 
-	if (( current_patch > previous_patch )); then
+	if (( current_patch < minimum_patch )); then
 		return 0
 	fi
 
@@ -124,8 +124,8 @@ if [ -z "${ITCH_TARGET:-}" ]; then
 	exit 1
 fi
 
-if [ -n "$LAST_DEPLOYED_VERSION" ] && ! version_is_newer_than "$RELEASE_VERSION" "$LAST_DEPLOYED_VERSION"; then
-	echo "Error: Release version $RELEASE_VERSION is not newer than the last deployed version $LAST_DEPLOYED_VERSION. Update FungusToast.Unity/version.txt before publishing to itch.io."
+if [ -n "$LAST_DEPLOYED_VERSION" ] && version_is_older_than "$RELEASE_VERSION" "$LAST_DEPLOYED_VERSION"; then
+	echo "Error: Release version $RELEASE_VERSION is older than the last deployed Windows version $LAST_DEPLOYED_VERSION. Update FungusToast.Unity/version.txt before publishing to itch.io."
 	exit 1
 fi
 

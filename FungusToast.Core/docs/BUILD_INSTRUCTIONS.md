@@ -36,7 +36,7 @@ Before any deployment or itch.io publish, confirm the intended semantic version 
 - Confirm which level should increment before running the deployment.
 - Do not assume the next version automatically, even for routine uploads.
 - Keep the first line of `FungusToast.Unity/version.txt` set to the release version that should be stamped into the build and passed to butler as `--userversion`.
-- `FungusToast.Unity/last-deployed-version.txt` records the last successful Windows itch.io publish so the scripts can reject accidental duplicate or downgraded deployments.
+- `FungusToast.Unity/last-deployed-version.txt` records the last successful Windows itch.io publish. The Windows script rejects duplicate or downgraded releases against it, while the macOS Unity Cloud script only blocks versions older than that Windows release so the same semantic version can still ship on macOS.
 
 Typical first-time setup:
 
@@ -112,7 +112,7 @@ The workflow reads the Unity version directly from `FungusToast.Unity/ProjectSet
 
 On success, GitHub uploads an artifact named `fungustoast-macos-<version>` containing a `.zip` built on macOS.
 
-If you publish that macOS artifact to itch.io through Unity Cloud Build, configure the user script path as `ci/deploy-itch.sh` relative to the Unity project root `FungusToast.Unity`. The real implementation now lives directly at `FungusToast.Unity/ci/deploy-itch.sh`; there is no repo-root duplicate script. It reads `FungusToast.Unity/version.txt` for `--userversion` and checks `FungusToast.Unity/last-deployed-version.txt` to reject duplicate or downgraded versions. The macOS CI script does not update `FungusToast.Unity/last-deployed-version.txt`; the Windows publish flow remains the only script that records a successful deployment in-repo.
+If you publish that macOS artifact to itch.io through Unity Cloud Build, configure the user script path as `ci/deploy-itch.sh` relative to the Unity project root `FungusToast.Unity`. The real implementation now lives directly at `FungusToast.Unity/ci/deploy-itch.sh`; there is no repo-root duplicate script. It reads `FungusToast.Unity/version.txt` for `--userversion` and treats `FungusToast.Unity/last-deployed-version.txt` as a minimum allowed version based on the last Windows release. That means macOS can publish the same semantic version as Windows, but it cannot publish an older one. The macOS CI script does not update `FungusToast.Unity/last-deployed-version.txt`; the Windows publish flow remains the only script that records a successful deployment in-repo.
 
 ### Why this flow matters
 

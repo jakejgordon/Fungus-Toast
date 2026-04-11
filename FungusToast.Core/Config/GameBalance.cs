@@ -123,12 +123,12 @@ namespace FungusToast.Core.Config
         public const int DirectedVectorTilesPerLevel = 1;
         public const int DirectedVectorCandidateCellsToCheck = 50; // Number of candidate cells to check for origin selection
         public const int DirectedVectorMaxLevel = 5;
-        public const int DirectedVectorPointsPerActivation = 9;
+        public const int DirectedVectorPointsPerActivation = 5;
         public const int DirectedVectorSurgeDuration = 4;
         public const int DirectedVectorSurgePointIncreasePerLevel = 1;
 
         // Chemotactic Beacon (Tier 2 MycelialSurges)
-        public const int ChemotacticBeaconBaseTiles = DirectedVectorBaseTiles;
+        public const int ChemotacticBeaconBaseTiles = 2;
         public const int ChemotacticBeaconTilesPerLevel = DirectedVectorTilesPerLevel;
         public const int ChemotacticBeaconMaxLevel = DirectedVectorMaxLevel;
         public const int ChemotacticBeaconPointsPerActivation = DirectedVectorPointsPerActivation;

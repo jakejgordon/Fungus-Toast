@@ -12,8 +12,12 @@ namespace FungusToast.Unity.UI
     [Serializable]
     public class GrowthDirectionCell
     {
-        private const float PercentTextScale = 1.18f;
-        private const float SurgeTextScale = 1.12f;
+        private const float PercentTextScale = 1.08f;
+        private const float SurgeTextScale = 0.94f;
+        private const float PercentAnchoredY = 9f;
+        private const float SurgeAnchoredY = -10f;
+        private static readonly Vector2 PercentTextSize = new(200f, 36f);
+        private static readonly Vector2 SurgeTextSize = new(200f, 22f);
 
         [Tooltip("Which direction this cell represents.")] public GrowthPreviewDirection direction;
         [Tooltip("Assign only the parent container GameObject. Children are auto-resolved by fixed names.")]
@@ -23,6 +27,8 @@ namespace FungusToast.Unity.UI
         private TextMeshProUGUI percentText;
         private TextMeshProUGUI surgeText;
         private Image arrowImage;
+        private RectTransform percentRect;
+        private RectTransform surgeRect;
         private bool resolved;
         private Color originalArrowColor;
 
@@ -42,6 +48,8 @@ namespace FungusToast.Unity.UI
             percentText = percentT.GetComponent<TextMeshProUGUI>() ?? throw new Exception($"Child '{percentName}' lacks TextMeshProUGUI component.");
             surgeText = surgeT.GetComponent<TextMeshProUGUI>() ?? throw new Exception($"Child '{surgeName}' lacks TextMeshProUGUI component.");
             arrowImage = arrowT.GetComponent<Image>() ?? throw new Exception($"Child '{arrowName}' lacks Image component.");
+            percentRect = percentT as RectTransform;
+            surgeRect = surgeT as RectTransform;
             originalArrowColor = arrowImage.color; // capture starting color so we leave it unchanged
 
             // Ensure rich text for surge
@@ -50,8 +58,14 @@ namespace FungusToast.Unity.UI
             ApplyTextScale(percentText, PercentTextScale);
             percentText.fontStyle = FontStyles.Bold;
             percentText.color = UIStyleTokens.Text.Primary;
+            percentText.alignment = TextAlignmentOptions.Center;
 
             ApplyTextScale(surgeText, SurgeTextScale);
+            surgeText.fontStyle = FontStyles.Bold;
+            surgeText.color = UIStyleTokens.Accent.Moss;
+            surgeText.alignment = TextAlignmentOptions.Center;
+
+            ApplyTextLayout();
             resolved = true;
         }
 
@@ -69,7 +83,7 @@ namespace FungusToast.Unity.UI
                 if (surgeBonus > SurgeDisplayEpsilon)
                 {
                     if (!surgeText.gameObject.activeSelf) surgeText.gameObject.SetActive(true);
-                    string successHex = ColorUtility.ToHtmlStringRGB(UIStyleTokens.State.Success);
+                    string successHex = ColorUtility.ToHtmlStringRGB(UIStyleTokens.Accent.Moss);
                     surgeText.text = $"<b><color=#{successHex}>+{(surgeBonus * 100f):F3}%</color></b>";
                 }
                 else if (surgeText.gameObject.activeSelf)
@@ -81,9 +95,29 @@ namespace FungusToast.Unity.UI
                 arrowImage.color = originalArrowColor;
         }
 
+        private void ApplyTextLayout()
+        {
+            ConfigureTextRect(percentRect, PercentAnchoredY, PercentTextSize);
+            ConfigureTextRect(surgeRect, SurgeAnchoredY, SurgeTextSize);
+        }
+
+        private static void ConfigureTextRect(RectTransform rect, float anchoredY, Vector2 size)
+        {
+            if (rect == null)
+            {
+                return;
+            }
+
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, anchoredY);
+            rect.sizeDelta = size;
+        }
+
         private static void ApplyTextScale(TextMeshProUGUI label, float scale)
         {
-            if (label == null || scale <= 1f) return;
+            if (label == null || Mathf.Approximately(scale, 1f)) return;
 
             if (label.enableAutoSizing)
             {
