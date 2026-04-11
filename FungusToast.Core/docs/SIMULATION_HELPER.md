@@ -22,6 +22,32 @@ Output files are generated with timestamped filenames even when no `--output` pa
 > **Do not rely on live console output alone for balance summaries.**
 > For any balance-reporting or campaign-validation reply, read the exported run artifacts and report from the canonical analysis sources below.
 > If Parquet export is present, use `players.parquet` (or the offline analytics helper that reads it) as the source of truth for the final summary.
+> If artifact-reading tooling is unavailable, the run is not fully validated yet. Report that blockage explicitly and do not make a final tuning call from console or harness summary text alone.
+
+### Required workflow for balance and campaign conclusions
+
+1. Run the simulation or campaign harness.
+2. Read the exported artifacts.
+3. Produce the summary from the canonical artifact sources.
+4. Only then make a tuning or balance call.
+
+Default artifact-reader expectation for this repo:
+- use the repo-local analytics environment at `FungusToast.Analytics/.venv`
+- run `FungusToast.Analytics/analyze_balance.py` with that interpreter before concluding that analytics tooling is unavailable
+
+If step 2 or 3 fails after using the repo-local analytics environment, stop at "validation blocked" rather than promoting a result from console output alone.
+
+### Allowed use of console output
+
+Console or harness summary output is useful for:
+- progress updates while a run is active
+- quick sanity checks before artifact inspection
+- locating the output/parquet folder
+
+Console or harness summary output is **not** sufficient for:
+- final balance summaries
+- campaign tuning calls
+- "good to go" / "too hard" / "too soft" decisions
 
 For balance discussions, post-simulation summaries should always report these per-player metrics:
 
@@ -83,6 +109,8 @@ Fallback if older output files do not include per-player end-toxin values:
 ## Campaign Balance Harness Note
 
 For campaign-balance validation, `scripts/run_campaign_balance.py` is the preferred entry point rather than hand-assembling raw `dotnet run` commands.
+
+Important reporting rule: the harness summary is still not the final source of truth. Use it to monitor the run, then read the exported artifacts before making a campaign tuning call.
 
 Important behavior: the harness now applies the campaign player's starting Adaptations automatically.
 For the safe proxy (`TST_CampaignPlayer_SafeBaseline`), slot 0 receives `X - 1` starting adaptations when simulating campaign level `X`, because the player would normally have earned one adaptation after each previous campaign win.
@@ -168,8 +196,26 @@ dotnet run -- --games 1 --players 2 --width 40 --height 40 --non-interactive
 Default workflow preference for this repository:
 
 1. **Run the simulation for the user when asked.**
-2. **Run analytics scripts for the user when asked.**
-3. Fall back to manual user-run instructions only if tool/terminal execution is blocked.
+2. **Let the simulation run to completion unless the user asks to stop it or the run is clearly broken.** Long simulations are expected in this repository and may exceed normal task-duration guidance.
+3. **Run analytics scripts for the user when asked.**
+4. Fall back to manual user-run instructions only if tool/terminal execution is blocked.
+
+### Default simulation-response rule
+
+When the user asks for a simulation and provides any mix of details such as player count, board size, campaign level, lineup, or number of games, default to this workflow:
+
+1. Choose the appropriate simulation entry point (`scripts/run_campaign_balance.py` for campaign validation, otherwise the normal simulation CLI).
+2. Run the requested simulation in non-interactive mode when possible.
+3. Do not interrupt the run merely because it is long.
+4. Read the exported Parquet artifacts.
+5. Use the repo-local analytics environment to generate the standard summaries.
+6. Report the result using the standard per-player metrics:
+   - `Win %`
+   - `Avg Living Cells`
+   - `Avg Dead Cells`
+   - `Avg Toxins`
+
+If the user asks for progress while the run is active, provide a brief status update, but do not treat the progress check as a reason to stop or restart the simulation.
 
 When automated terminal execution fails:
 
@@ -188,13 +234,24 @@ When the user asks for a simulation summary after a run, default to this workflo
 4. Prefer the offline analytics helper when available so the summary can be generated quickly and consistently.
 5. Do not give a final balance summary from partial terminal output if the Parquet/artifact-backed summary has not been checked yet.
 6. If multiple Python environments exist, check the repo-local analytics environment before concluding that Parquet tooling is unavailable.
+7. In this repo, prefer invoking the checked-in analytics venv directly (`FungusToast.Analytics/.venv`) instead of assuming a globally active `python` has the needed packages.
+8. If artifact reading still fails after trying the repo-local analytics environment, explicitly report "validation blocked on artifact analysis" and stop short of a final tuning conclusion.
 
 Recommended command:
 
 ```powershell
 cd FungusToast.Analytics
-python analyze_balance.py --run-folder "..\FungusToast.Simulation\bin\Debug\net8.0\SimulationParquet\<experiment-id>"
+.\.venv\Scripts\python.exe analyze_balance.py --run-folder "..\FungusToast.Simulation\bin\Debug\net8.0\SimulationParquet\<experiment-id>"
 ```
+
+WSL/Linux equivalent:
+
+```bash
+cd FungusToast.Analytics
+./.venv/bin/python analyze_balance.py --run-folder "../FungusToast.Simulation/bin/Debug/net8.0/SimulationParquet/<experiment-id>"
+```
+
+Fast default: if `post_simulation_player_summary.csv` already exists in the run folder, read it directly for the standard per-player result instead of recomputing the aggregation by hand. Re-run `analyze_balance.py` when the derived CSVs are missing or stale.
 
 Standard analysis artifacts now include:
 
@@ -610,74 +667,19 @@ In batch mode (`--player-counts` / `--board-sizes` / `--strategy-sets`), each st
 - `FungusToast.Core/Events/` - Event definitions
 
 ### Simulation Tracking
-- `FungusToast.Simulation/Models/SimulationTrackingContext.cs` - Partial class shell (`ISimulationObserver` type)
-- `FungusToast.Simulation/Models/SimulationTrackingContext.CoreStatMetrics.cs` - Mutation points, income, banked points, death-reason totals
-- `FungusToast.Simulation/Models/SimulationTrackingContext.FirstUpgradeRoundMetrics.cs` - First-acquired round tracking and summary stats
-- `FungusToast.Simulation/Models/SimulationTrackingContext.SupportEconomyMetrics.cs` - Surgical inoculation and rejuvenation cycle reduction
-- `FungusToast.Simulation/Models/SimulationTrackingContext.DefenseMobilityMetrics.cs` - Neutralization, bastion counts, creeping mold toxin jumps
-- `FungusToast.Simulation/Models/SimulationTrackingContext.GrowthTransferMetrics.cs` - Perimeter proliferator, resistance transfers, enduring toxaphore extensions
-- `FungusToast.Simulation/Models/SimulationTrackingContext.ReclaimFortifyMetrics.cs` - Reclamation rhizomorphs, necrophoric adaptation, ballistospore, chitin fortification
-- `FungusToast.Simulation/Models/SimulationTrackingContext.CombatEffectMetrics.cs` - Putrefactive cascade, mimetic resilience, cytolytic burst
-- `FungusToast.Simulation/Models/SimulationTrackingContext.RelocationRegenerationMetrics.cs` - Chemotactic relocations and hypersystemic regeneration effects
-- `FungusToast.Simulation/Models/SimulationTrackingContext.RegressionMetrics.cs` - Ontogenic regression and competitive antagonism tracking
-- `FungusToast.Simulation/Models/SimulationTrackingContext.GameplayMetrics.cs` - Remaining gameplay/event metrics and observer stubs
-- `FungusToast.Simulation/Models/PlayerResult.cs` - Result fields
-- `FungusToast.Simulation/Models/GameResult.cs` - Result population
+- `FungusToast.Simulation/Models/SimulationTrackingContext*.cs` - tracking implementation partials
+- `FungusToast.Simulation/Models/PlayerResult.cs` - result fields
+- `FungusToast.Simulation/Models/GameResult.cs` - result population
+- For the detailed partial-file map and effect-wiring checklist, see `second-level/SIMULATION_TRACKING_IMPLEMENTATION.md`
 
 ### Output Display
 - `FungusToast.Simulation/Analysis/PlayerMutationUsageTracker.cs` - Effect display
 - `FungusToast.Simulation/OutputManager.cs` - Output redirection
 
-## Event Tracking Checklist
+## Simulation Tracking Implementation Note
 
-When adding new mutation effects:
-
-1. ✅ Create event args class in `FungusToast.Core/Events/`
-2. ✅ Add event delegate and event to `GameBoard.cs`
-3. ✅ Add `OnEventName` method to `GameBoard.cs`
-4. ✅ Fire event in `MutationEffectProcessor.cs`
-5. ✅ Add tracking method to `ISimulationObserver.cs`
-6. ✅ Implement tracking in `SimulationTrackingContext` partials (place in the most relevant `SimulationTrackingContext.*.cs` file)
-7. ✅ Add field to `PlayerResult.cs`
-8. ✅ Populate field in `GameResult.From()`
-9. ✅ Add display case in `PlayerMutationUsageTracker.cs`
-
-## Useful Patterns
-
-### Adding New Mutation Effect
-```csharp
-// 1. Event args
-public class NewEffectEventArgs : EventArgs
-{
-    public int PlayerId { get; }
-    public int EffectCount { get; }
-    // ... other properties
-}
-
-// 2. GameBoard event
-public delegate void NewEffectEventHandler(object sender, NewEffectEventArgs e);
-public event NewEffectEventHandler? NewEffect;
-public virtual void OnNewEffect(NewEffectEventArgs e) => NewEffect?.Invoke(this, e);
-
-// 3. Fire event
-var args = new NewEffectEventArgs(playerId, count);
-board.OnNewEffect(args);
-
-// 4. Track in observer
-observer.RecordNewEffect(playerId, count);
-
-// 5. Add to PlayerResult
-public int NewEffectCount { get; set; }
-
-// 6. Populate in GameResult
-NewEffectCount = tracking.GetNewEffectCount(player.PlayerId),
-
-// 7. Display in tracker
-case MutationIds.NewMutation:
-    if (player.NewEffectCount > 0)
-        effects["Effect Name"] = player.NewEffectCount;
-    break;
-```
+If you are adding new simulation-tracked gameplay effects, do not document the wiring pattern here.
+Use [second-level/SIMULATION_TRACKING_IMPLEMENTATION.md](second-level/SIMULATION_TRACKING_IMPLEMENTATION.md) for the implementation checklist, `ISimulationObserver` guidance, and `SimulationTrackingContext` partial-file map.
 
 ## Notes for AI Assistant
 
