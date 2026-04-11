@@ -76,6 +76,74 @@ version_is_older_than() {
 	return 1
 }
 
+resolve_butler_path() {
+	if [ -n "${BUTLER_PATH:-}" ]; then
+		if [ ! -x "$BUTLER_PATH" ]; then
+			echo "Error: BUTLER_PATH is set but not executable: $BUTLER_PATH"
+			exit 1
+		fi
+
+		printf '%s' "$BUTLER_PATH"
+		return 0
+	fi
+
+	local command_path=""
+	command_path="$(command -v butler 2>/dev/null || true)"
+	if [ -n "$command_path" ] && [ -x "$command_path" ]; then
+		printf '%s' "$command_path"
+		return 0
+	fi
+
+	local itch_root="${HOME}/Library/Application Support/itch/broth/butler"
+	local chosen_version_file="$itch_root/.chosen-version"
+	if [ -f "$chosen_version_file" ]; then
+		local chosen_version=""
+		IFS= read -r chosen_version < "$chosen_version_file" || true
+		chosen_version="$(printf '%s' "$chosen_version" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+		local bundled_path="$itch_root/versions/$chosen_version/butler"
+		if [ -n "$chosen_version" ] && [ -x "$bundled_path" ]; then
+			printf '%s' "$bundled_path"
+			return 0
+		fi
+	fi
+
+	local cached_path="${HOME}/butler/butler"
+	if [ -x "$cached_path" ]; then
+		printf '%s' "$cached_path"
+		return 0
+	fi
+
+	return 1
+}
+
+download_butler() {
+	local butler_dir="$1"
+	local butler_archive="$2"
+	local butler_zip="$butler_dir/butler.zip"
+	local butler_path="$butler_dir/butler"
+	local butler_url="https://broth.itch.zone/butler/${butler_archive}/LATEST/archive/default"
+
+	echo "Downloading butler..."
+	if curl -L --fail --retry 3 --retry-delay 2 --connect-timeout 15 -o "$butler_zip" "$butler_url"; then
+		unzip -o "$butler_zip" -d "$butler_dir"
+		chmod +x "$butler_path"
+		printf '%s' "$butler_path"
+		return 0
+	fi
+
+	local existing_butler=""
+	existing_butler="$(resolve_butler_path || true)"
+	if [ -n "$existing_butler" ]; then
+		echo "Download failed, falling back to existing butler at $existing_butler"
+		printf '%s' "$existing_butler"
+		return 0
+	fi
+
+	echo "Error: Unable to download butler from $butler_url, and no existing butler binary was found."
+	echo "Set BUTLER_PATH to a bundled butler binary or allow access to broth.itch.zone from Unity Cloud Build."
+	exit 1
+}
+
 RELEASE_VERSION="$(read_version_file "$VERSION_FILE" "current release version")"
 LAST_DEPLOYED_VERSION="$(read_version_file "$LAST_DEPLOYED_VERSION_FILE" "last deployed version" true)"
 
@@ -146,17 +214,12 @@ case "$platform_arch" in
 		;;
 esac
 
-butler_url="https://broth.itch.ovh/butler/${butler_archive}/LATEST/archive/default"
-
-echo "Downloading butler from $butler_url..."
-curl -L --fail -o "$BUTLER_DIR/butler.zip" "$butler_url"
-unzip -o "$BUTLER_DIR/butler.zip" -d "$BUTLER_DIR"
-chmod +x "$BUTLER_DIR/butler"
+BUTLER_BIN="$(download_butler "$BUTLER_DIR" "$butler_archive")"
 
 echo "Butler version:"
-"$BUTLER_DIR/butler" -V
+"$BUTLER_BIN" -V
 
 echo "Pushing build to itch.io target: $ITCH_TARGET"
-"$BUTLER_DIR/butler" push "$BUILD_PATH" "$ITCH_TARGET" --userversion "$RELEASE_VERSION"
+"$BUTLER_BIN" push "$BUILD_PATH" "$ITCH_TARGET" --userversion "$RELEASE_VERSION"
 
 echo "Deployment complete."
