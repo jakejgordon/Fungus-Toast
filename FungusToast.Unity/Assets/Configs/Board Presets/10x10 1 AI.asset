@@ -18,4 +18,4 @@ MonoBehaviour:
   aiPlayers: []
   pooledAiPlayerCount: 1
   aiStrategyPool:
-  - TST_Training_ResilientMycelium
+  - TST_Training_ResilientMycelium_Offset3
