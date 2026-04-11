@@ -19,7 +19,7 @@ MonoBehaviour:
   - strategyName: AI1
   - strategyName: AI2
   - strategyName: AI3
-  - strategyName: AI10
+  - strategyName: TST_AI10_AnabolicRegression
   - strategyName: AI7
   - strategyName: AI8
-  - strategyName: AI9
+  - strategyName: AI10

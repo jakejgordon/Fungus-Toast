@@ -409,8 +409,9 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration),
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Reclamation)
             ),
             // AI4
             new ParameterizedSpendingStrategy(
@@ -503,6 +504,51 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            // AI10 test permutation: more direct toxin/regression pressure
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_AI10_CreepingRegression",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
+            ),
+            // AI10 test permutation: anabolic opener into bloom/regression cascade
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_AI10_AnabolicRegression",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion, 1),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
+            ),
+            // AI10 test permutation: beacon/surge pressure with regression follow-through
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_AI10_BeaconRegression",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 20),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, GameBalance.ChemotacticBeaconMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
+                surgeAttemptTurnFrequency: 5,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
             ),
             // AI11
             new ParameterizedSpendingStrategy(
@@ -1806,6 +1852,9 @@ namespace FungusToast.Core.AI
                 ["AI2"] = StrategyPowerTier.Strong,
                 ["AI3"] = StrategyPowerTier.Strong,
                 ["AI10"] = StrategyPowerTier.Strong,
+                ["TST_AI10_CreepingRegression"] = StrategyPowerTier.Strong,
+                ["TST_AI10_AnabolicRegression"] = StrategyPowerTier.Strong,
+                ["TST_AI10_BeaconRegression"] = StrategyPowerTier.Strong,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyPowerTier.Strong,
                 ["CMP_Bloom_CreepingRegression_Elite"] = StrategyPowerTier.Strong,
                 ["CMP_AnabolicBeaconRhizolith_Elite"] = StrategyPowerTier.Strong,
@@ -1907,6 +1956,9 @@ namespace FungusToast.Core.AI
                 ["AI2"] = StrategyRole.Boss,
                 ["AI3"] = StrategyRole.Boss,
                 ["AI10"] = StrategyRole.Boss,
+                ["TST_AI10_CreepingRegression"] = StrategyRole.Boss,
+                ["TST_AI10_AnabolicRegression"] = StrategyRole.Boss,
+                ["TST_AI10_BeaconRegression"] = StrategyRole.Boss,
                 ["AI13"] = StrategyRole.Boss,
                 ["AI6"] = StrategyRole.Training,
                 ["AI12"] = StrategyRole.Training,
@@ -1991,6 +2043,9 @@ namespace FungusToast.Core.AI
                 ["AI2"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["AI3"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["AI10"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["TST_AI10_CreepingRegression"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["TST_AI10_AnabolicRegression"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["TST_AI10_BeaconRegression"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_LowTierEconomyGrinder"] = new[] { DifficultyBand.Easy },
                 ["TST_LowTierSurgeSkirmisher"] = new[] { DifficultyBand.Easy },
                 ["TST_BalancedGeneralistControl"] = new[] { DifficultyBand.Normal },
@@ -2050,6 +2105,9 @@ namespace FungusToast.Core.AI
                 ["AI2"] = CampaignDifficulty.Elite,
                 ["AI3"] = CampaignDifficulty.Elite,
                 ["AI10"] = CampaignDifficulty.Elite,
+                ["TST_AI10_CreepingRegression"] = CampaignDifficulty.Elite,
+                ["TST_AI10_AnabolicRegression"] = CampaignDifficulty.Elite,
+                ["TST_AI10_BeaconRegression"] = CampaignDifficulty.Elite,
                 ["Growth/Resilience"] = CampaignDifficulty.Easy,
                 ["Grow>Kill>Reclaim(Econ)"] = CampaignDifficulty.Medium,
                 ["Grow>Kill>Reclaim(Econ/Reclaim)"] = CampaignDifficulty.Medium,
@@ -2373,6 +2431,27 @@ namespace FungusToast.Core.AI
                         "The Necrotoxin Gauntlet",
                         "Opens with toxins on all enemy spores, poisons kill adjacently on decay, and expired toxins chain-spread. Three stages of the same kill vector layered together.",
                         new[] { AdaptationIds.SporeSalvo, AdaptationIds.MycotoxicHalo, AdaptationIds.VesicleBurst })
+                },
+                ["TST_AI10_CreepingRegression"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "Thanatophyte",
+                        "Opens with toxins on all enemies, gets instant kills on new toxin drops, toxins kill adjacently on decay, expired toxins chain-spread, bridges into the enemy cluster early, and earns bonus MP to fund the cascade. Every vector of the toxin kill chain is supercharged.",
+                        new[] { AdaptationIds.SporeSalvo, AdaptationIds.MycotoxicHalo, AdaptationIds.MycotoxicLash, AdaptationIds.VesicleBurst, AdaptationIds.HyphalBridge, AdaptationIds.ApicalYield })
+                },
+                ["TST_AI10_AnabolicRegression"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "Thanatophyte",
+                        "Opens with toxins on all enemies, gets instant kills on new toxin drops, toxins kill adjacently on decay, expired toxins chain-spread, bridges into the enemy cluster early, and earns bonus MP to fund the cascade. Every vector of the toxin kill chain is supercharged.",
+                        new[] { AdaptationIds.SporeSalvo, AdaptationIds.MycotoxicHalo, AdaptationIds.MycotoxicLash, AdaptationIds.VesicleBurst, AdaptationIds.HyphalBridge, AdaptationIds.ApicalYield })
+                },
+                ["TST_AI10_BeaconRegression"] = new[]
+                {
+                    new AdaptationSynergySet(
+                        "Rhizolith",
+                        "Grows resistant cells every round, edge cells always resist, dead cells next to resistant ones vanish leaving no corpse lane, border threats are cleared on contact, and two repositioning tools ensure territorial coverage. Nearly impossible to contain once established.",
+                        new[] { AdaptationIds.AegisHyphae, AdaptationIds.CrustalCallus, AdaptationIds.RhizomorphicHunger, AdaptationIds.MarginalClamp, AdaptationIds.DistalSpore, AdaptationIds.ConidialRelay })
                 },
 
                 ["CMP_Defense_ResilientShell_Easy"] = new[]
