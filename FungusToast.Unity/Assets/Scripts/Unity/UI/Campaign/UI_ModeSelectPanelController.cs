@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.IO;
 using FungusToast.Unity;
 using FungusToast.Unity.UI.GameStart; // for UI_StartGamePanel
 
@@ -669,9 +670,39 @@ namespace FungusToast.Unity.UI.Campaign
 
         private static string BuildVersionLabel()
         {
-            return string.IsNullOrWhiteSpace(Application.version)
+            string version = ResolveVersion();
+            return string.IsNullOrWhiteSpace(version)
                 ? "Version not set"
-                : $"Version {Application.version}";
+                : $"Version {version}";
+        }
+
+        private static string ResolveVersion()
+        {
+            const string versionFileName = "version.txt";
+            const int maxAncestorSearchDepth = 6;
+
+            DirectoryInfo directory = new DirectoryInfo(Application.dataPath);
+            int depth = 0;
+
+            while (directory != null && depth <= maxAncestorSearchDepth)
+            {
+                string candidatePath = Path.Combine(directory.FullName, versionFileName);
+                if (File.Exists(candidatePath))
+                {
+                    string rawContents = File.ReadAllText(candidatePath).Trim();
+                    if (!string.IsNullOrWhiteSpace(rawContents))
+                    {
+                        return rawContents;
+                    }
+                }
+
+                directory = directory.Parent;
+                depth++;
+            }
+
+            return string.IsNullOrWhiteSpace(Application.version)
+                ? string.Empty
+                : Application.version.Trim();
         }
     }
 }
