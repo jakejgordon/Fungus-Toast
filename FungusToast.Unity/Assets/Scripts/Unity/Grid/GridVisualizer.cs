@@ -87,6 +87,15 @@ namespace FungusToast.Unity.Grid
         // Animation effect tracking
         private readonly HashSet<int> preAnimationHiddenPreviewTileIds = new();
         private readonly List<CreepingMoldVisualMove> _pendingCreepingMoldMoves = new();
+        private readonly HashSet<int> moldIdleAnimatedTileIds = new();
+        private readonly HashSet<int> moldIdleEligibleTileIds = new();
+        private readonly List<int> moldIdleResetTileIds = new();
+        private readonly List<int> moldIdleRenderCandidates = new();
+        private readonly List<int>[] moldIdleCohorts = CreateMoldIdleCohorts();
+        private readonly Dictionary<int, float> moldIdleNextUpdateTimes = new();
+        private readonly Dictionary<int, int> moldIdleUpdateSteps = new();
+        private int moldIdleNextCohortIndex;
+        private int moldIdleFrameSkipCounter;
 
         private readonly struct CreepingMoldVisualMove
         {
@@ -100,6 +109,18 @@ namespace FungusToast.Unity.Grid
             public int PlayerId { get; }
             public int SourceTileId { get; }
             public int DestinationTileId { get; }
+        }
+
+        private static List<int>[] CreateMoldIdleCohorts()
+        {
+            int cohortCount = Mathf.Max(1, UIEffectConstants.MoldIdleUpdateCohortCount);
+            var cohorts = new List<int>[cohortCount];
+            for (int i = 0; i < cohortCount; i++)
+            {
+                cohorts[i] = new List<int>();
+            }
+
+            return cohorts;
         }
 
         private SelectionHighlightHelper selectionHelper;
@@ -232,6 +253,7 @@ namespace FungusToast.Unity.Grid
         private void LateUpdate()
         {
             UpdateNutrientPulseVisuals();
+            UpdateMoldIdleVisuals();
             UpdateChemobeaconPulseVisuals();
         }
 
@@ -248,6 +270,8 @@ namespace FungusToast.Unity.Grid
             cellStateAnimationController?.ClearPendingToxinExpirySnapshots();
             cellStateAnimationController?.StopAndClearToxinExpiryAnimations();
             presentationEffects?.DestroyLingeringToasts();
+            ResetTrackedMoldIdleOffsets();
+            ClearMoldIdleCache();
 
             this.board = board;
 
@@ -280,6 +304,7 @@ namespace FungusToast.Unity.Grid
             resistanceOverlayController?.ResetRuntimeState();
             preAnimationHiddenPreviewTileIds.Clear();
             _pendingCreepingMoldMoves.Clear();
+            ClearMoldIdleCache();
             overlayRenderer?.ResetRuntimeState();
 
             ClearAllHighlights();
@@ -315,6 +340,322 @@ namespace FungusToast.Unity.Grid
         public void ClearPlayerMoldAssignments() => playerMoldAssignments.Clear();
         public bool IsPlayableBoardCell(Vector3Int cellPos)
             => board != null && cellPos.x >= 0 && cellPos.x < board.Width && cellPos.y >= 0 && cellPos.y < board.Height;
+
+        private void UpdateMoldIdleVisuals()
+        {
+            var activeMoldTilemap = moldTilemap;
+            if (activeMoldTilemap == null || moldIdleEligibleTileIds.Count == 0 || ShouldSuspendMoldIdleVisuals())
+            {
+                ResetTrackedMoldIdleOffsets();
+                return;
+            }
+
+            int frameInterval = Mathf.Max(1, UIEffectConstants.MoldIdleUpdateFrameInterval);
+            moldIdleFrameSkipCounter = (moldIdleFrameSkipCounter + 1) % frameInterval;
+            if (moldIdleFrameSkipCounter != 0)
+            {
+                return;
+            }
+
+            if (moldIdleNextCohortIndex >= moldIdleCohorts.Length)
+            {
+                moldIdleNextCohortIndex = 0;
+            }
+
+            List<int> cohort = moldIdleCohorts[moldIdleNextCohortIndex];
+            float now = Time.time;
+            for (int i = 0; i < cohort.Count; i++)
+            {
+                int tileId = cohort[i];
+                if (!moldIdleNextUpdateTimes.TryGetValue(tileId, out float nextUpdateTime) || now < nextUpdateTime)
+                {
+                    continue;
+                }
+
+                Vector3Int pos = GetPositionForTileId(tileId);
+                if (!activeMoldTilemap.HasTile(pos))
+                {
+                    continue;
+                }
+
+                int updateStep = moldIdleUpdateSteps.TryGetValue(tileId, out int recordedStep) ? recordedStep : 0;
+                activeMoldTilemap.SetTransformMatrix(pos, GetMoldIdleStepMatrix(tileId, updateStep, activeMoldTilemap.cellSize));
+                moldIdleAnimatedTileIds.Add(tileId);
+                moldIdleUpdateSteps[tileId] = updateStep + 1;
+                moldIdleNextUpdateTimes[tileId] = now + GetMoldIdleUpdateIntervalSeconds(tileId, updateStep + 1);
+            }
+
+            moldIdleNextCohortIndex = (moldIdleNextCohortIndex + 1) % moldIdleCohorts.Length;
+        }
+
+        private bool ShouldSuspendMoldIdleVisuals()
+            => HasActiveAnimations || playerHoverEmphasisCoroutine != null || playerHoverEmphasisSnapshots.Count > 0;
+
+        private bool ShouldApplyMoldIdleDrift(BoardTile tile, Tilemap activeMoldTilemap, Tilemap activeOverlayTilemap)
+        {
+            if (tile == null)
+            {
+                return false;
+            }
+
+            return ShouldApplyMoldIdleDrift(tile, activeMoldTilemap, activeOverlayTilemap, GetPositionForTileId(tile.TileId));
+        }
+
+        private bool ShouldApplyMoldIdleDrift(BoardTile tile, Tilemap activeMoldTilemap, Tilemap activeOverlayTilemap, Vector3Int pos)
+        {
+            if (tile?.FungalCell == null || tile.FungalCell.CellType != FungalCellType.Alive)
+            {
+                return false;
+            }
+
+            if (preAnimationHiddenPreviewTileIds.Contains(tile.TileId))
+            {
+                return false;
+            }
+
+            if (!activeMoldTilemap.HasTile(pos))
+            {
+                return false;
+            }
+
+            if (activeOverlayTilemap != null && activeOverlayTilemap.HasTile(pos))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private void RegisterMoldIdleTileFromRender(BoardTile tile, Vector3Int pos)
+        {
+            var activeMoldTilemap = moldTilemap;
+            if (tile == null || activeMoldTilemap == null)
+            {
+                return;
+            }
+
+            if (!ShouldApplyMoldIdleDrift(tile, activeMoldTilemap, overlayTilemap, pos))
+            {
+                return;
+            }
+
+            moldIdleRenderCandidates.Add(tile.TileId);
+        }
+
+        private void BuildMoldIdleCacheFromRenderCandidates()
+        {
+            var activeMoldTilemap = moldTilemap;
+            int candidateCount = moldIdleRenderCandidates.Count;
+            if (candidateCount == 0 || activeMoldTilemap == null)
+            {
+                return;
+            }
+
+            int budget = GetMoldIdleAnimatedTileBudget(candidateCount);
+            int stride = candidateCount <= budget ? 1 : Mathf.Max(1, Mathf.CeilToInt((float)candidateCount / budget));
+            for (int i = 0; i < candidateCount; i++)
+            {
+                int tileId = moldIdleRenderCandidates[i];
+                if (stride > 1 && !ShouldSelectMoldIdleCandidate(tileId, candidateCount, stride))
+                {
+                    continue;
+                }
+
+                moldIdleEligibleTileIds.Add(tileId);
+                moldIdleCohorts[GetMoldIdleCohortIndex(tileId)].Add(tileId);
+                Vector3Int pos = GetPositionForTileId(tileId);
+                if (activeMoldTilemap.HasTile(pos))
+                {
+                    activeMoldTilemap.SetTransformMatrix(pos, GetMoldIdleStepMatrix(tileId, 0, activeMoldTilemap.cellSize));
+                    moldIdleAnimatedTileIds.Add(tileId);
+                }
+
+                moldIdleUpdateSteps[tileId] = 1;
+                moldIdleNextUpdateTimes[tileId] = Time.time + GetMoldIdleUpdateIntervalSeconds(tileId, 1);
+            }
+        }
+
+        private void RefreshMoldIdleCacheForTile(int tileId)
+        {
+            var activeBoard = ActiveBoard;
+            var activeMoldTilemap = moldTilemap;
+            if (activeBoard == null || activeMoldTilemap == null || tileId < 0)
+            {
+                return;
+            }
+
+            int cohortIndex = GetMoldIdleCohortIndex(tileId);
+            List<int> cohort = moldIdleCohorts[cohortIndex];
+            bool wasEligible = moldIdleEligibleTileIds.Contains(tileId);
+
+            BoardTile tile = activeBoard.GetTileById(tileId);
+            bool shouldApply = ShouldApplyMoldIdleDrift(tile, activeMoldTilemap, overlayTilemap);
+            if (shouldApply)
+            {
+                if (!wasEligible)
+                {
+                    moldIdleEligibleTileIds.Add(tileId);
+                    cohort.Add(tileId);
+                    Vector3Int tilePos = GetPositionForTileId(tileId);
+                    if (activeMoldTilemap.HasTile(tilePos))
+                    {
+                        activeMoldTilemap.SetTransformMatrix(tilePos, GetMoldIdleStepMatrix(tileId, 0, activeMoldTilemap.cellSize));
+                        moldIdleAnimatedTileIds.Add(tileId);
+                    }
+
+                    moldIdleUpdateSteps[tileId] = 1;
+                    moldIdleNextUpdateTimes[tileId] = Time.time + GetMoldIdleUpdateIntervalSeconds(tileId, 1);
+                }
+
+                return;
+            }
+
+            if (!wasEligible)
+            {
+                return;
+            }
+
+            moldIdleEligibleTileIds.Remove(tileId);
+            moldIdleAnimatedTileIds.Remove(tileId);
+            cohort.Remove(tileId);
+            moldIdleNextUpdateTimes.Remove(tileId);
+            moldIdleUpdateSteps.Remove(tileId);
+
+            Vector3Int pos = GetPositionForTileId(tileId);
+            if (activeMoldTilemap.HasTile(pos))
+            {
+                activeMoldTilemap.SetTransformMatrix(pos, IdentityMatrix);
+            }
+        }
+
+        private int GetMoldIdleCohortIndex(int tileId)
+        {
+            int cohortCount = Mathf.Max(1, moldIdleCohorts.Length);
+            return Mathf.Abs(tileId) % cohortCount;
+        }
+
+        private static int GetMoldIdleAnimatedTileBudget(int candidateCount)
+        {
+            if (candidateCount <= 0)
+            {
+                return 0;
+            }
+
+            float fraction = Mathf.Clamp01(UIEffectConstants.MoldIdleAnimatedTileFraction);
+            int minimumBudget = Mathf.Max(1, UIEffectConstants.MoldIdleMinAnimatedTileBudget);
+            int maximumBudget = Mathf.Max(minimumBudget, UIEffectConstants.MoldIdleMaxAnimatedTileBudget);
+            int proportionalBudget = Mathf.RoundToInt(candidateCount * fraction);
+            return Mathf.Min(candidateCount, Mathf.Clamp(proportionalBudget, minimumBudget, maximumBudget));
+        }
+
+        private static bool ShouldSelectMoldIdleCandidate(int tileId, int candidateCount, int stride)
+        {
+            unchecked
+            {
+                uint hash = 2166136261u;
+                hash = (hash ^ (uint)tileId) * 16777619u;
+                hash = (hash ^ (uint)candidateCount) * 16777619u;
+                return (hash % (uint)stride) == 0u;
+            }
+        }
+
+        private static float GetMoldIdleUpdateIntervalSeconds(int tileId, int updateStep)
+        {
+            float minSeconds = Mathf.Max(0.05f, UIEffectConstants.MoldIdleUpdateIntervalMinSeconds);
+            float maxSeconds = Mathf.Max(minSeconds, UIEffectConstants.MoldIdleUpdateIntervalMaxSeconds);
+            return Mathf.Lerp(minSeconds, maxSeconds, GetMoldIdleNoise01(tileId, updateStep, 23u));
+        }
+
+        private static Matrix4x4 GetMoldIdleStepMatrix(int tileId, int updateStep, Vector3 cellSize)
+        {
+            float primaryPhase = (GetMoldIdleNoise01(tileId, updateStep, 41u) * Mathf.PI * 2f)
+                + (tileId * UIEffectConstants.MoldIdleDriftPhaseOffsetRadians);
+            float secondaryPhase = (GetMoldIdleNoise01(tileId, updateStep, 59u) * Mathf.PI * 2f)
+                + (tileId * UIEffectConstants.MoldIdleDriftSecondaryPhaseOffsetRadians);
+
+            float offsetX = cellSize.x * UIEffectConstants.MoldIdleDriftAmplitudeXCellFraction
+                * (Mathf.Sin(primaryPhase) + (Mathf.Sin(secondaryPhase) * UIEffectConstants.MoldIdleDriftSecondaryWaveContribution));
+            float offsetY = cellSize.y * UIEffectConstants.MoldIdleDriftAmplitudeYCellFraction
+                * (Mathf.Cos(secondaryPhase) + (Mathf.Sin(primaryPhase) * UIEffectConstants.MoldIdleDriftSecondaryWaveContribution));
+
+            return Matrix4x4.TRS(new Vector3(offsetX, offsetY, 0f), Quaternion.identity, Vector3.one);
+        }
+
+        private static float GetMoldIdleNoise01(int tileId, int updateStep, uint salt)
+        {
+            unchecked
+            {
+                uint hash = 2166136261u;
+                hash = (hash ^ (uint)tileId) * 16777619u;
+                hash = (hash ^ (uint)updateStep) * 16777619u;
+                hash = (hash ^ salt) * 16777619u;
+                return (hash & 65535u) / 65535f;
+            }
+        }
+
+        private void ClearMoldIdleCache()
+        {
+            moldIdleAnimatedTileIds.Clear();
+            moldIdleEligibleTileIds.Clear();
+            moldIdleResetTileIds.Clear();
+            moldIdleRenderCandidates.Clear();
+            moldIdleNextUpdateTimes.Clear();
+            moldIdleUpdateSteps.Clear();
+            for (int i = 0; i < moldIdleCohorts.Length; i++)
+            {
+                moldIdleCohorts[i].Clear();
+            }
+
+            moldIdleNextCohortIndex = 0;
+            moldIdleFrameSkipCounter = 0;
+        }
+
+        private void ResetTrackedMoldIdleOffsets()
+        {
+            var activeMoldTilemap = moldTilemap;
+            if (activeMoldTilemap != null)
+            {
+                moldIdleResetTileIds.Clear();
+                foreach (int tileId in moldIdleAnimatedTileIds)
+                {
+                    moldIdleResetTileIds.Add(tileId);
+                }
+
+                ResetMoldIdleOffsets(activeMoldTilemap, moldIdleResetTileIds);
+            }
+
+            moldIdleAnimatedTileIds.Clear();
+            moldIdleResetTileIds.Clear();
+        }
+
+        private void ResetMoldIdleOffsets(Tilemap activeMoldTilemap, List<int> tileIds)
+        {
+            for (int i = 0; i < tileIds.Count; i++)
+            {
+                Vector3Int pos = GetPositionForTileId(tileIds[i]);
+                if (!activeMoldTilemap.HasTile(pos))
+                {
+                    continue;
+                }
+
+                activeMoldTilemap.SetTransformMatrix(pos, IdentityMatrix);
+            }
+        }
+
+        private static Matrix4x4 GetMoldIdleDriftMatrix(int tileId, Vector3 cellSize)
+        {
+            float primaryPhase = (Time.time * UIEffectConstants.MoldIdleDriftPrimarySpeed)
+                + (tileId * UIEffectConstants.MoldIdleDriftPhaseOffsetRadians);
+            float secondaryPhase = (Time.time * UIEffectConstants.MoldIdleDriftSecondarySpeed)
+                + (tileId * UIEffectConstants.MoldIdleDriftSecondaryPhaseOffsetRadians);
+
+            float offsetX = cellSize.x * UIEffectConstants.MoldIdleDriftAmplitudeXCellFraction
+                * (Mathf.Sin(primaryPhase) + (Mathf.Sin(secondaryPhase) * UIEffectConstants.MoldIdleDriftSecondaryWaveContribution));
+            float offsetY = cellSize.y * UIEffectConstants.MoldIdleDriftAmplitudeYCellFraction
+                * (Mathf.Cos(secondaryPhase) + (Mathf.Sin(primaryPhase) * UIEffectConstants.MoldIdleDriftSecondaryWaveContribution));
+
+            return Matrix4x4.TRS(new Vector3(offsetX, offsetY, 0f), Quaternion.identity, Vector3.one);
+        }
 
         // === Public wrappers for extracted reclaim & surgical animations ===
         public void PlayRegenerativeHyphaeReclaimBatch(IReadOnlyList<int> tileIds, float scaleMultiplier, float explicitTotalSeconds)
@@ -459,11 +800,13 @@ namespace FungusToast.Unity.Grid
 
             cellStateAnimationController?.CancelChemobeaconExpiryAnimation(tileId);
             RenderChemobeaconOverlay(tileId, GetPositionForTileId(tileId));
+            RefreshMoldIdleCacheForTile(tileId);
         }
 
         private void HandleChemobeaconExpired(int playerId, int tileId)
         {
             ClearChemobeaconOverlay(tileId);
+            RefreshMoldIdleCacheForTile(tileId);
             cellStateAnimationController?.StartChemobeaconExpiryAnimation(playerId, tileId);
         }
 
@@ -580,6 +923,7 @@ namespace FungusToast.Unity.Grid
         public void RenderTileFromBoard(int tileId)
         {
             boardStateRenderer?.RenderTileFromBoard(tileId);
+            RefreshMoldIdleCacheForTile(tileId);
         }
 
         private void ApplyPreAnimationPreviewHiddenState(int tileId, Vector3Int pos) => boardStateRenderer?.ApplyPreAnimationPreviewHiddenState(tileId, pos);
@@ -648,6 +992,7 @@ namespace FungusToast.Unity.Grid
 
             cellStateAnimationController?.PrepareForBoardRender(board, suppressAnimations);
             overlayRenderer?.ResetRuntimeState();
+            ClearMoldIdleCache();
 
             toastTilemap.ClearAllTiles();
             moldTilemap.ClearAllTiles();
@@ -672,10 +1017,12 @@ namespace FungusToast.Unity.Grid
                     RenderNutrientPatchOverlay(tile, pos);
                     RenderChemobeaconOverlay(tile.TileId, pos);
                     ApplyPreAnimationPreviewHiddenState(tile.TileId, pos);
+                    RegisterMoldIdleTileFromRender(tile, pos);
                 }
             }
 
             RenderDecorativeCrust(board);
+            BuildMoldIdleCacheFromRenderCandidates();
 
             if (!suppressAnimations)
             {

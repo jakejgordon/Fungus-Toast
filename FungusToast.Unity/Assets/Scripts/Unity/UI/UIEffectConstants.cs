@@ -170,6 +170,20 @@ namespace FungusToast.Unity.UI
         public const float NutrientPatchPulseAlphaMin = 0.78f;
         public const float NutrientPatchPulseAlphaMax = 0.98f;
         public const float NutrientPatchPulsePhaseOffsetRadians = 0.37f;
+        public const float MoldIdleDriftAmplitudeXCellFraction = 0.046875f;
+        public const float MoldIdleDriftAmplitudeYCellFraction = 0.03125f;
+        public const float MoldIdleDriftPrimarySpeed = 1.15f;
+        public const float MoldIdleDriftSecondarySpeed = 0.71f;
+        public const float MoldIdleDriftPhaseOffsetRadians = 0.37f;
+        public const float MoldIdleDriftSecondaryPhaseOffsetRadians = 0.19f;
+        public const float MoldIdleDriftSecondaryWaveContribution = 0.28f;
+        public const int MoldIdleUpdateCohortCount = 10;
+        public const int MoldIdleUpdateFrameInterval = 3;
+        public const float MoldIdleUpdateIntervalMinSeconds = 1f;
+        public const float MoldIdleUpdateIntervalMaxSeconds = 3f;
+        public const float MoldIdleAnimatedTileFraction = 0.15f;
+        public const int MoldIdleMinAnimatedTileBudget = 24;
+        public const int MoldIdleMaxAnimatedTileBudget = 1536;
 
         /// <summary>
         /// Delay (in seconds) for AI to "think" before picking a mycovariant during draft.

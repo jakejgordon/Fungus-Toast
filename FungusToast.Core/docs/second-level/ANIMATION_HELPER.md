@@ -13,6 +13,7 @@ Any new gameplay animation entry point should be added to this file when introdu
 | Toxin placed (any phase when toxin tiles are added) | `TriggerToxinDropAnimation(int)` or `RenderBoard()` → `StartToxinDropAnimations()` | `ToxinDropAnimation` | `ToxinDropAnimationDurationSeconds` |
 | Toxin expires during growth-start cleanup | `GameBoard.ToxinExpired` → `GridVisualizer.HandleToxinExpired()` → next `RenderBoard()` → `StartPendingToxinExpiryAnimations()` | `ToxinExpiryDissolveAnimation` | `ToxinExpiryDissolveDurationSeconds` |
 | Cell marked dying (mainly after decay phase) | `TriggerDeathAnimation(int)` or `RenderBoard()` → `StartDeathAnimations()` | `DeathAnimation` | `CellDeathAnimationDurationSeconds` (first 15% is flash) |
+| Passive alive-mold idle drift | `GridVisualizer.LateUpdate()` → `UpdateMoldIdleVisuals()` | None (per-frame tilemap transform) | `MoldIdleDriftAmplitudeXCellFraction`, `MoldIdleDriftAmplitudeYCellFraction`, `MoldIdleDriftPrimarySpeed`, `MoldIdleDriftSecondarySpeed` |
 | Post‑Growth: Regenerative Hyphae reclaim batch | `PlayRegenerativeHyphaeReclaimBatch(tileIds, simplified, scaleMult [, explicitTotalSeconds])` | `RegenerativeHyphaeReclaimFull` / `RegenerativeHyphaeReclaimLite` | If provided: `explicitTotalSeconds`; else base sum `RegenerativeHyphaeTotalBaseDurationSeconds` scaled by `postGrowthPhaseDurationMultiplier` & `regenerativeHyphaeDurationMultiplier` |
 | Post‑Growth: Directed vector surge presentation | `GameBoard.DirectedVectorSurge` → `PostGrowthVisualSequence` → `PlayDirectedVectorSurgePresentation(playerId, originTileId, tileIds)` | `RunDirectedVectorSurgePresentation` with chunk pulses + floating toast | `HyphalVectoringOriginPulseDurationSeconds` + chunk cadence (`HyphalVectoringChunkPulseDurationSeconds`, `HyphalVectoringChunkStaggerSeconds`) + `HyphalVectoringToastDurationSeconds` |
 | Post‑Growth: Resistance pulses (Bastion / HRT spread) | `PlayResistancePulseBatchScaled(tileIds, scaleMultiplier)` | `BastionResistantPulseAnimation` | `MycelialBastionPulseDurationSeconds` (or `_timingContext.ResistancePulseTotal` if set) |
@@ -22,6 +23,7 @@ Any new gameplay animation entry point should be added to this file when introdu
 - Reclaim FULL sub‑phases (rise / hold / swap / settle) proportions come from base constants (`RegenerativeHyphae*DurationSeconds` + `RegenerativeHyphaeHoldBaseSeconds`). When you pass `explicitTotalSeconds`, those portions are applied linearly.
 - Lite reclaim uses only rise + swap (same proportional logic limited to those two components).
 - Timing context (`SetPostGrowthTiming`) can override reclaim (rise / hold / swap / settle / lite total) and resistance pulse totals directly.
+- The passive alive-mold drift only applies to eligible living mold tiles with no overlay present, and it suspends while higher-priority board animations or player-hover emphasis are active.
 - When adding a new reusable animation or board-FX entry point, register it here with its trigger, main method, and governing constants.
 
 ## Minimal Mycovariant (Active Ability) Animations
