@@ -44,6 +44,46 @@ namespace FungusToast.Unity.UI
         public const float CellGrowthSettleDurationSeconds = 0.3f;
 
         /// <summary>
+        /// Duration of the source-cell anticipation stretch for source-aware normal hyphal growth.
+        /// </summary>
+        public const float HyphalGrowthSourceStretchDurationSeconds = 0.08f;
+
+        /// <summary>
+        /// Duration of the new-cell emergence travel for source-aware normal hyphal growth.
+        /// </summary>
+        public const float HyphalGrowthTravelDurationSeconds = 0.12f;
+
+        /// <summary>
+        /// Duration of the destination settle after the new cell pinches off from the source.
+        /// </summary>
+        public const float HyphalGrowthSettleDurationSeconds = 0.09f;
+
+        /// <summary>
+        /// Fraction of a tile that the source cell shifts toward the target during the growth stretch.
+        /// </summary>
+        public const float HyphalGrowthSourceOffsetCellFraction = 0.16f;
+
+        /// <summary>
+        /// Fraction of a tile that the destination begins inset toward the source before settling.
+        /// </summary>
+        public const float HyphalGrowthDestinationInsetCellFraction = 0.34f;
+
+        /// <summary>
+        /// Stretch applied along the growth axis during the source-cell push-off.
+        /// </summary>
+        public const float HyphalGrowthAxisStretch = 1.16f;
+
+        /// <summary>
+        /// Squash applied perpendicular to the growth axis during the source-cell push-off.
+        /// </summary>
+        public const float HyphalGrowthPerpendicularSquash = 0.9f;
+
+        /// <summary>
+        /// Overshoot scale applied to the destination just before it settles.
+        /// </summary>
+        public const float HyphalGrowthDestinationOvershootScale = 1.06f;
+
+        /// <summary>
         /// Duration of the short launch squash before Creeping Mold hops to its new tile.
         /// </summary>
         public const float CreepingMoldSourceEmphasisDurationSeconds = 0.1f;

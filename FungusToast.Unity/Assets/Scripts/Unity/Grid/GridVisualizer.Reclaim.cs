@@ -809,6 +809,8 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly HashSet<int> _newlyGrownAnimationPlayedTileIds = new();
 		private readonly HashSet<int> _suppressedFadeInTileIdsForNextRender = new();
 		private readonly Dictionary<int, Coroutine> _fadeInCoroutines = new();
+		private readonly Dictionary<int, int> _directionalGrowthSourceTileIds = new();
+		private readonly Dictionary<int, Coroutine> _directionalGrowthCoroutines = new();
 		private readonly HashSet<int> _dyingTileIds = new();
 		private readonly Dictionary<int, Coroutine> _deathAnimationCoroutines = new();
 		private readonly Dictionary<int, PendingTileTransition> _pendingTileTransitions = new();
@@ -901,6 +903,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 
 			StopAndClearFadeInAnimations();
+			StopAndClearDirectionalGrowthAnimations();
 			StopAndClearDeathAnimations();
 			StopAndClearTransitionAnimations();
 			StopAndClearToxinDropAnimations();
@@ -1018,6 +1021,29 @@ namespace FungusToast.Unity.Grid.Helpers
 			StartPendingToxinExpiryAnimations();
 		}
 
+		public void StartDirectionalGrowthAnimations(IReadOnlyList<(int sourceTileId, int destinationTileId)> moves)
+		{
+			if (moves == null || moves.Count == 0)
+			{
+				return;
+			}
+
+			for (int i = 0; i < moves.Count; i++)
+			{
+				var move = moves[i];
+				if (move.sourceTileId < 0 || move.destinationTileId < 0 || move.sourceTileId == move.destinationTileId)
+				{
+					continue;
+				}
+
+				_directionalGrowthSourceTileIds[move.destinationTileId] = move.sourceTileId;
+				_newlyGrownAnimationPlayedTileIds.Add(move.destinationTileId);
+				StopTrackedAnimation(_fadeInCoroutines, move.destinationTileId);
+				StopTrackedAnimation(_directionalGrowthCoroutines, move.destinationTileId);
+				_directionalGrowthCoroutines[move.destinationTileId] = _startCoroutine(PlayDirectionalGrowth(move.sourceTileId, move.destinationTileId));
+			}
+		}
+
 		public float GetAliveCellAlpha(int tileId, FungalCell cell)
 		{
 			if (cell == null)
@@ -1077,12 +1103,30 @@ namespace FungusToast.Unity.Grid.Helpers
 			_chemobeaconExpiryCoroutines.Clear();
 		}
 
+		public void StopAndClearDirectionalGrowthAnimations()
+		{
+			foreach (var destinationTileId in _directionalGrowthCoroutines.Keys.ToList())
+			{
+				if (_directionalGrowthCoroutines.TryGetValue(destinationTileId, out var coroutine) && coroutine != null)
+				{
+					_stopCoroutine(coroutine);
+					_endAnimation();
+				}
+
+				ResetDirectionalGrowthVisuals(_directionalGrowthSourceTileIds.TryGetValue(destinationTileId, out int sourceTileId) ? sourceTileId : -1, destinationTileId);
+			}
+
+			_directionalGrowthCoroutines.Clear();
+			_directionalGrowthSourceTileIds.Clear();
+		}
+
 		public void ResetRuntimeState()
 		{
 			ClearPendingTileTransitions();
 			ClearPendingToxinImpactSnapshots();
 			ClearPendingToxinExpirySnapshots();
 			StopAndClearFadeInAnimations();
+			StopAndClearDirectionalGrowthAnimations();
 			StopAndClearDeathAnimations();
 			StopAndClearTransitionAnimations();
 			StopAndClearToxinDropAnimations();
@@ -1091,6 +1135,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
 			_newlyGrownTileIds.Clear();
 			_newlyGrownAnimationPlayedTileIds.Clear();
+			_directionalGrowthSourceTileIds.Clear();
 			_dyingTileIds.Clear();
 			_toxinDropTileIds.Clear();
 		}
@@ -1098,6 +1143,48 @@ namespace FungusToast.Unity.Grid.Helpers
 		public void Dispose()
 		{
 			ResetRuntimeState();
+		}
+
+		private void ResetDirectionalGrowthVisuals(int sourceTileId, int destinationTileId)
+		{
+			if (sourceTileId >= 0)
+			{
+				_renderTileFromBoard?.Invoke(sourceTileId);
+			}
+
+			_revealPreAnimationPreviewTile?.Invoke(destinationTileId);
+			_renderTileFromBoard?.Invoke(destinationTileId);
+			_directionalGrowthSourceTileIds.Remove(destinationTileId);
+		}
+
+		private static void ApplyDirectionalTransform(Tilemap moldTilemap, Tilemap overlayTilemap, Vector3Int pos, Vector3 localOffset, float axisScale, float perpendicularScale, bool horizontal)
+		{
+			Vector3 localScale = horizontal
+				? new Vector3(axisScale, perpendicularScale, 1f)
+				: new Vector3(perpendicularScale, axisScale, 1f);
+			Matrix4x4 matrix = Matrix4x4.TRS(localOffset, Quaternion.identity, localScale);
+			if (moldTilemap != null && moldTilemap.HasTile(pos))
+			{
+				moldTilemap.SetTransformMatrix(pos, matrix);
+			}
+
+			if (overlayTilemap != null && overlayTilemap.HasTile(pos))
+			{
+				overlayTilemap.SetTransformMatrix(pos, matrix);
+			}
+		}
+
+		private static void SetTileAlpha(Tilemap tilemap, Vector3Int pos, float alpha)
+		{
+			if (tilemap == null || !tilemap.HasTile(pos))
+			{
+				return;
+			}
+
+			tilemap.SetTileFlags(pos, TileFlags.None);
+			Color color = tilemap.GetColor(pos);
+			color.a = alpha;
+			tilemap.SetColor(pos, color);
 		}
 
 		public bool CaptureToxinImpactSnapshot(int tileId)
@@ -1310,6 +1397,11 @@ namespace FungusToast.Unity.Grid.Helpers
 		{
 			foreach (int tileId in _newlyGrownTileIds)
 			{
+				if (_directionalGrowthSourceTileIds.ContainsKey(tileId))
+				{
+					continue;
+				}
+
 				if (_pendingTileTransitions.ContainsKey(tileId))
 				{
 					continue;
@@ -1394,6 +1486,112 @@ namespace FungusToast.Unity.Grid.Helpers
 			finally
 			{
 				_fadeInCoroutines.Remove(tileId);
+				_endAnimation();
+			}
+		}
+
+		private IEnumerator PlayDirectionalGrowth(int sourceTileId, int destinationTileId)
+		{
+			var board = _getBoard();
+			var moldTilemap = _getMoldTilemap();
+			if (board == null || moldTilemap == null)
+			{
+				_directionalGrowthCoroutines.Remove(destinationTileId);
+				yield break;
+			}
+
+			var overlayTilemap = _getOverlayTilemap();
+			Vector3Int sourcePos = _getPositionForTileId(sourceTileId);
+			Vector3Int destinationPos = _getPositionForTileId(destinationTileId);
+			if (!moldTilemap.HasTile(sourcePos) || !moldTilemap.HasTile(destinationPos))
+			{
+				_directionalGrowthCoroutines.Remove(destinationTileId);
+				ResetDirectionalGrowthVisuals(sourceTileId, destinationTileId);
+				yield break;
+			}
+
+			var sourceXY = board.GetXYFromTileId(sourceTileId);
+			var destinationXY = board.GetXYFromTileId(destinationTileId);
+			int deltaX = destinationXY.Item1 - sourceXY.Item1;
+			int deltaY = destinationXY.Item2 - sourceXY.Item2;
+			if (Mathf.Abs(deltaX) + Mathf.Abs(deltaY) != 1)
+			{
+				_directionalGrowthCoroutines.Remove(destinationTileId);
+				ResetDirectionalGrowthVisuals(sourceTileId, destinationTileId);
+				yield break;
+			}
+
+			Vector3 cellSize = moldTilemap.cellSize;
+			Vector3 direction = new Vector3(deltaX * cellSize.x, deltaY * cellSize.y, 0f);
+			Vector3 normalizedDirection = direction.sqrMagnitude <= Mathf.Epsilon ? Vector3.right : direction.normalized;
+			bool horizontal = deltaX != 0;
+			float stretchDuration = UIEffectConstants.HyphalGrowthSourceStretchDurationSeconds;
+			float travelDuration = UIEffectConstants.HyphalGrowthTravelDurationSeconds;
+			float settleDuration = UIEffectConstants.HyphalGrowthSettleDurationSeconds;
+			float sourceOffsetMagnitude = (horizontal ? cellSize.x : cellSize.y) * UIEffectConstants.HyphalGrowthSourceOffsetCellFraction;
+			float destinationInsetMagnitude = (horizontal ? cellSize.x : cellSize.y) * UIEffectConstants.HyphalGrowthDestinationInsetCellFraction;
+			float axisStretch = UIEffectConstants.HyphalGrowthAxisStretch;
+			float perpendicularSquash = UIEffectConstants.HyphalGrowthPerpendicularSquash;
+			float overshootScale = UIEffectConstants.HyphalGrowthDestinationOvershootScale;
+
+			SetTileAlpha(moldTilemap, destinationPos, 0f);
+			SetTileAlpha(overlayTilemap, destinationPos, 0f);
+
+			_beginAnimation();
+			try
+			{
+				float elapsed = 0f;
+				while (elapsed < stretchDuration)
+				{
+					elapsed += Time.deltaTime;
+					float t = stretchDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / stretchDuration);
+					float ease = 1f - Mathf.Pow(1f - t, 3f);
+					float offset = Mathf.Lerp(0f, sourceOffsetMagnitude, ease);
+					float axisScale = Mathf.Lerp(1f, axisStretch, ease);
+					float perpendicularScale = Mathf.Lerp(1f, perpendicularSquash, ease);
+					ApplyDirectionalTransform(moldTilemap, overlayTilemap, sourcePos, normalizedDirection * offset, axisScale, perpendicularScale, horizontal);
+					yield return null;
+				}
+
+				elapsed = 0f;
+				while (elapsed < travelDuration)
+				{
+					elapsed += Time.deltaTime;
+					float t = travelDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / travelDuration);
+					float ease = 1f - Mathf.Pow(1f - t, 3f);
+					float sourceAxisScale = Mathf.Lerp(axisStretch, 1f, ease);
+					float sourcePerpendicularScale = Mathf.Lerp(perpendicularSquash, 1f, ease);
+					float sourceOffset = Mathf.Lerp(sourceOffsetMagnitude, 0f, ease);
+					ApplyDirectionalTransform(moldTilemap, overlayTilemap, sourcePos, normalizedDirection * sourceOffset, sourceAxisScale, sourcePerpendicularScale, horizontal);
+
+					float destinationOffset = Mathf.Lerp(destinationInsetMagnitude, 0f, ease);
+					float destinationAxisScale = Mathf.Lerp(perpendicularSquash, overshootScale, ease);
+					float destinationPerpendicularScale = Mathf.Lerp(axisStretch, overshootScale, ease);
+					ApplyDirectionalTransform(moldTilemap, overlayTilemap, destinationPos, -normalizedDirection * destinationOffset, destinationAxisScale, destinationPerpendicularScale, horizontal);
+					float alpha = Mathf.Lerp(0f, 1f, ease);
+					SetTileAlpha(moldTilemap, destinationPos, alpha);
+					SetTileAlpha(overlayTilemap, destinationPos, alpha);
+					yield return null;
+				}
+
+				elapsed = 0f;
+				while (elapsed < settleDuration)
+				{
+					elapsed += Time.deltaTime;
+					float t = settleDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / settleDuration);
+					float ease = 1f - Mathf.Pow(1f - t, 2f);
+					float settledScale = Mathf.Lerp(overshootScale, 1f, ease);
+					ApplyDirectionalTransform(moldTilemap, overlayTilemap, destinationPos, Vector3.zero, settledScale, settledScale, horizontal);
+					float alpha = Mathf.Lerp(1f, UIEffectConstants.NewGrowthFinalAlpha, ease);
+					SetTileAlpha(moldTilemap, destinationPos, alpha);
+					SetTileAlpha(overlayTilemap, destinationPos, alpha);
+					yield return null;
+				}
+			}
+			finally
+			{
+				_directionalGrowthCoroutines.Remove(destinationTileId);
+				ResetDirectionalGrowthVisuals(sourceTileId, destinationTileId);
 				_endAnimation();
 			}
 		}

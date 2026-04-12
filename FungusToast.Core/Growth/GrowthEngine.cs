@@ -242,6 +242,10 @@ namespace FungusToast.Core.Growth
 
             // Removed: targetTile.PlaceFungalCell(newCell); (caused isNew=false in GameBoard.PlaceFungalCell)
             board.PlaceFungalCell(newCell);
+            if (growthSource == GrowthSource.HyphalOutgrowth)
+            {
+                board.OnHyphalGrowthVisualized(playerId, sourceTileId, targetTileId);
+            }
             return true;
         }
 

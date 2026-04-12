@@ -72,6 +72,20 @@ namespace FungusToast.Core.Board
             public int AffectedTileCount => AffectedTileIds.Count;
         }
 
+        public sealed class HyphalGrowthVisualEventArgs
+        {
+            public HyphalGrowthVisualEventArgs(int playerId, int sourceTileId, int destinationTileId)
+            {
+                PlayerId = playerId;
+                SourceTileId = sourceTileId;
+                DestinationTileId = destinationTileId;
+            }
+
+            public int PlayerId { get; }
+            public int SourceTileId { get; }
+            public int DestinationTileId { get; }
+        }
+
         public int Width { get; }
         public int Height { get; }
         public BoardTile[,] Grid { get; }
@@ -123,6 +137,7 @@ namespace FungusToast.Core.Board
         public delegate void ResistanceAppliedBatchEventHandler(int playerId, GrowthSource source, IReadOnlyList<int> tileIds);
         public delegate void DirectedVectorSurgeEventHandler(DirectedVectorSurgeEventArgs e);
         public delegate void ConduitProjectionEventHandler(ConduitProjectionEventArgs e);
+        public delegate void HyphalGrowthVisualEventHandler(HyphalGrowthVisualEventArgs e);
         public delegate void RegenerativeHyphaeReclaimedEventHandler(int playerId, int tileId);
         public delegate void PostDecayPhaseEventHandler(); // NEW
         public delegate void ChemobeaconMarkerEventHandler(int playerId, int tileId);
@@ -159,6 +174,7 @@ namespace FungusToast.Core.Board
         public event ResistanceAppliedBatchEventHandler? ResistanceAppliedBatch;
         public event DirectedVectorSurgeEventHandler? DirectedVectorSurge;
         public event ConduitProjectionEventHandler? ConduitProjection;
+        public event HyphalGrowthVisualEventHandler? HyphalGrowthVisualized;
         public event RegenerativeHyphaeReclaimedEventHandler? RegenerativeHyphaeReclaimed;
         public event PostDecayPhaseEventHandler? PostDecayPhase; // NEW
         public event ChemobeaconMarkerEventHandler? ChemobeaconPlaced;
@@ -209,6 +225,8 @@ namespace FungusToast.Core.Board
         public virtual void OnDirectedVectorSurge(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds) => DirectedVectorSurge?.Invoke(new DirectedVectorSurgeEventArgs(playerId, originTileId, affectedTileIds));
         public virtual void OnConduitProjection(int playerId, GrowthSource source, int originTileId, IReadOnlyList<int> pathTileIds, IReadOnlyList<int> affectedTileIds, int finalLandingTileId)
             => ConduitProjection?.Invoke(new ConduitProjectionEventArgs(playerId, source, originTileId, pathTileIds, affectedTileIds, finalLandingTileId));
+        public virtual void OnHyphalGrowthVisualized(int playerId, int sourceTileId, int destinationTileId)
+            => HyphalGrowthVisualized?.Invoke(new HyphalGrowthVisualEventArgs(playerId, sourceTileId, destinationTileId));
         protected virtual void OnChemobeaconPlaced(int playerId, int tileId) => ChemobeaconPlaced?.Invoke(playerId, tileId);
         protected virtual void OnChemobeaconExpired(int playerId, int tileId) => ChemobeaconExpired?.Invoke(playerId, tileId);
         #endregion

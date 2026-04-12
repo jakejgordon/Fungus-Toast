@@ -87,6 +87,7 @@ namespace FungusToast.Unity.Grid
         // Animation effect tracking
         private readonly HashSet<int> preAnimationHiddenPreviewTileIds = new();
         private readonly List<CreepingMoldVisualMove> _pendingCreepingMoldMoves = new();
+        private readonly List<HyphalGrowthVisualMove> _pendingHyphalGrowthMoves = new();
         private readonly HashSet<int> moldIdleAnimatedTileIds = new();
         private readonly HashSet<int> moldIdleEligibleTileIds = new();
         private readonly List<int> moldIdleResetTileIds = new();
@@ -100,6 +101,20 @@ namespace FungusToast.Unity.Grid
         private readonly struct CreepingMoldVisualMove
         {
             public CreepingMoldVisualMove(int playerId, int sourceTileId, int destinationTileId)
+            {
+                PlayerId = playerId;
+                SourceTileId = sourceTileId;
+                DestinationTileId = destinationTileId;
+            }
+
+            public int PlayerId { get; }
+            public int SourceTileId { get; }
+            public int DestinationTileId { get; }
+        }
+
+        private readonly struct HyphalGrowthVisualMove
+        {
+            public HyphalGrowthVisualMove(int playerId, int sourceTileId, int destinationTileId)
             {
                 PlayerId = playerId;
                 SourceTileId = sourceTileId;
@@ -282,6 +297,7 @@ namespace FungusToast.Unity.Grid
                 this.board.CellInfested += HandleCellInfested;
                 this.board.CellOvergrown += HandleCellOvergrown;
                 this.board.CreepingMoldMove += HandleCreepingMoldMove;
+                this.board.HyphalGrowthVisualized += HandleHyphalGrowthVisualized;
                 this.board.ToxinExpired += HandleToxinExpired;
                 this.board.ChemobeaconPlaced += HandleChemobeaconPlaced;
                 this.board.ChemobeaconExpired += HandleChemobeaconExpired;
@@ -304,6 +320,7 @@ namespace FungusToast.Unity.Grid
             resistanceOverlayController?.ResetRuntimeState();
             preAnimationHiddenPreviewTileIds.Clear();
             _pendingCreepingMoldMoves.Clear();
+            _pendingHyphalGrowthMoves.Clear();
             ClearMoldIdleCache();
             overlayRenderer?.ResetRuntimeState();
 
@@ -766,12 +783,14 @@ namespace FungusToast.Unity.Grid
                 board.CellInfested -= HandleCellInfested;
                 board.CellOvergrown -= HandleCellOvergrown;
                 board.CreepingMoldMove -= HandleCreepingMoldMove;
+                board.HyphalGrowthVisualized -= HandleHyphalGrowthVisualized;
                 board.ToxinExpired -= HandleToxinExpired;
                 board.ChemobeaconPlaced -= HandleChemobeaconPlaced;
                 board.ChemobeaconExpired -= HandleChemobeaconExpired;
             }
 
             _pendingCreepingMoldMoves.Clear();
+            _pendingHyphalGrowthMoves.Clear();
         }
 
         private void HandleToxinPlaced(object sender, ToxinPlacedEventArgs e)
@@ -822,6 +841,16 @@ namespace FungusToast.Unity.Grid
             }
 
             _pendingCreepingMoldMoves.Add(new CreepingMoldVisualMove(playerId, fromTileId, toTileId));
+        }
+
+        private void HandleHyphalGrowthVisualized(GameBoard.HyphalGrowthVisualEventArgs e)
+        {
+            if (board == null || e == null || e.SourceTileId < 0 || e.DestinationTileId < 0 || e.SourceTileId == e.DestinationTileId)
+            {
+                return;
+            }
+
+            _pendingHyphalGrowthMoves.Add(new HyphalGrowthVisualMove(e.PlayerId, e.SourceTileId, e.DestinationTileId));
         }
 
         private void HandleChemobeaconPlaced(int playerId, int tileId)
@@ -1010,15 +1039,26 @@ namespace FungusToast.Unity.Grid
             var creepingMoldMoves = suppressAnimations
                 ? Array.Empty<CreepingMoldVisualMove>()
                 : ConsumePendingCreepingMoldMoves(board);
+            var hyphalGrowthMoves = suppressAnimations
+                ? Array.Empty<HyphalGrowthVisualMove>()
+                : ConsumePendingHyphalGrowthMoves(board);
 
             if (suppressAnimations)
             {
                 _pendingCreepingMoldMoves.Clear();
+                _pendingHyphalGrowthMoves.Clear();
             }
 
             if (creepingMoldMoves.Length > 0)
             {
                 var hiddenTileIds = creepingMoldMoves.Select(move => move.DestinationTileId).Distinct().ToList();
+                RegisterPreAnimationHiddenPreviewTiles(hiddenTileIds);
+                cellStateAnimationController?.SuppressNextFadeInAnimations(hiddenTileIds);
+            }
+
+            if (hyphalGrowthMoves.Length > 0)
+            {
+                var hiddenTileIds = hyphalGrowthMoves.Select(move => move.DestinationTileId).Distinct().ToList();
                 RegisterPreAnimationHiddenPreviewTiles(hiddenTileIds);
                 cellStateAnimationController?.SuppressNextFadeInAnimations(hiddenTileIds);
             }
@@ -1065,6 +1105,11 @@ namespace FungusToast.Unity.Grid
                 {
                     StartCoroutine(PlayCreepingMoldAnimationBatch(creepingMoldMoves));
                 }
+
+                if (hyphalGrowthMoves.Length > 0)
+                {
+                    cellStateAnimationController?.StartDirectionalGrowthAnimations(hyphalGrowthMoves.Select(move => (move.SourceTileId, move.DestinationTileId)).ToList());
+                }
             }
         }
 
@@ -1095,6 +1140,44 @@ namespace FungusToast.Unity.Grid
                 .ToArray();
 
             _pendingCreepingMoldMoves.Clear();
+            return sanitizedMoves;
+        }
+
+        private HyphalGrowthVisualMove[] ConsumePendingHyphalGrowthMoves(GameBoard renderBoard)
+        {
+            if (_pendingHyphalGrowthMoves.Count == 0 || renderBoard == null)
+            {
+                _pendingHyphalGrowthMoves.Clear();
+                return Array.Empty<HyphalGrowthVisualMove>();
+            }
+
+            var sanitizedMoves = _pendingHyphalGrowthMoves
+                .Where(move => move.SourceTileId >= 0 && move.DestinationTileId >= 0 && move.SourceTileId != move.DestinationTileId)
+                .GroupBy(move => move.DestinationTileId)
+                .Select(group => group.Last())
+                .Where(move =>
+                {
+                    var destinationTile = renderBoard.GetTileById(move.DestinationTileId);
+                    var destinationCell = destinationTile?.FungalCell;
+                    if (destinationCell?.IsAlive != true || destinationCell.OwnerPlayerId != move.PlayerId || destinationCell.SourceOfGrowth != GrowthSource.HyphalOutgrowth)
+                    {
+                        return false;
+                    }
+
+                    var sourceTile = renderBoard.GetTileById(move.SourceTileId);
+                    var sourceCell = sourceTile?.FungalCell;
+                    if (sourceCell?.IsAlive != true || sourceCell.OwnerPlayerId != move.PlayerId)
+                    {
+                        return false;
+                    }
+
+                    var (sourceX, sourceY) = renderBoard.GetXYFromTileId(move.SourceTileId);
+                    var (destinationX, destinationY) = renderBoard.GetXYFromTileId(move.DestinationTileId);
+                    return Mathf.Abs(sourceX - destinationX) + Mathf.Abs(sourceY - destinationY) == 1;
+                })
+                .ToArray();
+
+            _pendingHyphalGrowthMoves.Clear();
             return sanitizedMoves;
         }
 

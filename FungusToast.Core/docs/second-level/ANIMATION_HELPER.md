@@ -8,7 +8,7 @@ Any new gameplay animation entry point should be added to this file when introdu
 
 | Sequence Point (Order of Appearance) | What Triggers It (public entry or immediate caller) | Per‑Tile Coroutine | Duration Input / Governing Constant |
 |-------------------------------------|------------------------------------------------------|--------------------|--------------------------------------|
-| New growth cells appear after each board render (during growth cycles & post-growth re-render) | `GridVisualizer.RenderBoard()` → `StartFadeInAnimations()` | `FadeInCell` | `CellGrowthFadeInDurationSeconds` (fade) + minor flash (`NewGrowthFlashDurationSeconds`) |
+| New growth cells appear after each board render (during growth cycles & post-growth re-render) | Default: `GridVisualizer.RenderBoard()` → `StartFadeInAnimations()`; orthogonal hyphal outgrowth: `GameBoard.HyphalGrowthVisualized` → `GridVisualizer.RenderBoard()` → `StartDirectionalGrowthAnimations()` | `FadeInCell` or `PlayDirectionalGrowth` | Default: `CellGrowthFadeInDurationSeconds` (fade) + minor flash (`NewGrowthFlashDurationSeconds`); directional: `HyphalGrowthSourceStretchDurationSeconds` + `HyphalGrowthTravelDurationSeconds` + `HyphalGrowthSettleDurationSeconds` |
 | Creeping Mold move resolves after board render for Creeping Mold destinations | `GameBoard.CreepingMoldMove` → `GridVisualizer.RenderBoard()` → `PlayCreepingMoldAnimationBatch()` | `PlayCreepingMoldHopBatch` | `CreepingMoldSourceEmphasisDurationSeconds` + `CreepingMoldHopDurationSeconds` + `CreepingMoldLandingDurationSeconds` |
 | Toxin placed (any phase when toxin tiles are added) | `TriggerToxinDropAnimation(int)` or `RenderBoard()` → `StartToxinDropAnimations()` | `ToxinDropAnimation` | `ToxinDropAnimationDurationSeconds` |
 | Toxin expires during growth-start cleanup | `GameBoard.ToxinExpired` → `GridVisualizer.HandleToxinExpired()` → next `RenderBoard()` → `StartPendingToxinExpiryAnimations()` | `ToxinExpiryDissolveAnimation` | `ToxinExpiryDissolveDurationSeconds` |
@@ -24,6 +24,7 @@ Any new gameplay animation entry point should be added to this file when introdu
 - Lite reclaim uses only rise + swap (same proportional logic limited to those two components).
 - Timing context (`SetPostGrowthTiming`) can override reclaim (rise / hold / swap / settle / lite total) and resistance pulse totals directly.
 - The passive alive-mold drift only applies to eligible living mold tiles with no overlay present, and it suspends while higher-priority board animations or player-hover emphasis are active.
+- Source-aware directional normal growth currently applies only to standard orthogonal `HyphalOutgrowth` placements. Any newly grown tile without a buffered source/destination pair falls back to the existing fade-in behavior.
 - When adding a new reusable animation or board-FX entry point, register it here with its trigger, main method, and governing constants.
 
 ## Minimal Mycovariant (Active Ability) Animations
