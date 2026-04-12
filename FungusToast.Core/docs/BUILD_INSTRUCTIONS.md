@@ -34,6 +34,8 @@ Before any deployment or itch.io publish, confirm the intended semantic version 
 
 - Use `Major.Minor.BugFix` format.
 - Confirm which level should increment before running the deployment.
+- For Windows release handoff or AI-assisted publishing, present the three standard next-version choices derived from the current version: `BugFix` (`X.Y.Z` -> `X.Y.(Z+1)`), `Minor` (`X.Y.Z` -> `X.(Y+1).0`), or `Major` (`X.Y.Z` -> `(X+1).0.0`).
+- Do not silently choose one of those options; require an explicit selection before updating `FungusToast.Unity/version.txt`.
 - Do not assume the next version automatically, even for routine uploads.
 - Keep the first line of `FungusToast.Unity/version.txt` set to the release version that should be stamped into the build and passed to butler as `--userversion`.
 - `FungusToast.Unity/last-deployed-version.txt` records the last successful Windows itch.io publish. The Windows script rejects duplicate or downgraded releases against it, while the macOS Unity Cloud script only blocks versions older than that Windows release so the same semantic version can still ship on macOS.
