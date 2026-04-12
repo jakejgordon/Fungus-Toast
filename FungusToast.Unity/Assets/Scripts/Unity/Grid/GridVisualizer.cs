@@ -379,7 +379,7 @@ namespace FungusToast.Unity.Grid
                 }
 
                 int updateStep = moldIdleUpdateSteps.TryGetValue(tileId, out int recordedStep) ? recordedStep : 0;
-                activeMoldTilemap.SetTransformMatrix(pos, GetMoldIdleStepMatrix(tileId, updateStep, activeMoldTilemap.cellSize));
+                ApplyMoldIdleTransform(tileId, pos, GetMoldIdleStepMatrix(tileId, updateStep, activeMoldTilemap.cellSize), activeMoldTilemap);
                 moldIdleAnimatedTileIds.Add(tileId);
                 moldIdleUpdateSteps[tileId] = updateStep + 1;
                 moldIdleNextUpdateTimes[tileId] = now + GetMoldIdleUpdateIntervalSeconds(tileId, updateStep + 1);
@@ -420,10 +420,51 @@ namespace FungusToast.Unity.Grid
 
             if (activeOverlayTilemap != null && activeOverlayTilemap.HasTile(pos))
             {
-                return false;
+                return ShouldAnimateMoldIdleResistanceOverlay(tile, activeOverlayTilemap, pos);
             }
 
             return true;
+        }
+
+        private bool ShouldAnimateMoldIdleResistanceOverlay(BoardTile tile, Tilemap activeOverlayTilemap, Vector3Int pos)
+        {
+            var cell = tile?.FungalCell;
+            return tile != null
+                && cell?.CellType == FungalCellType.Alive
+                && activeOverlayTilemap != null
+                && activeOverlayTilemap.HasTile(pos)
+                && ShouldRenderResistanceOverlay(tile.TileId, cell);
+        }
+
+        private void ApplyMoldIdleTransform(int tileId, Vector3Int pos, Matrix4x4 matrix, Tilemap activeMoldTilemap)
+        {
+            activeMoldTilemap.SetTransformMatrix(pos, matrix);
+
+            var activeOverlayTilemap = overlayTilemap;
+            if (activeOverlayTilemap == null || !activeOverlayTilemap.HasTile(pos))
+            {
+                return;
+            }
+
+            BoardTile tile = ActiveBoard?.GetTileById(tileId);
+            if (ShouldAnimateMoldIdleResistanceOverlay(tile, activeOverlayTilemap, pos))
+            {
+                activeOverlayTilemap.SetTransformMatrix(pos, matrix);
+            }
+        }
+
+        private void ResetMoldIdleTransform(Vector3Int pos, Tilemap activeMoldTilemap)
+        {
+            if (activeMoldTilemap.HasTile(pos))
+            {
+                activeMoldTilemap.SetTransformMatrix(pos, IdentityMatrix);
+            }
+
+            var activeOverlayTilemap = overlayTilemap;
+            if (activeOverlayTilemap != null && activeOverlayTilemap.HasTile(pos))
+            {
+                activeOverlayTilemap.SetTransformMatrix(pos, IdentityMatrix);
+            }
         }
 
         private void RegisterMoldIdleTileFromRender(BoardTile tile, Vector3Int pos)
@@ -466,7 +507,7 @@ namespace FungusToast.Unity.Grid
                 Vector3Int pos = GetPositionForTileId(tileId);
                 if (activeMoldTilemap.HasTile(pos))
                 {
-                    activeMoldTilemap.SetTransformMatrix(pos, GetMoldIdleStepMatrix(tileId, 0, activeMoldTilemap.cellSize));
+                    ApplyMoldIdleTransform(tileId, pos, GetMoldIdleStepMatrix(tileId, 0, activeMoldTilemap.cellSize), activeMoldTilemap);
                     moldIdleAnimatedTileIds.Add(tileId);
                 }
 
@@ -499,7 +540,7 @@ namespace FungusToast.Unity.Grid
                     Vector3Int tilePos = GetPositionForTileId(tileId);
                     if (activeMoldTilemap.HasTile(tilePos))
                     {
-                        activeMoldTilemap.SetTransformMatrix(tilePos, GetMoldIdleStepMatrix(tileId, 0, activeMoldTilemap.cellSize));
+                        ApplyMoldIdleTransform(tileId, tilePos, GetMoldIdleStepMatrix(tileId, 0, activeMoldTilemap.cellSize), activeMoldTilemap);
                         moldIdleAnimatedTileIds.Add(tileId);
                     }
 
@@ -522,10 +563,7 @@ namespace FungusToast.Unity.Grid
             moldIdleUpdateSteps.Remove(tileId);
 
             Vector3Int pos = GetPositionForTileId(tileId);
-            if (activeMoldTilemap.HasTile(pos))
-            {
-                activeMoldTilemap.SetTransformMatrix(pos, IdentityMatrix);
-            }
+            ResetMoldIdleTransform(pos, activeMoldTilemap);
         }
 
         private int GetMoldIdleCohortIndex(int tileId)
@@ -633,12 +671,7 @@ namespace FungusToast.Unity.Grid
             for (int i = 0; i < tileIds.Count; i++)
             {
                 Vector3Int pos = GetPositionForTileId(tileIds[i]);
-                if (!activeMoldTilemap.HasTile(pos))
-                {
-                    continue;
-                }
-
-                activeMoldTilemap.SetTransformMatrix(pos, IdentityMatrix);
+                ResetMoldIdleTransform(pos, activeMoldTilemap);
             }
         }
 
