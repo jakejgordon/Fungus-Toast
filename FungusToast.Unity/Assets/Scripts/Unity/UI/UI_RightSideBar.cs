@@ -6,6 +6,7 @@ using FungusToast.Core.Players;
 using FungusToast.Core.Board;
 using FungusToast.Unity.Grid; // Needed for GridVisualizer
 using FungusToast.Core.Config;
+using FungusToast.Core.Mutations;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders; // ensure provider namespace is imported
 using UnityEngine.UI;
@@ -611,8 +612,20 @@ namespace FungusToast.Unity.UI
         {
             if (randomDecayChanceText == null) return; // optional safety
             float baseChance = GameBalance.BaseRandomDecayChance;
-            float additional = GameBalance.GetAdditionalRandomDecayChance(currentRound);
-            randomDecayChanceText.text = $"<b>Random Decay Chance:</b> {(baseChance * 100f):0.0}% (+{(additional * 100f):0.0}%)";
+            float roundModifier = GameBalance.GetAdditionalRandomDecayChance(currentRound);
+            float mycelialBloomModifier = 0f;
+
+            if (board != null && perspectivePlayerId.HasValue)
+            {
+                Player perspectivePlayer = board.Players.FirstOrDefault(player => player.PlayerId == perspectivePlayerId.Value);
+                if (perspectivePlayer != null)
+                {
+                    mycelialBloomModifier = perspectivePlayer.GetMutationLevel(MutationIds.MycelialBloom) * GameBalance.MycelialBloomRandomDecayPenaltyPerLevel;
+                }
+            }
+
+            float displayedModifier = roundModifier + mycelialBloomModifier;
+            randomDecayChanceText.text = $"<b>Random Decay Chance:</b> {(baseChance * 100f):0.0}% (+{(displayedModifier * 100f):0.0}%)";
         }
 
         public void InitializeRandomDecayChanceTooltip(GameBoard board, Player perspectivePlayer)

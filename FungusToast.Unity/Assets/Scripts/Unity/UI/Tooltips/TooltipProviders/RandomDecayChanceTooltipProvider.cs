@@ -10,7 +10,7 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
 {
     /// <summary>
     /// Dynamic tooltip provider for the Random Decay Chance label.
-    /// Displays scaling, Homeostatic Harmony mitigation, and effective chance.
+    /// Displays scaling, Mycelial Bloom pressure, Homeostatic Harmony mitigation, and effective chance.
     /// </summary>
     public class RandomDecayChanceTooltipProvider : MonoBehaviour, ITooltipContentProvider
     {
@@ -32,14 +32,15 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             int scalingStart = GameBalance.RandomDecayScalingStartRound;
             float perRound = GameBalance.RandomDecayAdditionalChancePerRound; // fraction per round after start
 
-            float roundModifier = 0f;
-            if (currentRound >= scalingStart)
-                roundModifier = (currentRound - scalingStart + 1) * perRound;
+            float roundModifier = GameBalance.GetAdditionalRandomDecayChance(currentRound);
+
+            int bloomLevel = player != null ? player.GetMutationLevel(MutationIds.MycelialBloom) : 0;
+            float mycelialBloomModifier = bloomLevel * GameBalance.MycelialBloomRandomDecayPenaltyPerLevel;
 
             int harmonyLevel = player != null ? player.GetMutationLevel(MutationIds.HomeostaticHarmony) : 0;
             float harmonyReduction = harmonyLevel * GameBalance.HomeostaticHarmonyEffectPerLevel;
 
-            float effective = baseChance + roundModifier - harmonyReduction;
+            float effective = baseChance + roundModifier + mycelialBloomModifier - harmonyReduction;
             if (effective < 0f) effective = 0f;
 
             var sb = new StringBuilder();
@@ -58,13 +59,14 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
                 sb.AppendLine($"Since round <b>{scalingStart}</b>, this chance increases by <b>{perRound * 100f:0.###}%</b> each round.");
             }
 
-            sb.AppendLine("Mitigated by the <b>Homeostatic Harmony</b> mutation.");
+            sb.AppendLine("Increased by <b>Mycelial Bloom</b> and mitigated by <b>Homeostatic Harmony</b>.");
             sb.AppendLine();
 
             sb.AppendLine("<b>Current Values</b>:");
             sb.AppendLine($"Base Chance: <b>{baseChance * 100f:0.###}%</b>");
-            sb.AppendLine($"Round Modifier: <b>{roundModifier * 100f:0.###}%</b>");
-            sb.AppendLine($"Homeostatic Harmony Reduction: <b>{harmonyReduction * 100f:0.###}%</b> (Level {harmonyLevel})");
+            sb.AppendLine($"Round Modifier: <b>+{roundModifier * 100f:0.###}%</b>");
+            sb.AppendLine($"Mycelial Bloom Modifier: <b>+{mycelialBloomModifier * 100f:0.###}%</b> (Level {bloomLevel})");
+            sb.AppendLine($"Homeostatic Harmony Reduction: <b>-{harmonyReduction * 100f:0.###}%</b> (Level {harmonyLevel})");
             sb.AppendLine($"Effective Chance: <b>{effective * 100f:0.###}%</b>");
             return sb.ToString();
         }
