@@ -1362,6 +1362,19 @@ namespace FungusToast.Unity.Grid.Helpers
 			_toxinDropCoroutines[tileId] = _startCoroutine(ToxinDropAnimation(tileId));
 		}
 
+		public void RenderImmediateResolvedTile(int tileId)
+		{
+			StopTrackedAnimation(_deathAnimationCoroutines, tileId);
+			StopTrackedAnimation(_transitionCoroutines, tileId);
+			StopTrackedAnimation(_fadeInCoroutines, tileId);
+			_dyingTileIds.Remove(tileId);
+			_pendingTileTransitions.Remove(tileId);
+			_newlyGrownTileIds.Remove(tileId);
+			_newlyGrownAnimationPlayedTileIds.Remove(tileId);
+			_revealPreAnimationPreviewTile?.Invoke(tileId);
+			_renderTileFromBoard?.Invoke(tileId);
+		}
+
 		public void CompleteGrowthAnimation(int tileId)
 		{
 			_newlyGrownTileIds.Remove(tileId);

@@ -82,7 +82,11 @@ public class StartingAdaptationTests
             AdaptationIds.ApicalYield, AdaptationIds.CrustalCallus,
             AdaptationIds.DistalSpore, AdaptationIds.AscusPrimacy,
             AdaptationIds.SporeSalvo, AdaptationIds.VesicleBurst,
-            AdaptationIds.HyphalBridge,
+            AdaptationIds.HyphalBridge, AdaptationIds.ObliqueFilament,
+            AdaptationIds.ThanatrophicRebound, AdaptationIds.ToxinPrimacy,
+            AdaptationIds.CentripetalGermination, AdaptationIds.SignalEconomy,
+            AdaptationIds.LiminalSporemeal, AdaptationIds.PutrefactiveResilience,
+            AdaptationIds.CompoundReserve,
         };
 
         foreach (var id in knownIds)

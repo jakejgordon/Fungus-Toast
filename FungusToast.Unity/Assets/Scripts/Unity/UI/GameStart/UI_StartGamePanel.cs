@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Tilemaps;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Unity;
+using FungusToast.Unity.UI;
 using FungusToast.Unity.UI.Testing;
+using FungusToast.Unity.UI.Tooltips;
+using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using System; // added for strict validation exceptions
 
 namespace FungusToast.Unity.UI.GameStart
@@ -78,6 +82,11 @@ namespace FungusToast.Unity.UI.GameStart
         private readonly List<Button> moldSelectionButtons = new();
         private readonly List<Image> moldSelectionHighlights = new();
         private readonly List<Image> moldSelectionIcons = new();
+        private readonly List<RectTransform> moldSelectionIconRects = new();
+        private readonly List<Vector2> moldSelectionIconBasePositions = new();
+        private readonly List<Vector2> moldSelectionIconCurrentOffsets = new();
+        private readonly List<Vector2> moldSelectionIconTargetOffsets = new();
+        private readonly List<float> moldSelectionIconNextMoveTimes = new();
         private readonly List<TextMeshProUGUI> moldSelectionLabels = new();
         private readonly List<int?> selectedHumanMoldIndices = new();
         private Button advancedSettingsToggleButton;
@@ -127,6 +136,12 @@ namespace FungusToast.Unity.UI.GameStart
         private void OnDisable()
         {
             SavePersistedMenuState();
+            ResetMoldSelectionIconIdleAnimation();
+        }
+
+        private void Update()
+        {
+            UpdateMoldSelectionIconIdleAnimation();
         }
 
         private void OnRectTransformDimensionsChange()
@@ -1709,7 +1724,7 @@ namespace FungusToast.Unity.UI.GameStart
                 && currentHumanMoldSelectionIndex < selectedHumanMoldIndices.Count
                 && selectedHumanMoldIndices[currentHumanMoldSelectionIndex].HasValue)
             {
-                currentChoice = $"Mold {selectedHumanMoldIndices[currentHumanMoldSelectionIndex].Value + 1}";
+                currentChoice = GetMoldDisplayName(selectedHumanMoldIndices[currentHumanMoldSelectionIndex].Value);
             }
 
             return $"Human {humanNumber} of {selectedHumanPlayerCount} is choosing. Current selection: {currentChoice}.";
@@ -1742,6 +1757,15 @@ namespace FungusToast.Unity.UI.GameStart
                     moldSelectionIcons[moldIndex].enabled = tile != null && tile.sprite != null;
                 }
 
+                if (moldIndex < moldSelectionIconRects.Count)
+                {
+                    var iconRect = moldSelectionIconRects[moldIndex];
+                    if (iconRect != null)
+                    {
+                        iconRect.gameObject.SetActive(tile != null && tile.sprite != null);
+                    }
+                }
+
                 bool isSelected = currentHumanMoldSelectionIndex >= 0
                     && currentHumanMoldSelectionIndex < selectedHumanMoldIndices.Count
                     && selectedHumanMoldIndices[currentHumanMoldSelectionIndex] == moldIndex;
@@ -1757,10 +1781,28 @@ namespace FungusToast.Unity.UI.GameStart
 
                 if (moldIndex < moldSelectionLabels.Count)
                 {
-                    moldSelectionLabels[moldIndex].text = isTakenByOtherHuman && !isSelected ? "Taken" : $"Mold {moldIndex + 1}";
+                    moldSelectionLabels[moldIndex].text = isTakenByOtherHuman && !isSelected ? "Taken" : GetMoldDisplayName(moldIndex);
                     moldSelectionLabels[moldIndex].color = button.interactable ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled;
                 }
             }
+        }
+
+        private static string GetMoldDisplayName(int moldIndex)
+        {
+            return MoldCatalog.GetDisplayName(moldIndex);
+        }
+
+        private string BuildMoldTooltipText(int moldIndex)
+        {
+            string moldName = MoldCatalog.GetDisplayName(moldIndex);
+            string adaptationId = MoldCatalog.GetStartingAdaptationId(moldIndex);
+            if (!AdaptationRepository.TryGetById(adaptationId, out var adaptation))
+            {
+                return $"<b>{moldName}</b>";
+            }
+
+            string description = AdaptationRepository.GetTooltipDescription(adaptation, selectedBoardSize);
+            return $"<b>{moldName}</b>\n\n<b>Starting Adaptation: {adaptation.Name}</b>\n{description}";
         }
 
         private void EnsureMoldSelectionButtonCount(int requiredCount)
@@ -1830,18 +1872,117 @@ namespace FungusToast.Unity.UI.GameStart
             labelRect.anchorMin = new Vector2(0.5f, 0f);
             labelRect.anchorMax = new Vector2(0.5f, 0f);
             labelRect.pivot = new Vector2(0.5f, 0f);
-            labelRect.sizeDelta = new Vector2(96f, 24f);
-            labelRect.anchoredPosition = new Vector2(0f, 10f);
+            labelRect.sizeDelta = new Vector2(102f, 34f);
+            labelRect.anchoredPosition = new Vector2(0f, 6f);
             var label = labelObject.GetComponent<TextMeshProUGUI>();
-            label.fontSize = 16f;
+            label.fontSize = 14f;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 10f;
+            label.fontSizeMax = 14f;
             label.alignment = TextAlignmentOptions.Center;
+            label.overflowMode = TextOverflowModes.Ellipsis;
             label.color = UIStyleTokens.Button.TextDefault;
             label.raycastTarget = false;
 
             moldSelectionButtons.Add(button);
             moldSelectionHighlights.Add(highlightImage);
             moldSelectionIcons.Add(iconImage);
+            moldSelectionIconRects.Add(iconRect);
+            moldSelectionIconBasePositions.Add(iconRect.anchoredPosition);
+            moldSelectionIconCurrentOffsets.Add(Vector2.zero);
+            moldSelectionIconTargetOffsets.Add(GetStartMenuMoldIconIdleOffset(moldIndex, 0));
+            moldSelectionIconNextMoveTimes.Add(Time.unscaledTime + GetStartMenuMoldIconIdleMoveInterval(moldIndex, 0));
             moldSelectionLabels.Add(label);
+
+            var tooltipProvider = buttonObject.AddComponent<MoldButtonTooltipProvider>();
+            tooltipProvider.Initialize(() => BuildMoldTooltipText(moldIndex));
+            buttonObject.AddComponent<TooltipTrigger>();
+        }
+
+        private void UpdateMoldSelectionIconIdleAnimation()
+        {
+            if (moldSelectionSectionRoot == null || !moldSelectionSectionRoot.gameObject.activeInHierarchy)
+            {
+                ResetMoldSelectionIconIdleAnimation();
+                return;
+            }
+
+            if (currentStep != SetupStep.MoldSelection)
+            {
+                ResetMoldSelectionIconIdleAnimation();
+                return;
+            }
+
+            float now = Time.unscaledTime;
+            float lerpFactor = 1f - Mathf.Exp(-UIEffectConstants.StartMenuMoldIconIdleLerpSpeed * Time.unscaledDeltaTime);
+            for (int i = 0; i < moldSelectionIconRects.Count; i++)
+            {
+                var iconRect = moldSelectionIconRects[i];
+                if (iconRect == null || !iconRect.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                if (i >= moldSelectionIcons.Count || !moldSelectionIcons[i].enabled)
+                {
+                    iconRect.anchoredPosition = moldSelectionIconBasePositions[i];
+                    moldSelectionIconCurrentOffsets[i] = Vector2.zero;
+                    continue;
+                }
+
+                if (now >= moldSelectionIconNextMoveTimes[i])
+                {
+                    int step = Mathf.Max(1, Mathf.FloorToInt(now / Mathf.Max(0.01f, UIEffectConstants.StartMenuMoldIconIdleMoveMinSeconds)));
+                    moldSelectionIconTargetOffsets[i] = GetStartMenuMoldIconIdleOffset(i, step);
+                    moldSelectionIconNextMoveTimes[i] = now + GetStartMenuMoldIconIdleMoveInterval(i, step);
+                }
+
+                Vector2 currentOffset = Vector2.Lerp(moldSelectionIconCurrentOffsets[i], moldSelectionIconTargetOffsets[i], lerpFactor);
+                moldSelectionIconCurrentOffsets[i] = currentOffset;
+                iconRect.anchoredPosition = moldSelectionIconBasePositions[i] + currentOffset;
+            }
+        }
+
+        private void ResetMoldSelectionIconIdleAnimation()
+        {
+            for (int i = 0; i < moldSelectionIconRects.Count; i++)
+            {
+                var iconRect = moldSelectionIconRects[i];
+                if (iconRect == null)
+                {
+                    continue;
+                }
+
+                iconRect.anchoredPosition = moldSelectionIconBasePositions[i];
+                moldSelectionIconCurrentOffsets[i] = Vector2.zero;
+            }
+        }
+
+        private static Vector2 GetStartMenuMoldIconIdleOffset(int moldIndex, int step)
+        {
+            float shift = UIEffectConstants.StartMenuMoldIconIdleShiftPixels;
+            float offsetX = Mathf.Lerp(-shift, shift, GetStartMenuMoldIconNoise01(moldIndex, step, 17u));
+            float offsetY = Mathf.Lerp(-shift, shift, GetStartMenuMoldIconNoise01(moldIndex, step, 43u));
+            return new Vector2(offsetX, offsetY);
+        }
+
+        private static float GetStartMenuMoldIconIdleMoveInterval(int moldIndex, int step)
+        {
+            float minSeconds = Mathf.Max(0.05f, UIEffectConstants.StartMenuMoldIconIdleMoveMinSeconds);
+            float maxSeconds = Mathf.Max(minSeconds, UIEffectConstants.StartMenuMoldIconIdleMoveMaxSeconds);
+            return Mathf.Lerp(minSeconds, maxSeconds, GetStartMenuMoldIconNoise01(moldIndex, step, 71u));
+        }
+
+        private static float GetStartMenuMoldIconNoise01(int moldIndex, int step, uint salt)
+        {
+            unchecked
+            {
+                uint hash = 2166136261u;
+                hash = (hash ^ (uint)moldIndex) * 16777619u;
+                hash = (hash ^ (uint)step) * 16777619u;
+                hash = (hash ^ salt) * 16777619u;
+                return (hash & 65535u) / 65535f;
+            }
         }
 
         private void OnMoldOptionSelected(int moldIndex)

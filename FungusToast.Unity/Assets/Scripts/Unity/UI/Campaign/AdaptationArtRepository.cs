@@ -108,6 +108,30 @@ namespace FungusToast.Unity.UI.Campaign
                         case "conidia_ascent":
                             DrawConidiaAscent(texture, drawAccent, highlight);
                             break;
+                        case "oblique_filament":
+                            DrawObliqueFilament(texture, drawAccent, highlight);
+                            break;
+                        case "thanatrophic_rebound":
+                            DrawThanatrophicRebound(texture, drawAccent, highlight);
+                            break;
+                        case "toxin_primacy":
+                            DrawToxinPrimacy(texture, drawAccent, highlight);
+                            break;
+                        case "centripetal_germination":
+                            DrawCentripetalGermination(texture, drawAccent, highlight);
+                            break;
+                        case "signal_economy":
+                            DrawSignalEconomy(texture, drawAccent, highlight);
+                            break;
+                        case "liminal_sporemeal":
+                            DrawLiminalSporemeal(texture, drawAccent, highlight);
+                            break;
+                        case "putrefactive_resilience":
+                            DrawPutrefactiveResilience(texture, drawAccent, highlight);
+                            break;
+                        case "compound_reserve":
+                            DrawCompoundReserve(texture, drawAccent, highlight);
+                            break;
                         default:
                             DrawFallback(texture, drawAccent, highlight);
                             break;
@@ -138,6 +162,14 @@ namespace FungusToast.Unity.UI.Campaign
                 "mycelial_crescendo" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.Surface.PanelPrimary, 0.40f),
                 "ossified_advance" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.45f),
                 "conidia_ascent" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.35f),
+                "oblique_filament" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.Surface.PanelPrimary, 0.55f),
+                "thanatrophic_rebound" => Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.Surface.PanelPrimary, 0.5f),
+                "toxin_primacy" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Surface.PanelPrimary, 0.38f),
+                "centripetal_germination" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.4f),
+                "signal_economy" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.Surface.PanelPrimary, 0.44f),
+                "liminal_sporemeal" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Surface.PanelPrimary, 0.46f),
+                "putrefactive_resilience" => Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.Surface.PanelPrimary, 0.42f),
+                "compound_reserve" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.Surface.PanelPrimary, 0.34f),
                 _ => UIStyleTokens.Surface.PanelPrimary
             };
         }
@@ -164,6 +196,14 @@ namespace FungusToast.Unity.UI.Campaign
                 "mycelial_crescendo" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.State.Warning, 0.25f),
                 "ossified_advance" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Text.Primary, 0.18f),
                 "conidia_ascent" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.State.Info, 0.45f),
+                "oblique_filament" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.Text.Primary, 0.15f),
+                "thanatrophic_rebound" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.Accent.Putrefaction, 0.32f),
+                "toxin_primacy" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Text.Primary, 0.14f),
+                "centripetal_germination" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.State.Warning, 0.28f),
+                "signal_economy" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.State.Info, 0.22f),
+                "liminal_sporemeal" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.State.Success, 0.18f),
+                "putrefactive_resilience" => Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.State.Info, 0.24f),
+                "compound_reserve" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.State.Warning, 0.18f),
                 _ => UIStyleTokens.Text.Primary
             };
         }
@@ -403,6 +443,88 @@ namespace FungusToast.Unity.UI.Campaign
             FillCircle(texture, 35, 12, 2, highlight);
             DrawLine(texture, 20, 18, 24, 18, accent, 1);
             DrawLine(texture, 23, 15, 27, 15, highlight, 1);
+        }
+
+        private static void DrawObliqueFilament(Texture2D texture, Color accent, Color highlight)
+        {
+            DrawLine(texture, 8, 30, 30, 8, accent, 2);
+            DrawLine(texture, 10, 34, 34, 10, highlight, 1);
+            DrawLine(texture, 6, 22, 18, 10, highlight, 1);
+            DrawLine(texture, 22, 30, 34, 18, highlight, 1);
+            FillCircle(texture, 12, 26, 3, highlight);
+            FillCircle(texture, 28, 14, 3, accent);
+        }
+
+        private static void DrawThanatrophicRebound(Texture2D texture, Color accent, Color highlight)
+        {
+            FillCircle(texture, 20, 26, 6, accent);
+            DrawRing(texture, 20, 26, 8, 1, highlight);
+            DrawLine(texture, 20, 18, 28, 10, highlight, 2);
+            FillShield(texture, 29, 11, 5, 6, highlight);
+            DrawLine(texture, 14, 13, 20, 18, accent, 1);
+        }
+
+        private static void DrawToxinPrimacy(Texture2D texture, Color accent, Color highlight)
+        {
+            FillCircle(texture, 12, 12, 4, accent);
+            FillCircle(texture, 28, 12, 4, accent);
+            FillCircle(texture, 20, 28, 5, highlight);
+            DrawLine(texture, 15, 15, 20, 23, highlight, 1);
+            DrawLine(texture, 25, 15, 20, 23, highlight, 1);
+            DrawRing(texture, 20, 20, 12, 1, accent);
+        }
+
+        private static void DrawCentripetalGermination(Texture2D texture, Color accent, Color highlight)
+        {
+            FillCircle(texture, 9, 31, 4, highlight);
+            DrawLine(texture, 12, 28, 20, 20, accent, 2);
+            DrawLine(texture, 20, 20, 29, 20, highlight, 1);
+            DrawLine(texture, 20, 20, 20, 11, highlight, 1);
+            FillCircle(texture, 20, 20, 3, accent);
+            DrawRing(texture, 20, 20, 9, 1, highlight);
+        }
+
+        private static void DrawSignalEconomy(Texture2D texture, Color accent, Color highlight)
+        {
+            DrawRing(texture, 20, 20, 10, 2, accent);
+            FillCircle(texture, 20, 20, 3, highlight);
+            DrawLine(texture, 20, 10, 20, 15, highlight, 1);
+            DrawLine(texture, 30, 20, 25, 20, highlight, 1);
+            DrawLine(texture, 20, 30, 20, 25, highlight, 1);
+            DrawLine(texture, 10, 20, 15, 20, highlight, 1);
+            DrawLine(texture, 26, 30, 34, 30, accent, 2);
+        }
+
+        private static void DrawLiminalSporemeal(Texture2D texture, Color accent, Color highlight)
+        {
+            DrawLine(texture, 6, 33, 34, 33, accent, 2);
+            FillCircle(texture, 11, 27, 3, highlight);
+            FillCircle(texture, 18, 24, 4, accent);
+            FillCircle(texture, 25, 27, 3, highlight);
+            FillCircle(texture, 31, 23, 2, accent);
+            DrawLine(texture, 18, 24, 24, 17, highlight, 1);
+            FillCircle(texture, 27, 14, 3, highlight);
+        }
+
+        private static void DrawPutrefactiveResilience(Texture2D texture, Color accent, Color highlight)
+        {
+            FillShield(texture, 16, 21, 8, 10, highlight);
+            FillCircle(texture, 29, 13, 4, accent);
+            DrawLine(texture, 26, 16, 21, 19, accent, 2);
+            DrawLine(texture, 18, 16, 12, 10, highlight, 1);
+            DrawLine(texture, 18, 22, 12, 28, highlight, 1);
+        }
+
+        private static void DrawCompoundReserve(Texture2D texture, Color accent, Color highlight)
+        {
+            DrawLine(texture, 10, 28, 30, 28, accent, 2);
+            DrawLine(texture, 10, 22, 30, 22, accent, 2);
+            DrawLine(texture, 10, 16, 30, 16, accent, 2);
+            FillCircle(texture, 14, 28, 2, highlight);
+            FillCircle(texture, 26, 22, 2, highlight);
+            FillCircle(texture, 20, 10, 4, highlight);
+            DrawLine(texture, 20, 6, 20, 14, accent, 1);
+            DrawLine(texture, 16, 10, 24, 10, accent, 1);
         }
 
         private static void DrawFallback(Texture2D texture, Color accent, Color highlight)

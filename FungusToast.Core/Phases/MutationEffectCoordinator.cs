@@ -101,6 +101,9 @@ namespace FungusToast.Core.Phases
             // 3. Putrefactive Cascade (directional kill chains - should happen last to avoid affecting other mutations)
             FungicideMutationProcessor.OnCellDeath_PutrefactiveCascade(eventArgs, board, players, rng, observer);
 
+            // 4. Adaptation effects on cell death
+            AdaptationEffectProcessor.OnCellDeath(eventArgs, board, players);
+
         }
 
         /// <summary>
@@ -124,6 +127,9 @@ namespace FungusToast.Core.Phases
 
             // 3. Putrefactive Cascade (directional kill chains - should happen last to avoid affecting other mutations)
             FungicideMutationProcessor.OnCellDeath_PutrefactiveCascade(eventArgs, board, players, rng, observer);
+
+            // 4. Adaptation effects on cell death
+            AdaptationEffectProcessor.OnCellDeath(eventArgs, board, players);
 
         }
 

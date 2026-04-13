@@ -25,5 +25,15 @@ namespace FungusToast.Core.Config
         public const int ConidiaAscentSourceBlockSize = 3;
         public const int ConidiaAscentDestinationBlockSize = 2;
         public const int ConidiaAscentLaunchSubsquareOffset = 1;
+
+        // Starting adaptation constants
+        public const float ObliqueFilamentOrthogonalPenalty = 0.002f;
+        public const float ObliqueFilamentDiagonalBonus = 0.0025f;
+        public const int ToxinPrimacyStartingLevel = 3;
+        public const float CentripetalGerminationShiftFactor = 0.05f;
+        public const int LiminalSporemealPatchSize = 4;
+        public const float PutrefactiveResilienceKillChanceReduction = 0.03f;
+        public const int CompoundReserveBankingThreshold = 5;
+        public const int CompoundReserveBonusPoints = 1;
     }
 }

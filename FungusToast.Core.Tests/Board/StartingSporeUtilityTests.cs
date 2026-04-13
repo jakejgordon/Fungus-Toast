@@ -93,4 +93,15 @@ public class StartingSporeUtilityTests
             Assert.InRange(entry.FavorRank, 1, 5);
         });
     }
+
+    [Theory]
+    [InlineData(0, 0, 10, 10, 1, 1)]
+    [InlineData(0, 0, 160, 160, 8, 8)]
+    [InlineData(4, 4, 10, 10, 5, 5)]
+    public void ShiftTowardCenter_uses_board_size_scaled_distance(int startX, int startY, int boardWidth, int boardHeight, int expectedX, int expectedY)
+    {
+        var shifted = StartingSporeUtility.ShiftTowardCenter(startX, startY, boardWidth, boardHeight);
+
+        Assert.Equal((expectedX, expectedY), shifted);
+    }
 }

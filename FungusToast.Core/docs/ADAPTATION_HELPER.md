@@ -55,3 +55,46 @@ Adaptations commonly do one of two things:
 - Keep Adaptation logic deterministic and Unity-free in Core.
 - Treat campaign state as the ownership source of truth for which Adaptations a run has earned.
 - Reuse Mycovariant patterns where helpful, but do not assume Adaptations are drafted or persisted the same way as Mycovariants.
+
+## Starting Adaptations
+
+Starting Adaptations are a special subset of Adaptations that are granted automatically when a player starts a new campaign run based on the mold they choose. They are **not** offered in the campaign reward draft.
+
+### Key facts
+
+- `AdaptationDefinition.IsStartingAdaptation == true` marks these adaptations. They are excluded from `GetAdaptationDraftChoices` via `.Where(x => !x.IsStartingAdaptation ...)`.
+- **Only the human player** receives a starting adaptation. AI players do not get mold-specific starting bonuses.
+- IDs `adaptation_20` through `adaptation_27` are reserved for the eight starting adaptations (one per mold, index 0–7).
+
+### Single source of truth: `MoldCatalog`
+
+`FungusToast.Core.Campaign.MoldCatalog` is the authoritative mapping from mold index to display name and starting adaptation ID:
+
+```csharp
+MoldCatalog.GetDisplayName(moldIndex)         // e.g. "Mycelavis"
+MoldCatalog.GetStartingAdaptationId(moldIndex) // e.g. "adaptation_20"
+```
+
+Use `MoldCatalog` wherever you need mold names or starting adaptation lookups — including Unity UI. Do **not** maintain a parallel `string[]` array of mold names in non-Core code.
+
+### Mold ↔ Adaptation roster
+
+| Index | Mold name     | Starting Adaptation         |
+|-------|---------------|-----------------------------|
+| 0     | Mycelavis     | Oblique Filament            |
+| 1     | Sporalunea    | Thanatrophic Rebound        |
+| 2     | Cineramyxa    | Toxin Primacy               |
+| 3     | Velutora      | Centripetal Germination     |
+| 4     | Glaucoryza    | Signal Economy              |
+| 5     | Viridomyxa    | Liminal Sporemeal           |
+| 6     | Noctephyra    | Putrefactive Resilience     |
+| 7     | Aureomycella  | Compound Reserve            |
+
+### Wiring checklist when adding a new starting adaptation
+
+1. Add the `AdaptationDefinition` to `AdaptationRepository` with `isStartingAdaptation: true`.
+2. Register it in `MoldCatalog` at the appropriate mold index.
+3. Add a new constant in `AdaptationIds`.
+4. Add any tunable balance constants in `AdaptationGameBalance`.
+5. Implement gameplay effects through `AdaptationEffectProcessor` (or the appropriate passive site in `Player.cs` / `FungicideMutationProcessor.cs`).
+6. The `CampaignController.StartNew` call automatically assigns the starting adaptation via `MoldCatalog`; no additional wiring is needed there.

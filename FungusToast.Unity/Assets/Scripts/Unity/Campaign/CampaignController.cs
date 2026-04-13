@@ -60,6 +60,12 @@ namespace FungusToast.Unity.Campaign
                 pendingVictorySnapshot = null,
                 resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, 0)
             };
+            var startingAdaptId = MoldCatalog.GetStartingAdaptationId(humanMoldIndex);
+            if (!string.IsNullOrEmpty(startingAdaptId))
+            {
+                State.selectedAdaptationIds ??= new List<string>();
+                State.selectedAdaptationIds.Add(startingAdaptId);
+            }
             CampaignSaveService.Save(State);
             Debug.Log($"[CampaignController] New campaign started. RunId={State.runId} Preset={preset.presetId}");
         }
@@ -156,7 +162,7 @@ namespace FungusToast.Unity.Campaign
 
             var selected = new HashSet<string>(State.selectedAdaptationIds ?? new List<string>(), StringComparer.Ordinal);
             var remaining = AdaptationRepository.All
-                .Where(x => !selected.Contains(x.Id))
+                .Where(x => !x.IsStartingAdaptation && !selected.Contains(x.Id))
                 .ToList();
 
             if (remaining.Count == 0)

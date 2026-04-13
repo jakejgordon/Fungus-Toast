@@ -27,13 +27,13 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image centerPlayerIcon;
         [SerializeField] private TextMeshProUGUI growthPreviewHeaderText;
 
-        [Header("Campaign Adaptations")]
+        [Header("Adaptations")]
         [SerializeField] private RectTransform adaptationSectionRoot;
         [SerializeField] private TextMeshProUGUI adaptationHeaderText;
         [SerializeField] private RectTransform adaptationIconGridRoot;
         [SerializeField] private RectTransform adaptationSectionHostRoot;
         [SerializeField] private string adaptationHeaderLabel = "Adaptations";
-        [SerializeField, TextArea] private string adaptationHeaderTooltip = "Adaptations are permanent campaign traits your mold develops by winning campaign levels.";
+        [SerializeField, TextArea] private string adaptationHeaderTooltip = "Adaptations are traits active for this match. In campaign, earned adaptations persist for the run; in solo and hotseat, your selected mold grants a starting adaptation.";
 
         [Header("Campaign Mycovariants")]
         [SerializeField] private RectTransform mycovariantSectionRoot;

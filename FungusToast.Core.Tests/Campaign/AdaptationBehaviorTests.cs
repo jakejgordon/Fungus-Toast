@@ -1,6 +1,8 @@
 using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
+using FungusToast.Core.Death;
+using FungusToast.Core.Events;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
@@ -76,6 +78,49 @@ public class AdaptationBehaviorTests
         Assert.False(board.GetCell(12)!.IsResistant);
     }
 
+    [Fact]
+    public void CompoundReserve_awards_bonus_point_when_banking_threshold_is_met()
+    {
+        var player = CreatePlayer(mutationPoints: AdaptationGameBalance.CompoundReserveBankingThreshold);
+        player.TryAddAdaptation(RequireAdaptation(AdaptationIds.CompoundReserve));
+
+        AdaptationEffectProcessor.OnMutationPointsBanked(player, player.MutationPoints);
+
+        Assert.Equal(
+            AdaptationGameBalance.CompoundReserveBankingThreshold + AdaptationGameBalance.CompoundReserveBonusPoints,
+            player.MutationPoints);
+    }
+
+    [Fact]
+    public void CompoundReserve_does_not_award_bonus_below_threshold()
+    {
+        var player = CreatePlayer(mutationPoints: AdaptationGameBalance.CompoundReserveBankingThreshold - 1);
+        player.TryAddAdaptation(RequireAdaptation(AdaptationIds.CompoundReserve));
+
+        AdaptationEffectProcessor.OnMutationPointsBanked(player, player.MutationPoints);
+
+        Assert.Equal(AdaptationGameBalance.CompoundReserveBankingThreshold - 1, player.MutationPoints);
+    }
+
+    [Fact]
+    public void ThanatrophicRebound_reclaims_first_dead_cell_as_resistant()
+    {
+        var board = CreateBoardWithPlayer(out var player);
+        player.TryAddAdaptation(RequireAdaptation(AdaptationIds.ThanatrophicRebound));
+        var cell = PlaceOwnedCell(board, player, tileId: 12);
+
+        board.KillFungalCell(cell, DeathReason.Age);
+        AdaptationEffectProcessor.OnCellDeath(
+            new FungalCellDiedEventArgs(cell.TileId, player.PlayerId, DeathReason.Age, null, cell),
+            board,
+            board.Players);
+
+        var reclaimedCell = Assert.IsType<FungalCell>(board.GetCell(12));
+        Assert.True(reclaimedCell.IsAlive);
+        Assert.True(reclaimedCell.IsResistant);
+        Assert.True(player.GetAdaptation(AdaptationIds.ThanatrophicRebound)!.HasTriggered);
+    }
+
     private static Player CreatePlayer(int mutationPoints = 0)
     {
         return new Player(playerId: 0, playerName: "Test Player", playerType: PlayerTypeEnum.AI)
@@ -90,6 +135,14 @@ public class AdaptationBehaviorTests
         player = CreatePlayer();
         board.Players.Add(player);
         return board;
+    }
+
+    private static FungalCell PlaceOwnedCell(GameBoard board, Player owner, int tileId)
+    {
+        var cell = new FungalCell(owner.PlayerId, tileId, GrowthSource.InitialSpore, null);
+        board.PlaceFungalCell(cell);
+        owner.AddControlledTile(tileId);
+        return cell;
     }
 
     private static Mutation RequireMutation(int mutationId)

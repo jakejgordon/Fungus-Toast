@@ -137,6 +137,12 @@ namespace FungusToast.Unity.UI.GameLog
             playerActivityLogManager?.RecordToxinCatabolism(playerId, toxinsCatabolized, catabolizedMutationPoints);
         }
 
+        public void RecordCompoundReserveBonus(int playerId, int bonusPoints)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordCompoundReserveBonus(playerId, bonusPoints);
+        }
+
         public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
         {
             if (IsSilentMode) return;

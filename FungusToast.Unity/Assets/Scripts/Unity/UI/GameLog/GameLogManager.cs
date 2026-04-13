@@ -845,6 +845,20 @@ namespace FungusToast.Unity.UI.GameLog
         }
         public void RecordAttributedKill(int playerId, DeathReason reason, int killCount = 1) { }
         public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints) { if (catabolizedMutationPoints > 0 && IsHuman(playerId)) AddPlayerEvent(playerId, catabolizedMutationPoints == 1 ? "Earned 1 mutation point from Mycotoxin Catabolism" : $"Earned {catabolizedMutationPoints} mutation points from Mycotoxin Catabolism", GameLogCategory.Lucky); }
+        public void RecordCompoundReserveBonus(int playerId, int bonusPoints)
+        {
+            if (!IsHuman(playerId) || bonusPoints <= 0)
+            {
+                return;
+            }
+
+            AddPlayerEvent(
+                playerId,
+                bonusPoints == 1
+                    ? "Compound Reserve awarded 1 bonus mutation point"
+                    : $"Compound Reserve awarded {bonusPoints} bonus mutation points",
+                GameLogCategory.Lucky);
+        }
         public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName) { if (IsHuman(playerId) && !string.IsNullOrEmpty(mutationName)) AddFreeUpgrade(playerId, "Mutator Phenotype", mutationName, 1); }
         public void RecordSpecificMutationUpgrade(int playerId, string mutationName) { if (IsHuman(playerId) && !string.IsNullOrEmpty(mutationName)) AddFreeUpgrade(playerId, "Mutator Phenotype", mutationName, 1); }
         public void RecordRetrogradeBloomUpgrade(int playerId, string evolvedMutationName, string devolvedMutationSummary, int devolvedPoints)

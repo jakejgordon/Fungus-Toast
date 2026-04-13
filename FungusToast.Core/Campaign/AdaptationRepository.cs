@@ -23,6 +23,16 @@ namespace FungusToast.Core.Campaign
         private static readonly string retrogradeBloomGainedLevels =
             AdaptationGameBalance.RetrogradeBloomTier5LevelsGained.ToString(CultureInfo.InvariantCulture);
 
+        // Starting adaptation computed description strings
+        private static readonly string obliqueFilamentOrthogonalPercent =
+            (AdaptationGameBalance.ObliqueFilamentOrthogonalPenalty * 100f).ToString("0.0", CultureInfo.InvariantCulture);
+        private static readonly string obliqueFilamentDiagonalPercent =
+            (AdaptationGameBalance.ObliqueFilamentDiagonalBonus * 100f).ToString("0.00", CultureInfo.InvariantCulture);
+        private static readonly int centripetalShiftTiles =
+            (int)Math.Ceiling(GameBalance.BoardWidth * AdaptationGameBalance.CentripetalGerminationShiftFactor);
+        private static readonly string putrefactiveResiliencePercent =
+            (AdaptationGameBalance.PutrefactiveResilienceKillChanceReduction * 100f).ToString("0", CultureInfo.InvariantCulture);
+
         private static readonly ReadOnlyCollection<AdaptationDefinition> all =
             new ReadOnlyCollection<AdaptationDefinition>(
                 new List<AdaptationDefinition>
@@ -121,10 +131,82 @@ namespace FungusToast.Core.Campaign
                         AdaptationIds.ConidiaAscent,
                         "Conidia Ascent",
                         $"At the start of round {AdaptationGameBalance.ConidiaAscentTriggerRound}, if you have a full 3x3 block of killable living cells and any completely empty 2x2 opening, that colony fragment blasts away. The 3x3 source block dies and a new 2x2 colony roots in a random open patch.",
-                        "conidia_ascent")
+                        "conidia_ascent"),
+                    // Starting adaptations — assigned by mold selection, never offered in mid-run drafts
+                    new AdaptationDefinition(
+                        AdaptationIds.ObliqueFilament,
+                        "Oblique Filament",
+                        $"Your hyphae trade -{obliqueFilamentOrthogonalPercent}% orthogonal growth chance for +{obliqueFilamentDiagonalPercent}% diagonal growth chance in each direction.",
+                        "oblique_filament",
+                        isStartingAdaptation: true),
+                    new AdaptationDefinition(
+                        AdaptationIds.ThanatrophicRebound,
+                        "Thanatrophic Rebound",
+                        "The first time one of your living cells dies, it immediately reclaims itself as a resistant cell.",
+                        "thanatrophic_rebound",
+                        isStartingAdaptation: true),
+                    new AdaptationDefinition(
+                        AdaptationIds.ToxinPrimacy,
+                        "Toxin Primacy",
+                        $"Your colony starts the game with Mycotoxin Tracer already at level {AdaptationGameBalance.ToxinPrimacyStartingLevel}.",
+                        "toxin_primacy",
+                        isStartingAdaptation: true),
+                    new AdaptationDefinition(
+                        AdaptationIds.CentripetalGermination,
+                        "Centripetal Germination",
+                        $"Your starting spore is placed {centripetalShiftTiles} tiles closer to the center of the board.",
+                        "centripetal_germination",
+                        isStartingAdaptation: true),
+                    new AdaptationDefinition(
+                        AdaptationIds.SignalEconomy,
+                        "Signal Economy",
+                        "Your Chemotactic Beacon surge costs 1 fewer mutation point to activate.",
+                        "signal_economy",
+                        isStartingAdaptation: true),
+                    new AdaptationDefinition(
+                        AdaptationIds.LiminalSporemeal,
+                        $"Liminal Sporemeal",
+                        $"At the start of the game, a {AdaptationGameBalance.LiminalSporemealPatchSize}-tile Sporemeal nutrient patch is placed near the board edge closest to your starting spore.",
+                        "liminal_sporemeal",
+                        isStartingAdaptation: true),
+                    new AdaptationDefinition(
+                        AdaptationIds.PutrefactiveResilience,
+                        "Putrefactive Resilience",
+                        $"Your cells have -{putrefactiveResiliencePercent}% reduced chance of being killed by Putrefactive Mycotoxins and Mycotoxin Potentiation.",
+                        "putrefactive_resilience",
+                        isStartingAdaptation: true),
+                    new AdaptationDefinition(
+                        AdaptationIds.CompoundReserve,
+                        "Compound Reserve",
+                        $"When you store {AdaptationGameBalance.CompoundReserveBankingThreshold} or more mutation points in a turn, gain {AdaptationGameBalance.CompoundReserveBonusPoints} additional mutation point.",
+                        "compound_reserve",
+                        isStartingAdaptation: true),
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;
+
+        public static int GetCentripetalGerminationShiftTiles(int boardWidth)
+        {
+            int safeBoardWidth = Math.Max(1, boardWidth);
+            return (int)Math.Ceiling(safeBoardWidth * AdaptationGameBalance.CentripetalGerminationShiftFactor);
+        }
+
+        public static string GetTooltipDescription(AdaptationDefinition adaptation, int boardWidth)
+        {
+            if (adaptation == null)
+            {
+                return string.Empty;
+            }
+
+            if (string.Equals(adaptation.Id, AdaptationIds.CentripetalGermination, StringComparison.Ordinal))
+            {
+                int shiftTiles = GetCentripetalGerminationShiftTiles(boardWidth);
+                string tileLabel = shiftTiles == 1 ? "tile" : "tiles";
+                return $"Your starting spore is placed {shiftTiles} {tileLabel} closer to the center of the board.";
+            }
+
+            return adaptation.Description;
+        }
 
         public static bool TryGetById(string id, out AdaptationDefinition adaptation)
         {

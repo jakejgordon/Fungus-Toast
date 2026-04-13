@@ -408,7 +408,8 @@ namespace FungusToast.Unity
                 () => configuredHumanPlayerCount,
                 () => CurrentGameMode,
                 () => campaignController?.CurrentBoardPreset,
-                () => campaignController?.CurrentResolvedAiStrategyNames);
+                () => campaignController?.CurrentResolvedAiStrategyNames,
+                () => configuredHumanMoldIndices);
             hotseatTurnManager = new HotseatTurnManager(
                 gameUIManager,
                 hotseatTurnPrompt,

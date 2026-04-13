@@ -32,6 +32,77 @@ namespace FungusToast.Core.Phases
                 TryApplySporeSalvo(player, board, players);
                 adaptation.MarkTriggered();
             }
+
+            // Toxin Primacy: grant free MycotoxinTracer levels at game start
+            if (MutationRegistry.All.TryGetValue(MutationIds.MycotoxinTracer, out var mycotoxinTracer))
+            {
+                foreach (var player in players)
+                {
+                    if (!player.HasAdaptation(AdaptationIds.ToxinPrimacy))
+                        continue;
+                    for (int i = 0; i < AdaptationGameBalance.ToxinPrimacyStartingLevel; i++)
+                        player.TryAutoUpgrade(mycotoxinTracer, board.CurrentRound);
+                }
+            }
+
+            // Liminal Sporemeal: place Sporemeal cluster near nearest board edge
+            foreach (var player in players)
+            {
+                if (!player.HasAdaptation(AdaptationIds.LiminalSporemeal))
+                    continue;
+                TryApplyLiminalSporemeal(player, board);
+            }
+        }
+
+        public static void OnCellDeath(
+            FungalCellDiedEventArgs eventArgs,
+            GameBoard board,
+            List<Player> players)
+        {
+            // Thanatrophic Rebound: reclaim the first cell this player ever loses, making it resistant
+            var owner = players.FirstOrDefault(p => p.PlayerId == eventArgs.OwnerPlayerId);
+            if (owner == null)
+                return;
+
+            var adaptation = owner.GetAdaptation(AdaptationIds.ThanatrophicRebound);
+            if (adaptation == null || adaptation.HasTriggered)
+                return;
+
+            var deadCell = eventArgs.Cell;
+            if (deadCell == null || !deadCell.IsReclaimable)
+                return;
+
+            bool success = board.TryReclaimDeadCell(
+                owner.PlayerId,
+                eventArgs.TileId,
+                GrowthSource.ThanatrophicRebound,
+                requireSameOwner: false);
+
+            if (success)
+            {
+                adaptation.MarkTriggered();
+                var reclaimedCell = board.GetCell(eventArgs.TileId);
+                if (reclaimedCell != null
+                    && reclaimedCell.IsAlive
+                    && reclaimedCell.OwnerPlayerId == owner.PlayerId
+                    && !reclaimedCell.IsResistant)
+                {
+                    reclaimedCell.MakeResistant(GrowthSource.ThanatrophicRebound);
+                    board.OnResistanceAppliedBatch(
+                        owner.PlayerId,
+                        GrowthSource.ThanatrophicRebound,
+                        new List<int> { eventArgs.TileId });
+                }
+            }
+        }
+
+        public static void OnMutationPointsBanked(Player player, int pointsBanked)
+        {
+            if (!player.HasAdaptation(AdaptationIds.CompoundReserve))
+                return;
+            if (pointsBanked < AdaptationGameBalance.CompoundReserveBankingThreshold)
+                return;
+            player.MutationPoints += AdaptationGameBalance.CompoundReserveBonusPoints;
         }
 
         public static void OnMutationPhaseStart(
@@ -1049,6 +1120,67 @@ namespace FungusToast.Core.Phases
         private static int GetTileId(int x, int y, int boardWidth)
         {
             return (y * boardWidth) + x;
+        }
+
+        private static void TryApplyLiminalSporemeal(Player player, GameBoard board)
+        {
+            if (!player.StartingTileId.HasValue)
+                return;
+
+            var (px, py) = board.GetXYFromTileId(player.StartingTileId.Value);
+            int bw = board.Width;
+            int bh = board.Height;
+            int patchSize = AdaptationGameBalance.LiminalSporemealPatchSize;
+
+            int distTop    = py;
+            int distBottom = bh - 1 - py;
+            int distLeft   = px;
+            int distRight  = bw - 1 - px;
+            int minDist = Math.Min(Math.Min(distTop, distBottom), Math.Min(distLeft, distRight));
+
+            IEnumerable<int> candidateIds;
+            if (minDist == distTop)
+                candidateIds = GetEdgeTileIdsFromOrigin(row: 0, col: px, fixRow: true, bw: bw, bh: bh);
+            else if (minDist == distBottom)
+                candidateIds = GetEdgeTileIdsFromOrigin(row: bh - 1, col: px, fixRow: true, bw: bw, bh: bh);
+            else if (minDist == distLeft)
+                candidateIds = GetEdgeTileIdsFromOrigin(row: py, col: 0, fixRow: false, bw: bw, bh: bh);
+            else
+                candidateIds = GetEdgeTileIdsFromOrigin(row: py, col: bw - 1, fixRow: false, bw: bw, bh: bh);
+
+            var patchTileIds = candidateIds
+                .Select(tid => board.GetTileById(tid))
+                .Where(tile => tile != null && !tile.IsOccupied && !tile.HasNutrientPatch)
+                .Take(patchSize)
+                .Select(tile => tile!.TileId)
+                .ToList();
+
+            if (patchTileIds.Count == 0)
+                return;
+
+            int clusterId = 10000 + player.PlayerId;
+            var patch = NutrientPatch.CreateSporemealCluster(clusterId, patchTileIds.Count, NutrientPatchSource.StartingBoard);
+            foreach (int tileId in patchTileIds)
+                board.PlaceNutrientPatch(tileId, patch);
+        }
+
+        private static IEnumerable<int> GetEdgeTileIdsFromOrigin(
+            int row, int col, bool fixRow, int bw, int bh)
+        {
+            // Yields tile IDs along an edge row or column, walking outward from (row, col)
+            int limit = fixRow ? bw : bh;
+            int origin = fixRow ? col : row;
+
+            yield return fixRow ? row * bw + col : row * bw + col;
+            for (int offset = 1; offset < limit; offset++)
+            {
+                int pos1 = origin + offset;
+                int pos2 = origin - offset;
+                if (pos1 < limit)
+                    yield return fixRow ? row * bw + pos1 : pos1 * bw + col;
+                if (pos2 >= 0)
+                    yield return fixRow ? row * bw + pos2 : pos2 * bw + col;
+            }
         }
 
         private static List<int> GetHyphalBridgeTileIds(

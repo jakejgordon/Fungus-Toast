@@ -192,6 +192,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Colony fragment launched by the Conidia Ascent adaptation.
         /// </summary>
-        ConidiaAscent
+        ConidiaAscent,
+
+        /// <summary>
+        /// Cell reclaimed and made resistant by the Thanatrophic Rebound starting adaptation.
+        /// </summary>
+        ThanatrophicRebound
     }
 }

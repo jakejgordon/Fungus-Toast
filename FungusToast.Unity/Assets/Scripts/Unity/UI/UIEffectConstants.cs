@@ -224,6 +224,10 @@ namespace FungusToast.Unity.UI
         public const float MoldIdleAnimatedTileFraction = 0.15f;
         public const int MoldIdleMinAnimatedTileBudget = 24;
         public const int MoldIdleMaxAnimatedTileBudget = 1536;
+        public const float StartMenuMoldIconIdleShiftPixels = 2.25f;
+        public const float StartMenuMoldIconIdleMoveMinSeconds = 0.45f;
+        public const float StartMenuMoldIconIdleMoveMaxSeconds = 0.85f;
+        public const float StartMenuMoldIconIdleLerpSpeed = 8f;
 
         /// <summary>
         /// Delay (in seconds) for AI to "think" before picking a mycovariant during draft.

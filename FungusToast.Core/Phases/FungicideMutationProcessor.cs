@@ -85,6 +85,16 @@ namespace FungusToast.Core.Phases
             if (chance <= 0f)
                 return false;
 
+            // Putrefactive Resilience: reduce kill chance when target has this adaptation
+            if (target.OwnerPlayerId.HasValue)
+            {
+                var targetPlayer = players.FirstOrDefault(p => p.PlayerId == target.OwnerPlayerId.Value);
+                if (targetPlayer?.HasAdaptation(AdaptationIds.PutrefactiveResilience) == true)
+                    chance -= AdaptationGameBalance.PutrefactiveResilienceKillChanceReduction;
+            }
+            if (chance <= 0f)
+                return false;
+
             // Proportional interval assignment for fairness:
             // Each player's effect contributes to a "slice" of the total chance.
             float runningTotal = 0f;
@@ -164,7 +174,11 @@ namespace FungusToast.Core.Phases
 
                 foreach (var neighborTile in board.GetAdjacentLivingTiles(tile.TileId, excludePlayerId: owner.PlayerId))
                 {
-                    if (rng.NextDouble() < killChance)
+                    float effectiveKillChance = killChance;
+                    var neighborOwner = players.FirstOrDefault(p => p.PlayerId == neighborTile.FungalCell!.OwnerPlayerId);
+                    if (neighborOwner?.HasAdaptation(AdaptationIds.PutrefactiveResilience) == true)
+                        effectiveKillChance -= AdaptationGameBalance.PutrefactiveResilienceKillChanceReduction;
+                    if (rng.NextDouble() < effectiveKillChance)
                     {
                         board.KillFungalCell(neighborTile.FungalCell!, DeathReason.MycotoxinPotentiation, owner.PlayerId);
                         killCount++;

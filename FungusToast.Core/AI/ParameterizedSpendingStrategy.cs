@@ -3,6 +3,7 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
+using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
@@ -367,6 +368,7 @@ namespace FungusToast.Core.AI
                 {
                     // Record that we're banking points for expensive mutations
                     simulationObserver.RecordBankedPoints(player.PlayerId, player.MutationPoints);
+                    AdaptationEffectProcessor.OnMutationPointsBanked(player, player.MutationPoints);
                     return; // Bank points for next turn
                 }
 
@@ -417,6 +419,7 @@ namespace FungusToast.Core.AI
             if (ShouldBankForSurges(player, allMutations, board))
             {
                 simulationObserver.RecordBankedPoints(player.PlayerId, player.MutationPoints);
+                AdaptationEffectProcessor.OnMutationPointsBanked(player, player.MutationPoints);
                 return; // Bank points for surge activation
             }
 

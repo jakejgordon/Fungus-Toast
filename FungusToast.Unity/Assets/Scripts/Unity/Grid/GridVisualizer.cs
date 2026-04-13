@@ -294,6 +294,7 @@ namespace FungusToast.Unity.Grid
             {
                 this.board.ToxinPlaced += HandleToxinPlaced;
                 this.board.CellReclaimed += HandleCellReclaimed;
+                this.board.ResistanceAppliedBatch += HandleResistanceAppliedBatch;
                 this.board.CellInfested += HandleCellInfested;
                 this.board.CellOvergrown += HandleCellOvergrown;
                 this.board.CreepingMoldMove += HandleCreepingMoldMove;
@@ -780,6 +781,7 @@ namespace FungusToast.Unity.Grid
             {
                 board.ToxinPlaced -= HandleToxinPlaced;
                 board.CellReclaimed -= HandleCellReclaimed;
+                board.ResistanceAppliedBatch -= HandleResistanceAppliedBatch;
                 board.CellInfested -= HandleCellInfested;
                 board.CellOvergrown -= HandleCellOvergrown;
                 board.CreepingMoldMove -= HandleCreepingMoldMove;
@@ -811,6 +813,19 @@ namespace FungusToast.Unity.Grid
             }
 
             cellStateAnimationController?.QueueReclaimTransition(tileId);
+        }
+
+        private void HandleResistanceAppliedBatch(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
+        {
+            if (board == null || source != GrowthSource.ThanatrophicRebound || tileIds == null)
+            {
+                return;
+            }
+
+            foreach (int tileId in tileIds)
+            {
+                cellStateAnimationController?.RenderImmediateResolvedTile(tileId);
+            }
         }
 
         private void HandleCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource source)

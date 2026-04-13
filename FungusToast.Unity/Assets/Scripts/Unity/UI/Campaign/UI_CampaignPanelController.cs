@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using FungusToast.Core.Campaign;
 using FungusToast.Unity.Campaign;
 using FungusToast.Unity.UI.Testing;
+using FungusToast.Unity.UI.Tooltips;
+using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -16,6 +18,18 @@ namespace FungusToast.Unity.UI.Campaign
     /// </summary>
     public class UI_CampaignPanelController : MonoBehaviour
     {
+        private static readonly string[] MoldDisplayNames =
+        {
+            "Mycelavis",
+            "Sporalunea",
+            "Cineramyxa",
+            "Velutora",
+            "Glaucoryza",
+            "Viridomyxa",
+            "Noctephyra",
+            "Aureomycella"
+        };
+
         private enum CampaignPanelStep
         {
             MainActions,
@@ -541,7 +555,7 @@ namespace FungusToast.Unity.UI.Campaign
             if (moldSelectionStatusLabel != null)
             {
                 moldSelectionStatusLabel.text = selectedCampaignMoldIndex.HasValue
-                    ? $"Selected mold: Mold {selectedCampaignMoldIndex.Value + 1}. This icon will persist for the whole run."
+                    ? $"Selected mold: {GetMoldDisplayName(selectedCampaignMoldIndex.Value)}. This icon will persist for the whole run."
                     : "Select a mold icon before starting the campaign.";
             }
 
@@ -575,8 +589,13 @@ namespace FungusToast.Unity.UI.Campaign
                 bool isSelected = selectedCampaignMoldIndex == moldIndex;
                 moldSelectionHighlights[moldIndex].enabled = isSelected;
                 moldSelectionHighlights[moldIndex].gameObject.SetActive(isSelected);
-                moldSelectionLabels[moldIndex].text = $"Mold {moldIndex + 1}";
+                moldSelectionLabels[moldIndex].text = GetMoldDisplayName(moldIndex);
             }
+        }
+
+        private static string GetMoldDisplayName(int moldIndex)
+        {
+            return MoldCatalog.GetDisplayName(moldIndex);
         }
 
         private void EnsureMoldSelectionButtonCount(int requiredCount)
@@ -645,11 +664,15 @@ namespace FungusToast.Unity.UI.Campaign
             labelRect.anchorMin = new Vector2(0.5f, 0f);
             labelRect.anchorMax = new Vector2(0.5f, 0f);
             labelRect.pivot = new Vector2(0.5f, 0f);
-            labelRect.sizeDelta = new Vector2(92f, 24f);
-            labelRect.anchoredPosition = new Vector2(0f, 10f);
+            labelRect.sizeDelta = new Vector2(98f, 34f);
+            labelRect.anchoredPosition = new Vector2(0f, 6f);
             var label = labelObject.GetComponent<TextMeshProUGUI>();
-            label.fontSize = 16f;
+            label.fontSize = 14f;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 10f;
+            label.fontSizeMax = 14f;
             label.alignment = TextAlignmentOptions.Center;
+            label.overflowMode = TextOverflowModes.Ellipsis;
             label.color = UIStyleTokens.Button.TextDefault;
             label.raycastTarget = false;
 
@@ -657,6 +680,19 @@ namespace FungusToast.Unity.UI.Campaign
             moldSelectionHighlights.Add(highlightImage);
             moldSelectionIcons.Add(iconImage);
             moldSelectionLabels.Add(label);
+
+            var tooltipProvider = buttonObject.AddComponent<MoldButtonTooltipProvider>();
+            tooltipProvider.Initialize(BuildMoldTooltipText(moldIndex));
+            buttonObject.AddComponent<TooltipTrigger>();
+        }
+
+        private static string BuildMoldTooltipText(int moldIndex)
+        {
+            string moldName = MoldCatalog.GetDisplayName(moldIndex);
+            string adaptId = MoldCatalog.GetStartingAdaptationId(moldIndex);
+            if (!AdaptationRepository.TryGetById(adaptId, out var def))
+                return $"<b>{moldName}</b>";
+            return $"<b>{moldName}</b>\n\n<b>Starting Adaptation: {def.Name}</b>\n{def.Description}";
         }
 
         private void OnCampaignMoldSelected(int moldIndex)

@@ -18,10 +18,13 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
         {
             if (adaptation == null)
             {
-                return "<b>Campaign Adaptation</b>\nUnset";
+                return "<b>Adaptation</b>\nUnset";
             }
 
-            return $"<b>{adaptation.Name}</b>\n<i>Campaign Adaptation</i>\n\n{adaptation.Description}";
+            string adaptationType = adaptation.IsStartingAdaptation ? "Starting Adaptation" : "Adaptation";
+            int boardWidth = FungusToast.Unity.GameManager.Instance?.Board?.Width ?? FungusToast.Core.Config.GameBalance.BoardWidth;
+            string description = AdaptationRepository.GetTooltipDescription(adaptation, boardWidth);
+            return $"<b>{adaptation.Name}</b>\n<i>{adaptationType}</i>\n\n{description}";
         }
     }
 

@@ -12,7 +12,13 @@ namespace FungusToast.Core.Campaign
         public string Description { get; }
         public string IconId { get; }
 
-        public AdaptationDefinition(string id, string name, string description, string? iconId = null)
+        /// <summary>
+        /// When true, this adaptation is assigned automatically based on the player's mold selection
+        /// and is never offered in mid-run adaptation drafts.
+        /// </summary>
+        public bool IsStartingAdaptation { get; }
+
+        public AdaptationDefinition(string id, string name, string description, string? iconId = null, bool isStartingAdaptation = false)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Adaptation id is required.", nameof(id));
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Adaptation name is required.", nameof(name));
@@ -21,6 +27,7 @@ namespace FungusToast.Core.Campaign
             Name = name;
             Description = description ?? string.Empty;
             IconId = string.IsNullOrWhiteSpace(iconId) ? id : iconId;
+            IsStartingAdaptation = isStartingAdaptation;
         }
     }
 }

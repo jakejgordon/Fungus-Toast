@@ -1,4 +1,6 @@
 using FungusToast.Core.Board;
+using FungusToast.Core.Campaign;
+using FungusToast.Core.Config;
 using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
@@ -262,8 +264,29 @@ namespace FungusToast.Core.Board
             for (int i = 0; i < positions.Count; i++)
             {
                 var (x, y) = positions[i];
-                board.PlaceInitialSpore(playerIndices[i], x, y);
+                int pid = playerIndices[i];
+                var player = players.FirstOrDefault(p => p.PlayerId == pid);
+                if (player?.HasAdaptation(AdaptationIds.CentripetalGermination) == true)
+                    (x, y) = ShiftTowardCenter(x, y, board.Width, board.Height);
+                board.PlaceInitialSpore(pid, x, y);
             }
+        }
+
+        /// <summary>
+        /// Shifts a starting-spore position toward the center of the board by the Centripetal Germination
+        /// shift distance, clamped to board bounds.
+        /// </summary>
+        public static (int x, int y) ShiftTowardCenter(int x, int y, int boardWidth, int boardHeight)
+        {
+            int shiftAmount = (int)Math.Ceiling(boardWidth * AdaptationGameBalance.CentripetalGerminationShiftFactor);
+            int centerX = boardWidth / 2;
+            int centerY = boardHeight / 2;
+            int stepX = x == centerX ? 0 : Math.Sign(centerX - x);
+            int stepY = y == centerY ? 0 : Math.Sign(centerY - y);
+            return (
+                Math.Clamp(x + stepX * shiftAmount, 0, boardWidth - 1),
+                Math.Clamp(y + stepY * shiftAmount, 0, boardHeight - 1)
+            );
         }
 
         private static IReadOnlyList<(int x, int y)> ApplyEdgeOffsets(IReadOnlyList<(int x, int y)> positions, int boardWidth, int boardHeight, IReadOnlyList<int> edgeOffsets)

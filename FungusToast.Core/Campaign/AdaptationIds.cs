@@ -21,5 +21,15 @@ namespace FungusToast.Core.Campaign
         public const string MycelialCrescendo = "adaptation_17";
         public const string OssifiedAdvance = "adaptation_18";
         public const string ConidiaAscent = "adaptation_19";
+
+        // Starting adaptations — assigned by mold selection, never offered in drafts
+        public const string ObliqueFilament = "adaptation_20";
+        public const string ThanatrophicRebound = "adaptation_21";
+        public const string ToxinPrimacy = "adaptation_22";
+        public const string CentripetalGermination = "adaptation_23";
+        public const string SignalEconomy = "adaptation_24";
+        public const string LiminalSporemeal = "adaptation_25";
+        public const string PutrefactiveResilience = "adaptation_26";
+        public const string CompoundReserve = "adaptation_27";
     }
 }

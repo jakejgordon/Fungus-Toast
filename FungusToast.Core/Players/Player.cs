@@ -132,8 +132,13 @@ namespace FungusToast.Core.Players
 
         /* ---------------- Growth / death chance --------------- */
 
-        public float GetEffectiveGrowthChance() =>
-            GameBalance.BaseGrowthChance + GetMutationEffect(MutationType.GrowthChance) + GetMutationEffect(MutationType.HyphalSurge);
+        public float GetEffectiveGrowthChance()
+        {
+            float chance = GameBalance.BaseGrowthChance + GetMutationEffect(MutationType.GrowthChance) + GetMutationEffect(MutationType.HyphalSurge);
+            if (HasAdaptation(AdaptationIds.ObliqueFilament))
+                chance -= AdaptationGameBalance.ObliqueFilamentOrthogonalPenalty;
+            return chance;
+        }
 
         public float GetEffectiveSelfDeathChance()
         {
@@ -144,15 +149,18 @@ namespace FungusToast.Core.Players
 
         /* ---------------- Diagonal growth helpers ------------- */
 
-        public float GetDiagonalGrowthChance(DiagonalDirection dir) =>
-            dir switch
+        public float GetDiagonalGrowthChance(DiagonalDirection dir)
+        {
+            float bonus = HasAdaptation(AdaptationIds.ObliqueFilament) ? AdaptationGameBalance.ObliqueFilamentDiagonalBonus : 0f;
+            return dir switch
             {
-                DiagonalDirection.Northwest => GetMutationEffect(MutationType.GrowthDiagonal_NW),
-                DiagonalDirection.Northeast => GetMutationEffect(MutationType.GrowthDiagonal_NE),
-                DiagonalDirection.Southeast => GetMutationEffect(MutationType.GrowthDiagonal_SE),
-                DiagonalDirection.Southwest => GetMutationEffect(MutationType.GrowthDiagonal_SW),
+                DiagonalDirection.Northwest => GetMutationEffect(MutationType.GrowthDiagonal_NW) + bonus,
+                DiagonalDirection.Northeast => GetMutationEffect(MutationType.GrowthDiagonal_NE) + bonus,
+                DiagonalDirection.Southeast => GetMutationEffect(MutationType.GrowthDiagonal_SE) + bonus,
+                DiagonalDirection.Southwest => GetMutationEffect(MutationType.GrowthDiagonal_SW) + bonus,
                 _ => 0f
             };
+        }
 
         /* ---------------- Mutation level / effect ------------- */
 
@@ -193,6 +201,12 @@ namespace FungusToast.Core.Players
                 && mutation.Category == MutationCategory.MycelialSurges)
             {
                 activationCost -= AdaptationGameBalance.HyphalEconomySurgeCostReduction;
+            }
+
+            if (HasAdaptation(AdaptationIds.SignalEconomy)
+                && mutation.Id == MutationIds.ChemotacticBeacon)
+            {
+                activationCost -= 1;
             }
 
             return Math.Max(0, activationCost);

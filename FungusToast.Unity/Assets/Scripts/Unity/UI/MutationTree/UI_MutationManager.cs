@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using UnityEngine.Tilemaps;
 using FungusToast.Unity.Grid;
@@ -713,7 +714,16 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (humanPlayer != null)
             {
+                int pointsBanked = humanPlayer.MutationPoints;
                 humanPlayer.WantsToBankPointsThisTurn = true;
+                AdaptationEffectProcessor.OnMutationPointsBanked(humanPlayer, pointsBanked);
+                int bonusPointsAwarded = Math.Max(0, humanPlayer.MutationPoints - pointsBanked);
+                if (bonusPointsAwarded > 0)
+                {
+                    RefreshSpendPointsButtonUI();
+                    GameManager.Instance?.GameUI?.GameLogRouter?.RecordCompoundReserveBonus(humanPlayer.PlayerId, bonusPointsAwarded);
+                }
+
                 PlayMutationStorePointsSound();
                 EndHumanMutationPhase();
             }

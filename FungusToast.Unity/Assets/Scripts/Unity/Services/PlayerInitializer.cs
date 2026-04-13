@@ -21,6 +21,7 @@ namespace FungusToast.Unity
         private readonly Func<GameMode> getGameMode;
         private readonly Func<BoardPreset> getCampaignBoardPreset;
         private readonly Func<IReadOnlyList<string>> getResolvedCampaignAiStrategyNames;
+        private readonly Func<IReadOnlyList<int>> getConfiguredHumanMoldIndices;
 
         public PlayerInitializer(
             GridVisualizer gridVisualizer,
@@ -28,7 +29,8 @@ namespace FungusToast.Unity
             Func<int> getConfiguredHumanCount,
             Func<GameMode> getGameMode,
             Func<BoardPreset> getCampaignBoardPreset,
-            Func<IReadOnlyList<string>> getResolvedCampaignAiStrategyNames)
+            Func<IReadOnlyList<string>> getResolvedCampaignAiStrategyNames,
+            Func<IReadOnlyList<int>> getConfiguredHumanMoldIndices)
         {
             this.gridVisualizer = gridVisualizer;
             this.ui = ui;
@@ -36,6 +38,7 @@ namespace FungusToast.Unity
             this.getGameMode = getGameMode;
             this.getCampaignBoardPreset = getCampaignBoardPreset;
             this.getResolvedCampaignAiStrategyNames = getResolvedCampaignAiStrategyNames;
+            this.getConfiguredHumanMoldIndices = getConfiguredHumanMoldIndices;
         }
 
         // totalPlayers: authoritative total player count for this game (from GameManager)
@@ -56,6 +59,7 @@ namespace FungusToast.Unity
             {
                 var hp = new Player(i, desiredHuman > 1 ? $"Human {i + 1}" : "Human", PlayerTypeEnum.Human, AITypeEnum.Random);
                 hp.SetBaseMutationPoints(baseMP);
+                ApplyStartingAdaptationToHuman(hp, i);
                 players.Add(hp);
                 humanPlayers.Add(hp);
             }
@@ -65,6 +69,7 @@ namespace FungusToast.Unity
             {
                 var fallback = new Player(0, "Human", PlayerTypeEnum.Human, AITypeEnum.Random);
                 fallback.SetBaseMutationPoints(baseMP);
+                ApplyStartingAdaptationToHuman(fallback, 0);
                 players.Add(fallback);
                 humanPlayers.Add(fallback);
             }
@@ -135,6 +140,36 @@ namespace FungusToast.Unity
                 {
                     Debug.LogWarning($"[PlayerInitializer] Unknown adaptation ID {adaptationId} for AI {strategyName ?? ai.PlayerName}. Skipping.");
                 }
+            }
+        }
+
+        private void ApplyStartingAdaptationToHuman(Player player, int humanIndex)
+        {
+            if (player == null || getGameMode() == GameMode.Campaign)
+            {
+                return;
+            }
+
+            var configuredMoldIndices = getConfiguredHumanMoldIndices?.Invoke();
+            if (configuredMoldIndices == null || humanIndex < 0 || humanIndex >= configuredMoldIndices.Count)
+            {
+                return;
+            }
+
+            int moldIndex = configuredMoldIndices[humanIndex];
+            string adaptationId = MoldCatalog.GetStartingAdaptationId(moldIndex);
+            if (string.IsNullOrWhiteSpace(adaptationId))
+            {
+                return;
+            }
+
+            if (AdaptationRepository.TryGetById(adaptationId, out var adaptation))
+            {
+                player.TryAddAdaptation(adaptation);
+            }
+            else
+            {
+                Debug.LogWarning($"[PlayerInitializer] Unknown starting adaptation '{adaptationId}' for human mold index {moldIndex}.");
             }
         }
 
