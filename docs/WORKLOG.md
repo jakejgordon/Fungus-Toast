@@ -66,17 +66,10 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 ## Current Plan
 
-1. ✅ Add simulation flags to disable nutrient patches and mycovariant drafting for fairness tests.
-2. ✅ Replace temporary source edits with reusable starting-position override parameters/plumbing.
-3. ✅ Keep progress tracked here so future sessions can resume cleanly.
-4. ✅ Commit the new simulation/override plumbing.
-5. ✅ Run a clean 6-player candidate bakeoff using explicit starting-position overrides.
-6. ✅ Promote the best validated 6-player layout into the precomputed fast-path once it actually holds up.
-7. ✅ Start clean 5-player validation and identify the fairest starting layout.
-8. ✅ Commit the selected 5-player layout and record the validation results.
-9. ✅ Document the 4-player symmetry assumption and start 3-player validation.
-10. ✅ Commit the selected 3-player layout and record the validation results.
-11. ⏳ Add/document the symmetric 2-player fast-path and confirm `1-8` startup placement behavior.
+1. Keep Campaign13 as accepted unless a later full-campaign pass reveals a stronger reason to revisit it.
+2. Keep Campaign14 as accepted for now in its current curated state.
+3. Curate and validate Campaign15 on the real authored Unity board with artifact-backed reporting.
+4. If Campaign15 tuning exposes a ramp problem, revisit whether Campaign12 still needs a smoothing pass.
 
 ## Current Handoff
 
@@ -94,9 +87,8 @@ Use the following minimal workflow to preserve working memory across sessions:
   - `CMP_Control_AnabolicFirst_Hard`
   - `CMP_Economy_LateSpike_Hard`
 - Current accepted Campaign14 validation result (artifact-backed `post_simulation_player_summary.csv`, seed family `20260426/20260440`): proxy `TST_CampaignPlayer_SafeBaseline` finished at `8.0% (4/50)`. `CMP_Bloom_CreepingRegression_Elite` became the dominant anchor at `60.0%` win rate in that confirmation, but this harsh result is currently considered acceptable for one of the last standard levels.
-- If this thread continues, the next likely late-campaign curation targets are:
-  1. **Campaign15**, which is still on an older authored lineup and has not yet been brought up to the newer curated state
-  2. **Campaign12**, if Jake wants the pre-endgame ramp smoothed before touching Campaign15
+- If this thread continues, the next likely late-campaign curation target is **Campaign15**, which is still on an older authored lineup and has not yet been brought up to the newer curated state.
+- Treat Campaign12 as "good enough for now unless Campaign15 tuning reveals a ramp problem" rather than as the main active target.
 
 
 ### 2026-03-27 (campaign AI pool support)
