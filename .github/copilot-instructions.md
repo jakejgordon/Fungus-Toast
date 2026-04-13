@@ -9,7 +9,7 @@ This file is the top-level router for AI-assisted development in this repository
 - **Build + validation basics:** `FungusToast.Core/docs/BUILD_INSTRUCTIONS.md`
 - **Local Windows itch.io release workflow:** `FungusToast.Core/docs/BUILD_INSTRUCTIONS.md`
 - **Unit test stack and canonical test commands:** `FungusToast.Core/docs/TESTING_HELPER.md`
-- **Simulation workflows, reproducibility, fairness testing, and balance runs:** `FungusToast.Core/docs/SIMULATION_HELPER.md`
+- **Simulation workflows, reproducibility, fairness testing, and balance runs:** `FungusToast.Core/docs/SIMULATION_HELPER.md` (final balance/campaign calls must be artifact-backed, not console-only)
 - **AI strategy authoring and roster metadata:** `FungusToast.Core/docs/AI_STRATEGY_AUTHORING.md`
 - **Mutation authoring:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`
 - **Mycovariant authoring:** `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`
@@ -82,6 +82,12 @@ Choose the smallest checklist that matches the change:
 2. Build Simulation
 3. Run a smoke simulation
 4. Confirm expected output/help behavior
+
+### Simulation balance / campaign validation change
+1. Build Core
+2. Build Simulation
+3. Run the intended simulation or campaign harness
+4. Read exported artifacts before making a final tuning or balance call
 
 ### Unity-facing change
 1. Build Core

@@ -19,7 +19,7 @@ MonoBehaviour:
   - strategyName: AI1
   - strategyName: AI2
   - strategyName: AI3
-  - strategyName: AI10
+  - strategyName: CMP_Bloom_CreepingRegression_Elite
   - strategyName: AI1
-  - strategyName: AI7
-  - strategyName: AI8
+  - strategyName: CMP_Control_AnabolicFirst_Hard
+  - strategyName: CMP_Economy_LateSpike_Hard

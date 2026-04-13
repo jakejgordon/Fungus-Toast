@@ -192,6 +192,7 @@ Adaptation draft UI reuse:
 2. Optionally adjust board sizes and nutrient-patch settings.
 3. Use campaign-safe `CMP_*` identities where possible so simulation tooling and curated docs stay aligned.
 4. Validate in Unity; CLI-side campaign validation now also exists via `scripts/run_campaign_balance.py` using the safe player proxy.
+5. For any campaign tuning call based on simulation, follow the artifact-backed reporting workflow in `SIMULATION_HELPER.md`; do not treat harness summary text alone as final evidence.
 
 ## Notes
 
