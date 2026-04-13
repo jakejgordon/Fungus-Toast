@@ -19,7 +19,14 @@ MonoBehaviour:
   - strategyName: AI1
   - strategyName: AI2
   - strategyName: AI3
-  - strategyName: AI10
+  - strategyName: CMP_Bloom_CreepingRegression_Elite
+    startingAdaptationIds:
+    - adaptation_13
+    - adaptation_3
+    - adaptation_4
+    - adaptation_14
+    - adaptation_15
+    - adaptation_9
   - strategyName: AI1
-  - strategyName: AI7
-  - strategyName: AI8
+  - strategyName: CMP_Control_AnabolicFirst_Hard
+  - strategyName: CMP_Economy_LateSpike_Hard

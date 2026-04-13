@@ -32,6 +32,7 @@ Use the following minimal workflow to preserve working memory across sessions:
      - slot policy
      - results
      - conclusions
+   - For balance or campaign-validation conclusions, do not treat console or harness summary text alone as sufficient evidence; final calls should be artifact-backed, or explicitly marked blocked if artifact analysis failed.
 
 4. **End-of-session checkpoint**
    - End substantial work sessions with a compact checkpoint containing:
@@ -60,39 +61,34 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** campaign difficulty validation with safe-proxy reporting now standardized through artifact-backed summaries. Campaign4/5/6 are currently treated as acceptable checkpoints; Campaign7 is the next likely difficulty target if this thread continues.
+- **Current focus:** late-campaign difficulty validation and curation with artifact-backed safe-proxy reporting. Campaign13 and Campaign14 are currently accepted for now; Campaign12 is still softer than intended and Campaign15 is the next likely late-campaign curation target.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
 
-1. ✅ Add simulation flags to disable nutrient patches and mycovariant drafting for fairness tests.
-2. ✅ Replace temporary source edits with reusable starting-position override parameters/plumbing.
-3. ✅ Keep progress tracked here so future sessions can resume cleanly.
-4. ✅ Commit the new simulation/override plumbing.
-5. ✅ Run a clean 6-player candidate bakeoff using explicit starting-position overrides.
-6. ✅ Promote the best validated 6-player layout into the precomputed fast-path once it actually holds up.
-7. ✅ Start clean 5-player validation and identify the fairest starting layout.
-8. ✅ Commit the selected 5-player layout and record the validation results.
-9. ✅ Document the 4-player symmetry assumption and start 3-player validation.
-10. ✅ Commit the selected 3-player layout and record the validation results.
-11. ⏳ Add/document the symmetric 2-player fast-path and confirm `1-8` startup placement behavior.
+1. Keep Campaign13 as accepted unless a later full-campaign pass reveals a stronger reason to revisit it.
+2. Keep Campaign14 as accepted for now in its current curated state.
+3. Curate and validate Campaign15 on the real authored Unity board with artifact-backed reporting.
+4. If Campaign15 tuning exposes a ramp problem, revisit whether Campaign12 still needs a smoothing pass.
 
 ## Current Handoff
 
 - First-pass safe-proxy acceptance curve for Campaign0-10 is now explicitly defined as: `Campaign0-2 90-100%`, `Campaign3 70-90%`, `Campaign4 50-70%`, `Campaign5 35-55%`, `Campaign6 25-45%`, `Campaign7 15-35%`, `Campaign8 10-25%`, `Campaign9 5-15%`, `Campaign10 0-10%`. Intent is a roughly linear decline for the conservative non-reactive proxy, with near-zero by ~Campaign10 acceptable.
-- 2026-04-04 early/mid campaign recheck with the deterministic `X-1` proxy-adaptation harness produced: `Campaign0 100%`, `Campaign1 100%`, `Campaign2 100%`, `Campaign3 100%`, `Campaign4 52%`, `Campaign5 10%`, `Campaign6 20%` on 50-game checks. That pass identified Campaign5 as the main opening/mid bridge cliff.
-- 2026-04-05 follow-up work closed the Campaign5 gap and also corrected Campaign4 authoring drift. `Campaign4` (`40x40 4 AI`) now uses exactly the three earlier-introduced training opponents (`TST_Training_ResilientMycelium`, `TST_Training_Overextender`, `TST_Training_ToxicTurtle`) and validated at `76.0% (38/50)` on one 50-game seed — higher than the earlier rough target band, but structurally correct and intentionally forgiving.
-- 2026-04-05 Campaign5 tuning was iterated on the real authored `50x50 5 AI` board using artifact-backed reporting. The current accepted authored state is:
-  - board pool still uses `TST_Training_ResilientMycelium` instead of `CMP_Surge_BeaconTempo_Medium`
-  - `CMP_TierCap_GrowthResilience_Easy` now caps at `MutationTier.Tier2`
-  - `CMP_Control_AnabolicRebirth_Medium` now uses `economyBias: EconomyBias.MinorEconomy`
-  - `CMP_Reclaim_Scavenger_Easy` now starts with `TargetMutationGoal(MutationIds.MycelialBloom, 5)`
-- Current accepted Campaign5 validation result (artifact-backed `post_simulation_player_summary.csv`, seed family `20260405/20260410`): proxy `TST_CampaignPlayer_SafeBaseline` finished at `44.0% (22/50)` on the exact authored lineup, which is inside the agreed `35-55%` target band. Practical call: **Campaign5 is good to go**.
-- Campaign6 should currently be treated as an accepted checkpoint / leave-as-is level, not the next urgent tuning target. Earlier pooled validation landed it at `25.0% (10/40)` and later conservative substitution tests only made the curve worse; practical call remains: **leave Campaign6 unchanged for now**.
 - Reporting/process correction: balance summaries should now be treated as artifact-backed by default. `FungusToast.Core/docs/SIMULATION_HELPER.md` was updated to explicitly say not to rely on live console output alone and to prefer `players.parquet` / the offline analytics helper when available.
-- 2026-04-07 follow-up validation confirmed that the practical fix for Campaign7 was to remove `CMP_Economy_KillReclaim_Medium` from the `90x90 6 AI` board rather than trying to save it with small starting-spore offsets. Replacing it with `CMP_Reclaim_Scavenger_Easy` yielded an artifact-backed proxy result of `20.0% (10/50)`, which is inside the agreed Campaign7 target band (`15-35%`). Practical call: **Campaign7 is good to go** in this configuration.
-- Follow-up on 2026-04-08 found that current authored assets had drifted from the older campaign curation notes. The real next authored level after Campaign11 is `Campaign12` on `130x130 7 AI.asset`, and that board had become too soft: exact safe-proxy checks on the live authored lineup (`AI1`, `AI2`, `AI3`, `AI7`, `AI8`, `AI9`, `AI11`) landed at `20.0% (4/20)` with seed `20260408` and `20.0% (4/20)` with seed `20260328`, both on the exact `130x130` board with nutrients on and 11 proxy adaptations. A conservative hardening pass replacing `AI11` with `AI10` moved the same board to `20.0% (4/20)` on a short seed `20260408` check and then `18.0% (9/50)` on a 50-game confirmation with seed `20260409`, which is still materially softer than the intended late-game hard/elite band. Practical call: Campaign12 remains the active tuning target and needs a stronger hardening step than `AI11 -> AI10` alone.
-- If this thread continues, the next likely campaign difficulty target is **Campaign12**.
+- Campaign4, Campaign5, Campaign6, and Campaign7 are currently accepted checkpoints and should not be treated as the immediate tuning target.
+- Campaign12 is still softer than intended in the current authored state. The stronger hardening pass on the exact live authored `130x130 7 AI` board (`AI1`, `AI2`, `AI3`, `AI10`, `AI7`, `AI8`, `AI10`) finished at `16.0% (8/50)` for `TST_CampaignPlayer_SafeBaseline`, which is harder than earlier variants but still softer than the intended late-campaign hard/elite blocker band.
+- Campaign13 is currently accepted for now. The artifact-backed 100-game rerun on the curated authored lineup finished at `12.0% (12/100)` for `TST_CampaignPlayer_SafeBaseline`, and Jake explicitly accepted it as good.
+- Campaign14 is currently accepted for now as one of the final standard levels. The current authored `150x150 7 AI` board uses:
+  - `AI1`
+  - `AI2`
+  - `AI3`
+  - `CMP_Bloom_CreepingRegression_Elite` with starting adaptations `SporeSalvo`, `MycotoxicHalo`, `MycotoxicLash`, `VesicleBurst`, `HyphalBridge`, `ApicalYield`
+  - `AI1`
+  - `CMP_Control_AnabolicFirst_Hard`
+  - `CMP_Economy_LateSpike_Hard`
+- Current accepted Campaign14 validation result (artifact-backed `post_simulation_player_summary.csv`, seed family `20260426/20260440`): proxy `TST_CampaignPlayer_SafeBaseline` finished at `8.0% (4/50)`. `CMP_Bloom_CreepingRegression_Elite` became the dominant anchor at `60.0%` win rate in that confirmation, but this harsh result is currently considered acceptable for one of the last standard levels.
+- If this thread continues, the next likely late-campaign curation target is **Campaign15**, which is still on an older authored lineup and has not yet been brought up to the newer curated state.
+- Treat Campaign12 as "good enough for now unless Campaign15 tuning reveals a ramp problem" rather than as the main active target.
 
 
 ### 2026-03-27 (campaign AI pool support)

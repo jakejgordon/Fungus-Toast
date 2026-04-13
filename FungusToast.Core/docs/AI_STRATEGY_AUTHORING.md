@@ -77,6 +77,49 @@ For ongoing 8-player balance tuning, the `Testing` roster now includes a fixed a
 
 Use these via explicit `--strategy-names` when you want a stable 8-player comparison harness that does not drift as the broader Testing roster evolves.
 
+## ParameterizedSpendingStrategy Precedence
+
+For `ParameterizedSpendingStrategy`, authoring intent is easiest to understand if you think in three layers:
+
+1. **Build order**
+   - `targetMutationGoals`
+   - This is the main spine of the AI. Goals are processed in list order, one active goal at a time, including prerequisites.
+2. **Surge plan**
+   - `surgePriorityIds`
+   - `surgeAttemptTurnFrequency`
+   - Preferred surges are attempted on scheduled rounds before normal fallback spending, with optional short-term banking if a preferred surge is close.
+3. **Fallback personality**
+   - `priorityMutationCategories`
+   - `prioritizeHighTier`
+   - `economyBias`
+   - These mainly shape spending only when the AI is not currently able to make meaningful progress on its explicit goal chain.
+
+Actual spending flow, simplified:
+
+1. Early-game economy mutation pass (`MutatorPhenotype`, `AdaptiveExpression`, `HyperadaptiveDrift`)
+2. Work through `targetMutationGoals` in order
+3. Try scheduled surges (`surgePriorityIds` on `surgeAttemptTurnFrequency` rounds)
+4. Try catch-up surge if behind
+5. Bank for a near-term preferred surge if appropriate
+6. Fallback spending:
+   - preferred categories first
+   - then any upgradable mutation
+   - then economy-biased random weighting
+7. Last-resort surge attempt again
+
+Practical interpretation of the main knobs:
+
+- `targetMutationGoals`
+  - Primary build order. Strongest authoring control.
+- `surgeAttemptTurnFrequency`
+  - Timing gate for preferred surge activation attempts.
+- `priorityMutationCategories`
+  - Category preference during fallback spending.
+- `prioritizeHighTier`
+  - Within a candidate set, try higher-tier prerequisite-backed options first.
+- `economyBias`
+  - **Fallback-only** weighting toward `GeneticDrift` mutations. This is not a full global economy strategy dial.
+
 ## Goal-Level Authoring Rules
 
 - Omit `TargetLevel` only when the intent is to max out a mutation.
