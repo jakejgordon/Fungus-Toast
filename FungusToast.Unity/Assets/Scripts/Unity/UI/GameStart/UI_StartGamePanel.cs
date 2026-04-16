@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using TMPro;
@@ -95,6 +96,7 @@ namespace FungusToast.Unity.UI.GameStart
         private SetupStep currentStep = SetupStep.CountSelection;
         private int currentHumanMoldSelectionIndex;
         private bool isAdvancedOptionsExpanded;
+        private Coroutine deferredLayoutRefreshCoroutine;
 
         private void Awake()
         {
@@ -137,6 +139,12 @@ namespace FungusToast.Unity.UI.GameStart
         {
             SavePersistedMenuState();
             ResetMoldSelectionIconIdleAnimation();
+
+            if (deferredLayoutRefreshCoroutine != null)
+            {
+                StopCoroutine(deferredLayoutRefreshCoroutine);
+                deferredLayoutRefreshCoroutine = null;
+            }
         }
 
         private void Update()
@@ -2251,6 +2259,13 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void RefreshStartMenuLayout()
         {
+            if (setupContentRoot != null)
+            {
+                setupContentRoot.localScale = Vector3.one;
+            }
+
+            Canvas.ForceUpdateCanvases();
+
             if (moldSelectionSectionRoot != null)
             {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(moldSelectionSectionRoot);
@@ -2287,7 +2302,10 @@ namespace FungusToast.Unity.UI.GameStart
                 LayoutRebuilder.ForceRebuildLayoutImmediate(panelRect);
             }
 
+            Canvas.ForceUpdateCanvases();
+
             RefreshResponsiveStartLayout();
+            ScheduleDeferredLayoutRefresh();
         }
 
         private void RefreshResponsiveStartLayout()
@@ -2303,10 +2321,17 @@ namespace FungusToast.Unity.UI.GameStart
                 return;
             }
 
+            setupContentRoot.localScale = Vector3.one;
+
+            Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(setupContentRoot);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(panelRect);
+            Canvas.ForceUpdateCanvases();
 
             float preferredHeight = LayoutUtility.GetPreferredHeight(setupContentRoot);
-            float availableHeight = Mathf.Max(0f, panelRect.rect.height - (StartMenuVerticalMargin * 2f));
+            float topInset = Mathf.Max(StartMenuVerticalMargin, -setupContentRoot.anchoredPosition.y);
+            float bottomInset = StartMenuVerticalMargin;
+            float availableHeight = Mathf.Max(0f, panelRect.rect.height - topInset - bottomInset);
             float scale = preferredHeight > 0f && availableHeight > 0f
                 ? Mathf.Min(1f, availableHeight / preferredHeight)
                 : 1f;
@@ -2314,6 +2339,35 @@ namespace FungusToast.Unity.UI.GameStart
             scale *= ResponsiveScaleSafetyFactor;
 
             setupContentRoot.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        private void ScheduleDeferredLayoutRefresh()
+        {
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
+
+            if (deferredLayoutRefreshCoroutine != null)
+            {
+                StopCoroutine(deferredLayoutRefreshCoroutine);
+            }
+
+            deferredLayoutRefreshCoroutine = StartCoroutine(RefreshStartMenuLayoutDeferred());
+        }
+
+        private IEnumerator RefreshStartMenuLayoutDeferred()
+        {
+            yield return null;
+
+            if (!isActiveAndEnabled)
+            {
+                deferredLayoutRefreshCoroutine = null;
+                yield break;
+            }
+
+            RefreshResponsiveStartLayout();
+            deferredLayoutRefreshCoroutine = null;
         }
 
         public void OnPlayerCountSelected(int count)
