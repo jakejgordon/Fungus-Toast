@@ -1054,9 +1054,9 @@ namespace FungusToast.Unity.Grid
             var creepingMoldMoves = suppressAnimations
                 ? Array.Empty<CreepingMoldVisualMove>()
                 : ConsumePendingCreepingMoldMoves(board);
-            var hyphalGrowthMoves = suppressAnimations
-                ? Array.Empty<HyphalGrowthVisualMove>()
-                : ConsumePendingHyphalGrowthMoves(board);
+            var (hyphalGrowthMoves, diagonalGrowthMoves) = suppressAnimations
+                ? (Array.Empty<HyphalGrowthVisualMove>(), Array.Empty<HyphalGrowthVisualMove>())
+                : ConsumePendingDirectionalGrowthMoves(board);
 
             if (suppressAnimations)
             {
@@ -1071,9 +1071,13 @@ namespace FungusToast.Unity.Grid
                 cellStateAnimationController?.SuppressNextFadeInAnimations(hiddenTileIds);
             }
 
-            if (hyphalGrowthMoves.Length > 0)
+            if (hyphalGrowthMoves.Length > 0 || diagonalGrowthMoves.Length > 0)
             {
-                var hiddenTileIds = hyphalGrowthMoves.Select(move => move.DestinationTileId).Distinct().ToList();
+                var hiddenTileIds = hyphalGrowthMoves
+                    .Concat(diagonalGrowthMoves)
+                    .Select(move => move.DestinationTileId)
+                    .Distinct()
+                    .ToList();
                 RegisterPreAnimationHiddenPreviewTiles(hiddenTileIds);
                 cellStateAnimationController?.SuppressNextFadeInAnimations(hiddenTileIds);
             }
@@ -1121,9 +1125,13 @@ namespace FungusToast.Unity.Grid
                     StartCoroutine(PlayCreepingMoldAnimationBatch(creepingMoldMoves));
                 }
 
-                if (hyphalGrowthMoves.Length > 0)
+                if (hyphalGrowthMoves.Length > 0 || diagonalGrowthMoves.Length > 0)
                 {
-                    cellStateAnimationController?.StartDirectionalGrowthAnimations(hyphalGrowthMoves.Select(move => (move.SourceTileId, move.DestinationTileId)).ToList());
+                    var directionalMoves = hyphalGrowthMoves
+                        .Select(move => (move.SourceTileId, move.DestinationTileId, false))
+                        .Concat(diagonalGrowthMoves.Select(move => (move.SourceTileId, move.DestinationTileId, true)))
+                        .ToList();
+                    cellStateAnimationController?.StartDirectionalGrowthAnimations(directionalMoves);
                 }
             }
         }
@@ -1158,12 +1166,12 @@ namespace FungusToast.Unity.Grid
             return sanitizedMoves;
         }
 
-        private HyphalGrowthVisualMove[] ConsumePendingHyphalGrowthMoves(GameBoard renderBoard)
+        private (HyphalGrowthVisualMove[] hyphalMoves, HyphalGrowthVisualMove[] diagonalMoves) ConsumePendingDirectionalGrowthMoves(GameBoard renderBoard)
         {
             if (_pendingHyphalGrowthMoves.Count == 0 || renderBoard == null)
             {
                 _pendingHyphalGrowthMoves.Clear();
-                return Array.Empty<HyphalGrowthVisualMove>();
+                return (Array.Empty<HyphalGrowthVisualMove>(), Array.Empty<HyphalGrowthVisualMove>());
             }
 
             var sanitizedMoves = _pendingHyphalGrowthMoves
@@ -1174,7 +1182,7 @@ namespace FungusToast.Unity.Grid
                 {
                     var destinationTile = renderBoard.GetTileById(move.DestinationTileId);
                     var destinationCell = destinationTile?.FungalCell;
-                    if (destinationCell?.IsAlive != true || destinationCell.OwnerPlayerId != move.PlayerId || destinationCell.SourceOfGrowth != GrowthSource.HyphalOutgrowth)
+                    if (destinationCell?.IsAlive != true || destinationCell.OwnerPlayerId != move.PlayerId)
                     {
                         return false;
                     }
@@ -1188,12 +1196,44 @@ namespace FungusToast.Unity.Grid
 
                     var (sourceX, sourceY) = renderBoard.GetXYFromTileId(move.SourceTileId);
                     var (destinationX, destinationY) = renderBoard.GetXYFromTileId(move.DestinationTileId);
+                    int deltaX = Mathf.Abs(sourceX - destinationX);
+                    int deltaY = Mathf.Abs(sourceY - destinationY);
+                    bool isOrthogonal = deltaX + deltaY == 1;
+                    bool isDiagonal = deltaX == 1 && deltaY == 1;
+                    if (!isOrthogonal && !isDiagonal)
+                    {
+                        return false;
+                    }
+
+                    if (isOrthogonal)
+                    {
+                        return destinationCell.SourceOfGrowth == GrowthSource.HyphalOutgrowth;
+                    }
+
+                    return destinationCell.SourceOfGrowth == GrowthSource.TendrilOutgrowth;
+                })
+                .ToArray();
+
+            var hyphalMoves = sanitizedMoves
+                .Where(move =>
+                {
+                    var (sourceX, sourceY) = renderBoard.GetXYFromTileId(move.SourceTileId);
+                    var (destinationX, destinationY) = renderBoard.GetXYFromTileId(move.DestinationTileId);
                     return Mathf.Abs(sourceX - destinationX) + Mathf.Abs(sourceY - destinationY) == 1;
                 })
                 .ToArray();
 
+            var diagonalMoves = sanitizedMoves
+                .Where(move =>
+                {
+                    var (sourceX, sourceY) = renderBoard.GetXYFromTileId(move.SourceTileId);
+                    var (destinationX, destinationY) = renderBoard.GetXYFromTileId(move.DestinationTileId);
+                    return Mathf.Abs(sourceX - destinationX) == 1 && Mathf.Abs(sourceY - destinationY) == 1;
+                })
+                .ToArray();
+
             _pendingHyphalGrowthMoves.Clear();
-            return sanitizedMoves;
+            return (hyphalMoves, diagonalMoves);
         }
 
         private IEnumerator PlayCreepingMoldAnimationBatch(IReadOnlyList<CreepingMoldVisualMove> moves)

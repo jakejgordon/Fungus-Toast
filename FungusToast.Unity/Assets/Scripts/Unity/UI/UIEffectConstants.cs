@@ -84,6 +84,46 @@ namespace FungusToast.Unity.UI
         public const float HyphalGrowthDestinationOvershootScale = 1.06f;
 
         /// <summary>
+        /// Duration of the source-cell anticipation stretch for diagonal tendril growth.
+        /// </summary>
+        public const float DiagonalGrowthSourceStretchDurationSeconds = 0.1f;
+
+        /// <summary>
+        /// Duration of the destination emergence travel for diagonal tendril growth.
+        /// </summary>
+        public const float DiagonalGrowthTravelDurationSeconds = 0.15f;
+
+        /// <summary>
+        /// Duration of destination settle for diagonal tendril growth.
+        /// </summary>
+        public const float DiagonalGrowthSettleDurationSeconds = 0.11f;
+
+        /// <summary>
+        /// Fraction of travel axis length used for the source push-off in diagonal growth.
+        /// </summary>
+        public const float DiagonalGrowthSourceOffsetCellFraction = 0.2f;
+
+        /// <summary>
+        /// Fraction of travel axis length used for destination inset in diagonal growth.
+        /// </summary>
+        public const float DiagonalGrowthDestinationInsetCellFraction = 0.38f;
+
+        /// <summary>
+        /// Stretch applied along the travel axis during diagonal growth push-off.
+        /// </summary>
+        public const float DiagonalGrowthAxisStretch = 1.2f;
+
+        /// <summary>
+        /// Squash applied perpendicular to the travel axis during diagonal growth push-off.
+        /// </summary>
+        public const float DiagonalGrowthPerpendicularSquash = 0.86f;
+
+        /// <summary>
+        /// Destination overshoot scale used before diagonal growth settles.
+        /// </summary>
+        public const float DiagonalGrowthDestinationOvershootScale = 1.1f;
+
+        /// <summary>
         /// Duration of the short launch squash before Creeping Mold hops to its new tile.
         /// </summary>
         public const float CreepingMoldSourceEmphasisDurationSeconds = 0.1f;

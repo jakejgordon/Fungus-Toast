@@ -810,6 +810,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly HashSet<int> _suppressedFadeInTileIdsForNextRender = new();
 		private readonly Dictionary<int, Coroutine> _fadeInCoroutines = new();
 		private readonly Dictionary<int, int> _directionalGrowthSourceTileIds = new();
+		private readonly Dictionary<int, bool> _directionalGrowthIsDiagonal = new();
 		private readonly Dictionary<int, Coroutine> _directionalGrowthCoroutines = new();
 		private readonly HashSet<int> _dyingTileIds = new();
 		private readonly Dictionary<int, Coroutine> _deathAnimationCoroutines = new();
@@ -1021,7 +1022,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			StartPendingToxinExpiryAnimations();
 		}
 
-		public void StartDirectionalGrowthAnimations(IReadOnlyList<(int sourceTileId, int destinationTileId)> moves)
+		public void StartDirectionalGrowthAnimations(IReadOnlyList<(int sourceTileId, int destinationTileId, bool isDiagonal)> moves)
 		{
 			if (moves == null || moves.Count == 0)
 			{
@@ -1037,10 +1038,11 @@ namespace FungusToast.Unity.Grid.Helpers
 				}
 
 				_directionalGrowthSourceTileIds[move.destinationTileId] = move.sourceTileId;
+				_directionalGrowthIsDiagonal[move.destinationTileId] = move.isDiagonal;
 				_newlyGrownAnimationPlayedTileIds.Add(move.destinationTileId);
 				StopTrackedAnimation(_fadeInCoroutines, move.destinationTileId);
 				StopTrackedAnimation(_directionalGrowthCoroutines, move.destinationTileId);
-				_directionalGrowthCoroutines[move.destinationTileId] = _startCoroutine(PlayDirectionalGrowth(move.sourceTileId, move.destinationTileId));
+				_directionalGrowthCoroutines[move.destinationTileId] = _startCoroutine(PlayDirectionalGrowth(move.sourceTileId, move.destinationTileId, move.isDiagonal));
 			}
 		}
 
@@ -1118,6 +1120,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
 			_directionalGrowthCoroutines.Clear();
 			_directionalGrowthSourceTileIds.Clear();
+			_directionalGrowthIsDiagonal.Clear();
 		}
 
 		public void ResetRuntimeState()
@@ -1136,6 +1139,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_newlyGrownTileIds.Clear();
 			_newlyGrownAnimationPlayedTileIds.Clear();
 			_directionalGrowthSourceTileIds.Clear();
+			_directionalGrowthIsDiagonal.Clear();
 			_dyingTileIds.Clear();
 			_toxinDropTileIds.Clear();
 		}
@@ -1155,14 +1159,15 @@ namespace FungusToast.Unity.Grid.Helpers
 			_revealPreAnimationPreviewTile?.Invoke(destinationTileId);
 			_renderTileFromBoard?.Invoke(destinationTileId);
 			_directionalGrowthSourceTileIds.Remove(destinationTileId);
+			_directionalGrowthIsDiagonal.Remove(destinationTileId);
 		}
 
-		private static void ApplyDirectionalTransform(Tilemap moldTilemap, Tilemap overlayTilemap, Vector3Int pos, Vector3 localOffset, float axisScale, float perpendicularScale, bool horizontal)
+		private static void ApplyDirectionalTransform(Tilemap moldTilemap, Tilemap overlayTilemap, Vector3Int pos, Vector3 localOffset, float axisScale, float perpendicularScale, Vector3 normalizedDirection)
 		{
-			Vector3 localScale = horizontal
-				? new Vector3(axisScale, perpendicularScale, 1f)
-				: new Vector3(perpendicularScale, axisScale, 1f);
-			Matrix4x4 matrix = Matrix4x4.TRS(localOffset, Quaternion.identity, localScale);
+			Vector3 direction = normalizedDirection.sqrMagnitude <= Mathf.Epsilon ? Vector3.right : normalizedDirection.normalized;
+			Quaternion rotation = Quaternion.FromToRotation(Vector3.right, direction);
+			Vector3 localScale = new(axisScale, perpendicularScale, 1f);
+			Matrix4x4 matrix = Matrix4x4.TRS(localOffset, rotation, localScale);
 			if (moldTilemap != null && moldTilemap.HasTile(pos))
 			{
 				moldTilemap.SetTransformMatrix(pos, matrix);
@@ -1503,7 +1508,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 		}
 
-		private IEnumerator PlayDirectionalGrowth(int sourceTileId, int destinationTileId)
+		private IEnumerator PlayDirectionalGrowth(int sourceTileId, int destinationTileId, bool isDiagonal)
 		{
 			var board = _getBoard();
 			var moldTilemap = _getMoldTilemap();
@@ -1527,25 +1532,50 @@ namespace FungusToast.Unity.Grid.Helpers
 			var destinationXY = board.GetXYFromTileId(destinationTileId);
 			int deltaX = destinationXY.Item1 - sourceXY.Item1;
 			int deltaY = destinationXY.Item2 - sourceXY.Item2;
-			if (Mathf.Abs(deltaX) + Mathf.Abs(deltaY) != 1)
+			bool isOrthogonalMove = Mathf.Abs(deltaX) + Mathf.Abs(deltaY) == 1;
+			bool isDiagonalMove = Mathf.Abs(deltaX) == 1 && Mathf.Abs(deltaY) == 1;
+			if (!isOrthogonalMove && !isDiagonalMove)
 			{
 				_directionalGrowthCoroutines.Remove(destinationTileId);
 				ResetDirectionalGrowthVisuals(sourceTileId, destinationTileId);
 				yield break;
 			}
 
+			if (isDiagonal && !isDiagonalMove)
+			{
+				isDiagonal = false;
+			}
+
 			Vector3 cellSize = moldTilemap.cellSize;
 			Vector3 direction = new Vector3(deltaX * cellSize.x, deltaY * cellSize.y, 0f);
 			Vector3 normalizedDirection = direction.sqrMagnitude <= Mathf.Epsilon ? Vector3.right : direction.normalized;
-			bool horizontal = deltaX != 0;
-			float stretchDuration = UIEffectConstants.HyphalGrowthSourceStretchDurationSeconds;
-			float travelDuration = UIEffectConstants.HyphalGrowthTravelDurationSeconds;
-			float settleDuration = UIEffectConstants.HyphalGrowthSettleDurationSeconds;
-			float sourceOffsetMagnitude = (horizontal ? cellSize.x : cellSize.y) * UIEffectConstants.HyphalGrowthSourceOffsetCellFraction;
-			float destinationInsetMagnitude = (horizontal ? cellSize.x : cellSize.y) * UIEffectConstants.HyphalGrowthDestinationInsetCellFraction;
-			float axisStretch = UIEffectConstants.HyphalGrowthAxisStretch;
-			float perpendicularSquash = UIEffectConstants.HyphalGrowthPerpendicularSquash;
-			float overshootScale = UIEffectConstants.HyphalGrowthDestinationOvershootScale;
+			float axisCellMagnitude = isDiagonalMove
+				? Mathf.Sqrt((cellSize.x * cellSize.x) + (cellSize.y * cellSize.y))
+				: (Mathf.Abs(deltaX) == 1 ? cellSize.x : cellSize.y);
+			float stretchDuration = isDiagonal
+				? UIEffectConstants.DiagonalGrowthSourceStretchDurationSeconds
+				: UIEffectConstants.HyphalGrowthSourceStretchDurationSeconds;
+			float travelDuration = isDiagonal
+				? UIEffectConstants.DiagonalGrowthTravelDurationSeconds
+				: UIEffectConstants.HyphalGrowthTravelDurationSeconds;
+			float settleDuration = isDiagonal
+				? UIEffectConstants.DiagonalGrowthSettleDurationSeconds
+				: UIEffectConstants.HyphalGrowthSettleDurationSeconds;
+			float sourceOffsetMagnitude = axisCellMagnitude * (isDiagonal
+				? UIEffectConstants.DiagonalGrowthSourceOffsetCellFraction
+				: UIEffectConstants.HyphalGrowthSourceOffsetCellFraction);
+			float destinationInsetMagnitude = axisCellMagnitude * (isDiagonal
+				? UIEffectConstants.DiagonalGrowthDestinationInsetCellFraction
+				: UIEffectConstants.HyphalGrowthDestinationInsetCellFraction);
+			float axisStretch = isDiagonal
+				? UIEffectConstants.DiagonalGrowthAxisStretch
+				: UIEffectConstants.HyphalGrowthAxisStretch;
+			float perpendicularSquash = isDiagonal
+				? UIEffectConstants.DiagonalGrowthPerpendicularSquash
+				: UIEffectConstants.HyphalGrowthPerpendicularSquash;
+			float overshootScale = isDiagonal
+				? UIEffectConstants.DiagonalGrowthDestinationOvershootScale
+				: UIEffectConstants.HyphalGrowthDestinationOvershootScale;
 
 			SetTileAlpha(moldTilemap, destinationPos, 0f);
 			SetTileAlpha(overlayTilemap, destinationPos, 0f);
@@ -1562,7 +1592,7 @@ namespace FungusToast.Unity.Grid.Helpers
 					float offset = Mathf.Lerp(0f, sourceOffsetMagnitude, ease);
 					float axisScale = Mathf.Lerp(1f, axisStretch, ease);
 					float perpendicularScale = Mathf.Lerp(1f, perpendicularSquash, ease);
-					ApplyDirectionalTransform(moldTilemap, overlayTilemap, sourcePos, normalizedDirection * offset, axisScale, perpendicularScale, horizontal);
+					ApplyDirectionalTransform(moldTilemap, overlayTilemap, sourcePos, normalizedDirection * offset, axisScale, perpendicularScale, normalizedDirection);
 					yield return null;
 				}
 
@@ -1575,12 +1605,12 @@ namespace FungusToast.Unity.Grid.Helpers
 					float sourceAxisScale = Mathf.Lerp(axisStretch, 1f, ease);
 					float sourcePerpendicularScale = Mathf.Lerp(perpendicularSquash, 1f, ease);
 					float sourceOffset = Mathf.Lerp(sourceOffsetMagnitude, 0f, ease);
-					ApplyDirectionalTransform(moldTilemap, overlayTilemap, sourcePos, normalizedDirection * sourceOffset, sourceAxisScale, sourcePerpendicularScale, horizontal);
+					ApplyDirectionalTransform(moldTilemap, overlayTilemap, sourcePos, normalizedDirection * sourceOffset, sourceAxisScale, sourcePerpendicularScale, normalizedDirection);
 
 					float destinationOffset = Mathf.Lerp(destinationInsetMagnitude, 0f, ease);
 					float destinationAxisScale = Mathf.Lerp(perpendicularSquash, overshootScale, ease);
 					float destinationPerpendicularScale = Mathf.Lerp(axisStretch, overshootScale, ease);
-					ApplyDirectionalTransform(moldTilemap, overlayTilemap, destinationPos, -normalizedDirection * destinationOffset, destinationAxisScale, destinationPerpendicularScale, horizontal);
+					ApplyDirectionalTransform(moldTilemap, overlayTilemap, destinationPos, -normalizedDirection * destinationOffset, destinationAxisScale, destinationPerpendicularScale, normalizedDirection);
 					float alpha = Mathf.Lerp(0f, 1f, ease);
 					SetTileAlpha(moldTilemap, destinationPos, alpha);
 					SetTileAlpha(overlayTilemap, destinationPos, alpha);
@@ -1594,7 +1624,7 @@ namespace FungusToast.Unity.Grid.Helpers
 					float t = settleDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / settleDuration);
 					float ease = 1f - Mathf.Pow(1f - t, 2f);
 					float settledScale = Mathf.Lerp(overshootScale, 1f, ease);
-					ApplyDirectionalTransform(moldTilemap, overlayTilemap, destinationPos, Vector3.zero, settledScale, settledScale, horizontal);
+					ApplyDirectionalTransform(moldTilemap, overlayTilemap, destinationPos, Vector3.zero, settledScale, settledScale, normalizedDirection);
 					float alpha = Mathf.Lerp(1f, UIEffectConstants.NewGrowthFinalAlpha, ease);
 					SetTileAlpha(moldTilemap, destinationPos, alpha);
 					SetTileAlpha(overlayTilemap, destinationPos, alpha);
