@@ -4,6 +4,7 @@ using UnityEngine.Tilemaps;
 using UnityEngine.EventSystems;
 using FungusToast.Core.Board;
 using FungusToast.Core.Death;
+using FungusToast.Unity.Input;
 using FungusToast.Unity.UI;
 using System.Collections;
 using System;
@@ -146,7 +147,8 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     void Update()
     {
         // Always move the magnifying glass root to mouse position (for potential future use)
-        transform.position = Input.mousePosition;
+        Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
+        transform.position = new Vector3(pointerScreen.x, pointerScreen.y, transform.position.z);
 
         bool overBread = gameStarted && IsMouseOverBread();
         bool pointerOverUI = EventSystem.current.IsPointerOverGameObject();
@@ -260,7 +262,8 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         if (gridVisualizer == null || gridVisualizer.toastTilemap == null)
             return false;
 
-        Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
+        Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(new Vector3(pointerScreen.x, pointerScreen.y, 0f));
         Vector3Int cellPos = gridVisualizer.toastTilemap.WorldToCell(mouseWorld);
         return gridVisualizer.IsPlayableBoardCell(cellPos) && gridVisualizer.toastTilemap.HasTile(cellPos);
     }
@@ -270,7 +273,8 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         if (gridVisualizer == null || gridVisualizer.toastTilemap == null)
             return Vector3Int.zero;
 
-        Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
+        Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(new Vector3(pointerScreen.x, pointerScreen.y, 0f));
         return gridVisualizer.toastTilemap.WorldToCell(mouseWorld);
     }
 
@@ -697,7 +701,8 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         if (tooltipRectTransform == null)
             return;
 
-        Vector3 mousePos = Input.mousePosition;
+        Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
+        Vector3 mousePos = new Vector3(pointerScreen.x, pointerScreen.y, 0f);
         Vector2 tooltipSize = tooltipRectTransform.sizeDelta;
         Vector2 screenSize = new Vector2(Screen.width, Screen.height);
 

@@ -1,3 +1,4 @@
+using FungusToast.Unity.Input;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -260,7 +261,7 @@ namespace FungusToast.Unity.UI.Tooltips
                 }
 
                 // No anchor — follow mouse
-                Vector2 mp = (Vector2)Input.mousePosition + new Vector2(16f, -16f);
+                Vector2 mp = UnityInputAdapter.GetPointerScreenPosition() + new Vector2(16f, -16f);
                 Vector2 mPiv = new Vector2(0f, 1f);
                 PlaceAtScreen(ClampScreen(mp, mPiv), mPiv);
                 return;
@@ -269,7 +270,7 @@ namespace FungusToast.Unity.UI.Tooltips
             // ══════════════════════════════════════════════
             //  EXPLICIT PLACEMENT  (N / NE / E / SE / S / SW / W / NW)
             // ══════════════════════════════════════════════
-            Vector2 targetScreen = wc != null ? WTS(wc[2]) : (Vector2)Input.mousePosition;
+            Vector2 targetScreen = wc != null ? WTS(wc[2]) : UnityInputAdapter.GetPointerScreenPosition();
             Vector3 MidOf(int a, int b) => (wc[a] + wc[b]) * 0.5f;
 
             Vector2 pivot = new Vector2(0f, 1f);

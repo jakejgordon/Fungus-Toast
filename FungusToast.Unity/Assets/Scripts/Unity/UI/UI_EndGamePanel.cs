@@ -14,6 +14,7 @@ using FungusToast.Unity.UI.Campaign;
 using Assets.Scripts.Unity.UI.MycovariantDraft;
 using FungusToast.Unity.Campaign;
 using FungusToast.Unity.Endgame;
+using FungusToast.Unity.Input;
 using FungusToast.Unity.UI.Testing;
 using UnityEngine.EventSystems;
 
@@ -131,7 +132,7 @@ namespace FungusToast.Unity.UI
 
         private void Update()
         {
-            if (!Application.isPlaying || !IsDetailsModalOpen || !Input.GetKeyDown(KeyCode.Escape))
+            if (!Application.isPlaying || !IsDetailsModalOpen || !UnityInputAdapter.WasEscapePressedThisFrame())
             {
                 return;
             }

@@ -1,3 +1,4 @@
+using FungusToast.Unity.Input;
 using UnityEngine;
 
 public class MagnifierCameraFollowMouse : MonoBehaviour
@@ -6,7 +7,8 @@ public class MagnifierCameraFollowMouse : MonoBehaviour
 
     void Update()
     {
-        Vector3 mouseScreen = Input.mousePosition;
+        Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
+        Vector3 mouseScreen = new Vector3(pointerScreen.x, pointerScreen.y, 0f);
         // Use the main camera's Z for correct world depth
         float z = Mathf.Abs(mainCamera.transform.position.z - transform.position.z);
         Vector3 mouseWorld = mainCamera.ScreenToWorldPoint(new Vector3(mouseScreen.x, mouseScreen.y, z));

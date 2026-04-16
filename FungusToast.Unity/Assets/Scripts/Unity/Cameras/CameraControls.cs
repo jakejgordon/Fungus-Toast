@@ -1,3 +1,4 @@
+using FungusToast.Unity.Input;
 using UnityEngine;
 
 namespace FungusToast.Unity.Cameras
@@ -41,7 +42,7 @@ namespace FungusToast.Unity.Cameras
             }
 
             // Zoom with scroll wheel
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            float scroll = UnityInputAdapter.GetMouseScrollDelta();
             if (Camera.main != null)
             {
                 float panDeltaTime = GetPanDeltaTime();
@@ -52,7 +53,8 @@ namespace FungusToast.Unity.Cameras
                 {
                     Camera cam = Camera.main;
                     // 1. Get world position under mouse before zoom
-                    Vector3 mouseScreenPos = Input.mousePosition;
+                    Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
+                    Vector3 mouseScreenPos = new Vector3(pointerScreen.x, pointerScreen.y, 0f);
                     Vector3 worldBefore = cam.ScreenToWorldPoint(new Vector3(mouseScreenPos.x, mouseScreenPos.y, cam.nearClipPlane));
 
                     // 2. Apply zoom
@@ -78,11 +80,8 @@ namespace FungusToast.Unity.Cameras
                 }
 
                 // --- Panning with WASD/Arrow Keys ---
-                Vector3 move = new Vector3(
-                    Input.GetAxis("Horizontal"),
-                    Input.GetAxis("Vertical"),
-                    0
-                );
+                Vector2 moveInput = UnityInputAdapter.GetKeyboardMoveVector();
+                Vector3 move = new Vector3(moveInput.x, moveInput.y, 0f);
                 if (move != Vector3.zero)
                 {
                     // Scale movement by camera size for consistent feel
@@ -93,13 +92,14 @@ namespace FungusToast.Unity.Cameras
                 }
 
                 // --- Right-click drag pan ---
-                if (Input.GetMouseButton(1)) // Right mouse button
+                if (UnityInputAdapter.IsSecondaryPointerPressed())
                 {
-                    // Right-drag panning also scaled by camera size
-                    float dragSpeed = moveSpeed * Camera.main.orthographicSize;
-                    float dx = -Input.GetAxis("Mouse X") * dragSpeed * panDeltaTime;
-                    float dy = -Input.GetAxis("Mouse Y") * dragSpeed * panDeltaTime;
-                    Vector3 frameDelta = Vector3.ClampMagnitude(new Vector3(dx, dy, 0), maxPanDistancePerFrame);
+                    // Pointer delta is already frame-relative, so convert pixels directly into world-space movement.
+                    float unitsPerPixel = (2f * Camera.main.orthographicSize) / Mathf.Max(1f, Camera.main.pixelHeight);
+                    Vector2 pointerDelta = UnityInputAdapter.GetPointerDelta();
+                    Vector3 frameDelta = Vector3.ClampMagnitude(
+                        new Vector3(-pointerDelta.x * unitsPerPixel, -pointerDelta.y * unitsPerPixel, 0f),
+                        maxPanDistancePerFrame);
                     Vector3 newPosition = Camera.main.transform.position + frameDelta;
                     Camera.main.transform.position = ClampCameraPosition(newPosition);
                 }

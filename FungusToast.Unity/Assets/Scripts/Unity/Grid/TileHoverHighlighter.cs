@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FungusToast.Unity.Input;
 using FungusToast.Unity.UI;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -48,7 +49,8 @@ namespace FungusToast.Unity.Grid
                 return;
             }
 
-            Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
+            Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(new Vector3(pointerScreen.x, pointerScreen.y, 0f));
             Vector3Int cellPos = gridVisualizer.toastTilemap.WorldToCell(mouseWorldPos);
 
             if (!IsCellOnBoard(cellPos))
@@ -96,7 +98,7 @@ namespace FungusToast.Unity.Grid
                     crosshairInstance.SetActive(false);
             }
 
-            if (Input.GetMouseButtonDown(0) && gridVisualizer.toastTilemap.HasTile(cellPos))
+            if (UnityInputAdapter.WasPrimaryPointerPressedThisFrame() && gridVisualizer.toastTilemap.HasTile(cellPos))
             {
                 int tileId = TileIdFromCell(cellPos);
                 bool gateOk = selectionTiles.Count == 0 || selectionTiles.Contains(tileId);
@@ -118,7 +120,7 @@ namespace FungusToast.Unity.Grid
                 TriggerPressedAnimation(cellPos);
             }
 
-            if (Input.GetMouseButtonDown(1))
+            if (UnityInputAdapter.WasSecondaryPointerPressedThisFrame())
             {
                 if (selectionTiles.Count > 0)
                 {

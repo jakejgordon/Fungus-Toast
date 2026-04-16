@@ -8,6 +8,7 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Campaign;
 using FungusToast.Unity.Endgame;
+using FungusToast.Unity.Input;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.Phases;
 using FungusToast.Unity.UI;
@@ -353,7 +354,7 @@ namespace FungusToast.Unity
 
         public void HandleInput()
         {
-            if (!Application.isPlaying || !Input.GetKeyDown(KeyCode.Escape))
+            if (!Application.isPlaying || !UnityInputAdapter.WasEscapePressedThisFrame())
             {
                 return;
             }

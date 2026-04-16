@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Linq;
+using FungusToast.Unity.Input;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -29,7 +30,7 @@ namespace FungusToast.Unity.UI.Tooltips
 
         private void Awake()
         {
-            touchMode = Input.touchSupported && (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer);
+            touchMode = UnityInputAdapter.IsTouchSupportedOnCurrentPlatform();
 
             // Auto-resolve a provider from attached components if not explicitly set
             if (dynamicProvider == null)

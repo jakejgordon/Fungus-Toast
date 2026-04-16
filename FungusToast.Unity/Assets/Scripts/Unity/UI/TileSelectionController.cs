@@ -1,6 +1,7 @@
 using FungusToast.Core.Board;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Grid;
+using FungusToast.Unity.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -69,7 +70,7 @@ namespace FungusToast.Unity.UI
 
             if (awaitingDirectionalMouseRelease)
             {
-                if (!Input.GetMouseButton(0))
+                if (!UnityInputAdapter.IsPrimaryPointerPressed())
                 {
                     awaitingDirectionalMouseRelease = false;
                 }
@@ -79,13 +80,13 @@ namespace FungusToast.Unity.UI
 
             UpdateDirectionalAimPreview();
 
-            if (Input.GetMouseButtonDown(1))
+            if (UnityInputAdapter.WasSecondaryPointerPressedThisFrame())
             {
                 CancelSelection();
                 return;
             }
 
-            if (Input.GetMouseButtonDown(0)
+            if (UnityInputAdapter.WasPrimaryPointerPressedThisFrame()
                 && currentDirectionalAim.HasValue
                 && !(EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
             {
@@ -502,7 +503,8 @@ namespace FungusToast.Unity.UI
                 0);
 
             Vector3 anchorWorld = gridVisualizer.toastTilemap.GetCellCenterWorld(anchorCell);
-            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
+            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(new Vector3(pointerScreen.x, pointerScreen.y, 0f));
             Vector2 delta = new Vector2(mouseWorld.x - anchorWorld.x, mouseWorld.y - anchorWorld.y);
 
             if (Mathf.Max(Mathf.Abs(delta.x), Mathf.Abs(delta.y)) < DirectionAimDeadZoneWorldUnits)
