@@ -36,6 +36,7 @@ namespace FungusToast.Unity.Campaign
         public bool IsCompleted => State != null && State.campaignCompleted;
         public CampaignVictorySnapshot PendingVictorySnapshot => State?.pendingVictorySnapshot;
         public int HumanMoldIndex => State != null ? State.humanMoldIndex : 0;
+        public MoldinessProgressSnapshot MoldinessProgress => MoldinessProgression.GetSnapshot(State?.moldiness);
 
         public void StartNew(int humanMoldIndex = 0)
         {
@@ -58,7 +59,8 @@ namespace FungusToast.Unity.Campaign
                 pendingAdaptationSelection = false,
                 campaignCompleted = false,
                 pendingVictorySnapshot = null,
-                resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, 0)
+                resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, 0),
+                moldiness = MoldinessProgression.CreateDefaultState()
             };
             var startingAdaptId = MoldCatalog.GetStartingAdaptationId(humanMoldIndex);
             if (!string.IsNullOrEmpty(startingAdaptId))
@@ -82,6 +84,8 @@ namespace FungusToast.Unity.Campaign
             State = loaded;
             State.selectedAdaptationIds ??= new List<string>();
             State.resolvedAiStrategyNames ??= new List<string>();
+            State.moldiness ??= MoldinessProgression.CreateDefaultState();
+            State.moldiness.pendingUnlockTriggers ??= new List<MoldinessUnlockTrigger>();
             if (!State.pendingAdaptationSelection)
             {
                 State.pendingVictorySnapshot = null;
@@ -136,6 +140,10 @@ namespace FungusToast.Unity.Campaign
             }
 
             // Victory path
+            int clearedLevelDisplay = State.levelIndex + 1;
+            var moldinessAward = MoldinessProgression.AwardForLevelClear(State.moldiness, clearedLevelDisplay);
+            LogMoldinessAward(clearedLevelDisplay, moldinessAward);
+
             int nextIndex = State.levelIndex + 1;
             if (nextIndex >= progression.MaxLevels)
             {
@@ -319,6 +327,7 @@ namespace FungusToast.Unity.Campaign
             State.levelIndex = 0;
             State.selectedAdaptationIds.Clear();
             State.seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+            State.moldiness ??= MoldinessProgression.CreateDefaultState();
             State.boardPresetId = preset.presetId;
             State.boardWidth = preset.boardWidth;
             State.boardHeight = preset.boardHeight;
@@ -328,6 +337,28 @@ namespace FungusToast.Unity.Campaign
             State.resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, 0);
             CampaignSaveService.Save(State);
             Debug.Log($"[CampaignController] Run reset after defeat. New RunId={State.runId} Preset={preset.presetId}");
+        }
+
+        private static void LogMoldinessAward(int clearedLevelDisplay, MoldinessAwardResult award)
+        {
+            if (award.AmountAwarded <= 0)
+            {
+                Debug.Log($"[CampaignController] Moldiness: cleared level {clearedLevelDisplay}, no reward awarded.");
+                return;
+            }
+
+            Debug.Log($"[CampaignController] Moldiness: cleared level {clearedLevelDisplay}, +{award.AmountAwarded}, progress {award.PreviousProgress}->{award.NewProgress}/{award.CurrentThreshold}, tier {award.PreviousTierIndex}->{award.NewTierIndex}, lifetime {award.LifetimeEarned}.");
+
+            if (!award.TriggeredUnlock)
+            {
+                return;
+            }
+
+            for (int i = 0; i < award.UnlockTriggers.Count; i++)
+            {
+                var trigger = award.UnlockTriggers[i];
+                Debug.Log($"[CampaignController] Moldiness unlock triggered: tier {trigger.tierIndex + 1}, threshold {trigger.threshold}, overflow {trigger.overflowAfterUnlock}.");
+            }
         }
 
         public int GetCurrentAiPlayerCount()

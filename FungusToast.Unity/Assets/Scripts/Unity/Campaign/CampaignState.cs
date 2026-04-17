@@ -21,6 +21,7 @@ namespace FungusToast.Unity.Campaign
         public bool campaignCompleted; // true after final victory
         public CampaignVictorySnapshot pendingVictorySnapshot; // serialized scoreboard snapshot for pending adaptation resumes
         public List<string> resolvedAiStrategyNames = new(); // active AI lineup for current level; persisted so pooled levels resume consistently
+        public MoldinessProgressionState moldiness = new(); // persistent moldiness progression toward permanent unlocks
     }
 
     [Serializable]
