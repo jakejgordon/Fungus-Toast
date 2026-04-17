@@ -27,6 +27,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float SpendButtonMinHeight = 40f;
         private const float StoreButtonMinWidth = 220f;
         private const float StoreButtonMinHeight = 36f;
+        private const float MutationPanelMaxWidth = 1125f;
 
         [Header("General UI References")]
         [SerializeField] private MutationManager mutationManager;
@@ -67,6 +68,7 @@ namespace FungusToast.Unity.UI.MutationTree
         public float shimmerStaggerDelay = 0.03f;
 
         private RectTransform mutationTreeRect;
+        private RectTransform parentRectTransform;
         private Vector3 originalButtonScale;
         private Vector3 originalCounterScale;
         private bool isTreeOpen = false;
@@ -102,11 +104,30 @@ namespace FungusToast.Unity.UI.MutationTree
         private void Awake()
         {
             if (mutationTreePanel != null)
+            {
                 mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
+                parentRectTransform = mutationTreeRect.parent as RectTransform;
+            }
             else
                 Debug.LogError("mutationTreePanel is NULL at Awake()!");
 
+            ApplyResponsiveMutationPanelLayout();
             EnsureSoundEffectAudioSource();
+        }
+
+        private void OnEnable()
+        {
+            ApplyResponsiveMutationPanelLayout();
+        }
+
+        private void OnRectTransformDimensionsChange()
+        {
+            if (mutationTreeRect == null)
+            {
+                return;
+            }
+
+            ApplyResponsiveMutationPanelLayout();
         }
 
         private void Start()
@@ -157,6 +178,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             StopAllCoroutines();
             CaptureOriginalControlScales();
+            ApplyResponsiveMutationPanelLayout();
 
             isTreeOpen = false;
             isSliding = false;
@@ -174,7 +196,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (mutationTreeRect != null)
             {
-                mutationTreeRect.anchoredPosition = hiddenPosition;
+                mutationTreeRect.anchoredPosition = GetHiddenPosition();
             }
 
             if (dockButtonText != null)
@@ -594,10 +616,11 @@ namespace FungusToast.Unity.UI.MutationTree
 
             isTreeOpen = false;
             isSliding = false;
+            ApplyResponsiveMutationPanelLayout();
 
             if (mutationTreeRect != null)
             {
-                mutationTreeRect.anchoredPosition = hiddenPosition;
+                mutationTreeRect.anchoredPosition = GetHiddenPosition();
             }
 
             mutationTreePanel.SetActive(false);
@@ -614,20 +637,23 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             isSliding = true;
 
+            ApplyResponsiveMutationPanelLayout();
+
             mutationTreePanel.SetActive(true);
             isTreeOpen = true;
 
             Vector2 startingPos = mutationTreeRect.anchoredPosition;
+            Vector2 targetVisiblePosition = GetVisiblePosition();
             float elapsedTime = 0f;
 
             while (elapsedTime < slideDuration)
             {
-                mutationTreeRect.anchoredPosition = Vector2.Lerp(startingPos, visiblePosition, elapsedTime / slideDuration);
+                mutationTreeRect.anchoredPosition = Vector2.Lerp(startingPos, targetVisiblePosition, elapsedTime / slideDuration);
                 elapsedTime += Time.deltaTime;
                 yield return null;
             }
 
-            mutationTreeRect.anchoredPosition = visiblePosition;
+            mutationTreeRect.anchoredPosition = targetVisiblePosition;
 
             if (dockButtonText != null)
                 dockButtonText.text = "<";
@@ -646,18 +672,20 @@ namespace FungusToast.Unity.UI.MutationTree
             isSliding = true;
 
             isTreeOpen = false;
+            ApplyResponsiveMutationPanelLayout();
 
             Vector2 startingPos = mutationTreeRect.anchoredPosition;
+            Vector2 targetHiddenPosition = GetHiddenPosition();
             float elapsedTime = 0f;
 
             while (elapsedTime < slideDuration)
             {
-                mutationTreeRect.anchoredPosition = Vector2.Lerp(startingPos, hiddenPosition, elapsedTime / slideDuration);
+                mutationTreeRect.anchoredPosition = Vector2.Lerp(startingPos, targetHiddenPosition, elapsedTime / slideDuration);
                 elapsedTime += Time.deltaTime;
                 yield return null;
             }
 
-            mutationTreeRect.anchoredPosition = hiddenPosition;
+            mutationTreeRect.anchoredPosition = targetHiddenPosition;
             mutationTreePanel.SetActive(false);
 
             if (dockButtonText != null)
@@ -758,6 +786,72 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             foreach (var btn in mutationButtons)
                 btn.DisableUpgrade();
+        }
+
+        private void ApplyResponsiveMutationPanelLayout()
+        {
+            if (mutationTreeRect == null)
+            {
+                return;
+            }
+
+            if (parentRectTransform == null)
+            {
+                parentRectTransform = mutationTreeRect.parent as RectTransform;
+            }
+
+            float targetHeight = GetParentHeight();
+            if (targetHeight > 0f)
+            {
+                mutationTreeRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetHeight);
+            }
+
+            float targetWidth = GetTargetPanelWidth();
+            if (targetWidth > 0f)
+            {
+                mutationTreeRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
+            }
+
+            if (!isSliding)
+            {
+                mutationTreeRect.anchoredPosition = isTreeOpen ? GetVisiblePosition() : GetHiddenPosition();
+            }
+        }
+
+        private float GetTargetPanelWidth()
+        {
+            if (parentRectTransform == null)
+            {
+                return MutationPanelMaxWidth;
+            }
+
+            return Mathf.Min(MutationPanelMaxWidth, parentRectTransform.rect.width);
+        }
+
+        private float GetParentHeight()
+        {
+            if (parentRectTransform == null)
+            {
+                return mutationTreeRect.rect.height;
+            }
+
+            return parentRectTransform.rect.height;
+        }
+
+        private Vector2 GetVisiblePosition()
+        {
+            return visiblePosition;
+        }
+
+        private Vector2 GetHiddenPosition()
+        {
+            if (mutationTreeRect == null)
+            {
+                return hiddenPosition;
+            }
+
+            float hiddenX = -Mathf.Max(mutationTreeRect.rect.width, 1f);
+            return new Vector2(hiddenX, visiblePosition.y);
         }
 
         public void SetSpendPointsButtonInteractable(bool interactable)
