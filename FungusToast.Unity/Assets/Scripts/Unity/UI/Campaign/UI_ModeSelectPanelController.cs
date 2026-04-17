@@ -19,13 +19,16 @@ namespace FungusToast.Unity.UI.Campaign
         private const float CreditsTextWidth = 700f;
         private const float WideLogoWidth = 520f;
         private const float WideLogoHeight = 223f;
-        private const float TitleHeight = 44f;
+        private const float TitleHeight = 34f;
         private const float SummaryHeight = 68f;
         private const float FooterHeight = 24f;
         private const float MinimumVerticalMargin = 32f;
         private const float ResponsiveScaleSafetyFactor = 0.97f;
         private const float SecondaryButtonHeight = 52f;
         private const float SecondaryButtonWidth = 240f;
+        private const int MainMenuHorizontalPadding = 40;
+        private const int MainMenuVerticalPadding = 32;
+        private const float MainMenuElementSpacing = 16f;
         private const string AlphaHeadingText = "Alpha test build";
         private const string AlphaSummaryCopy = "Alpha build for testing. Hotseat and campaign are both available; progression and balance are still in flux.";
         private const string CreditsHeadingText = "Special Credits";
@@ -198,6 +201,17 @@ namespace FungusToast.Unity.UI.Campaign
             if (contentRoot != null)
             {
                 contentRoot.sizeDelta = new Vector2(ExpandedContentWidth, contentRoot.sizeDelta.y);
+
+                VerticalLayoutGroup contentLayout = contentRoot.GetComponent<VerticalLayoutGroup>();
+                if (contentLayout != null)
+                {
+                    contentLayout.padding = new RectOffset(
+                        MainMenuHorizontalPadding,
+                        MainMenuHorizontalPadding,
+                        MainMenuVerticalPadding,
+                        MainMenuVerticalPadding);
+                    contentLayout.spacing = MainMenuElementSpacing;
+                }
             }
 
             ResizeRectTransform(hotseatButton != null ? hotseatButton.GetComponent<RectTransform>() : null, ExpandedButtonWidth, 90f);
