@@ -5,8 +5,6 @@ namespace FungusToast.Unity.Input
 {
     internal static class UnityInputAdapter
     {
-        private const float LegacyScrollStep = 120f;
-
         public static Vector2 GetPointerScreenPosition()
         {
             if (Pointer.current != null)
@@ -45,7 +43,15 @@ namespace FungusToast.Unity.Input
                 return 0f;
             }
 
-            return rawScroll / LegacyScrollStep;
+            // Unity's Input System defaults to a normalized [-1, 1] scroll range already.
+            // Only convert the legacy Windows wheel range when the project explicitly keeps
+            // platform-specific scroll values.
+            if (InputSystem.settings.scrollDeltaBehavior == InputSettings.ScrollDeltaBehavior.KeepPlatformSpecificInputRange)
+            {
+                return rawScroll / 120f;
+            }
+
+            return rawScroll;
         }
 
         public static Vector2 GetKeyboardMoveVector()

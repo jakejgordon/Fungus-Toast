@@ -56,6 +56,8 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     private RectTransform tooltipRectTransform;
     private CanvasGroup tooltipCanvasGroup;
     private CellTooltipUI tooltipUI;
+    private Canvas rootCanvas;
+    private RectTransform rootCanvasRect;
 
     [Header("Board Size Gate")] [SerializeField] private int minBoardSizeForMagnifier =30; // minimum width/height required
     private bool visualsAllowed = true; // NEW: whether magnifier visuals may appear (tooltips ignore this)
@@ -64,6 +66,8 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     void Start()
     {
         // Tooltip will be created dynamically when needed
+
+        CacheRootCanvas();
 
         ResolveMagnifierCamera();
         
@@ -148,7 +152,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     {
         // Always move the magnifying glass root to mouse position (for potential future use)
         Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
-        transform.position = new Vector3(pointerScreen.x, pointerScreen.y, transform.position.z);
+        PositionRectTransformAtScreen(transform as RectTransform, pointerScreen);
 
         bool overBread = gameStarted && IsMouseOverBread();
         bool pointerOverUI = EventSystem.current.IsPointerOverGameObject();
@@ -415,7 +419,18 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     void CreateTooltipInstance()
     {
         // Find the UI Canvas
-        Canvas uiCanvas = FindAnyObjectByType<Canvas>();
+        CacheRootCanvas();
+        Canvas uiCanvas = rootCanvas;
+        if (uiCanvas == null)
+        {
+            uiCanvas = FindAnyObjectByType<Canvas>()?.rootCanvas;
+            if (uiCanvas != null)
+            {
+                rootCanvas = uiCanvas;
+                rootCanvasRect = uiCanvas.transform as RectTransform;
+            }
+        }
+
         if (uiCanvas == null)
         {
             Debug.LogError("[Tooltip] No Canvas found! Tooltip cannot be created.");
@@ -445,9 +460,9 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         // CRITICAL: Configure RectTransform for proper positioning
         if (tooltipRectTransform != null)
         {
-            // Set anchors to bottom-left (0,0) for screen-space positioning
-            tooltipRectTransform.anchorMin = Vector2.zero;
-            tooltipRectTransform.anchorMax = Vector2.zero;
+            // Use a fixed anchor so canvas-local positioning remains consistent under scaling.
+            tooltipRectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            tooltipRectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             
             // Set pivot to bottom-left (0,0) for consistent positioning
             tooltipRectTransform.pivot = Vector2.zero;
@@ -701,9 +716,17 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         if (tooltipRectTransform == null)
             return;
 
+        CacheRootCanvas();
+        if (rootCanvas == null || rootCanvasRect == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(tooltipRectTransform);
+
         Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
         Vector3 mousePos = new Vector3(pointerScreen.x, pointerScreen.y, 0f);
-        Vector2 tooltipSize = tooltipRectTransform.sizeDelta;
+        Rect tooltipPixelRect = RectTransformUtility.PixelAdjustRect(tooltipRectTransform, rootCanvas);
+        Vector2 tooltipSize = tooltipPixelRect.size;
         Vector2 screenSize = new Vector2(Screen.width, Screen.height);
 
         // Calculate position to the right of the mouse with offset
@@ -725,10 +748,40 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         tooltipPos.x = Mathf.Clamp(tooltipPos.x, 0, screenSize.x - tooltipSize.x);
         tooltipPos.y = Mathf.Clamp(tooltipPos.y, 0, screenSize.y - tooltipSize.y);
 
-        tooltipRectTransform.anchoredPosition = new Vector2(tooltipPos.x, tooltipPos.y);
+        PositionRectTransformAtScreen(tooltipRectTransform, new Vector2(tooltipPos.x, tooltipPos.y));
 
         if (enableDebugLogs)
             Debug.Log($"[Tooltip Debug] Positioned tooltip at: {tooltipPos} (mouse: {mousePos}, offset: {tooltipOffset})");
+    }
+
+    void CacheRootCanvas()
+    {
+        if (rootCanvas != null && rootCanvasRect != null)
+            return;
+
+        rootCanvas = GetComponentInParent<Canvas>()?.rootCanvas;
+        if (rootCanvas == null && tooltipInstance != null)
+            rootCanvas = tooltipInstance.GetComponentInParent<Canvas>()?.rootCanvas;
+
+        if (rootCanvas != null)
+            rootCanvasRect = rootCanvas.transform as RectTransform;
+    }
+
+    void PositionRectTransformAtScreen(RectTransform rectTransform, Vector2 screenPosition)
+    {
+        if (rectTransform == null)
+            return;
+
+        CacheRootCanvas();
+        Camera uiCamera = rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? rootCanvas.worldCamera : null;
+
+        if (rootCanvasRect != null && RectTransformUtility.ScreenPointToLocalPointInRectangle(rootCanvasRect, screenPosition, uiCamera, out Vector2 localPosition))
+        {
+            rectTransform.anchoredPosition = localPosition;
+            return;
+        }
+
+        rectTransform.position = new Vector3(screenPosition.x, screenPosition.y, rectTransform.position.z);
     }
 
     void HideTooltip()

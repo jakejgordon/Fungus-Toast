@@ -13,7 +13,7 @@ namespace FungusToast.Unity.Cameras
         [Header("Input Stability")]
         [Tooltip("Caps the timestep used for pan input so animation hitches do not fling the camera across the board.")]
         [SerializeField] private float maxPanInputDeltaTime = 1f / 45f;
-        [Tooltip("Caps how far camera panning can move in a single frame, even if input spikes during heavy animations.")]
+        [Tooltip("Caps how far camera panning can move in a single frame at minimum zoom. The cap scales up with camera zoom so normal movement stays responsive while hitch spikes remain bounded.")]
         [SerializeField] private float maxPanDistancePerFrame = 0.75f;
 
         [Header("Camera Bounds")]
@@ -45,13 +45,15 @@ namespace FungusToast.Unity.Cameras
             float scroll = UnityInputAdapter.GetMouseScrollDelta();
             if (Camera.main != null)
             {
+                Camera mainCamera = Camera.main;
                 float panDeltaTime = GetPanDeltaTime();
-                float size = Camera.main.orthographicSize;
+                float maxPanDistance = GetMaxPanDistancePerFrame(mainCamera);
+                float size = mainCamera.orthographicSize;
 
                 // --- Zoom to mouse cursor logic ---
                 if (Mathf.Abs(scroll) > 0.0001f)
                 {
-                    Camera cam = Camera.main;
+                    Camera cam = mainCamera;
                     // 1. Get world position under mouse before zoom
                     Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
                     Vector3 mouseScreenPos = new Vector3(pointerScreen.x, pointerScreen.y, 0f);
@@ -76,7 +78,7 @@ namespace FungusToast.Unity.Cameras
                 {
                     // If no zoom, just clamp orthographic size
                     size = Mathf.Clamp(size, minZoom, maxZoom);
-                    Camera.main.orthographicSize = size;
+                    mainCamera.orthographicSize = size;
                 }
 
                 // --- Panning with WASD/Arrow Keys ---
@@ -85,23 +87,23 @@ namespace FungusToast.Unity.Cameras
                 if (move != Vector3.zero)
                 {
                     // Scale movement by camera size for consistent feel
-                    float scaledSpeed = moveSpeed * Camera.main.orthographicSize;
-                    Vector3 frameDelta = Vector3.ClampMagnitude(move * scaledSpeed * panDeltaTime, maxPanDistancePerFrame);
-                    Vector3 newPosition = Camera.main.transform.position + frameDelta;
-                    Camera.main.transform.position = ClampCameraPosition(newPosition);
+                    float scaledSpeed = moveSpeed * mainCamera.orthographicSize;
+                    Vector3 frameDelta = Vector3.ClampMagnitude(move * scaledSpeed * panDeltaTime, maxPanDistance);
+                    Vector3 newPosition = mainCamera.transform.position + frameDelta;
+                    mainCamera.transform.position = ClampCameraPosition(newPosition);
                 }
 
                 // --- Right-click drag pan ---
                 if (UnityInputAdapter.IsSecondaryPointerPressed())
                 {
                     // Pointer delta is already frame-relative, so convert pixels directly into world-space movement.
-                    float unitsPerPixel = (2f * Camera.main.orthographicSize) / Mathf.Max(1f, Camera.main.pixelHeight);
+                    float unitsPerPixel = (2f * mainCamera.orthographicSize) / Mathf.Max(1f, mainCamera.pixelHeight);
                     Vector2 pointerDelta = UnityInputAdapter.GetPointerDelta();
                     Vector3 frameDelta = Vector3.ClampMagnitude(
                         new Vector3(-pointerDelta.x * unitsPerPixel, -pointerDelta.y * unitsPerPixel, 0f),
-                        maxPanDistancePerFrame);
-                    Vector3 newPosition = Camera.main.transform.position + frameDelta;
-                    Camera.main.transform.position = ClampCameraPosition(newPosition);
+                        maxPanDistance);
+                    Vector3 newPosition = mainCamera.transform.position + frameDelta;
+                    mainCamera.transform.position = ClampCameraPosition(newPosition);
                 }
             }
         }
@@ -109,6 +111,17 @@ namespace FungusToast.Unity.Cameras
         private float GetPanDeltaTime()
         {
             return Mathf.Min(Time.unscaledDeltaTime, maxPanInputDeltaTime);
+        }
+
+        private float GetMaxPanDistancePerFrame(Camera camera)
+        {
+            if (camera == null)
+            {
+                return maxPanDistancePerFrame;
+            }
+
+            float zoomScale = camera.orthographicSize / Mathf.Max(0.01f, minZoom);
+            return maxPanDistancePerFrame * Mathf.Max(1f, zoomScale);
         }
 
         /// <summary>

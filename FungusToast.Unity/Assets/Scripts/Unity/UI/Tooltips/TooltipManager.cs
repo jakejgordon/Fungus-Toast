@@ -58,6 +58,15 @@ namespace FungusToast.Unity.UI.Tooltips
             tooltipCanvas.overrideSorting = true;
             tooltipCanvas.sortingOrder = short.MaxValue;
             view = go.GetComponent<TooltipView>();
+
+            RectTransform tooltipRect = go.transform as RectTransform;
+            if (tooltipRect != null)
+            {
+                tooltipRect.anchorMin = new Vector2(0.5f, 0.5f);
+                tooltipRect.anchorMax = new Vector2(0.5f, 0.5f);
+                tooltipRect.anchoredPosition = Vector2.zero;
+            }
+
             go.SetActive(false);
         }
 
@@ -140,13 +149,10 @@ namespace FungusToast.Unity.UI.Tooltips
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(tooltipRect);
 
-            // ── Tooltip screen-space size from world corners (accurate regardless of canvas setup) ──
-            Vector3[] ttWc = new Vector3[4];
-            tooltipRect.GetWorldCorners(ttWc);
-            Vector2 ttS0 = RectTransformUtility.WorldToScreenPoint(cam, ttWc[0]); // BL
-            Vector2 ttS2 = RectTransformUtility.WorldToScreenPoint(cam, ttWc[2]); // TR
-            float ttW = Mathf.Abs(ttS2.x - ttS0.x);
-            float ttH = Mathf.Abs(ttS2.y - ttS0.y);
+            // ── Tooltip size in screen pixels after canvas scaling ──
+            Rect tooltipPixelRect = RectTransformUtility.PixelAdjustRect(tooltipRect, rootCanvas);
+            float ttW = tooltipPixelRect.width;
+            float ttH = tooltipPixelRect.height;
 
             // ── Screen safe bounds (in screen pixels) ──
             float sL = screenPadding.x;
@@ -183,10 +189,10 @@ namespace FungusToast.Unity.UI.Tooltips
             void PlaceAtScreen(Vector2 screenPos, Vector2 piv)
             {
                 tooltipRect.pivot = piv;
-                if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
-                        canvasRect, screenPos, cam, out Vector3 worldPos))
+                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                        canvasRect, screenPos, cam, out Vector2 localPos))
                 {
-                    tooltipRect.position = worldPos;
+                    tooltipRect.anchoredPosition = localPos;
                 }
             }
 
