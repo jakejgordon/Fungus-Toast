@@ -15,25 +15,28 @@ namespace FungusToast.Core.Growth
             public BeaconPlacementCandidate(
                 BoardTile tile,
                 int pathLength,
-                int nutrientTilesCrossed,
+                int expectedPlacements,
+                int nutrientValue,
                 int enemyLivingTilesCrossed,
+                int enemyToxinsCrossed,
                 int distancePenalty)
             {
                 Tile = tile;
                 PathLength = pathLength;
-                NutrientTilesCrossed = nutrientTilesCrossed;
+                ExpectedPlacements = expectedPlacements;
+                NutrientValue = nutrientValue;
                 EnemyLivingTilesCrossed = enemyLivingTilesCrossed;
+                EnemyToxinsCrossed = enemyToxinsCrossed;
                 DistancePenalty = distancePenalty;
             }
 
             public BoardTile Tile { get; }
             public int PathLength { get; }
-            public int NutrientTilesCrossed { get; }
+            public int ExpectedPlacements { get; }
+            public int NutrientValue { get; }
             public int EnemyLivingTilesCrossed { get; }
+            public int EnemyToxinsCrossed { get; }
             public int DistancePenalty { get; }
-            public int Score => (NutrientTilesCrossed * GameBalance.ChemotacticBeaconAiNutrientPathScore)
-                + (EnemyLivingTilesCrossed * GameBalance.ChemotacticBeaconAiEnemyLivingPathScore)
-                - (DistancePenalty * GameBalance.ChemotacticBeaconAiDistancePenaltyPerTile);
         }
 
         public static bool TryGetActiveMarker(GameBoard board, Player player, out GameBoard.ChemobeaconMarker? marker)
@@ -77,14 +80,19 @@ namespace FungusToast.Core.Growth
             }
 
             int idealDistance = CalculateIdealDistance(projectedLevel, surgeDuration);
-            var bestCandidate = validTiles
-                .Select(tile => EvaluateCandidateTile(tile, anchor, player.PlayerId, board, idealDistance))
+            int maxPlacements = Math.Max(0, idealDistance);
+            var candidates = validTiles
+                .Select(tile => EvaluateCandidateTile(tile, anchor, player.PlayerId, board, idealDistance, maxPlacements))
                 .Where(candidate => candidate != null)
-                .OrderByDescending(candidate => candidate!.Score)
-                .ThenBy(candidate => candidate!.DistancePenalty)
+                .ToList();
+
+            var bestCandidate = candidates
+                .OrderByDescending(candidate => candidate!.EnemyLivingTilesCrossed)
+                .ThenByDescending(candidate => candidate!.EnemyToxinsCrossed)
+                .ThenByDescending(candidate => candidate!.NutrientValue)
+                .ThenByDescending(candidate => candidate!.ExpectedPlacements)
                 .ThenByDescending(candidate => candidate!.PathLength)
-                .ThenByDescending(candidate => candidate!.NutrientTilesCrossed)
-                .ThenByDescending(candidate => candidate!.EnemyLivingTilesCrossed)
+                .ThenBy(candidate => candidate!.DistancePenalty)
                 .ThenBy(candidate => candidate!.Tile.TileId)
                 .FirstOrDefault();
 
@@ -104,7 +112,8 @@ namespace FungusToast.Core.Growth
             BoardTile anchor,
             int playerId,
             GameBoard board,
-            int idealDistance)
+            int idealDistance,
+            int maxPlacements)
         {
             int dx = candidateTile.X - anchor.X;
             int dy = candidateTile.Y - anchor.Y;
@@ -120,9 +129,12 @@ namespace FungusToast.Core.Growth
                 return null;
             }
 
-            int nutrientTilesCrossed = 0;
+            int expectedPlacements = Math.Min(pathLength, maxPlacements);
+            int nutrientValue = 0;
             int enemyLivingTilesCrossed = 0;
-            for (int index = 0; index < path.Count - 1; index++)
+            int enemyToxinsCrossed = 0;
+            int stepsToEvaluate = Math.Min(expectedPlacements, Math.Max(0, path.Count - 1));
+            for (int index = 0; index < stepsToEvaluate; index++)
             {
                 var (x, y) = path[index];
                 var pathTile = board.GetTile(x, y);
@@ -133,20 +145,29 @@ namespace FungusToast.Core.Growth
 
                 if (pathTile.HasNutrientPatch)
                 {
-                    nutrientTilesCrossed++;
+                    nutrientValue += pathTile.NutrientPatch?.ClusterTileCount ?? 1;
                 }
 
-                if (pathTile.FungalCell is { IsAlive: true, OwnerPlayerId: var ownerId } && ownerId != playerId)
+                if (pathTile.FungalCell is { OwnerPlayerId: var ownerId } cell && ownerId != playerId)
                 {
-                    enemyLivingTilesCrossed++;
+                    if (cell.IsAlive)
+                    {
+                        enemyLivingTilesCrossed++;
+                    }
+                    else if (cell.IsToxin)
+                    {
+                        enemyToxinsCrossed++;
+                    }
                 }
             }
 
             return new BeaconPlacementCandidate(
                 candidateTile,
                 pathLength,
-                nutrientTilesCrossed,
+                expectedPlacements,
+                nutrientValue,
                 enemyLivingTilesCrossed,
+                enemyToxinsCrossed,
                 Math.Abs(pathLength - idealDistance));
         }
 

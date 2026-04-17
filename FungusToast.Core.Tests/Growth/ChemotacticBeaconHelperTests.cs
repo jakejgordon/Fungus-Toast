@@ -56,21 +56,21 @@ public class ChemotacticBeaconHelperTests
     }
 
     [Fact]
-    public void TrySelectAITargetTile_prefers_tiles_near_the_ideal_distance()
+    public void TrySelectAITargetTile_prefers_targets_with_more_expected_placements_before_reaching_the_beacon()
     {
         var board = new GameBoard(width: 50, height: 1, playerCount: 1);
         var player = CreatePlayer();
         board.Players.Add(player);
         board.PlaceInitialSpore(player.PlayerId, x: 1, y: 0);
 
-        int nearTileId = board.GetTile(16, 0)!.TileId;
-        int idealTileId = board.GetTile(31, 0)!.TileId;
-        BlockAllOpenTilesExcept(board, player.PlayerId, nearTileId, idealTileId);
+        int shortTargetTileId = board.GetTile(16, 0)!.TileId;
+        int longTargetTileId = board.GetTile(31, 0)!.TileId;
+        BlockAllOpenTilesExcept(board, player.PlayerId, shortTargetTileId, longTargetTileId);
 
         int projectedLevel = 1;
         int? tileId = ChemotacticBeaconHelper.TrySelectAITargetTile(player, board, projectedLevel, GameBalance.ChemotacticBeaconSurgeDuration);
 
-        Assert.Equal(idealTileId, tileId);
+        Assert.Equal(longTargetTileId, tileId);
     }
 
     [Fact]
@@ -84,12 +84,31 @@ public class ChemotacticBeaconHelperTests
 
         var emptyPathTarget = Assert.IsType<BoardTile>(board.GetTile(31, 10));
         var nutrientPathTarget = Assert.IsType<BoardTile>(board.GetTile(27, 14));
-        PlaceNutrientsOnUniquePathTiles(board, startTile, emptyPathTarget, nutrientPathTarget, count: 2);
+        PlaceNutrientsOnUniquePathTiles(board, startTile, emptyPathTarget, nutrientPathTarget, 2, 5);
         BlockAllOpenTilesExcept(board, player.PlayerId, emptyPathTarget.TileId, nutrientPathTarget.TileId);
 
         int? tileId = ChemotacticBeaconHelper.TrySelectAITargetTile(player, board, projectedLevel: 1, GameBalance.ChemotacticBeaconSurgeDuration);
 
         Assert.Equal(nutrientPathTarget.TileId, tileId);
+    }
+
+    [Fact]
+    public void TrySelectAITargetTile_values_larger_nutrient_patches_more_than_smaller_ones()
+    {
+        var board = new GameBoard(width: 40, height: 20, playerCount: 1);
+        var player = CreatePlayer();
+        board.Players.Add(player);
+        var startTile = Assert.IsType<BoardTile>(board.GetTile(1, 10));
+        board.PlaceInitialSpore(player.PlayerId, startTile.X, startTile.Y);
+
+        var smallPatchTarget = Assert.IsType<BoardTile>(board.GetTile(27, 6));
+        var largePatchTarget = Assert.IsType<BoardTile>(board.GetTile(27, 14));
+        PlaceNutrientsOnUniquePathTiles(board, startTile, smallPatchTarget, largePatchTarget, 1, 6);
+        BlockAllOpenTilesExcept(board, player.PlayerId, smallPatchTarget.TileId, largePatchTarget.TileId);
+
+        int? tileId = ChemotacticBeaconHelper.TrySelectAITargetTile(player, board, projectedLevel: 1, GameBalance.ChemotacticBeaconSurgeDuration);
+
+        Assert.Equal(largePatchTarget.TileId, tileId);
     }
 
     [Fact]
@@ -112,6 +131,29 @@ public class ChemotacticBeaconHelperTests
         int? tileId = ChemotacticBeaconHelper.TrySelectAITargetTile(player, board, projectedLevel: 1, GameBalance.ChemotacticBeaconSurgeDuration);
 
         Assert.Equal(enemyPathTarget.TileId, tileId);
+    }
+
+    [Fact]
+    public void TrySelectAITargetTile_prefers_enemy_living_cells_over_enemy_toxins_when_other_value_is_similar()
+    {
+        var board = new GameBoard(width: 40, height: 20, playerCount: 2);
+        var player = CreatePlayer();
+        var enemy = CreatePlayer(playerId: 1, playerName: "Enemy");
+        board.Players.Add(player);
+        board.Players.Add(enemy);
+        var startTile = Assert.IsType<BoardTile>(board.GetTile(1, 10));
+        board.PlaceInitialSpore(player.PlayerId, startTile.X, startTile.Y);
+        board.PlaceInitialSpore(enemy.PlayerId, x: 35, y: 10);
+
+        var toxinPathTarget = Assert.IsType<BoardTile>(board.GetTile(29, 6));
+        var livingPathTarget = Assert.IsType<BoardTile>(board.GetTile(29, 14));
+        PlaceEnemyToxinsOnUniquePathTiles(board, enemy.PlayerId, startTile, toxinPathTarget, livingPathTarget, count: 4, toxinLifespan: 5);
+        PlaceEnemyCellsOnUniquePathTiles(board, enemy.PlayerId, startTile, toxinPathTarget, livingPathTarget, count: 4);
+        BlockAllOpenTilesExcept(board, player.PlayerId, toxinPathTarget.TileId, livingPathTarget.TileId);
+
+        int? tileId = ChemotacticBeaconHelper.TrySelectAITargetTile(player, board, projectedLevel: 1, GameBalance.ChemotacticBeaconSurgeDuration);
+
+        Assert.Equal(livingPathTarget.TileId, tileId);
     }
 
     [Fact]
@@ -145,22 +187,31 @@ public class ChemotacticBeaconHelperTests
         }
     }
 
-    private static void PlaceNutrientsOnUniquePathTiles(GameBoard board, BoardTile startTile, BoardTile emptyPathTarget, BoardTile weightedTarget, int count)
+    private static void PlaceNutrientsOnUniquePathTiles(GameBoard board, BoardTile startTile, BoardTile baselineTarget, BoardTile weightedTarget, params int[] clusterSizes)
     {
-        var uniqueTileIds = GetUniqueIntermediateTileIds(board, startTile, emptyPathTarget, weightedTarget);
-        for (int index = 0; index < count && index < uniqueTileIds.Count; index++)
+        var uniqueTileIds = GetUniqueIntermediateTileIds(board, startTile, baselineTarget, weightedTarget);
+        for (int index = 0; index < clusterSizes.Length && index < uniqueTileIds.Count; index++)
         {
-            bool placed = board.PlaceNutrientPatch(uniqueTileIds[index], NutrientPatch.CreateAdaptogenCluster(clusterId: index + 1, clusterTileCount: 1));
+            bool placed = board.PlaceNutrientPatch(uniqueTileIds[index], NutrientPatch.CreateAdaptogenCluster(clusterId: index + 1, clusterTileCount: clusterSizes[index]));
             Assert.True(placed);
         }
     }
 
-    private static void PlaceEnemyCellsOnUniquePathTiles(GameBoard board, int enemyPlayerId, BoardTile startTile, BoardTile emptyPathTarget, BoardTile weightedTarget, int count)
+    private static void PlaceEnemyCellsOnUniquePathTiles(GameBoard board, int enemyPlayerId, BoardTile startTile, BoardTile baselineTarget, BoardTile weightedTarget, int count)
     {
-        var uniqueTileIds = GetUniqueIntermediateTileIds(board, startTile, emptyPathTarget, weightedTarget);
+        var uniqueTileIds = GetUniqueIntermediateTileIds(board, startTile, baselineTarget, weightedTarget);
         for (int index = 0; index < count && index < uniqueTileIds.Count; index++)
         {
             board.PlaceFungalCell(new FungalCell(enemyPlayerId, uniqueTileIds[index], GrowthSource.Manual, lastOwnerPlayerId: null));
+        }
+    }
+
+    private static void PlaceEnemyToxinsOnUniquePathTiles(GameBoard board, int enemyPlayerId, BoardTile startTile, BoardTile baselineTarget, BoardTile weightedTarget, int count, int toxinLifespan)
+    {
+        var uniqueTileIds = GetUniqueIntermediateTileIds(board, startTile, baselineTarget, weightedTarget);
+        for (int index = 0; index < count && index < uniqueTileIds.Count; index++)
+        {
+            board.PlaceFungalCell(new FungalCell(enemyPlayerId, uniqueTileIds[index], GrowthSource.Manual, toxinLifespan, lastOwnerPlayerId: null));
         }
     }
 
