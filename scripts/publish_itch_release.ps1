@@ -270,8 +270,36 @@ function Initialize-ButlerApiKey {
     }
 }
 
+function Get-OrphanedAssetImportWorkerProcessIds {
+    $unityProcesses = @(Get-CimInstance Win32_Process -Filter "Name = 'Unity.exe'" -ErrorAction SilentlyContinue)
+    if ($unityProcesses.Count -eq 0) {
+        return @()
+    }
+
+    $processIds = [System.Collections.Generic.HashSet[int]]::new()
+    foreach ($process in $unityProcesses) {
+        $commandLine = [string]$process.CommandLine
+        if ([string]::IsNullOrWhiteSpace($commandLine) -or $commandLine -notmatch 'AssetImportWorker\d+') {
+            continue
+        }
+
+        $parentId = [int]$process.ParentProcessId
+        $parentProcess = Get-Process -Id $parentId -ErrorAction SilentlyContinue
+        if ($null -ne $parentProcess) {
+            continue
+        }
+
+        [void]$processIds.Add([int]$process.ProcessId)
+    }
+
+    return @($processIds)
+}
+
 function Assert-UnityEditorIsClosed {
+    $orphanedAssetImportWorkerProcessIds = Get-OrphanedAssetImportWorkerProcessIds
+
     $runningUnityProcesses = @(Get-Process -Name 'Unity' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Id -notin $orphanedAssetImportWorkerProcessIds } |
         Sort-Object -Property Id)
 
     if ($runningUnityProcesses.Count -eq 0) {
