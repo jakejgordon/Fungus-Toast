@@ -271,10 +271,10 @@ function Initialize-ButlerApiKey {
 }
 
 function Assert-UnityEditorIsClosed {
-    $runningUnityProcesses = Get-Process -Name 'Unity' -ErrorAction SilentlyContinue |
-        Sort-Object -Property Id
+    $runningUnityProcesses = @(Get-Process -Name 'Unity' -ErrorAction SilentlyContinue |
+        Sort-Object -Property Id)
 
-    if ($null -eq $runningUnityProcesses -or $runningUnityProcesses.Count -eq 0) {
+    if ($runningUnityProcesses.Count -eq 0) {
         return
     }
 
