@@ -33,6 +33,7 @@ namespace FungusToast.Unity.Campaign
         }
         public IReadOnlyList<string> CurrentResolvedAiStrategyNames => State != null ? State.resolvedAiStrategyNames : Array.Empty<string>();
         public bool IsAwaitingAdaptationSelection => State != null && State.pendingAdaptationSelection;
+        public bool IsAwaitingDefeatCarryoverSelection => State != null && State.pendingDefeatCarryoverSelection;
         public bool IsCompleted => State != null && State.campaignCompleted;
         public CampaignVictorySnapshot PendingVictorySnapshot => State?.pendingVictorySnapshot;
         public int HumanMoldIndex => State != null ? State.humanMoldIndex : 0;
@@ -60,6 +61,9 @@ namespace FungusToast.Unity.Campaign
                 pendingAdaptationSelection = false,
                 campaignCompleted = false,
                 pendingVictorySnapshot = null,
+                pendingDefeatCarryoverSelection = false,
+                pendingDefeatCarryoverOptions = new List<string>(),
+                pendingNextRunCarryoverAdaptationIds = new List<string>(),
                 resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, 0),
                 moldiness = MoldinessProgression.CreateDefaultState()
             };
@@ -85,6 +89,8 @@ namespace FungusToast.Unity.Campaign
             State = loaded;
             State.selectedAdaptationIds ??= new List<string>();
             State.resolvedAiStrategyNames ??= new List<string>();
+            State.pendingDefeatCarryoverOptions ??= new List<string>();
+            State.pendingNextRunCarryoverAdaptationIds ??= new List<string>();
             State.moldiness ??= MoldinessProgression.CreateDefaultState();
             State.moldiness.pendingUnlockTriggers ??= new List<MoldinessUnlockTrigger>();
             State.moldiness.unlockedRewardIds ??= new List<string>();
@@ -138,7 +144,7 @@ namespace FungusToast.Unity.Campaign
             }
             if (!victory)
             {
-                ResetRunAfterDefeat();
+                BeginDefeatCarryoverSelectionOrReset();
                 return;
             }
 
@@ -295,6 +301,60 @@ namespace FungusToast.Unity.Campaign
             return true;
         }
 
+        public IReadOnlyList<AdaptationDefinition> GetPendingDefeatCarryoverOptions()
+        {
+            if (State?.pendingDefeatCarryoverOptions == null || State.pendingDefeatCarryoverOptions.Count == 0)
+            {
+                return Array.Empty<AdaptationDefinition>();
+            }
+
+            var options = new List<AdaptationDefinition>();
+            foreach (var adaptationId in State.pendingDefeatCarryoverOptions)
+            {
+                if (AdaptationRepository.TryGetById(adaptationId, out var adaptation))
+                {
+                    options.Add(adaptation);
+                }
+            }
+
+            return options;
+        }
+
+        public bool TryConfirmDefeatCarryoverSelection(IReadOnlyList<string> selectedAdaptationIds)
+        {
+            if (State == null || !State.pendingDefeatCarryoverSelection)
+            {
+                return false;
+            }
+
+            int capacity = Math.Max(0, State.moldiness?.failedRunAdaptationCarryoverCount ?? 0);
+            var selectedIds = selectedAdaptationIds == null
+                ? new List<string>()
+                : selectedAdaptationIds
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Distinct(StringComparer.Ordinal)
+                    .ToList();
+
+            if (selectedIds.Count > capacity)
+            {
+                Debug.LogWarning($"[CampaignController] Defeat carryover selection exceeded capacity {capacity}.");
+                return false;
+            }
+
+            var validOptions = new HashSet<string>(State.pendingDefeatCarryoverOptions ?? new List<string>(), StringComparer.Ordinal);
+            if (selectedIds.Any(id => !validOptions.Contains(id)))
+            {
+                Debug.LogWarning("[CampaignController] Defeat carryover selection included an invalid adaptation id.");
+                return false;
+            }
+
+            State.pendingNextRunCarryoverAdaptationIds = selectedIds;
+            State.pendingDefeatCarryoverSelection = false;
+            State.pendingDefeatCarryoverOptions = new List<string>();
+            ResetRunAfterDefeat();
+            return true;
+        }
+
         public bool TryAdvanceWithoutAdaptationReward()
         {
             if (State == null || !State.pendingAdaptationSelection)
@@ -344,6 +404,29 @@ namespace FungusToast.Unity.Campaign
         /// <summary>
         /// Reset the run after defeat (player returns to mode select with fresh level0 state).
         /// </summary>
+        private void BeginDefeatCarryoverSelectionOrReset()
+        {
+            State.moldiness ??= MoldinessProgression.CreateDefaultState();
+            int carryoverCapacity = Math.Max(0, State.moldiness.failedRunAdaptationCarryoverCount);
+            var carryoverOptions = (State.selectedAdaptationIds ?? new List<string>())
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+
+            if (carryoverCapacity > 0 && carryoverOptions.Count > 0)
+            {
+                State.pendingDefeatCarryoverSelection = true;
+                State.pendingDefeatCarryoverOptions = carryoverOptions;
+                State.pendingVictorySnapshot = null;
+                CampaignSaveService.Save(State);
+                Debug.Log($"[CampaignController] Defeat carryover selection pending. Capacity={carryoverCapacity}, Options={carryoverOptions.Count}.");
+                return;
+            }
+
+            State.pendingNextRunCarryoverAdaptationIds = new List<string>();
+            ResetRunAfterDefeat();
+        }
+
         private void ResetRunAfterDefeat()
         {
             if (progression.MaxLevels == 0)
@@ -360,6 +443,11 @@ namespace FungusToast.Unity.Campaign
             var preset = firstSpec.boardPreset;
             State.runId = Guid.NewGuid().ToString();
             State.levelIndex = 0;
+            var carryoverIds = (State.pendingNextRunCarryoverAdaptationIds ?? new List<string>())
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+
             State.selectedAdaptationIds.Clear();
             State.seed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
             State.moldiness ??= MoldinessProgression.CreateDefaultState();
@@ -369,7 +457,18 @@ namespace FungusToast.Unity.Campaign
             State.pendingAdaptationSelection = false;
             State.campaignCompleted = false;
             State.pendingVictorySnapshot = null;
+            State.pendingDefeatCarryoverSelection = false;
+            State.pendingDefeatCarryoverOptions = new List<string>();
+            State.pendingNextRunCarryoverAdaptationIds = new List<string>();
             State.resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, 0);
+
+            foreach (var adaptationId in carryoverIds)
+            {
+                if (!State.selectedAdaptationIds.Contains(adaptationId))
+                {
+                    State.selectedAdaptationIds.Add(adaptationId);
+                }
+            }
             CampaignSaveService.Save(State);
             Debug.Log($"[CampaignController] Run reset after defeat. New RunId={State.runId} Preset={preset.presetId}");
         }

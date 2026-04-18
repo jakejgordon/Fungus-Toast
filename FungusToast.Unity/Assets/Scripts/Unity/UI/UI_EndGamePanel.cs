@@ -17,6 +17,8 @@ using FungusToast.Unity.Endgame;
 using FungusToast.Unity.Input;
 using FungusToast.Unity.UI.Testing;
 using UnityEngine.EventSystems;
+using FungusToast.Core.Campaign;
+using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 
 namespace FungusToast.Unity.UI
 {
@@ -61,6 +63,9 @@ namespace FungusToast.Unity.UI
         private System.Action onCampaignResume;
         private System.Action onExitToModeSelect;
         private bool requiresAdaptationBeforeContinue;
+        private bool requiresDefeatCarryoverSelection;
+        private int defeatCarryoverSelectionCapacity;
+        private readonly HashSet<string> selectedDefeatCarryoverAdaptationIds = new();
         private readonly List<Component> legacyResultsHeaderCandidates = new();
 
         // Post-victory campaign testing controls (runtime-built to avoid scene dependency).
@@ -241,6 +246,9 @@ namespace FungusToast.Unity.UI
             SetLegacyResultsHeaderVisibility(!isCampaign);
             SetOutcomeBannerVisibility(isCampaign);
             requiresAdaptationBeforeContinue = false;
+            requiresDefeatCarryoverSelection = false;
+            selectedDefeatCarryoverAdaptationIds.Clear();
+            defeatCarryoverSelectionCapacity = 0;
             if (!isCampaign)
             {
                 // fallback to base behavior
@@ -279,6 +287,9 @@ namespace FungusToast.Unity.UI
 
             // Buttons
             requiresAdaptationBeforeContinue = adaptationPending;
+            requiresDefeatCarryoverSelection = false;
+            selectedDefeatCarryoverAdaptationIds.Clear();
+            defeatCarryoverSelectionCapacity = 0;
             if (continueButton != null)
                 continueButton.gameObject.SetActive(victory && !finalLevel && hasNextLevel);
             if (exitButton != null)
@@ -360,6 +371,43 @@ namespace FungusToast.Unity.UI
             StartCoroutine(FadeCanvasGroup(1f, 0.25f));
         }
 
+        public void ShowCampaignPendingDefeatCarryoverSelection(IReadOnlyList<AdaptationDefinition> options, int selectionCapacity)
+        {
+            ShowDefeatCarryoverSelectionRows(options, selectionCapacity);
+            SetLegacyResultsHeaderVisibility(false);
+            SetOutcomeBannerVisibility(true);
+            requiresAdaptationBeforeContinue = false;
+            requiresDefeatCarryoverSelection = true;
+            defeatCarryoverSelectionCapacity = Mathf.Max(0, selectionCapacity);
+            selectedDefeatCarryoverAdaptationIds.Clear();
+
+            if (outcomeLabel != null)
+            {
+                outcomeLabel.text =
+                    $"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Preserve your spores</b></color>\n" +
+                    $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Choose up to {defeatCarryoverSelectionCapacity} adaptation{Pluralize(defeatCarryoverSelectionCapacity)} to carry into your next run.</color></size>";
+            }
+
+            if (continueButton != null)
+            {
+                continueButton.gameObject.SetActive(true);
+                continueButton.interactable = true;
+                SetButtonLabel(continueButton, "Confirm Carryover");
+            }
+
+            if (playAgainButton != null)
+            {
+                playAgainButton.gameObject.SetActive(false);
+            }
+
+            if (exitButton != null)
+            {
+                exitButton.gameObject.SetActive(true);
+            }
+
+            UpdatePostVictoryTestingVisibility(false);
+        }
+
         public void ShowCampaignPendingVictorySnapshot(CampaignVictorySnapshot snapshot)
         {
             if (snapshot == null)
@@ -371,6 +419,9 @@ namespace FungusToast.Unity.UI
             SetLegacyResultsHeaderVisibility(false);
             SetOutcomeBannerVisibility(true);
             requiresAdaptationBeforeContinue = true;
+            requiresDefeatCarryoverSelection = false;
+            defeatCarryoverSelectionCapacity = 0;
+            selectedDefeatCarryoverAdaptationIds.Clear();
 
             if (outcomeLabel != null)
             {
@@ -443,6 +494,181 @@ namespace FungusToast.Unity.UI
             canvasGroup.blocksRaycasts = true;
         }
 
+        private void ShowDefeatCarryoverSelectionRows(IReadOnlyList<AdaptationDefinition> options, int selectionCapacity)
+        {
+            HidePlayerDetails();
+            currentPlayerStatistics = EndgamePlayerStatisticsSnapshot.Empty;
+
+            foreach (Transform child in resultsContainer)
+            {
+                Destroy(child.gameObject);
+            }
+
+            BuildCampaignTopSpacer();
+            BuildDefeatCarryoverSelectionContent(options, selectionCapacity);
+
+            ApplyControlReadabilityOverrides();
+
+            gameObject.SetActive(true);
+            canvasGroup.alpha = 1f;
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
+        }
+
+        private void BuildDefeatCarryoverSelectionContent(IReadOnlyList<AdaptationDefinition> options, int selectionCapacity)
+        {
+            if (resultsContainer == null)
+            {
+                return;
+            }
+
+            var root = new GameObject("UI_DefeatCarryoverSelectionRoot", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            root.transform.SetParent(resultsContainer, false);
+
+            var rootLayout = root.GetComponent<VerticalLayoutGroup>();
+            rootLayout.spacing = 18f;
+            rootLayout.padding = new RectOffset(18, 18, 8, 8);
+            rootLayout.childAlignment = TextAnchor.UpperCenter;
+            rootLayout.childControlWidth = true;
+            rootLayout.childControlHeight = true;
+            rootLayout.childForceExpandWidth = true;
+            rootLayout.childForceExpandHeight = false;
+
+            var title = CreateCarryoverInfoText(root.transform,
+                "Choose the adaptations you want to preserve for your next campaign run.",
+                28f,
+                UIStyleTokens.Text.Primary,
+                FontStyles.Bold);
+            title.alignment = TextAlignmentOptions.Center;
+
+            var subtitle = CreateCarryoverInfoText(root.transform,
+                $"Capacity: {Mathf.Max(0, selectionCapacity)}. Click an icon to toggle selection. Hover to inspect details.",
+                22f,
+                UIStyleTokens.Text.Secondary,
+                FontStyles.Normal);
+            subtitle.alignment = TextAlignmentOptions.Center;
+
+            var gridRoot = new GameObject("UI_DefeatCarryoverSelectionGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
+            gridRoot.transform.SetParent(root.transform, false);
+
+            var gridRect = gridRoot.GetComponent<RectTransform>();
+            gridRect.anchorMin = new Vector2(0f, 1f);
+            gridRect.anchorMax = new Vector2(1f, 1f);
+            gridRect.pivot = new Vector2(0.5f, 1f);
+
+            var grid = gridRoot.GetComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(88f, 88f);
+            grid.spacing = new Vector2(16f, 16f);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = Mathf.Clamp(options?.Count ?? 1, 1, 4);
+            grid.childAlignment = TextAnchor.UpperCenter;
+
+            var fitter = gridRoot.GetComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            if (options != null)
+            {
+                foreach (var adaptation in options)
+                {
+                    CreateDefeatCarryoverOptionButton(gridRoot.transform, adaptation, selectionCapacity);
+                }
+            }
+        }
+
+        private void CreateDefeatCarryoverOptionButton(Transform parent, AdaptationDefinition adaptation, int selectionCapacity)
+        {
+            if (adaptation == null || parent == null)
+            {
+                return;
+            }
+
+            var optionObject = new GameObject($"UI_DefeatCarryover_{adaptation.Id}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+            optionObject.transform.SetParent(parent, false);
+
+            var optionImage = optionObject.GetComponent<Image>();
+            optionImage.color = UIStyleTokens.Surface.PanelSecondary;
+            optionImage.sprite = AdaptationArtRepository.GetIcon(adaptation);
+            optionImage.type = Image.Type.Simple;
+            optionImage.preserveAspect = true;
+
+            var layout = optionObject.GetComponent<LayoutElement>();
+            layout.preferredWidth = 88f;
+            layout.preferredHeight = 88f;
+
+            var provider = optionObject.AddComponent<AdaptationTooltipProvider>();
+            provider.Initialize(adaptation);
+
+            var tooltipTrigger = optionObject.AddComponent<TooltipTrigger>();
+            tooltipTrigger.SetDynamicProvider(provider);
+            tooltipTrigger.SetAutoPlacementOffsetX(20f);
+
+            var button = optionObject.GetComponent<Button>();
+            var colors = button.colors;
+            colors.normalColor = UIStyleTokens.Surface.PanelSecondary;
+            colors.highlightedColor = UIStyleTokens.Interaction.HoverOverlay;
+            colors.pressedColor = UIStyleTokens.Interaction.PressedOverlay;
+            colors.selectedColor = UIStyleTokens.State.Success;
+            colors.disabledColor = UIStyleTokens.Surface.PanelPrimary;
+            button.colors = colors;
+            button.transition = Selectable.Transition.ColorTint;
+            button.onClick.AddListener(() => ToggleDefeatCarryoverSelection(adaptation.Id, optionImage, selectionCapacity));
+
+            UpdateDefeatCarryoverOptionVisual(optionImage, false);
+        }
+
+        private void ToggleDefeatCarryoverSelection(string adaptationId, Image optionImage, int selectionCapacity)
+        {
+            if (string.IsNullOrWhiteSpace(adaptationId))
+            {
+                return;
+            }
+
+            bool isSelected = selectedDefeatCarryoverAdaptationIds.Contains(adaptationId);
+            if (isSelected)
+            {
+                selectedDefeatCarryoverAdaptationIds.Remove(adaptationId);
+                UpdateDefeatCarryoverOptionVisual(optionImage, false);
+                return;
+            }
+
+            if (selectedDefeatCarryoverAdaptationIds.Count >= Mathf.Max(0, selectionCapacity))
+            {
+                return;
+            }
+
+            selectedDefeatCarryoverAdaptationIds.Add(adaptationId);
+            UpdateDefeatCarryoverOptionVisual(optionImage, true);
+        }
+
+        private static void UpdateDefeatCarryoverOptionVisual(Image optionImage, bool isSelected)
+        {
+            if (optionImage == null)
+            {
+                return;
+            }
+
+            optionImage.color = isSelected ? UIStyleTokens.State.Success : UIStyleTokens.Surface.PanelSecondary;
+        }
+
+        private static TextMeshProUGUI CreateCarryoverInfoText(Transform parent, string text, float fontSize, Color color, FontStyles fontStyle)
+        {
+            var textObject = new GameObject("UI_DefeatCarryoverInfoText", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            textObject.transform.SetParent(parent, false);
+
+            var layout = textObject.GetComponent<LayoutElement>();
+            layout.preferredHeight = fontSize + 16f;
+
+            var label = textObject.GetComponent<TextMeshProUGUI>();
+            label.text = text;
+            label.fontSize = fontSize;
+            label.fontStyle = fontStyle;
+            label.color = color;
+            label.enableWordWrapping = true;
+            label.alignment = TextAlignmentOptions.Center;
+            return label;
+        }
+
         /* ─────────── Buttons / Helpers ─────────── */
         private void OnClose()
         {
@@ -459,6 +685,30 @@ namespace FungusToast.Unity.UI
 
         private void OnContinueCampaign()
         {
+            if (requiresDefeatCarryoverSelection)
+            {
+                var manager = GameManager.Instance;
+                var campaignController = manager?.CampaignController;
+                if (campaignController == null)
+                {
+                    return;
+                }
+
+                bool confirmed = campaignController.TryConfirmDefeatCarryoverSelection(selectedDefeatCarryoverAdaptationIds.ToList());
+                if (!confirmed)
+                {
+                    return;
+                }
+
+                requiresDefeatCarryoverSelection = false;
+                HideInstant();
+                if (onExitToModeSelect != null)
+                    onExitToModeSelect();
+                else
+                    manager?.ReturnToMainMenu();
+                return;
+            }
+
             if (requiresAdaptationBeforeContinue)
             {
                 var manager = GameManager.Instance;
@@ -543,6 +793,9 @@ namespace FungusToast.Unity.UI
         {
             StopAllCoroutines();
             HidePlayerDetails();
+            requiresDefeatCarryoverSelection = false;
+            defeatCarryoverSelectionCapacity = 0;
+            selectedDefeatCarryoverAdaptationIds.Clear();
             canvasGroup.alpha = 0f;
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
