@@ -152,6 +152,15 @@ namespace FungusToast.Unity.Campaign
             int clearedLevelDisplay = State.levelIndex + 1;
             var moldinessAward = MoldinessProgression.AwardForLevelClear(State.moldiness, clearedLevelDisplay);
             LogMoldinessAward(clearedLevelDisplay, moldinessAward);
+            State.pendingVictorySnapshot ??= new CampaignVictorySnapshot();
+            State.pendingVictorySnapshot.clearedLevelDisplay = clearedLevelDisplay;
+            State.pendingVictorySnapshot.moldinessAwarded = moldinessAward.AmountAwarded;
+            State.pendingVictorySnapshot.moldinessProgressBeforeAward = moldinessAward.PreviousProgress;
+            State.pendingVictorySnapshot.moldinessProgressAfterAward = moldinessAward.NewProgress;
+            State.pendingVictorySnapshot.moldinessThresholdAfterAward = moldinessAward.CurrentThreshold;
+            State.pendingVictorySnapshot.moldinessTierBeforeAward = moldinessAward.PreviousTierIndex;
+            State.pendingVictorySnapshot.moldinessTierAfterAward = moldinessAward.NewTierIndex;
+            State.pendingVictorySnapshot.pendingMoldinessUnlockCount = State.moldiness?.pendingUnlockTriggers?.Count ?? 0;
 
             int nextIndex = State.levelIndex + 1;
             if (nextIndex >= progression.MaxLevels)

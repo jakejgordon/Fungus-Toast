@@ -19,6 +19,7 @@ using FungusToast.Unity.UI.Testing;
 using UnityEngine.EventSystems;
 using FungusToast.Core.Campaign;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
+using static FungusToast.Unity.Campaign.MoldinessProgression;
 
 namespace FungusToast.Unity.UI
 {
@@ -69,6 +70,7 @@ namespace FungusToast.Unity.UI
         private string selectedMoldinessRewardId;
         private readonly HashSet<string> selectedDefeatCarryoverAdaptationIds = new();
         private readonly List<Image> moldinessRewardOptionBackgrounds = new();
+        private readonly List<Image> moldinessSummaryToastTiles = new();
         private readonly List<Component> legacyResultsHeaderCandidates = new();
 
         // Post-victory campaign testing controls (runtime-built to avoid scene dependency).
@@ -247,7 +249,8 @@ namespace FungusToast.Unity.UI
             bool hasNextLevel,
             int lostLevelDisplay,
             int completedLevelDisplay,
-            bool adaptationPending)
+            bool adaptationPending,
+            CampaignVictorySnapshot campaignSnapshot = null)
         {
             ShowResultsInternal(ranked, board, playerStatistics, useCampaignTopSpacer: true);
             SetLegacyResultsHeaderVisibility(!isCampaign);
@@ -312,6 +315,11 @@ namespace FungusToast.Unity.UI
             if (continueButton != null)
             {
                 SetButtonLabel(continueButton, requiresAdaptationBeforeContinue ? "Select Adaptation" : "Continue Campaign");
+            }
+
+            if (isCampaign)
+            {
+                BuildCampaignMoldinessSummaryContent(campaignSnapshot, victory);
             }
 
             ApplyControlReadabilityOverrides();
@@ -750,6 +758,115 @@ namespace FungusToast.Unity.UI
             label.textWrappingMode = TextWrappingModes.Normal;
             label.alignment = TextAlignmentOptions.Center;
             return label;
+        }
+
+        private void BuildCampaignMoldinessSummaryContent(CampaignVictorySnapshot snapshot, bool victory)
+        {
+            if (resultsContainer == null || snapshot == null)
+            {
+                return;
+            }
+
+            var root = new GameObject("UI_CampaignMoldinessSummaryRoot", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(LayoutElement), typeof(ContentSizeFitter));
+            root.transform.SetParent(resultsContainer, false);
+
+            var background = root.GetComponent<Image>();
+            var backgroundColor = UIStyleTokens.Surface.PanelSecondary;
+            backgroundColor.a = 0.5f;
+            background.color = backgroundColor;
+            background.raycastTarget = false;
+
+            var layout = root.GetComponent<VerticalLayoutGroup>();
+            layout.spacing = 10f;
+            layout.padding = new RectOffset(18, 18, 16, 16);
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            var element = root.GetComponent<LayoutElement>();
+            element.flexibleWidth = 1f;
+            element.minHeight = 180f;
+
+            var fitter = root.GetComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            int currentLevel = snapshot.moldinessTierAfterAward + 1;
+            int progressAfter = Mathf.Clamp(snapshot.moldinessProgressAfterAward, 0, Math.Max(1, snapshot.moldinessThresholdAfterAward));
+            int threshold = Math.Max(1, snapshot.moldinessThresholdAfterAward);
+
+            var title = CreateCarryoverInfoText(root.transform,
+                victory ? $"+{snapshot.moldinessAwarded} Moldiness" : "Moldiness progression",
+                26f,
+                UIStyleTokens.Text.Primary,
+                FontStyles.Bold);
+            title.alignment = TextAlignmentOptions.Center;
+
+            var status = CreateCarryoverInfoText(root.transform,
+                $"Moldiness Level {currentLevel}  •  {progressAfter} / {threshold} to next threshold",
+                20f,
+                UIStyleTokens.Text.Secondary,
+                FontStyles.Normal);
+            status.alignment = TextAlignmentOptions.Center;
+
+            BuildMoldinessToastGrid(root.transform, progressAfter, threshold);
+
+            string thresholdMessage = snapshot.pendingMoldinessUnlockCount > 0
+                ? $"Threshold reached. {snapshot.pendingMoldinessUnlockCount} moldiness reward{Pluralize(snapshot.pendingMoldinessUnlockCount)} pending."
+                : (snapshot.moldinessAwarded > 0
+                    ? "No new threshold crossed this run."
+                    : "No moldiness gained this run.");
+
+            var detail = CreateCarryoverInfoText(root.transform,
+                thresholdMessage,
+                18f,
+                snapshot.pendingMoldinessUnlockCount > 0 ? UIStyleTokens.State.Warning : UIStyleTokens.Text.Secondary,
+                snapshot.pendingMoldinessUnlockCount > 0 ? FontStyles.Bold : FontStyles.Normal);
+            detail.alignment = TextAlignmentOptions.Center;
+        }
+
+        private void BuildMoldinessToastGrid(Transform parent, int progress, int threshold)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            moldinessSummaryToastTiles.Clear();
+            var gridRoot = new GameObject("UI_CampaignMoldinessSummaryToastGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
+            gridRoot.transform.SetParent(parent, false);
+
+            var grid = gridRoot.GetComponent<GridLayoutGroup>();
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 4;
+            grid.cellSize = new Vector2(38f, 38f);
+            grid.spacing = new Vector2(8f, 8f);
+            grid.childAlignment = TextAnchor.UpperCenter;
+
+            var fitter = gridRoot.GetComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            int tileCount = 8;
+            int filledCount = Mathf.Clamp(Mathf.CeilToInt((progress / (float)Math.Max(1, threshold)) * tileCount), 0, tileCount);
+            for (int i = 0; i < tileCount; i++)
+            {
+                var tileObject = new GameObject($"UI_CampaignMoldinessSummaryTile_{i + 1}", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+                tileObject.transform.SetParent(gridRoot.transform, false);
+
+                var image = tileObject.GetComponent<Image>();
+                image.raycastTarget = false;
+                image.color = i < filledCount ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Surface.PanelPrimary;
+                moldinessSummaryToastTiles.Add(image);
+
+                var tileLayout = tileObject.GetComponent<LayoutElement>();
+                tileLayout.minWidth = 38f;
+                tileLayout.preferredWidth = 38f;
+                tileLayout.minHeight = 38f;
+                tileLayout.preferredHeight = 38f;
+            }
         }
 
         private void BuildMoldinessRewardSelectionContent(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers)
