@@ -11,6 +11,9 @@ namespace FungusToast.Unity.Campaign
         public int currentTierIndex;
         public int lifetimeEarned;
         public List<MoldinessUnlockTrigger> pendingUnlockTriggers = new();
+        public List<string> unlockedMetaIds = new();
+        public List<string> unlockedAdaptationIds = new();
+        public MoldinessUnlockChoiceState pendingUnlockChoice;
     }
 
     [Serializable]

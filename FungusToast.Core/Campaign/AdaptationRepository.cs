@@ -33,6 +33,18 @@ namespace FungusToast.Core.Campaign
         private static readonly string putrefactiveResiliencePercent =
             (AdaptationGameBalance.PutrefactiveResilienceKillChanceReduction * 100f).ToString("0", CultureInfo.InvariantCulture);
 
+        private static readonly HashSet<string> metaUnlockAdaptationIds = new HashSet<string>(StringComparer.Ordinal)
+        {
+            AdaptationIds.SporeSalvo,
+            AdaptationIds.HyphalBridge,
+            AdaptationIds.VesicleBurst,
+            AdaptationIds.RhizomorphicHunger,
+            AdaptationIds.MycelialCrescendo,
+            AdaptationIds.OssifiedAdvance,
+            AdaptationIds.DistalSpore,
+            AdaptationIds.ConidiaAscent,
+        };
+
         private static readonly ReadOnlyCollection<AdaptationDefinition> all =
             new ReadOnlyCollection<AdaptationDefinition>(
                 new List<AdaptationDefinition>
@@ -184,6 +196,12 @@ namespace FungusToast.Core.Campaign
                 });
 
         public static IReadOnlyList<AdaptationDefinition> All => all;
+
+        public static bool IsMetaUnlockAdaptation(string adaptationId)
+        {
+            return !string.IsNullOrWhiteSpace(adaptationId)
+                && metaUnlockAdaptationIds.Contains(adaptationId);
+        }
 
         public static int GetCentripetalGerminationShiftTiles(int boardWidth)
         {

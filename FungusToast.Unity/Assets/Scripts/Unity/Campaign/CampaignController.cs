@@ -37,6 +37,7 @@ namespace FungusToast.Unity.Campaign
         public CampaignVictorySnapshot PendingVictorySnapshot => State?.pendingVictorySnapshot;
         public int HumanMoldIndex => State != null ? State.humanMoldIndex : 0;
         public MoldinessProgressSnapshot MoldinessProgress => MoldinessProgression.GetSnapshot(State?.moldiness);
+        public bool HasPendingMoldinessUnlockChoice => State?.moldiness?.pendingUnlockTriggers?.Count > 0;
 
         public void StartNew(int humanMoldIndex = 0)
         {
@@ -86,6 +87,8 @@ namespace FungusToast.Unity.Campaign
             State.resolvedAiStrategyNames ??= new List<string>();
             State.moldiness ??= MoldinessProgression.CreateDefaultState();
             State.moldiness.pendingUnlockTriggers ??= new List<MoldinessUnlockTrigger>();
+            State.moldiness.unlockedMetaIds ??= new List<string>();
+            State.moldiness.unlockedAdaptationIds ??= new List<string>();
             if (!State.pendingAdaptationSelection)
             {
                 State.pendingVictorySnapshot = null;
@@ -169,8 +172,11 @@ namespace FungusToast.Unity.Campaign
             }
 
             var selected = new HashSet<string>(State.selectedAdaptationIds ?? new List<string>(), StringComparer.Ordinal);
+            var permanentlyUnlocked = new HashSet<string>(State.moldiness?.unlockedAdaptationIds ?? new List<string>(), StringComparer.Ordinal);
             var remaining = AdaptationRepository.All
-                .Where(x => !x.IsStartingAdaptation && !selected.Contains(x.Id))
+                .Where(x => !x.IsStartingAdaptation)
+                .Where(x => !AdaptationRepository.IsMetaUnlockAdaptation(x.Id) || permanentlyUnlocked.Contains(x.Id))
+                .Where(x => !selected.Contains(x.Id))
                 .ToList();
 
             if (remaining.Count == 0)
@@ -213,6 +219,34 @@ namespace FungusToast.Unity.Campaign
             }
 
             return remaining.Take(count).ToList();
+        }
+
+        public List<MoldinessUnlockDefinition> GetPendingMoldinessUnlockOffers(System.Random random, int count)
+        {
+            if (State?.moldiness == null || State.moldiness.pendingUnlockTriggers == null || State.moldiness.pendingUnlockTriggers.Count == 0)
+            {
+                return new List<MoldinessUnlockDefinition>();
+            }
+
+            return MoldinessUnlockService.GenerateOffers(State.moldiness, random, count);
+        }
+
+        public bool TryApplyMoldinessUnlock(string unlockId)
+        {
+            if (State?.moldiness == null)
+            {
+                return false;
+            }
+
+            var result = MoldinessUnlockService.ApplyUnlockChoice(State.moldiness, unlockId);
+            if (!result.Applied)
+            {
+                return false;
+            }
+
+            CampaignSaveService.Save(State);
+            Debug.Log($"[CampaignController] Applied Moldiness unlock '{result.Definition.Id}' ({result.Definition.PayloadId}).");
+            return true;
         }
 
         public IReadOnlyList<AdaptationDefinition> GetSelectedAdaptations()
