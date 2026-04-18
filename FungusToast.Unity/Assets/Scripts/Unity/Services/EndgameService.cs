@@ -1016,7 +1016,8 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.MutationUIManager?.gameObject.SetActive(false);
 
-            gameUIManager.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(snapshot);
+            var offers = campaignController.GetPendingMoldinessUnlockOffers(getRng(), 3);
+            gameUIManager.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(snapshot, offers);
         }
     }
 

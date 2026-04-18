@@ -66,6 +66,7 @@ namespace FungusToast.Unity.UI
         private bool requiresDefeatCarryoverSelection;
         private bool requiresMoldinessRewardSelection;
         private int defeatCarryoverSelectionCapacity;
+        private string selectedMoldinessRewardId;
         private readonly HashSet<string> selectedDefeatCarryoverAdaptationIds = new();
         private readonly List<Component> legacyResultsHeaderCandidates = new();
 
@@ -249,6 +250,7 @@ namespace FungusToast.Unity.UI
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = false;
+            selectedMoldinessRewardId = null;
             selectedDefeatCarryoverAdaptationIds.Clear();
             defeatCarryoverSelectionCapacity = 0;
             if (!isCampaign)
@@ -291,6 +293,7 @@ namespace FungusToast.Unity.UI
             requiresAdaptationBeforeContinue = adaptationPending;
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = false;
+            selectedMoldinessRewardId = null;
             selectedDefeatCarryoverAdaptationIds.Clear();
             defeatCarryoverSelectionCapacity = 0;
             if (continueButton != null)
@@ -382,6 +385,7 @@ namespace FungusToast.Unity.UI
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = true;
             requiresMoldinessRewardSelection = false;
+            selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = Mathf.Max(0, selectionCapacity);
             selectedDefeatCarryoverAdaptationIds.Clear();
 
@@ -412,7 +416,7 @@ namespace FungusToast.Unity.UI
             UpdatePostVictoryTestingVisibility(false);
         }
 
-        public void ShowCampaignPendingMoldinessRewardSelection(CampaignVictorySnapshot snapshot)
+        public void ShowCampaignPendingMoldinessRewardSelection(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers)
         {
             if (snapshot == null)
             {
@@ -420,11 +424,13 @@ namespace FungusToast.Unity.UI
             }
 
             ShowSnapshotRows(snapshot);
+            BuildMoldinessRewardSelectionContent(offers);
             SetLegacyResultsHeaderVisibility(false);
             SetOutcomeBannerVisibility(true);
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = true;
+            selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
 
@@ -432,14 +438,14 @@ namespace FungusToast.Unity.UI
             {
                 outcomeLabel.text =
                     $"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Moldiness threshold reached</b></color>\n" +
-                    $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Resolve your moldiness reward before the normal adaptation draft.</color></size>";
+                    $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Choose one moldiness reward before the normal adaptation draft.</color></size>";
             }
 
             if (continueButton != null)
             {
                 continueButton.gameObject.SetActive(true);
                 continueButton.interactable = false;
-                SetButtonLabel(continueButton, "Moldiness Reward Pending");
+                SetButtonLabel(continueButton, "Choose Moldiness Reward");
             }
 
             if (playAgainButton != null)
@@ -717,6 +723,120 @@ namespace FungusToast.Unity.UI
             return label;
         }
 
+        private void BuildMoldinessRewardSelectionContent(IReadOnlyList<MoldinessUnlockDefinition> offers)
+        {
+            if (resultsContainer == null || offers == null || offers.Count == 0)
+            {
+                return;
+            }
+
+            var root = new GameObject("UI_MoldinessRewardSelectionRoot", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            root.transform.SetParent(resultsContainer, false);
+
+            var rootLayout = root.GetComponent<VerticalLayoutGroup>();
+            rootLayout.spacing = 18f;
+            rootLayout.padding = new RectOffset(18, 18, 8, 8);
+            rootLayout.childAlignment = TextAnchor.UpperCenter;
+            rootLayout.childControlWidth = true;
+            rootLayout.childControlHeight = true;
+            rootLayout.childForceExpandWidth = true;
+            rootLayout.childForceExpandHeight = false;
+
+            var info = CreateCarryoverInfoText(root.transform,
+                "Choose one reward. Unlock rewards affect future drafts, and universal rewards permanently improve campaign persistence.",
+                22f,
+                UIStyleTokens.Text.Secondary,
+                FontStyles.Normal);
+            info.alignment = TextAlignmentOptions.Center;
+
+            foreach (var offer in offers)
+            {
+                CreateMoldinessRewardOptionButton(root.transform, offer);
+            }
+        }
+
+        private void CreateMoldinessRewardOptionButton(Transform parent, MoldinessUnlockDefinition offer)
+        {
+            if (offer == null || parent == null)
+            {
+                return;
+            }
+
+            var buttonObject = new GameObject($"UI_MoldinessReward_{offer.Id}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            buttonObject.transform.SetParent(parent, false);
+
+            var layout = buttonObject.GetComponent<LayoutElement>();
+            layout.preferredHeight = 120f;
+            layout.flexibleWidth = 1f;
+
+            var background = buttonObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Surface.PanelSecondary;
+
+            var vertical = buttonObject.GetComponent<VerticalLayoutGroup>();
+            vertical.spacing = 6f;
+            vertical.padding = new RectOffset(14, 14, 14, 14);
+            vertical.childAlignment = TextAnchor.UpperLeft;
+            vertical.childControlWidth = true;
+            vertical.childControlHeight = false;
+            vertical.childForceExpandWidth = true;
+            vertical.childForceExpandHeight = false;
+
+            var title = CreateCarryoverInfoText(buttonObject.transform, offer.DisplayName, 24f, UIStyleTokens.Text.Primary, FontStyles.Bold);
+            title.alignment = TextAlignmentOptions.Left;
+
+            var description = CreateCarryoverInfoText(buttonObject.transform, offer.Description, 20f, UIStyleTokens.Text.Secondary, FontStyles.Normal);
+            description.alignment = TextAlignmentOptions.Left;
+
+            var button = buttonObject.GetComponent<Button>();
+            var colors = button.colors;
+            colors.normalColor = UIStyleTokens.Surface.PanelSecondary;
+            colors.highlightedColor = UIStyleTokens.Interaction.HoverOverlay;
+            colors.pressedColor = UIStyleTokens.Interaction.PressedOverlay;
+            colors.selectedColor = UIStyleTokens.State.Success;
+            button.colors = colors;
+            button.transition = Selectable.Transition.ColorTint;
+            button.onClick.AddListener(() => SelectMoldinessReward(offer.Id, background));
+        }
+
+        private void SelectMoldinessReward(string rewardId, Image selectedBackground)
+        {
+            selectedMoldinessRewardId = rewardId;
+
+            foreach (Transform child in resultsContainer)
+            {
+                if (child == null)
+                {
+                    continue;
+                }
+
+                var image = child.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.color = UIStyleTokens.Surface.PanelSecondary;
+                }
+
+                foreach (Transform nested in child)
+                {
+                    var nestedImage = nested.GetComponent<Image>();
+                    if (nestedImage != null && nestedImage != selectedBackground)
+                    {
+                        nestedImage.color = UIStyleTokens.Surface.PanelSecondary;
+                    }
+                }
+            }
+
+            if (selectedBackground != null)
+            {
+                selectedBackground.color = UIStyleTokens.State.Success;
+            }
+
+            if (continueButton != null)
+            {
+                continueButton.interactable = true;
+                SetButtonLabel(continueButton, "Claim Moldiness Reward");
+            }
+        }
+
         /* ─────────── Buttons / Helpers ─────────── */
         private void OnClose()
         {
@@ -759,6 +879,28 @@ namespace FungusToast.Unity.UI
 
             if (requiresMoldinessRewardSelection)
             {
+                var manager = GameManager.Instance;
+                var campaignController = manager?.CampaignController;
+                if (campaignController == null || string.IsNullOrWhiteSpace(selectedMoldinessRewardId))
+                {
+                    return;
+                }
+
+                bool applied = campaignController.TryApplyMoldinessUnlock(selectedMoldinessRewardId);
+                if (!applied)
+                {
+                    return;
+                }
+
+                requiresMoldinessRewardSelection = false;
+                selectedMoldinessRewardId = null;
+                HideInstant();
+
+                bool started = manager.TryStartCampaignAdaptationDraft(OnCampaignAdaptationSelected);
+                if (!started)
+                {
+                    manager.StartCampaignResume();
+                }
                 return;
             }
 
@@ -848,6 +990,7 @@ namespace FungusToast.Unity.UI
             HidePlayerDetails();
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = false;
+            selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
             canvasGroup.alpha = 0f;
