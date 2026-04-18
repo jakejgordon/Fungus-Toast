@@ -28,6 +28,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float StoreButtonMinWidth = 220f;
         private const float StoreButtonMinHeight = 36f;
         private const float MutationPanelMaxWidth = 1125f;
+        private const float MutationPanelTopInsetPadding = 6f;
 
         [Header("General UI References")]
         [SerializeField] private MutationManager mutationManager;
@@ -69,6 +70,10 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private RectTransform mutationTreeRect;
         private RectTransform parentRectTransform;
+        private RectTransform mutationScrollViewRect;
+        private RectTransform mutationViewportRect;
+        private RectTransform mutationScrollViewContentRect;
+        private Canvas rootCanvas;
         private Vector3 originalButtonScale;
         private Vector3 originalCounterScale;
         private bool isTreeOpen = false;
@@ -82,6 +87,9 @@ namespace FungusToast.Unity.UI.MutationTree
         private List<MutationNodeUI> mutationButtons = new();
         private Dictionary<int, List<int>> directDependentsByMutationId = new();
         private PendingTargetedSurgeSelection pendingTargetedSurgeSelection;
+        private Vector2 lastKnownParentSize = new(-1f, -1f);
+        private int lastKnownScreenWidth = -1;
+        private int lastKnownScreenHeight = -1;
 
         private sealed class PendingTargetedSurgeSelection
         {
@@ -105,19 +113,19 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (mutationTreePanel != null)
             {
-                mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
-                parentRectTransform = mutationTreeRect.parent as RectTransform;
+                CacheMutationPanelLayoutReferences();
             }
             else
                 Debug.LogError("mutationTreePanel is NULL at Awake()!");
 
-            ApplyResponsiveMutationPanelLayout();
+            RefreshResponsiveMutationPanelLayout();
             EnsureSoundEffectAudioSource();
         }
 
         private void OnEnable()
         {
-            ApplyResponsiveMutationPanelLayout();
+            RefreshResponsiveMutationPanelLayout();
+            StartCoroutine(RefreshResponsiveMutationPanelLayoutNextFrame());
         }
 
         private void OnRectTransformDimensionsChange()
@@ -127,7 +135,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            ApplyResponsiveMutationPanelLayout();
+            RefreshResponsiveMutationPanelLayout();
         }
 
         private void Start()
@@ -146,6 +154,7 @@ namespace FungusToast.Unity.UI.MutationTree
             ApplyActionStyles();
             RestoreActionRowLayout();
             WireSpendPointsTooltip();
+            RefreshResponsiveMutationPanelLayout();
 
             // ── Store Points button tooltip ──
             WireStorePointsTooltip();
@@ -164,6 +173,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void Update()
         {
+            RefreshResponsiveMutationPanelLayoutIfNeeded();
+
             if (humanPlayer != null && humanPlayer.MutationPoints > 0)
                 AnimatePulse();
             else
@@ -178,7 +189,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             StopAllCoroutines();
             CaptureOriginalControlScales();
-            ApplyResponsiveMutationPanelLayout();
+            RefreshResponsiveMutationPanelLayout();
 
             isTreeOpen = false;
             isSliding = false;
@@ -233,7 +244,7 @@ namespace FungusToast.Unity.UI.MutationTree
         public void Initialize(Player player)
         {
             if (mutationTreeRect == null && mutationTreePanel != null)
-                mutationTreeRect = mutationTreePanel.GetComponent<RectTransform>();
+                CacheMutationPanelLayoutReferences();
 
             if (gridVisualizer == null)
             {
@@ -267,6 +278,7 @@ namespace FungusToast.Unity.UI.MutationTree
             ConfigurePlayerHoverTargets(player.PlayerId, playerMoldIcon.enabled);
 
             PopulateAllMutations();
+            RefreshResponsiveMutationPanelLayout();
             
             // Final safety check before starting coroutine
             if (gameObject.activeInHierarchy && enabled)
@@ -334,6 +346,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             mutationButtons.Clear(); // reset in case we're rebuilding
             mutationButtons = mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
+            RefreshResponsiveMutationPanelLayout();
         }
 
         public void TryUpgradeMutation(Mutation mutation, Action<bool> onResolved)
@@ -637,10 +650,11 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             isSliding = true;
 
-            ApplyResponsiveMutationPanelLayout();
-
             mutationTreePanel.SetActive(true);
             isTreeOpen = true;
+            RefreshResponsiveMutationPanelLayout();
+            yield return null;
+            RefreshResponsiveMutationPanelLayout();
 
             Vector2 startingPos = mutationTreeRect.anchoredPosition;
             Vector2 targetVisiblePosition = GetVisiblePosition();
@@ -672,7 +686,7 @@ namespace FungusToast.Unity.UI.MutationTree
             isSliding = true;
 
             isTreeOpen = false;
-            ApplyResponsiveMutationPanelLayout();
+            RefreshResponsiveMutationPanelLayout();
 
             Vector2 startingPos = mutationTreeRect.anchoredPosition;
             Vector2 targetHiddenPosition = GetHiddenPosition();
@@ -795,21 +809,31 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            if (parentRectTransform == null)
-            {
-                parentRectTransform = mutationTreeRect.parent as RectTransform;
-            }
-
-            float targetHeight = GetParentHeight();
-            if (targetHeight > 0f)
-            {
-                mutationTreeRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetHeight);
-            }
+            CacheMutationPanelLayoutReferences();
 
             float targetWidth = GetTargetPanelWidth();
             if (targetWidth > 0f)
             {
-                mutationTreeRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
+                ConfigureMutationPanelRect(targetWidth);
+            }
+
+            ConfigureMutationScrollViewRect(GetMutationPanelTopInset());
+
+            if (mutationViewportRect != null)
+            {
+                mutationViewportRect.anchorMin = Vector2.zero;
+                mutationViewportRect.anchorMax = Vector2.one;
+                mutationViewportRect.offsetMin = Vector2.zero;
+                mutationViewportRect.offsetMax = Vector2.zero;
+                mutationViewportRect.pivot = new Vector2(0f, 1f);
+            }
+
+            if (mutationScrollViewContentRect != null)
+            {
+                mutationScrollViewContentRect.anchorMin = new Vector2(0f, 1f);
+                mutationScrollViewContentRect.anchorMax = new Vector2(0f, 1f);
+                mutationScrollViewContentRect.pivot = new Vector2(0f, 1f);
+                mutationScrollViewContentRect.anchoredPosition = Vector2.zero;
             }
 
             if (!isSliding)
@@ -820,22 +844,41 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private float GetTargetPanelWidth()
         {
-            if (parentRectTransform == null)
+            Vector2 canvasSize = GetEffectiveCanvasSize();
+            if (canvasSize.x <= 0f)
             {
                 return MutationPanelMaxWidth;
             }
 
-            return Mathf.Min(MutationPanelMaxWidth, parentRectTransform.rect.width);
+            return Mathf.Min(MutationPanelMaxWidth, canvasSize.x);
         }
 
-        private float GetParentHeight()
+        private float GetMutationPanelTopInset()
         {
-            if (parentRectTransform == null)
+            if (mutationTreeRect == null)
             {
-                return mutationTreeRect.rect.height;
+                return 45f;
             }
 
-            return parentRectTransform.rect.height;
+            float topInset = 0f;
+            for (int i = 0; i < mutationTreeRect.childCount; i++)
+            {
+                RectTransform child = mutationTreeRect.GetChild(i) as RectTransform;
+                if (child == null || child == mutationScrollViewRect)
+                {
+                    continue;
+                }
+
+                if (child.anchorMin.y < 0.9f || child.anchorMax.y < 0.9f)
+                {
+                    continue;
+                }
+
+                float childTopInset = Mathf.Max(0f, -child.anchoredPosition.y + (child.rect.height * child.pivot.y));
+                topInset = Mathf.Max(topInset, childTopInset);
+            }
+
+            return topInset > 0f ? topInset + MutationPanelTopInsetPadding : 45f;
         }
 
         private Vector2 GetVisiblePosition()
@@ -852,6 +895,150 @@ namespace FungusToast.Unity.UI.MutationTree
 
             float hiddenX = -Mathf.Max(mutationTreeRect.rect.width, 1f);
             return new Vector2(hiddenX, visiblePosition.y);
+        }
+
+        private void CacheMutationPanelLayoutReferences()
+        {
+            if (mutationTreePanel == null)
+            {
+                return;
+            }
+
+            mutationTreeRect ??= mutationTreePanel.GetComponent<RectTransform>();
+            parentRectTransform ??= mutationTreeRect?.parent as RectTransform;
+            rootCanvas ??= mutationTreeRect?.GetComponentInParent<Canvas>()?.rootCanvas;
+
+            if (mutationTreeRect == null)
+            {
+                return;
+            }
+
+            mutationScrollViewRect ??= mutationTreeRect.Find("UI_MutationScrollView") as RectTransform;
+            mutationViewportRect ??= mutationScrollViewRect?.Find("UI_MutationViewport") as RectTransform;
+            mutationScrollViewContentRect ??= mutationViewportRect?.Find("UI_MutationScrollViewContent") as RectTransform;
+        }
+
+        private void ConfigureMutationPanelRect(float targetWidth)
+        {
+            Vector2 canvasSize = GetEffectiveCanvasSize();
+
+            mutationTreeRect.anchorMin = new Vector2(0f, 0f);
+            mutationTreeRect.anchorMax = new Vector2(0f, 1f);
+            mutationTreeRect.pivot = new Vector2(0f, 0.5f);
+            mutationTreeRect.sizeDelta = new Vector2(targetWidth, 0f);
+
+            if (canvasSize.y > 0f)
+            {
+                mutationTreeRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, canvasSize.y);
+            }
+        }
+
+        private void ConfigureMutationScrollViewRect(float topInset)
+        {
+            if (mutationScrollViewRect == null)
+            {
+                return;
+            }
+
+            mutationScrollViewRect.anchorMin = Vector2.zero;
+            mutationScrollViewRect.anchorMax = Vector2.one;
+            mutationScrollViewRect.pivot = new Vector2(0f, 1f);
+            mutationScrollViewRect.anchoredPosition = new Vector2(0f, -topInset);
+            mutationScrollViewRect.sizeDelta = new Vector2(0f, -topInset);
+        }
+
+        private void RefreshResponsiveMutationPanelLayout()
+        {
+            CacheMutationPanelLayoutReferences();
+            ApplyResponsiveMutationPanelLayout();
+            ForceMutationPanelLayoutRebuild();
+            CaptureResponsiveMutationPanelLayoutState();
+        }
+
+        private void RefreshResponsiveMutationPanelLayoutIfNeeded()
+        {
+            if (mutationTreeRect == null)
+            {
+                return;
+            }
+
+            CacheMutationPanelLayoutReferences();
+
+            Vector2 parentSize = GetEffectiveCanvasSize();
+            if (parentSize == lastKnownParentSize
+                && Screen.width == lastKnownScreenWidth
+                && Screen.height == lastKnownScreenHeight)
+            {
+                return;
+            }
+
+            RefreshResponsiveMutationPanelLayout();
+        }
+
+        private IEnumerator RefreshResponsiveMutationPanelLayoutNextFrame()
+        {
+            yield return null;
+            RefreshResponsiveMutationPanelLayout();
+            yield return null;
+            RefreshResponsiveMutationPanelLayout();
+        }
+
+        private void CaptureResponsiveMutationPanelLayoutState()
+        {
+            lastKnownParentSize = GetEffectiveCanvasSize();
+            lastKnownScreenWidth = Screen.width;
+            lastKnownScreenHeight = Screen.height;
+        }
+
+        private Vector2 GetEffectiveCanvasSize()
+        {
+            if (rootCanvas != null && rootCanvas.scaleFactor > 0f)
+            {
+                return new Vector2(Screen.width / rootCanvas.scaleFactor, Screen.height / rootCanvas.scaleFactor);
+            }
+
+            if (parentRectTransform != null)
+            {
+                return parentRectTransform.rect.size;
+            }
+
+            return Vector2.zero;
+        }
+
+        private void ForceMutationPanelLayoutRebuild()
+        {
+            if (mutationTreeRect == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(mutationTreeRect);
+
+            if (mutationScrollViewRect != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(mutationScrollViewRect);
+            }
+
+            if (mutationViewportRect != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(mutationViewportRect);
+            }
+
+            if (mutationScrollViewContentRect != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(mutationScrollViewContentRect);
+
+                float preferredWidth = LayoutUtility.GetPreferredWidth(mutationScrollViewContentRect);
+                float preferredHeight = LayoutUtility.GetPreferredHeight(mutationScrollViewContentRect);
+
+                if (preferredWidth > 0f || preferredHeight > 0f)
+                {
+                    mutationScrollViewContentRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, preferredWidth);
+                    mutationScrollViewContentRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, preferredHeight);
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(mutationScrollViewContentRect);
+                }
+            }
         }
 
         public void SetSpendPointsButtonInteractable(bool interactable)
