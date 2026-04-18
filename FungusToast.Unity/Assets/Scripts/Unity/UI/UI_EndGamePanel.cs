@@ -954,7 +954,7 @@ namespace FungusToast.Unity.UI
             moldinessRewardOptionBackgrounds.Add(background);
 
             var vertical = buttonObject.GetComponent<VerticalLayoutGroup>();
-            vertical.spacing = 6f;
+            vertical.spacing = 8f;
             vertical.padding = new RectOffset(14, 14, 14, 14);
             vertical.childAlignment = TextAnchor.UpperLeft;
             vertical.childControlWidth = true;
@@ -967,10 +967,52 @@ namespace FungusToast.Unity.UI
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
             var outline = buttonObject.AddComponent<Outline>();
-            outline.effectColor = new Color(UIStyleTokens.Text.Muted.r, UIStyleTokens.Text.Muted.g, UIStyleTokens.Text.Muted.b, 0.45f);
+            outline.effectColor = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.55f);
             outline.effectDistance = new Vector2(1.5f, -1.5f);
 
-            var title = CreateCarryoverInfoText(buttonObject.transform, offer.DisplayName, 24f, UIStyleTokens.Text.Primary, FontStyles.Bold);
+            var headerRow = new GameObject("HeaderRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            headerRow.transform.SetParent(buttonObject.transform, false);
+            var headerLayout = headerRow.GetComponent<HorizontalLayoutGroup>();
+            headerLayout.spacing = 10f;
+            headerLayout.childAlignment = TextAnchor.MiddleLeft;
+            headerLayout.childControlWidth = false;
+            headerLayout.childControlHeight = true;
+            headerLayout.childForceExpandWidth = false;
+            headerLayout.childForceExpandHeight = false;
+            var headerElement = headerRow.GetComponent<LayoutElement>();
+            headerElement.minHeight = 42f;
+
+            var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            iconObject.transform.SetParent(headerRow.transform, false);
+            var iconImage = iconObject.GetComponent<Image>();
+            iconImage.sprite = GetMoldinessRewardIcon(offer);
+            iconImage.preserveAspect = true;
+            iconImage.color = Color.white;
+            var iconLayout = iconObject.GetComponent<LayoutElement>();
+            iconLayout.minWidth = 36f;
+            iconLayout.preferredWidth = 36f;
+            iconLayout.minHeight = 36f;
+            iconLayout.preferredHeight = 36f;
+
+            var headerTextRoot = new GameObject("HeaderTextRoot", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            headerTextRoot.transform.SetParent(headerRow.transform, false);
+            var headerTextLayout = headerTextRoot.GetComponent<VerticalLayoutGroup>();
+            headerTextLayout.spacing = 2f;
+            headerTextLayout.childAlignment = TextAnchor.MiddleLeft;
+            headerTextLayout.childControlWidth = true;
+            headerTextLayout.childControlHeight = true;
+            headerTextLayout.childForceExpandWidth = true;
+            headerTextLayout.childForceExpandHeight = false;
+            var headerTextElement = headerTextRoot.GetComponent<LayoutElement>();
+            headerTextElement.flexibleWidth = 1f;
+
+            if (!string.IsNullOrWhiteSpace(offer.CategoryLabel))
+            {
+                var category = CreateCarryoverInfoText(headerTextRoot.transform, offer.CategoryLabel, 16f, offer.AccentColor, FontStyles.Bold);
+                category.alignment = TextAlignmentOptions.Left;
+            }
+
+            var title = CreateCarryoverInfoText(headerTextRoot.transform, offer.DisplayName, 24f, UIStyleTokens.Text.Primary, FontStyles.Bold);
             title.alignment = TextAlignmentOptions.Left;
 
             var description = CreateCarryoverInfoText(buttonObject.transform, offer.Description, 20f, UIStyleTokens.Text.Secondary, FontStyles.Normal);
@@ -987,6 +1029,35 @@ namespace FungusToast.Unity.UI
             button.transition = Selectable.Transition.ColorTint;
             button.targetGraphic = background;
             button.onClick.AddListener(() => SelectMoldinessReward(offer.Id, background));
+        }
+
+        private static Sprite GetMoldinessRewardIcon(MoldinessUnlockDefinition offer)
+        {
+            if (offer == null)
+            {
+                return AdaptationArtRepository.GetIcon(null);
+            }
+
+            if (offer.Type == MoldinessUnlockType.UnlockAdaptation && AdaptationRepository.TryGetById(offer.AdaptationId, out var adaptation))
+            {
+                return AdaptationArtRepository.GetIcon(adaptation);
+            }
+
+            return ProceduralIconUtility.CreateSprite(
+                $"MoldinessReward_{offer.Id}",
+                Color.Lerp(offer.AccentColor, UIStyleTokens.Surface.PanelPrimary, 0.5f),
+                offer.AccentColor,
+                (texture, drawAccent, highlight) =>
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        int centerX = 10 + (i * 10);
+                        drawAccent(centerX, 12, 3 + i);
+                        drawAccent(centerX - 2, 22, 2 + i);
+                    }
+                    highlight(8, 8, 20, 4);
+                },
+                40);
         }
 
         private void SelectMoldinessReward(string rewardId, Image selectedBackground)
