@@ -910,15 +910,8 @@ namespace FungusToast.Unity.UI
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
-            if (snapshot != null)
-            {
-                string summary = $"Level {snapshot.clearedLevelDisplay} cleared. Choose one moldiness reward to claim before the normal adaptation draft.";
-                var summaryText = CreateCarryoverInfoText(root.transform, summary, 24f, UIStyleTokens.Text.Primary, FontStyles.Bold);
-                summaryText.alignment = TextAlignmentOptions.Center;
-            }
-
             var info = CreateCarryoverInfoText(root.transform,
-                "Unlock rewards add new content to future adaptation drafts. Universal rewards permanently improve campaign persistence across runs.",
+                "Win campaign games to unlock rewards and permanent improvements that benefit all future campaign runs.",
                 20f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);

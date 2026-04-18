@@ -96,4 +96,4 @@ Use the following minimal workflow to preserve working memory across sessions:
   - a toast-corruption / colonized-tiles mini-toast should be the primary moldiness visualization
   - exact numbers should support the visualization rather than replace it
   - the visualization belongs in campaign menus, win/loss result panels, and moldiness reward context, not in the live match HUD
-- Immediate next implementation target: polish and verify end-of-level moldiness summaries, then add moldiness context to the reward panel itself and continue on campaign pending-state hints.
+- Immediate next implementation target: continue reward-panel polish and campaign pending-state hints after fixing offer-generation edge cases and tightening reward-panel copy.

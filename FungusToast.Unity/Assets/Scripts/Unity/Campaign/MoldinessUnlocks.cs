@@ -154,8 +154,12 @@ namespace FungusToast.Unity.Campaign
             var ownedRewardIds = new HashSet<string>(progressionState.unlockedRewardIds, StringComparer.Ordinal);
             var ownedAdaptationIds = new HashSet<string>(progressionState.unlockedAdaptationIds, StringComparer.Ordinal);
             int currentUnlockLevel = Math.Max(0, progressionState.unlockLevel);
+            int highestTriggeredUnlockLevel = progressionState.pendingUnlockTriggers != null && progressionState.pendingUnlockTriggers.Count > 0
+                ? progressionState.pendingUnlockTriggers.Max(trigger => trigger.tierIndex + 1)
+                : 0;
+            int availableUnlockLevel = Math.Max(currentUnlockLevel, highestTriggeredUnlockLevel);
             var eligible = MoldinessUnlockCatalog.All
-                .Where(definition => definition.RequiredUnlockLevel <= currentUnlockLevel)
+                .Where(definition => definition.RequiredUnlockLevel <= availableUnlockLevel)
                 .Where(definition => definition.IsRepeatable || !ownedRewardIds.Contains(definition.Id))
                 .Where(definition => definition.Type != MoldinessUnlockType.UnlockAdaptation || !ownedAdaptationIds.Contains(definition.AdaptationId))
                 .ToList();
