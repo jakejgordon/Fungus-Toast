@@ -22,6 +22,8 @@ namespace FungusToast.Core.Campaign
             AdaptationGameBalance.RetrogradeBloomTier1LevelsLost.ToString(CultureInfo.InvariantCulture);
         private static readonly string retrogradeBloomGainedLevels =
             AdaptationGameBalance.RetrogradeBloomTier5LevelsGained.ToString(CultureInfo.InvariantCulture);
+        private static readonly string hyphalPrimingLevelsGranted =
+            AdaptationGameBalance.HyphalPrimingLevelsGranted.ToString(CultureInfo.InvariantCulture);
 
         // Starting adaptation computed description strings
         private static readonly string obliqueFilamentOrthogonalPercent =
@@ -138,6 +140,13 @@ namespace FungusToast.Core.Campaign
                         "Conidia Ascent",
                         $"At the start of round {AdaptationGameBalance.ConidiaAscentTriggerRound}, if you have a full 3x3 block of killable living cells and any completely empty 2x2 opening, that colony fragment blasts away. The 3x3 source block dies and a new 2x2 colony roots in a random open patch.",
                         "conidia_ascent"),
+                    new AdaptationDefinition(
+                        AdaptationIds.HyphalPriming,
+                        "Hyphal Priming",
+                        $"At the start of round {AdaptationGameBalance.HyphalPrimingTriggerRound}'s Mutation Phase, a random Tier 2 mutation outside Mycelial Surges gains {hyphalPrimingLevelsGranted} free levels. Prerequisites are ignored.",
+                        "hyphal_priming",
+                        isLocked: true,
+                        requiredMoldinessUnlockLevel: 1),
                     // Starting adaptations — assigned by mold selection, never offered in mid-run drafts
                     new AdaptationDefinition(
                         AdaptationIds.ObliqueFilament,

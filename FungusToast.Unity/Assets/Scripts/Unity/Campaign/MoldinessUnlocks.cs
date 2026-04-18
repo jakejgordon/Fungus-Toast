@@ -113,6 +113,13 @@ namespace FungusToast.Unity.Campaign
                         type: MoldinessUnlockType.UnlockAdaptation,
                         requiredUnlockLevel: 1,
                         adaptationId: AdaptationIds.VesicleBurst),
+                    new MoldinessUnlockDefinition(
+                        id: "moldiness_unlock_adaptation_hyphal_priming",
+                        displayName: "Unlock Hyphal Priming",
+                        description: "Hyphal Priming can now appear in future normal adaptation drafts.",
+                        type: MoldinessUnlockType.UnlockAdaptation,
+                        requiredUnlockLevel: 1,
+                        adaptationId: AdaptationIds.HyphalPriming),
                 });
 
         private static readonly Dictionary<string, MoldinessUnlockDefinition> byId =

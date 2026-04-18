@@ -111,6 +111,21 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver observer)
         {
+            if (board.CurrentRound == AdaptationGameBalance.HyphalPrimingTriggerRound)
+            {
+                foreach (var player in players)
+                {
+                    var adaptation = player.GetAdaptation(AdaptationIds.HyphalPriming);
+                    if (adaptation == null || adaptation.HasTriggered)
+                    {
+                        continue;
+                    }
+
+                    adaptation.MarkTriggered();
+                    TryApplyHyphalPriming(player, board, rng, observer);
+                }
+            }
+
             if (board.CurrentRound == AdaptationGameBalance.RetrogradeBloomTriggerRound)
             {
                 foreach (var player in players)
@@ -173,6 +188,52 @@ namespace FungusToast.Core.Phases
                     }
                 }
             }
+        }
+
+        private static bool TryApplyHyphalPriming(
+            Player player,
+            GameBoard board,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            var eligibleTier2Mutations = MutationRegistry.All.Values
+                .Where(mutation => mutation.Tier == MutationTier.Tier2)
+                .Where(mutation => mutation.Category != MutationCategory.MycelialSurges)
+                .Where(mutation => player.GetMutationLevel(mutation.Id) < mutation.MaxLevel)
+                .ToList();
+
+            if (eligibleTier2Mutations.Count == 0)
+            {
+                return false;
+            }
+
+            var fullHeadroomMutations = eligibleTier2Mutations
+                .Where(mutation => player.GetMutationLevel(mutation.Id) <= mutation.MaxLevel - AdaptationGameBalance.HyphalPrimingLevelsGranted)
+                .ToList();
+
+            var candidatePool = fullHeadroomMutations.Count > 0
+                ? fullHeadroomMutations
+                : eligibleTier2Mutations;
+
+            var targetMutation = candidatePool[rng.Next(candidatePool.Count)];
+            int oldLevel = player.GetMutationLevel(targetMutation.Id);
+            int newLevel = Math.Min(targetMutation.MaxLevel, oldLevel + AdaptationGameBalance.HyphalPrimingLevelsGranted);
+
+            player.SetMutationLevel(targetMutation.Id, newLevel, board.CurrentRound, observer);
+            observer.RecordMutationUpgradeEvent(
+                playerId: player.PlayerId,
+                mutationId: targetMutation.Id,
+                mutationName: targetMutation.Name,
+                mutationTier: targetMutation.Tier,
+                oldLevel: oldLevel,
+                newLevel: player.GetMutationLevel(targetMutation.Id),
+                round: board.CurrentRound,
+                mutationPointsBefore: player.MutationPoints,
+                mutationPointsAfter: player.MutationPoints,
+                pointsSpent: 0,
+                upgradeSource: "adaptation");
+
+            return true;
         }
 
         public static void OnPostGrowthPhaseCompleted(

@@ -2,6 +2,8 @@ namespace FungusToast.Core.Config
 {
     public static class AdaptationGameBalance
     {
+        public const int HyphalPrimingTriggerRound = 1;
+        public const int HyphalPrimingLevelsGranted = 2;
         public const int HyphalBridgeTriggerRound = 8;
         public const int HyphalBridgeCellCount = 4;
         public const int ConidialRelayTriggerRound = 10;
