@@ -5,7 +5,6 @@ using FungusToast.Unity.Campaign;
 using FungusToast.Unity.UI.Testing;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
-using FungusToast.Unity.Campaign;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Tilemaps;
