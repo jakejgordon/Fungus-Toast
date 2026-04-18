@@ -241,12 +241,25 @@ namespace FungusToast.Unity
 
             if (isCampaign)
             {
-                ui.EndGamePanel.ShowResultsWithOutcome(
-                    ranked, board, endgamePlayerStatistics, true, humanWon,
-                    finalLevelPreAdvance && humanWon, hasNextLevel,
-                    humanWon ? completedLevelDisplay : lostLevelDisplay,
-                    completedLevelDisplay,
-                    campaignController.State.pendingAdaptationSelection);
+                if (!humanWon && campaignController.IsAwaitingDefeatCarryoverSelection)
+                {
+                    var carryoverOptions = campaignController.GetPendingDefeatCarryoverOptions();
+                    int carryoverCapacity = Mathf.Max(0, campaignController.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0);
+                    ui.EndGamePanel.ShowCampaignPendingDefeatCarryoverSelection(carryoverOptions, carryoverCapacity);
+                }
+                else if (humanWon && campaignController.HasPendingMoldinessUnlockChoice && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot) && pendingSnapshot != null)
+                {
+                    ui.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(pendingSnapshot);
+                }
+                else
+                {
+                    ui.EndGamePanel.ShowResultsWithOutcome(
+                        ranked, board, endgamePlayerStatistics, true, humanWon,
+                        finalLevelPreAdvance && humanWon, hasNextLevel,
+                        humanWon ? completedLevelDisplay : lostLevelDisplay,
+                        completedLevelDisplay,
+                        campaignController.State.pendingAdaptationSelection);
+                }
             }
             else
             {
@@ -804,11 +817,25 @@ namespace FungusToast.Unity
                 && campaignController.IsAwaitingAdaptationSelection;
         }
 
+        public bool HasPendingCampaignMoldinessUnlock()
+        {
+            var campaignController = getCampaignController();
+            return getGameMode() == GameMode.Campaign
+                && campaignController != null
+                && campaignController.HasPendingMoldinessUnlockChoice;
+        }
+
         public bool TryStartCampaignAdaptationDraft(Action onSelectionComplete)
         {
             var campaignController = getCampaignController();
             if (getGameMode() != GameMode.Campaign || campaignController == null || !campaignController.IsAwaitingAdaptationSelection)
             {
+                return false;
+            }
+
+            if (campaignController.HasPendingMoldinessUnlockChoice)
+            {
+                Debug.Log("[GameManager] Cannot start campaign adaptation draft while a moldiness reward choice is still pending.");
                 return false;
             }
 
@@ -885,11 +912,24 @@ namespace FungusToast.Unity
             campaignController.Resume();
             setGameMode(GameMode.Campaign);
 
+            if (campaignController.IsAwaitingDefeatCarryoverSelection)
+            {
+                ShowPendingCampaignDefeatCarryoverScreen(campaignController);
+                return;
+            }
+
             if (campaignController.IsAwaitingAdaptationSelection
                 && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot)
                 && pendingSnapshot != null)
             {
-                ShowPendingCampaignVictoryScreen(campaignController, pendingSnapshot);
+                if (campaignController.HasPendingMoldinessUnlockChoice)
+                {
+                    ShowPendingCampaignMoldinessRewardScreen(campaignController, pendingSnapshot);
+                }
+                else
+                {
+                    ShowPendingCampaignVictoryScreen(campaignController, pendingSnapshot);
+                }
                 return;
             }
 
@@ -931,6 +971,53 @@ namespace FungusToast.Unity
             gameUIManager.MutationUIManager?.gameObject.SetActive(false);
 
             gameUIManager.EndGamePanel.ShowCampaignPendingVictorySnapshot(snapshot);
+        }
+
+        private void ShowPendingCampaignDefeatCarryoverScreen(CampaignController campaignController)
+        {
+            if (campaignController == null || gameUIManager?.EndGamePanel == null)
+            {
+                Debug.LogWarning("[GameManager] Pending campaign defeat carryover screen could not be shown.");
+                return;
+            }
+
+            stopAllCoroutines?.Invoke();
+            mycovariantDraftController?.StopAllCoroutines();
+
+            modeSelectPanel?.SetActive(false);
+            startGamePanel?.gameObject.SetActive(false);
+
+            gameUIManager.LoadingScreen?.gameObject.SetActive(false);
+            gameUIManager.LeftSidebar?.gameObject.SetActive(false);
+            gameUIManager.RightSidebar?.gameObject.SetActive(true);
+            gameUIManager.MutationUIManager?.gameObject.SetActive(false);
+
+            var carryoverOptions = campaignController.GetPendingDefeatCarryoverOptions();
+            int carryoverCapacity = Mathf.Max(0, campaignController.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0);
+            gameUIManager.EndGamePanel.ShowCampaignPendingDefeatCarryoverSelection(carryoverOptions, carryoverCapacity);
+        }
+
+        private void ShowPendingCampaignMoldinessRewardScreen(CampaignController campaignController, CampaignVictorySnapshot snapshot)
+        {
+            if (campaignController == null || snapshot == null || gameUIManager?.EndGamePanel == null)
+            {
+                Debug.LogWarning("[GameManager] Pending campaign moldiness reward screen could not be shown.");
+                return;
+            }
+
+            stopAllCoroutines?.Invoke();
+            mycovariantDraftController?.StopAllCoroutines();
+
+            modeSelectPanel?.SetActive(false);
+            startGamePanel?.gameObject.SetActive(false);
+
+            gameUIManager.LoadingScreen?.gameObject.SetActive(false);
+            gameUIManager.LeftSidebar?.gameObject.SetActive(false);
+            gameUIManager.RightSidebar?.gameObject.SetActive(true);
+            gameUIManager.MutationUIManager?.gameObject.SetActive(false);
+
+            var offers = campaignController.GetPendingMoldinessUnlockOffers(getRng(), 3);
+            gameUIManager.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(snapshot, offers);
         }
     }
 

@@ -20,6 +20,9 @@ namespace FungusToast.Unity.Campaign
         public bool pendingAdaptationSelection; // true when player must pick adaptation before continuing
         public bool campaignCompleted; // true after final victory
         public CampaignVictorySnapshot pendingVictorySnapshot; // serialized scoreboard snapshot for pending adaptation resumes
+        public bool pendingDefeatCarryoverSelection; // true when player must choose preserved adaptations before resetting the run
+        public List<string> pendingDefeatCarryoverOptions = new(); // adaptation ids available to preserve from the failed run
+        public List<string> pendingNextRunCarryoverAdaptationIds = new(); // applied automatically to the next fresh run
         public List<string> resolvedAiStrategyNames = new(); // active AI lineup for current level; persisted so pooled levels resume consistently
         public MoldinessProgressionState moldiness = new(); // persistent moldiness progression toward permanent unlocks
     }
