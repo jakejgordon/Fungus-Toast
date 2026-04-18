@@ -660,8 +660,8 @@ namespace FungusToast.Unity.UI
             var button = optionObject.GetComponent<Button>();
             var colors = button.colors;
             colors.normalColor = UIStyleTokens.Surface.PanelSecondary;
-            colors.highlightedColor = UIStyleTokens.Interaction.HoverOverlay;
-            colors.pressedColor = UIStyleTokens.Interaction.PressedOverlay;
+            colors.highlightedColor = UIStyleTokens.Surface.PanelElevated;
+            colors.pressedColor = UIStyleTokens.Surface.PanelPrimary;
             colors.selectedColor = UIStyleTokens.State.Success;
             colors.disabledColor = UIStyleTokens.Surface.PanelPrimary;
             button.colors = colors;
@@ -718,7 +718,7 @@ namespace FungusToast.Unity.UI
             label.fontSize = fontSize;
             label.fontStyle = fontStyle;
             label.color = color;
-            label.enableWordWrapping = true;
+            label.textWrappingMode = TextWrappingModes.Normal;
             label.alignment = TextAlignmentOptions.Center;
             return label;
         }
@@ -790,8 +790,8 @@ namespace FungusToast.Unity.UI
             var button = buttonObject.GetComponent<Button>();
             var colors = button.colors;
             colors.normalColor = UIStyleTokens.Surface.PanelSecondary;
-            colors.highlightedColor = UIStyleTokens.Interaction.HoverOverlay;
-            colors.pressedColor = UIStyleTokens.Interaction.PressedOverlay;
+            colors.highlightedColor = UIStyleTokens.Surface.PanelElevated;
+            colors.pressedColor = UIStyleTokens.Surface.PanelPrimary;
             colors.selectedColor = UIStyleTokens.State.Success;
             button.colors = colors;
             button.transition = Selectable.Transition.ColorTint;

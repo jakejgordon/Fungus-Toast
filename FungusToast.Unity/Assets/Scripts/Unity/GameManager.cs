@@ -198,6 +198,7 @@ namespace FungusToast.Unity
         public GameBoard Board { get; private set; } = null!;
         public GameUIManager GameUI => gameUIManager; 
         public SpecialEventPresentationService SpecialEventPresentationService => specialEventPresentationService;
+        public CampaignController? CampaignController => campaignController;
         public static GameManager Instance { get; private set; } = null!;
 
         private readonly List<Player> players = new(); 
