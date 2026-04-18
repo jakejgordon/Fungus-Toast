@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using FungusToast.Core.Campaign;
+using FungusToast.Unity.UI;
 
 namespace FungusToast.Unity.Campaign
 {
@@ -30,7 +31,9 @@ namespace FungusToast.Unity.Campaign
             string adaptationId = null,
             int stackAmount = 0,
             bool isRepeatable = false,
-            bool isUniversal = false)
+            bool isUniversal = false,
+            string categoryLabel = "",
+            Color? accentColor = null)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Unlock id is required.", nameof(id));
             if (string.IsNullOrWhiteSpace(displayName)) throw new ArgumentException("Unlock display name is required.", nameof(displayName));
@@ -52,6 +55,8 @@ namespace FungusToast.Unity.Campaign
             StackAmount = Math.Max(0, stackAmount);
             IsRepeatable = isRepeatable;
             IsUniversal = isUniversal;
+            CategoryLabel = categoryLabel ?? string.Empty;
+            AccentColor = accentColor ?? UIStyleTokens.State.Info;
         }
 
         public string Id { get; }
@@ -63,6 +68,8 @@ namespace FungusToast.Unity.Campaign
         public int StackAmount { get; }
         public bool IsRepeatable { get; }
         public bool IsUniversal { get; }
+        public string CategoryLabel { get; }
+        public Color AccentColor { get; }
     }
 
     public readonly struct MoldinessUnlockApplicationResult
@@ -91,35 +98,45 @@ namespace FungusToast.Unity.Campaign
                         requiredUnlockLevel: 1,
                         stackAmount: 1,
                         isRepeatable: true,
-                        isUniversal: true),
+                        isUniversal: true,
+                        categoryLabel: "Permanent Campaign Upgrade",
+                        accentColor: UIStyleTokens.State.Warning),
                     new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_spore_salvo",
                         displayName: "Unlock Spore Salvo",
                         description: "Spore Salvo can now appear in future normal adaptation drafts.",
                         type: MoldinessUnlockType.UnlockAdaptation,
                         requiredUnlockLevel: 1,
-                        adaptationId: AdaptationIds.SporeSalvo),
+                        adaptationId: AdaptationIds.SporeSalvo,
+                        categoryLabel: "Adaptation Unlock",
+                        accentColor: UIStyleTokens.State.Success),
                     new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_hyphal_bridge",
                         displayName: "Unlock Hyphal Bridge",
                         description: "Hyphal Bridge can now appear in future normal adaptation drafts.",
                         type: MoldinessUnlockType.UnlockAdaptation,
                         requiredUnlockLevel: 1,
-                        adaptationId: AdaptationIds.HyphalBridge),
+                        adaptationId: AdaptationIds.HyphalBridge,
+                        categoryLabel: "Adaptation Unlock",
+                        accentColor: UIStyleTokens.State.Success),
                     new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_vesicle_burst",
                         displayName: "Unlock Vesicle Burst",
                         description: "Vesicle Burst can now appear in future normal adaptation drafts.",
                         type: MoldinessUnlockType.UnlockAdaptation,
                         requiredUnlockLevel: 1,
-                        adaptationId: AdaptationIds.VesicleBurst),
+                        adaptationId: AdaptationIds.VesicleBurst,
+                        categoryLabel: "Adaptation Unlock",
+                        accentColor: UIStyleTokens.State.Success),
                     new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_hyphal_priming",
                         displayName: "Unlock Hyphal Priming",
                         description: "Hyphal Priming can now appear in future normal adaptation drafts.",
                         type: MoldinessUnlockType.UnlockAdaptation,
                         requiredUnlockLevel: 1,
-                        adaptationId: AdaptationIds.HyphalPriming),
+                        adaptationId: AdaptationIds.HyphalPriming,
+                        categoryLabel: "Adaptation Unlock",
+                        accentColor: UIStyleTokens.State.Success),
                 });
 
         private static readonly Dictionary<string, MoldinessUnlockDefinition> byId =

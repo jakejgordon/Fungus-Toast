@@ -65,6 +65,7 @@ namespace FungusToast.Unity.UI.Campaign
         private TextMeshProUGUI moldinessSummaryTitleLabel;
         private TextMeshProUGUI moldinessSummaryStatusLabel;
         private TextMeshProUGUI moldinessSummaryPendingLabel;
+        private TextMeshProUGUI permanentUpgradesLabel;
         private GridLayoutGroup moldinessSummaryToastGrid;
         private readonly List<Image> moldinessSummaryToastTiles = new();
         private RectTransform moldSelectionSectionRoot;
@@ -449,6 +450,12 @@ namespace FungusToast.Unity.UI.Campaign
                 FontStyles.Italic,
                 UIStyleTokens.State.Warning,
                 30f);
+            permanentUpgradesLabel ??= CreateMoldinessSummaryText(
+                "UI_CampaignPermanentUpgrades",
+                18f,
+                FontStyles.Normal,
+                UIStyleTokens.Text.Secondary,
+                30f);
         }
 
         private TextMeshProUGUI CreateMoldinessSummaryText(string objectName, float fontSize, FontStyles fontStyle, Color color, float minHeight)
@@ -591,6 +598,21 @@ namespace FungusToast.Unity.UI.Campaign
                 moldinessSummaryPendingLabel.gameObject.SetActive(pendingCount > 0);
                 moldinessSummaryPendingLabel.text = pendingCount > 0
                     ? $"{pendingCount} pending moldiness reward{(pendingCount == 1 ? string.Empty : "s")}" 
+                    : string.Empty;
+            }
+
+            if (permanentUpgradesLabel != null)
+            {
+                var unlockedPermanentUpgrades = campaignController.State?.moldiness?.unlockedRewardIds != null
+                    ? campaignController.State.moldiness.unlockedRewardIds
+                        .Select(id => MoldinessUnlockCatalog.TryGetById(id, out var definition) ? definition : null)
+                        .Where(definition => definition != null && definition.Type == MoldinessUnlockType.IncreaseFailedRunAdaptationCarryover)
+                        .ToList()
+                    : new List<MoldinessUnlockDefinition>();
+
+                permanentUpgradesLabel.gameObject.SetActive(unlockedPermanentUpgrades.Count > 0);
+                permanentUpgradesLabel.text = unlockedPermanentUpgrades.Count > 0
+                    ? $"Permanent Campaign Upgrades: {string.Join(", ", unlockedPermanentUpgrades.Select(definition => definition.DisplayName))}"
                     : string.Empty;
             }
 
