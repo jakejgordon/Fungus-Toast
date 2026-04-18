@@ -87,8 +87,7 @@ namespace FungusToast.Unity.Campaign
             State.resolvedAiStrategyNames ??= new List<string>();
             State.moldiness ??= MoldinessProgression.CreateDefaultState();
             State.moldiness.pendingUnlockTriggers ??= new List<MoldinessUnlockTrigger>();
-            State.moldiness.unlockedMetaIds ??= new List<string>();
-            State.moldiness.unlockedAdaptationIds ??= new List<string>();
+            State.moldiness.unlockedContentIds ??= new List<string>();
             if (!State.pendingAdaptationSelection)
             {
                 State.pendingVictorySnapshot = null;
@@ -172,10 +171,8 @@ namespace FungusToast.Unity.Campaign
             }
 
             var selected = new HashSet<string>(State.selectedAdaptationIds ?? new List<string>(), StringComparer.Ordinal);
-            var permanentlyUnlocked = new HashSet<string>(State.moldiness?.unlockedAdaptationIds ?? new List<string>(), StringComparer.Ordinal);
             var remaining = AdaptationRepository.All
                 .Where(x => !x.IsStartingAdaptation)
-                .Where(x => !AdaptationRepository.IsMetaUnlockAdaptation(x.Id) || permanentlyUnlocked.Contains(x.Id))
                 .Where(x => !selected.Contains(x.Id))
                 .ToList();
 
@@ -245,7 +242,7 @@ namespace FungusToast.Unity.Campaign
             }
 
             CampaignSaveService.Save(State);
-            Debug.Log($"[CampaignController] Applied Moldiness unlock '{result.Definition.Id}' ({result.Definition.PayloadId}).");
+            Debug.Log($"[CampaignController] Applied Moldiness unlock '{result.Definition.Id}' ({result.Definition.ContentId}).");
             return true;
         }
 
