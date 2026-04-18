@@ -188,7 +188,7 @@ namespace FungusToast.Unity.UI
             badgeText.fontSizeMin = 7f;
             badgeText.fontSizeMax = 11f;
             badgeText.textWrappingMode = TextWrappingModes.NoWrap;
-            badgeText.overflowMode = TextOverflowModes.Ellipsis;
+            badgeText.overflowMode = TextOverflowModes.Truncate;
 
             if (livingCellsText != null)
             {
