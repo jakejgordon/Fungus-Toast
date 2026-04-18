@@ -68,6 +68,7 @@ namespace FungusToast.Unity.UI
         private int defeatCarryoverSelectionCapacity;
         private string selectedMoldinessRewardId;
         private readonly HashSet<string> selectedDefeatCarryoverAdaptationIds = new();
+        private readonly List<Image> moldinessRewardOptionBackgrounds = new();
         private readonly List<Component> legacyResultsHeaderCandidates = new();
 
         // Post-victory campaign testing controls (runtime-built to avoid scene dependency).
@@ -295,6 +296,7 @@ namespace FungusToast.Unity.UI
             requiresMoldinessRewardSelection = false;
             selectedMoldinessRewardId = null;
             selectedDefeatCarryoverAdaptationIds.Clear();
+            moldinessRewardOptionBackgrounds.Clear();
             defeatCarryoverSelectionCapacity = 0;
             if (continueButton != null)
                 continueButton.gameObject.SetActive(victory && !finalLevel && hasNextLevel);
@@ -388,6 +390,7 @@ namespace FungusToast.Unity.UI
             selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = Mathf.Max(0, selectionCapacity);
             selectedDefeatCarryoverAdaptationIds.Clear();
+            moldinessRewardOptionBackgrounds.Clear();
 
             if (outcomeLabel != null)
             {
@@ -432,6 +435,7 @@ namespace FungusToast.Unity.UI
             selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
+            moldinessRewardOptionBackgrounds.Clear();
 
             if (outcomeLabel != null)
             {
@@ -578,6 +582,7 @@ namespace FungusToast.Unity.UI
                 Destroy(child.gameObject);
             }
 
+            moldinessRewardOptionBackgrounds.Clear();
             BuildCampaignTopSpacer();
             BuildMoldinessRewardSelectionContent(snapshot, offers);
 
@@ -750,12 +755,25 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            var root = new GameObject("UI_MoldinessRewardSelectionRoot", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            var root = new GameObject("UI_MoldinessRewardSelectionRoot", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(LayoutElement), typeof(ContentSizeFitter));
             root.transform.SetParent(resultsContainer, false);
+
+            var rootRect = root.GetComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0f, 1f);
+            rootRect.anchorMax = new Vector2(1f, 1f);
+            rootRect.pivot = new Vector2(0.5f, 1f);
+            rootRect.anchoredPosition = Vector2.zero;
+            rootRect.sizeDelta = Vector2.zero;
+
+            var rootBackground = root.GetComponent<Image>();
+            var rootBackgroundColor = UIStyleTokens.Surface.PanelSecondary;
+            rootBackgroundColor.a = 0.42f;
+            rootBackground.color = rootBackgroundColor;
+            rootBackground.raycastTarget = false;
 
             var rootLayout = root.GetComponent<VerticalLayoutGroup>();
             rootLayout.spacing = 16f;
-            rootLayout.padding = new RectOffset(18, 18, 8, 8);
+            rootLayout.padding = new RectOffset(18, 18, 18, 18);
             rootLayout.childAlignment = TextAnchor.UpperCenter;
             rootLayout.childControlWidth = true;
             rootLayout.childControlHeight = true;
@@ -765,6 +783,11 @@ namespace FungusToast.Unity.UI
             var rootElement = root.GetComponent<LayoutElement>();
             rootElement.flexibleHeight = 1f;
             rootElement.flexibleWidth = 1f;
+            rootElement.minHeight = 240f;
+
+            var fitter = root.GetComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
             if (snapshot != null)
             {
@@ -804,24 +827,34 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            var buttonObject = new GameObject($"UI_MoldinessReward_{offer.Id}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            var buttonObject = new GameObject($"UI_MoldinessReward_{offer.Id}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(VerticalLayoutGroup), typeof(LayoutElement), typeof(ContentSizeFitter));
             buttonObject.transform.SetParent(parent, false);
 
             var layout = buttonObject.GetComponent<LayoutElement>();
-            layout.preferredHeight = 120f;
+            layout.minHeight = 120f;
             layout.flexibleWidth = 1f;
 
             var background = buttonObject.GetComponent<Image>();
-            background.color = UIStyleTokens.Surface.PanelSecondary;
+            background.color = UIStyleTokens.Surface.PanelElevated;
+            background.raycastTarget = true;
+            moldinessRewardOptionBackgrounds.Add(background);
 
             var vertical = buttonObject.GetComponent<VerticalLayoutGroup>();
             vertical.spacing = 6f;
             vertical.padding = new RectOffset(14, 14, 14, 14);
             vertical.childAlignment = TextAnchor.UpperLeft;
             vertical.childControlWidth = true;
-            vertical.childControlHeight = false;
+            vertical.childControlHeight = true;
             vertical.childForceExpandWidth = true;
             vertical.childForceExpandHeight = false;
+
+            var fitter = buttonObject.GetComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            var outline = buttonObject.AddComponent<Outline>();
+            outline.effectColor = new Color(UIStyleTokens.Text.Muted.r, UIStyleTokens.Text.Muted.g, UIStyleTokens.Text.Muted.b, 0.45f);
+            outline.effectDistance = new Vector2(1.5f, -1.5f);
 
             var title = CreateCarryoverInfoText(buttonObject.transform, offer.DisplayName, 24f, UIStyleTokens.Text.Primary, FontStyles.Bold);
             title.alignment = TextAlignmentOptions.Left;
@@ -830,13 +863,15 @@ namespace FungusToast.Unity.UI
             description.alignment = TextAlignmentOptions.Left;
 
             var button = buttonObject.GetComponent<Button>();
+            UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
             var colors = button.colors;
-            colors.normalColor = UIStyleTokens.Surface.PanelSecondary;
-            colors.highlightedColor = UIStyleTokens.Surface.PanelElevated;
+            colors.normalColor = UIStyleTokens.Surface.PanelElevated;
+            colors.highlightedColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.75f);
             colors.pressedColor = UIStyleTokens.Surface.PanelPrimary;
             colors.selectedColor = UIStyleTokens.State.Success;
             button.colors = colors;
             button.transition = Selectable.Transition.ColorTint;
+            button.targetGraphic = background;
             button.onClick.AddListener(() => SelectMoldinessReward(offer.Id, background));
         }
 
@@ -844,26 +879,12 @@ namespace FungusToast.Unity.UI
         {
             selectedMoldinessRewardId = rewardId;
 
-            foreach (Transform child in resultsContainer)
+            for (int i = 0; i < moldinessRewardOptionBackgrounds.Count; i++)
             {
-                if (child == null)
+                var background = moldinessRewardOptionBackgrounds[i];
+                if (background != null && background != selectedBackground)
                 {
-                    continue;
-                }
-
-                var image = child.GetComponent<Image>();
-                if (image != null)
-                {
-                    image.color = UIStyleTokens.Surface.PanelSecondary;
-                }
-
-                foreach (Transform nested in child)
-                {
-                    var nestedImage = nested.GetComponent<Image>();
-                    if (nestedImage != null && nestedImage != selectedBackground)
-                    {
-                        nestedImage.color = UIStyleTokens.Surface.PanelSecondary;
-                    }
+                    background.color = UIStyleTokens.Surface.PanelElevated;
                 }
             }
 
@@ -1035,6 +1056,7 @@ namespace FungusToast.Unity.UI
             selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
+            moldinessRewardOptionBackgrounds.Clear();
             canvasGroup.alpha = 0f;
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
