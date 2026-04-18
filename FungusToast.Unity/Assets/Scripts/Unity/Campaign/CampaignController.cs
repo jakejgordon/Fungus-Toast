@@ -87,7 +87,8 @@ namespace FungusToast.Unity.Campaign
             State.resolvedAiStrategyNames ??= new List<string>();
             State.moldiness ??= MoldinessProgression.CreateDefaultState();
             State.moldiness.pendingUnlockTriggers ??= new List<MoldinessUnlockTrigger>();
-            State.moldiness.unlockedContentIds ??= new List<string>();
+            State.moldiness.unlockedRewardIds ??= new List<string>();
+            State.moldiness.unlockedAdaptationIds ??= new List<string>();
             if (!State.pendingAdaptationSelection)
             {
                 State.pendingVictorySnapshot = null;
@@ -171,8 +172,11 @@ namespace FungusToast.Unity.Campaign
             }
 
             var selected = new HashSet<string>(State.selectedAdaptationIds ?? new List<string>(), StringComparer.Ordinal);
+            var permanentlyUnlockedAdaptations = new HashSet<string>(State.moldiness?.unlockedAdaptationIds ?? new List<string>(), StringComparer.Ordinal);
+            var currentUnlockLevel = State.moldiness?.unlockLevel ?? 0;
             var remaining = AdaptationRepository.All
                 .Where(x => !x.IsStartingAdaptation)
+                .Where(x => !x.IsLocked || (x.RequiredMoldinessUnlockLevel <= currentUnlockLevel && permanentlyUnlockedAdaptations.Contains(x.Id)))
                 .Where(x => !selected.Contains(x.Id))
                 .ToList();
 

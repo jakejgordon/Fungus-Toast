@@ -18,7 +18,26 @@ namespace FungusToast.Core.Campaign
         /// </summary>
         public bool IsStartingAdaptation { get; }
 
-        public AdaptationDefinition(string id, string name, string description, string? iconId = null, bool isStartingAdaptation = false)
+        /// <summary>
+        /// When true, this adaptation cannot appear in normal adaptation drafts until it has been
+        /// explicitly unlocked by a moldiness reward.
+        /// </summary>
+        public bool IsLocked { get; }
+
+        /// <summary>
+        /// Minimum moldiness unlock level required before this adaptation's unlock reward can appear
+        /// in moldiness drafts.
+        /// </summary>
+        public int RequiredMoldinessUnlockLevel { get; }
+
+        public AdaptationDefinition(
+            string id,
+            string name,
+            string description,
+            string? iconId = null,
+            bool isStartingAdaptation = false,
+            bool isLocked = false,
+            int requiredMoldinessUnlockLevel = 0)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Adaptation id is required.", nameof(id));
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Adaptation name is required.", nameof(name));
@@ -28,6 +47,8 @@ namespace FungusToast.Core.Campaign
             Description = description ?? string.Empty;
             IconId = string.IsNullOrWhiteSpace(iconId) ? id : iconId;
             IsStartingAdaptation = isStartingAdaptation;
+            IsLocked = isLocked;
+            RequiredMoldinessUnlockLevel = Math.Max(0, requiredMoldinessUnlockLevel);
         }
     }
 }

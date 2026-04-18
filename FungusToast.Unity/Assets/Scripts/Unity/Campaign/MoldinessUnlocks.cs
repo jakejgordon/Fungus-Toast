@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using FungusToast.Core.Campaign;
 
 namespace FungusToast.Unity.Campaign
 {
     public enum MoldinessUnlockType
     {
-        UnlockContent = 0,
+        UnlockAdaptation = 0,
+        IncreaseFailedRunAdaptationCarryover = 1,
     }
 
     [Serializable]
@@ -19,28 +21,48 @@ namespace FungusToast.Unity.Campaign
 
     public sealed class MoldinessUnlockDefinition
     {
-        public MoldinessUnlockDefinition(string id, string displayName, string description, MoldinessUnlockType type, string contentId, int requiredUnlockLevel, bool isRepeatable = false)
+        public MoldinessUnlockDefinition(
+            string id,
+            string displayName,
+            string description,
+            MoldinessUnlockType type,
+            int requiredUnlockLevel,
+            string adaptationId = null,
+            int stackAmount = 0,
+            bool isRepeatable = false,
+            bool isUniversal = false)
         {
             if (string.IsNullOrWhiteSpace(id)) throw new ArgumentException("Unlock id is required.", nameof(id));
             if (string.IsNullOrWhiteSpace(displayName)) throw new ArgumentException("Unlock display name is required.", nameof(displayName));
-            if (string.IsNullOrWhiteSpace(contentId)) throw new ArgumentException("Unlock content id is required.", nameof(contentId));
+            if (type == MoldinessUnlockType.UnlockAdaptation && string.IsNullOrWhiteSpace(adaptationId))
+            {
+                throw new ArgumentException("UnlockAdaptation rewards require an adaptation id.", nameof(adaptationId));
+            }
+            if (type == MoldinessUnlockType.IncreaseFailedRunAdaptationCarryover && stackAmount <= 0)
+            {
+                throw new ArgumentException("Carryover rewards require a positive stack amount.", nameof(stackAmount));
+            }
 
             Id = id;
             DisplayName = displayName;
             Description = description ?? string.Empty;
             Type = type;
-            ContentId = contentId;
             RequiredUnlockLevel = Math.Max(0, requiredUnlockLevel);
+            AdaptationId = adaptationId ?? string.Empty;
+            StackAmount = Math.Max(0, stackAmount);
             IsRepeatable = isRepeatable;
+            IsUniversal = isUniversal;
         }
 
         public string Id { get; }
         public string DisplayName { get; }
         public string Description { get; }
         public MoldinessUnlockType Type { get; }
-        public string ContentId { get; }
         public int RequiredUnlockLevel { get; }
+        public string AdaptationId { get; }
+        public int StackAmount { get; }
         public bool IsRepeatable { get; }
+        public bool IsUniversal { get; }
     }
 
     public readonly struct MoldinessUnlockApplicationResult
@@ -62,61 +84,35 @@ namespace FungusToast.Unity.Campaign
                 new List<MoldinessUnlockDefinition>
                 {
                     new MoldinessUnlockDefinition(
-                        id: "moldiness_unlock_content_adaptation_spore_salvo",
-                        displayName: "Locked Adaptation, Spore Salvo",
-                        description: "Unlock a new draftable adaptation blueprint tied to Spore Salvo concepts.",
-                        type: MoldinessUnlockType.UnlockContent,
-                        contentId: "locked_adaptation_spore_salvo",
-                        requiredUnlockLevel: 1),
+                        id: "moldiness_reward_failed_run_adaptation_carryover",
+                        displayName: "Spores in Reserve",
+                        description: "On failed campaigns, permanently carry over 1 additional adaptation into your next run.",
+                        type: MoldinessUnlockType.IncreaseFailedRunAdaptationCarryover,
+                        requiredUnlockLevel: 1,
+                        stackAmount: 1,
+                        isRepeatable: true,
+                        isUniversal: true),
                     new MoldinessUnlockDefinition(
-                        id: "moldiness_unlock_content_adaptation_hyphal_bridge",
-                        displayName: "Locked Adaptation, Hyphal Bridge",
-                        description: "Unlock a new draftable adaptation blueprint tied to Hyphal Bridge concepts.",
-                        type: MoldinessUnlockType.UnlockContent,
-                        contentId: "locked_adaptation_hyphal_bridge",
-                        requiredUnlockLevel: 2),
+                        id: "moldiness_unlock_adaptation_spore_salvo",
+                        displayName: "Unlock Spore Salvo",
+                        description: "Spore Salvo can now appear in future normal adaptation drafts.",
+                        type: MoldinessUnlockType.UnlockAdaptation,
+                        requiredUnlockLevel: 1,
+                        adaptationId: AdaptationIds.SporeSalvo),
                     new MoldinessUnlockDefinition(
-                        id: "moldiness_unlock_content_adaptation_vesicle_burst",
-                        displayName: "Locked Adaptation, Vesicle Burst",
-                        description: "Unlock a new draftable adaptation blueprint tied to Vesicle Burst concepts.",
-                        type: MoldinessUnlockType.UnlockContent,
-                        contentId: "locked_adaptation_vesicle_burst",
-                        requiredUnlockLevel: 2),
+                        id: "moldiness_unlock_adaptation_hyphal_bridge",
+                        displayName: "Unlock Hyphal Bridge",
+                        description: "Hyphal Bridge can now appear in future normal adaptation drafts.",
+                        type: MoldinessUnlockType.UnlockAdaptation,
+                        requiredUnlockLevel: 1,
+                        adaptationId: AdaptationIds.HyphalBridge),
                     new MoldinessUnlockDefinition(
-                        id: "moldiness_unlock_content_adaptation_rhizomorphic_hunger",
-                        displayName: "Locked Adaptation, Rhizomorphic Hunger",
-                        description: "Unlock a new draftable adaptation blueprint tied to Rhizomorphic Hunger concepts.",
-                        type: MoldinessUnlockType.UnlockContent,
-                        contentId: "locked_adaptation_rhizomorphic_hunger",
-                        requiredUnlockLevel: 3),
-                    new MoldinessUnlockDefinition(
-                        id: "moldiness_unlock_content_adaptation_mycelial_crescendo",
-                        displayName: "Locked Adaptation, Mycelial Crescendo",
-                        description: "Unlock a new draftable adaptation blueprint tied to Mycelial Crescendo concepts.",
-                        type: MoldinessUnlockType.UnlockContent,
-                        contentId: "locked_adaptation_mycelial_crescendo",
-                        requiredUnlockLevel: 3),
-                    new MoldinessUnlockDefinition(
-                        id: "moldiness_unlock_content_adaptation_ossified_advance",
-                        displayName: "Locked Adaptation, Ossified Advance",
-                        description: "Unlock a new draftable adaptation blueprint tied to Ossified Advance concepts.",
-                        type: MoldinessUnlockType.UnlockContent,
-                        contentId: "locked_adaptation_ossified_advance",
-                        requiredUnlockLevel: 4),
-                    new MoldinessUnlockDefinition(
-                        id: "moldiness_unlock_content_adaptation_distal_spore",
-                        displayName: "Locked Adaptation, Distal Spore",
-                        description: "Unlock a new draftable adaptation blueprint tied to Distal Spore concepts.",
-                        type: MoldinessUnlockType.UnlockContent,
-                        contentId: "locked_adaptation_distal_spore",
-                        requiredUnlockLevel: 4),
-                    new MoldinessUnlockDefinition(
-                        id: "moldiness_unlock_content_adaptation_conidia_ascent",
-                        displayName: "Locked Adaptation, Conidia Ascent",
-                        description: "Unlock a new draftable adaptation blueprint tied to Conidia Ascent concepts.",
-                        type: MoldinessUnlockType.UnlockContent,
-                        contentId: "locked_adaptation_conidia_ascent",
-                        requiredUnlockLevel: 5),
+                        id: "moldiness_unlock_adaptation_vesicle_burst",
+                        displayName: "Unlock Vesicle Burst",
+                        description: "Vesicle Burst can now appear in future normal adaptation drafts.",
+                        type: MoldinessUnlockType.UnlockAdaptation,
+                        requiredUnlockLevel: 1,
+                        adaptationId: AdaptationIds.VesicleBurst),
                 });
 
         private static readonly Dictionary<string, MoldinessUnlockDefinition> byId =
@@ -135,7 +131,8 @@ namespace FungusToast.Unity.Campaign
         public static List<MoldinessUnlockDefinition> GenerateOffers(MoldinessProgressionState progressionState, System.Random random, int count)
         {
             progressionState ??= MoldinessProgression.CreateDefaultState();
-            progressionState.unlockedContentIds ??= new List<string>();
+            progressionState.unlockedRewardIds ??= new List<string>();
+            progressionState.unlockedAdaptationIds ??= new List<string>();
             progressionState.pendingUnlockChoice ??= null;
 
             if (progressionState.pendingUnlockChoice != null && progressionState.pendingUnlockChoice.offeredUnlockIds?.Count > 0)
@@ -147,11 +144,13 @@ namespace FungusToast.Unity.Campaign
                     .ToList();
             }
 
-            var ownedContentIds = new HashSet<string>(progressionState.unlockedContentIds, StringComparer.Ordinal);
+            var ownedRewardIds = new HashSet<string>(progressionState.unlockedRewardIds, StringComparer.Ordinal);
+            var ownedAdaptationIds = new HashSet<string>(progressionState.unlockedAdaptationIds, StringComparer.Ordinal);
             int currentUnlockLevel = Math.Max(0, progressionState.unlockLevel);
             var eligible = MoldinessUnlockCatalog.All
-                .Where(definition => definition.RequiredUnlockLevel <= currentUnlockLevel + 1)
-                .Where(definition => definition.IsRepeatable || !ownedContentIds.Contains(definition.ContentId))
+                .Where(definition => definition.RequiredUnlockLevel <= currentUnlockLevel)
+                .Where(definition => definition.IsRepeatable || !ownedRewardIds.Contains(definition.Id))
+                .Where(definition => definition.Type != MoldinessUnlockType.UnlockAdaptation || !ownedAdaptationIds.Contains(definition.AdaptationId))
                 .ToList();
 
             if (eligible.Count == 0)
@@ -179,21 +178,38 @@ namespace FungusToast.Unity.Campaign
         public static MoldinessUnlockApplicationResult ApplyUnlockChoice(MoldinessProgressionState progressionState, string unlockId)
         {
             progressionState ??= MoldinessProgression.CreateDefaultState();
-            progressionState.unlockedContentIds ??= new List<string>();
+            progressionState.unlockedRewardIds ??= new List<string>();
+            progressionState.unlockedAdaptationIds ??= new List<string>();
 
             if (!MoldinessUnlockCatalog.TryGetById(unlockId, out var definition))
             {
                 return new MoldinessUnlockApplicationResult(false, null);
             }
 
-            if (!definition.IsRepeatable && progressionState.unlockedContentIds.Contains(definition.ContentId))
+            if (!definition.IsRepeatable && progressionState.unlockedRewardIds.Contains(definition.Id))
             {
                 return new MoldinessUnlockApplicationResult(false, definition);
             }
 
+            switch (definition.Type)
+            {
+                case MoldinessUnlockType.UnlockAdaptation:
+                    if (progressionState.unlockedAdaptationIds.Contains(definition.AdaptationId))
+                    {
+                        return new MoldinessUnlockApplicationResult(false, definition);
+                    }
+
+                    progressionState.unlockedAdaptationIds.Add(definition.AdaptationId);
+                    break;
+
+                case MoldinessUnlockType.IncreaseFailedRunAdaptationCarryover:
+                    progressionState.failedRunAdaptationCarryoverCount += definition.StackAmount;
+                    break;
+            }
+
             if (!definition.IsRepeatable)
             {
-                progressionState.unlockedContentIds.Add(definition.ContentId);
+                progressionState.unlockedRewardIds.Add(definition.Id);
             }
 
             progressionState.unlockLevel = Math.Max(progressionState.unlockLevel, definition.RequiredUnlockLevel);

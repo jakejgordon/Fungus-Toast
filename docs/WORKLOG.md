@@ -33,32 +33,32 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** campaign moldiness meta-progression. The current backend prototype exists, but the design needs to shift from unlocking ordinary existing adaptations toward explicit locked content gated by moldiness level.
+- **Current focus:** campaign moldiness meta-progression. The current backend prototype exists, and the design direction is now a hybrid model: moldiness drafts unlock future adaptation-draft eligibility for explicit locked content and repeatable meta rewards.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
 
-1. Define the moldiness progression model around explicit locked content and `MoldinessUnlockLevel`, not ordinary existing adaptations.
-2. Decide the first gated content set for the MVP, with current bias toward locked adaptations that are stronger, niche, or build-shaping.
-3. Replace the temporary auto-apply behavior with a real post-victory moldiness unlock choice UI that presents multiple options.
-4. Decide how moldiness unlock flow chains with the normal adaptation reward flow, with current preference that moldiness resolves first.
-5. Build and smoke-test the combined campaign progression flow, then tune reward pacing, unlock pacing, and the initial locked-content catalog.
+1. Finalize the hybrid moldiness model: a moldiness reward catalog for threshold drafts plus native locked-content metadata on actual game content.
+2. Add the first repeatable universal moldiness reward, which permanently increases failed-run adaptation carryover capacity.
+3. Create at least three new locked level-1 adaptations whose unlock rewards can appear in the moldiness draft once moldiness level 1 is reached.
+4. Replace the temporary auto-apply behavior with a real post-victory moldiness draft UI that presents multiple options before the normal adaptation reward flow.
+5. Build and smoke-test the combined campaign progression flow, then tune reward pacing, unlock pacing, and the initial moldiness reward catalog.
 
 ## Pending Tasks
 
-1. Introduce a first-class concept for locked content that can be gated by moldiness progression.
-2. Add a `MoldinessUnlockLevel` concept so content can become eligible only after reaching the required moldiness tier.
-3. Define whether moldiness progression is lifetime-based, current-balance-based, or both for unlock eligibility and display. Current direction is lifetime-style threshold progression with carryover.
-4. Decide which systems should participate in moldiness gating first: Adaptations only, or Adaptations plus Mutations/Mycovariants.
-5. Create the first real locked-content catalog instead of reusing ordinary existing adaptations as pseudo-unlocks.
-6. Replace the temporary auto-apply moldiness behavior with a real player-facing moldiness unlock choice step that offers multiple choices.
-7. Ensure moldiness unlocks resolve before the normal adaptation reward selection, unless a better chained-flow design emerges.
-8. Decide whether some moldiness unlock effects should apply immediately to the current run, future runs only, or both.
-9. Add player-facing UI copy for moldiness progress, threshold crossings, unlock level, and newly available content.
+1. Refactor the current moldiness reward definition model into a true reward-card system with support for repeatable universal rewards and locked-content unlock rewards.
+2. Add `failedRunAdaptationCarryoverCount` or equivalent persistent state and wire the first repeatable universal reward to increase it by +1 per draft.
+3. Add native locked metadata to `AdaptationDefinition`, including `IsLocked` and required moldiness level fields.
+4. Create at least three new level-1 locked adaptations and corresponding moldiness reward entries that permanently unlock them for future normal adaptation drafts.
+5. Ensure moldiness draft eligibility is based on moldiness level, while normal adaptation draft eligibility depends on whether a locked adaptation has actually been unlocked.
+6. Replace the temporary auto-apply moldiness behavior with a real player-facing moldiness draft step that offers multiple choices.
+7. Ensure moldiness draft resolution happens before the normal adaptation reward selection, unless a better chained-flow design emerges.
+8. Decide whether some moldiness rewards should apply immediately to the current run, future runs only, or both.
+9. Add player-facing UI copy for moldiness progress, threshold crossings, unlock level, locked-content rewards, and carryover rewards.
 10. Explore visual direction for moldiness presentation, with current inspiration being toast corruption / corruption cells and an organic, atmospheric, scientific, fungal feel.
-11. Verify campaign save/resume behavior when moldiness progress or unlock choice state is pending.
-12. Smoke-test a full campaign victory flow covering: no moldiness event, unlock threshold crossed, normal adaptation reward, and chained reward states.
-13. Tune moldiness reward pacing and threshold pacing after the end-to-end flow is playable.
+11. Verify campaign save/resume behavior when moldiness progress or moldiness draft state is pending.
+12. Smoke-test a full campaign victory flow covering: no moldiness event, unlock threshold crossed, moldiness draft resolution, normal adaptation reward, and chained reward states.
+13. Tune moldiness reward pacing, threshold pacing, and moldiness draft pool composition after the end-to-end flow is playable.
 
 ## Current Handoff
 
@@ -78,19 +78,21 @@ Use the following minimal workflow to preserve working memory across sessions:
   - current preference is that moldiness unlock resolution happens before the normal post-victory adaptation choice
   - some unlocks may eventually affect the current run immediately rather than only future runs
 - Design correction from Jake:
-  - ordinary existing adaptations should not be treated as permanent moldiness unlocks
-  - moldiness should instead gate explicit locked content
-  - content availability should be controlled by `MoldinessUnlockLevel`
-  - the system should be extensible enough to gate Adaptations, and later possibly Mutations, Mycovariants, or other reward types
+  - ordinary existing adaptations should not be treated as automatic permanent moldiness unlocks
+  - moldiness should instead drive a separate moldiness draft that can unlock explicit locked content and repeatable meta rewards
+  - `MoldinessUnlockLevel` controls what can appear in the moldiness draft, not what automatically appears in the normal adaptation draft
+  - the system should be extensible enough to support Adaptations first, then later Mycovariants, Mutations, or other reward types
 - MVP content direction:
-  - start with locked adaptations as the first gated content type
-  - those should be new, stronger, niche, or build-shaping options rather than ordinary baseline adaptations that already exist in the draft pool
-- Longer-term unlock categories discussed in the recovered transcript:
+  - start with a hybrid model
+  - moldiness draft offers should include both locked-content unlock rewards and repeatable universal meta rewards
+  - first repeatable universal reward should permanently increase failed-run adaptation carryover capacity by +1 per draft
+  - first locked-content rewards should unlock at least three new level-1 adaptations for future normal adaptation drafts
+- Longer-term unlock categories discussed in the recovered transcript and follow-up clarification:
   - additional draftable adaptations
   - additional draftable mycovariants
   - mutation-related unlocks
-  - possible failed-run carryover adaptation systems
+  - failed-run carryover adaptation systems
 - UI direction discussed in the recovered transcript:
   - moldiness should feel organic, atmospheric, scientific, fungal, and slightly quirky
   - a toast-corruption board / corruption-cell visual metaphor was discussed as a promising presentation direction
-- Immediate next implementation target: revise the prototype to match the corrected locked-content design, then build the real moldiness unlock UI flow on top of that model.
+- Immediate next implementation target: update the prototype to a hybrid moldiness reward-card model, document it in `docs/MOLDINESS_HELPER.md`, then build the real moldiness draft UI flow on top of that model.
