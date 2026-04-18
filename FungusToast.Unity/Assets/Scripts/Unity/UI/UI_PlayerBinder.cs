@@ -9,6 +9,12 @@ namespace FungusToast.Unity.UI
         private Dictionary<Player, Sprite> playerMoldIcons = new();
         private Dictionary<int, Sprite> playerIconById = new();
 
+        public void ClearIcons()
+        {
+            playerMoldIcons.Clear();
+            playerIconById.Clear();
+        }
+
         /// <summary>
         /// Assigns a mold icon sprite to a player.
         /// </summary>
@@ -21,7 +27,21 @@ namespace FungusToast.Unity.UI
             }
 
             playerMoldIcons[player] = sprite;
-            playerIconById[player.PlayerId] = sprite;
+            AssignIcon(player.PlayerId, sprite);
+        }
+
+        /// <summary>
+        /// Assigns a mold icon sprite to a player ID when no live Player object exists.
+        /// </summary>
+        public void AssignIcon(int playerId, Sprite sprite)
+        {
+            if (playerId < 0 || sprite == null)
+            {
+                Debug.LogWarning("⚠️ Cannot assign icon: playerId is invalid or sprite is null.");
+                return;
+            }
+
+            playerIconById[playerId] = sprite;
         }
 
         /// <summary>

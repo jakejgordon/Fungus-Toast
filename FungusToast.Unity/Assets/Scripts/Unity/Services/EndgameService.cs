@@ -687,6 +687,7 @@ namespace FungusToast.Unity
             gameUIManager?.GameLogManager?.ResetForGameTransition();
             gameUIManager?.GlobalGameLogManager?.ResetForGameTransition();
             gameUIManager?.ClearBoard();
+            gameUIManager?.PlayerUIBinder?.ClearIcons();
             gameUIManager?.GameLogRouter?.DisableSilentMode();
             TooltipManager.Instance?.CancelAll();
         }
@@ -768,6 +769,7 @@ namespace FungusToast.Unity
         private readonly Func<string> getForcedAdaptationId;
         private readonly Action<int, int> setBoardDimensions;
         private readonly Action<int, IReadOnlyList<int>> setHotseatConfig;
+        private readonly Action<int> applyConfiguredPlayerMoldAssignments;
         private readonly Action<int> initializeGame;
         private readonly Action stopAllCoroutines;
 
@@ -785,6 +787,7 @@ namespace FungusToast.Unity
             Func<string> getForcedAdaptationId,
             Action<int, int> setBoardDimensions,
             Action<int, IReadOnlyList<int>> setHotseatConfig,
+            Action<int> applyConfiguredPlayerMoldAssignments,
             Action<int> initializeGame,
             Action stopAllCoroutines)
         {
@@ -801,6 +804,7 @@ namespace FungusToast.Unity
             this.getForcedAdaptationId = getForcedAdaptationId;
             this.setBoardDimensions = setBoardDimensions;
             this.setHotseatConfig = setHotseatConfig;
+            this.applyConfiguredPlayerMoldAssignments = applyConfiguredPlayerMoldAssignments;
             this.initializeGame = initializeGame;
             this.stopAllCoroutines = stopAllCoroutines;
         }
@@ -970,6 +974,7 @@ namespace FungusToast.Unity
             gameUIManager.LeftSidebar?.gameObject.SetActive(false);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.MutationUIManager?.gameObject.SetActive(false);
+            PreparePendingCampaignSnapshotPresentation(campaignController, snapshot);
 
             gameUIManager.EndGamePanel.ShowCampaignPendingVictorySnapshot(snapshot);
         }
@@ -992,6 +997,7 @@ namespace FungusToast.Unity
             gameUIManager.LeftSidebar?.gameObject.SetActive(false);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.MutationUIManager?.gameObject.SetActive(false);
+            PreparePendingCampaignSnapshotPresentation(campaignController, null);
 
             var carryoverOptions = campaignController.GetPendingDefeatCarryoverOptions();
             int carryoverCapacity = Mathf.Max(0, campaignController.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0);
@@ -1016,9 +1022,36 @@ namespace FungusToast.Unity
             gameUIManager.LeftSidebar?.gameObject.SetActive(false);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
             gameUIManager.MutationUIManager?.gameObject.SetActive(false);
+            PreparePendingCampaignSnapshotPresentation(campaignController, snapshot);
 
             var offers = campaignController.GetPendingMoldinessUnlockOffers(getRng(), 3);
             gameUIManager.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(snapshot, offers);
+        }
+
+        private void PreparePendingCampaignSnapshotPresentation(CampaignController campaignController, CampaignVictorySnapshot snapshot)
+        {
+            gameUIManager?.ClearBoard();
+
+            var playerBinder = gameUIManager?.PlayerUIBinder;
+            playerBinder?.ClearIcons();
+
+            if (campaignController == null || snapshot?.rows == null || snapshot.rows.Count == 0 || gridVisualizer == null)
+            {
+                return;
+            }
+
+            int totalPlayers = Mathf.Max(1, snapshot.rows.Count);
+            setHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
+            applyConfiguredPlayerMoldAssignments?.Invoke(totalPlayers);
+
+            foreach (var row in snapshot.rows)
+            {
+                var icon = gridVisualizer.GetTileForPlayer(row.playerId)?.sprite;
+                if (icon != null)
+                {
+                    playerBinder?.AssignIcon(row.playerId, icon);
+                }
+            }
         }
     }
 

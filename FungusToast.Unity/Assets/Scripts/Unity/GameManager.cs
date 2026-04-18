@@ -394,6 +394,7 @@ namespace FungusToast.Unity
                     boardHeight = height;
                 },
                 (humanCount, humanMoldIndices) => SetHotseatConfig(humanCount, humanMoldIndices),
+                playerCount => playerMoldAssignmentService?.ApplyConfiguredPlayerMoldAssignments(playerCount),
                 InitializeGame,
                 StopAllCoroutines);
             playerPerspectiveService = new PlayerPerspectiveService(gameUIManager);
