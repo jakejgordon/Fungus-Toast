@@ -247,6 +247,10 @@ namespace FungusToast.Unity
                     int carryoverCapacity = Mathf.Max(0, campaignController.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0);
                     ui.EndGamePanel.ShowCampaignPendingDefeatCarryoverSelection(carryoverOptions, carryoverCapacity);
                 }
+                else if (humanWon && campaignController.HasPendingMoldinessUnlockChoice && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot) && pendingSnapshot != null)
+                {
+                    ui.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(pendingSnapshot);
+                }
                 else
                 {
                     ui.EndGamePanel.ShowResultsWithOutcome(
@@ -821,33 +825,6 @@ namespace FungusToast.Unity
                 && campaignController.HasPendingMoldinessUnlockChoice;
         }
 
-        public bool TryResolvePendingCampaignMoldinessUnlock(System.Random random)
-        {
-            var campaignController = getCampaignController();
-            if (getGameMode() != GameMode.Campaign || campaignController == null || !campaignController.HasPendingMoldinessUnlockChoice)
-            {
-                return false;
-            }
-
-            var offers = campaignController.GetPendingMoldinessUnlockOffers(random, 1);
-            if (offers == null || offers.Count == 0)
-            {
-                Debug.LogWarning("[GameManager] Pending moldiness unlock existed but no offers were generated.");
-                return false;
-            }
-
-            var selected = offers[0];
-            bool applied = campaignController.TryApplyMoldinessUnlock(selected.Id);
-            if (!applied)
-            {
-                Debug.LogError($"[GameManager] Failed to auto-apply moldiness unlock '{selected.Id}'.");
-                return false;
-            }
-
-            Debug.Log($"[GameManager] Auto-applied pending moldiness unlock '{selected.DisplayName}'.");
-            return true;
-        }
-
         public bool TryStartCampaignAdaptationDraft(Action onSelectionComplete)
         {
             var campaignController = getCampaignController();
@@ -858,11 +835,8 @@ namespace FungusToast.Unity
 
             if (campaignController.HasPendingMoldinessUnlockChoice)
             {
-                bool resolved = TryResolvePendingCampaignMoldinessUnlock(getRng());
-                if (!resolved)
-                {
-                    return false;
-                }
+                Debug.Log("[GameManager] Cannot start campaign adaptation draft while a moldiness reward choice is still pending.");
+                return false;
             }
 
             var choices = campaignController.GetAdaptationDraftChoices(
@@ -948,7 +922,14 @@ namespace FungusToast.Unity
                 && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot)
                 && pendingSnapshot != null)
             {
-                ShowPendingCampaignVictoryScreen(campaignController, pendingSnapshot);
+                if (campaignController.HasPendingMoldinessUnlockChoice)
+                {
+                    ShowPendingCampaignMoldinessRewardScreen(campaignController, pendingSnapshot);
+                }
+                else
+                {
+                    ShowPendingCampaignVictoryScreen(campaignController, pendingSnapshot);
+                }
                 return;
             }
 
@@ -1014,6 +995,28 @@ namespace FungusToast.Unity
             var carryoverOptions = campaignController.GetPendingDefeatCarryoverOptions();
             int carryoverCapacity = Mathf.Max(0, campaignController.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0);
             gameUIManager.EndGamePanel.ShowCampaignPendingDefeatCarryoverSelection(carryoverOptions, carryoverCapacity);
+        }
+
+        private void ShowPendingCampaignMoldinessRewardScreen(CampaignController campaignController, CampaignVictorySnapshot snapshot)
+        {
+            if (campaignController == null || snapshot == null || gameUIManager?.EndGamePanel == null)
+            {
+                Debug.LogWarning("[GameManager] Pending campaign moldiness reward screen could not be shown.");
+                return;
+            }
+
+            stopAllCoroutines?.Invoke();
+            mycovariantDraftController?.StopAllCoroutines();
+
+            modeSelectPanel?.SetActive(false);
+            startGamePanel?.gameObject.SetActive(false);
+
+            gameUIManager.LoadingScreen?.gameObject.SetActive(false);
+            gameUIManager.LeftSidebar?.gameObject.SetActive(false);
+            gameUIManager.RightSidebar?.gameObject.SetActive(true);
+            gameUIManager.MutationUIManager?.gameObject.SetActive(false);
+
+            gameUIManager.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(snapshot);
         }
     }
 

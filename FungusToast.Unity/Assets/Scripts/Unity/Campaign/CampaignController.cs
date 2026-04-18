@@ -252,7 +252,10 @@ namespace FungusToast.Unity.Campaign
             }
 
             CampaignSaveService.Save(State);
-            Debug.Log($"[CampaignController] Applied Moldiness unlock '{result.Definition.Id}' ({result.Definition.ContentId}).");
+            string targetLabel = result.Definition.Type == MoldinessUnlockType.UnlockAdaptation
+                ? result.Definition.AdaptationId
+                : result.Definition.Type.ToString();
+            Debug.Log($"[CampaignController] Applied Moldiness unlock '{result.Definition.Id}' ({targetLabel}).");
             return true;
         }
 

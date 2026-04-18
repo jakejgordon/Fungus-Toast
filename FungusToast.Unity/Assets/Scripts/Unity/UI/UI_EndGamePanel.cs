@@ -64,6 +64,7 @@ namespace FungusToast.Unity.UI
         private System.Action onExitToModeSelect;
         private bool requiresAdaptationBeforeContinue;
         private bool requiresDefeatCarryoverSelection;
+        private bool requiresMoldinessRewardSelection;
         private int defeatCarryoverSelectionCapacity;
         private readonly HashSet<string> selectedDefeatCarryoverAdaptationIds = new();
         private readonly List<Component> legacyResultsHeaderCandidates = new();
@@ -247,6 +248,7 @@ namespace FungusToast.Unity.UI
             SetOutcomeBannerVisibility(isCampaign);
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = false;
+            requiresMoldinessRewardSelection = false;
             selectedDefeatCarryoverAdaptationIds.Clear();
             defeatCarryoverSelectionCapacity = 0;
             if (!isCampaign)
@@ -288,6 +290,7 @@ namespace FungusToast.Unity.UI
             // Buttons
             requiresAdaptationBeforeContinue = adaptationPending;
             requiresDefeatCarryoverSelection = false;
+            requiresMoldinessRewardSelection = false;
             selectedDefeatCarryoverAdaptationIds.Clear();
             defeatCarryoverSelectionCapacity = 0;
             if (continueButton != null)
@@ -378,6 +381,7 @@ namespace FungusToast.Unity.UI
             SetOutcomeBannerVisibility(true);
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = true;
+            requiresMoldinessRewardSelection = false;
             defeatCarryoverSelectionCapacity = Mathf.Max(0, selectionCapacity);
             selectedDefeatCarryoverAdaptationIds.Clear();
 
@@ -408,6 +412,49 @@ namespace FungusToast.Unity.UI
             UpdatePostVictoryTestingVisibility(false);
         }
 
+        public void ShowCampaignPendingMoldinessRewardSelection(CampaignVictorySnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            ShowSnapshotRows(snapshot);
+            SetLegacyResultsHeaderVisibility(false);
+            SetOutcomeBannerVisibility(true);
+            requiresAdaptationBeforeContinue = false;
+            requiresDefeatCarryoverSelection = false;
+            requiresMoldinessRewardSelection = true;
+            defeatCarryoverSelectionCapacity = 0;
+            selectedDefeatCarryoverAdaptationIds.Clear();
+
+            if (outcomeLabel != null)
+            {
+                outcomeLabel.text =
+                    $"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Moldiness threshold reached</b></color>\n" +
+                    $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Resolve your moldiness reward before the normal adaptation draft.</color></size>";
+            }
+
+            if (continueButton != null)
+            {
+                continueButton.gameObject.SetActive(true);
+                continueButton.interactable = false;
+                SetButtonLabel(continueButton, "Moldiness Reward Pending");
+            }
+
+            if (playAgainButton != null)
+            {
+                playAgainButton.gameObject.SetActive(false);
+            }
+
+            if (exitButton != null)
+            {
+                exitButton.gameObject.SetActive(true);
+            }
+
+            UpdatePostVictoryTestingVisibility(false);
+        }
+
         public void ShowCampaignPendingVictorySnapshot(CampaignVictorySnapshot snapshot)
         {
             if (snapshot == null)
@@ -420,6 +467,7 @@ namespace FungusToast.Unity.UI
             SetOutcomeBannerVisibility(true);
             requiresAdaptationBeforeContinue = true;
             requiresDefeatCarryoverSelection = false;
+            requiresMoldinessRewardSelection = false;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
 
@@ -709,6 +757,11 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            if (requiresMoldinessRewardSelection)
+            {
+                return;
+            }
+
             if (requiresAdaptationBeforeContinue)
             {
                 var manager = GameManager.Instance;
@@ -794,6 +847,7 @@ namespace FungusToast.Unity.UI
             StopAllCoroutines();
             HidePlayerDetails();
             requiresDefeatCarryoverSelection = false;
+            requiresMoldinessRewardSelection = false;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
             canvasGroup.alpha = 0f;
