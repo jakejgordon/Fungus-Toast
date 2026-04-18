@@ -9,37 +9,19 @@ Use the following minimal workflow to preserve working memory across sessions:
 1. **Session anchor**
    - At the start of a Fungus-Toast session, explicitly say to work in:
      - `/home/jakejgordon/Fungus-Toast`
-   - Also name the current thread of work when helpful:
-     - balance sims
-     - AI tuning
-     - campaign difficulty
-     - starting positions
-     - feature work
+   - Also name the current thread of work when helpful.
 
-2. **Daily continuity**
-   - Use OpenClaw daily memory (`memory/YYYY-MM-DD.md`) for short session summaries:
-     - what changed today
-     - what was learned
-     - what is next
+2. **Canonical task list**
+   - Use this file as the canonical in-repo task list and handoff for active Fungus-Toast work.
+   - At the start of a new task, check `Pending Tasks` here and ask whether one of those should be completed first.
 
 3. **Durable project record**
-   - Keep durable project context in the repo, especially in this file and other relevant docs.
-   - Detailed simulation findings should be recorded in project docs with concrete evidence:
-     - commands
-     - seeds
-     - board sizes
-     - player counts
-     - slot policy
-     - results
-     - conclusions
-   - For balance or campaign-validation conclusions, do not treat console or harness summary text alone as sufficient evidence; final calls should be artifact-backed, or explicitly marked blocked if artifact analysis failed.
+   - Keep durable project context in the repo only when it is still actively useful.
+   - Do not keep transient simulation findings or stale task history here once they stop helping current decisions.
 
 4. **End-of-session checkpoint**
-   - End substantial work sessions with a compact checkpoint containing:
-     - what changed
-     - what we learned
-     - open questions
-     - next steps
+   - Put end-of-session checkpoints in OpenClaw daily memory (`memory/YYYY-MM-DD.md`).
+   - Only keep partial-progress resume notes here when they are needed to continue an unfinished task.
 
 ## Current Notes
 
@@ -51,133 +33,44 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** moldiness meta-progression feature work. Backend progression and permanent adaptation unlock plumbing are now in repo; next step is wiring the post-victory campaign UI flow so moldiness unlock choices can actually be surfaced and claimed in-game.
+- **Current focus:** campaign moldiness meta-progression. The current backend prototype exists, but the design needs to shift from unlocking ordinary existing adaptations toward explicit locked content gated by moldiness level.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
 
-1. Build the real moldiness unlock choice UI in the post-victory campaign flow.
-2. Ensure the player can resolve moldiness unlocks before the normal adaptation reward selection without corrupting campaign progression.
-3. Build/smoke-test the campaign flow, then tune reward pacing and expand or refine the unlock catalog.
+1. Define the moldiness progression model around explicit locked content and `MoldinessUnlockLevel`, not ordinary existing adaptations.
+2. Replace the temporary auto-apply behavior with a real post-victory moldiness unlock choice UI.
+3. Decide how moldiness unlock flow should chain with normal adaptation rewards, then build and smoke-test the combined campaign progression flow.
+4. Tune reward pacing, unlock pacing, and the initial locked-content catalog once the full loop is playable.
 
 ## Pending Tasks
 
-1. Replace the temporary auto-apply moldiness behavior with a real player-facing moldiness unlock choice step.
-2. Decide whether moldiness unlocks should always happen before adaptation rewards, or whether some victories should present both in a chained flow.
-3. Add clear UI copy for moldiness: what was earned, whether a threshold was crossed, and what permanent benefit the selected unlock grants.
-4. Verify campaign save/resume behavior when a moldiness unlock is pending, especially across mid-flow exits or restarts.
-5. Smoke-test a full campaign victory flow covering: no unlock triggered, unlock triggered, adaptation reward triggered, and both systems in sequence.
-6. Review the MVP unlock catalog of eight permanent adaptation unlocks and decide whether any should move tier, change wording, or be replaced.
-7. Tune moldiness reward pacing and threshold pacing after the end-to-end flow is playable.
+1. Introduce a first-class concept for locked content that can be gated by moldiness progression.
+2. Add a `MoldinessUnlockLevel` concept so content can become eligible only after reaching the required moldiness tier.
+3. Decide which systems should participate in moldiness gating first: Adaptations only, or Adaptations plus Mutations/Mycovariants.
+4. Replace the temporary auto-apply moldiness behavior with a real player-facing moldiness unlock choice step.
+5. Add player-facing UI copy for moldiness progress, threshold crossings, unlock level, and newly available content.
+6. Verify campaign save/resume behavior when moldiness progress or unlock choice state is pending.
+7. Smoke-test a full campaign victory flow covering: no moldiness event, unlock threshold crossed, normal adaptation reward, and chained reward states.
+8. Create the first real locked-content catalog instead of reusing ordinary existing adaptations as pseudo-unlocks.
+9. Tune moldiness reward pacing and threshold pacing after the end-to-end flow is playable.
 
 ## Current Handoff
 
-- Moldiness progression foundation is committed in `90b81d3` and permanent moldiness unlock plumbing is committed in `32b2b44`.
-- Current moldiness behavior in repo:
+- `WORKLOG.md` is intentionally present-tense only. Historical task logs and stale tuning notes have been removed.
+- Moldiness progression foundation is committed in `90b81d3` and the first unlock-plumbing prototype is committed in `32b2b44`.
+- Current moldiness prototype in repo:
   - level clears award persistent moldiness using rewards `1,1,2,2,3,3,4,4,5,5,6,6,7,7,8`
   - threshold tiers are `6,9,12,15,18,21,24,27,30,34`, then continue with `+4` growth beyond the table
   - overflow carries over and multiple unlock thresholds can trigger from one award
-  - permanent unlock offers are generated from the moldiness catalog and persisted in campaign save state
-  - currently gated meta-unlock adaptations are hidden from campaign adaptation drafts until permanently unlocked
-- Current unlock catalog MVP is eight permanent adaptation unlocks:
-  - `SporeSalvo`
-  - `HyphalBridge`
-  - `VesicleBurst`
-  - `RhizomorphicHunger`
-  - `MycelialCrescendo`
-  - `OssifiedAdvance`
-  - `DistalSpore`
-  - `ConidiaAscent`
-- Current implementation shortcut: the endgame service temporarily auto-applies a pending moldiness unlock before launching the normal adaptation draft. This keeps progression unblocked, but it is only a temporary bridge and not the intended UX.
-- Immediate next implementation target: replace the temporary auto-apply behavior with a real moldiness unlock choice UI, then validate save/resume and combined reward flow.
-
-
-### 2026-03-27 (campaign AI pool support)
-- **Focus:** Start backlog implementation for campaign board presets that can draw opponents from a strategy pool without tying pool size to active AI count.
-- **Changed:** Added optional `BoardPreset.aiStrategyPool` + `pooledAiPlayerCount`, preserved existing fixed `aiPlayers` behavior, and wired campaign state/controller/runtime so pooled levels resolve a stable per-run/per-level lineup that persists across resume instead of reshuffling.
-- **Learned:** The risky part was not the pool itself but reproducibility: game startup inferred player count from `aiPlayers.Count`, so pooled support also needed explicit active-AI count plumbing plus persisted resolved names in `CampaignState`.
-- **Open questions:** Unity-side validation still needs a real editor pass on pooled level assets.
-- **Next steps:** Use the new pooled authoring path in early campaign presets and validate exact resolved lineups with the safe-proxy harness.
-
-### 2026-03-27 (early-campaign reclaim/surge pass)
-- **Focus:** Add Jake's new easy campaign mold and continue early-campaign tuning with the safe proxy.
-- **Changed:** Added `CMP_Reclaim_InfiltrationSurge_Easy` to the campaign roster (`Necrohyphal Infiltration` maxed first, then `Hyphal Surge`), extended `scripts/run_campaign_balance.py` so pooled campaign presets resolve deterministic AI lineups from `aiStrategyPool`, added the new mold to the `Campaign1` pool, and replaced `AI12` with it in `Campaign4` after validation.
-- **Learned:** The new mold is a good *easy/training-adjacent* fit on small boards but too soft for `Campaign2`-style 20x20 multi-AI screens. The bigger problem was `Campaign4`: current authored `AI12` made the level a cliff (`5%` proxy win rate), while the new reclaim/surge mold softens it back into a plausible early-campaign band.
-- **Evidence:** 20-game safe-proxy screens (`TST_CampaignPlayer_SafeBaseline`) with seed `20260327` for authored levels produced: `Campaign0 90.0% (18/20), avg living 50.8, avg dead 14.9`; `Campaign1 60.0% (12/20), avg living 69.4, avg dead 20.9` (pool resolved to `TST_Training_Overextender` for this seed); `Campaign2 65.0% (13/20), avg living 105.9, avg dead 32.5`; `Campaign3 55.0% (11/20), avg living 166.9, avg dead 113.9`; `Campaign4` old lineup with `AI12` `5.0% (1/20), avg living 172.2, avg dead 133.8`. Direct candidate screens: `15x15` duel vs `CMP_Reclaim_InfiltrationSurge_Easy` -> `85.0% (17/20), avg living 103.2, avg dead 29.2`; `20x20` with `TST_Training_ResilientMycelium + CMP_Reclaim_InfiltrationSurge_Easy` -> `95.0% (19/20), avg living 146.2, avg dead 39.5`; `Campaign4` swap replacing `AI12` with `CMP_Reclaim_InfiltrationSurge_Easy` -> `35.0% (7/20), avg living 201.7, avg dead 150.6`.
-- **Open questions:** `Campaign0-3` now look broadly sane in short screens, but `Campaign4` should be rerun at 50-100 games to make sure the new softer lineup stays in-band instead of just being high-variance.
-- **Next steps:** Continue converting Campaign2-4 to curated pools, then rerun Campaign0-4 on the safe-proxy harness to see whether the opening arc smooths out once those levels stop using fixed lineups.
-
-### 2026-03-27 (Campaign2-4 poolification pass)
-- **Focus:** Replace the remaining fixed early-campaign lineups (Campaign2-4) with real curated pools and rerun the first five campaign levels against the safe baseline.
-- **Changed:** Switched `Campaign2` (`20x20 2 AI`) to a 4-entry easy/training pool with 2 resolved opponents, `Campaign3` (`30x30 3 AI`) to a 6-entry training/easy pool with 3 resolved opponents, and `Campaign4` (`40x40 4 AI`) to a 7-entry training/easy pool with 4 resolved opponents. This keeps the current early-tier design language (training molds plus weak curated `CMP_*` easy molds) while finally using the pooled runtime path on all of Campaign0-4.
-- **Learned:** The pool conversion clearly removes the old Campaign4 brick-wall behavior, but a single-seed pooled sweep is not automatically monotone. With seed `20260327`, Campaign1 still resolved `AI12` and stayed relatively sharp (`74%` proxy win rate), while Campaign2 resolved a softer pair and also landed at `74%`. The good news is the old fixed-lineup cliff is gone: Campaign3 settled at `44%` and Campaign4 at `28%` instead of the earlier `55%` -> `5%` collapse.
-- **Evidence:** `python3 scripts/run_campaign_balance.py --games 50 --seed 20260327 --level 0..4` equivalent per-level runs. Resolved lineups/results: `Campaign0` -> `AI6`: `48.0% (24/50), avg living 37.7, avg dead 14.1`; `Campaign1` -> `AI12`: `74.0% (37/50), avg living 91.7, avg dead 30.8`; `Campaign2` -> `TST_Training_Overextender + CMP_TierCap_GrowthResilience_Easy`: `74.0% (37/50), avg living 101.4, avg dead 30.5`; `Campaign3` -> `CMP_Reclaim_Scavenger_Easy + CMP_TierCap_GrowthResilience_Easy + TST_Training_ResilientMycelium`: `44.0% (22/50), avg living 199.7, avg dead 88.8`; `Campaign4` -> `TST_Training_Overextender + CMP_TierCap_GrowthResilience_Easy + CMP_Reclaim_Scavenger_Easy + TST_Training_ToxicTurtle`: `28.0% (14/50), avg living 189.5, avg dead 175.9`.
-- **Open questions:** Should Campaign1 lose `AI12` now that the rest of the opening band is pooled and softer, or should we treat Campaign1/Campaign2 as acceptable variance and evaluate across multiple seeds before more asset churn?
-- **Next steps:** Run a short multi-seed Campaign0-4 pooled sweep so we can judge the pool *distribution*, not just the `20260327` resolution, then decide whether to remove/replace `AI12` from the early duel band or tighten the Campaign2 pool upward slightly.
-
-### 2026-03-27 (campaign roster expansion pass)
-- **Focus:** Add the next safe weak/easy molds for Campaign1 variety and conservative named medium aliases for the first medium band.
-- **Changed:** Added `CMP_Defense_ResilientShell_Easy`, `CMP_Defense_ReclaimShell_Easy`, `CMP_Surge_BeaconTempo_Medium`, `CMP_Control_AnabolicRebirth_Medium`, and `CMP_Surge_GrowthTempo_Medium` to `AIRoster` with campaign metadata. Expanded the `Campaign1` pool to include the two new weak defense molds. Replaced early-medium preset references to legacy `AI7`/`AI8`/`AI11` with their curated `CMP_*` aliases in Campaign5/6/7/8-authored boards where behavior was intended to stay conservative. Rejected a stronger draft (`CMP_Attrition_ToxicTurtle_Easy`) after proxy screening instead of folding it into the pool.
-- **Learned:** The safe additions for `Campaign1` are the two defense shells, not the toxin turtle. `CMP_Defense_ResilientShell_Easy` is extremely soft in a 15x15 duel, while `CMP_Defense_ReclaimShell_Easy` is still weaker than the proxy but offers more bite. The named medium aliases behave conservatively in authored Campaign5/6 screens and stay clearly below the safe proxy even by Campaign8, which fits the "first-medium with a little spice" guidance.
-- **Evidence:** Build smoke: `dotnet build FungusToast.Core/FungusToast.Core.csproj`. Direct 20-game 15x15 duel screens with seed `20260327`: `CMP_Defense_ResilientShell_Easy` -> `0.0% (0/20), avg living 65.7, avg dead 5.1`; `CMP_Defense_ReclaimShell_Easy` -> `35.0% (7/20), avg living 78.1, avg dead 12.2`; rejected `CMP_Attrition_ToxicTurtle_Easy` -> `65.0% (13/20), avg living 64.7, avg dead 16.4`. Authored 20-game campaign screens with seed `20260327`: `Campaign5` (`CMP_Surge_BeaconTempo_Medium`, `CMP_Control_AnabolicRebirth_Medium`, `AI9`, `CMP_Economy_KillReclaim_Medium`, `CMP_TierCap_GrowthResilience_Easy`) -> proxy `30.0% (6/20), avg living 272.9, avg dead 181.4`; `Campaign6` (`CMP_Surge_BeaconTempo_Medium`, `CMP_Control_AnabolicRebirth_Medium`, `AI9`, `CMP_Bloom_CreepingNecro_Medium`) -> `25.0% (5/20), avg living 665.6, avg dead 447.9`; `Campaign8` (`CMP_Control_AnabolicRebirth_Medium`, `AI9`, `CMP_Surge_GrowthTempo_Medium`, `CMP_Economy_KillReclaim_Medium`, `CMP_Bloom_CreepingNecro_Medium`, `CMP_Bloom_BeaconRegression_Medium`) -> `10.0% (2/20), avg living 694.8, avg dead 584.5`.
-- **Open questions:** Campaign7 still uses the same conservative alias pair but was not rerun in this pass; if we want full authored-level evidence for every renamed board, run Campaign7 next. `CMP_Defense_ReclaimShell_Easy` is acceptable as weak variety now, but if Campaign1 needs even more softness later it is the first easy slot I'd revisit.
-- **Next steps:** Keep expanding named curated aliases upward from Campaign9 while preserving Jake's guardrail that `CMP_Bloom_FortifyMimic_Medium` does not enter until Campaign9+.
-
-### 2026-03-21
-- **Focus:** Reconstruct lost OpenClaw context and preserve current Fungus-Toast thread.
-- **Changed:** Established the new memory workflow; created this worklog; recovered recent project context from saved memory and recent commits.
-- **Learned:** Recent work was centered on simulation-driven balance and starting-position fairness. `StartingSporeUtility` was upgraded from a fixed-radius circle to a board-aware search, then exposed analysis data for per-slot fairness inspection.
-- **Recovered context:**
-  - true fixed-slot simulation runs now preserve fixed starting positions
-  - board-aware starting layout search landed in `StartingSporeUtility`
-  - `GetStartingPositionAnalysis(width, height, playerCount)` now exposes coordinates, uncontested counts, early uncontested counts, tie counts, and favor rank
-  - 160x160 / 8-player fairness improved substantially versus the old layout
-- **Saved reference result:** Current chosen 160x160 / 8-player layout is P0 `(142,106)`, P1 `(106,142)`, P2 `(54,142)`, P3 `(18,106)`, P4 `(18,54)`, P5 `(54,18)`, P6 `(106,18)`, P7 `(142,54)`.
-- **Open questions:** Should next tuning focus on additional board sizes / aspect ratios, alternate player counts, or empirical simulation validation beyond geometric scoring?
-- **Next steps:** Resume work in `/home/jakejgordon/Fungus-Toast` and continue from the starting-position/balance-testing thread.
-
-### 2026-03-21 (later)
-- **Focus:** Clean 6-player fairness validation and simulation-tooling improvements.
-- **Changed:** Added simulation flags to disable nutrient patches and mycovariants. Replaced temporary candidate-override source edits with reusable starting-position override parameters so candidate layouts can be tested via CLI instead of editing `StartingSporeUtility`.
-- **Learned:** Candidate 6 looked promising in short samples but failed to hold up in a clean 100-game run with nutrients and mycovariants disabled.
-- **Evidence:** Clean 100-game result for candidate 6 on `160x160` with same AI in all slots and fixed positions was `17,12,19,16,18,18` (range `7`).
-- **Open questions:** Which of the saved 6-player candidates remains strongest under the clean no-nutrients/no-mycovariants setup?
-- **Next steps:** Commit the new plumbing, then run a clean staged bakeoff across the top saved 6-player candidates using `--starting-positions`.
-
-## Session Checkpoint Template
-
-### YYYY-MM-DD
-- **Focus:**
-- **Changed:**
-- **Learned:**
-- **Open questions:**
-- **Next steps:**
-.
-- **Learned:** Of the tested clean 100-game validations, candidate 6 performed best; candidate 15 and 18 both regressed badly despite looking promising in short screens.
-- **Evidence:** Candidate 6 clean 100-game result on `160x160` with same AI in all slots and fixed positions was `17,12,19,16,18,18` (range `7`). Candidate 15 was `22,12,19,13,20,14` (range `10`). Candidate 18 was `21,16,23,11,16,13` (range `12`).
-- **Open questions:** 5-player validation has not been documented yet.
-- **Next steps:** Start clean 5-player validation, record the current auto-selected 5-player baseline, and compare candidates if needed.
-
-### 2026-03-21 (5-player decision)
-- **Focus:** Finish 5-player starting-position selection.
-- **Changed:** Accepted candidate 11 as the selected 5-player layout and added it to the precomputed fast-path.
-- **Learned:** The previous 5-player auto-selected layout was too biased. A tighter 5-player ring performed substantially better under clean validation.
-- **Evidence:** Previous auto-selected layout produced `22,15,27,14,22` (range `13`). Selected candidate 11 produced `22,18,22,16,22` (range `6`) on `160x160` with same AI in all slots, fixed positions, nutrients off, and mycovariants off.
-- **Selected layout:** P0 `(114,104)`, P1 `(67,120)`, P2 `(38,80)`, P3 `(67,40)`, P4 `(114,56)`.
-- **Open questions:** Remaining player counts below 5 have not been validated in this pass.
-- **Next steps:** Commit/push the selected 5-player layout and continue only if additional player-count tuning is desired.
-
-### 2026-03-27 (campaign modernization pass)
-- **Focus:** Promote curated modern molds into the actual campaign roster and retune Campaign5-10 using the safe-proxy harness.
-- **Changed:** Added `CMP_*` campaign-safe aliases to `AIRoster`, tagged them with campaign metadata, and rewired Campaign5-10 board presets to use the curated roster instead of legacy placeholder `AI4/AI5` or overly spiky elite inserts.
-- **Learned:** The real blocker was roster mismatch, not just preset composition: the balance harness only validated the `Campaign` set, so medium modern molds had to be promoted there first. Hard molds introduced before Campaign10 were consistently too sharp for the safe baseline in 20-game screens.
-- **Evidence:** See `/home/jakejgordon/Fungus-Toast/docs/campaign-modernization-2026-03-27.md` for commands, lineups, and per-level proxy results. Final proxy results were Campaign5 `25% (5/20)`, Campaign6 `25% (5/20)`, Campaign7 `5% (1/20)`, Campaign8 `10% (2/20)`, Campaign9 `5% (1/20)`, Campaign10 `10% (2/20)`.
-- **Open questions:** Campaign7 and Campaign9 still look a little harsher than the surrounding curve; decide whether to soften them further or accept them as current checkpoints pending broader campaign pass data.
-- **Next steps:** If continuing this thread, rerun Campaign7-10 at a larger sample size (50-100 games) after deciding whether to swap one medium mold in 7/9 for a weaker training/easy curve shaper.
-
-### 2026-03-27 (late-campaign continuation / blocker)
-- **Focus:** Continue safe-proxy campaign tuning upward into Campaign11-Campaign14.
-- **Changed:** Screened the currently authored late levels plus two softened curated candidate sets for Campaign12-14. Did not rewrite late board presets because the harness evidence did not justify picking a new lineup yet.
+  - a temporary unlock/offer plumbing path exists in campaign state/controller code
+  - the endgame service currently contains a temporary shortcut that auto-applies a pending moldiness unlock before the normal adaptation draft
+- Design correction from Jake:
+  - ordinary existing adaptations should not be treated as permanent moldiness unlocks
+  - moldiness should instead gate explicit locked content
+  - content availability should be controlled by `MoldinessUnlockLevel`
+  - the system should be extensible enough to gate Adaptations, and later possibly Mutations, Mycovariants, or other reward types
+- Immediate next implementation target: revise the prototype to match the corrected design, then build the real moldiness unlock UI flow on top of that model.
 - **Learned:** Campaign11 is at least survivable in short samples, but Campaign12-14 remain a real blocker. Even after removing duplicate elite anchors and substituting mostly medium/hard curated molds that obey the earliest-introduction guidance, the safe proxy still went `0/10` on every tested Campaign12-14 lineup.
 - **Evidence:** Baseline short screen results were Campaign11 `20.0% (2/10), avg living 1101.4, avg dead 1039.1`; Campaign12 `0.0% (0/10), avg living 1196.8, avg dead 982.2`; Campaign13 `0.0% (0/10), avg living 1191.4, avg dead 1213.4`; Campaign14 `0.0% (0/10), avg living 1368.1, avg dead 1227.9`. Additional candidate screens are recorded in `docs/campaign-modernization-2026-03-27.md`, and every Campaign12-14 candidate there also stayed at `0/10`.
 - **Open questions:** Is the blocker the proxy itself, fixed-slot late-board variance, or an implicit target-band mismatch where `0-5%` is actually acceptable for current late campaign?
