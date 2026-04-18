@@ -5,6 +5,7 @@ using FungusToast.Unity.Campaign;
 using FungusToast.Unity.UI.Testing;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
+using FungusToast.Unity.Campaign;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -54,6 +55,12 @@ namespace FungusToast.Unity.UI.Campaign
         private RectTransform mainStackRoot;
         private GameObject actionStack;
         private DevelopmentTestingCardController testingCardController;
+        private RectTransform moldinessSummarySectionRoot;
+        private TextMeshProUGUI moldinessSummaryTitleLabel;
+        private TextMeshProUGUI moldinessSummaryStatusLabel;
+        private TextMeshProUGUI moldinessSummaryPendingLabel;
+        private GridLayoutGroup moldinessSummaryToastGrid;
+        private readonly List<Image> moldinessSummaryToastTiles = new();
         private RectTransform moldSelectionSectionRoot;
         private TextMeshProUGUI moldSelectionTitleLabel;
         private TextMeshProUGUI moldSelectionStatusLabel;
@@ -76,6 +83,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             BuildLayoutScaffold();
             BuildTestingCard();
+            BuildMoldinessSummarySection();
             BuildMoldSelectionSection();
             BuildActionStack();
             ApplyStyle();
@@ -212,6 +220,259 @@ namespace FungusToast.Unity.UI.Campaign
                 LayoutInvalidated = ForceLayoutNow
             });
             testingCardController.Build();
+        }
+
+        private void BuildMoldinessSummarySection()
+        {
+            if (mainStackRoot == null)
+            {
+                return;
+            }
+
+            var existing = mainStackRoot.Find("UI_CampaignMoldinessSummarySection") as RectTransform;
+            if (existing != null)
+            {
+                moldinessSummarySectionRoot = existing;
+            }
+            else
+            {
+                var section = new GameObject(
+                    "UI_CampaignMoldinessSummarySection",
+                    typeof(RectTransform),
+                    typeof(Image),
+                    typeof(VerticalLayoutGroup),
+                    typeof(ContentSizeFitter),
+                    typeof(LayoutElement));
+                section.transform.SetParent(mainStackRoot, false);
+                moldinessSummarySectionRoot = section.GetComponent<RectTransform>();
+            }
+
+            ConfigureMoldinessSummarySection();
+            EnsureMoldinessSummaryHeader();
+            EnsureMoldinessSummaryToastGrid();
+        }
+
+        private void ConfigureMoldinessSummarySection()
+        {
+            if (moldinessSummarySectionRoot == null)
+            {
+                return;
+            }
+
+            moldinessSummarySectionRoot.anchorMin = new Vector2(0.5f, 1f);
+            moldinessSummarySectionRoot.anchorMax = new Vector2(0.5f, 1f);
+            moldinessSummarySectionRoot.pivot = new Vector2(0.5f, 0.5f);
+            moldinessSummarySectionRoot.anchoredPosition = Vector2.zero;
+            moldinessSummarySectionRoot.localScale = Vector3.one;
+
+            var surface = moldinessSummarySectionRoot.GetComponent<Image>();
+            if (surface != null)
+            {
+                surface.color = UIStyleTokens.Surface.PanelPrimary;
+            }
+
+            var layout = moldinessSummarySectionRoot.GetComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(18, 18, 18, 18);
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.spacing = 10f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+
+            var fitter = moldinessSummarySectionRoot.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var element = moldinessSummarySectionRoot.GetComponent<LayoutElement>();
+            element.minWidth = 460f;
+            element.preferredWidth = 500f;
+            element.minHeight = 190f;
+            element.preferredHeight = -1f;
+        }
+
+        private void EnsureMoldinessSummaryHeader()
+        {
+            moldinessSummaryTitleLabel ??= CreateMoldinessSummaryText(
+                "UI_CampaignMoldinessSummaryTitle",
+                28f,
+                FontStyles.Bold,
+                UIStyleTokens.Text.Primary,
+                38f);
+            moldinessSummaryStatusLabel ??= CreateMoldinessSummaryText(
+                "UI_CampaignMoldinessSummaryStatus",
+                20f,
+                FontStyles.Normal,
+                UIStyleTokens.Text.Secondary,
+                48f);
+            moldinessSummaryPendingLabel ??= CreateMoldinessSummaryText(
+                "UI_CampaignMoldinessSummaryPending",
+                18f,
+                FontStyles.Italic,
+                UIStyleTokens.State.Warning,
+                30f);
+        }
+
+        private TextMeshProUGUI CreateMoldinessSummaryText(string objectName, float fontSize, FontStyles fontStyle, Color color, float minHeight)
+        {
+            var existing = moldinessSummarySectionRoot.Find(objectName) as RectTransform;
+            TextMeshProUGUI label;
+            if (existing != null)
+            {
+                label = existing.GetComponent<TextMeshProUGUI>();
+            }
+            else
+            {
+                var labelObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+                labelObject.transform.SetParent(moldinessSummarySectionRoot, false);
+                label = labelObject.GetComponent<TextMeshProUGUI>();
+            }
+
+            label.fontSize = fontSize;
+            label.fontStyle = fontStyle;
+            label.color = color;
+            label.alignment = TextAlignmentOptions.Center;
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.text = string.Empty;
+
+            var element = label.GetComponent<LayoutElement>();
+            element.minWidth = 460f;
+            element.preferredWidth = 460f;
+            element.minHeight = minHeight;
+            element.preferredHeight = -1f;
+
+            return label;
+        }
+
+        private void EnsureMoldinessSummaryToastGrid()
+        {
+            if (moldinessSummarySectionRoot == null)
+            {
+                return;
+            }
+
+            if (moldinessSummaryToastGrid == null)
+            {
+                var existing = moldinessSummarySectionRoot.Find("UI_CampaignMoldinessSummaryToastGrid") as RectTransform;
+                if (existing != null)
+                {
+                    moldinessSummaryToastGrid = existing.GetComponent<GridLayoutGroup>();
+                }
+                else
+                {
+                    var gridObject = new GameObject(
+                        "UI_CampaignMoldinessSummaryToastGrid",
+                        typeof(RectTransform),
+                        typeof(GridLayoutGroup),
+                        typeof(ContentSizeFitter),
+                        typeof(LayoutElement));
+                    gridObject.transform.SetParent(moldinessSummarySectionRoot, false);
+                    moldinessSummaryToastGrid = gridObject.GetComponent<GridLayoutGroup>();
+                }
+            }
+
+            moldinessSummaryToastGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            moldinessSummaryToastGrid.constraintCount = 4;
+            moldinessSummaryToastGrid.cellSize = new Vector2(42f, 42f);
+            moldinessSummaryToastGrid.spacing = new Vector2(8f, 8f);
+            moldinessSummaryToastGrid.childAlignment = TextAnchor.UpperCenter;
+
+            var fitter = moldinessSummaryToastGrid.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var element = moldinessSummaryToastGrid.GetComponent<LayoutElement>();
+            element.minWidth = 200f;
+            element.preferredWidth = 200f;
+            element.minHeight = 92f;
+            element.preferredHeight = -1f;
+
+            EnsureMoldinessSummaryToastTileCount(8);
+        }
+
+        private void EnsureMoldinessSummaryToastTileCount(int requiredCount)
+        {
+            while (moldinessSummaryToastTiles.Count < requiredCount)
+            {
+                var tileObject = new GameObject(
+                    $"UI_CampaignMoldinessToastTile_{moldinessSummaryToastTiles.Count + 1}",
+                    typeof(RectTransform),
+                    typeof(Image),
+                    typeof(LayoutElement));
+                tileObject.transform.SetParent(moldinessSummaryToastGrid.transform, false);
+
+                var tileImage = tileObject.GetComponent<Image>();
+                tileImage.raycastTarget = false;
+                tileImage.color = UIStyleTokens.Surface.PanelSecondary;
+
+                var tileElement = tileObject.GetComponent<LayoutElement>();
+                tileElement.minWidth = 42f;
+                tileElement.preferredWidth = 42f;
+                tileElement.minHeight = 42f;
+                tileElement.preferredHeight = 42f;
+
+                moldinessSummaryToastTiles.Add(tileImage);
+            }
+        }
+
+        private void RefreshMoldinessSummaryUi()
+        {
+            var gameManager = GameManager.Instance;
+            var campaignController = gameManager?.CampaignController;
+            bool hasSave = gameManager != null && gameManager.HasCampaignSave();
+            if (moldinessSummarySectionRoot == null)
+            {
+                return;
+            }
+
+            moldinessSummarySectionRoot.gameObject.SetActive(hasSave && currentStep == CampaignPanelStep.MainActions);
+            if (!hasSave || campaignController == null)
+            {
+                return;
+            }
+
+            MoldinessProgressSnapshot snapshot = campaignController.MoldinessProgress;
+            int level = snapshot.CurrentTierIndex + 1;
+            int threshold = Math.Max(1, snapshot.CurrentThreshold);
+            int progress = Mathf.Clamp(snapshot.CurrentProgress, 0, threshold);
+            int filledTileCount = Mathf.Clamp(Mathf.CeilToInt((progress / (float)threshold) * moldinessSummaryToastTiles.Count), 0, moldinessSummaryToastTiles.Count);
+
+            if (moldinessSummaryTitleLabel != null)
+            {
+                moldinessSummaryTitleLabel.text = $"Moldiness Level {level}";
+            }
+
+            if (moldinessSummaryStatusLabel != null)
+            {
+                moldinessSummaryStatusLabel.text = $"{progress} / {threshold} to next threshold  •  Lifetime earned: {snapshot.LifetimeEarned}";
+            }
+
+            if (moldinessSummaryPendingLabel != null)
+            {
+                int pendingCount = snapshot.PendingUnlockCount;
+                moldinessSummaryPendingLabel.gameObject.SetActive(pendingCount > 0);
+                moldinessSummaryPendingLabel.text = pendingCount > 0
+                    ? $"{pendingCount} pending moldiness reward{(pendingCount == 1 ? string.Empty : "s")}" 
+                    : string.Empty;
+            }
+
+            for (int i = 0; i < moldinessSummaryToastTiles.Count; i++)
+            {
+                var tile = moldinessSummaryToastTiles[i];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                bool isFilled = i < filledTileCount;
+                tile.color = isFilled ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Surface.PanelSecondary;
+            }
+
+            bool pendingReward = snapshot.PendingUnlockCount > 0;
+            if (resumeButton != null)
+            {
+                SetButtonText(resumeButton, pendingReward ? "Resume Campaign (Pending Reward)" : "Resume Campaign");
+            }
         }
 
         private void BuildMoldSelectionSection()
@@ -495,6 +756,11 @@ namespace FungusToast.Unity.UI.Campaign
                 resumeButton.gameObject.SetActive(!selectingMold && GameManager.Instance != null && GameManager.Instance.HasCampaignSave());
             }
 
+            if (moldinessSummarySectionRoot != null)
+            {
+                moldinessSummarySectionRoot.gameObject.SetActive(!selectingMold && GameManager.Instance != null && GameManager.Instance.HasCampaignSave());
+            }
+
             if (deleteButton != null)
             {
                 deleteButton.gameObject.SetActive(false);
@@ -518,6 +784,11 @@ namespace FungusToast.Unity.UI.Campaign
                 {
                     testingRoot.gameObject.SetActive(!selectingMold);
                 }
+            }
+
+            if (!selectingMold)
+            {
+                RefreshMoldinessSummaryUi();
             }
 
             if (selectingMold)
@@ -747,6 +1018,11 @@ namespace FungusToast.Unity.UI.Campaign
                 resumeButton.gameObject.SetActive(hasSave);
                 resumeButton.interactable = hasSave;
                 UIStyleTokens.Button.SetButtonLabelColor(resumeButton, hasSave ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled);
+            }
+
+            if (moldinessSummarySectionRoot != null)
+            {
+                moldinessSummarySectionRoot.gameObject.SetActive(hasSave && currentStep == CampaignPanelStep.MainActions);
             }
 
             if (deleteButton != null)
