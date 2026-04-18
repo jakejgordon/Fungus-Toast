@@ -33,32 +33,29 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** campaign moldiness meta-progression. The current backend prototype exists, and the design direction is now a hybrid model: moldiness drafts unlock future adaptation-draft eligibility for explicit locked content and repeatable meta rewards.
+- **Current focus:** campaign moldiness meta-progression and player-facing UI. Core flow now exists for moldiness rewards, defeat carryover selection, and locked adaptation unlocks, but the moldiness UI still needs visibility/polish and the new moldiness reward panel currently has a rendering/interaction issue under investigation.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
 
-1. Finalize the hybrid moldiness model: a moldiness reward catalog for threshold drafts plus native locked-content metadata on actual game content.
-2. Add the first repeatable universal moldiness reward, which permanently increases failed-run adaptation carryover capacity.
-3. Create at least three new locked level-1 adaptations whose unlock rewards can appear in the moldiness draft once moldiness level 1 is reached.
-4. Replace the temporary auto-apply behavior with a real post-victory moldiness draft UI that presents multiple options before the normal adaptation reward flow.
-5. Build and smoke-test the combined campaign progression flow, then tune reward pacing, unlock pacing, and the initial moldiness reward catalog.
+1. Fix the current moldiness reward panel rendering/interaction issue so reward offers are visible and selectable during the post-victory moldiness draft.
+2. Add persistent moldiness UI to the campaign HUD, likely in the right sidebar, showing current moldiness level, progress toward the next threshold, and unlock proximity.
+3. Add end-of-level moldiness summary UI on the endgame panel, including gained moldiness, updated progress, threshold crossings, and why a moldiness draft triggered.
+4. Reserve and prototype a strong location for the longer-term moldiness toast/corruption visualization on the endgame panel and/or campaign HUD.
+5. Smoke-test the combined campaign progression flow, then tune reward pacing, unlock pacing, UI clarity, and the initial moldiness reward catalog.
 
 ## Pending Tasks
 
-1. Refactor the current moldiness reward definition model into a true reward-card system with support for repeatable universal rewards and locked-content unlock rewards.
-2. Add `failedRunAdaptationCarryoverCount` or equivalent persistent state and wire the first repeatable universal reward to increase it by +1 per draft.
-3. Add native locked metadata to `AdaptationDefinition`, including `IsLocked` and required moldiness level fields.
-4. Create at least three new level-1 locked adaptations and corresponding moldiness reward entries that permanently unlock them for future normal adaptation drafts.
-5. Ensure moldiness draft eligibility is based on moldiness level, while normal adaptation draft eligibility depends on whether a locked adaptation has actually been unlocked.
-6. Replace the temporary auto-apply moldiness behavior with a real player-facing moldiness draft step that offers multiple choices.
-7. Ensure moldiness draft resolution happens before the normal adaptation reward selection, unless a better chained-flow design emerges.
-8. Decide whether some moldiness rewards should apply immediately to the current run, future runs only, or both.
-9. Add player-facing UI copy for moldiness progress, threshold crossings, unlock level, locked-content rewards, and carryover rewards.
-10. Explore visual direction for moldiness presentation, with current inspiration being toast corruption / corruption cells and an organic, atmospheric, scientific, fungal feel.
-11. Verify campaign save/resume behavior when moldiness progress or moldiness draft state is pending.
-12. Smoke-test a full campaign victory flow covering: no moldiness event, unlock threshold crossed, moldiness draft resolution, normal adaptation reward, and chained reward states.
-13. Tune moldiness reward pacing, threshold pacing, and moldiness draft pool composition after the end-to-end flow is playable.
+1. Fix the current post-victory moldiness reward panel so reward cards actually render and can be selected reliably.
+2. Add persistent moldiness HUD UI showing at minimum: moldiness unlock level, current progress, next threshold, and pending draft state when applicable.
+3. Add end-of-level moldiness summaries for both wins and losses, including `+X Moldiness`, updated progress, and threshold/draft messaging.
+4. Decide and implement the first good placement for moldiness toast visualization so the corruption metaphor has a visible home in the campaign UI.
+5. Polish the moldiness reward panel UX, including clearer selection highlighting and reward-type presentation.
+6. Verify campaign save/resume behavior when moldiness progress, moldiness draft state, adaptation draft state, or defeat carryover selection is pending.
+7. Smoke-test a full campaign flow covering: no moldiness event, threshold crossed, moldiness draft resolution, normal adaptation reward, defeat carryover selection, and chained reward states.
+8. Tune moldiness reward pacing, threshold pacing, and moldiness draft pool composition after the end-to-end flow is playable.
+9. Decide whether some moldiness rewards should apply immediately to the current run, future runs only, or both.
+10. Explore longer-term expansion to additional unlock categories such as mycovariants and mutation-related rewards once the adaptation-first loop is solid.
 
 ## Current Handoff
 
@@ -69,8 +66,9 @@ Use the following minimal workflow to preserve working memory across sessions:
   - level clears award persistent moldiness using rewards `1,1,2,2,3,3,4,4,5,5,6,6,7,7,8`
   - threshold tiers are `6,9,12,15,18,21,24,27,30,34`, then continue with `+4` growth beyond the table
   - overflow carries over and multiple unlock thresholds can trigger from one award
-  - a temporary unlock/offer plumbing path exists in campaign state/controller code
-  - the endgame service currently contains a temporary shortcut that auto-applies a pending moldiness unlock before the normal adaptation draft
+  - moldiness rewards now block the normal adaptation draft until resolved instead of auto-applying silently
+  - defeat carryover selection now blocks defeat reset when the player has carryover capacity
+  - the current moldiness reward panel is functional in structure, but is presently showing a rendering/interaction issue where reward cards may fail to appear, leaving the button inert
 - Recovered design intent from the earlier moldiness transcript:
   - moldiness should be a single meta-progression currency first, with more milestone-based systems added later if needed
   - reward gain should come from campaign progress, especially cleared campaign levels, and scale with progression depth
@@ -86,7 +84,7 @@ Use the following minimal workflow to preserve working memory across sessions:
   - start with a hybrid model
   - moldiness draft offers should include both locked-content unlock rewards and repeatable universal meta rewards
   - first repeatable universal reward should permanently increase failed-run adaptation carryover capacity by +1 per draft
-  - first locked-content rewards should unlock at least three new level-1 adaptations for future normal adaptation drafts
+  - first locked-content rewards now include at least three level-1 locked adaptations for future normal adaptation drafts, and Jake has also added a new adaptation from another PC that should be incorporated into the unlock pool via sync/pull first
 - Longer-term unlock categories discussed in the recovered transcript and follow-up clarification:
   - additional draftable adaptations
   - additional draftable mycovariants
@@ -95,4 +93,4 @@ Use the following minimal workflow to preserve working memory across sessions:
 - UI direction discussed in the recovered transcript:
   - moldiness should feel organic, atmospheric, scientific, fungal, and slightly quirky
   - a toast-corruption board / corruption-cell visual metaphor was discussed as a promising presentation direction
-- Immediate next implementation target: update the prototype to a hybrid moldiness reward-card model, document it in `docs/MOLDINESS_HELPER.md`, then build the real moldiness draft UI flow on top of that model.
+- Immediate next implementation target: fix the current moldiness reward panel rendering/selection issue, then add persistent moldiness progress UI to the campaign HUD and end-of-level summary surfaces so players can see level, progress, gains, and why moldiness drafts trigger.

@@ -423,8 +423,7 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            ShowSnapshotRows(snapshot);
-            BuildMoldinessRewardSelectionContent(offers);
+            ShowMoldinessRewardSelectionRows(snapshot, offers);
             SetLegacyResultsHeaderVisibility(false);
             SetOutcomeBannerVisibility(true);
             requiresAdaptationBeforeContinue = false;
@@ -560,6 +559,27 @@ namespace FungusToast.Unity.UI
 
             BuildCampaignTopSpacer();
             BuildDefeatCarryoverSelectionContent(options, selectionCapacity);
+
+            ApplyControlReadabilityOverrides();
+
+            gameObject.SetActive(true);
+            canvasGroup.alpha = 1f;
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
+        }
+
+        private void ShowMoldinessRewardSelectionRows(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers)
+        {
+            HidePlayerDetails();
+            currentPlayerStatistics = EndgamePlayerStatisticsSnapshot.Empty;
+
+            foreach (Transform child in resultsContainer)
+            {
+                Destroy(child.gameObject);
+            }
+
+            BuildCampaignTopSpacer();
+            BuildMoldinessRewardSelectionContent(snapshot, offers);
 
             ApplyControlReadabilityOverrides();
 
@@ -723,9 +743,9 @@ namespace FungusToast.Unity.UI
             return label;
         }
 
-        private void BuildMoldinessRewardSelectionContent(IReadOnlyList<MoldinessUnlockDefinition> offers)
+        private void BuildMoldinessRewardSelectionContent(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers)
         {
-            if (resultsContainer == null || offers == null || offers.Count == 0)
+            if (resultsContainer == null)
             {
                 return;
             }
@@ -734,7 +754,7 @@ namespace FungusToast.Unity.UI
             root.transform.SetParent(resultsContainer, false);
 
             var rootLayout = root.GetComponent<VerticalLayoutGroup>();
-            rootLayout.spacing = 18f;
+            rootLayout.spacing = 16f;
             rootLayout.padding = new RectOffset(18, 18, 8, 8);
             rootLayout.childAlignment = TextAnchor.UpperCenter;
             rootLayout.childControlWidth = true;
@@ -742,12 +762,34 @@ namespace FungusToast.Unity.UI
             rootLayout.childForceExpandWidth = true;
             rootLayout.childForceExpandHeight = false;
 
+            var rootElement = root.GetComponent<LayoutElement>();
+            rootElement.flexibleHeight = 1f;
+            rootElement.flexibleWidth = 1f;
+
+            if (snapshot != null)
+            {
+                string summary = $"Level {snapshot.clearedLevelDisplay} cleared. Choose one moldiness reward to claim before the normal adaptation draft.";
+                var summaryText = CreateCarryoverInfoText(root.transform, summary, 24f, UIStyleTokens.Text.Primary, FontStyles.Bold);
+                summaryText.alignment = TextAlignmentOptions.Center;
+            }
+
             var info = CreateCarryoverInfoText(root.transform,
-                "Choose one reward. Unlock rewards affect future drafts, and universal rewards permanently improve campaign persistence.",
-                22f,
+                "Unlock rewards add new content to future adaptation drafts. Universal rewards permanently improve campaign persistence across runs.",
+                20f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
             info.alignment = TextAlignmentOptions.Center;
+
+            if (offers == null || offers.Count == 0)
+            {
+                var emptyText = CreateCarryoverInfoText(root.transform,
+                    "No moldiness rewards are currently available for this threshold.",
+                    22f,
+                    UIStyleTokens.State.Warning,
+                    FontStyles.Italic);
+                emptyText.alignment = TextAlignmentOptions.Center;
+                return;
+            }
 
             foreach (var offer in offers)
             {
