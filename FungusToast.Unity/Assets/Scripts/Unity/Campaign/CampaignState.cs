@@ -31,6 +31,13 @@ namespace FungusToast.Unity.Campaign
     public class CampaignVictorySnapshot
     {
         public int clearedLevelDisplay;
+        public int moldinessAwarded;
+        public int moldinessProgressBeforeAward;
+        public int moldinessProgressAfterAward;
+        public int moldinessThresholdAfterAward;
+        public int moldinessTierBeforeAward;
+        public int moldinessTierAfterAward;
+        public int pendingMoldinessUnlockCount;
         public List<CampaignVictoryPlayerRow> rows = new();
     }
 

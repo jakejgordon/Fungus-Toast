@@ -259,7 +259,8 @@ namespace FungusToast.Unity
                         finalLevelPreAdvance && humanWon, hasNextLevel,
                         humanWon ? completedLevelDisplay : lostLevelDisplay,
                         completedLevelDisplay,
-                        campaignController.State.pendingAdaptationSelection);
+                        campaignController.State.pendingAdaptationSelection,
+                        campaignController.PendingVictorySnapshot);
                 }
             }
             else
