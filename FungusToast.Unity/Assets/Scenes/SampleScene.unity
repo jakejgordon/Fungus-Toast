@@ -116671,8 +116671,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8561422ec0c84540a664714cfb666ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  zoomSpeed: 15
-  moveSpeed: 2
+  zoomSpeed: 7.5
+  moveSpeed: 1
   minZoom: 5
   maxZoom: 100
   maxPanInputDeltaTime: 0.033333335

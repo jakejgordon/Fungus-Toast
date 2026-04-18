@@ -5,10 +5,18 @@ namespace FungusToast.Unity.Cameras
 {
     public class CameraControls : MonoBehaviour
     {
-        public float zoomSpeed = 25f;
-        public float moveSpeed = 15f;
+        public float zoomSpeed = 12.5f;
+        public float moveSpeed = 7.5f;
         public float minZoom = 5f;
         public float maxZoom = 100f;
+
+        [Header("Zoom Scaling")]
+        [Tooltip("Smallest board dimension that uses the minimum zoom sensitivity scale.")]
+        [SerializeField] private float minBoardDimensionForZoomScaling = 10f;
+        [Tooltip("Board dimension at which zoom reaches full sensitivity.")]
+        [SerializeField] private float maxBoardDimensionForZoomScaling = 160f;
+        [Tooltip("Multiplier applied to zoom sensitivity on the smallest supported boards.")]
+        [SerializeField] private float minZoomSensitivityScale = 0.25f;
 
         [Header("Input Stability")]
         [Tooltip("Caps the timestep used for pan input so animation hitches do not fling the camera across the board.")]
@@ -60,7 +68,7 @@ namespace FungusToast.Unity.Cameras
                     Vector3 worldBefore = cam.ScreenToWorldPoint(new Vector3(mouseScreenPos.x, mouseScreenPos.y, cam.nearClipPlane));
 
                     // 2. Apply zoom
-                    size -= scroll * zoomSpeed;
+                    size -= scroll * GetZoomSpeedForCurrentBoard();
                     size = Mathf.Clamp(size, minZoom, maxZoom);
                     cam.orthographicSize = size;
 
@@ -111,6 +119,23 @@ namespace FungusToast.Unity.Cameras
         private float GetPanDeltaTime()
         {
             return Mathf.Min(Time.unscaledDeltaTime, maxPanInputDeltaTime);
+        }
+
+        private float GetZoomSpeedForCurrentBoard()
+        {
+            if (gameManager?.Board == null)
+            {
+                return zoomSpeed;
+            }
+
+            float boardDimension = Mathf.Max(gameManager.Board.Width, gameManager.Board.Height);
+            float fullSensitivityDimension = Mathf.Max(minBoardDimensionForZoomScaling, maxBoardDimensionForZoomScaling);
+            float t = fullSensitivityDimension <= minBoardDimensionForZoomScaling
+                ? 1f
+                : Mathf.InverseLerp(minBoardDimensionForZoomScaling, fullSensitivityDimension, boardDimension);
+
+            float sensitivityScale = Mathf.Lerp(minZoomSensitivityScale, 1f, t);
+            return zoomSpeed * sensitivityScale;
         }
 
         private float GetMaxPanDistancePerFrame(Camera camera)
