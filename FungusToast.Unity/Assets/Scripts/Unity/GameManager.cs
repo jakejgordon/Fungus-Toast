@@ -214,6 +214,7 @@ namespace FungusToast.Unity
 
         public bool IsTestingModeEnabled => testingModeEnabled; 
         public int? TestingMycovariantId => testingMycovariantId;
+        public string TestingForcedAdaptationId => testingForcedAdaptationId;
         public ForcedGameResultMode TestingForcedGameResult => testingForcedGameResult;
         public bool ShouldForceFirstGameExperience => testingModeEnabled && testingTreatAsFirstGame;
 
@@ -869,6 +870,13 @@ namespace FungusToast.Unity
                 return;
             }
 
+            Player? activeHuman = null;
+            if (humanPlayers.Count > 0)
+            {
+                activeHuman = humanPlayers[0];
+                SetActiveHumanPlayer(activeHuman);
+            }
+
             ui.GameLogRouter?.OnRoundStart(board.CurrentRound);
             ui.GameLogManager?.OnLogSegmentStart("MutationPhaseStart");
 
@@ -881,10 +889,8 @@ namespace FungusToast.Unity
                 board.OnMutationPhaseStart();
             }
 
-            if (humanPlayers.Count >0)
+            if (activeHuman != null)
             {
-                var activeHuman = humanPlayers[0]!;
-                SetActiveHumanPlayer(activeHuman);
                 ui.GameLogManager?.EmitPendingSegmentSummariesFor(activeHuman.PlayerId);
             }
 
@@ -893,9 +899,8 @@ namespace FungusToast.Unity
             hotseatTurnManager.BeginHumanMutationPhase();
 
             // Fail-safe: campaign continuation can traverse custom UI steps; ensure mutation controls are re-armed.
-            if (humanPlayers.Count > 0)
+            if (activeHuman != null)
             {
-                var activeHuman = humanPlayers[0];
                 ui.MutationUIManager?.SetSpendPointsButtonVisible(true);
                 ui.MutationUIManager?.RefreshSpendPointsButtonUI();
                 ui.MutationUIManager?.SetSpendPointsButtonInteractable(activeHuman.MutationPoints > 0);

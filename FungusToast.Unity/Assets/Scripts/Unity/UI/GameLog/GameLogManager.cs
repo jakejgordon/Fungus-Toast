@@ -885,6 +885,20 @@ namespace FungusToast.Unity.UI.GameLog
 
             AddPlayerEvent(playerId, "Retrograde Bloom reshaped your mutation tree", GameLogCategory.Lucky);
         }
+        public void RecordHyphalPrimingUpgrade(int playerId, string mutationName, int levelsGranted)
+        {
+            if (!IsHuman(playerId) || levelsGranted <= 0)
+            {
+                return;
+            }
+
+            string mutationLabel = string.IsNullOrWhiteSpace(mutationName) ? "a mutation" : mutationName;
+            string levelsLabel = levelsGranted == 1 ? "level" : "levels";
+            AddPlayerEvent(
+                playerId,
+                $"Hyphal Priming grants {levelsGranted} free {levelsLabel} of {mutationLabel}!",
+                GameLogCategory.Lucky);
+        }
         public void RecordMutationUpgradeEvent(int playerId, int mutationId, string mutationName, MutationTier mutationTier, int oldLevel, int newLevel, int round, int mutationPointsBefore, int mutationPointsAfter, int pointsSpent, string upgradeSource) { }
         public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained) { if (IsHuman(playerId) && targetLevelsGained > 0 && !string.IsNullOrEmpty(targetMutationName)) AddFreeUpgrade(playerId, "Ontogenic Regression", targetMutationName, targetLevelsGained); }
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned, bool deprecated = true) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }

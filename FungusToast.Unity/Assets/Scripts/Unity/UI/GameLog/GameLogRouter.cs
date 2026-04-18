@@ -106,8 +106,15 @@ namespace FungusToast.Unity.UI.GameLog
             int pointsSpent,
             string upgradeSource)
         {
-            // Intentionally no-op for now. This hook exists so gameplay telemetry
-            // can consume ordered upgrade events in future iterations.
+            if (IsSilentMode)
+            {
+                return;
+            }
+
+            if (upgradeSource == "adaptation.hyphal_priming")
+            {
+                playerActivityLogManager?.RecordHyphalPrimingUpgrade(playerId, mutationName, newLevel - oldLevel);
+            }
         }
 
         public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset)

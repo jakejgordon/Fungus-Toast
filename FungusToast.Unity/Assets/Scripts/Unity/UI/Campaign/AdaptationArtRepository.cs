@@ -132,6 +132,9 @@ namespace FungusToast.Unity.UI.Campaign
                         case "compound_reserve":
                             DrawCompoundReserve(texture, drawAccent, highlight);
                             break;
+                        case "hyphal_priming":
+                            DrawHyphalPriming(texture, drawAccent, highlight);
+                            break;
                         default:
                             DrawFallback(texture, drawAccent, highlight);
                             break;
@@ -170,6 +173,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "liminal_sporemeal" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Surface.PanelPrimary, 0.46f),
                 "putrefactive_resilience" => Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.Surface.PanelPrimary, 0.42f),
                 "compound_reserve" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.Surface.PanelPrimary, 0.34f),
+                "hyphal_priming" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.Surface.PanelPrimary, 0.28f),
                 _ => UIStyleTokens.Surface.PanelPrimary
             };
         }
@@ -204,6 +208,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "liminal_sporemeal" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.State.Success, 0.18f),
                 "putrefactive_resilience" => Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.State.Info, 0.24f),
                 "compound_reserve" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.State.Warning, 0.18f),
+                "hyphal_priming" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Text.Primary, 0.12f),
                 _ => UIStyleTokens.Text.Primary
             };
         }
@@ -231,6 +236,18 @@ namespace FungusToast.Unity.UI.Campaign
             DrawLine(texture, 11, 24, 23, 31, highlight, 2);
             FillCircle(texture, 20, 8, 3, highlight);
             FillCircle(texture, 30, 14, 2, highlight);
+        }
+
+        private static void DrawHyphalPriming(Texture2D texture, Color accent, Color highlight)
+        {
+            DrawLine(texture, 10, 29, 20, 11, accent, 2);
+            DrawLine(texture, 20, 11, 30, 29, accent, 2);
+            DrawLine(texture, 20, 11, 20, 31, highlight, 2);
+            DrawLine(texture, 13, 23, 27, 23, highlight, 1);
+            FillCircle(texture, 20, 9, 3, highlight);
+            FillCircle(texture, 12, 29, 2, accent);
+            FillCircle(texture, 28, 29, 2, accent);
+            FillCircle(texture, 20, 23, 2, highlight);
         }
 
         private static void DrawMycotoxicHalo(Texture2D texture, Color accent, Color highlight)

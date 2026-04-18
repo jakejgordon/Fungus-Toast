@@ -75,6 +75,8 @@ namespace FungusToast.Unity.UI
         private Button postVictoryTestingToggleButton;
         private TMP_Dropdown postVictoryMycovariantDropdown;
         private GameObject postVictoryMycovariantRow;
+        private TMP_Dropdown postVictoryAdaptationDropdown;
+        private GameObject postVictoryAdaptationRow;
         private Button postVictoryFastForwardButton;
         private Button postVictorySkipToEndButton;
         private Button postVictoryForcedResultButton;
@@ -83,6 +85,8 @@ namespace FungusToast.Unity.UI
         private int postVictoryFastForwardRounds;
         private ForcedGameResultMode postVictoryForcedResult = ForcedGameResultMode.Natural;
         private int? postVictoryForcedMycovariantId;
+        private string postVictoryForcedAdaptationId = string.Empty;
+        private List<AdaptationDefinition> postVictorySortedAdaptations = new();
         private GameObject detailsOverlayRoot;
         private CanvasGroup detailsOverlayCanvasGroup;
         private Image detailsOverlayBackground;
@@ -1975,6 +1979,7 @@ namespace FungusToast.Unity.UI
 
             postVictoryTestingToggleButton = CreatePostVictorySettingButton(postVictoryTestingRoot.transform, "UI_PostVictoryTestingToggle", OnPostVictoryTestingToggled);
             postVictoryMycovariantRow = CreatePostVictoryMycovariantRow(postVictoryTestingRoot.transform);
+            postVictoryAdaptationRow = CreatePostVictoryAdaptationRow(postVictoryTestingRoot.transform);
             postVictoryFastForwardButton = CreatePostVictorySettingButton(postVictoryTestingRoot.transform, "UI_PostVictoryFastForward", OnPostVictoryFastForwardCycle);
             postVictorySkipToEndButton = CreatePostVictorySettingButton(postVictoryTestingRoot.transform, "UI_PostVictorySkipToEnd", OnPostVictorySkipToEndToggled);
             postVictoryForcedResultButton = CreatePostVictorySettingButton(postVictoryTestingRoot.transform, "UI_PostVictoryForcedResult", OnPostVictoryForcedResultCycle);
@@ -2097,6 +2102,74 @@ namespace FungusToast.Unity.UI
             return row;
         }
 
+        private GameObject CreatePostVictoryAdaptationRow(Transform parent)
+        {
+            if (parent == null)
+            {
+                return null;
+            }
+
+            TMP_Dropdown template = FindAnyObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
+            if (template == null)
+            {
+                Debug.LogWarning("UI_EndGamePanel: Unable to create Adaptation dropdown because no TMP_Dropdown template was found in scene.");
+                return null;
+            }
+
+            var row = new GameObject("UI_PostVictoryAdaptationRow", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            row.transform.SetParent(parent, false);
+
+            var rowLayout = row.GetComponent<VerticalLayoutGroup>();
+            rowLayout.childControlHeight = true;
+            rowLayout.childControlWidth = true;
+            rowLayout.childForceExpandHeight = false;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.spacing = 4f;
+            rowLayout.padding = new RectOffset(4, 4, 2, 2);
+
+            var rowElement = row.GetComponent<LayoutElement>();
+            rowElement.preferredHeight = 86f;
+            rowElement.minHeight = 80f;
+
+            var labelObj = new GameObject("UI_PostVictoryAdaptationLabel", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            labelObj.transform.SetParent(row.transform, false);
+            var label = labelObj.GetComponent<TextMeshProUGUI>();
+            label.text = "Forced Adaptation";
+            label.color = UIStyleTokens.Text.Primary;
+            label.fontSize = 20f;
+            label.enableAutoSizing = true;
+            label.fontSizeMax = 20f;
+            label.fontSizeMin = 15f;
+            label.alignment = TextAlignmentOptions.Left;
+
+            var labelLayout = labelObj.GetComponent<LayoutElement>();
+            labelLayout.preferredHeight = 28f;
+            labelLayout.minHeight = 24f;
+
+            var dropdownObj = Instantiate(template.gameObject, row.transform);
+            dropdownObj.name = "UI_PostVictoryAdaptationDropdown";
+            postVictoryAdaptationDropdown = dropdownObj.GetComponent<TMP_Dropdown>();
+            if (postVictoryAdaptationDropdown != null)
+            {
+                postVictoryAdaptationDropdown.onValueChanged.RemoveAllListeners();
+                postVictoryAdaptationDropdown.onValueChanged.AddListener(OnPostVictoryAdaptationDropdownChanged);
+            }
+
+            var dropdownLayout = dropdownObj.GetComponent<LayoutElement>();
+            if (dropdownLayout == null)
+            {
+                dropdownLayout = dropdownObj.AddComponent<LayoutElement>();
+            }
+
+            dropdownLayout.preferredHeight = 44f;
+            dropdownLayout.minHeight = 40f;
+            dropdownLayout.preferredWidth = 440f;
+            dropdownLayout.minWidth = 320f;
+
+            PopulatePostVictoryAdaptationDropdown();
+            return row;
+        }
+
         private void PopulatePostVictoryMycovariantDropdown()
         {
             if (postVictoryMycovariantDropdown == null)
@@ -2129,6 +2202,43 @@ namespace FungusToast.Unity.UI
             ApplyDropdownReadability(postVictoryMycovariantDropdown);
         }
 
+        private void PopulatePostVictoryAdaptationDropdown()
+        {
+            if (postVictoryAdaptationDropdown == null)
+            {
+                return;
+            }
+
+            postVictorySortedAdaptations = AdaptationRepository.All
+                .OrderBy(adaptation => adaptation.Name, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(adaptation => adaptation.Id, StringComparer.Ordinal)
+                .ToList();
+
+            var options = new List<string> { "None" };
+            for (int i = 0; i < postVictorySortedAdaptations.Count; i++)
+            {
+                var adaptation = postVictorySortedAdaptations[i];
+                options.Add($"{adaptation.Name} (ID: {adaptation.Id})");
+            }
+
+            postVictoryAdaptationDropdown.ClearOptions();
+            postVictoryAdaptationDropdown.AddOptions(options);
+            postVictoryAdaptationDropdown.value = 0;
+            postVictoryAdaptationDropdown.RefreshShownValue();
+
+            if (postVictoryAdaptationDropdown.captionText != null)
+            {
+                postVictoryAdaptationDropdown.captionText.color = UIStyleTokens.Button.TextDefault;
+            }
+
+            if (postVictoryAdaptationDropdown.itemText != null)
+            {
+                postVictoryAdaptationDropdown.itemText.color = UIStyleTokens.Button.TextDefault;
+            }
+
+            ApplyDropdownReadability(postVictoryAdaptationDropdown);
+        }
+
         private void OnPostVictoryMycovariantDropdownChanged(int index)
         {
             if (index <= 0)
@@ -2146,6 +2256,25 @@ namespace FungusToast.Unity.UI
             else
             {
                 postVictoryForcedMycovariantId = null;
+            }
+        }
+
+        private void OnPostVictoryAdaptationDropdownChanged(int index)
+        {
+            if (index <= 0)
+            {
+                postVictoryForcedAdaptationId = string.Empty;
+                return;
+            }
+
+            int mapped = index - 1;
+            if (mapped >= 0 && mapped < postVictorySortedAdaptations.Count)
+            {
+                postVictoryForcedAdaptationId = postVictorySortedAdaptations[mapped].Id;
+            }
+            else
+            {
+                postVictoryForcedAdaptationId = string.Empty;
             }
         }
 
@@ -2176,6 +2305,12 @@ namespace FungusToast.Unity.UI
 
             if (postVictoryMycovariantDropdown != null)
                 postVictoryMycovariantDropdown.interactable = postVictoryTestingEnabled;
+
+            if (postVictoryAdaptationRow != null)
+                postVictoryAdaptationRow.SetActive(postVictoryTestingEnabled && postVictorySkipToEnd);
+
+            if (postVictoryAdaptationDropdown != null)
+                postVictoryAdaptationDropdown.interactable = postVictoryTestingEnabled && postVictorySkipToEnd;
 
             if (postVictorySkipToEndButton != null)
                 postVictorySkipToEndButton.gameObject.SetActive(postVictoryTestingEnabled);
@@ -2240,10 +2375,16 @@ namespace FungusToast.Unity.UI
             postVictorySkipToEnd = manager.testingSkipToEndgameAfterFastForward;
             postVictoryForcedResult = manager.TestingForcedGameResult;
             postVictoryForcedMycovariantId = manager.TestingMycovariantId;
+            postVictoryForcedAdaptationId = manager.TestingForcedAdaptationId;
 
             if (!postVictorySkipToEnd && postVictoryForcedResult != ForcedGameResultMode.Natural)
             {
                 postVictoryForcedResult = ForcedGameResultMode.Natural;
+            }
+
+            if (!postVictorySkipToEnd)
+            {
+                postVictoryForcedAdaptationId = string.Empty;
             }
         }
 
@@ -2271,6 +2412,22 @@ namespace FungusToast.Unity.UI
                 postVictoryMycovariantDropdown.RefreshShownValue();
             }
 
+            if (postVictoryAdaptationDropdown != null)
+            {
+                int target = 0;
+                if (!string.IsNullOrWhiteSpace(postVictoryForcedAdaptationId))
+                {
+                    int found = postVictorySortedAdaptations.FindIndex(adaptation => string.Equals(adaptation.Id, postVictoryForcedAdaptationId, StringComparison.Ordinal));
+                    if (found >= 0)
+                    {
+                        target = found + 1;
+                    }
+                }
+
+                postVictoryAdaptationDropdown.SetValueWithoutNotify(target);
+                postVictoryAdaptationDropdown.RefreshShownValue();
+            }
+
             ApplyControlReadabilityOverrides();
         }
 
@@ -2284,6 +2441,7 @@ namespace FungusToast.Unity.UI
                 postVictorySkipToEnd = false;
                 postVictoryForcedResult = ForcedGameResultMode.Natural;
                 postVictoryForcedMycovariantId = null;
+                postVictoryForcedAdaptationId = string.Empty;
             }
 
             if (postVictoryFastForwardButton != null)
@@ -2295,11 +2453,22 @@ namespace FungusToast.Unity.UI
             if (postVictoryMycovariantDropdown != null)
                 postVictoryMycovariantDropdown.interactable = postVictoryTestingEnabled;
 
+            if (postVictoryAdaptationRow != null)
+                postVictoryAdaptationRow.SetActive(postVictoryTestingEnabled && postVictorySkipToEnd);
+
+            if (postVictoryAdaptationDropdown != null)
+                postVictoryAdaptationDropdown.interactable = postVictoryTestingEnabled && postVictorySkipToEnd;
+
             if (postVictorySkipToEndButton != null)
                 postVictorySkipToEndButton.gameObject.SetActive(postVictoryTestingEnabled);
 
             if (postVictoryForcedResultButton != null)
                 postVictoryForcedResultButton.gameObject.SetActive(postVictoryTestingEnabled && postVictorySkipToEnd);
+
+            if (!postVictorySkipToEnd)
+            {
+                postVictoryForcedAdaptationId = string.Empty;
+            }
 
             UpdatePostVictoryTestingLayoutHeight();
             UpdatePostVictoryTestingLabels();
@@ -2323,10 +2492,17 @@ namespace FungusToast.Unity.UI
             else
             {
                 postVictoryForcedResult = ForcedGameResultMode.Natural;
+                postVictoryForcedAdaptationId = string.Empty;
             }
 
             if (postVictoryForcedResultButton != null)
                 postVictoryForcedResultButton.gameObject.SetActive(postVictoryTestingEnabled && postVictorySkipToEnd);
+
+            if (postVictoryAdaptationRow != null)
+                postVictoryAdaptationRow.SetActive(postVictoryTestingEnabled && postVictorySkipToEnd);
+
+            if (postVictoryAdaptationDropdown != null)
+                postVictoryAdaptationDropdown.interactable = postVictoryTestingEnabled && postVictorySkipToEnd;
 
             UpdatePostVictoryTestingLayoutHeight();
             UpdatePostVictoryTestingLabels();
@@ -2348,6 +2524,7 @@ namespace FungusToast.Unity.UI
             float height = 16f; // top/bottom padding budget
             if (postVictoryTestingToggleButton != null && postVictoryTestingToggleButton.gameObject.activeSelf) height += 42f + 6f;
             if (postVictoryMycovariantRow != null && postVictoryMycovariantRow.activeSelf) height += 86f + 6f;
+            if (postVictoryAdaptationRow != null && postVictoryAdaptationRow.activeSelf) height += 86f + 6f;
             if (postVictoryFastForwardButton != null && postVictoryFastForwardButton.gameObject.activeSelf) height += 42f + 6f;
             if (postVictorySkipToEndButton != null && postVictorySkipToEndButton.gameObject.activeSelf) height += 42f + 6f;
             if (postVictoryForcedResultButton != null && postVictoryForcedResultButton.gameObject.activeSelf) height += 42f + 6f;
@@ -2374,6 +2551,7 @@ namespace FungusToast.Unity.UI
             }
 
             ApplyDropdownReadability(postVictoryMycovariantDropdown);
+            ApplyDropdownReadability(postVictoryAdaptationDropdown);
             ApplyResultsHeaderReadabilityOverrides();
         }
 
@@ -2560,7 +2738,8 @@ namespace FungusToast.Unity.UI
                 postVictoryFastForwardRounds,
                 postVictorySkipToEnd,
                 false,
-                forcedResult);
+                forcedResult,
+                postVictorySkipToEnd ? postVictoryForcedAdaptationId : string.Empty);
         }
 
         private static string FormatForcedResult(ForcedGameResultMode mode)

@@ -231,7 +231,7 @@ namespace FungusToast.Core.Phases
                 mutationPointsBefore: player.MutationPoints,
                 mutationPointsAfter: player.MutationPoints,
                 pointsSpent: 0,
-                upgradeSource: "adaptation");
+                upgradeSource: "adaptation.hyphal_priming");
 
             return true;
         }

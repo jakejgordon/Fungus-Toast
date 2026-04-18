@@ -186,15 +186,27 @@ namespace FungusToast.Unity.Campaign
                 .Where(x => !selected.Contains(x.Id))
                 .ToList();
 
-            if (remaining.Count == 0)
-            {
-                return remaining;
-            }
-
             AdaptationDefinition forcedAdaptation = null;
             if (!string.IsNullOrWhiteSpace(forcedAdaptationId))
             {
-                forcedAdaptation = remaining.FirstOrDefault(x => string.Equals(x.Id, forcedAdaptationId, StringComparison.Ordinal));
+                if (AdaptationRepository.TryGetById(forcedAdaptationId, out var forcedDefinition)
+                    && forcedDefinition != null
+                    && !forcedDefinition.IsStartingAdaptation
+                    && !selected.Contains(forcedDefinition.Id))
+                {
+                    forcedAdaptation = forcedDefinition;
+                }
+            }
+
+            if (forcedAdaptation != null
+                && !remaining.Any(x => string.Equals(x.Id, forcedAdaptation.Id, StringComparison.Ordinal)))
+            {
+                remaining.Add(forcedAdaptation);
+            }
+
+            if (remaining.Count == 0)
+            {
+                return remaining;
             }
 
             if (count <= 0 || count >= remaining.Count)
