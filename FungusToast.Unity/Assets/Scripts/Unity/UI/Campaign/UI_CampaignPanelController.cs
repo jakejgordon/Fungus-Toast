@@ -13,11 +13,16 @@ using UnityEngine.UI;
 namespace FungusToast.Unity.UI.Campaign
 {
     /// <summary>
-    /// Campaign selection panel with a deterministic layout stack:
-    /// Testing card at top, action buttons beneath.
+    /// Campaign selection panel with a deterministic two-column layout:
+    /// primary menu content on the left and development testing controls on the right.
     /// </summary>
     public class UI_CampaignPanelController : MonoBehaviour
     {
+        private const float PrimaryColumnWidth = 500f;
+        private const float DevelopmentRailWidth = 340f;
+        private const float LayoutShellWidth = 500f;
+        private const float DevelopmentRailOffsetX = 440f;
+
         private static readonly string[] MoldDisplayNames =
         {
             "Mycelavis",
@@ -51,7 +56,9 @@ namespace FungusToast.Unity.UI.Campaign
         [SerializeField] private GameObject testingModePanelTemplate;
 
         private RectTransform contentRoot;
+        private RectTransform layoutShellRoot;
         private RectTransform mainStackRoot;
+        private RectTransform developmentTestingRailRoot;
         private GameObject actionStack;
         private DevelopmentTestingCardController testingCardController;
         private RectTransform moldinessSummarySectionRoot;
@@ -106,7 +113,23 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void BuildLayoutScaffold()
         {
-            var existing = contentRoot.Find("UI_CampaignMainStack") as RectTransform;
+            if (contentRoot == null)
+            {
+                return;
+            }
+
+            layoutShellRoot = FindNamedRectTransform("UI_CampaignLayoutShell");
+            if (layoutShellRoot == null)
+            {
+                var shell = new GameObject("UI_CampaignLayoutShell", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
+                shell.transform.SetParent(contentRoot, false);
+                layoutShellRoot = shell.GetComponent<RectTransform>();
+            }
+
+            layoutShellRoot.SetParent(contentRoot, false);
+            ConfigureLayoutShellRoot(layoutShellRoot);
+
+            var existing = FindNamedRectTransform("UI_CampaignMainStack");
             if (existing != null)
             {
                 mainStackRoot = existing;
@@ -118,28 +141,20 @@ namespace FungusToast.Unity.UI.Campaign
                 mainStackRoot = root.GetComponent<RectTransform>();
             }
 
-            mainStackRoot.anchorMin = new Vector2(0.5f, 1f);
-            mainStackRoot.anchorMax = new Vector2(0.5f, 1f);
-            mainStackRoot.pivot = new Vector2(0.5f, 1f);
-            mainStackRoot.anchoredPosition = new Vector2(0f, -98f);
-            mainStackRoot.sizeDelta = new Vector2(500f, 0f);
+            mainStackRoot.SetParent(contentRoot, false);
+            ConfigureMainStackRoot(mainStackRoot);
 
-            var rootLayout = mainStackRoot.GetComponent<VerticalLayoutGroup>();
-            rootLayout.childAlignment = TextAnchor.UpperCenter;
-            rootLayout.childControlWidth = true;
-            rootLayout.childControlHeight = true;
-            rootLayout.childForceExpandWidth = false;
-            rootLayout.childForceExpandHeight = false;
-            rootLayout.spacing = 14f;
-            rootLayout.padding = new RectOffset(0, 0, 0, 0);
+            developmentTestingRailRoot = FindNamedRectTransform("UI_CampaignDevelopmentTestingRail");
+            if (developmentTestingRailRoot == null)
+            {
+                var rail = new GameObject("UI_CampaignDevelopmentTestingRail", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
+                rail.transform.SetParent(layoutShellRoot, false);
+                developmentTestingRailRoot = rail.GetComponent<RectTransform>();
+            }
 
-            var rootFitter = mainStackRoot.GetComponent<ContentSizeFitter>();
-            rootFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            rootFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            var rootElement = mainStackRoot.GetComponent<LayoutElement>();
-            rootElement.minWidth = 460f;
-            rootElement.preferredWidth = 500f;
+            developmentTestingRailRoot.SetParent(layoutShellRoot, false);
+            developmentTestingRailRoot.SetSiblingIndex(1);
+            ConfigureDevelopmentTestingRailRoot(developmentTestingRailRoot);
 
             if (testingOptionsSectionRoot != null)
             {
@@ -175,7 +190,7 @@ namespace FungusToast.Unity.UI.Campaign
                     continue;
                 }
 
-                if (mainStackRoot != null && t.IsChildOf(mainStackRoot))
+                if (layoutShellRoot != null && t.IsChildOf(layoutShellRoot))
                 {
                     continue;
                 }
@@ -209,16 +224,140 @@ namespace FungusToast.Unity.UI.Campaign
         {
             testingCardController = new DevelopmentTestingCardController(new DevelopmentTestingCardOptions
             {
-                Parent = mainStackRoot,
+                Parent = developmentTestingRailRoot,
                 ButtonTemplate = backButton != null ? backButton : resumeButton,
                 DropdownTemplate = FindDropdownTemplate(),
                 SupportsForcedAdaptation = true,
                 CardName = "UI_CampaignTestingCard",
                 ControlPrefix = "UI_CampaignTesting",
                 LogPrefix = "UI_CampaignPanelController",
-                LayoutInvalidated = ForceLayoutNow
+                LayoutInvalidated = ForceLayoutNow,
+                CardWidth = DevelopmentRailWidth,
+                SettingWidth = DevelopmentRailWidth - 24f
             });
             testingCardController.Build();
+        }
+
+        private RectTransform FindNamedRectTransform(string objectName)
+        {
+            if (string.IsNullOrWhiteSpace(objectName))
+            {
+                return null;
+            }
+
+            var children = GetComponentsInChildren<RectTransform>(true);
+            for (int index = 0; index < children.Length; index++)
+            {
+                var child = children[index];
+                if (child != null && string.Equals(child.name, objectName, StringComparison.Ordinal))
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
+        private static void ConfigureLayoutShellRoot(RectTransform shellRoot)
+        {
+            if (shellRoot == null)
+            {
+                return;
+            }
+
+            shellRoot.anchorMin = new Vector2(0.5f, 1f);
+            shellRoot.anchorMax = new Vector2(0.5f, 1f);
+            shellRoot.pivot = new Vector2(0.5f, 1f);
+            shellRoot.anchoredPosition = new Vector2(0f, -98f);
+            shellRoot.sizeDelta = new Vector2(LayoutShellWidth, 0f);
+            shellRoot.localScale = Vector3.one;
+
+            var layout = shellRoot.GetComponent<HorizontalLayoutGroup>();
+            layout.enabled = false;
+
+            var fitter = shellRoot.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            var element = shellRoot.GetComponent<LayoutElement>();
+            element.ignoreLayout = true;
+            element.minWidth = PrimaryColumnWidth;
+            element.preferredWidth = PrimaryColumnWidth;
+            element.minHeight = 0f;
+            element.preferredHeight = -1f;
+        }
+
+        private static void ConfigureMainStackRoot(RectTransform stackRoot)
+        {
+            if (stackRoot == null)
+            {
+                return;
+            }
+
+            stackRoot.anchorMin = new Vector2(0.5f, 1f);
+            stackRoot.anchorMax = new Vector2(0.5f, 1f);
+            stackRoot.pivot = new Vector2(0.5f, 1f);
+            stackRoot.anchoredPosition = new Vector2(0f, -98f);
+            stackRoot.sizeDelta = new Vector2(PrimaryColumnWidth, 0f);
+            stackRoot.localScale = Vector3.one;
+
+            var rootLayout = stackRoot.GetComponent<VerticalLayoutGroup>();
+            rootLayout.childAlignment = TextAnchor.UpperCenter;
+            rootLayout.childControlWidth = true;
+            rootLayout.childControlHeight = true;
+            rootLayout.childForceExpandWidth = false;
+            rootLayout.childForceExpandHeight = false;
+            rootLayout.spacing = 14f;
+            rootLayout.padding = new RectOffset(0, 0, 0, 0);
+
+            var rootFitter = stackRoot.GetComponent<ContentSizeFitter>();
+            rootFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            rootFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var rootElement = stackRoot.GetComponent<LayoutElement>();
+            rootElement.minWidth = PrimaryColumnWidth - 40f;
+            rootElement.preferredWidth = PrimaryColumnWidth;
+            rootElement.minHeight = 200f;
+            rootElement.preferredHeight = -1f;
+        }
+
+        private static void ConfigureDevelopmentTestingRailRoot(RectTransform railRoot)
+        {
+            if (railRoot == null)
+            {
+                return;
+            }
+
+            railRoot.anchorMin = new Vector2(0.5f, 1f);
+            railRoot.anchorMax = new Vector2(0.5f, 1f);
+            railRoot.pivot = new Vector2(0.5f, 1f);
+            railRoot.anchoredPosition = new Vector2(DevelopmentRailOffsetX, 0f);
+            railRoot.sizeDelta = new Vector2(DevelopmentRailWidth, 0f);
+            railRoot.localScale = Vector3.one;
+
+            var layout = railRoot.GetComponent<VerticalLayoutGroup>();
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            layout.spacing = 0f;
+            layout.padding = new RectOffset(0, 0, 0, 0);
+
+            var fitter = railRoot.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var element = railRoot.GetComponent<LayoutElement>();
+            element.minWidth = DevelopmentRailWidth;
+            element.preferredWidth = DevelopmentRailWidth;
+            element.minHeight = 44f;
+            element.preferredHeight = -1f;
+        }
+
+        private static bool ShouldShowDevelopmentTestingUi()
+        {
+            return true;
         }
 
         private void BuildMoldinessSummarySection()
@@ -776,13 +915,9 @@ namespace FungusToast.Unity.UI.Campaign
                 SetButtonText(backButton, "Back");
             }
 
-            if (testingCardController != null)
+            if (developmentTestingRailRoot != null)
             {
-                var testingRoot = mainStackRoot != null ? mainStackRoot.Find("UI_CampaignTestingCard") : null;
-                if (testingRoot != null)
-                {
-                    testingRoot.gameObject.SetActive(!selectingMold);
-                }
+                developmentTestingRailRoot.gameObject.SetActive(!selectingMold && ShouldShowDevelopmentTestingUi());
             }
 
             if (!selectingMold)
@@ -1115,9 +1250,17 @@ namespace FungusToast.Unity.UI.Campaign
         private void ForceLayoutNow()
         {
             Canvas.ForceUpdateCanvases();
+            if (layoutShellRoot != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(layoutShellRoot);
+            }
             if (mainStackRoot != null)
             {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(mainStackRoot);
+            }
+            if (developmentTestingRailRoot != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(developmentTestingRailRoot);
             }
             if (contentRoot != null)
             {
