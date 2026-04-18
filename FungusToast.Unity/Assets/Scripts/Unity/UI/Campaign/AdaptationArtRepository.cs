@@ -96,6 +96,9 @@ namespace FungusToast.Unity.UI.Campaign
                         case "hyphal_bridge":
                             DrawHyphalBridge(texture, drawAccent, highlight);
                             break;
+                        case "rhizomorphic_hunger":
+                            DrawRhizomorphicHunger(texture, drawAccent, highlight);
+                            break;
                         case "vesicle_burst":
                             DrawVesicleBurst(texture, drawAccent, highlight);
                             break;
@@ -161,6 +164,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "ascus_primacy" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Surface.PanelPrimary, 0.5f),
                 "spore_salvo" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Surface.PanelPrimary, 0.48f),
                 "hyphal_bridge" => Color.Lerp(UIStyleTokens.Accent.Moss, UIStyleTokens.Surface.PanelPrimary, 0.42f),
+                "rhizomorphic_hunger" => Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.Surface.PanelPrimary, 0.46f),
                 "vesicle_burst" => Color.Lerp(UIStyleTokens.Category.Fungicide, UIStyleTokens.Accent.Putrefaction, 0.3f),
                 "mycelial_crescendo" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.Surface.PanelPrimary, 0.40f),
                 "ossified_advance" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.45f),
@@ -196,6 +200,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "ascus_primacy" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Text.Primary, 0.12f),
                 "spore_salvo" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.State.Danger, 0.35f),
                 "hyphal_bridge" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.State.Info, 0.25f),
+                "rhizomorphic_hunger" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Accent.Moss, 0.32f),
                 "vesicle_burst" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Accent.Putrefaction, 0.35f),
                 "mycelial_crescendo" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.State.Warning, 0.25f),
                 "ossified_advance" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Text.Primary, 0.18f),
@@ -386,6 +391,31 @@ namespace FungusToast.Unity.UI.Campaign
             FillCircle(texture, 18, 19, 2, highlight);
             FillCircle(texture, 22, 23, 2, accent);
             FillCircle(texture, 27, 27, 2, highlight);
+        }
+
+        private static void DrawRhizomorphicHunger(Texture2D texture, Color accent, Color highlight)
+        {
+            DrawRing(texture, 20, 20, 8, 1, accent);
+            FillCircle(texture, 20, 20, 4, highlight);
+
+            DrawLine(texture, 20, 6, 20, 14, accent, 2);
+            DrawLine(texture, 20, 34, 20, 26, accent, 2);
+            DrawLine(texture, 6, 20, 14, 20, accent, 2);
+            DrawLine(texture, 34, 20, 26, 20, accent, 2);
+
+            DrawLine(texture, 14, 20, 10, 14, highlight, 1);
+            DrawLine(texture, 14, 20, 10, 26, highlight, 1);
+            DrawLine(texture, 26, 20, 30, 14, highlight, 1);
+            DrawLine(texture, 26, 20, 30, 26, highlight, 1);
+            DrawLine(texture, 20, 14, 14, 10, highlight, 1);
+            DrawLine(texture, 20, 14, 26, 10, highlight, 1);
+            DrawLine(texture, 20, 26, 14, 30, highlight, 1);
+            DrawLine(texture, 20, 26, 26, 30, highlight, 1);
+
+            FillCircle(texture, 20, 6, 2, highlight);
+            FillCircle(texture, 20, 34, 2, highlight);
+            FillCircle(texture, 6, 20, 2, highlight);
+            FillCircle(texture, 34, 20, 2, highlight);
         }
 
         private static void DrawVesicleBurst(Texture2D texture, Color accent, Color highlight)
