@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using FungusToast.Core.Campaign;
 using FungusToast.Unity.UI;
+using UnityEngine;
 
 namespace FungusToast.Unity.Campaign
 {

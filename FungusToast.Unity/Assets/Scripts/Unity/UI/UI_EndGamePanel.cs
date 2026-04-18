@@ -1047,15 +1047,22 @@ namespace FungusToast.Unity.UI
                 $"MoldinessReward_{offer.Id}",
                 Color.Lerp(offer.AccentColor, UIStyleTokens.Surface.PanelPrimary, 0.5f),
                 offer.AccentColor,
-                (texture, drawAccent, highlight) =>
+                (texture, accent, highlight) =>
                 {
                     for (int i = 0; i < 3; i++)
                     {
                         int centerX = 10 + (i * 10);
-                        drawAccent(centerX, 12, 3 + i);
-                        drawAccent(centerX - 2, 22, 2 + i);
+                        ProceduralIconUtility.FillCircle(texture, centerX, 12, 3 + i, accent);
+                        ProceduralIconUtility.FillCircle(texture, centerX - 2, 22, 2 + i, accent);
                     }
-                    highlight(8, 8, 20, 4);
+
+                    for (int y = 8; y < 12; y++)
+                    {
+                        for (int x = 8; x < 28; x++)
+                        {
+                            texture.SetPixel(x, y, highlight);
+                        }
+                    }
                 },
                 40);
         }
