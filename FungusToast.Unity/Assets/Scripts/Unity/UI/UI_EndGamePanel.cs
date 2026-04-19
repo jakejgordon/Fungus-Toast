@@ -979,8 +979,8 @@ namespace FungusToast.Unity.UI
             rootBackground.raycastTarget = false;
 
             var rootLayout = root.GetComponent<VerticalLayoutGroup>();
-            rootLayout.spacing = 16f;
-            rootLayout.padding = new RectOffset(18, 18, 18, 18);
+            rootLayout.spacing = 10f;
+            rootLayout.padding = new RectOffset(16, 16, 14, 14);
             rootLayout.childAlignment = TextAnchor.UpperCenter;
             rootLayout.childControlWidth = true;
             rootLayout.childControlHeight = true;
@@ -998,10 +998,13 @@ namespace FungusToast.Unity.UI
 
             var info = CreateCarryoverInfoText(root.transform,
                 "Win campaign games to unlock rewards and permanent improvements that benefit all future campaign runs.",
-                20f,
+                16f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
             info.alignment = TextAlignmentOptions.Center;
+            info.enableAutoSizing = true;
+            info.fontSizeMax = 16f;
+            info.fontSizeMin = 13f;
 
             if (offers == null || offers.Count == 0)
             {
@@ -1024,7 +1027,7 @@ namespace FungusToast.Unity.UI
             offersRect.sizeDelta = Vector2.zero;
 
             var offersLayout = offersColumn.GetComponent<VerticalLayoutGroup>();
-            offersLayout.spacing = 12f;
+            offersLayout.spacing = 8f;
             offersLayout.childAlignment = TextAnchor.UpperCenter;
             offersLayout.childControlWidth = true;
             offersLayout.childControlHeight = true;
@@ -1056,7 +1059,7 @@ namespace FungusToast.Unity.UI
             buttonObject.transform.SetParent(parent, false);
 
             var layout = buttonObject.GetComponent<LayoutElement>();
-            layout.minHeight = 132f;
+            layout.minHeight = 104f;
             layout.preferredHeight = -1f;
             layout.flexibleWidth = 1f;
 
@@ -1066,8 +1069,8 @@ namespace FungusToast.Unity.UI
             moldinessRewardOptionBackgrounds.Add(background);
 
             var vertical = buttonObject.GetComponent<VerticalLayoutGroup>();
-            vertical.spacing = 8f;
-            vertical.padding = new RectOffset(14, 14, 14, 14);
+            vertical.spacing = 4f;
+            vertical.padding = new RectOffset(12, 12, 10, 10);
             vertical.childAlignment = TextAnchor.UpperLeft;
             vertical.childControlWidth = true;
             vertical.childControlHeight = true;
@@ -1085,7 +1088,7 @@ namespace FungusToast.Unity.UI
             var headerRow = new GameObject("HeaderRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
             headerRow.transform.SetParent(buttonObject.transform, false);
             var headerLayout = headerRow.GetComponent<HorizontalLayoutGroup>();
-            headerLayout.spacing = 10f;
+            headerLayout.spacing = 8f;
             headerLayout.childAlignment = TextAnchor.MiddleLeft;
             headerLayout.childControlWidth = true;
             headerLayout.childControlHeight = true;
@@ -1094,7 +1097,7 @@ namespace FungusToast.Unity.UI
             var headerElement = headerRow.GetComponent<LayoutElement>();
             headerElement.flexibleWidth = 1f;
             headerElement.preferredHeight = -1f;
-            headerElement.minHeight = 50f;
+            headerElement.minHeight = 34f;
 
             var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
             iconObject.transform.SetParent(headerRow.transform, false);
@@ -1103,11 +1106,11 @@ namespace FungusToast.Unity.UI
             iconImage.preserveAspect = true;
             iconImage.color = Color.white;
             var iconLayout = iconObject.GetComponent<LayoutElement>();
-            iconLayout.minWidth = 40f;
-            iconLayout.preferredWidth = 40f;
+            iconLayout.minWidth = 24f;
+            iconLayout.preferredWidth = 24f;
             iconLayout.flexibleWidth = 0f;
-            iconLayout.minHeight = 40f;
-            iconLayout.preferredHeight = 40f;
+            iconLayout.minHeight = 24f;
+            iconLayout.preferredHeight = 24f;
 
             var headerTextRoot = new GameObject("HeaderTextRoot", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
             headerTextRoot.transform.SetParent(headerRow.transform, false);
@@ -1124,21 +1127,24 @@ namespace FungusToast.Unity.UI
 
             if (!string.IsNullOrWhiteSpace(offer.CategoryLabel))
             {
-                var category = CreateCarryoverInfoText(headerTextRoot.transform, offer.CategoryLabel, 16f, offer.AccentColor, FontStyles.Bold);
+                var category = CreateCarryoverInfoText(headerTextRoot.transform, offer.CategoryLabel, 13f, offer.AccentColor, FontStyles.Bold);
                 category.alignment = TextAlignmentOptions.Left;
-                category.fontSizeMin = 12f;
                 category.enableAutoSizing = true;
+                category.fontSizeMax = 13f;
+                category.fontSizeMin = 10f;
             }
 
-            var title = CreateCarryoverInfoText(headerTextRoot.transform, offer.DisplayName, 24f, UIStyleTokens.Text.Primary, FontStyles.Bold);
+            var title = CreateCarryoverInfoText(headerTextRoot.transform, offer.DisplayName, 18f, UIStyleTokens.Text.Primary, FontStyles.Bold);
             title.alignment = TextAlignmentOptions.Left;
-            title.fontSizeMin = 18f;
             title.enableAutoSizing = true;
+            title.fontSizeMax = 18f;
+            title.fontSizeMin = 13f;
 
-            var description = CreateCarryoverInfoText(buttonObject.transform, offer.Description, 20f, UIStyleTokens.Text.Secondary, FontStyles.Normal);
+            var description = CreateCarryoverInfoText(buttonObject.transform, offer.Description, 14f, UIStyleTokens.Text.Secondary, FontStyles.Normal);
             description.alignment = TextAlignmentOptions.Left;
-            description.fontSizeMin = 15f;
             description.enableAutoSizing = true;
+            description.fontSizeMax = 14f;
+            description.fontSizeMin = 11f;
 
             var button = buttonObject.GetComponent<Button>();
             UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
