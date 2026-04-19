@@ -351,7 +351,10 @@ namespace FungusToast.Unity.Campaign
                 return false;
             }
 
-            int capacity = Math.Max(0, State.moldiness?.failedRunAdaptationCarryoverCount ?? 0);
+            int availableOptionCount = State.pendingDefeatCarryoverOptions?.Count ?? 0;
+            int capacity = Math.Min(
+                Math.Max(0, State.moldiness?.failedRunAdaptationCarryoverCount ?? 0),
+                Math.Max(0, availableOptionCount));
             var selectedIds = selectedAdaptationIds == null
                 ? new List<string>()
                 : selectedAdaptationIds
@@ -359,9 +362,9 @@ namespace FungusToast.Unity.Campaign
                     .Distinct(StringComparer.Ordinal)
                     .ToList();
 
-            if (selectedIds.Count > capacity)
+            if (selectedIds.Count != capacity)
             {
-                Debug.LogWarning($"[CampaignController] Defeat carryover selection exceeded capacity {capacity}.");
+                Debug.LogWarning($"[CampaignController] Defeat carryover selection must choose exactly {capacity} adaptation(s).");
                 return false;
             }
 
@@ -436,14 +439,15 @@ namespace FungusToast.Unity.Campaign
                 .Where(id => !string.IsNullOrWhiteSpace(id))
                 .Distinct(StringComparer.Ordinal)
                 .ToList();
+            int selectableCarryoverCount = Math.Min(carryoverCapacity, carryoverOptions.Count);
 
-            if (carryoverCapacity > 0 && carryoverOptions.Count > 0)
+            if (selectableCarryoverCount > 0 && carryoverOptions.Count > 0)
             {
                 State.pendingDefeatCarryoverSelection = true;
                 State.pendingDefeatCarryoverOptions = carryoverOptions;
                 State.pendingVictorySnapshot = null;
                 CampaignSaveService.Save(State);
-                Debug.Log($"[CampaignController] Defeat carryover selection pending. Capacity={carryoverCapacity}, Options={carryoverOptions.Count}.");
+                Debug.Log($"[CampaignController] Defeat carryover selection pending. Capacity={selectableCarryoverCount}, Options={carryoverOptions.Count}.");
                 return;
             }
 
@@ -493,6 +497,13 @@ namespace FungusToast.Unity.Campaign
                     State.selectedAdaptationIds.Add(adaptationId);
                 }
             }
+
+            var startingAdaptId = MoldCatalog.GetStartingAdaptationId(State.humanMoldIndex);
+            if (!string.IsNullOrEmpty(startingAdaptId) && !State.selectedAdaptationIds.Contains(startingAdaptId))
+            {
+                State.selectedAdaptationIds.Insert(0, startingAdaptId);
+            }
+
             CampaignSaveService.Save(State);
             Debug.Log($"[CampaignController] Run reset after defeat. New RunId={State.runId} Preset={preset.presetId}");
         }

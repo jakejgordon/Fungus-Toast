@@ -98,7 +98,9 @@ namespace FungusToast.Unity.UI
         private int defeatCarryoverSelectionCapacity;
         private string selectedMoldinessRewardId;
         private readonly HashSet<string> selectedDefeatCarryoverAdaptationIds = new();
+        private readonly Dictionary<string, Image> defeatCarryoverOptionImages = new();
         private readonly List<Image> moldinessRewardOptionBackgrounds = new();
+        private TextMeshProUGUI defeatCarryoverSelectionStatusLabel;
         private readonly List<Image> moldinessSummaryToastTiles = new();
         private readonly List<Component> legacyResultsHeaderCandidates = new();
         private RectTransform endGameLayoutContainer;
@@ -477,23 +479,25 @@ namespace FungusToast.Unity.UI
             requiresDefeatCarryoverSelection = true;
             requiresMoldinessRewardSelection = false;
             selectedMoldinessRewardId = null;
-            defeatCarryoverSelectionCapacity = Mathf.Max(0, selectionCapacity);
+            defeatCarryoverSelectionCapacity = Mathf.Max(0, Mathf.Min(selectionCapacity, options?.Count ?? 0));
             selectedDefeatCarryoverAdaptationIds.Clear();
+            defeatCarryoverOptionImages.Clear();
             moldinessRewardOptionBackgrounds.Clear();
 
             if (outcomeLabel != null)
             {
                 outcomeLabel.text =
                     $"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Preserve your spores</b></color>\n" +
-                    $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Choose up to {defeatCarryoverSelectionCapacity} adaptation{Pluralize(defeatCarryoverSelectionCapacity)} to carry into your next run.</color></size>";
+                    $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Choose {defeatCarryoverSelectionCapacity} adaptation{Pluralize(defeatCarryoverSelectionCapacity)} to carry into your next run.</color></size>";
             }
 
             if (continueButton != null)
             {
                 continueButton.gameObject.SetActive(true);
-                continueButton.interactable = true;
                 SetButtonLabel(continueButton, "Confirm Carryover");
             }
+
+            RefreshDefeatCarryoverSelectionUi();
 
             if (playAgainButton != null)
             {
@@ -760,11 +764,12 @@ namespace FungusToast.Unity.UI
             title.alignment = TextAlignmentOptions.Center;
 
             var subtitle = CreateCarryoverInfoText(root.transform,
-                $"Capacity: {Mathf.Max(0, selectionCapacity)}. Click an icon to toggle selection. Hover to inspect details.",
+                $"Selected 0 / {Mathf.Max(0, selectionCapacity)}. Click icons to choose your carryover adaptations. Hover to inspect details.",
                 22f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
             subtitle.alignment = TextAlignmentOptions.Center;
+            defeatCarryoverSelectionStatusLabel = subtitle;
 
             var gridRoot = new GameObject("UI_DefeatCarryoverSelectionGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
             gridRoot.transform.SetParent(root.transform, false);
@@ -775,8 +780,8 @@ namespace FungusToast.Unity.UI
             gridRect.pivot = new Vector2(0.5f, 1f);
 
             var grid = gridRoot.GetComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(88f, 88f);
-            grid.spacing = new Vector2(16f, 16f);
+            grid.cellSize = new Vector2(96f, 96f);
+            grid.spacing = new Vector2(14f, 14f);
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = Mathf.Clamp(options?.Count ?? 1, 1, 4);
             grid.childAlignment = TextAnchor.UpperCenter;
@@ -805,14 +810,16 @@ namespace FungusToast.Unity.UI
             optionObject.transform.SetParent(parent, false);
 
             var optionImage = optionObject.GetComponent<Image>();
-            optionImage.color = UIStyleTokens.Surface.PanelSecondary;
+            optionImage.color = Color.white;
             optionImage.sprite = AdaptationArtRepository.GetIcon(adaptation);
             optionImage.type = Image.Type.Simple;
             optionImage.preserveAspect = true;
 
             var layout = optionObject.GetComponent<LayoutElement>();
-            layout.preferredWidth = 88f;
-            layout.preferredHeight = 88f;
+            layout.preferredWidth = 96f;
+            layout.minWidth = 96f;
+            layout.preferredHeight = 96f;
+            layout.minHeight = 96f;
 
             var provider = optionObject.AddComponent<AdaptationTooltipProvider>();
             provider.Initialize(adaptation);
@@ -832,6 +839,7 @@ namespace FungusToast.Unity.UI
             button.transition = Selectable.Transition.ColorTint;
             button.onClick.AddListener(() => ToggleDefeatCarryoverSelection(adaptation.Id, optionImage, selectionCapacity));
 
+            defeatCarryoverOptionImages[adaptation.Id] = optionImage;
             UpdateDefeatCarryoverOptionVisual(optionImage, false);
         }
 
@@ -842,21 +850,24 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            int requiredSelectionCount = Mathf.Max(0, selectionCapacity);
             bool isSelected = selectedDefeatCarryoverAdaptationIds.Contains(adaptationId);
             if (isSelected)
             {
                 selectedDefeatCarryoverAdaptationIds.Remove(adaptationId);
                 UpdateDefeatCarryoverOptionVisual(optionImage, false);
+                RefreshDefeatCarryoverSelectionUi();
                 return;
             }
 
-            if (selectedDefeatCarryoverAdaptationIds.Count >= Mathf.Max(0, selectionCapacity))
+            if (selectedDefeatCarryoverAdaptationIds.Count >= requiredSelectionCount)
             {
                 return;
             }
 
             selectedDefeatCarryoverAdaptationIds.Add(adaptationId);
             UpdateDefeatCarryoverOptionVisual(optionImage, true);
+            RefreshDefeatCarryoverSelectionUi();
         }
 
         private static void UpdateDefeatCarryoverOptionVisual(Image optionImage, bool isSelected)
@@ -866,7 +877,40 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            optionImage.color = isSelected ? UIStyleTokens.State.Success : UIStyleTokens.Surface.PanelSecondary;
+            optionImage.color = Color.white;
+            optionImage.material = null;
+
+            var outline = optionImage.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = optionImage.gameObject.AddComponent<Outline>();
+            }
+
+            outline.effectColor = isSelected
+                ? new Color(UIStyleTokens.State.Success.r, UIStyleTokens.State.Success.g, UIStyleTokens.State.Success.b, 0.95f)
+                : new Color(UIStyleTokens.Text.Primary.r, UIStyleTokens.Text.Primary.g, UIStyleTokens.Text.Primary.b, 0.55f);
+            outline.effectDistance = isSelected ? new Vector2(4f, -4f) : new Vector2(2f, -2f);
+        }
+
+        private void RefreshDefeatCarryoverSelectionUi()
+        {
+            int selectedCount = selectedDefeatCarryoverAdaptationIds.Count;
+            int requiredCount = Mathf.Max(0, defeatCarryoverSelectionCapacity);
+
+            if (defeatCarryoverSelectionStatusLabel != null)
+            {
+                defeatCarryoverSelectionStatusLabel.text = requiredCount > 0
+                    ? $"Selected {selectedCount} / {requiredCount}. Click icons to choose exactly {requiredCount} carryover adaptation{Pluralize(requiredCount)}."
+                    : "No carryover adaptations are available for this run.";
+                defeatCarryoverSelectionStatusLabel.color = selectedCount >= requiredCount
+                    ? UIStyleTokens.State.Success
+                    : UIStyleTokens.Text.Secondary;
+            }
+
+            if (continueButton != null)
+            {
+                continueButton.interactable = selectedCount == requiredCount;
+            }
         }
 
         private static TextMeshProUGUI CreateCarryoverInfoText(Transform parent, string text, float fontSize, Color color, FontStyles fontStyle)
