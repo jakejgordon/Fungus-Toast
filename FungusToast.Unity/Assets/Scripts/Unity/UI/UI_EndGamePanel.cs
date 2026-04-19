@@ -1346,8 +1346,8 @@ namespace FungusToast.Unity.UI
 
             var offersElement = offersColumn.GetComponent<LayoutElement>();
             offersElement.flexibleWidth = 0f;
-            offersElement.preferredWidth = 760f;
-            offersElement.minWidth = 680f;
+            offersElement.preferredWidth = 620f;
+            offersElement.minWidth = 560f;
             offersElement.preferredHeight = -1f;
 
             var offersFitter = offersColumn.GetComponent<ContentSizeFitter>();
@@ -1461,8 +1461,8 @@ namespace FungusToast.Unity.UI
             badgeImage.color = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
             var badgeLayout = badgeObject.GetComponent<LayoutElement>();
             badgeLayout.flexibleWidth = 0f;
-            badgeLayout.preferredWidth = 170f;
-            badgeLayout.minWidth = 170f;
+            badgeLayout.preferredWidth = 156f;
+            badgeLayout.minWidth = 156f;
             badgeLayout.minHeight = 22f;
             badgeLayout.preferredHeight = 22f;
 
