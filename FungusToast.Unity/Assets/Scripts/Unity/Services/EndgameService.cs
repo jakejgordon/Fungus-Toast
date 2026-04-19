@@ -406,6 +406,8 @@ namespace FungusToast.Unity
                 return;
             }
 
+            tryCancelActiveSelection();
+
             onBeforeOpen?.Invoke();
             IsOpen = true;
             Time.timeScale = 0f;

@@ -1215,6 +1215,7 @@ namespace FungusToast.Unity
 
         public void ReturnToMainMenu()
         {
+            TryCancelActiveSelection();
             gameTransitionService?.ReturnToMainMenu();
         }
 
