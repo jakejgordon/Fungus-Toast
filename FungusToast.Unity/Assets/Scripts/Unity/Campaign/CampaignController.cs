@@ -95,6 +95,7 @@ namespace FungusToast.Unity.Campaign
             State.moldiness.pendingUnlockTriggers ??= new List<MoldinessUnlockTrigger>();
             State.moldiness.unlockedRewardIds ??= new List<string>();
             State.moldiness.unlockedAdaptationIds ??= new List<string>();
+            SanitizePendingDefeatCarryoverOptions();
             if (!State.pendingAdaptationSelection)
             {
                 State.pendingVictorySnapshot = null;
@@ -435,10 +436,7 @@ namespace FungusToast.Unity.Campaign
         {
             State.moldiness ??= MoldinessProgression.CreateDefaultState();
             int carryoverCapacity = Math.Max(0, State.moldiness.failedRunAdaptationCarryoverCount);
-            var carryoverOptions = (State.selectedAdaptationIds ?? new List<string>())
-                .Where(id => !string.IsNullOrWhiteSpace(id))
-                .Distinct(StringComparer.Ordinal)
-                .ToList();
+            var carryoverOptions = GetEligibleDefeatCarryoverAdaptationIds(State.selectedAdaptationIds ?? new List<string>());
             int selectableCarryoverCount = Math.Min(carryoverCapacity, carryoverOptions.Count);
 
             if (selectableCarryoverCount > 0 && carryoverOptions.Count > 0)
@@ -506,6 +504,49 @@ namespace FungusToast.Unity.Campaign
 
             CampaignSaveService.Save(State);
             Debug.Log($"[CampaignController] Run reset after defeat. New RunId={State.runId} Preset={preset.presetId}");
+        }
+
+        private void SanitizePendingDefeatCarryoverOptions()
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            var sanitizedOptions = GetEligibleDefeatCarryoverAdaptationIds(State.pendingDefeatCarryoverOptions ?? new List<string>());
+            bool optionsChanged = !(State.pendingDefeatCarryoverOptions ?? new List<string>()).SequenceEqual(sanitizedOptions, StringComparer.Ordinal);
+
+            if (!optionsChanged)
+            {
+                return;
+            }
+
+            State.pendingDefeatCarryoverOptions = sanitizedOptions;
+            if (State.pendingDefeatCarryoverSelection && sanitizedOptions.Count == 0)
+            {
+                State.pendingDefeatCarryoverSelection = false;
+                State.pendingNextRunCarryoverAdaptationIds = new List<string>();
+                ResetRunAfterDefeat();
+                return;
+            }
+
+            CampaignSaveService.Save(State);
+        }
+
+        private static List<string> GetEligibleDefeatCarryoverAdaptationIds(IEnumerable<string> adaptationIds)
+        {
+            return (adaptationIds ?? Array.Empty<string>())
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Where(IsEligibleDefeatCarryoverAdaptationId)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+        }
+
+        private static bool IsEligibleDefeatCarryoverAdaptationId(string adaptationId)
+        {
+            return AdaptationRepository.TryGetById(adaptationId, out var adaptation)
+                && adaptation != null
+                && !adaptation.IsStartingAdaptation;
         }
 
         private static void LogMoldinessAward(int clearedLevelDisplay, MoldinessAwardResult award)
