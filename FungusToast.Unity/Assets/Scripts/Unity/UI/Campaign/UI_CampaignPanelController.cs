@@ -69,6 +69,7 @@ namespace FungusToast.Unity.UI.Campaign
         private TextMeshProUGUI permanentUpgradesLabel;
         private GridLayoutGroup moldinessSummaryToastGrid;
         private readonly List<Image> moldinessSummaryToastTiles = new();
+        private System.Random moldinessSummaryToastRandom;
         private RectTransform moldSelectionSectionRoot;
         private TextMeshProUGUI moldSelectionTitleLabel;
         private TextMeshProUGUI moldSelectionStatusLabel;
@@ -517,23 +518,15 @@ namespace FungusToast.Unity.UI.Campaign
                 }
             }
 
-            moldinessSummaryToastGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            moldinessSummaryToastGrid.constraintCount = 4;
-            moldinessSummaryToastGrid.cellSize = new Vector2(42f, 42f);
-            moldinessSummaryToastGrid.spacing = new Vector2(8f, 8f);
-            moldinessSummaryToastGrid.childAlignment = TextAnchor.UpperCenter;
-
             var fitter = moldinessSummaryToastGrid.GetComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var element = moldinessSummaryToastGrid.GetComponent<LayoutElement>();
             element.minWidth = 200f;
-            element.preferredWidth = 200f;
+            element.preferredWidth = 240f;
             element.minHeight = 92f;
             element.preferredHeight = -1f;
-
-            EnsureMoldinessSummaryToastTileCount(8);
         }
 
         private void EnsureMoldinessSummaryToastTileCount(int requiredCount)
@@ -564,7 +557,6 @@ namespace FungusToast.Unity.UI.Campaign
         private void RefreshMoldinessSummaryUi()
         {
             var gameManager = GameManager.Instance;
-            var campaignController = gameManager?.CampaignController;
             bool hasSave = gameManager != null && gameManager.HasCampaignSave();
             if (moldinessSummarySectionRoot == null)
             {
@@ -572,7 +564,18 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             moldinessSummarySectionRoot.gameObject.SetActive(hasSave && currentStep == CampaignPanelStep.MainActions);
-            if (!hasSave || campaignController == null)
+            if (!hasSave)
+            {
+                return;
+            }
+
+            var campaignController = gameManager?.CampaignController;
+            if (campaignController?.State == null && FungusToast.Unity.Campaign.CampaignSaveService.Exists())
+            {
+                campaignController?.Resume();
+            }
+
+            if (campaignController?.State == null)
             {
                 return;
             }
@@ -581,7 +584,9 @@ namespace FungusToast.Unity.UI.Campaign
             int level = snapshot.CurrentTierIndex + 1;
             int threshold = Math.Max(1, snapshot.CurrentThreshold);
             int progress = Mathf.Clamp(snapshot.CurrentProgress, 0, threshold);
-            int filledTileCount = Mathf.Clamp(Mathf.CeilToInt((progress / (float)threshold) * moldinessSummaryToastTiles.Count), 0, moldinessSummaryToastTiles.Count);
+            ConfigureMoldinessSummaryToastGrid(threshold);
+            EnsureMoldinessSummaryToastTileCount(threshold);
+            int filledTileCount = Mathf.Clamp(progress, 0, moldinessSummaryToastTiles.Count);
 
             if (moldinessSummaryTitleLabel != null)
             {
@@ -617,6 +622,57 @@ namespace FungusToast.Unity.UI.Campaign
                     : string.Empty;
             }
 
+            ApplyMoldinessSummaryToastPattern(progress, threshold, filledTileCount);
+
+            bool pendingReward = snapshot.PendingUnlockCount > 0;
+            if (resumeButton != null)
+            {
+                SetButtonText(resumeButton, pendingReward ? "Resume Campaign (Pending Reward)" : "Resume Campaign");
+            }
+        }
+
+        private void ConfigureMoldinessSummaryToastGrid(int threshold)
+        {
+            if (moldinessSummaryToastGrid == null)
+            {
+                return;
+            }
+
+            int columns = Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(threshold)), 3, 8);
+            int rows = Mathf.Max(1, Mathf.CeilToInt(threshold / (float)columns));
+            float maxGridWidth = 220f;
+            float maxGridHeight = 112f;
+            float spacing = threshold <= 12 ? 6f : 4f;
+            float cellWidth = Mathf.Clamp((maxGridWidth - ((columns - 1) * spacing)) / columns, 14f, 34f);
+            float cellHeight = Mathf.Clamp((maxGridHeight - ((rows - 1) * spacing)) / rows, 14f, 34f);
+
+            moldinessSummaryToastGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            moldinessSummaryToastGrid.constraintCount = columns;
+            moldinessSummaryToastGrid.cellSize = new Vector2(cellWidth, cellHeight);
+            moldinessSummaryToastGrid.spacing = new Vector2(spacing, spacing);
+            moldinessSummaryToastGrid.childAlignment = TextAnchor.UpperCenter;
+
+            var element = moldinessSummaryToastGrid.GetComponent<LayoutElement>();
+            element.minWidth = maxGridWidth;
+            element.preferredWidth = maxGridWidth;
+            element.minHeight = Mathf.Max(56f, (rows * cellHeight) + ((rows - 1) * spacing));
+            element.preferredHeight = -1f;
+        }
+
+        private void ApplyMoldinessSummaryToastPattern(int progress, int threshold, int filledTileCount)
+        {
+            if (moldinessSummaryToastTiles.Count == 0)
+            {
+                return;
+            }
+
+            moldinessSummaryToastRandom ??= new System.Random(1337);
+            var orderedIndices = Enumerable.Range(0, threshold)
+                .OrderBy(index => GetToastTileSortKey(index, threshold))
+                .ThenBy(index => index)
+                .ToList();
+            var filledIndices = new HashSet<int>(orderedIndices.Take(filledTileCount));
+
             for (int i = 0; i < moldinessSummaryToastTiles.Count; i++)
             {
                 var tile = moldinessSummaryToastTiles[i];
@@ -625,15 +681,25 @@ namespace FungusToast.Unity.UI.Campaign
                     continue;
                 }
 
-                bool isFilled = i < filledTileCount;
-                tile.color = isFilled ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Surface.PanelSecondary;
-            }
+                bool shouldShow = i < threshold;
+                tile.gameObject.SetActive(shouldShow);
+                if (!shouldShow)
+                {
+                    continue;
+                }
 
-            bool pendingReward = snapshot.PendingUnlockCount > 0;
-            if (resumeButton != null)
-            {
-                SetButtonText(resumeButton, pendingReward ? "Resume Campaign (Pending Reward)" : "Resume Campaign");
+                tile.color = filledIndices.Contains(i) ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Surface.PanelSecondary;
             }
+        }
+
+        private static float GetToastTileSortKey(int index, int threshold)
+        {
+            int columns = Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(threshold)), 3, 8);
+            int row = index / columns;
+            int column = index % columns;
+            float centerColumn = (columns - 1) * 0.5f;
+            float columnDistance = Mathf.Abs(column - centerColumn);
+            return (row * 10f) + columnDistance + ((index * 37) % 11) * 0.01f;
         }
 
         private void BuildMoldSelectionSection()
