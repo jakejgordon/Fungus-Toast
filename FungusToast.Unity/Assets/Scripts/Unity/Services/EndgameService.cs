@@ -1083,6 +1083,7 @@ namespace FungusToast.Unity
         private void PreparePendingCampaignSnapshotPresentation(CampaignController campaignController, CampaignVictorySnapshot snapshot)
         {
             gameUIManager?.ClearBoard();
+            gridVisualizer?.SetBoardMedium(campaignController?.CurrentBoardPreset?.boardMedium);
 
             var playerBinder = gameUIManager?.PlayerUIBinder;
             playerBinder?.ClearIcons();
