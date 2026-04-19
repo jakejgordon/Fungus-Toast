@@ -3244,7 +3244,9 @@ namespace FungusToast.Unity.UI
                 skipToEnd,
                 false,
                 forcedResult,
-                forcedAdaptationId);
+                manager != null ? manager.TestingCampaignLevelIndex : 0,
+                forcedAdaptationId,
+                manager?.TestingForcedStartingAdaptationIds);
         }
 
         private void CreateHeaderCell(Transform parent, string text, float preferredWidth, TextAlignmentOptions alignment, bool flexible)

@@ -108,7 +108,9 @@ namespace FungusToast.Unity
         [Header("Testing Mode")] 
         public bool testingModeEnabled = false; 
         public int? testingMycovariantId = null; 
+        public int testingCampaignLevelIndex = 0;
         public string testingForcedAdaptationId = string.Empty;
+        public List<string> testingForcedStartingAdaptationIds = new();
         public bool testingModeForceHumanFirst = true; 
         public ForcedGameResultMode testingForcedGameResult = ForcedGameResultMode.Natural;
         public int fastForwardRounds =0; 
@@ -179,6 +181,7 @@ namespace FungusToast.Unity
 
         [Header("Campaign Config")] 
         public CampaignProgression? campaignProgression; // assign ScriptableObject in inspector
+        public CampaignProgression? CampaignProgression => campaignProgression;
 
         [Header("Magnifier")]
         [SerializeField] private MagnifyingGlassFollowMouse? magnifyingGlass; // new serialized reference
@@ -214,7 +217,9 @@ namespace FungusToast.Unity
 
         public bool IsTestingModeEnabled => testingModeEnabled; 
         public int? TestingMycovariantId => testingMycovariantId;
+        public int TestingCampaignLevelIndex => testingCampaignLevelIndex;
         public string TestingForcedAdaptationId => testingForcedAdaptationId;
+        public IReadOnlyList<string> TestingForcedStartingAdaptationIds => testingForcedStartingAdaptationIds;
         public ForcedGameResultMode TestingForcedGameResult => testingForcedGameResult;
         public bool ShouldForceFirstGameExperience => testingModeEnabled && testingTreatAsFirstGame;
 
@@ -1259,11 +1264,19 @@ namespace FungusToast.Unity
             bool skipToEndgameAfterFastForward = false,
             bool forceFirstGame = false,
             ForcedGameResultMode forcedGameResult = ForcedGameResultMode.Natural,
-            string forcedAdaptationId = "")
+            int campaignLevelIndex = 0,
+            string forcedAdaptationId = "",
+            IReadOnlyList<string> forcedStartingAdaptationIds = null)
         {
             testingModeEnabled = true;
             testingMycovariantId = mycovariantId;
+            testingCampaignLevelIndex = Math.Max(0, campaignLevelIndex);
             testingForcedAdaptationId = forcedAdaptationId ?? string.Empty;
+            testingForcedStartingAdaptationIds = forcedStartingAdaptationIds?
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.Ordinal)
+                .ToList()
+                ?? new List<string>();
             testingModeForceHumanFirst = mycovariantId.HasValue;
             testingForcedGameResult = forcedGameResult;
             this.fastForwardRounds = fastForwardRounds;
@@ -1275,7 +1288,9 @@ namespace FungusToast.Unity
         {
             testingModeEnabled = false;
             testingMycovariantId = null;
+            testingCampaignLevelIndex = 0;
             testingForcedAdaptationId = string.Empty;
+            testingForcedStartingAdaptationIds = new List<string>();
             testingModeForceHumanFirst = false;
             testingForcedGameResult = ForcedGameResultMode.Natural;
             fastForwardRounds =0;

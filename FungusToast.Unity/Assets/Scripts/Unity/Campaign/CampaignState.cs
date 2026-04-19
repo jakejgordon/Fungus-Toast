@@ -24,6 +24,7 @@ namespace FungusToast.Unity.Campaign
         public List<string> pendingDefeatCarryoverOptions = new(); // adaptation ids available to preserve from the failed run
         public List<string> pendingNextRunCarryoverAdaptationIds = new(); // applied automatically to the next fresh run
         public List<string> resolvedAiStrategyNames = new(); // active AI lineup for current level; persisted so pooled levels resume consistently
+        public List<string> temporaryTestingAdaptationIds = new(); // temporary per-game testing adaptations, cleared after the active level resolves
         public MoldinessProgressionState moldiness = new(); // persistent moldiness progression toward permanent unlocks
     }
 
