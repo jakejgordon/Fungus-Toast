@@ -94,7 +94,7 @@ namespace FungusToast.Unity.Campaign
                     new MoldinessUnlockDefinition(
                         id: "moldiness_reward_failed_run_adaptation_carryover",
                         displayName: "Spores in Reserve",
-                        description: "On failed campaigns, permanently carry over 1 additional adaptation into your next run.",
+                        description: "For each instance of Spores in Reserve unlocked, allow one extra Adaptation to be selected at the end of a failed campaign to carry over into the next campaign.",
                         type: MoldinessUnlockType.IncreaseFailedRunAdaptationCarryover,
                         requiredUnlockLevel: 1,
                         stackAmount: 1,
@@ -105,7 +105,7 @@ namespace FungusToast.Unity.Campaign
                     new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_spore_salvo",
                         displayName: "Unlock Spore Salvo",
-                        description: "Spore Salvo can now appear in future normal adaptation drafts.",
+                        description: "Permanently unlock Spore Salvo so it can appear in future campaign drafts.",
                         type: MoldinessUnlockType.UnlockAdaptation,
                         requiredUnlockLevel: 1,
                         adaptationId: AdaptationIds.SporeSalvo,
@@ -114,7 +114,7 @@ namespace FungusToast.Unity.Campaign
                     new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_hyphal_bridge",
                         displayName: "Unlock Hyphal Bridge",
-                        description: "Hyphal Bridge can now appear in future normal adaptation drafts.",
+                        description: "Permanently unlock Hyphal Bridge so it can appear in future campaign drafts.",
                         type: MoldinessUnlockType.UnlockAdaptation,
                         requiredUnlockLevel: 1,
                         adaptationId: AdaptationIds.HyphalBridge,
@@ -123,7 +123,7 @@ namespace FungusToast.Unity.Campaign
                     new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_vesicle_burst",
                         displayName: "Unlock Vesicle Burst",
-                        description: "Vesicle Burst can now appear in future normal adaptation drafts.",
+                        description: "Permanently unlock Vesicle Burst so it can appear in future campaign drafts.",
                         type: MoldinessUnlockType.UnlockAdaptation,
                         requiredUnlockLevel: 1,
                         adaptationId: AdaptationIds.VesicleBurst,
@@ -132,7 +132,7 @@ namespace FungusToast.Unity.Campaign
                     new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_hyphal_priming",
                         displayName: "Unlock Hyphal Priming",
-                        description: "Hyphal Priming can now appear in future normal adaptation drafts.",
+                        description: "Permanently unlock Hyphal Priming so it can appear in future campaign drafts.",
                         type: MoldinessUnlockType.UnlockAdaptation,
                         requiredUnlockLevel: 1,
                         adaptationId: AdaptationIds.HyphalPriming,
