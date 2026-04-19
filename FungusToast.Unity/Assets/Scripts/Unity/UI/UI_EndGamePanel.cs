@@ -959,8 +959,8 @@ namespace FungusToast.Unity.UI
             gridRect.pivot = new Vector2(0.5f, 1f);
 
             var grid = gridRoot.GetComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(96f, 96f);
-            grid.spacing = new Vector2(14f, 14f);
+            grid.cellSize = new Vector2(112f, 112f);
+            grid.spacing = new Vector2(16f, 16f);
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = Mathf.Clamp(options?.Count ?? 1, 1, 4);
             grid.childAlignment = TextAnchor.UpperCenter;
@@ -995,10 +995,10 @@ namespace FungusToast.Unity.UI
             optionImage.preserveAspect = true;
 
             var layout = optionObject.GetComponent<LayoutElement>();
-            layout.preferredWidth = 96f;
-            layout.minWidth = 96f;
-            layout.preferredHeight = 96f;
-            layout.minHeight = 96f;
+            layout.preferredWidth = 112f;
+            layout.minWidth = 112f;
+            layout.preferredHeight = 112f;
+            layout.minHeight = 112f;
 
             var provider = optionObject.AddComponent<AdaptationTooltipProvider>();
             provider.Initialize(adaptation);
@@ -1008,14 +1008,8 @@ namespace FungusToast.Unity.UI
             tooltipTrigger.SetAutoPlacementOffsetX(20f);
 
             var button = optionObject.GetComponent<Button>();
-            var colors = button.colors;
-            colors.normalColor = UIStyleTokens.Surface.PanelSecondary;
-            colors.highlightedColor = UIStyleTokens.Surface.PanelElevated;
-            colors.pressedColor = UIStyleTokens.Surface.PanelPrimary;
-            colors.selectedColor = UIStyleTokens.State.Success;
-            colors.disabledColor = UIStyleTokens.Surface.PanelPrimary;
-            button.colors = colors;
-            button.transition = Selectable.Transition.ColorTint;
+            button.transition = Selectable.Transition.None;
+            button.targetGraphic = null;
             button.onClick.AddListener(() => ToggleDefeatCarryoverSelection(adaptation.Id, optionImage, selectionCapacity));
 
             defeatCarryoverOptionImages[adaptation.Id] = optionImage;
@@ -1083,8 +1077,8 @@ namespace FungusToast.Unity.UI
 
             outline.effectColor = isSelected
                 ? new Color(UIStyleTokens.State.Success.r, UIStyleTokens.State.Success.g, UIStyleTokens.State.Success.b, 0.95f)
-                : new Color(UIStyleTokens.Text.Primary.r, UIStyleTokens.Text.Primary.g, UIStyleTokens.Text.Primary.b, 0.55f);
-            outline.effectDistance = isSelected ? new Vector2(4f, -4f) : new Vector2(2f, -2f);
+                : new Color(UIStyleTokens.Text.Primary.r, UIStyleTokens.Text.Primary.g, UIStyleTokens.Text.Primary.b, 0f);
+            outline.effectDistance = isSelected ? new Vector2(4f, -4f) : Vector2.zero;
         }
 
         private void RefreshDefeatCarryoverSelectionUi()

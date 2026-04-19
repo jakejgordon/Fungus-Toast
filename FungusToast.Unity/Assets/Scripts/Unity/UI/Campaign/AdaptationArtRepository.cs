@@ -44,8 +44,9 @@ namespace FungusToast.Unity.UI.Campaign
 
         private static Sprite BuildIcon(string adaptationId)
         {
-            var background = ResolveBackground(adaptationId);
-            var accent = ResolveAccent(adaptationId);
+            var background = Color.Lerp(ResolveBackground(adaptationId), UIStyleTokens.Text.Secondary, 0.24f);
+            var accent = Color.Lerp(ResolveAccent(adaptationId), UIStyleTokens.Text.Primary, 0.28f);
+
             return ProceduralIconUtility.CreateSprite(
                 $"AdaptationIcon_{adaptationId}",
                 background,
