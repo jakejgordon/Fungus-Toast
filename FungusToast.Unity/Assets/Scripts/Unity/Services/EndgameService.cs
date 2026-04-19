@@ -902,7 +902,12 @@ namespace FungusToast.Unity
                 Debug.LogError("[GameManager] Cannot start campaign: CampaignProgression not assigned.");
                 return;
             }
-            if (FungusToast.Unity.Campaign.CampaignSaveService.Exists())
+
+            bool isTestingLevelOverride = GameManager.Instance != null
+                && GameManager.Instance.IsTestingModeEnabled
+                && GameManager.Instance.TestingCampaignLevelIndex > 0;
+
+            if (!isTestingLevelOverride && FungusToast.Unity.Campaign.CampaignSaveService.Exists())
             {
                 campaignController.Resume();
                 if (campaignController.IsAwaitingDefeatCarryoverSelection)
@@ -913,7 +918,13 @@ namespace FungusToast.Unity
                 }
             }
 
-            campaignController.StartNew(humanMoldIndex);
+            int? levelOverride = GameManager.Instance != null && GameManager.Instance.IsTestingModeEnabled
+                ? GameManager.Instance.TestingCampaignLevelIndex
+                : null;
+            IReadOnlyList<string> forcedStartingAdaptationIds = GameManager.Instance != null && GameManager.Instance.IsTestingModeEnabled
+                ? GameManager.Instance.TestingForcedStartingAdaptationIds
+                : null;
+            campaignController.StartNew(humanMoldIndex, levelOverride, forcedStartingAdaptationIds);
             setGameMode(GameMode.Campaign);
             StartCampaignGameplay(campaignController);
         }

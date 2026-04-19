@@ -104,7 +104,9 @@ namespace FungusToast.Unity.UI.Testing
         public bool SkipToEndGame { get; }
         public bool ForceFirstGame { get; }
         public ForcedGameResultMode ForcedResult { get; }
+        public int CampaignLevelIndex { get; }
         public string ForcedAdaptationId { get; }
+        public IReadOnlyList<string> ForcedStartingAdaptationIds { get; }
 
         public DevelopmentTestingConfiguration(
             bool isEnabled,
@@ -114,7 +116,9 @@ namespace FungusToast.Unity.UI.Testing
             bool skipToEndGame,
             bool forceFirstGame,
             ForcedGameResultMode forcedResult,
-            string forcedAdaptationId)
+            int campaignLevelIndex,
+            string forcedAdaptationId,
+            IReadOnlyList<string> forcedStartingAdaptationIds)
         {
             IsEnabled = isEnabled;
             BoardSizeOverride = boardSizeOverride;
@@ -123,7 +127,13 @@ namespace FungusToast.Unity.UI.Testing
             SkipToEndGame = skipToEndGame;
             ForceFirstGame = forceFirstGame;
             ForcedResult = forcedResult;
+            CampaignLevelIndex = Math.Max(0, campaignLevelIndex);
             ForcedAdaptationId = forcedAdaptationId ?? string.Empty;
+            ForcedStartingAdaptationIds = forcedStartingAdaptationIds?
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.Ordinal)
+                .ToList()
+                ?? new List<string>();
         }
     }
 
@@ -168,6 +178,8 @@ namespace FungusToast.Unity.UI.Testing
         private Button testingToggleButton;
         private GameObject boardSizeRow;
         private TMP_Dropdown boardSizeDropdown;
+        private GameObject campaignLevelRow;
+        private TMP_Dropdown campaignLevelDropdown;
         private GameObject mycovariantRow;
         private TMP_Dropdown mycovariantDropdown;
         private Button fastForwardButton;
@@ -176,14 +188,18 @@ namespace FungusToast.Unity.UI.Testing
         private Button forcedResultButton;
         private GameObject adaptationRow;
         private TMP_Dropdown adaptationDropdown;
+        private Button forcedStartingAdaptationsToggleButton;
+        private GameObject forcedStartingAdaptationsRow;
         private List<Mycovariant> sortedMycovariants = new List<Mycovariant>();
         private List<AdaptationDefinition> sortedAdaptations = new List<AdaptationDefinition>();
 
         private bool testingEnabled;
         private bool skipToEnd;
         private bool forceFirstGame;
+        private bool forceStartingAdaptationsEnabled;
         private int fastForwardRounds;
         private int selectedBoardSize = DevelopmentTestingBoardSizePresets.DefaultSize;
+        private int selectedCampaignLevelIndex;
         private ForcedGameResultMode forcedResult = ForcedGameResultMode.Natural;
 
         public DevelopmentTestingCardController(DevelopmentTestingCardOptions options)
@@ -215,6 +231,14 @@ namespace FungusToast.Unity.UI.Testing
                 ConfigureBoardSizeDropdown();
             }
 
+            campaignLevelRow = EnsureDropdownRow(
+                $"{options.ControlPrefix}CampaignLevelRow",
+                $"{options.ControlPrefix}CampaignLevelLabel",
+                $"{options.ControlPrefix}CampaignLevelDropdown",
+                "Campaign Level",
+                out campaignLevelDropdown);
+            ConfigureCampaignLevelDropdown();
+
             mycovariantRow = EnsureDropdownRow(
                 $"{options.ControlPrefix}MycovariantRow",
                 $"{options.ControlPrefix}MycovariantLabel",
@@ -237,18 +261,23 @@ namespace FungusToast.Unity.UI.Testing
                     $"{options.ControlPrefix}AdaptationRow",
                     $"{options.ControlPrefix}AdaptationLabel",
                     $"{options.ControlPrefix}AdaptationDropdown",
-                    "Forced Adaptation",
+                    "Forced Adaptation in Draft",
                     out adaptationDropdown);
             }
 
+            forcedStartingAdaptationsToggleButton = EnsureSettingButton($"{options.ControlPrefix}ForcedStartingAdaptationsToggleButton", OnForcedStartingAdaptationsToggleClicked);
+            forcedStartingAdaptationsRow = EnsureForcedStartingAdaptationsRow();
+
             SetSiblingIndex(testingToggleButton != null ? testingToggleButton.transform : null, 0);
-            SetSiblingIndex(boardSizeRow != null ? boardSizeRow.transform : null, 1);
-            SetSiblingIndex(mycovariantRow != null ? mycovariantRow.transform : null, 2);
-            SetSiblingIndex(fastForwardButton != null ? fastForwardButton.transform : null, 3);
-            SetSiblingIndex(firstGameButton != null ? firstGameButton.transform : null, 4);
-            SetSiblingIndex(skipToEndButton != null ? skipToEndButton.transform : null, 5);
-            SetSiblingIndex(forcedResultButton != null ? forcedResultButton.transform : null, 6);
-            SetSiblingIndex(adaptationRow != null ? adaptationRow.transform : null, 7);
+            SetSiblingIndex(campaignLevelRow != null ? campaignLevelRow.transform : null, 1);
+            SetSiblingIndex(fastForwardButton != null ? fastForwardButton.transform : null, 2);
+            SetSiblingIndex(skipToEndButton != null ? skipToEndButton.transform : null, 3);
+            SetSiblingIndex(forcedResultButton != null ? forcedResultButton.transform : null, 4);
+            SetSiblingIndex(adaptationRow != null ? adaptationRow.transform : null, 5);
+            SetSiblingIndex(firstGameButton != null ? firstGameButton.transform : null, 6);
+            SetSiblingIndex(forcedStartingAdaptationsToggleButton != null ? forcedStartingAdaptationsToggleButton.transform : null, 7);
+            SetSiblingIndex(forcedStartingAdaptationsRow != null ? forcedStartingAdaptationsRow.transform : null, 8);
+            SetSiblingIndex(mycovariantRow != null ? mycovariantRow.transform : null, 9);
 
             RefreshDropdownOptions();
             RefreshVisualState();
@@ -269,8 +298,10 @@ namespace FungusToast.Unity.UI.Testing
 
             testingEnabled = configuration.IsEnabled;
             fastForwardRounds = Math.Max(0, configuration.FastForwardRounds);
+            selectedCampaignLevelIndex = Math.Max(0, configuration.CampaignLevelIndex);
             skipToEnd = testingEnabled && configuration.SkipToEndGame;
             forceFirstGame = options.SupportsFirstGameToggle && testingEnabled && configuration.ForceFirstGame;
+            forceStartingAdaptationsEnabled = testingEnabled && configuration.ForcedStartingAdaptationIds.Count > 0;
             forcedResult = skipToEnd ? configuration.ForcedResult : ForcedGameResultMode.Natural;
 
             RefreshDropdownOptions();
@@ -280,6 +311,12 @@ namespace FungusToast.Unity.UI.Testing
                 int boardSizeIndex = DevelopmentTestingBoardSizePresets.GetIndex(selectedBoardSize);
                 boardSizeDropdown.SetValueWithoutNotify(boardSizeIndex);
                 boardSizeDropdown.RefreshShownValue();
+            }
+
+            if (campaignLevelDropdown != null)
+            {
+                campaignLevelDropdown.SetValueWithoutNotify(Mathf.Max(0, Mathf.Min(selectedCampaignLevelIndex, campaignLevelDropdown.options.Count - 1)));
+                campaignLevelDropdown.RefreshShownValue();
             }
 
             if (mycovariantDropdown != null)
@@ -345,6 +382,16 @@ namespace FungusToast.Unity.UI.Testing
                 boardSizeDropdown.value = selectedIndex;
                 boardSizeDropdown.RefreshShownValue();
                 ApplyDropdownReadability(boardSizeDropdown);
+            }
+
+            if (campaignLevelDropdown != null)
+            {
+                var campaignLevelOptions = BuildCampaignLevelOptions();
+                campaignLevelDropdown.ClearOptions();
+                campaignLevelDropdown.AddOptions(campaignLevelOptions);
+                campaignLevelDropdown.value = Mathf.Max(0, Mathf.Min(selectedCampaignLevelIndex, campaignLevelOptions.Count - 1));
+                campaignLevelDropdown.RefreshShownValue();
+                ApplyDropdownReadability(campaignLevelDropdown);
             }
 
             if (mycovariantDropdown != null)
@@ -424,6 +471,16 @@ namespace FungusToast.Unity.UI.Testing
                 boardSizeDropdown.interactable = testingEnabled;
             }
 
+            if (campaignLevelRow != null)
+            {
+                campaignLevelRow.SetActive(testingEnabled);
+            }
+
+            if (campaignLevelDropdown != null)
+            {
+                campaignLevelDropdown.interactable = testingEnabled;
+            }
+
             if (adaptationDropdown != null)
             {
                 adaptationDropdown.interactable = testingEnabled && skipToEnd;
@@ -439,11 +496,18 @@ namespace FungusToast.Unity.UI.Testing
                 }
             }
 
+            UpdateButtonState(forcedStartingAdaptationsToggleButton, testingEnabled, testingEnabled);
+            if (forcedStartingAdaptationsRow != null)
+            {
+                forcedStartingAdaptationsRow.SetActive(testingEnabled && forceStartingAdaptationsEnabled);
+            }
+
             SetButtonLabel(testingToggleButton, $"Development Testing: {(testingEnabled ? "On" : "Off")}");
             SetButtonLabel(fastForwardButton, $"Fast Forward Rounds: {fastForwardRounds}");
             SetButtonLabel(firstGameButton, $"First Game?: {(forceFirstGame ? "Yes" : "No")}");
             SetButtonLabel(skipToEndButton, $"Skip to End Game: {(skipToEnd ? "On" : "Off")}");
             SetButtonLabel(forcedResultButton, $"Forced Result: {FormatForcedResult(forcedResult)}");
+            SetButtonLabel(forcedStartingAdaptationsToggleButton, $"Forced Adaptations?: {(forceStartingAdaptationsEnabled ? "On" : "Off")}");
 
             NotifyLayoutInvalidated();
         }
@@ -468,7 +532,7 @@ namespace FungusToast.Unity.UI.Testing
         {
             if (!testingEnabled)
             {
-                return new DevelopmentTestingConfiguration(false, null, null, 0, false, false, ForcedGameResultMode.Natural, string.Empty);
+                return new DevelopmentTestingConfiguration(false, null, null, 0, false, false, ForcedGameResultMode.Natural, 0, string.Empty, Array.Empty<string>());
             }
 
             int? selectedMycovariantId = null;
@@ -491,6 +555,10 @@ namespace FungusToast.Unity.UI.Testing
                 }
             }
 
+            var forcedStartingAdaptationIds = forceStartingAdaptationsEnabled
+                ? GetSelectedForcedStartingAdaptationIds()
+                : Array.Empty<string>();
+
             return new DevelopmentTestingConfiguration(
                 true,
                 options.SupportsBoardSizeOverride ? selectedBoardSize : null,
@@ -499,7 +567,9 @@ namespace FungusToast.Unity.UI.Testing
                 skipToEnd,
                 options.SupportsFirstGameToggle && forceFirstGame,
                 skipToEnd ? forcedResult : ForcedGameResultMode.Natural,
-                selectedAdaptationId);
+                selectedCampaignLevelIndex,
+                selectedAdaptationId,
+                forcedStartingAdaptationIds);
         }
 
         public void ApplyToGameManager(GameManager manager)
@@ -522,7 +592,9 @@ namespace FungusToast.Unity.UI.Testing
                 configuration.SkipToEndGame,
                 configuration.ForceFirstGame,
                 configuration.ForcedResult,
-                configuration.ForcedAdaptationId);
+                configuration.CampaignLevelIndex,
+                configuration.ForcedAdaptationId,
+                configuration.ForcedStartingAdaptationIds);
         }
 
         private void ConfigureBoardSizeDropdown()
@@ -538,6 +610,36 @@ namespace FungusToast.Unity.UI.Testing
             boardSizeDropdown.value = DevelopmentTestingBoardSizePresets.GetIndex(selectedBoardSize);
             boardSizeDropdown.RefreshShownValue();
             ApplyDropdownReadability(boardSizeDropdown);
+        }
+
+        private void ConfigureCampaignLevelDropdown()
+        {
+            if (campaignLevelDropdown == null)
+            {
+                return;
+            }
+
+            campaignLevelDropdown.onValueChanged = new TMP_Dropdown.DropdownEvent();
+            campaignLevelDropdown.onValueChanged.AddListener(OnCampaignLevelChanged);
+            campaignLevelDropdown.RefreshShownValue();
+            ApplyDropdownReadability(campaignLevelDropdown);
+        }
+
+        private List<string> BuildCampaignLevelOptions()
+        {
+            var options = new List<string>();
+            int maxLevels = GameManager.Instance?.CampaignProgression?.MaxLevels ?? 0;
+            for (int levelIndex = 0; levelIndex < maxLevels; levelIndex++)
+            {
+                options.Add($"Campaign{levelIndex}");
+            }
+
+            if (options.Count == 0)
+            {
+                options.Add("Campaign0");
+            }
+
+            return options;
         }
 
         private GameObject EnsureCardRoot()
@@ -682,6 +784,100 @@ namespace FungusToast.Unity.UI.Testing
             return row;
         }
 
+        private GameObject EnsureForcedStartingAdaptationsRow()
+        {
+            var existing = cardRoot.transform.Find($"{options.ControlPrefix}ForcedStartingAdaptationsRow");
+            if (existing != null)
+            {
+                return existing.gameObject;
+            }
+
+            var row = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptationsRow", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            row.transform.SetParent(cardRoot.transform, false);
+
+            var layout = row.GetComponent<VerticalLayoutGroup>();
+            layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            layout.spacing = 2f;
+            layout.padding = new RectOffset(2, 2, 0, 0);
+
+            var element = row.GetComponent<LayoutElement>();
+            element.minHeight = 140f;
+            element.preferredHeight = 180f;
+
+            BuildForcedStartingAdaptationChecklist(row.transform);
+            return row;
+        }
+
+        private void BuildForcedStartingAdaptationChecklist(Transform parent)
+        {
+            foreach (Transform child in parent)
+            {
+                UnityEngine.Object.Destroy(child.gameObject);
+            }
+
+            var labelObject = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptationsLabel", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            labelObject.transform.SetParent(parent, false);
+            var label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = "Starting Adaptations";
+            label.color = UIStyleTokens.Text.Primary;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 14f;
+            label.fontSizeMax = 18f;
+            label.alignment = TextAlignmentOptions.Left;
+
+            var labelElement = labelObject.GetComponent<LayoutElement>();
+            labelElement.minHeight = DropdownLabelMinHeight;
+            labelElement.preferredHeight = DropdownLabelPreferredHeight;
+
+            foreach (var adaptation in AdaptationRepository.All
+                         .Where(adaptation => !adaptation.IsStartingAdaptation)
+                         .OrderBy(adaptation => adaptation.Name, StringComparer.OrdinalIgnoreCase)
+                         .ThenBy(adaptation => adaptation.Id, StringComparer.Ordinal))
+            {
+                var toggleObject = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptation_{adaptation.Id}", typeof(RectTransform), typeof(Toggle), typeof(LayoutElement));
+                toggleObject.transform.SetParent(parent, false);
+                var toggle = toggleObject.GetComponent<Toggle>();
+                var toggleLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+                toggleLabelObject.transform.SetParent(toggleObject.transform, false);
+                var toggleLabel = toggleLabelObject.GetComponent<TextMeshProUGUI>();
+                toggleLabel.text = adaptation.Name;
+                toggleLabel.color = UIStyleTokens.Text.Primary;
+                toggleLabel.fontSize = 16f;
+                toggleLabel.alignment = TextAlignmentOptions.Left;
+                toggle.isOn = false;
+            }
+        }
+
+        private IReadOnlyList<string> GetSelectedForcedStartingAdaptationIds()
+        {
+            if (forcedStartingAdaptationsRow == null)
+            {
+                return Array.Empty<string>();
+            }
+
+            var selected = new List<string>();
+            foreach (Transform child in forcedStartingAdaptationsRow.transform)
+            {
+                var toggle = child.GetComponent<Toggle>();
+                if (toggle == null || !toggle.isOn)
+                {
+                    continue;
+                }
+
+                string prefix = $"{options.ControlPrefix}ForcedStartingAdaptation_";
+                if (child.name.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    selected.Add(child.name.Substring(prefix.Length));
+                }
+            }
+
+            return selected;
+        }
+
         private static void ConfigureDropdownRow(GameObject row, string labelName, string labelText)
         {
             var rowLayout = row.GetComponent<VerticalLayoutGroup>();
@@ -741,7 +937,9 @@ namespace FungusToast.Unity.UI.Testing
         {
             skipToEnd = false;
             forceFirstGame = false;
+            forceStartingAdaptationsEnabled = false;
             fastForwardRounds = 0;
+            selectedCampaignLevelIndex = 0;
             forcedResult = ForcedGameResultMode.Natural;
         }
 
@@ -755,6 +953,12 @@ namespace FungusToast.Unity.UI.Testing
         private void OnFirstGameClicked()
         {
             forceFirstGame = !forceFirstGame;
+            RefreshVisualState();
+        }
+
+        private void OnForcedStartingAdaptationsToggleClicked()
+        {
+            forceStartingAdaptationsEnabled = !forceStartingAdaptationsEnabled;
             RefreshVisualState();
         }
 
@@ -780,6 +984,12 @@ namespace FungusToast.Unity.UI.Testing
         private void OnBoardSizeChanged(int index)
         {
             selectedBoardSize = DevelopmentTestingBoardSizePresets.GetSizeAt(index);
+            NotifyLayoutInvalidated();
+        }
+
+        private void OnCampaignLevelChanged(int index)
+        {
+            selectedCampaignLevelIndex = Math.Max(0, index);
             NotifyLayoutInvalidated();
         }
 

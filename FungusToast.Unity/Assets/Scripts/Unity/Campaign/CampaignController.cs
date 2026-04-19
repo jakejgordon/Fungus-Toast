@@ -40,22 +40,26 @@ namespace FungusToast.Unity.Campaign
         public MoldinessProgressSnapshot MoldinessProgress => MoldinessProgression.GetSnapshot(State?.moldiness);
         public bool HasPendingMoldinessUnlockChoice => State?.moldiness?.pendingUnlockTriggers?.Count > 0;
 
-        public void StartNew(int humanMoldIndex = 0)
+        public void StartNew(int humanMoldIndex = 0, int? levelIndexOverride = null, IReadOnlyList<string> temporaryTestingAdaptationIds = null)
         {
             if (progression.MaxLevels == 0) throw new InvalidOperationException("CampaignProgression has no levels defined.");
-            var previousState = State ?? CampaignSaveService.Load();
-            var carryoverAdaptationIds = GetCarryoverAdaptationIdsForNewCampaignStart(previousState);
+
+            int targetLevelIndex = Mathf.Clamp(levelIndexOverride ?? 0, 0, progression.MaxLevels - 1);
+            bool isLevelOverrideRun = targetLevelIndex > 0;
+            var previousState = isLevelOverrideRun ? null : State ?? CampaignSaveService.Load();
+            var carryoverAdaptationIds = isLevelOverrideRun
+                ? new List<string>()
+                : GetCarryoverAdaptationIdsForNewCampaignStart(previousState);
             var persistentMoldinessState = previousState?.moldiness ?? MoldinessProgression.CreateDefaultState();
-            var firstSpec = progression.Get(0);
-            // Seed must be set before ResolveBoardPreset can use it for boss pool selection.
+            var targetSpec = progression.Get(targetLevelIndex);
             int newSeed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
             State = new CampaignState { seed = newSeed };
-            var preset = ResolveBoardPreset(firstSpec, 0);
-            if (preset == null) throw new InvalidOperationException("Level0 has no BoardPreset assigned.");
+            var preset = ResolveBoardPreset(targetSpec, targetLevelIndex);
+            if (preset == null) throw new InvalidOperationException($"Campaign level {targetLevelIndex} has no BoardPreset assigned.");
             State = new CampaignState
             {
                 runId = Guid.NewGuid().ToString(),
-                levelIndex = 0,
+                levelIndex = targetLevelIndex,
                 boardPresetId = preset.presetId,
                 seed = newSeed,
                 boardWidth = preset.boardWidth,
@@ -67,7 +71,8 @@ namespace FungusToast.Unity.Campaign
                 pendingDefeatCarryoverSelection = false,
                 pendingDefeatCarryoverOptions = new List<string>(),
                 pendingNextRunCarryoverAdaptationIds = new List<string>(),
-                resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, 0),
+                resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, targetLevelIndex),
+                temporaryTestingAdaptationIds = SanitizeTemporaryTestingAdaptationIds(temporaryTestingAdaptationIds),
                 moldiness = persistentMoldinessState
             };
             State.selectedAdaptationIds ??= new List<string>();
@@ -88,7 +93,7 @@ namespace FungusToast.Unity.Campaign
                 }
             }
             CampaignSaveService.Save(State);
-            Debug.Log($"[CampaignController] New campaign started. RunId={State.runId} Preset={preset.presetId}");
+            Debug.Log($"[CampaignController] New campaign started. RunId={State.runId} Level={targetLevelIndex} Preset={preset.presetId}");
         }
 
         public void Resume()
@@ -105,6 +110,7 @@ namespace FungusToast.Unity.Campaign
             State.resolvedAiStrategyNames ??= new List<string>();
             State.pendingDefeatCarryoverOptions ??= new List<string>();
             State.pendingNextRunCarryoverAdaptationIds ??= new List<string>();
+            State.temporaryTestingAdaptationIds ??= new List<string>();
             State.moldiness ??= MoldinessProgression.CreateDefaultState();
             State.moldiness.pendingUnlockTriggers ??= new List<MoldinessUnlockTrigger>();
             State.moldiness.unlockedRewardIds ??= new List<string>();
@@ -160,6 +166,7 @@ namespace FungusToast.Unity.Campaign
             }
             if (!victory)
             {
+                ClearTemporaryTestingAdaptations(saveAfterClear: false);
                 BeginDefeatCarryoverSelectionOrReset();
                 return;
             }
@@ -182,6 +189,7 @@ namespace FungusToast.Unity.Campaign
             if (nextIndex >= progression.MaxLevels)
             {
                 // Final victory.
+                ClearTemporaryTestingAdaptations(saveAfterClear: false);
                 State.pendingAdaptationSelection = false;
                 State.campaignCompleted = true;
                 State.pendingVictorySnapshot = null;
@@ -202,7 +210,7 @@ namespace FungusToast.Unity.Campaign
                 return new List<AdaptationDefinition>();
             }
 
-            var selected = new HashSet<string>(State.selectedAdaptationIds ?? new List<string>(), StringComparer.Ordinal);
+            var selected = new HashSet<string>(GetAllActiveAdaptationIds(), StringComparer.Ordinal);
             var permanentlyUnlockedAdaptations = new HashSet<string>(State.moldiness?.unlockedAdaptationIds ?? new List<string>(), StringComparer.Ordinal);
             var currentUnlockLevel = State.moldiness?.unlockLevel ?? 0;
             var remaining = AdaptationRepository.All
@@ -298,13 +306,14 @@ namespace FungusToast.Unity.Campaign
 
         public IReadOnlyList<AdaptationDefinition> GetSelectedAdaptations()
         {
-            if (State?.selectedAdaptationIds == null || State.selectedAdaptationIds.Count == 0)
+            var activeAdaptationIds = GetAllActiveAdaptationIds();
+            if (activeAdaptationIds.Count == 0)
             {
                 return Array.Empty<AdaptationDefinition>();
             }
 
             var selected = new List<AdaptationDefinition>();
-            foreach (var adaptationId in State.selectedAdaptationIds)
+            foreach (var adaptationId in activeAdaptationIds)
             {
                 if (AdaptationRepository.TryGetById(adaptationId, out var adaptation))
                 {
@@ -335,6 +344,7 @@ namespace FungusToast.Unity.Campaign
             }
 
             State.selectedAdaptationIds.Add(adaptationId);
+            ClearTemporaryTestingAdaptations(saveAfterClear: false);
             State.pendingAdaptationSelection = false;
             State.pendingVictorySnapshot = null;
             AdvanceToNextLevel();
@@ -405,6 +415,7 @@ namespace FungusToast.Unity.Campaign
                 return false;
             }
 
+            ClearTemporaryTestingAdaptations(saveAfterClear: false);
             State.pendingAdaptationSelection = false;
             State.pendingVictorySnapshot = null;
             AdvanceToNextLevel();
@@ -584,6 +595,50 @@ namespace FungusToast.Unity.Campaign
             }
 
             CampaignSaveService.Save(State);
+        }
+
+        private List<string> GetAllActiveAdaptationIds()
+        {
+            var activeIds = new List<string>();
+            if (State?.selectedAdaptationIds != null)
+            {
+                activeIds.AddRange(State.selectedAdaptationIds);
+            }
+
+            if (State?.temporaryTestingAdaptationIds != null)
+            {
+                activeIds.AddRange(State.temporaryTestingAdaptationIds);
+            }
+
+            return activeIds
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+        }
+
+        private static List<string> SanitizeTemporaryTestingAdaptationIds(IReadOnlyList<string> adaptationIds)
+        {
+            return (adaptationIds ?? Array.Empty<string>())
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Where(id => AdaptationRepository.TryGetById(id, out var adaptation)
+                    && adaptation != null
+                    && !adaptation.IsStartingAdaptation)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+        }
+
+        private void ClearTemporaryTestingAdaptations(bool saveAfterClear = true)
+        {
+            if (State?.temporaryTestingAdaptationIds == null || State.temporaryTestingAdaptationIds.Count == 0)
+            {
+                return;
+            }
+
+            State.temporaryTestingAdaptationIds.Clear();
+            if (saveAfterClear)
+            {
+                CampaignSaveService.Save(State);
+            }
         }
 
         private static List<string> GetEligibleDefeatCarryoverAdaptationIds(IEnumerable<string> adaptationIds)
