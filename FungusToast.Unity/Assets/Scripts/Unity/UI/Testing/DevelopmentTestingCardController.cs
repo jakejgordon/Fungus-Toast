@@ -200,6 +200,7 @@ namespace FungusToast.Unity.UI.Testing
         private bool skipToEnd;
         private bool forceFirstGame;
         private bool forceStartingAdaptationsEnabled;
+        private readonly HashSet<string> selectedForcedStartingAdaptationIds = new(StringComparer.Ordinal);
         private int fastForwardRounds;
         private int selectedBoardSize = DevelopmentTestingBoardSizePresets.DefaultSize;
         private int selectedCampaignLevelIndex;
@@ -304,6 +305,11 @@ namespace FungusToast.Unity.UI.Testing
             selectedCampaignLevelIndex = Math.Max(0, configuration.CampaignLevelIndex);
             skipToEnd = testingEnabled && configuration.SkipToEndGame;
             forceFirstGame = options.SupportsFirstGameToggle && testingEnabled && configuration.ForceFirstGame;
+            selectedForcedStartingAdaptationIds.Clear();
+            foreach (var adaptationId in configuration.ForcedStartingAdaptationIds)
+            {
+                selectedForcedStartingAdaptationIds.Add(adaptationId);
+            }
             forceStartingAdaptationsEnabled = testingEnabled && configuration.ForcedStartingAdaptationIds.Count > 0;
             forcedResult = skipToEnd ? configuration.ForcedResult : ForcedGameResultMode.Natural;
 
@@ -951,7 +957,18 @@ namespace FungusToast.Unity.UI.Testing
                 var toggle = toggleObject.GetComponent<Toggle>();
                 toggle.targetGraphic = toggleBackground;
                 toggle.graphic = checkmark;
-                toggle.isOn = false;
+                toggle.isOn = selectedForcedStartingAdaptationIds.Contains(adaptation.Id);
+                toggle.onValueChanged.AddListener(isOn =>
+                {
+                    if (isOn)
+                    {
+                        selectedForcedStartingAdaptationIds.Add(adaptation.Id);
+                    }
+                    else
+                    {
+                        selectedForcedStartingAdaptationIds.Remove(adaptation.Id);
+                    }
+                });
                 forcedStartingAdaptationToggles.Add(toggle);
 
                 var toggleLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
@@ -979,23 +996,10 @@ namespace FungusToast.Unity.UI.Testing
                 return Array.Empty<string>();
             }
 
-            var selected = new List<string>();
-            string prefix = $"{options.ControlPrefix}ForcedStartingAdaptation_";
-            foreach (Transform child in forcedStartingAdaptationsRow.transform)
-            {
-                if (!child.name.StartsWith(prefix, StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                var toggle = child.GetComponentInChildren<Toggle>(true);
-                if (toggle != null && toggle.isOn)
-                {
-                    selected.Add(child.name.Substring(prefix.Length));
-                }
-            }
-
-            return selected;
+            return selectedForcedStartingAdaptationIds
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
         }
 
         private static void ConfigureDropdownRow(GameObject row, string labelName, string labelText)
@@ -1058,6 +1062,7 @@ namespace FungusToast.Unity.UI.Testing
             skipToEnd = false;
             forceFirstGame = false;
             forceStartingAdaptationsEnabled = false;
+            selectedForcedStartingAdaptationIds.Clear();
             fastForwardRounds = 0;
             selectedCampaignLevelIndex = 0;
             forcedResult = ForcedGameResultMode.Natural;
