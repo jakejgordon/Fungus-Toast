@@ -1389,17 +1389,23 @@ namespace FungusToast.Unity.UI
             description.fontSizeMax = 14f;
             description.fontSizeMin = 11f;
 
+            var tooltipTrigger = buttonObject.GetComponent<TooltipTrigger>();
+            if (tooltipTrigger == null)
+            {
+                tooltipTrigger = buttonObject.AddComponent<TooltipTrigger>();
+            }
+
             if (offer.Type == MoldinessUnlockType.UnlockAdaptation && AdaptationRepository.TryGetById(offer.AdaptationId, out var adaptation))
             {
                 var provider = buttonObject.AddComponent<AdaptationTooltipProvider>();
                 provider.Initialize(adaptation);
-
-                var tooltipTrigger = buttonObject.GetComponent<TooltipTrigger>();
-                if (tooltipTrigger == null)
-                {
-                    tooltipTrigger = buttonObject.AddComponent<TooltipTrigger>();
-                }
-
+                tooltipTrigger.SetDynamicProvider(provider);
+                tooltipTrigger.SetAutoPlacementOffsetX(24f);
+            }
+            else
+            {
+                var provider = buttonObject.AddComponent<MoldinessRewardTooltipProvider>();
+                provider.Initialize(offer);
                 tooltipTrigger.SetDynamicProvider(provider);
                 tooltipTrigger.SetAutoPlacementOffsetX(24f);
             }
