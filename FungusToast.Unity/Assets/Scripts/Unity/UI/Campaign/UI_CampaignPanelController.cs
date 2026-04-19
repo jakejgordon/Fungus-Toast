@@ -23,6 +23,7 @@ namespace FungusToast.Unity.UI.Campaign
         private const float DevelopmentRailWidth = 340f;
         private const float LayoutShellWidth = 500f;
         private const float DevelopmentRailOffsetX = 440f;
+        private const float DevelopmentRailTopOffsetY = -18f;
 
         private static readonly string[] MoldDisplayNames =
         {
@@ -334,7 +335,7 @@ namespace FungusToast.Unity.UI.Campaign
             railRoot.anchorMin = new Vector2(0.5f, 1f);
             railRoot.anchorMax = new Vector2(0.5f, 1f);
             railRoot.pivot = new Vector2(0.5f, 1f);
-            railRoot.anchoredPosition = new Vector2(DevelopmentRailOffsetX, 0f);
+            railRoot.anchoredPosition = new Vector2(DevelopmentRailOffsetX, DevelopmentRailTopOffsetY);
             railRoot.sizeDelta = new Vector2(DevelopmentRailWidth, 0f);
             railRoot.localScale = Vector3.one;
 

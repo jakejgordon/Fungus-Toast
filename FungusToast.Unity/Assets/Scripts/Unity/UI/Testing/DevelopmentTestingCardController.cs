@@ -171,6 +171,7 @@ namespace FungusToast.Unity.UI.Testing
         private const float DropdownLabelPreferredHeight = 22f;
         private const float TestingDropdownFontSize = 18f;
         private const float TestingDropdownScrollSensitivity = 1.5f;
+        private const float ForcedAdaptationListViewportHeight = 220f;
 
         private readonly DevelopmentTestingCardOptions options;
 
@@ -190,6 +191,7 @@ namespace FungusToast.Unity.UI.Testing
         private TMP_Dropdown adaptationDropdown;
         private Button forcedStartingAdaptationsToggleButton;
         private GameObject forcedStartingAdaptationsRow;
+        private ScrollRect forcedStartingAdaptationsScrollRect;
         private readonly List<Toggle> forcedStartingAdaptationToggles = new();
         private List<Mycovariant> sortedMycovariants = new List<Mycovariant>();
         private List<AdaptationDefinition> sortedAdaptations = new List<AdaptationDefinition>();
@@ -814,8 +816,8 @@ namespace FungusToast.Unity.UI.Testing
             image.raycastTarget = false;
 
             var element = row.GetComponent<LayoutElement>();
-            element.minHeight = 220f;
-            element.preferredHeight = 300f;
+            element.minHeight = ForcedAdaptationListViewportHeight + 32f;
+            element.preferredHeight = ForcedAdaptationListViewportHeight + 32f;
             element.minWidth = options.SettingWidth;
             element.preferredWidth = options.SettingWidth;
 
@@ -834,16 +836,62 @@ namespace FungusToast.Unity.UI.Testing
             var labelObject = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptationsLabel", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
             labelObject.transform.SetParent(row.transform, false);
             var label = labelObject.GetComponent<TextMeshProUGUI>();
-            label.text = "Starting Adaptations";
+            label.text = "Forced Starting Adaptations";
             label.color = UIStyleTokens.Text.Primary;
-            label.enableAutoSizing = true;
-            label.fontSizeMin = 14f;
-            label.fontSizeMax = 18f;
+            label.enableAutoSizing = false;
+            label.fontSize = 15f;
             label.alignment = TextAlignmentOptions.Left;
+            label.overflowMode = TextOverflowModes.Ellipsis;
 
             var labelElement = labelObject.GetComponent<LayoutElement>();
             labelElement.minHeight = DropdownLabelMinHeight;
             labelElement.preferredHeight = DropdownLabelPreferredHeight;
+
+            var viewportObject = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptationsViewport", typeof(RectTransform), typeof(Image), typeof(Mask), typeof(LayoutElement));
+            viewportObject.transform.SetParent(row.transform, false);
+            var viewportImage = viewportObject.GetComponent<Image>();
+            viewportImage.color = new Color(1f, 1f, 1f, 0.04f);
+            var viewportMask = viewportObject.GetComponent<Mask>();
+            viewportMask.showMaskGraphic = false;
+            var viewportElement = viewportObject.GetComponent<LayoutElement>();
+            viewportElement.minHeight = ForcedAdaptationListViewportHeight;
+            viewportElement.preferredHeight = ForcedAdaptationListViewportHeight;
+            viewportElement.minWidth = options.SettingWidth - 12f;
+            viewportElement.preferredWidth = options.SettingWidth - 12f;
+
+            var contentObject = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptationsContent", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            contentObject.transform.SetParent(viewportObject.transform, false);
+            var contentRect = contentObject.GetComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0f, 1f);
+            contentRect.anchorMax = new Vector2(1f, 1f);
+            contentRect.pivot = new Vector2(0.5f, 1f);
+            contentRect.anchoredPosition = Vector2.zero;
+            contentRect.sizeDelta = Vector2.zero;
+
+            var contentLayout = contentObject.GetComponent<VerticalLayoutGroup>();
+            contentLayout.childAlignment = TextAnchor.UpperLeft;
+            contentLayout.childControlWidth = true;
+            contentLayout.childControlHeight = true;
+            contentLayout.childForceExpandWidth = false;
+            contentLayout.childForceExpandHeight = false;
+            contentLayout.spacing = 4f;
+            contentLayout.padding = new RectOffset(0, 0, 0, 0);
+
+            var contentFitter = contentObject.GetComponent<ContentSizeFitter>();
+            contentFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            forcedStartingAdaptationsScrollRect = row.GetComponent<ScrollRect>();
+            if (forcedStartingAdaptationsScrollRect == null)
+            {
+                forcedStartingAdaptationsScrollRect = row.AddComponent<ScrollRect>();
+            }
+
+            forcedStartingAdaptationsScrollRect.horizontal = false;
+            forcedStartingAdaptationsScrollRect.vertical = true;
+            forcedStartingAdaptationsScrollRect.scrollSensitivity = 24f;
+            forcedStartingAdaptationsScrollRect.viewport = viewportObject.GetComponent<RectTransform>();
+            forcedStartingAdaptationsScrollRect.content = contentRect;
 
             foreach (var adaptation in AdaptationRepository.All
                          .Where(adaptation => !adaptation.IsStartingAdaptation)
@@ -851,7 +899,7 @@ namespace FungusToast.Unity.UI.Testing
                          .ThenBy(adaptation => adaptation.Id, StringComparer.Ordinal))
             {
                 var item = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptation_{adaptation.Id}", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
-                item.transform.SetParent(row.transform, false);
+                item.transform.SetParent(contentObject.transform, false);
 
                 var itemLayout = item.GetComponent<HorizontalLayoutGroup>();
                 itemLayout.childAlignment = TextAnchor.MiddleLeft;
@@ -865,13 +913,13 @@ namespace FungusToast.Unity.UI.Testing
                 var itemElement = item.GetComponent<LayoutElement>();
                 itemElement.minHeight = 24f;
                 itemElement.preferredHeight = 26f;
-                itemElement.minWidth = options.SettingWidth - 12f;
-                itemElement.preferredWidth = options.SettingWidth - 12f;
+                itemElement.minWidth = options.SettingWidth - 32f;
+                itemElement.preferredWidth = options.SettingWidth - 32f;
 
                 var toggleObject = new GameObject("Toggle", typeof(RectTransform), typeof(Toggle), typeof(Image), typeof(LayoutElement));
                 toggleObject.transform.SetParent(item.transform, false);
                 var toggleBackground = toggleObject.GetComponent<Image>();
-                toggleBackground.color = Color.white;
+                toggleBackground.color = new Color(1f, 1f, 1f, 0.12f);
                 var toggleElement = toggleObject.GetComponent<LayoutElement>();
                 toggleElement.minWidth = 18f;
                 toggleElement.preferredWidth = 18f;
@@ -885,8 +933,8 @@ namespace FungusToast.Unity.UI.Testing
                 var checkmarkRect = checkmarkObject.GetComponent<RectTransform>();
                 checkmarkRect.anchorMin = Vector2.zero;
                 checkmarkRect.anchorMax = Vector2.one;
-                checkmarkRect.offsetMin = new Vector2(3f, 3f);
-                checkmarkRect.offsetMax = new Vector2(-3f, -3f);
+                checkmarkRect.offsetMin = new Vector2(4f, 4f);
+                checkmarkRect.offsetMax = new Vector2(-4f, -4f);
 
                 var toggle = toggleObject.GetComponent<Toggle>();
                 toggle.targetGraphic = toggleBackground;
@@ -905,8 +953,8 @@ namespace FungusToast.Unity.UI.Testing
                 toggleLabel.overflowMode = TextOverflowModes.Ellipsis;
 
                 var textElement = toggleLabelObject.GetComponent<LayoutElement>();
-                textElement.minWidth = options.SettingWidth - 40f;
-                textElement.preferredWidth = options.SettingWidth - 40f;
+                textElement.minWidth = options.SettingWidth - 56f;
+                textElement.preferredWidth = options.SettingWidth - 56f;
                 textElement.minHeight = 22f;
                 textElement.preferredHeight = 24f;
             }
