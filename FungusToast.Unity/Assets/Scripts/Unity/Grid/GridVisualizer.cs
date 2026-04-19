@@ -1279,6 +1279,25 @@ namespace FungusToast.Unity.Grid
         /// </summary>
         public void ClearJettingMyceliumPreview() => hoverHelper?.ClearPreviewTiles();
 
+        public void ShowChemotacticBeaconPreview(IEnumerable<int> tileIds)
+        {
+            if (hoverHelper == null)
+            {
+                return;
+            }
+
+            var active = ActiveBoard;
+            if (active == null)
+            {
+                return;
+            }
+
+            var positions = tileIds.Select(id => GetPositionForTileId(id));
+            hoverHelper.ShowSolidPreviewTiles(positions, Color.black);
+        }
+
+        public void ClearChemotacticBeaconPreview() => hoverHelper?.ClearPreviewTiles();
+
         public void HighlightPlayerTiles(int playerId, bool includeStartingTilePing = false)
         {
             var active = ActiveBoard; if (active == null) return;

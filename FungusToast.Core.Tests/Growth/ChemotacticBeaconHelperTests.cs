@@ -174,7 +174,7 @@ public class ChemotacticBeaconHelperTests
     }
 
     [Fact]
-    public void GetProjectedGrowthTileIds_matches_chemotactic_beacon_growth_targets_and_skips_friendly_living_cells()
+    public void GetProjectedGrowthTileIds_traces_the_full_valid_route_to_the_beacon_and_skips_friendly_living_cells()
     {
         var board = new GameBoard(width: 10, height: 5, playerCount: 1);
         var player = CreatePlayer();
@@ -195,6 +195,7 @@ public class ChemotacticBeaconHelperTests
                 board.GetTile(5, 2)!.TileId,
                 board.GetTile(6, 2)!.TileId,
                 board.GetTile(7, 2)!.TileId,
+                board.GetTile(8, 2)!.TileId,
             },
             previewTileIds);
         Assert.DoesNotContain(board.GetTile(3, 2)!.TileId, previewTileIds);

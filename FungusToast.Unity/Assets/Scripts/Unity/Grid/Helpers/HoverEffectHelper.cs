@@ -100,6 +100,23 @@ namespace FungusToast.Unity.Grid.Helpers
                 _previewPulseCoroutine = _runner.StartCoroutine(PreviewPulseAnimation());
         }
 
+        public void ShowSolidPreviewTiles(IEnumerable<Vector3Int> positions, Color color)
+        {
+            ClearPreviewTiles();
+            if (_solidHighlightTile == null || _hoverOverlayTileMap == null)
+            {
+                return;
+            }
+
+            foreach (var pos in positions)
+            {
+                _hoverOverlayTileMap.SetTile(pos, _solidHighlightTile);
+                _hoverOverlayTileMap.SetTileFlags(pos, TileFlags.None);
+                _hoverOverlayTileMap.SetColor(pos, color);
+                _livingPreviewPositions.Add(pos);
+            }
+        }
+
         /// <summary>
         /// Clears all preview tiles from the hover overlay and stops the pulse animation.
         /// </summary>

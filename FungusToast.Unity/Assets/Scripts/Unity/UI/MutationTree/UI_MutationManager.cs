@@ -490,18 +490,18 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 if (gridVisualizer == null || tileId < 0)
                 {
-                    gridVisualizer?.ClearSelectedTiles();
+                    gridVisualizer?.ClearChemotacticBeaconPreview();
                     return;
                 }
 
                 var previewTileIds = ChemotacticBeaconHelper.GetProjectedGrowthTileIds(humanPlayer, board, tileId, projectedLevel);
                 if (previewTileIds.Count == 0)
                 {
-                    gridVisualizer.ClearSelectedTiles();
+                    gridVisualizer.ClearChemotacticBeaconPreview();
                     return;
                 }
 
-                gridVisualizer.ShowSelectedTiles(previewTileIds, Color.black);
+                gridVisualizer.ShowChemotacticBeaconPreview(previewTileIds);
             });
 
             while (!resolved)
