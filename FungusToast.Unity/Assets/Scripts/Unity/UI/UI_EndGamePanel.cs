@@ -1154,22 +1154,42 @@ namespace FungusToast.Unity.UI
             }
 
             moldinessSummaryToastTiles.Clear();
-            var gridRoot = new GameObject("UI_CampaignMoldinessSummaryToastGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
+            var gridRoot = new GameObject("UI_CampaignMoldinessSummaryToastGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
             gridRoot.transform.SetParent(parent, false);
+
+            int columns = Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(threshold)), 3, 8);
+            int rows = Mathf.Max(1, Mathf.CeilToInt(threshold / (float)columns));
+            float maxGridWidth = 220f;
+            float maxGridHeight = 112f;
+            float spacing = threshold <= 12 ? 6f : 4f;
+            float cellWidth = Mathf.Clamp((maxGridWidth - ((columns - 1) * spacing)) / columns, 14f, 34f);
+            float cellHeight = Mathf.Clamp((maxGridHeight - ((rows - 1) * spacing)) / rows, 14f, 34f);
 
             var grid = gridRoot.GetComponent<GridLayoutGroup>();
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = 4;
-            grid.cellSize = new Vector2(38f, 38f);
-            grid.spacing = new Vector2(8f, 8f);
+            grid.constraintCount = columns;
+            grid.cellSize = new Vector2(cellWidth, cellHeight);
+            grid.spacing = new Vector2(spacing, spacing);
             grid.childAlignment = TextAnchor.UpperCenter;
 
             var fitter = gridRoot.GetComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
-            int tileCount = 8;
-            int filledCount = Mathf.Clamp(Mathf.CeilToInt((progress / (float)Math.Max(1, threshold)) * tileCount), 0, tileCount);
+            var element = gridRoot.GetComponent<LayoutElement>();
+            element.minWidth = maxGridWidth;
+            element.preferredWidth = maxGridWidth;
+            element.minHeight = Mathf.Max(56f, (rows * cellHeight) + ((rows - 1) * spacing));
+            element.preferredHeight = -1f;
+
+            int tileCount = Math.Max(1, threshold);
+            int filledCount = Mathf.Clamp(progress, 0, tileCount);
+            var orderedIndices = Enumerable.Range(0, tileCount)
+                .OrderBy(index => GetEndgameToastTileSortKey(index, tileCount))
+                .ThenBy(index => index)
+                .ToList();
+            var filledIndices = new HashSet<int>(orderedIndices.Take(filledCount));
+
             for (int i = 0; i < tileCount; i++)
             {
                 var tileObject = new GameObject($"UI_CampaignMoldinessSummaryTile_{i + 1}", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
@@ -1177,15 +1197,25 @@ namespace FungusToast.Unity.UI
 
                 var image = tileObject.GetComponent<Image>();
                 image.raycastTarget = false;
-                image.color = i < filledCount ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Surface.PanelPrimary;
+                image.color = filledIndices.Contains(i) ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Surface.PanelPrimary;
                 moldinessSummaryToastTiles.Add(image);
 
                 var tileLayout = tileObject.GetComponent<LayoutElement>();
-                tileLayout.minWidth = 38f;
-                tileLayout.preferredWidth = 38f;
-                tileLayout.minHeight = 38f;
-                tileLayout.preferredHeight = 38f;
+                tileLayout.minWidth = cellWidth;
+                tileLayout.preferredWidth = cellWidth;
+                tileLayout.minHeight = cellHeight;
+                tileLayout.preferredHeight = cellHeight;
             }
+        }
+
+        private static float GetEndgameToastTileSortKey(int index, int threshold)
+        {
+            int columns = Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(threshold)), 3, 8);
+            int row = index / columns;
+            int column = index % columns;
+            float centerColumn = (columns - 1) * 0.5f;
+            float columnDistance = Mathf.Abs(column - centerColumn);
+            return (row * 10f) + columnDistance + ((index * 37) % 11) * 0.01f;
         }
 
         private void BuildMoldinessRewardSelectionContent(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers)
