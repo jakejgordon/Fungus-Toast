@@ -8,6 +8,9 @@ namespace FungusToast.Unity.UI
 {
     public class UI_GameEndPlayerResultsRow : MonoBehaviour
     {
+        private const float MetricColumnWidth = 112f;
+        private const float DetailsColumnWidth = 116f;
+
         [Header("References")]
         [SerializeField] private TextMeshProUGUI rankText;
         [SerializeField] private Image iconImage;
@@ -52,6 +55,7 @@ namespace FungusToast.Unity.UI
             ConfigureText(deadText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
             EnsureToxinText();
             EnsureDetailsButton();
+            EnsureColumnWidths();
         }
 
         /* -------- public API -------- */
@@ -100,7 +104,8 @@ namespace FungusToast.Unity.UI
                 layout = clone.AddComponent<LayoutElement>();
             }
 
-            layout.preferredWidth = 140f;
+            layout.preferredWidth = MetricColumnWidth;
+            layout.minWidth = MetricColumnWidth;
             layout.flexibleWidth = -1f;
         }
 
@@ -129,7 +134,8 @@ namespace FungusToast.Unity.UI
                 layout = clone.AddComponent<LayoutElement>();
             }
 
-            layout.preferredWidth = 140f;
+            layout.preferredWidth = MetricColumnWidth;
+            layout.minWidth = MetricColumnWidth;
             layout.flexibleWidth = -1f;
         }
 
@@ -157,8 +163,8 @@ namespace FungusToast.Unity.UI
             detailsButton = buttonObject.GetComponent<Button>();
 
             var layout = buttonObject.GetComponent<LayoutElement>();
-            layout.preferredWidth = 132f;
-            layout.minWidth = 116f;
+            layout.preferredWidth = DetailsColumnWidth;
+            layout.minWidth = DetailsColumnWidth;
             layout.preferredHeight = 42f;
             layout.minHeight = 38f;
             layout.flexibleWidth = -1f;
@@ -183,6 +189,45 @@ namespace FungusToast.Unity.UI
             label.raycastTarget = false;
 
             ApplyDetailsButtonStyle(detailsButton);
+        }
+
+        private void EnsureColumnWidths()
+        {
+            ApplyColumnWidth(livingText, MetricColumnWidth);
+            ApplyColumnWidth(resistantText, MetricColumnWidth);
+            ApplyColumnWidth(deadText, MetricColumnWidth);
+            ApplyColumnWidth(toxinText, MetricColumnWidth);
+
+            if (detailsButton != null)
+            {
+                var layout = detailsButton.GetComponent<LayoutElement>();
+                if (layout == null)
+                {
+                    layout = detailsButton.gameObject.AddComponent<LayoutElement>();
+                }
+
+                layout.preferredWidth = DetailsColumnWidth;
+                layout.minWidth = DetailsColumnWidth;
+                layout.flexibleWidth = -1f;
+            }
+        }
+
+        private static void ApplyColumnWidth(Component component, float width)
+        {
+            if (component == null)
+            {
+                return;
+            }
+
+            var layout = component.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = component.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layout.preferredWidth = width;
+            layout.minWidth = width;
+            layout.flexibleWidth = -1f;
         }
 
         private void ConfigureDetailsButton(Action onDetailsRequested)
