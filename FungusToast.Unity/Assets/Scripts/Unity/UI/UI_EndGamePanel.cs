@@ -1290,12 +1290,12 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            var buttonObject = new GameObject($"UI_MoldinessReward_{offer.Id}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(VerticalLayoutGroup), typeof(LayoutElement), typeof(ContentSizeFitter));
+            var buttonObject = new GameObject($"UI_MoldinessReward_{offer.Id}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
             buttonObject.transform.SetParent(parent, false);
 
             var layout = buttonObject.GetComponent<LayoutElement>();
-            layout.minHeight = 116f;
-            layout.preferredHeight = -1f;
+            layout.minHeight = 124f;
+            layout.preferredHeight = 124f;
             layout.flexibleWidth = 0f;
 
             var background = buttonObject.GetComponent<Image>();
@@ -1303,106 +1303,97 @@ namespace FungusToast.Unity.UI
             background.raycastTarget = true;
             moldinessRewardOptionBackgrounds.Add(background);
 
-            var vertical = buttonObject.GetComponent<VerticalLayoutGroup>();
-            vertical.spacing = 6f;
-            vertical.padding = new RectOffset(10, 10, 8, 8);
-            vertical.childAlignment = TextAnchor.UpperLeft;
-            vertical.childControlWidth = true;
-            vertical.childControlHeight = true;
-            vertical.childForceExpandWidth = true;
-            vertical.childForceExpandHeight = false;
-
-            var fitter = buttonObject.GetComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-
             var outline = buttonObject.AddComponent<Outline>();
             outline.effectColor = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.55f);
             outline.effectDistance = new Vector2(1.5f, -1.5f);
 
-            var headerRow = new GameObject("HeaderRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
-            headerRow.transform.SetParent(buttonObject.transform, false);
-            var headerLayout = headerRow.GetComponent<HorizontalLayoutGroup>();
-            headerLayout.spacing = 8f;
-            headerLayout.childAlignment = TextAnchor.MiddleLeft;
-            headerLayout.childControlWidth = true;
-            headerLayout.childControlHeight = true;
-            headerLayout.childForceExpandWidth = false;
-            headerLayout.childForceExpandHeight = false;
-            var headerElement = headerRow.GetComponent<LayoutElement>();
-            headerElement.flexibleWidth = 1f;
-            headerElement.preferredHeight = -1f;
-            headerElement.minHeight = 64f;
+            var rootRect = buttonObject.GetComponent<RectTransform>();
 
             var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
-            iconObject.transform.SetParent(headerRow.transform, false);
+            iconObject.transform.SetParent(buttonObject.transform, false);
             var iconImage = iconObject.GetComponent<Image>();
             iconImage.sprite = GetMoldinessRewardIcon(offer);
             iconImage.preserveAspect = true;
             iconImage.color = Color.white;
+            var iconRect = iconObject.GetComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0f, 0.5f);
+            iconRect.anchorMax = new Vector2(0f, 0.5f);
+            iconRect.pivot = new Vector2(0f, 0.5f);
+            iconRect.anchoredPosition = new Vector2(12f, 0f);
+            iconRect.sizeDelta = new Vector2(72f, 72f);
             var iconLayout = iconObject.GetComponent<LayoutElement>();
-            iconLayout.minWidth = 56f;
-            iconLayout.preferredWidth = 56f;
+            iconLayout.minWidth = 72f;
+            iconLayout.preferredWidth = 72f;
             iconLayout.flexibleWidth = 0f;
-            iconLayout.minHeight = 56f;
-            iconLayout.preferredHeight = 56f;
+            iconLayout.minHeight = 72f;
+            iconLayout.preferredHeight = 72f;
 
-            var headerTextRoot = new GameObject("HeaderTextRoot", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
-            headerTextRoot.transform.SetParent(headerRow.transform, false);
-            var headerTextLayout = headerTextRoot.GetComponent<VerticalLayoutGroup>();
-            headerTextLayout.spacing = 2f;
-            headerTextLayout.childAlignment = TextAnchor.MiddleLeft;
-            headerTextLayout.childControlWidth = true;
-            headerTextLayout.childControlHeight = true;
-            headerTextLayout.childForceExpandWidth = true;
-            headerTextLayout.childForceExpandHeight = false;
-            var headerTextElement = headerTextRoot.GetComponent<LayoutElement>();
-            headerTextElement.flexibleWidth = 1f;
-            headerTextElement.preferredHeight = -1f;
+            var badgeObject = new GameObject("CategoryBadge", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            badgeObject.transform.SetParent(buttonObject.transform, false);
+            var badgeRect = badgeObject.GetComponent<RectTransform>();
+            badgeRect.anchorMin = new Vector2(1f, 1f);
+            badgeRect.anchorMax = new Vector2(1f, 1f);
+            badgeRect.pivot = new Vector2(1f, 1f);
+            badgeRect.anchoredPosition = new Vector2(-12f, -12f);
+            badgeRect.sizeDelta = new Vector2(170f, 22f);
+            var badgeImage = badgeObject.GetComponent<Image>();
+            badgeImage.color = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
+            var badgeLayout = badgeObject.GetComponent<LayoutElement>();
+            badgeLayout.flexibleWidth = 0f;
+            badgeLayout.preferredWidth = 170f;
+            badgeLayout.minWidth = 170f;
+            badgeLayout.minHeight = 22f;
+            badgeLayout.preferredHeight = 22f;
 
-            var title = CreateCarryoverInfoText(headerTextRoot.transform, offer.DisplayName, 18f, UIStyleTokens.Text.Primary, FontStyles.Bold);
+            var badgeLabel = CreateCarryoverInfoText(badgeObject.transform, offer.CategoryLabel ?? string.Empty, 11f, offer.AccentColor, FontStyles.Bold);
+            badgeLabel.alignment = TextAlignmentOptions.Center;
+            badgeLabel.enableAutoSizing = true;
+            badgeLabel.fontSizeMax = 11f;
+            badgeLabel.fontSizeMin = 9f;
+
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(buttonObject.transform, false);
+            var titleRect = titleObject.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0f, 1f);
+            titleRect.offsetMin = new Vector2(94f, -52f);
+            titleRect.offsetMax = new Vector2(-190f, -14f);
+            var titleLayout = titleObject.GetComponent<LayoutElement>();
+            titleLayout.minHeight = 36f;
+            titleLayout.preferredHeight = 36f;
+            var title = titleObject.GetComponent<TextMeshProUGUI>();
+            title.text = offer.DisplayName;
+            title.fontSize = 18f;
+            title.fontStyle = FontStyles.Bold;
+            title.color = UIStyleTokens.Text.Primary;
             title.alignment = TextAlignmentOptions.Left;
             title.enableAutoSizing = true;
             title.fontSizeMax = 18f;
             title.fontSizeMin = 13f;
+            title.enableWordWrapping = true;
+            title.textWrappingMode = TextWrappingModes.Normal;
+            title.overflowMode = TextOverflowModes.Ellipsis;
+            title.maxVisibleLines = 2;
 
-            var descriptionStack = new GameObject("DescriptionStack", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
-            descriptionStack.transform.SetParent(buttonObject.transform, false);
-            var descriptionStackLayout = descriptionStack.GetComponent<VerticalLayoutGroup>();
-            descriptionStackLayout.spacing = 4f;
-            descriptionStackLayout.childAlignment = TextAnchor.UpperLeft;
-            descriptionStackLayout.childControlWidth = true;
-            descriptionStackLayout.childControlHeight = true;
-            descriptionStackLayout.childForceExpandWidth = true;
-            descriptionStackLayout.childForceExpandHeight = false;
-            var descriptionStackElement = descriptionStack.GetComponent<LayoutElement>();
-            descriptionStackElement.flexibleWidth = 1f;
-            descriptionStackElement.preferredHeight = -1f;
-            descriptionStackElement.minHeight = 36f;
-
-            if (!string.IsNullOrWhiteSpace(offer.CategoryLabel))
-            {
-                var badgeObject = new GameObject("CategoryBadge", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
-                badgeObject.transform.SetParent(descriptionStack.transform, false);
-                var badgeImage = badgeObject.GetComponent<Image>();
-                badgeImage.color = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
-                var badgeLayout = badgeObject.GetComponent<LayoutElement>();
-                badgeLayout.flexibleWidth = 0f;
-                badgeLayout.preferredWidth = 150f;
-                badgeLayout.minHeight = 22f;
-                badgeLayout.preferredHeight = 22f;
-
-                var badgeLabel = CreateCarryoverInfoText(badgeObject.transform, offer.CategoryLabel, 11f, offer.AccentColor, FontStyles.Bold);
-                badgeLabel.alignment = TextAlignmentOptions.Center;
-                badgeLabel.enableAutoSizing = true;
-                badgeLabel.fontSizeMax = 11f;
-                badgeLabel.fontSizeMin = 9f;
-            }
-
-            var description = CreateCarryoverInfoText(descriptionStack.transform, offer.Description, 14f, UIStyleTokens.Text.Secondary, FontStyles.Normal);
-            description.alignment = TextAlignmentOptions.Left;
-            description.enableAutoSizing = false;
+            var descriptionObject = new GameObject("Description", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            descriptionObject.transform.SetParent(buttonObject.transform, false);
+            var descriptionRect = descriptionObject.GetComponent<RectTransform>();
+            descriptionRect.anchorMin = new Vector2(0f, 0f);
+            descriptionRect.anchorMax = new Vector2(1f, 0f);
+            descriptionRect.pivot = new Vector2(0f, 0f);
+            descriptionRect.offsetMin = new Vector2(94f, 10f);
+            descriptionRect.offsetMax = new Vector2(-12f, 44f);
+            var descriptionLayout = descriptionObject.GetComponent<LayoutElement>();
+            descriptionLayout.minHeight = 32f;
+            descriptionLayout.preferredHeight = 40f;
+            var description = descriptionObject.GetComponent<TextMeshProUGUI>();
+            description.text = offer.Description;
             description.fontSize = 14f;
+            description.fontStyle = FontStyles.Normal;
+            description.color = UIStyleTokens.Text.Secondary;
+            description.alignment = TextAlignmentOptions.BottomLeft;
+            description.enableAutoSizing = false;
             description.enableWordWrapping = true;
             description.textWrappingMode = TextWrappingModes.Normal;
             description.overflowMode = TextOverflowModes.Ellipsis;
