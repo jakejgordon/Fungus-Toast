@@ -1122,11 +1122,13 @@ namespace FungusToast.Unity.UI
             offersLayout.childAlignment = TextAnchor.UpperCenter;
             offersLayout.childControlWidth = true;
             offersLayout.childControlHeight = true;
-            offersLayout.childForceExpandWidth = true;
+            offersLayout.childForceExpandWidth = false;
             offersLayout.childForceExpandHeight = false;
 
             var offersElement = offersColumn.GetComponent<LayoutElement>();
-            offersElement.flexibleWidth = 1f;
+            offersElement.flexibleWidth = 0f;
+            offersElement.preferredWidth = 760f;
+            offersElement.minWidth = 680f;
             offersElement.preferredHeight = -1f;
 
             var offersFitter = offersColumn.GetComponent<ContentSizeFitter>();
@@ -1150,9 +1152,9 @@ namespace FungusToast.Unity.UI
             buttonObject.transform.SetParent(parent, false);
 
             var layout = buttonObject.GetComponent<LayoutElement>();
-            layout.minHeight = 104f;
+            layout.minHeight = 100f;
             layout.preferredHeight = -1f;
-            layout.flexibleWidth = 1f;
+            layout.flexibleWidth = 0f;
 
             var background = buttonObject.GetComponent<Image>();
             background.color = UIStyleTokens.Surface.PanelElevated;
@@ -1161,7 +1163,7 @@ namespace FungusToast.Unity.UI
 
             var vertical = buttonObject.GetComponent<VerticalLayoutGroup>();
             vertical.spacing = 4f;
-            vertical.padding = new RectOffset(12, 12, 10, 10);
+            vertical.padding = new RectOffset(10, 10, 8, 8);
             vertical.childAlignment = TextAnchor.UpperLeft;
             vertical.childControlWidth = true;
             vertical.childControlHeight = true;
@@ -1188,7 +1190,7 @@ namespace FungusToast.Unity.UI
             var headerElement = headerRow.GetComponent<LayoutElement>();
             headerElement.flexibleWidth = 1f;
             headerElement.preferredHeight = -1f;
-            headerElement.minHeight = 34f;
+            headerElement.minHeight = 64f;
 
             var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
             iconObject.transform.SetParent(headerRow.transform, false);
@@ -1197,11 +1199,11 @@ namespace FungusToast.Unity.UI
             iconImage.preserveAspect = true;
             iconImage.color = Color.white;
             var iconLayout = iconObject.GetComponent<LayoutElement>();
-            iconLayout.minWidth = 24f;
-            iconLayout.preferredWidth = 24f;
+            iconLayout.minWidth = 56f;
+            iconLayout.preferredWidth = 56f;
             iconLayout.flexibleWidth = 0f;
-            iconLayout.minHeight = 24f;
-            iconLayout.preferredHeight = 24f;
+            iconLayout.minHeight = 56f;
+            iconLayout.preferredHeight = 56f;
 
             var headerTextRoot = new GameObject("HeaderTextRoot", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
             headerTextRoot.transform.SetParent(headerRow.transform, false);
@@ -1216,26 +1218,65 @@ namespace FungusToast.Unity.UI
             headerTextElement.flexibleWidth = 1f;
             headerTextElement.preferredHeight = -1f;
 
-            if (!string.IsNullOrWhiteSpace(offer.CategoryLabel))
-            {
-                var category = CreateCarryoverInfoText(headerTextRoot.transform, offer.CategoryLabel, 13f, offer.AccentColor, FontStyles.Bold);
-                category.alignment = TextAlignmentOptions.Left;
-                category.enableAutoSizing = true;
-                category.fontSizeMax = 13f;
-                category.fontSizeMin = 10f;
-            }
-
             var title = CreateCarryoverInfoText(headerTextRoot.transform, offer.DisplayName, 18f, UIStyleTokens.Text.Primary, FontStyles.Bold);
             title.alignment = TextAlignmentOptions.Left;
             title.enableAutoSizing = true;
             title.fontSizeMax = 18f;
             title.fontSizeMin = 13f;
 
-            var description = CreateCarryoverInfoText(buttonObject.transform, offer.Description, 14f, UIStyleTokens.Text.Secondary, FontStyles.Normal);
+            var descriptionRow = new GameObject("DescriptionRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            descriptionRow.transform.SetParent(buttonObject.transform, false);
+            var descriptionRowLayout = descriptionRow.GetComponent<HorizontalLayoutGroup>();
+            descriptionRowLayout.spacing = 8f;
+            descriptionRowLayout.childAlignment = TextAnchor.MiddleLeft;
+            descriptionRowLayout.childControlWidth = true;
+            descriptionRowLayout.childControlHeight = true;
+            descriptionRowLayout.childForceExpandWidth = false;
+            descriptionRowLayout.childForceExpandHeight = false;
+            var descriptionRowElement = descriptionRow.GetComponent<LayoutElement>();
+            descriptionRowElement.flexibleWidth = 1f;
+            descriptionRowElement.preferredHeight = -1f;
+            descriptionRowElement.minHeight = 20f;
+
+            if (!string.IsNullOrWhiteSpace(offer.CategoryLabel))
+            {
+                var badgeObject = new GameObject("CategoryBadge", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+                badgeObject.transform.SetParent(descriptionRow.transform, false);
+                var badgeImage = badgeObject.GetComponent<Image>();
+                badgeImage.color = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
+                var badgeLayout = badgeObject.GetComponent<LayoutElement>();
+                badgeLayout.flexibleWidth = 0f;
+                badgeLayout.preferredWidth = 150f;
+                badgeLayout.minHeight = 22f;
+                badgeLayout.preferredHeight = 22f;
+
+                var badgeLabel = CreateCarryoverInfoText(badgeObject.transform, offer.CategoryLabel, 11f, offer.AccentColor, FontStyles.Bold);
+                badgeLabel.alignment = TextAlignmentOptions.Center;
+                badgeLabel.enableAutoSizing = true;
+                badgeLabel.fontSizeMax = 11f;
+                badgeLabel.fontSizeMin = 9f;
+            }
+
+            var description = CreateCarryoverInfoText(descriptionRow.transform, offer.Description, 14f, UIStyleTokens.Text.Secondary, FontStyles.Normal);
             description.alignment = TextAlignmentOptions.Left;
             description.enableAutoSizing = true;
             description.fontSizeMax = 14f;
             description.fontSizeMin = 11f;
+
+            if (offer.Type == MoldinessUnlockType.UnlockAdaptation && AdaptationRepository.TryGetById(offer.AdaptationId, out var adaptation))
+            {
+                var provider = buttonObject.AddComponent<AdaptationTooltipProvider>();
+                provider.Initialize(adaptation);
+
+                var tooltipTrigger = buttonObject.GetComponent<TooltipTrigger>();
+                if (tooltipTrigger == null)
+                {
+                    tooltipTrigger = buttonObject.AddComponent<TooltipTrigger>();
+                }
+
+                tooltipTrigger.SetDynamicProvider(provider);
+                tooltipTrigger.SetAutoPlacementOffsetX(24f);
+            }
 
             var button = buttonObject.GetComponent<Button>();
             UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
