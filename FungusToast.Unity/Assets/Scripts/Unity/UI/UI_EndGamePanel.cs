@@ -988,7 +988,23 @@ namespace FungusToast.Unity.UI
 
             if (selectedDefeatCarryoverAdaptationIds.Count >= requiredSelectionCount)
             {
-                return;
+                if (requiredSelectionCount == 1 && selectedDefeatCarryoverAdaptationIds.Count == 1)
+                {
+                    string currentlySelectedId = selectedDefeatCarryoverAdaptationIds.FirstOrDefault();
+                    if (!string.IsNullOrWhiteSpace(currentlySelectedId)
+                        && !string.Equals(currentlySelectedId, adaptationId, StringComparison.Ordinal))
+                    {
+                        selectedDefeatCarryoverAdaptationIds.Remove(currentlySelectedId);
+                        if (defeatCarryoverOptionImages.TryGetValue(currentlySelectedId, out var previousImage))
+                        {
+                            UpdateDefeatCarryoverOptionVisual(previousImage, false);
+                        }
+                    }
+                }
+                else
+                {
+                    return;
+                }
             }
 
             selectedDefeatCarryoverAdaptationIds.Add(adaptationId);
