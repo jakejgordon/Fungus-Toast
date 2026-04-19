@@ -36,6 +36,21 @@ namespace FungusToast.Unity.UI
         private const float CampaignOutcomeSpacerPreferredHeight = 94f;
         private const float CampaignOutcomeSpacerMinHeight = 88f;
         private const int CampaignOutcomeSubtitleFontSize = 26;
+        private const float EndGameOverlayHorizontalInset = 120f;
+        private const float EndGameOverlayVerticalInset = 18f;
+        private const float EndGameContentHorizontalInset = 28f;
+        private const float EndGameContentTopInset = 30f;
+        private const float EndGameContentTopInsetWithOutcome = 126f;
+        private const float EndGameContentBottomInset = 110f;
+        private const float EndGameActionBarHeight = 60f;
+        private const float EndGameActionBarBottomInset = 24f;
+        private const float EndGameRailWidth = 340f;
+        private const float EndGameRailGap = 18f;
+        private const float EndGameActionButtonMinWidth = 260f;
+        private const float EndGameActionButtonPreferredWidth = 320f;
+        private const float EndGameLegacyHeaderHeight = 42f;
+        private const float EndGameResultsScrollMinHeight = 220f;
+        private const float EndGameTestingRailMinimumCardWidth = 1480f;
         private const float DetailsCardPreferredWidth = 820f;
         private const float DetailsCardPreferredHeight = 900f;
         private const float DetailsCardMinWidth = 680f;
@@ -72,17 +87,33 @@ namespace FungusToast.Unity.UI
         private readonly List<Image> moldinessRewardOptionBackgrounds = new();
         private readonly List<Image> moldinessSummaryToastTiles = new();
         private readonly List<Component> legacyResultsHeaderCandidates = new();
+        private RectTransform endGameLayoutContainer;
+        private RectTransform endGameContentShellRoot;
+        private RectTransform endGameMainColumnRoot;
+        private RectTransform endGameTestingRailRoot;
+        private LayoutElement endGameTestingRailLayoutElement;
+        private RectTransform endGameActionBarRoot;
+        private RectTransform endGameResultsScrollRoot;
+        private RectTransform endGameResultsViewportRoot;
+        private ScrollRect endGameResultsScrollRect;
+        private TextMeshProUGUI legacyResultsTitleText;
+        private DevelopmentTestingCardController postVictoryTestingCardController;
+        private bool runtimeLayoutRefreshQueued;
+        private bool isRefreshingRuntimeLayout;
+        private bool resetResultsScrollPositionOnNextLayout;
+        private bool postVictoryTestingRailRequestedVisible;
+        private bool postVictoryTestingRailVisible;
 
         // Post-victory campaign testing controls (runtime-built to avoid scene dependency).
         private GameObject postVictoryTestingRoot;
-        private Button postVictoryTestingToggleButton;
+        private Button postVictoryTestingToggleButton = null;
         private TMP_Dropdown postVictoryMycovariantDropdown;
-        private GameObject postVictoryMycovariantRow;
+        private GameObject postVictoryMycovariantRow = null;
         private TMP_Dropdown postVictoryAdaptationDropdown;
-        private GameObject postVictoryAdaptationRow;
-        private Button postVictoryFastForwardButton;
-        private Button postVictorySkipToEndButton;
-        private Button postVictoryForcedResultButton;
+        private GameObject postVictoryAdaptationRow = null;
+        private Button postVictoryFastForwardButton = null;
+        private Button postVictorySkipToEndButton = null;
+        private Button postVictoryForcedResultButton = null;
         private bool postVictoryTestingEnabled;
         private bool postVictorySkipToEnd;
         private int postVictoryFastForwardRounds;
@@ -154,6 +185,26 @@ namespace FungusToast.Unity.UI
             HidePlayerDetails();
         }
 
+        private void LateUpdate()
+        {
+            if (!Application.isPlaying || !runtimeLayoutRefreshQueued || isRefreshingRuntimeLayout)
+            {
+                return;
+            }
+
+            ProcessPendingRuntimeEndGameLayoutRefresh();
+        }
+
+        private void OnRectTransformDimensionsChange()
+        {
+            if (!Application.isPlaying || isRefreshingRuntimeLayout)
+            {
+                return;
+            }
+
+            RefreshRuntimeEndGameLayout();
+        }
+
         private void ApplyStyle()
         {
             if (panelBackground == null)
@@ -178,6 +229,7 @@ namespace FungusToast.Unity.UI
             UIStyleTokens.Button.SetButtonLabelColor(exitButton, UIStyleTokens.Button.TextDefault);
             UIStyleTokens.Button.SetButtonLabelColor(playAgainButton, UIStyleTokens.Button.TextDefault);
 
+            EnsureRuntimeLayoutScaffold();
             EnsureButtonLayout(continueButton);
             EnsureButtonLayout(exitButton);
             EnsureButtonLayout(playAgainButton);
@@ -213,6 +265,7 @@ namespace FungusToast.Unity.UI
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 30f);
             SetOutcomeBannerVisibility(false);
             ApplyControlReadabilityOverrides();
+            RefreshRuntimeEndGameLayout();
         }
 
         private void ApplyTooltips()
@@ -331,6 +384,7 @@ namespace FungusToast.Unity.UI
         /* ─────────── Internal Row Builder ─────────── */
         private void ShowResultsInternal(List<Player> ranked, GameBoard board, EndgamePlayerStatisticsSnapshot playerStatistics, bool useCampaignTopSpacer)
         {
+            PreparePanelForContentBuild();
             HidePlayerDetails();
             currentPlayerStatistics = playerStatistics ?? EndgamePlayerStatisticsSnapshot.Empty;
 
@@ -374,6 +428,8 @@ namespace FungusToast.Unity.UI
             }
 
             ApplyControlReadabilityOverrides();
+            resetResultsScrollPositionOnNextLayout = true;
+            RefreshRuntimeEndGameLayout();
 
             gameObject.SetActive(true);
             canvasGroup.alpha = 0f;
@@ -520,6 +576,7 @@ namespace FungusToast.Unity.UI
 
         private void ShowSnapshotRows(CampaignVictorySnapshot snapshot)
         {
+            PreparePanelForContentBuild();
             HidePlayerDetails();
             currentPlayerStatistics = EndgamePlayerStatisticsSnapshot.Empty;
 
@@ -555,7 +612,11 @@ namespace FungusToast.Unity.UI
                     player != null ? () => ShowPlayerDetails(player, capturedRank, capturedIcon) : null);
             }
 
+                    BuildCampaignMoldinessSummaryContent(snapshot, victory: true);
+
             ApplyControlReadabilityOverrides();
+            resetResultsScrollPositionOnNextLayout = true;
+            RefreshRuntimeEndGameLayout();
 
             gameObject.SetActive(true);
             canvasGroup.alpha = 1f;
@@ -565,6 +626,7 @@ namespace FungusToast.Unity.UI
 
         private void ShowDefeatCarryoverSelectionRows(IReadOnlyList<AdaptationDefinition> options, int selectionCapacity)
         {
+            PreparePanelForContentBuild();
             HidePlayerDetails();
             currentPlayerStatistics = EndgamePlayerStatisticsSnapshot.Empty;
 
@@ -577,6 +639,8 @@ namespace FungusToast.Unity.UI
             BuildDefeatCarryoverSelectionContent(options, selectionCapacity);
 
             ApplyControlReadabilityOverrides();
+            resetResultsScrollPositionOnNextLayout = true;
+            RefreshRuntimeEndGameLayout();
 
             gameObject.SetActive(true);
             canvasGroup.alpha = 1f;
@@ -586,6 +650,7 @@ namespace FungusToast.Unity.UI
 
         private void ShowMoldinessRewardSelectionRows(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers)
         {
+            PreparePanelForContentBuild();
             HidePlayerDetails();
             currentPlayerStatistics = EndgamePlayerStatisticsSnapshot.Empty;
 
@@ -599,6 +664,8 @@ namespace FungusToast.Unity.UI
             BuildMoldinessRewardSelectionContent(snapshot, offers);
 
             ApplyControlReadabilityOverrides();
+            resetResultsScrollPositionOnNextLayout = true;
+            RefreshRuntimeEndGameLayout();
 
             gameObject.SetActive(true);
             canvasGroup.alpha = 1f;
@@ -1217,6 +1284,7 @@ namespace FungusToast.Unity.UI
 
             UpdatePostVictoryTestingVisibility(continueButton != null && continueButton.gameObject.activeSelf);
             ApplyControlReadabilityOverrides();
+            RefreshRuntimeEndGameLayout();
 
             gameObject.SetActive(true);
             canvasGroup.alpha = 1f;
@@ -2078,9 +2146,29 @@ namespace FungusToast.Unity.UI
             return count == 1 ? string.Empty : "s";
         }
 
+        private void PreparePanelForContentBuild()
+        {
+            if (!gameObject.activeSelf)
+            {
+                gameObject.SetActive(true);
+            }
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
+            }
+        }
+
         private void BuildCampaignTopSpacer()
         {
             if (resultsContainer == null)
+            {
+                return;
+            }
+
+            if (resultsContainer.Find("UI_CampaignOutcomeTopSpacer") != null)
             {
                 return;
             }
@@ -2092,6 +2180,497 @@ namespace FungusToast.Unity.UI
             layout.preferredHeight = CampaignOutcomeSpacerPreferredHeight;
             layout.minHeight = CampaignOutcomeSpacerMinHeight;
             layout.flexibleHeight = 0f;
+        }
+
+        private void EnsureRuntimeLayoutScaffold()
+        {
+            if (resultsCardBackground == null || resultsContainer == null)
+            {
+                return;
+            }
+
+            var panelRect = GetComponent<RectTransform>();
+            if (panelRect != null)
+            {
+                panelRect.anchorMin = Vector2.zero;
+                panelRect.anchorMax = Vector2.one;
+                panelRect.offsetMin = new Vector2(EndGameOverlayHorizontalInset, 0f);
+                panelRect.offsetMax = new Vector2(-EndGameOverlayHorizontalInset, 0f);
+                panelRect.localScale = Vector3.one;
+            }
+
+            endGameLayoutContainer = resultsCardBackground.transform.parent as RectTransform;
+            if (endGameLayoutContainer != null)
+            {
+                endGameLayoutContainer.anchorMin = Vector2.zero;
+                endGameLayoutContainer.anchorMax = Vector2.one;
+                endGameLayoutContainer.pivot = new Vector2(0.5f, 0.5f);
+                endGameLayoutContainer.anchoredPosition = Vector2.zero;
+                endGameLayoutContainer.offsetMin = new Vector2(0f, EndGameOverlayVerticalInset);
+                endGameLayoutContainer.offsetMax = new Vector2(0f, -EndGameOverlayVerticalInset);
+                endGameLayoutContainer.localScale = Vector3.one;
+
+                var layout = endGameLayoutContainer.GetComponent<VerticalLayoutGroup>();
+                if (layout != null)
+                {
+                    layout.enabled = false;
+                }
+            }
+
+            var cardRect = resultsCardBackground.rectTransform;
+            cardRect.anchorMin = Vector2.zero;
+            cardRect.anchorMax = Vector2.one;
+            cardRect.pivot = new Vector2(0.5f, 0.5f);
+            cardRect.anchoredPosition = Vector2.zero;
+            cardRect.offsetMin = Vector2.zero;
+            cardRect.offsetMax = Vector2.zero;
+            cardRect.localScale = Vector3.one;
+
+            var cardLayout = resultsCardBackground.GetComponent<VerticalLayoutGroup>();
+            if (cardLayout != null)
+            {
+                cardLayout.enabled = false;
+            }
+
+            if (endGameContentShellRoot == null)
+            {
+                var shell = new GameObject("UI_EndGameContentShell", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+                shell.transform.SetParent(resultsCardBackground.transform, false);
+                endGameContentShellRoot = shell.GetComponent<RectTransform>();
+            }
+
+            endGameContentShellRoot.SetParent(resultsCardBackground.transform, false);
+            endGameContentShellRoot.anchorMin = Vector2.zero;
+            endGameContentShellRoot.anchorMax = Vector2.one;
+            endGameContentShellRoot.pivot = new Vector2(0.5f, 0.5f);
+            endGameContentShellRoot.anchoredPosition = Vector2.zero;
+            endGameContentShellRoot.localScale = Vector3.one;
+
+            var shellLayout = endGameContentShellRoot.GetComponent<HorizontalLayoutGroup>();
+            shellLayout.childAlignment = TextAnchor.UpperLeft;
+            shellLayout.childControlWidth = true;
+            shellLayout.childControlHeight = true;
+            shellLayout.childForceExpandWidth = false;
+            shellLayout.childForceExpandHeight = true;
+            shellLayout.spacing = EndGameRailGap;
+            shellLayout.padding = new RectOffset(0, 0, 0, 0);
+
+            if (endGameMainColumnRoot == null)
+            {
+                var mainColumn = new GameObject("UI_EndGameMainColumn", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+                mainColumn.transform.SetParent(endGameContentShellRoot, false);
+                endGameMainColumnRoot = mainColumn.GetComponent<RectTransform>();
+            }
+
+            endGameMainColumnRoot.SetParent(endGameContentShellRoot, false);
+            endGameMainColumnRoot.localScale = Vector3.one;
+
+            var mainColumnLayout = endGameMainColumnRoot.GetComponent<VerticalLayoutGroup>();
+            mainColumnLayout.childAlignment = TextAnchor.UpperCenter;
+            mainColumnLayout.childControlWidth = true;
+            mainColumnLayout.childControlHeight = true;
+            mainColumnLayout.childForceExpandWidth = true;
+            mainColumnLayout.childForceExpandHeight = false;
+            mainColumnLayout.spacing = 12f;
+            mainColumnLayout.padding = new RectOffset(0, 0, 0, 0);
+
+            var mainColumnElement = endGameMainColumnRoot.GetComponent<LayoutElement>();
+            mainColumnElement.flexibleWidth = 1f;
+            mainColumnElement.flexibleHeight = 1f;
+            mainColumnElement.minWidth = 560f;
+
+            if (endGameTestingRailRoot == null)
+            {
+                var rail = new GameObject("UI_EndGameTestingRail", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+                rail.transform.SetParent(endGameContentShellRoot, false);
+                endGameTestingRailRoot = rail.GetComponent<RectTransform>();
+            }
+
+            endGameTestingRailRoot.SetParent(endGameContentShellRoot, false);
+            endGameTestingRailRoot.localScale = Vector3.one;
+
+            var railLayout = endGameTestingRailRoot.GetComponent<VerticalLayoutGroup>();
+            railLayout.childAlignment = TextAnchor.UpperCenter;
+            railLayout.childControlWidth = true;
+            railLayout.childControlHeight = true;
+            railLayout.childForceExpandWidth = false;
+            railLayout.childForceExpandHeight = false;
+            railLayout.spacing = 0f;
+            railLayout.padding = new RectOffset(0, 0, 0, 0);
+
+            endGameTestingRailLayoutElement = endGameTestingRailRoot.GetComponent<LayoutElement>();
+            endGameTestingRailLayoutElement.flexibleWidth = 0f;
+            endGameTestingRailLayoutElement.flexibleHeight = 1f;
+            endGameTestingRailLayoutElement.minWidth = EndGameRailWidth;
+            endGameTestingRailLayoutElement.preferredWidth = EndGameRailWidth;
+
+            if (endGameActionBarRoot == null)
+            {
+                var actionBar = new GameObject("UI_EndGameActionBar", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+                actionBar.transform.SetParent(resultsCardBackground.transform, false);
+                endGameActionBarRoot = actionBar.GetComponent<RectTransform>();
+            }
+
+            endGameActionBarRoot.SetParent(resultsCardBackground.transform, false);
+            endGameActionBarRoot.anchorMin = new Vector2(0f, 0f);
+            endGameActionBarRoot.anchorMax = new Vector2(1f, 0f);
+            endGameActionBarRoot.pivot = new Vector2(0.5f, 0f);
+            endGameActionBarRoot.anchoredPosition = new Vector2(0f, EndGameActionBarBottomInset);
+            endGameActionBarRoot.sizeDelta = new Vector2(0f, EndGameActionBarHeight);
+            endGameActionBarRoot.offsetMin = new Vector2(EndGameContentHorizontalInset, endGameActionBarRoot.offsetMin.y);
+            endGameActionBarRoot.offsetMax = new Vector2(-EndGameContentHorizontalInset, endGameActionBarRoot.offsetMax.y);
+            endGameActionBarRoot.localScale = Vector3.one;
+
+            var actionBarLayout = endGameActionBarRoot.GetComponent<HorizontalLayoutGroup>();
+            actionBarLayout.childAlignment = TextAnchor.MiddleCenter;
+            actionBarLayout.childControlWidth = true;
+            actionBarLayout.childControlHeight = true;
+            actionBarLayout.childForceExpandWidth = false;
+            actionBarLayout.childForceExpandHeight = false;
+            actionBarLayout.spacing = 18f;
+            actionBarLayout.padding = new RectOffset(0, 0, 0, 0);
+
+            EnsureScrollableResultsContent();
+            EnsureLegacyResultsTitlePlacement();
+        }
+
+        private void EnsureLegacyResultsTitlePlacement()
+        {
+            if (endGameMainColumnRoot == null)
+            {
+                return;
+            }
+
+            if (legacyResultsTitleText == null)
+            {
+                var existing = resultsCardBackground != null
+                    ? resultsCardBackground.transform.Find("UI_GameEndResultsHeaderText") as RectTransform
+                    : null;
+                legacyResultsTitleText = existing != null ? existing.GetComponent<TextMeshProUGUI>() : null;
+            }
+
+            if (legacyResultsTitleText == null)
+            {
+                return;
+            }
+
+            if (legacyResultsTitleText.transform.parent != endGameMainColumnRoot)
+            {
+                legacyResultsTitleText.transform.SetParent(endGameMainColumnRoot, false);
+            }
+
+            legacyResultsTitleText.transform.SetSiblingIndex(0);
+            legacyResultsTitleText.enableAutoSizing = true;
+            legacyResultsTitleText.fontSizeMax = 30f;
+            legacyResultsTitleText.fontSizeMin = 22f;
+            legacyResultsTitleText.alignment = TextAlignmentOptions.Center;
+            legacyResultsTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+            legacyResultsTitleText.overflowMode = TextOverflowModes.Ellipsis;
+
+            var element = legacyResultsTitleText.GetComponent<LayoutElement>();
+            if (element == null)
+            {
+                element = legacyResultsTitleText.gameObject.AddComponent<LayoutElement>();
+            }
+
+            element.minHeight = EndGameLegacyHeaderHeight;
+            element.preferredHeight = EndGameLegacyHeaderHeight;
+            element.flexibleWidth = 1f;
+        }
+
+        private void EnsureScrollableResultsContent()
+        {
+            if (endGameMainColumnRoot == null || resultsContainer == null)
+            {
+                return;
+            }
+
+            if (endGameResultsScrollRoot == null)
+            {
+                var scrollView = new GameObject("UI_EndGameResultsScrollView", typeof(RectTransform), typeof(Image), typeof(ScrollRect), typeof(LayoutElement));
+                scrollView.transform.SetParent(endGameMainColumnRoot, false);
+                endGameResultsScrollRoot = scrollView.GetComponent<RectTransform>();
+            }
+
+            endGameResultsScrollRoot.SetParent(endGameMainColumnRoot, false);
+            endGameResultsScrollRoot.localScale = Vector3.one;
+
+            var scrollImage = endGameResultsScrollRoot.GetComponent<Image>();
+            scrollImage.color = new Color(0f, 0f, 0f, 0.001f);
+            scrollImage.raycastTarget = true;
+
+            var scrollLayoutElement = endGameResultsScrollRoot.GetComponent<LayoutElement>();
+            scrollLayoutElement.flexibleHeight = 1f;
+            scrollLayoutElement.flexibleWidth = 1f;
+            scrollLayoutElement.minHeight = EndGameResultsScrollMinHeight;
+
+            if (endGameResultsViewportRoot == null)
+            {
+                var viewport = new GameObject("UI_EndGameResultsViewport", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+                viewport.transform.SetParent(endGameResultsScrollRoot, false);
+                endGameResultsViewportRoot = viewport.GetComponent<RectTransform>();
+            }
+
+            endGameResultsViewportRoot.SetParent(endGameResultsScrollRoot, false);
+            endGameResultsViewportRoot.anchorMin = Vector2.zero;
+            endGameResultsViewportRoot.anchorMax = Vector2.one;
+            endGameResultsViewportRoot.pivot = new Vector2(0.5f, 0.5f);
+            endGameResultsViewportRoot.anchoredPosition = Vector2.zero;
+            endGameResultsViewportRoot.offsetMin = Vector2.zero;
+            endGameResultsViewportRoot.offsetMax = Vector2.zero;
+            endGameResultsViewportRoot.localScale = Vector3.one;
+
+            var viewportImage = endGameResultsViewportRoot.GetComponent<Image>();
+            viewportImage.color = new Color(0f, 0f, 0f, 0.001f);
+            viewportImage.raycastTarget = false;
+
+            var viewportMask = endGameResultsViewportRoot.GetComponent<Mask>();
+            if (viewportMask != null)
+            {
+                viewportMask.enabled = false;
+            }
+
+            var viewportRectMask = endGameResultsViewportRoot.GetComponent<RectMask2D>();
+            if (viewportRectMask == null)
+            {
+                viewportRectMask = endGameResultsViewportRoot.gameObject.AddComponent<RectMask2D>();
+            }
+
+            if (resultsContainer.parent != endGameResultsViewportRoot)
+            {
+                resultsContainer.SetParent(endGameResultsViewportRoot, false);
+            }
+
+            if (resultsContainer is RectTransform resultsRect)
+            {
+                resultsRect.anchorMin = new Vector2(0f, 1f);
+                resultsRect.anchorMax = new Vector2(1f, 1f);
+                resultsRect.pivot = new Vector2(0.5f, 1f);
+                resultsRect.anchoredPosition = Vector2.zero;
+                resultsRect.offsetMin = Vector2.zero;
+                resultsRect.offsetMax = Vector2.zero;
+                resultsRect.sizeDelta = Vector2.zero;
+                resultsRect.localScale = Vector3.one;
+
+                var contentElement = resultsRect.GetComponent<LayoutElement>();
+                if (contentElement == null)
+                {
+                    contentElement = resultsRect.gameObject.AddComponent<LayoutElement>();
+                }
+
+                contentElement.minWidth = 0f;
+                contentElement.preferredWidth = -1f;
+                contentElement.flexibleWidth = 1f;
+                contentElement.minHeight = 0f;
+                contentElement.preferredHeight = -1f;
+                contentElement.flexibleHeight = 0f;
+
+                var contentLayout = resultsRect.GetComponent<VerticalLayoutGroup>();
+                if (contentLayout != null)
+                {
+                    contentLayout.padding = new RectOffset(0, 0, 8, 8);
+                    contentLayout.childAlignment = TextAnchor.UpperLeft;
+                    contentLayout.childControlWidth = true;
+                    contentLayout.childControlHeight = true;
+                    contentLayout.childForceExpandWidth = true;
+                    contentLayout.childForceExpandHeight = false;
+                    contentLayout.spacing = 6f;
+                }
+
+                var contentFitter = resultsRect.GetComponent<ContentSizeFitter>();
+                if (contentFitter != null)
+                {
+                    contentFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+                    contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+                }
+
+                endGameResultsScrollRect = endGameResultsScrollRoot.GetComponent<ScrollRect>();
+                endGameResultsScrollRect.viewport = endGameResultsViewportRoot;
+                endGameResultsScrollRect.content = resultsRect;
+                endGameResultsScrollRect.horizontal = false;
+                endGameResultsScrollRect.vertical = true;
+                endGameResultsScrollRect.movementType = ScrollRect.MovementType.Clamped;
+                endGameResultsScrollRect.scrollSensitivity = 28f;
+            }
+        }
+
+        private void RefreshRuntimeEndGameLayout()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            runtimeLayoutRefreshQueued = true;
+        }
+
+        private void ProcessPendingRuntimeEndGameLayoutRefresh()
+        {
+            if (resultsCardBackground == null || resultsContainer == null)
+            {
+                runtimeLayoutRefreshQueued = false;
+                return;
+            }
+
+            runtimeLayoutRefreshQueued = false;
+            isRefreshingRuntimeLayout = true;
+
+            try
+            {
+                EnsureRuntimeLayoutScaffold();
+                ApplyPostVictoryTestingRailVisibility(reloadConfiguration: false);
+
+                bool hasActionButtons = IsAnyActionButtonVisible();
+                float topInset = outcomeLabel != null && outcomeLabel.gameObject.activeSelf
+                    ? EndGameContentTopInsetWithOutcome
+                    : EndGameContentTopInset;
+                float bottomInset = hasActionButtons ? EndGameContentBottomInset : EndGameActionBarBottomInset;
+
+                if (endGameContentShellRoot != null)
+                {
+                    endGameContentShellRoot.offsetMin = new Vector2(EndGameContentHorizontalInset, bottomInset);
+                    endGameContentShellRoot.offsetMax = new Vector2(-EndGameContentHorizontalInset, -topInset);
+                }
+
+                if (endGameActionBarRoot != null)
+                {
+                    endGameActionBarRoot.gameObject.SetActive(hasActionButtons);
+                }
+
+                if (endGameTestingRailLayoutElement != null)
+                {
+                    endGameTestingRailLayoutElement.minWidth = postVictoryTestingRailVisible ? EndGameRailWidth : 0f;
+                    endGameTestingRailLayoutElement.preferredWidth = postVictoryTestingRailVisible ? EndGameRailWidth : 0f;
+                }
+
+                ConfigureActionBarButtonLayout(playAgainButton);
+                ConfigureActionBarButtonLayout(continueButton);
+                ConfigureActionBarButtonLayout(exitButton);
+
+                Canvas.ForceUpdateCanvases();
+
+                if (endGameContentShellRoot != null)
+                {
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(endGameContentShellRoot);
+                }
+
+                if (endGameMainColumnRoot != null)
+                {
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(endGameMainColumnRoot);
+                }
+
+                if (resultsContainer is RectTransform resultsRect)
+                {
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(resultsRect);
+
+                    float targetContentHeight = LayoutUtility.GetPreferredHeight(resultsRect);
+                    if (targetContentHeight > 0f)
+                    {
+                        resultsRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetContentHeight);
+                    }
+
+                    if (endGameResultsViewportRoot != null)
+                    {
+                        float viewportWidth = endGameResultsViewportRoot.rect.width;
+                        if (viewportWidth > 0f)
+                        {
+                            resultsRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, viewportWidth);
+                        }
+                    }
+
+                    resultsRect.anchoredPosition = Vector2.zero;
+                }
+
+                if (endGameResultsScrollRoot != null)
+                {
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(endGameResultsScrollRoot);
+                }
+
+                if (endGameActionBarRoot != null)
+                {
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(endGameActionBarRoot);
+                }
+
+                if (endGameResultsScrollRect != null && resetResultsScrollPositionOnNextLayout)
+                {
+                    endGameResultsScrollRect.StopMovement();
+                    endGameResultsScrollRect.verticalNormalizedPosition = 1f;
+                    resetResultsScrollPositionOnNextLayout = false;
+                }
+                else if (endGameResultsScrollRect == null)
+                {
+                    resetResultsScrollPositionOnNextLayout = false;
+                }
+            }
+            finally
+            {
+                isRefreshingRuntimeLayout = false;
+            }
+        }
+
+        private bool IsAnyActionButtonVisible()
+        {
+            return IsButtonVisible(playAgainButton) || IsButtonVisible(continueButton) || IsButtonVisible(exitButton);
+        }
+
+        private static bool IsButtonVisible(Button button)
+        {
+            return button != null && button.gameObject.activeSelf;
+        }
+
+        private static void ConfigureActionBarButtonLayout(Button button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var layout = button.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = button.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layout.preferredHeight = 56f;
+            layout.minHeight = 52f;
+            layout.preferredWidth = EndGameActionButtonPreferredWidth;
+            layout.minWidth = EndGameActionButtonMinWidth;
+            layout.flexibleWidth = 1f;
+
+            var rect = button.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+            }
+        }
+
+        private static TMP_Dropdown FindDropdownTemplate()
+        {
+            return FindAnyObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
+        }
+
+        private static DevelopmentTestingConfiguration BuildTestingConfigurationFromGameManager(GameManager manager)
+        {
+            bool isEnabled = manager != null && manager.IsTestingModeEnabled;
+            bool skipToEnd = isEnabled && manager.testingSkipToEndgameAfterFastForward;
+            ForcedGameResultMode forcedResult = skipToEnd && manager != null
+                ? manager.TestingForcedGameResult
+                : ForcedGameResultMode.Natural;
+            string forcedAdaptationId = skipToEnd && manager != null
+                ? manager.TestingForcedAdaptationId
+                : string.Empty;
+
+            return new DevelopmentTestingConfiguration(
+                isEnabled,
+                null,
+                manager?.TestingMycovariantId,
+                manager != null ? Mathf.Max(0, manager.fastForwardRounds) : 0,
+                skipToEnd,
+                false,
+                forcedResult,
+                forcedAdaptationId);
         }
 
         private void CreateHeaderCell(Transform parent, string text, float preferredWidth, TextAlignmentOptions alignment, bool flexible)
@@ -2146,55 +2725,48 @@ namespace FungusToast.Unity.UI
 
         private void EnsurePostVictoryTestingControls()
         {
-            if (playAgainButton == null)
+            EnsureRuntimeLayoutScaffold();
+
+            if (playAgainButton == null || endGameTestingRailRoot == null)
             {
                 return;
             }
+
+            if (postVictoryTestingCardController != null)
+            {
+                postVictoryTestingRoot = postVictoryTestingCardController.RootObject;
+                return;
+            }
+
+            var buttonTemplate = exitButton != null ? exitButton : (continueButton != null ? continueButton : playAgainButton);
+            if (buttonTemplate == null)
+            {
+                return;
+            }
+
+            postVictoryTestingCardController = new DevelopmentTestingCardController(new DevelopmentTestingCardOptions
+            {
+                Parent = endGameTestingRailRoot,
+                ButtonTemplate = buttonTemplate,
+                DropdownTemplate = FindDropdownTemplate(),
+                SupportsBoardSizeOverride = false,
+                SupportsForcedAdaptation = true,
+                SupportsFirstGameToggle = false,
+                CardName = "UI_EndGameTestingCard",
+                ControlPrefix = "UI_EndGameTesting",
+                LogPrefix = "UI_EndGamePanel",
+                LayoutInvalidated = RefreshRuntimeEndGameLayout,
+                CardWidth = EndGameRailWidth,
+                SettingWidth = EndGameRailWidth - 24f
+            });
+            postVictoryTestingCardController.Build();
+            postVictoryTestingRoot = postVictoryTestingCardController.RootObject;
 
             if (postVictoryTestingRoot != null)
             {
-                return;
+                postVictoryTestingRoot.SetActive(false);
             }
 
-            var parent = playAgainButton.transform.parent;
-            if (parent == null)
-            {
-                return;
-            }
-
-            postVictoryTestingRoot = new GameObject("UI_PostVictoryTestingRoot", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement), typeof(Image));
-            postVictoryTestingRoot.transform.SetParent(parent, false);
-            postVictoryTestingRoot.transform.SetSiblingIndex(playAgainButton.transform.GetSiblingIndex() + 2);
-
-            var rootLayout = postVictoryTestingRoot.GetComponent<VerticalLayoutGroup>();
-            rootLayout.childAlignment = TextAnchor.UpperCenter;
-            rootLayout.childControlWidth = true;
-            rootLayout.childControlHeight = true;
-            rootLayout.childForceExpandWidth = false;
-            rootLayout.childForceExpandHeight = false;
-            rootLayout.spacing = 6f;
-            rootLayout.padding = new RectOffset(10, 10, 8, 8);
-
-            var rootElement = postVictoryTestingRoot.GetComponent<LayoutElement>();
-            rootElement.preferredHeight = 246f;
-            rootElement.minHeight = 56f;
-            rootElement.preferredWidth = 470f;
-            rootElement.minWidth = 360f;
-
-            var rootBackground = postVictoryTestingRoot.GetComponent<Image>();
-            var rootColor = UIStyleTokens.Surface.PanelPrimary;
-            rootColor.a = 0.92f;
-            rootBackground.color = rootColor;
-            rootBackground.raycastTarget = false;
-
-            postVictoryTestingToggleButton = CreatePostVictorySettingButton(postVictoryTestingRoot.transform, "UI_PostVictoryTestingToggle", OnPostVictoryTestingToggled);
-            postVictoryMycovariantRow = CreatePostVictoryMycovariantRow(postVictoryTestingRoot.transform);
-            postVictoryAdaptationRow = CreatePostVictoryAdaptationRow(postVictoryTestingRoot.transform);
-            postVictoryFastForwardButton = CreatePostVictorySettingButton(postVictoryTestingRoot.transform, "UI_PostVictoryFastForward", OnPostVictoryFastForwardCycle);
-            postVictorySkipToEndButton = CreatePostVictorySettingButton(postVictoryTestingRoot.transform, "UI_PostVictorySkipToEnd", OnPostVictorySkipToEndToggled);
-            postVictoryForcedResultButton = CreatePostVictorySettingButton(postVictoryTestingRoot.transform, "UI_PostVictoryForcedResult", OnPostVictoryForcedResultCycle);
-
-            EnsurePostVictoryControlOrder();
             UpdatePostVictoryTestingVisibility(false);
         }
 
@@ -2491,46 +3063,40 @@ namespace FungusToast.Unity.UI
         private void UpdatePostVictoryTestingVisibility(bool visible)
         {
             EnsurePostVictoryTestingControls();
-            if (postVictoryTestingRoot == null)
-            {
-                return;
-            }
+            postVictoryTestingRailRequestedVisible = visible && postVictoryTestingCardController != null;
+            ApplyPostVictoryTestingRailVisibility(reloadConfiguration: true);
 
-            if (!visible)
-            {
-                postVictoryTestingRoot.SetActive(false);
-                EnsurePostVictoryControlOrder();
-                return;
-            }
-
-            SyncPostVictoryTestingDefaultsFromGameManager();
-            postVictoryTestingRoot.SetActive(true);
-            EnsurePostVictoryControlOrder();
-
-            if (postVictoryFastForwardButton != null)
-                postVictoryFastForwardButton.gameObject.SetActive(postVictoryTestingEnabled);
-
-            if (postVictoryMycovariantRow != null)
-                postVictoryMycovariantRow.SetActive(postVictoryTestingEnabled);
-
-            if (postVictoryMycovariantDropdown != null)
-                postVictoryMycovariantDropdown.interactable = postVictoryTestingEnabled;
-
-            if (postVictoryAdaptationRow != null)
-                postVictoryAdaptationRow.SetActive(postVictoryTestingEnabled && postVictorySkipToEnd);
-
-            if (postVictoryAdaptationDropdown != null)
-                postVictoryAdaptationDropdown.interactable = postVictoryTestingEnabled && postVictorySkipToEnd;
-
-            if (postVictorySkipToEndButton != null)
-                postVictorySkipToEndButton.gameObject.SetActive(postVictoryTestingEnabled);
-
-            if (postVictoryForcedResultButton != null)
-                postVictoryForcedResultButton.gameObject.SetActive(postVictoryTestingEnabled && postVictorySkipToEnd);
-
-            UpdatePostVictoryTestingLayoutHeight();
-            UpdatePostVictoryTestingLabels();
             ApplyControlReadabilityOverrides();
+            RefreshRuntimeEndGameLayout();
+        }
+
+        private bool ShouldShowTestingRailForCurrentWidth()
+        {
+            return postVictoryTestingRailRequestedVisible
+                && resultsCardBackground != null
+                && resultsCardBackground.rectTransform.rect.width >= EndGameTestingRailMinimumCardWidth;
+        }
+
+        private void ApplyPostVictoryTestingRailVisibility(bool reloadConfiguration)
+        {
+            bool showTestingRail = ShouldShowTestingRailForCurrentWidth();
+
+            if (endGameTestingRailRoot != null)
+            {
+                endGameTestingRailRoot.gameObject.SetActive(showTestingRail);
+            }
+
+            if (postVictoryTestingRoot != null)
+            {
+                postVictoryTestingRoot.SetActive(showTestingRail);
+            }
+
+            if (showTestingRail && postVictoryTestingCardController != null && (reloadConfiguration || !postVictoryTestingRailVisible))
+            {
+                postVictoryTestingCardController.LoadConfiguration(BuildTestingConfigurationFromGameManager(GameManager.Instance));
+            }
+
+            postVictoryTestingRailVisible = showTestingRail;
         }
 
         private void EnsurePostVictoryControlOrder()
@@ -2600,45 +3166,8 @@ namespace FungusToast.Unity.UI
 
         private void UpdatePostVictoryTestingLabels()
         {
-            SetButtonLabel(postVictoryTestingToggleButton, $"Development Testing: {(postVictoryTestingEnabled ? "On" : "Off")}");
-            SetButtonLabel(postVictoryFastForwardButton, $"Fast Forward Rounds: {postVictoryFastForwardRounds}");
-            SetButtonLabel(postVictorySkipToEndButton, $"Skip To End Game: {(postVictorySkipToEnd ? "On" : "Off")}");
-            SetButtonLabel(postVictoryForcedResultButton, $"Forced Result: {FormatForcedResult(postVictoryForcedResult)}");
-
-            if (postVictoryMycovariantDropdown != null)
-            {
-                int target = 0;
-                if (postVictoryForcedMycovariantId.HasValue)
-                {
-                    var all = FungusToast.Core.Mycovariants.MycovariantRepository.All;
-                    int found = all.FindIndex(m => m.Id == postVictoryForcedMycovariantId.Value);
-                    if (found >= 0)
-                    {
-                        target = found + 1;
-                    }
-                }
-
-                postVictoryMycovariantDropdown.SetValueWithoutNotify(target);
-                postVictoryMycovariantDropdown.RefreshShownValue();
-            }
-
-            if (postVictoryAdaptationDropdown != null)
-            {
-                int target = 0;
-                if (!string.IsNullOrWhiteSpace(postVictoryForcedAdaptationId))
-                {
-                    int found = postVictorySortedAdaptations.FindIndex(adaptation => string.Equals(adaptation.Id, postVictoryForcedAdaptationId, StringComparison.Ordinal));
-                    if (found >= 0)
-                    {
-                        target = found + 1;
-                    }
-                }
-
-                postVictoryAdaptationDropdown.SetValueWithoutNotify(target);
-                postVictoryAdaptationDropdown.RefreshShownValue();
-            }
-
-            ApplyControlReadabilityOverrides();
+            postVictoryTestingCardController?.RefreshVisualState();
+            RefreshRuntimeEndGameLayout();
         }
 
         private void OnPostVictoryTestingToggled()
@@ -2931,25 +3460,12 @@ namespace FungusToast.Unity.UI
 
         private void ApplyPostVictoryTestingSettings(GameManager manager)
         {
-            if (manager == null)
+            if (manager == null || postVictoryTestingCardController == null)
             {
                 return;
             }
 
-            if (!postVictoryTestingEnabled)
-            {
-                manager.DisableTestingMode();
-                return;
-            }
-
-            var forcedResult = postVictorySkipToEnd ? postVictoryForcedResult : ForcedGameResultMode.Natural;
-            manager.EnableTestingMode(
-                postVictoryForcedMycovariantId,
-                postVictoryFastForwardRounds,
-                postVictorySkipToEnd,
-                false,
-                forcedResult,
-                postVictorySkipToEnd ? postVictoryForcedAdaptationId : string.Empty);
+            postVictoryTestingCardController.ApplyToGameManager(manager);
         }
 
         private static string FormatForcedResult(ForcedGameResultMode mode)
@@ -2964,28 +3480,35 @@ namespace FungusToast.Unity.UI
 
         private void EnsureActionButtonsShareContainer()
         {
-            if (playAgainButton == null)
+            EnsureRuntimeLayoutScaffold();
+
+            if (endGameActionBarRoot == null)
             {
                 return;
             }
 
-            var primaryParent = playAgainButton.transform.parent;
-            if (primaryParent == null)
+            if (playAgainButton != null && playAgainButton.transform.parent != endGameActionBarRoot)
             {
-                return;
+                playAgainButton.transform.SetParent(endGameActionBarRoot, false);
             }
 
-            if (continueButton != null && continueButton.transform.parent != primaryParent)
+            if (continueButton != null && continueButton.transform.parent != endGameActionBarRoot)
             {
-                continueButton.transform.SetParent(primaryParent, false);
+                continueButton.transform.SetParent(endGameActionBarRoot, false);
             }
 
-            if (exitButton != null && exitButton.transform.parent != primaryParent)
+            if (exitButton != null && exitButton.transform.parent != endGameActionBarRoot)
             {
-                exitButton.transform.SetParent(primaryParent, false);
+                exitButton.transform.SetParent(endGameActionBarRoot, false);
             }
 
-            int nextIndex = playAgainButton.transform.GetSiblingIndex() + 1;
+            int nextIndex = 0;
+            if (playAgainButton != null)
+            {
+                playAgainButton.transform.SetSiblingIndex(nextIndex);
+                nextIndex++;
+            }
+
             if (continueButton != null)
             {
                 continueButton.transform.SetSiblingIndex(nextIndex);
@@ -2996,24 +3519,24 @@ namespace FungusToast.Unity.UI
             {
                 exitButton.transform.SetSiblingIndex(nextIndex);
             }
+
+            ConfigureActionBarButtonLayout(playAgainButton);
+            ConfigureActionBarButtonLayout(continueButton);
+            ConfigureActionBarButtonLayout(exitButton);
         }
 
         private void EnsureButtonContainerLayout()
         {
-            var parent = playAgainButton != null ? playAgainButton.transform.parent : null;
-            if (parent == null)
+            if (endGameActionBarRoot == null)
             {
                 return;
             }
 
-            var vlg = parent.GetComponent<VerticalLayoutGroup>();
-            if (vlg != null)
-            {
-                vlg.childControlWidth = true;
-                vlg.childForceExpandWidth = false;
-                vlg.childForceExpandHeight = false;
-                vlg.childAlignment = TextAnchor.UpperCenter;
-            }
+            var layout = endGameActionBarRoot.GetComponent<HorizontalLayoutGroup>();
+            layout.childControlWidth = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            layout.childAlignment = TextAnchor.MiddleCenter;
         }
 
         private void EnsureOutcomePlacement()
@@ -3101,6 +3624,8 @@ namespace FungusToast.Unity.UI
             {
                 outcomeBackdrop.gameObject.SetActive(visible);
             }
+
+            RefreshRuntimeEndGameLayout();
         }
 
         private static void EnsureTooltip(Button button, string text)
@@ -3137,6 +3662,8 @@ namespace FungusToast.Unity.UI
 
                 candidate.gameObject.SetActive(visible);
             }
+
+            RefreshRuntimeEndGameLayout();
         }
 
         private void CacheLegacyResultsHeaderCandidates()

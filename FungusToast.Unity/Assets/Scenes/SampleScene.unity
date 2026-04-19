@@ -108401,14 +108401,6 @@ MonoBehaviour:
   - {fileID: 952816454}
   playerSummaryLabel: {fileID: 1671315638}
   testingOptionsSectionRoot: {fileID: 0}
-  testingModeToggle: {fileID: 0}
-  mycovariantDropdown: {fileID: 0}
-  forcedGameResultDropdown: {fileID: 0}
-  forcedGameResultRow: {fileID: 0}
-  testingModePanel: {fileID: 0}
-  fastForwardRoundsInput: {fileID: 0}
-  fastForwardLabel: {fileID: 0}
-  skipToEndgameToggle: {fileID: 0}
   magnifyingGlassUI: {fileID: 325918925}
   magnifierVisualRoot: {fileID: 1145352011}
 --- !u!225 &656464965

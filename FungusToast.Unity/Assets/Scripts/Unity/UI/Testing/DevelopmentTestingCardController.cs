@@ -134,6 +134,7 @@ namespace FungusToast.Unity.UI.Testing
         public TMP_Dropdown DropdownTemplate { get; set; }
         public bool SupportsForcedAdaptation { get; set; }
         public bool SupportsBoardSizeOverride { get; set; }
+        public bool SupportsFirstGameToggle { get; set; } = true;
         public string CardName { get; set; } = "UI_DevelopmentTestingCard";
         public string ControlPrefix { get; set; } = "UI_DevelopmentTesting";
         public string LogPrefix { get; set; } = "DevelopmentTestingCardController";
@@ -221,7 +222,12 @@ namespace FungusToast.Unity.UI.Testing
                 "Forced Mycovariant",
                 out mycovariantDropdown);
             fastForwardButton = EnsureSettingButton($"{options.ControlPrefix}FastForwardButton", OnFastForwardClicked);
-            firstGameButton = EnsureSettingButton($"{options.ControlPrefix}FirstGameButton", OnFirstGameClicked);
+
+            if (options.SupportsFirstGameToggle)
+            {
+                firstGameButton = EnsureSettingButton($"{options.ControlPrefix}FirstGameButton", OnFirstGameClicked);
+            }
+
             skipToEndButton = EnsureSettingButton($"{options.ControlPrefix}SkipToEndButton", OnSkipToEndClicked);
             forcedResultButton = EnsureSettingButton($"{options.ControlPrefix}ForcedResultButton", OnForcedResultClicked);
 
@@ -245,6 +251,69 @@ namespace FungusToast.Unity.UI.Testing
             SetSiblingIndex(adaptationRow != null ? adaptationRow.transform : null, 7);
 
             RefreshDropdownOptions();
+            RefreshVisualState();
+        }
+
+        public void LoadConfiguration(DevelopmentTestingConfiguration configuration)
+        {
+            if (configuration == null)
+            {
+                SetTestingEnabled(false);
+                return;
+            }
+
+            if (options.SupportsBoardSizeOverride && configuration.BoardSizeOverride.HasValue)
+            {
+                selectedBoardSize = DevelopmentTestingBoardSizePresets.ClampToSupportedSize(configuration.BoardSizeOverride.Value);
+            }
+
+            testingEnabled = configuration.IsEnabled;
+            fastForwardRounds = Math.Max(0, configuration.FastForwardRounds);
+            skipToEnd = testingEnabled && configuration.SkipToEndGame;
+            forceFirstGame = options.SupportsFirstGameToggle && testingEnabled && configuration.ForceFirstGame;
+            forcedResult = skipToEnd ? configuration.ForcedResult : ForcedGameResultMode.Natural;
+
+            RefreshDropdownOptions();
+
+            if (boardSizeDropdown != null)
+            {
+                int boardSizeIndex = DevelopmentTestingBoardSizePresets.GetIndex(selectedBoardSize);
+                boardSizeDropdown.SetValueWithoutNotify(boardSizeIndex);
+                boardSizeDropdown.RefreshShownValue();
+            }
+
+            if (mycovariantDropdown != null)
+            {
+                int selectedMycovariantIndex = 0;
+                if (configuration.MycovariantId.HasValue)
+                {
+                    int found = sortedMycovariants.FindIndex(mycovariant => mycovariant.Id == configuration.MycovariantId.Value);
+                    if (found >= 0)
+                    {
+                        selectedMycovariantIndex = found + 1;
+                    }
+                }
+
+                mycovariantDropdown.SetValueWithoutNotify(selectedMycovariantIndex);
+                mycovariantDropdown.RefreshShownValue();
+            }
+
+            if (adaptationDropdown != null)
+            {
+                int selectedAdaptationIndex = 0;
+                if (!string.IsNullOrWhiteSpace(configuration.ForcedAdaptationId))
+                {
+                    int found = sortedAdaptations.FindIndex(adaptation => string.Equals(adaptation.Id, configuration.ForcedAdaptationId, StringComparison.Ordinal));
+                    if (found >= 0)
+                    {
+                        selectedAdaptationIndex = found + 1;
+                    }
+                }
+
+                adaptationDropdown.SetValueWithoutNotify(selectedAdaptationIndex);
+                adaptationDropdown.RefreshShownValue();
+            }
+
             RefreshVisualState();
         }
 
@@ -428,7 +497,7 @@ namespace FungusToast.Unity.UI.Testing
                 selectedMycovariantId,
                 fastForwardRounds,
                 skipToEnd,
-                forceFirstGame,
+                options.SupportsFirstGameToggle && forceFirstGame,
                 skipToEnd ? forcedResult : ForcedGameResultMode.Natural,
                 selectedAdaptationId);
         }
