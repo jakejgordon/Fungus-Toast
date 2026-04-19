@@ -1084,6 +1084,18 @@ namespace FungusToast.Unity.UI.Testing
         private void OnForcedStartingAdaptationsToggleClicked()
         {
             forceStartingAdaptationsEnabled = !forceStartingAdaptationsEnabled;
+            if (!forceStartingAdaptationsEnabled)
+            {
+                selectedForcedStartingAdaptationIds.Clear();
+                foreach (var toggle in forcedStartingAdaptationToggles)
+                {
+                    if (toggle != null)
+                    {
+                        toggle.SetIsOnWithoutNotify(false);
+                    }
+                }
+            }
+
             RefreshVisualState();
         }
 
