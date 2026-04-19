@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using FungusToast.Unity.Input;
 using FungusToast.Unity.UI;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
 
 namespace FungusToast.Unity.Grid
@@ -98,7 +99,9 @@ namespace FungusToast.Unity.Grid
                     crosshairInstance.SetActive(false);
             }
 
-            if (UnityInputAdapter.WasPrimaryPointerPressedThisFrame() && gridVisualizer.toastTilemap.HasTile(cellPos))
+            bool pointerBlockedByUi = IsPointerBlockedByUi(pointerScreen);
+
+            if (!pointerBlockedByUi && UnityInputAdapter.WasPrimaryPointerPressedThisFrame() && gridVisualizer.toastTilemap.HasTile(cellPos))
             {
                 int tileId = TileIdFromCell(cellPos);
                 bool gateOk = selectionTiles.Count == 0 || selectionTiles.Contains(tileId);
@@ -134,6 +137,23 @@ namespace FungusToast.Unity.Grid
                     }
                 }
             }
+        }
+
+        private bool IsPointerBlockedByUi(Vector2 pointerScreen)
+        {
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            {
+                return true;
+            }
+
+            var selectionPromptPanel = GameManager.Instance?.SelectionPromptPanel;
+            if (selectionPromptPanel == null || !selectionPromptPanel.activeInHierarchy)
+            {
+                return false;
+            }
+
+            var promptRect = selectionPromptPanel.GetComponent<RectTransform>();
+            return promptRect != null && RectTransformUtility.RectangleContainsScreenPoint(promptRect, pointerScreen, null);
         }
 
         bool IsSelectable(Vector3Int cell)

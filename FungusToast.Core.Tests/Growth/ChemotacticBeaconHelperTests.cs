@@ -173,6 +173,34 @@ public class ChemotacticBeaconHelperTests
         Assert.Equal(farTileId, tileId);
     }
 
+    [Fact]
+    public void GetProjectedGrowthTileIds_matches_chemotactic_beacon_growth_targets_and_skips_friendly_living_cells()
+    {
+        var board = new GameBoard(width: 10, height: 5, playerCount: 1);
+        var player = CreatePlayer();
+        board.Players.Add(player);
+        board.PlaceInitialSpore(player.PlayerId, x: 1, y: 2);
+        board.PlaceFungalCell(new FungalCell(player.PlayerId, board.GetTile(3, 2)!.TileId, GrowthSource.HyphalSurge, lastOwnerPlayerId: null));
+        board.PlaceFungalCell(new FungalCell(ownerPlayerId: 99, tileId: board.GetTile(6, 2)!.TileId, source: GrowthSource.Manual, lastOwnerPlayerId: null));
+
+        int targetTileId = board.GetTile(9, 2)!.TileId;
+
+        var previewTileIds = ChemotacticBeaconHelper.GetProjectedGrowthTileIds(player, board, targetTileId, projectedLevel: 1);
+
+        Assert.Equal(
+            new[]
+            {
+                board.GetTile(2, 2)!.TileId,
+                board.GetTile(4, 2)!.TileId,
+                board.GetTile(5, 2)!.TileId,
+                board.GetTile(6, 2)!.TileId,
+                board.GetTile(7, 2)!.TileId,
+            },
+            previewTileIds);
+        Assert.DoesNotContain(board.GetTile(3, 2)!.TileId, previewTileIds);
+        Assert.DoesNotContain(targetTileId, previewTileIds);
+    }
+
     private static void BlockAllOpenTilesExcept(GameBoard board, int ownerPlayerId, params int[] openTileIds)
     {
         var openTileIdSet = openTileIds.ToHashSet();

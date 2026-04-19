@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using UnityEngine.Tilemaps;
@@ -434,6 +435,7 @@ namespace FungusToast.Unity.UI.MutationTree
             bool resolved = false;
             bool success = false;
             var observer = gameManager.GameUI.GameLogRouter;
+            int projectedLevel = Math.Min(humanPlayer.GetMutationLevel(mutation.Id) + 1, mutation.MaxLevel);
 
             TileSelectionController.Instance.PromptSelectBoardTile(
                 tile => board.IsTileOpenForChemobeacon(tile.TileId),
@@ -481,8 +483,26 @@ namespace FungusToast.Unity.UI.MutationTree
                 },
                 "Select one empty, non-nutrient tile to place your Chemobeacon.",
                 showCancelButton: true,
-                cancelButtonLabel: "Cancel Beacon"
+                cancelButtonLabel: "Cancel (Esc)"
             );
+
+            TileSelectionController.Instance.SetHoverPreviewCallback(tileId =>
+            {
+                if (gridVisualizer == null || tileId < 0)
+                {
+                    gridVisualizer?.ClearSelectedTiles();
+                    return;
+                }
+
+                var previewTileIds = ChemotacticBeaconHelper.GetProjectedGrowthTileIds(humanPlayer, board, tileId, projectedLevel);
+                if (previewTileIds.Count == 0)
+                {
+                    gridVisualizer.ClearSelectedTiles();
+                    return;
+                }
+
+                gridVisualizer.ShowSelectedTiles(previewTileIds, Color.black);
+            });
 
             while (!resolved)
             {
@@ -552,7 +572,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (pendingTargetedSurgeSelection != null)
             {
                 spendPointsButton.interactable = false;
-                spendPointsButtonText.text = "Select Chemobeacon Tile";
+                spendPointsButtonText.text = "Select Tile";
                 buttonOutline.enabled = false;
 
                 if (mutationPointsCounterText != null)

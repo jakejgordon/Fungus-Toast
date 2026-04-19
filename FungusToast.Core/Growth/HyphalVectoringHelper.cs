@@ -385,6 +385,60 @@ namespace FungusToast.Core.Growth
             return outcome;
         }
 
+        public static IReadOnlyList<int> GetChemotacticBeaconPathTargetTileIds(
+            Player player,
+            GameBoard board,
+            int startTileId,
+            int targetTileId,
+            int totalTiles)
+        {
+            if (player == null || board == null || totalTiles <= 0 || startTileId < 0 || targetTileId < 0)
+            {
+                return Array.Empty<int>();
+            }
+
+            var startTile = board.GetTileById(startTileId);
+            var targetTile = board.GetTileById(targetTileId);
+            if (startTile == null || targetTile == null)
+            {
+                return Array.Empty<int>();
+            }
+
+            int selectedGrowthTargets = 0;
+            int maxPathLength = board.Width * board.Height;
+            var path = GetLineToTarget(startTile.X, startTile.Y, targetTile.X, targetTile.Y, maxPathLength);
+            var affectedTileIds = new List<int>();
+
+            foreach (var (x, y) in path)
+            {
+                if (selectedGrowthTargets >= totalTiles)
+                {
+                    break;
+                }
+
+                var tile = board.GetTile(x, y);
+                if (tile == null)
+                {
+                    break;
+                }
+
+                if (tile.TileId == targetTileId)
+                {
+                    break;
+                }
+
+                if (!IsChemotacticBeaconGrowthTarget(tile, board, player.PlayerId, out _))
+                {
+                    continue;
+                }
+
+                selectedGrowthTargets++;
+                affectedTileIds.Add(tile.TileId);
+            }
+
+            return affectedTileIds;
+        }
+
         private static bool IsChemotacticBeaconGrowthTarget(BoardTile tile, GameBoard board, int playerId, out bool alreadyOwned)
         {
             alreadyOwned = false;

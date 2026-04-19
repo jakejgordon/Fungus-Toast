@@ -1266,7 +1266,7 @@ namespace FungusToast.Unity
             ForcedGameResultMode forcedGameResult = ForcedGameResultMode.Natural,
             int campaignLevelIndex = 0,
             string forcedAdaptationId = "",
-            IReadOnlyList<string> forcedStartingAdaptationIds = null)
+            IReadOnlyList<string>? forcedStartingAdaptationIds = null)
         {
             testingModeEnabled = true;
             testingMycovariantId = mycovariantId;

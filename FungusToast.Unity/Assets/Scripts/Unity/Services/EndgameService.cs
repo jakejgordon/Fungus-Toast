@@ -479,6 +479,8 @@ namespace FungusToast.Unity
                 return;
             }
 
+            EnsureSelectionPromptBackgroundGraphic();
+
             if (selectionPromptCancelButton == null)
             {
                 selectionPromptCancelButton = selectionPromptPanel.GetComponentInChildren<Button>(true);
@@ -541,6 +543,22 @@ namespace FungusToast.Unity
                 && selectionPromptCancelButton.interactable);
         }
 
+        private void EnsureSelectionPromptBackgroundGraphic()
+        {
+            if (selectionPromptPanel == null)
+            {
+                return;
+            }
+
+            if (selectionPromptPanel.GetComponent<Graphic>() != null)
+            {
+                return;
+            }
+
+            var blocker = selectionPromptPanel.AddComponent<Image>();
+            blocker.color = new Color(1f, 1f, 1f, 0f);
+        }
+
         private void ConfigureSelectionPromptCancelButton(bool visible, string cancelButtonLabel, Action onCancel)
         {
             if (selectionPromptCancelButton == null)
@@ -592,6 +610,12 @@ namespace FungusToast.Unity
                 }
 
                 graphic.raycastTarget = false;
+            }
+
+            var backgroundGraphic = selectionPromptPanel.GetComponent<Graphic>();
+            if (backgroundGraphic != null)
+            {
+                backgroundGraphic.raycastTarget = true;
             }
 
             if (selectionPromptCancelButton == null)

@@ -54,6 +54,27 @@ namespace FungusToast.Core.Growth
         public static int? TrySelectAITargetTile(Player player, GameBoard board)
             => TrySelectAITargetTile(player, board, player?.GetMutationLevel(MutationIds.ChemotacticBeacon) ?? 0, GameBalance.ChemotacticBeaconSurgeDuration);
 
+        public static IReadOnlyList<int> GetProjectedGrowthTileIds(Player player, GameBoard board, int targetTileId, int projectedLevel)
+        {
+            if (player == null || board == null || !player.StartingTileId.HasValue)
+            {
+                return Array.Empty<int>();
+            }
+
+            int totalTiles = GetChemotacticBeaconTileCount(projectedLevel);
+            if (totalTiles <= 0)
+            {
+                return Array.Empty<int>();
+            }
+
+            return DirectedVectorHelper.GetChemotacticBeaconPathTargetTileIds(
+                player,
+                board,
+                player.StartingTileId.Value,
+                targetTileId,
+                totalTiles);
+        }
+
         public static int? TrySelectAITargetTile(Player player, GameBoard board, int projectedLevel, int surgeDuration)
         {
             if (player == null || board == null)
@@ -105,6 +126,12 @@ namespace FungusToast.Core.Growth
             int clampedDuration = Math.Max(0, surgeDuration);
             int cellsPerRound = GameBalance.ChemotacticBeaconBaseTiles + (clampedLevel * GameBalance.ChemotacticBeaconTilesPerLevel);
             return (clampedDuration * cellsPerRound) + GameBalance.ChemotacticBeaconAiBridgeBufferTiles;
+        }
+
+        private static int GetChemotacticBeaconTileCount(int projectedLevel)
+        {
+            int clampedLevel = Math.Max(0, projectedLevel);
+            return GameBalance.ChemotacticBeaconBaseTiles + (clampedLevel * GameBalance.ChemotacticBeaconTilesPerLevel);
         }
 
         private static BeaconPlacementCandidate? EvaluateCandidateTile(
