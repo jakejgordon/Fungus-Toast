@@ -916,15 +916,26 @@ namespace FungusToast.Unity.UI.Testing
                 itemElement.minWidth = options.SettingWidth - 32f;
                 itemElement.preferredWidth = options.SettingWidth - 32f;
 
-                var toggleObject = new GameObject("Toggle", typeof(RectTransform), typeof(Toggle), typeof(Image), typeof(LayoutElement));
-                toggleObject.transform.SetParent(item.transform, false);
+                var toggleRoot = new GameObject("ToggleRoot", typeof(RectTransform), typeof(LayoutElement));
+                toggleRoot.transform.SetParent(item.transform, false);
+                var toggleRootElement = toggleRoot.GetComponent<LayoutElement>();
+                toggleRootElement.minWidth = 18f;
+                toggleRootElement.preferredWidth = 18f;
+                toggleRootElement.minHeight = 18f;
+                toggleRootElement.preferredHeight = 18f;
+
+                var toggleObject = new GameObject("Toggle", typeof(RectTransform), typeof(Toggle), typeof(Image));
+                toggleObject.transform.SetParent(toggleRoot.transform, false);
+                var toggleRect = toggleObject.GetComponent<RectTransform>();
+                toggleRect.anchorMin = new Vector2(0.5f, 0.5f);
+                toggleRect.anchorMax = new Vector2(0.5f, 0.5f);
+                toggleRect.pivot = new Vector2(0.5f, 0.5f);
+                toggleRect.sizeDelta = new Vector2(18f, 18f);
+                toggleRect.anchoredPosition = Vector2.zero;
+
                 var toggleBackground = toggleObject.GetComponent<Image>();
                 toggleBackground.color = new Color(1f, 1f, 1f, 0.12f);
-                var toggleElement = toggleObject.GetComponent<LayoutElement>();
-                toggleElement.minWidth = 18f;
-                toggleElement.preferredWidth = 18f;
-                toggleElement.minHeight = 18f;
-                toggleElement.preferredHeight = 18f;
+                toggleBackground.type = Image.Type.Sliced;
 
                 var checkmarkObject = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
                 checkmarkObject.transform.SetParent(toggleObject.transform, false);
@@ -933,6 +944,7 @@ namespace FungusToast.Unity.UI.Testing
                 var checkmarkRect = checkmarkObject.GetComponent<RectTransform>();
                 checkmarkRect.anchorMin = Vector2.zero;
                 checkmarkRect.anchorMax = Vector2.one;
+                checkmarkRect.pivot = new Vector2(0.5f, 0.5f);
                 checkmarkRect.offsetMin = new Vector2(4f, 4f);
                 checkmarkRect.offsetMax = new Vector2(-4f, -4f);
 
