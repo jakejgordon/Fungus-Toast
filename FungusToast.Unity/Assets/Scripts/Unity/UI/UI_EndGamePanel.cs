@@ -327,9 +327,6 @@ namespace FungusToast.Unity.UI
             CampaignVictorySnapshot campaignSnapshot = null)
         {
             SetPostAdaptationConfirmationState(false);
-            ShowResultsInternal(ranked, board, playerStatistics, useCampaignTopSpacer: true);
-            SetLegacyResultsHeaderVisibility(!isCampaign);
-            SetOutcomeBannerVisibility(isCampaign);
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = false;
@@ -338,7 +335,9 @@ namespace FungusToast.Unity.UI
             defeatCarryoverSelectionCapacity = 0;
             if (!isCampaign)
             {
+                ShowResultsInternal(ranked, board, playerStatistics, useCampaignTopSpacer: true);
                 // fallback to base behavior
+                SetLegacyResultsHeaderVisibility(true);
                 if (continueButton != null) continueButton.gameObject.SetActive(false);
                 if (exitButton != null) exitButton.gameObject.SetActive(true);
                 if (outcomeLabel != null) outcomeLabel.text = "";
@@ -346,6 +345,12 @@ namespace FungusToast.Unity.UI
                 UpdatePostVictoryTestingVisibility(false);
                 return;
             }
+
+            int levelDisplay = victory ? completedLevelDisplay : lostLevelDisplay;
+            var presentationSnapshot = EnsureCampaignOutcomePresentationSnapshot(campaignSnapshot, victory, levelDisplay);
+            ShowCampaignOutcomeRows(ranked, board, playerStatistics, presentationSnapshot, victory);
+            SetLegacyResultsHeaderVisibility(false);
+            SetOutcomeBannerVisibility(true);
 
             // Campaign messaging
             if (outcomeLabel != null)
@@ -390,11 +395,6 @@ namespace FungusToast.Unity.UI
             if (continueButton != null)
             {
                 SetButtonLabel(continueButton, requiresAdaptationBeforeContinue ? "Select Adaptation" : "Continue Campaign");
-            }
-
-            if (isCampaign)
-            {
-                BuildCampaignMoldinessSummaryContent(campaignSnapshot, victory);
             }
 
             ApplyControlReadabilityOverrides();
@@ -467,6 +467,132 @@ namespace FungusToast.Unity.UI
             /* fade-in */
             StopAllCoroutines();
             StartCoroutine(FadeCanvasGroup(1f, 0.25f));
+        }
+
+        private void ShowCampaignOutcomeRows(
+            List<Player> ranked,
+            GameBoard board,
+            EndgamePlayerStatisticsSnapshot playerStatistics,
+            CampaignVictorySnapshot campaignSnapshot,
+            bool victory)
+        {
+            PreparePanelForContentBuild();
+            HidePlayerDetails();
+            currentPlayerStatistics = playerStatistics ?? EndgamePlayerStatisticsSnapshot.Empty;
+
+            foreach (Transform child in resultsContainer)
+            {
+                Destroy(child.gameObject);
+            }
+
+            BuildCampaignTopSpacer();
+
+            var contentColumns = new GameObject("UI_CampaignVictoryContentColumns", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            contentColumns.transform.SetParent(resultsContainer, false);
+
+            var columnsLayout = contentColumns.GetComponent<HorizontalLayoutGroup>();
+            columnsLayout.spacing = 16f;
+            columnsLayout.padding = new RectOffset(0, 0, 0, 0);
+            columnsLayout.childAlignment = TextAnchor.UpperCenter;
+            columnsLayout.childControlWidth = true;
+            columnsLayout.childControlHeight = true;
+            columnsLayout.childForceExpandWidth = true;
+            columnsLayout.childForceExpandHeight = false;
+
+            var columnsElement = contentColumns.GetComponent<LayoutElement>();
+            columnsElement.flexibleWidth = 1f;
+            columnsElement.preferredHeight = -1f;
+
+            var resultsColumn = new GameObject("UI_CampaignVictoryResultsColumn", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement), typeof(ContentSizeFitter));
+            resultsColumn.transform.SetParent(contentColumns.transform, false);
+
+            var resultsColumnLayout = resultsColumn.GetComponent<VerticalLayoutGroup>();
+            resultsColumnLayout.spacing = 6f;
+            resultsColumnLayout.padding = new RectOffset(0, 0, 0, 0);
+            resultsColumnLayout.childAlignment = TextAnchor.UpperCenter;
+            resultsColumnLayout.childControlWidth = true;
+            resultsColumnLayout.childControlHeight = true;
+            resultsColumnLayout.childForceExpandWidth = true;
+            resultsColumnLayout.childForceExpandHeight = false;
+
+            var resultsColumnElement = resultsColumn.GetComponent<LayoutElement>();
+            resultsColumnElement.flexibleWidth = 1f;
+            resultsColumnElement.preferredWidth = 0f;
+
+            var resultsColumnFitter = resultsColumn.GetComponent<ContentSizeFitter>();
+            resultsColumnFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            resultsColumnFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            BuildResultsHeader(resultsColumn.transform);
+
+            var summaries = BoardUtilities.GetPlayerBoardSummaries(ranked, board);
+            int rank = 1;
+            foreach (var player in ranked)
+            {
+                var row = Instantiate(playerResultRowPrefab, resultsColumn.transform);
+                var summary = summaries[player.PlayerId];
+                Sprite icon = gameUI != null
+                    ? gameUI.PlayerUIBinder.GetIcon(player)
+                    : GameManager.Instance.GameUI.PlayerUIBinder.GetIcon(player);
+
+                int capturedRank = rank;
+                Player capturedPlayer = player;
+                Sprite capturedIcon = icon;
+
+                row.Populate(
+                    rank,
+                    icon,
+                    player.PlayerName,
+                    summary.LivingCells,
+                    summary.ResistantCells,
+                    summary.DeadCells,
+                    summary.ToxinCells,
+                    () => ShowPlayerDetails(capturedPlayer, capturedRank, capturedIcon));
+                rank++;
+            }
+
+            BuildCampaignMoldinessSummaryContent(campaignSnapshot, victory, contentColumns.transform);
+
+            ApplyControlReadabilityOverrides();
+            resetResultsScrollPositionOnNextLayout = true;
+            RefreshRuntimeEndGameLayout();
+
+            gameObject.SetActive(true);
+            canvasGroup.alpha = 0f;
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
+
+            if (!gameObject.activeInHierarchy)
+            {
+                Debug.LogWarning("UI_EndGamePanel is still inactive – coroutine skipped.");
+                return;
+            }
+
+            StopAllCoroutines();
+            StartCoroutine(FadeCanvasGroup(1f, 0.25f));
+        }
+
+        private static CampaignVictorySnapshot EnsureCampaignOutcomePresentationSnapshot(CampaignVictorySnapshot snapshot, bool victory, int levelDisplay)
+        {
+            snapshot ??= new CampaignVictorySnapshot();
+            snapshot.clearedLevelDisplay = levelDisplay;
+
+            var moldinessState = GameManager.Instance?.CampaignController?.State?.moldiness;
+            var moldinessSnapshot = GetSnapshot(moldinessState);
+
+            snapshot.moldinessAwarded = victory ? GetRewardForClearedLevel(levelDisplay) : 0;
+            snapshot.moldinessProgressAfterAward = moldinessSnapshot.CurrentProgress;
+            snapshot.moldinessThresholdAfterAward = moldinessSnapshot.CurrentThreshold;
+            snapshot.moldinessTierAfterAward = moldinessSnapshot.CurrentTierIndex;
+            snapshot.pendingMoldinessUnlockCount = moldinessSnapshot.PendingUnlockCount;
+
+            if (!victory)
+            {
+                snapshot.moldinessProgressBeforeAward = moldinessSnapshot.CurrentProgress;
+                snapshot.moldinessTierBeforeAward = moldinessSnapshot.CurrentTierIndex;
+            }
+
+            return snapshot;
         }
 
         public void ShowCampaignPendingDefeatCarryoverSelection(IReadOnlyList<AdaptationDefinition> options, int selectionCapacity)
