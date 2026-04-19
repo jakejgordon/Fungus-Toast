@@ -190,6 +190,7 @@ namespace FungusToast.Unity.UI.Testing
         private TMP_Dropdown adaptationDropdown;
         private Button forcedStartingAdaptationsToggleButton;
         private GameObject forcedStartingAdaptationsRow;
+        private readonly List<Toggle> forcedStartingAdaptationToggles = new();
         private List<Mycovariant> sortedMycovariants = new List<Mycovariant>();
         private List<AdaptationDefinition> sortedAdaptations = new List<AdaptationDefinition>();
 
@@ -789,10 +790,12 @@ namespace FungusToast.Unity.UI.Testing
             var existing = cardRoot.transform.Find($"{options.ControlPrefix}ForcedStartingAdaptationsRow");
             if (existing != null)
             {
+                forcedStartingAdaptationToggles.Clear();
+                BuildForcedStartingAdaptationChecklist(existing.gameObject);
                 return existing.gameObject;
             }
 
-            var row = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptationsRow", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            var row = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptationsRow", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(LayoutElement));
             row.transform.SetParent(cardRoot.transform, false);
 
             var layout = row.GetComponent<VerticalLayoutGroup>();
@@ -801,26 +804,35 @@ namespace FungusToast.Unity.UI.Testing
             layout.childControlHeight = true;
             layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = false;
-            layout.spacing = 2f;
-            layout.padding = new RectOffset(2, 2, 0, 0);
+            layout.spacing = 4f;
+            layout.padding = new RectOffset(6, 6, 6, 6);
+
+            var image = row.GetComponent<Image>();
+            var bg = UIStyleTokens.Surface.PanelSecondary;
+            bg.a = 0.55f;
+            image.color = bg;
+            image.raycastTarget = false;
 
             var element = row.GetComponent<LayoutElement>();
-            element.minHeight = 140f;
-            element.preferredHeight = 180f;
+            element.minHeight = 220f;
+            element.preferredHeight = 300f;
+            element.minWidth = options.SettingWidth;
+            element.preferredWidth = options.SettingWidth;
 
-            BuildForcedStartingAdaptationChecklist(row.transform);
+            BuildForcedStartingAdaptationChecklist(row);
             return row;
         }
 
-        private void BuildForcedStartingAdaptationChecklist(Transform parent)
+        private void BuildForcedStartingAdaptationChecklist(GameObject row)
         {
-            foreach (Transform child in parent)
+            forcedStartingAdaptationToggles.Clear();
+            foreach (Transform child in row.transform)
             {
                 UnityEngine.Object.Destroy(child.gameObject);
             }
 
             var labelObject = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptationsLabel", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
-            labelObject.transform.SetParent(parent, false);
+            labelObject.transform.SetParent(row.transform, false);
             var label = labelObject.GetComponent<TextMeshProUGUI>();
             label.text = "Starting Adaptations";
             label.color = UIStyleTokens.Text.Primary;
@@ -838,17 +850,65 @@ namespace FungusToast.Unity.UI.Testing
                          .OrderBy(adaptation => adaptation.Name, StringComparer.OrdinalIgnoreCase)
                          .ThenBy(adaptation => adaptation.Id, StringComparer.Ordinal))
             {
-                var toggleObject = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptation_{adaptation.Id}", typeof(RectTransform), typeof(Toggle), typeof(LayoutElement));
-                toggleObject.transform.SetParent(parent, false);
+                var item = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptation_{adaptation.Id}", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+                item.transform.SetParent(row.transform, false);
+
+                var itemLayout = item.GetComponent<HorizontalLayoutGroup>();
+                itemLayout.childAlignment = TextAnchor.MiddleLeft;
+                itemLayout.childControlWidth = false;
+                itemLayout.childControlHeight = false;
+                itemLayout.childForceExpandWidth = false;
+                itemLayout.childForceExpandHeight = false;
+                itemLayout.spacing = 8f;
+                itemLayout.padding = new RectOffset(0, 0, 2, 2);
+
+                var itemElement = item.GetComponent<LayoutElement>();
+                itemElement.minHeight = 24f;
+                itemElement.preferredHeight = 26f;
+                itemElement.minWidth = options.SettingWidth - 12f;
+                itemElement.preferredWidth = options.SettingWidth - 12f;
+
+                var toggleObject = new GameObject("Toggle", typeof(RectTransform), typeof(Toggle), typeof(Image), typeof(LayoutElement));
+                toggleObject.transform.SetParent(item.transform, false);
+                var toggleBackground = toggleObject.GetComponent<Image>();
+                toggleBackground.color = Color.white;
+                var toggleElement = toggleObject.GetComponent<LayoutElement>();
+                toggleElement.minWidth = 18f;
+                toggleElement.preferredWidth = 18f;
+                toggleElement.minHeight = 18f;
+                toggleElement.preferredHeight = 18f;
+
+                var checkmarkObject = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
+                checkmarkObject.transform.SetParent(toggleObject.transform, false);
+                var checkmark = checkmarkObject.GetComponent<Image>();
+                checkmark.color = UIStyleTokens.Text.Primary;
+                var checkmarkRect = checkmarkObject.GetComponent<RectTransform>();
+                checkmarkRect.anchorMin = Vector2.zero;
+                checkmarkRect.anchorMax = Vector2.one;
+                checkmarkRect.offsetMin = new Vector2(3f, 3f);
+                checkmarkRect.offsetMax = new Vector2(-3f, -3f);
+
                 var toggle = toggleObject.GetComponent<Toggle>();
-                var toggleLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-                toggleLabelObject.transform.SetParent(toggleObject.transform, false);
+                toggle.targetGraphic = toggleBackground;
+                toggle.graphic = checkmark;
+                toggle.isOn = false;
+                forcedStartingAdaptationToggles.Add(toggle);
+
+                var toggleLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+                toggleLabelObject.transform.SetParent(item.transform, false);
                 var toggleLabel = toggleLabelObject.GetComponent<TextMeshProUGUI>();
                 toggleLabel.text = adaptation.Name;
                 toggleLabel.color = UIStyleTokens.Text.Primary;
-                toggleLabel.fontSize = 16f;
+                toggleLabel.enableAutoSizing = false;
+                toggleLabel.fontSize = 15f;
                 toggleLabel.alignment = TextAlignmentOptions.Left;
-                toggle.isOn = false;
+                toggleLabel.overflowMode = TextOverflowModes.Ellipsis;
+
+                var textElement = toggleLabelObject.GetComponent<LayoutElement>();
+                textElement.minWidth = options.SettingWidth - 40f;
+                textElement.preferredWidth = options.SettingWidth - 40f;
+                textElement.minHeight = 22f;
+                textElement.preferredHeight = 24f;
             }
         }
 
@@ -860,16 +920,16 @@ namespace FungusToast.Unity.UI.Testing
             }
 
             var selected = new List<string>();
+            string prefix = $"{options.ControlPrefix}ForcedStartingAdaptation_";
             foreach (Transform child in forcedStartingAdaptationsRow.transform)
             {
-                var toggle = child.GetComponent<Toggle>();
-                if (toggle == null || !toggle.isOn)
+                if (!child.name.StartsWith(prefix, StringComparison.Ordinal))
                 {
                     continue;
                 }
 
-                string prefix = $"{options.ControlPrefix}ForcedStartingAdaptation_";
-                if (child.name.StartsWith(prefix, StringComparison.Ordinal))
+                var toggle = child.GetComponentInChildren<Toggle>(true);
+                if (toggle != null && toggle.isOn)
                 {
                     selected.Add(child.name.Substring(prefix.Length));
                 }
