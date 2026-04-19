@@ -54,8 +54,8 @@ namespace FungusToast.Unity.UI
         private const float EndGameResultsHeaderHorizontalPadding = 18f;
         private const float EndGameResultsRankWidth = 60f;
         private const float EndGameResultsIconWidth = 52f;
-        private const float EndGameResultsMetricWidth = 112f;
-        private const float EndGameResultsDetailsWidth = 116f;
+        private const float EndGameResultsMetricWidth = 92f;
+        private const float EndGameResultsDetailsWidth = 108f;
         private const float EndGameConfirmationButtonMinWidth = 280f;
         private const float EndGameConfirmationButtonPreferredWidth = 360f;
         private const float EndGameConfirmationStackMinHeight = 240f;
@@ -601,12 +601,49 @@ namespace FungusToast.Unity.UI
             }
 
             BuildCampaignTopSpacer();
-            BuildResultsHeader();
+
+            var contentColumns = new GameObject("UI_CampaignVictoryContentColumns", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            contentColumns.transform.SetParent(resultsContainer, false);
+
+            var columnsLayout = contentColumns.GetComponent<HorizontalLayoutGroup>();
+            columnsLayout.spacing = 16f;
+            columnsLayout.padding = new RectOffset(0, 0, 0, 0);
+            columnsLayout.childAlignment = TextAnchor.UpperCenter;
+            columnsLayout.childControlWidth = true;
+            columnsLayout.childControlHeight = true;
+            columnsLayout.childForceExpandWidth = true;
+            columnsLayout.childForceExpandHeight = false;
+
+            var columnsElement = contentColumns.GetComponent<LayoutElement>();
+            columnsElement.flexibleWidth = 1f;
+            columnsElement.preferredHeight = -1f;
+
+            var resultsColumn = new GameObject("UI_CampaignVictoryResultsColumn", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement), typeof(ContentSizeFitter));
+            resultsColumn.transform.SetParent(contentColumns.transform, false);
+
+            var resultsColumnLayout = resultsColumn.GetComponent<VerticalLayoutGroup>();
+            resultsColumnLayout.spacing = 6f;
+            resultsColumnLayout.padding = new RectOffset(0, 0, 0, 0);
+            resultsColumnLayout.childAlignment = TextAnchor.UpperCenter;
+            resultsColumnLayout.childControlWidth = true;
+            resultsColumnLayout.childControlHeight = true;
+            resultsColumnLayout.childForceExpandWidth = true;
+            resultsColumnLayout.childForceExpandHeight = false;
+
+            var resultsColumnElement = resultsColumn.GetComponent<LayoutElement>();
+            resultsColumnElement.flexibleWidth = 1f;
+            resultsColumnElement.preferredWidth = 0f;
+
+            var resultsColumnFitter = resultsColumn.GetComponent<ContentSizeFitter>();
+            resultsColumnFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            resultsColumnFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            BuildResultsHeader(resultsColumn.transform);
 
             for (int i = 0; i < snapshot.rows.Count; i++)
             {
                 var rowData = snapshot.rows[i];
-                var row = Instantiate(playerResultRowPrefab, resultsContainer);
+                var row = Instantiate(playerResultRowPrefab, resultsColumn.transform);
 
                 Sprite icon = gameUI != null
                     ? gameUI.PlayerUIBinder.GetPlayerIcon(rowData.playerId)
@@ -627,7 +664,7 @@ namespace FungusToast.Unity.UI
                     player != null ? () => ShowPlayerDetails(player, capturedRank, capturedIcon) : null);
             }
 
-                    BuildCampaignMoldinessSummaryContent(snapshot, victory: true);
+            BuildCampaignMoldinessSummaryContent(snapshot, victory: true, contentColumns.transform);
 
             ApplyControlReadabilityOverrides();
             resetResultsScrollPositionOnNextLayout = true;
@@ -846,15 +883,16 @@ namespace FungusToast.Unity.UI
             return label;
         }
 
-        private void BuildCampaignMoldinessSummaryContent(CampaignVictorySnapshot snapshot, bool victory)
+        private void BuildCampaignMoldinessSummaryContent(CampaignVictorySnapshot snapshot, bool victory, Transform parentOverride = null)
         {
-            if (resultsContainer == null || snapshot == null)
+            var parent = parentOverride ?? resultsContainer;
+            if (parent == null || snapshot == null)
             {
                 return;
             }
 
             var root = new GameObject("UI_CampaignMoldinessSummaryRoot", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(LayoutElement), typeof(ContentSizeFitter));
-            root.transform.SetParent(resultsContainer, false);
+            root.transform.SetParent(parent, false);
 
             var background = root.GetComponent<Image>();
             var backgroundColor = UIStyleTokens.Surface.PanelSecondary;
@@ -863,8 +901,8 @@ namespace FungusToast.Unity.UI
             background.raycastTarget = false;
 
             var layout = root.GetComponent<VerticalLayoutGroup>();
-            layout.spacing = 10f;
-            layout.padding = new RectOffset(18, 18, 16, 16);
+            layout.spacing = 8f;
+            layout.padding = new RectOffset(16, 16, 16, 16);
             layout.childAlignment = TextAnchor.UpperCenter;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -872,7 +910,9 @@ namespace FungusToast.Unity.UI
             layout.childForceExpandHeight = false;
 
             var element = root.GetComponent<LayoutElement>();
-            element.flexibleWidth = 1f;
+            element.flexibleWidth = 0f;
+            element.preferredWidth = 320f;
+            element.minWidth = 300f;
             element.minHeight = 180f;
 
             var fitter = root.GetComponent<ContentSizeFitter>();
@@ -885,14 +925,14 @@ namespace FungusToast.Unity.UI
 
             var title = CreateCarryoverInfoText(root.transform,
                 victory ? $"+{snapshot.moldinessAwarded} Moldiness" : "Moldiness progression",
-                26f,
+                24f,
                 UIStyleTokens.Text.Primary,
                 FontStyles.Bold);
             title.alignment = TextAlignmentOptions.Center;
 
             var status = CreateCarryoverInfoText(root.transform,
                 $"Moldiness Level {currentLevel}  •  {progressAfter} / {threshold} to next threshold",
-                20f,
+                18f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
             status.alignment = TextAlignmentOptions.Center;
@@ -907,7 +947,7 @@ namespace FungusToast.Unity.UI
 
             var detail = CreateCarryoverInfoText(root.transform,
                 thresholdMessage,
-                18f,
+                16f,
                 snapshot.pendingMoldinessUnlockCount > 0 ? UIStyleTokens.State.Warning : UIStyleTokens.Text.Secondary,
                 snapshot.pendingMoldinessUnlockCount > 0 ? FontStyles.Bold : FontStyles.Normal);
             detail.alignment = TextAlignmentOptions.Center;
@@ -1422,19 +1462,20 @@ namespace FungusToast.Unity.UI
             canvasGroup.alpha = targetAlpha;
         }
 
-        private void BuildResultsHeader()
+        private void BuildResultsHeader(Transform parentOverride = null)
         {
-            if (resultsContainer == null)
+            var parent = parentOverride ?? resultsContainer;
+            if (parent == null)
             {
                 return;
             }
 
             var header = new GameObject("UI_GameEndResultsHeaderRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
-            header.transform.SetParent(resultsContainer, false);
+            header.transform.SetParent(parent, false);
 
             var layout = header.GetComponent<HorizontalLayoutGroup>();
             layout.childAlignment = TextAnchor.MiddleLeft;
-            layout.spacing = 14f;
+            layout.spacing = 8f;
             layout.padding = new RectOffset((int)EndGameResultsHeaderHorizontalPadding, (int)EndGameResultsHeaderHorizontalPadding, 2, 2);
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -1446,7 +1487,7 @@ namespace FungusToast.Unity.UI
 
             CreateHeaderCell(header.transform, string.Empty, EndGameResultsRankWidth, TextAlignmentOptions.Center, false);
             CreateHeaderCell(header.transform, string.Empty, EndGameResultsIconWidth, TextAlignmentOptions.Center, false);
-            CreateHeaderCell(header.transform, "Player", 260f, TextAlignmentOptions.Left, true);
+            CreateHeaderCell(header.transform, "Player", 210f, TextAlignmentOptions.Left, true);
             CreateHeaderCell(header.transform, "Alive", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);
             CreateHeaderCell(header.transform, "Resistant", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);
             CreateHeaderCell(header.transform, "Dead", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);

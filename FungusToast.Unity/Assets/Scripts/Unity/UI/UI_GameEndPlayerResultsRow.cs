@@ -8,8 +8,8 @@ namespace FungusToast.Unity.UI
 {
     public class UI_GameEndPlayerResultsRow : MonoBehaviour
     {
-        private const float MetricColumnWidth = 112f;
-        private const float DetailsColumnWidth = 116f;
+        private const float MetricColumnWidth = 92f;
+        private const float DetailsColumnWidth = 108f;
 
         [Header("References")]
         [SerializeField] private TextMeshProUGUI rankText;
