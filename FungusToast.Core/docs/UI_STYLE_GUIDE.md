@@ -139,6 +139,15 @@ Notes:
 - Standard primary action button height: 52–64px.
 - Avoid dense clusters of controls with <8px gap.
 
+### Desktop Action Stack Standard
+- For major menu, campaign, pause, and confirmation stacks on desktop, treat the campaign screen as the canonical button size reference.
+- Canonical primary menu action button: `500x56px`.
+- Canonical compact lower-emphasis stack action (for `Back`, `Exit`, or similar dismissal actions): `330x56px`.
+- Canonical desktop action-stack column width: `500px`.
+- Canonical vertical spacing between large stacked actions: `10-14px`.
+- Narrower setup flows may use a tighter `470x52px` button when the whole column is intentionally constrained, but overlays and modal confirmation states should default back to the `500x56px` standard.
+- In two-column layouts with a right-side development/testing rail, keep the main action stack centered in the available overlay and top-align the rail with the stack rather than allowing the rail width to pull the primary actions off-center.
+
 ---
 
 ## 5) Component Recipes

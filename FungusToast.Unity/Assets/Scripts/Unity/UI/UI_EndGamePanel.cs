@@ -37,11 +37,15 @@ namespace FungusToast.Unity.UI
         private const float CampaignOutcomeSpacerMinHeight = 88f;
         private const int CampaignOutcomeSubtitleFontSize = 26;
         private const float EndGameOverlayHorizontalInset = 120f;
+        private const float EndGameConfirmationOverlayHorizontalInset = 220f;
         private const float EndGameOverlayVerticalInset = 18f;
+        private const float EndGameConfirmationOverlayVerticalInset = 76f;
         private const float EndGameContentHorizontalInset = 28f;
         private const float EndGameContentTopInset = 30f;
         private const float EndGameContentTopInsetWithOutcome = 126f;
+        private const float EndGameConfirmationContentTopInsetWithOutcome = 162f;
         private const float EndGameContentBottomInset = 110f;
+        private const float EndGameConfirmationContentBottomInset = 56f;
         private const float EndGameActionBarHeight = 60f;
         private const float EndGameActionBarBottomInset = 24f;
         private const float EndGameRailWidth = 340f;
@@ -56,9 +60,11 @@ namespace FungusToast.Unity.UI
         private const float EndGameResultsIconWidth = 52f;
         private const float EndGameResultsMetricWidth = 112f;
         private const float EndGameResultsDetailsWidth = 116f;
-        private const float EndGameConfirmationButtonMinWidth = 280f;
-        private const float EndGameConfirmationButtonPreferredWidth = 360f;
-        private const float EndGameConfirmationStackMinHeight = 240f;
+        private const float EndGameConfirmationPrimaryButtonWidth = 500f;
+        private const float EndGameConfirmationCompactButtonWidth = 330f;
+        private const float EndGameConfirmationButtonHeight = 56f;
+        private const float EndGameConfirmationStackWidth = 500f;
+        private const float EndGameConfirmationStackSpacing = 14f;
         private const float DetailsCardPreferredWidth = 820f;
         private const float DetailsCardPreferredHeight = 900f;
         private const float DetailsCardMinWidth = 680f;
@@ -100,6 +106,8 @@ namespace FungusToast.Unity.UI
         private RectTransform endGameMainColumnRoot;
         private RectTransform endGameTestingRailRoot;
         private LayoutElement endGameTestingRailLayoutElement;
+        private RectTransform endGameTestingRailMirrorSpacerRoot;
+        private LayoutElement endGameTestingRailMirrorSpacerLayoutElement;
         private RectTransform endGameActionBarRoot;
         private RectTransform endGameResultsScrollRoot;
         private RectTransform endGameResultsViewportRoot;
@@ -839,7 +847,6 @@ namespace FungusToast.Unity.UI
             label.fontSize = fontSize;
             label.fontStyle = fontStyle;
             label.color = color;
-            label.enableWordWrapping = true;
             label.overflowMode = TextOverflowModes.Overflow;
             label.textWrappingMode = TextWrappingModes.Normal;
             label.alignment = TextAlignmentOptions.Center;
@@ -2262,22 +2269,30 @@ namespace FungusToast.Unity.UI
             var panelRect = GetComponent<RectTransform>();
             if (panelRect != null)
             {
+                float horizontalInset = showPostAdaptationConfirmationState
+                    ? EndGameConfirmationOverlayHorizontalInset
+                    : EndGameOverlayHorizontalInset;
+
                 panelRect.anchorMin = Vector2.zero;
                 panelRect.anchorMax = Vector2.one;
-                panelRect.offsetMin = new Vector2(EndGameOverlayHorizontalInset, 0f);
-                panelRect.offsetMax = new Vector2(-EndGameOverlayHorizontalInset, 0f);
+                panelRect.offsetMin = new Vector2(horizontalInset, 0f);
+                panelRect.offsetMax = new Vector2(-horizontalInset, 0f);
                 panelRect.localScale = Vector3.one;
             }
 
             endGameLayoutContainer = resultsCardBackground.transform.parent as RectTransform;
             if (endGameLayoutContainer != null)
             {
+                float verticalInset = showPostAdaptationConfirmationState
+                    ? EndGameConfirmationOverlayVerticalInset
+                    : EndGameOverlayVerticalInset;
+
                 endGameLayoutContainer.anchorMin = Vector2.zero;
                 endGameLayoutContainer.anchorMax = Vector2.one;
                 endGameLayoutContainer.pivot = new Vector2(0.5f, 0.5f);
                 endGameLayoutContainer.anchoredPosition = Vector2.zero;
-                endGameLayoutContainer.offsetMin = new Vector2(0f, EndGameOverlayVerticalInset);
-                endGameLayoutContainer.offsetMax = new Vector2(0f, -EndGameOverlayVerticalInset);
+                endGameLayoutContainer.offsetMin = new Vector2(0f, verticalInset);
+                endGameLayoutContainer.offsetMax = new Vector2(0f, -verticalInset);
                 endGameLayoutContainer.localScale = Vector3.one;
 
                 var layout = endGameLayoutContainer.GetComponent<VerticalLayoutGroup>();
@@ -2324,6 +2339,21 @@ namespace FungusToast.Unity.UI
             shellLayout.childForceExpandHeight = true;
             shellLayout.spacing = EndGameRailGap;
             shellLayout.padding = new RectOffset(0, 0, 0, 0);
+
+            if (endGameTestingRailMirrorSpacerRoot == null)
+            {
+                var spacer = new GameObject("UI_EndGameTestingRailMirrorSpacer", typeof(RectTransform), typeof(LayoutElement));
+                spacer.transform.SetParent(endGameContentShellRoot, false);
+                endGameTestingRailMirrorSpacerRoot = spacer.GetComponent<RectTransform>();
+            }
+
+            endGameTestingRailMirrorSpacerRoot.SetParent(endGameContentShellRoot, false);
+            endGameTestingRailMirrorSpacerRoot.localScale = Vector3.one;
+            endGameTestingRailMirrorSpacerLayoutElement = endGameTestingRailMirrorSpacerRoot.GetComponent<LayoutElement>();
+            endGameTestingRailMirrorSpacerLayoutElement.flexibleWidth = 0f;
+            endGameTestingRailMirrorSpacerLayoutElement.flexibleHeight = 1f;
+            endGameTestingRailMirrorSpacerLayoutElement.minWidth = 0f;
+            endGameTestingRailMirrorSpacerLayoutElement.preferredWidth = 0f;
 
             if (endGameMainColumnRoot == null)
             {
@@ -2411,18 +2441,21 @@ namespace FungusToast.Unity.UI
             endGamePostAdaptationRoot.localScale = Vector3.one;
 
             var confirmationLayout = endGamePostAdaptationRoot.GetComponent<VerticalLayoutGroup>();
-            confirmationLayout.childAlignment = TextAnchor.MiddleCenter;
+            confirmationLayout.childAlignment = TextAnchor.UpperCenter;
             confirmationLayout.childControlWidth = true;
             confirmationLayout.childControlHeight = true;
             confirmationLayout.childForceExpandWidth = false;
             confirmationLayout.childForceExpandHeight = false;
-            confirmationLayout.spacing = 14f;
+            confirmationLayout.spacing = EndGameConfirmationStackSpacing;
             confirmationLayout.padding = new RectOffset(0, 0, 0, 0);
 
             var confirmationElement = endGamePostAdaptationRoot.GetComponent<LayoutElement>();
-            confirmationElement.flexibleWidth = 1f;
-            confirmationElement.flexibleHeight = 1f;
-            confirmationElement.minHeight = EndGameConfirmationStackMinHeight;
+            confirmationElement.minWidth = EndGameConfirmationStackWidth;
+            confirmationElement.preferredWidth = EndGameConfirmationStackWidth;
+            confirmationElement.flexibleWidth = 0f;
+            confirmationElement.flexibleHeight = 0f;
+            confirmationElement.minHeight = 0f;
+            confirmationElement.preferredHeight = -1f;
 
             EnsureScrollableResultsContent();
             EnsureLegacyResultsTitlePlacement();
@@ -2615,12 +2648,54 @@ namespace FungusToast.Unity.UI
                 ApplyPostVictoryTestingRailVisibility(reloadConfiguration: false);
                 EnsureActionButtonsShareContainer();
 
+                var shellLayout = endGameContentShellRoot != null ? endGameContentShellRoot.GetComponent<HorizontalLayoutGroup>() : null;
+                bool showMirroredRailSpacer = showPostAdaptationConfirmationState && postVictoryTestingRailVisible;
+                if (shellLayout != null)
+                {
+                    shellLayout.childAlignment = showPostAdaptationConfirmationState ? TextAnchor.UpperCenter : TextAnchor.UpperLeft;
+                }
+
+                if (endGameTestingRailMirrorSpacerRoot != null)
+                {
+                    endGameTestingRailMirrorSpacerRoot.gameObject.SetActive(showMirroredRailSpacer);
+                    endGameTestingRailMirrorSpacerRoot.SetSiblingIndex(0);
+                }
+
+                if (endGameTestingRailMirrorSpacerLayoutElement != null)
+                {
+                    endGameTestingRailMirrorSpacerLayoutElement.minWidth = showMirroredRailSpacer ? EndGameRailWidth : 0f;
+                    endGameTestingRailMirrorSpacerLayoutElement.preferredWidth = showMirroredRailSpacer ? EndGameRailWidth : 0f;
+                }
+
+                if (endGameMainColumnRoot != null)
+                {
+                    endGameMainColumnRoot.SetSiblingIndex(showMirroredRailSpacer ? 1 : 0);
+                }
+
+                if (endGameTestingRailRoot != null)
+                {
+                    endGameTestingRailRoot.SetSiblingIndex(showMirroredRailSpacer ? 2 : 1);
+                }
+
                 bool hasActionButtons = IsAnyActionButtonVisible();
-                float topInset = outcomeLabel != null && outcomeLabel.gameObject.activeSelf
-                    ? EndGameContentTopInsetWithOutcome
-                    : EndGameContentTopInset;
+                float topInset;
+                if (outcomeLabel != null && outcomeLabel.gameObject.activeSelf)
+                {
+                    topInset = showPostAdaptationConfirmationState
+                        ? EndGameConfirmationContentTopInsetWithOutcome
+                        : EndGameContentTopInsetWithOutcome;
+                }
+                else
+                {
+                    topInset = EndGameContentTopInset;
+                }
+
                 bool useBottomActionBar = hasActionButtons && !showPostAdaptationConfirmationState;
-                float bottomInset = useBottomActionBar ? EndGameContentBottomInset : EndGameActionBarBottomInset;
+                float bottomInset = useBottomActionBar
+                    ? EndGameContentBottomInset
+                    : showPostAdaptationConfirmationState
+                        ? EndGameConfirmationContentBottomInset
+                        : EndGameActionBarBottomInset;
 
                 if (endGameContentShellRoot != null)
                 {
@@ -2647,6 +2722,28 @@ namespace FungusToast.Unity.UI
                 {
                     endGameTestingRailLayoutElement.minWidth = postVictoryTestingRailVisible ? EndGameRailWidth : 0f;
                     endGameTestingRailLayoutElement.preferredWidth = postVictoryTestingRailVisible ? EndGameRailWidth : 0f;
+                }
+
+                if (endGameMainColumnRoot != null)
+                {
+                    var mainColumnElement = endGameMainColumnRoot.GetComponent<LayoutElement>();
+                    if (mainColumnElement != null)
+                    {
+                        if (showPostAdaptationConfirmationState)
+                        {
+                            mainColumnElement.minWidth = EndGameConfirmationStackWidth;
+                            mainColumnElement.preferredWidth = EndGameConfirmationStackWidth;
+                            mainColumnElement.flexibleWidth = 0f;
+                            mainColumnElement.flexibleHeight = 0f;
+                        }
+                        else
+                        {
+                            mainColumnElement.minWidth = 560f;
+                            mainColumnElement.preferredWidth = -1f;
+                            mainColumnElement.flexibleWidth = 1f;
+                            mainColumnElement.flexibleHeight = 1f;
+                        }
+                    }
                 }
 
                 ConfigureActionBarButtonLayout(playAgainButton);
@@ -3663,7 +3760,7 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        private static void ConfigurePostAdaptationButtonLayout(Button button)
+        private void ConfigurePostAdaptationButtonLayout(Button button)
         {
             if (button == null)
             {
@@ -3676,10 +3773,13 @@ namespace FungusToast.Unity.UI
                 layout = button.gameObject.AddComponent<LayoutElement>();
             }
 
-            layout.preferredHeight = 56f;
-            layout.minHeight = 52f;
-            layout.preferredWidth = EndGameConfirmationButtonPreferredWidth;
-            layout.minWidth = EndGameConfirmationButtonMinWidth;
+            bool useCompactWidth = button == exitButton;
+            float buttonWidth = useCompactWidth ? EndGameConfirmationCompactButtonWidth : EndGameConfirmationPrimaryButtonWidth;
+
+            layout.preferredHeight = EndGameConfirmationButtonHeight;
+            layout.minHeight = EndGameConfirmationButtonHeight - 4f;
+            layout.preferredWidth = buttonWidth;
+            layout.minWidth = buttonWidth;
             layout.flexibleWidth = 0f;
 
             var rect = button.GetComponent<RectTransform>();
