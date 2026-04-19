@@ -830,13 +830,17 @@ namespace FungusToast.Unity.UI
             textObject.transform.SetParent(parent, false);
 
             var layout = textObject.GetComponent<LayoutElement>();
-            layout.preferredHeight = fontSize + 16f;
+            layout.flexibleWidth = 1f;
+            layout.preferredHeight = -1f;
+            layout.minHeight = fontSize + 12f;
 
             var label = textObject.GetComponent<TextMeshProUGUI>();
             label.text = text;
             label.fontSize = fontSize;
             label.fontStyle = fontStyle;
             label.color = color;
+            label.enableWordWrapping = true;
+            label.overflowMode = TextOverflowModes.Overflow;
             label.textWrappingMode = TextWrappingModes.Normal;
             label.alignment = TextAlignmentOptions.Center;
             return label;
@@ -1010,9 +1014,34 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            var offersColumn = new GameObject("UI_MoldinessRewardSelectionOffers", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement), typeof(ContentSizeFitter));
+            offersColumn.transform.SetParent(root.transform, false);
+
+            var offersRect = offersColumn.GetComponent<RectTransform>();
+            offersRect.anchorMin = new Vector2(0f, 1f);
+            offersRect.anchorMax = new Vector2(1f, 1f);
+            offersRect.pivot = new Vector2(0.5f, 1f);
+            offersRect.sizeDelta = Vector2.zero;
+
+            var offersLayout = offersColumn.GetComponent<VerticalLayoutGroup>();
+            offersLayout.spacing = 12f;
+            offersLayout.childAlignment = TextAnchor.UpperCenter;
+            offersLayout.childControlWidth = true;
+            offersLayout.childControlHeight = true;
+            offersLayout.childForceExpandWidth = true;
+            offersLayout.childForceExpandHeight = false;
+
+            var offersElement = offersColumn.GetComponent<LayoutElement>();
+            offersElement.flexibleWidth = 1f;
+            offersElement.preferredHeight = -1f;
+
+            var offersFitter = offersColumn.GetComponent<ContentSizeFitter>();
+            offersFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            offersFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
             foreach (var offer in offers)
             {
-                CreateMoldinessRewardOptionButton(root.transform, offer);
+                CreateMoldinessRewardOptionButton(offersColumn.transform, offer);
             }
         }
 
@@ -1027,7 +1056,8 @@ namespace FungusToast.Unity.UI
             buttonObject.transform.SetParent(parent, false);
 
             var layout = buttonObject.GetComponent<LayoutElement>();
-            layout.minHeight = 120f;
+            layout.minHeight = 132f;
+            layout.preferredHeight = -1f;
             layout.flexibleWidth = 1f;
 
             var background = buttonObject.GetComponent<Image>();
@@ -1057,12 +1087,14 @@ namespace FungusToast.Unity.UI
             var headerLayout = headerRow.GetComponent<HorizontalLayoutGroup>();
             headerLayout.spacing = 10f;
             headerLayout.childAlignment = TextAnchor.MiddleLeft;
-            headerLayout.childControlWidth = false;
+            headerLayout.childControlWidth = true;
             headerLayout.childControlHeight = true;
             headerLayout.childForceExpandWidth = false;
             headerLayout.childForceExpandHeight = false;
             var headerElement = headerRow.GetComponent<LayoutElement>();
-            headerElement.minHeight = 42f;
+            headerElement.flexibleWidth = 1f;
+            headerElement.preferredHeight = -1f;
+            headerElement.minHeight = 50f;
 
             var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
             iconObject.transform.SetParent(headerRow.transform, false);
@@ -1071,10 +1103,11 @@ namespace FungusToast.Unity.UI
             iconImage.preserveAspect = true;
             iconImage.color = Color.white;
             var iconLayout = iconObject.GetComponent<LayoutElement>();
-            iconLayout.minWidth = 36f;
-            iconLayout.preferredWidth = 36f;
-            iconLayout.minHeight = 36f;
-            iconLayout.preferredHeight = 36f;
+            iconLayout.minWidth = 40f;
+            iconLayout.preferredWidth = 40f;
+            iconLayout.flexibleWidth = 0f;
+            iconLayout.minHeight = 40f;
+            iconLayout.preferredHeight = 40f;
 
             var headerTextRoot = new GameObject("HeaderTextRoot", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
             headerTextRoot.transform.SetParent(headerRow.transform, false);
@@ -1087,18 +1120,25 @@ namespace FungusToast.Unity.UI
             headerTextLayout.childForceExpandHeight = false;
             var headerTextElement = headerTextRoot.GetComponent<LayoutElement>();
             headerTextElement.flexibleWidth = 1f;
+            headerTextElement.preferredHeight = -1f;
 
             if (!string.IsNullOrWhiteSpace(offer.CategoryLabel))
             {
                 var category = CreateCarryoverInfoText(headerTextRoot.transform, offer.CategoryLabel, 16f, offer.AccentColor, FontStyles.Bold);
                 category.alignment = TextAlignmentOptions.Left;
+                category.fontSizeMin = 12f;
+                category.enableAutoSizing = true;
             }
 
             var title = CreateCarryoverInfoText(headerTextRoot.transform, offer.DisplayName, 24f, UIStyleTokens.Text.Primary, FontStyles.Bold);
             title.alignment = TextAlignmentOptions.Left;
+            title.fontSizeMin = 18f;
+            title.enableAutoSizing = true;
 
             var description = CreateCarryoverInfoText(buttonObject.transform, offer.Description, 20f, UIStyleTokens.Text.Secondary, FontStyles.Normal);
             description.alignment = TextAlignmentOptions.Left;
+            description.fontSizeMin = 15f;
+            description.enableAutoSizing = true;
 
             var button = buttonObject.GetComponent<Button>();
             UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
