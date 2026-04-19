@@ -1294,7 +1294,7 @@ namespace FungusToast.Unity.UI
             buttonObject.transform.SetParent(parent, false);
 
             var layout = buttonObject.GetComponent<LayoutElement>();
-            layout.minHeight = 100f;
+            layout.minHeight = 116f;
             layout.preferredHeight = -1f;
             layout.flexibleWidth = 0f;
 
@@ -1304,7 +1304,7 @@ namespace FungusToast.Unity.UI
             moldinessRewardOptionBackgrounds.Add(background);
 
             var vertical = buttonObject.GetComponent<VerticalLayoutGroup>();
-            vertical.spacing = 4f;
+            vertical.spacing = 6f;
             vertical.padding = new RectOffset(10, 10, 8, 8);
             vertical.childAlignment = TextAnchor.UpperLeft;
             vertical.childControlWidth = true;
@@ -1366,24 +1366,24 @@ namespace FungusToast.Unity.UI
             title.fontSizeMax = 18f;
             title.fontSizeMin = 13f;
 
-            var descriptionRow = new GameObject("DescriptionRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
-            descriptionRow.transform.SetParent(buttonObject.transform, false);
-            var descriptionRowLayout = descriptionRow.GetComponent<HorizontalLayoutGroup>();
-            descriptionRowLayout.spacing = 8f;
-            descriptionRowLayout.childAlignment = TextAnchor.MiddleLeft;
-            descriptionRowLayout.childControlWidth = true;
-            descriptionRowLayout.childControlHeight = true;
-            descriptionRowLayout.childForceExpandWidth = false;
-            descriptionRowLayout.childForceExpandHeight = false;
-            var descriptionRowElement = descriptionRow.GetComponent<LayoutElement>();
-            descriptionRowElement.flexibleWidth = 1f;
-            descriptionRowElement.preferredHeight = -1f;
-            descriptionRowElement.minHeight = 20f;
+            var descriptionStack = new GameObject("DescriptionStack", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            descriptionStack.transform.SetParent(buttonObject.transform, false);
+            var descriptionStackLayout = descriptionStack.GetComponent<VerticalLayoutGroup>();
+            descriptionStackLayout.spacing = 4f;
+            descriptionStackLayout.childAlignment = TextAnchor.UpperLeft;
+            descriptionStackLayout.childControlWidth = true;
+            descriptionStackLayout.childControlHeight = true;
+            descriptionStackLayout.childForceExpandWidth = true;
+            descriptionStackLayout.childForceExpandHeight = false;
+            var descriptionStackElement = descriptionStack.GetComponent<LayoutElement>();
+            descriptionStackElement.flexibleWidth = 1f;
+            descriptionStackElement.preferredHeight = -1f;
+            descriptionStackElement.minHeight = 36f;
 
             if (!string.IsNullOrWhiteSpace(offer.CategoryLabel))
             {
                 var badgeObject = new GameObject("CategoryBadge", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
-                badgeObject.transform.SetParent(descriptionRow.transform, false);
+                badgeObject.transform.SetParent(descriptionStack.transform, false);
                 var badgeImage = badgeObject.GetComponent<Image>();
                 badgeImage.color = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
                 var badgeLayout = badgeObject.GetComponent<LayoutElement>();
@@ -1399,11 +1399,14 @@ namespace FungusToast.Unity.UI
                 badgeLabel.fontSizeMin = 9f;
             }
 
-            var description = CreateCarryoverInfoText(descriptionRow.transform, offer.Description, 14f, UIStyleTokens.Text.Secondary, FontStyles.Normal);
+            var description = CreateCarryoverInfoText(descriptionStack.transform, offer.Description, 14f, UIStyleTokens.Text.Secondary, FontStyles.Normal);
             description.alignment = TextAlignmentOptions.Left;
-            description.enableAutoSizing = true;
-            description.fontSizeMax = 14f;
-            description.fontSizeMin = 11f;
+            description.enableAutoSizing = false;
+            description.fontSize = 14f;
+            description.enableWordWrapping = true;
+            description.textWrappingMode = TextWrappingModes.Normal;
+            description.overflowMode = TextOverflowModes.Ellipsis;
+            description.maxVisibleLines = 2;
 
             var tooltipTrigger = buttonObject.GetComponent<TooltipTrigger>();
             if (tooltipTrigger == null)
