@@ -251,7 +251,7 @@ namespace FungusToast.Core.Board
         /// </summary>
         public static void PlaceStartingSpores(GameBoard board, List<Player> players, Random rng, bool shufflePlayerOrder = true, IReadOnlyList<(int x, int y)>? overridePositions = null, IReadOnlyList<int>? edgeOffsets = null)
         {
-            var positions = GetStartingPositions(board.Width, board.Height, players.Count, overridePositions, edgeOffsets);
+            var basePositions = GetStartingPositions(board.Width, board.Height, players.Count, overridePositions);
 
             var playerIndices = Enumerable.Range(0, players.Count).ToList();
             if (shufflePlayerOrder)
@@ -261,11 +261,18 @@ namespace FungusToast.Core.Board
                     .ToList();
             }
 
-            for (int i = 0; i < positions.Count; i++)
+            for (int i = 0; i < basePositions.Count; i++)
             {
-                var (x, y) = positions[i];
                 int pid = playerIndices[i];
                 var player = players.FirstOrDefault(p => p.PlayerId == pid);
+                var (x, y) = basePositions[i];
+
+                int offset = pid < edgeOffsets?.Count ? edgeOffsets[pid] : 0;
+                if (offset != 0)
+                {
+                    (x, y) = ApplyEdgeOffset(x, y, board.Width, board.Height, offset);
+                }
+
                 if (player?.HasAdaptation(AdaptationIds.CentripetalGermination) == true)
                     (x, y) = ShiftTowardCenter(x, y, board.Width, board.Height);
                 board.PlaceInitialSpore(pid, x, y);
@@ -296,23 +303,24 @@ namespace FungusToast.Core.Board
             {
                 var (x, y) = positions[i];
                 int offset = i < edgeOffsets.Count ? edgeOffsets[i] : 0;
-                if (offset == 0)
-                {
-                    adjusted[i] = (x, y);
-                    continue;
-                }
-
-                int centerX = boardWidth / 2;
-                int centerY = boardHeight / 2;
-                int stepX = x == centerX ? 0 : Math.Sign(x - centerX);
-                int stepY = y == centerY ? 0 : Math.Sign(y - centerY);
-                adjusted[i] = (
-                    Math.Clamp(x + (stepX * offset), 0, boardWidth - 1),
-                    Math.Clamp(y + (stepY * offset), 0, boardHeight - 1)
-                );
+                adjusted[i] = offset == 0
+                    ? (x, y)
+                    : ApplyEdgeOffset(x, y, boardWidth, boardHeight, offset);
             }
 
             return adjusted;
+        }
+
+        private static (int x, int y) ApplyEdgeOffset(int x, int y, int boardWidth, int boardHeight, int offset)
+        {
+            int centerX = boardWidth / 2;
+            int centerY = boardHeight / 2;
+            int stepX = x == centerX ? 0 : Math.Sign(x - centerX);
+            int stepY = y == centerY ? 0 : Math.Sign(y - centerY);
+            return (
+                Math.Clamp(x + (stepX * offset), 0, boardWidth - 1),
+                Math.Clamp(y + (stepY * offset), 0, boardHeight - 1)
+            );
         }
 
         private static LayoutCandidate FindBestLayout(int boardWidth, int boardHeight, int playerCount)

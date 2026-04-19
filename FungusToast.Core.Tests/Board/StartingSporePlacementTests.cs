@@ -1,3 +1,4 @@
+using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Players;
@@ -79,6 +80,33 @@ public class StartingSporePlacementTests
         Assert.Equal(new[] { 0, 1, 2, 3 }, ownerIds);
     }
 
+    [Fact]
+    public void PlaceStartingSpores_with_shuffle_keeps_the_human_on_an_unoffset_base_slot_when_only_the_ai_has_an_edge_offset()
+    {
+        var board = CreateBoard(width: 20, height: 20, playerCount: 2);
+        var players = board.Players;
+        players[0] = CreatePlayer(0, PlayerTypeEnum.Human, startingSporeEdgeOffset: 0);
+        players[1] = CreatePlayer(1, PlayerTypeEnum.AI, startingSporeEdgeOffset: 3);
+
+        var rng = new Random(0);
+        var overridePositions = new[]
+        {
+            (2, 10),
+            (17, 10),
+        };
+
+        StartingSporeUtility.PlaceStartingSpores(
+            board,
+            players,
+            rng,
+            shufflePlayerOrder: true,
+            overridePositions,
+            edgeOffsets: new[] { 0, 3 });
+
+        var humanPosition = (players[0].StartingTileId!.Value % board.Width, players[0].StartingTileId.Value / board.Width);
+        Assert.Contains(humanPosition, overridePositions);
+    }
+
     private static GameBoard CreateBoard(int width, int height, int playerCount)
     {
         var board = new GameBoard(width, height, playerCount);
@@ -88,5 +116,23 @@ public class StartingSporePlacementTests
         }
 
         return board;
+    }
+
+    private static Player CreatePlayer(int playerId, PlayerTypeEnum playerType, int startingSporeEdgeOffset)
+    {
+        var player = new Player(playerId, $"Player {playerId}", playerType);
+        player.SetMutationStrategy(new ParameterizedSpendingStrategy(
+            strategyName: $"TestStrategy{playerId}",
+            prioritizeHighTier: false,
+            startingSporeEdgeOffset: startingSporeEdgeOffset));
+
+        return player;
+    }
+
+    private static void AssertOccupiedByPlayer(GameBoard board, int x, int y, int playerId)
+    {
+        var tile = Assert.IsType<BoardTile>(board.GetTile(x, y));
+        Assert.NotNull(tile.FungalCell);
+        Assert.Equal(playerId, tile.FungalCell!.OwnerPlayerId);
     }
 }
