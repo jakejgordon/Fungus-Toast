@@ -46,21 +46,41 @@ public class PlayerTargetedSurgeTests
     }
 
     [Fact]
-    public void TryActivateReservedTargetedSurge_uses_reserved_cost_without_deducting_mutation_points_again()
+    public void TryActivateReservedTargetedSurge_uses_reserved_cost_and_spends_points_on_activation()
     {
         var player = CreatePlayer(mutationPoints: 50);
         var observer = new TestSimulationObserver();
         var board = new GameBoard(width: 5, height: 5, playerCount: 1);
         var mutation = RequireMutation(MutationIds.ChemotacticBeacon);
         player.SetMutationLevel(MutationIds.MycelialBloom, newLevel: 7, currentRound: 1);
+        int reservedCost = GameBalance.ChemotacticBeaconPointsPerActivation;
 
-        var activated = player.TryActivateReservedTargetedSurge(mutation, board, targetTileId: 6, observer, currentRound: 2, reservedActivationCost: GameBalance.ChemotacticBeaconPointsPerActivation);
+        var activated = player.TryActivateReservedTargetedSurge(mutation, board, targetTileId: 6, observer, currentRound: 2, reservedActivationCost: reservedCost);
 
         Assert.True(activated, $"Expected reserved targeted surge activation to succeed on an open tile.");
-        Assert.Equal(50, player.MutationPoints);
+        Assert.Equal(50 - reservedCost, player.MutationPoints);
         Assert.True(player.IsSurgeActive(mutation.Id));
         Assert.True(board.HasChemobeacon(player.PlayerId));
-        Assert.Equal(GameBalance.ChemotacticBeaconPointsPerActivation, observer.LastMutationPointsSpent);
+        Assert.Equal(reservedCost, observer.LastMutationPointsSpent);
+    }
+
+    [Fact]
+    public void TryActivateReservedTargetedSurge_returns_false_without_spending_points_when_reserved_cost_cannot_be_paid()
+    {
+        var player = CreatePlayer(mutationPoints: 1);
+        var observer = new TestSimulationObserver();
+        var board = new GameBoard(width: 5, height: 5, playerCount: 1);
+        var mutation = RequireMutation(MutationIds.ChemotacticBeacon);
+        player.SetMutationLevel(MutationIds.MycelialBloom, newLevel: 7, currentRound: 1);
+        int reservedCost = GameBalance.ChemotacticBeaconPointsPerActivation;
+
+        var activated = player.TryActivateReservedTargetedSurge(mutation, board, targetTileId: 6, observer, currentRound: 2, reservedActivationCost: reservedCost);
+
+        Assert.False(activated, $"Expected reserved targeted surge activation to fail when the reserved cost exceeds available mutation points.");
+        Assert.Equal(1, player.MutationPoints);
+        Assert.False(player.IsSurgeActive(mutation.Id));
+        Assert.False(board.HasChemobeacon(player.PlayerId));
+        Assert.Null(observer.LastMutationPointsSpent);
     }
 
     [Fact]

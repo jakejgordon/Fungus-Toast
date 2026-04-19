@@ -426,7 +426,6 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             pendingTargetedSurgeSelection = new PendingTargetedSurgeSelection(mutation, reservedCost, currentRound);
-            humanPlayer.MutationPoints -= reservedCost;
             RefreshSpendPointsButtonUI();
             RefreshAllMutationButtons();
             SetMutationChoiceLocked(true);
@@ -447,10 +446,6 @@ namespace FungusToast.Unity.UI.MutationTree
                         observer,
                         currentRound,
                         reservedCost);
-                    if (!success)
-                    {
-                        humanPlayer.MutationPoints += reservedCost;
-                    }
 
                     pendingTargetedSurgeSelection = null;
                     if (success)
@@ -478,7 +473,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 },
                 () =>
                 {
-                    humanPlayer.MutationPoints += reservedCost;
                     pendingTargetedSurgeSelection = null;
                     RefreshSpendPointsButtonUI();
                     RefreshAllMutationButtons();

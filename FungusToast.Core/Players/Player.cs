@@ -240,17 +240,15 @@ namespace FungusToast.Core.Players
 
             int activationCost = reservedActivationCost ?? GetMutationPointCost(mutation);
 
-            if ((!reservedActivationCost.HasValue && MutationPoints < activationCost) || pm.CurrentLevel >= mutation.MaxLevel)
+            if (MutationPoints < activationCost || pm.CurrentLevel >= mutation.MaxLevel)
                 return false;
 
             if (mutation.Prerequisites.Count > 0 && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
                 return false;
 
             int oldLevel = pm.CurrentLevel;
-            int mutationPointsBefore = reservedActivationCost.HasValue ? MutationPoints + activationCost : MutationPoints;
-
-            if (!reservedActivationCost.HasValue)
-                MutationPoints -= activationCost;
+            int mutationPointsBefore = MutationPoints;
+            MutationPoints -= activationCost;
 
             pm.Upgrade(currentRound);
             int newLevel = pm.CurrentLevel;
