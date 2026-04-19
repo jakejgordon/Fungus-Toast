@@ -601,10 +601,20 @@ namespace FungusToast.Unity.UI.Campaign
             if (moldinessSummaryPendingLabel != null)
             {
                 int pendingCount = snapshot.PendingUnlockCount;
-                moldinessSummaryPendingLabel.gameObject.SetActive(pendingCount > 0);
-                moldinessSummaryPendingLabel.text = pendingCount > 0
-                    ? $"{pendingCount} pending moldiness reward{(pendingCount == 1 ? string.Empty : "s")}" 
-                    : string.Empty;
+                bool hasPendingSporePreservationMessage = campaignController.IsAwaitingDefeatCarryoverSelection;
+                var pendingMessages = new List<string>();
+                if (hasPendingSporePreservationMessage)
+                {
+                    pendingMessages.Add("Spore preservation is pending from your last failed campaign. Resolve it before starting a new run.");
+                }
+
+                if (pendingCount > 0)
+                {
+                    pendingMessages.Add($"{pendingCount} pending moldiness reward{(pendingCount == 1 ? string.Empty : "s")}");
+                }
+
+                moldinessSummaryPendingLabel.gameObject.SetActive(pendingMessages.Count > 0);
+                moldinessSummaryPendingLabel.text = string.Join("\n", pendingMessages);
             }
 
             if (permanentUpgradesLabel != null)
@@ -625,9 +635,14 @@ namespace FungusToast.Unity.UI.Campaign
             ApplyMoldinessSummaryToastPattern(progress, threshold, filledTileCount);
 
             bool pendingReward = snapshot.PendingUnlockCount > 0;
+            bool pendingSporePreservation = campaignController.IsAwaitingDefeatCarryoverSelection;
             if (resumeButton != null)
             {
-                SetButtonText(resumeButton, pendingReward ? "Resume Campaign (Pending Reward)" : "Resume Campaign");
+                SetButtonText(
+                    resumeButton,
+                    pendingSporePreservation
+                        ? "Resume Campaign (Pending Spore Preservation)"
+                        : (pendingReward ? "Resume Campaign (Pending Reward)" : "Resume Campaign"));
             }
         }
 
@@ -1270,8 +1285,7 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             GameManager.Instance.StartCampaignResume();
-            bool resumed = GameManager.Instance.CurrentGameMode == GameMode.Campaign
-                           && (GameManager.Instance.Board != null || GameManager.Instance.IsCampaignAwaitingAdaptationSelection());
+            bool resumed = DidCampaignNavigationActivate();
 
             if (resumed)
             {
@@ -1292,6 +1306,22 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (currentStep == CampaignPanelStep.MainActions)
             {
+                if (HasPendingSporePreservation())
+                {
+                    ApplyTestingModeToGameManager();
+                    GameManager.Instance.StartCampaignResume();
+                    if (DidCampaignNavigationActivate())
+                    {
+                        gameObject.SetActive(false);
+                    }
+                    else
+                    {
+                        Debug.LogError("UI_CampaignPanelController: Pending spore preservation prompt failed to open; keeping panel open.");
+                    }
+
+                    return;
+                }
+
                 EnterMoldSelectionStep();
                 return;
             }
@@ -1312,6 +1342,34 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 Debug.LogError("UI_CampaignPanelController: New campaign failed; keeping panel open.");
             }
+        }
+
+        private bool DidCampaignNavigationActivate()
+        {
+            if (GameManager.Instance == null || GameManager.Instance.CurrentGameMode != GameMode.Campaign)
+            {
+                return false;
+            }
+
+            return GameManager.Instance.Board != null
+                || GameManager.Instance.IsCampaignAwaitingAdaptationSelection()
+                || (GameManager.Instance.CampaignController?.IsAwaitingDefeatCarryoverSelection ?? false);
+        }
+
+        private bool HasPendingSporePreservation()
+        {
+            if (GameManager.Instance == null || !GameManager.Instance.HasCampaignSave())
+            {
+                return false;
+            }
+
+            var campaignController = GameManager.Instance.CampaignController;
+            if (campaignController?.State == null && CampaignSaveService.Exists())
+            {
+                campaignController?.Resume();
+            }
+
+            return campaignController?.IsAwaitingDefeatCarryoverSelection ?? false;
         }
 
         private void OnDeleteClicked()

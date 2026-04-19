@@ -23,6 +23,12 @@ using static FungusToast.Unity.Campaign.MoldinessProgression;
 
 namespace FungusToast.Unity.UI
 {
+    public enum DefeatCarryoverEntryMode
+    {
+        ImmediateLossScreen,
+        DeferredResumePrompt,
+    }
+
     public class UI_EndGamePanel : MonoBehaviour
     {
         private const float OutcomeLabelAnchorMinX = 0.08f;
@@ -95,11 +101,14 @@ namespace FungusToast.Unity.UI
         private bool requiresAdaptationBeforeContinue;
         private bool requiresDefeatCarryoverSelection;
         private bool requiresMoldinessRewardSelection;
+        private bool hasPendingDefeatCarryoverEvent;
         private int defeatCarryoverSelectionCapacity;
         private string selectedMoldinessRewardId;
         private readonly HashSet<string> selectedDefeatCarryoverAdaptationIds = new();
         private readonly Dictionary<string, Image> defeatCarryoverOptionImages = new();
         private readonly List<Image> moldinessRewardOptionBackgrounds = new();
+        private readonly List<AdaptationDefinition> pendingDefeatCarryoverOptions = new();
+        private DefeatCarryoverEntryMode pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
         private TextMeshProUGUI defeatCarryoverSelectionStatusLabel;
         private readonly List<Image> moldinessSummaryToastTiles = new();
         private readonly List<Component> legacyResultsHeaderCandidates = new();
@@ -324,15 +333,20 @@ namespace FungusToast.Unity.UI
             int lostLevelDisplay,
             int completedLevelDisplay,
             bool adaptationPending,
-            CampaignVictorySnapshot campaignSnapshot = null)
+            CampaignVictorySnapshot campaignSnapshot = null,
+            IReadOnlyList<AdaptationDefinition> defeatCarryoverOptions = null,
+            int defeatCarryoverCapacity = 0)
         {
             SetPostAdaptationConfirmationState(false);
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = false;
+            hasPendingDefeatCarryoverEvent = false;
             selectedMoldinessRewardId = null;
             selectedDefeatCarryoverAdaptationIds.Clear();
             defeatCarryoverSelectionCapacity = 0;
+            pendingDefeatCarryoverOptions.Clear();
+            pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
             if (!isCampaign)
             {
                 ShowResultsInternal(ranked, board, playerStatistics, useCampaignTopSpacer: true);
@@ -392,9 +406,38 @@ namespace FungusToast.Unity.UI
             if (playAgainButton != null)
                 playAgainButton.gameObject.SetActive(!requiresAdaptationBeforeContinue);
 
+            if (!victory)
+            {
+                ConfigurePendingDefeatCarryoverEvent(defeatCarryoverOptions, defeatCarryoverCapacity, DefeatCarryoverEntryMode.ImmediateLossScreen);
+
+                if (hasPendingDefeatCarryoverEvent)
+                {
+                    if (continueButton != null)
+                    {
+                        continueButton.gameObject.SetActive(true);
+                        SetButtonLabel(continueButton, "Preserve Spores for Next Run");
+                    }
+
+                    if (playAgainButton != null)
+                    {
+                        playAgainButton.gameObject.SetActive(true);
+                        SetButtonLabel(playAgainButton, "Main Menu");
+                    }
+                }
+                else if (playAgainButton != null)
+                {
+                    SetButtonLabel(playAgainButton, "Main Menu");
+                }
+            }
+
             if (continueButton != null)
             {
                 SetButtonLabel(continueButton, requiresAdaptationBeforeContinue ? "Select Adaptation" : "Continue Campaign");
+            }
+
+            if (!victory && hasPendingDefeatCarryoverEvent && continueButton != null)
+            {
+                SetButtonLabel(continueButton, "Preserve Spores for Next Run");
             }
 
             ApplyControlReadabilityOverrides();
@@ -595,7 +638,10 @@ namespace FungusToast.Unity.UI
             return snapshot;
         }
 
-        public void ShowCampaignPendingDefeatCarryoverSelection(IReadOnlyList<AdaptationDefinition> options, int selectionCapacity)
+        public void ShowCampaignPendingDefeatCarryoverSelection(
+            IReadOnlyList<AdaptationDefinition> options,
+            int selectionCapacity,
+            DefeatCarryoverEntryMode entryMode = DefeatCarryoverEntryMode.ImmediateLossScreen)
         {
             SetPostAdaptationConfirmationState(false);
             ShowDefeatCarryoverSelectionRows(options, selectionCapacity);
@@ -604,17 +650,23 @@ namespace FungusToast.Unity.UI
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = true;
             requiresMoldinessRewardSelection = false;
+            hasPendingDefeatCarryoverEvent = false;
             selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = Mathf.Max(0, Mathf.Min(selectionCapacity, options?.Count ?? 0));
             selectedDefeatCarryoverAdaptationIds.Clear();
             defeatCarryoverOptionImages.Clear();
             moldinessRewardOptionBackgrounds.Clear();
+            pendingDefeatCarryoverOptions.Clear();
+            pendingDefeatCarryoverEntryMode = entryMode;
 
             if (outcomeLabel != null)
             {
+                string subtitle = entryMode == DefeatCarryoverEntryMode.DeferredResumePrompt
+                    ? $"These spores are waiting from your last failed campaign. Choose {defeatCarryoverSelectionCapacity} adaptation{Pluralize(defeatCarryoverSelectionCapacity)} to carry into your next run."
+                    : $"Choose {defeatCarryoverSelectionCapacity} adaptation{Pluralize(defeatCarryoverSelectionCapacity)} to carry into your next run.";
                 outcomeLabel.text =
                     $"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Preserve your spores</b></color>\n" +
-                    $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Choose {defeatCarryoverSelectionCapacity} adaptation{Pluralize(defeatCarryoverSelectionCapacity)} to carry into your next run.</color></size>";
+                    $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>{subtitle}</color></size>";
             }
 
             if (continueButton != null)
@@ -627,7 +679,8 @@ namespace FungusToast.Unity.UI
 
             if (playAgainButton != null)
             {
-                playAgainButton.gameObject.SetActive(false);
+                playAgainButton.gameObject.SetActive(true);
+                SetButtonLabel(playAgainButton, "Main Menu");
             }
 
             if (exitButton != null)
@@ -1403,7 +1456,6 @@ namespace FungusToast.Unity.UI
             description.alignment = TextAlignmentOptions.Left;
             description.enableAutoSizing = false;
             description.fontSize = 14f;
-            description.enableWordWrapping = true;
             description.textWrappingMode = TextWrappingModes.Normal;
             description.overflowMode = TextOverflowModes.Ellipsis;
             description.maxVisibleLines = 2;
@@ -1519,6 +1571,15 @@ namespace FungusToast.Unity.UI
 
         private void OnContinueCampaign()
         {
+            if (hasPendingDefeatCarryoverEvent)
+            {
+                ShowCampaignPendingDefeatCarryoverSelection(
+                    pendingDefeatCarryoverOptions,
+                    defeatCarryoverSelectionCapacity,
+                    pendingDefeatCarryoverEntryMode);
+                return;
+            }
+
             if (requiresDefeatCarryoverSelection)
             {
                 var manager = GameManager.Instance;
@@ -1659,16 +1720,35 @@ namespace FungusToast.Unity.UI
             StopAllCoroutines();
             HidePlayerDetails();
             SetPostAdaptationConfirmationState(false);
+            hasPendingDefeatCarryoverEvent = false;
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = false;
             selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
+            pendingDefeatCarryoverOptions.Clear();
+            pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
             moldinessRewardOptionBackgrounds.Clear();
             canvasGroup.alpha = 0f;
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
             gameObject.SetActive(false);
+        }
+
+        private void ConfigurePendingDefeatCarryoverEvent(
+            IReadOnlyList<AdaptationDefinition> options,
+            int selectionCapacity,
+            DefeatCarryoverEntryMode entryMode)
+        {
+            pendingDefeatCarryoverOptions.Clear();
+            if (options != null)
+            {
+                pendingDefeatCarryoverOptions.AddRange(options.Where(option => option != null));
+            }
+
+            defeatCarryoverSelectionCapacity = Mathf.Max(0, Mathf.Min(selectionCapacity, pendingDefeatCarryoverOptions.Count));
+            hasPendingDefeatCarryoverEvent = defeatCarryoverSelectionCapacity > 0 && pendingDefeatCarryoverOptions.Count > 0;
+            pendingDefeatCarryoverEntryMode = entryMode;
         }
 
         private static void SetButtonLabel(Button button, string text)

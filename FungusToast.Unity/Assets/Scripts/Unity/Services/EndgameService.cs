@@ -241,26 +241,28 @@ namespace FungusToast.Unity
 
             if (isCampaign)
             {
-                if (!humanWon && campaignController.IsAwaitingDefeatCarryoverSelection)
-                {
-                    var carryoverOptions = campaignController.GetPendingDefeatCarryoverOptions();
-                    int carryoverCapacity = Mathf.Max(0, campaignController.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0);
-                    ui.EndGamePanel.ShowCampaignPendingDefeatCarryoverSelection(carryoverOptions, carryoverCapacity);
-                }
-                else if (humanWon && campaignController.HasPendingMoldinessUnlockChoice && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot) && pendingSnapshot != null)
+                if (humanWon && campaignController.HasPendingMoldinessUnlockChoice && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot) && pendingSnapshot != null)
                 {
                     var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(), 3);
                     ui.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(pendingSnapshot, offers);
                 }
                 else
                 {
+                    var carryoverOptions = !humanWon && campaignController.IsAwaitingDefeatCarryoverSelection
+                        ? campaignController.GetPendingDefeatCarryoverOptions()
+                        : Array.Empty<FungusToast.Core.Campaign.AdaptationDefinition>();
+                    int carryoverCapacity = !humanWon && campaignController.IsAwaitingDefeatCarryoverSelection
+                        ? Mathf.Max(0, campaignController.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0)
+                        : 0;
                     ui.EndGamePanel.ShowResultsWithOutcome(
                         ranked, board, endgamePlayerStatistics, true, humanWon,
                         finalLevelPreAdvance && humanWon, hasNextLevel,
                         humanWon ? completedLevelDisplay : lostLevelDisplay,
                         completedLevelDisplay,
                         campaignController.State.pendingAdaptationSelection,
-                        campaignController.PendingVictorySnapshot);
+                        campaignController.PendingVictorySnapshot,
+                        carryoverOptions,
+                        carryoverCapacity);
                 }
             }
             else
@@ -900,6 +902,16 @@ namespace FungusToast.Unity
                 Debug.LogError("[GameManager] Cannot start campaign: CampaignProgression not assigned.");
                 return;
             }
+            if (FungusToast.Unity.Campaign.CampaignSaveService.Exists())
+            {
+                campaignController.Resume();
+                if (campaignController.IsAwaitingDefeatCarryoverSelection)
+                {
+                    setGameMode(GameMode.Campaign);
+                    ShowPendingCampaignDefeatCarryoverScreen(campaignController, UI.DefeatCarryoverEntryMode.DeferredResumePrompt);
+                    return;
+                }
+            }
 
             campaignController.StartNew(humanMoldIndex);
             setGameMode(GameMode.Campaign);
@@ -920,7 +932,7 @@ namespace FungusToast.Unity
 
             if (campaignController.IsAwaitingDefeatCarryoverSelection)
             {
-                ShowPendingCampaignDefeatCarryoverScreen(campaignController);
+                ShowPendingCampaignDefeatCarryoverScreen(campaignController, UI.DefeatCarryoverEntryMode.DeferredResumePrompt);
                 return;
             }
 
@@ -980,7 +992,9 @@ namespace FungusToast.Unity
             gameUIManager.EndGamePanel.ShowCampaignPendingVictorySnapshot(snapshot);
         }
 
-        private void ShowPendingCampaignDefeatCarryoverScreen(CampaignController campaignController)
+        private void ShowPendingCampaignDefeatCarryoverScreen(
+            CampaignController campaignController,
+            UI.DefeatCarryoverEntryMode entryMode = UI.DefeatCarryoverEntryMode.ImmediateLossScreen)
         {
             if (campaignController == null || gameUIManager?.EndGamePanel == null)
             {
@@ -1002,7 +1016,7 @@ namespace FungusToast.Unity
 
             var carryoverOptions = campaignController.GetPendingDefeatCarryoverOptions();
             int carryoverCapacity = Mathf.Max(0, campaignController.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0);
-            gameUIManager.EndGamePanel.ShowCampaignPendingDefeatCarryoverSelection(carryoverOptions, carryoverCapacity);
+            gameUIManager.EndGamePanel.ShowCampaignPendingDefeatCarryoverSelection(carryoverOptions, carryoverCapacity, entryMode);
         }
 
         private void ShowPendingCampaignMoldinessRewardScreen(CampaignController campaignController, CampaignVictorySnapshot snapshot)
