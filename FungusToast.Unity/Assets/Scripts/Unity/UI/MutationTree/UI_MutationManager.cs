@@ -45,6 +45,7 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private MutationTreeBuilder mutationTreeBuilder;
 
         [Header("Dock")]
+        [SerializeField] private Button dockButton;
         [SerializeField] private TextMeshProUGUI dockButtonText;
 
         [Header("UI Wiring")]
@@ -124,8 +125,14 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void OnEnable()
         {
+            SetDockButtonVisible(true);
             RefreshResponsiveMutationPanelLayout();
             StartCoroutine(RefreshResponsiveMutationPanelLayoutNextFrame());
+        }
+
+        private void OnDisable()
+        {
+            SetDockButtonVisible(false);
         }
 
         private void OnRectTransformDimensionsChange()
@@ -214,6 +221,8 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 dockButtonText.text = ">";
             }
+
+            SetDockButtonVisible(false);
 
             if (spendPointsButton != null)
             {
@@ -609,7 +618,15 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void TogglePanelDock()
         {
+            if (!isActiveAndEnabled || mutationTreePanel == null)
+            {
+                return;
+            }
+
             if (pendingTargetedSurgeSelection != null)
+                return;
+
+            if (isSliding)
                 return;
 
             if (isTreeOpen)
@@ -642,6 +659,8 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 dockButtonText.text = ">";
             }
+
+            SetDockButtonVisible(false);
         }
 
 
@@ -651,6 +670,7 @@ namespace FungusToast.Unity.UI.MutationTree
             isSliding = true;
 
             mutationTreePanel.SetActive(true);
+            SetDockButtonVisible(true);
             isTreeOpen = true;
             RefreshResponsiveMutationPanelLayout();
             yield return null;
@@ -705,7 +725,16 @@ namespace FungusToast.Unity.UI.MutationTree
             if (dockButtonText != null)
                 dockButtonText.text = ">";
 
+            SetDockButtonVisible(false);
             isSliding = false;
+        }
+
+        private void SetDockButtonVisible(bool visible)
+        {
+            if (dockButton != null)
+            {
+                dockButton.gameObject.SetActive(visible);
+            }
         }
 
         private void TryEndHumanTurn()
