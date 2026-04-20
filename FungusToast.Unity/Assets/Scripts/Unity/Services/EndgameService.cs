@@ -1092,7 +1092,8 @@ namespace FungusToast.Unity
             PreparePendingCampaignSnapshotPresentation(campaignController, snapshot);
 
             var offers = campaignController.GetPendingMoldinessUnlockOffers(getRng(), 3);
-            gameUIManager.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(snapshot, offers);
+            bool returnToCampaignMenuAfterSelection = modeSelectPanel != null && !modeSelectPanel.activeSelf;
+            gameUIManager.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(snapshot, offers, returnToCampaignMenuAfterSelection);
         }
 
         private void PreparePendingCampaignSnapshotPresentation(CampaignController campaignController, CampaignVictorySnapshot snapshot)
