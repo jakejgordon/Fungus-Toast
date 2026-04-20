@@ -392,14 +392,14 @@ namespace FungusToast.Unity.UI.Campaign
 
             UpdateVersionLabel();
 
-            if (creditsButton != null)
-            {
-                creditsButton.transform.SetAsLastSibling();
-            }
-
             if (settingsButton != null)
             {
                 settingsButton.transform.SetAsLastSibling();
+            }
+
+            if (creditsButton != null)
+            {
+                creditsButton.transform.SetAsLastSibling();
             }
 
             if (quitButton != null)
