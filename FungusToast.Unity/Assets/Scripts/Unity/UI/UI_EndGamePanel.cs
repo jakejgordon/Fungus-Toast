@@ -109,7 +109,7 @@ namespace FungusToast.Unity.UI
         private readonly HashSet<string> selectedDefeatCarryoverAdaptationIds = new();
         private readonly Dictionary<string, Image> defeatCarryoverOptionImages = new();
         private readonly List<Image> moldinessRewardOptionBackgrounds = new();
-        private readonly Dictionary<string, MoldinessRewardOptionVisual> moldinessRewardOptionVisuals = new();
+        private readonly List<MoldinessRewardOptionVisual> moldinessRewardOptionVisuals = new();
         private readonly List<AdaptationDefinition> pendingDefeatCarryoverOptions = new();
         private bool returnToCampaignMenuAfterMoldinessReward;
         private DefeatCarryoverEntryMode pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
@@ -141,8 +141,10 @@ namespace FungusToast.Unity.UI
 
         private sealed class MoldinessRewardOptionVisual
         {
+            public string RewardId;
             public Image Background;
             public Image FillOverlay;
+            public Outline FillOverlayOutline;
             public Outline Outline;
             public Image BadgeBackground;
         }
@@ -1424,15 +1426,19 @@ namespace FungusToast.Unity.UI
             var fillOverlayRect = fillOverlayObject.GetComponent<RectTransform>();
             fillOverlayRect.anchorMin = Vector2.zero;
             fillOverlayRect.anchorMax = Vector2.one;
-            fillOverlayRect.offsetMin = new Vector2(4f, 4f);
-            fillOverlayRect.offsetMax = new Vector2(-4f, -4f);
+            fillOverlayRect.offsetMin = new Vector2(3f, 3f);
+            fillOverlayRect.offsetMax = new Vector2(-3f, -3f);
             var fillOverlay = fillOverlayObject.GetComponent<Image>();
             var selectedTint = UIStyleTokens.Button.BackgroundSelected;
-            selectedTint.a = 0.42f;
+            selectedTint.a = 0.18f;
             fillOverlay.color = selectedTint;
             fillOverlay.raycastTarget = false;
             fillOverlay.enabled = false;
             fillOverlayObject.SetActive(false);
+            var fillOverlayOutline = fillOverlayObject.AddComponent<Outline>();
+            fillOverlayOutline.effectColor = new Color(UIStyleTokens.Button.BackgroundSelected.r, UIStyleTokens.Button.BackgroundSelected.g, UIStyleTokens.Button.BackgroundSelected.b, 1f);
+            fillOverlayOutline.effectDistance = new Vector2(2f, -2f);
+            fillOverlayOutline.enabled = false;
 
             var outline = buttonObject.AddComponent<Outline>();
             outline.effectColor = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.35f);
@@ -1462,13 +1468,17 @@ namespace FungusToast.Unity.UI
             var badgeImage = badgeObject.GetComponent<Image>();
             badgeImage.color = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
 
-            moldinessRewardOptionVisuals[offer.Id] = new MoldinessRewardOptionVisual
+            var visual = new MoldinessRewardOptionVisual
             {
+                RewardId = offer.Id,
                 Background = background,
                 FillOverlay = fillOverlay,
+                FillOverlayOutline = fillOverlayOutline,
                 Outline = outline,
                 BadgeBackground = badgeImage
             };
+
+            moldinessRewardOptionVisuals.Add(visual);
 
             var badgeLabel = CreateCarryoverInfoText(badgeObject.transform, offer.CategoryLabel ?? string.Empty, 16f, offer.AccentColor, FontStyles.Bold);
             var badgeLabelLayout = badgeLabel.GetComponent<LayoutElement>();
@@ -1551,6 +1561,8 @@ namespace FungusToast.Unity.UI
                 tooltipTrigger.SetAutoPlacementOffsetX(24f);
             }
 
+            fillOverlayObject.transform.SetAsLastSibling();
+
             var button = buttonObject.GetComponent<Button>();
             UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
             var colors = button.colors;
@@ -1561,7 +1573,7 @@ namespace FungusToast.Unity.UI
             button.colors = colors;
             button.transition = Selectable.Transition.None;
             button.targetGraphic = background;
-            button.onClick.AddListener(() => SelectMoldinessReward(offer.Id, background));
+            button.onClick.AddListener(() => SelectMoldinessReward(visual));
         }
 
         private static Sprite GetMoldinessRewardIcon(MoldinessUnlockDefinition offer)
@@ -1600,19 +1612,24 @@ namespace FungusToast.Unity.UI
                 40);
         }
 
-        private void SelectMoldinessReward(string rewardId, Image selectedBackground)
+        private void SelectMoldinessReward(MoldinessRewardOptionVisual clickedVisual)
         {
-            bool togglingOff = string.Equals(selectedMoldinessRewardId, rewardId, StringComparison.Ordinal);
-            selectedMoldinessRewardId = togglingOff ? null : rewardId;
-
-            foreach (var pair in moldinessRewardOptionVisuals)
+            if (clickedVisual == null)
             {
-                ApplyMoldinessRewardOptionVisualState(pair.Value, isSelected: false);
+                return;
             }
 
-            if (!togglingOff && moldinessRewardOptionVisuals.TryGetValue(rewardId, out var selectedVisual))
+            bool togglingOff = string.Equals(selectedMoldinessRewardId, clickedVisual.RewardId, StringComparison.Ordinal);
+            selectedMoldinessRewardId = togglingOff ? null : clickedVisual.RewardId;
+
+            for (int i = 0; i < moldinessRewardOptionVisuals.Count; i++)
             {
-                ApplyMoldinessRewardOptionVisualState(selectedVisual, isSelected: true);
+                ApplyMoldinessRewardOptionVisualState(moldinessRewardOptionVisuals[i], isSelected: false);
+            }
+
+            if (!togglingOff)
+            {
+                ApplyMoldinessRewardOptionVisualState(clickedVisual, isSelected: true);
             }
 
             EventSystem.current?.SetSelectedGameObject(null);
@@ -1641,7 +1658,7 @@ namespace FungusToast.Unity.UI
                 if (isSelected)
                 {
                     var selectedTint = UIStyleTokens.Button.BackgroundSelected;
-                    selectedTint.a = 0.42f;
+                    selectedTint.a = 0.18f;
                     visual.FillOverlay.color = selectedTint;
                     visual.FillOverlay.enabled = true;
                     visual.FillOverlay.gameObject.SetActive(true);
@@ -1651,6 +1668,11 @@ namespace FungusToast.Unity.UI
                     visual.FillOverlay.enabled = false;
                     visual.FillOverlay.gameObject.SetActive(false);
                 }
+            }
+
+            if (visual.FillOverlayOutline != null)
+            {
+                visual.FillOverlayOutline.enabled = isSelected;
             }
 
             if (visual.Outline != null)
