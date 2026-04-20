@@ -109,6 +109,7 @@ namespace FungusToast.Unity.UI
         private readonly HashSet<string> selectedDefeatCarryoverAdaptationIds = new();
         private readonly Dictionary<string, Image> defeatCarryoverOptionImages = new();
         private readonly List<Image> moldinessRewardOptionBackgrounds = new();
+        private readonly Dictionary<string, MoldinessRewardOptionVisual> moldinessRewardOptionVisuals = new();
         private readonly List<AdaptationDefinition> pendingDefeatCarryoverOptions = new();
         private bool returnToCampaignMenuAfterMoldinessReward;
         private DefeatCarryoverEntryMode pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
@@ -137,6 +138,13 @@ namespace FungusToast.Unity.UI
         private bool showPostAdaptationConfirmationState;
 
         private bool UseVerticalActionStack => showPostAdaptationConfirmationState || requiresMoldinessRewardSelection;
+
+        private sealed class MoldinessRewardOptionVisual
+        {
+            public Image Background;
+            public Outline Outline;
+            public Image BadgeBackground;
+        }
 
         // Post-victory campaign testing controls (runtime-built to avoid scene dependency).
         private GameObject postVictoryTestingRoot;
@@ -407,6 +415,7 @@ namespace FungusToast.Unity.UI
             selectedMoldinessRewardId = null;
             selectedDefeatCarryoverAdaptationIds.Clear();
             moldinessRewardOptionBackgrounds.Clear();
+            moldinessRewardOptionVisuals.Clear();
             defeatCarryoverSelectionCapacity = 0;
             if (continueButton != null)
                 continueButton.gameObject.SetActive(victory && !finalLevel && hasNextLevel);
@@ -666,6 +675,7 @@ namespace FungusToast.Unity.UI
             selectedDefeatCarryoverAdaptationIds.Clear();
             defeatCarryoverOptionImages.Clear();
             moldinessRewardOptionBackgrounds.Clear();
+            moldinessRewardOptionVisuals.Clear();
             pendingDefeatCarryoverOptions.Clear();
             pendingDefeatCarryoverEntryMode = entryMode;
 
@@ -726,6 +736,7 @@ namespace FungusToast.Unity.UI
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
             moldinessRewardOptionBackgrounds.Clear();
+            moldinessRewardOptionVisuals.Clear();
 
             if (outcomeLabel != null)
             {
@@ -923,6 +934,7 @@ namespace FungusToast.Unity.UI
             }
 
             moldinessRewardOptionBackgrounds.Clear();
+            moldinessRewardOptionVisuals.Clear();
             BuildCampaignTopSpacer();
             BuildMoldinessRewardSelectionContent(snapshot, offers);
 
@@ -1406,7 +1418,7 @@ namespace FungusToast.Unity.UI
             moldinessRewardOptionBackgrounds.Add(background);
 
             var outline = buttonObject.AddComponent<Outline>();
-            outline.effectColor = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.55f);
+            outline.effectColor = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.35f);
             outline.effectDistance = new Vector2(1.5f, -1.5f);
 
             var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image));
@@ -1432,6 +1444,13 @@ namespace FungusToast.Unity.UI
             badgeRect.sizeDelta = new Vector2(300f, 26f);
             var badgeImage = badgeObject.GetComponent<Image>();
             badgeImage.color = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
+
+            moldinessRewardOptionVisuals[offer.Id] = new MoldinessRewardOptionVisual
+            {
+                Background = background,
+                Outline = outline,
+                BadgeBackground = badgeImage
+            };
 
             var badgeLabel = CreateCarryoverInfoText(badgeObject.transform, offer.CategoryLabel ?? string.Empty, 16f, offer.AccentColor, FontStyles.Bold);
             var badgeLabelLayout = badgeLabel.GetComponent<LayoutElement>();
@@ -1577,9 +1596,22 @@ namespace FungusToast.Unity.UI
                 }
             }
 
-            if (!togglingOff && selectedBackground != null)
+            foreach (var pair in moldinessRewardOptionVisuals)
             {
-                selectedBackground.color = UIStyleTokens.State.Success;
+                ApplyMoldinessRewardOptionVisualState(pair.Value, isSelected: false);
+            }
+
+            if (!togglingOff)
+            {
+                if (selectedBackground != null)
+                {
+                    selectedBackground.color = UIStyleTokens.Button.BackgroundSelected;
+                }
+
+                if (moldinessRewardOptionVisuals.TryGetValue(rewardId, out var selectedVisual))
+                {
+                    ApplyMoldinessRewardOptionVisualState(selectedVisual, isSelected: true);
+                }
             }
 
             EventSystem.current?.SetSelectedGameObject(null);
@@ -1588,6 +1620,36 @@ namespace FungusToast.Unity.UI
             {
                 continueButton.interactable = !togglingOff;
                 SetButtonLabel(continueButton, togglingOff ? "Choose Moldiness Reward" : "Claim Moldiness Reward");
+            }
+        }
+
+        private static void ApplyMoldinessRewardOptionVisualState(MoldinessRewardOptionVisual visual, bool isSelected)
+        {
+            if (visual == null)
+            {
+                return;
+            }
+
+            if (visual.Background != null)
+            {
+                visual.Background.color = isSelected
+                    ? UIStyleTokens.Button.BackgroundSelected
+                    : UIStyleTokens.Surface.PanelElevated;
+            }
+
+            if (visual.Outline != null)
+            {
+                visual.Outline.effectColor = isSelected
+                    ? new Color(UIStyleTokens.Button.BackgroundSelected.r, UIStyleTokens.Button.BackgroundSelected.g, UIStyleTokens.Button.BackgroundSelected.b, 0.95f)
+                    : new Color(UIStyleTokens.Text.Muted.r, UIStyleTokens.Text.Muted.g, UIStyleTokens.Text.Muted.b, 0.35f);
+                visual.Outline.effectDistance = isSelected ? new Vector2(2.5f, -2.5f) : new Vector2(1.5f, -1.5f);
+            }
+
+            if (visual.BadgeBackground != null)
+            {
+                visual.BadgeBackground.color = isSelected
+                    ? new Color(UIStyleTokens.Button.BackgroundSelected.r, UIStyleTokens.Button.BackgroundSelected.g, UIStyleTokens.Button.BackgroundSelected.b, 0.42f)
+                    : new Color(UIStyleTokens.Surface.PanelPrimary.r, UIStyleTokens.Surface.PanelPrimary.g, UIStyleTokens.Surface.PanelPrimary.b, 0.65f);
             }
         }
 
@@ -1778,6 +1840,7 @@ namespace FungusToast.Unity.UI
             pendingDefeatCarryoverOptions.Clear();
             pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
             moldinessRewardOptionBackgrounds.Clear();
+            moldinessRewardOptionVisuals.Clear();
             canvasGroup.alpha = 0f;
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
@@ -3168,6 +3231,34 @@ namespace FungusToast.Unity.UI
                 if (endGamePostAdaptationRoot != null)
                 {
                     endGamePostAdaptationRoot.gameObject.SetActive(UseVerticalActionStack);
+                }
+
+                if (endGameMainColumnRoot != null)
+                {
+                    if (legacyResultsTitleText != null)
+                    {
+                        legacyResultsTitleText.transform.SetSiblingIndex(0);
+                    }
+
+                    if (requiresMoldinessRewardSelection)
+                    {
+                        if (endGameResultsScrollRoot != null)
+                        {
+                            endGameResultsScrollRoot.SetSiblingIndex(1);
+                        }
+
+                        if (endGamePostAdaptationRoot != null)
+                        {
+                            endGamePostAdaptationRoot.SetSiblingIndex(2);
+                        }
+                    }
+                    else if (showPostAdaptationConfirmationState)
+                    {
+                        if (endGamePostAdaptationRoot != null)
+                        {
+                            endGamePostAdaptationRoot.SetSiblingIndex(1);
+                        }
+                    }
                 }
 
                 if (endGameTestingRailLayoutElement != null)
