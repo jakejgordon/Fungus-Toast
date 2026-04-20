@@ -35,13 +35,13 @@ Recommended naming:
 - `sfx_phase_decay_start_01.wav`
 - `sfx_phase_draft_start_01.wav`
 - `sfx_phase_growth_cycle_tick_01.wav`
-- `music_enoki_of_c_01.mp3`
-- `music_spororific_lounge_01.mp3`
-- `music_fun_guses_lament_01.mp3`
+- `track_01_enoki_of_c.mp3`
+- `track_02_spororific_lounge.mp3`
+- `track_03_fun_guses_lament.mp3`
 
 Keep variations grouped by suffix (`_01`, `_02`, `_03`) rather than inventing new names for the same cue family.
 
-For gameplay music, use the same lowercase underscore pattern with a `music_` prefix and a version suffix.
+For gameplay music, use the same lowercase underscore pattern with a `track_XX_` prefix, where `XX` is a unique two-digit track number. Keep titles space-free by using underscores.
 
 ### Batch Converting iPhone `.m4a` Files to `.wav`
 
@@ -146,12 +146,12 @@ Current behavior:
 
 Currently assigned in the active gameplay scene playlist:
 
-- `music_enoki_of_c_01.mp3`
-- `music_spororific_lounge_01.mp3`
-- `music_fun_guses_lament_01.mp3`
-- `music_mycorizing_01.mp3`
-- `music_break_from_the_mold_01.mp3`
-- `music_twice cooked bread_01.mp3`
+- `track_01_enoki_of_c.mp3`
+- `track_02_spororific_lounge.mp3`
+- `track_03_fun_guses_lament.mp3`
+- `track_04_mycorizing.mp3`
+- `track_05_break_from_the_mold.mp3`
+- `track_06_twice_cooked_bread.mp3`
 
 ### Standard workflow for adding a new gameplay music track
 
@@ -205,7 +205,7 @@ Canonical import settings for gameplay music assets:
 Practical guidance:
 
 - if Unity imports a new music file with `preloadAudioData: 0`, `loadInBackground: 0`, or `3D: 1`, fix the `.meta` to match the existing gameplay tracks
-- prefer matching the import profile of `music_enoki_of_c_01` unless there is a deliberate reason not to
+- prefer matching the import profile of `track_01_enoki_of_c.mp3` unless there is a deliberate reason not to
 - when wiring a new clip into the active playlist, preserve the existing track assignments and append the new track unless the user asked to replace or reorder the playlist
 - treat the scene YAML as authoritative for what is actually live in the current gameplay playlist
 
