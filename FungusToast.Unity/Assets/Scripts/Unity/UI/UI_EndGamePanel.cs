@@ -1289,7 +1289,7 @@ namespace FungusToast.Unity.UI
             rootBackground.raycastTarget = false;
 
             var rootLayout = root.GetComponent<VerticalLayoutGroup>();
-            rootLayout.spacing = 10f;
+            rootLayout.spacing = 12f;
             rootLayout.padding = new RectOffset(16, 16, 14, 14);
             rootLayout.childAlignment = TextAnchor.UpperCenter;
             rootLayout.childControlWidth = true;
@@ -1308,13 +1308,13 @@ namespace FungusToast.Unity.UI
 
             var info = CreateCarryoverInfoText(root.transform,
                 "Win campaign games to unlock rewards and permanent improvements that benefit all future campaign runs.",
-                16f,
+                18f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
             info.alignment = TextAlignmentOptions.Center;
             info.enableAutoSizing = true;
-            info.fontSizeMax = 16f;
-            info.fontSizeMin = 13f;
+            info.fontSizeMax = 18f;
+            info.fontSizeMin = 16f;
 
             if (offers == null || offers.Count == 0)
             {
@@ -1337,7 +1337,7 @@ namespace FungusToast.Unity.UI
             offersRect.sizeDelta = Vector2.zero;
 
             var offersLayout = offersColumn.GetComponent<VerticalLayoutGroup>();
-            offersLayout.spacing = 8f;
+            offersLayout.spacing = 6f;
             offersLayout.childAlignment = TextAnchor.UpperCenter;
             offersLayout.childControlWidth = true;
             offersLayout.childControlHeight = true;
@@ -1346,8 +1346,8 @@ namespace FungusToast.Unity.UI
 
             var offersElement = offersColumn.GetComponent<LayoutElement>();
             offersElement.flexibleWidth = 0f;
-            offersElement.preferredWidth = 520f;
-            offersElement.minWidth = 500f;
+            offersElement.preferredWidth = 360f;
+            offersElement.minWidth = 340f;
             offersElement.preferredHeight = -1f;
 
             var offersFitter = offersColumn.GetComponent<ContentSizeFitter>();
@@ -1371,8 +1371,8 @@ namespace FungusToast.Unity.UI
             buttonObject.transform.SetParent(parent, false);
 
             var layout = buttonObject.GetComponent<LayoutElement>();
-            layout.minHeight = 112f;
-            layout.preferredHeight = 112f;
+            layout.minHeight = 88f;
+            layout.preferredHeight = 88f;
             layout.flexibleWidth = 1f;
 
             var background = buttonObject.GetComponent<Image>();
@@ -1394,8 +1394,8 @@ namespace FungusToast.Unity.UI
             iconRect.anchorMin = new Vector2(0f, 0.5f);
             iconRect.anchorMax = new Vector2(0f, 0.5f);
             iconRect.pivot = new Vector2(0f, 0.5f);
-            iconRect.anchoredPosition = new Vector2(14f, 0f);
-            iconRect.sizeDelta = new Vector2(72f, 72f);
+            iconRect.anchoredPosition = new Vector2(12f, 0f);
+            iconRect.sizeDelta = new Vector2(56f, 56f);
 
             var badgeObject = new GameObject("CategoryBadge", typeof(RectTransform), typeof(Image));
             badgeObject.transform.SetParent(buttonObject.transform, false);
@@ -1403,16 +1403,16 @@ namespace FungusToast.Unity.UI
             badgeRect.anchorMin = new Vector2(1f, 1f);
             badgeRect.anchorMax = new Vector2(1f, 1f);
             badgeRect.pivot = new Vector2(1f, 1f);
-            badgeRect.anchoredPosition = new Vector2(-12f, -10f);
-            badgeRect.sizeDelta = new Vector2(270f, 24f);
+            badgeRect.anchoredPosition = new Vector2(-10f, -10f);
+            badgeRect.sizeDelta = new Vector2(210f, 26f);
             var badgeImage = badgeObject.GetComponent<Image>();
             badgeImage.color = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
 
-            var badgeLabel = CreateCarryoverInfoText(badgeObject.transform, offer.CategoryLabel ?? string.Empty, 11f, offer.AccentColor, FontStyles.Bold);
+            var badgeLabel = CreateCarryoverInfoText(badgeObject.transform, offer.CategoryLabel ?? string.Empty, 16f, offer.AccentColor, FontStyles.Bold);
             badgeLabel.alignment = TextAlignmentOptions.Center;
             badgeLabel.enableAutoSizing = true;
-            badgeLabel.fontSizeMax = 11f;
-            badgeLabel.fontSizeMin = 9f;
+            badgeLabel.fontSizeMax = 16f;
+            badgeLabel.fontSizeMin = 14f;
 
             var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
             titleObject.transform.SetParent(buttonObject.transform, false);
@@ -1420,17 +1420,17 @@ namespace FungusToast.Unity.UI
             titleRect.anchorMin = new Vector2(0f, 1f);
             titleRect.anchorMax = new Vector2(1f, 1f);
             titleRect.pivot = new Vector2(0f, 1f);
-            titleRect.offsetMin = new Vector2(100f, -40f);
-            titleRect.offsetMax = new Vector2(-292f, -10f);
+            titleRect.offsetMin = new Vector2(80f, -34f);
+            titleRect.offsetMax = new Vector2(-226f, -8f);
             var title = titleObject.GetComponent<TextMeshProUGUI>();
             title.text = offer.DisplayName;
-            title.fontSize = 18f;
+            title.fontSize = 22f;
             title.fontStyle = FontStyles.Bold;
             title.color = UIStyleTokens.Text.Primary;
             title.alignment = TextAlignmentOptions.Left;
             title.enableAutoSizing = true;
-            title.fontSizeMax = 18f;
-            title.fontSizeMin = 13f;
+            title.fontSizeMax = 22f;
+            title.fontSizeMin = 18f;
             title.textWrappingMode = TextWrappingModes.NoWrap;
             title.overflowMode = TextOverflowModes.Ellipsis;
             title.maxVisibleLines = 1;
@@ -1441,15 +1441,17 @@ namespace FungusToast.Unity.UI
             descriptionRect.anchorMin = new Vector2(0f, 0f);
             descriptionRect.anchorMax = new Vector2(1f, 1f);
             descriptionRect.pivot = new Vector2(0f, 0.5f);
-            descriptionRect.offsetMin = new Vector2(100f, 14f);
-            descriptionRect.offsetMax = new Vector2(-14f, -42f);
+            descriptionRect.offsetMin = new Vector2(80f, 10f);
+            descriptionRect.offsetMax = new Vector2(-12f, -34f);
             var description = descriptionObject.GetComponent<TextMeshProUGUI>();
             description.text = offer.Description;
-            description.fontSize = 14f;
+            description.fontSize = 17f;
             description.fontStyle = FontStyles.Normal;
             description.color = UIStyleTokens.Text.Secondary;
             description.alignment = TextAlignmentOptions.TopLeft;
-            description.enableAutoSizing = false;
+            description.enableAutoSizing = true;
+            description.fontSizeMax = 17f;
+            description.fontSizeMin = 16f;
             description.textWrappingMode = TextWrappingModes.Normal;
             description.overflowMode = TextOverflowModes.Ellipsis;
             description.maxVisibleLines = 2;

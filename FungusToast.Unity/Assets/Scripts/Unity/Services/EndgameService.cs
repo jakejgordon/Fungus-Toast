@@ -1019,6 +1019,11 @@ namespace FungusToast.Unity
 
             modeSelectPanel?.SetActive(false);
             startGamePanel?.gameObject.SetActive(false);
+            var campaignPanel = modeSelectPanel != null ? modeSelectPanel.transform.Find("UI_CampaignPanel") : null;
+            if (campaignPanel != null)
+            {
+                campaignPanel.gameObject.SetActive(false);
+            }
 
             gameUIManager.LoadingScreen?.gameObject.SetActive(false);
             gameUIManager.LeftSidebar?.gameObject.SetActive(false);
@@ -1044,6 +1049,11 @@ namespace FungusToast.Unity
 
             modeSelectPanel?.SetActive(false);
             startGamePanel?.gameObject.SetActive(false);
+            var campaignPanel = modeSelectPanel != null ? modeSelectPanel.transform.Find("UI_CampaignPanel") : null;
+            if (campaignPanel != null)
+            {
+                campaignPanel.gameObject.SetActive(false);
+            }
 
             gameUIManager.LoadingScreen?.gameObject.SetActive(false);
             gameUIManager.LeftSidebar?.gameObject.SetActive(false);
@@ -1069,6 +1079,11 @@ namespace FungusToast.Unity
 
             modeSelectPanel?.SetActive(false);
             startGamePanel?.gameObject.SetActive(false);
+            var campaignPanel = modeSelectPanel != null ? modeSelectPanel.transform.Find("UI_CampaignPanel") : null;
+            if (campaignPanel != null)
+            {
+                campaignPanel.gameObject.SetActive(false);
+            }
 
             gameUIManager.LoadingScreen?.gameObject.SetActive(false);
             gameUIManager.LeftSidebar?.gameObject.SetActive(false);
