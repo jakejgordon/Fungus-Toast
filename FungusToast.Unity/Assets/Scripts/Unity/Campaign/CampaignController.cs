@@ -51,6 +51,7 @@ namespace FungusToast.Unity.Campaign
                 ? new List<string>()
                 : GetCarryoverAdaptationIdsForNewCampaignStart(previousState);
             var persistentMoldinessState = previousState?.moldiness ?? MoldinessProgression.CreateDefaultState();
+            MoldinessUnlockService.NormalizeProgressionState(persistentMoldinessState);
             var targetSpec = progression.Get(targetLevelIndex);
             int newSeed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
             State = new CampaignState { seed = newSeed };
@@ -112,9 +113,7 @@ namespace FungusToast.Unity.Campaign
             State.pendingNextRunCarryoverAdaptationIds ??= new List<string>();
             State.temporaryTestingAdaptationIds ??= new List<string>();
             State.moldiness ??= MoldinessProgression.CreateDefaultState();
-            State.moldiness.pendingUnlockTriggers ??= new List<MoldinessUnlockTrigger>();
-            State.moldiness.unlockedRewardIds ??= new List<string>();
-            State.moldiness.unlockedAdaptationIds ??= new List<string>();
+            bool normalizedMoldinessState = MoldinessUnlockService.NormalizeProgressionState(State.moldiness);
             RestorePendingNextRunCarryoverToSelectedAdaptations();
             SanitizePendingDefeatCarryoverOptions();
             if (!State.pendingAdaptationSelection)
@@ -123,6 +122,10 @@ namespace FungusToast.Unity.Campaign
             }
 
             EnsureResolvedAiLineup();
+            if (normalizedMoldinessState)
+            {
+                CampaignSaveService.Save(State);
+            }
             Debug.Log($"[CampaignController] Resumed campaign RunId={State.runId} Level={State.levelIndex} PresetId={State.boardPresetId}");
         }
 

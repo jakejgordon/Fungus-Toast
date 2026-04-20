@@ -10,17 +10,22 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
 
         public void Initialize(MoldinessUnlockDefinition definition)
         {
-            Initialize(definition, 1);
+            Initialize(definition, 1, 0);
         }
 
         public void Initialize(MoldinessUnlockDefinition definition, int ownedCount)
         {
-            tooltipText = BuildTooltipText(definition, ownedCount);
+            Initialize(definition, ownedCount, 0);
+        }
+
+        public void Initialize(MoldinessUnlockDefinition definition, int ownedCount, int currentCarryoverCapacity)
+        {
+            tooltipText = BuildTooltipText(definition, ownedCount, currentCarryoverCapacity);
         }
 
         public string GetTooltipText() => tooltipText ?? string.Empty;
 
-        private static string BuildTooltipText(MoldinessUnlockDefinition definition, int ownedCount)
+        private static string BuildTooltipText(MoldinessUnlockDefinition definition, int ownedCount, int currentCarryoverCapacity)
         {
             if (definition == null)
             {
@@ -38,8 +43,10 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
                     $"{title}\n\n" +
                     "Permanent Campaign Upgrade\n\n" +
                     $"{definition.Description}\n\n" +
-                    $"Current stacks: {safeOwnedCount}\n\n" +
-                    $"Your Spores in Reserve capacity is currently increased by {safeOwnedCount}. On a failed campaign run, you may preserve that many non-starting adaptations from the run you just lost. Those preserved adaptations are then added to the start of your next fresh campaign run.",
+                    (currentCarryoverCapacity > 0
+                        ? $"Current carryover capacity: {currentCarryoverCapacity}\n\n"
+                        : $"Claim effect: +{Mathf.Max(1, definition.StackAmount)} carryover capacity\n\n") +
+                    $"On a failed campaign run, you may preserve up to {Mathf.Max(1, currentCarryoverCapacity > 0 ? currentCarryoverCapacity : definition.StackAmount)} non-starting adaptations from the run you just lost. Those preserved adaptations are then added to the start of your next fresh campaign run.",
                 _ =>
                     $"{title}\n\n{definition.Description}"
             };

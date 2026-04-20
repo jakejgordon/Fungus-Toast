@@ -99,14 +99,17 @@ So:
 
 ### 1. Failed-Run Carryover Reward
 
-This is the first repeatable universal moldiness reward.
+This is a five-step permanent moldiness reward line.
 
 Behavior:
-- always eligible for the moldiness reward pool, subject to any future balancing constraints
-- each time drafted, increase permanent failed-run adaptation carryover capacity by 1
+- `Spores in Reserve I` has no moldiness-level constraint beyond becoming eligible at level 1
+- `Spores in Reserve II` unlocks at Moldiness Level 5
+- `Spores in Reserve III` unlocks at Moldiness Level 8
+- `Spores in Reserve IV` unlocks at Moldiness Level 10
+- `Spores in Reserve V` unlocks at Moldiness Level 12
+- each tier is a separate one-time moldiness reward
+- each tier drafted increases permanent failed-run adaptation carryover capacity by 1
 - on failed campaigns, the player may retain up to that many adaptations into the next run
-
-This is analogous to a universal mycovariant in that it can continue appearing across moldiness levels.
 
 Suggested state field:
 - `failedRunAdaptationCarryoverCount`
@@ -172,7 +175,7 @@ This keeps meta-progression legible and avoids normal run rewards obscuring the 
 - Should some moldiness rewards apply immediately to the current run, future runs only, or both?
 - How should failed-run adaptation carryover be presented and selected at run failure time?
 - Should locked adaptations be linked directly to unlock reward ids, or resolved through a looser content-id mapping?
-- What balancing rules should control repeatable universal rewards so they remain attractive without crowding out everything else?
+- What other permanent reward lines should sit alongside the capped Spores in Reserve tiers so the pool stays attractive without crowding out everything else?
 
 ## Recommended Near-Term Implementation Order
 

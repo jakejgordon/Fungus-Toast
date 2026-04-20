@@ -753,7 +753,10 @@ namespace FungusToast.Unity.UI.Campaign
                 else
                 {
                     var provider = iconRoot.GetComponent<MoldinessRewardTooltipProvider>() ?? iconRoot.AddComponent<MoldinessRewardTooltipProvider>();
-                    provider.Initialize(reward, ownedCount);
+                    int carryoverCapacity = reward.Type == MoldinessUnlockType.IncreaseFailedRunAdaptationCarryover
+                        ? Mathf.Max(0, GameManager.Instance?.CampaignController?.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0)
+                        : 0;
+                    provider.Initialize(reward, ownedCount, carryoverCapacity);
                     tooltipTrigger.SetDynamicProvider(provider);
                 }
 
@@ -880,18 +883,9 @@ namespace FungusToast.Unity.UI.Campaign
                 ? campaignController.State.moldiness.unlockedRewardIds
                     .Select(id => MoldinessUnlockCatalog.TryGetById(id, out var definition) ? definition : null)
                     .Where(definition => definition != null)
+                    .OrderBy(definition => MoldinessUnlockCatalog.GetSortIndex(definition.Id))
                     .ToList()
                 : new List<MoldinessUnlockDefinition>();
-
-            int extraCarryoverStacks = Mathf.Max(0, campaignController.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0);
-            if (extraCarryoverStacks > 0 && MoldinessUnlockCatalog.TryGetById("moldiness_reward_failed_run_adaptation_carryover", out var carryoverReward))
-            {
-                unlockedRewards.RemoveAll(definition => definition != null && string.Equals(definition.Id, carryoverReward.Id, StringComparison.Ordinal));
-                for (int i = 0; i < extraCarryoverStacks; i++)
-                {
-                    unlockedRewards.Add(carryoverReward);
-                }
-            }
 
             if (moldinessUnlockedRewardsLabel != null)
             {
