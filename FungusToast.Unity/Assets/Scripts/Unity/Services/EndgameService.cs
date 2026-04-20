@@ -1114,7 +1114,8 @@ namespace FungusToast.Unity
                 return;
             }
 
-            ShowPendingCampaignMoldinessRewardScreen(campaignController, pendingSnapshot, true);
+            bool returnToCampaignMenuAfterSelection = !campaignController.IsAwaitingAdaptationSelection;
+            ShowPendingCampaignMoldinessRewardScreen(campaignController, pendingSnapshot, returnToCampaignMenuAfterSelection);
         }
 
         private void ShowPendingCampaignMoldinessRewardScreen(CampaignController campaignController, CampaignVictorySnapshot snapshot)
