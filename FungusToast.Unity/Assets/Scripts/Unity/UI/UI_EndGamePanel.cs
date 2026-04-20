@@ -1424,7 +1424,7 @@ namespace FungusToast.Unity.UI
             badgeRect.anchorMin = new Vector2(1f, 1f);
             badgeRect.anchorMax = new Vector2(1f, 1f);
             badgeRect.pivot = new Vector2(1f, 1f);
-            badgeRect.anchoredPosition = new Vector2(-10f, -10f);
+            badgeRect.anchoredPosition = new Vector2(-10f, -7f);
             badgeRect.sizeDelta = new Vector2(300f, 26f);
             var badgeImage = badgeObject.GetComponent<Image>();
             badgeImage.color = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
@@ -1475,7 +1475,7 @@ namespace FungusToast.Unity.UI
             descriptionRect.anchorMax = new Vector2(1f, 1f);
             descriptionRect.pivot = new Vector2(0f, 0.5f);
             descriptionRect.offsetMin = new Vector2(80f, 10f);
-            descriptionRect.offsetMax = new Vector2(-12f, -34f);
+            descriptionRect.offsetMax = new Vector2(-12f, -37f);
             var description = descriptionObject.GetComponent<TextMeshProUGUI>();
             description.text = offer.Description;
             description.fontSize = 17f;
@@ -1516,7 +1516,7 @@ namespace FungusToast.Unity.UI
             colors.normalColor = UIStyleTokens.Surface.PanelElevated;
             colors.highlightedColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.75f);
             colors.pressedColor = UIStyleTokens.Surface.PanelPrimary;
-            colors.selectedColor = UIStyleTokens.State.Success;
+            colors.selectedColor = UIStyleTokens.Surface.PanelElevated;
             button.colors = colors;
             button.transition = Selectable.Transition.ColorTint;
             button.targetGraphic = background;
@@ -1561,7 +1561,8 @@ namespace FungusToast.Unity.UI
 
         private void SelectMoldinessReward(string rewardId, Image selectedBackground)
         {
-            selectedMoldinessRewardId = rewardId;
+            bool togglingOff = string.Equals(selectedMoldinessRewardId, rewardId, StringComparison.Ordinal);
+            selectedMoldinessRewardId = togglingOff ? null : rewardId;
 
             for (int i = 0; i < moldinessRewardOptionBackgrounds.Count; i++)
             {
@@ -1572,15 +1573,15 @@ namespace FungusToast.Unity.UI
                 }
             }
 
-            if (selectedBackground != null)
+            if (!togglingOff && selectedBackground != null)
             {
                 selectedBackground.color = UIStyleTokens.State.Success;
             }
 
             if (continueButton != null)
             {
-                continueButton.interactable = true;
-                SetButtonLabel(continueButton, "Claim Moldiness Reward");
+                continueButton.interactable = !togglingOff;
+                SetButtonLabel(continueButton, togglingOff ? "Choose Moldiness Reward" : "Claim Moldiness Reward");
             }
         }
 
