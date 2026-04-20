@@ -136,6 +136,8 @@ namespace FungusToast.Unity.UI
         private bool postVictoryTestingRailVisible;
         private bool showPostAdaptationConfirmationState;
 
+        private bool UseVerticalActionStack => showPostAdaptationConfirmationState || requiresMoldinessRewardSelection;
+
         // Post-victory campaign testing controls (runtime-built to avoid scene dependency).
         private GameObject postVictoryTestingRoot;
         private Button postVictoryTestingToggleButton = null;
@@ -741,12 +743,14 @@ namespace FungusToast.Unity.UI
 
             if (playAgainButton != null)
             {
-                playAgainButton.gameObject.SetActive(false);
+                playAgainButton.gameObject.SetActive(true);
+                SetButtonLabel(playAgainButton, "Main Menu");
             }
 
             if (exitButton != null)
             {
                 exitButton.gameObject.SetActive(true);
+                SetButtonLabel(exitButton, "Exit Game");
             }
 
             UpdatePostVictoryTestingVisibility(false);
@@ -1514,11 +1518,11 @@ namespace FungusToast.Unity.UI
             UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
             var colors = button.colors;
             colors.normalColor = UIStyleTokens.Surface.PanelElevated;
-            colors.highlightedColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.75f);
-            colors.pressedColor = UIStyleTokens.Surface.PanelPrimary;
+            colors.highlightedColor = UIStyleTokens.Surface.PanelElevated;
+            colors.pressedColor = UIStyleTokens.Surface.PanelElevated;
             colors.selectedColor = UIStyleTokens.Surface.PanelElevated;
             button.colors = colors;
-            button.transition = Selectable.Transition.ColorTint;
+            button.transition = Selectable.Transition.None;
             button.targetGraphic = background;
             button.onClick.AddListener(() => SelectMoldinessReward(offer.Id, background));
         }
@@ -1577,6 +1581,8 @@ namespace FungusToast.Unity.UI
             {
                 selectedBackground.color = UIStyleTokens.State.Success;
             }
+
+            EventSystem.current?.SetSelectedGameObject(null);
 
             if (continueButton != null)
             {
@@ -3136,10 +3142,10 @@ namespace FungusToast.Unity.UI
                     topInset = EndGameContentTopInset;
                 }
 
-                bool useBottomActionBar = hasActionButtons && !showPostAdaptationConfirmationState;
+                bool useBottomActionBar = hasActionButtons && !UseVerticalActionStack;
                 float bottomInset = useBottomActionBar
                     ? EndGameContentBottomInset
-                    : showPostAdaptationConfirmationState
+                    : UseVerticalActionStack
                         ? EndGameConfirmationContentBottomInset
                         : EndGameActionBarBottomInset;
 
@@ -3161,7 +3167,7 @@ namespace FungusToast.Unity.UI
 
                 if (endGamePostAdaptationRoot != null)
                 {
-                    endGamePostAdaptationRoot.gameObject.SetActive(showPostAdaptationConfirmationState);
+                    endGamePostAdaptationRoot.gameObject.SetActive(UseVerticalActionStack);
                 }
 
                 if (endGameTestingRailLayoutElement != null)
@@ -4142,7 +4148,7 @@ namespace FungusToast.Unity.UI
         {
             EnsureRuntimeLayoutScaffold();
 
-            var targetParent = showPostAdaptationConfirmationState ? endGamePostAdaptationRoot : endGameActionBarRoot;
+            var targetParent = UseVerticalActionStack ? endGamePostAdaptationRoot : endGameActionBarRoot;
             if (targetParent == null)
             {
                 return;
@@ -4164,7 +4170,7 @@ namespace FungusToast.Unity.UI
             }
 
             int nextIndex = 0;
-            if (showPostAdaptationConfirmationState)
+            if (UseVerticalActionStack)
             {
                 if (continueButton != null)
                 {
@@ -4203,11 +4209,11 @@ namespace FungusToast.Unity.UI
                 }
             }
 
-            if (showPostAdaptationConfirmationState)
+            if (UseVerticalActionStack)
             {
-                ConfigurePostAdaptationButtonLayout(continueButton);
-                ConfigurePostAdaptationButtonLayout(playAgainButton);
-                ConfigurePostAdaptationButtonLayout(exitButton);
+                ConfigureVerticalActionStackButtonLayout(continueButton);
+                ConfigureVerticalActionStackButtonLayout(playAgainButton);
+                ConfigureVerticalActionStackButtonLayout(exitButton);
             }
             else
             {
@@ -4217,7 +4223,7 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        private void ConfigurePostAdaptationButtonLayout(Button button)
+        private void ConfigureVerticalActionStackButtonLayout(Button button)
         {
             if (button == null)
             {
@@ -4245,6 +4251,17 @@ namespace FungusToast.Unity.UI
                 rect.anchorMin = new Vector2(0.5f, 0.5f);
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
+            }
+
+            var label = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (label != null)
+            {
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                label.overflowMode = TextOverflowModes.Ellipsis;
+                label.enableAutoSizing = true;
+                label.fontSizeMax = 28f;
+                label.fontSizeMin = 18f;
+                label.alignment = TextAlignmentOptions.Center;
             }
         }
 
