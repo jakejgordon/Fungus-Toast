@@ -67,6 +67,10 @@ namespace FungusToast.Unity.UI
         private const float EndGameResultsIconWidth = 52f;
         private const float EndGameResultsMetricWidth = 92f;
         private const float EndGameResultsDetailsWidth = 108f;
+        private const float CampaignMoldinessSummaryPanelMinWidth = 280f;
+        private const float CampaignMoldinessSummaryPanelPreferredWidth = 288f;
+        private const float CampaignMoldinessSummaryTextWidth = 248f;
+        private const float CampaignMoldinessSummaryToastGridWidth = 188f;
         private const float EndGameConfirmationPrimaryButtonWidth = 500f;
         private const float EndGameConfirmationCompactButtonWidth = 330f;
         private const float EndGameConfirmationButtonHeight = 56f;
@@ -782,8 +786,6 @@ namespace FungusToast.Unity.UI
             selectedMoldinessRewardVisual = null;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
-            moldinessRewardOptionBackgrounds.Clear();
-            moldinessRewardOptionVisuals.Clear();
 
             bool hasAvailableOffers = offers != null && offers.Count > 0;
             if (outcomeLabel != null)
@@ -1243,8 +1245,8 @@ namespace FungusToast.Unity.UI
 
             var element = root.GetComponent<LayoutElement>();
             element.flexibleWidth = 0f;
-            element.preferredWidth = 320f;
-            element.minWidth = 300f;
+            element.preferredWidth = CampaignMoldinessSummaryPanelPreferredWidth;
+            element.minWidth = CampaignMoldinessSummaryPanelMinWidth;
             element.minHeight = 180f;
 
             var fitter = root.GetComponent<ContentSizeFitter>();
@@ -1260,6 +1262,7 @@ namespace FungusToast.Unity.UI
                 24f,
                 UIStyleTokens.Text.Primary,
                 FontStyles.Bold);
+            ApplyCarryoverInfoTextWidth(title, CampaignMoldinessSummaryTextWidth);
             title.alignment = TextAlignmentOptions.Center;
 
             var status = CreateCarryoverInfoText(root.transform,
@@ -1267,6 +1270,7 @@ namespace FungusToast.Unity.UI
                 18f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
+            ApplyCarryoverInfoTextWidth(status, CampaignMoldinessSummaryTextWidth);
             status.alignment = TextAlignmentOptions.Center;
 
             BuildMoldinessToastGrid(root.transform, progressAfter, threshold);
@@ -1282,6 +1286,7 @@ namespace FungusToast.Unity.UI
                 16f,
                 snapshot.pendingMoldinessUnlockCount > 0 ? UIStyleTokens.State.Warning : UIStyleTokens.Text.Secondary,
                 snapshot.pendingMoldinessUnlockCount > 0 ? FontStyles.Bold : FontStyles.Normal);
+            ApplyCarryoverInfoTextWidth(detail, CampaignMoldinessSummaryTextWidth);
             detail.alignment = TextAlignmentOptions.Center;
         }
 
@@ -1298,7 +1303,7 @@ namespace FungusToast.Unity.UI
 
             int columns = Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(threshold)), 3, 8);
             int rows = Mathf.Max(1, Mathf.CeilToInt(threshold / (float)columns));
-            float maxGridWidth = 220f;
+            float maxGridWidth = CampaignMoldinessSummaryToastGridWidth;
             float maxGridHeight = 112f;
             float spacing = threshold <= 12 ? 6f : 4f;
             float cellWidth = Mathf.Clamp((maxGridWidth - ((columns - 1) * spacing)) / columns, 14f, 34f);
@@ -1344,6 +1349,28 @@ namespace FungusToast.Unity.UI
                 tileLayout.preferredWidth = cellWidth;
                 tileLayout.minHeight = cellHeight;
                 tileLayout.preferredHeight = cellHeight;
+            }
+        }
+
+        private static void ApplyCarryoverInfoTextWidth(TextMeshProUGUI label, float width)
+        {
+            if (label == null)
+            {
+                return;
+            }
+
+            var layout = label.GetComponent<LayoutElement>();
+            if (layout != null)
+            {
+                layout.minWidth = width;
+                layout.preferredWidth = width;
+                layout.flexibleWidth = 0f;
+            }
+
+            var rect = label.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
             }
         }
 

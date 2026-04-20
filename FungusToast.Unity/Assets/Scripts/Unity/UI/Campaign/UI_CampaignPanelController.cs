@@ -26,6 +26,11 @@ namespace FungusToast.Unity.UI.Campaign
         private const float LayoutShellWidth = 500f;
         private const float DevelopmentRailOffsetX = 440f;
         private const float DevelopmentRailTopOffsetY = -18f;
+        private const float MoldinessSummaryPanelMinWidth = 440f;
+        private const float MoldinessSummaryPanelPreferredWidth = 460f;
+        private const float MoldinessSummaryTextWidth = 400f;
+        private const float MoldinessSummaryToastGridWidth = 200f;
+        private const float MoldinessUnlockedRewardsGridWidth = 400f;
 
         private static readonly string[] MoldDisplayNames =
         {
@@ -440,8 +445,8 @@ namespace FungusToast.Unity.UI.Campaign
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var element = moldinessSummarySectionRoot.GetComponent<LayoutElement>();
-            element.minWidth = 460f;
-            element.preferredWidth = 500f;
+            element.minWidth = MoldinessSummaryPanelMinWidth;
+            element.preferredWidth = MoldinessSummaryPanelPreferredWidth;
             element.minHeight = 190f;
             element.preferredHeight = -1f;
         }
@@ -498,8 +503,8 @@ namespace FungusToast.Unity.UI.Campaign
             label.raycastTarget = false;
 
             var element = label.GetComponent<LayoutElement>();
-            element.minWidth = 460f;
-            element.preferredWidth = 460f;
+            element.minWidth = MoldinessSummaryTextWidth;
+            element.preferredWidth = MoldinessSummaryTextWidth;
             element.minHeight = minHeight;
             element.preferredHeight = -1f;
 
@@ -538,8 +543,8 @@ namespace FungusToast.Unity.UI.Campaign
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var element = moldinessSummaryToastGrid.GetComponent<LayoutElement>();
-            element.minWidth = 200f;
-            element.preferredWidth = 240f;
+            element.minWidth = MoldinessSummaryToastGridWidth;
+            element.preferredWidth = MoldinessSummaryToastGridWidth;
             element.minHeight = 92f;
             element.preferredHeight = -1f;
         }
@@ -605,8 +610,8 @@ namespace FungusToast.Unity.UI.Campaign
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var element = moldinessUnlockedRewardsGrid.GetComponent<LayoutElement>();
-            element.minWidth = 440f;
-            element.preferredWidth = 440f;
+            element.minWidth = MoldinessUnlockedRewardsGridWidth;
+            element.preferredWidth = MoldinessUnlockedRewardsGridWidth;
             element.minHeight = 0f;
             element.preferredHeight = -1f;
         }
@@ -951,7 +956,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             int columns = Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(threshold)), 3, 8);
             int rows = Mathf.Max(1, Mathf.CeilToInt(threshold / (float)columns));
-            float maxGridWidth = 220f;
+            float maxGridWidth = MoldinessSummaryToastGridWidth;
             float maxGridHeight = 112f;
             float spacing = threshold <= 12 ? 6f : 4f;
             float cellWidth = Mathf.Clamp((maxGridWidth - ((columns - 1) * spacing)) / columns, 14f, 34f);

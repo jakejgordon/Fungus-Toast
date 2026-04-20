@@ -61,19 +61,22 @@ namespace FungusToast.Unity.UI
         /* -------- public API -------- */
         public void Populate(int rank, Sprite icon, string playerName, int living, int resistant, int dead, int toxins, Action onDetailsRequested = null)
         {
+            EnsureResistantText();
+            EnsureToxinText();
+
             rankText.text = rank.ToString();
             iconImage.sprite = icon;
             nameText.text = playerName;
             livingText.text = FormatCount(living);
             if (resistantText != null)
             {
-                resistantText.text = FormatCount(resistant);
+                resistantText.text = FormatCountOrZero(resistant);
             }
 
             deadText.text = FormatCount(dead);
             if (toxinText != null)
             {
-                toxinText.text = FormatCount(toxins);
+                toxinText.text = FormatCountOrZero(toxins);
             }
 
             ConfigureDetailsButton(onDetailsRequested);
@@ -95,7 +98,7 @@ namespace FungusToast.Unity.UI
             {
                 resistantText.color = UIStyleTokens.State.Success;
                 ConfigureText(resistantText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
-                resistantText.text = string.Empty;
+                resistantText.text = "0";
             }
 
             var layout = clone.GetComponent<LayoutElement>();
@@ -125,7 +128,7 @@ namespace FungusToast.Unity.UI
             {
                 toxinText.color = UIStyleTokens.Text.Muted;
                 ConfigureText(toxinText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
-                toxinText.text = "";
+                toxinText.text = "0";
             }
 
             var layout = clone.GetComponent<LayoutElement>();
@@ -284,6 +287,11 @@ namespace FungusToast.Unity.UI
         private static string FormatCount(int value)
         {
             return value.ToString("N0", CultureInfo.CurrentCulture);
+        }
+
+        private static string FormatCountOrZero(int value)
+        {
+            return value <= 0 ? "0" : FormatCount(value);
         }
 
         private static void ConfigureText(TextMeshProUGUI label, TextAlignmentOptions alignment, float fontSize, bool allowAutoSize)
