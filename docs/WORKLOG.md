@@ -33,24 +33,23 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** campaign-layer moldiness UX polish and remaining edge cases. The main moldiness reward flow, campaign summary surfaces, and reward-card presentation are now in place, and the remaining work is around pending-state clarity, save/resume verification, and further reward-panel polish.
+- **Current focus:** campaign pending-state UX and moldiness reward flow polish. The pending reward flow now works from both the campaign menu and the mode-select screen, and the remaining work is mainly Unity-side verification plus any last UX cleanup around save/resume and reward presentation.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
 
-1. Finish campaign pending-state clarity, especially around resume/new-campaign surfaces when moldiness reward resolution is waiting.
-2. Verify save/resume behavior across pending moldiness rewards, pending adaptation drafts, and pending defeat carryover selection.
-3. Continue polishing the moldiness reward panel, especially selection clarity, reward-type readability, and compact context messaging.
-4. Smoke-test the combined campaign progression flow, then tune reward pacing, unlock pacing, UI clarity, and the initial moldiness reward catalog.
-5. Expand reward content and categories once the adaptation-first loop and permanent-upgrade presentation feel solid.
+1. Verify the new mode-select pending-reward entry flow end to end.
+2. Verify campaign save/resume behavior across pending moldiness rewards, pending adaptation drafts, and pending defeat carryover selection.
+3. Smoke-test the combined campaign progression flow, then tune moldiness reward pacing, unlock pacing, and campaign UX clarity.
+4. Expand reward content and categories once the adaptation-first loop and permanent-upgrade presentation feel stable.
 
 ## Pending Tasks
 
-1. Verify campaign save/resume behavior when moldiness progress, moldiness draft state, adaptation draft state, or defeat carryover selection is pending.
-2. Smoke-test a full campaign flow covering: no moldiness event, threshold crossed, moldiness draft resolution, normal adaptation reward, defeat carryover selection, chained reward states, and resume after each pending state.
-3. Add or polish campaign pending-state hints where needed, especially if unresolved moldiness rewards should be surfaced more clearly on resume/new-campaign screens.
-4. Further polish the moldiness reward panel UX, including selection highlighting, card readability, and concise context summary at the top of the reward screen.
-5. Tune moldiness reward pacing, threshold pacing, and moldiness draft pool composition after the end-to-end flow is playable.
+1. Unity-test the full pending moldiness reward flow from the main menu `Campaign (Pending Reward)` button through reward claim and return to the campaign menu.
+2. Verify campaign save/resume behavior when moldiness reward selection, adaptation draft selection, or defeat carryover selection is pending.
+3. Smoke-test a full campaign flow covering: no moldiness event, threshold crossed, moldiness reward resolution, normal adaptation reward, defeat carryover selection, chained reward states, and resume after each pending state.
+4. Do a final UX cleanup pass on moldiness reward cards only if new Unity testing still shows readability or layout issues.
+5. Tune moldiness reward pacing, threshold pacing, and moldiness draft pool composition after the end-to-end flow is confirmed playable.
 6. Decide whether some moldiness rewards should apply immediately to the current run, future runs only, or both.
 7. Expand permanent campaign upgrade presentation beyond the current text summary if needed, for example with richer icon display on campaign screens.
 8. Explore longer-term expansion to additional unlock categories such as mycovariants and mutation-related rewards once the adaptation-first loop is solid.
@@ -73,7 +72,7 @@ Use the following minimal workflow to preserve working memory across sessions:
   - end-of-run moldiness summaries exist on campaign end panels (`619305e`)
   - reward generation bug for pending thresholds is fixed (`cc56710`)
   - moldiness reward cards now support icon/category presentation, and permanent campaign upgrades have distinct tags and campaign-menu visibility (`2dbb202`)
-  - follow-up remote changes after that expanded moldiness-related campaign/start-screen UI further; inspect current files before assuming older layout details
+  - on 2026-04-19, substantial follow-up polish landed for campaign testing overrides, pending moldiness reward presentation, reward-card sizing/layout, mode-select pending reward routing, and resume/menu flow cleanup; inspect current files before assuming any earlier UI layout details
 - Recovered design intent from the earlier moldiness transcript:
   - moldiness should be a single meta-progression currency first, with more milestone-based systems added later if needed
   - reward gain should come from campaign progress, especially cleared campaign levels, and scale with progression depth
@@ -102,4 +101,12 @@ Use the following minimal workflow to preserve working memory across sessions:
   - exact numbers support the visualization rather than replace it
   - the visualization belongs in campaign menus, win/loss result panels, and moldiness reward context, not in the live match HUD
   - permanent campaign upgrades should keep the same overall card footprint as other moldiness rewards while using distinct iconography, accent styling, and category labels rather than different geometry
-- Immediate next implementation target: verify pending-state behavior end to end, then continue pending-state clarity and reward-panel polish before broader content expansion. Latest polish fixes addressed moldiness-threshold reward-card layout, defeat carryover selection clarity/selection gating, defeat-reset carryover restoration, and campaign-menu moldiness summary loading/threshold-driven toast visualization.
+  - for pending moldiness reward resume flows, a simple opaque backdrop is currently preferred over spending more time on special bread-background rendering
+- Latest completed polish/fix work from 2026-04-19:
+  - campaign testing level override and temporary forced-adaptation flow were completed and pushed earlier in the day
+  - forced-adaptation checklist scrolling, hit area, persistence, and stale-state clearing were fixed in Unity UI
+  - moldiness reward cards were rebuilt into compact icon + title + description + badge tiles with tuned widths and larger readable text
+  - pending moldiness reward overlays were narrowed and centered, with right-sidebar suppression for the resume flow
+  - mode select now surfaces `Campaign (Pending Reward)` and routes into pending reward resolution
+  - pending reward claims entered from mode select now return to the campaign menu instead of jumping straight into gameplay
+- Immediate next implementation target: verify the current pending reward flow end to end in Unity, then move from UX polish back to broader campaign progression tuning and content expansion.
