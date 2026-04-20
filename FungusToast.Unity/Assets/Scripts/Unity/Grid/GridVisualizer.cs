@@ -145,6 +145,7 @@ namespace FungusToast.Unity.Grid
 
         private Coroutine startingTilePingCoroutine;
         private Tilemap lastPingTilemap;
+        private int loopingStartingTilePingPlayerId = -1;
 
         // Animators (new helpers replacing partial class split)
         private Animation.RegenerativeHyphaeReclaimAnimator _reclaimAnimator;
@@ -1377,6 +1378,7 @@ namespace FungusToast.Unity.Grid
         public void ClearSelectedTiles() => selectionHelper.ClearSelectedTiles();
         public void ClearHighlights()
         {
+            StopStartingTileHoverPing();
             selectionHelper.ClearHighlights(highlightedPositions);
             if (pulseHighlightCoroutine != null)
             {
@@ -1438,6 +1440,49 @@ namespace FungusToast.Unity.Grid
         }
 
         #region Starting Tile Ping
+        public void StartStartingTileHoverPing(int playerId)
+        {
+            var active = ActiveBoard;
+            if (active == null)
+            {
+                return;
+            }
+
+            int? startId = GetPlayerStartingTile(playerId);
+            if (!startId.HasValue)
+            {
+                return;
+            }
+
+            var targetTilemap = ringHelper.ChoosePingTarget();
+            if (targetTilemap == null || solidHighlightTile == null)
+            {
+                return;
+            }
+
+            if (startingTilePingCoroutine != null && loopingStartingTilePingPlayerId == playerId)
+            {
+                return;
+            }
+
+            var (sx, sy) = active.GetXYFromTileId(startId.Value);
+            CancelActivePing(targetTilemap);
+            lastPingTilemap = targetTilemap;
+            loopingStartingTilePingPlayerId = playerId;
+            BeginAnimation();
+            startingTilePingCoroutine = StartCoroutine(RunLoopingStartingTilePing(new Vector3Int(sx, sy, 0), targetTilemap));
+        }
+
+        public void StopStartingTileHoverPing()
+        {
+            if (loopingStartingTilePingPlayerId < 0)
+            {
+                return;
+            }
+
+            CancelActivePing(lastPingTilemap != null ? lastPingTilemap : ringHelper.ChoosePingTarget());
+        }
+
         public void TriggerStartingTilePing(int playerId)
         {
             var active = ActiveBoard; if (active == null) return;
@@ -1448,6 +1493,7 @@ namespace FungusToast.Unity.Grid
             if (targetTilemap == null || solidHighlightTile == null) return;
             CancelActivePing(targetTilemap);
             lastPingTilemap = targetTilemap;
+            loopingStartingTilePingPlayerId = -1;
             BeginAnimation();
             startingTilePingCoroutine = StartCoroutine(RunStartingTilePing(center, targetTilemap));
         }
@@ -1519,26 +1565,49 @@ namespace FungusToast.Unity.Grid
             StopCoroutine(startingTilePingCoroutine);
             ringHelper.ClearRingHighlight(lastPingTilemap != null ? lastPingTilemap : fallbackTilemap);
             startingTilePingCoroutine = null;
+            lastPingTilemap = null;
+            loopingStartingTilePingPlayerId = -1;
             EndAnimation();
+        }
+
+        private void GetStartingTilePingParameters(out float duration, out float expandPortion, out float maxRadius, out float ringThickness)
+        {
+            duration = UIEffectConstants.StartingTilePingDurationSeconds;
+            expandPortion = UIEffectConstants.StartingTilePingExpandPortion;
+            var active = ActiveBoard;
+            float boardScaledRadius = active == null
+                ? UIEffectConstants.StartingTilePingMaxRadiusTiles
+                : Mathf.Max(active.Width, active.Height) * UIEffectConstants.StartingTilePingMaxRadiusBoardFraction;
+            maxRadius = Mathf.Min(UIEffectConstants.StartingTilePingMaxRadiusTiles, boardScaledRadius);
+            ringThickness = UIEffectConstants.StartingTilePingRingThicknessTiles;
         }
 
         private IEnumerator RunStartingTilePing(Vector3Int center, Tilemap targetTilemap)
         {
-            float duration = 1.0f;
-            float expandPortion = 0.5f;
-            var active = ActiveBoard; float maxRadius = Mathf.Min(10f, Mathf.Max(active.Width, active.Height) * 0.25f);
-            float ringThickness = 0.6f;
-            yield return ringHelper.StartingTilePingAnimation(center, targetTilemap, duration, expandPortion, maxRadius, ringThickness);
+            GetStartingTilePingParameters(out float duration, out float expandPortion, out float maxRadius, out float ringThickness);
+            yield return ringHelper.StartingTilePingAnimation(center, targetTilemap, duration, expandPortion, maxRadius, ringThickness, drawSpokes: true);
+            startingTilePingCoroutine = null;
+            lastPingTilemap = null;
+            loopingStartingTilePingPlayerId = -1;
             EndAnimation();
+        }
+
+        private IEnumerator RunLoopingStartingTilePing(Vector3Int center, Tilemap targetTilemap)
+        {
+            GetStartingTilePingParameters(out float duration, out float expandPortion, out float maxRadius, out float ringThickness);
+            while (true)
+            {
+                yield return ringHelper.StartingTilePingAnimation(center, targetTilemap, duration, expandPortion, maxRadius, ringThickness, drawSpokes: true);
+            }
         }
 
         private IEnumerator RunBatchPing(IReadOnlyList<Vector3Int> centers, Tilemap targetTilemap)
         {
-            float duration = 1.0f;
-            float expandPortion = 0.5f;
-            var active = ActiveBoard; float maxRadius = Mathf.Min(10f, Mathf.Max(active.Width, active.Height) * 0.25f);
-            float ringThickness = 0.6f;
+            GetStartingTilePingParameters(out float duration, out float expandPortion, out float maxRadius, out float ringThickness);
             yield return ringHelper.StartingTilePingAnimation(centers, targetTilemap, duration, expandPortion, maxRadius, ringThickness);
+            startingTilePingCoroutine = null;
+            lastPingTilemap = null;
+            loopingStartingTilePingPlayerId = -1;
             EndAnimation();
         }
 

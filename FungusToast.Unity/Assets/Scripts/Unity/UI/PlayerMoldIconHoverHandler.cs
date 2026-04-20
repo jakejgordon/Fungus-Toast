@@ -63,7 +63,8 @@ namespace FungusToast.Unity.UI
             if (FungusToast.Unity.GameManager.Instance != null && FungusToast.Unity.GameManager.Instance.IsDraftPhaseActive)
                 return;
 
-            gridVisualizer.HighlightPlayerTiles(playerId, true); // Include starting tile ping
+            gridVisualizer.HighlightPlayerTiles(playerId);
+            gridVisualizer.StartStartingTileHoverPing(playerId);
         }
 
         public void OnPointerExit(PointerEventData eventData)

@@ -762,6 +762,91 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public static readonly Color PlayerHoverColonyHaloColor = new Color(1f, 0.98f, 0.78f, 1f);
 
+        /// <summary>
+        /// Duration of one full starting-spore pulse cycle.
+        /// </summary>
+        public const float StartingTilePingDurationSeconds = 1f;
+
+        /// <summary>
+        /// Portion of the starting-spore pulse spent expanding outward.
+        /// </summary>
+        public const float StartingTilePingExpandPortion = 0.5f;
+
+        /// <summary>
+        /// Smallest visible radius of the starting-spore ring, in board tiles.
+        /// </summary>
+        public const float StartingTilePingMinVisibleRadiusTiles = 0.5f;
+
+        /// <summary>
+        /// Maximum portion of the larger board dimension used for the starting-spore ring radius.
+        /// </summary>
+        public const float StartingTilePingMaxRadiusBoardFraction = 0.25f;
+
+        /// <summary>
+        /// Hard cap for the starting-spore ring radius, in board tiles.
+        /// </summary>
+        public const float StartingTilePingMaxRadiusTiles = 10f;
+
+        /// <summary>
+        /// Ring thickness for starting-spore pulses, in board tiles.
+        /// </summary>
+        public const float StartingTilePingRingThicknessTiles = 0.6f;
+
+        /// <summary>
+        /// Thickness multiplier used as the starting-spore ring contracts.
+        /// </summary>
+        public const float StartingTilePingContractedThicknessScale = 0.35f;
+
+        /// <summary>
+        /// Radius multiplier for the brief settle flash at the end of a starting-spore pulse.
+        /// </summary>
+        public const float StartingTilePingSettleRadiusScale = 0.65f;
+
+        /// <summary>
+        /// Thickness multiplier for the brief settle flash at the end of a starting-spore pulse.
+        /// </summary>
+        public const float StartingTilePingSettleThicknessScale = 0.5f;
+
+        /// <summary>
+        /// Portion of the pulse reserved for the initial fade-in.
+        /// </summary>
+        public const float StartingTilePingFadeInEndPortion = 0.06f;
+
+        /// <summary>
+        /// Portion of the pulse after which the ring begins fading out.
+        /// </summary>
+        public const float StartingTilePingFadeOutStartPortion = 0.85f;
+
+        /// <summary>
+        /// Number of radial spokes rendered around the starting-spore ring.
+        /// </summary>
+        public const int StartingTilePingSpokeCount = 6;
+
+        /// <summary>
+        /// Distance from the center at which the starting-spore spokes begin, in board tiles.
+        /// </summary>
+        public const float StartingTilePingSpokeInnerRadiusTiles = 1f;
+
+        /// <summary>
+        /// How far the starting-spore spokes extend beyond the ring edge, in board tiles.
+        /// </summary>
+        public const float StartingTilePingSpokeOuterExtensionTiles = 0.9f;
+
+        /// <summary>
+        /// Base color used for the animated starting-spore ring.
+        /// </summary>
+        public static readonly Color StartingTilePingRingColor = new Color(1f, 0.85f, 0.15f, 1f);
+
+        /// <summary>
+        /// Color used for the brief settle flash at the end of a starting-spore pulse.
+        /// </summary>
+        public static readonly Color StartingTilePingSettleColor = new Color(1f, 0.95f, 0.3f, 0.95f);
+
+        /// <summary>
+        /// High-contrast spoke color used to keep the starting spore legible against other overlays.
+        /// </summary>
+        public static readonly Color StartingTilePingSpokeColor = new Color(0f, 0f, 0f, 0.92f);
+
         // ==================== MYCELIAL BASTION PULSE ====================
         /// <summary>
         /// Duration (in seconds) for mycelial bastion pulse animation.
