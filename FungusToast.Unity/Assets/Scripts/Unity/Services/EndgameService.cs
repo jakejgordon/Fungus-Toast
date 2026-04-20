@@ -1087,7 +1087,7 @@ namespace FungusToast.Unity
 
             gameUIManager.LoadingScreen?.gameObject.SetActive(false);
             gameUIManager.LeftSidebar?.gameObject.SetActive(false);
-            gameUIManager.RightSidebar?.gameObject.SetActive(true);
+            gameUIManager.RightSidebar?.gameObject.SetActive(false);
             gameUIManager.MutationUIManager?.gameObject.SetActive(false);
             PreparePendingCampaignSnapshotPresentation(campaignController, snapshot);
 

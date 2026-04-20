@@ -43,7 +43,7 @@ namespace FungusToast.Unity.UI
         private const float CampaignOutcomeSpacerMinHeight = 88f;
         private const int CampaignOutcomeSubtitleFontSize = 26;
         private const float EndGameOverlayHorizontalInset = 120f;
-        private const float PendingMoldinessRewardPanelWidth = 760f;
+        private const float PendingMoldinessRewardPanelWidth = 950f;
         private const float EndGameConfirmationOverlayHorizontalInset = 220f;
         private const float EndGameOverlayVerticalInset = 18f;
         private const float EndGameConfirmationOverlayVerticalInset = 76f;
@@ -1123,6 +1123,9 @@ namespace FungusToast.Unity.UI
             layout.preferredHeight = -1f;
             layout.minHeight = fontSize + 12f;
 
+            var rect = textObject.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(300f, rect.sizeDelta.y);
+
             var label = textObject.GetComponent<TextMeshProUGUI>();
             label.text = text;
             label.fontSize = fontSize;
@@ -1357,8 +1360,8 @@ namespace FungusToast.Unity.UI
 
             var offersElement = offersColumn.GetComponent<LayoutElement>();
             offersElement.flexibleWidth = 0f;
-            offersElement.preferredWidth = 1000f;
-            offersElement.minWidth = 1000f;
+            offersElement.preferredWidth = 930f;
+            offersElement.minWidth = 930f;
             offersElement.preferredHeight = -1f;
 
             var offersFitter = offersColumn.GetComponent<ContentSizeFitter>();
@@ -1426,6 +1429,11 @@ namespace FungusToast.Unity.UI
                 badgeLabelLayout.minWidth = 300f;
                 badgeLabelLayout.preferredWidth = 300f;
                 badgeLabelLayout.flexibleWidth = 0f;
+            }
+            var badgeLabelRect = badgeLabel.GetComponent<RectTransform>();
+            if (badgeLabelRect != null)
+            {
+                badgeLabelRect.sizeDelta = new Vector2(300f, badgeLabelRect.sizeDelta.y);
             }
             badgeLabel.alignment = TextAlignmentOptions.Center;
             badgeLabel.enableAutoSizing = true;
@@ -1551,7 +1559,7 @@ namespace FungusToast.Unity.UI
             for (int i = 0; i < moldinessRewardOptionBackgrounds.Count; i++)
             {
                 var background = moldinessRewardOptionBackgrounds[i];
-                if (background != null && background != selectedBackground)
+                if (background != null)
                 {
                     background.color = UIStyleTokens.Surface.PanelElevated;
                 }
@@ -3068,7 +3076,9 @@ namespace FungusToast.Unity.UI
                 bool showMirroredRailSpacer = showPostAdaptationConfirmationState && postVictoryTestingRailVisible;
                 if (shellLayout != null)
                 {
-                    shellLayout.childAlignment = showPostAdaptationConfirmationState ? TextAnchor.UpperCenter : TextAnchor.UpperLeft;
+                    shellLayout.childAlignment = (showPostAdaptationConfirmationState || requiresMoldinessRewardSelection)
+                        ? TextAnchor.UpperCenter
+                        : TextAnchor.UpperLeft;
                 }
 
                 if (endGameTestingRailMirrorSpacerRoot != null)
