@@ -107183,9 +107183,12 @@ MonoBehaviour:
   boardHeight: 160
   playerCount: 1
   testingModeEnabled: 0
+  testingCampaignLevelIndex: 0
   testingForcedAdaptationId: 
+  testingForcedStartingAdaptationIds: []
   testingModeForceHumanFirst: 1
   testingForcedGameResult: 0
+  testingForceMoldinessRewards: 0
   fastForwardRounds: 0
   testingSkipToEndgameAfterFastForward: 0
   testingTreatAsFirstGame: 0
