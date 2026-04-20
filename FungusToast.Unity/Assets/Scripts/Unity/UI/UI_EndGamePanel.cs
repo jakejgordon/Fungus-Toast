@@ -146,10 +146,13 @@ namespace FungusToast.Unity.UI
         {
             public string RewardId;
             public Image Background;
+            public Image HoverOverlay;
             public Image FillOverlay;
             public Outline FillOverlayOutline;
             public Outline Outline;
             public Image BadgeBackground;
+            public Color BadgeBaseColor;
+            public bool IsHovered;
         }
 
         // Post-victory campaign testing controls (runtime-built to avoid scene dependency).
@@ -1450,6 +1453,22 @@ namespace FungusToast.Unity.UI
             background.raycastTarget = true;
             moldinessRewardOptionBackgrounds.Add(background);
 
+            var hoverOverlayObject = new GameObject("HoverOverlay", typeof(RectTransform), typeof(Image));
+            hoverOverlayObject.transform.SetParent(buttonObject.transform, false);
+            hoverOverlayObject.transform.SetAsFirstSibling();
+            var hoverOverlayRect = hoverOverlayObject.GetComponent<RectTransform>();
+            hoverOverlayRect.anchorMin = Vector2.zero;
+            hoverOverlayRect.anchorMax = Vector2.one;
+            hoverOverlayRect.offsetMin = new Vector2(3f, 3f);
+            hoverOverlayRect.offsetMax = new Vector2(-3f, -3f);
+            var hoverOverlay = hoverOverlayObject.GetComponent<Image>();
+            var hoverTint = UIStyleTokens.Accent.Spore;
+            hoverTint.a = 0.10f;
+            hoverOverlay.color = hoverTint;
+            hoverOverlay.raycastTarget = false;
+            hoverOverlay.enabled = false;
+            hoverOverlayObject.SetActive(false);
+
             var fillOverlayObject = new GameObject("FillOverlay", typeof(RectTransform), typeof(Image));
             fillOverlayObject.transform.SetParent(buttonObject.transform, false);
             fillOverlayObject.transform.SetAsFirstSibling();
@@ -1496,16 +1515,19 @@ namespace FungusToast.Unity.UI
             badgeRect.anchoredPosition = new Vector2(-10f, -7f);
             badgeRect.sizeDelta = new Vector2(300f, 26f);
             var badgeImage = badgeObject.GetComponent<Image>();
-            badgeImage.color = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
+            Color badgeBaseColor = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
+            badgeImage.color = badgeBaseColor;
 
             var visual = new MoldinessRewardOptionVisual
             {
                 RewardId = offer.Id,
                 Background = background,
+                HoverOverlay = hoverOverlay,
                 FillOverlay = fillOverlay,
                 FillOverlayOutline = fillOverlayOutline,
                 Outline = outline,
-                BadgeBackground = badgeImage
+                BadgeBackground = badgeImage,
+                BadgeBaseColor = badgeBaseColor
             };
 
             moldinessRewardOptionVisuals.Add(visual);
@@ -1604,6 +1626,15 @@ namespace FungusToast.Unity.UI
             button.transition = Selectable.Transition.None;
             button.targetGraphic = background;
             button.onClick.AddListener(() => SelectMoldinessReward(visual));
+
+            var eventTrigger = buttonObject.GetComponent<EventTrigger>();
+            if (eventTrigger == null)
+            {
+                eventTrigger = buttonObject.AddComponent<EventTrigger>();
+            }
+
+            AddPointerEvent(eventTrigger, EventTriggerType.PointerEnter, () => SetMoldinessRewardHoverState(visual, true));
+            AddPointerEvent(eventTrigger, EventTriggerType.PointerExit, () => SetMoldinessRewardHoverState(visual, false));
         }
 
         private static Sprite GetMoldinessRewardIcon(MoldinessUnlockDefinition offer)
@@ -1685,6 +1716,29 @@ namespace FungusToast.Unity.UI
             SetButtonLabel(continueButton, hasSelection ? "Claim Moldiness Reward" : "Choose Moldiness Reward");
         }
 
+        private void SetMoldinessRewardHoverState(MoldinessRewardOptionVisual visual, bool isHovered)
+        {
+            if (visual == null)
+            {
+                return;
+            }
+
+            visual.IsHovered = isHovered;
+            ApplyMoldinessRewardOptionVisualState(visual, ReferenceEquals(selectedMoldinessRewardVisual, visual));
+        }
+
+        private static void AddPointerEvent(EventTrigger trigger, EventTriggerType eventType, Action callback)
+        {
+            if (trigger == null || callback == null)
+            {
+                return;
+            }
+
+            var entry = new EventTrigger.Entry { eventID = eventType };
+            entry.callback.AddListener(_ => callback());
+            trigger.triggers.Add(entry);
+        }
+
         private static void ApplyMoldinessRewardOptionVisualState(MoldinessRewardOptionVisual visual, bool isSelected)
         {
             if (visual == null)
@@ -1695,6 +1749,13 @@ namespace FungusToast.Unity.UI
             if (visual.Background != null)
             {
                 visual.Background.color = UIStyleTokens.Surface.PanelElevated;
+            }
+
+            if (visual.HoverOverlay != null)
+            {
+                bool showHover = visual.IsHovered && !isSelected;
+                visual.HoverOverlay.enabled = showHover;
+                visual.HoverOverlay.gameObject.SetActive(showHover);
             }
 
             if (visual.FillOverlay != null)
@@ -1729,9 +1790,7 @@ namespace FungusToast.Unity.UI
 
             if (visual.BadgeBackground != null)
             {
-                visual.BadgeBackground.color = isSelected
-                    ? new Color(UIStyleTokens.Button.BackgroundSelected.r, UIStyleTokens.Button.BackgroundSelected.g, UIStyleTokens.Button.BackgroundSelected.b, 0.42f)
-                    : new Color(UIStyleTokens.Surface.PanelPrimary.r, UIStyleTokens.Surface.PanelPrimary.g, UIStyleTokens.Surface.PanelPrimary.b, 0.65f);
+                visual.BadgeBackground.color = visual.BadgeBaseColor;
             }
         }
 
@@ -4475,8 +4534,9 @@ namespace FungusToast.Unity.UI
                 label.overflowMode = TextOverflowModes.Ellipsis;
                 label.enableAutoSizing = true;
                 label.fontSizeMax = 28f;
-                label.fontSizeMin = 18f;
+                label.fontSizeMin = 16f;
                 label.alignment = TextAlignmentOptions.Center;
+                label.margin = new Vector4(24f, 0f, 24f, 0f);
             }
         }
 

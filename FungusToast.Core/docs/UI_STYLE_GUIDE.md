@@ -191,6 +191,7 @@ Notes:
 - Disabled styling should never be used for active controls. If a control is clickable, label contrast must match active button text tokens.
 - On dark panels or overlays, secondary buttons should not reuse light primary fills by default. Prefer a dark raised surface treatment such as `Surface.PanelElevated` with `Text.Primary` so compact table actions and dismiss controls remain readable at a glance.
 - Runtime-built buttons must receive an explicit active label color after styling passes. Do not assume inherited TMP defaults will remain contrast-safe.
+- Interactive card-style controls on dark panels should expose a gentle hover highlight so mouse users can immediately tell they are actionable. Keep the hover state subtle and clearly weaker than the selected state.
 
 ### 5.3 Dropdown/Input Readability
 - Dropdown caption and option text must use `Button.Text.Default` on light dropdown surfaces.
