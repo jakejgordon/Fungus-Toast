@@ -254,29 +254,21 @@ namespace FungusToast.Unity
                     campaignController.TryQueueForcedMoldinessRewardForTesting(new System.Random(campaignController.State?.seed ?? 0), 3);
                 }
 
-                if (humanWon && campaignController.HasPendingMoldinessUnlockChoice && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot) && pendingSnapshot != null)
-                {
-                    var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(campaignController.State?.seed ?? 0), 3);
-                    ui.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(pendingSnapshot, offers);
-                }
-                else
-                {
-                    var carryoverOptions = !humanWon && campaignController.IsAwaitingDefeatCarryoverSelection
-                        ? campaignController.GetPendingDefeatCarryoverOptions()
-                        : Array.Empty<FungusToast.Core.Campaign.AdaptationDefinition>();
-                    int carryoverCapacity = !humanWon && campaignController.IsAwaitingDefeatCarryoverSelection
-                        ? Mathf.Max(0, campaignController.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0)
-                        : 0;
-                    ui.EndGamePanel.ShowResultsWithOutcome(
-                        ranked, board, endgamePlayerStatistics, true, humanWon,
-                        finalLevelPreAdvance && humanWon, hasNextLevel,
-                        humanWon ? completedLevelDisplay : lostLevelDisplay,
-                        completedLevelDisplay,
-                        campaignController.State.pendingAdaptationSelection,
-                        campaignController.PendingVictorySnapshot,
-                        carryoverOptions,
-                        carryoverCapacity);
-                }
+                var carryoverOptions = !humanWon && campaignController.IsAwaitingDefeatCarryoverSelection
+                    ? campaignController.GetPendingDefeatCarryoverOptions()
+                    : Array.Empty<FungusToast.Core.Campaign.AdaptationDefinition>();
+                int carryoverCapacity = !humanWon && campaignController.IsAwaitingDefeatCarryoverSelection
+                    ? Mathf.Max(0, campaignController.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0)
+                    : 0;
+                ui.EndGamePanel.ShowResultsWithOutcome(
+                    ranked, board, endgamePlayerStatistics, true, humanWon,
+                    finalLevelPreAdvance && humanWon, hasNextLevel,
+                    humanWon ? completedLevelDisplay : lostLevelDisplay,
+                    completedLevelDisplay,
+                    campaignController.State.pendingAdaptationSelection,
+                    campaignController.PendingVictorySnapshot,
+                    carryoverOptions,
+                    carryoverCapacity);
             }
             else
             {

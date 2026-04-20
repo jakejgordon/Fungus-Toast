@@ -417,10 +417,13 @@ namespace FungusToast.Unity.UI
                 }
                 else
                 {
-                    // mid-run victory
+                    bool hasPendingMoldinessRewards = presentationSnapshot != null && presentationSnapshot.pendingMoldinessUnlockCount > 0;
+                    string subtitle = hasPendingMoldinessRewards
+                        ? "Claim your moldiness rewards before the normal adaptation draft."
+                        : "Select an Adaptation to continue the campaign.";
                     outcomeLabel.text =
                         $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Level {completedLevelDisplay} cleared</b></color>\n" +
-                        $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Select an Adaptation to continue the campaign.</color></size>";
+                        $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>{subtitle}</color></size>";
                 }
             }
 
@@ -467,7 +470,12 @@ namespace FungusToast.Unity.UI
 
             if (continueButton != null)
             {
-                SetButtonLabel(continueButton, requiresAdaptationBeforeContinue ? "Select Adaptation" : "Continue Campaign");
+                bool hasPendingMoldinessRewards = presentationSnapshot != null && presentationSnapshot.pendingMoldinessUnlockCount > 0;
+                SetButtonLabel(
+                    continueButton,
+                    requiresAdaptationBeforeContinue
+                        ? (hasPendingMoldinessRewards ? "Claim Moldiness Rewards" : "Select Adaptation")
+                        : "Continue Campaign");
             }
 
             if (!victory && hasPendingDefeatCarryoverEvent && continueButton != null)
@@ -777,18 +785,22 @@ namespace FungusToast.Unity.UI
             moldinessRewardOptionBackgrounds.Clear();
             moldinessRewardOptionVisuals.Clear();
 
+            bool hasAvailableOffers = offers != null && offers.Count > 0;
             if (outcomeLabel != null)
             {
+                string subtitle = hasAvailableOffers
+                    ? "Choose one moldiness reward before the normal adaptation draft."
+                    : "No moldiness rewards are available for this threshold. Continue to move on.";
                 outcomeLabel.text =
                     $"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Moldiness threshold reached</b></color>\n" +
-                    $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Choose one moldiness reward before the normal adaptation draft.</color></size>";
+                    $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>{subtitle}</color></size>";
             }
 
             if (continueButton != null)
             {
                 continueButton.gameObject.SetActive(true);
-                continueButton.interactable = false;
-                SetButtonLabel(continueButton, "Choose Moldiness Reward");
+                continueButton.interactable = !hasAvailableOffers;
+                SetButtonLabel(continueButton, hasAvailableOffers ? "Choose Moldiness Reward" : "Continue");
             }
 
             if (playAgainButton != null)
@@ -1718,9 +1730,16 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            bool hasOffers = moldinessRewardOptionVisuals.Count > 0;
             bool hasSelection = selectedMoldinessRewardVisual != null && !string.IsNullOrWhiteSpace(selectedMoldinessRewardId);
-            continueButton.interactable = hasSelection;
-            SetButtonLabel(continueButton, hasSelection ? "Claim Moldiness Reward" : "Choose Moldiness Reward");
+            continueButton.interactable = !hasOffers || hasSelection;
+            SetButtonLabel(
+                continueButton,
+                !hasOffers
+                    ? "Continue"
+                    : hasSelection
+                        ? "Claim Moldiness Reward"
+                        : "Choose Moldiness Reward");
         }
 
         private void SetMoldinessRewardHoverState(MoldinessRewardOptionVisual visual, bool isHovered)
@@ -1854,19 +1873,23 @@ namespace FungusToast.Unity.UI
             {
                 var manager = GameManager.Instance;
                 var campaignController = manager?.CampaignController;
-                if (campaignController == null || string.IsNullOrWhiteSpace(selectedMoldinessRewardId))
+                if (campaignController == null)
                 {
                     return;
                 }
 
-                bool applied = campaignController.TryApplyMoldinessUnlock(selectedMoldinessRewardId);
-                if (!applied)
+                bool hasOffers = moldinessRewardOptionVisuals.Count > 0;
+                bool resolved = hasOffers
+                    ? !string.IsNullOrWhiteSpace(selectedMoldinessRewardId) && campaignController.TryApplyMoldinessUnlock(selectedMoldinessRewardId)
+                    : campaignController.TryContinueWithoutMoldinessUnlock();
+                if (!resolved)
                 {
                     return;
                 }
 
                 requiresMoldinessRewardSelection = false;
                 selectedMoldinessRewardId = null;
+                selectedMoldinessRewardVisual = null;
                 bool returnToCampaignMenu = returnToCampaignMenuAfterMoldinessReward;
                 bool showPostAdaptationConfirmation = showPostAdaptationConfirmationAfterMoldinessRewardSelection;
                 returnToCampaignMenuAfterMoldinessReward = false;
@@ -1900,6 +1923,26 @@ namespace FungusToast.Unity.UI
             if (requiresAdaptationBeforeContinue)
             {
                 var manager = GameManager.Instance;
+                var campaignController = manager?.CampaignController;
+                if (campaignController != null && campaignController.HasPendingMoldinessUnlockChoice)
+                {
+                    var snapshot = cachedCampaignVictorySnapshot;
+                    if (snapshot == null
+                        && (!campaignController.TryGetPendingMoldinessRewardSnapshot(out snapshot) || snapshot == null))
+                    {
+                        return;
+                    }
+
+                    snapshot.pendingMoldinessUnlockCount = campaignController.State?.moldiness?.pendingUnlockTriggers?.Count ?? snapshot.pendingMoldinessUnlockCount;
+                    var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(campaignController.State?.seed ?? 0), 3);
+                    ShowCampaignPendingMoldinessRewardSelection(
+                        snapshot,
+                        offers,
+                        returnToCampaignMenuAfterSelection: false,
+                        showAdaptationConfirmationAfterSelection: false);
+                    return;
+                }
+
                 HideInstant();
 
                 bool started = manager != null && manager.TryStartCampaignAdaptationDraft(OnCampaignAdaptationSelected);

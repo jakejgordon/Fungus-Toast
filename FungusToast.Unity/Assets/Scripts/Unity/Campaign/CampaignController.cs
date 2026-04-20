@@ -374,20 +374,34 @@ namespace FungusToast.Unity.Campaign
                 return false;
             }
 
-            if (State.pendingVictorySnapshot != null)
-            {
-                State.pendingVictorySnapshot.pendingMoldinessUnlockCount = State.moldiness.pendingUnlockTriggers?.Count ?? 0;
-                if (!State.pendingAdaptationSelection && State.pendingVictorySnapshot.pendingMoldinessUnlockCount == 0)
-                {
-                    State.pendingVictorySnapshot = null;
-                }
-            }
+            SynchronizePendingVictorySnapshotAfterMoldinessResolution();
 
             CampaignSaveService.Save(State);
             string targetLabel = result.Definition.Type == MoldinessUnlockType.UnlockAdaptation
                 ? result.Definition.AdaptationId
                 : result.Definition.Type.ToString();
             Debug.Log($"[CampaignController] Applied Moldiness unlock '{result.Definition.Id}' ({targetLabel}).");
+            return true;
+        }
+
+        public bool TryContinueWithoutMoldinessUnlock()
+        {
+            if (State?.moldiness == null || State.moldiness.pendingUnlockTriggers == null || State.moldiness.pendingUnlockTriggers.Count == 0)
+            {
+                return false;
+            }
+
+            var offers = GetPendingMoldinessUnlockOffers(new System.Random(State.seed), 3);
+            if (offers.Count > 0)
+            {
+                return false;
+            }
+
+            State.moldiness.pendingUnlockChoice = null;
+            State.moldiness.pendingUnlockTriggers.RemoveAt(0);
+            SynchronizePendingVictorySnapshotAfterMoldinessResolution();
+            CampaignSaveService.Save(State);
+            Debug.Log("[CampaignController] No moldiness rewards were available for the pending threshold; continuing without a reward.");
             return true;
         }
 
@@ -716,6 +730,23 @@ namespace FungusToast.Unity.Campaign
             State.pendingVictorySnapshot.moldinessTierBeforeAward = moldinessSnapshot.CurrentTierIndex;
             State.pendingVictorySnapshot.moldinessTierAfterAward = moldinessSnapshot.CurrentTierIndex;
             State.pendingVictorySnapshot.pendingMoldinessUnlockCount = 0;
+        }
+
+        private void SynchronizePendingVictorySnapshotAfterMoldinessResolution()
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            if (State.pendingVictorySnapshot != null)
+            {
+                State.pendingVictorySnapshot.pendingMoldinessUnlockCount = State.moldiness?.pendingUnlockTriggers?.Count ?? 0;
+                if (!State.pendingAdaptationSelection && State.pendingVictorySnapshot.pendingMoldinessUnlockCount == 0)
+                {
+                    State.pendingVictorySnapshot = null;
+                }
+            }
         }
 
         private void SanitizePendingDefeatCarryoverOptions()
