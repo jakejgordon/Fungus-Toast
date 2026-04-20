@@ -10,27 +10,38 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
 
         public void Initialize(MoldinessUnlockDefinition definition)
         {
-            tooltipText = BuildTooltipText(definition);
+            Initialize(definition, 1);
+        }
+
+        public void Initialize(MoldinessUnlockDefinition definition, int ownedCount)
+        {
+            tooltipText = BuildTooltipText(definition, ownedCount);
         }
 
         public string GetTooltipText() => tooltipText ?? string.Empty;
 
-        private static string BuildTooltipText(MoldinessUnlockDefinition definition)
+        private static string BuildTooltipText(MoldinessUnlockDefinition definition, int ownedCount)
         {
             if (definition == null)
             {
                 return string.Empty;
             }
 
+            int safeOwnedCount = Mathf.Max(1, ownedCount);
+            string title = safeOwnedCount > 1
+                ? $"<b>{definition.DisplayName} x{safeOwnedCount}</b>"
+                : $"<b>{definition.DisplayName}</b>";
+
             return definition.Type switch
             {
                 MoldinessUnlockType.IncreaseFailedRunAdaptationCarryover =>
-                    $"<b>{definition.DisplayName}</b>\n\n" +
+                    $"{title}\n\n" +
                     "Permanent Campaign Upgrade\n\n" +
                     $"{definition.Description}\n\n" +
-                    "Each time you take this reward, your Spores in Reserve capacity increases by 1. On a failed campaign run, you may preserve that many non-starting adaptations from the run you just lost. Those preserved adaptations are then added to the start of your next fresh campaign run.",
+                    $"Current stacks: {safeOwnedCount}\n\n" +
+                    $"Your Spores in Reserve capacity is currently increased by {safeOwnedCount}. On a failed campaign run, you may preserve that many non-starting adaptations from the run you just lost. Those preserved adaptations are then added to the start of your next fresh campaign run.",
                 _ =>
-                    $"<b>{definition.DisplayName}</b>\n\n{definition.Description}"
+                    $"{title}\n\n{definition.Description}"
             };
         }
     }
