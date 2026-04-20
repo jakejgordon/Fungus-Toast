@@ -31,7 +31,7 @@ Do not introduce ad hoc color names in new UI work.
 - `Surface.Canvas`: `#2C3140` (global background/navy-earth anchor)
 - `Surface.PanelPrimary`: `#3A4350` (sidebar + major panel)
 - `Surface.PanelSecondary`: `#465164` (nested cards/sections)
-- `Surface.PanelElevated`: `#576277` (hovered/active section)
+- `Surface.PanelElevated`: `#4F5C70` (hovered/active section)
 - `Surface.OverlayDim`: `#12161DCC` (modal/overlay dim)
 
 ### 2.2 Fungal Accent Palette
@@ -43,15 +43,15 @@ Do not introduce ad hoc color names in new UI work.
 
 ### 2.3 Text Colors
 - `Text.Primary`: `#F1F3EE`
-- `Text.Secondary`: `#C9D0C2`
-- `Text.Muted`: `#9BA392`
+- `Text.Secondary`: `#D9DED3`
+- `Text.Muted`: `#B6BEAF`
 - `Text.Disabled`: `#7A8174`
 - `Text.OnAccent`: `#1B2117`
 
 ### 2.4 Semantic States
-- `State.Success`: `#8FAF52`
+- `State.Success`: `#A9CC63`
 - `State.Info`: `#7EA4A6`
-- `State.Warning`: `#B8924A`
+- `State.Warning`: `#D1AE63`
 - `State.Danger`: `#B45E5E`
 - `State.Focus`: `#B3C77A`
 
@@ -115,6 +115,8 @@ Notes:
 - Keep button labels short and verb-oriented.
 - Avoid all-caps except tiny overline/meta labels.
 - Avoid abbreviations when the full word fits in the available UI space; prefer full wording to reduce ambiguity (especially for non-native English readers).
+- On dark blue surfaces, default body and control text to `Text.Primary` unless the element is intentionally de-emphasized and still clears contrast comfortably at its rendered size.
+- Treat `Text.Secondary`, `Text.Muted`, `State.Success`, and `State.Warning` as supporting colors, not the default for dense small copy on dark cards.
 
 ---
 

@@ -17,7 +17,7 @@ namespace FungusToast.Unity.UI
             public static readonly Color Canvas = Hex("#2C3140");
             public static readonly Color PanelPrimary = Hex("#3A4350");
             public static readonly Color PanelSecondary = Hex("#465164");
-            public static readonly Color PanelElevated = Hex("#576277");
+            public static readonly Color PanelElevated = Hex("#4F5C70");
             public static readonly Color OverlayDim = Hex("#12161DCC");
         }
 
@@ -33,17 +33,17 @@ namespace FungusToast.Unity.UI
         public static class Text
         {
             public static readonly Color Primary = Hex("#F1F3EE");
-            public static readonly Color Secondary = Hex("#C9D0C2");
-            public static readonly Color Muted = Hex("#9BA392");
+            public static readonly Color Secondary = Hex("#D9DED3");
+            public static readonly Color Muted = Hex("#B6BEAF");
             public static readonly Color Disabled = Hex("#7A8174");
             public static readonly Color OnAccent = Hex("#1B2117");
         }
 
         public static class State
         {
-            public static readonly Color Success = Hex("#8FAF52");
+            public static readonly Color Success = Hex("#A9CC63");
             public static readonly Color Info = Hex("#7EA4A6");
-            public static readonly Color Warning = Hex("#B8924A");
+            public static readonly Color Warning = Hex("#D1AE63");
             public static readonly Color Danger = Hex("#B45E5E");
             public static readonly Color Focus = Hex("#B3C77A");
         }
