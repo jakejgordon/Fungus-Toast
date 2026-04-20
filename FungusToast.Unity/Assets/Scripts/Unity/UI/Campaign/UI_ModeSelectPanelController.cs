@@ -167,7 +167,8 @@ namespace FungusToast.Unity.UI.Campaign
         private void OnCampaignClicked()
         {
             GameManager manager = FindAnyObjectByType<GameManager>();
-            if (manager != null && manager.HasPendingCampaignMoldinessUnlock())
+            var campaignController = manager != null ? manager.getCampaignController() : null;
+            if (manager != null && campaignController != null && campaignController.HasPendingMoldinessUnlockChoice)
             {
                 manager.StartCampaignResume();
                 gameObject.SetActive(false);
@@ -341,7 +342,8 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             GameManager manager = FindAnyObjectByType<GameManager>();
-            bool hasPendingReward = manager != null && manager.HasPendingCampaignMoldinessUnlock();
+            var campaignController = manager != null ? manager.getCampaignController() : null;
+            bool hasPendingReward = campaignController != null && campaignController.HasPendingMoldinessUnlockChoice;
             SetButtonLabel(campaignButton, hasPendingReward ? "Campaign (Pending Reward)" : "Campaign");
         }
 
