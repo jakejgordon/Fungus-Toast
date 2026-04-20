@@ -93,6 +93,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image panelBackground;
         [SerializeField] private Image resultsCardBackground;
         [SerializeField] private Image outcomeBackdrop;
+        [SerializeField] private Sprite pendingRewardBreadSprite;
 
         // Façade reference — set by GameManager so we don't need GameManager.Instance
         private GameUIManager gameUI;
@@ -154,6 +155,7 @@ namespace FungusToast.Unity.UI
         private CanvasGroup detailsOverlayCanvasGroup;
         private Image detailsOverlayBackground;
         private Image detailsCardBackgroundImage;
+        private Image pendingRewardBreadBackground;
         private TextMeshProUGUI detailsTitleText;
         private TextMeshProUGUI detailsSubtitleText;
         private Image detailsPlayerIconImage;
@@ -200,6 +202,7 @@ namespace FungusToast.Unity.UI
                 Debug.LogWarning("UI_EndGamePanel: ExitButton reference is missing (player cannot exit results).");
 
             EnsureDetailsModal();
+            EnsurePendingRewardBreadBackground();
 
             HideInstant();
         }
@@ -245,6 +248,8 @@ namespace FungusToast.Unity.UI
             {
                 panelBackground.color = UIStyleTokens.Surface.OverlayDim;
             }
+
+            ApplyPendingRewardBackgroundMode(false);
 
             if (resultsCardBackground != null)
             {
@@ -647,6 +652,7 @@ namespace FungusToast.Unity.UI
             ShowDefeatCarryoverSelectionRows(options, selectionCapacity);
             SetLegacyResultsHeaderVisibility(false);
             SetOutcomeBannerVisibility(true);
+            ApplyPendingRewardBackgroundMode(false);
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = true;
             requiresMoldinessRewardSelection = false;
@@ -702,6 +708,7 @@ namespace FungusToast.Unity.UI
             ShowMoldinessRewardSelectionRows(snapshot, offers);
             SetLegacyResultsHeaderVisibility(false);
             SetOutcomeBannerVisibility(true);
+            ApplyPendingRewardBackgroundMode(true);
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = true;
@@ -748,6 +755,7 @@ namespace FungusToast.Unity.UI
             ShowSnapshotRows(snapshot);
             SetLegacyResultsHeaderVisibility(false);
             SetOutcomeBannerVisibility(true);
+            ApplyPendingRewardBackgroundMode(false);
             requiresAdaptationBeforeContinue = true;
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = false;
@@ -1346,8 +1354,8 @@ namespace FungusToast.Unity.UI
 
             var offersElement = offersColumn.GetComponent<LayoutElement>();
             offersElement.flexibleWidth = 0f;
-            offersElement.preferredWidth = 360f;
-            offersElement.minWidth = 340f;
+            offersElement.preferredWidth = 1000f;
+            offersElement.minWidth = 1000f;
             offersElement.preferredHeight = -1f;
 
             var offersFitter = offersColumn.GetComponent<ContentSizeFitter>();
@@ -1404,7 +1412,7 @@ namespace FungusToast.Unity.UI
             badgeRect.anchorMax = new Vector2(1f, 1f);
             badgeRect.pivot = new Vector2(1f, 1f);
             badgeRect.anchoredPosition = new Vector2(-10f, -10f);
-            badgeRect.sizeDelta = new Vector2(210f, 26f);
+            badgeRect.sizeDelta = new Vector2(300f, 26f);
             var badgeImage = badgeObject.GetComponent<Image>();
             badgeImage.color = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
 
@@ -1421,7 +1429,7 @@ namespace FungusToast.Unity.UI
             titleRect.anchorMax = new Vector2(1f, 1f);
             titleRect.pivot = new Vector2(0f, 1f);
             titleRect.offsetMin = new Vector2(80f, -34f);
-            titleRect.offsetMax = new Vector2(-226f, -8f);
+            titleRect.offsetMax = new Vector2(-316f, -8f);
             var title = titleObject.GetComponent<TextMeshProUGUI>();
             title.text = offer.DisplayName;
             title.fontSize = 22f;
@@ -1716,6 +1724,7 @@ namespace FungusToast.Unity.UI
             StopAllCoroutines();
             HidePlayerDetails();
             SetPostAdaptationConfirmationState(false);
+            ApplyPendingRewardBackgroundMode(false);
             hasPendingDefeatCarryoverEvent = false;
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = false;
@@ -1745,6 +1754,44 @@ namespace FungusToast.Unity.UI
             defeatCarryoverSelectionCapacity = Mathf.Max(0, Mathf.Min(selectionCapacity, pendingDefeatCarryoverOptions.Count));
             hasPendingDefeatCarryoverEvent = defeatCarryoverSelectionCapacity > 0 && pendingDefeatCarryoverOptions.Count > 0;
             pendingDefeatCarryoverEntryMode = entryMode;
+        }
+
+        private void EnsurePendingRewardBreadBackground()
+        {
+            if (pendingRewardBreadBackground != null)
+            {
+                return;
+            }
+
+            var backgroundObject = new GameObject("UI_PendingRewardBreadBackground", typeof(RectTransform), typeof(Image));
+            var backgroundRect = backgroundObject.GetComponent<RectTransform>();
+            backgroundRect.SetParent(transform, false);
+            backgroundRect.anchorMin = Vector2.zero;
+            backgroundRect.anchorMax = Vector2.one;
+            backgroundRect.offsetMin = Vector2.zero;
+            backgroundRect.offsetMax = Vector2.zero;
+            backgroundRect.SetAsFirstSibling();
+
+            pendingRewardBreadBackground = backgroundObject.GetComponent<Image>();
+            pendingRewardBreadBackground.raycastTarget = false;
+            pendingRewardBreadBackground.preserveAspect = true;
+            pendingRewardBreadBackground.color = Color.white;
+            pendingRewardBreadBackground.sprite = pendingRewardBreadSprite;
+            pendingRewardBreadBackground.enabled = false;
+        }
+
+        private void ApplyPendingRewardBackgroundMode(bool enabled)
+        {
+            if (panelBackground != null)
+            {
+                panelBackground.color = enabled ? new Color(1f, 1f, 1f, 0f) : UIStyleTokens.Surface.OverlayDim;
+            }
+
+            EnsurePendingRewardBreadBackground();
+            if (pendingRewardBreadBackground != null)
+            {
+                pendingRewardBreadBackground.enabled = enabled && pendingRewardBreadBackground.sprite != null;
+            }
         }
 
         private static void SetButtonLabel(Button button, string text)
