@@ -243,7 +243,7 @@ namespace FungusToast.Unity
             {
                 if (humanWon && campaignController.HasPendingMoldinessUnlockChoice && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot) && pendingSnapshot != null)
                 {
-                    var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(), 3);
+                    var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(campaignController.State?.seed ?? 0), 3);
                     ui.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(pendingSnapshot, offers);
                 }
                 else

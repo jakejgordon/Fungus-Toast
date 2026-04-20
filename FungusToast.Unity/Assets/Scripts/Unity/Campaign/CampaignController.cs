@@ -280,7 +280,15 @@ namespace FungusToast.Unity.Campaign
                 return new List<MoldinessUnlockDefinition>();
             }
 
-            return MoldinessUnlockService.GenerateOffers(State.moldiness, random, count);
+            bool hadPendingChoice = State.moldiness.pendingUnlockChoice?.offeredUnlockIds?.Count > 0;
+            var offers = MoldinessUnlockService.GenerateOffers(State.moldiness, random, count);
+            bool generatedPendingChoice = !hadPendingChoice && State.moldiness.pendingUnlockChoice?.offeredUnlockIds?.Count > 0;
+            if (generatedPendingChoice)
+            {
+                CampaignSaveService.Save(State);
+            }
+
+            return offers;
         }
 
         public bool TryApplyMoldinessUnlock(string unlockId)
