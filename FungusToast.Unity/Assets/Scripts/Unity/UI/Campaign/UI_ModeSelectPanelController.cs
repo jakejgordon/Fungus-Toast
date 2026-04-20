@@ -141,6 +141,7 @@ namespace FungusToast.Unity.UI.Campaign
         {
             UpdateVersionLabel();
             ShowMainMenuContent();
+            RefreshCampaignButtonState();
 
             // Ensure subordinate panels start hidden so only mode select is visible.
             if (startGamePanel != null) startGamePanel.gameObject.SetActive(false);
@@ -165,6 +166,14 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void OnCampaignClicked()
         {
+            GameManager manager = FindAnyObjectByType<GameManager>();
+            if (manager != null && manager.HasPendingCampaignMoldinessUnlock())
+            {
+                manager.StartCampaignResume();
+                gameObject.SetActive(false);
+                return;
+            }
+
             if (campaignPanel != null)
                 campaignPanel.SetActive(true);
             gameObject.SetActive(false);
@@ -324,6 +333,18 @@ namespace FungusToast.Unity.UI.Campaign
             }
         }
 
+        private void RefreshCampaignButtonState()
+        {
+            if (campaignButton == null)
+            {
+                return;
+            }
+
+            GameManager manager = FindAnyObjectByType<GameManager>();
+            bool hasPendingReward = manager != null && manager.HasPendingCampaignMoldinessUnlock();
+            SetButtonLabel(campaignButton, hasPendingReward ? "Campaign (Pending Reward)" : "Campaign");
+        }
+
         private static void ResizeRectTransform(RectTransform rectTransform, float width, float height)
         {
             if (rectTransform == null)
@@ -332,6 +353,20 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             rectTransform.sizeDelta = new Vector2(width, height);
+        }
+
+        private static void SetButtonLabel(Button button, string text)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var label = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (label != null)
+            {
+                label.text = text;
+            }
         }
 
         private TextMeshProUGUI CreateLabel(string objectName, string textValue, float fontSize, float preferredHeight, Color color)
