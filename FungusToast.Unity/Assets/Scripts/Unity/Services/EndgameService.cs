@@ -882,8 +882,7 @@ namespace FungusToast.Unity
 
             campaignController.Resume();
             return campaignController.HasPendingMoldinessUnlockChoice
-                && campaignController.IsAwaitingAdaptationSelection
-                && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot)
+                && campaignController.TryGetPendingMoldinessRewardSnapshot(out var pendingSnapshot)
                 && pendingSnapshot != null;
         }
 
@@ -1001,18 +1000,19 @@ namespace FungusToast.Unity
                 return;
             }
 
+            if (campaignController.HasPendingMoldinessUnlockChoice
+                && campaignController.TryGetPendingMoldinessRewardSnapshot(out var pendingMoldinessSnapshot)
+                && pendingMoldinessSnapshot != null)
+            {
+                ShowPendingCampaignMoldinessRewardScreen(campaignController, pendingMoldinessSnapshot);
+                return;
+            }
+
             if (campaignController.IsAwaitingAdaptationSelection
                 && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot)
                 && pendingSnapshot != null)
             {
-                if (campaignController.HasPendingMoldinessUnlockChoice)
-                {
-                    ShowPendingCampaignMoldinessRewardScreen(campaignController, pendingSnapshot);
-                }
-                else
-                {
-                    ShowPendingCampaignVictoryScreen(campaignController, pendingSnapshot);
-                }
+                ShowPendingCampaignVictoryScreen(campaignController, pendingSnapshot);
                 return;
             }
 
@@ -1106,9 +1106,8 @@ namespace FungusToast.Unity
             campaignController.Resume();
             setGameMode(GameMode.Campaign);
 
-            if (!campaignController.IsAwaitingAdaptationSelection
-                || !campaignController.HasPendingMoldinessUnlockChoice
-                || !campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot)
+            if (!campaignController.HasPendingMoldinessUnlockChoice
+                || !campaignController.TryGetPendingMoldinessRewardSnapshot(out var pendingSnapshot)
                 || pendingSnapshot == null)
             {
                 Debug.LogWarning("[GameManager] No pending campaign moldiness reward is available from main menu.");

@@ -906,13 +906,16 @@ namespace FungusToast.Unity.UI.Campaign
             ApplyMoldinessSummaryToastPattern(progress, threshold, filledTileCount);
 
             bool pendingSporePreservation = campaignController.IsAwaitingDefeatCarryoverSelection;
+            bool pendingMoldinessReward = campaignController.HasPendingMoldinessUnlockChoice;
             if (resumeButton != null)
             {
                 SetButtonText(
                     resumeButton,
                     pendingSporePreservation
                         ? "Resume Campaign (Pending Spore Preservation)"
-                        : "Resume Campaign");
+                        : pendingMoldinessReward
+                            ? "Resume Campaign (Pending Reward)"
+                            : "Resume Campaign");
             }
         }
 
