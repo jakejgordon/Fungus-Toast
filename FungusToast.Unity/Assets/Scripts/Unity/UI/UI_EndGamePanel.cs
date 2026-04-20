@@ -43,7 +43,7 @@ namespace FungusToast.Unity.UI
         private const float CampaignOutcomeSpacerMinHeight = 88f;
         private const int CampaignOutcomeSubtitleFontSize = 26;
         private const float EndGameOverlayHorizontalInset = 120f;
-        private const float PendingMoldinessRewardPanelWidth = 1000f;
+        private const float PendingMoldinessRewardPanelWidth = 760f;
         private const float EndGameConfirmationOverlayHorizontalInset = 220f;
         private const float EndGameOverlayVerticalInset = 18f;
         private const float EndGameConfirmationOverlayVerticalInset = 76f;
@@ -1420,6 +1420,13 @@ namespace FungusToast.Unity.UI
             badgeImage.color = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
 
             var badgeLabel = CreateCarryoverInfoText(badgeObject.transform, offer.CategoryLabel ?? string.Empty, 16f, offer.AccentColor, FontStyles.Bold);
+            var badgeLabelLayout = badgeLabel.GetComponent<LayoutElement>();
+            if (badgeLabelLayout != null)
+            {
+                badgeLabelLayout.minWidth = 300f;
+                badgeLabelLayout.preferredWidth = 300f;
+                badgeLabelLayout.flexibleWidth = 0f;
+            }
             badgeLabel.alignment = TextAlignmentOptions.Center;
             badgeLabel.enableAutoSizing = true;
             badgeLabel.fontSizeMax = 16f;
@@ -1793,13 +1800,13 @@ namespace FungusToast.Unity.UI
         {
             if (panelBackground != null)
             {
-                panelBackground.color = enabled ? new Color(1f, 1f, 1f, 0f) : UIStyleTokens.Surface.OverlayDim;
+                panelBackground.color = enabled ? UIStyleTokens.Surface.PanelPrimary : UIStyleTokens.Surface.OverlayDim;
             }
 
             EnsurePendingRewardBreadBackground();
             if (pendingRewardBreadBackground != null)
             {
-                pendingRewardBreadBackground.enabled = enabled && pendingRewardBreadBackground.sprite != null;
+                pendingRewardBreadBackground.enabled = false;
             }
         }
 
