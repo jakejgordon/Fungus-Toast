@@ -138,6 +138,37 @@ namespace FungusToast.Unity.Campaign
             return true;
         }
 
+        public bool TryGetPendingMoldinessRewardSnapshot(out CampaignVictorySnapshot snapshot)
+        {
+            snapshot = null;
+            if (State?.moldiness?.pendingUnlockTriggers == null || State.moldiness.pendingUnlockTriggers.Count == 0)
+            {
+                return false;
+            }
+
+            if (State.pendingVictorySnapshot != null)
+            {
+                State.pendingVictorySnapshot.pendingMoldinessUnlockCount = State.moldiness.pendingUnlockTriggers.Count;
+                snapshot = State.pendingVictorySnapshot;
+                return true;
+            }
+
+            var moldinessSnapshot = MoldinessProgress;
+            snapshot = new CampaignVictorySnapshot
+            {
+                clearedLevelDisplay = Math.Max(1, State.levelIndex + 1),
+                moldinessAwarded = 0,
+                moldinessProgressBeforeAward = moldinessSnapshot.CurrentProgress,
+                moldinessProgressAfterAward = moldinessSnapshot.CurrentProgress,
+                moldinessThresholdAfterAward = moldinessSnapshot.CurrentThreshold,
+                moldinessTierBeforeAward = moldinessSnapshot.CurrentTierIndex,
+                moldinessTierAfterAward = moldinessSnapshot.CurrentTierIndex,
+                pendingMoldinessUnlockCount = State.moldiness.pendingUnlockTriggers.Count,
+                rows = new List<CampaignVictoryPlayerRow>()
+            };
+            return true;
+        }
+
         public void SetPendingVictorySnapshot(CampaignVictorySnapshot snapshot)
         {
             if (State == null)
