@@ -881,7 +881,10 @@ namespace FungusToast.Unity
             }
 
             campaignController.Resume();
-            return campaignController.HasPendingMoldinessUnlockChoice && campaignController.IsAwaitingAdaptationSelection;
+            return campaignController.HasPendingMoldinessUnlockChoice
+                && campaignController.IsAwaitingAdaptationSelection
+                && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot)
+                && pendingSnapshot != null;
         }
 
         public bool TryStartCampaignAdaptationDraft(Action onSelectionComplete)
