@@ -142,6 +142,7 @@ namespace FungusToast.Unity.UI
         private sealed class MoldinessRewardOptionVisual
         {
             public Image Background;
+            public Image FillOverlay;
             public Outline Outline;
             public Image BadgeBackground;
         }
@@ -1417,6 +1418,18 @@ namespace FungusToast.Unity.UI
             background.raycastTarget = true;
             moldinessRewardOptionBackgrounds.Add(background);
 
+            var fillOverlayObject = new GameObject("FillOverlay", typeof(RectTransform), typeof(Image));
+            fillOverlayObject.transform.SetParent(buttonObject.transform, false);
+            fillOverlayObject.transform.SetAsFirstSibling();
+            var fillOverlayRect = fillOverlayObject.GetComponent<RectTransform>();
+            fillOverlayRect.anchorMin = Vector2.zero;
+            fillOverlayRect.anchorMax = Vector2.one;
+            fillOverlayRect.offsetMin = Vector2.zero;
+            fillOverlayRect.offsetMax = Vector2.zero;
+            var fillOverlay = fillOverlayObject.GetComponent<Image>();
+            fillOverlay.color = UIStyleTokens.Surface.PanelElevated;
+            fillOverlay.raycastTarget = false;
+
             var outline = buttonObject.AddComponent<Outline>();
             outline.effectColor = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.35f);
             outline.effectDistance = new Vector2(1.5f, -1.5f);
@@ -1448,6 +1461,7 @@ namespace FungusToast.Unity.UI
             moldinessRewardOptionVisuals[offer.Id] = new MoldinessRewardOptionVisual
             {
                 Background = background,
+                FillOverlay = fillOverlay,
                 Outline = outline,
                 BadgeBackground = badgeImage
             };
@@ -1587,31 +1601,14 @@ namespace FungusToast.Unity.UI
             bool togglingOff = string.Equals(selectedMoldinessRewardId, rewardId, StringComparison.Ordinal);
             selectedMoldinessRewardId = togglingOff ? null : rewardId;
 
-            for (int i = 0; i < moldinessRewardOptionBackgrounds.Count; i++)
-            {
-                var background = moldinessRewardOptionBackgrounds[i];
-                if (background != null)
-                {
-                    background.color = UIStyleTokens.Surface.PanelElevated;
-                }
-            }
-
             foreach (var pair in moldinessRewardOptionVisuals)
             {
                 ApplyMoldinessRewardOptionVisualState(pair.Value, isSelected: false);
             }
 
-            if (!togglingOff)
+            if (!togglingOff && moldinessRewardOptionVisuals.TryGetValue(rewardId, out var selectedVisual))
             {
-                if (selectedBackground != null)
-                {
-                    selectedBackground.color = UIStyleTokens.Button.BackgroundSelected;
-                }
-
-                if (moldinessRewardOptionVisuals.TryGetValue(rewardId, out var selectedVisual))
-                {
-                    ApplyMoldinessRewardOptionVisualState(selectedVisual, isSelected: true);
-                }
+                ApplyMoldinessRewardOptionVisualState(selectedVisual, isSelected: true);
             }
 
             EventSystem.current?.SetSelectedGameObject(null);
@@ -1632,7 +1629,12 @@ namespace FungusToast.Unity.UI
 
             if (visual.Background != null)
             {
-                visual.Background.color = isSelected
+                visual.Background.color = UIStyleTokens.Surface.PanelElevated;
+            }
+
+            if (visual.FillOverlay != null)
+            {
+                visual.FillOverlay.color = isSelected
                     ? UIStyleTokens.Button.BackgroundSelected
                     : UIStyleTokens.Surface.PanelElevated;
             }
@@ -2960,7 +2962,7 @@ namespace FungusToast.Unity.UI
             confirmationLayout.childForceExpandWidth = false;
             confirmationLayout.childForceExpandHeight = false;
             confirmationLayout.spacing = EndGameConfirmationStackSpacing;
-            confirmationLayout.padding = new RectOffset(0, 0, 0, 0);
+            confirmationLayout.padding = new RectOffset(0, 0, requiresMoldinessRewardSelection ? 10 : 0, 0);
 
             var confirmationElement = endGamePostAdaptationRoot.GetComponent<LayoutElement>();
             confirmationElement.minWidth = EndGameConfirmationStackWidth;
