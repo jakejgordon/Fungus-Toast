@@ -43,6 +43,7 @@ namespace FungusToast.Unity.UI
         private const float CampaignOutcomeSpacerMinHeight = 88f;
         private const int CampaignOutcomeSubtitleFontSize = 26;
         private const float EndGameOverlayHorizontalInset = 120f;
+        private const float PendingMoldinessRewardPanelWidth = 1000f;
         private const float EndGameConfirmationOverlayHorizontalInset = 220f;
         private const float EndGameOverlayVerticalInset = 18f;
         private const float EndGameConfirmationOverlayVerticalInset = 76f;
@@ -1117,6 +1118,8 @@ namespace FungusToast.Unity.UI
 
             var layout = textObject.GetComponent<LayoutElement>();
             layout.flexibleWidth = 1f;
+            layout.preferredWidth = 300f;
+            layout.minWidth = 300f;
             layout.preferredHeight = -1f;
             layout.minHeight = fontSize + 12f;
 
@@ -1776,6 +1779,12 @@ namespace FungusToast.Unity.UI
             pendingRewardBreadBackground.raycastTarget = false;
             pendingRewardBreadBackground.preserveAspect = true;
             pendingRewardBreadBackground.color = Color.white;
+#if UNITY_EDITOR
+            if (pendingRewardBreadSprite == null)
+            {
+                pendingRewardBreadSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/UI/Bread Backgrounds/white_bread_1024x1024.png");
+            }
+#endif
             pendingRewardBreadBackground.sprite = pendingRewardBreadSprite;
             pendingRewardBreadBackground.enabled = false;
         }
@@ -3135,6 +3144,13 @@ namespace FungusToast.Unity.UI
                             mainColumnElement.preferredWidth = EndGameConfirmationStackWidth;
                             mainColumnElement.flexibleWidth = 0f;
                             mainColumnElement.flexibleHeight = 0f;
+                        }
+                        else if (requiresMoldinessRewardSelection)
+                        {
+                            mainColumnElement.minWidth = PendingMoldinessRewardPanelWidth;
+                            mainColumnElement.preferredWidth = PendingMoldinessRewardPanelWidth;
+                            mainColumnElement.flexibleWidth = 0f;
+                            mainColumnElement.flexibleHeight = 1f;
                         }
                         else
                         {
