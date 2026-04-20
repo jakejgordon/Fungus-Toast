@@ -1424,11 +1424,15 @@ namespace FungusToast.Unity.UI
             var fillOverlayRect = fillOverlayObject.GetComponent<RectTransform>();
             fillOverlayRect.anchorMin = Vector2.zero;
             fillOverlayRect.anchorMax = Vector2.one;
-            fillOverlayRect.offsetMin = Vector2.zero;
-            fillOverlayRect.offsetMax = Vector2.zero;
+            fillOverlayRect.offsetMin = new Vector2(4f, 4f);
+            fillOverlayRect.offsetMax = new Vector2(-4f, -4f);
             var fillOverlay = fillOverlayObject.GetComponent<Image>();
-            fillOverlay.color = UIStyleTokens.Surface.PanelElevated;
+            var selectedTint = UIStyleTokens.Button.BackgroundSelected;
+            selectedTint.a = 0.42f;
+            fillOverlay.color = selectedTint;
             fillOverlay.raycastTarget = false;
+            fillOverlay.enabled = false;
+            fillOverlayObject.SetActive(false);
 
             var outline = buttonObject.AddComponent<Outline>();
             outline.effectColor = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.35f);
@@ -1634,17 +1638,27 @@ namespace FungusToast.Unity.UI
 
             if (visual.FillOverlay != null)
             {
-                visual.FillOverlay.color = isSelected
-                    ? UIStyleTokens.Button.BackgroundSelected
-                    : UIStyleTokens.Surface.PanelElevated;
+                if (isSelected)
+                {
+                    var selectedTint = UIStyleTokens.Button.BackgroundSelected;
+                    selectedTint.a = 0.42f;
+                    visual.FillOverlay.color = selectedTint;
+                    visual.FillOverlay.enabled = true;
+                    visual.FillOverlay.gameObject.SetActive(true);
+                }
+                else
+                {
+                    visual.FillOverlay.enabled = false;
+                    visual.FillOverlay.gameObject.SetActive(false);
+                }
             }
 
             if (visual.Outline != null)
             {
                 visual.Outline.effectColor = isSelected
-                    ? new Color(UIStyleTokens.Button.BackgroundSelected.r, UIStyleTokens.Button.BackgroundSelected.g, UIStyleTokens.Button.BackgroundSelected.b, 0.95f)
-                    : new Color(UIStyleTokens.Text.Muted.r, UIStyleTokens.Text.Muted.g, UIStyleTokens.Text.Muted.b, 0.35f);
-                visual.Outline.effectDistance = isSelected ? new Vector2(2.5f, -2.5f) : new Vector2(1.5f, -1.5f);
+                    ? new Color(UIStyleTokens.Button.BackgroundSelected.r, UIStyleTokens.Button.BackgroundSelected.g, UIStyleTokens.Button.BackgroundSelected.b, 1f)
+                    : new Color(UIStyleTokens.Text.Muted.r, UIStyleTokens.Text.Muted.g, UIStyleTokens.Text.Muted.b, 0.45f);
+                visual.Outline.effectDistance = isSelected ? new Vector2(3f, -3f) : new Vector2(1.5f, -1.5f);
             }
 
             if (visual.BadgeBackground != null)
@@ -2962,7 +2976,7 @@ namespace FungusToast.Unity.UI
             confirmationLayout.childForceExpandWidth = false;
             confirmationLayout.childForceExpandHeight = false;
             confirmationLayout.spacing = EndGameConfirmationStackSpacing;
-            confirmationLayout.padding = new RectOffset(0, 0, requiresMoldinessRewardSelection ? 10 : 0, 0);
+            confirmationLayout.padding = new RectOffset(0, 0, requiresMoldinessRewardSelection ? 18 : 0, 0);
 
             var confirmationElement = endGamePostAdaptationRoot.GetComponent<LayoutElement>();
             confirmationElement.minWidth = EndGameConfirmationStackWidth;
