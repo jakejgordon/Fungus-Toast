@@ -237,6 +237,13 @@ Notes:
 - Explanatory helper text uses `Text.Secondary`.
 - In large menu-style buttons, prefer centered icon-plus-label groupings over left-edge icon placement unless the entire button stack is intentionally left-aligned like a navigation list.
 
+### 6.1.1 Settings / Preferences Screens
+- Treat settings and preferences surfaces as dark-panel secondary-action screens by default, not as a stack of primary CTA buttons.
+- Default control for audio toggles, volume cycling, advanced utilities, and `Back` actions on these screens: `Surface.PanelElevated` background with `Text.Primary` labels via the panel-secondary button style.
+- Use the canonical desktop action widths from this guide instead of ad hoc narrow buttons. Default full-width settings action: `500x56px`. Default compact dismiss/cancel action: `330x56px`.
+- Unity implementation note: runtime-built menu stacks should route through the shared `UIStyleTokens.Button` menu-action helpers instead of re-declaring per-screen button widths/heights.
+- Reserve light primary button styling for an actual high-priority affirmative CTA. Do not use low-contrast muted text on dark raised settings controls.
+
 ### 6.2 In-Game HUD + Sidebars
 - Left and right sidebars should share the same surface hierarchy.
 - Round/phase/occupancy text should use consistent emphasis weights.

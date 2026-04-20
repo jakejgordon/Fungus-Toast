@@ -59,6 +59,13 @@ namespace FungusToast.Unity.UI
 
         public static class Button
         {
+            public const float DesktopPrimaryMenuActionWidth = 500f;
+            public const float DesktopCompactMenuActionWidth = 330f;
+            public const float NarrowMenuActionWidth = 470f;
+            public const float DesktopMenuActionHeight = 56f;
+            public const float NarrowMenuActionHeight = 52f;
+            public const float MinimumMenuActionHeight = 48f;
+
             public static readonly Color BackgroundDefault = Hex("#E7E8E5");
             public static readonly Color BackgroundHover = Hex("#F4F5F2");
             public static readonly Color BackgroundPressed = Hex("#D3D7C9");
@@ -97,6 +104,58 @@ namespace FungusToast.Unity.UI
 
                 button.colors = colors;
                 SetButtonLabelColor(button, TextDefault);
+            }
+
+            public static void ConfigureMenuActionLayout(
+                UnityEngine.UI.Button button,
+                float width,
+                float preferredHeight = DesktopMenuActionHeight,
+                float minHeight = MinimumMenuActionHeight)
+            {
+                if (button == null)
+                {
+                    return;
+                }
+
+                var layoutElement = button.GetComponent<LayoutElement>();
+                if (layoutElement == null)
+                {
+                    layoutElement = button.gameObject.AddComponent<LayoutElement>();
+                }
+
+                layoutElement.minWidth = width;
+                layoutElement.preferredWidth = width;
+                layoutElement.minHeight = minHeight;
+                layoutElement.preferredHeight = preferredHeight;
+                layoutElement.flexibleWidth = 0f;
+                layoutElement.flexibleHeight = 0f;
+
+                var rectTransform = button.GetComponent<RectTransform>();
+                if (rectTransform != null)
+                {
+                    rectTransform.sizeDelta = new Vector2(width, preferredHeight);
+                }
+            }
+
+            public static void ApplyPrimaryMenuAction(
+                UnityEngine.UI.Button button,
+                float width = DesktopPrimaryMenuActionWidth,
+                bool useSelectedAsNormal = false,
+                float preferredHeight = DesktopMenuActionHeight,
+                float minHeight = MinimumMenuActionHeight)
+            {
+                ConfigureMenuActionLayout(button, width, preferredHeight, minHeight);
+                ApplyStyle(button, useSelectedAsNormal);
+            }
+
+            public static void ApplySecondaryMenuAction(
+                UnityEngine.UI.Button button,
+                float width = DesktopPrimaryMenuActionWidth,
+                float preferredHeight = DesktopMenuActionHeight,
+                float minHeight = MinimumMenuActionHeight)
+            {
+                ConfigureMenuActionLayout(button, width, preferredHeight, minHeight);
+                ApplyPanelSecondaryStyle(button);
             }
 
             public static void ApplyPanelSecondaryStyle(UnityEngine.UI.Button button)

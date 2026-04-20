@@ -1074,6 +1074,11 @@ namespace FungusToast.Unity.UI.GameStart
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(onClick);
             EnsureActionButtonLayout(button);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(
+                button,
+                UIStyleTokens.Button.NarrowMenuActionWidth,
+                UIStyleTokens.Button.NarrowMenuActionHeight,
+                UIStyleTokens.Button.MinimumMenuActionHeight);
             return button;
         }
 
@@ -1102,7 +1107,11 @@ namespace FungusToast.Unity.UI.GameStart
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(onClick);
             EnsureDevelopmentTestingButtonLayout(button);
-            UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(
+                button,
+                StartMenuDevelopmentRailWidth,
+                UIStyleTokens.Button.NarrowMenuActionHeight,
+                UIStyleTokens.Button.MinimumMenuActionHeight);
             return button;
         }
 
@@ -1217,23 +1226,11 @@ namespace FungusToast.Unity.UI.GameStart
 
         private static void EnsureDevelopmentTestingButtonLayout(Button button)
         {
-            if (button == null)
-            {
-                return;
-            }
-
-            var layoutElement = button.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = button.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.minWidth = StartMenuDevelopmentRailWidth;
-            layoutElement.preferredWidth = StartMenuDevelopmentRailWidth;
-            layoutElement.minHeight = 48f;
-            layoutElement.preferredHeight = 52f;
-            layoutElement.flexibleWidth = 0f;
-            layoutElement.flexibleHeight = 0f;
+            UIStyleTokens.Button.ConfigureMenuActionLayout(
+                button,
+                StartMenuDevelopmentRailWidth,
+                UIStyleTokens.Button.NarrowMenuActionHeight,
+                UIStyleTokens.Button.MinimumMenuActionHeight);
         }
 
         private static void ConfigureAudioSettingsSection(RectTransform sectionRoot)
@@ -1423,23 +1420,11 @@ namespace FungusToast.Unity.UI.GameStart
 
         private static void EnsureActionButtonLayout(Button button)
         {
-            if (button == null)
-            {
-                return;
-            }
-
-            var layoutElement = button.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = button.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.minWidth = 470f;
-            layoutElement.preferredWidth = 470f;
-            layoutElement.minHeight = 48f;
-            layoutElement.preferredHeight = 52f;
-            layoutElement.flexibleWidth = 0f;
-            layoutElement.flexibleHeight = 0f;
+            UIStyleTokens.Button.ConfigureMenuActionLayout(
+                button,
+                UIStyleTokens.Button.NarrowMenuActionWidth,
+                UIStyleTokens.Button.NarrowMenuActionHeight,
+                UIStyleTokens.Button.MinimumMenuActionHeight);
         }
 
         private static void ConfigureSetupContentRoot(RectTransform contentRoot)
@@ -1576,8 +1561,17 @@ namespace FungusToast.Unity.UI.GameStart
 
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
 
-            UIStyleTokens.Button.ApplyStyle(startGameButton, useSelectedAsNormal: true);
-            UIStyleTokens.Button.ApplyStyle(backButton);
+            UIStyleTokens.Button.ApplyPrimaryMenuAction(
+                startGameButton,
+                UIStyleTokens.Button.NarrowMenuActionWidth,
+                useSelectedAsNormal: true,
+                preferredHeight: UIStyleTokens.Button.NarrowMenuActionHeight,
+                minHeight: UIStyleTokens.Button.MinimumMenuActionHeight);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(
+                backButton,
+                UIStyleTokens.Button.NarrowMenuActionWidth,
+                UIStyleTokens.Button.NarrowMenuActionHeight,
+                UIStyleTokens.Button.MinimumMenuActionHeight);
 
             if (playerSummaryLabel != null)
             {

@@ -186,6 +186,42 @@ namespace FungusToast.Unity.Campaign
             State = null;
         }
 
+        public bool ResetMoldinessProgression()
+        {
+            if (State == null)
+            {
+                State = CampaignSaveService.Load();
+            }
+
+            if (State == null)
+            {
+                return false;
+            }
+
+            State.selectedAdaptationIds ??= new List<string>();
+            State.pendingDefeatCarryoverOptions ??= new List<string>();
+            State.pendingNextRunCarryoverAdaptationIds ??= new List<string>();
+            State.resolvedAiStrategyNames ??= new List<string>();
+            State.temporaryTestingAdaptationIds ??= new List<string>();
+            State.moldiness = MoldinessProgression.CreateDefaultState();
+            State.pendingNextRunCarryoverAdaptationIds = new List<string>();
+
+            if (State.pendingDefeatCarryoverSelection)
+            {
+                State.pendingDefeatCarryoverSelection = false;
+                State.pendingDefeatCarryoverOptions = new List<string>();
+                ResetRunAfterDefeat();
+                Debug.Log("[CampaignController] Reset moldiness progression and cleared pending defeat carryover state.");
+                return true;
+            }
+
+            State.pendingDefeatCarryoverOptions = new List<string>();
+            SynchronizePendingVictorySnapshotWithCurrentMoldiness();
+            CampaignSaveService.Save(State);
+            Debug.Log("[CampaignController] Reset moldiness progression and cleared persistent campaign rewards.");
+            return true;
+        }
+
         /// <summary>
         /// Called by GameManager when a campaign level ends. Handles victory progression or defeat reset.
         /// </summary>
@@ -644,6 +680,30 @@ namespace FungusToast.Unity.Campaign
             {
                 CampaignSaveService.Save(State);
             }
+        }
+
+        private void SynchronizePendingVictorySnapshotWithCurrentMoldiness()
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            if (!State.pendingAdaptationSelection)
+            {
+                State.pendingVictorySnapshot = null;
+                return;
+            }
+
+            State.pendingVictorySnapshot ??= new CampaignVictorySnapshot();
+            var moldinessSnapshot = MoldinessProgression.GetSnapshot(State.moldiness);
+            State.pendingVictorySnapshot.moldinessAwarded = 0;
+            State.pendingVictorySnapshot.moldinessProgressBeforeAward = moldinessSnapshot.CurrentProgress;
+            State.pendingVictorySnapshot.moldinessProgressAfterAward = moldinessSnapshot.CurrentProgress;
+            State.pendingVictorySnapshot.moldinessThresholdAfterAward = moldinessSnapshot.CurrentThreshold;
+            State.pendingVictorySnapshot.moldinessTierBeforeAward = moldinessSnapshot.CurrentTierIndex;
+            State.pendingVictorySnapshot.moldinessTierAfterAward = moldinessSnapshot.CurrentTierIndex;
+            State.pendingVictorySnapshot.pendingMoldinessUnlockCount = 0;
         }
 
         private void SanitizePendingDefeatCarryoverOptions()

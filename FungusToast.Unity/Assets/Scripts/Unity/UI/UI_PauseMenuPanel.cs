@@ -24,6 +24,8 @@ namespace FungusToast.Unity.UI
         private const float CardHeight = 700f;
         private const float CardPadding = 24f;
         private const float ContentSpacing = 14f;
+        private const float PauseMenuPrimaryButtonWidth = CardWidth - (CardPadding * 2f);
+        private const float PauseMenuConfirmationButtonWidth = 180f;
 
         private GameUIManager gameUI;
         private Action onOpenRequested;
@@ -377,13 +379,13 @@ namespace FungusToast.Unity.UI
 
             primaryActionsRoot = CreateVerticalSection(contentRoot.transform, "PrimaryActions", 10f);
 
-            Button resumeButton = CreateActionButton(primaryActionsRoot.transform, "Resume");
+            Button resumeButton = CreateActionButton(primaryActionsRoot.transform, "Resume", width: PauseMenuPrimaryButtonWidth);
             resumeButton.onClick.AddListener(() => onResumeRequested?.Invoke());
 
-            Button mainMenuButton = CreateActionButton(primaryActionsRoot.transform, "Main Menu", gameUI != null ? gameUI.PauseMenuButtonIcon : null);
+            Button mainMenuButton = CreateActionButton(primaryActionsRoot.transform, "Main Menu", gameUI != null ? gameUI.PauseMenuButtonIcon : null, PauseMenuPrimaryButtonWidth);
             mainMenuButton.onClick.AddListener(RequestMainMenuConfirmation);
 
-            Button exitButton = CreateActionButton(primaryActionsRoot.transform, "Exit Game");
+            Button exitButton = CreateActionButton(primaryActionsRoot.transform, "Exit Game", width: PauseMenuPrimaryButtonWidth);
             exitButton.onClick.AddListener(RequestExitConfirmation);
 
             soundSettingsRoot = CreateVerticalSection(contentRoot.transform, "SoundSettings", 10f);
@@ -392,16 +394,16 @@ namespace FungusToast.Unity.UI
             soundLabel.alignment = TextAlignmentOptions.Center;
             soundLabel.color = UIStyleTokens.Text.Primary;
 
-            soundEffectsToggleButton = CreateActionButton(soundSettingsRoot.transform, string.Empty);
+            soundEffectsToggleButton = CreateActionButton(soundSettingsRoot.transform, string.Empty, width: PauseMenuPrimaryButtonWidth, secondaryStyle: true);
             soundEffectsToggleButton.onClick.AddListener(OnSoundEffectsToggleClicked);
 
-            soundEffectsVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty);
+            soundEffectsVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty, width: PauseMenuPrimaryButtonWidth, secondaryStyle: true);
             soundEffectsVolumeButton.onClick.AddListener(OnSoundEffectsVolumeClicked);
 
-            musicVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty);
+            musicVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty, width: PauseMenuPrimaryButtonWidth, secondaryStyle: true);
             musicVolumeButton.onClick.AddListener(OnMusicVolumeClicked);
 
-            nextTrackMenuButton = CreateActionButton(soundSettingsRoot.transform, "Next Track", gameUI != null ? gameUI.NextTrackButtonIcon : null);
+            nextTrackMenuButton = CreateActionButton(soundSettingsRoot.transform, "Next Track", gameUI != null ? gameUI.NextTrackButtonIcon : null, PauseMenuPrimaryButtonWidth, secondaryStyle: true);
             nextTrackMenuButton.onClick.AddListener(OnNextTrackClicked);
 
             TooltipTrigger nextTrackTooltip = nextTrackMenuButton.gameObject.AddComponent<TooltipTrigger>();
@@ -423,11 +425,10 @@ namespace FungusToast.Unity.UI
             buttonRow.childForceExpandWidth = true;
             buttonRow.childForceExpandHeight = false;
 
-            Button confirmButton = CreateActionButton(confirmationButtons.transform, "Confirm");
-            UIStyleTokens.Button.ApplyStyle(confirmButton, useSelectedAsNormal: true);
+            Button confirmButton = CreateActionButton(confirmationButtons.transform, "Confirm", width: PauseMenuConfirmationButtonWidth, useSelectedAsNormal: true);
             confirmButton.onClick.AddListener(ConfirmPendingAction);
 
-            Button cancelButton = CreateActionButton(confirmationButtons.transform, "Cancel");
+            Button cancelButton = CreateActionButton(confirmationButtons.transform, "Cancel", width: PauseMenuConfirmationButtonWidth, secondaryStyle: true);
             cancelButton.onClick.AddListener(CancelPendingAction);
 
             RefreshSoundSettingsButtons();
@@ -538,22 +539,20 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        private Button CreateActionButton(Transform parent, string labelText, Sprite icon = null)
+        private Button CreateActionButton(
+            Transform parent,
+            string labelText,
+            Sprite icon = null,
+            float width = PauseMenuPrimaryButtonWidth,
+            bool secondaryStyle = false,
+            bool useSelectedAsNormal = false)
         {
             GameObject buttonObject = CreateUiObject(labelText.Replace(" ", string.Empty) + "Button", parent);
-            RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
-            buttonRect.sizeDelta = new Vector2(0f, 56f);
-
-            LayoutElement layout = buttonObject.AddComponent<LayoutElement>();
-            layout.preferredHeight = 56f;
-            layout.minHeight = 48f;
-            layout.flexibleWidth = 1f;
 
             Image image = buttonObject.AddComponent<Image>();
             image.color = UIStyleTokens.Button.BackgroundDefault;
 
             Button button = buttonObject.AddComponent<Button>();
-            UIStyleTokens.Button.ApplyStyle(button);
 
             if (icon != null)
             {
@@ -580,7 +579,6 @@ namespace FungusToast.Unity.UI
 
                 TextMeshProUGUI iconLabel = CreateActionButtonContentLabel(contentRoot.transform, labelText);
                 iconLabel.alignment = TextAlignmentOptions.Center;
-                iconLabel.color = UIStyleTokens.Button.TextDefault;
             }
             else
             {
@@ -591,8 +589,16 @@ namespace FungusToast.Unity.UI
                 labelRect.offsetMin = Vector2.zero;
                 labelRect.offsetMax = Vector2.zero;
                 label.alignment = TextAlignmentOptions.Center;
-                label.color = UIStyleTokens.Button.TextDefault;
                 label.margin = Vector4.zero;
+            }
+
+            if (secondaryStyle)
+            {
+                UIStyleTokens.Button.ApplySecondaryMenuAction(button, width);
+            }
+            else
+            {
+                UIStyleTokens.Button.ApplyPrimaryMenuAction(button, width, useSelectedAsNormal);
             }
 
             return button;

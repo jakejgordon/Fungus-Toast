@@ -24,8 +24,8 @@ namespace FungusToast.Unity.UI.Campaign
         private const float FooterHeight = 24f;
         private const float MinimumVerticalMargin = 32f;
         private const float ResponsiveScaleSafetyFactor = 0.97f;
-        private const float SecondaryButtonHeight = 52f;
-        private const float SecondaryButtonWidth = 240f;
+        private const float SettingsCardWidth = 860f;
+        private const float SettingsTextWidth = 700f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
@@ -36,6 +36,10 @@ namespace FungusToast.Unity.UI.Campaign
         private const string ArtworkCreditCopy = "Special thanks to my teenage son Matthew for doing many of the graphics.";
         private const string MusicHeadingText = "Music";
         private const string MusicCreditCopy = "Thanks to Chris Howard for the music track of Fungus Toast. It sounds great!";
+        private const string SettingsHeadingText = "Settings";
+        private const string SettingsAudioHeadingText = "Audio";
+        private const string SettingsAdvancedHeadingText = "Advanced Campaign";
+        private const string SettingsResetPromptText = "Are you sure you want to reset all of your campaign rewards?";
 
         [Header("Panels")] 
         [SerializeField] private UI_StartGamePanel startGamePanel = null; // existing start / player config panel
@@ -56,9 +60,19 @@ namespace FungusToast.Unity.UI.Campaign
         private TextMeshProUGUI alphaSummaryText;
         private TextMeshProUGUI versionText;
         private GameObject creditsPanel;
+        private GameObject settingsPanel;
         private Button creditsButton;
+        private Button settingsButton;
         private Button creditsBackButton;
+        private Button settingsBackButton;
+        private Button settingsSoundEffectsButton;
+        private Button settingsMusicButton;
+        private Button settingsResetButton;
+        private Button settingsResetCancelButton;
         private Button quitButton;
+        private TextMeshProUGUI settingsResetStatusText;
+        private TextMeshProUGUI settingsResetPromptLabel;
+        private bool isConfirmingCampaignReset;
 
         private void Awake()
         {
@@ -130,11 +144,17 @@ namespace FungusToast.Unity.UI.Campaign
                 versionText.color = UIStyleTokens.Text.Muted;
             }
 
-            UIStyleTokens.Button.ApplyStyle(hotseatButton);
-            UIStyleTokens.Button.ApplyStyle(campaignButton);
-            UIStyleTokens.Button.ApplyPanelSecondaryStyle(creditsButton);
-            UIStyleTokens.Button.ApplyPanelSecondaryStyle(creditsBackButton);
-            UIStyleTokens.Button.ApplyPanelSecondaryStyle(quitButton);
+            UIStyleTokens.Button.ApplyPrimaryMenuAction(hotseatButton, ExpandedButtonWidth, preferredHeight: 90f, minHeight: 72f);
+            UIStyleTokens.Button.ApplyPrimaryMenuAction(campaignButton, ExpandedButtonWidth, preferredHeight: 90f, minHeight: 72f);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(creditsButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(creditsBackButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsBackButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsSoundEffectsButton);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsMusicButton);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsResetButton);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsResetCancelButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(quitButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
         }
 
         private void OnEnable()
@@ -142,6 +162,7 @@ namespace FungusToast.Unity.UI.Campaign
             UpdateVersionLabel();
             ShowMainMenuContent();
             RefreshCampaignButtonState();
+            RefreshSettingsState();
 
             // Ensure subordinate panels start hidden so only mode select is visible.
             if (startGamePanel != null) startGamePanel.gameObject.SetActive(false);
@@ -200,9 +221,67 @@ namespace FungusToast.Unity.UI.Campaign
             ShowCreditsContent();
         }
 
+        private void OnSettingsClicked()
+        {
+            ShowSettingsContent();
+        }
+
         private void OnCreditsBackClicked()
         {
             ShowMainMenuContent();
+        }
+
+        private void OnSettingsBackClicked()
+        {
+            ShowMainMenuContent();
+        }
+
+        private void OnSettingsSoundEffectsClicked()
+        {
+            SoundEffectsSettings.CycleVolumeForward();
+            RefreshSettingsAudioLabels();
+        }
+
+        private void OnSettingsMusicClicked()
+        {
+            MusicSettings.CycleVolumeForward();
+            RefreshSettingsAudioLabels();
+        }
+
+        private void OnSettingsResetClicked()
+        {
+            if (!isConfirmingCampaignReset)
+            {
+                isConfirmingCampaignReset = true;
+                if (settingsResetStatusText != null)
+                {
+                    settingsResetStatusText.text = string.Empty;
+                }
+
+                RefreshSettingsResetControls();
+                return;
+            }
+
+            GameManager manager = FindAnyObjectByType<GameManager>();
+            bool resetApplied = manager != null && manager.ResetCampaignMoldinessProgression();
+            isConfirmingCampaignReset = false;
+
+            if (settingsResetStatusText != null)
+            {
+                settingsResetStatusText.text = resetApplied
+                    ? "Campaign rewards and moldiness progress have been reset."
+                    : "No campaign save was found to reset.";
+                settingsResetStatusText.color = resetApplied ? UIStyleTokens.State.Success : UIStyleTokens.Text.Secondary;
+            }
+
+            RefreshCampaignButtonState();
+            RefreshSettingsState();
+        }
+
+        private void OnSettingsResetCancelClicked()
+        {
+            isConfirmingCampaignReset = false;
+            RefreshSettingsResetControls();
         }
 
         private void ConfigureLayout()
@@ -282,6 +361,12 @@ namespace FungusToast.Unity.UI.Campaign
                 creditsButton.onClick.AddListener(OnCreditsClicked);
             }
 
+            if (settingsButton == null)
+            {
+                settingsButton = CreateButton("UI_ModeSelectSettingsButton", "Settings");
+                settingsButton.onClick.AddListener(OnSettingsClicked);
+            }
+
             if (quitButton == null && ShouldShowQuitButton())
             {
                 quitButton = CreateButton("UI_ModeSelectQuitButton", "Quit to Desktop");
@@ -312,6 +397,11 @@ namespace FungusToast.Unity.UI.Campaign
                 creditsButton.transform.SetAsLastSibling();
             }
 
+            if (settingsButton != null)
+            {
+                settingsButton.transform.SetAsLastSibling();
+            }
+
             if (quitButton != null)
             {
                 quitButton.transform.SetAsLastSibling();
@@ -323,6 +413,7 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             EnsureCreditsPanel();
+            EnsureSettingsPanel();
         }
 
         private void UpdateVersionLabel()
@@ -516,6 +607,149 @@ namespace FungusToast.Unity.UI.Campaign
             creditsBackButton = CreateCreditsButton(cardObject.transform, "UI_ModeSelectCreditsBackButton", "Back to Menu");
         }
 
+        private void EnsureSettingsPanel()
+        {
+            if (settingsPanel != null)
+            {
+                return;
+            }
+
+            settingsPanel = new GameObject("UI_ModeSelectSettingsPanel", typeof(RectTransform), typeof(VerticalLayoutGroup));
+            settingsPanel.transform.SetParent(transform, false);
+            settingsPanel.layer = gameObject.layer;
+            settingsPanel.SetActive(false);
+
+            RectTransform panelRect = settingsPanel.GetComponent<RectTransform>();
+            panelRect.anchorMin = Vector2.zero;
+            panelRect.anchorMax = Vector2.one;
+            panelRect.offsetMin = Vector2.zero;
+            panelRect.offsetMax = Vector2.zero;
+
+            VerticalLayoutGroup panelLayout = settingsPanel.GetComponent<VerticalLayoutGroup>();
+            panelLayout.padding = new RectOffset(72, 72, 72, 72);
+            panelLayout.spacing = 24f;
+            panelLayout.childAlignment = TextAnchor.MiddleCenter;
+            panelLayout.childControlWidth = false;
+            panelLayout.childControlHeight = false;
+            panelLayout.childForceExpandWidth = false;
+            panelLayout.childForceExpandHeight = false;
+
+            GameObject cardObject = new GameObject(
+                "UI_ModeSelectSettingsCard",
+                typeof(RectTransform),
+                typeof(LayoutElement),
+                typeof(Image),
+                typeof(VerticalLayoutGroup),
+                typeof(ContentSizeFitter));
+            cardObject.transform.SetParent(settingsPanel.transform, false);
+            cardObject.layer = gameObject.layer;
+
+            RectTransform cardRect = cardObject.GetComponent<RectTransform>();
+            cardRect.sizeDelta = new Vector2(SettingsCardWidth, 0f);
+
+            LayoutElement cardLayoutElement = cardObject.GetComponent<LayoutElement>();
+            cardLayoutElement.preferredWidth = SettingsCardWidth;
+            cardLayoutElement.flexibleWidth = 0f;
+            cardLayoutElement.flexibleHeight = 0f;
+
+            Image cardBackground = cardObject.GetComponent<Image>();
+            cardBackground.color = UIStyleTokens.Surface.PanelPrimary;
+
+            VerticalLayoutGroup cardLayout = cardObject.GetComponent<VerticalLayoutGroup>();
+            cardLayout.padding = new RectOffset(44, 44, 40, 40);
+            cardLayout.spacing = 14f;
+            cardLayout.childAlignment = TextAnchor.UpperCenter;
+            cardLayout.childControlWidth = true;
+            cardLayout.childControlHeight = false;
+            cardLayout.childForceExpandWidth = false;
+            cardLayout.childForceExpandHeight = false;
+
+            ContentSizeFitter cardFitter = cardObject.GetComponent<ContentSizeFitter>();
+            cardFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            cardFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            TextMeshProUGUI titleLabel = CreateSettingsLabel(
+                cardObject.transform,
+                "UI_ModeSelectSettingsTitle",
+                SettingsHeadingText,
+                34f,
+                56f,
+                UIStyleTokens.Text.Primary,
+                FontStyles.Bold);
+            titleLabel.enableAutoSizing = true;
+            titleLabel.fontSizeMin = 26f;
+            titleLabel.fontSizeMax = 34f;
+
+            TextMeshProUGUI audioHeading = CreateSettingsLabel(
+                cardObject.transform,
+                "UI_ModeSelectSettingsAudioHeading",
+                SettingsAudioHeadingText,
+                24f,
+                34f,
+                UIStyleTokens.Accent.Spore,
+                FontStyles.Bold);
+
+            settingsSoundEffectsButton = CreateSettingsButton(cardObject.transform, "UI_ModeSelectSettingsSfxButton", string.Empty);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsSoundEffectsButton);
+            settingsSoundEffectsButton.onClick.AddListener(OnSettingsSoundEffectsClicked);
+
+            settingsMusicButton = CreateSettingsButton(cardObject.transform, "UI_ModeSelectSettingsMusicButton", string.Empty);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsMusicButton);
+            settingsMusicButton.onClick.AddListener(OnSettingsMusicClicked);
+
+            TextMeshProUGUI advancedHeading = CreateSettingsLabel(
+                cardObject.transform,
+                "UI_ModeSelectSettingsAdvancedHeading",
+                SettingsAdvancedHeadingText,
+                24f,
+                34f,
+                UIStyleTokens.Accent.Moss,
+                FontStyles.Bold);
+
+            CreateSettingsLabel(
+                cardObject.transform,
+                "UI_ModeSelectSettingsAdvancedSummary",
+                "Resetting campaign rewards clears your persistent moldiness progress, unlocked moldiness rewards, and pending moldiness reward choices.",
+                20f,
+                78f,
+                UIStyleTokens.Text.Secondary,
+                FontStyles.Normal);
+
+            settingsResetPromptLabel = CreateSettingsLabel(
+                cardObject.transform,
+                "UI_ModeSelectSettingsResetPrompt",
+                SettingsResetPromptText,
+                20f,
+                64f,
+                UIStyleTokens.State.Warning,
+                FontStyles.Bold);
+
+            settingsResetButton = CreateSettingsButton(cardObject.transform, "UI_ModeSelectSettingsResetButton", string.Empty);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsResetButton);
+            settingsResetButton.onClick.AddListener(OnSettingsResetClicked);
+
+            settingsResetCancelButton = CreateSettingsButton(cardObject.transform, "UI_ModeSelectSettingsResetCancelButton", "Cancel");
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsResetCancelButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+            settingsResetCancelButton.onClick.AddListener(OnSettingsResetCancelClicked);
+
+            settingsResetStatusText = CreateSettingsLabel(
+                cardObject.transform,
+                "UI_ModeSelectSettingsResetStatus",
+                string.Empty,
+                18f,
+                52f,
+                UIStyleTokens.Text.Secondary,
+                FontStyles.Normal);
+
+            settingsBackButton = CreateSettingsButton(cardObject.transform, "UI_ModeSelectSettingsBackButton", "Back to Menu");
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsBackButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+            settingsBackButton.onClick.AddListener(OnSettingsBackClicked);
+
+            _ = audioHeading;
+            _ = advancedHeading;
+            RefreshSettingsState();
+        }
+
         private TextMeshProUGUI CreateCreditsLabel(
             Transform parent,
             string objectName,
@@ -551,20 +785,46 @@ namespace FungusToast.Unity.UI.Campaign
             return label;
         }
 
+        private TextMeshProUGUI CreateSettingsLabel(
+            Transform parent,
+            string objectName,
+            string textValue,
+            float fontSize,
+            float preferredHeight,
+            Color color,
+            FontStyles fontStyle)
+        {
+            GameObject labelObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(parent, false);
+            labelObject.layer = gameObject.layer;
+
+            RectTransform rectTransform = labelObject.GetComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(SettingsTextWidth, preferredHeight);
+
+            LayoutElement layoutElement = labelObject.GetComponent<LayoutElement>();
+            layoutElement.preferredWidth = SettingsTextWidth;
+            layoutElement.preferredHeight = preferredHeight;
+            layoutElement.flexibleWidth = 0f;
+            layoutElement.flexibleHeight = 0f;
+
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = textValue;
+            label.font = ResolveSharedFont();
+            label.fontSize = fontSize;
+            label.fontStyle = fontStyle;
+            label.alignment = TextAlignmentOptions.Center;
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.raycastTarget = false;
+            label.color = color;
+
+            return label;
+        }
+
         private Button CreateCreditsButton(Transform parent, string objectName, string labelText)
         {
             GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(Image), typeof(Button));
             buttonObject.transform.SetParent(parent, false);
             buttonObject.layer = gameObject.layer;
-
-            RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
-            rectTransform.sizeDelta = new Vector2(SecondaryButtonWidth, SecondaryButtonHeight);
-
-            LayoutElement layoutElement = buttonObject.GetComponent<LayoutElement>();
-            layoutElement.preferredWidth = SecondaryButtonWidth;
-            layoutElement.preferredHeight = SecondaryButtonHeight;
-            layoutElement.flexibleWidth = 0f;
-            layoutElement.flexibleHeight = 0f;
 
             Image background = buttonObject.GetComponent<Image>();
             background.color = UIStyleTokens.Surface.PanelElevated;
@@ -590,6 +850,41 @@ namespace FungusToast.Unity.UI.Campaign
             label.alignment = TextAlignmentOptions.Center;
             label.raycastTarget = false;
 
+            UIStyleTokens.Button.ApplySecondaryMenuAction(button, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+
+            return button;
+        }
+
+        private Button CreateSettingsButton(Transform parent, string objectName, string labelText)
+        {
+            GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(Image), typeof(Button));
+            buttonObject.transform.SetParent(parent, false);
+            buttonObject.layer = gameObject.layer;
+
+            Image background = buttonObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Surface.PanelElevated;
+
+            Button button = buttonObject.GetComponent<Button>();
+            button.targetGraphic = background;
+
+            GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(buttonObject.transform, false);
+            labelObject.layer = gameObject.layer;
+
+            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = labelText;
+            label.font = ResolveSharedFont();
+            label.fontSize = 24f;
+            label.fontStyle = FontStyles.Bold;
+            label.alignment = TextAlignmentOptions.Center;
+            label.raycastTarget = false;
+
             return button;
         }
 
@@ -603,6 +898,11 @@ namespace FungusToast.Unity.UI.Campaign
             if (creditsPanel != null)
             {
                 creditsPanel.SetActive(false);
+            }
+
+            if (settingsPanel != null)
+            {
+                settingsPanel.SetActive(false);
             }
 
             RefreshResponsiveLayout();
@@ -620,7 +920,96 @@ namespace FungusToast.Unity.UI.Campaign
                 creditsPanel.SetActive(true);
             }
 
+            if (settingsPanel != null)
+            {
+                settingsPanel.SetActive(false);
+            }
+
             RefreshResponsiveLayout();
+        }
+
+        private void ShowSettingsContent()
+        {
+            if (contentRoot != null)
+            {
+                contentRoot.gameObject.SetActive(false);
+            }
+
+            if (creditsPanel != null)
+            {
+                creditsPanel.SetActive(false);
+            }
+
+            if (settingsPanel != null)
+            {
+                settingsPanel.SetActive(true);
+            }
+
+            RefreshSettingsState();
+
+            RefreshResponsiveLayout();
+        }
+
+        private void RefreshSettingsState()
+        {
+            RefreshSettingsAudioLabels();
+            RefreshSettingsResetControls();
+        }
+
+        private void RefreshSettingsAudioLabels()
+        {
+            SetButtonLabel(settingsSoundEffectsButton, $"SFX Volume: {Mathf.RoundToInt(SoundEffectsSettings.Volume * 100f)}%");
+            SetButtonLabel(settingsMusicButton, $"Music Volume: {Mathf.RoundToInt(MusicSettings.Volume * 100f)}%");
+        }
+
+        private void RefreshSettingsResetControls()
+        {
+            GameManager manager = FindAnyObjectByType<GameManager>();
+            bool hasCampaignSave = manager != null && manager.HasCampaignSave();
+
+            if (settingsResetPromptLabel != null)
+            {
+                settingsResetPromptLabel.gameObject.SetActive(isConfirmingCampaignReset);
+            }
+
+            if (settingsResetCancelButton != null)
+            {
+                settingsResetCancelButton.gameObject.SetActive(isConfirmingCampaignReset);
+            }
+
+            if (settingsResetButton != null)
+            {
+                settingsResetButton.interactable = hasCampaignSave;
+                SetButtonLabel(
+                    settingsResetButton,
+                    isConfirmingCampaignReset
+                        ? "Yes, Reset Campaign Rewards"
+                        : "Reset Campaign Rewards");
+            }
+
+            if (!hasCampaignSave)
+            {
+                isConfirmingCampaignReset = false;
+                if (settingsResetPromptLabel != null)
+                {
+                    settingsResetPromptLabel.gameObject.SetActive(false);
+                }
+
+                if (settingsResetCancelButton != null)
+                {
+                    settingsResetCancelButton.gameObject.SetActive(false);
+                }
+
+                if (settingsResetStatusText != null && string.IsNullOrWhiteSpace(settingsResetStatusText.text))
+                {
+                    settingsResetStatusText.text = "No campaign save found. Start or resume a campaign before using this reset option.";
+                    settingsResetStatusText.color = UIStyleTokens.Text.Secondary;
+                }
+            }
+            else if (settingsResetStatusText != null && settingsResetStatusText.text == "No campaign save found. Start or resume a campaign before using this reset option.")
+            {
+                settingsResetStatusText.text = string.Empty;
+            }
         }
 
         private void RefreshResponsiveLayout()
@@ -655,15 +1044,6 @@ namespace FungusToast.Unity.UI.Campaign
             buttonObject.transform.SetParent(contentRoot, false);
             buttonObject.layer = gameObject.layer;
 
-            RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
-            rectTransform.sizeDelta = new Vector2(SecondaryButtonWidth, SecondaryButtonHeight);
-
-            LayoutElement layoutElement = buttonObject.GetComponent<LayoutElement>();
-            layoutElement.preferredWidth = SecondaryButtonWidth;
-            layoutElement.preferredHeight = SecondaryButtonHeight;
-            layoutElement.flexibleWidth = 0f;
-            layoutElement.flexibleHeight = 0f;
-
             Image background = buttonObject.GetComponent<Image>();
             background.color = UIStyleTokens.Surface.PanelElevated;
 
@@ -686,6 +1066,8 @@ namespace FungusToast.Unity.UI.Campaign
             label.fontSize = 22f;
             label.alignment = TextAlignmentOptions.Center;
             label.raycastTarget = false;
+
+            UIStyleTokens.Button.ApplySecondaryMenuAction(button, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
 
             return button;
         }

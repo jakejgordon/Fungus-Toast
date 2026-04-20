@@ -497,6 +497,11 @@ namespace FungusToast.Unity
             return gameStartService != null && gameStartService.HasPendingCampaignMoldinessUnlockOnSavedRun();
         }
 
+        public bool ResetCampaignMoldinessProgression()
+        {
+            return campaignController != null && campaignController.ResetMoldinessProgression();
+        }
+
         public bool TryStartCampaignAdaptationDraft(Action onSelectionComplete)
         {
             return gameStartService != null && gameStartService.TryStartCampaignAdaptationDraft(onSelectionComplete);

@@ -1200,27 +1200,14 @@ namespace FungusToast.Unity.UI.Campaign
 
             button.transform.SetParent(actionStack.transform, false);
             button.transform.SetSiblingIndex(index);
-            EnsureButtonLayout(button, button == backButton ? 330f : 500f);
+            EnsureButtonLayout(
+                button,
+                button == backButton ? UIStyleTokens.Button.DesktopCompactMenuActionWidth : UIStyleTokens.Button.DesktopPrimaryMenuActionWidth);
         }
 
         private static void EnsureButtonLayout(Button button, float width)
         {
-            if (button == null)
-            {
-                return;
-            }
-
-            var element = button.GetComponent<LayoutElement>();
-            if (element == null)
-            {
-                element = button.gameObject.AddComponent<LayoutElement>();
-            }
-
-            element.minHeight = 52f;
-            element.preferredHeight = 56f;
-            element.minWidth = width;
-            element.preferredWidth = width;
-            element.flexibleWidth = 0f;
+            UIStyleTokens.Button.ConfigureMenuActionLayout(button, width);
         }
 
         private TMP_Dropdown FindDropdownTemplate()
@@ -1242,15 +1229,10 @@ namespace FungusToast.Unity.UI.Campaign
             UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.Canvas);
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
 
-            UIStyleTokens.Button.ApplyStyle(resumeButton);
-            UIStyleTokens.Button.ApplyStyle(newButton);
-            UIStyleTokens.Button.ApplyStyle(deleteButton);
-            UIStyleTokens.Button.ApplyStyle(backButton);
-
-            UIStyleTokens.Button.SetButtonLabelColor(resumeButton, UIStyleTokens.Button.TextDefault);
-            UIStyleTokens.Button.SetButtonLabelColor(newButton, UIStyleTokens.Button.TextDefault);
-            UIStyleTokens.Button.SetButtonLabelColor(deleteButton, UIStyleTokens.Button.TextDefault);
-            UIStyleTokens.Button.SetButtonLabelColor(backButton, UIStyleTokens.Button.TextDefault);
+            UIStyleTokens.Button.ApplyPrimaryMenuAction(resumeButton);
+            UIStyleTokens.Button.ApplyPrimaryMenuAction(newButton);
+            UIStyleTokens.Button.ApplyPrimaryMenuAction(deleteButton);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(backButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
         }
 
         private void UpdateStepState()
