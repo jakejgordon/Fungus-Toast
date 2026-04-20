@@ -112,7 +112,9 @@ namespace FungusToast.Unity.UI
         private readonly Dictionary<string, MoldinessRewardOptionVisual> moldinessRewardOptionVisuals = new();
         private readonly List<AdaptationDefinition> pendingDefeatCarryoverOptions = new();
         private bool returnToCampaignMenuAfterMoldinessReward;
+        private bool showPostAdaptationConfirmationAfterMoldinessRewardSelection;
         private DefeatCarryoverEntryMode pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
+        private CampaignVictorySnapshot cachedCampaignVictorySnapshot;
         private TextMeshProUGUI defeatCarryoverSelectionStatusLabel;
         private readonly List<Image> moldinessSummaryToastTiles = new();
         private readonly List<Component> legacyResultsHeaderCandidates = new();
@@ -365,6 +367,8 @@ namespace FungusToast.Unity.UI
             defeatCarryoverSelectionCapacity = 0;
             pendingDefeatCarryoverOptions.Clear();
             pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
+            cachedCampaignVictorySnapshot = null;
+            showPostAdaptationConfirmationAfterMoldinessRewardSelection = false;
             if (!isCampaign)
             {
                 ShowResultsInternal(ranked, board, playerStatistics, useCampaignTopSpacer: true);
@@ -380,6 +384,7 @@ namespace FungusToast.Unity.UI
 
             int levelDisplay = victory ? completedLevelDisplay : lostLevelDisplay;
             var presentationSnapshot = EnsureCampaignOutcomePresentationSnapshot(campaignSnapshot, victory, levelDisplay);
+            cachedCampaignVictorySnapshot = presentationSnapshot;
             ShowCampaignOutcomeRows(ranked, board, playerStatistics, presentationSnapshot, victory);
             SetLegacyResultsHeaderVisibility(false);
             SetOutcomeBannerVisibility(true);
@@ -714,10 +719,27 @@ namespace FungusToast.Unity.UI
 
         public void ShowCampaignPendingMoldinessRewardSelection(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers)
         {
-            ShowCampaignPendingMoldinessRewardSelection(snapshot, offers, returnToCampaignMenuAfterSelection: false);
+            ShowCampaignPendingMoldinessRewardSelection(
+                snapshot,
+                offers,
+                returnToCampaignMenuAfterSelection: false,
+                showAdaptationConfirmationAfterSelection: false);
         }
 
         public void ShowCampaignPendingMoldinessRewardSelection(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers, bool returnToCampaignMenuAfterSelection)
+        {
+            ShowCampaignPendingMoldinessRewardSelection(
+                snapshot,
+                offers,
+                returnToCampaignMenuAfterSelection,
+                showAdaptationConfirmationAfterSelection: false);
+        }
+
+        public void ShowCampaignPendingMoldinessRewardSelection(
+            CampaignVictorySnapshot snapshot,
+            IReadOnlyList<MoldinessUnlockDefinition> offers,
+            bool returnToCampaignMenuAfterSelection,
+            bool showAdaptationConfirmationAfterSelection)
         {
             SetPostAdaptationConfirmationState(false);
             if (snapshot == null)
@@ -733,6 +755,8 @@ namespace FungusToast.Unity.UI
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = true;
             returnToCampaignMenuAfterMoldinessReward = returnToCampaignMenuAfterSelection;
+            showPostAdaptationConfirmationAfterMoldinessRewardSelection = showAdaptationConfirmationAfterSelection;
+            cachedCampaignVictorySnapshot = snapshot;
             selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
@@ -776,6 +800,8 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            cachedCampaignVictorySnapshot = snapshot;
+            showPostAdaptationConfirmationAfterMoldinessRewardSelection = false;
             ShowSnapshotRows(snapshot);
             SetLegacyResultsHeaderVisibility(false);
             SetOutcomeBannerVisibility(true);
@@ -1736,11 +1762,13 @@ namespace FungusToast.Unity.UI
                 requiresMoldinessRewardSelection = false;
                 selectedMoldinessRewardId = null;
                 bool returnToCampaignMenu = returnToCampaignMenuAfterMoldinessReward;
+                bool showPostAdaptationConfirmation = showPostAdaptationConfirmationAfterMoldinessRewardSelection;
                 returnToCampaignMenuAfterMoldinessReward = false;
-                HideInstant();
+                showPostAdaptationConfirmationAfterMoldinessRewardSelection = false;
 
                 if (returnToCampaignMenu)
                 {
+                    HideInstant();
                     if (onExitToModeSelect != null)
                         onExitToModeSelect();
                     else
@@ -1748,6 +1776,13 @@ namespace FungusToast.Unity.UI
                     return;
                 }
 
+                if (showPostAdaptationConfirmation)
+                {
+                    ShowCampaignAdaptationSecuredConfirmation();
+                    return;
+                }
+
+                HideInstant();
                 bool started = manager.TryStartCampaignAdaptationDraft(OnCampaignAdaptationSelected);
                 if (!started)
                 {
@@ -1786,6 +1821,36 @@ namespace FungusToast.Unity.UI
         private void OnCampaignAdaptationSelected()
         {
             requiresAdaptationBeforeContinue = false;
+
+            var manager = GameManager.Instance;
+            var campaignController = manager?.CampaignController;
+            if (campaignController != null && campaignController.HasPendingMoldinessUnlockChoice)
+            {
+                var snapshot = cachedCampaignVictorySnapshot;
+                if (snapshot == null
+                    && (!campaignController.TryGetPendingMoldinessRewardSnapshot(out snapshot) || snapshot == null))
+                {
+                    manager?.StartCampaignResume();
+                    return;
+                }
+
+                snapshot.pendingMoldinessUnlockCount = campaignController.State?.moldiness?.pendingUnlockTriggers?.Count ?? snapshot.pendingMoldinessUnlockCount;
+                var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(campaignController.State?.seed ?? 0), 3);
+                ShowCampaignPendingMoldinessRewardSelection(
+                    snapshot,
+                    offers,
+                    returnToCampaignMenuAfterSelection: false,
+                    showAdaptationConfirmationAfterSelection: true);
+                return;
+            }
+
+            ShowCampaignAdaptationSecuredConfirmation();
+        }
+
+        private void ShowCampaignAdaptationSecuredConfirmation()
+        {
+            requiresAdaptationBeforeContinue = false;
+            showPostAdaptationConfirmationAfterMoldinessRewardSelection = false;
 
             if (outcomeLabel != null)
             {
@@ -1850,11 +1915,13 @@ namespace FungusToast.Unity.UI
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = false;
             returnToCampaignMenuAfterMoldinessReward = false;
+            showPostAdaptationConfirmationAfterMoldinessRewardSelection = false;
             selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
             pendingDefeatCarryoverOptions.Clear();
             pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
+            cachedCampaignVictorySnapshot = null;
             moldinessRewardOptionBackgrounds.Clear();
             moldinessRewardOptionVisuals.Clear();
             canvasGroup.alpha = 0f;
