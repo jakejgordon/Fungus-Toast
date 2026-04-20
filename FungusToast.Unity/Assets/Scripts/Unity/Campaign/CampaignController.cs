@@ -371,6 +371,15 @@ namespace FungusToast.Unity.Campaign
                 return false;
             }
 
+            if (State.pendingVictorySnapshot != null)
+            {
+                State.pendingVictorySnapshot.pendingMoldinessUnlockCount = State.moldiness.pendingUnlockTriggers?.Count ?? 0;
+                if (!State.pendingAdaptationSelection && State.pendingVictorySnapshot.pendingMoldinessUnlockCount == 0)
+                {
+                    State.pendingVictorySnapshot = null;
+                }
+            }
+
             CampaignSaveService.Save(State);
             string targetLabel = result.Definition.Type == MoldinessUnlockType.UnlockAdaptation
                 ? result.Definition.AdaptationId

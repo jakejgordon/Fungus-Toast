@@ -139,8 +139,9 @@ namespace FungusToast.Unity.UI
         private bool postVictoryTestingRailRequestedVisible;
         private bool postVictoryTestingRailVisible;
         private bool showPostAdaptationConfirmationState;
+        private bool showCampaignLossActionStack;
 
-        private bool UseVerticalActionStack => showPostAdaptationConfirmationState || requiresMoldinessRewardSelection;
+        private bool UseVerticalActionStack => showPostAdaptationConfirmationState || requiresMoldinessRewardSelection || requiresDefeatCarryoverSelection || showCampaignLossActionStack;
 
         private sealed class MoldinessRewardOptionVisual
         {
@@ -334,6 +335,7 @@ namespace FungusToast.Unity.UI
         public void ShowResults(List<Player> ranked, GameBoard board, EndgamePlayerStatisticsSnapshot playerStatistics = null)
         {
             SetPostAdaptationConfirmationState(false);
+            showCampaignLossActionStack = false;
             ShowResultsInternal(ranked, board, playerStatistics, useCampaignTopSpacer: false);
             SetLegacyResultsHeaderVisibility(true);
             SetOutcomeBannerVisibility(false);
@@ -368,6 +370,7 @@ namespace FungusToast.Unity.UI
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = false;
             hasPendingDefeatCarryoverEvent = false;
+            showCampaignLossActionStack = false;
             selectedMoldinessRewardId = null;
             selectedDefeatCarryoverAdaptationIds.Clear();
             defeatCarryoverSelectionCapacity = 0;
@@ -389,6 +392,7 @@ namespace FungusToast.Unity.UI
             }
 
             int levelDisplay = victory ? completedLevelDisplay : lostLevelDisplay;
+            showCampaignLossActionStack = !victory;
             var presentationSnapshot = EnsureCampaignOutcomePresentationSnapshot(campaignSnapshot, victory, levelDisplay);
             cachedCampaignVictorySnapshot = presentationSnapshot;
             ShowCampaignOutcomeRows(ranked, board, playerStatistics, presentationSnapshot, victory);
@@ -683,6 +687,7 @@ namespace FungusToast.Unity.UI
             requiresDefeatCarryoverSelection = true;
             requiresMoldinessRewardSelection = false;
             hasPendingDefeatCarryoverEvent = false;
+            showCampaignLossActionStack = false;
             selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = Mathf.Max(0, Mathf.Min(selectionCapacity, options?.Count ?? 0));
             selectedDefeatCarryoverAdaptationIds.Clear();
@@ -761,6 +766,7 @@ namespace FungusToast.Unity.UI
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = true;
+            showCampaignLossActionStack = false;
             returnToCampaignMenuAfterMoldinessReward = returnToCampaignMenuAfterSelection;
             showPostAdaptationConfirmationAfterMoldinessRewardSelection = showAdaptationConfirmationAfterSelection;
             cachedCampaignVictorySnapshot = snapshot;
@@ -803,6 +809,7 @@ namespace FungusToast.Unity.UI
         public void ShowCampaignPendingVictorySnapshot(CampaignVictorySnapshot snapshot)
         {
             SetPostAdaptationConfirmationState(false);
+            showCampaignLossActionStack = false;
             if (snapshot == null)
             {
                 return;
@@ -1256,7 +1263,7 @@ namespace FungusToast.Unity.UI
                 ? $"Threshold reached. {snapshot.pendingMoldinessUnlockCount} moldiness reward{Pluralize(snapshot.pendingMoldinessUnlockCount)} pending."
                 : (snapshot.moldinessAwarded > 0
                     ? "No new threshold crossed this run."
-                    : "No moldiness gained this run.");
+                    : "No moldiness gained this level.");
 
             var detail = CreateCarryoverInfoText(root.transform,
                 thresholdMessage,
@@ -1950,6 +1957,7 @@ namespace FungusToast.Unity.UI
         {
             requiresAdaptationBeforeContinue = false;
             showPostAdaptationConfirmationAfterMoldinessRewardSelection = false;
+            showCampaignLossActionStack = false;
 
             if (outcomeLabel != null)
             {

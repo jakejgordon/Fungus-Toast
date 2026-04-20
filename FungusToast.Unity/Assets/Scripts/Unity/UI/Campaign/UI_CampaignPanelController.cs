@@ -20,6 +20,7 @@ namespace FungusToast.Unity.UI.Campaign
     /// </summary>
     public class UI_CampaignPanelController : MonoBehaviour
     {
+        private const string MoldinessSummaryTooltipText = "Earn moldiness for completing campaign levels. Higher levels award more moldiness. Whenever a moldiness threshold is reached, you can pick between permanent rewards to enhance future campaign runs.";
         private const float PrimaryColumnWidth = 500f;
         private const float DevelopmentRailWidth = 340f;
         private const float LayoutShellWidth = 500f;
@@ -420,6 +421,11 @@ namespace FungusToast.Unity.UI.Campaign
                 surface.color = UIStyleTokens.Surface.PanelPrimary;
             }
 
+            var tooltipTrigger = moldinessSummarySectionRoot.GetComponent<TooltipTrigger>()
+                ?? moldinessSummarySectionRoot.gameObject.AddComponent<TooltipTrigger>();
+            tooltipTrigger.SetStaticText(MoldinessSummaryTooltipText);
+            tooltipTrigger.SetPinOnClick(false);
+
             var layout = moldinessSummarySectionRoot.GetComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(18, 18, 18, 18);
             layout.childAlignment = TextAnchor.UpperCenter;
@@ -489,6 +495,7 @@ namespace FungusToast.Unity.UI.Campaign
             label.alignment = TextAlignmentOptions.Center;
             label.textWrappingMode = TextWrappingModes.Normal;
             label.text = string.Empty;
+            label.raycastTarget = false;
 
             var element = label.GetComponent<LayoutElement>();
             element.minWidth = 460f;
@@ -907,16 +914,38 @@ namespace FungusToast.Unity.UI.Campaign
 
             bool pendingSporePreservation = campaignController.IsAwaitingDefeatCarryoverSelection;
             bool pendingMoldinessReward = campaignController.HasPendingMoldinessUnlockChoice;
+            int nextLevelDisplay = GetNextCampaignLevelDisplay(campaignController);
             if (resumeButton != null)
             {
                 SetButtonText(
                     resumeButton,
                     pendingSporePreservation
-                        ? "Resume Campaign (Pending Spore Preservation)"
+                        ? $"Resume Campaign (Pending Spore Preservation, Level {nextLevelDisplay})"
                         : pendingMoldinessReward
-                            ? "Resume Campaign (Pending Reward)"
-                            : "Resume Campaign");
+                            ? $"Resume Campaign (Pending Reward, Level {nextLevelDisplay})"
+                            : $"Resume Campaign (Level {nextLevelDisplay})");
             }
+        }
+
+        private static int GetNextCampaignLevelDisplay(CampaignController campaignController)
+        {
+            if (campaignController?.State == null)
+            {
+                return 1;
+            }
+
+            if (campaignController.IsAwaitingDefeatCarryoverSelection)
+            {
+                return 1;
+            }
+
+            int nextLevelDisplay = campaignController.State.levelIndex + 1;
+            if (campaignController.IsAwaitingAdaptationSelection)
+            {
+                nextLevelDisplay++;
+            }
+
+            return Mathf.Max(1, nextLevelDisplay);
         }
 
         private void ConfigureMoldinessSummaryToastGrid(int threshold)
@@ -1608,6 +1637,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             return GameManager.Instance.Board != null
                 || GameManager.Instance.IsCampaignAwaitingAdaptationSelection()
+                || (GameManager.Instance.CampaignController?.HasPendingMoldinessUnlockChoice ?? false)
                 || (GameManager.Instance.CampaignController?.IsAwaitingDefeatCarryoverSelection ?? false);
         }
 
