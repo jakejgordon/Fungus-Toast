@@ -489,8 +489,10 @@ namespace FungusToast.Unity
         public bool HasCampaignSave() => gameStartService != null && gameStartService.HasCampaignSave();
         public bool IsCampaignAwaitingAdaptationSelection() =>
             gameStartService != null && gameStartService.IsCampaignAwaitingAdaptationSelection();
-        public bool HasPendingCampaignMoldinessUnlockOnSavedRun() =>
-            gameStartService != null && gameStartService.HasPendingCampaignMoldinessUnlockOnSavedRun();
+        public bool HasPendingCampaignMoldinessUnlockOnSavedRun()
+        {
+            return gameStartService != null && gameStartService.HasPendingCampaignMoldinessUnlockOnSavedRun();
+        }
 
         public bool TryStartCampaignAdaptationDraft(Action onSelectionComplete)
         {
