@@ -235,6 +235,7 @@ namespace FungusToast.Unity.UI.Campaign
                 ButtonTemplate = backButton != null ? backButton : resumeButton,
                 DropdownTemplate = FindDropdownTemplate(),
                 SupportsForcedAdaptation = true,
+                SupportsForceMoldinessRewards = true,
                 CardName = "UI_CampaignTestingCard",
                 ControlPrefix = "UI_CampaignTesting",
                 LogPrefix = "UI_CampaignPanelController",

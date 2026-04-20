@@ -104,6 +104,7 @@ namespace FungusToast.Unity.UI.Testing
         public bool SkipToEndGame { get; }
         public bool ForceFirstGame { get; }
         public ForcedGameResultMode ForcedResult { get; }
+        public bool ForceMoldinessRewards { get; }
         public int CampaignLevelIndex { get; }
         public string ForcedAdaptationId { get; }
         public IReadOnlyList<string> ForcedStartingAdaptationIds { get; }
@@ -116,6 +117,7 @@ namespace FungusToast.Unity.UI.Testing
             bool skipToEndGame,
             bool forceFirstGame,
             ForcedGameResultMode forcedResult,
+            bool forceMoldinessRewards,
             int campaignLevelIndex,
             string forcedAdaptationId,
             IReadOnlyList<string> forcedStartingAdaptationIds)
@@ -127,6 +129,9 @@ namespace FungusToast.Unity.UI.Testing
             SkipToEndGame = skipToEndGame;
             ForceFirstGame = forceFirstGame;
             ForcedResult = forcedResult;
+            ForceMoldinessRewards = skipToEndGame
+                && forcedResult == ForcedGameResultMode.ForcedWin
+                && forceMoldinessRewards;
             CampaignLevelIndex = Math.Max(0, campaignLevelIndex);
             ForcedAdaptationId = forcedAdaptationId ?? string.Empty;
             ForcedStartingAdaptationIds = forcedStartingAdaptationIds?
@@ -143,6 +148,7 @@ namespace FungusToast.Unity.UI.Testing
         public Button ButtonTemplate { get; set; }
         public TMP_Dropdown DropdownTemplate { get; set; }
         public bool SupportsForcedAdaptation { get; set; }
+        public bool SupportsForceMoldinessRewards { get; set; }
         public bool SupportsBoardSizeOverride { get; set; }
         public bool SupportsFirstGameToggle { get; set; } = true;
         public string CardName { get; set; } = "UI_DevelopmentTestingCard";
@@ -187,6 +193,7 @@ namespace FungusToast.Unity.UI.Testing
         private Button firstGameButton;
         private Button skipToEndButton;
         private Button forcedResultButton;
+        private Button forceMoldinessRewardsButton;
         private GameObject adaptationRow;
         private TMP_Dropdown adaptationDropdown;
         private Button forcedStartingAdaptationsToggleButton;
@@ -199,6 +206,7 @@ namespace FungusToast.Unity.UI.Testing
         private bool testingEnabled;
         private bool skipToEnd;
         private bool forceFirstGame;
+        private bool forceMoldinessRewards;
         private bool forceStartingAdaptationsEnabled;
         private readonly HashSet<string> selectedForcedStartingAdaptationIds = new(StringComparer.Ordinal);
         private int fastForwardRounds;
@@ -259,6 +267,11 @@ namespace FungusToast.Unity.UI.Testing
             skipToEndButton = EnsureSettingButton($"{options.ControlPrefix}SkipToEndButton", OnSkipToEndClicked);
             forcedResultButton = EnsureSettingButton($"{options.ControlPrefix}ForcedResultButton", OnForcedResultClicked);
 
+            if (options.SupportsForceMoldinessRewards)
+            {
+                forceMoldinessRewardsButton = EnsureSettingButton($"{options.ControlPrefix}ForceMoldinessRewardsButton", OnForceMoldinessRewardsClicked);
+            }
+
             if (options.SupportsForcedAdaptation)
             {
                 adaptationRow = EnsureDropdownRow(
@@ -277,11 +290,12 @@ namespace FungusToast.Unity.UI.Testing
             SetSiblingIndex(fastForwardButton != null ? fastForwardButton.transform : null, 2);
             SetSiblingIndex(skipToEndButton != null ? skipToEndButton.transform : null, 3);
             SetSiblingIndex(forcedResultButton != null ? forcedResultButton.transform : null, 4);
-            SetSiblingIndex(adaptationRow != null ? adaptationRow.transform : null, 5);
-            SetSiblingIndex(firstGameButton != null ? firstGameButton.transform : null, 6);
-            SetSiblingIndex(forcedStartingAdaptationsToggleButton != null ? forcedStartingAdaptationsToggleButton.transform : null, 7);
-            SetSiblingIndex(forcedStartingAdaptationsRow != null ? forcedStartingAdaptationsRow.transform : null, 8);
-            SetSiblingIndex(mycovariantRow != null ? mycovariantRow.transform : null, 9);
+            SetSiblingIndex(forceMoldinessRewardsButton != null ? forceMoldinessRewardsButton.transform : null, 5);
+            SetSiblingIndex(adaptationRow != null ? adaptationRow.transform : null, 6);
+            SetSiblingIndex(firstGameButton != null ? firstGameButton.transform : null, 7);
+            SetSiblingIndex(forcedStartingAdaptationsToggleButton != null ? forcedStartingAdaptationsToggleButton.transform : null, 8);
+            SetSiblingIndex(forcedStartingAdaptationsRow != null ? forcedStartingAdaptationsRow.transform : null, 9);
+            SetSiblingIndex(mycovariantRow != null ? mycovariantRow.transform : null, 10);
 
             RefreshDropdownOptions();
             RefreshVisualState();
@@ -305,6 +319,11 @@ namespace FungusToast.Unity.UI.Testing
             selectedCampaignLevelIndex = Math.Max(0, configuration.CampaignLevelIndex);
             skipToEnd = testingEnabled && configuration.SkipToEndGame;
             forceFirstGame = options.SupportsFirstGameToggle && testingEnabled && configuration.ForceFirstGame;
+            forceMoldinessRewards = options.SupportsForceMoldinessRewards
+                && testingEnabled
+                && skipToEnd
+                && configuration.ForcedResult == ForcedGameResultMode.ForcedWin
+                && configuration.ForceMoldinessRewards;
             selectedForcedStartingAdaptationIds.Clear();
             foreach (var adaptationId in configuration.ForcedStartingAdaptationIds)
             {
@@ -464,6 +483,10 @@ namespace FungusToast.Unity.UI.Testing
             UpdateButtonState(firstGameButton, testingEnabled, testingEnabled);
             UpdateButtonState(skipToEndButton, testingEnabled, testingEnabled);
             UpdateButtonState(forcedResultButton, testingEnabled && skipToEnd, testingEnabled && skipToEnd);
+            UpdateButtonState(
+                forceMoldinessRewardsButton,
+                testingEnabled && skipToEnd && forcedResult == ForcedGameResultMode.ForcedWin,
+                testingEnabled && skipToEnd && forcedResult == ForcedGameResultMode.ForcedWin);
 
             if (adaptationRow != null)
             {
@@ -498,11 +521,17 @@ namespace FungusToast.Unity.UI.Testing
             if (!skipToEnd)
             {
                 forcedResult = ForcedGameResultMode.Natural;
+                forceMoldinessRewards = false;
                 if (adaptationDropdown != null)
                 {
                     adaptationDropdown.value = 0;
                     adaptationDropdown.RefreshShownValue();
                 }
+            }
+
+            if (forcedResult != ForcedGameResultMode.ForcedWin)
+            {
+                forceMoldinessRewards = false;
             }
 
             UpdateButtonState(forcedStartingAdaptationsToggleButton, testingEnabled, testingEnabled);
@@ -516,6 +545,7 @@ namespace FungusToast.Unity.UI.Testing
             SetButtonLabel(firstGameButton, $"First Game?: {(forceFirstGame ? "Yes" : "No")}");
             SetButtonLabel(skipToEndButton, $"Skip to End Game: {(skipToEnd ? "On" : "Off")}");
             SetButtonLabel(forcedResultButton, $"Forced Result: {FormatForcedResult(forcedResult)}");
+            SetButtonLabel(forceMoldinessRewardsButton, $"Force Moldiness Rewards: {(forceMoldinessRewards ? "On" : "Off")}");
             SetButtonLabel(forcedStartingAdaptationsToggleButton, $"Forced Adaptations?: {(forceStartingAdaptationsEnabled ? "On" : "Off")}");
 
             NotifyLayoutInvalidated();
@@ -541,7 +571,7 @@ namespace FungusToast.Unity.UI.Testing
         {
             if (!testingEnabled)
             {
-                return new DevelopmentTestingConfiguration(false, null, null, 0, false, false, ForcedGameResultMode.Natural, 0, string.Empty, Array.Empty<string>());
+                return new DevelopmentTestingConfiguration(false, null, null, 0, false, false, ForcedGameResultMode.Natural, false, 0, string.Empty, Array.Empty<string>());
             }
 
             int? selectedMycovariantId = null;
@@ -576,6 +606,7 @@ namespace FungusToast.Unity.UI.Testing
                 skipToEnd,
                 options.SupportsFirstGameToggle && forceFirstGame,
                 skipToEnd ? forcedResult : ForcedGameResultMode.Natural,
+                options.SupportsForceMoldinessRewards && skipToEnd && forcedResult == ForcedGameResultMode.ForcedWin && forceMoldinessRewards,
                 selectedCampaignLevelIndex,
                 selectedAdaptationId,
                 forcedStartingAdaptationIds);
@@ -601,6 +632,7 @@ namespace FungusToast.Unity.UI.Testing
                 configuration.SkipToEndGame,
                 configuration.ForceFirstGame,
                 configuration.ForcedResult,
+                configuration.ForceMoldinessRewards,
                 configuration.CampaignLevelIndex,
                 configuration.ForcedAdaptationId,
                 configuration.ForcedStartingAdaptationIds);
@@ -1061,6 +1093,7 @@ namespace FungusToast.Unity.UI.Testing
         {
             skipToEnd = false;
             forceFirstGame = false;
+            forceMoldinessRewards = false;
             forceStartingAdaptationsEnabled = false;
             selectedForcedStartingAdaptationIds.Clear();
             fastForwardRounds = 0;
@@ -1103,6 +1136,10 @@ namespace FungusToast.Unity.UI.Testing
         {
             skipToEnd = !skipToEnd;
             forcedResult = skipToEnd ? ForcedGameResultMode.ForcedWin : ForcedGameResultMode.Natural;
+            if (!skipToEnd)
+            {
+                forceMoldinessRewards = false;
+            }
             RefreshVisualState();
         }
 
@@ -1114,6 +1151,18 @@ namespace FungusToast.Unity.UI.Testing
                 ForcedGameResultMode.ForcedWin => ForcedGameResultMode.ForcedLoss,
                 _ => ForcedGameResultMode.Natural
             };
+
+            if (forcedResult != ForcedGameResultMode.ForcedWin)
+            {
+                forceMoldinessRewards = false;
+            }
+
+            RefreshVisualState();
+        }
+
+        private void OnForceMoldinessRewardsClicked()
+        {
+            forceMoldinessRewards = !forceMoldinessRewards;
 
             RefreshVisualState();
         }

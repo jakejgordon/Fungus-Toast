@@ -39,6 +39,7 @@ namespace FungusToast.Unity
         private readonly Func<Dictionary<(int playerId, int mutationId), List<int>>> getFirstUpgradeRounds;
         private readonly Func<bool> getTestingModeEnabled;
         private readonly Func<ForcedGameResultMode> getForcedGameResultMode;
+        private readonly Func<bool> getForceMoldinessRewards;
 
         private bool isCountdownActive;
         private int roundsRemainingUntilGameEnd;
@@ -55,7 +56,8 @@ namespace FungusToast.Unity
             Func<EndgamePlayerStatisticsSnapshot> getEndgamePlayerStatistics,
             Func<Dictionary<(int playerId, int mutationId), List<int>>> getFirstUpgradeRounds,
             Func<bool> getTestingModeEnabled,
-            Func<ForcedGameResultMode> getForcedGameResultMode)
+            Func<ForcedGameResultMode> getForcedGameResultMode,
+            Func<bool> getForceMoldinessRewards)
         {
             this.ui = ui;
             this.getBoard = getBoard;
@@ -67,6 +69,7 @@ namespace FungusToast.Unity
             this.getFirstUpgradeRounds = getFirstUpgradeRounds;
             this.getTestingModeEnabled = getTestingModeEnabled;
             this.getForcedGameResultMode = getForcedGameResultMode;
+            this.getForceMoldinessRewards = getForceMoldinessRewards;
         }
 
         /// <summary>
@@ -241,6 +244,16 @@ namespace FungusToast.Unity
 
             if (isCampaign)
             {
+                bool shouldForceMoldinessRewardForTesting = humanWon
+                    && getTestingModeEnabled()
+                    && getForcedGameResultMode() == ForcedGameResultMode.ForcedWin
+                    && getForceMoldinessRewards();
+
+                if (shouldForceMoldinessRewardForTesting)
+                {
+                    campaignController.TryQueueForcedMoldinessRewardForTesting(new System.Random(campaignController.State?.seed ?? 0), 3);
+                }
+
                 if (humanWon && campaignController.HasPendingMoldinessUnlockChoice && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot) && pendingSnapshot != null)
                 {
                     var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(campaignController.State?.seed ?? 0), 3);

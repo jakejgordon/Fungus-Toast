@@ -312,6 +312,43 @@ namespace FungusToast.Unity.Campaign
             return true;
         }
 
+        public bool TryQueueForcedMoldinessRewardForTesting(System.Random random, int count)
+        {
+            if (State?.moldiness == null || random == null || !State.pendingAdaptationSelection)
+            {
+                return false;
+            }
+
+            State.moldiness.pendingUnlockTriggers ??= new List<MoldinessUnlockTrigger>();
+            if (State.moldiness.pendingUnlockTriggers.Count > 0)
+            {
+                return true;
+            }
+
+            int triggerTierIndex = Math.Max(0, State.moldiness.unlockLevel - 1);
+            var trigger = new MoldinessUnlockTrigger
+            {
+                tierIndex = triggerTierIndex,
+                threshold = MoldinessProgression.GetThresholdForTier(triggerTierIndex),
+                overflowAfterUnlock = State.moldiness.currentProgress
+            };
+
+            State.moldiness.pendingUnlockTriggers.Add(trigger);
+            var offers = MoldinessUnlockService.GenerateOffers(State.moldiness, random, count);
+            if (offers.Count == 0)
+            {
+                State.moldiness.pendingUnlockTriggers.RemoveAt(State.moldiness.pendingUnlockTriggers.Count - 1);
+                State.moldiness.pendingUnlockChoice = null;
+                return false;
+            }
+
+            State.pendingVictorySnapshot ??= new CampaignVictorySnapshot();
+            State.pendingVictorySnapshot.pendingMoldinessUnlockCount = State.moldiness.pendingUnlockTriggers.Count;
+            CampaignSaveService.Save(State);
+            Debug.Log($"[CampaignController] Queued a forced moldiness reward selection for testing with {offers.Count} offer(s).");
+            return true;
+        }
+
         public IReadOnlyList<AdaptationDefinition> GetSelectedAdaptations()
         {
             var activeAdaptationIds = GetAllActiveAdaptationIds();

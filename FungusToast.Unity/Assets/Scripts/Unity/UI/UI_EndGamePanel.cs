@@ -3325,6 +3325,7 @@ namespace FungusToast.Unity.UI
                 skipToEnd,
                 false,
                 forcedResult,
+                manager != null && manager.TestingForceMoldinessRewards,
                 manager != null ? manager.TestingCampaignLevelIndex : 0,
                 forcedAdaptationId,
                 manager?.TestingForcedStartingAdaptationIds);
@@ -3408,6 +3409,7 @@ namespace FungusToast.Unity.UI
                 DropdownTemplate = FindDropdownTemplate(),
                 SupportsBoardSizeOverride = false,
                 SupportsForcedAdaptation = true,
+                SupportsForceMoldinessRewards = true,
                 SupportsFirstGameToggle = false,
                 CardName = "UI_EndGameTestingCard",
                 ControlPrefix = "UI_EndGameTesting",

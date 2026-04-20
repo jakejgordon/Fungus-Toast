@@ -113,6 +113,7 @@ namespace FungusToast.Unity
         public List<string> testingForcedStartingAdaptationIds = new();
         public bool testingModeForceHumanFirst = true; 
         public ForcedGameResultMode testingForcedGameResult = ForcedGameResultMode.Natural;
+        public bool testingForceMoldinessRewards = false;
         public int fastForwardRounds =0; 
         public bool testingSkipToEndgameAfterFastForward = false;
         public bool testingTreatAsFirstGame = false;
@@ -221,6 +222,7 @@ namespace FungusToast.Unity
         public string TestingForcedAdaptationId => testingForcedAdaptationId;
         public IReadOnlyList<string> TestingForcedStartingAdaptationIds => testingForcedStartingAdaptationIds;
         public ForcedGameResultMode TestingForcedGameResult => testingForcedGameResult;
+        public bool TestingForceMoldinessRewards => testingForceMoldinessRewards;
         public bool ShouldForceFirstGameExperience => testingModeEnabled && testingTreatAsFirstGame;
 
         private bool isFastForwarding = false; 
@@ -443,7 +445,8 @@ namespace FungusToast.Unity
                 () => endgamePlayerStatisticsTracker.CreateSnapshot(Board?.Players ?? players),
                 () => FirstUpgradeRounds,
                 () => testingModeEnabled,
-                () => testingForcedGameResult);
+                () => testingForcedGameResult,
+                () => testingForceMoldinessRewards);
             mutationPointService = new MutationPointService(
                 gameUIManager,
                 () => Board,
@@ -1274,6 +1277,7 @@ namespace FungusToast.Unity
             bool skipToEndgameAfterFastForward = false,
             bool forceFirstGame = false,
             ForcedGameResultMode forcedGameResult = ForcedGameResultMode.Natural,
+            bool forceMoldinessRewards = false,
             int campaignLevelIndex = 0,
             string forcedAdaptationId = "",
             IReadOnlyList<string>? forcedStartingAdaptationIds = null)
@@ -1289,6 +1293,9 @@ namespace FungusToast.Unity
                 ?? new List<string>();
             testingModeForceHumanFirst = mycovariantId.HasValue;
             testingForcedGameResult = forcedGameResult;
+            testingForceMoldinessRewards = skipToEndgameAfterFastForward
+                && forcedGameResult == ForcedGameResultMode.ForcedWin
+                && forceMoldinessRewards;
             this.fastForwardRounds = fastForwardRounds;
             testingSkipToEndgameAfterFastForward = skipToEndgameAfterFastForward;
             testingTreatAsFirstGame = forceFirstGame;
@@ -1303,6 +1310,7 @@ namespace FungusToast.Unity
             testingForcedStartingAdaptationIds = new List<string>();
             testingModeForceHumanFirst = false;
             testingForcedGameResult = ForcedGameResultMode.Natural;
+            testingForceMoldinessRewards = false;
             fastForwardRounds =0;
             testingSkipToEndgameAfterFastForward = false;
             testingTreatAsFirstGame = false;
