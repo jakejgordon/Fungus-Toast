@@ -106,6 +106,7 @@ namespace FungusToast.Unity.UI
         private bool hasPendingDefeatCarryoverEvent;
         private int defeatCarryoverSelectionCapacity;
         private string selectedMoldinessRewardId;
+        private MoldinessRewardOptionVisual selectedMoldinessRewardVisual;
         private readonly HashSet<string> selectedDefeatCarryoverAdaptationIds = new();
         private readonly Dictionary<string, Image> defeatCarryoverOptionImages = new();
         private readonly List<Image> moldinessRewardOptionBackgrounds = new();
@@ -421,6 +422,7 @@ namespace FungusToast.Unity.UI
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = false;
             selectedMoldinessRewardId = null;
+            selectedMoldinessRewardVisual = null;
             selectedDefeatCarryoverAdaptationIds.Clear();
             moldinessRewardOptionBackgrounds.Clear();
             moldinessRewardOptionVisuals.Clear();
@@ -760,6 +762,7 @@ namespace FungusToast.Unity.UI
             showPostAdaptationConfirmationAfterMoldinessRewardSelection = showAdaptationConfirmationAfterSelection;
             cachedCampaignVictorySnapshot = snapshot;
             selectedMoldinessRewardId = null;
+            selectedMoldinessRewardVisual = null;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
             moldinessRewardOptionBackgrounds.Clear();
@@ -964,6 +967,7 @@ namespace FungusToast.Unity.UI
 
             moldinessRewardOptionBackgrounds.Clear();
             moldinessRewardOptionVisuals.Clear();
+            selectedMoldinessRewardVisual = null;
             BuildCampaignTopSpacer();
             BuildMoldinessRewardSelectionContent(snapshot, offers);
 
@@ -1456,7 +1460,7 @@ namespace FungusToast.Unity.UI
             fillOverlayRect.offsetMax = new Vector2(-3f, -3f);
             var fillOverlay = fillOverlayObject.GetComponent<Image>();
             var selectedTint = UIStyleTokens.Button.BackgroundSelected;
-            selectedTint.a = 0.18f;
+            selectedTint.a = 0.12f;
             fillOverlay.color = selectedTint;
             fillOverlay.raycastTarget = false;
             fillOverlay.enabled = false;
@@ -1587,7 +1591,7 @@ namespace FungusToast.Unity.UI
                 tooltipTrigger.SetAutoPlacementOffsetX(24f);
             }
 
-            fillOverlayObject.transform.SetAsLastSibling();
+            fillOverlayObject.transform.SetAsFirstSibling();
 
             var button = buttonObject.GetComponent<Button>();
             UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
@@ -1645,26 +1649,40 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            bool togglingOff = string.Equals(selectedMoldinessRewardId, clickedVisual.RewardId, StringComparison.Ordinal);
-            selectedMoldinessRewardId = togglingOff ? null : clickedVisual.RewardId;
+            bool togglingOff = ReferenceEquals(selectedMoldinessRewardVisual, clickedVisual)
+                || string.Equals(selectedMoldinessRewardId, clickedVisual.RewardId, StringComparison.Ordinal);
 
-            for (int i = 0; i < moldinessRewardOptionVisuals.Count; i++)
+            if (selectedMoldinessRewardVisual != null)
             {
-                ApplyMoldinessRewardOptionVisualState(moldinessRewardOptionVisuals[i], isSelected: false);
+                ApplyMoldinessRewardOptionVisualState(selectedMoldinessRewardVisual, isSelected: false);
             }
 
-            if (!togglingOff)
+            if (togglingOff)
             {
+                selectedMoldinessRewardVisual = null;
+                selectedMoldinessRewardId = null;
+            }
+            else
+            {
+                selectedMoldinessRewardVisual = clickedVisual;
+                selectedMoldinessRewardId = clickedVisual.RewardId;
                 ApplyMoldinessRewardOptionVisualState(clickedVisual, isSelected: true);
             }
 
             EventSystem.current?.SetSelectedGameObject(null);
+            RefreshMoldinessRewardActionState();
+        }
 
-            if (continueButton != null)
+        private void RefreshMoldinessRewardActionState()
+        {
+            if (continueButton == null)
             {
-                continueButton.interactable = !togglingOff;
-                SetButtonLabel(continueButton, togglingOff ? "Choose Moldiness Reward" : "Claim Moldiness Reward");
+                return;
             }
+
+            bool hasSelection = selectedMoldinessRewardVisual != null && !string.IsNullOrWhiteSpace(selectedMoldinessRewardId);
+            continueButton.interactable = hasSelection;
+            SetButtonLabel(continueButton, hasSelection ? "Claim Moldiness Reward" : "Choose Moldiness Reward");
         }
 
         private static void ApplyMoldinessRewardOptionVisualState(MoldinessRewardOptionVisual visual, bool isSelected)
@@ -1684,7 +1702,7 @@ namespace FungusToast.Unity.UI
                 if (isSelected)
                 {
                     var selectedTint = UIStyleTokens.Button.BackgroundSelected;
-                    selectedTint.a = 0.18f;
+                    selectedTint.a = 0.12f;
                     visual.FillOverlay.color = selectedTint;
                     visual.FillOverlay.enabled = true;
                     visual.FillOverlay.gameObject.SetActive(true);
@@ -1704,9 +1722,9 @@ namespace FungusToast.Unity.UI
             if (visual.Outline != null)
             {
                 visual.Outline.effectColor = isSelected
-                    ? new Color(UIStyleTokens.Button.BackgroundSelected.r, UIStyleTokens.Button.BackgroundSelected.g, UIStyleTokens.Button.BackgroundSelected.b, 1f)
+                    ? new Color(UIStyleTokens.Button.BackgroundSelected.r, UIStyleTokens.Button.BackgroundSelected.g, UIStyleTokens.Button.BackgroundSelected.b, 0.7f)
                     : new Color(UIStyleTokens.Text.Muted.r, UIStyleTokens.Text.Muted.g, UIStyleTokens.Text.Muted.b, 0.45f);
-                visual.Outline.effectDistance = isSelected ? new Vector2(3f, -3f) : new Vector2(1.5f, -1.5f);
+                visual.Outline.effectDistance = isSelected ? new Vector2(2f, -2f) : new Vector2(1.5f, -1.5f);
             }
 
             if (visual.BadgeBackground != null)
@@ -1946,6 +1964,7 @@ namespace FungusToast.Unity.UI
             cachedCampaignVictorySnapshot = null;
             moldinessRewardOptionBackgrounds.Clear();
             moldinessRewardOptionVisuals.Clear();
+            selectedMoldinessRewardVisual = null;
             canvasGroup.alpha = 0f;
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
