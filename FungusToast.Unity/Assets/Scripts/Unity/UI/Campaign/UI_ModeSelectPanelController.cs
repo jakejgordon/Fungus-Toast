@@ -167,19 +167,11 @@ namespace FungusToast.Unity.UI.Campaign
         private void OnCampaignClicked()
         {
             GameManager manager = FindAnyObjectByType<GameManager>();
-            if (manager != null)
+            if (manager != null && manager.HasPendingCampaignMoldinessUnlockOnSavedRun())
             {
-                var campaignController = manager.CampaignController;
-                if (campaignController != null)
-                {
-                    campaignController.Resume();
-                    if (campaignController.HasPendingMoldinessUnlockChoice && campaignController.IsAwaitingAdaptationSelection)
-                    {
-                        manager.StartCampaignResume();
-                        gameObject.SetActive(false);
-                        return;
-                    }
-                }
+                manager.ShowPendingCampaignMoldinessRewardFromMainMenu();
+                gameObject.SetActive(false);
+                return;
             }
 
             if (campaignPanel != null)
@@ -349,16 +341,7 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             GameManager manager = FindAnyObjectByType<GameManager>();
-            bool hasPendingReward = false;
-            if (manager != null)
-            {
-                var campaignController = manager.CampaignController;
-                if (campaignController != null && manager.HasCampaignSave())
-                {
-                    campaignController.Resume();
-                    hasPendingReward = campaignController.HasPendingMoldinessUnlockChoice && campaignController.IsAwaitingAdaptationSelection;
-                }
-            }
+            bool hasPendingReward = manager != null && manager.HasPendingCampaignMoldinessUnlockOnSavedRun();
             SetButtonLabel(campaignButton, hasPendingReward ? "Campaign (Pending Reward)" : "Campaign");
         }
 

@@ -480,10 +480,17 @@ namespace FungusToast.Unity
             gameStartService?.StartCampaignResume();
         }
 
+        public void ShowPendingCampaignMoldinessRewardFromMainMenu()
+        {
+            gameStartService?.ShowPendingCampaignMoldinessRewardFromMainMenu();
+        }
+
         // Accessor for external panels
         public bool HasCampaignSave() => gameStartService != null && gameStartService.HasCampaignSave();
         public bool IsCampaignAwaitingAdaptationSelection() =>
             gameStartService != null && gameStartService.IsCampaignAwaitingAdaptationSelection();
+        public bool HasPendingCampaignMoldinessUnlockOnSavedRun() =>
+            gameStartService != null && gameStartService.HasPendingCampaignMoldinessUnlockOnSavedRun();
 
         public bool TryStartCampaignAdaptationDraft(Action onSelectionComplete)
         {

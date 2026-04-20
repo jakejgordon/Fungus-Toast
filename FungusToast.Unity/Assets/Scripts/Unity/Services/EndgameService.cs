@@ -859,6 +859,18 @@ namespace FungusToast.Unity
                 && campaignController.HasPendingMoldinessUnlockChoice;
         }
 
+        public bool HasPendingCampaignMoldinessUnlockOnSavedRun()
+        {
+            var campaignController = getCampaignController();
+            if (campaignController == null || !CampaignSaveService.Exists())
+            {
+                return false;
+            }
+
+            campaignController.Resume();
+            return campaignController.HasPendingMoldinessUnlockChoice && campaignController.IsAwaitingAdaptationSelection;
+        }
+
         public bool TryStartCampaignAdaptationDraft(Action onSelectionComplete)
         {
             var campaignController = getCampaignController();
@@ -1066,7 +1078,36 @@ namespace FungusToast.Unity
             gameUIManager.EndGamePanel.ShowCampaignPendingDefeatCarryoverSelection(carryoverOptions, carryoverCapacity, entryMode);
         }
 
+        public void ShowPendingCampaignMoldinessRewardFromMainMenu()
+        {
+            var campaignController = getCampaignController();
+            if (campaignController == null)
+            {
+                Debug.LogError("[GameManager] Cannot show pending campaign moldiness reward: CampaignProgression not assigned.");
+                return;
+            }
+
+            campaignController.Resume();
+            setGameMode(GameMode.Campaign);
+
+            if (!campaignController.IsAwaitingAdaptationSelection
+                || !campaignController.HasPendingMoldinessUnlockChoice
+                || !campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot)
+                || pendingSnapshot == null)
+            {
+                Debug.LogWarning("[GameManager] No pending campaign moldiness reward is available from main menu.");
+                return;
+            }
+
+            ShowPendingCampaignMoldinessRewardScreen(campaignController, pendingSnapshot, true);
+        }
+
         private void ShowPendingCampaignMoldinessRewardScreen(CampaignController campaignController, CampaignVictorySnapshot snapshot)
+        {
+            ShowPendingCampaignMoldinessRewardScreen(campaignController, snapshot, false);
+        }
+
+        private void ShowPendingCampaignMoldinessRewardScreen(CampaignController campaignController, CampaignVictorySnapshot snapshot, bool returnToCampaignMenuAfterSelection)
         {
             if (campaignController == null || snapshot == null || gameUIManager?.EndGamePanel == null)
             {
@@ -1092,7 +1133,6 @@ namespace FungusToast.Unity
             PreparePendingCampaignSnapshotPresentation(campaignController, snapshot);
 
             var offers = campaignController.GetPendingMoldinessUnlockOffers(getRng(), 3);
-            bool returnToCampaignMenuAfterSelection = modeSelectPanel != null && !modeSelectPanel.activeSelf;
             gameUIManager.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(snapshot, offers, returnToCampaignMenuAfterSelection);
         }
 
