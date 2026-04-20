@@ -110,6 +110,7 @@ namespace FungusToast.Unity.UI
         private readonly Dictionary<string, Image> defeatCarryoverOptionImages = new();
         private readonly List<Image> moldinessRewardOptionBackgrounds = new();
         private readonly List<AdaptationDefinition> pendingDefeatCarryoverOptions = new();
+        private bool returnToCampaignMenuAfterMoldinessReward;
         private DefeatCarryoverEntryMode pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
         private TextMeshProUGUI defeatCarryoverSelectionStatusLabel;
         private readonly List<Image> moldinessSummaryToastTiles = new();
@@ -700,6 +701,11 @@ namespace FungusToast.Unity.UI
 
         public void ShowCampaignPendingMoldinessRewardSelection(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers)
         {
+            ShowCampaignPendingMoldinessRewardSelection(snapshot, offers, returnToCampaignMenuAfterSelection: false);
+        }
+
+        public void ShowCampaignPendingMoldinessRewardSelection(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers, bool returnToCampaignMenuAfterSelection)
+        {
             SetPostAdaptationConfirmationState(false);
             if (snapshot == null)
             {
@@ -713,6 +719,7 @@ namespace FungusToast.Unity.UI
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = true;
+            returnToCampaignMenuAfterMoldinessReward = returnToCampaignMenuAfterSelection;
             selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
@@ -1643,7 +1650,18 @@ namespace FungusToast.Unity.UI
 
                 requiresMoldinessRewardSelection = false;
                 selectedMoldinessRewardId = null;
+                bool returnToCampaignMenu = returnToCampaignMenuAfterMoldinessReward;
+                returnToCampaignMenuAfterMoldinessReward = false;
                 HideInstant();
+
+                if (returnToCampaignMenu)
+                {
+                    if (onExitToModeSelect != null)
+                        onExitToModeSelect();
+                    else
+                        manager?.ReturnToMainMenu();
+                    return;
+                }
 
                 bool started = manager.TryStartCampaignAdaptationDraft(OnCampaignAdaptationSelected);
                 if (!started)
@@ -1746,6 +1764,7 @@ namespace FungusToast.Unity.UI
             hasPendingDefeatCarryoverEvent = false;
             requiresDefeatCarryoverSelection = false;
             requiresMoldinessRewardSelection = false;
+            returnToCampaignMenuAfterMoldinessReward = false;
             selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = 0;
             selectedDefeatCarryoverAdaptationIds.Clear();
