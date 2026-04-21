@@ -462,6 +462,24 @@ namespace FungusToast.Unity.Campaign
             return selected;
         }
 
+        public void SetTemporaryTestingAdaptationIds(IReadOnlyList<string> adaptationIds)
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            var sanitizedAdaptationIds = SanitizeTemporaryTestingAdaptationIds(adaptationIds);
+            State.temporaryTestingAdaptationIds ??= new List<string>();
+            if (State.temporaryTestingAdaptationIds.SequenceEqual(sanitizedAdaptationIds, StringComparer.Ordinal))
+            {
+                return;
+            }
+
+            State.temporaryTestingAdaptationIds = sanitizedAdaptationIds;
+            CampaignSaveService.Save(State);
+        }
+
         public bool TrySelectAdaptationAndAdvance(string adaptationId)
         {
             if (State == null || !State.pendingAdaptationSelection)

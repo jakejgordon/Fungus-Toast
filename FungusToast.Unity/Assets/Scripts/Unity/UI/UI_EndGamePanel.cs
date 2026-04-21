@@ -2962,7 +2962,9 @@ namespace FungusToast.Unity.UI
 
         private static string BuildAdaptationTooltip(PlayerAdaptation playerAdaptation)
         {
-            return $"<b>{playerAdaptation.Adaptation.Name}</b>\n<i>{BuildAdaptationMetaText(playerAdaptation)}</i>\n\n{playerAdaptation.Adaptation.Description}";
+            int boardWidth = GameManager.Instance?.Board?.Width ?? FungusToast.Core.Config.GameBalance.BoardWidth;
+            string description = AdaptationRepository.GetTooltipDescription(playerAdaptation, boardWidth);
+            return $"<b>{playerAdaptation.Adaptation.Name}</b>\n<i>{BuildAdaptationMetaText(playerAdaptation)}</i>\n\n{description}";
         }
 
         private static string FormatEnumLabel(string raw)

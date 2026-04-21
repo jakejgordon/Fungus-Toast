@@ -1,6 +1,7 @@
 using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Mycovariants;
+using FungusToast.Core.Players;
 using FungusToast.Unity.UI.Tooltips;
 
 namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
@@ -8,10 +9,18 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
     public class AdaptationTooltipProvider : UnityEngine.MonoBehaviour, ITooltipContentProvider
     {
         private AdaptationDefinition adaptation;
+        private PlayerAdaptation playerAdaptation;
 
         public void Initialize(AdaptationDefinition definition)
         {
             adaptation = definition;
+            playerAdaptation = null;
+        }
+
+        public void Initialize(PlayerAdaptation ownedAdaptation)
+        {
+            playerAdaptation = ownedAdaptation;
+            adaptation = ownedAdaptation?.Adaptation;
         }
 
         public string GetTooltipText()
@@ -23,7 +32,9 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
 
             string adaptationType = adaptation.IsStartingAdaptation ? "Starting Adaptation" : "Adaptation";
             int boardWidth = FungusToast.Unity.GameManager.Instance?.Board?.Width ?? FungusToast.Core.Config.GameBalance.BoardWidth;
-            string description = AdaptationRepository.GetTooltipDescription(adaptation, boardWidth);
+            string description = playerAdaptation != null
+                ? AdaptationRepository.GetTooltipDescription(playerAdaptation, boardWidth)
+                : AdaptationRepository.GetTooltipDescription(adaptation, boardWidth);
             return $"<b>{adaptation.Name}</b>\n<i>{adaptationType}</i>\n\n{description}";
         }
     }

@@ -34,6 +34,8 @@ public class PrimePulseAdaptationTests
 
             Assert.Equal(expectedRound, player.MutationPoints);
             Assert.Equal(expectedRound, observer.LastMutationPointIncome);
+            Assert.Equal(expectedRound, observer.LastPrimePulseTriggerRound);
+            Assert.Equal(expectedRound, observer.LastPrimePulseMutationPointsAwarded);
             Assert.True(player.GetAdaptation(AdaptationIds.PrimePulse)!.HasTriggered);
         }
 
@@ -41,6 +43,25 @@ public class PrimePulseAdaptationTests
         AdaptationEffectProcessor.OnMutationPhaseStart(board, board.Players, new Random(0), observer);
 
         Assert.Equal(expectedRound, player.MutationPoints);
+    }
+
+    [Theory]
+    [InlineData(1, 7)]
+    [InlineData(5, 11)]
+    [InlineData(0, 13)]
+    public void PrimePulse_tooltip_description_reports_the_resolved_trigger_round_for_the_level(int seed, int expectedRound)
+    {
+        var board = CreateBoardWithPlayer(out var player);
+        player.TryAddAdaptation(RequireAdaptation(AdaptationIds.PrimePulse));
+
+        AdaptationEffectProcessor.OnStartingSporesEstablished(board, board.Players, new Random(seed));
+
+        var description = AdaptationRepository.GetTooltipDescription(
+            player.GetAdaptation(AdaptationIds.PrimePulse)!,
+            board.Width);
+
+        Assert.Contains($"will trigger on round {expectedRound}", description);
+        Assert.Contains($"granting {expectedRound} mutation", description);
     }
 
     private static GameBoard CreateBoardWithPlayer(out Player player)

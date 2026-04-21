@@ -862,6 +862,19 @@ namespace FungusToast.Unity.UI.GameLog
         #region ISimulationObserver (Implemented / Routed)
 
         public void RecordMutationPointIncome(int playerId, int totalMutationPoints) { }
+        public void RecordPrimePulseTriggered(int playerId, int triggerRound, int mutationPointsAwarded)
+        {
+            if (!IsHuman(playerId) || mutationPointsAwarded <= 0)
+            {
+                return;
+            }
+
+            string pointLabel = mutationPointsAwarded == 1 ? "point" : "points";
+            AddPlayerEvent(
+                playerId,
+                $"Prime Pulse fires on round {triggerRound}, granting {mutationPointsAwarded} mutation {pointLabel}",
+                GameLogCategory.Lucky);
+        }
         public void RecordNutrientPatchesPlaced(int count) { }
         public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
         {

@@ -32,6 +32,7 @@ namespace FungusToast.Core.Metrics
         void RecordNecrophyticBloomPatchCreation(int playerId, int createdPatchCount);
         void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped);
         void RecordMutationPointIncome(int playerId, int newMutationPoints);
+        void RecordPrimePulseTriggered(int playerId, int triggerRound, int mutationPointsAwarded);
         void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade);
         void RecordBankedPoints(int playerId, int pointsBanked);
         void RecordHyphalSurgeGrowth(int playerId);

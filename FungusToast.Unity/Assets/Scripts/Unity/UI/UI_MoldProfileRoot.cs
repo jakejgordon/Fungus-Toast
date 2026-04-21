@@ -360,16 +360,7 @@ namespace FungusToast.Unity.UI
         {
             EnsureAdaptationSectionExists();
 
-            var adaptations = new List<AdaptationDefinition>();
-            if (trackedPlayer?.PlayerAdaptations != null)
-            {
-                for (int i = 0; i < trackedPlayer.PlayerAdaptations.Count; i++)
-                {
-                    adaptations.Add(trackedPlayer.PlayerAdaptations[i].Adaptation);
-                }
-            }
-
-            RefreshIconSection(adaptationSectionRoot, adaptationIconGridRoot, adaptationIconObjects, adaptations, CreateAdaptationIcon);
+            RefreshIconSection(adaptationSectionRoot, adaptationIconGridRoot, adaptationIconObjects, trackedPlayer?.PlayerAdaptations, CreateAdaptationIcon);
         }
 
         private void RefreshBoardOverlayLegend()
@@ -631,17 +622,19 @@ namespace FungusToast.Unity.UI
             return Mathf.Clamp(columns, 1, AdaptationIconMaxColumns);
         }
 
-        private void CreateAdaptationIcon(AdaptationDefinition adaptation)
+        private void CreateAdaptationIcon(PlayerAdaptation playerAdaptation)
         {
-            if (adaptationIconGridRoot == null)
+            if (adaptationIconGridRoot == null || playerAdaptation?.Adaptation == null)
             {
                 return;
             }
 
+            var adaptation = playerAdaptation.Adaptation;
+
             var iconObject = CreateIconObject($"UI_Adaptation_{adaptation.Id}", adaptationIconGridRoot, adaptationIconObjects, AdaptationArtRepository.GetIcon(adaptation));
 
             var provider = iconObject.AddComponent<AdaptationTooltipProvider>();
-            provider.Initialize(adaptation);
+            provider.Initialize(playerAdaptation);
 
             var trigger = iconObject.AddComponent<TooltipTrigger>();
             trigger.SetDynamicProvider(provider);

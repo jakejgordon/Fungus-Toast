@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using FungusToast.Core.Config;
+using FungusToast.Core.Players;
 
 namespace FungusToast.Core.Campaign
 {
@@ -237,6 +238,35 @@ namespace FungusToast.Core.Campaign
             }
 
             return adaptation.Description;
+        }
+
+        public static string GetTooltipDescription(PlayerAdaptation playerAdaptation, int boardWidth)
+        {
+            if (playerAdaptation?.Adaptation == null)
+            {
+                return string.Empty;
+            }
+
+            if (string.Equals(playerAdaptation.Adaptation.Id, AdaptationIds.PrimePulse, StringComparison.Ordinal))
+            {
+                return GetPrimePulseTooltipDescription(playerAdaptation);
+            }
+
+            return GetTooltipDescription(playerAdaptation.Adaptation, boardWidth);
+        }
+
+        private static string GetPrimePulseTooltipDescription(PlayerAdaptation playerAdaptation)
+        {
+            if (!playerAdaptation.HasRuntimeValue)
+            {
+                return playerAdaptation.Adaptation.Description;
+            }
+
+            int triggerRound = playerAdaptation.RuntimeValue;
+            string pointLabel = triggerRound == 1 ? "point" : "points";
+            return playerAdaptation.HasTriggered
+                ? $"This level's pulse triggered on round {triggerRound}, granting {triggerRound} mutation {pointLabel} at the start of that Mutation Phase."
+                : $"This level's pulse will trigger on round {triggerRound}, granting {triggerRound} mutation {pointLabel} at the start of that Mutation Phase. The trigger round and mutation points awarded are assigned at the start of each new campaign level.";
         }
 
         public static bool TryGetById(string id, out AdaptationDefinition adaptation)

@@ -1013,6 +1013,11 @@ namespace FungusToast.Unity
 
         private void StartCampaignGameplay(CampaignController campaignController)
         {
+            IReadOnlyList<string> forcedStartingAdaptationIds = GameManager.Instance != null && GameManager.Instance.IsTestingModeEnabled
+                ? GameManager.Instance.TestingForcedStartingAdaptationIds
+                : Array.Empty<string>();
+            campaignController?.SetTemporaryTestingAdaptationIds(forcedStartingAdaptationIds);
+
             var preset = campaignController.CurrentBoardPreset;
             if (preset != null)
             {

@@ -186,6 +186,7 @@ namespace FungusToast.Core.Phases
 
                 player.AddMutationPoints(triggerRound);
                 observer.RecordMutationPointIncome(player.PlayerId, triggerRound);
+                observer.RecordPrimePulseTriggered(player.PlayerId, triggerRound, triggerRound);
                 adaptation.MarkTriggered();
             }
 

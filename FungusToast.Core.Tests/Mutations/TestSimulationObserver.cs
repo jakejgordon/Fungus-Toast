@@ -10,6 +10,8 @@ internal sealed class TestSimulationObserver : ISimulationObserver
 {
     public int? LastMutationPointsSpent { get; private set; }
     public int? LastMutationPointIncome { get; private set; }
+    public int? LastPrimePulseTriggerRound { get; private set; }
+    public int? LastPrimePulseMutationPointsAwarded { get; private set; }
     public int? LastApicalYieldBonus { get; private set; }
     public string? LastUpgradeSource { get; private set; }
     public int UpgradeEventCount { get; private set; }
@@ -55,6 +57,11 @@ internal sealed class TestSimulationObserver : ISimulationObserver
     }
     public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
     public void RecordMutationPointIncome(int playerId, int newMutationPoints) => LastMutationPointIncome = newMutationPoints;
+    public void RecordPrimePulseTriggered(int playerId, int triggerRound, int mutationPointsAwarded)
+    {
+        LastPrimePulseTriggerRound = triggerRound;
+        LastPrimePulseMutationPointsAwarded = mutationPointsAwarded;
+    }
     public void RecordBankedPoints(int playerId, int pointsBanked) { }
     public void RecordHyphalSurgeGrowth(int playerId) { }
     public void RecordDirectedVectorGrowth(int playerId, int cellsPlaced) { }

@@ -128,6 +128,12 @@ namespace FungusToast.Unity.UI.GameLog
             playerActivityLogManager?.RecordMutationPointIncome(playerId, newMutationPoints);
         }
 
+        public void RecordPrimePulseTriggered(int playerId, int triggerRound, int mutationPointsAwarded)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordPrimePulseTriggered(playerId, triggerRound, mutationPointsAwarded);
+        }
+
         public void RecordNutrientPatchesPlaced(int count)
         {
         }

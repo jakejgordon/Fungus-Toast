@@ -503,6 +503,7 @@ public class Tier4MutationTests
         public void RecordNecrophyticBloomPatchCreation(int playerId, int createdPatchCount) { }
         public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
         public void RecordMutationPointIncome(int playerId, int newMutationPoints) { }
+        public void RecordPrimePulseTriggered(int playerId, int triggerRound, int mutationPointsAwarded) { }
         public void RecordBankedPoints(int playerId, int pointsBanked) { }
         public void RecordHyphalSurgeGrowth(int playerId) { }
         public void RecordDirectedVectorGrowth(int playerId, int cellsPlaced) { }
