@@ -1482,7 +1482,7 @@ namespace FungusToast.Unity
             if (!willFastForward)
                 gameUIManager.LoadingScreen?.FadeOut();
 
-            AdaptationEffectProcessor.OnStartingSporesEstablished(Board, players);
+            AdaptationEffectProcessor.OnStartingSporesEstablished(Board, players, rng);
             if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
             {
                 yield return specialEventPresentationService.PresentPendingImmediate();

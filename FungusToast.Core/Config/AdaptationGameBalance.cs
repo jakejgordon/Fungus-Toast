@@ -24,6 +24,9 @@ namespace FungusToast.Core.Config
         public const int MycelialCrescendoSecondTriggerRound = 16;
         public const float OssifiedAdvanceOrthogonalBonus = 0.025f;
         public const int ConidiaAscentTriggerRound = 17;
+        public const int PrimePulseFirstTriggerRound = 7;
+        public const int PrimePulseSecondTriggerRound = 11;
+        public const int PrimePulseThirdTriggerRound = 13;
         public const int ConidiaAscentSourceBlockSize = 3;
         public const int ConidiaAscentDestinationBlockSize = 2;
         public const int ConidiaAscentLaunchSubsquareOffset = 1;

@@ -33,26 +33,22 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** campaign pending-state UX and moldiness reward flow polish. The pending reward flow now works from both the campaign menu and the mode-select screen, and the remaining work is mainly Unity-side verification plus any last UX cleanup around save/resume and reward presentation.
+- **Current focus:** moldiness progression tuning and content expansion. The pending-state UX and reward-flow verification work is complete, so the next phase is balancing pacing, clarifying reward behavior, and deciding what new unlock content to add next.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
 
-1. Verify the new mode-select pending-reward entry flow end to end.
-2. Verify campaign save/resume behavior across pending moldiness rewards, pending adaptation drafts, and pending defeat carryover selection.
-3. Smoke-test the combined campaign progression flow, then tune moldiness reward pacing, unlock pacing, and campaign UX clarity.
-4. Expand reward content and categories once the adaptation-first loop and permanent-upgrade presentation feel stable.
+1. Tune moldiness reward pacing, threshold pacing, and moldiness draft pool composition now that the end-to-end flow is verified.
+2. Decide which moldiness rewards should affect the current run immediately, future runs only, or both.
+3. Expand permanent campaign upgrade presentation only if the current text-and-icon summary still feels insufficient during playtesting.
+4. Explore the next unlock-content wave, likely additional adaptations first, then mycovariants or mutation-related rewards.
 
 ## Pending Tasks
 
-1. Unity-test the full pending moldiness reward flow from the main menu `Campaign (Pending Reward)` button through reward claim and return to the campaign menu.
-2. Verify campaign save/resume behavior when moldiness reward selection, adaptation draft selection, or defeat carryover selection is pending.
-3. Smoke-test a full campaign flow covering: no moldiness event, threshold crossed, moldiness reward resolution, normal adaptation reward, defeat carryover selection, chained reward states, and resume after each pending state.
-4. Do a final UX cleanup pass on moldiness reward cards only if new Unity testing still shows readability or layout issues.
-5. Tune moldiness reward pacing, threshold pacing, and moldiness draft pool composition after the end-to-end flow is confirmed playable.
-6. Decide whether some moldiness rewards should apply immediately to the current run, future runs only, or both.
-7. Expand permanent campaign upgrade presentation beyond the current text summary if needed, for example with richer icon display on campaign screens.
-8. Explore longer-term expansion to additional unlock categories such as mycovariants and mutation-related rewards once the adaptation-first loop is solid.
+1. Tune moldiness reward pacing, threshold pacing, and moldiness draft pool composition after the end-to-end flow confirmation.
+2. Decide whether some moldiness rewards should apply immediately to the current run, future runs only, or both.
+3. Expand permanent campaign upgrade presentation beyond the current text summary if needed, for example with richer icon display on campaign screens.
+4. Explore longer-term expansion to additional unlock categories such as mycovariants and mutation-related rewards once the adaptation-first loop is solid.
 
 ## Current Handoff
 
@@ -89,7 +85,7 @@ Use the following minimal workflow to preserve working memory across sessions:
   - start with a hybrid model
   - moldiness draft offers should include both locked-content unlock rewards and repeatable universal meta rewards
   - first repeatable universal reward should permanently increase failed-run adaptation carryover capacity by +1 per draft
-  - first locked-content rewards include at least `Spore Salvo`, `Hyphal Bridge`, `Vesicle Burst`, and `Hyphal Priming` as level-1 adaptation unlock rewards
+  - first locked-content rewards include at least `Spore Salvo`, `Hyphal Bridge`, `Vesicle Burst`, `Hyphal Priming`, and `Prime Pulse` as level-1 adaptation unlock rewards
 - Longer-term unlock categories discussed in the recovered transcript and follow-up clarification:
   - additional draftable adaptations
   - additional draftable mycovariants
@@ -109,4 +105,4 @@ Use the following minimal workflow to preserve working memory across sessions:
   - pending moldiness reward overlays were narrowed and centered, with right-sidebar suppression for the resume flow
   - mode select now surfaces `Campaign (Pending Reward)` and routes into pending reward resolution
   - pending reward claims entered from mode select now return to the campaign menu instead of jumping straight into gameplay
-- Immediate next implementation target: verify the current pending reward flow end to end in Unity, then move from UX polish back to broader campaign progression tuning and content expansion.
+- Immediate next implementation target: move from pending-state UX verification into broader moldiness progression tuning, reward-behavior decisions, and the next wave of unlock content.

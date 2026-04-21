@@ -16,6 +16,12 @@ namespace FungusToast.Core.Phases
     public static class AdaptationEffectProcessor
     {
         private const string AegisHyphaeCounterKey = "adaptation_aegis_hyphae_growths";
+        private static readonly int[] primePulseTriggerRounds =
+        {
+            AdaptationGameBalance.PrimePulseFirstTriggerRound,
+            AdaptationGameBalance.PrimePulseSecondTriggerRound,
+            AdaptationGameBalance.PrimePulseThirdTriggerRound,
+        };
 
         public sealed class TropicLysisResolutionResult
         {
@@ -60,7 +66,8 @@ namespace FungusToast.Core.Phases
 
         public static void OnStartingSporesEstablished(
             GameBoard board,
-            List<Player> players)
+            List<Player> players,
+            Random rng)
         {
             foreach (var player in players)
             {
@@ -92,6 +99,17 @@ namespace FungusToast.Core.Phases
                 if (!player.HasAdaptation(AdaptationIds.LiminalSporemeal))
                     continue;
                 TryApplyLiminalSporemeal(player, board);
+            }
+
+            foreach (var player in players)
+            {
+                var adaptation = player.GetAdaptation(AdaptationIds.PrimePulse);
+                if (adaptation == null || adaptation.HasRuntimeValue)
+                {
+                    continue;
+                }
+
+                adaptation.SetRuntimeValue(GetPrimePulseTriggerRound(rng));
             }
         }
 
@@ -152,6 +170,25 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver observer)
         {
+            foreach (var player in players)
+            {
+                var adaptation = player.GetAdaptation(AdaptationIds.PrimePulse);
+                if (adaptation == null || adaptation.HasTriggered)
+                {
+                    continue;
+                }
+
+                int triggerRound = ResolvePrimePulseTriggerRound(adaptation, rng);
+                if (board.CurrentRound != triggerRound)
+                {
+                    continue;
+                }
+
+                player.AddMutationPoints(triggerRound);
+                observer.RecordMutationPointIncome(player.PlayerId, triggerRound);
+                adaptation.MarkTriggered();
+            }
+
             if (board.CurrentRound == AdaptationGameBalance.HyphalPrimingTriggerRound)
             {
                 foreach (var player in players)
@@ -333,6 +370,21 @@ namespace FungusToast.Core.Phases
                 enemyLivingCellsCleared,
                 corpsesCleared,
                 toxinsCleared);
+        }
+
+        private static int ResolvePrimePulseTriggerRound(PlayerAdaptation adaptation, Random rng)
+        {
+            if (!adaptation.HasRuntimeValue)
+            {
+                adaptation.SetRuntimeValue(GetPrimePulseTriggerRound(rng));
+            }
+
+            return adaptation.RuntimeValue;
+        }
+
+        private static int GetPrimePulseTriggerRound(Random rng)
+        {
+            return primePulseTriggerRounds[rng.Next(primePulseTriggerRounds.Length)];
         }
 
         private static bool TryApplyHyphalPriming(

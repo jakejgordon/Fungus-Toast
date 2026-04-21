@@ -156,6 +156,13 @@ namespace FungusToast.Core.Campaign
                         "tropic_lysis",
                         isLocked: true,
                         requiredMoldinessUnlockLevel: 1),
+                    new AdaptationDefinition(
+                        AdaptationIds.PrimePulse,
+                        "Prime Pulse",
+                        $"At the start of each game, roll one equal-chance payout: {AdaptationGameBalance.PrimePulseFirstTriggerRound} mutation points on round {AdaptationGameBalance.PrimePulseFirstTriggerRound}, {AdaptationGameBalance.PrimePulseSecondTriggerRound} mutation points on round {AdaptationGameBalance.PrimePulseSecondTriggerRound}, or {AdaptationGameBalance.PrimePulseThirdTriggerRound} mutation points on round {AdaptationGameBalance.PrimePulseThirdTriggerRound}. Gain it at the start of that round's Mutation Phase.",
+                        "prime_pulse",
+                        isLocked: true,
+                        requiredMoldinessUnlockLevel: 1),
                     // Starting adaptations — assigned by mold selection, never offered in mid-run drafts
                     new AdaptationDefinition(
                         AdaptationIds.ObliqueFilament,

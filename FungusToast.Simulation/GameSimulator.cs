@@ -256,7 +256,7 @@ namespace FungusToast.Simulation.GameSimulation
                 }
             }
 
-            AdaptationEffectProcessor.OnStartingSporesEstablished(board, players);
+            AdaptationEffectProcessor.OnStartingSporesEstablished(board, players, rng);
 
             return (players, board);
         }
