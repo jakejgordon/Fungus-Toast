@@ -85,7 +85,7 @@ Use the following minimal workflow to preserve working memory across sessions:
   - start with a hybrid model
   - moldiness draft offers should include both locked-content unlock rewards and repeatable universal meta rewards
   - first repeatable universal reward should permanently increase failed-run adaptation carryover capacity by +1 per draft
-  - first locked-content rewards include at least `Spore Salvo`, `Hyphal Bridge`, `Vesicle Burst`, and `Hyphal Priming` as level-1 adaptation unlock rewards
+  - first locked-content rewards include at least `Spore Salvo`, `Hyphal Bridge`, `Vesicle Burst`, `Hyphal Priming`, and `Prime Pulse` as level-1 adaptation unlock rewards
 - Longer-term unlock categories discussed in the recovered transcript and follow-up clarification:
   - additional draftable adaptations
   - additional draftable mycovariants

@@ -85,6 +85,7 @@ public class StartingAdaptationTests
             AdaptationIds.HyphalBridge, AdaptationIds.RhizomorphicHunger,
             AdaptationIds.MycelialCrescendo, AdaptationIds.OssifiedAdvance,
             AdaptationIds.ConidiaAscent, AdaptationIds.HyphalPriming,
+            AdaptationIds.PrimePulse,
             AdaptationIds.ObliqueFilament,
             AdaptationIds.ThanatrophicRebound, AdaptationIds.ToxinPrimacy,
             AdaptationIds.CentripetalGermination, AdaptationIds.SignalEconomy,

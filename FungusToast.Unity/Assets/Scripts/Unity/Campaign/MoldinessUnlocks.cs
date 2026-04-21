@@ -184,6 +184,15 @@ namespace FungusToast.Unity.Campaign
                         adaptationId: AdaptationIds.HyphalPriming,
                         categoryLabel: "Adaptation Unlock",
                         accentColor: UIStyleTokens.State.Success),
+                    new MoldinessUnlockDefinition(
+                        id: "moldiness_unlock_adaptation_prime_pulse",
+                        displayName: "Unlock Prime Pulse",
+                        description: "Permanently unlock Prime Pulse so it can appear in future campaign drafts.",
+                        type: MoldinessUnlockType.UnlockAdaptation,
+                        requiredUnlockLevel: 1,
+                        adaptationId: AdaptationIds.PrimePulse,
+                        categoryLabel: "Adaptation Unlock",
+                        accentColor: UIStyleTokens.State.Success),
                 });
 
         private static readonly Dictionary<string, MoldinessUnlockDefinition> byId =

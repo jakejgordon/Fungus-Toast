@@ -22,6 +22,7 @@ namespace FungusToast.Core.Campaign
         public const string OssifiedAdvance = "adaptation_18";
         public const string ConidiaAscent = "adaptation_19";
         public const string HyphalPriming = "adaptation_28";
+        public const string PrimePulse = "adaptation_29";
 
         // Starting adaptations — assigned by mold selection, never offered in drafts
         public const string ObliqueFilament = "adaptation_20";
