@@ -636,6 +636,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private static readonly Color SporemealPatchTextColor = new(0.12f, 0.35f, 0.11f, 1f);
 		private static readonly Color HypervariationPatchTextColor = new(0.35f, 0.12f, 0.42f, 1f);
 		private static readonly Color DirectedVectorToastColor = new(0.45f, 0.08f, 0.12f, 1f);
+		private static readonly Color TropicLysisToastColor = new(0.46f, 0.19f, 0.07f, 1f);
 		private static readonly Color BoardToastOutlineColor = new(0.02f, 0.01f, 0f, 1f);
 		private static readonly Color DirectedVectorPulseColor = new(1f, 0.92f, 0.38f, 0.96f);
 
@@ -759,6 +760,129 @@ namespace FungusToast.Unity.Grid.Helpers
 				if (blackHoldDuration > 0f)
 				{
 					yield return new WaitForSeconds(blackHoldDuration);
+				}
+			}
+			finally
+			{
+				_endAnimation();
+			}
+		}
+
+		public IEnumerator PlayTropicLysisAnimation(int originTileId, int destinationTileId, IReadOnlyList<int> tileIds, string toastText)
+		{
+			var board = _getBoard();
+			var moldTilemap = _getMoldTilemap();
+			var overlayTilemap = _getOverlayTilemap();
+			if (board == null || tileIds == null || tileIds.Count == 0 || moldTilemap == null || overlayTilemap == null)
+			{
+				yield break;
+			}
+
+			var states = new List<(Vector3Int pos, bool hasMold, Color moldColor, bool hasOverlay, Color overlayColor)>();
+			var seenTileIds = new HashSet<int>();
+
+			for (int i = 0; i < tileIds.Count; i++)
+			{
+				int tileId = tileIds[i];
+				if (!seenTileIds.Add(tileId))
+				{
+					continue;
+				}
+
+				var (x, y) = board.GetXYFromTileId(tileId);
+				var pos = new Vector3Int(x, y, 0);
+				bool hasMold = moldTilemap.HasTile(pos);
+				bool hasOverlay = overlayTilemap.HasTile(pos);
+				if (!hasMold && !hasOverlay)
+				{
+					continue;
+				}
+
+				states.Add((
+					pos,
+					hasMold,
+					hasMold ? moldTilemap.GetColor(pos) : Color.white,
+					hasOverlay,
+					hasOverlay ? overlayTilemap.GetColor(pos) : Color.white));
+			}
+
+			if (states.Count == 0)
+			{
+				yield break;
+			}
+
+			TextMeshPro toast = CreateBoardToastText(
+				toastText,
+				originTileId,
+				destinationTileId,
+				overlayTilemap,
+				UIEffectConstants.TropicLysisToastFontSize,
+				TropicLysisToastColor,
+				"TropicLysisToast");
+
+			float dissolveDuration = UIEffectConstants.TropicLysisDissolveDurationSeconds;
+			float toastDuration = toast != null ? UIEffectConstants.TropicLysisToastDurationSeconds : 0f;
+			float totalDuration = Mathf.Max(dissolveDuration, toastDuration);
+
+			_beginAnimation();
+			try
+			{
+				if (toast != null)
+				{
+					_startCoroutine(AnimateFloatingToast(toast, toastDuration, TropicLysisToastColor, UIEffectConstants.TropicLysisToastRiseWorld, useAnimatedScale: false));
+				}
+
+				float elapsed = 0f;
+				while (elapsed < dissolveDuration)
+				{
+					elapsed += Time.deltaTime;
+					float t = dissolveDuration <= 0f ? 1f : Mathf.Clamp01(elapsed / dissolveDuration);
+					float eased = 1f - Mathf.Pow(1f - t, 3f);
+					float scaleAmount = Mathf.Lerp(1f, UIEffectConstants.TropicLysisFinalScale, eased);
+					var scaleMatrix = Matrix4x4.Scale(new Vector3(scaleAmount, scaleAmount, 1f));
+
+					for (int i = 0; i < states.Count; i++)
+					{
+						var state = states[i];
+						if (state.hasMold && moldTilemap.HasTile(state.pos))
+						{
+							Color dissolveColor = Color.Lerp(state.moldColor, new Color(1f, 0.89f, 0.71f, 0f), eased);
+							dissolveColor.a = Mathf.Lerp(state.moldColor.a, 0f, eased);
+							moldTilemap.SetColor(state.pos, dissolveColor);
+							moldTilemap.SetTransformMatrix(state.pos, scaleMatrix);
+						}
+
+						if (state.hasOverlay && overlayTilemap.HasTile(state.pos))
+						{
+							Color overlayColor = Color.Lerp(state.overlayColor, new Color(1f, 0.95f, 0.82f, 0f), eased);
+							overlayColor.a = Mathf.Lerp(state.overlayColor.a, 0f, eased);
+							overlayTilemap.SetColor(state.pos, overlayColor);
+							overlayTilemap.SetTransformMatrix(state.pos, scaleMatrix);
+						}
+					}
+
+					yield return null;
+				}
+
+				for (int i = 0; i < states.Count; i++)
+				{
+					var state = states[i];
+					if (state.hasMold && moldTilemap.HasTile(state.pos))
+					{
+						moldTilemap.SetTile(state.pos, null);
+						moldTilemap.SetTransformMatrix(state.pos, Matrix4x4.identity);
+					}
+
+					if (state.hasOverlay && overlayTilemap.HasTile(state.pos))
+					{
+						overlayTilemap.SetTile(state.pos, null);
+						overlayTilemap.SetTransformMatrix(state.pos, Matrix4x4.identity);
+					}
+				}
+
+				if (totalDuration > dissolveDuration)
+				{
+					yield return new WaitForSeconds(totalDuration - dissolveDuration);
 				}
 			}
 			finally
@@ -1603,7 +1727,19 @@ namespace FungusToast.Unity.Grid.Helpers
 
 		private TextMeshPro CreateBoardToastText(GrowthSource source, int originTileId, int destinationTileId, Tilemap overlayTilemap)
 		{
-			if (overlayTilemap == null || destinationTileId < 0)
+			return CreateBoardToastText(
+				BuildGrowthSourceToastText(source),
+				originTileId,
+				destinationTileId,
+				overlayTilemap,
+				UIEffectConstants.DirectedVectorToastFontSize,
+				DirectedVectorToastColor,
+				"DirectedVectorToast");
+		}
+
+		private TextMeshPro CreateBoardToastText(string toastText, int originTileId, int destinationTileId, Tilemap overlayTilemap, float fontSize, Color textColor, string objectName)
+		{
+			if (overlayTilemap == null || destinationTileId < 0 || string.IsNullOrWhiteSpace(toastText))
 			{
 				return null;
 			}
@@ -1616,12 +1752,12 @@ namespace FungusToast.Unity.Grid.Helpers
 				? UIEffectConstants.DirectedVectorToastStartHeightWorld
 				: UIEffectConstants.DirectedVectorToastStartHeightWorld;
 
-			var textObject = new GameObject("DirectedVectorToast", typeof(TextMeshPro));
+			var textObject = new GameObject(objectName, typeof(TextMeshPro));
 			textObject.transform.SetParent(_getToastParent(), false);
 
 			var tmp = textObject.GetComponent<TextMeshPro>();
-			tmp.text = BuildGrowthSourceToastText(source);
-			ApplyBoardToastStyle(tmp, UIEffectConstants.DirectedVectorToastFontSize, DirectedVectorToastColor);
+			tmp.text = toastText;
+			ApplyBoardToastStyle(tmp, fontSize, textColor);
 			tmp.transform.position = anchorWorld + new Vector3(0f, verticalOffset, 0f);
 			tmp.transform.localScale = Vector3.one * GetBoardToastScaleMultiplier();
 

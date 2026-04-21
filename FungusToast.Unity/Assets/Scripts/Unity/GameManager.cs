@@ -97,6 +97,7 @@ namespace FungusToast.Unity
     {
         private const string AlphaMutationOnboardingSeenKey = "Onboarding.AlphaMutationPhaseSeen";
         private const string AlphaMutationOnboardingBannerText = "Goal: control the largest share of the toast.\nSpend mutation points for upgrades now or store them to save for stronger upgrades later.\nAfter that, your colony grows automatically.";
+        private const string TropicLysisDisplayName = "Tropic Lysis";
 
         #region Inspector Fields
 
@@ -213,6 +214,8 @@ namespace FungusToast.Unity
         public bool IsDraftPhaseActive => isInDraftPhase; 
         private int lastCompletedMycovariantDraftRound = -1;
         private bool activeDraftCountsTowardRoundCompletion;
+        private bool isMycovariantDraftChainActive;
+        private bool humanDraftedMycovariantThisDraftChain;
         public int LastCompletedMycovariantDraftRound => lastCompletedMycovariantDraftRound;
         private Dictionary<(int playerId, int mutationId), List<int>> FirstUpgradeRounds = new();
 
@@ -419,7 +422,8 @@ namespace FungusToast.Unity
                 () => CurrentGameMode,
                 () => campaignController?.CurrentBoardPreset,
                 () => campaignController?.CurrentResolvedAiStrategyNames,
-                () => configuredHumanMoldIndices);
+                () => configuredHumanMoldIndices,
+                () => testingForcedStartingAdaptationIds);
             hotseatTurnManager = new HotseatTurnManager(
                 gameUIManager,
                 hotseatTurnPrompt,
@@ -1101,6 +1105,12 @@ namespace FungusToast.Unity
             string? aiTurnBannerPrefix,
             bool countsTowardRoundCompletion)
         {
+            if (!isMycovariantDraftChainActive)
+            {
+                isMycovariantDraftChainActive = true;
+                humanDraftedMycovariantThisDraftChain = false;
+            }
+
             isInDraftPhase = true;
             activeDraftCountsTowardRoundCompletion = countsTowardRoundCompletion;
             RefreshRightSidebarTopStats();
@@ -1169,6 +1179,18 @@ namespace FungusToast.Unity
             {
                 return;
             }
+
+            gameUIManager.GameLogRouter?.DisableSilentMode();
+            isMycovariantDraftChainActive = false;
+            bool shouldResolveTropicLysis = ShouldResolveTropicLysisAfterDraftChain();
+            humanDraftedMycovariantThisDraftChain = false;
+
+            if (shouldResolveTropicLysis)
+            {
+                StartCoroutine(ResolvePostDraftEffectsThenAdvance());
+                return;
+            }
+
             if (testingModeEnabled)
             {
                 StartNextRound();
@@ -1195,12 +1217,68 @@ namespace FungusToast.Unity
         public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)
         {
             player.AddMycovariant(picked);
+            if (player.PlayerType == PlayerTypeEnum.Human)
+            {
+                humanDraftedMycovariantThisDraftChain = true;
+            }
+
             var pm = player.PlayerMycovariants.LastOrDefault(x => x.MycovariantId == picked.Id);
             if (pm != null && picked.AutoMarkTriggered)
             {
                 picked.ApplyEffect?.Invoke(pm, Board, rng, gameUIManager.GameLogRouter);
             }
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
+        }
+
+        private bool ShouldResolveTropicLysisAfterDraftChain()
+        {
+            return Board != null
+                && humanPlayer != null
+                && humanDraftedMycovariantThisDraftChain
+                && humanPlayer.HasAdaptation(AdaptationIds.TropicLysis);
+        }
+
+        private IEnumerator ResolvePostDraftEffectsThenAdvance()
+        {
+            var result = AdaptationEffectProcessor.TryResolveTropicLysisAfterDraft(
+                humanPlayer,
+                Board,
+                gameUIManager.GameLogRouter);
+
+            gameUIManager.GameLogRouter?.DisableSilentMode();
+            gameUIManager.GameLogManager?.RecordVisibleTropicLysisEffect(
+                humanPlayer != null ? humanPlayer.PlayerId : result.PlayerId,
+                result.EnemyLivingCellsCleared,
+                result.CorpsesCleared,
+                result.ToxinsCleared);
+
+            if (result.AnyCleared)
+            {
+                RefreshRightSidebarTopStats();
+                gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
+
+                if (gridVisualizer != null)
+                {
+                    yield return StartCoroutine(
+                        gridVisualizer.PlayTropicLysisAnimation(
+                            result.StartingTileId,
+                            result.ToastDestinationTileId,
+                            result.AffectedTileIds,
+                            TropicLysisDisplayName));
+
+                    gridVisualizer.RenderBoard(Board, suppressAnimations: true);
+                }
+
+                StartNextRound();
+                yield break;
+            }
+
+            if (!testingModeEnabled)
+            {
+                yield return new WaitForSeconds(1f);
+            }
+
+            StartNextRound();
         }
 
         public void MarkMycovariantDraftCompleteForRound(int round)

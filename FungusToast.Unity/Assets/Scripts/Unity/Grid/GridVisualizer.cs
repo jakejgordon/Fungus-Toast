@@ -764,6 +764,8 @@ namespace FungusToast.Unity.Grid
             => StartCoroutine(PlayNutrientPatchConsumptionAnimation(nutrientTileId, destinationTileId, patchType, rewardType, rewardAmount));
         public IEnumerator PlayMycotoxicLashAnimation(IReadOnlyList<int> tileIds)
             => presentationEffects != null ? presentationEffects.PlayMycotoxicLashAnimation(tileIds) : null;
+        public IEnumerator PlayTropicLysisAnimation(int originTileId, int destinationTileId, IReadOnlyList<int> tileIds, string toastText)
+            => presentationEffects != null ? presentationEffects.PlayTropicLysisAnimation(originTileId, destinationTileId, tileIds, toastText) : null;
         public IEnumerator PlayNecrophyticBloomCompostAnimation(IReadOnlyList<int> tileIds, NutrientPatchType patchType)
             => presentationEffects != null ? presentationEffects.PlayNecrophyticBloomCompostAnimation(tileIds, patchType) : null;
 

@@ -261,6 +261,7 @@ namespace FungusToast.Unity.UI.GameStart
                 Parent = testingCardSectionRoot,
                 ButtonTemplate = backButton != null ? backButton : startGameButton,
                 DropdownTemplate = ResolveDropdownTemplate(),
+                SupportsCampaignLevelSelection = false,
                 SupportsBoardSizeOverride = false,
                 SupportsForcedAdaptation = false,
                 CardName = "UI_StartGameTestingCard",

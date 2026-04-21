@@ -398,6 +398,31 @@ namespace FungusToast.Unity.UI
         public const float DirectedVectorPulseScale = 1.33f;
 
         /// <summary>
+        /// Duration of the Tropic Lysis dissolve sweep.
+        /// </summary>
+        public const float TropicLysisDissolveDurationSeconds = 0.9f;
+
+        /// <summary>
+        /// Lifetime of the floating Tropic Lysis toast.
+        /// </summary>
+        public const float TropicLysisToastDurationSeconds = 1.15f;
+
+        /// <summary>
+        /// World-space vertical travel applied to the floating Tropic Lysis toast.
+        /// </summary>
+        public const float TropicLysisToastRiseWorld = 0.92f;
+
+        /// <summary>
+        /// Font size used for the floating Tropic Lysis toast.
+        /// </summary>
+        public const float TropicLysisToastFontSize = 8.1f;
+
+        /// <summary>
+        /// Final scale reached by tiles dissolving under Tropic Lysis.
+        /// </summary>
+        public const float TropicLysisFinalScale = 0.58f;
+
+        /// <summary>
         /// Total duration for the Conidial Relay presentation animation.
         /// </summary>
         public const float ConidialRelayTotalDurationSeconds = 1.5f;

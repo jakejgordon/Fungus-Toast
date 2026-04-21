@@ -86,8 +86,9 @@ namespace FungusToast.Unity
                     state.player.SetMutationStrategy(state.strategy);
                 }
                 setFastForwardFlag(false);
+                ui.GameLogRouter.DisableSilentMode();
                 gameManager.gridVisualizer.RenderBoard(board, true); ui.RightSidebar?.UpdatePlayerSummaries(board.Players); ui.RightSidebar?.SortPlayerSummaryRows(board.Players); float occupancy = board.GetOccupiedTileRatio() * 100f; ui.RightSidebar?.SetRoundAndOccupancy(board.CurrentRound, occupancy); ui.MoldProfileRoot?.ApplyDeferredRefreshIfNeeded();
-                if (skipToEnd) { ui.GameLogRouter.DisableSilentMode(); gameManager.TriggerEndGameFromFastForward(); yield break; }
+                if (skipToEnd) { gameManager.TriggerEndGameFromFastForward(); yield break; }
                 gameManager.ArmImmediateFinalRoundAfterFastForward();
                 if (testingMycoId.HasValue) gameManager.StartMycovariantDraftPhase(); else { string msg = treatAsTargetRound ? $"Reached Round {board.CurrentRound}" : $"Fast-forwarded {board.CurrentRound - startingRound} rounds"; ui.PhaseBanner.Show(msg, 2f); gameManager.StartNextRound(); }
             }

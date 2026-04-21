@@ -239,6 +239,12 @@ namespace FungusToast.Unity.UI.GameLog
             playerActivityLogManager?.RecordMarginalClampKills(playerId, cellsKilled);
         }
 
+        public void RecordTropicLysisEffect(int playerId, int enemyCellsCleared, int corpsesCleared, int toxinsCleared)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordTropicLysisEffect(playerId, enemyCellsCleared, corpsesCleared, toxinsCleared);
+        }
+
         public void RecordSporeSalvoLaunches(int playerId, int launches)
         {
             if (IsSilentMode) return;

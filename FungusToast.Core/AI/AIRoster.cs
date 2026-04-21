@@ -2500,7 +2500,7 @@ namespace FungusToast.Core.AI
                 {
                     new AdaptationSynergySet(
                         "Rhizolith",
-                        "Grows resistant cells every round, edge cells always resist, dead cells next to resistant ones vanish leaving no corpse lane, border threats are cleared on contact, and two repositioning tools ensure territorial coverage. Nearly impossible to contain once established.",
+                        "Grows resistant cells every round, edge cells always resist, dead cells next to resistant ones vanish leaving no dead-cell lane, border threats are cleared on contact, and two repositioning tools ensure territorial coverage. Nearly impossible to contain once established.",
                         new[] { AdaptationIds.AegisHyphae, AdaptationIds.CrustalCallus, AdaptationIds.RhizomorphicHunger, AdaptationIds.MarginalClamp, AdaptationIds.DistalSpore, AdaptationIds.ConidialRelay })
                 },
 
@@ -2562,7 +2562,7 @@ namespace FungusToast.Core.AI
                 {
                     new AdaptationSynergySet(
                         "Rhizolith",
-                        "Grows resistant cells every round, edge cells always resist, dead cells next to resistant ones vanish leaving no corpse lane, border threats are cleared on contact, and two repositioning tools ensure territorial coverage. Nearly impossible to contain once established.",
+                        "Grows resistant cells every round, edge cells always resist, dead cells next to resistant ones vanish leaving no dead-cell lane, border threats are cleared on contact, and two repositioning tools ensure territorial coverage. Nearly impossible to contain once established.",
                         new[] { AdaptationIds.AegisHyphae, AdaptationIds.CrustalCallus, AdaptationIds.RhizomorphicHunger, AdaptationIds.MarginalClamp, AdaptationIds.DistalSpore, AdaptationIds.ConidialRelay })
                 },
 

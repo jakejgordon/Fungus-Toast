@@ -545,6 +545,23 @@ namespace FungusToast.Unity.UI.GameLog
         {
             if (IsSilentMode || playerId < 0) return;
 
+            AddPlayerEventCore(playerId, message, cat, explicitRound);
+        }
+
+        private void AddPlayerEventIgnoringSilentMode(int playerId, string message, GameLogCategory cat, int? explicitRound = null)
+        {
+            if (playerId < 0) return;
+
+            AddPlayerEventCore(playerId, message, cat, explicitRound);
+        }
+
+        private void AddPlayerEventCore(int playerId, string message, GameLogCategory cat, int? explicitRound = null)
+        {
+            if (playerId < 0)
+            {
+                return;
+            }
+
             var s = GetSummary(playerId);
             s.Add(new PlayerLogEvent
             {
@@ -559,6 +576,61 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 OnNewLogEntry?.Invoke(new GameLogEntry(message, cat, null, playerId, explicitRound));
             }
+        }
+
+        public void RecordVisibleTropicLysisEffect(int playerId, int enemyCellsCleared, int corpsesCleared, int toxinsCleared)
+        {
+            EnsurePlayerState(playerId);
+
+            if (aggregations.TryGetValue(playerId, out var agg))
+            {
+                agg.DraftStartSnapshot = null;
+            }
+
+            if (playerId < 0)
+            {
+                return;
+            }
+
+            if (enemyCellsCleared <= 0 && corpsesCleared <= 0 && toxinsCleared <= 0)
+            {
+                pendingRoundLeadSummaries[playerId].Enqueue(new SegmentSummary
+                {
+                    Message = "Tropic Lysis found nothing to clear",
+                    Round = board?.CurrentRound ?? 0
+                });
+                return;
+            }
+
+            var parts = new List<string>();
+            if (enemyCellsCleared > 0)
+            {
+                parts.Add(enemyCellsCleared == 1 ? "1 enemy cell" : $"{enemyCellsCleared} enemy cells");
+            }
+
+            if (corpsesCleared > 0)
+            {
+                parts.Add(corpsesCleared == 1 ? "1 dead cell" : $"{corpsesCleared} dead cells");
+            }
+
+            if (toxinsCleared > 0)
+            {
+                parts.Add(toxinsCleared == 1 ? "1 toxin" : $"{toxinsCleared} toxins");
+            }
+
+            string summary = parts.Count switch
+            {
+                0 => string.Empty,
+                1 => parts[0],
+                2 => $"{parts[0]} and {parts[1]}",
+                _ => $"{string.Join(", ", parts.Take(parts.Count - 1))}, and {parts[^1]}"
+            };
+
+            pendingRoundLeadSummaries[playerId].Enqueue(new SegmentSummary
+            {
+                Message = $"Tropic Lysis cleared {summary}",
+                Round = board?.CurrentRound ?? 0
+            });
         }
 
         private bool IsHuman(int playerId)
@@ -982,6 +1054,39 @@ namespace FungusToast.Unity.UI.GameLog
                     ? "Marginal Clamp cleared 1 border threat"
                     : $"Marginal Clamp cleared {cellsKilled} border threats",
                 GameLogCategory.Lucky);
+        }
+        public void RecordTropicLysisEffect(int playerId, int enemyCellsCleared, int corpsesCleared, int toxinsCleared)
+        {
+            if (!IsHuman(playerId) || (enemyCellsCleared <= 0 && corpsesCleared <= 0 && toxinsCleared <= 0))
+            {
+                return;
+            }
+
+            var parts = new List<string>();
+            if (enemyCellsCleared > 0)
+            {
+                parts.Add(enemyCellsCleared == 1 ? "1 enemy cell" : $"{enemyCellsCleared} enemy cells");
+            }
+
+            if (corpsesCleared > 0)
+            {
+                parts.Add(corpsesCleared == 1 ? "1 dead cell" : $"{corpsesCleared} dead cells");
+            }
+
+            if (toxinsCleared > 0)
+            {
+                parts.Add(toxinsCleared == 1 ? "1 toxin" : $"{toxinsCleared} toxins");
+            }
+
+            string summary = parts.Count switch
+            {
+                0 => string.Empty,
+                1 => parts[0],
+                2 => $"{parts[0]} and {parts[1]}",
+                _ => $"{string.Join(", ", parts.Take(parts.Count - 1))}, and {parts[^1]}"
+            };
+
+            AddPlayerEvent(playerId, $"Tropic Lysis cleared {summary}", GameLogCategory.Lucky);
         }
         public void RecordSporeSalvoLaunches(int playerId, int launches)
         {

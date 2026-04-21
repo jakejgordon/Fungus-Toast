@@ -22,6 +22,7 @@ namespace FungusToast.Unity
         private readonly Func<BoardPreset> getCampaignBoardPreset;
         private readonly Func<IReadOnlyList<string>> getResolvedCampaignAiStrategyNames;
         private readonly Func<IReadOnlyList<int>> getConfiguredHumanMoldIndices;
+        private readonly Func<IReadOnlyList<string>> getTestingForcedAdaptationIds;
 
         public PlayerInitializer(
             GridVisualizer gridVisualizer,
@@ -30,7 +31,8 @@ namespace FungusToast.Unity
             Func<GameMode> getGameMode,
             Func<BoardPreset> getCampaignBoardPreset,
             Func<IReadOnlyList<string>> getResolvedCampaignAiStrategyNames,
-            Func<IReadOnlyList<int>> getConfiguredHumanMoldIndices)
+            Func<IReadOnlyList<int>> getConfiguredHumanMoldIndices,
+            Func<IReadOnlyList<string>> getTestingForcedAdaptationIds)
         {
             this.gridVisualizer = gridVisualizer;
             this.ui = ui;
@@ -39,6 +41,7 @@ namespace FungusToast.Unity
             this.getCampaignBoardPreset = getCampaignBoardPreset;
             this.getResolvedCampaignAiStrategyNames = getResolvedCampaignAiStrategyNames;
             this.getConfiguredHumanMoldIndices = getConfiguredHumanMoldIndices;
+            this.getTestingForcedAdaptationIds = getTestingForcedAdaptationIds;
         }
 
         // totalPlayers: authoritative total player count for this game (from GameManager)
@@ -145,7 +148,17 @@ namespace FungusToast.Unity
 
         private void ApplyStartingAdaptationToHuman(Player player, int humanIndex)
         {
-            if (player == null || getGameMode() == GameMode.Campaign)
+            if (player == null)
+            {
+                return;
+            }
+
+            if (getGameMode() != GameMode.Campaign)
+            {
+                ApplyTestingForcedAdaptationsToHuman(player);
+            }
+
+            if (getGameMode() == GameMode.Campaign)
             {
                 return;
             }
@@ -170,6 +183,26 @@ namespace FungusToast.Unity
             else
             {
                 Debug.LogWarning($"[PlayerInitializer] Unknown starting adaptation '{adaptationId}' for human mold index {moldIndex}.");
+            }
+        }
+
+        private void ApplyTestingForcedAdaptationsToHuman(Player player)
+        {
+            var adaptationIds = getTestingForcedAdaptationIds?.Invoke();
+            if (adaptationIds == null || adaptationIds.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var adaptationId in adaptationIds)
+            {
+                if (!AdaptationRepository.TryGetById(adaptationId, out var adaptation))
+                {
+                    Debug.LogWarning($"[PlayerInitializer] Unknown forced testing adaptation '{adaptationId}'. Skipping.");
+                    continue;
+                }
+
+                player.TryAddAdaptation(adaptation);
             }
         }
 

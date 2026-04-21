@@ -184,6 +184,15 @@ namespace FungusToast.Unity.Campaign
                         adaptationId: AdaptationIds.HyphalPriming,
                         categoryLabel: "Adaptation Unlock",
                         accentColor: UIStyleTokens.State.Success),
+                    new MoldinessUnlockDefinition(
+                        id: "moldiness_unlock_adaptation_tropic_lysis",
+                        displayName: "Unlock Tropic Lysis",
+                        description: "Permanently unlock Tropic Lysis so it can appear in future campaign drafts.",
+                        type: MoldinessUnlockType.UnlockAdaptation,
+                        requiredUnlockLevel: 1,
+                        adaptationId: AdaptationIds.TropicLysis,
+                        categoryLabel: "Adaptation Unlock",
+                        accentColor: UIStyleTokens.State.Success),
                 });
 
         private static readonly Dictionary<string, MoldinessUnlockDefinition> byId =

@@ -17,6 +17,47 @@ namespace FungusToast.Core.Phases
     {
         private const string AegisHyphaeCounterKey = "adaptation_aegis_hyphae_growths";
 
+        public sealed class TropicLysisResolutionResult
+        {
+            public static TropicLysisResolutionResult None { get; } = new(
+                playerId: -1,
+                startingTileId: -1,
+                beaconTileId: null,
+                affectedTileIds: Array.Empty<int>(),
+                enemyLivingCellsCleared: 0,
+                corpsesCleared: 0,
+                toxinsCleared: 0);
+
+            public TropicLysisResolutionResult(
+                int playerId,
+                int startingTileId,
+                int? beaconTileId,
+                IReadOnlyList<int> affectedTileIds,
+                int enemyLivingCellsCleared,
+                int corpsesCleared,
+                int toxinsCleared)
+            {
+                PlayerId = playerId;
+                StartingTileId = startingTileId;
+                BeaconTileId = beaconTileId;
+                AffectedTileIds = affectedTileIds ?? Array.Empty<int>();
+                EnemyLivingCellsCleared = Math.Max(0, enemyLivingCellsCleared);
+                CorpsesCleared = Math.Max(0, corpsesCleared);
+                ToxinsCleared = Math.Max(0, toxinsCleared);
+            }
+
+            public int PlayerId { get; }
+            public int StartingTileId { get; }
+            public int? BeaconTileId { get; }
+            public IReadOnlyList<int> AffectedTileIds { get; }
+            public int EnemyLivingCellsCleared { get; }
+            public int CorpsesCleared { get; }
+            public int ToxinsCleared { get; }
+            public int TotalCleared => EnemyLivingCellsCleared + CorpsesCleared + ToxinsCleared;
+            public bool AnyCleared => TotalCleared > 0;
+            public int ToastDestinationTileId => BeaconTileId ?? StartingTileId;
+        }
+
         public static void OnStartingSporesEstablished(
             GameBoard board,
             List<Player> players)
@@ -188,6 +229,110 @@ namespace FungusToast.Core.Phases
                     }
                 }
             }
+        }
+
+        public static TropicLysisResolutionResult TryResolveTropicLysisAfterDraft(
+            Player player,
+            GameBoard board,
+            ISimulationObserver observer)
+        {
+            if (player == null
+                || board == null
+                || observer == null
+                || !player.HasAdaptation(AdaptationIds.TropicLysis)
+                || !player.StartingTileId.HasValue)
+            {
+                return TropicLysisResolutionResult.None;
+            }
+
+            int startingTileId = player.StartingTileId.Value;
+            var startingTile = board.GetTileById(startingTileId);
+            if (startingTile == null)
+            {
+                return TropicLysisResolutionResult.None;
+            }
+
+            var candidateTileIds = new HashSet<int>();
+            AddTilesInCircularRange(candidateTileIds, board, startingTile.X, startingTile.Y, AdaptationGameBalance.TropicLysisRadius);
+
+            int? beaconTileId = null;
+            if (ChemotacticBeaconHelper.TryGetActiveMarker(board, player, out var marker)
+                && marker != null)
+            {
+                beaconTileId = marker.TileId;
+                var beaconTile = board.GetTileById(marker.TileId);
+                if (beaconTile != null)
+                {
+                    AddTilesInCircularRange(candidateTileIds, board, beaconTile.X, beaconTile.Y, AdaptationGameBalance.TropicLysisRadius);
+                }
+            }
+
+            int enemyLivingCellsCleared = 0;
+            int corpsesCleared = 0;
+            int toxinsCleared = 0;
+            var affectedTileIds = new List<int>();
+
+            foreach (int tileId in candidateTileIds.OrderBy(id => id))
+            {
+                var tile = board.GetTileById(tileId);
+                var cell = tile?.FungalCell;
+                if (cell == null)
+                {
+                    continue;
+                }
+
+                if (cell.OwnerPlayerId == player.PlayerId)
+                {
+                    continue;
+                }
+
+                if (cell.IsAlive)
+                {
+                    if (cell.IsResistant)
+                    {
+                        continue;
+                    }
+
+                    board.ConsumeFungalCell(cell, DeathReason.TropicLysis, player.PlayerId, startingTileId);
+                    enemyLivingCellsCleared++;
+                    affectedTileIds.Add(tileId);
+                    continue;
+                }
+
+                if (cell.IsDead)
+                {
+                    board.RemoveCellInternal(tileId, removeControl: true);
+                    corpsesCleared++;
+                    affectedTileIds.Add(tileId);
+                    continue;
+                }
+
+                if (cell.IsToxin)
+                {
+                    board.RemoveCellInternal(tileId, removeControl: true);
+                    toxinsCleared++;
+                    affectedTileIds.Add(tileId);
+                }
+            }
+
+            if (enemyLivingCellsCleared > 0)
+            {
+                observer.RecordAttributedKill(player.PlayerId, DeathReason.TropicLysis, enemyLivingCellsCleared);
+            }
+
+            if (affectedTileIds.Count == 0)
+            {
+                return TropicLysisResolutionResult.None;
+            }
+
+            return new TropicLysisResolutionResult(
+                player.PlayerId,
+                startingTileId,
+                beaconTileId,
+                affectedTileIds,
+                enemyLivingCellsCleared,
+                corpsesCleared,
+                toxinsCleared);
         }
 
         private static bool TryApplyHyphalPriming(
@@ -412,6 +557,36 @@ namespace FungusToast.Core.Phases
                     tileId,
                     affectedTileIds[0],
                     affectedTileIds));
+        }
+
+        private static void AddTilesInCircularRange(HashSet<int> candidateTileIds, GameBoard board, int centerX, int centerY, int radius)
+        {
+            if (candidateTileIds == null || board == null)
+            {
+                return;
+            }
+
+            int radiusSquared = radius * radius;
+
+            int minX = Math.Max(0, centerX - radius);
+            int maxX = Math.Min(board.Width - 1, centerX + radius);
+            int minY = Math.Max(0, centerY - radius);
+            int maxY = Math.Min(board.Height - 1, centerY + radius);
+
+            for (int x = minX; x <= maxX; x++)
+            {
+                for (int y = minY; y <= maxY; y++)
+                {
+                    int deltaX = x - centerX;
+                    int deltaY = y - centerY;
+                    if ((deltaX * deltaX) + (deltaY * deltaY) > radiusSquared)
+                    {
+                        continue;
+                    }
+
+                    candidateTileIds.Add(board.Grid[x, y].TileId);
+                }
+            }
         }
 
         public static bool TryConsumeSaprophageRingDeath(

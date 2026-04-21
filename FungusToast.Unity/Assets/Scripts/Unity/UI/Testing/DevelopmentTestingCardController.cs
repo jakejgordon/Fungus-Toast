@@ -147,6 +147,7 @@ namespace FungusToast.Unity.UI.Testing
         public Transform Parent { get; set; }
         public Button ButtonTemplate { get; set; }
         public TMP_Dropdown DropdownTemplate { get; set; }
+        public bool SupportsCampaignLevelSelection { get; set; } = true;
         public bool SupportsForcedAdaptation { get; set; }
         public bool SupportsForceMoldinessRewards { get; set; }
         public bool SupportsBoardSizeOverride { get; set; }
@@ -243,13 +244,16 @@ namespace FungusToast.Unity.UI.Testing
                 ConfigureBoardSizeDropdown();
             }
 
-            campaignLevelRow = EnsureDropdownRow(
-                $"{options.ControlPrefix}CampaignLevelRow",
-                $"{options.ControlPrefix}CampaignLevelLabel",
-                $"{options.ControlPrefix}CampaignLevelDropdown",
-                "Campaign Level",
-                out campaignLevelDropdown);
-            ConfigureCampaignLevelDropdown();
+            if (options.SupportsCampaignLevelSelection)
+            {
+                campaignLevelRow = EnsureDropdownRow(
+                    $"{options.ControlPrefix}CampaignLevelRow",
+                    $"{options.ControlPrefix}CampaignLevelLabel",
+                    $"{options.ControlPrefix}CampaignLevelDropdown",
+                    "Campaign Level",
+                    out campaignLevelDropdown);
+                ConfigureCampaignLevelDropdown();
+            }
 
             mycovariantRow = EnsureDropdownRow(
                 $"{options.ControlPrefix}MycovariantRow",
@@ -505,12 +509,12 @@ namespace FungusToast.Unity.UI.Testing
 
             if (campaignLevelRow != null)
             {
-                campaignLevelRow.SetActive(testingEnabled);
+                campaignLevelRow.SetActive(testingEnabled && options.SupportsCampaignLevelSelection);
             }
 
             if (campaignLevelDropdown != null)
             {
-                campaignLevelDropdown.interactable = testingEnabled;
+                campaignLevelDropdown.interactable = testingEnabled && options.SupportsCampaignLevelSelection;
             }
 
             if (adaptationDropdown != null)

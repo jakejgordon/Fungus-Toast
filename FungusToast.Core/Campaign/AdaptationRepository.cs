@@ -24,6 +24,8 @@ namespace FungusToast.Core.Campaign
             AdaptationGameBalance.RetrogradeBloomTier5LevelsGained.ToString(CultureInfo.InvariantCulture);
         private static readonly string hyphalPrimingLevelsGranted =
             AdaptationGameBalance.HyphalPrimingLevelsGranted.ToString(CultureInfo.InvariantCulture);
+        private static readonly string tropicLysisRadius =
+            AdaptationGameBalance.TropicLysisRadius.ToString(CultureInfo.InvariantCulture);
 
         // Starting adaptation computed description strings
         private static readonly string obliqueFilamentOrthogonalPercent =
@@ -72,7 +74,7 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.SaprophageRing,
                         "Saprophage Ring",
-                        "Your cells that die beside one of your resistant cells are consumed, leaving the tile empty instead of a corpse.",
+                        "Your cells that die beside one of your resistant cells are consumed, leaving the tile empty instead of a dead cell.",
                         "saprophage_ring"),
                     new AdaptationDefinition(
                         AdaptationIds.MarginalClamp,
@@ -116,7 +118,7 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.VesicleBurst,
                         "Vesicle Burst",
-                        $"For the rest of the campaign, each of your expired toxins has a {vesicleBurstPercent}% chance to pop and drop friendly toxins into every orthogonally adjacent tile that is empty or occupied by a non-resistant enemy cell, corpse, or toxin.",
+                        $"For the rest of the campaign, each of your expired toxins has a {vesicleBurstPercent}% chance to pop and drop friendly toxins into every orthogonally adjacent tile that is empty or occupied by a non-resistant enemy cell, dead cell, or toxin.",
                         "vesicle_burst",
                         isLocked: true,
                         requiredMoldinessUnlockLevel: 1),
@@ -145,6 +147,13 @@ namespace FungusToast.Core.Campaign
                         "Hyphal Priming",
                         $"At the start of round {AdaptationGameBalance.HyphalPrimingTriggerRound}'s Mutation Phase, a random Tier 2 mutation outside Mycelial Surges gains {hyphalPrimingLevelsGranted} free levels. Prerequisites are ignored.",
                         "hyphal_priming",
+                        isLocked: true,
+                        requiredMoldinessUnlockLevel: 1),
+                    new AdaptationDefinition(
+                        AdaptationIds.TropicLysis,
+                        "Tropic Lysis",
+                        $"Whenever a Mycovariant draft ends and you drafted a Mycovariant, clear all enemy cells, dead cells, and toxins within {tropicLysisRadius} tiles of your starting spore and active Chemotactic Beacon, leaving those tiles empty. If no beacon is active, clear only around your starting spore; resistant enemy living cells survive.",
+                        "tropic_lysis",
                         isLocked: true,
                         requiredMoldinessUnlockLevel: 1),
                     // Starting adaptations — assigned by mold selection, never offered in mid-run drafts

@@ -3766,6 +3766,7 @@ namespace FungusToast.Unity.UI
                 Parent = endGameTestingRailRoot,
                 ButtonTemplate = buttonTemplate,
                 DropdownTemplate = FindDropdownTemplate(),
+                SupportsCampaignLevelSelection = GameManager.Instance != null && GameManager.Instance.CurrentGameMode == GameMode.Campaign,
                 SupportsBoardSizeOverride = false,
                 SupportsForcedAdaptation = true,
                 SupportsForceMoldinessRewards = true,
