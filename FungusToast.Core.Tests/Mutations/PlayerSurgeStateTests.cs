@@ -1,4 +1,5 @@
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Players;
 
 namespace FungusToast.Core.Tests.Mutations;
@@ -52,8 +53,29 @@ public class PlayerSurgeStateTests
         Assert.Equal(2, player.GetSurgeTurnsRemaining(MutationIds.ChemotacticBeacon));
     }
 
+    [Fact]
+    public void TryAddAdaptation_hyphal_echo_extends_existing_active_surges()
+    {
+        var player = CreatePlayer();
+        player.ActiveSurges[MutationIds.HyphalSurge] = new Player.ActiveSurgeInfo(mutationId: MutationIds.HyphalSurge, level: 1, duration: 2);
+        player.ActiveSurges[MutationIds.ChemotacticBeacon] = new Player.ActiveSurgeInfo(mutationId: MutationIds.ChemotacticBeacon, level: 1, duration: 4);
+
+        var added = player.TryAddAdaptation(RequireAdaptation(AdaptationIds.HyphalEcho));
+
+        Assert.True(added);
+        Assert.Equal(3, player.GetSurgeTurnsRemaining(MutationIds.HyphalSurge));
+        Assert.Equal(5, player.GetSurgeTurnsRemaining(MutationIds.ChemotacticBeacon));
+    }
+
     private static Player CreatePlayer()
     {
         return new Player(playerId: 0, playerName: "Test Player", playerType: PlayerTypeEnum.AI);
+    }
+
+    private static AdaptationDefinition RequireAdaptation(string adaptationId)
+    {
+        var found = AdaptationRepository.TryGetById(adaptationId, out var adaptation);
+        Assert.True(found, $"Expected adaptation {adaptationId} to exist in the adaptation repository.");
+        return Assert.IsType<AdaptationDefinition>(adaptation);
     }
 }

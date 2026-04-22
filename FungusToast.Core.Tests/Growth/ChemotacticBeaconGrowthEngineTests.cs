@@ -20,9 +20,8 @@ public class ChemotacticBeaconGrowthEngineTests
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 3, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2);
-        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 5, 2);
-        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 6, 2);
-        Assert.Equal(GrowthSource.ChemotacticBeacon, setup.board.GetTile(6, 2)?.FungalCell?.SourceOfGrowth);
+        Assert.Null(setup.board.GetTile(5, 2)?.FungalCell);
+        Assert.Equal(GrowthSource.ChemotacticBeacon, setup.board.GetTile(4, 2)?.FungalCell?.SourceOfGrowth);
     }
 
     [Fact]
@@ -37,8 +36,7 @@ public class ChemotacticBeaconGrowthEngineTests
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 5, 2);
-        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 6, 2);
-        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 7, 2);
+        Assert.Null(setup.board.GetTile(6, 2)?.FungalCell);
         Assert.Equal(GrowthSource.HyphalSurge, setup.board.GetTile(3, 2)?.FungalCell?.SourceOfGrowth);
         Assert.Equal(GrowthSource.ChemotacticBeacon, setup.board.GetTile(4, 2)?.FungalCell?.SourceOfGrowth);
         Assert.Equal(GrowthSource.ChemotacticBeacon, setup.board.GetTile(5, 2)?.FungalCell?.SourceOfGrowth);
@@ -59,9 +57,8 @@ public class ChemotacticBeaconGrowthEngineTests
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 3, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 5, 2);
-        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 6, 2);
-        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 7, 2);
-        Assert.Null(setup.board.GetTile(8, 2)?.FungalCell);
+        Assert.Null(setup.board.GetTile(6, 2)?.FungalCell);
+        Assert.Null(setup.board.GetTile(7, 2)?.FungalCell);
     }
 
     [Fact]
@@ -86,7 +83,7 @@ public class ChemotacticBeaconGrowthEngineTests
         Assert.True(setup.board.GetTile(5, 2)?.FungalCell?.IsDead);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 6, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 7, 2);
-        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 8, 2);
+        Assert.Null(setup.board.GetTile(8, 2)?.FungalCell);
     }
 
     [Fact]

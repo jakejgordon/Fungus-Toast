@@ -164,6 +164,13 @@ namespace FungusToast.Core.Campaign
                         "prime_pulse",
                         isLocked: true,
                         requiredMoldinessUnlockLevel: 1),
+                    new AdaptationDefinition(
+                        AdaptationIds.HyphalEcho,
+                        "Hyphal Echo",
+                        $"For the rest of the campaign, your Mycelial Surges last {AdaptationGameBalance.HyphalEchoSurgeDurationBonus} additional round{(AdaptationGameBalance.HyphalEchoSurgeDurationBonus == 1 ? string.Empty : "s")}.",
+                        "hyphal_echo",
+                        isLocked: true,
+                        requiredMoldinessUnlockLevel: 32),
                     // Starting adaptations — assigned by mold selection, never offered in mid-run drafts
                     new AdaptationDefinition(
                         AdaptationIds.ObliqueFilament,

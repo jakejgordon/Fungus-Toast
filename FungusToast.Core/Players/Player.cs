@@ -77,6 +77,14 @@ namespace FungusToast.Core.Players
                 TurnsRemaining = duration;
             }
 
+            public void AddTurns(int additionalTurns)
+            {
+                if (additionalTurns > 0)
+                {
+                    TurnsRemaining += additionalTurns;
+                }
+            }
+
             public void TickDown() => TurnsRemaining--;
             public bool IsExpired => TurnsRemaining <= 0;
         }
@@ -184,7 +192,52 @@ namespace FungusToast.Core.Players
             }
 
             PlayerAdaptations.Add(new PlayerAdaptation(PlayerId, adaptation));
+
+            if (string.Equals(adaptation.Id, AdaptationIds.HyphalEcho, StringComparison.Ordinal))
+            {
+                ExtendActiveSurgesDuration(AdaptationGameBalance.HyphalEchoSurgeDurationBonus);
+            }
+
             return true;
+        }
+
+        public int GetSurgeDurationBonus(Mutation mutation)
+        {
+            if (mutation == null || !mutation.IsSurge)
+            {
+                return 0;
+            }
+
+            if (HasAdaptation(AdaptationIds.HyphalEcho)
+                && mutation.Category == MutationCategory.MycelialSurges)
+            {
+                return AdaptationGameBalance.HyphalEchoSurgeDurationBonus;
+            }
+
+            return 0;
+        }
+
+        public int GetSurgeDuration(Mutation mutation)
+        {
+            if (mutation == null)
+            {
+                return 0;
+            }
+
+            return Math.Max(0, mutation.SurgeDuration + GetSurgeDurationBonus(mutation));
+        }
+
+        private void ExtendActiveSurgesDuration(int additionalTurns)
+        {
+            if (additionalTurns <= 0)
+            {
+                return;
+            }
+
+            foreach (var activeSurge in ActiveSurges.Values)
+            {
+                activeSurge.AddTurns(additionalTurns);
+            }
         }
 
         public int GetMutationPointCost(Mutation mutation)
@@ -252,7 +305,7 @@ namespace FungusToast.Core.Players
 
             pm.Upgrade(currentRound);
             int newLevel = pm.CurrentLevel;
-            int duration = mutation.SurgeDuration;
+            int duration = GetSurgeDuration(mutation);
             TryApplyApicalYield(mutation, oldLevel, newLevel, simulationObserver);
 
             ActiveSurges[mutation.Id] = new ActiveSurgeInfo(mutation.Id, newLevel, duration);
@@ -389,7 +442,7 @@ namespace FungusToast.Core.Players
                 return false;
             }
 
-            return board.TryPlaceChemobeacon(PlayerId, targetTileId, mutation.Id, mutation.SurgeDuration);
+            return board.TryPlaceChemobeacon(PlayerId, targetTileId, mutation.Id, GetSurgeDuration(mutation));
         }
 
         public bool TryActivateReservedTargetedSurge(
@@ -415,7 +468,7 @@ namespace FungusToast.Core.Players
                 return false;
             }
 
-            return board.TryPlaceChemobeacon(PlayerId, targetTileId, mutation.Id, mutation.SurgeDuration);
+            return board.TryPlaceChemobeacon(PlayerId, targetTileId, mutation.Id, GetSurgeDuration(mutation));
         }
 
         public bool CanUpgrade(Mutation mut, int currentRound)

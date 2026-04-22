@@ -72,8 +72,10 @@ public class PlayerMutationEffectTests
         player.SetMutationLevel(MutationIds.MycotropicInduction, newLevel: 3, currentRound: 1);
 
         var diagonalGrowthChance = GrowthMutationProcessor.GetEffectiveDirectionalDiagonalGrowthChance(player, DiagonalDirection.Northwest);
+        float expectedChance = RequireMutation(MutationIds.TendrilNorthwest).GetTotalEffect(2)
+            * (1f + (RequireMutation(MutationIds.MycotropicInduction).EffectPerLevel * 3));
 
-        Assert.Equal(0.07f, diagonalGrowthChance, precision: 6);
+        Assert.Equal(expectedChance, diagonalGrowthChance, precision: 6);
     }
 
     [Fact]

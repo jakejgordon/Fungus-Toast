@@ -202,6 +202,15 @@ namespace FungusToast.Unity.Campaign
                         adaptationId: AdaptationIds.PrimePulse,
                         categoryLabel: "Adaptation Unlock",
                         accentColor: UIStyleTokens.State.Success),
+                    new MoldinessUnlockDefinition(
+                        id: "moldiness_unlock_adaptation_hyphal_echo",
+                        displayName: "Unlock Hyphal Echo",
+                        description: "Permanently unlock Hyphal Echo so it can appear in future campaign drafts.",
+                        type: MoldinessUnlockType.UnlockAdaptation,
+                        requiredUnlockLevel: 32,
+                        adaptationId: AdaptationIds.HyphalEcho,
+                        categoryLabel: "Adaptation Unlock",
+                        accentColor: UIStyleTokens.State.Success),
                 });
 
         private static readonly Dictionary<string, MoldinessUnlockDefinition> byId =

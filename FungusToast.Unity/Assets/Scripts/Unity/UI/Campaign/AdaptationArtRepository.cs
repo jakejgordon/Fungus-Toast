@@ -145,6 +145,9 @@ namespace FungusToast.Unity.UI.Campaign
                         case "prime_pulse":
                             DrawPrimePulse(texture, drawAccent, highlight);
                             break;
+                        case "hyphal_echo":
+                            DrawHyphalEcho(texture, drawAccent, highlight);
+                            break;
                         default:
                             DrawFallback(texture, drawAccent, highlight);
                             break;
@@ -187,6 +190,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "hyphal_priming" => Color.Lerp(UIStyleTokens.State.Success, UIStyleTokens.Surface.PanelPrimary, 0.28f),
                 "tropic_lysis" => Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.Surface.PanelPrimary, 0.34f),
                 "prime_pulse" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.3f),
+                "hyphal_echo" => Color.Lerp(UIStyleTokens.Category.MycelialSurges, UIStyleTokens.Surface.PanelPrimary, 0.46f),
                 _ => UIStyleTokens.Surface.PanelPrimary
             };
         }
@@ -225,6 +229,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "hyphal_priming" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Text.Primary, 0.12f),
                 "tropic_lysis" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.Accent.Putrefaction, 0.3f),
                 "prime_pulse" => Color.Lerp(UIStyleTokens.State.Warning, UIStyleTokens.State.Info, 0.35f),
+                "hyphal_echo" => Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Category.MycelialSurges, 0.45f),
                 _ => UIStyleTokens.Text.Primary
             };
         }
@@ -294,6 +299,17 @@ namespace FungusToast.Unity.UI.Campaign
             FillCircle(texture, 18, 12, 3, highlight);
             FillCircle(texture, 22, 29, 2, highlight);
             FillCircle(texture, 28, 17, 2, highlight);
+        }
+
+        private static void DrawHyphalEcho(Texture2D texture, Color accent, Color highlight)
+        {
+            DrawLine(texture, 10, 28, 18, 12, accent, 2);
+            DrawLine(texture, 18, 12, 30, 18, accent, 2);
+            DrawLine(texture, 14, 30, 26, 30, highlight, 1);
+            DrawRing(texture, 18, 12, 5, 1, highlight);
+            DrawRing(texture, 24, 18, 7, 1, accent);
+            FillCircle(texture, 11, 28, 3, highlight);
+            FillCircle(texture, 28, 30, 2, accent);
         }
 
         private static void DrawMycotoxicHalo(Texture2D texture, Color accent, Color highlight)

@@ -9,6 +9,7 @@ using System.Text;
 using System.Linq;
 using FungusToast.Unity;
 using FungusToast.Unity.UI.Tooltips;
+using FungusToast.Core.Campaign;
 
 namespace FungusToast.Unity.UI.MutationTree
 {
@@ -483,6 +484,12 @@ namespace FungusToast.Unity.UI.MutationTree
                 sb.AppendLine();
             }
 
+            if (mutation.IsSurge)
+            {
+                sb.AppendLine(BuildSurgeDurationLine());
+                sb.AppendLine();
+            }
+
             sb.AppendLine(mutation.Description);
 
             if (!string.IsNullOrEmpty(mutation.FlavorText))
@@ -492,6 +499,20 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             return sb.ToString();
+        }
+
+        private string BuildSurgeDurationLine()
+        {
+            int totalDuration = player.GetSurgeDuration(mutation);
+            int durationBonus = player.GetSurgeDurationBonus(mutation);
+
+            if (durationBonus <= 0)
+            {
+                return $"<b>Round Duration:</b> {totalDuration}";
+            }
+
+            string sourceName = player.GetAdaptation(AdaptationIds.HyphalEcho)?.Adaptation?.Name ?? "Hyphal Echo";
+            return $"<b>Round Duration:</b> {totalDuration} (including +{durationBonus} bonus from {sourceName})";
         }
 
         public void DisableUpgrade()

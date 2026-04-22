@@ -2945,9 +2945,17 @@ namespace FungusToast.Unity.UI
             string flavor = string.IsNullOrWhiteSpace(playerMutation.Mutation.FlavorText)
                 ? string.Empty
                 : $"\n\n<i>{playerMutation.Mutation.FlavorText}</i>";
-            string surge = playerMutation.Mutation.IsSurge
-                ? $"\nSurge Duration: {playerMutation.Mutation.SurgeDuration} round{Pluralize(playerMutation.Mutation.SurgeDuration)}"
-                : string.Empty;
+            string surge = string.Empty;
+
+            if (playerMutation.Mutation.IsSurge)
+            {
+                Player? owner = GameManager.Instance?.Board?.Players?.FirstOrDefault(player => player.PlayerId == playerMutation.PlayerId);
+                int totalDuration = owner?.GetSurgeDuration(playerMutation.Mutation) ?? playerMutation.Mutation.SurgeDuration;
+                int durationBonus = owner?.GetSurgeDurationBonus(playerMutation.Mutation) ?? 0;
+                surge = durationBonus > 0
+                    ? $"\nRound Duration: {totalDuration} (including +{durationBonus} bonus from Hyphal Echo)"
+                    : $"\nRound Duration: {totalDuration}";
+            }
 
             return $"<b>{playerMutation.Mutation.Name}</b>\n<i>{BuildMutationMetaText(playerMutation)}</i>\n\n{playerMutation.Mutation.Description}{surge}{flavor}";
         }

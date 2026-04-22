@@ -1,4 +1,5 @@
 using FungusToast.Core.Board;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
@@ -43,6 +44,25 @@ public class PlayerTargetedSurgeTests
         Assert.Equal(12, marker.TileId);
         Assert.Equal(mutation.Id, marker.MutationId);
         Assert.Equal(mutation.SurgeDuration, marker.TurnsRemaining);
+    }
+
+    [Fact]
+    public void TryActivateTargetedSurge_with_hyphal_echo_extends_chemobeacon_duration()
+    {
+        var player = CreatePlayer(mutationPoints: 99);
+        var observer = new TestSimulationObserver();
+        var board = new GameBoard(width: 5, height: 5, playerCount: 1);
+        var mutation = RequireMutation(MutationIds.ChemotacticBeacon);
+        player.TryAddAdaptation(RequireAdaptation(AdaptationIds.HyphalEcho));
+        player.SetMutationLevel(MutationIds.MycelialBloom, newLevel: 7, currentRound: 1);
+
+        var activated = player.TryActivateTargetedSurge(mutation, board, targetTileId: 12, observer, currentRound: 2);
+
+        Assert.True(activated);
+        Assert.Equal(mutation.SurgeDuration + AdaptationGameBalance.HyphalEchoSurgeDurationBonus, player.GetSurgeTurnsRemaining(mutation.Id));
+
+        var marker = Assert.IsType<GameBoard.ChemobeaconMarker>(board.GetChemobeacon(player.PlayerId));
+        Assert.Equal(mutation.SurgeDuration + AdaptationGameBalance.HyphalEchoSurgeDurationBonus, marker.TurnsRemaining);
     }
 
     [Fact]
@@ -113,5 +133,12 @@ public class PlayerTargetedSurgeTests
     {
         var mutation = MutationRegistry.GetById(mutationId);
         return Assert.IsType<Mutation>(mutation);
+    }
+
+    private static AdaptationDefinition RequireAdaptation(string adaptationId)
+    {
+        var found = AdaptationRepository.TryGetById(adaptationId, out var adaptation);
+        Assert.True(found, $"Expected adaptation {adaptationId} to exist in the adaptation repository.");
+        return Assert.IsType<AdaptationDefinition>(adaptation);
     }
 }

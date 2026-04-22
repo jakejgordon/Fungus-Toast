@@ -44,6 +44,21 @@ public class AdaptationBehaviorTests
     }
 
     [Fact]
+    public void HyphalEcho_extends_future_mycelial_surge_activations_by_one_round()
+    {
+        var player = CreatePlayer(mutationPoints: 99);
+        var observer = new TestSimulationObserver();
+        var mutation = RequireMutation(MutationIds.HyphalSurge);
+        player.TryAddAdaptation(RequireAdaptation(AdaptationIds.HyphalEcho));
+        player.SetMutationLevel(MutationIds.MycelialBloom, newLevel: 5, currentRound: 1);
+
+        var activated = player.TryUpgradeMutation(mutation, observer, currentRound: 2);
+
+        Assert.True(activated);
+        Assert.Equal(mutation.SurgeDuration + AdaptationGameBalance.HyphalEchoSurgeDurationBonus, player.GetSurgeTurnsRemaining(mutation.Id));
+    }
+
+    [Fact]
     public void AegisHyphae_fortifies_only_the_first_new_living_cell_each_round()
     {
         var board = CreateBoardWithPlayer(out var player);

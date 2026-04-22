@@ -31,6 +31,7 @@ namespace FungusToast.Core.Config
         public const int ConidiaAscentDestinationBlockSize = 2;
         public const int ConidiaAscentLaunchSubsquareOffset = 1;
         public const int TropicLysisRadius = 3;
+        public const int HyphalEchoSurgeDurationBonus = 1;
 
         // Starting adaptation constants
         public const float ObliqueFilamentOrthogonalPenalty = 0.002f;

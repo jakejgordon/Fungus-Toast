@@ -24,6 +24,7 @@ namespace FungusToast.Core.Campaign
         public const string HyphalPriming = "adaptation_28";
         public const string TropicLysis = "adaptation_29";
         public const string PrimePulse = "adaptation_30";
+        public const string HyphalEcho = "adaptation_31";
 
         // Starting adaptations — assigned by mold selection, never offered in drafts
         public const string ObliqueFilament = "adaptation_20";
