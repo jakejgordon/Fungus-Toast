@@ -68,43 +68,58 @@ namespace FungusToast.Unity.Grid.Helpers
             }
         }
 
-        private void DrawSpokesWithoutClearing(Vector3Int centerPos, float radius, float alpha, Tilemap targetTilemap)
+        private void DrawAlternatingPingHighlight(Vector3Int centerPos, float radius, float bandWidth, float alpha, Tilemap targetTilemap)
         {
-            int spokeCount = Mathf.Max(0, UIEffectConstants.StartingTilePingSpokeCount);
-            if (spokeCount == 0 || targetTilemap == null || _solidHighlightTile == null)
+            ClearRingHighlight(targetTilemap);
+            DrawAlternatingPingHighlightWithoutClearing(centerPos, radius, bandWidth, alpha, targetTilemap);
+        }
+
+        private void DrawAlternatingPingHighlights(IEnumerable<Vector3Int> centerPositions, float radius, float bandWidth, float alpha, Tilemap targetTilemap)
+        {
+            ClearRingHighlight(targetTilemap);
+            if (centerPositions == null)
             {
                 return;
             }
 
-            float innerRadius = Mathf.Max(0f, UIEffectConstants.StartingTilePingSpokeInnerRadiusTiles);
-            float outerRadius = Mathf.Max(innerRadius, radius + UIEffectConstants.StartingTilePingSpokeOuterExtensionTiles);
-            if (outerRadius <= innerRadius)
+            foreach (var centerPos in centerPositions)
+            {
+                DrawAlternatingPingHighlightWithoutClearing(centerPos, radius, bandWidth, alpha, targetTilemap);
+            }
+        }
+
+        private void DrawAlternatingPingHighlightWithoutClearing(Vector3Int centerPos, float radius, float bandWidth, float alpha, Tilemap targetTilemap)
+        {
+            if (radius <= 0f || targetTilemap == null || _solidHighlightTile == null)
             {
                 return;
             }
 
-            Color spokeColor = UIEffectConstants.StartingTilePingSpokeColor;
-            spokeColor.a *= Mathf.Clamp01(alpha);
-
-            float angleStep = (Mathf.PI * 2f) / spokeCount;
-            int sampleCount = Mathf.Max(1, Mathf.CeilToInt((outerRadius - innerRadius) * 4f));
-            for (int spokeIndex = 0; spokeIndex < spokeCount; spokeIndex++)
+            float clampedAlpha = Mathf.Clamp01(alpha);
+            float effectiveBandWidth = Mathf.Max(1f, bandWidth);
+            float outerSq = radius * radius;
+            int rInt = Mathf.CeilToInt(radius + 1f);
+            for (int dx = -rInt; dx <= rInt; dx++)
             {
-                float angle = (-Mathf.PI * 0.5f) + (spokeIndex * angleStep);
-                Vector2 direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-
-                for (int sampleIndex = 0; sampleIndex <= sampleCount; sampleIndex++)
+                for (int dy = -rInt; dy <= rInt; dy++)
                 {
-                    float t = sampleCount == 0 ? 0f : sampleIndex / (float)sampleCount;
-                    float distance = Mathf.Lerp(innerRadius, outerRadius, t);
-                    var pos = new Vector3Int(
-                        centerPos.x + Mathf.RoundToInt(direction.x * distance),
-                        centerPos.y + Mathf.RoundToInt(direction.y * distance),
-                        0);
+                    float d2 = dx * dx + dy * dy;
+                    if (d2 > outerSq)
+                    {
+                        continue;
+                    }
 
+                    float distance = Mathf.Sqrt(d2);
+                    int bandIndex = Mathf.FloorToInt(distance / effectiveBandWidth);
+                    Color bandColor = bandIndex % 2 == 0
+                        ? UIEffectConstants.StartingTilePingPrimaryBandColor
+                        : UIEffectConstants.StartingTilePingSecondaryBandColor;
+                    bandColor.a *= clampedAlpha;
+
+                    var pos = new Vector3Int(centerPos.x + dx, centerPos.y + dy, 0);
                     targetTilemap.SetTile(pos, _solidHighlightTile);
                     targetTilemap.SetTileFlags(pos, TileFlags.None);
-                    targetTilemap.SetColor(pos, spokeColor);
+                    targetTilemap.SetColor(pos, bandColor);
                     _ringHighlightPositions.Add(pos);
                 }
             }
@@ -117,7 +132,7 @@ namespace FungusToast.Unity.Grid.Helpers
             _ringHighlightPositions.Clear();
         }
 
-        public IEnumerator StartingTilePingAnimation(Vector3Int centerPos, Tilemap targetTilemap, float duration, float expandPortion, float maxRadius, float ringThickness, bool drawSpokes = false)
+        public IEnumerator StartingTilePingAnimation(Vector3Int centerPos, Tilemap targetTilemap, float duration, float expandPortion, float maxRadius, float ringThickness)
         {
             float contractPortion = 1f - expandPortion;
             float minVisibleRadius = UIEffectConstants.StartingTilePingMinVisibleRadiusTiles;
@@ -156,31 +171,21 @@ namespace FungusToast.Unity.Grid.Helpers
                 else
                     alpha = 1f;
 
-                Color ringColor = UIEffectConstants.StartingTilePingRingColor;
-                ringColor.a = alpha;
-                DrawRingHighlight(centerPos, radius, thickness, ringColor, targetTilemap);
-                if (drawSpokes)
-                {
-                    DrawSpokesWithoutClearing(centerPos, radius, alpha, targetTilemap);
-                }
+                DrawAlternatingPingHighlight(centerPos, radius, thickness, alpha, targetTilemap);
                 yield return null;
             }
 
-            DrawRingHighlight(
+            DrawAlternatingPingHighlight(
                 centerPos,
                 minVisibleRadius * UIEffectConstants.StartingTilePingSettleRadiusScale,
                 ringThickness * UIEffectConstants.StartingTilePingSettleThicknessScale,
-                UIEffectConstants.StartingTilePingSettleColor,
+                1f,
                 targetTilemap);
-            if (drawSpokes)
-            {
-                DrawSpokesWithoutClearing(centerPos, minVisibleRadius, 1f, targetTilemap);
-            }
             yield return null;
             ClearRingHighlight(targetTilemap);
         }
 
-        public IEnumerator StartingTilePingAnimation(IEnumerable<Vector3Int> centerPositions, Tilemap targetTilemap, float duration, float expandPortion, float maxRadius, float ringThickness, bool drawSpokes = false)
+        public IEnumerator StartingTilePingAnimation(IEnumerable<Vector3Int> centerPositions, Tilemap targetTilemap, float duration, float expandPortion, float maxRadius, float ringThickness)
         {
             if (centerPositions == null)
             {
@@ -230,32 +235,16 @@ namespace FungusToast.Unity.Grid.Helpers
                 else
                     alpha = 1f;
 
-                Color ringColor = UIEffectConstants.StartingTilePingRingColor;
-                ringColor.a = alpha;
-                DrawRingHighlights(centers, radius, thickness, ringColor, targetTilemap);
-                if (drawSpokes)
-                {
-                    foreach (Vector3Int center in centers)
-                    {
-                        DrawSpokesWithoutClearing(center, radius, alpha, targetTilemap);
-                    }
-                }
+                DrawAlternatingPingHighlights(centers, radius, thickness, alpha, targetTilemap);
                 yield return null;
             }
 
-            DrawRingHighlights(
+            DrawAlternatingPingHighlights(
                 centers,
                 minVisibleRadius * UIEffectConstants.StartingTilePingSettleRadiusScale,
                 ringThickness * UIEffectConstants.StartingTilePingSettleThicknessScale,
-                UIEffectConstants.StartingTilePingSettleColor,
+                1f,
                 targetTilemap);
-            if (drawSpokes)
-            {
-                foreach (Vector3Int center in centers)
-                {
-                    DrawSpokesWithoutClearing(center, minVisibleRadius, 1f, targetTilemap);
-                }
-            }
             yield return null;
             ClearRingHighlight(targetTilemap);
         }

@@ -1587,7 +1587,7 @@ namespace FungusToast.Unity.Grid
         private IEnumerator RunStartingTilePing(Vector3Int center, Tilemap targetTilemap)
         {
             GetStartingTilePingParameters(out float duration, out float expandPortion, out float maxRadius, out float ringThickness);
-            yield return ringHelper.StartingTilePingAnimation(center, targetTilemap, duration, expandPortion, maxRadius, ringThickness, drawSpokes: true);
+            yield return ringHelper.StartingTilePingAnimation(center, targetTilemap, duration, expandPortion, maxRadius, ringThickness);
             startingTilePingCoroutine = null;
             lastPingTilemap = null;
             loopingStartingTilePingPlayerId = -1;
@@ -1599,7 +1599,7 @@ namespace FungusToast.Unity.Grid
             GetStartingTilePingParameters(out float duration, out float expandPortion, out float maxRadius, out float ringThickness);
             while (true)
             {
-                yield return ringHelper.StartingTilePingAnimation(center, targetTilemap, duration, expandPortion, maxRadius, ringThickness, drawSpokes: true);
+                yield return ringHelper.StartingTilePingAnimation(center, targetTilemap, duration, expandPortion, maxRadius, ringThickness);
             }
         }
 

@@ -843,34 +843,14 @@ namespace FungusToast.Unity.UI
         public const float StartingTilePingFadeOutStartPortion = 0.85f;
 
         /// <summary>
-        /// Number of radial spokes rendered around the starting-spore ring.
+        /// Primary magenta band color used for the starting-spore hover ping.
         /// </summary>
-        public const int StartingTilePingSpokeCount = 6;
+        public static readonly Color StartingTilePingPrimaryBandColor = new Color(1f, 0.12f, 0.72f, 1f);
 
         /// <summary>
-        /// Distance from the center at which the starting-spore spokes begin, in board tiles.
+        /// Secondary black band color used for the starting-spore hover ping.
         /// </summary>
-        public const float StartingTilePingSpokeInnerRadiusTiles = 1f;
-
-        /// <summary>
-        /// How far the starting-spore spokes extend beyond the ring edge, in board tiles.
-        /// </summary>
-        public const float StartingTilePingSpokeOuterExtensionTiles = 0.9f;
-
-        /// <summary>
-        /// Base color used for the animated starting-spore ring.
-        /// </summary>
-        public static readonly Color StartingTilePingRingColor = new Color(1f, 0.85f, 0.15f, 1f);
-
-        /// <summary>
-        /// Color used for the brief settle flash at the end of a starting-spore pulse.
-        /// </summary>
-        public static readonly Color StartingTilePingSettleColor = new Color(1f, 0.95f, 0.3f, 0.95f);
-
-        /// <summary>
-        /// High-contrast spoke color used to keep the starting spore legible against other overlays.
-        /// </summary>
-        public static readonly Color StartingTilePingSpokeColor = new Color(0f, 0f, 0f, 0.92f);
+        public static readonly Color StartingTilePingSecondaryBandColor = new Color(0f, 0f, 0f, 0.62f);
 
         // ==================== MYCELIAL BASTION PULSE ====================
         /// <summary>
