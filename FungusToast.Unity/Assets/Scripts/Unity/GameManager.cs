@@ -552,7 +552,7 @@ namespace FungusToast.Unity
             SubscribeToPlayerMutationEvents();
 
             persistentPoolManager = new MycovariantPoolManager();
-            persistentPoolManager.InitializePool(MycovariantRepository.All.ToList(), rng);
+            persistentPoolManager.InitializePool(GetInitialMycovariantPool(), rng);
 
             mutationManager.ResetMutationPoints(players);
             initialMutationPointsAssigned = true;
@@ -649,6 +649,17 @@ namespace FungusToast.Unity
             {
                 humanPlayer.TryAddAdaptation(adaptation);
             }
+        }
+
+        private List<Mycovariant> GetInitialMycovariantPool()
+        {
+            var allMycovariants = MycovariantRepository.All.ToList();
+            if (CurrentGameMode != GameMode.Campaign || campaignController == null)
+            {
+                return allMycovariants;
+            }
+
+            return campaignController.GetEligibleMycovariantsForCampaignDraft(allMycovariants);
         }
 
         private void OnPlayerMutationsChanged(Player p)

@@ -35,6 +35,7 @@ namespace FungusToast.Core.Mycovariants
            Func<Player, List<Mycovariant>, Mycovariant>? humanSelectionCallback = null)
         {
             var draftOrder = BuildDraftOrder(players, board);
+            MarkLastAiDrafterForCurrentDraft(players, draftOrder);
 
             foreach (var player in draftOrder)
             {
@@ -98,8 +99,28 @@ namespace FungusToast.Core.Mycovariants
             // Return undrafted unique mycovariants to the pool for future drafts
             var allMycovariants = MycovariantRepository.All;
             poolManager.ReturnUndraftedToPool(allMycovariants, rng);
+
+            ClearLastAiDrafterForCurrentDraft(players);
         }
 
+        public static void MarkLastAiDrafterForCurrentDraft(IEnumerable<Player> players, IReadOnlyList<Player> draftOrder)
+        {
+            int? lastAiDraftPlayerId = draftOrder.LastOrDefault(player => player.PlayerType == PlayerTypeEnum.AI)?.PlayerId;
+
+            foreach (var player in players)
+            {
+                player.IsLastAiMycovariantDrafterForCurrentDraft = lastAiDraftPlayerId.HasValue
+                    && player.PlayerId == lastAiDraftPlayerId.Value;
+            }
+        }
+
+        public static void ClearLastAiDrafterForCurrentDraft(IEnumerable<Player> players)
+        {
+            foreach (var player in players)
+            {
+                player.IsLastAiMycovariantDrafterForCurrentDraft = false;
+            }
+        }
         public static List<Player> BuildDraftOrder(List<Player> players, GameBoard board)
         {
             if (players == null || board == null)

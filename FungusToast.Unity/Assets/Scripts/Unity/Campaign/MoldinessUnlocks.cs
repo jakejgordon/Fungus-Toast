@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using FungusToast.Core.Campaign;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.UI;
 using UnityEngine;
 
@@ -12,6 +13,7 @@ namespace FungusToast.Unity.Campaign
     {
         UnlockAdaptation = 0,
         IncreaseFailedRunAdaptationCarryover = 1,
+        UnlockMycovariant = 2,
     }
 
     [Serializable]
@@ -30,6 +32,7 @@ namespace FungusToast.Unity.Campaign
             MoldinessUnlockType type,
             int requiredUnlockLevel,
             string adaptationId = null,
+            int mycovariantId = -1,
             int stackAmount = 0,
             bool isRepeatable = false,
             bool isUniversal = false,
@@ -46,6 +49,10 @@ namespace FungusToast.Unity.Campaign
             {
                 throw new ArgumentException("Carryover rewards require a positive stack amount.", nameof(stackAmount));
             }
+            if (type == MoldinessUnlockType.UnlockMycovariant && mycovariantId < 0)
+            {
+                throw new ArgumentException("UnlockMycovariant rewards require a mycovariant id.", nameof(mycovariantId));
+            }
 
             Id = id;
             DisplayName = displayName;
@@ -53,6 +60,7 @@ namespace FungusToast.Unity.Campaign
             Type = type;
             RequiredUnlockLevel = Math.Max(0, requiredUnlockLevel);
             AdaptationId = adaptationId ?? string.Empty;
+            MycovariantId = Math.Max(-1, mycovariantId);
             StackAmount = Math.Max(0, stackAmount);
             IsRepeatable = isRepeatable;
             IsUniversal = isUniversal;
@@ -66,6 +74,7 @@ namespace FungusToast.Unity.Campaign
         public MoldinessUnlockType Type { get; }
         public int RequiredUnlockLevel { get; }
         public string AdaptationId { get; }
+        public int MycovariantId { get; }
         public int StackAmount { get; }
         public bool IsRepeatable { get; }
         public bool IsUniversal { get; }
@@ -203,6 +212,15 @@ namespace FungusToast.Unity.Campaign
                         categoryLabel: "Adaptation Unlock",
                         accentColor: UIStyleTokens.State.Success),
                     new MoldinessUnlockDefinition(
+                        id: "moldiness_unlock_mycovariant_ascus_bait",
+                        displayName: "Unlock Ascus Bait",
+                        description: "Permanently unlock Ascus Bait so it can appear in campaign mycovariant drafts.",
+                        type: MoldinessUnlockType.UnlockMycovariant,
+                        requiredUnlockLevel: 1,
+                        mycovariantId: MycovariantIds.AscusBaitId,
+                        categoryLabel: "Mycovariant Unlock",
+                        accentColor: UIStyleTokens.State.Focus),
+                    new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_hyphal_echo",
                         displayName: "Unlock Hyphal Echo",
                         description: "Permanently unlock Hyphal Echo so it can appear in future campaign drafts.",
@@ -287,6 +305,12 @@ namespace FungusToast.Unity.Campaign
                 changed = true;
             }
 
+            if (progressionState.unlockedMycovariantIds == null)
+            {
+                progressionState.unlockedMycovariantIds = new List<int>();
+                changed = true;
+            }
+
             if (progressionState.failedRunAdaptationCarryoverCount < 0)
             {
                 progressionState.failedRunAdaptationCarryoverCount = 0;
@@ -354,6 +378,7 @@ namespace FungusToast.Unity.Campaign
 
             var ownedRewardIds = new HashSet<string>(progressionState.unlockedRewardIds, StringComparer.Ordinal);
             var ownedAdaptationIds = new HashSet<string>(progressionState.unlockedAdaptationIds, StringComparer.Ordinal);
+            var ownedMycovariantIds = new HashSet<int>(progressionState.unlockedMycovariantIds);
             int currentUnlockLevel = Math.Max(0, progressionState.unlockLevel);
             int highestTriggeredUnlockLevel = progressionState.pendingUnlockTriggers != null && progressionState.pendingUnlockTriggers.Count > 0
                 ? progressionState.pendingUnlockTriggers.Max(trigger => trigger.tierIndex + 1)
@@ -363,6 +388,7 @@ namespace FungusToast.Unity.Campaign
                 .Where(definition => definition.RequiredUnlockLevel <= availableUnlockLevel)
                 .Where(definition => definition.IsRepeatable || !ownedRewardIds.Contains(definition.Id))
                 .Where(definition => definition.Type != MoldinessUnlockType.UnlockAdaptation || !ownedAdaptationIds.Contains(definition.AdaptationId))
+                .Where(definition => definition.Type != MoldinessUnlockType.UnlockMycovariant || !ownedMycovariantIds.Contains(definition.MycovariantId))
                 .ToList();
 
             if (eligible.Count == 0)
@@ -416,6 +442,15 @@ namespace FungusToast.Unity.Campaign
                 case MoldinessUnlockType.IncreaseFailedRunAdaptationCarryover:
                     progressionState.failedRunAdaptationCarryoverCount += definition.StackAmount;
                     break;
+
+                case MoldinessUnlockType.UnlockMycovariant:
+                    if (progressionState.unlockedMycovariantIds.Contains(definition.MycovariantId))
+                    {
+                        return new MoldinessUnlockApplicationResult(false, definition);
+                    }
+
+                    progressionState.unlockedMycovariantIds.Add(definition.MycovariantId);
+                    break;
             }
 
             if (!definition.IsRepeatable)
@@ -447,6 +482,7 @@ namespace FungusToast.Unity.Campaign
 
             var ownedRewardIds = new HashSet<string>(progressionState.unlockedRewardIds, StringComparer.Ordinal);
             var ownedAdaptationIds = new HashSet<string>(progressionState.unlockedAdaptationIds, StringComparer.Ordinal);
+            var ownedMycovariantIds = new HashSet<int>(progressionState.unlockedMycovariantIds ?? new List<int>());
             int availableUnlockLevel = GetAvailableUnlockLevel(progressionState);
 
             foreach (var rewardId in progressionState.pendingUnlockChoice.offeredUnlockIds)
@@ -469,6 +505,11 @@ namespace FungusToast.Unity.Campaign
                 }
 
                 if (definition.Type == MoldinessUnlockType.UnlockAdaptation && ownedAdaptationIds.Contains(definition.AdaptationId))
+                {
+                    return true;
+                }
+
+                if (definition.Type == MoldinessUnlockType.UnlockMycovariant && ownedMycovariantIds.Contains(definition.MycovariantId))
                 {
                     return true;
                 }

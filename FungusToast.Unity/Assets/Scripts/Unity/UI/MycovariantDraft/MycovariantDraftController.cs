@@ -110,6 +110,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             this.humanTurnBannerText = string.IsNullOrWhiteSpace(humanTurnBannerText) ? DefaultHumanTurnBannerText : humanTurnBannerText;
             this.aiTurnBannerPrefix = string.IsNullOrWhiteSpace(aiTurnBannerPrefix) ? DefaultAiTurnBannerPrefix : aiTurnBannerPrefix;
             isFinishingDraftPhase = false;
+            MycovariantDraftManager.MarkLastAiDrafterForCurrentDraft(players, draftOrder);
 
             EnsureDraftMessageUI();
             ClearDraftMessages();
@@ -140,6 +141,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             isCampaignAdaptationDraft = false;
             onAdaptationPicked = null;
             _cameraRecenteredThisDraftPhase = false;
+
+            if (draftOrder != null)
+            {
+                MycovariantDraftManager.ClearLastAiDrafterForCurrentDraft(draftOrder);
+            }
 
             ClearChoiceCards();
             ClearDraftMessages();
@@ -183,6 +189,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             {
                 var allMycovariants = MycovariantRepository.All;
                 poolManager.ReturnUndraftedToPool(allMycovariants, rng);
+                MycovariantDraftManager.ClearLastAiDrafterForCurrentDraft(draftOrder);
                 AddDraftMessage("Draft complete. Spores settle while the colonies prepare for the next round...");
                 BeginDraftCompletionSequence();
                 return;
@@ -367,52 +374,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private void ReplacePickedCardAndContinue(Mycovariant picked)
         {
-            ReplacePickedCard(picked);
-            
             draftIndex++;
-            BeginNextDraftWithExistingCards();
-        }
-
-        private void BeginNextDraftWithExistingCards()
-        {
-            if (draftIndex >= draftOrder.Count)
-            {
-                var allMycovariants = MycovariantRepository.All;
-                poolManager.ReturnUndraftedToPool(allMycovariants, rng);
-
-                AddDraftMessage("Draft complete. Spores settle while the colonies prepare for the next round...");
-                BeginDraftCompletionSequence();
-                return;
-            }
-            
-            currentPlayer = draftOrder[draftIndex];
-            UpdateDraftBanner();
-
-            if (draftOrderRow != null)
-            {
-                draftOrderRow.gameObject.SetActive(draftOrder.Count > 1);
-                draftOrderRow.SetDraftOrder(draftOrder, draftIndex);
-            }
-
-            draftChoices = new List<Mycovariant>();
-            foreach (Transform child in choiceContainer)
-            {
-                var card = child.GetComponent<MycovariantCard>();
-                if (card != null && card.gameObject.activeInHierarchy)
-                {
-                    draftChoices.Add(card.Mycovariant);
-                }
-            }
-
-            if (currentPlayer.PlayerType == PlayerTypeEnum.AI)
-            {
-                SetDraftState(DraftUIState.AITurn);
-                StartCoroutine(AnimateAIPickRoutine());
-            }
-            else
-            {
-                SetDraftState(DraftUIState.HumanTurn);
-            }
+            // Rebuild choices for the next drafter so player-specific eligibility cannot leak across turns.
+            BeginNextDraft();
         }
 
         private void ReplacePickedCard(Mycovariant picked)

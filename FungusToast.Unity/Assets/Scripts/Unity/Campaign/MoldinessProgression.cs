@@ -15,6 +15,7 @@ namespace FungusToast.Unity.Campaign
         public int failedRunAdaptationCarryoverCount;
         public List<string> unlockedRewardIds = new();
         public List<string> unlockedAdaptationIds = new();
+        public List<int> unlockedMycovariantIds = new();
         public MoldinessUnlockChoiceState pendingUnlockChoice;
     }
 

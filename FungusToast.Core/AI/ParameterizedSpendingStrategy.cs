@@ -242,6 +242,16 @@ namespace FungusToast.Core.AI
         /// </summary>
         public Mycovariant SelectMycovariantFromChoices(Player player, List<Mycovariant> choices, GameBoard board)
         {
+            var scoredChoices = choices
+                .Select(m => new { Mycovariant = m, Score = m.GetBaseAIScore(player, board) })
+                .OrderByDescending(x => x.Score)
+                .ToList();
+
+            if (scoredChoices.Count > 0 && scoredChoices[0].Score >= MycovariantGameBalance.AIDraftAlwaysPickScoreThreshold)
+            {
+                return scoredChoices[0].Mycovariant;
+            }
+
             // First, check if any preferred mycovariants are in the choices
             foreach (var preference in mycovariantPreferences.OrderByDescending(p => p.Priority))
             {
@@ -258,11 +268,6 @@ namespace FungusToast.Core.AI
             }
             
             // No preferred mycovariants available, fall back to AI scoring
-            var scoredChoices = choices
-                .Select(m => new { Mycovariant = m, Score = m.GetBaseAIScore(player, board) })
-                .OrderByDescending(x => x.Score)
-                .ToList();
-                
             // Return the highest scoring mycovariant, or first if all have the same score
             return scoredChoices.First().Mycovariant;
         }

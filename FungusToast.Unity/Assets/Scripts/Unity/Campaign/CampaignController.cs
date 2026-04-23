@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.AI;
 using FungusToast.Core.Campaign;
+using FungusToast.Core.Mycovariants;
 using UnityEngine;
 
 namespace FungusToast.Unity.Campaign
@@ -39,6 +40,21 @@ namespace FungusToast.Unity.Campaign
         public int HumanMoldIndex => State != null ? State.humanMoldIndex : 0;
         public MoldinessProgressSnapshot MoldinessProgress => MoldinessProgression.GetSnapshot(State?.moldiness);
         public bool HasPendingMoldinessUnlockChoice => State?.moldiness?.pendingUnlockTriggers?.Count > 0;
+
+        public List<Mycovariant> GetEligibleMycovariantsForCampaignDraft(IEnumerable<Mycovariant> allMycovariants)
+        {
+            if (allMycovariants == null)
+            {
+                return new List<Mycovariant>();
+            }
+
+            var permanentlyUnlockedMycovariants = new HashSet<int>(State?.moldiness?.unlockedMycovariantIds ?? new List<int>());
+            var currentUnlockLevel = State?.moldiness?.unlockLevel ?? 0;
+
+            return allMycovariants
+                .Where(x => !x.IsLocked || (x.RequiredMoldinessUnlockLevel <= currentUnlockLevel && permanentlyUnlockedMycovariants.Contains(x.Id)))
+                .ToList();
+        }
 
         public void StartNew(int humanMoldIndex = 0, int? levelIndexOverride = null, IReadOnlyList<string> temporaryTestingAdaptationIds = null)
         {
@@ -377,9 +393,12 @@ namespace FungusToast.Unity.Campaign
             SynchronizePendingVictorySnapshotAfterMoldinessResolution();
 
             CampaignSaveService.Save(State);
-            string targetLabel = result.Definition.Type == MoldinessUnlockType.UnlockAdaptation
-                ? result.Definition.AdaptationId
-                : result.Definition.Type.ToString();
+            string targetLabel = result.Definition.Type switch
+            {
+                MoldinessUnlockType.UnlockAdaptation => result.Definition.AdaptationId,
+                MoldinessUnlockType.UnlockMycovariant => result.Definition.MycovariantId.ToString(),
+                _ => result.Definition.Type.ToString()
+            };
             Debug.Log($"[CampaignController] Applied Moldiness unlock '{result.Definition.Id}' ({targetLabel}).");
             return true;
         }

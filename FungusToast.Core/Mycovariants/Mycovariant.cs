@@ -33,6 +33,17 @@ namespace FungusToast.Core.Mycovariants
         public bool IsUniversal { get; set; } = false;
 
         /// <summary>
+        /// When true, this mycovariant cannot appear in campaign mycovariant drafts until it has been
+        /// explicitly unlocked by a moldiness reward.
+        /// </summary>
+        public bool IsLocked { get; set; } = false;
+
+        /// <summary>
+        /// Minimum moldiness unlock level required before this mycovariant's unlock reward can appear.
+        /// </summary>
+        public int RequiredMoldinessUnlockLevel { get; set; } = 0;
+
+        /// <summary>
         /// If true, this mycovariant will be automatically marked as triggered when acquired.
         /// Use for passive mycovariants that are "triggered" by definition (e.g., always-active effects).
         /// </summary>

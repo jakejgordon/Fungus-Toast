@@ -125,6 +125,12 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 return;
             }
 
+            if (mycovariant?.IconId == "myco_ascus_bait")
+            {
+                DrawAscusBaitMotif(texture, accent, highlight);
+                return;
+            }
+
             switch (mycovariant.Type)
             {
                 case MycovariantType.Directional:
@@ -187,6 +193,19 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             ProceduralIconUtility.FillCircle(texture, 26, 27, 2, highlight);
             ProceduralIconUtility.DrawLine(texture, 12, 16, 28, 28, accent, 1);
             ProceduralIconUtility.DrawLine(texture, 28, 16, 12, 28, accent, 1);
+        }
+
+        private static void DrawAscusBaitMotif(Texture2D texture, Color accent, Color highlight)
+        {
+            ProceduralIconUtility.FillCircle(texture, 20, 18, 6, accent);
+            ProceduralIconUtility.DrawRing(texture, 20, 18, 9, 1, highlight);
+            ProceduralIconUtility.DrawLine(texture, 20, 8, 20, 13, highlight, 2);
+            ProceduralIconUtility.DrawLine(texture, 20, 24, 20, 31, accent, 2);
+            ProceduralIconUtility.DrawLine(texture, 20, 31, 26, 31, highlight, 2);
+            ProceduralIconUtility.DrawLine(texture, 26, 31, 24, 27, highlight, 2);
+            ProceduralIconUtility.FillCircle(texture, 14, 22, 2, highlight);
+            ProceduralIconUtility.FillCircle(texture, 26, 22, 2, highlight);
+            ProceduralIconUtility.DrawLine(texture, 14, 22, 26, 22, accent, 1);
         }
 
         private static void DrawPassiveMotif(Texture2D texture, Color accent, Color highlight)

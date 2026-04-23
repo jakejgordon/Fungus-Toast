@@ -107,6 +107,43 @@ public static class MycovariantEffectProcessor
         return levelsGranted > 0;
     }
 
+    public static int ResolveAscusBait(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+        if (player == null)
+        {
+            playerMyco.MarkTriggered();
+            return 0;
+        }
+
+        if (player.PlayerType == PlayerTypeEnum.Human)
+        {
+            player.AddMutationPoints(MycovariantGameBalance.AscusBaitMutationPointAward);
+            playerMyco.MarkTriggered();
+            return 0;
+        }
+
+        var livingCells = board.GetAllCellsOwnedBy(player.PlayerId)
+            .Where(cell => cell.IsAlive && !cell.IsResistant)
+            .ToList();
+        int killCount = (int)Math.Ceiling(livingCells.Count * MycovariantGameBalance.AscusBaitSelfCullPercentage);
+        killCount = Math.Min(killCount, livingCells.Count);
+
+        for (int i = 0; i < killCount; i++)
+        {
+            int j = rng.Next(i, livingCells.Count);
+            (livingCells[i], livingCells[j]) = (livingCells[j], livingCells[i]);
+            board.KillFungalCell(livingCells[i], DeathReason.AscusBait);
+        }
+
+        playerMyco.MarkTriggered();
+        return killCount;
+    }
+
     public static void ResolveJettingMycelium(
         PlayerMycovariant playerMyco,
         Player player,

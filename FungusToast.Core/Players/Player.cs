@@ -42,6 +42,12 @@ namespace FungusToast.Core.Players
 
         public bool WantsToBankPointsThisTurn { get; set; }
 
+        /// <summary>
+        /// Ephemeral flag used during mycovariant draft scoring to indicate that this player is the
+        /// final AI drafter in the current draft order.
+        /// </summary>
+        public bool IsLastAiMycovariantDrafterForCurrentDraft { get; set; }
+
         private int baseMutationPoints = GameBalance.StartingMutationPoints;
 
         public IMutationSpendingStrategy? MutationStrategy { get; private set; }

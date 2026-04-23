@@ -12,6 +12,7 @@ namespace FungusToast.Core.Mycovariants
             yield return PlasmidBountyII();
             yield return PlasmidBountyIII();
             yield return AscusWager();
+            yield return AscusBait();
         }
 
         private static Mycovariant PlasmidBounty() =>
@@ -95,6 +96,30 @@ namespace FungusToast.Core.Mycovariants
                 },
                 AIPrioritizeEarly = true,
                 AIScore = (player, board) => MycovariantGameBalance.AscusWagerAIScore
+            };
+
+        private static Mycovariant AscusBait() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.AscusBaitId,
+                Name = "Ascus Bait",
+                Description = $"One-time on draft: if Human, gain {MycovariantGameBalance.AscusBaitMutationPointAward} mutation points. If AI, {MycovariantGameBalance.AscusBaitSelfCullPercentage * 100f:0}% of your non-Resistant living cells die at random (rounded up).",
+                FlavorText = "A swollen ascus promises easy advantage, luring rash colonies into rupturing their own hyphae.",
+                IconId = "myco_ascus_bait",
+                Type = MycovariantType.Economy,
+                Category = MycovariantCategory.Economy,
+                IsUniversal = true,
+                IsLocked = true,
+                RequiredMoldinessUnlockLevel = 1,
+                AutoMarkTriggered = true,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    MycovariantEffectProcessor.ResolveAscusBait(playerMyco, board, rng, observer);
+                },
+                AIPrioritizeEarly = false,
+                AIScore = (player, board) => player.IsLastAiMycovariantDrafterForCurrentDraft
+                    ? MycovariantGameBalance.AscusBaitPreferredAIScore
+                    : MycovariantGameBalance.AscusBaitFallbackAIScore
             };
     }
 }
