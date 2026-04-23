@@ -33,22 +33,17 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** moldiness progression tuning and content expansion. The pending-state UX and reward-flow verification work is complete, so the next phase is balancing pacing, clarifying reward behavior, and deciding what new unlock content to add next.
+- **Current focus:** task list cleared for now. Next up is deciding the next improvement wave for campaign progression, unlock content, and balance polish.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
 
-1. Tune moldiness reward pacing, threshold pacing, and moldiness draft pool composition now that the end-to-end flow is verified.
-2. Decide which moldiness rewards should affect the current run immediately, future runs only, or both.
-3. Expand permanent campaign upgrade presentation only if the current text-and-icon summary still feels insufficient during playtesting.
-4. Explore the next unlock-content wave, likely additional adaptations first, then mycovariants or mutation-related rewards.
+1. Review the current moldiness system as shipped and identify the highest-value next improvements.
+2. Choose the next implementation wave before adding new pending tasks here.
 
 ## Pending Tasks
 
-1. Tune moldiness reward pacing, threshold pacing, and moldiness draft pool composition after the end-to-end flow confirmation.
-2. Decide whether some moldiness rewards should apply immediately to the current run, future runs only, or both.
-3. Expand permanent campaign upgrade presentation beyond the current text summary if needed, for example with richer icon display on campaign screens.
-4. Explore longer-term expansion to additional unlock categories such as mycovariants and mutation-related rewards once the adaptation-first loop is solid.
+- None right now.
 
 ## Current Handoff
 
