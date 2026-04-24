@@ -47,6 +47,12 @@ FungusToast.Unity/Assets/Resources/PerformanceTestRunSettings.json.meta
 **/obj/
 *.deps.json
 
+# Keep the Core runtime DLL checked in so Unity can run immediately after pull
+!FungusToast.Core/bin/
+!FungusToast.Core/bin/Debug/
+!FungusToast.Core/bin/Debug/netstandard2.1/
+!FungusToast.Core/bin/Debug/netstandard2.1/FungusToast.Core.dll
+
 # Ignore debug symbols except inside Unity Assets
 **/bin/**/*.pdb
 **/obj/**/*.pdb

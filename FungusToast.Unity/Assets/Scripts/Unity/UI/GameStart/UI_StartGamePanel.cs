@@ -27,6 +27,7 @@ namespace FungusToast.Unity.UI.GameStart
         private const float StartMenuDevelopmentRailWidth = 340f;
         private const float StartMenuDevelopmentRailRightMargin = 48f;
         private const float StartMenuDevelopmentRailTopOffset = 0f;
+        private const string HumanSelectionPrefix = "Select number of Human Players";
 
         private enum SetupStep
         {
@@ -2545,7 +2546,9 @@ namespace FungusToast.Unity.UI.GameStart
             int total = selectedPlayerCount.Value;
             int humans = Mathf.Clamp(selectedHumanPlayerCount, 1, total);
             int ai = Mathf.Max(0, total - humans);
-            playerSummaryLabel.text = $"{total} Players ({humans} Human / {ai} AI)";
+            string humanLabel = humans == 1 ? "1 Human" : $"{humans} Humans";
+            string aiLabel = ai == 1 ? "1 AI" : $"{ai} AI";
+            playerSummaryLabel.text = $"{HumanSelectionPrefix} ({humanLabel} / {aiLabel})";
         }
 
         private void UpdateButtonVisuals()
