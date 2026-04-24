@@ -107236,6 +107236,9 @@ MonoBehaviour:
   gameplayMusicReplayDelaySeconds: 5
   gameplayMusicFadeInSeconds: 1
   gameplayMusicMixerGroup: {fileID: 0}
+  titleTrackClip: {fileID: 8300000, guid: dd450c647bb16264b846f7402bd07bd2, type: 3}
+  titleTrackVolume: 1
+  titleTrackMixerGroup: {fileID: 0}
   configuredHumanPlayerCount: 1
   campaignProgression: {fileID: 11400000, guid: ddba19d3898f54445b37abdc3b92a2b7, type: 2}
   magnifyingGlass: {fileID: 325918930}

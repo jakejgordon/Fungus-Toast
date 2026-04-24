@@ -366,6 +366,13 @@ namespace FungusToast.Unity
         private float fadeInSeconds = 1f;
         private bool shouldPlay;
         private bool audioSourcePaused;
+        // Title track fields (main menu / sub-menus)
+        private AudioClip titleClip;
+        private AudioMixerGroup titleMixerGroup;
+        private AudioSource titleAudioSource;
+        private float titleBaseVolume = 0.28f;
+        private bool titlePlaying;
+        private Coroutine titlePlaybackRoutine;
 
         public BackgroundMusicService(MonoBehaviour coroutineHost, Transform audioRoot, Func<bool> getIsPaused)
         {
@@ -415,6 +422,9 @@ namespace FungusToast.Unity
                 return;
             }
 
+            // If the title music is playing (main menu), stop it before starting gameplay music.
+            StopTitleMusic();
+
             EnsureAudioSource();
             shouldPlay = true;
             audioSourcePaused = false;
@@ -430,6 +440,119 @@ namespace FungusToast.Unity
             lastPlayedClip = null;
             skipToNextRequested = false;
             playbackRoutine = coroutineHost.StartCoroutine(RunGameplayMusicLoop());
+        }
+
+        public void ConfigureTitleTrack(AudioClip clip, float volume, AudioMixerGroup outputMixerGroup)
+        {
+            titleClip = clip;
+            titleMixerGroup = outputMixerGroup;
+            titleBaseVolume = Mathf.Clamp01(volume);
+
+            if (titleClip != null && titleClip.loadState == AudioDataLoadState.Unloaded)
+            {
+                titleClip.LoadAudioData();
+            }
+        }
+
+        public void StartTitleMusic()
+        {
+            if (titleClip == null)
+            {
+                return;
+            }
+
+            // Stop any gameplay music loop / coroutine first.
+            StopGameplayMusic();
+            // If clip data is not yet loaded, load and wait for it before playing.
+            if (titleClip.loadState == AudioDataLoadState.Unloaded)
+            {
+                titleClip.LoadAudioData();
+            }
+
+            if (titleClip.loadState == AudioDataLoadState.Loading)
+            {
+                StopTitlePlaybackRoutine();
+                titlePlaybackRoutine = coroutineHost.StartCoroutine(WaitForTitleAndPlay());
+                return;
+            }
+
+            PlayTitleImmediate();
+        }
+
+        private void StopTitlePlaybackRoutine()
+        {
+            if (titlePlaybackRoutine != null)
+            {
+                coroutineHost.StopCoroutine(titlePlaybackRoutine);
+                titlePlaybackRoutine = null;
+            }
+        }
+
+        private IEnumerator WaitForTitleAndPlay()
+        {
+            while (titleClip != null && titleClip.loadState == AudioDataLoadState.Loading)
+            {
+                yield return null;
+            }
+
+            if (titleClip == null || titleClip.loadState == AudioDataLoadState.Failed)
+            {
+                Debug.LogWarning("[BackgroundMusicService] Title music failed to load or was null.");
+                titlePlaybackRoutine = null;
+                yield break;
+            }
+
+            PlayTitleImmediate();
+            titlePlaybackRoutine = null;
+        }
+
+        private void PlayTitleImmediate()
+        {
+            if (titleAudioSource == null)
+            {
+                Transform child = audioRoot.Find("TitleMusicAudioSource");
+                if (child == null)
+                {
+                    GameObject audioSourceObject = new GameObject("TitleMusicAudioSource");
+                    child = audioSourceObject.transform;
+                    child.SetParent(audioRoot, false);
+                }
+
+                titleAudioSource = child.GetComponent<AudioSource>();
+                if (titleAudioSource == null)
+                {
+                    titleAudioSource = child.gameObject.AddComponent<AudioSource>();
+                }
+
+                titleAudioSource.playOnAwake = false;
+                titleAudioSource.loop = true;
+                titleAudioSource.spatialBlend = 0f;
+            }
+
+            titleAudioSource.clip = titleClip;
+            titleAudioSource.outputAudioMixerGroup = titleMixerGroup;
+            titleAudioSource.volume = MusicSettings.GetEffectiveVolume(titleBaseVolume);
+            titleAudioSource.loop = true;
+            titleAudioSource.Play();
+            titlePlaying = true;
+        }
+
+        public void StopTitleMusic()
+        {
+            titlePlaying = false;
+            StopTitlePlaybackRoutine();
+            if (titleAudioSource == null)
+            {
+                return;
+            }
+
+            if (titleAudioSource.isPlaying)
+            {
+                titleAudioSource.Stop();
+            }
+
+            titleAudioSource.clip = null;
+            titleAudioSource.volume = 0f;
         }
 
         public void StopGameplayMusic()

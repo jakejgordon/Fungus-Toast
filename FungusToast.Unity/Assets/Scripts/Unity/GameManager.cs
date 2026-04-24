@@ -159,6 +159,10 @@ namespace FungusToast.Unity
         [SerializeField, Min(0f)] private float gameplayMusicReplayDelaySeconds = 5f;
         [SerializeField, Min(0f)] private float gameplayMusicFadeInSeconds = 1f;
         [SerializeField] private AudioMixerGroup? gameplayMusicMixerGroup = null;
+        [Header("Title Track")]
+        [SerializeField] private AudioClip? titleTrackClip = null;
+        [SerializeField, Range(0f, 1f)] private float titleTrackVolume = 1f;
+        [SerializeField] private AudioMixerGroup? titleTrackMixerGroup = null;
 
         [Header("Hotseat Config")] 
         public int configuredHumanPlayerCount =1; 
@@ -283,6 +287,8 @@ namespace FungusToast.Unity
             {
                 pauseMenuService?.ForceClose();
                 gameTransitionService?.ShowStartGamePanel();
+                // Start the title/menu music when in start/menu screens
+                backgroundMusicService?.StartTitleMusic();
             }
         }
 
@@ -413,6 +419,8 @@ namespace FungusToast.Unity
                 () => configuredHumanPlayerCount,
                 () => configuredHumanMoldIndices);
             backgroundMusicService = new BackgroundMusicService(this, transform, () => !hasApplicationFocus);
+            // Configure both gameplay and title music
+            backgroundMusicService.ConfigureTitleTrack(titleTrackClip, titleTrackVolume, titleTrackMixerGroup);
             ConfigureBackgroundMusicService();
 
             playerInitializer = new PlayerInitializer(
@@ -563,6 +571,8 @@ namespace FungusToast.Unity
             gridVisualizer.RenderBoard(Board);
             playerPerspectiveService?.InitializeGameplayPerspective(humanPlayer, Board, players, gridVisualizer);
 
+            // Ensure any title/menu music is stopped when starting gameplay music.
+            backgroundMusicService?.StopTitleMusic();
             backgroundMusicService?.StartGameplayMusic();
             StartCoroutine(PlayStartingSporeIntroAndContinue());
 
@@ -1344,6 +1354,8 @@ namespace FungusToast.Unity
             humanPlayers.Clear();
             humanPlayer = null!;
             Board = null!;
+            // Start title/menu music when returning to main menu
+            backgroundMusicService?.StartTitleMusic();
         }
 
         public void ShowSelectionPrompt(string message, bool showCancelButton = false, string cancelButtonLabel = "Cancel", Action? onCancel = null)

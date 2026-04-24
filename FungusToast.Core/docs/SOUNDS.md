@@ -184,6 +184,11 @@ Current implementation details for standard gameplay-track wiring:
 - `BackgroundMusicService.ConfigureGameplayMusic(...)` consumes that playlist and already handles sequencing, fade-in, pause awareness, and shuffle-bag rotation
 - the active scene wiring currently lives in `FungusToast.Unity/Assets/Scenes/SampleScene.unity`
 
+### Title track
+
+- The title/menu music for the main menu and sub-menus should be a looping track that plays while the player is navigating menus before starting a game.
+- The current title track asset is: `title_track_fungus_amongus.mp3` and should be placed under `FungusToast.Unity/Assets/Audio/Music`.
+- The title track is expected to loop and respect the same music volume settings exposed in the main menu.
 Default rule for future gameplay-track additions:
 
 - if the request is only to add another track to the existing gameplay rotation, prefer scene and importer updates over code changes
