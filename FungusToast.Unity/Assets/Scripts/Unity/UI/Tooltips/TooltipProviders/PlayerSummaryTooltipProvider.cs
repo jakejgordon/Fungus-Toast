@@ -41,18 +41,15 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             if (campaignAiProfile != null)
             {
                 sb.AppendLine($"<b>Opponent:</b> {campaignAiProfile.FriendlyName}");
-                if (!string.IsNullOrWhiteSpace(campaignAiProfile.AIPlayerIntentions))
-                {
-                    sb.AppendLine(campaignAiProfile.AIPlayerIntentions);
-                }
+                sb.AppendLine($"<b>Strategy:</b> {campaignAiProfile.AIPlayerIntentions}");
             }
             else
             {
                 sb.AppendLine($"<b>Player Name:</b> {player.PlayerName}");
-            }
 
-            if (showStrategyName)
-                sb.AppendLine($"<b>Strategy:</b> {GetStrategyDisplayText(player)}");
+                if (showStrategyName)
+                    sb.AppendLine($"<b>Strategy:</b> {GetStrategyDisplayText(player)}");
+            }
 
             // Highest Mutation: pick by highest tier then highest level
             string highestMutationText = GetHighestMutationText(player);
