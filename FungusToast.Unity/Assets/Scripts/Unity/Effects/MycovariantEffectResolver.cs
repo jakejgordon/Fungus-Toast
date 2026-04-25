@@ -145,6 +145,18 @@ namespace FungusToast.Unity.Effects
             // Add more cases as needed
             else
             {
+                var gameManager = GameManager.Instance;
+                if (playerMyco != null && !mycovariant.AutoMarkTriggered && gameManager != null)
+                {
+                    mycovariant.ApplyEffect?.Invoke(
+                        playerMyco,
+                        gameManager.Board,
+                        new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                        gameManager.GameUI.GameLogRouter);
+
+                    gridVisualizer?.RenderBoard(gameManager.Board);
+                }
+
                 onComplete?.Invoke();
             }
         }

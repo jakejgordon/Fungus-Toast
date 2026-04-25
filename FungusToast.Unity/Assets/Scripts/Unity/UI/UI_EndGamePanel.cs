@@ -2949,7 +2949,7 @@ namespace FungusToast.Unity.UI
 
             if (playerMutation.Mutation.IsSurge)
             {
-                Player? owner = GameManager.Instance?.Board?.Players?.FirstOrDefault(player => player.PlayerId == playerMutation.PlayerId);
+                Player owner = GameManager.Instance?.Board?.Players?.FirstOrDefault(player => player.PlayerId == playerMutation.PlayerId);
                 int totalDuration = owner?.GetSurgeDuration(playerMutation.Mutation) ?? playerMutation.Mutation.SurgeDuration;
                 int durationBonus = owner?.GetSurgeDurationBonus(playerMutation.Mutation) ?? 0;
                 surge = durationBonus > 0

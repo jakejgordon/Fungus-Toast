@@ -103,7 +103,8 @@ public class StartingSporePlacementTests
             overridePositions,
             edgeOffsets: new[] { 0, 3 });
 
-        var humanPosition = (players[0].StartingTileId!.Value % board.Width, players[0].StartingTileId.Value / board.Width);
+        var startingTileId = Assert.IsType<int>(players[0].StartingTileId);
+        var humanPosition = (startingTileId % board.Width, startingTileId / board.Width);
         Assert.Contains(humanPosition, overridePositions);
     }
 

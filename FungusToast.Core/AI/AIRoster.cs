@@ -457,10 +457,10 @@ namespace FungusToast.Core.AI
                 {
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
                     new TargetMutationGoal(MutationIds.HyphalSurge),
-                    new TargetMutationGoal(MutationIds.ChemotacticBeacon)
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 3)
                 },
                 surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon },
-                surgeAttemptTurnFrequency: 10,
+                surgeAttemptTurnFrequency: 5,
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy,
                 startingSporeEdgeOffset: -10),

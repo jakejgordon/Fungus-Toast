@@ -38,6 +38,7 @@ namespace FungusToast.Core.Growth
             GrowthSource.HyphalBridge => "Hyphal Bridge",
             GrowthSource.HyphalDraw => "Hyphal Draw",
             GrowthSource.SeptalAlarm => "Septal Alarm",
+            GrowthSource.SeptalSeal => "Septal Seal",
             GrowthSource.SporemealPatch => "Sporemeal Patch",
             GrowthSource.ConidiaAscent => "Conidia Ascent",
             _ => source.ToString()

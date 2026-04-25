@@ -978,6 +978,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 MycovariantEffectType.BallistosporeDischarge => "ballistospores dropped",
                 MycovariantEffectType.ResistantCellPlaced => "resistant cells placed",
                 MycovariantEffectType.Bastioned => "cells bastioned",
+                MycovariantEffectType.SeptalSealResistances => "cells sealed",
                 MycovariantEffectType.ResistantTransfers => "resistance transfers",
                 MycovariantEffectType.Neutralized => "toxins neutralized",
                 MycovariantEffectType.Relocations => "toxin relocations",

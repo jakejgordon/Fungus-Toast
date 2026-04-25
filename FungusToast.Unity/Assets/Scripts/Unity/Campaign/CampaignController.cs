@@ -297,13 +297,11 @@ namespace FungusToast.Unity.Campaign
             }
 
             var selected = new HashSet<string>(GetAllActiveAdaptationIds(), StringComparer.Ordinal);
-            var permanentlyUnlockedAdaptations = new HashSet<string>(State.moldiness?.unlockedAdaptationIds ?? new List<string>(), StringComparer.Ordinal);
-            var currentUnlockLevel = State.moldiness?.unlockLevel ?? 0;
-            var remaining = AdaptationRepository.All
-                .Where(x => !x.IsStartingAdaptation)
-                .Where(x => !x.IsLocked || (x.RequiredMoldinessUnlockLevel <= currentUnlockLevel && permanentlyUnlockedAdaptations.Contains(x.Id)))
-                .Where(x => !selected.Contains(x.Id))
-                .ToList();
+            var remaining = CampaignDraftEligibility.GetEligibleAdaptations(
+                AdaptationRepository.All,
+                selected,
+                State.moldiness?.unlockedAdaptationIds,
+                State.moldiness?.unlockLevel ?? 0);
 
             AdaptationDefinition forcedAdaptation = null;
             if (!string.IsNullOrWhiteSpace(forcedAdaptationId))

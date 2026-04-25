@@ -27,6 +27,7 @@
         CytolyticBurstKills, // Cells killed by Cytolytic Burst toxins
         Relocations, // Toxins relocated by Chemotactic Mycotoxins
         SeptalAlarmResistances,
+        SeptalSealResistances,
         // Corner Conduit specific counts
         CornerConduitInfestations,
         CornerConduitColonizations,

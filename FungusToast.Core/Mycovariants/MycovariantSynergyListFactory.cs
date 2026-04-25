@@ -17,6 +17,7 @@ namespace FungusToast.Core.Mycovariants
             MycovariantIds.MycelialBastionIIIId,
             MycovariantIds.HyphalResistanceTransferId,
             MycovariantIds.SeptalAlarmId,
+            MycovariantIds.SeptalSealId,
             MycovariantIds.SurgicalInoculationId,
             // Aggressotropic Conduit tiers (last cell becomes Resistant)
             MycovariantIds.AggressotropicConduitIId,

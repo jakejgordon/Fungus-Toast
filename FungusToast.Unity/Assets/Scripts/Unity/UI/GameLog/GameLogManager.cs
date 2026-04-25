@@ -1225,6 +1225,7 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordPerimeterProliferatorGrowth(int playerId) { }
         public void RecordHyphalResistanceTransfer(int playerId, int count) { AddResistanceGain(playerId, count, "Hyphal Resistance Transfer"); }
         public void RecordSeptalAlarmResistance(int playerId, int count) { }
+        public void RecordSeptalSealResistance(int playerId, int count) { AddResistanceGain(playerId, count, "Septal Seal"); }
         public void RecordEnduringToxaphoresExtendedCycles(int playerId, int cycles) { }
         public void RecordEnduringToxaphoresExistingExtensions(int playerId, int cycles) { }
         public void RecordReclamationRhizomorphsSecondAttempt(int playerId, int count) { }

@@ -371,7 +371,6 @@ namespace FungusToast.Unity
         private AudioMixerGroup titleMixerGroup;
         private AudioSource titleAudioSource;
         private float titleBaseVolume = 0.28f;
-        private bool titlePlaying;
         private Coroutine titlePlaybackRoutine;
 
         public BackgroundMusicService(MonoBehaviour coroutineHost, Transform audioRoot, Func<bool> getIsPaused)
@@ -534,12 +533,10 @@ namespace FungusToast.Unity
             titleAudioSource.volume = MusicSettings.GetEffectiveVolume(titleBaseVolume);
             titleAudioSource.loop = true;
             titleAudioSource.Play();
-            titlePlaying = true;
         }
 
         public void StopTitleMusic()
         {
-            titlePlaying = false;
             StopTitlePlaybackRoutine();
             if (titleAudioSource == null)
             {

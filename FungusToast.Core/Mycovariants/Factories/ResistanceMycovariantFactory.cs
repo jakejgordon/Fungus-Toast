@@ -16,6 +16,7 @@ namespace FungusToast.Core.Mycovariants
             yield return SurgicalInoculation();
             yield return HyphalResistanceTransfer();
             yield return SeptalAlarm();
+            yield return SeptalSeal();
             yield return AggressotropicConduitI();
             yield return AggressotropicConduitII();
             yield return AggressotropicConduitIII();
@@ -125,6 +126,26 @@ namespace FungusToast.Core.Mycovariants
             IconId = "myco_septal_alarm",
             SynergyWith = MycovariantSynergyListFactory.GetResistanceSynergyMycovariantIdsExcluding(MycovariantIds.SeptalAlarmId),
             AIScore = (player, board) => MycovariantGameBalance.SeptalAlarmBaseAIScore
+        };
+
+        private static Mycovariant SeptalSeal() => new Mycovariant
+        {
+            Id = MycovariantIds.SeptalSealId,
+            Name = "Septal Seal",
+            Description = "Randomly make a portion of your living non-Resistant cells Resistant for the rest of the game. The portion is 30% divided by your existing Mycovariant count, rounded up, with a minimum divisor of 1.",
+            FlavorText = "Sealed septa harden scattered branches before the colony learns where the next wound will land.",
+            IconId = "myco_septal_seal",
+            Type = MycovariantType.Active,
+            Category = MycovariantCategory.Resistance,
+            IsUniversal = false,
+            IsLocked = true,
+            RequiredMoldinessUnlockLevel = 1,
+            ApplyEffect = (playerMyco, board, rng, observer) =>
+            {
+                MycovariantEffectProcessor.ResolveSeptalSeal(playerMyco, board, rng, observer);
+            },
+            SynergyWith = MycovariantSynergyListFactory.GetResistanceSynergyMycovariantIdsExcluding(MycovariantIds.SeptalSealId),
+            AIScore = (player, board) => MycovariantGameBalance.SeptalSealAIScore
         };
 
         private static Mycovariant AggressotropicConduitI() => new Mycovariant

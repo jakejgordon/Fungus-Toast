@@ -221,6 +221,15 @@ namespace FungusToast.Unity.Campaign
                         categoryLabel: "Mycovariant Unlock",
                         accentColor: UIStyleTokens.State.Focus),
                     new MoldinessUnlockDefinition(
+                        id: "moldiness_unlock_mycovariant_septal_seal",
+                        displayName: "Unlock Septal Seal",
+                        description: "Permanently unlock Septal Seal so it can appear in campaign mycovariant drafts.",
+                        type: MoldinessUnlockType.UnlockMycovariant,
+                        requiredUnlockLevel: 1,
+                        mycovariantId: MycovariantIds.SeptalSealId,
+                        categoryLabel: "Mycovariant Unlock",
+                        accentColor: UIStyleTokens.State.Focus),
+                    new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_hyphal_echo",
                         displayName: "Unlock Hyphal Echo",
                         description: "Permanently unlock Hyphal Echo so it can appear in future campaign drafts.",

@@ -392,6 +392,11 @@ namespace FungusToast.Unity.UI.GameLog
             if (IsSilentMode) return;
             playerActivityLogManager?.RecordSeptalAlarmResistance(playerId, count);
         }
+        public void RecordSeptalSealResistance(int playerId, int count)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordSeptalSealResistance(playerId, count);
+        }
         public void RecordEnduringToxaphoresExtendedCycles(int playerId, int cycles) { }
         public void RecordEnduringToxaphoresExistingExtensions(int playerId, int cycles) { }
         public void RecordReclamationRhizomorphsSecondAttempt(int playerId, int count) { }

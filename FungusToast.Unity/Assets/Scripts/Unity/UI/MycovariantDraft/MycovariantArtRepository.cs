@@ -131,6 +131,12 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 return;
             }
 
+            if (mycovariant?.IconId == "myco_septal_seal")
+            {
+                DrawSeptalSealMotif(texture, accent, highlight);
+                return;
+            }
+
             switch (mycovariant.Type)
             {
                 case MycovariantType.Directional:
@@ -206,6 +212,18 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             ProceduralIconUtility.FillCircle(texture, 14, 22, 2, highlight);
             ProceduralIconUtility.FillCircle(texture, 26, 22, 2, highlight);
             ProceduralIconUtility.DrawLine(texture, 14, 22, 26, 22, accent, 1);
+        }
+
+        private static void DrawSeptalSealMotif(Texture2D texture, Color accent, Color highlight)
+        {
+            ProceduralIconUtility.FillShield(texture, 20, 22, 9, 10, accent);
+            ProceduralIconUtility.DrawRing(texture, 20, 18, 8, 1, highlight);
+            ProceduralIconUtility.DrawLine(texture, 13, 18, 27, 18, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 16, 14, 16, 22, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 24, 14, 24, 22, highlight, 1);
+            ProceduralIconUtility.FillCircle(texture, 16, 24, 2, accent);
+            ProceduralIconUtility.FillCircle(texture, 24, 24, 2, accent);
+            ProceduralIconUtility.DrawLine(texture, 16, 24, 24, 24, highlight, 1);
         }
 
         private static void DrawPassiveMotif(Texture2D texture, Color accent, Color highlight)

@@ -379,6 +379,60 @@ public static class MycovariantEffectProcessor
         playerMyco.MarkTriggered();
     }
 
+    public static void ResolveSeptalSeal(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+        if (player == null)
+        {
+            return;
+        }
+
+        var eligibleCells = new List<FungalCell>();
+        foreach (var tileId in player.ControlledTileIds)
+        {
+            var tile = board.GetTileById(tileId);
+            var cell = tile?.FungalCell;
+            if (cell != null && cell.IsAlive && !cell.IsResistant && cell.OwnerPlayerId == player.PlayerId)
+            {
+                eligibleCells.Add(cell);
+            }
+        }
+
+        if (eligibleCells.Count == 0)
+        {
+            playerMyco.MarkTriggered();
+            return;
+        }
+
+        int ownedMycovariantCount = player.PlayerMycovariants.Count;
+        int existingMycovariantCount = Math.Max(0, ownedMycovariantCount - (player.HasMycovariant(playerMyco.MycovariantId) ? 1 : 0));
+        int divisor = Math.Max(1, existingMycovariantCount);
+        float portion = MycovariantGameBalance.SeptalSealResistancePortionNumerator / divisor;
+        int resistanceCount = Math.Min(
+            eligibleCells.Count,
+            Math.Max(1, (int)Math.Ceiling(eligibleCells.Count * portion)));
+
+        var resistantTileIds = new List<int>(resistanceCount);
+        for (int i = 0; i < resistanceCount; i++)
+        {
+            int j = rng.Next(i, eligibleCells.Count);
+            (eligibleCells[i], eligibleCells[j]) = (eligibleCells[j], eligibleCells[i]);
+
+            var cell = eligibleCells[i];
+            cell.MakeResistant(GrowthSource.SeptalSeal);
+            resistantTileIds.Add(cell.TileId);
+        }
+
+        playerMyco.IncrementEffectCount(MycovariantEffectType.SeptalSealResistances, resistantTileIds.Count);
+        board.OnResistanceAppliedBatch(player.PlayerId, GrowthSource.SeptalSeal, resistantTileIds);
+        observer.RecordSeptalSealResistance(player.PlayerId, resistantTileIds.Count);
+        playerMyco.MarkTriggered();
+    }
+
     public static void ResolveCytolyticBurst(
         PlayerMycovariant playerMyco,
         GameBoard board,
