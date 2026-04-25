@@ -218,32 +218,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 BeginDraftCompletionSequence();
                 return;
             }
+
             currentPlayer = draftOrder[draftIndex];
-            UpdateDraftBanner();
-
-            if (draftOrderRow != null)
-            {
-                draftOrderRow.gameObject.SetActive(draftOrder.Count > 1);
-                draftOrderRow.SetDraftOrder(draftOrder, draftIndex);
-            }
-
-            int? forcedMycovariantId = null;
-            if (GameManager.Instance.IsTestingModeEnabled && currentPlayer.PlayerType == PlayerTypeEnum.Human)
-                forcedMycovariantId = GameManager.Instance.TestingMycovariantId;
-            draftChoices = MycovariantDraftManager.GetDraftChoices(
-                currentPlayer, poolManager, draftChoicesCount, rng, forcedMycovariantId);
-
-            PopulateChoices(draftChoices);
-
-            if (currentPlayer.PlayerType == PlayerTypeEnum.AI)
-            {
-                SetDraftState(DraftUIState.AITurn);
-                StartCoroutine(AnimateAIPickRoutine());
-            }
-            else
-            {
-                SetDraftState(DraftUIState.HumanTurn);
-            }
+            EnterDraftTurn(GetFreshDraftChoicesForCurrentPlayer(), repopulateChoices: true);
         }
 
         private void UpdateDraftBanner()
@@ -406,8 +383,182 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private void ReplacePickedCardAndContinue(Mycovariant picked)
         {
             draftIndex++;
-            // Rebuild choices for the next drafter so player-specific eligibility cannot leak across turns.
-            BeginNextDraft();
+            if (draftIndex >= draftOrder.Count)
+            {
+                BeginNextDraft();
+                return;
+            }
+
+            currentPlayer = draftOrder[draftIndex];
+            var nextChoices = BuildCarriedForwardDraftChoices(picked);
+            if (nextChoices == null || nextChoices.Count == 0)
+            {
+                EnterDraftTurn(GetFreshDraftChoicesForCurrentPlayer(), repopulateChoices: true);
+                return;
+            }
+
+            EnterDraftTurn(nextChoices, repopulateChoices: false);
+        }
+
+        private void EnterDraftTurn(List<Mycovariant> choices, bool repopulateChoices)
+        {
+            UpdateDraftBanner();
+
+            if (draftOrderRow != null)
+            {
+                draftOrderRow.gameObject.SetActive(draftOrder.Count > 1);
+                draftOrderRow.SetDraftOrder(draftOrder, draftIndex);
+            }
+
+            draftChoices = choices ?? new List<Mycovariant>();
+
+            if (repopulateChoices)
+            {
+                PopulateChoices(draftChoices);
+            }
+            else
+            {
+                ReconcileVisibleChoices(draftChoices);
+            }
+
+            if (currentPlayer.PlayerType == PlayerTypeEnum.AI)
+            {
+                SetDraftState(DraftUIState.AITurn);
+                StartCoroutine(AnimateAIPickRoutine());
+            }
+            else
+            {
+                SetDraftState(DraftUIState.HumanTurn);
+            }
+        }
+
+        private List<Mycovariant> GetFreshDraftChoicesForCurrentPlayer()
+        {
+            return MycovariantDraftManager.GetDraftChoices(
+                currentPlayer,
+                poolManager,
+                draftChoicesCount,
+                rng,
+                GetForcedMycovariantIdForCurrentPlayer());
+        }
+
+        private List<Mycovariant> BuildCarriedForwardDraftChoices(Mycovariant picked)
+        {
+            if (draftChoices == null || draftChoices.Count == 0)
+            {
+                return GetFreshDraftChoicesForCurrentPlayer();
+            }
+
+            var eligibleById = poolManager
+                .GetEligibleMycovariantsForPlayer(currentPlayer)
+                .GroupBy(mycovariant => mycovariant.Id)
+                .ToDictionary(group => group.Key, group => group.First());
+
+            var nextChoices = new Mycovariant[draftChoices.Count];
+            for (int index = 0; index < draftChoices.Count; index++)
+            {
+                var existingChoice = draftChoices[index];
+                if (existingChoice == null || existingChoice.Id == picked.Id)
+                {
+                    continue;
+                }
+
+                if (eligibleById.TryGetValue(existingChoice.Id, out var carriedChoice))
+                {
+                    nextChoices[index] = carriedChoice;
+                    eligibleById.Remove(existingChoice.Id);
+                }
+            }
+
+            var replacementPool = eligibleById.Values
+                .Where(choice => choice.Id != picked.Id)
+                .OrderBy(_ => rng.Next())
+                .ToList();
+
+            int replacementIndex = 0;
+            for (int index = 0; index < nextChoices.Length; index++)
+            {
+                if (nextChoices[index] != null)
+                {
+                    continue;
+                }
+
+                if (replacementIndex >= replacementPool.Count)
+                {
+                    return GetFreshDraftChoicesForCurrentPlayer();
+                }
+
+                nextChoices[index] = replacementPool[replacementIndex++];
+            }
+
+            var carriedChoices = nextChoices.ToList();
+            ForceMycovariantIntoChoicesIfNeeded(carriedChoices, eligibleById.Values);
+            return carriedChoices;
+        }
+
+        private void ForceMycovariantIntoChoicesIfNeeded(List<Mycovariant> choices, IEnumerable<Mycovariant> eligibleChoices)
+        {
+            int? forcedMycovariantId = GetForcedMycovariantIdForCurrentPlayer();
+            if (!forcedMycovariantId.HasValue)
+            {
+                return;
+            }
+
+            var forcedChoice = eligibleChoices?.FirstOrDefault(mycovariant => mycovariant.Id == forcedMycovariantId.Value);
+            if (forcedChoice == null || choices.Any(choice => choice != null && choice.Id == forcedChoice.Id))
+            {
+                return;
+            }
+
+            if (choices.Count < draftChoicesCount)
+            {
+                choices.Add(forcedChoice);
+                return;
+            }
+
+            if (choices.Count > 0)
+            {
+                choices[0] = forcedChoice;
+            }
+        }
+
+        private int? GetForcedMycovariantIdForCurrentPlayer()
+        {
+            if (GameManager.Instance.IsTestingModeEnabled && currentPlayer.PlayerType == PlayerTypeEnum.Human)
+            {
+                return GameManager.Instance.TestingMycovariantId;
+            }
+
+            return null;
+        }
+
+        private void ReconcileVisibleChoices(IReadOnlyList<Mycovariant> choices)
+        {
+            if (choices == null || choiceContainer == null || choiceContainer.childCount != choices.Count)
+            {
+                PopulateChoices(choices?.ToList() ?? new List<Mycovariant>());
+                return;
+            }
+
+            int index = 0;
+            foreach (Transform child in choiceContainer)
+            {
+                var card = child.GetComponent<MycovariantCard>();
+                var choice = choices[index++];
+                if (card == null || choice == null)
+                {
+                    PopulateChoices(choices.ToList());
+                    return;
+                }
+
+                if (card.Mycovariant == null || card.Mycovariant.Id != choice.Id)
+                {
+                    card.SetMycovariant(choice, OnChoicePicked);
+                }
+
+                card.SetActiveHighlight(false);
+                card.gameObject.SetActive(true);
+            }
         }
 
         private void ReplacePickedCard(Mycovariant picked)
