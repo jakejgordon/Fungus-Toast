@@ -112,6 +112,7 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = true,
                 IsLocked = true,
                 RequiredMoldinessUnlockLevel = 1,
+                IsBait = true,
                 AutoMarkTriggered = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {
@@ -136,6 +137,7 @@ namespace FungusToast.Core.Mycovariants
                 IsUniversal = true,
                 IsLocked = true,
                 RequiredMoldinessUnlockLevel = 6,
+                IsBait = true,
                 AutoMarkTriggered = false,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {

@@ -44,6 +44,12 @@ namespace FungusToast.Core.Mycovariants
         public int RequiredMoldinessUnlockLevel { get; set; } = 0;
 
         /// <summary>
+        /// If true, this Mycovariant is a player-facing "Bait" pick: especially favorable for the Human player,
+        /// a poor draft for AI players, or otherwise intentionally asymmetric.
+        /// </summary>
+        public bool IsBait { get; set; } = false;
+
+        /// <summary>
         /// If true, this mycovariant will be automatically marked as triggered when acquired.
         /// Use for passive mycovariants that are "triggered" by definition (e.g., always-active effects).
         /// </summary>
