@@ -123,6 +123,8 @@ namespace FungusToast.Core.AI
             IReadOnlyCollection<DifficultyBand> difficultyBands,
             CampaignDifficulty? campaignDifficulty,
             StrategyPool pools,
+            string friendlyName,
+            string aiPlayerIntentions,
             string intent,
             string notes,
             IReadOnlyCollection<CounterTag>? favoredAgainst = null,
@@ -139,6 +141,8 @@ namespace FungusToast.Core.AI
             DifficultyBands = difficultyBands;
             CampaignDifficulty = campaignDifficulty;
             Pools = pools;
+            FriendlyName = friendlyName;
+            AIPlayerIntentions = aiPlayerIntentions;
             Intent = intent;
             Notes = notes;
             FavoredAgainst = favoredAgainst ?? Array.Empty<CounterTag>();
@@ -156,6 +160,8 @@ namespace FungusToast.Core.AI
         public IReadOnlyCollection<DifficultyBand> DifficultyBands { get; }
         public CampaignDifficulty? CampaignDifficulty { get; }
         public StrategyPool Pools { get; }
+        public string FriendlyName { get; }
+        public string AIPlayerIntentions { get; }
         public string Intent { get; }
         public string Notes { get; }
         public IReadOnlyCollection<CounterTag> FavoredAgainst { get; }

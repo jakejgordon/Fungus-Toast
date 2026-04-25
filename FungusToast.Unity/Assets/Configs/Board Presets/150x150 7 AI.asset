@@ -16,9 +16,9 @@ MonoBehaviour:
   boardWidth: 150
   boardHeight: 150
   aiPlayers:
-  - strategyName: AI1
-  - strategyName: AI2
-  - strategyName: AI3
+  - strategyName: CMP_Economy_Economancer_Elite
+  - strategyName: CMP_Economy_HoardsporeRegent_Elite
+  - strategyName: CMP_Defense_IronShell_Elite
   - strategyName: CMP_Bloom_CreepingRegression_Elite
     startingAdaptationIds:
     - adaptation_13
@@ -27,6 +27,6 @@ MonoBehaviour:
     - adaptation_14
     - adaptation_15
     - adaptation_9
-  - strategyName: AI1
+  - strategyName: CMP_Economy_Economancer_Elite
   - strategyName: CMP_Control_AnabolicFirst_Hard
   - strategyName: CMP_Economy_LateSpike_Hard

@@ -20,6 +20,6 @@ MonoBehaviour:
   aiStrategyPool:
   - CMP_Surge_BeaconTempo_Medium
   - CMP_Control_AnabolicRebirth_Medium
-  - AI9
+  - CMP_Growth_PutridTendrils_Medium
   - CMP_Bloom_CreepingNecro_Medium
   - CMP_TierCap_GrowthResilience_Easy

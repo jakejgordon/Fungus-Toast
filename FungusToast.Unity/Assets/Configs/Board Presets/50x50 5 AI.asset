@@ -20,7 +20,7 @@ MonoBehaviour:
   aiStrategyPool:
   - TST_Training_ResilientMycelium
   - CMP_Control_AnabolicRebirth_Medium
-  - TST_Training_Overextender
+  - CMP_Mobility_Overextender_Training
   - CMP_Economy_KillReclaim_Medium
   - CMP_TierCap_GrowthResilience_Easy
   - CMP_Reclaim_Scavenger_Easy

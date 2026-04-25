@@ -19,5 +19,5 @@ MonoBehaviour:
   pooledAiPlayerCount: 3
   aiStrategyPool:
   - TST_Training_ResilientMycelium_Offset1
-  - TST_Training_Overextender_Offset1
-  - TST_Training_ToxicTurtle_Offset1
+  - CMP_Mobility_Overextender_Training_Offset1
+  - CMP_Attrition_ToxicTurtle_Training_Offset1

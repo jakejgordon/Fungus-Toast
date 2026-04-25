@@ -228,13 +228,14 @@ namespace FungusToast.Unity
                             continue;
                         }
 
-                        if (AIRoster.CampaignStrategiesByName.TryGetValue(strategyName, out var campaignStrategy))
+                        var normalizedStrategyName = AIRoster.NormalizeCampaignStrategyName(strategyName);
+                        if (AIRoster.CampaignStrategiesByName.TryGetValue(normalizedStrategyName, out var campaignStrategy))
                         {
                             resolved.Add(campaignStrategy);
                             continue;
                         }
 
-                        if (AIRoster.ProvenStrategiesByName.TryGetValue(strategyName, out var provenStrategy))
+                        if (AIRoster.ProvenStrategiesByName.TryGetValue(normalizedStrategyName, out var provenStrategy))
                         {
                             resolved.Add(provenStrategy);
                             continue;

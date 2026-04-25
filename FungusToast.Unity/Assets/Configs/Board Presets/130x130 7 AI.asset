@@ -16,10 +16,10 @@ MonoBehaviour:
   boardWidth: 130
   boardHeight: 130
   aiPlayers:
-  - strategyName: AI1
-  - strategyName: AI2
-  - strategyName: AI3
-  - strategyName: TST_AI10_AnabolicRegression
-  - strategyName: AI7
-  - strategyName: AI8
-  - strategyName: AI10
+  - strategyName: CMP_Economy_Economancer_Elite
+  - strategyName: CMP_Economy_HoardsporeRegent_Elite
+  - strategyName: CMP_Defense_IronShell_Elite
+  - strategyName: CMP_Bloom_Thanatophyte_Elite
+  - strategyName: CMP_Surge_BeaconSprinter_Medium
+  - strategyName: CMP_Control_RebirthFurnace_Medium
+  - strategyName: CMP_Bloom_NecrotoxinGauntlet_Elite
