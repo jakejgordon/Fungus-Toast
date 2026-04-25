@@ -848,6 +848,17 @@ namespace FungusToast.Unity
             return getCampaignController() != null && CampaignSaveService.Exists();
         }
 
+        public bool HasResumableCampaignSave()
+        {
+            if (getCampaignController() == null || !CampaignSaveService.Exists())
+            {
+                return false;
+            }
+
+            var savedState = CampaignSaveService.Load();
+            return savedState != null && !savedState.requiresNewCampaignStart;
+        }
+
         public bool IsCampaignAwaitingAdaptationSelection()
         {
             var campaignController = getCampaignController();

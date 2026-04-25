@@ -1267,6 +1267,8 @@ namespace FungusToast.Unity.UI.Campaign
         private void UpdateStepState()
         {
             bool selectingMold = currentStep == CampaignPanelStep.MoldSelection;
+            bool hasCampaignSave = GameManager.Instance != null && GameManager.Instance.HasCampaignSave();
+            bool hasResumableCampaignSave = GameManager.Instance != null && GameManager.Instance.HasResumableCampaignSave();
             if (moldSelectionSectionRoot != null)
             {
                 moldSelectionSectionRoot.gameObject.SetActive(selectingMold);
@@ -1279,12 +1281,12 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (resumeButton != null)
             {
-                resumeButton.gameObject.SetActive(!selectingMold && GameManager.Instance != null && GameManager.Instance.HasCampaignSave());
+                resumeButton.gameObject.SetActive(!selectingMold && hasResumableCampaignSave);
             }
 
             if (moldinessSummarySectionRoot != null)
             {
-                moldinessSummarySectionRoot.gameObject.SetActive(!selectingMold && GameManager.Instance != null && GameManager.Instance.HasCampaignSave());
+                moldinessSummarySectionRoot.gameObject.SetActive(!selectingMold && hasCampaignSave);
             }
 
             if (deleteButton != null)
@@ -1294,7 +1296,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (newButton != null)
             {
-                SetButtonText(newButton, selectingMold ? "Start Campaign" : "New Campaign");
+                SetButtonText(newButton, selectingMold ? "Start Campaign" : hasResumableCampaignSave ? "New Campaign" : "Start Campaign");
                 newButton.interactable = !selectingMold || selectedCampaignMoldIndex.HasValue;
             }
 
@@ -1534,12 +1536,13 @@ namespace FungusToast.Unity.UI.Campaign
         private void RefreshButtonStates()
         {
             bool hasSave = GameManager.Instance != null && GameManager.Instance.HasCampaignSave();
+            bool hasResumableCampaignSave = GameManager.Instance != null && GameManager.Instance.HasResumableCampaignSave();
 
             if (resumeButton != null)
             {
-                resumeButton.gameObject.SetActive(hasSave);
-                resumeButton.interactable = hasSave;
-                UIStyleTokens.Button.SetButtonLabelColor(resumeButton, hasSave ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled);
+                resumeButton.gameObject.SetActive(hasResumableCampaignSave);
+                resumeButton.interactable = hasResumableCampaignSave;
+                UIStyleTokens.Button.SetButtonLabelColor(resumeButton, hasResumableCampaignSave ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled);
             }
 
             if (moldinessSummarySectionRoot != null)

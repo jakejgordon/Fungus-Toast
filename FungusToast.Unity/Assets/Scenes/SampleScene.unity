@@ -116685,6 +116685,8 @@ MonoBehaviour:
   cameraCenterer: {fileID: 743098981}
   autoCalculateBounds: 1
   autoBoundsPadding: 25
+  maxZoomOutRelativeToInitialFraming: 1.12
+  minVisibleSmallBoardFraction: 0.85
 --- !u!4 &1422559398
 Transform:
   m_ObjectHideFlags: 0

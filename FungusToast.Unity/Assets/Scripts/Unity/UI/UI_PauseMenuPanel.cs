@@ -442,13 +442,14 @@ namespace FungusToast.Unity.UI
 
         private void ApplyPanelState()
         {
-            if (primaryActionsRoot == null || confirmationRoot == null || confirmationLabel == null || subtitleLabel == null)
+            if (primaryActionsRoot == null || soundSettingsRoot == null || confirmationRoot == null || confirmationLabel == null || subtitleLabel == null)
             {
                 return;
             }
 
             bool showConfirmation = pendingAction != PendingAction.None;
             primaryActionsRoot.SetActive(!showConfirmation);
+            soundSettingsRoot.SetActive(!showConfirmation);
             confirmationRoot.SetActive(showConfirmation);
 
             if (!showConfirmation)

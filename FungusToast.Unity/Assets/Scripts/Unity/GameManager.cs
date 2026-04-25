@@ -502,6 +502,7 @@ namespace FungusToast.Unity
 
         // Accessor for external panels
         public bool HasCampaignSave() => gameStartService != null && gameStartService.HasCampaignSave();
+        public bool HasResumableCampaignSave() => gameStartService != null && gameStartService.HasResumableCampaignSave();
         public bool IsCampaignAwaitingAdaptationSelection() =>
             gameStartService != null && gameStartService.IsCampaignAwaitingAdaptationSelection();
         public bool HasPendingCampaignMoldinessUnlockOnSavedRun()
