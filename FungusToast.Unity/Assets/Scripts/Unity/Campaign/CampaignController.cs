@@ -40,6 +40,12 @@ namespace FungusToast.Unity.Campaign
         public int HumanMoldIndex => State != null ? State.humanMoldIndex : 0;
         public MoldinessProgressSnapshot MoldinessProgress => MoldinessProgression.GetSnapshot(State?.moldiness);
         public bool HasPendingMoldinessUnlockChoice => State?.moldiness?.pendingUnlockTriggers?.Count > 0;
+        public bool HasUnlockedCampaignAdaptationDraftRedraw => HasUnlockedMoldinessReward(MoldinessUnlockCatalog.SporeSiftingRewardId);
+        public bool CanUsePendingAdaptationDraftRedraw => State != null
+            && State.pendingAdaptationSelection
+            && HasUnlockedCampaignAdaptationDraftRedraw
+            && !State.pendingAdaptationDraftRedrawUsed
+            && (State.pendingAdaptationDraftChoiceIds?.Count ?? 0) > 0;
 
         public bool HasUnlockedMoldinessReward(string unlockId)
         {
@@ -89,6 +95,8 @@ namespace FungusToast.Unity.Campaign
                 boardHeight = preset.boardHeight,
                 humanMoldIndex = Mathf.Max(0, humanMoldIndex),
                 pendingAdaptationSelection = false,
+                pendingAdaptationDraftChoiceIds = new List<string>(),
+                pendingAdaptationDraftRedrawUsed = false,
                 campaignCompleted = false,
                 pendingVictorySnapshot = null,
                 pendingDefeatCarryoverSelection = false,
@@ -133,9 +141,11 @@ namespace FungusToast.Unity.Campaign
             State.resolvedAiStrategyNames ??= new List<string>();
             State.pendingDefeatCarryoverOptions ??= new List<string>();
             State.pendingNextRunCarryoverAdaptationIds ??= new List<string>();
+            State.pendingAdaptationDraftChoiceIds ??= new List<string>();
             State.temporaryTestingAdaptationIds ??= new List<string>();
             State.moldiness ??= MoldinessProgression.CreateDefaultState();
             bool normalizedMoldinessState = MoldinessUnlockService.NormalizeProgressionState(State.moldiness);
+            bool normalizedPendingAdaptationDraftState = NormalizePendingAdaptationDraftState();
             RestorePendingNextRunCarryoverToSelectedAdaptations();
             SanitizePendingDefeatCarryoverOptions();
             if (!State.pendingAdaptationSelection)
@@ -144,7 +154,7 @@ namespace FungusToast.Unity.Campaign
             }
 
             EnsureResolvedAiLineup();
-            if (normalizedMoldinessState)
+            if (normalizedMoldinessState || normalizedPendingAdaptationDraftState)
             {
                 CampaignSaveService.Save(State);
             }
@@ -283,6 +293,7 @@ namespace FungusToast.Unity.Campaign
                 // Final victory.
                 ClearTemporaryTestingAdaptations(saveAfterClear: false);
                 State.pendingAdaptationSelection = false;
+                ResetPendingAdaptationDraftState(resetRedrawUsage: true);
                 State.campaignCompleted = true;
                 State.pendingVictorySnapshot = null;
                 CampaignSaveService.Save(State);
@@ -292,6 +303,7 @@ namespace FungusToast.Unity.Campaign
 
             // Mid-run victory: wait for adaptation pick before advancing.
             State.pendingAdaptationSelection = true;
+            ResetPendingAdaptationDraftState(resetRedrawUsage: true);
             CampaignSaveService.Save(State);
         }
 
@@ -302,65 +314,42 @@ namespace FungusToast.Unity.Campaign
                 return new List<AdaptationDefinition>();
             }
 
-            var selected = new HashSet<string>(GetAllActiveAdaptationIds(), StringComparer.Ordinal);
-            var remaining = CampaignDraftEligibility.GetEligibleAdaptations(
-                AdaptationRepository.All,
-                selected,
-                State.moldiness?.unlockedAdaptationIds,
-                State.moldiness?.unlockLevel ?? 0);
-
-            AdaptationDefinition forcedAdaptation = null;
-            if (!string.IsNullOrWhiteSpace(forcedAdaptationId))
+            if (State.pendingAdaptationSelection)
             {
-                if (AdaptationRepository.TryGetById(forcedAdaptationId, out var forcedDefinition)
-                    && forcedDefinition != null
-                    && !forcedDefinition.IsStartingAdaptation
-                    && !selected.Contains(forcedDefinition.Id))
+                var persistedChoices = ResolvePendingAdaptationDraftChoices();
+                if (persistedChoices.Count > 0)
                 {
-                    forcedAdaptation = forcedDefinition;
+                    return persistedChoices;
                 }
             }
 
-            if (forcedAdaptation != null
-                && !remaining.Any(x => string.Equals(x.Id, forcedAdaptation.Id, StringComparison.Ordinal)))
+            var generatedChoices = BuildAdaptationDraftChoices(random, count, forcedAdaptationId);
+            if (State.pendingAdaptationSelection)
             {
-                remaining.Add(forcedAdaptation);
+                PersistPendingAdaptationDraftChoices(generatedChoices);
             }
 
-            if (remaining.Count == 0)
+            return generatedChoices;
+        }
+
+        public bool TryUsePendingAdaptationDraftRedraw(System.Random random, int count, string forcedAdaptationId, out List<AdaptationDefinition> redrawnChoices)
+        {
+            redrawnChoices = new List<AdaptationDefinition>();
+            if (!CanUsePendingAdaptationDraftRedraw)
             {
-                return remaining;
+                return false;
             }
 
-            if (count <= 0 || count >= remaining.Count)
+            var currentOfferIds = State.pendingAdaptationDraftChoiceIds ?? new List<string>();
+            redrawnChoices = BuildAdaptationDraftChoices(random, count, forcedAdaptationId, currentOfferIds);
+            if (redrawnChoices.Count == 0)
             {
-                return remaining;
+                return false;
             }
 
-            // Fisher-Yates shuffle then take N for stable uniqueness without duplicates.
-            for (int i = remaining.Count - 1; i > 0; i--)
-            {
-                int swapIndex = random.Next(i + 1);
-                (remaining[i], remaining[swapIndex]) = (remaining[swapIndex], remaining[i]);
-            }
-
-            if (forcedAdaptation != null)
-            {
-                remaining.RemoveAll(x => string.Equals(x.Id, forcedAdaptation.Id, StringComparison.Ordinal));
-
-                var forcedChoices = remaining.Take(Math.Max(0, count - 1)).ToList();
-                forcedChoices.Add(forcedAdaptation);
-
-                for (int i = forcedChoices.Count - 1; i > 0; i--)
-                {
-                    int swapIndex = random.Next(i + 1);
-                    (forcedChoices[i], forcedChoices[swapIndex]) = (forcedChoices[swapIndex], forcedChoices[i]);
-                }
-
-                return forcedChoices;
-            }
-
-            return remaining.Take(count).ToList();
+            State.pendingAdaptationDraftRedrawUsed = true;
+            PersistPendingAdaptationDraftChoices(redrawnChoices);
+            return true;
         }
 
         public List<MoldinessUnlockDefinition> GetPendingMoldinessUnlockOffers(System.Random random, int count)
@@ -522,9 +511,18 @@ namespace FungusToast.Unity.Campaign
                 return false;
             }
 
+            if (State.pendingAdaptationDraftChoiceIds != null
+                && State.pendingAdaptationDraftChoiceIds.Count > 0
+                && !State.pendingAdaptationDraftChoiceIds.Contains(adaptationId))
+            {
+                Debug.LogWarning($"[CampaignController] Adaptation '{adaptationId}' is not part of the current pending offer.");
+                return false;
+            }
+
             State.selectedAdaptationIds.Add(adaptationId);
             ClearTemporaryTestingAdaptations(saveAfterClear: false);
             State.pendingAdaptationSelection = false;
+            ResetPendingAdaptationDraftState(resetRedrawUsage: true);
             State.pendingVictorySnapshot = null;
             AdvanceToNextLevel();
             return true;
@@ -596,6 +594,7 @@ namespace FungusToast.Unity.Campaign
 
             ClearTemporaryTestingAdaptations(saveAfterClear: false);
             State.pendingAdaptationSelection = false;
+            ResetPendingAdaptationDraftState(resetRedrawUsage: true);
             State.pendingVictorySnapshot = null;
             AdvanceToNextLevel();
             return true;
@@ -627,6 +626,7 @@ namespace FungusToast.Unity.Campaign
             State.boardPresetId = preset.presetId;
             State.boardWidth = preset.boardWidth;
             State.boardHeight = preset.boardHeight;
+            ResetPendingAdaptationDraftState(resetRedrawUsage: true);
             State.campaignCompleted = false;
             State.resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, targetIndex);
             // Seed retained across victories for reproducibility
@@ -686,6 +686,7 @@ namespace FungusToast.Unity.Campaign
             State.boardWidth = preset.boardWidth;
             State.boardHeight = preset.boardHeight;
             State.pendingAdaptationSelection = false;
+            ResetPendingAdaptationDraftState(resetRedrawUsage: true);
             State.campaignCompleted = false;
             State.pendingVictorySnapshot = null;
             State.pendingDefeatCarryoverSelection = false;
@@ -815,6 +816,210 @@ namespace FungusToast.Unity.Campaign
             }
 
             CampaignSaveService.Save(State);
+        }
+
+        private void PersistPendingAdaptationDraftChoices(IEnumerable<AdaptationDefinition> choices)
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            State.pendingAdaptationDraftChoiceIds = (choices ?? Array.Empty<AdaptationDefinition>())
+                .Where(choice => choice != null && !string.IsNullOrWhiteSpace(choice.Id))
+                .Select(choice => choice.Id)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+            CampaignSaveService.Save(State);
+        }
+
+        private List<AdaptationDefinition> ResolvePendingAdaptationDraftChoices()
+        {
+            if (State?.pendingAdaptationDraftChoiceIds == null || State.pendingAdaptationDraftChoiceIds.Count == 0)
+            {
+                return new List<AdaptationDefinition>();
+            }
+
+            var selected = new HashSet<string>(GetAllActiveAdaptationIds(), StringComparer.Ordinal);
+            var resolved = new List<AdaptationDefinition>();
+            foreach (var adaptationId in State.pendingAdaptationDraftChoiceIds)
+            {
+                if (string.IsNullOrWhiteSpace(adaptationId)
+                    || !AdaptationRepository.TryGetById(adaptationId, out var adaptation)
+                    || adaptation == null
+                    || adaptation.IsStartingAdaptation
+                    || selected.Contains(adaptationId)
+                    || resolved.Any(existing => string.Equals(existing.Id, adaptationId, StringComparison.Ordinal)))
+                {
+                    return new List<AdaptationDefinition>();
+                }
+
+                resolved.Add(adaptation);
+            }
+
+            return resolved;
+        }
+
+        private List<AdaptationDefinition> BuildAdaptationDraftChoices(
+            System.Random random,
+            int count,
+            string forcedAdaptationId = "",
+            IEnumerable<string> deprioritizedAdaptationIds = null)
+        {
+            if (State == null)
+            {
+                return new List<AdaptationDefinition>();
+            }
+
+            random ??= new System.Random(State.seed);
+
+            var selected = new HashSet<string>(GetAllActiveAdaptationIds(), StringComparer.Ordinal);
+            var eligible = CampaignDraftEligibility.GetEligibleAdaptations(
+                AdaptationRepository.All,
+                selected,
+                State.moldiness?.unlockedAdaptationIds,
+                State.moldiness?.unlockLevel ?? 0);
+
+            AdaptationDefinition forcedAdaptation = null;
+            if (!string.IsNullOrWhiteSpace(forcedAdaptationId)
+                && AdaptationRepository.TryGetById(forcedAdaptationId, out var forcedDefinition)
+                && forcedDefinition != null
+                && !forcedDefinition.IsStartingAdaptation
+                && !selected.Contains(forcedDefinition.Id))
+            {
+                forcedAdaptation = forcedDefinition;
+                if (!eligible.Any(choice => string.Equals(choice.Id, forcedAdaptation.Id, StringComparison.Ordinal)))
+                {
+                    eligible.Add(forcedAdaptation);
+                }
+            }
+
+            if (eligible.Count == 0)
+            {
+                return eligible;
+            }
+
+            if ((deprioritizedAdaptationIds == null || !deprioritizedAdaptationIds.Any())
+                && forcedAdaptation == null
+                && (count <= 0 || count >= eligible.Count))
+            {
+                return eligible;
+            }
+
+            int desiredCount = count <= 0 ? eligible.Count : Mathf.Min(count, eligible.Count);
+            var deprioritizedIds = new HashSet<string>(
+                (deprioritizedAdaptationIds ?? Array.Empty<string>())
+                    .Where(id => !string.IsNullOrWhiteSpace(id)),
+                StringComparer.Ordinal);
+
+            var choicePool = eligible
+                .Where(choice => forcedAdaptation == null || !string.Equals(choice.Id, forcedAdaptation.Id, StringComparison.Ordinal))
+                .ToList();
+            ShuffleInPlace(random, choicePool);
+
+            var prioritizedChoices = choicePool
+                .Where(choice => !deprioritizedIds.Contains(choice.Id))
+                .ToList();
+            var fallbackChoices = choicePool
+                .Where(choice => deprioritizedIds.Contains(choice.Id))
+                .ToList();
+
+            var result = new List<AdaptationDefinition>(desiredCount);
+            if (forcedAdaptation != null)
+            {
+                result.Add(forcedAdaptation);
+            }
+
+            int remainingSlots = Mathf.Max(0, desiredCount - result.Count);
+            result.AddRange(prioritizedChoices.Take(remainingSlots));
+
+            remainingSlots = Mathf.Max(0, desiredCount - result.Count);
+            if (remainingSlots > 0)
+            {
+                result.AddRange(fallbackChoices.Take(remainingSlots));
+            }
+
+            if (forcedAdaptation != null)
+            {
+                ShuffleInPlace(random, result);
+            }
+
+            return result;
+        }
+
+        private bool NormalizePendingAdaptationDraftState()
+        {
+            if (State == null)
+            {
+                return false;
+            }
+
+            bool changed = false;
+            State.pendingAdaptationDraftChoiceIds ??= new List<string>();
+
+            var sanitizedChoiceIds = State.pendingAdaptationDraftChoiceIds
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+            if (!State.pendingAdaptationDraftChoiceIds.SequenceEqual(sanitizedChoiceIds, StringComparer.Ordinal))
+            {
+                State.pendingAdaptationDraftChoiceIds = sanitizedChoiceIds;
+                changed = true;
+            }
+
+            if (!State.pendingAdaptationSelection)
+            {
+                if (State.pendingAdaptationDraftChoiceIds.Count > 0)
+                {
+                    State.pendingAdaptationDraftChoiceIds.Clear();
+                    changed = true;
+                }
+
+                if (State.pendingAdaptationDraftRedrawUsed)
+                {
+                    State.pendingAdaptationDraftRedrawUsed = false;
+                    changed = true;
+                }
+
+                return changed;
+            }
+
+            if (State.pendingAdaptationDraftChoiceIds.Count > 0 && ResolvePendingAdaptationDraftChoices().Count != State.pendingAdaptationDraftChoiceIds.Count)
+            {
+                State.pendingAdaptationDraftChoiceIds.Clear();
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private void ResetPendingAdaptationDraftState(bool resetRedrawUsage)
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            State.pendingAdaptationDraftChoiceIds ??= new List<string>();
+            State.pendingAdaptationDraftChoiceIds.Clear();
+            if (resetRedrawUsage)
+            {
+                State.pendingAdaptationDraftRedrawUsed = false;
+            }
+        }
+
+        private static void ShuffleInPlace<T>(System.Random random, IList<T> items)
+        {
+            if (random == null || items == null)
+            {
+                return;
+            }
+
+            for (int i = items.Count - 1; i > 0; i--)
+            {
+                int swapIndex = random.Next(i + 1);
+                (items[i], items[swapIndex]) = (items[swapIndex], items[i]);
+            }
         }
 
         private List<string> GetAllActiveAdaptationIds()
