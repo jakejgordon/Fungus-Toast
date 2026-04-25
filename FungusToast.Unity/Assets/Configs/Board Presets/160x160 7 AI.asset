@@ -16,10 +16,10 @@ MonoBehaviour:
   boardWidth: 160
   boardHeight: 160
   aiPlayers:
-  - strategyName: AI1
-  - strategyName: AI2
-  - strategyName: AI3
-  - strategyName: AI10
-  - strategyName: AI1
-  - strategyName: AI2
-  - strategyName: AI7
+  - strategyName: CMP_Economy_Economancer_Elite
+  - strategyName: CMP_Economy_HoardsporeRegent_Elite
+  - strategyName: CMP_Defense_IronShell_Elite
+  - strategyName: CMP_Bloom_NecrotoxinGauntlet_Elite
+  - strategyName: CMP_Economy_Economancer_Elite
+  - strategyName: CMP_Economy_HoardsporeRegent_Elite
+  - strategyName: CMP_Surge_BeaconSprinter_Medium

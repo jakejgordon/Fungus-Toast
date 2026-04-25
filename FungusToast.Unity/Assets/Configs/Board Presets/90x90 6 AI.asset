@@ -18,7 +18,7 @@ MonoBehaviour:
   aiPlayers:
   - strategyName: CMP_Surge_BeaconTempo_Medium
   - strategyName: CMP_Control_AnabolicRebirth_Medium
-  - strategyName: AI9
+  - strategyName: CMP_Growth_PutridTendrils_Medium
   - strategyName: CMP_Reclaim_Scavenger_Easy
   - strategyName: CMP_Bloom_CreepingNecro_Medium
   - strategyName: CMP_TierCap_GrowthResilience_Easy

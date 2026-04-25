@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Logging;
@@ -72,6 +73,8 @@ namespace FungusToast.Core.AI
             StrategySetEnum strategySet,
             StrategyTheme theme,
             StrategyStatus status,
+            string friendlyName,
+            string aiPlayerIntentions,
             string intent,
             StrategyPowerTier powerTier,
             StrategyRole role,
@@ -87,6 +90,8 @@ namespace FungusToast.Core.AI
             StrategySet = strategySet;
             Theme = theme;
             Status = status;
+            FriendlyName = friendlyName;
+            AIPlayerIntentions = aiPlayerIntentions;
             Intent = intent;
             PowerTier = powerTier;
             Role = role;
@@ -103,6 +108,8 @@ namespace FungusToast.Core.AI
         public StrategySetEnum StrategySet { get; }
         public StrategyTheme Theme { get; }
         public StrategyStatus Status { get; }
+        public string FriendlyName { get; }
+        public string AIPlayerIntentions { get; }
         public string Intent { get; }
         public StrategyPowerTier PowerTier { get; }
         public StrategyRole Role { get; }
@@ -113,6 +120,18 @@ namespace FungusToast.Core.AI
         public IReadOnlyCollection<CounterTag> FavoredAgainst { get; }
         public IReadOnlyCollection<CounterTag> WeakAgainst { get; }
         public string Notes { get; }
+    }
+
+    internal sealed class CampaignAiTooltipProfile
+    {
+        public CampaignAiTooltipProfile(string friendlyName, string aiPlayerIntentions)
+        {
+            FriendlyName = friendlyName ?? string.Empty;
+            AIPlayerIntentions = aiPlayerIntentions ?? string.Empty;
+        }
+
+        public string FriendlyName { get; }
+        public string AIPlayerIntentions { get; }
     }
 
     public static class AIRoster
@@ -369,13 +388,13 @@ namespace FungusToast.Core.AI
         };
 
         /// <summary>
-        /// Campaign strategies: mirror ProvenStrategies but with simple names AI1..AI N for UI draft/select purposes.
+        /// Campaign strategies used by board presets, campaign progression, and tooltip/catalog surfaces.
         /// </summary>
         private static readonly List<IMutationSpendingStrategy> _rawCampaignStrategies = new List<IMutationSpendingStrategy>
         {
             // AI1
             new ParameterizedSpendingStrategy(
-                strategyName: "AI1",
+                strategyName: "CMP_Economy_Economancer_Elite",
                 prioritizeHighTier: true,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
@@ -388,7 +407,7 @@ namespace FungusToast.Core.AI
             ),
             // AI2
             new ParameterizedSpendingStrategy(
-                strategyName: "AI2",
+                strategyName: "CMP_Economy_HoardsporeRegent_Elite",
                 prioritizeHighTier: true,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
@@ -402,7 +421,7 @@ namespace FungusToast.Core.AI
             ),
             // AI3
             new ParameterizedSpendingStrategy(
-                strategyName: "AI3",
+                strategyName: "CMP_Defense_IronShell_Elite",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -452,7 +471,7 @@ namespace FungusToast.Core.AI
             ),
             // AI7
             new ParameterizedSpendingStrategy(
-                strategyName: "AI7",
+                strategyName: "CMP_Surge_BeaconSprinter_Medium",
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
@@ -466,7 +485,7 @@ namespace FungusToast.Core.AI
                 startingSporeEdgeOffset: -10),
             // AI8
             new ParameterizedSpendingStrategy(
-                strategyName: "AI8",
+                strategyName: "CMP_Control_RebirthFurnace_Medium",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -497,7 +516,7 @@ namespace FungusToast.Core.AI
             ),
             // AI10
             new ParameterizedSpendingStrategy(
-                strategyName: "AI10",
+                strategyName: "CMP_Bloom_NecrotoxinGauntlet_Elite",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -525,7 +544,7 @@ namespace FungusToast.Core.AI
             ),
             // AI10 test permutation: anabolic opener into bloom/regression cascade
             new ParameterizedSpendingStrategy(
-                strategyName: "TST_AI10_AnabolicRegression",
+                strategyName: "CMP_Bloom_Thanatophyte_Elite",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -949,7 +968,7 @@ namespace FungusToast.Core.AI
             ),
             // Training mold: reckless growth in one tendril 
             new ParameterizedSpendingStrategy(
-                strategyName: "TST_Training_Overextender",
+                strategyName: "CMP_Mobility_Overextender_Training",
                 prioritizeHighTier: false,
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -963,7 +982,7 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
             ),
             new ParameterizedSpendingStrategy(
-                strategyName: "TST_Training_Overextender_Offset1",
+                strategyName: "CMP_Mobility_Overextender_Training_Offset1",
                 prioritizeHighTier: false,
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -978,7 +997,7 @@ namespace FungusToast.Core.AI
                 startingSporeEdgeOffset: 1
             ),
             new ParameterizedSpendingStrategy(
-                strategyName: "TST_Training_Overextender_Offset2",
+                strategyName: "CMP_Mobility_Overextender_Training_Offset2",
                 prioritizeHighTier: false,
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -993,7 +1012,7 @@ namespace FungusToast.Core.AI
                 startingSporeEdgeOffset: 2
             ),
             new ParameterizedSpendingStrategy(
-                strategyName: "TST_Training_Overextender_Offset3",
+                strategyName: "CMP_Mobility_Overextender_Training_Offset3",
                 prioritizeHighTier: false,
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -1054,7 +1073,7 @@ namespace FungusToast.Core.AI
             ),
             // Training mold: slow fungicide/resilience turtle that eventually shows adjacent poison
             new ParameterizedSpendingStrategy(
-                strategyName: "TST_Training_ToxicTurtle",
+                strategyName: "CMP_Attrition_ToxicTurtle_Training",
                 prioritizeHighTier: false,
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -1068,7 +1087,7 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Fungicide, MycovariantCategory.Resistance)
             ),
             new ParameterizedSpendingStrategy(
-                strategyName: "TST_Training_ToxicTurtle_Offset1",
+                strategyName: "CMP_Attrition_ToxicTurtle_Training_Offset1",
                 prioritizeHighTier: false,
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -1083,7 +1102,7 @@ namespace FungusToast.Core.AI
                 startingSporeEdgeOffset: 1
             ),
             new ParameterizedSpendingStrategy(
-                strategyName: "TST_Training_ToxicTurtle_Offset2",
+                strategyName: "CMP_Attrition_ToxicTurtle_Training_Offset2",
                 prioritizeHighTier: false,
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
@@ -1772,6 +1791,98 @@ namespace FungusToast.Core.AI
             )
         };
 
+        private static readonly IReadOnlyDictionary<string, CampaignAiTooltipProfile> _campaignAiTooltipProfilesByStrategyName =
+            new Dictionary<string, CampaignAiTooltipProfile>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["CMP_Economy_Economancer_Elite"] = new("The Economancer", "Builds up safely, hoards mutation economy, and turns that stockpile into a brutal late swing."),
+                ["CMP_Economy_HoardsporeRegent_Elite"] = new("Hoardspore Regent", "Stays patient early, values long-term setup, and becomes much scarier once its engine is running."),
+                ["CMP_Defense_IronShell_Elite"] = new("Iron Shell", "Expands carefully and becomes hard to dislodge once its defenses finish taking root."),
+                ["CMP_Surge_BeaconSprinter_Medium"] = new("Beacon Sprinter", "Looks for sudden openings, quick repositioning, and short explosive turns instead of slow pressure."),
+                ["CMP_Control_RebirthFurnace_Medium"] = new("Rebirth Furnace", "Welcomes messy fights and tries to turn every loss into fresh growth."),
+                ["CMP_Bloom_NecrotoxinGauntlet_Elite"] = new("The Necrotoxin Gauntlet", "Spreads decay pressure fast and lets poison plus regression do the finishing work."),
+                ["CMP_Growth_PutridTendrils_Medium"] = new("Putrid Tendrils", "Reaches outward with aggressive growth lanes and tries to crowd territory early."),
+                ["CMP_Growth_WildfireBloom_Medium"] = new("Wildfire Bloom", "Overgrows wide lanes quickly and keeps pressing until the board feels smothered."),
+                ["TST_AI10_CreepingRegression"] = new("The Necrotoxin Gauntlet", "Pushes decay hard and wants every poisoned foothold to spiral into collapse."),
+                ["CMP_Bloom_Thanatophyte_Elite"] = new("Thanatophyte", "Accelerates early, then leans into a sharp decay finish once it has momentum."),
+                ["TST_AI10_BeaconRegression"] = new("Rhizolith", "Plants stubborn anchors, then uses guided pressure to squeeze whole lanes shut."),
+                ["CMP_TierCap_GrowthResilience_Easy"] = new("Resilient Canopy", "Keeps to a simple toolkit, grows safely, and tries to outlast sloppy attacks."),
+                ["CMP_Reclaim_Scavenger_Easy"] = new("Scavenger Court", "Thrives on messy boards, reclaiming dead ground and stealing back lost space."),
+                ["CMP_Surge_Pulsar_Easy"] = new("Pulsar Sprout", "Waits for timing windows, then spends hard in short bursts to catch opponents off balance."),
+                ["CMP_Reclaim_InfiltrationSurge_Easy"] = new("Needle Reclaimer", "Sneaks into weak seams, then surges once it has a foothold worth exploiting."),
+                ["CMP_Defense_ResilientShell_Easy"] = new("Iron Shell", "Builds a sturdy shell first and only pushes once the core feels secure."),
+                ["CMP_Defense_ReclaimShell_Easy"] = new("Grave Bastion", "Prefers defensive trades, then slowly rebuilds from the wreckage."),
+                ["CMP_Surge_BeaconTempo_Medium"] = new("Beacon Sprinter", "Plays for tempo swings, using brief setup windows to launch sudden pressure."),
+                ["CMP_Control_AnabolicRebirth_Medium"] = new("Rebirth Conductor", "Uses steady mutation growth and rebirth loops to stay in control of long games."),
+                ["CMP_Surge_GrowthTempo_Medium"] = new("Pulse Runner", "Grows first, then turns that board presence into quick tempo bursts."),
+                ["CMP_Growth_Pressure_Medium"] = new("Pressure Bloom", "Pushes outward constantly and would rather suffocate space than wait."),
+                ["CMP_Bloom_FortifyMimic_Medium"] = new("Mimic Bastion", "Builds a defensive bloom and punishes anyone who tries to trade into it head-on."),
+                ["CMP_Economy_KillReclaim_Medium"] = new("Harvest Broker", "Builds value carefully, then cashes it in by picking fights and reclaiming the aftermath."),
+                ["TST_Campaign7_KillReclaim_Offset1"] = new("Harvest Broker", "Builds value carefully, then cashes it in by picking fights and reclaiming the aftermath."),
+                ["TST_Campaign7_KillReclaim_Offset2"] = new("Harvest Broker", "Builds value carefully, then cashes it in by picking fights and reclaiming the aftermath."),
+                ["TST_Campaign7_KillReclaim_Offset3"] = new("Harvest Broker", "Builds value carefully, then cashes it in by picking fights and reclaiming the aftermath."),
+                ["TST_Campaign7_KillReclaim_Offset8"] = new("Harvest Broker", "Builds value carefully, then cashes it in by picking fights and reclaiming the aftermath."),
+                ["CMP_Economy_TempoReclaim_Medium"] = new("Tempo Harvester", "Stays efficient, then turns small advantages into a steady reclaim snowball."),
+                ["CMP_Bloom_CreepingNecro_Medium"] = new("Gravebloom", "Likes slow spreading decay that keeps paying off after the first contact."),
+                ["CMP_Bloom_BeaconRegression_Medium"] = new("Beacon of Rot", "Uses guided pressure to open cracks, then deepens them with collapse effects."),
+                ["CMP_Bloom_AnabolicRegression_Medium"] = new("Voltaic Rot", "Starts with a strong engine and uses it to fuel a grinding decay plan."),
+                ["CMP_Control_AnabolicFirst_Hard"] = new("Voltaic Bloom", "Accelerates first, then pivots into flexible board control once it has breathing room."),
+                ["CMP_Economy_LateSpike_Hard"] = new("The Economancer", "Plays a patient economy game, then turns saved resources into a nasty late spike."),
+                ["CMP_Bloom_CreepingRegression_Elite"] = new("The Necrotoxin Gauntlet", "Pushes creeping decay from every angle and lets the board collapse behind it."),
+                ["CMP_AnabolicBeaconRhizolith_Elite"] = new("Rhizolith Crown", "Builds a stubborn core, then projects pressure outward from carefully held anchors."),
+                ["TST_CampaignPlayer_SafeBaseline"] = new("Safe Baseline", "Plays a measured, low-drama game that prefers reliable value over flashy swings."),
+                ["CMP_Mobility_Overextender_Training"] = new("Overextender", "Spends itself thin chasing space and can be baited into reaching too far."),
+                ["CMP_Mobility_Overextender_Training_Offset1"] = new("Overextender", "Spends itself thin chasing space and can be baited into reaching too far."),
+                ["CMP_Mobility_Overextender_Training_Offset2"] = new("Overextender", "Spends itself thin chasing space and can be baited into reaching too far."),
+                ["CMP_Mobility_Overextender_Training_Offset3"] = new("Overextender", "Spends itself thin chasing space and can be baited into reaching too far."),
+                ["TST_Training_ResilientMycelium"] = new("Resilient Mycelium", "Grows methodically, values safety, and rarely gives up space for free."),
+                ["TST_Training_ResilientMycelium_Offset1"] = new("Resilient Mycelium", "Grows methodically, values safety, and rarely gives up space for free."),
+                ["TST_Training_ResilientMycelium_Offset3"] = new("Resilient Mycelium", "Grows methodically, values safety, and rarely gives up space for free."),
+                ["CMP_Attrition_ToxicTurtle_Training"] = new("Toxic Turtle", "Holds ground and chips away with stubborn poison pressure instead of racing."),
+                ["CMP_Attrition_ToxicTurtle_Training_Offset1"] = new("Toxic Turtle", "Holds ground and chips away with stubborn poison pressure instead of racing."),
+                ["CMP_Attrition_ToxicTurtle_Training_Offset2"] = new("Toxic Turtle", "Holds ground and chips away with stubborn poison pressure instead of racing."),
+            };
+
+        private static readonly IReadOnlyDictionary<string, string> _legacyCampaignStrategyNameAliases =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["AI1"] = "CMP_Economy_Economancer_Elite",
+                ["AI2"] = "CMP_Economy_HoardsporeRegent_Elite",
+                ["AI3"] = "CMP_Defense_IronShell_Elite",
+                ["AI7"] = "CMP_Surge_BeaconSprinter_Medium",
+                ["AI8"] = "CMP_Control_RebirthFurnace_Medium",
+                ["AI9"] = "CMP_Growth_PutridTendrils_Medium",
+                ["AI10"] = "CMP_Bloom_NecrotoxinGauntlet_Elite",
+                ["AI11"] = "CMP_Growth_WildfireBloom_Medium",
+                ["TST_AI10_AnabolicRegression"] = "CMP_Bloom_Thanatophyte_Elite",
+                ["TST_Training_Overextender"] = "CMP_Mobility_Overextender_Training",
+                ["TST_Training_Overextender_Offset1"] = "CMP_Mobility_Overextender_Training_Offset1",
+                ["TST_Training_Overextender_Offset2"] = "CMP_Mobility_Overextender_Training_Offset2",
+                ["TST_Training_Overextender_Offset3"] = "CMP_Mobility_Overextender_Training_Offset3",
+                ["TST_Training_ToxicTurtle"] = "CMP_Attrition_ToxicTurtle_Training",
+                ["TST_Training_ToxicTurtle_Offset1"] = "CMP_Attrition_ToxicTurtle_Training_Offset1",
+                ["TST_Training_ToxicTurtle_Offset2"] = "CMP_Attrition_ToxicTurtle_Training_Offset2",
+            };
+
+        private static readonly HashSet<string> _campaignFriendlyNameIgnoredTokens =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                "CMP",
+                "TST",
+                "TMP",
+                "Easy",
+                "Medium",
+                "Hard",
+                "Elite",
+                "Campaign",
+                "Player",
+                "Safe",
+                "Baseline",
+                "Offset1",
+                "Offset2",
+                "Offset3",
+                "Offset8"
+            };
+
         private static readonly Dictionary<string, StrategyTheme> _explicitStrategyThemesByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
@@ -1831,11 +1942,11 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignPlayer_SafeBaseline"] = StrategyTheme.Control,
                 ["TST_Training_ResilientMycelium"] = StrategyTheme.Defense,
                 ["TST_Training_ResilientMycelium_Offset3"] = StrategyTheme.Defense,
-                ["TST_Training_Overextender"] = StrategyTheme.Mobility,
-                ["TST_Training_Overextender_Offset2"] = StrategyTheme.Mobility,
-                ["TST_Training_Overextender_Offset3"] = StrategyTheme.Mobility,
-                ["TST_Training_ToxicTurtle"] = StrategyTheme.Attrition,
-                ["TST_Training_ToxicTurtle_Offset2"] = StrategyTheme.Attrition,
+                ["CMP_Mobility_Overextender_Training"] = StrategyTheme.Mobility,
+                ["CMP_Mobility_Overextender_Training_Offset2"] = StrategyTheme.Mobility,
+                ["CMP_Mobility_Overextender_Training_Offset3"] = StrategyTheme.Mobility,
+                ["CMP_Attrition_ToxicTurtle_Training"] = StrategyTheme.Attrition,
+                ["CMP_Attrition_ToxicTurtle_Training_Offset2"] = StrategyTheme.Attrition,
                 ["Grow>Defend>Kill"] = StrategyTheme.Defense,
                 ["Grow>Kill>Reclaim(Econ)"] = StrategyTheme.EconomyRamp,
                 ["Grow>Kill>Reclaim(Econ/Reclaim)"] = StrategyTheme.Reclamation,
@@ -1865,11 +1976,11 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignPlayer_SafeBaseline"] = StrategyStatus.Testing,
                 ["TST_Training_ResilientMycelium"] = StrategyStatus.Testing,
                 ["TST_Training_ResilientMycelium_Offset3"] = StrategyStatus.Testing,
-                ["TST_Training_Overextender"] = StrategyStatus.Testing,
-                ["TST_Training_Overextender_Offset2"] = StrategyStatus.Testing,
-                ["TST_Training_Overextender_Offset3"] = StrategyStatus.Testing,
-                ["TST_Training_ToxicTurtle"] = StrategyStatus.Testing,
-                ["TST_Training_ToxicTurtle_Offset2"] = StrategyStatus.Testing,
+                ["CMP_Mobility_Overextender_Training"] = StrategyStatus.Testing,
+                ["CMP_Mobility_Overextender_Training_Offset2"] = StrategyStatus.Testing,
+                ["CMP_Mobility_Overextender_Training_Offset3"] = StrategyStatus.Testing,
+                ["CMP_Attrition_ToxicTurtle_Training"] = StrategyStatus.Testing,
+                ["CMP_Attrition_ToxicTurtle_Training_Offset2"] = StrategyStatus.Testing,
             };
 
         private static readonly Dictionary<string, StrategyPowerTier> _explicitPowerTiersByName =
@@ -1898,12 +2009,12 @@ namespace FungusToast.Core.AI
                 ["AI6"] = StrategyPowerTier.Weak,
                 ["AI12"] = StrategyPowerTier.Weak,
                 ["AI13"] = StrategyPowerTier.Strong,
-                ["AI1"] = StrategyPowerTier.Strong,
-                ["AI2"] = StrategyPowerTier.Strong,
-                ["AI3"] = StrategyPowerTier.Strong,
-                ["AI10"] = StrategyPowerTier.Strong,
+                ["CMP_Economy_Economancer_Elite"] = StrategyPowerTier.Strong,
+                ["CMP_Economy_HoardsporeRegent_Elite"] = StrategyPowerTier.Strong,
+                ["CMP_Defense_IronShell_Elite"] = StrategyPowerTier.Strong,
+                ["CMP_Bloom_NecrotoxinGauntlet_Elite"] = StrategyPowerTier.Strong,
                 ["TST_AI10_CreepingRegression"] = StrategyPowerTier.Strong,
-                ["TST_AI10_AnabolicRegression"] = StrategyPowerTier.Strong,
+                ["CMP_Bloom_Thanatophyte_Elite"] = StrategyPowerTier.Strong,
                 ["TST_AI10_BeaconRegression"] = StrategyPowerTier.Strong,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyPowerTier.Strong,
                 ["CMP_Bloom_CreepingRegression_Elite"] = StrategyPowerTier.Strong,
@@ -1996,18 +2107,18 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignPlayer_SafeBaseline"] = StrategyRole.Experimental,
                 ["TST_Training_ResilientMycelium"] = StrategyRole.Training,
                 ["TST_Training_ResilientMycelium_Offset3"] = StrategyRole.Training,
-                ["TST_Training_Overextender"] = StrategyRole.Training,
-                ["TST_Training_Overextender_Offset2"] = StrategyRole.Training,
-                ["TST_Training_Overextender_Offset3"] = StrategyRole.Training,
-                ["TST_Training_ToxicTurtle"] = StrategyRole.Training,
-                ["TST_Training_ToxicTurtle_Offset2"] = StrategyRole.Training,
+                ["CMP_Mobility_Overextender_Training"] = StrategyRole.Training,
+                ["CMP_Mobility_Overextender_Training_Offset2"] = StrategyRole.Training,
+                ["CMP_Mobility_Overextender_Training_Offset3"] = StrategyRole.Training,
+                ["CMP_Attrition_ToxicTurtle_Training"] = StrategyRole.Training,
+                ["CMP_Attrition_ToxicTurtle_Training_Offset2"] = StrategyRole.Training,
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyRole.Experimental,
-                ["AI1"] = StrategyRole.Boss,
-                ["AI2"] = StrategyRole.Boss,
-                ["AI3"] = StrategyRole.Boss,
-                ["AI10"] = StrategyRole.Boss,
+                ["CMP_Economy_Economancer_Elite"] = StrategyRole.Boss,
+                ["CMP_Economy_HoardsporeRegent_Elite"] = StrategyRole.Boss,
+                ["CMP_Defense_IronShell_Elite"] = StrategyRole.Boss,
+                ["CMP_Bloom_NecrotoxinGauntlet_Elite"] = StrategyRole.Boss,
                 ["TST_AI10_CreepingRegression"] = StrategyRole.Boss,
-                ["TST_AI10_AnabolicRegression"] = StrategyRole.Boss,
+                ["CMP_Bloom_Thanatophyte_Elite"] = StrategyRole.Boss,
                 ["TST_AI10_BeaconRegression"] = StrategyRole.Boss,
                 ["AI13"] = StrategyRole.Boss,
                 ["AI6"] = StrategyRole.Training,
@@ -2060,11 +2171,11 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignPlayer_SafeBaseline"] = StrategyLifecycle.Active,
                 ["TST_Training_ResilientMycelium"] = StrategyLifecycle.Active,
                 ["TST_Training_ResilientMycelium_Offset3"] = StrategyLifecycle.Active,
-                ["TST_Training_Overextender"] = StrategyLifecycle.Active,
-                ["TST_Training_Overextender_Offset2"] = StrategyLifecycle.Active,
-                ["TST_Training_Overextender_Offset3"] = StrategyLifecycle.Active,
-                ["TST_Training_ToxicTurtle"] = StrategyLifecycle.Active,
-                ["TST_Training_ToxicTurtle_Offset2"] = StrategyLifecycle.Active,
+                ["CMP_Mobility_Overextender_Training"] = StrategyLifecycle.Active,
+                ["CMP_Mobility_Overextender_Training_Offset2"] = StrategyLifecycle.Active,
+                ["CMP_Mobility_Overextender_Training_Offset3"] = StrategyLifecycle.Active,
+                ["CMP_Attrition_ToxicTurtle_Training"] = StrategyLifecycle.Active,
+                ["CMP_Attrition_ToxicTurtle_Training_Offset2"] = StrategyLifecycle.Active,
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyLifecycle.Active,
                 ["TST_FortressResilience"] = StrategyLifecycle.NeedsTuning,
                 ["TST_OpportunisticCounterplay"] = StrategyLifecycle.NeedsTuning,
@@ -2085,16 +2196,16 @@ namespace FungusToast.Core.AI
                 ["AI6"] = new[] { DifficultyBand.Easy },
                 ["AI12"] = new[] { DifficultyBand.Easy },
                 ["AI13"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
-                ["AI7"] = new[] { DifficultyBand.Normal },
-                ["AI8"] = new[] { DifficultyBand.Normal },
+                ["CMP_Surge_BeaconSprinter_Medium"] = new[] { DifficultyBand.Normal },
+                ["CMP_Control_RebirthFurnace_Medium"] = new[] { DifficultyBand.Normal },
                 ["CMP_Growth_PutridTendrils_Medium"] = new[] { DifficultyBand.Normal },
                 ["CMP_Growth_WildfireBloom_Medium"] = new[] { DifficultyBand.Normal },
-                ["AI1"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
-                ["AI2"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
-                ["AI3"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
-                ["AI10"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["CMP_Economy_Economancer_Elite"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["CMP_Economy_HoardsporeRegent_Elite"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["CMP_Defense_IronShell_Elite"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["CMP_Bloom_NecrotoxinGauntlet_Elite"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_AI10_CreepingRegression"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
-                ["TST_AI10_AnabolicRegression"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["CMP_Bloom_Thanatophyte_Elite"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_AI10_BeaconRegression"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_LowTierEconomyGrinder"] = new[] { DifficultyBand.Easy },
                 ["TST_LowTierSurgeSkirmisher"] = new[] { DifficultyBand.Easy },
@@ -2134,11 +2245,11 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignPlayer_SafeBaseline"] = new[] { DifficultyBand.Normal },
                 ["TST_Training_ResilientMycelium"] = new[] { DifficultyBand.Easy },
                 ["TST_Training_ResilientMycelium_Offset3"] = new[] { DifficultyBand.Easy },
-                ["TST_Training_Overextender"] = new[] { DifficultyBand.Easy },
-                ["TST_Training_Overextender_Offset2"] = new[] { DifficultyBand.Easy },
-                ["TST_Training_Overextender_Offset3"] = new[] { DifficultyBand.Easy },
-                ["TST_Training_ToxicTurtle"] = new[] { DifficultyBand.Easy },
-                ["TST_Training_ToxicTurtle_Offset2"] = new[] { DifficultyBand.Easy },
+                ["CMP_Mobility_Overextender_Training"] = new[] { DifficultyBand.Easy },
+                ["CMP_Mobility_Overextender_Training_Offset2"] = new[] { DifficultyBand.Easy },
+                ["CMP_Mobility_Overextender_Training_Offset3"] = new[] { DifficultyBand.Easy },
+                ["CMP_Attrition_ToxicTurtle_Training"] = new[] { DifficultyBand.Easy },
+                ["CMP_Attrition_ToxicTurtle_Training_Offset2"] = new[] { DifficultyBand.Easy },
             };
 
         private static readonly Dictionary<string, CampaignDifficulty> _explicitCampaignDifficultyByName =
@@ -2147,16 +2258,16 @@ namespace FungusToast.Core.AI
                 ["AI6"] = CampaignDifficulty.Training,
                 ["AI12"] = CampaignDifficulty.Easy,
                 ["AI13"] = CampaignDifficulty.Hard,
-                ["AI7"] = CampaignDifficulty.Medium,
-                ["AI8"] = CampaignDifficulty.Medium,
+                ["CMP_Surge_BeaconSprinter_Medium"] = CampaignDifficulty.Medium,
+                ["CMP_Control_RebirthFurnace_Medium"] = CampaignDifficulty.Medium,
                 ["CMP_Growth_PutridTendrils_Medium"] = CampaignDifficulty.Medium,
                 ["CMP_Growth_WildfireBloom_Medium"] = CampaignDifficulty.Medium,
-                ["AI1"] = CampaignDifficulty.Elite,
-                ["AI2"] = CampaignDifficulty.Elite,
-                ["AI3"] = CampaignDifficulty.Elite,
-                ["AI10"] = CampaignDifficulty.Elite,
+                ["CMP_Economy_Economancer_Elite"] = CampaignDifficulty.Elite,
+                ["CMP_Economy_HoardsporeRegent_Elite"] = CampaignDifficulty.Elite,
+                ["CMP_Defense_IronShell_Elite"] = CampaignDifficulty.Elite,
+                ["CMP_Bloom_NecrotoxinGauntlet_Elite"] = CampaignDifficulty.Elite,
                 ["TST_AI10_CreepingRegression"] = CampaignDifficulty.Elite,
-                ["TST_AI10_AnabolicRegression"] = CampaignDifficulty.Elite,
+                ["CMP_Bloom_Thanatophyte_Elite"] = CampaignDifficulty.Elite,
                 ["TST_AI10_BeaconRegression"] = CampaignDifficulty.Elite,
                 ["Growth/Resilience"] = CampaignDifficulty.Easy,
                 ["Grow>Kill>Reclaim(Econ)"] = CampaignDifficulty.Medium,
@@ -2165,11 +2276,11 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignPlayer_SafeBaseline"] = CampaignDifficulty.Medium,
                 ["TST_Training_ResilientMycelium"] = CampaignDifficulty.Training,
                 ["TST_Training_ResilientMycelium_Offset3"] = CampaignDifficulty.Training,
-                ["TST_Training_Overextender"] = CampaignDifficulty.Easy,
-                ["TST_Training_Overextender_Offset2"] = CampaignDifficulty.Easy,
-                ["TST_Training_Overextender_Offset3"] = CampaignDifficulty.Easy,
-                ["TST_Training_ToxicTurtle"] = CampaignDifficulty.Easy,
-                ["TST_Training_ToxicTurtle_Offset2"] = CampaignDifficulty.Easy,
+                ["CMP_Mobility_Overextender_Training"] = CampaignDifficulty.Easy,
+                ["CMP_Mobility_Overextender_Training_Offset2"] = CampaignDifficulty.Easy,
+                ["CMP_Mobility_Overextender_Training_Offset3"] = CampaignDifficulty.Easy,
+                ["CMP_Attrition_ToxicTurtle_Training"] = CampaignDifficulty.Easy,
+                ["CMP_Attrition_ToxicTurtle_Training_Offset2"] = CampaignDifficulty.Easy,
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = CampaignDifficulty.Medium,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = CampaignDifficulty.Medium,
                 ["CMP_TierCap_GrowthResilience_Easy"] = CampaignDifficulty.Easy,
@@ -2365,8 +2476,9 @@ namespace FungusToast.Core.AI
 
         public static StrategyProfile? GetStrategyProfile(StrategySetEnum strategySet, string strategyName)
         {
+            var normalizedStrategyName = NormalizeStrategyNameForLookup(strategySet, strategyName);
             return GetStrategyProfiles(strategySet)
-                .FirstOrDefault(p => string.Equals(p.StrategyName, strategyName, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(p => string.Equals(p.StrategyName, normalizedStrategyName, StringComparison.OrdinalIgnoreCase));
         }
 
         public static IReadOnlyList<StrategyCatalogEntry> GetStrategyCatalogEntries(StrategySetEnum strategySet)
@@ -2376,8 +2488,9 @@ namespace FungusToast.Core.AI
 
         public static StrategyCatalogEntry? GetStrategyCatalogEntry(StrategySetEnum strategySet, string strategyName)
         {
+            var normalizedStrategyName = NormalizeStrategyNameForLookup(strategySet, strategyName);
             return GetStrategyCatalogEntries(strategySet)
-                .FirstOrDefault(p => string.Equals(p.StrategyName, strategyName, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(p => string.Equals(p.StrategyName, normalizedStrategyName, StringComparison.OrdinalIgnoreCase));
         }
 
         public static IReadOnlyList<StrategyCatalogEntry> GetStrategyCatalogEntries(
@@ -2411,7 +2524,7 @@ namespace FungusToast.Core.AI
         {
             var requestedNames = strategyNames
                 .Where(n => !string.IsNullOrWhiteSpace(n))
-                .Select(n => n.Trim())
+                .Select(n => NormalizeStrategyNameForLookup(strategySet, n))
                 .ToList();
 
             var sourceByName = GetStrategyDictionary(strategySet);
@@ -2451,6 +2564,8 @@ namespace FungusToast.Core.AI
                 strategySet,
                 theme,
                 status,
+                GetFriendlyName(strategy, strategySet),
+                GetAiPlayerIntentions(strategy, strategySet),
                 BuildIntentLabel(strategy),
                 powerTier,
                 role,
@@ -2475,7 +2590,7 @@ namespace FungusToast.Core.AI
                         "Opens with toxins on all enemy spores, poisons kill adjacently on decay, and expired toxins chain-spread. Three stages of the same kill vector layered together.",
                         new[] { AdaptationIds.SporeSalvo, AdaptationIds.MycotoxicHalo, AdaptationIds.VesicleBurst })
                 },
-                ["AI10"] = new[]
+                ["CMP_Bloom_NecrotoxinGauntlet_Elite"] = new[]
                 {
                     new AdaptationSynergySet(
                         "The Necrotoxin Gauntlet",
@@ -2489,7 +2604,7 @@ namespace FungusToast.Core.AI
                         "Opens with toxins on all enemies, gets instant kills on new toxin drops, toxins kill adjacently on decay, expired toxins chain-spread, bridges into the enemy cluster early, and earns bonus MP to fund the cascade. Every vector of the toxin kill chain is supercharged.",
                         new[] { AdaptationIds.SporeSalvo, AdaptationIds.MycotoxicHalo, AdaptationIds.MycotoxicLash, AdaptationIds.VesicleBurst, AdaptationIds.HyphalBridge, AdaptationIds.ApicalYield })
                 },
-                ["TST_AI10_AnabolicRegression"] = new[]
+                ["CMP_Bloom_Thanatophyte_Elite"] = new[]
                 {
                     new AdaptationSynergySet(
                         "Thanatophyte",
@@ -2511,7 +2626,7 @@ namespace FungusToast.Core.AI
                         "Every grown cell gets Resistance (first per round), edge cells always resist, and dying cells beside resistant ones leave clean tiles. The board gradually becomes an untouchable fortress.",
                         new[] { AdaptationIds.AegisHyphae, AdaptationIds.CrustalCallus, AdaptationIds.SaprophageRing })
                 },
-                ["AI3"] = new[]
+                ["CMP_Defense_IronShell_Elite"] = new[]
                 {
                     new AdaptationSynergySet(
                         "Iron Shell",
@@ -2526,14 +2641,14 @@ namespace FungusToast.Core.AI
                         "Surges cost less, maxing mutations earns bonus MP, and Retrograde Bloom hands a free T5 upgrade while sacrificing T1 junk. Explosive late-game mutation acceleration.",
                         new[] { AdaptationIds.HyphalEconomy, AdaptationIds.ApicalYield, AdaptationIds.RetrogradeBloom })
                 },
-                ["AI1"] = new[]
+                ["CMP_Economy_Economancer_Elite"] = new[]
                 {
                     new AdaptationSynergySet(
                         "The Economancer",
                         "Surges cost less, maxing mutations earns bonus MP, and Retrograde Bloom hands a free T5 upgrade while sacrificing T1 junk. Explosive late-game mutation acceleration.",
                         new[] { AdaptationIds.HyphalEconomy, AdaptationIds.ApicalYield, AdaptationIds.RetrogradeBloom })
                 },
-                ["AI2"] = new[]
+                ["CMP_Economy_HoardsporeRegent_Elite"] = new[]
                 {
                     new AdaptationSynergySet(
                         "The Economancer",
@@ -2592,6 +2707,8 @@ namespace FungusToast.Core.AI
                 profile.DifficultyBands,
                 profile.CampaignDifficulty,
                 profile.Pools,
+                profile.FriendlyName,
+                profile.AIPlayerIntentions,
                 profile.Intent,
                 profile.Notes,
                 profile.FavoredAgainst,
@@ -2804,6 +2921,226 @@ namespace FungusToast.Core.AI
                 StrategyTheme.TierCap => "Concentrate value in constrained tier bands",
                 _ => "Balanced all-purpose mutation progression"
             };
+        }
+
+        private static string GetFriendlyName(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
+        {
+            if (strategySet == StrategySetEnum.Campaign
+                && _campaignAiTooltipProfilesByStrategyName.TryGetValue(strategy.StrategyName, out var profile)
+                && !string.IsNullOrWhiteSpace(profile.FriendlyName))
+            {
+                return profile.FriendlyName;
+            }
+
+            if (_suggestedAdaptationSetsByStrategyName.TryGetValue(strategy.StrategyName, out var sets))
+            {
+                var firstSet = sets.FirstOrDefault();
+                if (firstSet != null && !string.IsNullOrWhiteSpace(firstSet.SetName))
+                {
+                    return firstSet.SetName;
+                }
+            }
+
+            if (strategySet == StrategySetEnum.Campaign)
+            {
+                var generated = GenerateFriendlyNameFromStrategyName(strategy.StrategyName);
+                if (!string.IsNullOrWhiteSpace(generated))
+                {
+                    return generated;
+                }
+            }
+
+            return strategy.StrategyName;
+        }
+
+        private static string GetAiPlayerIntentions(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
+        {
+            if (strategySet == StrategySetEnum.Campaign)
+            {
+                var generated = BuildCampaignAiPlayerIntentions(strategy);
+                if (!string.IsNullOrWhiteSpace(generated))
+                {
+                    return generated;
+                }
+
+                if (_campaignAiTooltipProfilesByStrategyName.TryGetValue(strategy.StrategyName, out var profile)
+                    && !string.IsNullOrWhiteSpace(profile.AIPlayerIntentions))
+                {
+                    return profile.AIPlayerIntentions;
+                }
+            }
+
+            return BuildIntentLabel(strategy);
+        }
+
+        public static string NormalizeCampaignStrategyName(string strategyName)
+        {
+            if (string.IsNullOrWhiteSpace(strategyName))
+            {
+                return string.Empty;
+            }
+
+            var trimmed = strategyName.Trim();
+            return _legacyCampaignStrategyNameAliases.TryGetValue(trimmed, out var canonical)
+                ? canonical
+                : trimmed;
+        }
+
+        private static string NormalizeStrategyNameForLookup(StrategySetEnum strategySet, string strategyName)
+        {
+            if (strategySet != StrategySetEnum.Campaign)
+            {
+                return strategyName?.Trim() ?? string.Empty;
+            }
+
+            return NormalizeCampaignStrategyName(strategyName);
+        }
+
+        private static string BuildCampaignAiPlayerIntentions(IMutationSpendingStrategy strategy)
+        {
+            if (strategy is not ParameterizedSpendingStrategy parameterized)
+            {
+                return string.Empty;
+            }
+
+            var scores = BuildMutationCategoryIntentScores(parameterized)
+                .OrderByDescending(pair => pair.Value)
+                .ToList();
+
+            if (scores.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var strongest = scores[0].Value;
+            var descriptors = scores
+                .Where(pair => pair.Value >= strongest * 0.28d)
+                .Take(3)
+                .Select(pair => $"{GetIntentStrengthLabel(pair.Value, strongest)} {GetIntentCategoryLabel(pair.Key)}")
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return descriptors.Count == 0
+                ? string.Empty
+                : $"{ToOxfordList(descriptors)}.";
+        }
+
+        private static Dictionary<MutationCategory, double> BuildMutationCategoryIntentScores(ParameterizedSpendingStrategy strategy)
+        {
+            var scores = new Dictionary<MutationCategory, double>();
+
+            for (var i = 0; i < strategy.TargetMutationGoals.Count; i++)
+            {
+                var goal = strategy.TargetMutationGoals[i];
+                if (!MutationRepository.All.TryGetValue(goal.MutationId, out var mutation))
+                {
+                    continue;
+                }
+
+                var targetLevel = goal.TargetLevel ?? 1;
+                var maxLevel = Math.Max(1, mutation.MaxLevel);
+                var depthRatio = Math.Clamp((double)targetLevel / maxLevel, 0.18d, 1.0d);
+                var orderWeight = Math.Max(0.35d, 1.18d - (i * 0.16d));
+                var tierWeight = 0.92d + ((mutation.TierNumber - 1) * 0.08d);
+                var score = orderWeight * (0.55d + depthRatio) * tierWeight;
+
+                AddIntentScore(scores, mutation.Category, score);
+            }
+
+            if (strategy.PriorityMutationCategories != null)
+            {
+                for (var i = 0; i < strategy.PriorityMutationCategories.Count; i++)
+                {
+                    var score = Math.Max(0.35d, 0.8d - (i * 0.15d));
+                    AddIntentScore(scores, strategy.PriorityMutationCategories[i], score);
+                }
+            }
+
+            if (strategy.SurgePriorityIds.Count > 0)
+            {
+                AddIntentScore(scores, MutationCategory.MycelialSurges, 0.65d + (0.12d * Math.Min(strategy.SurgePriorityIds.Count, 3)));
+            }
+
+            return scores;
+        }
+
+        private static void AddIntentScore(Dictionary<MutationCategory, double> scores, MutationCategory category, double score)
+        {
+            scores[category] = scores.TryGetValue(category, out var existing)
+                ? existing + score
+                : score;
+        }
+
+        private static string GetIntentStrengthLabel(double score, double strongestScore)
+        {
+            if (strongestScore <= 0d)
+            {
+                return "mild";
+            }
+
+            var ratio = score / strongestScore;
+            if (ratio >= 0.88d)
+            {
+                return "wild";
+            }
+
+            if (ratio >= 0.6d)
+            {
+                return "moderate";
+            }
+
+            return "mild";
+        }
+
+        private static string GetIntentCategoryLabel(MutationCategory category)
+        {
+            return category switch
+            {
+                MutationCategory.Growth => "growth",
+                MutationCategory.CellularResilience => "resilience",
+                MutationCategory.Fungicide => "toxin pressure",
+                MutationCategory.GeneticDrift => "genetic mutation",
+                MutationCategory.MycelialSurges => "surge timing",
+                _ => "mutation pressure"
+            };
+        }
+
+        private static string ToOxfordList(IReadOnlyList<string> items)
+        {
+            if (items == null || items.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            if (items.Count == 1)
+            {
+                return items[0];
+            }
+
+            if (items.Count == 2)
+            {
+                return $"{items[0]} and {items[1]}";
+            }
+
+            return string.Join(", ", items.Take(items.Count - 1)) + ", and " + items[^1];
+        }
+
+        private static string GenerateFriendlyNameFromStrategyName(string strategyName)
+        {
+            if (string.IsNullOrWhiteSpace(strategyName))
+            {
+                return string.Empty;
+            }
+
+            var cleanedTokens = strategyName
+                .Split(new[] { '_' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(token => !_campaignFriendlyNameIgnoredTokens.Contains(token))
+                .Select(token => Regex.Replace(token, "([a-z])([A-Z])", "$1 $2"))
+                .ToList();
+
+            return cleanedTokens.Count == 0
+                ? strategyName
+                : string.Join(" ", cleanedTokens);
         }
 
         private static List<IMutationSpendingStrategy> GetSourceStrategies(StrategySetEnum strategySet)

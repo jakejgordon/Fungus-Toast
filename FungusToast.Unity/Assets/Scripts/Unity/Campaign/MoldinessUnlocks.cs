@@ -14,6 +14,7 @@ namespace FungusToast.Unity.Campaign
         UnlockAdaptation = 0,
         IncreaseFailedRunAdaptationCarryover = 1,
         UnlockMycovariant = 2,
+        UnlockCampaignIntel = 3,
     }
 
     [Serializable]
@@ -97,6 +98,7 @@ namespace FungusToast.Unity.Campaign
     public static class MoldinessUnlockCatalog
     {
         public const string LegacySporesInReserveRewardId = "moldiness_reward_failed_run_adaptation_carryover";
+        public const string StrainProfilingRewardId = "moldiness_unlock_campaign_ai_profile";
 
         private static readonly ReadOnlyCollection<MoldinessUnlockDefinition> all =
             new ReadOnlyCollection<MoldinessUnlockDefinition>(
@@ -220,6 +222,14 @@ namespace FungusToast.Unity.Campaign
                         mycovariantId: MycovariantIds.AscusBaitId,
                         categoryLabel: "Mycovariant Unlock",
                         accentColor: UIStyleTokens.State.Focus),
+                    new MoldinessUnlockDefinition(
+                        id: StrainProfilingRewardId,
+                        displayName: "Strain Profiling",
+                        description: "During campaign games, enemy campaign AI tooltips reveal a friendly name and a short note about that opponent's style.",
+                        type: MoldinessUnlockType.UnlockCampaignIntel,
+                        requiredUnlockLevel: 3,
+                        categoryLabel: "Permanent Campaign Upgrade",
+                        accentColor: UIStyleTokens.State.Info),
                     new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_hyphal_echo",
                         displayName: "Unlock Hyphal Echo",
@@ -450,6 +460,9 @@ namespace FungusToast.Unity.Campaign
                     }
 
                     progressionState.unlockedMycovariantIds.Add(definition.MycovariantId);
+                    break;
+
+                case MoldinessUnlockType.UnlockCampaignIntel:
                     break;
             }
 

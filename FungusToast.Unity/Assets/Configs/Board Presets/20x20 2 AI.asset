@@ -16,9 +16,9 @@ MonoBehaviour:
   boardWidth: 20
   boardHeight: 20
   aiPlayers:
-  - strategyName: TST_Training_Overextender
+  - strategyName: CMP_Mobility_Overextender_Training
     startingAdaptationIds: []
-  - strategyName: TST_Training_ToxicTurtle
+  - strategyName: CMP_Attrition_ToxicTurtle_Training
     startingAdaptationIds: []
   pooledAiPlayerCount: 0
   aiStrategyPool: []

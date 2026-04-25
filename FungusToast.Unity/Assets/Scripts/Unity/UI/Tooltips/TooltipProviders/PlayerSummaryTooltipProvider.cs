@@ -1,9 +1,11 @@
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using FungusToast.Core.AI;
 using FungusToast.Core.Players;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Common;
+using FungusToast.Unity.Campaign;
 using FungusToast.Unity.UI.Tooltips;
 
 namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
@@ -32,10 +34,22 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
                 return "Player: (unset)";
 
             var sb = new StringBuilder();
-            bool showStrategyName = GameManager.Instance != null && GameManager.Instance.IsTestingModeEnabled;
+            var manager = GameManager.Instance;
+            bool showStrategyName = manager != null && manager.IsTestingModeEnabled;
+            var campaignAiProfile = GetVisibleCampaignAiProfile(player, manager);
 
-            // Player Name
-            sb.AppendLine($"<b>Player Name:</b> {player.PlayerName}");
+            if (campaignAiProfile != null)
+            {
+                sb.AppendLine($"<b>Opponent:</b> {campaignAiProfile.FriendlyName}");
+                if (!string.IsNullOrWhiteSpace(campaignAiProfile.AIPlayerIntentions))
+                {
+                    sb.AppendLine(campaignAiProfile.AIPlayerIntentions);
+                }
+            }
+            else
+            {
+                sb.AppendLine($"<b>Player Name:</b> {player.PlayerName}");
+            }
 
             if (showStrategyName)
                 sb.AppendLine($"<b>Strategy:</b> {GetStrategyDisplayText(player)}");
@@ -63,6 +77,42 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             return string.IsNullOrWhiteSpace(p.MutationStrategy?.StrategyName)
                 ? "Unassigned"
                 : p.MutationStrategy.StrategyName;
+        }
+
+        private static StrategyCatalogEntry GetVisibleCampaignAiProfile(Player p, GameManager manager)
+        {
+            if (p == null || manager == null || manager.CurrentGameMode != GameMode.Campaign)
+            {
+                return null;
+            }
+
+            if (p.PlayerType == PlayerTypeEnum.Human)
+            {
+                return null;
+            }
+
+            var campaignController = manager.CampaignController;
+            if (campaignController == null
+                || !campaignController.HasUnlockedMoldinessReward(MoldinessUnlockCatalog.StrainProfilingRewardId))
+            {
+                return null;
+            }
+
+            var strategyName = p.MutationStrategy?.StrategyName;
+            if (string.IsNullOrWhiteSpace(strategyName))
+            {
+                return null;
+            }
+
+            var entry = AIRoster.GetStrategyCatalogEntry(StrategySetEnum.Campaign, strategyName);
+            if (entry == null
+                || string.IsNullOrWhiteSpace(entry.FriendlyName)
+                || string.IsNullOrWhiteSpace(entry.AIPlayerIntentions))
+            {
+                return null;
+            }
+
+            return entry;
         }
 
         private static string GetHighestMutationText(Player p)

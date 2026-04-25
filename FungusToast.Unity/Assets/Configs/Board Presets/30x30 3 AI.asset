@@ -16,7 +16,7 @@ MonoBehaviour:
   boardWidth: 30
   boardHeight: 30
   aiPlayers:
-  - strategyName: TST_Training_ToxicTurtle
+  - strategyName: CMP_Attrition_ToxicTurtle_Training
     startingAdaptationIds: []
   pooledAiPlayerCount: 1
   aiStrategyPool: []

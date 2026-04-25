@@ -41,6 +41,12 @@ namespace FungusToast.Unity.Campaign
         public MoldinessProgressSnapshot MoldinessProgress => MoldinessProgression.GetSnapshot(State?.moldiness);
         public bool HasPendingMoldinessUnlockChoice => State?.moldiness?.pendingUnlockTriggers?.Count > 0;
 
+        public bool HasUnlockedMoldinessReward(string unlockId)
+        {
+            return !string.IsNullOrWhiteSpace(unlockId)
+                && State?.moldiness?.unlockedRewardIds?.Any(id => string.Equals(id, unlockId, StringComparison.Ordinal)) == true;
+        }
+
         public List<Mycovariant> GetEligibleMycovariantsForCampaignDraft(IEnumerable<Mycovariant> allMycovariants)
         {
             if (allMycovariants == null)
@@ -991,7 +997,7 @@ namespace FungusToast.Unity.Campaign
                 {
                     if (aiSpec != null && !string.IsNullOrWhiteSpace(aiSpec.strategyName))
                     {
-                        resolved.Add(aiSpec.strategyName);
+                        resolved.Add(AIRoster.NormalizeCampaignStrategyName(aiSpec.strategyName));
                     }
                 }
 
@@ -1005,7 +1011,8 @@ namespace FungusToast.Unity.Campaign
 
             var uniqueEligible = preset.aiStrategyPool
                 .Where(name => !string.IsNullOrWhiteSpace(name))
-                .Distinct(StringComparer.Ordinal)
+                .Select(AIRoster.NormalizeCampaignStrategyName)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(IsKnownCampaignStrategyName)
                 .ToList();
 
@@ -1028,8 +1035,9 @@ namespace FungusToast.Unity.Campaign
 
         private static bool IsKnownCampaignStrategyName(string strategyName)
         {
-            return AIRoster.CampaignStrategiesByName.ContainsKey(strategyName)
-                || AIRoster.ProvenStrategiesByName.ContainsKey(strategyName);
+            var normalizedName = AIRoster.NormalizeCampaignStrategyName(strategyName);
+            return AIRoster.CampaignStrategiesByName.ContainsKey(normalizedName)
+                || AIRoster.ProvenStrategiesByName.ContainsKey(normalizedName);
         }
 
         private static int GetStableStringHash(string value)
