@@ -197,3 +197,6 @@ This keeps meta-progression legible and avoids normal run rewards obscuring the 
 - Reaching a moldiness unlock level broadens the moldiness reward pool. It does not directly inject locked adaptations into the normal adaptation draft.
 - Prefer explicit permanent unlock state over implicit inference when resuming saves.
 - Keep the moldiness reward system generic enough to support future mycovariant or mutation unlocks, but do not force all gameplay content into the same abstraction layer.
+- As a general UI rule, if a permanent campaign unlock enables a new action, reveal, or affordance, add a lightweight indicator explaining what unlock is enabling it.
+- Prefer low-clutter attribution such as a tooltip line, helper text, badge, or short unlock label rather than a large new panel.
+- Good examples include a tooltip on an enabled action button (for example, Spore Sifting) or a short source line inside revealed information (for example, Strain Profiling in campaign AI tooltips).

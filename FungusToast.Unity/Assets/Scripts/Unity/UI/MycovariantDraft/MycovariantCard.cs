@@ -1,4 +1,6 @@
 ﻿using FungusToast.Core.Mycovariants;
+using FungusToast.Unity.UI;
+using FungusToast.Unity.UI.Tooltips;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -9,6 +11,8 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
     {
         private const float TitleFontSizeMin = 16f;
         private const float TitleFontSizeMax = 20f;
+        private const string BaitBadgeLabel = "Bait";
+        private const string BaitTooltipText = "Bait Mycovariant: tuned to favor the Human player, or to be a poor draft for AI opponents. These can be unlocked in the campaign as moldiness rewards.";
 
         public Image iconImage;
         public TextMeshProUGUI nameText;
@@ -25,6 +29,7 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
 
         // Cache the outline
         private Outline outline;
+        private GameObject baitBadgeRoot;
 
         public Mycovariant Mycovariant => mycovariant;
 
@@ -87,6 +92,7 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 pickButton.onClick.AddListener(() => onClick?.Invoke());
             }
 
+            RefreshBaitBadge();
             SetActiveHighlight(false);
 
             // Force layout rebuild to fix text overlap issues
@@ -97,6 +103,68 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             {
                 UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
             }
+        }
+
+        private void RefreshBaitBadge()
+        {
+            bool shouldShow = mycovariant != null && mycovariant.IsBait;
+
+            if (!shouldShow)
+            {
+                if (baitBadgeRoot != null)
+                {
+                    baitBadgeRoot.SetActive(false);
+                }
+
+                return;
+            }
+
+            EnsureBaitBadge();
+            baitBadgeRoot.SetActive(true);
+        }
+
+        private void EnsureBaitBadge()
+        {
+            if (baitBadgeRoot != null)
+            {
+                return;
+            }
+
+            baitBadgeRoot = new GameObject("BaitBadge", typeof(RectTransform), typeof(Image), typeof(TooltipTrigger));
+            baitBadgeRoot.transform.SetParent(transform, false);
+            baitBadgeRoot.transform.SetAsLastSibling();
+
+            var rect = baitBadgeRoot.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(1f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(1f, 1f);
+            rect.anchoredPosition = new Vector2(-10f, -8f);
+            rect.sizeDelta = new Vector2(72f, 24f);
+
+            var background = baitBadgeRoot.GetComponent<Image>();
+            background.color = UIStyleTokens.State.Warning;
+            background.raycastTarget = true;
+
+            var trigger = baitBadgeRoot.GetComponent<TooltipTrigger>();
+            trigger.SetStaticText(BaitTooltipText);
+
+            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(baitBadgeRoot.transform, false);
+            var labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(6f, 2f);
+            labelRect.offsetMax = new Vector2(-6f, -2f);
+
+            var label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = BaitBadgeLabel;
+            label.alignment = TextAlignmentOptions.Center;
+            label.fontSize = 13f;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 11f;
+            label.fontSizeMax = 13f;
+            label.color = UIStyleTokens.Text.OnAccent;
+            label.raycastTarget = false;
         }
 
         /// <summary>
