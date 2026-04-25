@@ -38,6 +38,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private const float FeedRowSpacing = 8f;
         private const int FeedRowPadding = 8;
         private const float FeedIconSpacerWidth = 8f;
+        private const float CampaignAdaptationUtilityPanelHeight = 92f;
+        private const float CampaignAdaptationUtilityPanelWidth = 840f;
+        private const string CampaignAdaptationRedrawReadyLabel = "Use Spore Sifting";
+        private const string CampaignAdaptationRedrawConfirmLabel = "Confirm Redraw";
+        private const string CampaignAdaptationRedrawUsedLabel = "Spore Sifting Used";
 
         [Header("UI References")]
         [SerializeField] private GameObject draftPanel; // Main draft panel root
@@ -80,6 +85,14 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private bool isFinishingDraftPhase;
         private bool isCampaignAdaptationDraft;
         private Action<AdaptationDefinition> onAdaptationPicked;
+        private GameObject campaignAdaptationUtilityRoot;
+        private TextMeshProUGUI campaignAdaptationUtilityStatusText;
+        private Button campaignAdaptationRedrawButton;
+        private TextMeshProUGUI campaignAdaptationRedrawButtonText;
+        private bool showCampaignAdaptationRedrawControl;
+        private bool campaignAdaptationRedrawAvailable;
+        private bool campaignAdaptationRedrawConfirmArmed;
+        private Func<IReadOnlyList<AdaptationDefinition>> onCampaignAdaptationRedrawRequested;
         private AudioSource soundEffectAudioSource;
 
         private bool _cameraRecenteredThisDraftPhase = false;
@@ -121,6 +134,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             isCampaignAdaptationDraft = false;
             onAdaptationPicked = null;
+            ConfigureCampaignAdaptationRedrawControl(false, false, null);
             ShowDraftUI();
             BeginNextDraft();
         }
@@ -140,6 +154,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             isFinishingDraftPhase = false;
             isCampaignAdaptationDraft = false;
             onAdaptationPicked = null;
+            showCampaignAdaptationRedrawControl = false;
+            campaignAdaptationRedrawAvailable = false;
+            campaignAdaptationRedrawConfirmArmed = false;
+            onCampaignAdaptationRedrawRequested = null;
             _cameraRecenteredThisDraftPhase = false;
 
             if (draftOrder != null)
@@ -154,7 +172,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         public void StartCampaignAdaptationDraft(
             IReadOnlyList<AdaptationDefinition> choices,
-            Action<AdaptationDefinition> onPicked)
+            Action<AdaptationDefinition> onPicked,
+            bool showRedrawControl,
+            bool redrawAvailable,
+            Func<IReadOnlyList<AdaptationDefinition>> onRedrawRequested)
         {
             if (choices == null || choices.Count == 0)
             {
@@ -174,6 +195,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 "Choose an Adaptation",
                 "Select one adaptation to strengthen your colony for the rest of the campaign.");
 
+            ConfigureCampaignAdaptationRedrawControl(showRedrawControl, redrawAvailable, onRedrawRequested);
             ShowDraftUI();
             if (draftOrderRow != null)
             {
@@ -246,6 +268,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private void SetDraftState(DraftUIState state)
         {
             uiState = state;
+            if (state != DraftUIState.HumanTurn)
+            {
+                campaignAdaptationRedrawConfirmArmed = false;
+            }
+
             switch (state)
             {
                 case DraftUIState.HumanTurn:
@@ -275,6 +302,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     HighlightActiveCards(false);
                     break;
             }
+
+            RefreshCampaignAdaptationUtilityUi();
         }
 
         private void HighlightActiveCards(bool highlight)
@@ -495,6 +524,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     () => OnAdaptationChoicePicked(adaptation),
                     highlight: true);
             }
+
+            RefreshCampaignAdaptationUtilityUi();
         }
 
         private void ClearChoiceCards()
@@ -638,6 +669,204 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 draftOrderRow.gameObject.SetActive(true);
             }
             uiState = DraftUIState.Idle;
+            RefreshCampaignAdaptationUtilityUi();
+        }
+
+        private void ConfigureCampaignAdaptationRedrawControl(
+            bool showControl,
+            bool redrawAvailable,
+            Func<IReadOnlyList<AdaptationDefinition>> onRedrawRequested)
+        {
+            showCampaignAdaptationRedrawControl = showControl;
+            campaignAdaptationRedrawAvailable = showControl && redrawAvailable;
+            campaignAdaptationRedrawConfirmArmed = false;
+            onCampaignAdaptationRedrawRequested = onRedrawRequested;
+            EnsureCampaignAdaptationUtilityUi();
+            RefreshCampaignAdaptationUtilityUi();
+        }
+
+        private void EnsureCampaignAdaptationUtilityUi()
+        {
+            if (choiceContainer == null || choiceContainer.parent == null || campaignAdaptationUtilityRoot != null)
+            {
+                return;
+            }
+
+            campaignAdaptationUtilityRoot = new GameObject(
+                "CampaignAdaptationUtilityRoot",
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(LayoutElement),
+                typeof(VerticalLayoutGroup));
+            campaignAdaptationUtilityRoot.transform.SetParent(choiceContainer.parent, false);
+            campaignAdaptationUtilityRoot.transform.SetSiblingIndex(choiceContainer.GetSiblingIndex());
+
+            var rootRect = campaignAdaptationUtilityRoot.GetComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0.5f, 1f);
+            rootRect.anchorMax = new Vector2(0.5f, 1f);
+            rootRect.pivot = new Vector2(0.5f, 0.5f);
+            rootRect.sizeDelta = new Vector2(CampaignAdaptationUtilityPanelWidth, CampaignAdaptationUtilityPanelHeight);
+
+            var layoutElement = campaignAdaptationUtilityRoot.GetComponent<LayoutElement>();
+            layoutElement.preferredWidth = CampaignAdaptationUtilityPanelWidth;
+            layoutElement.minWidth = CampaignAdaptationUtilityPanelWidth;
+            layoutElement.preferredHeight = CampaignAdaptationUtilityPanelHeight;
+            layoutElement.minHeight = CampaignAdaptationUtilityPanelHeight;
+
+            var rootImage = campaignAdaptationUtilityRoot.GetComponent<Image>();
+            var backgroundColor = UIStyleTokens.Surface.PanelSecondary;
+            backgroundColor.a = 0.92f;
+            rootImage.color = backgroundColor;
+            rootImage.raycastTarget = true;
+
+            var layout = campaignAdaptationUtilityRoot.GetComponent<VerticalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.padding = new RectOffset(16, 16, 12, 12);
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            var statusObject = new GameObject("Status", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            statusObject.transform.SetParent(campaignAdaptationUtilityRoot.transform, false);
+            var statusLayout = statusObject.GetComponent<LayoutElement>();
+            statusLayout.preferredHeight = 28f;
+            statusLayout.minHeight = 28f;
+            campaignAdaptationUtilityStatusText = statusObject.GetComponent<TextMeshProUGUI>();
+            campaignAdaptationUtilityStatusText.fontSize = 14f;
+            campaignAdaptationUtilityStatusText.enableAutoSizing = true;
+            campaignAdaptationUtilityStatusText.fontSizeMin = 12f;
+            campaignAdaptationUtilityStatusText.fontSizeMax = 14f;
+            campaignAdaptationUtilityStatusText.alignment = TextAlignmentOptions.Center;
+            campaignAdaptationUtilityStatusText.textWrappingMode = TextWrappingModes.Normal;
+            campaignAdaptationUtilityStatusText.overflowMode = TextOverflowModes.Overflow;
+            campaignAdaptationUtilityStatusText.color = UIStyleTokens.Text.Secondary;
+
+            var buttonObject = new GameObject("RedrawButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+            buttonObject.transform.SetParent(campaignAdaptationUtilityRoot.transform, false);
+            var buttonRect = buttonObject.GetComponent<RectTransform>();
+            buttonRect.sizeDelta = new Vector2(260f, 36f);
+            var buttonLayout = buttonObject.GetComponent<LayoutElement>();
+            buttonLayout.preferredWidth = 260f;
+            buttonLayout.minWidth = 260f;
+            buttonLayout.preferredHeight = 36f;
+            buttonLayout.minHeight = 36f;
+            campaignAdaptationRedrawButton = buttonObject.GetComponent<Button>();
+            campaignAdaptationRedrawButton.targetGraphic = buttonObject.GetComponent<Image>();
+            UIStyleTokens.Button.ApplyStyle(campaignAdaptationRedrawButton, useSelectedAsNormal: true);
+            campaignAdaptationRedrawButton.onClick.AddListener(OnCampaignAdaptationRedrawButtonClicked);
+
+            var buttonLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            buttonLabelObject.transform.SetParent(buttonObject.transform, false);
+            var buttonLabelRect = buttonLabelObject.GetComponent<RectTransform>();
+            buttonLabelRect.anchorMin = Vector2.zero;
+            buttonLabelRect.anchorMax = Vector2.one;
+            buttonLabelRect.offsetMin = new Vector2(8f, 4f);
+            buttonLabelRect.offsetMax = new Vector2(-8f, -4f);
+            campaignAdaptationRedrawButtonText = buttonLabelObject.GetComponent<TextMeshProUGUI>();
+            campaignAdaptationRedrawButtonText.alignment = TextAlignmentOptions.Center;
+            campaignAdaptationRedrawButtonText.fontSize = 16f;
+            campaignAdaptationRedrawButtonText.enableAutoSizing = true;
+            campaignAdaptationRedrawButtonText.fontSizeMin = 13f;
+            campaignAdaptationRedrawButtonText.fontSizeMax = 16f;
+            campaignAdaptationRedrawButtonText.textWrappingMode = TextWrappingModes.NoWrap;
+            campaignAdaptationRedrawButtonText.overflowMode = TextOverflowModes.Ellipsis;
+            campaignAdaptationRedrawButtonText.color = UIStyleTokens.Button.TextDefault;
+            campaignAdaptationRedrawButtonText.raycastTarget = false;
+            UIStyleTokens.Button.SetButtonLabelColor(campaignAdaptationRedrawButton, UIStyleTokens.Button.TextDefault);
+
+            campaignAdaptationUtilityRoot.SetActive(false);
+        }
+
+        private void RefreshCampaignAdaptationUtilityUi()
+        {
+            bool shouldShow = isCampaignAdaptationDraft && showCampaignAdaptationRedrawControl;
+
+            if (!shouldShow)
+            {
+                campaignAdaptationRedrawConfirmArmed = false;
+            }
+
+            if (campaignAdaptationUtilityRoot != null)
+            {
+                if (choiceContainer != null)
+                {
+                    int choiceIndex = choiceContainer.GetSiblingIndex();
+                    int utilityIndex = campaignAdaptationUtilityRoot.transform.GetSiblingIndex();
+                    int targetIndex = utilityIndex < choiceIndex ? Mathf.Max(0, choiceIndex - 1) : choiceIndex;
+                    campaignAdaptationUtilityRoot.transform.SetSiblingIndex(targetIndex);
+                }
+
+                campaignAdaptationUtilityRoot.SetActive(shouldShow);
+            }
+
+            if (!shouldShow || campaignAdaptationUtilityStatusText == null || campaignAdaptationRedrawButton == null || campaignAdaptationRedrawButtonText == null)
+            {
+                return;
+            }
+
+            bool canInteract = campaignAdaptationRedrawAvailable && uiState == DraftUIState.HumanTurn;
+            if (!canInteract)
+            {
+                campaignAdaptationRedrawConfirmArmed = false;
+            }
+
+            string buttonLabel;
+            string statusText;
+            Color statusColor;
+            if (!campaignAdaptationRedrawAvailable)
+            {
+                buttonLabel = CampaignAdaptationRedrawUsedLabel;
+                statusText = "Spore Sifting has already been used for this campaign level.";
+                statusColor = UIStyleTokens.Text.Muted;
+            }
+            else if (campaignAdaptationRedrawConfirmArmed)
+            {
+                buttonLabel = CampaignAdaptationRedrawConfirmLabel;
+                statusText = "Click again to redraw all 3 adaptation cards. This spends Spore Sifting for this level.";
+                statusColor = UIStyleTokens.State.Warning;
+            }
+            else
+            {
+                buttonLabel = CampaignAdaptationRedrawReadyLabel;
+                statusText = "Spore Sifting ready: redraw the entire 3-card offer once before you pick.";
+                statusColor = UIStyleTokens.Text.Secondary;
+            }
+
+            campaignAdaptationRedrawButton.interactable = canInteract;
+            campaignAdaptationRedrawButtonText.text = buttonLabel;
+            campaignAdaptationUtilityStatusText.text = statusText;
+            campaignAdaptationUtilityStatusText.color = statusColor;
+        }
+
+        private void OnCampaignAdaptationRedrawButtonClicked()
+        {
+            if (!isCampaignAdaptationDraft || !showCampaignAdaptationRedrawControl || !campaignAdaptationRedrawAvailable || uiState != DraftUIState.HumanTurn)
+            {
+                return;
+            }
+
+            if (!campaignAdaptationRedrawConfirmArmed)
+            {
+                campaignAdaptationRedrawConfirmArmed = true;
+                RefreshCampaignAdaptationUtilityUi();
+                return;
+            }
+
+            var redrawnChoices = onCampaignAdaptationRedrawRequested?.Invoke();
+            campaignAdaptationRedrawConfirmArmed = false;
+            if (redrawnChoices == null || redrawnChoices.Count == 0)
+            {
+                AddDraftMessage("Spore Sifting failed to redraw the current offer.");
+                RefreshCampaignAdaptationUtilityUi();
+                return;
+            }
+
+            campaignAdaptationRedrawAvailable = false;
+            PopulateAdaptationChoices(redrawnChoices);
+            AddDraftMessage("Spore Sifting scatters the old offer. A fresh 3-card adaptation draft blooms.");
+            SetDraftState(DraftUIState.HumanTurn);
         }
 
         private void EnsureDraftMessageUI()
@@ -743,6 +972,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 draftFeedContentTransform = contentGO.transform;
                 draftFeedScrollRect.content = contentRect;
             }
+
+            EnsureCampaignAdaptationUtilityUi();
         }
 
         private void ClearDraftMessages()

@@ -15,6 +15,7 @@ namespace FungusToast.Unity.Campaign
         IncreaseFailedRunAdaptationCarryover = 1,
         UnlockMycovariant = 2,
         UnlockCampaignIntel = 3,
+        UnlockCampaignDraftRedraw = 4,
     }
 
     [Serializable]
@@ -99,6 +100,7 @@ namespace FungusToast.Unity.Campaign
     {
         public const string LegacySporesInReserveRewardId = "moldiness_reward_failed_run_adaptation_carryover";
         public const string StrainProfilingRewardId = "moldiness_unlock_campaign_ai_profile";
+        public const string SporeSiftingRewardId = "moldiness_unlock_campaign_draft_redraw";
 
         private static readonly ReadOnlyCollection<MoldinessUnlockDefinition> all =
             new ReadOnlyCollection<MoldinessUnlockDefinition>(
@@ -239,6 +241,14 @@ namespace FungusToast.Unity.Campaign
                         requiredUnlockLevel: 3,
                         categoryLabel: "Permanent Campaign Upgrade",
                         accentColor: UIStyleTokens.State.Info),
+                    new MoldinessUnlockDefinition(
+                        id: SporeSiftingRewardId,
+                        displayName: "Spore Sifting",
+                        description: "Once per campaign level, redraw the entire adaptation draft before choosing a card.",
+                        type: MoldinessUnlockType.UnlockCampaignDraftRedraw,
+                        requiredUnlockLevel: 5,
+                        categoryLabel: "Permanent Campaign Upgrade",
+                        accentColor: UIStyleTokens.Accent.Spore),
                     new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_hyphal_echo",
                         displayName: "Unlock Hyphal Echo",
@@ -472,6 +482,7 @@ namespace FungusToast.Unity.Campaign
                     break;
 
                 case MoldinessUnlockType.UnlockCampaignIntel:
+                case MoldinessUnlockType.UnlockCampaignDraftRedraw:
                     break;
             }
 

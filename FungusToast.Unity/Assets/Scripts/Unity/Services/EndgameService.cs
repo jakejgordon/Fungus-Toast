@@ -926,6 +926,18 @@ namespace FungusToast.Unity
                     }
 
                     onSelectionComplete?.Invoke();
+                },
+                campaignController.HasUnlockedCampaignAdaptationDraftRedraw,
+                campaignController.CanUsePendingAdaptationDraftRedraw,
+                () =>
+                {
+                    return campaignController.TryUsePendingAdaptationDraftRedraw(
+                        getRng(),
+                        3,
+                        getTestingModeEnabled() ? getForcedAdaptationId() : string.Empty,
+                        out var redrawnChoices)
+                        ? redrawnChoices
+                        : null;
                 });
 
             return true;
