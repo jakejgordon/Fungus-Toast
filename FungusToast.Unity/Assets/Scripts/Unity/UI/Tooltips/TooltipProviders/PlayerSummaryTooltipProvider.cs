@@ -42,6 +42,7 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             {
                 sb.AppendLine($"<b>Opponent:</b> {campaignAiProfile.FriendlyName}");
                 sb.AppendLine($"<b>Strategy:</b> {campaignAiProfile.AIPlayerIntentions}");
+                sb.AppendLine("<b>Campaign Unlock:</b> Strain Profiling");
             }
             else
             {

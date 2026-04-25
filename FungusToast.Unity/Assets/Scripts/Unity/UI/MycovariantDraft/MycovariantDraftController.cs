@@ -7,6 +7,7 @@ using FungusToast.Core.Players;
 using FungusToast.Unity.Effects;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI.Campaign;
+using FungusToast.Unity.UI.Tooltips;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -43,6 +44,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private const string CampaignAdaptationRedrawReadyLabel = "Use Spore Sifting";
         private const string CampaignAdaptationRedrawConfirmLabel = "Confirm Redraw";
         private const string CampaignAdaptationRedrawUsedLabel = "Spore Sifting Used";
+        private const string CampaignAdaptationRedrawTooltipText = "You unlocked the Spore Sifting moldiness reward, allowing you to redraw all Mycovariants to present new draft options once per level.";
 
         [Header("UI References")]
         [SerializeField] private GameObject draftPanel; // Main draft panel root
@@ -756,6 +758,14 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             campaignAdaptationRedrawButton.targetGraphic = buttonObject.GetComponent<Image>();
             UIStyleTokens.Button.ApplyStyle(campaignAdaptationRedrawButton, useSelectedAsNormal: true);
             campaignAdaptationRedrawButton.onClick.AddListener(OnCampaignAdaptationRedrawButtonClicked);
+
+            var redrawTooltipTrigger = buttonObject.GetComponent<TooltipTrigger>();
+            if (redrawTooltipTrigger == null)
+            {
+                redrawTooltipTrigger = buttonObject.AddComponent<TooltipTrigger>();
+            }
+
+            redrawTooltipTrigger.SetStaticText(CampaignAdaptationRedrawTooltipText);
 
             var buttonLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
             buttonLabelObject.transform.SetParent(buttonObject.transform, false);

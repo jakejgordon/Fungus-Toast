@@ -33,17 +33,57 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** task list cleared for now. Next up is deciding the next improvement wave for campaign progression, unlock content, and balance polish.
+- **Current focus:** tighten `Spore Sifting` so it only applies to Mycovariant drafts, not campaign Adaptation or Moldiness reward flows.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
 
-1. Review the current moldiness system as shipped and identify the highest-value next improvements.
-2. Choose the next implementation wave before adding new pending tasks here.
+1. Add a new permanent moldiness unlock named `Spore Sifting`.
+2. Make it grant exactly **one Mycovariant draft redraw per campaign level**.
+3. Surface the ability clearly in the Mycovariant draft UI with a dedicated non-card control, visible remaining-use state, and confirmation before use.
+4. Track/reset usage cleanly at the campaign level boundary so it cannot be spammed across multiple drafts in the same level.
+5. Validate behavior across Mycovariant draft flow, and ensure it does not appear in Adaptation or Moldiness reward flows before balancing further.
 
 ## Pending Tasks
 
-- None right now.
+- **Implement `Spore Sifting` permanent campaign upgrade**
+  - **Product decision:** this is the next moldiness permanent upgrade after `Strain Profiling`.
+  - **Name:** `Spore Sifting`
+  - **Concept:** a fungal-themed strategic reroll that improves draft consistency without directly buffing combat stats.
+  - **Exact behavior:**
+    - grants **1 redraw per level**, not per draft
+    - redraw replaces **all currently offered Mycovariant cards at once**
+    - can only be used **before** drafting one of the offered Mycovariants
+    - once used in a level, it is unavailable for the rest of that level's drafts
+    - usage should reset when the player starts the next campaign level/game
+  - **Why this version won:**
+    - cleaner and more legible than rerolling one card every draft
+    - less clicky and less balance-risky across the usual 3 to 4 drafts per level
+    - higher drama, better save-for-the-bad-roll gameplay, easier UI communication
+  - **Recommended implementation shape:**
+    - add a new moldiness unlock definition/card for `Spore Sifting`
+    - store persistent ownership in the existing moldiness unlock system
+    - store per-level consumed/not-consumed state separately from permanent ownership
+    - hook into the Mycovariant draft controller/service layer that generates the offer set so it can discard and regenerate the full offer set on command
+  - **UI requirements:**
+    - add a dedicated control separate from the Mycovariant draft cards, likely between the subtitle and the card row
+    - label it clearly, for example `Redraw Draft` with `Spore Sifting: 1 available this level`
+    - when spent, show persistent used-state text such as `Spore Sifting used this level`
+    - require a confirmation click/modal before consuming the redraw so the user cannot accidentally spend it while trying to draft a card
+    - avoid tiny per-card reroll icons or anything that could be confused with card selection
+    - if possible, animate old cards fading/shriveling away and new cards blooming in
+  - **Validation checklist for a fresh session:**
+    - verify the button only appears when the player owns `Spore Sifting`
+    - verify it appears on the relevant Mycovariant draft screens only
+    - verify it works for the full offered set, not a single card
+    - verify it cannot be used after picking a card from that draft
+    - verify it cannot be used twice in the same level across multiple Mycovariant drafts
+    - verify it resets correctly on the next level
+    - verify no accidental interaction with Adaptation reward resolution, pending Moldiness reward resolution, or testing overrides
+  - **Nice-to-have later, not MVP:**
+    - second stack/tier that grants 2 redraws per level
+    - richer fungal VFX/audio treatment
+    - broader routing/intel synergies with future campaign meta upgrades
 
 ## Current Handoff
 
@@ -93,6 +133,11 @@ Use the following minimal workflow to preserve working memory across sessions:
   - the visualization belongs in campaign menus, win/loss result panels, and moldiness reward context, not in the live match HUD
   - permanent campaign upgrades should keep the same overall card footprint as other moldiness rewards while using distinct iconography, accent styling, and category labels rather than different geometry
   - for pending moldiness reward resume flows, a simple opaque backdrop is currently preferred over spending more time on special bread-background rendering
+- Recent completed work from 2026-04-24:
+  - campaign-only `Strain Profiling` moldiness unlock was added so owned campaign runs reveal AI `FriendlyName` and `AIPlayerIntentions` in player-summary tooltips
+  - campaign-visible AI strategy ids were normalized to canonical `CMP_*` names with legacy alias resolution kept for compatibility
+  - campaign AI `AIPlayerIntentions` now come from deterministic generated text rather than relying only on hand-authored blurbs
+  - tooltip display was adjusted so unlocked AI profiles show `Opponent: {FriendlyName}` and `Strategy: {AIPlayerIntentions}` rather than exposing the technical strategy id
 - Latest completed polish/fix work from 2026-04-19:
   - campaign testing level override and temporary forced-adaptation flow were completed and pushed earlier in the day
   - forced-adaptation checklist scrolling, hit area, persistence, and stale-state clearing were fixed in Unity UI
@@ -100,4 +145,4 @@ Use the following minimal workflow to preserve working memory across sessions:
   - pending moldiness reward overlays were narrowed and centered, with right-sidebar suppression for the resume flow
   - mode select now surfaces `Campaign (Pending Reward)` and routes into pending reward resolution
   - pending reward claims entered from mode select now return to the campaign menu instead of jumping straight into gameplay
-- Immediate next implementation target: move from pending-state UX verification into broader moldiness progression tuning, reward-behavior decisions, and the next wave of unlock content.
+- Immediate next implementation target: keep `Spore Sifting` scoped to Mycovariant drafts only, with a once-per-level full redraw and no bleed into Adaptation or Moldiness reward flows.
