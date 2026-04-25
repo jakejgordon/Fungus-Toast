@@ -214,7 +214,7 @@ public static class MycovariantEffectProcessor
         }
 
         var humanPlayer = board.Players.FirstOrDefault(p => p.PlayerType == PlayerTypeEnum.Human && p.StartingTileId.HasValue);
-        if (humanPlayer == null || !draftingPlayer.StartingTileId.HasValue)
+            if (humanPlayer == null || !humanPlayer.StartingTileId.HasValue || !draftingPlayer.StartingTileId.HasValue)
         {
             playerMyco.MarkTriggered();
             return null;

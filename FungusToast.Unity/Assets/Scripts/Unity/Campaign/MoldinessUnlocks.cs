@@ -253,7 +253,7 @@ namespace FungusToast.Unity.Campaign
                     new MoldinessUnlockDefinition(
                         id: SporeSiftingRewardId,
                         displayName: "Spore Sifting",
-                        description: "Once per campaign level, redraw a Mycovariant draft offer before choosing a card."}]}{Jsiiքները to=functions.edit  重庆时时彩的 assistant to=functions.edit մեկնաբանություն  亂倫json error? need proper json. Let's do again.♀♀♀♀assistant to=functions.edit մեկնաբանություն  天天中彩票网 to=functions.edit  大发快三和值ి?  彩神争霸官网 కామენტరీ  天天中彩票人工 to=functions.edit  日本一本道json  一级a做爰片assistant to=functions.edit კომენტary  天天爱彩票app  大发极速json  content={
+                        description: "Once per campaign level, redraw a Mycovariant draft offer before choosing a card.",
                         type: MoldinessUnlockType.UnlockCampaignDraftRedraw,
                         requiredUnlockLevel: 5,
                         categoryLabel: "Permanent Campaign Upgrade",
