@@ -13,6 +13,7 @@ namespace FungusToast.Core.Mycovariants
             yield return PlasmidBountyIII();
             yield return AscusWager();
             yield return AscusBait();
+            yield return SporalSnare();
         }
 
         private static Mycovariant PlasmidBounty() =>
@@ -120,6 +121,30 @@ namespace FungusToast.Core.Mycovariants
                 AIScore = (player, board) => player.IsLastAiMycovariantDrafterForCurrentDraft
                     ? MycovariantGameBalance.AscusBaitPreferredAIScore
                     : MycovariantGameBalance.AscusBaitFallbackAIScore
+            };
+
+        private static Mycovariant SporalSnare() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.SporalSnareId,
+                Name = "Sporal Snare",
+                Description = $"The leading AI player always prefers drafting this Mycovariant, causing a line of living cells from the Human player to shoot toward the AI player's starting spore, reclaiming dead cells, infesting non-resistant living cells, and overgrowing toxins. If drafted by the Human player, grants {MycovariantGameBalance.SporalSnareMutationPointAward} mutation points.",
+                FlavorText = "A baited pore-mouth yawns open, inviting rival growth to thread a breach straight back through the taker's own lane.",
+            IconId = "myco_sporal_snare",
+                Type = MycovariantType.Economy,
+                Category = MycovariantCategory.Economy,
+                IsUniversal = true,
+                IsLocked = true,
+                RequiredMoldinessUnlockLevel = 6,
+                AutoMarkTriggered = false,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    MycovariantEffectProcessor.ResolveSporalSnare(playerMyco, board, rng, observer);
+                },
+                AIPrioritizeEarly = false,
+                AIScore = (player, board) => player.IsLastAiMycovariantDrafterForCurrentDraft
+                    ? MycovariantGameBalance.SporalSnarePreferredAIScore
+                    : MycovariantGameBalance.SporalSnareFallbackAIScore
             };
     }
 }

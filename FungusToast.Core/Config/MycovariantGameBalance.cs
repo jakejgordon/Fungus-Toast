@@ -26,6 +26,14 @@ namespace FungusToast.Core.Config
         public const float AscusBaitSelfCullPercentage = 0.10f;
         public const float AscusBaitPreferredAIScore = 99f;
         public const float AscusBaitFallbackAIScore = 0f;
+        public const int SporalSnareMutationPointAward = 10;
+        public const float SporalSnarePreferredAIScore = 99f;
+        public const float SporalSnareFallbackAIScore = 0f;
+        public const int SporalSnareDenseLineMaxBoardDimension = 18;
+        public const int SporalSnareMediumLineMaxBoardDimension = 36;
+        public const int SporalSnareDenseLineStride = 1;
+        public const int SporalSnareMediumLineStride = 2;
+        public const int SporalSnareSparseLineStride = 3;
 
         public const float NeutralizingMantleNeutralizeChance = 0.20f;
 

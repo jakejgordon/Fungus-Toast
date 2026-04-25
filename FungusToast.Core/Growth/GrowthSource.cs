@@ -180,6 +180,11 @@ namespace FungusToast.Core.Growth
         SeptalSeal,
 
         /// <summary>
+        /// Living breach projected by the Sporal Snare mycovariant.
+        /// </summary>
+        SporalSnare,
+
+        /// <summary>
         /// Free chained growth granted by claiming a Sporemeal Patch.
         /// </summary>
         SporemealPatch,

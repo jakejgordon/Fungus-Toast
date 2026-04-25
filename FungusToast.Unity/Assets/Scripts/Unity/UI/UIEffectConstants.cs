@@ -279,6 +279,7 @@ namespace FungusToast.Unity.UI
         /// and again after they complete, before reopening the draft window.
         /// </summary>
         public const float AIActiveMycovariantStaggerSeconds = 0.25f;
+        public const float SporalSnareTotalAnimationSeconds = 3f;
 
         // ==================== GAME PHASE TIMING CONSTANTS ====================
         

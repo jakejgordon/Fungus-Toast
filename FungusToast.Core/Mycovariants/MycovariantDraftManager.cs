@@ -160,8 +160,8 @@ namespace FungusToast.Core.Mycovariants
             var shuffled = uniqueEligible.OrderBy(x => rng.Next()).ToList();
             var choices = shuffled.Take(choicesCount).ToList();
 
-            // Only force for human player and if a forced ID is provided
-            if (forcedMycovariantId.HasValue && player.PlayerType == PlayerTypeEnum.Human)
+            // In testing mode, inject the forced mycovariant for the current drafter when eligible.
+            if (forcedMycovariantId.HasValue)
             {
                 // First check if the forced mycovariant is actually eligible from the pool
                 var forced = uniqueEligible.FirstOrDefault(m => m.Id == forcedMycovariantId.Value);
@@ -174,7 +174,7 @@ namespace FungusToast.Core.Mycovariants
                     else
                         choices[0] = forced;
                         
-                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Draft] Forced testing mycovariant '{forced.Name}' (ID: {forcedMycovariantId.Value}) into choices for human player");
+                    FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Draft] Forced testing mycovariant '{forced.Name}' (ID: {forcedMycovariantId.Value}) into choices for player {player.PlayerId}");
                 }
                 else if (forced == null)
                 {

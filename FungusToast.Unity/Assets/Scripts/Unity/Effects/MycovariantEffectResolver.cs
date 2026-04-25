@@ -40,6 +40,8 @@ namespace FungusToast.Unity.Effects
 
         public static bool IsHyphalDraw(int id) => id == MycovariantIds.HyphalDrawId;
 
+        public static bool IsSporalSnare(int id) => id == MycovariantIds.SporalSnareId;
+
         public IEnumerator ResolveEffect(
             Player player,
             Mycovariant mycovariant,
@@ -71,6 +73,19 @@ namespace FungusToast.Unity.Effects
             {
                 yield return StartCoroutine(
                     MycovariantEffectHelpers.HandleHyphalDraw(
+                        player,
+                        mycovariant,
+                        onComplete,
+                        draftPanel,
+                        gridVisualizer,
+                        GameManager.Instance
+                    )
+                );
+            }
+            else if (IsSporalSnare(mycovariant.Id))
+            {
+                yield return StartCoroutine(
+                    MycovariantEffectHelpers.HandleSporalSnare(
                         player,
                         mycovariant,
                         onComplete,

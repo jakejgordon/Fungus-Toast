@@ -77,7 +77,7 @@ namespace FungusToast.Core.Mycovariants
             var availableUniversal = _universalPool.Where(m =>
                 player.PlayerType != PlayerTypeEnum.AI
                 || player.IsLastAiMycovariantDrafterForCurrentDraft
-                || m.Id != MycovariantIds.AscusBaitId).ToList();
+                || (m.Id != MycovariantIds.AscusBaitId && m.Id != MycovariantIds.SporalSnareId)).ToList();
             eligible.AddRange(availableUniversal);
 
             FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Pool] Player {player.PlayerId} eligible: {availableNonUniversal.Count} non-universal + {availableUniversal.Count} universal = {eligible.Count} total");

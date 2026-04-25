@@ -131,6 +131,12 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 return;
             }
 
+            if (mycovariant?.IconId == "myco_sporal_snare")
+            {
+                DrawSporalSnareMotif(texture, accent, highlight);
+                return;
+            }
+
             if (mycovariant?.IconId == "myco_septal_seal")
             {
                 DrawSeptalSealMotif(texture, accent, highlight);
@@ -212,6 +218,20 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             ProceduralIconUtility.FillCircle(texture, 14, 22, 2, highlight);
             ProceduralIconUtility.FillCircle(texture, 26, 22, 2, highlight);
             ProceduralIconUtility.DrawLine(texture, 14, 22, 26, 22, accent, 1);
+        }
+
+        private static void DrawSporalSnareMotif(Texture2D texture, Color accent, Color highlight)
+        {
+            ProceduralIconUtility.DrawRing(texture, 14, 20, 7, 2, accent);
+            ProceduralIconUtility.DrawRing(texture, 14, 20, 10, 1, highlight);
+            ProceduralIconUtility.DrawLine(texture, 20, 20, 31, 20, accent, 2);
+            ProceduralIconUtility.DrawLine(texture, 24, 14, 31, 20, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 24, 26, 31, 20, highlight, 1);
+            ProceduralIconUtility.FillCircle(texture, 24, 20, 2, highlight);
+            ProceduralIconUtility.FillCircle(texture, 29, 20, 3, accent);
+            ProceduralIconUtility.DrawLine(texture, 29, 12, 29, 28, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 29, 28, 25, 24, highlight, 2);
+            ProceduralIconUtility.DrawLine(texture, 29, 28, 33, 24, highlight, 2);
         }
 
         private static void DrawSeptalSealMotif(Texture2D texture, Color accent, Color highlight)

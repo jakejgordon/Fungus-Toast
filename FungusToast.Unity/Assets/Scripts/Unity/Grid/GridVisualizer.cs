@@ -735,14 +735,14 @@ namespace FungusToast.Unity.Grid
             => _surgicalAnimator != null && toxinOverlayTile != null
             ? _surgicalAnimator.RunArcVolley(sourceTileId, destinationTileIds, toxinOverlayTile.sprite, onImpact)
                 : null;
-        public IEnumerator PlayHyphalBridgeAnimation(int playerId, int sourceTileId, IReadOnlyList<int> destinationTileIds)
+        public IEnumerator PlayHyphalBridgeAnimation(int playerId, int sourceTileId, IReadOnlyList<int> destinationTileIds, float durationScale = UIEffectConstants.HyphalBridgeSegmentDurationScale)
             => _launchArcAnimator != null
                 ? _launchArcAnimator.PlaySequence(
                     playerId,
                     sourceTileId,
                     destinationTileIds,
                     preserveSourceCell: true,
-                    durationScale: UIEffectConstants.HyphalBridgeSegmentDurationScale)
+                    durationScale: durationScale)
                 : null;
         public IEnumerator PlayHyphalDrawAnimation(int playerId, IReadOnlyList<(int sourceTileId, int destinationTileId)> moves)
             => _launchArcAnimator != null

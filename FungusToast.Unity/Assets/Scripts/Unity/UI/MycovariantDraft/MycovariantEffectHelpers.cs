@@ -1,5 +1,6 @@
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Grid;
@@ -309,6 +310,99 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             {
                 yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
             }
+
+            onComplete?.Invoke();
+        }
+
+        public static IEnumerator HandleSporalSnare(
+            Player player,
+            Mycovariant picked,
+            Action onComplete,
+            GameObject draftPanel,
+            GridVisualizer gridVisualizer,
+            GameManager gameManager)
+        {
+            if (gameManager == null)
+            {
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            var board = gameManager.Board;
+            var gameLogRouter = gameManager.GameUI.GameLogRouter;
+            var playerMyco = player.PlayerMycovariants
+                .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+
+            if (playerMyco == null)
+            {
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            draftPanel?.SetActive(false);
+
+            if (player.PlayerType == PlayerTypeEnum.AI)
+            {
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
+                var resolution = MycovariantEffectProcessor.ResolveSporalSnare(
+                    playerMyco,
+                    board,
+                    new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                    gameLogRouter);
+
+                var animatedTileIds = resolution?.SampledPathTileIds
+                    .Where(tileId =>
+                    {
+                        var cell = board.GetCell(tileId);
+                        return cell?.IsAlive == true
+                            && cell.OwnerPlayerId == resolution.HumanPlayerId
+                            && cell.SourceOfGrowth == GrowthSource.SporalSnare;
+                    })
+                    .ToList() ?? new List<int>();
+
+                if (animatedTileIds.Count > 0)
+                {
+                    gridVisualizer.RegisterPreAnimationHiddenPreviewTiles(animatedTileIds);
+                }
+
+                gridVisualizer.RenderBoard(board);
+
+                if (animatedTileIds.Count > 0)
+                {
+                    var availableBridgeSeconds = Mathf.Max(
+                        0.25f,
+                        UIEffectConstants.SporalSnareTotalAnimationSeconds
+                        - (UIEffectConstants.AIActiveMycovariantStaggerSeconds * 2f)
+                        - UIEffectConstants.JettingMyceliumPostVolleyHoldSeconds);
+                    var totalBaseBridgeSeconds = animatedTileIds.Count * UIEffectConstants.ConidialRelayTotalDurationSeconds;
+                    var durationScale = Mathf.Max(0.05f, availableBridgeSeconds / Mathf.Max(0.0001f, totalBaseBridgeSeconds));
+
+                    gameManager.PlayJettingMyceliumVolleySound();
+                    var breachAnimation = gridVisualizer.PlayHyphalBridgeAnimation(
+                        resolution!.HumanPlayerId,
+                        resolution.SourceTileId,
+                        animatedTileIds,
+                        durationScale);
+                    if (breachAnimation != null)
+                    {
+                        yield return breachAnimation;
+                    }
+
+                    gameManager.StopJettingMyceliumVolleySound();
+                    yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumPostVolleyHoldSeconds);
+                }
+
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            MycovariantEffectProcessor.ResolveSporalSnare(
+                playerMyco,
+                board,
+                new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                gameLogRouter);
+            gridVisualizer.RenderBoard(board);
 
             onComplete?.Invoke();
         }

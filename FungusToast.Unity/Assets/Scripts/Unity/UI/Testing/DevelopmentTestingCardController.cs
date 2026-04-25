@@ -437,7 +437,7 @@ namespace FungusToast.Unity.UI.Testing
                 for (int index = 0; index < sortedMycovariants.Count; index++)
                 {
                     var mycovariant = sortedMycovariants[index];
-                    mycovariantOptions.Add($"{mycovariant.Name} (ID: {mycovariant.Id})");
+                    mycovariantOptions.Add(mycovariant.Name);
                 }
 
                 mycovariantDropdown.ClearOptions();

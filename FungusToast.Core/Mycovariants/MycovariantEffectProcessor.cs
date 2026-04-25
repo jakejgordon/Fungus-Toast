@@ -53,6 +53,54 @@ public static class MycovariantEffectProcessor
         public bool HasAnyMovement => Moves.Count > 0;
     }
 
+    public sealed class SporalSnareResolution
+    {
+        public SporalSnareResolution(
+            int humanPlayerId,
+            int draftingPlayerId,
+            int sourceTileId,
+            int targetTileId,
+            IReadOnlyList<int> sampledPathTileIds,
+            int lineStride,
+            int colonized,
+            int infested,
+            int reclaimed,
+            int overgrown,
+            int skippedResistant,
+            int alreadyOwned,
+            int invalid)
+        {
+            HumanPlayerId = humanPlayerId;
+            DraftingPlayerId = draftingPlayerId;
+            SourceTileId = sourceTileId;
+            TargetTileId = targetTileId;
+            SampledPathTileIds = sampledPathTileIds;
+            LineStride = lineStride;
+            Colonized = colonized;
+            Infested = infested;
+            Reclaimed = reclaimed;
+            Overgrown = overgrown;
+            SkippedResistant = skippedResistant;
+            AlreadyOwned = alreadyOwned;
+            Invalid = invalid;
+        }
+
+        public int HumanPlayerId { get; }
+        public int DraftingPlayerId { get; }
+        public int SourceTileId { get; }
+        public int TargetTileId { get; }
+        public IReadOnlyList<int> SampledPathTileIds { get; }
+        public int LineStride { get; }
+        public int Colonized { get; }
+        public int Infested { get; }
+        public int Reclaimed { get; }
+        public int Overgrown { get; }
+        public int SkippedResistant { get; }
+        public int AlreadyOwned { get; }
+        public int Invalid { get; }
+        public bool HasAnyAction => Colonized + Infested + Reclaimed + Overgrown > 0;
+    }
+
     public static bool ResolveAscusWager(
         PlayerMycovariant playerMyco,
         GameBoard board,
@@ -142,6 +190,135 @@ public static class MycovariantEffectProcessor
 
         playerMyco.MarkTriggered();
         return killCount;
+    }
+
+    public static SporalSnareResolution? ResolveSporalSnare(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        var draftingPlayer = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+        if (draftingPlayer == null)
+        {
+            playerMyco.MarkTriggered();
+            return null;
+        }
+
+        if (draftingPlayer.PlayerType == PlayerTypeEnum.Human)
+        {
+            draftingPlayer.AddMutationPoints(MycovariantGameBalance.SporalSnareMutationPointAward);
+            playerMyco.IncrementEffectCount(MycovariantEffectType.MpBonus, MycovariantGameBalance.SporalSnareMutationPointAward);
+            playerMyco.MarkTriggered();
+            return null;
+        }
+
+        var humanPlayer = board.Players.FirstOrDefault(p => p.PlayerType == PlayerTypeEnum.Human && p.StartingTileId.HasValue);
+        if (humanPlayer == null || !draftingPlayer.StartingTileId.HasValue)
+        {
+            playerMyco.MarkTriggered();
+            return null;
+        }
+
+        int sourceTileId = humanPlayer.StartingTileId.Value;
+        int targetTileId = draftingPlayer.StartingTileId.Value;
+        var (sx, sy) = board.GetXYFromTileId(sourceTileId);
+        var (tx, ty) = board.GetXYFromTileId(targetTileId);
+
+        var sampledPathTileIds = BuildSporalSnarePath(board, sx, sy, tx, ty, out int lineStride);
+        int colonized = 0;
+        int infested = 0;
+        int reclaimed = 0;
+        int overgrown = 0;
+        int skippedResistant = 0;
+        int alreadyOwned = 0;
+        int invalid = 0;
+
+        foreach (int tileId in sampledPathTileIds)
+        {
+            var tile = board.GetTileById(tileId);
+            if (tile == null)
+            {
+                invalid++;
+                continue;
+            }
+
+            var existing = tile.FungalCell;
+            if (existing == null)
+            {
+                if (board.SpawnSporeForPlayer(humanPlayer, tileId, GrowthSource.SporalSnare))
+                {
+                    colonized++;
+                }
+                else
+                {
+                    invalid++;
+                }
+
+                continue;
+            }
+
+            if (existing.IsResistant)
+            {
+                skippedResistant++;
+                continue;
+            }
+
+            if (existing.IsDead)
+            {
+                if (board.TryReclaimDeadCell(humanPlayer.PlayerId, tileId, GrowthSource.SporalSnare, requireSameOwner: false))
+                {
+                    reclaimed++;
+                }
+                else
+                {
+                    invalid++;
+                }
+
+                continue;
+            }
+
+            var takeover = board.TakeoverCell(tileId, humanPlayer.PlayerId, allowToxin: true, GrowthSource.SporalSnare, players: board.Players, rng: rng, observer: observer);
+            switch (takeover)
+            {
+                case FungalCellTakeoverResult.Infested:
+                    infested++;
+                    break;
+                case FungalCellTakeoverResult.Reclaimed:
+                    reclaimed++;
+                    break;
+                case FungalCellTakeoverResult.Overgrown:
+                    overgrown++;
+                    break;
+                case FungalCellTakeoverResult.AlreadyOwned:
+                    alreadyOwned++;
+                    break;
+                default:
+                    invalid++;
+                    break;
+            }
+        }
+
+        if (infested > 0) playerMyco.IncrementEffectCount(MycovariantEffectType.Infested, infested);
+        if (reclaimed > 0) playerMyco.IncrementEffectCount(MycovariantEffectType.Reclaimed, reclaimed);
+        if (overgrown > 0) playerMyco.IncrementEffectCount(MycovariantEffectType.CatabolicGrowth, overgrown);
+        if (colonized > 0) playerMyco.IncrementEffectCount(MycovariantEffectType.Colonized, colonized);
+        playerMyco.MarkTriggered();
+
+        return new SporalSnareResolution(
+            humanPlayer.PlayerId,
+            draftingPlayer.PlayerId,
+            sourceTileId,
+            targetTileId,
+            sampledPathTileIds,
+            lineStride,
+            colonized,
+            infested,
+            reclaimed,
+            overgrown,
+            skippedResistant,
+            alreadyOwned,
+            invalid);
     }
 
     public static void ResolveJettingMycelium(
@@ -1389,6 +1566,53 @@ public static class MycovariantEffectProcessor
             if (e2 < dx){ err += dx; y += sy; }
         }
         return points;
+    }
+
+    public static IReadOnlyList<int> BuildSporalSnarePath(GameBoard board, int startX, int startY, int endX, int endY, out int lineStride)
+    {
+        var fullLine = GenerateBresenhamLine(startX, startY, endX, endY)
+            .Select(point => point.y * board.Width + point.x)
+            .ToList();
+
+        lineStride = GetSporalSnareLineStride(board);
+        if (fullLine.Count <= 1)
+        {
+            return new List<int>();
+        }
+
+        var sampled = new List<int>();
+        for (int index = 1; index < fullLine.Count; index++)
+        {
+            bool shouldInclude = ((index - 1) % lineStride) == 0 || index == fullLine.Count - 1;
+            if (!shouldInclude)
+            {
+                continue;
+            }
+
+            int tileId = fullLine[index];
+            if (sampled.Count == 0 || sampled[sampled.Count - 1] != tileId)
+            {
+                sampled.Add(tileId);
+            }
+        }
+
+        return sampled;
+    }
+
+    public static int GetSporalSnareLineStride(GameBoard board)
+    {
+        int maxDimension = Math.Max(board.Width, board.Height);
+        if (maxDimension <= MycovariantGameBalance.SporalSnareDenseLineMaxBoardDimension)
+        {
+            return MycovariantGameBalance.SporalSnareDenseLineStride;
+        }
+
+        if (maxDimension <= MycovariantGameBalance.SporalSnareMediumLineMaxBoardDimension)
+        {
+            return MycovariantGameBalance.SporalSnareMediumLineStride;
+        }
+
+        return MycovariantGameBalance.SporalSnareSparseLineStride;
     }
 
     public static void OnPreGrowthPhase_AggressotropicConduit(
