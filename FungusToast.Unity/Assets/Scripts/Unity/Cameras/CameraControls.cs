@@ -164,13 +164,30 @@ namespace FungusToast.Unity.Cameras
         {
             float dynamicMaxZoom = maxZoom;
 
-            if (cameraCenterer != null && cameraCenterer.HasInitialFraming)
+            if (ShouldApplySmallBoardZoomCap() && cameraCenterer != null && cameraCenterer.HasInitialFraming)
             {
                 float framedZoomCap = cameraCenterer.InitialOrthographicSize * Mathf.Max(1f, maxZoomOutRelativeToInitialFraming);
                 dynamicMaxZoom = Mathf.Min(dynamicMaxZoom, framedZoomCap);
             }
 
             return Mathf.Max(GetDynamicMinZoom(), dynamicMaxZoom);
+        }
+
+        private bool ShouldApplySmallBoardZoomCap()
+        {
+            Camera camera = Camera.main;
+            if (camera == null || gameManager?.Board == null || cameraCenterer == null || !cameraCenterer.HasInitialFraming)
+            {
+                return false;
+            }
+
+            GetBoardExtents(out float boardMinX, out float boardMaxX, out float boardMinY, out float boardMaxY);
+            float boardWidth = boardMaxX - boardMinX;
+            float boardHeight = boardMaxY - boardMinY;
+            float viewWidthAtInitialFraming = 2f * cameraCenterer.InitialOrthographicSize * camera.aspect;
+            float viewHeightAtInitialFraming = 2f * cameraCenterer.InitialOrthographicSize;
+
+            return boardWidth <= viewWidthAtInitialFraming && boardHeight <= viewHeightAtInitialFraming;
         }
 
         private void GetBoardExtents(out float minX, out float maxX, out float minY, out float maxY)
