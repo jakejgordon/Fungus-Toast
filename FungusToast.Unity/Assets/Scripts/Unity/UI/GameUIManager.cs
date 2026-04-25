@@ -37,6 +37,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private UI_PauseMenuPanel pauseMenuPanel;
         [SerializeField] private Sprite pauseMenuButtonIcon;
         [SerializeField] private Sprite nextTrackButtonIcon;
+        [SerializeField] private Sprite nextTrackMenuButtonIcon;
 
         [Header("Phase Transitions")]
         [SerializeField] private UI_PhaseBanner phaseBanner;
@@ -89,6 +90,7 @@ namespace FungusToast.Unity.UI
         public UI_PauseMenuPanel PauseMenuPanel => pauseMenuPanel;
         public Sprite PauseMenuButtonIcon => pauseMenuButtonIcon;
         public Sprite NextTrackButtonIcon => nextTrackButtonIcon;
+        public Sprite NextTrackMenuButtonIcon => nextTrackMenuButtonIcon != null ? nextTrackMenuButtonIcon : nextTrackButtonIcon;
         public UI_PhaseBanner PhaseBanner => phaseBanner;
         public UI_MoldProfileRoot MoldProfileRoot => moldProfileRoot;
 

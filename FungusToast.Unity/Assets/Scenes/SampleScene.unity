@@ -111415,6 +111415,7 @@ MonoBehaviour:
   pauseMenuPanel: {fileID: 0}
   pauseMenuButtonIcon: {fileID: 21300000, guid: 761a24c9f8ae3fe41ad60558bafb0887, type: 3}
   nextTrackButtonIcon: {fileID: 21300000, guid: 99e787abb9d5b1f469a7c8814108cf35, type: 3}
+  nextTrackMenuButtonIcon: {fileID: 21300000, guid: f8e87288f8af46b09ec29de11b5709b6, type: 3}
   phaseBanner: {fileID: 247844408}
   phaseProgressTracker: {fileID: 518604235}
 --- !u!4 &948889970

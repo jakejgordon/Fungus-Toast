@@ -403,7 +403,13 @@ namespace FungusToast.Unity.UI
             musicVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty, width: PauseMenuPrimaryButtonWidth, secondaryStyle: true);
             musicVolumeButton.onClick.AddListener(OnMusicVolumeClicked);
 
-            nextTrackMenuButton = CreateActionButton(soundSettingsRoot.transform, "Next Track", gameUI != null ? gameUI.NextTrackButtonIcon : null, PauseMenuPrimaryButtonWidth, secondaryStyle: true);
+            nextTrackMenuButton = CreateActionButton(
+                soundSettingsRoot.transform,
+                "Next Track",
+                gameUI != null ? gameUI.NextTrackMenuButtonIcon : null,
+                PauseMenuPrimaryButtonWidth,
+                secondaryStyle: true,
+                iconColor: UIStyleTokens.Text.Primary);
             nextTrackMenuButton.onClick.AddListener(OnNextTrackClicked);
 
             TooltipTrigger nextTrackTooltip = nextTrackMenuButton.gameObject.AddComponent<TooltipTrigger>();
@@ -545,7 +551,8 @@ namespace FungusToast.Unity.UI
             Sprite icon = null,
             float width = PauseMenuPrimaryButtonWidth,
             bool secondaryStyle = false,
-            bool useSelectedAsNormal = false)
+            bool useSelectedAsNormal = false,
+            Color? iconColor = null)
         {
             GameObject buttonObject = CreateUiObject(labelText.Replace(" ", string.Empty) + "Button", parent);
 
@@ -575,7 +582,12 @@ namespace FungusToast.Unity.UI
                 contentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
                 contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-                CreateIconLayoutImage(contentRoot.transform, "ButtonIcon", icon, ActionButtonIconSize);
+                CreateIconLayoutImage(
+                    contentRoot.transform,
+                    "ButtonIcon",
+                    icon,
+                    ActionButtonIconSize,
+                    iconColor ?? UIStyleTokens.Button.TextDefault);
 
                 TextMeshProUGUI iconLabel = CreateActionButtonContentLabel(contentRoot.transform, labelText);
                 iconLabel.alignment = TextAlignmentOptions.Center;
@@ -746,12 +758,12 @@ namespace FungusToast.Unity.UI
             return iconImage;
         }
 
-        private static Image CreateIconLayoutImage(Transform parent, string name, Sprite icon, float size)
+        private static Image CreateIconLayoutImage(Transform parent, string name, Sprite icon, float size, Color color)
         {
             GameObject iconObject = CreateUiObject(name, parent);
             Image iconImage = iconObject.AddComponent<Image>();
             iconImage.sprite = icon;
-            iconImage.color = UIStyleTokens.Button.TextDefault;
+            iconImage.color = color;
             iconImage.preserveAspect = true;
             iconImage.raycastTarget = false;
 
