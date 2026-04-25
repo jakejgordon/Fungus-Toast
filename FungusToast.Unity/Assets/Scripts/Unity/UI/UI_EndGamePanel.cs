@@ -85,6 +85,7 @@ namespace FungusToast.Unity.UI
         private const float DetailsDismissButtonSize = 44f;
         private const float DetailsHeaderIconSize = 56f;
         private const float DetailsSectionSpacing = 12f;
+        private const float DefeatCarryoverInfoFontSize = 23f;
 
         /* ─────────── Inspector ─────────── */
         [Header("UI References")]
@@ -136,6 +137,7 @@ namespace FungusToast.Unity.UI
         private ScrollRect endGameResultsScrollRect;
         private TextMeshProUGUI legacyResultsTitleText;
         private RectTransform endGamePostAdaptationRoot;
+        private TextMeshProUGUI endGamePostAdaptationHelperLabel;
         private DevelopmentTestingCardController postVictoryTestingCardController;
         private bool runtimeLayoutRefreshQueued;
         private bool isRefreshingRuntimeLayout;
@@ -399,6 +401,12 @@ namespace FungusToast.Unity.UI
             showCampaignLossActionStack = !victory;
             var presentationSnapshot = EnsureCampaignOutcomePresentationSnapshot(campaignSnapshot, victory, levelDisplay);
             cachedCampaignVictorySnapshot = presentationSnapshot;
+
+            if (!victory)
+            {
+                ConfigurePendingDefeatCarryoverEvent(defeatCarryoverOptions, defeatCarryoverCapacity, DefeatCarryoverEntryMode.ImmediateLossScreen);
+            }
+
             ShowCampaignOutcomeRows(ranked, board, playerStatistics, presentationSnapshot, victory);
             SetLegacyResultsHeaderVisibility(false);
             SetOutcomeBannerVisibility(true);
@@ -411,7 +419,8 @@ namespace FungusToast.Unity.UI
                     // defeat – show lost level index (1-based)
                     outcomeLabel.text =
                         $"<color=#{ToHex(UIStyleTokens.State.Danger)}><b>Campaign lost</b></color>\n" +
-                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Level {lostLevelDisplay}</color></size>";
+                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Level {lostLevelDisplay}</color></size>\n" +
+                        $"<size=22><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Oh no! You just weren't moldy enough.</color></size>";
                 }
                 else if (finalLevel)
                 {
@@ -450,8 +459,6 @@ namespace FungusToast.Unity.UI
 
             if (!victory)
             {
-                ConfigurePendingDefeatCarryoverEvent(defeatCarryoverOptions, defeatCarryoverCapacity, DefeatCarryoverEntryMode.ImmediateLossScreen);
-
                 if (hasPendingDefeatCarryoverEvent)
                 {
                     if (continueButton != null)
@@ -712,7 +719,7 @@ namespace FungusToast.Unity.UI
             if (outcomeLabel != null)
             {
                 string subtitle = entryMode == DefeatCarryoverEntryMode.DeferredResumePrompt
-                    ? $"These spores are waiting from your last failed campaign. Choose {defeatCarryoverSelectionCapacity} adaptation{Pluralize(defeatCarryoverSelectionCapacity)} to carry into your next run."
+                    ? "Your preserved spores are waiting. Choose which adaptations carry into the next run."
                     : $"Choose {defeatCarryoverSelectionCapacity} adaptation{Pluralize(defeatCarryoverSelectionCapacity)} to carry into your next run.";
                 outcomeLabel.text =
                     $"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Preserve your spores</b></color>\n" +
@@ -1031,6 +1038,24 @@ namespace FungusToast.Unity.UI
                 FontStyles.Bold);
             title.alignment = TextAlignmentOptions.Center;
 
+            var helper = CreateCarryoverInfoText(root.transform,
+                GetDefeatCarryoverSelectionHelperText(Mathf.Max(0, selectionCapacity), pendingDefeatCarryoverEntryMode),
+                DefeatCarryoverInfoFontSize,
+                UIStyleTokens.Text.Secondary,
+                FontStyles.Normal);
+            helper.alignment = TextAlignmentOptions.Center;
+
+            string sporesBlurb = FormatSporesInReserveCarryoverText(Mathf.Max(0, selectionCapacity), isSelectionScreen: true);
+            if (!string.IsNullOrWhiteSpace(sporesBlurb))
+            {
+                var carryoverInfo = CreateCarryoverInfoText(root.transform,
+                    sporesBlurb,
+                    DefeatCarryoverInfoFontSize,
+                    UIStyleTokens.Text.Secondary,
+                    FontStyles.Normal);
+                carryoverInfo.alignment = TextAlignmentOptions.Center;
+            }
+
             var subtitle = CreateCarryoverInfoText(root.transform,
                 $"Selected 0 / {Mathf.Max(0, selectionCapacity)}. Click icons to choose your carryover adaptations. Hover to inspect details.",
                 22f,
@@ -1215,6 +1240,28 @@ namespace FungusToast.Unity.UI
             label.textWrappingMode = TextWrappingModes.Normal;
             label.alignment = TextAlignmentOptions.Center;
             return label;
+        }
+
+        private static string GetDefeatCarryoverSelectionHelperText(int selectionCapacity, DefeatCarryoverEntryMode entryMode)
+        {
+            if (entryMode == DefeatCarryoverEntryMode.DeferredResumePrompt)
+            {
+                return $"These spores are waiting from your last failed campaign. Choose exactly {selectionCapacity} adaptation{Pluralize(selectionCapacity)} to preserve for the next run.";
+            }
+
+            return "Choose which adaptations you want to keep before you return to the campaign menu.";
+        }
+
+        private static string FormatSporesInReserveCarryoverText(int carryoverCapacity, bool isSelectionScreen)
+        {
+            if (carryoverCapacity <= 0)
+            {
+                return null;
+            }
+
+            return isSelectionScreen
+                ? $"Your Spores in Reserve reward allows you to preserve {carryoverCapacity} adaptation{Pluralize(carryoverCapacity)} to carry over into the next campaign run."
+                : $"Since you unlocked Spores in Reserve, you can preserve {carryoverCapacity} adaptation{Pluralize(carryoverCapacity)} to carry over into the next campaign run.";
         }
 
         private void BuildCampaignMoldinessSummaryContent(CampaignVictorySnapshot snapshot, bool victory, Transform parentOverride = null)
@@ -3241,8 +3288,44 @@ namespace FungusToast.Unity.UI
             confirmationElement.minHeight = 0f;
             confirmationElement.preferredHeight = -1f;
 
+            EnsurePostAdaptationHelperLabel();
+
             EnsureScrollableResultsContent();
             EnsureLegacyResultsTitlePlacement();
+        }
+
+        private void EnsurePostAdaptationHelperLabel()
+        {
+            if (endGamePostAdaptationRoot == null)
+            {
+                return;
+            }
+
+            if (endGamePostAdaptationHelperLabel == null)
+            {
+                var helperObject = new GameObject("UI_EndGamePostAdaptationHelperText", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+                helperObject.transform.SetParent(endGamePostAdaptationRoot, false);
+                endGamePostAdaptationHelperLabel = helperObject.GetComponent<TextMeshProUGUI>();
+            }
+
+            var helperRect = endGamePostAdaptationHelperLabel.rectTransform;
+            helperRect.SetParent(endGamePostAdaptationRoot, false);
+            helperRect.localScale = Vector3.one;
+
+            var helperLayout = endGamePostAdaptationHelperLabel.GetComponent<LayoutElement>();
+            helperLayout.minWidth = EndGameConfirmationStackWidth;
+            helperLayout.preferredWidth = EndGameConfirmationStackWidth;
+            helperLayout.flexibleWidth = 0f;
+            helperLayout.minHeight = 0f;
+            helperLayout.preferredHeight = -1f;
+
+            endGamePostAdaptationHelperLabel.enableAutoSizing = false;
+            endGamePostAdaptationHelperLabel.fontSize = DefeatCarryoverInfoFontSize;
+            endGamePostAdaptationHelperLabel.fontStyle = FontStyles.Normal;
+            endGamePostAdaptationHelperLabel.color = UIStyleTokens.Text.Secondary;
+            endGamePostAdaptationHelperLabel.alignment = TextAlignmentOptions.Center;
+            endGamePostAdaptationHelperLabel.textWrappingMode = TextWrappingModes.Normal;
+            endGamePostAdaptationHelperLabel.overflowMode = TextOverflowModes.Overflow;
         }
 
         private void EnsureLegacyResultsTitlePlacement()
@@ -3430,6 +3513,7 @@ namespace FungusToast.Unity.UI
             {
                 EnsureRuntimeLayoutScaffold();
                 ApplyPostVictoryTestingRailVisibility(reloadConfiguration: false);
+                UpdatePostAdaptationHelperText();
                 EnsureActionButtonsShareContainer();
 
                 var shellLayout = endGameContentShellRoot != null ? endGameContentShellRoot.GetComponent<HorizontalLayoutGroup>() : null;
@@ -3512,6 +3596,18 @@ namespace FungusToast.Unity.UI
                     }
 
                     if (requiresMoldinessRewardSelection)
+                    {
+                        if (endGameResultsScrollRoot != null)
+                        {
+                            endGameResultsScrollRoot.SetSiblingIndex(1);
+                        }
+
+                        if (endGamePostAdaptationRoot != null)
+                        {
+                            endGamePostAdaptationRoot.SetSiblingIndex(2);
+                        }
+                    }
+                    else if (requiresDefeatCarryoverSelection || showCampaignLossActionStack)
                     {
                         if (endGameResultsScrollRoot != null)
                         {
@@ -4535,6 +4631,13 @@ namespace FungusToast.Unity.UI
             int nextIndex = 0;
             if (UseVerticalActionStack)
             {
+                bool hasHelperText = endGamePostAdaptationHelperLabel != null && endGamePostAdaptationHelperLabel.gameObject.activeSelf;
+                if (hasHelperText)
+                {
+                    endGamePostAdaptationHelperLabel.transform.SetSiblingIndex(0);
+                    nextIndex = 1;
+                }
+
                 if (continueButton != null)
                 {
                     continueButton.transform.SetSiblingIndex(nextIndex);
@@ -4583,6 +4686,26 @@ namespace FungusToast.Unity.UI
                 ConfigureActionBarButtonLayout(playAgainButton);
                 ConfigureActionBarButtonLayout(continueButton);
                 ConfigureActionBarButtonLayout(exitButton);
+            }
+        }
+
+        private void UpdatePostAdaptationHelperText()
+        {
+            EnsurePostAdaptationHelperLabel();
+            if (endGamePostAdaptationHelperLabel == null)
+            {
+                return;
+            }
+
+            string helperText = showCampaignLossActionStack
+                ? FormatSporesInReserveCarryoverText(defeatCarryoverSelectionCapacity, isSelectionScreen: false)
+                : null;
+
+            bool hasHelperText = !string.IsNullOrWhiteSpace(helperText);
+            endGamePostAdaptationHelperLabel.gameObject.SetActive(hasHelperText);
+            if (hasHelperText)
+            {
+                endGamePostAdaptationHelperLabel.text = helperText;
             }
         }
 
