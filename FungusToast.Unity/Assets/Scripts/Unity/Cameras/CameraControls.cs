@@ -36,6 +36,12 @@ namespace FungusToast.Unity.Cameras
         [Tooltip("Extra padding beyond board edges when auto-calculating (in world units)")]
         public float autoBoundsPadding = 25f;
 
+        [Header("Small Board Safeguards")]
+        [Tooltip("Maximum zoom-out multiplier relative to the initial board framing. Keeps tiny boards from shrinking to a speck.")]
+        [SerializeField] private float maxZoomOutRelativeToInitialFraming = 1.12f;
+        [Tooltip("For boards smaller than the viewport, keep at least this fraction of the board visible on each axis while panning.")]
+        [SerializeField] [Range(0.5f, 1f)] private float minVisibleSmallBoardFraction = 0.85f;
+
         void Update()
         {
             if (GameManager.Instance != null && GameManager.Instance.IsPauseMenuOpen)
@@ -69,7 +75,7 @@ namespace FungusToast.Unity.Cameras
 
                     // 2. Apply zoom
                     size -= scroll * GetZoomSpeedForCurrentBoard();
-                    size = Mathf.Clamp(size, minZoom, maxZoom);
+                    size = Mathf.Clamp(size, GetDynamicMinZoom(), GetDynamicMaxZoom());
                     cam.orthographicSize = size;
 
                     // 3. Get world position under mouse after zoom
@@ -85,7 +91,7 @@ namespace FungusToast.Unity.Cameras
                 else
                 {
                     // If no zoom, just clamp orthographic size
-                    size = Mathf.Clamp(size, minZoom, maxZoom);
+                    size = Mathf.Clamp(size, GetDynamicMinZoom(), GetDynamicMaxZoom());
                     mainCamera.orthographicSize = size;
                 }
 
@@ -145,58 +151,105 @@ namespace FungusToast.Unity.Cameras
                 return maxPanDistancePerFrame;
             }
 
-            float zoomScale = camera.orthographicSize / Mathf.Max(0.01f, minZoom);
+            float zoomScale = camera.orthographicSize / Mathf.Max(0.01f, GetDynamicMinZoom());
             return maxPanDistancePerFrame * Mathf.Max(1f, zoomScale);
         }
 
+        private float GetDynamicMinZoom()
+        {
+            return minZoom;
+        }
+
+        private float GetDynamicMaxZoom()
+        {
+            float dynamicMaxZoom = maxZoom;
+
+            if (cameraCenterer != null && cameraCenterer.HasInitialFraming)
+            {
+                float framedZoomCap = cameraCenterer.InitialOrthographicSize * Mathf.Max(1f, maxZoomOutRelativeToInitialFraming);
+                dynamicMaxZoom = Mathf.Min(dynamicMaxZoom, framedZoomCap);
+            }
+
+            return Mathf.Max(GetDynamicMinZoom(), dynamicMaxZoom);
+        }
+
+        private void GetBoardExtents(out float minX, out float maxX, out float minY, out float maxY)
+        {
+            int boardWidth = gameManager.Board.Width;
+            int boardHeight = gameManager.Board.Height;
+            int visualPaddingTiles = Mathf.Max(0, gameManager.gridVisualizer?.CurrentBoardVisualPaddingTiles ?? 0);
+
+            minX = -visualPaddingTiles;
+            minY = -visualPaddingTiles;
+            maxX = boardWidth + visualPaddingTiles;
+            maxY = boardHeight + visualPaddingTiles;
+        }
+
         /// <summary>
-        /// Simple bounds that prevent the camera from moving too far from the board center.
-        /// This ensures players can always find their way back to the game area while allowing
-        /// generous panning freedom around the board.
+        /// Clamp camera movement against the actual board footprint rather than a loose radius.
+        /// Small boards keep most of the toast visible; large boards still allow edge exploration.
         /// </summary>
         private Vector3 ClampCameraPosition(Vector3 desiredPosition)
         {
-            if (Camera.main == null || gameManager?.Board == null)
+            Camera camera = Camera.main;
+            if (camera == null || gameManager?.Board == null)
+            {
                 return desiredPosition;
-
-            // Get the board center (matching CameraCenterer calculation)
-            int boardWidth = gameManager.Board.Width;
-            int boardHeight = gameManager.Board.Height;
-            float sidebarOffsetInUnits = cameraCenterer != null ? cameraCenterer.sidebarWidthInUnits : 5f;
-            
-            float boardCenterX = (boardWidth / 2f) + (sidebarOffsetInUnits / 2f);
-            float boardCenterY = boardHeight / 2f;
-            Vector3 boardCenter = new Vector3(boardCenterX, boardCenterY, desiredPosition.z);
-
-            // Calculate effective max distance
-            float effectiveMaxDistance;
-            if (autoCalculateBounds)
-            {
-                // Auto-calculate based on board size: distance to furthest corner + padding
-                float maxBoardRadius = Mathf.Max(boardWidth, boardHeight) / 2f;
-                effectiveMaxDistance = maxBoardRadius + autoBoundsPadding;
-            }
-            else
-            {
-                // Use manual setting
-                effectiveMaxDistance = maxDistanceFromCenter;
             }
 
-            // Calculate distance from board center
-            float distanceFromCenter = Vector2.Distance(
-                new Vector2(desiredPosition.x, desiredPosition.y),
-                new Vector2(boardCenter.x, boardCenter.y)
-            );
+            GetBoardExtents(out float boardMinX, out float boardMaxX, out float boardMinY, out float boardMaxY);
 
-            // If within allowed distance, no clamping needed
-            if (distanceFromCenter <= effectiveMaxDistance)
-                return desiredPosition;
+            float viewHalfHeight = camera.orthographicSize;
+            float viewHalfWidth = camera.orthographicSize * camera.aspect;
+            float boardWidth = boardMaxX - boardMinX;
+            float boardHeight = boardMaxY - boardMinY;
 
-            // Clamp to max distance from center
-            Vector2 direction = (new Vector2(desiredPosition.x, desiredPosition.y) - new Vector2(boardCenter.x, boardCenter.y)).normalized;
-            Vector2 clampedPosition = new Vector2(boardCenter.x, boardCenter.y) + direction * effectiveMaxDistance;
+            float clampedX = ClampAxis(
+                desiredPosition.x,
+                boardMinX,
+                boardMaxX,
+                boardWidth,
+                viewHalfWidth,
+                allowFullBoardOffscreen: false);
+            float clampedY = ClampAxis(
+                desiredPosition.y,
+                boardMinY,
+                boardMaxY,
+                boardHeight,
+                viewHalfHeight,
+                allowFullBoardOffscreen: false);
 
-            return new Vector3(clampedPosition.x, clampedPosition.y, desiredPosition.z);
+            return new Vector3(clampedX, clampedY, desiredPosition.z);
+        }
+
+        private float ClampAxis(
+            float desiredCenter,
+            float boardMin,
+            float boardMax,
+            float boardSize,
+            float viewHalfSpan,
+            bool allowFullBoardOffscreen)
+        {
+            float viewSpan = viewHalfSpan * 2f;
+
+            if (boardSize <= viewSpan)
+            {
+                float visibleRequirement = boardSize * minVisibleSmallBoardFraction;
+                float minCenter = boardMin + visibleRequirement - viewHalfSpan;
+                float maxCenter = boardMax - visibleRequirement + viewHalfSpan;
+                return Mathf.Clamp(desiredCenter, minCenter, maxCenter);
+            }
+
+            if (!autoCalculateBounds)
+            {
+                float boardCenter = (boardMin + boardMax) * 0.5f;
+                return Mathf.Clamp(desiredCenter, boardCenter - maxDistanceFromCenter, boardCenter + maxDistanceFromCenter);
+            }
+
+            float edgePadding = allowFullBoardOffscreen ? autoBoundsPadding : Mathf.Min(autoBoundsPadding, boardSize * 0.25f);
+            float minLargeBoardCenter = boardMin + viewHalfSpan - edgePadding;
+            float maxLargeBoardCenter = boardMax - viewHalfSpan + edgePadding;
+            return Mathf.Clamp(desiredCenter, minLargeBoardCenter, maxLargeBoardCenter);
         }
     }
 }

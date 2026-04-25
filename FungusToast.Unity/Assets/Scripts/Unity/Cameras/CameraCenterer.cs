@@ -21,6 +21,10 @@ namespace FungusToast.Unity.Cameras
         private Vector3 _initialPosition;
         private float _initialOrthographicSize;
 
+        public bool HasInitialFraming => _initialFramingCaptured;
+        public float InitialOrthographicSize => _initialOrthographicSize;
+        public Vector3 InitialPosition => _initialPosition;
+
         private void Awake()
         {
             if (leftSidebarRect) _canvasScaler = leftSidebarRect.GetComponentInParent<CanvasScaler>();
