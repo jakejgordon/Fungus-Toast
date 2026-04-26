@@ -1626,6 +1626,11 @@ namespace FungusToast.Unity
                 || testingMycovariantId.HasValue;
         }
 
+        private bool ShouldSkipTestingStartupEffects()
+        {
+            return testingModeEnabled && testingSkipToEndgameAfterFastForward;
+        }
+
         private IEnumerator PlayStartingSporeIntroAndContinue()
         {
             yield return PlayGameplayEntryFlow(applyStartingSporeEffects: true, allowSkippingIntroForTesting: true);
@@ -1640,6 +1645,7 @@ namespace FungusToast.Unity
         {
             List<int> startingIds = ResolveStartingSporeIntroTileIds();
             bool skipStartingSporeIntro = allowSkippingIntroForTesting && ShouldSkipStartingSporeIntro();
+            bool skipTestingStartupEffects = ShouldSkipTestingStartupEffects();
             gameUIManager.LoadingScreen?.SetStatus("Spores are landing…");
             if (startingIds.Count > 0 && !skipStartingSporeIntro)
             {
@@ -1654,12 +1660,16 @@ namespace FungusToast.Unity
                 gameUIManager.LoadingScreen?.FadeOut();
             }
 
-            if (applyStartingSporeEffects)
+            if (applyStartingSporeEffects && !skipTestingStartupEffects)
             {
                 AdaptationEffectProcessor.OnStartingSporesEstablished(Board, players, rng);
             }
 
-            if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
+            if (skipTestingStartupEffects)
+            {
+                specialEventPresentationService?.Reset();
+            }
+            else if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
             {
                 yield return specialEventPresentationService.PresentPendingImmediate();
             }
