@@ -21,7 +21,7 @@ namespace FungusToast.Unity.Campaign
         public int humanMoldIndex = 0; // selected mold icon for the single campaign human player
         public bool pendingAdaptationSelection; // true when player must pick adaptation before continuing
         public List<string> pendingAdaptationDraftChoiceIds = new(); // persisted adaptation offer shown for the current pending selection
-        public bool pendingAdaptationDraftRedrawUsed; // true once Spore Sifting has been consumed for the current level's pending adaptation draft
+        public bool pendingAdaptationDraftRedrawUsed; // legacy field name; true once Spore Sifting has been consumed for the current level's pending redraw-enabled draft
         public bool campaignCompleted; // true after final victory
         public CampaignVictorySnapshot pendingVictorySnapshot; // serialized scoreboard snapshot for pending adaptation resumes
         public bool pendingDefeatCarryoverSelection; // true when player must choose preserved adaptations before resetting the run

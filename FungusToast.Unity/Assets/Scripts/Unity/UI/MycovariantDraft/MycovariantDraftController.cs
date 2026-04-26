@@ -985,7 +985,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             else if (campaignAdaptationRedrawConfirmArmed)
             {
                 buttonLabel = CampaignAdaptationRedrawConfirmLabel;
-                statusText = "Click again to redraw all 3 adaptation cards. This spends Spore Sifting for this level.";
+                statusText = "Click again to redraw all 3 Mycovariants. This spends Spore Sifting for this level.";
                 statusColor = UIStyleTokens.State.Warning;
             }
             else
@@ -1026,7 +1026,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             campaignAdaptationRedrawAvailable = false;
             PopulateAdaptationChoices(redrawnChoices);
-            AddDraftMessage("Spore Sifting scatters the old offer. A fresh 3-card adaptation draft blooms.");
+            AddDraftMessage("Spore Sifting scatters the old offer. A fresh 3-card Mycovariant draft blooms.");
             SetDraftState(DraftUIState.HumanTurn);
         }
 
