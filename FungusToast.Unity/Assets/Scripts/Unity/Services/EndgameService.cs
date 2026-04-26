@@ -5,12 +5,14 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Persistence;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Campaign;
 using FungusToast.Unity.Endgame;
 using FungusToast.Unity.Input;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.Phases;
+using FungusToast.Unity.Save;
 using FungusToast.Unity.UI;
 using FungusToast.Unity.UI.GameStart;
 using FungusToast.Unity.UI.MycovariantDraft;
@@ -314,6 +316,7 @@ namespace FungusToast.Unity
         private readonly Func<bool> tryCancelActiveSelection;
         private readonly Action onBeforeOpen;
         private readonly Action onReturnToMainMenuRequested;
+        private readonly Action onRestartLevelRequested;
         private readonly Action onExitRequested;
         private readonly Action onNextTrackRequested;
         private readonly Func<string> getCurrentTrackName;
@@ -328,6 +331,7 @@ namespace FungusToast.Unity
             Func<bool> tryCancelActiveSelection,
             Action onBeforeOpen,
             Action onReturnToMainMenuRequested,
+            Action onRestartLevelRequested,
             Action onExitRequested,
             Action onNextTrackRequested,
             Func<string> getCurrentTrackName,
@@ -339,6 +343,7 @@ namespace FungusToast.Unity
             this.tryCancelActiveSelection = tryCancelActiveSelection;
             this.onBeforeOpen = onBeforeOpen;
             this.onReturnToMainMenuRequested = onReturnToMainMenuRequested;
+            this.onRestartLevelRequested = onRestartLevelRequested;
             this.onExitRequested = onExitRequested;
             this.onNextTrackRequested = onNextTrackRequested;
             this.getCurrentTrackName = getCurrentTrackName;
@@ -360,6 +365,7 @@ namespace FungusToast.Unity
                 Open,
                 ResumeGameplay,
                 onReturnToMainMenuRequested,
+                onRestartLevelRequested,
                 onExitRequested,
                 onNextTrackRequested,
                 getCurrentTrackName,
@@ -801,10 +807,14 @@ namespace FungusToast.Unity
         private readonly Func<System.Random> getRng;
         private readonly Func<bool> getTestingModeEnabled;
         private readonly Func<string> getForcedAdaptationId;
+        private readonly Func<int> getCurrentPlayerCount;
+        private readonly Func<int> getCurrentGameplaySeed;
         private readonly Action<int, int> setBoardDimensions;
         private readonly Action<int, IReadOnlyList<int>> setHotseatConfig;
         private readonly Action<int> applyConfiguredPlayerMoldAssignments;
+        private readonly Action<int> setPendingGameplaySeed;
         private readonly Action<int> initializeGame;
+        private readonly Action<RoundStartRuntimeSnapshot, RandomStateSnapshot, int> initializeRestoredGame;
         private readonly Action stopAllCoroutines;
 
         public GameStartService(
@@ -819,10 +829,14 @@ namespace FungusToast.Unity
             Func<System.Random> getRng,
             Func<bool> getTestingModeEnabled,
             Func<string> getForcedAdaptationId,
+            Func<int> getCurrentPlayerCount,
+            Func<int> getCurrentGameplaySeed,
             Action<int, int> setBoardDimensions,
             Action<int, IReadOnlyList<int>> setHotseatConfig,
             Action<int> applyConfiguredPlayerMoldAssignments,
+            Action<int> setPendingGameplaySeed,
             Action<int> initializeGame,
+            Action<RoundStartRuntimeSnapshot, RandomStateSnapshot, int> initializeRestoredGame,
             Action stopAllCoroutines)
         {
             this.getCampaignController = getCampaignController;
@@ -836,11 +850,20 @@ namespace FungusToast.Unity
             this.getRng = getRng;
             this.getTestingModeEnabled = getTestingModeEnabled;
             this.getForcedAdaptationId = getForcedAdaptationId;
+            this.getCurrentPlayerCount = getCurrentPlayerCount;
+            this.getCurrentGameplaySeed = getCurrentGameplaySeed;
             this.setBoardDimensions = setBoardDimensions;
             this.setHotseatConfig = setHotseatConfig;
             this.applyConfiguredPlayerMoldAssignments = applyConfiguredPlayerMoldAssignments;
+            this.setPendingGameplaySeed = setPendingGameplaySeed;
             this.initializeGame = initializeGame;
+            this.initializeRestoredGame = initializeRestoredGame;
             this.stopAllCoroutines = stopAllCoroutines;
+        }
+
+        public bool HasSoloSave()
+        {
+            return SoloGameSaveService.Exists();
         }
 
         public bool HasCampaignSave()
@@ -947,10 +970,29 @@ namespace FungusToast.Unity
 
         public void StartHotseatGame(int numberOfPlayers)
         {
+            SoloGameSaveService.Delete();
             setGameMode(GameMode.Hotseat);
             gridVisualizer?.ClearBoardMediumOverride();
             gridVisualizer?.ClearPlayerMoldAssignments();
             initializeGame(numberOfPlayers);
+        }
+
+        public void StartHotseatResume()
+        {
+            var soloSave = SoloGameSaveService.Load();
+            if (soloSave?.runtimeSnapshot == null)
+            {
+                Debug.LogWarning("[GameManager] Cannot resume hotseat game: no solo save checkpoint exists.");
+                return;
+            }
+
+            setGameMode(GameMode.Hotseat);
+            gridVisualizer?.ClearBoardMediumOverride();
+            gridVisualizer?.ClearPlayerMoldAssignments();
+            setBoardDimensions(soloSave.boardWidth, soloSave.boardHeight);
+            setHotseatConfig(soloSave.humanPlayerCount, soloSave.humanMoldIndices ?? new List<int>());
+            setPendingGameplaySeed(soloSave.gameplaySeed);
+            initializeRestoredGame(soloSave.runtimeSnapshot, soloSave.randomState, soloSave.gameplaySeed);
         }
 
         public void StartCampaignNew(int humanMoldIndex = 0)
@@ -1022,6 +1064,26 @@ namespace FungusToast.Unity
                 return;
             }
 
+            if (campaignController.TryGetGameplayCheckpoint(out var gameplaySnapshot, out var randomState)
+                && gameplaySnapshot != null)
+            {
+                var preset = campaignController.CurrentBoardPreset;
+                if (preset != null)
+                {
+                    setBoardDimensions(preset.boardWidth, preset.boardHeight);
+                    gridVisualizer?.SetBoardMedium(preset.boardMedium);
+                }
+                else
+                {
+                    setBoardDimensions(gameplaySnapshot.BoardWidth, gameplaySnapshot.BoardHeight);
+                }
+
+                setHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
+                setPendingGameplaySeed(campaignController.CurrentLevelGameplaySeed);
+                initializeRestoredGame(gameplaySnapshot, randomState, campaignController.CurrentLevelGameplaySeed);
+                return;
+            }
+
             StartCampaignGameplay(campaignController);
         }
 
@@ -1041,7 +1103,38 @@ namespace FungusToast.Unity
             gridVisualizer?.SetBoardMedium(preset?.boardMedium);
             int totalPlayers = 1 + campaignController.GetCurrentAiPlayerCount();
             setHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
+            setPendingGameplaySeed(campaignController.CurrentLevelGameplaySeed);
             initializeGame(totalPlayers);
+        }
+
+        public void RestartCurrentLevel()
+        {
+            if (getGameMode() == GameMode.Campaign)
+            {
+                var campaignController = getCampaignController();
+                if (campaignController == null || !campaignController.HasActiveRun)
+                {
+                    Debug.LogWarning("[GameManager] Cannot restart campaign level: no active campaign run exists.");
+                    return;
+                }
+
+                campaignController.ClearGameplayCheckpoint();
+                StartCampaignGameplay(campaignController);
+                return;
+            }
+
+            if (getGameMode() != GameMode.Hotseat || getCurrentPlayerCount() <= 0)
+            {
+                Debug.LogWarning("[GameManager] Cannot restart hotseat game: no active level exists.");
+                return;
+            }
+
+            SoloGameSaveService.Delete();
+            setGameMode(GameMode.Hotseat);
+            gridVisualizer?.ClearBoardMediumOverride();
+            gridVisualizer?.ClearPlayerMoldAssignments();
+            setPendingGameplaySeed(getCurrentGameplaySeed());
+            initializeGame(getCurrentPlayerCount());
         }
 
         private void ShowPendingCampaignVictoryScreen(CampaignController campaignController, CampaignVictorySnapshot snapshot)

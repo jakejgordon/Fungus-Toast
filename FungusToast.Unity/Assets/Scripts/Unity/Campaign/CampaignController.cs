@@ -4,6 +4,9 @@ using System.Linq;
 using FungusToast.Core.AI;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Mycovariants;
+using FungusToast.Core.Persistence;
+using FungusToast.Core.Players;
+using FungusToast.Unity.Save;
 using UnityEngine;
 
 namespace FungusToast.Unity.Campaign
@@ -39,8 +42,10 @@ namespace FungusToast.Unity.Campaign
         public bool IsCompleted => State != null && State.campaignCompleted;
         public CampaignVictorySnapshot PendingVictorySnapshot => State?.pendingVictorySnapshot;
         public int HumanMoldIndex => State != null ? State.humanMoldIndex : 0;
+        public int CurrentLevelGameplaySeed => State != null ? State.currentLevelGameplaySeed : 0;
         public MoldinessProgressSnapshot MoldinessProgress => MoldinessProgression.GetSnapshot(State?.moldiness);
         public bool HasPendingMoldinessUnlockChoice => State?.moldiness?.pendingUnlockTriggers?.Count > 0;
+        public bool HasSavedGameplayCheckpoint => State?.hasInLevelGameplayCheckpoint == true;
         public bool HasUnlockedCampaignAdaptationDraftRedraw => HasUnlockedMoldinessReward(MoldinessUnlockCatalog.SporeSiftingRewardId);
         public bool CanUsePendingAdaptationDraftRedraw => State != null
             && State.pendingAdaptationSelection
@@ -106,7 +111,11 @@ namespace FungusToast.Unity.Campaign
                 requiresNewCampaignStart = false,
                 resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, targetLevelIndex),
                 temporaryTestingAdaptationIds = SanitizeTemporaryTestingAdaptationIds(temporaryTestingAdaptationIds),
-                moldiness = persistentMoldinessState
+                moldiness = persistentMoldinessState,
+                currentLevelGameplaySeed = UnityEngine.Random.Range(int.MinValue, int.MaxValue),
+                hasInLevelGameplayCheckpoint = false,
+                inLevelRuntimeSnapshot = null,
+                inLevelRandomState = null
             };
             State.selectedAdaptationIds ??= new List<string>();
             foreach (var carryoverAdaptationId in carryoverAdaptationIds)
@@ -221,6 +230,80 @@ namespace FungusToast.Unity.Campaign
             CampaignSaveService.Save(State);
         }
 
+        public void SaveGameplayCheckpoint(RoundStartRuntimeSnapshot snapshot, RandomStateSnapshot randomState, int gameplaySeed)
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            State.currentLevelGameplaySeed = gameplaySeed;
+            State.hasInLevelGameplayCheckpoint = true;
+            State.inLevelRuntimeSnapshot = snapshot;
+            State.inLevelRandomState = randomState;
+            CampaignSaveService.Save(State);
+        }
+
+        public bool TryGetGameplayCheckpoint(out RoundStartRuntimeSnapshot snapshot, out RandomStateSnapshot randomState)
+        {
+            snapshot = null;
+            randomState = null;
+            if (State == null || !State.hasInLevelGameplayCheckpoint || State.inLevelRuntimeSnapshot == null)
+            {
+                return false;
+            }
+
+            snapshot = State.inLevelRuntimeSnapshot;
+            randomState = State.inLevelRandomState;
+
+            if (!IsValidGameplayCheckpoint(snapshot))
+            {
+                Debug.LogWarning("[CampaignController] Ignoring invalid saved gameplay checkpoint and starting the level fresh.");
+                ClearGameplayCheckpoint();
+                snapshot = null;
+                randomState = null;
+                return false;
+            }
+
+            return true;
+        }
+
+        public void ClearGameplayCheckpoint(bool saveAfterClear = true)
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            State.hasInLevelGameplayCheckpoint = false;
+            State.inLevelRuntimeSnapshot = null;
+            State.inLevelRandomState = null;
+            if (saveAfterClear)
+            {
+                CampaignSaveService.Save(State);
+            }
+        }
+
+        private static bool IsValidGameplayCheckpoint(RoundStartRuntimeSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return false;
+            }
+
+            if (snapshot.BoardWidth <= 0 || snapshot.BoardHeight <= 0)
+            {
+                return false;
+            }
+
+            if (snapshot.Players == null || snapshot.Players.Count == 0)
+            {
+                return false;
+            }
+
+            return snapshot.Players.Any(player => player != null && player.PlayerType == PlayerTypeEnum.Human);
+        }
+
         public void Delete()
         {
             CampaignSaveService.Delete();
@@ -274,6 +357,7 @@ namespace FungusToast.Unity.Campaign
             }
             if (!victory)
             {
+                ClearGameplayCheckpoint(saveAfterClear: false);
                 ClearTemporaryTestingAdaptations(saveAfterClear: false);
                 State.requiresNewCampaignStart = true;
                 BeginDefeatCarryoverSelectionOrReset();
@@ -298,6 +382,7 @@ namespace FungusToast.Unity.Campaign
             if (nextIndex >= progression.MaxLevels)
             {
                 // Final victory.
+                ClearGameplayCheckpoint(saveAfterClear: false);
                 ClearTemporaryTestingAdaptations(saveAfterClear: false);
                 State.pendingAdaptationSelection = false;
                 ResetPendingAdaptationDraftState(resetRedrawUsage: true);
@@ -309,6 +394,7 @@ namespace FungusToast.Unity.Campaign
             }
 
             // Mid-run victory: wait for adaptation pick before advancing.
+            ClearGameplayCheckpoint(saveAfterClear: false);
             State.pendingAdaptationSelection = true;
             ResetPendingAdaptationDraftState(resetRedrawUsage: true);
             CampaignSaveService.Save(State);
@@ -636,6 +722,10 @@ namespace FungusToast.Unity.Campaign
             ResetPendingAdaptationDraftState(resetRedrawUsage: true);
             State.campaignCompleted = false;
             State.resolvedAiStrategyNames = BuildResolvedAiStrategyNames(preset, targetIndex);
+            State.currentLevelGameplaySeed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+            State.hasInLevelGameplayCheckpoint = false;
+            State.inLevelRuntimeSnapshot = null;
+            State.inLevelRandomState = null;
             // Seed retained across victories for reproducibility
             CampaignSaveService.Save(State);
             Debug.Log($"[CampaignController] Advanced to level {State.levelIndex}. Preset={preset.presetId}");
@@ -690,6 +780,10 @@ namespace FungusToast.Unity.Campaign
             State.boardPresetId = string.Empty;
             State.boardWidth = 0;
             State.boardHeight = 0;
+            State.currentLevelGameplaySeed = 0;
+            State.hasInLevelGameplayCheckpoint = false;
+            State.inLevelRuntimeSnapshot = null;
+            State.inLevelRandomState = null;
             State.pendingAdaptationSelection = false;
             ResetPendingAdaptationDraftState(resetRedrawUsage: true);
             State.campaignCompleted = false;

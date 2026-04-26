@@ -375,5 +375,46 @@ namespace FungusToast.Core.Board
             GrowthCycleAge = Math.Max(0, GrowthCycleAge - amount);
             return oldAge - GrowthCycleAge;
         }
+
+        internal static FungalCell CreateRestored(
+            int originalOwnerPlayerId,
+            int? ownerPlayerId,
+            int tileId,
+            int birthRound,
+            FungalCellType cellType,
+            int growthCycleAge,
+            int toxinExpirationAge,
+            bool isNewlyGrown,
+            bool isDying,
+            bool isReceivingToxinDrop,
+            DeathReason? causeOfDeath,
+            GrowthSource? sourceOfGrowth,
+            int? lastOwnerPlayerId,
+            int reclaimCount,
+            bool isResistant,
+            string? resistanceSource)
+        {
+            var cell = new FungalCell
+            {
+                OriginalOwnerPlayerId = originalOwnerPlayerId,
+                OwnerPlayerId = ownerPlayerId,
+                TileId = tileId,
+                BirthRound = birthRound,
+                _cellType = cellType,
+                GrowthCycleAge = growthCycleAge,
+                ToxinExpirationAge = toxinExpirationAge,
+                IsNewlyGrown = isNewlyGrown,
+                IsDying = isDying,
+                IsReceivingToxinDrop = isReceivingToxinDrop,
+                CauseOfDeath = causeOfDeath,
+                SourceOfGrowth = sourceOfGrowth,
+                LastOwnerPlayerId = lastOwnerPlayerId,
+                ReclaimCount = reclaimCount,
+                IsResistant = isResistant,
+                ResistanceSource = resistanceSource,
+            };
+
+            return cell;
+        }
     }
 }

@@ -11,6 +11,7 @@ namespace FungusToast.Unity.UI
         private enum PendingAction
         {
             None,
+            RestartLevel,
             ReturnToMainMenu,
             ExitGame
         }
@@ -21,9 +22,10 @@ namespace FungusToast.Unity.UI
         private const float ActionButtonIconSize = 28f;
         private const float ActionButtonContentSpacing = 12f;
         private const float CardWidth = 420f;
-        private const float CardHeight = 700f;
         private const float CardPadding = 24f;
         private const float ContentSpacing = 14f;
+        private const float CardMinimumHeight = 520f;
+        private const float CardViewportMargin = 64f;
         private const float PauseMenuPrimaryButtonWidth = CardWidth - (CardPadding * 2f);
         private const float PauseMenuConfirmationButtonWidth = 180f;
 
@@ -31,6 +33,7 @@ namespace FungusToast.Unity.UI
         private Action onOpenRequested;
         private Action onResumeRequested;
         private Action onReturnToMainMenuRequested;
+        private Action onRestartLevelRequested;
         private Action onExitRequested;
         private Action onNextTrackRequested;
         private Func<string> getCurrentTrackName;
@@ -46,6 +49,8 @@ namespace FungusToast.Unity.UI
 
         private GameObject overlayRoot;
         private CanvasGroup overlayCanvasGroup;
+        private RectTransform cardRect;
+        private RectTransform contentRect;
         private TextMeshProUGUI titleLabel;
         private TextMeshProUGUI subtitleLabel;
         private GameObject primaryActionsRoot;
@@ -68,6 +73,7 @@ namespace FungusToast.Unity.UI
             Action openRequested,
             Action resumeRequested,
             Action returnToMainMenuRequested,
+            Action restartLevelRequested,
             Action exitRequested,
             Action nextTrackRequested,
             Func<string> currentTrackNameProvider,
@@ -77,6 +83,7 @@ namespace FungusToast.Unity.UI
             onOpenRequested = openRequested;
             onResumeRequested = resumeRequested;
             onReturnToMainMenuRequested = returnToMainMenuRequested;
+            onRestartLevelRequested = restartLevelRequested;
             onExitRequested = exitRequested;
             onNextTrackRequested = nextTrackRequested;
             getCurrentTrackName = currentTrackNameProvider;
@@ -147,6 +154,8 @@ namespace FungusToast.Unity.UI
             {
                 overlayRoot.SetActive(false);
             }
+
+            RefreshCardLayout();
 
             IsOpen = false;
         }
@@ -334,18 +343,18 @@ namespace FungusToast.Unity.UI
             overlayCanvasGroup = overlayRoot.AddComponent<CanvasGroup>();
 
             GameObject card = CreateUiObject("PauseMenuCard", overlayRoot.transform);
-            RectTransform cardRect = card.GetComponent<RectTransform>();
+            cardRect = card.GetComponent<RectTransform>();
             cardRect.anchorMin = new Vector2(0.5f, 0.5f);
             cardRect.anchorMax = new Vector2(0.5f, 0.5f);
             cardRect.pivot = new Vector2(0.5f, 0.5f);
-            cardRect.sizeDelta = new Vector2(CardWidth, CardHeight);
+            cardRect.sizeDelta = new Vector2(CardWidth, CardMinimumHeight);
             cardRect.anchoredPosition = Vector2.zero;
 
             Image cardImage = card.AddComponent<Image>();
             cardImage.color = UIStyleTokens.Surface.PanelPrimary;
 
             GameObject contentRoot = CreateUiObject("PauseMenuContent", card.transform);
-            RectTransform contentRect = contentRoot.GetComponent<RectTransform>();
+            contentRect = contentRoot.GetComponent<RectTransform>();
             contentRect.anchorMin = new Vector2(0.5f, 1f);
             contentRect.anchorMax = new Vector2(0.5f, 1f);
             contentRect.pivot = new Vector2(0.5f, 1f);
@@ -376,11 +385,15 @@ namespace FungusToast.Unity.UI
             subtitleLabel = CreateLabel(contentRoot.transform, string.Empty, 22f, FontStyles.Normal);
             subtitleLabel.alignment = TextAlignmentOptions.Center;
             subtitleLabel.color = UIStyleTokens.Text.Secondary;
+            ConfigureDynamicWrappedLabel(subtitleLabel);
 
             primaryActionsRoot = CreateVerticalSection(contentRoot.transform, "PrimaryActions", 10f);
 
             Button resumeButton = CreateActionButton(primaryActionsRoot.transform, "Resume", width: PauseMenuPrimaryButtonWidth);
             resumeButton.onClick.AddListener(() => onResumeRequested?.Invoke());
+
+            Button restartButton = CreateActionButton(primaryActionsRoot.transform, "Restart Level", width: PauseMenuPrimaryButtonWidth);
+            restartButton.onClick.AddListener(RequestRestartConfirmation);
 
             Button mainMenuButton = CreateActionButton(primaryActionsRoot.transform, "Main Menu", gameUI != null ? gameUI.PauseMenuButtonIcon : null, PauseMenuPrimaryButtonWidth);
             mainMenuButton.onClick.AddListener(RequestMainMenuConfirmation);
@@ -420,7 +433,7 @@ namespace FungusToast.Unity.UI
             confirmationLabel = CreateLabel(confirmationRoot.transform, string.Empty, 21f, FontStyles.Normal);
             confirmationLabel.alignment = TextAlignmentOptions.Center;
             confirmationLabel.color = UIStyleTokens.Text.Secondary;
-            confirmationLabel.textWrappingMode = TextWrappingModes.Normal;
+            ConfigureDynamicWrappedLabel(confirmationLabel);
 
             GameObject confirmationButtons = CreateUiObject("ConfirmationButtons", confirmationRoot.transform);
             HorizontalLayoutGroup buttonRow = confirmationButtons.AddComponent<HorizontalLayoutGroup>();
@@ -438,6 +451,7 @@ namespace FungusToast.Unity.UI
             cancelButton.onClick.AddListener(CancelPendingAction);
 
             RefreshSoundSettingsButtons();
+            RefreshCardLayout();
         }
 
         private void ApplyPanelState()
@@ -455,11 +469,16 @@ namespace FungusToast.Unity.UI
             if (!showConfirmation)
             {
                 subtitleLabel.text = string.Empty;
+                RefreshCardLayout();
                 return;
             }
 
             switch (pendingAction)
             {
+                case PendingAction.RestartLevel:
+                    subtitleLabel.text = "Restart this level?";
+                    confirmationLabel.text = "Restart the current level from its original seed and setup? Progress since the level began will be discarded.";
+                    break;
                 case PendingAction.ReturnToMainMenu:
                     subtitleLabel.text = "Leave the current run?";
                     confirmationLabel.text = "Return to the main menu and abandon the current game?";
@@ -469,11 +488,19 @@ namespace FungusToast.Unity.UI
                     confirmationLabel.text = "Exit the game now? Any unsaved progress in this run will be lost.";
                     break;
             }
+
+            RefreshCardLayout();
         }
 
         private void RequestMainMenuConfirmation()
         {
             pendingAction = PendingAction.ReturnToMainMenu;
+            ApplyPanelState();
+        }
+
+        private void RequestRestartConfirmation()
+        {
+            pendingAction = PendingAction.RestartLevel;
             ApplyPanelState();
         }
 
@@ -487,6 +514,9 @@ namespace FungusToast.Unity.UI
         {
             switch (pendingAction)
             {
+                case PendingAction.RestartLevel:
+                    onRestartLevelRequested?.Invoke();
+                    break;
                 case PendingAction.ReturnToMainMenu:
                     onReturnToMainMenuRequested?.Invoke();
                     break;
@@ -666,6 +696,58 @@ namespace FungusToast.Unity.UI
             layout.preferredHeight = preferredHeight;
             layout.flexibleHeight = 0f;
             return label;
+        }
+
+        private static void ConfigureDynamicWrappedLabel(TextMeshProUGUI label)
+        {
+            if (label == null)
+            {
+                return;
+            }
+
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.overflowMode = TextOverflowModes.Overflow;
+
+            LayoutElement layout = label.GetComponent<LayoutElement>();
+            if (layout != null)
+            {
+                layout.minHeight = 0f;
+                layout.preferredHeight = -1f;
+                layout.flexibleHeight = 0f;
+            }
+
+            RectTransform labelRect = label.rectTransform;
+            labelRect.sizeDelta = new Vector2(0f, 0f);
+
+            ContentSizeFitter fitter = label.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                fitter = label.gameObject.AddComponent<ContentSizeFitter>();
+            }
+
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        }
+
+        private void RefreshCardLayout()
+        {
+            if (cardRect == null || contentRect == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(cardRect);
+
+            float preferredContentHeight = Mathf.Max(contentRect.rect.height, LayoutUtility.GetPreferredHeight(contentRect));
+            float desiredHeight = Mathf.Max(CardMinimumHeight, preferredContentHeight + (CardPadding * 2f));
+            RectTransform canvasRect = rootCanvas != null ? rootCanvas.GetComponent<RectTransform>() : null;
+            float viewportHeight = canvasRect != null
+                ? canvasRect.rect.height - CardViewportMargin
+                : desiredHeight;
+            float clampedHeight = Mathf.Min(desiredHeight, Mathf.Max(CardMinimumHeight, viewportHeight));
+            cardRect.sizeDelta = new Vector2(CardWidth, clampedHeight);
         }
 
         private TextMeshProUGUI CreateActionButtonContentLabel(Transform parent, string text)

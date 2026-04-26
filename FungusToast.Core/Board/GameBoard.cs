@@ -265,6 +265,8 @@ namespace FungusToast.Core.Board
             playerId = -1;
             return false;
         }
+
+    public IReadOnlyList<int> GetPendingHypervariationDraftPlayerIds() => pendingHypervariationDraftPlayerIds.ToList();
         #endregion
 
         #region Neighbor Queries
@@ -886,6 +888,33 @@ namespace FungusToast.Core.Board
         public void UpdateCachedDecayPhaseContext() { if (CachedDecayPhaseContext == null) CachedDecayPhaseContext = new DecayPhaseContext(this, Players); }
         public void ClearCachedDecayPhaseContext() => CachedDecayPhaseContext = null;
         public void OnNecrophyticBloomActivatedEvent() => NecrophyticBloomActivatedEvent?.Invoke();
+
+        public void RestoreRoundState(
+            int currentRound,
+            int currentGrowthCycle,
+            bool necrophyticBloomActivated,
+            IEnumerable<int>? pendingHypervariationDraftPlayerIds)
+        {
+            CurrentRound = Math.Max(1, currentRound);
+            CurrentGrowthCycle = Math.Max(0, currentGrowthCycle);
+            NecrophyticBloomActivated = necrophyticBloomActivated;
+            CachedDecayPhaseContext = null;
+            CurrentRoundContext.Reset();
+
+            this.pendingHypervariationDraftPlayerIds.Clear();
+            if (pendingHypervariationDraftPlayerIds == null)
+            {
+                return;
+            }
+
+            foreach (int playerId in pendingHypervariationDraftPlayerIds)
+            {
+                if (playerId >= 0)
+                {
+                    this.pendingHypervariationDraftPlayerIds.Enqueue(playerId);
+                }
+            }
+        }
         public void OnCatabolicRebirth(CatabolicRebirthEventArgs e) => CatabolicRebirth?.Invoke(this, e);
         public void OnToxinPlaced(ToxinPlacedEventArgs e) => ToxinPlaced?.Invoke(this, e);
         public void FireCellPoisonedEvent(int playerId, int tileId, int oldOwnerId, GrowthSource source) => OnCellPoisoned(playerId, tileId, oldOwnerId, source);

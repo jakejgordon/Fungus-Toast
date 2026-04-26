@@ -152,6 +152,7 @@ Currently assigned in the active gameplay scene playlist:
 - `track_04_mycorizing.mp3`
 - `track_05_break_from_the_mold.mp3`
 - `track_06_twice_cooked_bread.mp3`
+- `track_07_fungus_amongus.mp3`
 
 ### Standard workflow for adding a new gameplay music track
 
@@ -187,7 +188,7 @@ Current implementation details for standard gameplay-track wiring:
 ### Title track
 
 - The title/menu music for the main menu and sub-menus should be a looping track that plays while the player is navigating menus before starting a game.
-- The current title track asset is: `title_track_fungus_amongus.mp3` and should be placed under `FungusToast.Unity/Assets/Audio/Music`.
+- The current title track asset is: `title_track_mycophamus.mp3` and should be placed under `FungusToast.Unity/Assets/Audio/Music`.
 - The title track is expected to loop and respect the same music volume settings exposed in the main menu.
 Default rule for future gameplay-track additions:
 

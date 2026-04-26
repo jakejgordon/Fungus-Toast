@@ -77,5 +77,11 @@ namespace FungusToast.Core.Players
         {
             return Mutation != null && CurrentLevel < Mutation.MaxLevel;
         }
+
+        internal void RestoreBookkeeping(int? firstUpgradeRound, int? prereqMetRound)
+        {
+            FirstUpgradeRound = firstUpgradeRound;
+            PrereqMetRound = prereqMetRound;
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.Players;
+using FungusToast.Core.Persistence;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -176,6 +177,45 @@ namespace FungusToast.Core.Mycovariants
         public string GetPoolSummary()
         {
             return $"Available: {_availablePool.Count}, Universal: {_universalPool.Count}, Drafted: {_draftedNonUniversalIds.Count}, TempRemoved: {_temporarilyRemovedMycovariants.Count}";
+        }
+
+        public MycovariantPoolRuntimeSnapshot ExportRuntimeState()
+        {
+            return new MycovariantPoolRuntimeSnapshot
+            {
+                AvailablePoolIds = _availablePool.Select(mycovariant => mycovariant.Id).ToList(),
+                UniversalPoolIds = _universalPool.Select(mycovariant => mycovariant.Id).ToList(),
+                DraftedNonUniversalIds = _draftedNonUniversalIds.OrderBy(id => id).ToList(),
+                TemporarilyRemovedMycovariantIds = _temporarilyRemovedMycovariants.Select(mycovariant => mycovariant.Id).ToList(),
+            };
+        }
+
+        public void RestoreRuntimeState(MycovariantPoolRuntimeSnapshot snapshot, IReadOnlyCollection<Mycovariant> allMycovariants)
+        {
+            if (snapshot == null)
+            {
+                throw new ArgumentNullException(nameof(snapshot));
+            }
+
+            if (allMycovariants == null)
+            {
+                throw new ArgumentNullException(nameof(allMycovariants));
+            }
+
+            var mycovariantsById = allMycovariants.ToDictionary(mycovariant => mycovariant.Id);
+            _availablePool = snapshot.AvailablePoolIds
+                .Where(mycovariantsById.ContainsKey)
+                .Select(id => mycovariantsById[id])
+                .ToList();
+            _universalPool = snapshot.UniversalPoolIds
+                .Where(mycovariantsById.ContainsKey)
+                .Select(id => mycovariantsById[id])
+                .ToList();
+            _draftedNonUniversalIds = snapshot.DraftedNonUniversalIds.ToHashSet();
+            _temporarilyRemovedMycovariants = snapshot.TemporarilyRemovedMycovariantIds
+                .Where(mycovariantsById.ContainsKey)
+                .Select(id => mycovariantsById[id])
+                .ToList();
         }
     }
 

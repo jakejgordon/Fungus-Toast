@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using FungusToast.Core.Persistence;
+using FungusToast.Unity.Save;
 
 namespace FungusToast.Unity.Campaign
 {
@@ -29,6 +31,10 @@ namespace FungusToast.Unity.Campaign
         public List<string> resolvedAiStrategyNames = new(); // active AI lineup for current level; persisted so pooled levels resume consistently
         public List<string> temporaryTestingAdaptationIds = new(); // temporary per-game testing adaptations, cleared after the active level resolves
         public MoldinessProgressionState moldiness = new(); // persistent moldiness progression toward permanent unlocks
+        public int currentLevelGameplaySeed; // deterministic seed for the current level's fresh-start setup
+        public bool hasInLevelGameplayCheckpoint; // true only when an autosave checkpoint should be considered resumable
+        public RoundStartRuntimeSnapshot inLevelRuntimeSnapshot; // autosave checkpoint captured at round start
+        public RandomStateSnapshot inLevelRandomState; // live RNG state paired with the autosave checkpoint
     }
 
     [Serializable]

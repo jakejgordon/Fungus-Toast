@@ -92,6 +92,7 @@ namespace FungusToast.Unity.UI.GameStart
         private Button advancedSettingsToggleButton;
         private Button soundEffectsVolumeButton;
         private Button musicVolumeButton;
+        private Button resumeSavedGameButton;
         private SetupStep currentStep = SetupStep.CountSelection;
         private int currentHumanMoldSelectionIndex;
         private bool isAdvancedOptionsExpanded = true;
@@ -115,6 +116,7 @@ namespace FungusToast.Unity.UI.GameStart
             startGameButton.interactable = false;
             InitializeHumanPlayerUI();
             EnsureMoldSelectionSection();
+            EnsureResumeSavedGameButton();
             UpdateSetupStepState();
 
             // Ensure magnifier visuals are disabled at startup
@@ -126,6 +128,7 @@ namespace FungusToast.Unity.UI.GameStart
         {
             ResetSelectionState();
             EnsureRuntimeLayoutScaffold();
+            EnsureResumeSavedGameButton();
             testingCardController?.RefreshDropdownOptions();
             LoadPersistedMenuState();
             RefreshAudioSettingsControls();
@@ -1429,6 +1432,43 @@ namespace FungusToast.Unity.UI.GameStart
                 UIStyleTokens.Button.MinimumMenuActionHeight);
         }
 
+        private void EnsureResumeSavedGameButton()
+        {
+            if (actionButtonStackRoot == null)
+            {
+                return;
+            }
+
+            if (resumeSavedGameButton == null)
+            {
+                var existing = actionButtonStackRoot.Find("UI_StartGameResumeSavedButton");
+                if (existing != null)
+                {
+                    resumeSavedGameButton = existing.GetComponent<Button>();
+                }
+            }
+
+            if (resumeSavedGameButton == null)
+            {
+                Button template = backButton != null ? backButton : startGameButton;
+                var buttonObject = Instantiate(template.gameObject, actionButtonStackRoot);
+                buttonObject.name = "UI_StartGameResumeSavedButton";
+                resumeSavedGameButton = buttonObject.GetComponent<Button>();
+            }
+
+            resumeSavedGameButton.transform.SetParent(actionButtonStackRoot, false);
+            resumeSavedGameButton.transform.SetSiblingIndex(1);
+            resumeSavedGameButton.onClick = new Button.ButtonClickedEvent();
+            resumeSavedGameButton.onClick.AddListener(OnResumeSavedGamePressed);
+            EnsureActionButtonLayout(resumeSavedGameButton);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(
+                resumeSavedGameButton,
+                UIStyleTokens.Button.NarrowMenuActionWidth,
+                UIStyleTokens.Button.NarrowMenuActionHeight,
+                UIStyleTokens.Button.MinimumMenuActionHeight);
+            SetButtonText(resumeSavedGameButton, "Resume Saved Game");
+        }
+
         private static void ConfigureSetupContentRoot(RectTransform contentRoot)
         {
             if (contentRoot == null)
@@ -1649,6 +1689,12 @@ namespace FungusToast.Unity.UI.GameStart
             SetButtonText(startGameButton, isMoldSelectionStep ? GetMoldStepPrimaryButtonText() : "Start Game >");
             SetButtonText(backButton, isMoldSelectionStep ? "Back" : "Back");
             startGameButton.interactable = isMoldSelectionStep ? IsCurrentHumanMoldSelected() : selectedPlayerCount.HasValue;
+            if (resumeSavedGameButton != null)
+            {
+                var manager = GameManager.Instance;
+                bool showResumeButton = !isMoldSelectionStep && manager != null && manager.HasSoloSave();
+                resumeSavedGameButton.gameObject.SetActive(showResumeButton);
+            }
             RefreshAudioSettingsControls();
             RefreshTestingSectionLayout();
             RefreshStartMenuLayout();
@@ -2231,8 +2277,32 @@ namespace FungusToast.Unity.UI.GameStart
             ApplySoloBoardSize(manager);
             testingCardController?.ApplyToGameManager(manager);
 
-            manager.InitializeGame(selectedPlayerCount.Value);
+            manager.StartHotseatGame(selectedPlayerCount.Value);
             manager.cameraCenterer.CenterCameraSmooth();
+            gameObject.SetActive(false);
+
+            if (magnifyingGlassUI != null)
+            {
+                magnifyingGlassUI.SetActive(true);
+            }
+
+            if (magnifierVisualRoot != null)
+            {
+                magnifierVisualRoot.SetActive(true);
+            }
+
+            MagnifyingGlassFollowMouse.gameStarted = true;
+        }
+
+        private void OnResumeSavedGamePressed()
+        {
+            var manager = GameManager.Instance;
+            if (manager == null || !manager.HasSoloSave())
+            {
+                return;
+            }
+
+            manager.StartHotseatResume();
             gameObject.SetActive(false);
 
             if (magnifyingGlassUI != null)

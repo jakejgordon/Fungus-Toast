@@ -107231,12 +107231,13 @@ MonoBehaviour:
   - {fileID: 8300000, guid: fa70256f6b0580442bc383ec17dcd9ac, type: 3}
   - {fileID: 8300000, guid: b9bcdf3afed74d840bcd4e662dd134fa, type: 3}
   - {fileID: 8300000, guid: 8a8b7a8f42456dc4a8e32fcb682154ee, type: 3}
+  - {fileID: 8300000, guid: dd450c647bb16264b846f7402bd07bd2, type: 3}
   gameplayMusicVolume: 1
   gameplayMusicInitialDelaySeconds: 10
   gameplayMusicReplayDelaySeconds: 5
   gameplayMusicFadeInSeconds: 1
   gameplayMusicMixerGroup: {fileID: 0}
-  titleTrackClip: {fileID: 8300000, guid: dd450c647bb16264b846f7402bd07bd2, type: 3}
+  titleTrackClip: {fileID: 8300000, guid: f95514be9099e9c4fab6e271d3ff1830, type: 3}
   titleTrackVolume: 1
   titleTrackMixerGroup: {fileID: 0}
   configuredHumanPlayerCount: 1
