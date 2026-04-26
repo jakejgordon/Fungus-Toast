@@ -449,11 +449,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 return GetFreshDraftChoicesForCurrentPlayer();
             }
 
-            var eligibleById = poolManager
-                .GetEligibleMycovariantsForPlayer(currentPlayer)
-                .GroupBy(mycovariant => mycovariant.Id)
-                .ToDictionary(group => group.Key, group => group.First());
-
             var nextChoices = new Mycovariant[draftChoices.Count];
             for (int index = 0; index < draftChoices.Count; index++)
             {
@@ -463,15 +458,19 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     continue;
                 }
 
-                if (eligibleById.TryGetValue(existingChoice.Id, out var carriedChoice))
-                {
-                    nextChoices[index] = carriedChoice;
-                    eligibleById.Remove(existingChoice.Id);
-                }
+                nextChoices[index] = existingChoice;
             }
 
-            var replacementPool = eligibleById.Values
+            var visibleChoiceIds = new HashSet<int>(nextChoices
+                .Where(choice => choice != null)
+                .Select(choice => choice.Id));
+
+            var replacementPool = poolManager
+                .GetEligibleMycovariantsForPlayer(currentPlayer)
+                .GroupBy(mycovariant => mycovariant.Id)
+                .Select(group => group.First())
                 .Where(choice => choice.Id != picked.Id)
+                .Where(choice => !visibleChoiceIds.Contains(choice.Id))
                 .OrderBy(_ => rng.Next())
                 .ToList();
 
@@ -492,7 +491,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
 
             var carriedChoices = nextChoices.ToList();
-            ForceMycovariantIntoChoicesIfNeeded(carriedChoices, eligibleById.Values);
+            ForceMycovariantIntoChoicesIfNeeded(carriedChoices, replacementPool);
             return carriedChoices;
         }
 
@@ -620,20 +619,47 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             return uniqueEligible[rng.Next(uniqueEligible.Count)];
         }
 
+        private List<Mycovariant> GetEligibleVisibleChoicesForCurrentPlayer()
+        {
+            if (draftChoices == null || draftChoices.Count == 0)
+            {
+                return new List<Mycovariant>();
+            }
+
+            var eligibleIds = poolManager
+                .GetEligibleMycovariantsForPlayer(currentPlayer)
+                .Select(mycovariant => mycovariant.Id)
+                .ToHashSet();
+
+            return draftChoices
+                .Where(mycovariant => mycovariant != null && eligibleIds.Contains(mycovariant.Id))
+                .GroupBy(mycovariant => mycovariant.Id)
+                .Select(group => group.First())
+                .ToList();
+        }
+
         private IEnumerator AnimateAIPickRoutine()
         {
             yield return new WaitForSeconds(FungusToast.Unity.UI.UIEffectConstants.AIDraftPickDelaySeconds);
 
-            Mycovariant pick;
-            if (GameManager.Instance.IsTestingModeEnabled && GameManager.Instance.TestingMycovariantId.HasValue && draftChoices.Any(m => m.Id == GameManager.Instance.TestingMycovariantId.Value))
+            var eligibleChoices = GetEligibleVisibleChoicesForCurrentPlayer();
+            if (eligibleChoices.Count == 0)
             {
-                pick = draftChoices.First(m => m.Id == GameManager.Instance.TestingMycovariantId.Value);
+                draftChoices = GetFreshDraftChoicesForCurrentPlayer();
+                PopulateChoices(draftChoices);
+                eligibleChoices = draftChoices;
+            }
+
+            Mycovariant pick;
+            if (GameManager.Instance.IsTestingModeEnabled && GameManager.Instance.TestingMycovariantId.HasValue && eligibleChoices.Any(m => m.Id == GameManager.Instance.TestingMycovariantId.Value))
+            {
+                pick = eligibleChoices.First(m => m.Id == GameManager.Instance.TestingMycovariantId.Value);
             }
             else
             {
                 float maxScore = float.MinValue;
                 List<Mycovariant> bestChoices = new List<Mycovariant>();
-                foreach (var m in draftChoices)
+                foreach (var m in eligibleChoices)
                 {
                     float score = m.AIScore != null ? m.AIScore(currentPlayer, GameManager.Instance.Board) : MycovariantAIGameBalance.DefaultAIScore;
                     if (score > maxScore)
