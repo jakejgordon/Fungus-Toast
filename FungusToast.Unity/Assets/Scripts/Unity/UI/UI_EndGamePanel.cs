@@ -1375,10 +1375,7 @@ namespace FungusToast.Unity.UI
 
             int tileCount = Math.Max(1, threshold);
             int filledCount = Mathf.Clamp(progress, 0, tileCount);
-            var orderedIndices = Enumerable.Range(0, tileCount)
-                .OrderBy(index => GetEndgameToastTileSortKey(index, tileCount))
-                .ThenBy(index => index)
-                .ToList();
+            var orderedIndices = BuildEndgameToastFillOrder(tileCount, columns, rows);
             var filledIndices = new HashSet<int>(orderedIndices.Take(filledCount));
 
             for (int i = 0; i < tileCount; i++)
@@ -1421,14 +1418,148 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        private static float GetEndgameToastTileSortKey(int index, int threshold)
+        private static List<int> BuildEndgameToastFillOrder(int tileCount, int columns, int rows)
         {
-            int columns = Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(threshold)), 3, 8);
+            var available = new HashSet<int>(Enumerable.Range(0, tileCount));
+            var frontier = new HashSet<int>();
+            var ordered = new List<int>(tileCount);
+
+            foreach (int seed in GetEndgameToastSeedIndices(tileCount, columns, rows))
+            {
+                if (!available.Remove(seed))
+                {
+                    continue;
+                }
+
+                ordered.Add(seed);
+                AddEndgameToastNeighbors(seed, tileCount, columns, rows, frontier, available);
+            }
+
+            while (ordered.Count < tileCount)
+            {
+                if (frontier.Count == 0)
+                {
+                    int fallback = available
+                        .OrderBy(index => GetEndgameToastFallbackScore(index, tileCount, columns, rows))
+                        .ThenBy(index => index)
+                        .First();
+                    frontier.Add(fallback);
+                }
+
+                int next = frontier
+                    .OrderBy(index => GetEndgameToastFrontierScore(index, tileCount, columns, rows))
+                    .ThenBy(index => index)
+                    .First();
+                frontier.Remove(next);
+
+                if (!available.Remove(next))
+                {
+                    continue;
+                }
+
+                ordered.Add(next);
+                AddEndgameToastNeighbors(next, tileCount, columns, rows, frontier, available);
+            }
+
+            return ordered;
+        }
+
+        private static IEnumerable<int> GetEndgameToastSeedIndices(int tileCount, int columns, int rows)
+        {
+            int seedCount = tileCount >= 10 ? 2 : 1;
+            var chosen = new HashSet<int>();
+
+            for (int i = 0; i < seedCount; i++)
+            {
+                int seed = Enumerable.Range(0, tileCount)
+                    .Where(index => !chosen.Contains(index))
+                    .OrderBy(index => GetEndgameToastSeedScore(index, tileCount, columns, rows, i))
+                    .ThenBy(index => index)
+                    .First();
+                chosen.Add(seed);
+                yield return seed;
+            }
+        }
+
+        private static void AddEndgameToastNeighbors(int index, int tileCount, int columns, int rows, HashSet<int> frontier, HashSet<int> available)
+        {
             int row = index / columns;
             int column = index % columns;
-            float centerColumn = (columns - 1) * 0.5f;
-            float columnDistance = Mathf.Abs(column - centerColumn);
-            return (row * 10f) + columnDistance + ((index * 37) % 11) * 0.01f;
+
+            for (int rowDelta = -1; rowDelta <= 1; rowDelta++)
+            {
+                for (int columnDelta = -1; columnDelta <= 1; columnDelta++)
+                {
+                    if (rowDelta == 0 && columnDelta == 0)
+                    {
+                        continue;
+                    }
+
+                    int neighborRow = row + rowDelta;
+                    int neighborColumn = column + columnDelta;
+                    if (neighborRow < 0 || neighborRow >= rows || neighborColumn < 0 || neighborColumn >= columns)
+                    {
+                        continue;
+                    }
+
+                    int neighborIndex = (neighborRow * columns) + neighborColumn;
+                    if (neighborIndex >= tileCount || !available.Contains(neighborIndex))
+                    {
+                        continue;
+                    }
+
+                    frontier.Add(neighborIndex);
+                }
+            }
+        }
+
+        private static float GetEndgameToastSeedScore(int index, int tileCount, int columns, int rows, int seedOffset)
+        {
+            Vector2 position = GetEndgameToastNormalizedPosition(index, columns, rows);
+            float centerDistance = Vector2.Distance(position, new Vector2(0.5f, 0.5f));
+            float hash = GetEndgameToastHash01(index, tileCount, (seedOffset + 1) * 193);
+            return centerDistance * 0.65f + hash * 0.35f;
+        }
+
+        private static float GetEndgameToastFrontierScore(int index, int tileCount, int columns, int rows)
+        {
+            Vector2 position = GetEndgameToastNormalizedPosition(index, columns, rows);
+            float centerDistance = Vector2.Distance(position, new Vector2(0.5f, 0.5f));
+            float verticalBias = Mathf.Abs(position.y - 0.45f);
+            float hash = GetEndgameToastHash01(index, tileCount, 521);
+            return hash * 0.6f + centerDistance * 0.25f + verticalBias * 0.15f;
+        }
+
+        private static float GetEndgameToastFallbackScore(int index, int tileCount, int columns, int rows)
+        {
+            Vector2 position = GetEndgameToastNormalizedPosition(index, columns, rows);
+            float centerDistance = Vector2.Distance(position, new Vector2(0.5f, 0.5f));
+            float hash = GetEndgameToastHash01(index, tileCount, 887);
+            return centerDistance * 0.55f + hash * 0.45f;
+        }
+
+        private static Vector2 GetEndgameToastNormalizedPosition(int index, int columns, int rows)
+        {
+            int row = index / columns;
+            int column = index % columns;
+            float normalizedColumn = columns <= 1 ? 0.5f : column / (float)(columns - 1);
+            float normalizedRow = rows <= 1 ? 0.5f : row / (float)(rows - 1);
+            return new Vector2(normalizedColumn, normalizedRow);
+        }
+
+        private static float GetEndgameToastHash01(int index, int tileCount, int salt)
+        {
+            unchecked
+            {
+                uint value = (uint)(index + 1);
+                value ^= (uint)(tileCount * 2246822519u);
+                value ^= (uint)salt * 3266489917u;
+                value *= 668265263u;
+                value ^= value >> 15;
+                value *= 2246822519u;
+                value ^= value >> 13;
+                return (value & 0x00FFFFFFu) / 16777215f;
+            }
         }
 
         private void BuildMoldinessRewardSelectionContent(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers)
