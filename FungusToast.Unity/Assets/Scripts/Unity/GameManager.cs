@@ -1622,6 +1622,7 @@ namespace FungusToast.Unity
 
             return fastForwardRounds > 0
                 || testingSkipToEndgameAfterFastForward
+                || testingForcedGameResult != ForcedGameResultMode.Natural
                 || testingMycovariantId.HasValue;
         }
 
