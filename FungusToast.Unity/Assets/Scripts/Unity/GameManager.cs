@@ -701,7 +701,6 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
             gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
-            gameUIManager.LoadingScreen?.FadeOut();
 
             if (cameraCenterer != null)
             {
@@ -715,7 +714,7 @@ namespace FungusToast.Unity
                 magnifyingGlass.ApplyBoardSizeGate(Board.Width, Board.Height);
             }
 
-            StartNextRound();
+            StartCoroutine(PlayRestoredGameIntroAndContinue());
         }
 
         private void InitGameLogs()
@@ -1628,22 +1627,37 @@ namespace FungusToast.Unity
 
         private IEnumerator PlayStartingSporeIntroAndContinue()
         {
+            yield return PlayGameplayEntryFlow(applyStartingSporeEffects: true, allowSkippingIntroForTesting: true);
+        }
+
+        private IEnumerator PlayRestoredGameIntroAndContinue()
+        {
+            yield return PlayGameplayEntryFlow(applyStartingSporeEffects: false, allowSkippingIntroForTesting: false);
+        }
+
+        private IEnumerator PlayGameplayEntryFlow(bool applyStartingSporeEffects, bool allowSkippingIntroForTesting)
+        {
             List<int> startingIds = ResolveStartingSporeIntroTileIds();
-            bool skipStartingSporeIntro = ShouldSkipStartingSporeIntro();
+            bool skipStartingSporeIntro = allowSkippingIntroForTesting && ShouldSkipStartingSporeIntro();
             gameUIManager.LoadingScreen?.SetStatus("Spores are landing…");
-            if (startingIds.Count >0 && !skipStartingSporeIntro)
+            if (startingIds.Count > 0 && !skipStartingSporeIntro)
             {
                 yield return gridVisualizer.PlayStartingSporeArrivalAnimation(
                     startingIds,
                     () => soundEffectService?.PlayOneShot(startingSporeDropClip, startingSporeDropVolume));
             }
-            // Only fade out loading screen if we are NOT about to fast-forward;
-            // fast-forward will take over the loading screen with progress text.
+
             bool willFastForward = testingModeEnabled && fastForwardRounds > 0 && !_fastForwardStarted;
             if (!willFastForward)
+            {
                 gameUIManager.LoadingScreen?.FadeOut();
+            }
 
-            AdaptationEffectProcessor.OnStartingSporesEstablished(Board, players, rng);
+            if (applyStartingSporeEffects)
+            {
+                AdaptationEffectProcessor.OnStartingSporesEstablished(Board, players, rng);
+            }
+
             if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
             {
                 yield return specialEventPresentationService.PresentPendingImmediate();
@@ -1662,14 +1676,13 @@ namespace FungusToast.Unity
             playerPerspectiveService?.InitializeGameplayPerspective(humanPlayer, Board, players, gridVisualizer);
             if (testingModeEnabled)
             {
-                if (fastForwardRounds >0 && !_fastForwardStarted)
+                if (fastForwardRounds > 0 && !_fastForwardStarted)
                 {
                     _fastForwardStarted = true;
                     fastForwardService.StartFastForward(fastForwardRounds, testingSkipToEndgameAfterFastForward, testingMycovariantId);
                 }
                 else if (testingSkipToEndgameAfterFastForward)
                 {
-                    // Allow campaign menu testing to force immediate endgame even when fast-forward rounds are 0.
                     TriggerEndGameInternal();
                     yield break;
                 }
@@ -1680,12 +1693,12 @@ namespace FungusToast.Unity
                 }
                 else
                 {
-                    gameUIManager.PhaseBanner.Show("New Game Settings",2f);
+                    gameUIManager.PhaseBanner.Show(CurrentGameMode == GameMode.Campaign ? "Campaign Level" : "New Game Settings", 2f);
                 }
             }
             else
             {
-                gameUIManager.PhaseBanner.Show("New Game Settings",2f);
+                gameUIManager.PhaseBanner.Show(CurrentGameMode == GameMode.Campaign ? "Campaign Level" : "New Game Settings", 2f);
             }
 
             phaseProgressTracker?.ResetTracker();
@@ -1696,7 +1709,7 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
             gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
-            if (!(testingModeEnabled && (fastForwardRounds >0 || testingMycovariantId.HasValue)))
+            if (!(testingModeEnabled && (fastForwardRounds > 0 || testingMycovariantId.HasValue)))
             {
                 StartNextRound();
             }
