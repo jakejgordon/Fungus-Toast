@@ -14,6 +14,7 @@ namespace FungusToast.Core.Mycovariants
             yield return AscusWager();
             yield return AscusBait();
             yield return SporalSnare();
+            yield return PerisporeCrown();
         }
 
         private static Mycovariant PlasmidBounty() =>
@@ -147,6 +148,31 @@ namespace FungusToast.Core.Mycovariants
                 AIScore = (player, board) => player.IsLastAiMycovariantDrafterForCurrentDraft
                     ? MycovariantGameBalance.SporalSnarePreferredAIScore
                     : MycovariantGameBalance.SporalSnareFallbackAIScore
+            };
+
+        private static Mycovariant PerisporeCrown() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.PerisporeCrownId,
+                Name = "Perispore Crown",
+                Description = $"One-time on draft: if Human, gain {MycovariantGameBalance.PerisporeCrownMutationPointAward} mutation points. If AI, Human-owned toxins erupt in a circular burst around the AI starting spore, poisoning non-human non-Resistant living cells and toxifying empty plus non-living enemy tiles.",
+                FlavorText = "A hardened perispore flowers into a toxin crown, baiting rivals into wreathing their own foothold in decay.",
+                IconId = "myco_perispore_crown",
+                Type = MycovariantType.Economy,
+                Category = MycovariantCategory.Economy,
+                IsUniversal = true,
+                IsLocked = true,
+                RequiredMoldinessUnlockLevel = 3,
+                IsBait = true,
+                AutoMarkTriggered = false,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    MycovariantEffectProcessor.ResolvePerisporeCrown(playerMyco, board, rng, observer);
+                },
+                AIPrioritizeEarly = false,
+                AIScore = (player, board) => player.IsLastAiMycovariantDrafterForCurrentDraft
+                    ? MycovariantGameBalance.PerisporeCrownPreferredAIScore
+                    : MycovariantGameBalance.PerisporeCrownFallbackAIScore
             };
     }
 }

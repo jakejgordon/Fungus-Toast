@@ -86,6 +86,7 @@ These permanently unlock locked mycovariants so they can appear in future campai
 
 Current implemented mycovariant unlock rewards:
 - `Unlock Ascus Bait` — level 1
+- `Unlock Perispore Crown` — level 3
 - `Unlock Septal Seal` — level 1
 - `Unlock Sporal Snare` — level 6
 
@@ -143,6 +144,7 @@ This presentation lives in `MycovariantCard.cs` and should remain lightweight an
 
 Current bait mycovariants in repo:
 - `Ascus Bait`
+- `Perispore Crown`
 - `Sporal Snare`
 
 Both are:
@@ -156,7 +158,7 @@ Bait mycovariants are not meant to be consumed by early AI drafters before the i
 
 Current pool rule:
 - Humans can see eligible bait mycovariants normally
-- early AI drafters are prevented from taking `Ascus Bait` and `Sporal Snare`
+- early AI drafters are prevented from taking bait mycovariants
 - the final AI drafter in the current mycovariant draft can be offered them
 
 That rule currently lives in `MycovariantPoolManager.GetEligibleMycovariantsForPlayer`.
@@ -170,6 +172,10 @@ That rule currently lives in `MycovariantPoolManager.GetEligibleMycovariantsForP
 #### Sporal Snare
 - if Human drafted: grants bonus mutation points
 - if AI drafted: creates the snare effect described in the mycovariant definition, tuned as a trap-like outcome rather than a straightforward AI-positive pick
+
+#### Perispore Crown
+- if Human drafted: grants 10 mutation points
+- if AI drafted: erupts Human-owned toxins in a circular radius around that AI player's starting spore, poisoning non-Resistant enemy living cells and toxifying eligible non-living or empty tiles in the area
 
 Design rule:
 - the exact balance numbers can change

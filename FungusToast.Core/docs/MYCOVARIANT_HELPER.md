@@ -18,23 +18,25 @@ Mycovariants are drafted abilities that either:
 ## Suggested Agent Workflow
 
 1. Read `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` before naming a new Mycovariant.
-2. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
-3. Read `MYCOVARIANT_AUTHORING_STYLE.md` before editing descriptions/flavor text.
-4. Read `MYCOVARIANT_TECHNICAL_FLOW.md` before adding or changing behavior.
-5. Generate a unique icon for the Mycovariant so draft cards, tooltips, and any sidebar/profile surfaces do not fall back to generic art. The first pass can be provisional and replaced later, but every new Mycovariant should ship with distinct iconography.
-6. Implement changes in category factories and processors.
-7. Proactively list the proposed test cases for the new or changed Mycovariant, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and likely regressions.
-8. Validate with Core + Simulation builds.
-9. Complete `MYCOVARIANT_PR_CHECKLIST.md` before requesting review.
+2. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing any shortlist.
+3. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
+4. Read `MYCOVARIANT_AUTHORING_STYLE.md` before editing descriptions/flavor text.
+5. Read `MYCOVARIANT_TECHNICAL_FLOW.md` before adding or changing behavior.
+6. Generate a unique icon for the Mycovariant so draft cards, tooltips, and any sidebar/profile surfaces do not fall back to generic art. The first pass can be provisional and replaced later, but every new Mycovariant should ship with distinct iconography.
+7. Implement changes in category factories and processors.
+8. Proactively list the proposed test cases for the new or changed Mycovariant, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and likely regressions.
+9. Validate with Core + Simulation builds.
+10. Complete `MYCOVARIANT_PR_CHECKLIST.md` before requesting review.
 
 ## Common Tasks
 
 ### Add a new Mycovariant
 1. Add or confirm the ID in `FungusToast.Core/Mycovariants/MycovariantIds.cs`.
 2. Name it using `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`, starting with 5 candidate names before finalizing.
-3. Write concise description and optional flavor text using `second-level/MYCOVARIANT_AUTHORING_STYLE.md`.
-4. Generate a unique icon keyed off the Mycovariant's `IconId`. It can be temporary and replaced later, but it should be distinct from every other Mycovariant.
-5. Define the Mycovariant in the correct category factory and wire any gameplay behavior through the appropriate processors, observers, and Unity draft hooks.
+3. Confirm the chosen name is unique across Mutations, Mycovariants, and Adaptations with a repo search.
+4. Write concise description and optional flavor text using `second-level/MYCOVARIANT_AUTHORING_STYLE.md`.
+5. Generate a unique icon keyed off the Mycovariant's `IconId`. It can be temporary and replaced later, but it should be distinct from every other Mycovariant.
+6. Define the Mycovariant in the correct category factory and wire any gameplay behavior through the appropriate processors, observers, and Unity draft hooks.
 
 ### Add Mycovariant UI presence
 1. Reuse the existing Unity tooltip system with `ITooltipContentProvider` and `TooltipTrigger`.

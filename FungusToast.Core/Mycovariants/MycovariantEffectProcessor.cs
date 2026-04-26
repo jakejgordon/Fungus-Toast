@@ -101,6 +101,41 @@ public static class MycovariantEffectProcessor
         public bool HasAnyAction => Colonized + Infested + Reclaimed + Overgrown > 0;
     }
 
+    public sealed class PerisporeCrownResolution
+    {
+        public PerisporeCrownResolution(
+            int humanPlayerId,
+            int draftingPlayerId,
+            int sourceTileId,
+            IReadOnlyList<int> impactedTileIds,
+            int mutationPointAward,
+            int radius,
+            int poisoned,
+            int toxified,
+            int skippedResistant)
+        {
+            HumanPlayerId = humanPlayerId;
+            DraftingPlayerId = draftingPlayerId;
+            SourceTileId = sourceTileId;
+            ImpactedTileIds = impactedTileIds;
+            MutationPointAward = mutationPointAward;
+            Radius = radius;
+            Poisoned = poisoned;
+            Toxified = toxified;
+            SkippedResistant = skippedResistant;
+        }
+
+        public int HumanPlayerId { get; }
+        public int DraftingPlayerId { get; }
+        public int SourceTileId { get; }
+        public IReadOnlyList<int> ImpactedTileIds { get; }
+        public int MutationPointAward { get; }
+        public int Radius { get; }
+        public int Poisoned { get; }
+        public int Toxified { get; }
+        public int SkippedResistant { get; }
+    }
+
     public static bool ResolveAscusWager(
         PlayerMycovariant playerMyco,
         GameBoard board,
@@ -319,6 +354,190 @@ public static class MycovariantEffectProcessor
             skippedResistant,
             alreadyOwned,
             invalid);
+    }
+
+    public static PerisporeCrownResolution? ResolvePerisporeCrown(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        var draftingPlayer = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+        if (draftingPlayer == null)
+        {
+            playerMyco.MarkTriggered();
+            return null;
+        }
+
+        if (draftingPlayer.PlayerType == PlayerTypeEnum.Human)
+        {
+            draftingPlayer.AddMutationPoints(MycovariantGameBalance.PerisporeCrownMutationPointAward);
+            playerMyco.IncrementEffectCount(MycovariantEffectType.MpBonus, MycovariantGameBalance.PerisporeCrownMutationPointAward);
+            playerMyco.MarkTriggered();
+            return new PerisporeCrownResolution(
+                humanPlayerId: draftingPlayer.PlayerId,
+                draftingPlayerId: draftingPlayer.PlayerId,
+                sourceTileId: draftingPlayer.StartingTileId ?? -1,
+                impactedTileIds: Array.Empty<int>(),
+                mutationPointAward: MycovariantGameBalance.PerisporeCrownMutationPointAward,
+                radius: 0,
+                poisoned: 0,
+                toxified: 0,
+                skippedResistant: 0);
+        }
+
+        var humanPlayer = board.Players.FirstOrDefault(p => p.PlayerType == PlayerTypeEnum.Human);
+        if (humanPlayer == null || !draftingPlayer.StartingTileId.HasValue)
+        {
+            playerMyco.MarkTriggered();
+            return null;
+        }
+
+        int sourceTileId = draftingPlayer.StartingTileId.Value;
+        int radius = GetPerisporeCrownRadius(board);
+        int toxinLifespan = ToxinHelper.GetToxinExpirationAge(humanPlayer, MycovariantGameBalance.PerisporeCrownToxinGrowthCycleDuration);
+        var impactedTileIds = new List<int>();
+        var candidateTileIds = new HashSet<int>();
+        var (centerX, centerY) = board.GetXYFromTileId(sourceTileId);
+        AddTilesInCircularRange(candidateTileIds, board, centerX, centerY, radius);
+
+        int poisoned = 0;
+        int toxified = 0;
+        int skippedResistant = 0;
+
+        foreach (int tileId in candidateTileIds)
+        {
+            var tile = board.GetTileById(tileId);
+            var cell = tile?.FungalCell;
+
+            if (cell == null)
+            {
+                ToxinHelper.ConvertToToxin(board, tileId, toxinLifespan, GrowthSource.PerisporeCrown, humanPlayer);
+                if (board.GetCell(tileId)?.IsToxin == true && board.GetCell(tileId)?.OwnerPlayerId == humanPlayer.PlayerId)
+                {
+                    toxified++;
+                    impactedTileIds.Add(tileId);
+                }
+
+                continue;
+            }
+
+            if (cell.OwnerPlayerId == humanPlayer.PlayerId)
+            {
+                continue;
+            }
+
+            if (cell.IsResistant)
+            {
+                skippedResistant++;
+                continue;
+            }
+
+            if (cell.IsAlive)
+            {
+                ToxinHelper.KillAndToxify(
+                    board,
+                    tileId,
+                    toxinLifespan,
+                    DeathReason.Poisoned,
+                    GrowthSource.PerisporeCrown,
+                    humanPlayer,
+                    sourceTileId);
+
+                if (board.GetCell(tileId)?.IsToxin == true && board.GetCell(tileId)?.OwnerPlayerId == humanPlayer.PlayerId)
+                {
+                    poisoned++;
+                    impactedTileIds.Add(tileId);
+                }
+
+                continue;
+            }
+
+            ToxinHelper.ConvertToToxin(board, tileId, toxinLifespan, GrowthSource.PerisporeCrown, humanPlayer);
+            if (board.GetCell(tileId)?.IsToxin == true && board.GetCell(tileId)?.OwnerPlayerId == humanPlayer.PlayerId)
+            {
+                toxified++;
+                impactedTileIds.Add(tileId);
+            }
+        }
+
+        if (poisoned > 0)
+        {
+            observer.RecordAttributedKill(humanPlayer.PlayerId, DeathReason.Poisoned, poisoned);
+            playerMyco.IncrementEffectCount(MycovariantEffectType.Poisoned, poisoned);
+        }
+
+        if (toxified > 0)
+        {
+            playerMyco.IncrementEffectCount(MycovariantEffectType.Toxified, toxified);
+        }
+
+        playerMyco.MarkTriggered();
+        return new PerisporeCrownResolution(
+            humanPlayerId: humanPlayer.PlayerId,
+            draftingPlayerId: draftingPlayer.PlayerId,
+            sourceTileId: sourceTileId,
+            impactedTileIds: impactedTileIds,
+            mutationPointAward: 0,
+            radius: radius,
+            poisoned: poisoned,
+            toxified: toxified,
+            skippedResistant: skippedResistant);
+    }
+
+    public static int GetPerisporeCrownRadius(GameBoard board)
+    {
+        if (board == null)
+        {
+            return MycovariantGameBalance.PerisporeCrownMinimumRadius;
+        }
+
+        int maxDimension = Math.Max(board.Width, board.Height);
+        int baseRadius = maxDimension <= MycovariantGameBalance.SporalSnareDenseLineMaxBoardDimension
+            ? MycovariantGameBalance.PerisporeCrownMinimumRadius
+            : maxDimension <= MycovariantGameBalance.SporalSnareMediumLineMaxBoardDimension
+                ? MycovariantGameBalance.PerisporeCrownMediumBoardRadius
+                : MycovariantGameBalance.PerisporeCrownLargeBoardRadius;
+
+        if (board.CurrentRound >= MycovariantGameBalance.PerisporeCrownLateRoundThreshold)
+        {
+            baseRadius += MycovariantGameBalance.PerisporeCrownLateRoundRadiusBonus;
+        }
+
+        return Math.Clamp(
+            baseRadius,
+            MycovariantGameBalance.PerisporeCrownMinimumRadius,
+            MycovariantGameBalance.PerisporeCrownMaximumRadius);
+    }
+
+    private static void AddTilesInCircularRange(HashSet<int> candidateTileIds, GameBoard board, int centerX, int centerY, int radius)
+    {
+        if (candidateTileIds == null || board == null)
+        {
+            return;
+        }
+
+        int radiusSquared = radius * radius;
+
+        int minX = Math.Max(0, centerX - radius);
+        int maxX = Math.Min(board.Width - 1, centerX + radius);
+        int minY = Math.Max(0, centerY - radius);
+        int maxY = Math.Min(board.Height - 1, centerY + radius);
+
+        for (int x = minX; x <= maxX; x++)
+        {
+            for (int y = minY; y <= maxY; y++)
+            {
+                int deltaX = x - centerX;
+                int deltaY = y - centerY;
+                if ((deltaX * deltaX) + (deltaY * deltaY) > radiusSquared)
+                {
+                    continue;
+                }
+
+                candidateTileIds.Add(board.Grid[x, y].TileId);
+            }
+        }
     }
 
     public static void ResolveJettingMycelium(

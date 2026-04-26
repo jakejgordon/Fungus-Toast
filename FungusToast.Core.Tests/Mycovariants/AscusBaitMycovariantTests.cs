@@ -48,6 +48,25 @@ public class AscusBaitMycovariantTests
     }
 
     [Fact]
+    public void Factory_exposes_perispore_crown_with_expected_metadata()
+    {
+        var mycovariant = MycovariantFactory.GetAll().Single(myco => myco.Id == MycovariantIds.PerisporeCrownId);
+
+        Assert.Equal("Perispore Crown", mycovariant.Name);
+        Assert.Equal("myco_perispore_crown", mycovariant.IconId);
+        Assert.Equal(MycovariantType.Economy, mycovariant.Type);
+        Assert.Equal(MycovariantCategory.Economy, mycovariant.Category);
+        Assert.True(mycovariant.IsUniversal);
+        Assert.True(mycovariant.IsLocked);
+        Assert.Equal(3, mycovariant.RequiredMoldinessUnlockLevel);
+        Assert.True(mycovariant.IsBait);
+        Assert.False(mycovariant.AutoMarkTriggered);
+        Assert.Contains("circular burst", mycovariant.Description);
+        Assert.Contains("gain 10 mutation points", mycovariant.Description);
+        Assert.NotNull(mycovariant.ApplyEffect);
+    }
+
+    [Fact]
     public void ResolveAscusBait_grants_human_player_mutation_points()
     {
         var board = new GameBoard(width: 5, height: 5, playerCount: 1);
@@ -77,6 +96,127 @@ public class AscusBaitMycovariantTests
         Assert.Null(result);
         Assert.Equal(13, player.MutationPoints);
         Assert.True(playerMyco.HasTriggered);
+    }
+
+    [Fact]
+    public void ResolvePerisporeCrown_grants_human_player_mutation_points()
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 1);
+        var player = new Player(0, "P0", PlayerTypeEnum.Human) { MutationPoints = 3 };
+        board.Players.Add(player);
+        var mycovariant = MycovariantRepository.GetById(MycovariantIds.PerisporeCrownId);
+        var playerMyco = new PlayerMycovariant(player.PlayerId, mycovariant.Id, mycovariant);
+
+        var result = MycovariantEffectProcessor.ResolvePerisporeCrown(playerMyco, board, new Random(123), new TestSimulationObserver());
+
+        Assert.NotNull(result);
+        Assert.Equal(13, player.MutationPoints);
+        Assert.Equal(MycovariantGameBalance.PerisporeCrownMutationPointAward, result!.MutationPointAward);
+        Assert.Equal(0, result.Radius);
+        Assert.True(playerMyco.HasTriggered);
+    }
+
+    [Fact]
+    public void ResolvePerisporeCrown_erupts_human_owned_toxins_in_a_circular_radius()
+    {
+        var board = new GameBoard(width: 9, height: 9, playerCount: 2);
+        var human = new Player(0, "Human", PlayerTypeEnum.Human);
+        var ai = new Player(1, "AI", PlayerTypeEnum.AI);
+        board.Players.Add(human);
+        board.Players.Add(ai);
+        board.PlaceInitialSpore(human.PlayerId, 0, 0);
+        board.PlaceInitialSpore(ai.PlayerId, 4, 4);
+
+        int livingEdgeTileId = board.GetTile(7, 4)!.TileId;
+        int deadTileId = board.GetTile(4, 1)!.TileId;
+        int emptyTileId = board.GetTile(4, 7)!.TileId;
+        int squareCornerTileId = board.GetTile(7, 7)!.TileId;
+
+        PlaceLivingCell(board, ai.PlayerId, livingEdgeTileId);
+        PlaceCorpse(board, ai.PlayerId, deadTileId);
+
+        var mycovariant = MycovariantRepository.GetById(MycovariantIds.PerisporeCrownId);
+        var playerMyco = new PlayerMycovariant(ai.PlayerId, mycovariant.Id, mycovariant);
+
+        var result = MycovariantEffectProcessor.ResolvePerisporeCrown(playerMyco, board, new Random(123), new TestSimulationObserver());
+
+        Assert.NotNull(result);
+        Assert.Equal(3, result!.Radius);
+        Assert.Equal(human.PlayerId, board.GetCell(livingEdgeTileId)!.OwnerPlayerId);
+        Assert.True(board.GetCell(livingEdgeTileId)!.IsToxin);
+        Assert.Equal(human.PlayerId, board.GetCell(deadTileId)!.OwnerPlayerId);
+        Assert.True(board.GetCell(deadTileId)!.IsToxin);
+        Assert.Equal(human.PlayerId, board.GetCell(emptyTileId)!.OwnerPlayerId);
+        Assert.True(board.GetCell(emptyTileId)!.IsToxin);
+        Assert.Contains(livingEdgeTileId, result.ImpactedTileIds);
+        Assert.Contains(deadTileId, result.ImpactedTileIds);
+        Assert.Contains(emptyTileId, result.ImpactedTileIds);
+        Assert.DoesNotContain(squareCornerTileId, result.ImpactedTileIds);
+        Assert.Null(board.GetCell(squareCornerTileId));
+        Assert.Equal(1, result.Poisoned);
+        Assert.Equal(27, result.Toxified);
+        Assert.Equal(28, result.ImpactedTileIds.Count);
+    }
+
+    [Fact]
+    public void ResolvePerisporeCrown_skips_human_owned_and_resistant_tiles()
+    {
+        var board = new GameBoard(width: 9, height: 9, playerCount: 2);
+        var human = new Player(0, "Human", PlayerTypeEnum.Human);
+        var ai = new Player(1, "AI", PlayerTypeEnum.AI);
+        board.Players.Add(human);
+        board.Players.Add(ai);
+        board.PlaceInitialSpore(human.PlayerId, 0, 0);
+        board.PlaceInitialSpore(ai.PlayerId, 4, 4);
+
+        int humanTileId = board.GetTile(5, 4)!.TileId;
+        int resistantEnemyTileId = board.GetTile(4, 5)!.TileId;
+        PlaceLivingCell(board, human.PlayerId, humanTileId);
+        PlaceLivingCell(board, ai.PlayerId, resistantEnemyTileId);
+        board.GetCell(resistantEnemyTileId)!.MakeResistant();
+
+        var mycovariant = MycovariantRepository.GetById(MycovariantIds.PerisporeCrownId);
+        var playerMyco = new PlayerMycovariant(ai.PlayerId, mycovariant.Id, mycovariant);
+
+        var result = MycovariantEffectProcessor.ResolvePerisporeCrown(playerMyco, board, new Random(123), new TestSimulationObserver());
+
+        Assert.NotNull(result);
+        Assert.Equal(human.PlayerId, board.GetCell(humanTileId)!.OwnerPlayerId);
+        Assert.True(board.GetCell(humanTileId)!.IsAlive);
+        Assert.Equal(ai.PlayerId, board.GetCell(resistantEnemyTileId)!.OwnerPlayerId);
+        Assert.True(board.GetCell(resistantEnemyTileId)!.IsAlive);
+        Assert.True(board.GetCell(resistantEnemyTileId)!.IsResistant);
+        Assert.DoesNotContain(humanTileId, result!.ImpactedTileIds);
+        Assert.DoesNotContain(resistantEnemyTileId, result.ImpactedTileIds);
+        Assert.True(result.SkippedResistant >= 1);
+    }
+
+    [Fact]
+    public void ResolvePerisporeCrown_targets_any_non_human_enemy_in_range()
+    {
+        var board = new GameBoard(width: 9, height: 9, playerCount: 3);
+        var human = new Player(0, "Human", PlayerTypeEnum.Human);
+        var draftingAi = new Player(1, "AI1", PlayerTypeEnum.AI);
+        var otherAi = new Player(2, "AI2", PlayerTypeEnum.AI);
+        board.Players.Add(human);
+        board.Players.Add(draftingAi);
+        board.Players.Add(otherAi);
+        board.PlaceInitialSpore(human.PlayerId, 0, 0);
+        board.PlaceInitialSpore(draftingAi.PlayerId, 4, 4);
+        board.PlaceInitialSpore(otherAi.PlayerId, 8, 8);
+
+        int otherAiTileId = board.GetTile(3, 4)!.TileId;
+        PlaceLivingCell(board, otherAi.PlayerId, otherAiTileId);
+
+        var mycovariant = MycovariantRepository.GetById(MycovariantIds.PerisporeCrownId);
+        var playerMyco = new PlayerMycovariant(draftingAi.PlayerId, mycovariant.Id, mycovariant);
+
+        var result = MycovariantEffectProcessor.ResolvePerisporeCrown(playerMyco, board, new Random(123), new TestSimulationObserver());
+
+        Assert.NotNull(result);
+        Assert.Equal(human.PlayerId, board.GetCell(otherAiTileId)!.OwnerPlayerId);
+        Assert.True(board.GetCell(otherAiTileId)!.IsToxin);
+        Assert.Contains(otherAiTileId, result!.ImpactedTileIds);
     }
 
     [Fact]
@@ -219,6 +359,24 @@ public class AscusBaitMycovariantTests
     }
 
     [Fact]
+    public void PerisporeCrown_ai_score_is_high_only_for_last_ai_drafter()
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 1);
+        var player = new Player(0, "P0", PlayerTypeEnum.AI);
+        board.Players.Add(player);
+        var mycovariant = MycovariantRepository.GetById(MycovariantIds.PerisporeCrownId);
+
+        player.IsLastAiMycovariantDrafterForCurrentDraft = false;
+        var normalScore = mycovariant.GetBaseAIScore(player, board);
+
+        player.IsLastAiMycovariantDrafterForCurrentDraft = true;
+        var lastAiScore = mycovariant.GetBaseAIScore(player, board);
+
+        Assert.Equal(0f, normalScore);
+        Assert.Equal(MycovariantGameBalance.PerisporeCrownPreferredAIScore, lastAiScore);
+    }
+
+    [Fact]
     public void BuildSporalSnarePath_scales_stride_by_board_size()
     {
         var smallBoard = new GameBoard(width: 12, height: 12, playerCount: 1);
@@ -235,6 +393,19 @@ public class AscusBaitMycovariantTests
         Assert.Equal(new[] { 1, 3, 5, 6 }, mediumPath);
         Assert.Equal(3, largeStride);
         Assert.Equal(new[] { 1, 4, 7, 8 }, largePath);
+    }
+
+    [Fact]
+    public void GetPerisporeCrownRadius_scales_by_board_size_and_current_round()
+    {
+        var smallBoard = new GameBoard(width: 12, height: 12, playerCount: 1);
+        var mediumBoard = new GameBoard(width: 24, height: 24, playerCount: 1);
+        var largeBoard = new GameBoard(width: 60, height: 60, playerCount: 1);
+        largeBoard.RestoreRoundState(currentRound: 25, currentGrowthCycle: 0, necrophyticBloomActivated: false, pendingHypervariationDraftPlayerIds: null);
+
+        Assert.Equal(3, MycovariantEffectProcessor.GetPerisporeCrownRadius(smallBoard));
+        Assert.Equal(4, MycovariantEffectProcessor.GetPerisporeCrownRadius(mediumBoard));
+        Assert.Equal(6, MycovariantEffectProcessor.GetPerisporeCrownRadius(largeBoard));
     }
 
     [Fact]
@@ -284,6 +455,34 @@ public class AscusBaitMycovariantTests
         Assert.DoesNotContain(firstAiEligible, myco => myco.Id == MycovariantIds.SporalSnareId);
         Assert.Contains(lastAiEligible, myco => myco.Id == MycovariantIds.SporalSnareId);
         Assert.Contains(humanEligible, myco => myco.Id == MycovariantIds.SporalSnareId);
+    }
+
+    [Fact]
+    public void GetEligibleMycovariantsForPlayer_hides_all_bait_mycovariants_from_non_final_ai_only()
+    {
+        var firstAi = new Player(0, "P0", PlayerTypeEnum.AI);
+        var lastAi = new Player(1, "P1", PlayerTypeEnum.AI)
+        {
+            IsLastAiMycovariantDrafterForCurrentDraft = true
+        };
+        var human = new Player(2, "Human", PlayerTypeEnum.Human);
+
+        var ascusBait = MycovariantRepository.GetById(MycovariantIds.AscusBaitId);
+        var sporalSnare = MycovariantRepository.GetById(MycovariantIds.SporalSnareId);
+        var perisporeCrown = MycovariantRepository.GetById(MycovariantIds.PerisporeCrownId);
+        var plasmidBounty = MycovariantRepository.GetById(MycovariantIds.PlasmidBountyId);
+        var poolManager = new MycovariantPoolManager();
+        poolManager.InitializePool(new List<Mycovariant> { ascusBait, sporalSnare, perisporeCrown, plasmidBounty }, new Random(5));
+
+        var firstAiEligible = poolManager.GetEligibleMycovariantsForPlayer(firstAi);
+        var lastAiEligible = poolManager.GetEligibleMycovariantsForPlayer(lastAi);
+        var humanEligible = poolManager.GetEligibleMycovariantsForPlayer(human);
+
+        Assert.DoesNotContain(firstAiEligible, myco => myco.IsBait);
+        Assert.Contains(lastAiEligible, myco => myco.Id == MycovariantIds.AscusBaitId);
+        Assert.Contains(lastAiEligible, myco => myco.Id == MycovariantIds.SporalSnareId);
+        Assert.Contains(lastAiEligible, myco => myco.Id == MycovariantIds.PerisporeCrownId);
+        Assert.Contains(humanEligible, myco => myco.Id == MycovariantIds.PerisporeCrownId);
     }
 
     [Fact]
@@ -373,5 +572,17 @@ public class AscusBaitMycovariantTests
             board.PlaceFungalCell(cell);
             owner.AddControlledTile(tileId);
         }
+    }
+
+    private static void PlaceLivingCell(GameBoard board, int ownerPlayerId, int tileId)
+    {
+        bool placed = board.SpawnSporeForPlayer(board.Players[ownerPlayerId], tileId, GrowthSource.Manual);
+        Assert.True(placed);
+    }
+
+    private static void PlaceCorpse(GameBoard board, int ownerPlayerId, int tileId)
+    {
+        PlaceLivingCell(board, ownerPlayerId, tileId);
+        board.KillFungalCell(Assert.IsType<FungalCell>(board.GetCell(tileId)), DeathReason.Unknown, ownerPlayerId);
     }
 }

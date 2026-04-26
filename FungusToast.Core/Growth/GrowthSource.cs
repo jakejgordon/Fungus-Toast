@@ -185,6 +185,11 @@ namespace FungusToast.Core.Growth
         SporalSnare,
 
         /// <summary>
+        /// Human-owned toxin eruption created by the Perispore Crown mycovariant.
+        /// </summary>
+        PerisporeCrown,
+
+        /// <summary>
         /// Free chained growth granted by claiming a Sporemeal Patch.
         /// </summary>
         SporemealPatch,

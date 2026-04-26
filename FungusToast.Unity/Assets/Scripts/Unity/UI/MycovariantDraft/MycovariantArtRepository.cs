@@ -137,6 +137,12 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 return;
             }
 
+            if (mycovariant?.IconId == "myco_perispore_crown")
+            {
+                DrawPerisporeCrownMotif(texture, accent, highlight);
+                return;
+            }
+
             if (mycovariant?.IconId == "myco_septal_seal")
             {
                 DrawSeptalSealMotif(texture, accent, highlight);
@@ -232,6 +238,21 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             ProceduralIconUtility.DrawLine(texture, 29, 12, 29, 28, highlight, 1);
             ProceduralIconUtility.DrawLine(texture, 29, 28, 25, 24, highlight, 2);
             ProceduralIconUtility.DrawLine(texture, 29, 28, 33, 24, highlight, 2);
+        }
+
+        private static void DrawPerisporeCrownMotif(Texture2D texture, Color accent, Color highlight)
+        {
+            ProceduralIconUtility.DrawRing(texture, 20, 20, 10, 2, accent);
+            ProceduralIconUtility.DrawRing(texture, 20, 20, 6, 1, highlight);
+            ProceduralIconUtility.FillCircle(texture, 20, 20, 3, accent);
+            ProceduralIconUtility.DrawLine(texture, 20, 7, 20, 12, highlight, 2);
+            ProceduralIconUtility.DrawLine(texture, 20, 28, 20, 33, highlight, 2);
+            ProceduralIconUtility.DrawLine(texture, 7, 20, 12, 20, highlight, 2);
+            ProceduralIconUtility.DrawLine(texture, 28, 20, 33, 20, highlight, 2);
+            ProceduralIconUtility.FillCircle(texture, 20, 6, 2, accent);
+            ProceduralIconUtility.FillCircle(texture, 34, 20, 2, accent);
+            ProceduralIconUtility.FillCircle(texture, 20, 34, 2, accent);
+            ProceduralIconUtility.FillCircle(texture, 6, 20, 2, accent);
         }
 
         private static void DrawSeptalSealMotif(Texture2D texture, Color accent, Color highlight)

@@ -42,6 +42,8 @@ namespace FungusToast.Unity.Effects
 
         public static bool IsSporalSnare(int id) => id == MycovariantIds.SporalSnareId;
 
+        public static bool IsPerisporeCrown(int id) => id == MycovariantIds.PerisporeCrownId;
+
         public IEnumerator ResolveEffect(
             Player player,
             Mycovariant mycovariant,
@@ -86,6 +88,19 @@ namespace FungusToast.Unity.Effects
             {
                 yield return StartCoroutine(
                     MycovariantEffectHelpers.HandleSporalSnare(
+                        player,
+                        mycovariant,
+                        onComplete,
+                        draftPanel,
+                        gridVisualizer,
+                        GameManager.Instance
+                    )
+                );
+            }
+            else if (IsPerisporeCrown(mycovariant.Id))
+            {
+                yield return StartCoroutine(
+                    MycovariantEffectHelpers.HandlePerisporeCrown(
                         player,
                         mycovariant,
                         onComplete,

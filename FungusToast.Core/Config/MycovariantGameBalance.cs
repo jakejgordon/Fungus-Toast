@@ -29,6 +29,16 @@ namespace FungusToast.Core.Config
         public const int SporalSnareMutationPointAward = 10;
         public const float SporalSnarePreferredAIScore = 99f;
         public const float SporalSnareFallbackAIScore = 0f;
+        public const int PerisporeCrownMutationPointAward = 10;
+        public const float PerisporeCrownPreferredAIScore = 99f;
+        public const float PerisporeCrownFallbackAIScore = 0f;
+        public const int PerisporeCrownMinimumRadius = 3;
+        public const int PerisporeCrownMediumBoardRadius = 4;
+        public const int PerisporeCrownLargeBoardRadius = 5;
+        public const int PerisporeCrownMaximumRadius = 6;
+        public const int PerisporeCrownLateRoundThreshold = 25;
+        public const int PerisporeCrownLateRoundRadiusBonus = 1;
+        public const int PerisporeCrownToxinGrowthCycleDuration = DefaultJettingMyceliumToxinGrowthCycleDuration;
         public const int SporalSnareDenseLineMaxBoardDimension = 18;
         public const int SporalSnareMediumLineMaxBoardDimension = 36;
         public const int SporalSnareDenseLineStride = 1;

@@ -73,12 +73,12 @@ namespace FungusToast.Core.Mycovariants
                 !_draftedNonUniversalIds.Contains(m.Id)).ToList();
             eligible.AddRange(availableNonUniversal);
 
-            // Universals are generally available to everyone, except Ascus Bait which is reserved for
-            // the final AI drafter so earlier AIs cannot consume the trap before it reaches that seat.
+            // Universals are generally available to everyone, except bait mycovariants which are reserved
+            // for the final AI drafter so earlier AIs cannot consume the trap before it reaches that seat.
             var availableUniversal = _universalPool.Where(m =>
                 player.PlayerType != PlayerTypeEnum.AI
                 || player.IsLastAiMycovariantDrafterForCurrentDraft
-                || (m.Id != MycovariantIds.AscusBaitId && m.Id != MycovariantIds.SporalSnareId)).ToList();
+                || !m.IsBait).ToList();
             eligible.AddRange(availableUniversal);
 
             FungusToast.Core.Logging.CoreLogger.Log?.Invoke($"[Pool] Player {player.PlayerId} eligible: {availableNonUniversal.Count} non-universal + {availableUniversal.Count} universal = {eligible.Count} total");

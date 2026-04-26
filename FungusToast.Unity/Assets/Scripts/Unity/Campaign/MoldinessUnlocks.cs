@@ -243,6 +243,15 @@ namespace FungusToast.Unity.Campaign
                         categoryLabel: "Mycovariant Unlock",
                         accentColor: UIStyleTokens.State.Focus),
                     new MoldinessUnlockDefinition(
+                        id: "moldiness_unlock_mycovariant_perispore_crown",
+                        displayName: "Unlock Perispore Crown",
+                        description: "Permanently unlock Perispore Crown so it can appear in campaign mycovariant drafts.",
+                        type: MoldinessUnlockType.UnlockMycovariant,
+                        requiredUnlockLevel: 3,
+                        mycovariantId: MycovariantIds.PerisporeCrownId,
+                        categoryLabel: "Mycovariant Unlock",
+                        accentColor: UIStyleTokens.State.Focus),
+                    new MoldinessUnlockDefinition(
                         id: StrainProfilingRewardId,
                         displayName: "Strain Profiling",
                         description: "During campaign games, enemy campaign AI tooltips reveal a friendly name and a short note about that opponent's style.",

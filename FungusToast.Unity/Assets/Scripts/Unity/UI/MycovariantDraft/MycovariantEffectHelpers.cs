@@ -407,6 +407,96 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             onComplete?.Invoke();
         }
 
+        public static IEnumerator HandlePerisporeCrown(
+            Player player,
+            Mycovariant picked,
+            Action onComplete,
+            GameObject draftPanel,
+            GridVisualizer gridVisualizer,
+            GameManager gameManager)
+        {
+            if (gameManager == null)
+            {
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            var board = gameManager.Board;
+            var gameLogRouter = gameManager.GameUI.GameLogRouter;
+            var playerMyco = player.PlayerMycovariants
+                .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+
+            if (playerMyco == null)
+            {
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            draftPanel?.SetActive(false);
+
+            if (player.PlayerType == PlayerTypeEnum.AI)
+            {
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
+                var resolution = MycovariantEffectProcessor.ResolvePerisporeCrown(
+                    playerMyco,
+                    board,
+                    new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                    gameLogRouter);
+
+                var animatedTileIds = resolution?.ImpactedTileIds
+                    .Where(tileId =>
+                    {
+                        var cell = board.GetCell(tileId);
+                        return cell?.IsToxin == true
+                            && cell.OwnerPlayerId == resolution.HumanPlayerId
+                                && cell.SourceOfGrowth == GrowthSource.PerisporeCrown;
+                    })
+                    .ToList() ?? new List<int>();
+
+                if (animatedTileIds.Count > 0)
+                {
+                    gridVisualizer.RegisterPreAnimationHiddenPreviewTiles(animatedTileIds);
+                    ClearToxinDropFlags(board, animatedTileIds);
+                }
+
+                gridVisualizer.RenderBoard(board);
+                yield return gridVisualizer.WaitForAllAnimations();
+
+                if (animatedTileIds.Count > 0 && resolution != null && resolution.SourceTileId >= 0)
+                {
+                    gameManager.PlayJettingMyceliumVolleySound();
+                    var toxinVolley = gridVisualizer.PlayJettingMyceliumToxinVolleyAnimation(
+                        resolution.SourceTileId,
+                        animatedTileIds,
+                        toxinTileId =>
+                        {
+                            gridVisualizer.RevealPreAnimationPreviewTile(toxinTileId);
+                            gridVisualizer.RenderTileFromBoard(toxinTileId);
+                        });
+                    if (toxinVolley != null)
+                    {
+                        yield return toxinVolley;
+                    }
+
+                    gameManager.StopJettingMyceliumVolleySound();
+                    yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumPostVolleyHoldSeconds);
+                }
+
+                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            MycovariantEffectProcessor.ResolvePerisporeCrown(
+                playerMyco,
+                board,
+                new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                gameLogRouter);
+            gridVisualizer.RenderBoard(board);
+
+            onComplete?.Invoke();
+        }
+
         /// <summary>
         /// Handles UI/AI, input, and effect resolution for Mycelial Bastion.
         /// </summary>

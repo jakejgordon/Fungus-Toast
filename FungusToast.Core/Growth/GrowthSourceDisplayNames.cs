@@ -40,6 +40,7 @@ namespace FungusToast.Core.Growth
             GrowthSource.SeptalAlarm => "Septal Alarm",
             GrowthSource.SeptalSeal => "Septal Seal",
             GrowthSource.SporalSnare => "Sporal Snare",
+            GrowthSource.PerisporeCrown => "Perispore Crown",
             GrowthSource.SporemealPatch => "Sporemeal Patch",
             GrowthSource.ConidiaAscent => "Conidia Ascent",
             _ => source.ToString()
