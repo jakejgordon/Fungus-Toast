@@ -1,4 +1,5 @@
 using FungusToast.Unity.Campaign;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.UI.Tooltips;
 using UnityEngine;
 
@@ -47,9 +48,25 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
                         ? $"Current carryover capacity: {currentCarryoverCapacity}\n\n"
                         : $"Claim effect: +{Mathf.Max(1, definition.StackAmount)} carryover capacity\n\n") +
                     $"On a failed campaign run, you may preserve up to {Mathf.Max(1, currentCarryoverCapacity > 0 ? currentCarryoverCapacity : definition.StackAmount)} non-starting adaptations from the run you just lost. Those preserved adaptations are then added to the start of your next fresh campaign run.",
+                MoldinessUnlockType.UnlockMycovariant => BuildMycovariantUnlockTooltip(title, definition),
                 _ =>
                     $"{title}\n\n{definition.Description}"
             };
+        }
+
+        private static string BuildMycovariantUnlockTooltip(string title, MoldinessUnlockDefinition definition)
+        {
+            Mycovariant mycovariant = MycovariantRepository.All.Find(candidate => candidate.Id == definition.MycovariantId);
+            if (mycovariant == null)
+            {
+                return $"{title}\n\n{definition.Description}";
+            }
+
+            return $"{title}\n\n" +
+                "Mycovariant Unlock\n\n" +
+                $"<b>{mycovariant.Name}</b>\n" +
+                $"<i>Mycovariant · {mycovariant.Category}</i>\n\n" +
+                mycovariant.Description;
         }
     }
 }
