@@ -853,6 +853,36 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public static readonly Color StartingTilePingSecondaryBandColor = new Color(0f, 0f, 0f, 0.62f);
 
+        /// <summary>
+        /// Duration of one full always-on starting-spore emphasis pulse cycle.
+        /// </summary>
+        public const float StartingTileEmphasisPulseDurationSeconds = 1.9f;
+
+        /// <summary>
+        /// Minimum scale for the always-on starting-spore emphasis halo.
+        /// </summary>
+        public const float StartingTileEmphasisMinScale = 1.08f;
+
+        /// <summary>
+        /// Maximum scale for the always-on starting-spore emphasis halo.
+        /// </summary>
+        public const float StartingTileEmphasisMaxScale = 1.34f;
+
+        /// <summary>
+        /// Minimum alpha for the always-on starting-spore emphasis halo.
+        /// </summary>
+        public const float StartingTileEmphasisMinAlpha = 0.14f;
+
+        /// <summary>
+        /// Maximum alpha for the always-on starting-spore emphasis halo.
+        /// </summary>
+        public const float StartingTileEmphasisMaxAlpha = 0.3f;
+
+        /// <summary>
+        /// Warm halo color used for persistent starting-spore emphasis.
+        /// </summary>
+        public static readonly Color StartingTileEmphasisColor = new Color(1f, 0.94f, 0.7f, 1f);
+
         // ==================== MYCELIAL BASTION PULSE ====================
         /// <summary>
         /// Duration (in seconds) for mycelial bastion pulse animation.

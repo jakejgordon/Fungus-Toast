@@ -72,6 +72,7 @@ namespace FungusToast.Unity.Grid
         private Color pulseColorA = new(1f, 1f, 0.1f, 1f);
         private Color pulseColorB = new(0.1f, 1f, 1f, 1f);
         private readonly List<PlayerHoverEmphasisSnapshot> playerHoverEmphasisSnapshots = new();
+        private readonly HashSet<Vector3Int> startingTileEmphasisPositions = new();
         private Coroutine playerHoverEmphasisCoroutine;
 
         private sealed class PlayerHoverEmphasisSnapshot
@@ -259,6 +260,7 @@ namespace FungusToast.Unity.Grid
 
         private void OnDestroy()
         {
+            ClearStartingTileEmphasis();
             UnsubscribeFromBoardEvents();
             cellStateAnimationController?.Dispose();
             presentationEffects?.DestroyLingeringToasts();
@@ -271,6 +273,7 @@ namespace FungusToast.Unity.Grid
             UpdateNutrientPulseVisuals();
             UpdateMoldIdleVisuals();
             UpdateChemobeaconPulseVisuals();
+            UpdateStartingTileEmphasis();
         }
 
         public void Initialize(GameBoard board)
@@ -328,6 +331,7 @@ namespace FungusToast.Unity.Grid
 
             ClearAllHighlights();
             ClearHoverEffect();
+            ClearStartingTileEmphasis();
 
             toastTilemap?.ClearAllTiles();
             moldTilemap?.ClearAllTiles();
@@ -1619,6 +1623,88 @@ namespace FungusToast.Unity.Grid
             if (active != null && playerId >= 0 && playerId < active.Players.Count)
                 return active.Players[playerId].StartingTileId;
             return null;
+        }
+
+        private void UpdateStartingTileEmphasis()
+        {
+            var active = ActiveBoard;
+            var emphasisTilemap = HoverOverlayTileMap != null ? HoverOverlayTileMap : PingOverlayTileMap;
+            if (active == null || emphasisTilemap == null || solidHighlightTile == null)
+            {
+                ClearStartingTileEmphasis();
+                return;
+            }
+
+            HashSet<Vector3Int> nextPositions = new();
+            for (int i = 0; i < active.Players.Count; i++)
+            {
+                int? startingTileId = active.Players[i].StartingTileId;
+                if (!startingTileId.HasValue)
+                {
+                    continue;
+                }
+
+                nextPositions.Add(GetPositionForTileId(startingTileId.Value));
+            }
+
+            if (nextPositions.Count == 0)
+            {
+                ClearStartingTileEmphasis();
+                return;
+            }
+
+            float duration = Mathf.Max(0.01f, UIEffectConstants.StartingTileEmphasisPulseDurationSeconds);
+            float cycleT = Mathf.Repeat(Time.time, duration) / duration;
+            float eased = Mathf.Sin(cycleT * Mathf.PI);
+            eased *= eased;
+            float scale = Mathf.Lerp(UIEffectConstants.StartingTileEmphasisMinScale, UIEffectConstants.StartingTileEmphasisMaxScale, eased);
+            float alpha = Mathf.Lerp(UIEffectConstants.StartingTileEmphasisMinAlpha, UIEffectConstants.StartingTileEmphasisMaxAlpha, eased);
+            Matrix4x4 transform = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
+            Color haloColor = UIEffectConstants.StartingTileEmphasisColor;
+            haloColor.a = alpha;
+
+            if (startingTileEmphasisPositions.Count > 0)
+            {
+                foreach (Vector3Int position in startingTileEmphasisPositions)
+                {
+                    if (!nextPositions.Contains(position))
+                    {
+                        emphasisTilemap.SetTile(position, null);
+                        emphasisTilemap.SetColor(position, Color.white);
+                        emphasisTilemap.SetTransformMatrix(position, Matrix4x4.identity);
+                    }
+                }
+            }
+
+            foreach (Vector3Int position in nextPositions)
+            {
+                emphasisTilemap.SetTile(position, solidHighlightTile);
+                emphasisTilemap.SetTileFlags(position, TileFlags.None);
+                emphasisTilemap.SetColor(position, haloColor);
+                emphasisTilemap.SetTransformMatrix(position, transform);
+            }
+
+            startingTileEmphasisPositions.Clear();
+            foreach (Vector3Int position in nextPositions)
+            {
+                startingTileEmphasisPositions.Add(position);
+            }
+        }
+
+        private void ClearStartingTileEmphasis()
+        {
+            var emphasisTilemap = HoverOverlayTileMap != null ? HoverOverlayTileMap : PingOverlayTileMap;
+            if (emphasisTilemap != null)
+            {
+                foreach (Vector3Int position in startingTileEmphasisPositions)
+                {
+                    emphasisTilemap.SetTile(position, null);
+                    emphasisTilemap.SetColor(position, Color.white);
+                    emphasisTilemap.SetTransformMatrix(position, Matrix4x4.identity);
+                }
+            }
+
+            startingTileEmphasisPositions.Clear();
         }
 
         private void StartPlayerHoverEmphasis(IReadOnlyList<int> tileIds)
