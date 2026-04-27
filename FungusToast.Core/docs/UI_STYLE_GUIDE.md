@@ -160,6 +160,16 @@ Notes:
 - Hover and pressed states must be visibly distinct.
 - Selected state uses `Button.Bg.Selected`.
 - Readability rule: button labels on light or selected button backgrounds must use high-contrast dark text (`Button.Text.Default` or `Text.OnAccent`). Do not use `Text.Secondary` or `Text.Muted` for interactive button labels.
+- Button color must communicate semantic role, not just visual emphasis.
+
+### 5.1.0 Button Semantic Roles
+- **Affirmative CTA / continue / start**: use accent-filled green (`Button.Bg.Selected` as the resting state). This is the default treatment for the single best forward-progress action in a local action cluster.
+- **Neutral active action / peer choice**: use the light neutral button fill (`Button.Bg.Default`) for active choices that are not the single forward CTA, including symmetric mode choices and non-destructive alternatives.
+- **Secondary utility / settings action**: use the dark raised panel-secondary treatment for settings, audio controls, testing controls, compact details actions, and other lower-emphasis utilities on dark surfaces.
+- **Destructive / abandon / dismissive action**: never use success-green styling for `Exit Game`, `Quit to Desktop`, `Main Menu`, `Delete`, or `Back`. Use neutral or darker secondary styling unless the flow explicitly requires a stronger warning treatment.
+- **Single-green rule**: within one visible action cluster, prefer exactly one green button. Only break this when multiple buttons intentionally represent the same class of positive continuation.
+- **Mode-choice exception**: when a screen is presenting two or more peer mode choices without a recommended path (for example `Solo / Hotseat Game` vs `Campaign`), it is valid for all of those buttons to remain neutral/light instead of forcing one to read as primary.
+- Unity implementation note: prefer semantic helpers such as `ApplyAffirmativeMenuAction`, `ApplyNeutralMenuAction`, and `ApplySecondaryMenuAction` instead of treating all large menu buttons as the same role.
 
 ### 5.1.1 Buttons With Icons
 - Use icons only when they reinforce a familiar action or improve scan speed. Good candidates include menu, play, pause, skip, close, back, add, delete, download, and settings.
@@ -239,6 +249,10 @@ Notes:
 - Selected options should share one universal selected style.
 - Explanatory helper text uses `Text.Secondary`.
 - In large menu-style buttons, prefer centered icon-plus-label groupings over left-edge icon placement unless the entire button stack is intentionally left-aligned like a navigation list.
+- Mode select screens may keep peer choices such as `Solo / Hotseat Game` and `Campaign` neutral/light when neither choice is being recommended.
+- Campaign entry screens should promote the best forward action with the affirmative green treatment: `Resume Campaign` when a resumable run exists, otherwise `Start Campaign`.
+- Pause and post-victory overlays should keep `Resume`, `Continue Campaign`, `Select Adaptation`, or equivalent forward actions as the lone green CTA in their local action stack.
+- `Main Menu`, `Exit Game`, `Back`, and similar dismissal/navigation controls should not share the affirmative green treatment on these screens.
 
 ### 6.1.1 Settings / Preferences Screens
 - Treat settings and preferences surfaces as dark-panel secondary-action screens by default, not as a stack of primary CTA buttons.

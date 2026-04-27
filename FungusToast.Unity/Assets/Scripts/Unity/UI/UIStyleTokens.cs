@@ -148,6 +148,24 @@ namespace FungusToast.Unity.UI
                 ApplyStyle(button, useSelectedAsNormal);
             }
 
+            public static void ApplyAffirmativeMenuAction(
+                UnityEngine.UI.Button button,
+                float width = DesktopPrimaryMenuActionWidth,
+                float preferredHeight = DesktopMenuActionHeight,
+                float minHeight = MinimumMenuActionHeight)
+            {
+                ApplyPrimaryMenuAction(button, width, useSelectedAsNormal: true, preferredHeight: preferredHeight, minHeight: minHeight);
+            }
+
+            public static void ApplyNeutralMenuAction(
+                UnityEngine.UI.Button button,
+                float width = DesktopPrimaryMenuActionWidth,
+                float preferredHeight = DesktopMenuActionHeight,
+                float minHeight = MinimumMenuActionHeight)
+            {
+                ApplyPrimaryMenuAction(button, width, useSelectedAsNormal: false, preferredHeight: preferredHeight, minHeight: minHeight);
+            }
+
             public static void ApplySecondaryMenuAction(
                 UnityEngine.UI.Button button,
                 float width = DesktopPrimaryMenuActionWidth,
