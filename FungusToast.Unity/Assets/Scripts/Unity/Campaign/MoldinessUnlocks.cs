@@ -266,7 +266,7 @@ namespace FungusToast.Unity.Campaign
                         type: MoldinessUnlockType.UnlockCampaignDraftRedraw,
                         requiredUnlockLevel: 5,
                         categoryLabel: "Permanent Campaign Upgrade",
-                        accentColor: UIStyleTokens.Accent.Spore),
+                        accentColor: UIStyleTokens.State.Warning),
                     new MoldinessUnlockDefinition(
                         id: "moldiness_unlock_adaptation_hyphal_echo",
                         displayName: "Unlock Hyphal Echo",

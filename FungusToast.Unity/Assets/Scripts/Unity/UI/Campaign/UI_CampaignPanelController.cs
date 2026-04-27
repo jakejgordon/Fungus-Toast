@@ -73,6 +73,7 @@ namespace FungusToast.Unity.UI.Campaign
         private RectTransform moldinessSummarySectionRoot;
         private TextMeshProUGUI moldinessSummaryTitleLabel;
         private TextMeshProUGUI moldinessSummaryStatusLabel;
+        private TextMeshProUGUI moldinessSummaryLifetimeLabel;
         private TextMeshProUGUI moldinessSummaryPendingLabel;
         private TextMeshProUGUI moldinessUnlockedRewardsLabel;
         private RectTransform moldinessUnlockedRewardsGridRoot;
@@ -406,6 +407,7 @@ namespace FungusToast.Unity.UI.Campaign
             EnsureMoldinessSummaryHeader();
             EnsureMoldinessSummaryToastGrid();
             EnsureMoldinessUnlockedRewardsGrid();
+            ReorderMoldinessSummaryContent();
         }
 
         private void ConfigureMoldinessSummarySection()
@@ -466,6 +468,12 @@ namespace FungusToast.Unity.UI.Campaign
                 FontStyles.Normal,
                 UIStyleTokens.Text.Secondary,
                 48f);
+            moldinessSummaryLifetimeLabel ??= CreateMoldinessSummaryText(
+                "UI_CampaignMoldinessSummaryLifetime",
+                20f,
+                FontStyles.Normal,
+                UIStyleTokens.Text.Secondary,
+                26f);
             moldinessSummaryPendingLabel ??= CreateMoldinessSummaryText(
                 "UI_CampaignMoldinessSummaryPending",
                 18f,
@@ -615,6 +623,23 @@ namespace FungusToast.Unity.UI.Campaign
             element.preferredWidth = MoldinessUnlockedRewardsGridWidth;
             element.minHeight = 0f;
             element.preferredHeight = -1f;
+        }
+
+        private void ReorderMoldinessSummaryContent()
+        {
+            if (moldinessSummarySectionRoot == null)
+            {
+                return;
+            }
+
+            int siblingIndex = 0;
+            moldinessSummaryTitleLabel?.transform.SetSiblingIndex(siblingIndex++);
+            moldinessSummaryStatusLabel?.transform.SetSiblingIndex(siblingIndex++);
+            moldinessSummaryLifetimeLabel?.transform.SetSiblingIndex(siblingIndex++);
+            moldinessSummaryPendingLabel?.transform.SetSiblingIndex(siblingIndex++);
+            moldinessSummaryToastGrid?.transform.SetSiblingIndex(siblingIndex++);
+            moldinessUnlockedRewardsLabel?.transform.SetSiblingIndex(siblingIndex++);
+            moldinessUnlockedRewardsGridRoot?.transform.SetSiblingIndex(siblingIndex);
         }
 
         private void RefreshMoldinessUnlockedRewardsGrid(List<MoldinessUnlockDefinition> unlockedRewards)
@@ -870,7 +895,12 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (moldinessSummaryStatusLabel != null)
             {
-                moldinessSummaryStatusLabel.text = $"{progress} / {threshold} to next threshold  •  Lifetime earned: {snapshot.LifetimeEarned}";
+                moldinessSummaryStatusLabel.text = $"{progress} / {threshold} to next threshold";
+            }
+
+            if (moldinessSummaryLifetimeLabel != null)
+            {
+                moldinessSummaryLifetimeLabel.text = $"Lifetime earned: {snapshot.LifetimeEarned}";
             }
 
             if (moldinessSummaryPendingLabel != null)
@@ -896,7 +926,8 @@ namespace FungusToast.Unity.UI.Campaign
                 ? campaignController.State.moldiness.unlockedRewardIds
                     .Select(id => MoldinessUnlockCatalog.TryGetById(id, out var definition) ? definition : null)
                     .Where(definition => definition != null)
-                    .OrderBy(definition => MoldinessUnlockCatalog.GetSortIndex(definition.Id))
+                    .OrderBy(GetMoldinessRewardCategorySortOrder)
+                    .ThenBy(definition => MoldinessUnlockCatalog.GetSortIndex(definition.Id))
                     .ToList()
                 : new List<MoldinessUnlockDefinition>();
 
@@ -967,8 +998,9 @@ namespace FungusToast.Unity.UI.Campaign
                 return;
             }
 
-            int columns = Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(threshold)), 3, 8);
-            int rows = Mathf.Max(1, Mathf.CeilToInt(threshold / (float)columns));
+            var dimensions = GetMoldinessToastGridDimensions(threshold);
+            int columns = dimensions.x;
+            int rows = dimensions.y;
             float maxGridWidth = MoldinessSummaryToastGridWidth;
             float maxGridHeight = 112f;
             float spacing = threshold <= 12 ? 6f : 4f;
@@ -986,6 +1018,36 @@ namespace FungusToast.Unity.UI.Campaign
             element.preferredWidth = maxGridWidth;
             element.minHeight = Mathf.Max(56f, (rows * cellHeight) + ((rows - 1) * spacing));
             element.preferredHeight = -1f;
+        }
+
+        private static Vector2Int GetMoldinessToastGridDimensions(int threshold)
+        {
+            int safeThreshold = Mathf.Max(1, threshold);
+            int bestColumns = safeThreshold;
+            int bestRows = 1;
+            int bestAspectPenalty = int.MaxValue;
+
+            for (int columns = 1; columns <= safeThreshold; columns++)
+            {
+                if (safeThreshold % columns != 0)
+                {
+                    continue;
+                }
+
+                int rows = safeThreshold / columns;
+                int maxDimension = Mathf.Max(columns, rows);
+                int minDimension = Mathf.Min(columns, rows);
+                int aspectPenalty = maxDimension - minDimension;
+
+                if (aspectPenalty < bestAspectPenalty)
+                {
+                    bestAspectPenalty = aspectPenalty;
+                    bestColumns = maxDimension;
+                    bestRows = minDimension;
+                }
+            }
+
+            return new Vector2Int(bestColumns, bestRows);
         }
 
         private void ApplyMoldinessSummaryToastPattern(int progress, int threshold, int filledTileCount)
@@ -1023,12 +1085,30 @@ namespace FungusToast.Unity.UI.Campaign
 
         private static float GetToastTileSortKey(int index, int threshold)
         {
-            int columns = Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(threshold)), 3, 8);
+            int columns = GetMoldinessToastGridDimensions(threshold).x;
             int row = index / columns;
             int column = index % columns;
             float centerColumn = (columns - 1) * 0.5f;
             float columnDistance = Mathf.Abs(column - centerColumn);
             return (row * 10f) + columnDistance + ((index * 37) % 11) * 0.01f;
+        }
+
+        private static int GetMoldinessRewardCategorySortOrder(MoldinessUnlockDefinition definition)
+        {
+            if (definition == null)
+            {
+                return int.MaxValue;
+            }
+
+            return definition.Type switch
+            {
+                MoldinessUnlockType.IncreaseFailedRunAdaptationCarryover => 0,
+                MoldinessUnlockType.UnlockCampaignIntel => 0,
+                MoldinessUnlockType.UnlockCampaignDraftRedraw => 0,
+                MoldinessUnlockType.UnlockAdaptation => 1,
+                MoldinessUnlockType.UnlockMycovariant => 2,
+                _ => 3
+            };
         }
 
         private void BuildMoldSelectionSection()
