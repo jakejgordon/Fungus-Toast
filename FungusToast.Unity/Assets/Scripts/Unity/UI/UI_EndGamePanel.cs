@@ -1861,28 +1861,176 @@ namespace FungusToast.Unity.UI
                 return AdaptationArtRepository.GetIcon(adaptation);
             }
 
+            if (offer.Type == MoldinessUnlockType.UnlockMycovariant)
+            {
+                return CreateMycovariantUnlockIcon(offer);
+            }
+
+            return CreateCampaignUpgradeIcon(offer);
+        }
+
+        private static Sprite CreateCampaignUpgradeIcon(MoldinessUnlockDefinition offer)
+        {
             return ProceduralIconUtility.CreateSprite(
                 $"MoldinessReward_{offer.Id}",
                 Color.Lerp(offer.AccentColor, UIStyleTokens.Surface.PanelPrimary, 0.5f),
                 offer.AccentColor,
                 (texture, accent, highlight) =>
                 {
-                    for (int i = 0; i < 3; i++)
+                    if (offer.Type == MoldinessUnlockType.IncreaseFailedRunAdaptationCarryover)
                     {
-                        int centerX = 10 + (i * 10);
-                        ProceduralIconUtility.FillCircle(texture, centerX, 12, 3 + i, accent);
-                        ProceduralIconUtility.FillCircle(texture, centerX - 2, 22, 2 + i, accent);
+                        DrawCarryoverUpgradeMotif(texture, accent, highlight, Mathf.Max(1, GetRomanTierValue(offer.DisplayName)));
+                        return;
                     }
 
-                    for (int y = 8; y < 12; y++)
+                    switch (offer.Id)
                     {
-                        for (int x = 8; x < 28; x++)
-                        {
-                            texture.SetPixel(x, y, highlight);
-                        }
+                        case MoldinessUnlockCatalog.StrainProfilingRewardId:
+                            DrawStrainProfilingMotif(texture, accent, highlight);
+                            break;
+                        case MoldinessUnlockCatalog.SporeSiftingRewardId:
+                            DrawSporeSiftingMotif(texture, accent, highlight);
+                            break;
+                        default:
+                            DrawFallbackUpgradeMotif(texture, accent, highlight, offer.Id);
+                            break;
                     }
                 },
                 40);
+        }
+
+        private static Sprite CreateMycovariantUnlockIcon(MoldinessUnlockDefinition offer)
+        {
+            var mycovariant = MycovariantRepository.All.Find(candidate => candidate.Id == offer.MycovariantId);
+            string identityKey = mycovariant?.IconId ?? offer.Id;
+
+            return ProceduralIconUtility.CreateSprite(
+                $"MoldinessReward_{offer.Id}",
+                Color.Lerp(UIStyleTokens.State.Info, UIStyleTokens.Surface.PanelPrimary, 0.5f),
+                UIStyleTokens.State.Info,
+                (texture, accent, highlight) => DrawMycovariantUnlockMotif(texture, accent, highlight, identityKey),
+                40);
+        }
+
+        private static void DrawCarryoverUpgradeMotif(Texture2D texture, Color accent, Color highlight, int tier)
+        {
+            ProceduralIconUtility.DrawLine(texture, 10, 10, 30, 10, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 20, 10, 20, 20, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 12, 22, 20, 30, accent, 2);
+            ProceduralIconUtility.DrawLine(texture, 28, 22, 20, 30, accent, 2);
+            ProceduralIconUtility.FillCircle(texture, 12, 18, 3, accent);
+            ProceduralIconUtility.FillCircle(texture, 20, 22, 3, accent);
+            ProceduralIconUtility.FillCircle(texture, 28, 18, 3, accent);
+            DrawPips(texture, Mathf.Clamp(tier, 1, 5), highlight);
+        }
+
+        private static void DrawStrainProfilingMotif(Texture2D texture, Color accent, Color highlight)
+        {
+            ProceduralIconUtility.DrawRing(texture, 16, 22, 7, 2, accent);
+            ProceduralIconUtility.DrawLine(texture, 21, 17, 29, 9, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 10, 9, 10, 29, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 10, 9, 30, 9, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 11, 13, 16, 16, accent, 1);
+            ProceduralIconUtility.DrawLine(texture, 16, 16, 21, 14, accent, 1);
+            ProceduralIconUtility.DrawLine(texture, 21, 14, 28, 21, accent, 1);
+            ProceduralIconUtility.FillCircle(texture, 16, 22, 2, highlight);
+        }
+
+        private static void DrawSporeSiftingMotif(Texture2D texture, Color accent, Color highlight)
+        {
+            ProceduralIconUtility.DrawLine(texture, 10, 30, 30, 30, accent, 1);
+            ProceduralIconUtility.DrawLine(texture, 10, 30, 17, 18, accent, 1);
+            ProceduralIconUtility.DrawLine(texture, 30, 30, 23, 18, accent, 1);
+            ProceduralIconUtility.DrawLine(texture, 17, 18, 23, 18, accent, 1);
+            ProceduralIconUtility.DrawLine(texture, 20, 18, 20, 10, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 17, 24, 23, 24, highlight, 1);
+            ProceduralIconUtility.FillCircle(texture, 14, 27, 2, highlight);
+            ProceduralIconUtility.FillCircle(texture, 20, 25, 2, highlight);
+            ProceduralIconUtility.FillCircle(texture, 26, 27, 2, highlight);
+            ProceduralIconUtility.FillCircle(texture, 20, 12, 2, accent);
+        }
+
+        private static void DrawFallbackUpgradeMotif(Texture2D texture, Color accent, Color highlight, string identity)
+        {
+            ProceduralIconUtility.DrawRing(texture, 20, 20, 9, 2, accent);
+            DrawHashGlyph(texture, accent, highlight, identity);
+        }
+
+        private static void DrawMycovariantUnlockMotif(Texture2D texture, Color accent, Color highlight, string identity)
+        {
+            int hash = ProceduralIconUtility.ComputeStableHash(identity);
+            int pattern = hash % 4;
+            switch (pattern)
+            {
+                case 0:
+                    ProceduralIconUtility.DrawRing(texture, 20, 20, 8, 2, accent);
+                    ProceduralIconUtility.DrawLine(texture, 20, 12, 20, 28, highlight, 1);
+                    ProceduralIconUtility.DrawLine(texture, 12, 20, 28, 20, highlight, 1);
+                    break;
+                case 1:
+                    ProceduralIconUtility.DrawLine(texture, 10, 30, 30, 10, accent, 2);
+                    ProceduralIconUtility.DrawLine(texture, 10, 22, 22, 10, highlight, 1);
+                    ProceduralIconUtility.DrawLine(texture, 18, 30, 30, 18, highlight, 1);
+                    break;
+                case 2:
+                    ProceduralIconUtility.DrawRing(texture, 15, 15, 5, 2, accent);
+                    ProceduralIconUtility.DrawRing(texture, 25, 25, 5, 2, accent);
+                    ProceduralIconUtility.DrawLine(texture, 18, 18, 22, 22, highlight, 1);
+                    break;
+                default:
+                    ProceduralIconUtility.FillShield(texture, 20, 21, 8, 9, accent);
+                    ProceduralIconUtility.DrawLine(texture, 13, 15, 27, 27, highlight, 1);
+                    ProceduralIconUtility.DrawLine(texture, 27, 15, 13, 27, highlight, 1);
+                    break;
+            }
+
+            DrawHashGlyph(texture, accent, highlight, identity);
+        }
+
+        private static void DrawHashGlyph(Texture2D texture, Color accent, Color highlight, string identity)
+        {
+            int hash = ProceduralIconUtility.ComputeStableHash(identity);
+            for (int i = 0; i < 3; i++)
+            {
+                int x = 10 + (((hash >> (i * 4)) & 0x7) * 3);
+                int y = 10 + (((hash >> (i * 7 + 3)) & 0x7) * 3);
+                int radius = 1 + ((hash >> (i * 5 + 2)) & 0x1);
+                ProceduralIconUtility.FillCircle(texture, Mathf.Clamp(x, 8, 32), Mathf.Clamp(y, 8, 32), radius, i % 2 == 0 ? highlight : accent);
+            }
+        }
+
+        private static void DrawPips(Texture2D texture, int count, Color color)
+        {
+            int startX = 20 - ((count - 1) * 3);
+            for (int i = 0; i < count; i++)
+            {
+                ProceduralIconUtility.FillCircle(texture, startX + (i * 6), 34, 1, color);
+            }
+        }
+
+        private static int GetRomanTierValue(string displayName)
+        {
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                return 1;
+            }
+
+            int lastSpace = displayName.LastIndexOf(' ');
+            if (lastSpace < 0 || lastSpace >= displayName.Length - 1)
+            {
+                return 1;
+            }
+
+            string numeral = displayName.Substring(lastSpace + 1).Trim().ToUpperInvariant();
+            return numeral switch
+            {
+                "I" => 1,
+                "II" => 2,
+                "III" => 3,
+                "IV" => 4,
+                "V" => 5,
+                _ => 1
+            };
         }
 
         private void SelectMoldinessReward(MoldinessRewardOptionVisual clickedVisual)
