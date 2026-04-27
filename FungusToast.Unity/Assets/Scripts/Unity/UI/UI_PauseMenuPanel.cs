@@ -389,7 +389,7 @@ namespace FungusToast.Unity.UI
 
             primaryActionsRoot = CreateVerticalSection(contentRoot.transform, "PrimaryActions", 10f);
 
-            Button resumeButton = CreateActionButton(primaryActionsRoot.transform, "Resume", width: PauseMenuPrimaryButtonWidth);
+            Button resumeButton = CreateActionButton(primaryActionsRoot.transform, "Resume", width: PauseMenuPrimaryButtonWidth, useSelectedAsNormal: true);
             resumeButton.onClick.AddListener(() => onResumeRequested?.Invoke());
 
             Button restartButton = CreateActionButton(primaryActionsRoot.transform, "Restart Level", width: PauseMenuPrimaryButtonWidth);

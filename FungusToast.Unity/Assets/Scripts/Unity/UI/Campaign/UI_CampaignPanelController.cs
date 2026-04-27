@@ -1269,10 +1269,45 @@ namespace FungusToast.Unity.UI.Campaign
         {
             UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.Canvas);
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
+            ApplyActionButtonSemantics();
+        }
 
-            UIStyleTokens.Button.ApplyPrimaryMenuAction(resumeButton);
-            UIStyleTokens.Button.ApplyPrimaryMenuAction(newButton);
-            UIStyleTokens.Button.ApplyPrimaryMenuAction(deleteButton);
+        private void ApplyActionButtonSemantics()
+        {
+            bool selectingMold = currentStep == CampaignPanelStep.MoldSelection;
+            bool hasResumableCampaignSave = GameManager.Instance != null && GameManager.Instance.HasResumableCampaignSave();
+            bool useAffirmativeResume = !selectingMold && hasResumableCampaignSave;
+            bool useAffirmativeNew = selectingMold || !hasResumableCampaignSave;
+
+            if (resumeButton != null)
+            {
+                if (useAffirmativeResume)
+                {
+                    UIStyleTokens.Button.ApplyAffirmativeMenuAction(resumeButton);
+                }
+                else
+                {
+                    UIStyleTokens.Button.ApplyNeutralMenuAction(resumeButton);
+                }
+            }
+
+            if (newButton != null)
+            {
+                if (useAffirmativeNew)
+                {
+                    UIStyleTokens.Button.ApplyAffirmativeMenuAction(newButton);
+                }
+                else
+                {
+                    UIStyleTokens.Button.ApplyNeutralMenuAction(newButton);
+                }
+            }
+
+            if (deleteButton != null)
+            {
+                UIStyleTokens.Button.ApplyNeutralMenuAction(deleteButton);
+            }
+
             UIStyleTokens.Button.ApplySecondaryMenuAction(backButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
         }
 
@@ -1281,6 +1316,7 @@ namespace FungusToast.Unity.UI.Campaign
             bool selectingMold = currentStep == CampaignPanelStep.MoldSelection;
             bool hasCampaignSave = GameManager.Instance != null && GameManager.Instance.HasCampaignSave();
             bool hasResumableCampaignSave = GameManager.Instance != null && GameManager.Instance.HasResumableCampaignSave();
+            ApplyActionButtonSemantics();
             if (moldSelectionSectionRoot != null)
             {
                 moldSelectionSectionRoot.gameObject.SetActive(selectingMold);
@@ -1549,6 +1585,7 @@ namespace FungusToast.Unity.UI.Campaign
         {
             bool hasSave = GameManager.Instance != null && GameManager.Instance.HasCampaignSave();
             bool hasResumableCampaignSave = GameManager.Instance != null && GameManager.Instance.HasResumableCampaignSave();
+            ApplyActionButtonSemantics();
 
             if (resumeButton != null)
             {

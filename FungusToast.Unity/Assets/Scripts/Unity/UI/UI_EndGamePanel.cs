@@ -284,9 +284,9 @@ namespace FungusToast.Unity.UI
                 resultsCardBackground.color = UIStyleTokens.Surface.PanelPrimary;
             }
 
-            UIStyleTokens.Button.ApplyStyle(continueButton, useSelectedAsNormal: true);
-            UIStyleTokens.Button.ApplyStyle(exitButton);
-            UIStyleTokens.Button.ApplyStyle(playAgainButton, useSelectedAsNormal: true);
+            UIStyleTokens.Button.ApplyAffirmativeMenuAction(continueButton);
+            UIStyleTokens.Button.ApplyNeutralMenuAction(exitButton);
+            UIStyleTokens.Button.ApplyNeutralMenuAction(playAgainButton);
             UIStyleTokens.Button.SetButtonLabelColor(continueButton, UIStyleTokens.Button.TextDefault);
             UIStyleTokens.Button.SetButtonLabelColor(exitButton, UIStyleTokens.Button.TextDefault);
             UIStyleTokens.Button.SetButtonLabelColor(playAgainButton, UIStyleTokens.Button.TextDefault);
