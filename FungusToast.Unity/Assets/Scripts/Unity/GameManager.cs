@@ -1640,7 +1640,7 @@ namespace FungusToast.Unity
 
         private IEnumerator PlayRestoredGameIntroAndContinue()
         {
-            yield return PlayGameplayEntryFlow(applyStartingSporeEffects: false, allowSkippingIntroForTesting: false);
+            yield return PlayGameplayEntryFlow(applyStartingSporeEffects: false, allowSkippingIntroForTesting: true);
         }
 
         private IEnumerator PlayGameplayEntryFlow(bool applyStartingSporeEffects, bool allowSkippingIntroForTesting)
