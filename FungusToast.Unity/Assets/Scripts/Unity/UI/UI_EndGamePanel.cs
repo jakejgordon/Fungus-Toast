@@ -18,6 +18,7 @@ using FungusToast.Unity.Input;
 using FungusToast.Unity.UI.Testing;
 using UnityEngine.EventSystems;
 using FungusToast.Core.Campaign;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using static FungusToast.Unity.Campaign.MoldinessProgression;
 
