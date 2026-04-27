@@ -449,7 +449,10 @@ namespace FungusToast.Unity.UI
             selectedDefeatCarryoverAdaptationIds.Clear();
             moldinessRewardOptionBackgrounds.Clear();
             moldinessRewardOptionVisuals.Clear();
-            defeatCarryoverSelectionCapacity = 0;
+                if (victory || !hasPendingDefeatCarryoverEvent)
+                {
+                    defeatCarryoverSelectionCapacity = 0;
+                }
             if (continueButton != null)
                 continueButton.gameObject.SetActive(victory && !finalLevel && hasNextLevel);
             if (exitButton != null)
@@ -972,7 +975,6 @@ namespace FungusToast.Unity.UI
                 Destroy(child.gameObject);
             }
 
-            BuildCampaignTopSpacer();
             BuildDefeatCarryoverSelectionContent(options, selectionCapacity);
 
             ApplyControlReadabilityOverrides();
@@ -1023,27 +1025,13 @@ namespace FungusToast.Unity.UI
             root.transform.SetParent(resultsContainer, false);
 
             var rootLayout = root.GetComponent<VerticalLayoutGroup>();
-            rootLayout.spacing = 18f;
-            rootLayout.padding = new RectOffset(18, 18, 8, 8);
+            rootLayout.spacing = 12f;
+            rootLayout.padding = new RectOffset(18, 18, 0, 8);
             rootLayout.childAlignment = TextAnchor.UpperCenter;
             rootLayout.childControlWidth = true;
             rootLayout.childControlHeight = true;
             rootLayout.childForceExpandWidth = true;
             rootLayout.childForceExpandHeight = false;
-
-            var title = CreateCarryoverInfoText(root.transform,
-                "Choose the adaptations you want to preserve for your next campaign run.",
-                28f,
-                UIStyleTokens.Text.Primary,
-                FontStyles.Bold);
-            title.alignment = TextAlignmentOptions.Center;
-
-            var helper = CreateCarryoverInfoText(root.transform,
-                GetDefeatCarryoverSelectionHelperText(Mathf.Max(0, selectionCapacity), pendingDefeatCarryoverEntryMode),
-                DefeatCarryoverInfoFontSize,
-                UIStyleTokens.Text.Secondary,
-                FontStyles.Normal);
-            helper.alignment = TextAlignmentOptions.Center;
 
             string sporesBlurb = FormatSporesInReserveCarryoverText(Mathf.Max(0, selectionCapacity), isSelectionScreen: true);
             if (!string.IsNullOrWhiteSpace(sporesBlurb))
@@ -1057,7 +1045,7 @@ namespace FungusToast.Unity.UI
             }
 
             var subtitle = CreateCarryoverInfoText(root.transform,
-                $"Selected 0 / {Mathf.Max(0, selectionCapacity)}. Click icons to choose your carryover adaptations. Hover to inspect details.",
+                $"Selected 0 / {Mathf.Max(0, selectionCapacity)}. Choose exactly {Mathf.Max(0, selectionCapacity)} adaptation{Pluralize(Mathf.Max(0, selectionCapacity))}.",
                 22f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
@@ -1203,7 +1191,7 @@ namespace FungusToast.Unity.UI
             if (defeatCarryoverSelectionStatusLabel != null)
             {
                 defeatCarryoverSelectionStatusLabel.text = requiredCount > 0
-                    ? $"Selected {selectedCount} / {requiredCount}. Click icons to choose exactly {requiredCount} carryover adaptation{Pluralize(requiredCount)}."
+                    ? $"Selected {selectedCount} / {requiredCount}. Choose exactly {requiredCount} adaptation{Pluralize(requiredCount)}."
                     : "No carryover adaptations are available for this run.";
                 defeatCarryoverSelectionStatusLabel.color = selectedCount >= requiredCount
                     ? UIStyleTokens.State.Success
@@ -1260,7 +1248,7 @@ namespace FungusToast.Unity.UI
             }
 
             return isSelectionScreen
-                ? $"Your Spores in Reserve reward allows you to preserve {carryoverCapacity} adaptation{Pluralize(carryoverCapacity)} to carry over into the next campaign run."
+                ? $"Spores in Reserve: preserve {carryoverCapacity} adaptation{Pluralize(carryoverCapacity)} for your next run."
                 : $"Since you unlocked Spores in Reserve, you can preserve {carryoverCapacity} adaptation{Pluralize(carryoverCapacity)} to carry over into the next campaign run.";
         }
 
