@@ -18,8 +18,8 @@ Practical rule:
 
 Use the following audio asset structure in this repository:
 
-- `FungusToast.Unity/Assets/Audio/SFX/UI` for button-like or UI-timed confirmation cues, including the current mutation/phase start pass.
-- `FungusToast.Unity/Assets/Audio/SFX/Phases` for future phase-specific libraries if the audio set grows beyond the current UI-timed cues.
+- `FungusToast.Unity/Assets/Audio/SFX/UI` for button-like or UI-timed confirmation cues.
+- `FungusToast.Unity/Assets/Audio/SFX/Phases` for phase-start, phase-cycle, and other phase-specific cues.
 - `FungusToast.Unity/Assets/Audio/SFX/Board` for board-state or world-space feedback.
 - `FungusToast.Unity/Assets/Audio/Music` for menu or match music.
 - `FungusToast.Unity/Assets/Audio/Mixers` for Unity mixer assets and audio routing configuration.
