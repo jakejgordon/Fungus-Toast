@@ -258,7 +258,7 @@ namespace FungusToast.Unity.Campaign
                         type: MoldinessUnlockType.UnlockCampaignIntel,
                         requiredUnlockLevel: 3,
                         categoryLabel: "Permanent Campaign Upgrade",
-                        accentColor: UIStyleTokens.State.Info),
+                        accentColor: UIStyleTokens.State.Warning),
                     new MoldinessUnlockDefinition(
                         id: SporeSiftingRewardId,
                         displayName: "Spore Sifting",
