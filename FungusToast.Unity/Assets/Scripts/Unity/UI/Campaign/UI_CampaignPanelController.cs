@@ -915,6 +915,7 @@ namespace FungusToast.Unity.UI.Campaign
             bool pendingSporePreservation = campaignController.IsAwaitingDefeatCarryoverSelection;
             bool pendingMoldinessReward = campaignController.HasPendingMoldinessUnlockChoice;
             int nextLevelDisplay = GetNextCampaignLevelDisplay(campaignController);
+            string resumableLevelLabel = BuildResumableLevelLabel(campaignController, nextLevelDisplay);
             if (resumeButton != null)
             {
                 SetButtonText(
@@ -923,8 +924,19 @@ namespace FungusToast.Unity.UI.Campaign
                         ? $"Resume Campaign (Pending Spore Preservation, Level {nextLevelDisplay})"
                         : pendingMoldinessReward
                             ? $"Resume Campaign (Pending Reward, Level {nextLevelDisplay})"
-                            : $"Resume Campaign (Level {nextLevelDisplay})");
+                            : $"Resume Campaign ({resumableLevelLabel})");
             }
+        }
+
+        private static string BuildResumableLevelLabel(CampaignController campaignController, int nextLevelDisplay)
+        {
+            if (campaignController?.State?.hasInLevelGameplayCheckpoint == true
+                && campaignController.State.inLevelRuntimeSnapshot != null)
+            {
+                return $"Level {nextLevelDisplay}, Round {campaignController.State.inLevelRuntimeSnapshot.CurrentRound}";
+            }
+
+            return $"Level {nextLevelDisplay}";
         }
 
         private static int GetNextCampaignLevelDisplay(CampaignController campaignController)

@@ -666,6 +666,7 @@ namespace FungusToast.Unity
         private readonly SpecialEventPresentationService specialEventPresentationService;
         private readonly PostGrowthVisualSequence postGrowthVisualSequence;
         private readonly PauseMenuService pauseMenuService;
+        private readonly Action saveCurrentRunForResume;
         private readonly Action resetManagerStateForMenuReturn;
 
         public GameTransitionService(
@@ -684,6 +685,7 @@ namespace FungusToast.Unity
             SpecialEventPresentationService specialEventPresentationService,
             PostGrowthVisualSequence postGrowthVisualSequence,
             PauseMenuService pauseMenuService,
+            Action saveCurrentRunForResume,
             Action resetManagerStateForMenuReturn)
         {
             this.gameUIManager = gameUIManager;
@@ -701,6 +703,7 @@ namespace FungusToast.Unity
             this.specialEventPresentationService = specialEventPresentationService;
             this.postGrowthVisualSequence = postGrowthVisualSequence;
             this.pauseMenuService = pauseMenuService;
+            this.saveCurrentRunForResume = saveCurrentRunForResume;
             this.resetManagerStateForMenuReturn = resetManagerStateForMenuReturn;
         }
 
@@ -775,6 +778,7 @@ namespace FungusToast.Unity
         public void ReturnToMainMenu()
         {
             pauseMenuService?.ForceClose();
+            saveCurrentRunForResume?.Invoke();
             ResetRuntimeStateForGameTransition();
             resetManagerStateForMenuReturn?.Invoke();
             gridVisualizer?.ClearAllHighlights();
@@ -785,6 +789,7 @@ namespace FungusToast.Unity
         public void QuitGame()
         {
             pauseMenuService?.ForceClose();
+            saveCurrentRunForResume?.Invoke();
             stopGameplayMusic?.Invoke();
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;

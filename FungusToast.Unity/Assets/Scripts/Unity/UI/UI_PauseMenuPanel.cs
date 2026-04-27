@@ -481,11 +481,11 @@ namespace FungusToast.Unity.UI
                     break;
                 case PendingAction.ReturnToMainMenu:
                     subtitleLabel.text = "Leave the current run?";
-                    confirmationLabel.text = "Return to the main menu and abandon the current game?";
+                    confirmationLabel.text = "Return to the main menu? Your current game will be saved and can be resumed later.";
                     break;
                 case PendingAction.ExitGame:
                     subtitleLabel.text = "Close Fungus Toast?";
-                    confirmationLabel.text = "Exit the game now? Any unsaved progress in this run will be lost.";
+                    confirmationLabel.text = "Exit the game now? Your current game will be saved and can be resumed later.";
                     break;
             }
 

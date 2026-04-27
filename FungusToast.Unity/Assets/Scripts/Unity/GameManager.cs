@@ -397,6 +397,7 @@ namespace FungusToast.Unity
                 specialEventPresentationService,
                 postGrowthVisualSequence,
                 pauseMenuService,
+                SaveCurrentRunForResume,
                 ResetManagerStateForMainMenuReturn);
             gameStartService = new GameStartService(
                 () => campaignController,
@@ -699,6 +700,7 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
             gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
+            gameUIManager.RightSidebar?.SetRoundAndOccupancy(Board.CurrentRound, Board.GetOccupiedTileRatio() * 100f);
             gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
             gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
 
@@ -1775,6 +1777,40 @@ namespace FungusToast.Unity
         private void PersistRoundStartAutosave()
         {
             if (Board == null || rng == null)
+            {
+                return;
+            }
+
+            var snapshot = RoundStartRuntimeSnapshotFactory.Export(Board, persistentPoolManager);
+            var randomState = RandomStateSerialization.Capture(rng, currentLevelGameplaySeed);
+
+            if (CurrentGameMode == GameMode.Campaign && campaignController != null && campaignController.HasActiveRun)
+            {
+                campaignController.SaveGameplayCheckpoint(snapshot, randomState, currentLevelGameplaySeed);
+                return;
+            }
+
+            if (CurrentGameMode != GameMode.Hotseat)
+            {
+                return;
+            }
+
+            SoloGameSaveService.Save(new SoloGameSaveState
+            {
+                boardWidth = boardWidth,
+                boardHeight = boardHeight,
+                playerCount = playerCount,
+                humanPlayerCount = configuredHumanPlayerCount,
+                humanMoldIndices = configuredHumanMoldIndices.ToList(),
+                gameplaySeed = currentLevelGameplaySeed,
+                runtimeSnapshot = snapshot,
+                randomState = randomState
+            });
+        }
+
+        private void SaveCurrentRunForResume()
+        {
+            if (Board == null || rng == null || gameEnded)
             {
                 return;
             }
