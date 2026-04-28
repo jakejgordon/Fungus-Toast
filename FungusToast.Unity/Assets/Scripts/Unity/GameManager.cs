@@ -1955,7 +1955,7 @@ namespace FungusToast.Unity
 
         private bool CanOpenPauseMenu()
         {
-            if (Board == null || gameEnded || isInDraftPhase)
+            if (Board == null || gameEnded)
             {
                 return false;
             }
@@ -1963,11 +1963,6 @@ namespace FungusToast.Unity
             bool inMenu = (modeSelectPanel != null && modeSelectPanel.activeInHierarchy)
                           || (startGamePanel != null && startGamePanel.gameObject.activeInHierarchy);
             if (inMenu)
-            {
-                return false;
-            }
-
-            if (mycovariantDraftController != null && mycovariantDraftController.gameObject.activeInHierarchy)
             {
                 return false;
             }
