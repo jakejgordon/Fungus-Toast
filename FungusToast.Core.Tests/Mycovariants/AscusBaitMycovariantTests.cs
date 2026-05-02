@@ -48,6 +48,25 @@ public class AscusBaitMycovariantTests
     }
 
     [Fact]
+    public void Factory_exposes_sporophore_decoy_with_expected_metadata()
+    {
+        var mycovariant = MycovariantFactory.GetAll().Single(myco => myco.Id == MycovariantIds.SporophoreDecoyId);
+
+        Assert.Equal("Sporophore Decoy", mycovariant.Name);
+        Assert.Equal("myco_sporophore_decoy", mycovariant.IconId);
+        Assert.Equal(MycovariantType.Economy, mycovariant.Type);
+        Assert.Equal(MycovariantCategory.Economy, mycovariant.Category);
+        Assert.True(mycovariant.IsUniversal);
+        Assert.True(mycovariant.IsLocked);
+        Assert.Equal(1, mycovariant.RequiredMoldinessUnlockLevel);
+        Assert.True(mycovariant.IsBait);
+        Assert.True(mycovariant.AutoMarkTriggered);
+        Assert.Contains("gain 8 mutation points", mycovariant.Description);
+        Assert.Contains("lose Resistance", mycovariant.Description);
+        Assert.NotNull(mycovariant.ApplyEffect);
+    }
+
+    [Fact]
     public void Factory_exposes_perispore_crown_with_expected_metadata()
     {
         var mycovariant = MycovariantFactory.GetAll().Single(myco => myco.Id == MycovariantIds.PerisporeCrownId);
@@ -95,6 +114,22 @@ public class AscusBaitMycovariantTests
 
         Assert.Null(result);
         Assert.Equal(13, player.MutationPoints);
+        Assert.True(playerMyco.HasTriggered);
+    }
+
+    [Fact]
+    public void ResolveSporophoreDecoy_grants_human_player_mutation_points()
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 1);
+        var player = new Player(0, "P0", PlayerTypeEnum.Human) { MutationPoints = 3 };
+        board.Players.Add(player);
+        var mycovariant = MycovariantRepository.GetById(MycovariantIds.SporophoreDecoyId);
+        var playerMyco = new PlayerMycovariant(player.PlayerId, mycovariant.Id, mycovariant);
+
+        var result = MycovariantEffectProcessor.ResolveSporophoreDecoy(playerMyco, board, new Random(123), new TestSimulationObserver());
+
+        Assert.Equal(0, result);
+        Assert.Equal(3 + MycovariantGameBalance.SporophoreDecoyMutationPointAward, player.MutationPoints);
         Assert.True(playerMyco.HasTriggered);
     }
 
@@ -304,6 +339,31 @@ public class AscusBaitMycovariantTests
     }
 
     [Fact]
+    public void ResolveSporophoreDecoy_removes_resistance_from_ai_non_starting_cells_only()
+    {
+        var board = new GameBoard(width: 6, height: 6, playerCount: 1);
+        var player = new Player(0, "P0", PlayerTypeEnum.AI);
+        board.Players.Add(player);
+        board.PlaceInitialSpore(playerId: player.PlayerId, x: 0, y: 0);
+        SeedOwnedLivingCells(board, player, new[] { 1, 2, 3 });
+        board.GetCell(0)!.MakeResistant();
+        board.GetCell(1)!.MakeResistant();
+        board.GetCell(2)!.MakeResistant();
+
+        var mycovariant = MycovariantRepository.GetById(MycovariantIds.SporophoreDecoyId);
+        var playerMyco = new PlayerMycovariant(player.PlayerId, mycovariant.Id, mycovariant);
+
+        var result = MycovariantEffectProcessor.ResolveSporophoreDecoy(playerMyco, board, new Random(17), new TestSimulationObserver());
+
+        Assert.Equal(2, result);
+        Assert.True(playerMyco.HasTriggered);
+        Assert.True(board.GetCell(0)!.IsResistant);
+        Assert.False(board.GetCell(1)!.IsResistant);
+        Assert.False(board.GetCell(2)!.IsResistant);
+        Assert.False(board.GetCell(3)!.IsResistant);
+    }
+
+    [Fact]
     public void SelectMycovariantFromChoices_prefers_ascus_bait_over_preferred_choice_when_score_hits_always_pick_threshold()
     {
         var strategy = new ParameterizedSpendingStrategy(
@@ -356,6 +416,24 @@ public class AscusBaitMycovariantTests
 
         Assert.Equal(0f, normalScore);
         Assert.Equal(MycovariantGameBalance.SporalSnarePreferredAIScore, lastAiScore);
+    }
+
+    [Fact]
+    public void SporophoreDecoy_ai_score_is_high_only_for_last_ai_drafter()
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 1);
+        var player = new Player(0, "P0", PlayerTypeEnum.AI);
+        board.Players.Add(player);
+        var mycovariant = MycovariantRepository.GetById(MycovariantIds.SporophoreDecoyId);
+
+        player.IsLastAiMycovariantDrafterForCurrentDraft = false;
+        var normalScore = mycovariant.GetBaseAIScore(player, board);
+
+        player.IsLastAiMycovariantDrafterForCurrentDraft = true;
+        var lastAiScore = mycovariant.GetBaseAIScore(player, board);
+
+        Assert.Equal(0f, normalScore);
+        Assert.Equal(MycovariantGameBalance.SporophoreDecoyPreferredAIScore, lastAiScore);
     }
 
     [Fact]
@@ -468,11 +546,12 @@ public class AscusBaitMycovariantTests
         var human = new Player(2, "Human", PlayerTypeEnum.Human);
 
         var ascusBait = MycovariantRepository.GetById(MycovariantIds.AscusBaitId);
+        var sporophoreDecoy = MycovariantRepository.GetById(MycovariantIds.SporophoreDecoyId);
         var sporalSnare = MycovariantRepository.GetById(MycovariantIds.SporalSnareId);
         var perisporeCrown = MycovariantRepository.GetById(MycovariantIds.PerisporeCrownId);
         var plasmidBounty = MycovariantRepository.GetById(MycovariantIds.PlasmidBountyId);
         var poolManager = new MycovariantPoolManager();
-        poolManager.InitializePool(new List<Mycovariant> { ascusBait, sporalSnare, perisporeCrown, plasmidBounty }, new Random(5));
+        poolManager.InitializePool(new List<Mycovariant> { ascusBait, sporophoreDecoy, sporalSnare, perisporeCrown, plasmidBounty }, new Random(5));
 
         var firstAiEligible = poolManager.GetEligibleMycovariantsForPlayer(firstAi);
         var lastAiEligible = poolManager.GetEligibleMycovariantsForPlayer(lastAi);
@@ -480,8 +559,10 @@ public class AscusBaitMycovariantTests
 
         Assert.DoesNotContain(firstAiEligible, myco => myco.IsBait);
         Assert.Contains(lastAiEligible, myco => myco.Id == MycovariantIds.AscusBaitId);
+        Assert.Contains(lastAiEligible, myco => myco.Id == MycovariantIds.SporophoreDecoyId);
         Assert.Contains(lastAiEligible, myco => myco.Id == MycovariantIds.SporalSnareId);
         Assert.Contains(lastAiEligible, myco => myco.Id == MycovariantIds.PerisporeCrownId);
+        Assert.Contains(humanEligible, myco => myco.Id == MycovariantIds.SporophoreDecoyId);
         Assert.Contains(humanEligible, myco => myco.Id == MycovariantIds.PerisporeCrownId);
     }
 

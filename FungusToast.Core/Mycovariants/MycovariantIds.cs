@@ -45,5 +45,6 @@ namespace FungusToast.Core.Mycovariants
         public const int SeptalSealId = 1036;
         public const int SporalSnareId = 1037;
         public const int PerisporeCrownId = 1038;
+        public const int SporophoreDecoyId = 1039;
     }
 }

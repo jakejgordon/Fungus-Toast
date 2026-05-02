@@ -227,6 +227,41 @@ public static class MycovariantEffectProcessor
         return killCount;
     }
 
+    public static int ResolveSporophoreDecoy(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        Random rng,
+        ISimulationObserver observer)
+    {
+        var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+        if (player == null)
+        {
+            playerMyco.MarkTriggered();
+            return 0;
+        }
+
+        if (player.PlayerType == PlayerTypeEnum.Human)
+        {
+            player.AddMutationPoints(MycovariantGameBalance.SporophoreDecoyMutationPointAward);
+            playerMyco.MarkTriggered();
+            return 0;
+        }
+
+        int? startingTileId = player.StartingTileId;
+        var resistantCells = board.GetAllCellsOwnedBy(player.PlayerId)
+            .Where(cell => cell.IsAlive && cell.IsResistant)
+            .Where(cell => !startingTileId.HasValue || cell.TileId != startingTileId.Value)
+            .ToList();
+
+        foreach (var cell in resistantCells)
+        {
+            cell.RemoveResistance();
+        }
+
+        playerMyco.MarkTriggered();
+        return resistantCells.Count;
+    }
+
     public static SporalSnareResolution? ResolveSporalSnare(
         PlayerMycovariant playerMyco,
         GameBoard board,

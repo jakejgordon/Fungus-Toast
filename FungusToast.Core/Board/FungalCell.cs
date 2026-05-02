@@ -190,6 +190,12 @@ namespace FungusToast.Core.Board
                 : resistanceSource;
         }
 
+        public void RemoveResistance()
+        {
+            IsResistant = false;
+            ResistanceSource = null;
+        }
+
         /// <summary>
         /// Clears the toxin drop flag (called after toxin drop animation completes)
         /// </summary>

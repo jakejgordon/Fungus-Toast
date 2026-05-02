@@ -13,6 +13,7 @@ namespace FungusToast.Core.Mycovariants
             yield return PlasmidBountyIII();
             yield return AscusWager();
             yield return AscusBait();
+            yield return SporophoreDecoy();
             yield return SporalSnare();
             yield return PerisporeCrown();
         }
@@ -123,6 +124,31 @@ namespace FungusToast.Core.Mycovariants
                 AIScore = (player, board) => player.IsLastAiMycovariantDrafterForCurrentDraft
                     ? MycovariantGameBalance.AscusBaitPreferredAIScore
                     : MycovariantGameBalance.AscusBaitFallbackAIScore
+            };
+
+        private static Mycovariant SporophoreDecoy() =>
+            new Mycovariant
+            {
+                Id = MycovariantIds.SporophoreDecoyId,
+                Name = "Sporophore Decoy",
+                Description = $"One-time on draft: if Human, gain {MycovariantGameBalance.SporophoreDecoyMutationPointAward} mutation points. If AI, all of your non-starting Resistant cells immediately lose Resistance.",
+                FlavorText = "A counterfeit fruiting flare promises easy advantage, only to leave the taker's outer hyphae stripped bare.",
+                IconId = "myco_sporophore_decoy",
+                Type = MycovariantType.Economy,
+                Category = MycovariantCategory.Economy,
+                IsUniversal = true,
+                IsLocked = true,
+                RequiredMoldinessUnlockLevel = 1,
+                IsBait = true,
+                AutoMarkTriggered = true,
+                ApplyEffect = (playerMyco, board, rng, observer) =>
+                {
+                    MycovariantEffectProcessor.ResolveSporophoreDecoy(playerMyco, board, rng, observer);
+                },
+                AIPrioritizeEarly = false,
+                AIScore = (player, board) => player.IsLastAiMycovariantDrafterForCurrentDraft
+                    ? MycovariantGameBalance.SporophoreDecoyPreferredAIScore
+                    : MycovariantGameBalance.SporophoreDecoyFallbackAIScore
             };
 
         private static Mycovariant SporalSnare() =>

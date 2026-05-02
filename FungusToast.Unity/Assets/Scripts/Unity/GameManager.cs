@@ -789,7 +789,8 @@ namespace FungusToast.Unity
                 return allMycovariants;
             }
 
-            return campaignController.GetEligibleMycovariantsForCampaignDraft(allMycovariants);
+            int? forcedMycovariantId = testingModeEnabled ? testingMycovariantId : null;
+            return campaignController.GetEligibleMycovariantsForCampaignDraft(allMycovariants, forcedMycovariantId);
         }
 
         private void OnPlayerMutationsChanged(Player p)

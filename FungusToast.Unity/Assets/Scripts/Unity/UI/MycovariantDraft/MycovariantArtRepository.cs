@@ -131,6 +131,12 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 return;
             }
 
+            if (mycovariant?.IconId == "myco_sporophore_decoy")
+            {
+                DrawSporophoreDecoyMotif(texture, accent, highlight);
+                return;
+            }
+
             if (mycovariant?.IconId == "myco_sporal_snare")
             {
                 DrawSporalSnareMotif(texture, accent, highlight);
@@ -224,6 +230,19 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             ProceduralIconUtility.FillCircle(texture, 14, 22, 2, highlight);
             ProceduralIconUtility.FillCircle(texture, 26, 22, 2, highlight);
             ProceduralIconUtility.DrawLine(texture, 14, 22, 26, 22, accent, 1);
+        }
+
+        private static void DrawSporophoreDecoyMotif(Texture2D texture, Color accent, Color highlight)
+        {
+            ProceduralIconUtility.FillCircle(texture, 20, 15, 5, accent);
+            ProceduralIconUtility.DrawRing(texture, 20, 15, 8, 1, highlight);
+            ProceduralIconUtility.DrawLine(texture, 20, 21, 20, 30, accent, 2);
+            ProceduralIconUtility.DrawLine(texture, 13, 28, 27, 28, highlight, 2);
+            ProceduralIconUtility.DrawLine(texture, 11, 12, 29, 28, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 29, 12, 11, 28, highlight, 1);
+            ProceduralIconUtility.FillCircle(texture, 14, 14, 2, highlight);
+            ProceduralIconUtility.FillCircle(texture, 26, 14, 2, highlight);
+            ProceduralIconUtility.DrawRing(texture, 20, 28, 6, 1, accent);
         }
 
         private static void DrawSporalSnareMotif(Texture2D texture, Color accent, Color highlight)

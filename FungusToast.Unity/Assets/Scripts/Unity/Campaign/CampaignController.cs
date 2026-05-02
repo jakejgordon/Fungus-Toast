@@ -61,17 +61,16 @@ namespace FungusToast.Unity.Campaign
 
         public List<Mycovariant> GetEligibleMycovariantsForCampaignDraft(IEnumerable<Mycovariant> allMycovariants)
         {
-            if (allMycovariants == null)
-            {
-                return new List<Mycovariant>();
-            }
+            return GetEligibleMycovariantsForCampaignDraft(allMycovariants, null);
+        }
 
-            var permanentlyUnlockedMycovariants = new HashSet<int>(State?.moldiness?.unlockedMycovariantIds ?? new List<int>());
-            var currentUnlockLevel = State?.moldiness?.unlockLevel ?? 0;
-
-            return allMycovariants
-                .Where(x => !x.IsLocked || (x.RequiredMoldinessUnlockLevel <= currentUnlockLevel && permanentlyUnlockedMycovariants.Contains(x.Id)))
-                .ToList();
+        public List<Mycovariant> GetEligibleMycovariantsForCampaignDraft(IEnumerable<Mycovariant> allMycovariants, int? forcedMycovariantId)
+        {
+            return CampaignDraftEligibility.GetEligibleMycovariants(
+                allMycovariants,
+                State?.moldiness?.unlockedMycovariantIds,
+                State?.moldiness?.unlockLevel ?? 0,
+                forcedMycovariantId);
         }
 
         public void StartNew(int humanMoldIndex = 0, int? levelIndexOverride = null, IReadOnlyList<string> temporaryTestingAdaptationIds = null)
