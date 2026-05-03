@@ -1,5 +1,6 @@
 using FungusToast.Unity.Input;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace FungusToast.Unity.Cameras
 {
@@ -55,8 +56,10 @@ namespace FungusToast.Unity.Cameras
                 return;
             }
 
+            bool pointerOverUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+
             // Zoom with scroll wheel
-            float scroll = UnityInputAdapter.GetMouseScrollDelta();
+            float scroll = pointerOverUi ? 0f : UnityInputAdapter.GetMouseScrollDelta();
             if (Camera.main != null)
             {
                 Camera mainCamera = Camera.main;
@@ -108,7 +111,7 @@ namespace FungusToast.Unity.Cameras
                 }
 
                 // --- Right-click drag pan ---
-                if (UnityInputAdapter.IsSecondaryPointerPressed())
+                if (!pointerOverUi && UnityInputAdapter.IsSecondaryPointerPressed())
                 {
                     // Pointer delta is already frame-relative, so convert pixels directly into world-space movement.
                     float unitsPerPixel = (2f * mainCamera.orthographicSize) / Mathf.Max(1f, mainCamera.pixelHeight);

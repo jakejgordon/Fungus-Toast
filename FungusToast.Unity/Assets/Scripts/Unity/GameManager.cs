@@ -697,6 +697,7 @@ namespace FungusToast.Unity
             phaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
             phaseProgressTracker?.HighlightMutationPhase();
+            ConfigureDraftHistoryUi();
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
             gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
@@ -1331,6 +1332,7 @@ namespace FungusToast.Unity
             TooltipManager.Instance?.CancelAll();
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
+            gameUIManager.RightSidebar?.RefreshDraftHistoryAvailability();
             gameUIManager.LeftSidebar?.gameObject.SetActive(true);
             mycovariantDraftController.gameObject.SetActive(false);
             if (TryStartQueuedDraftPhaseForCurrentRound())
@@ -1455,6 +1457,18 @@ namespace FungusToast.Unity
             float occ = Board.GetOccupiedTileRatio() * 100f;
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ);
             gameUIManager.RightSidebar.UpdateRandomDecayChance(round);
+        }
+
+        private void ConfigureDraftHistoryUi()
+        {
+            if (gameUIManager?.RightSidebar == null || mycovariantDraftController == null)
+            {
+                return;
+            }
+
+            gameUIManager.RightSidebar.SetDraftHistoryHandler(
+                () => mycovariantDraftController.ShowDraftHistoryOverlay(),
+                () => mycovariantDraftController.HasDraftHistory);
         }
 
         #endregion
@@ -1688,6 +1702,7 @@ namespace FungusToast.Unity
             cameraCenterer?.CaptureInitialFraming();
             InitGameLogs();
             playerPerspectiveService?.InitializeGameplayPerspective(humanPlayer, Board, players, gridVisualizer);
+            ConfigureDraftHistoryUi();
             if (testingModeEnabled)
             {
                 if (fastForwardRounds > 0 && !_fastForwardStarted)
@@ -1718,6 +1733,7 @@ namespace FungusToast.Unity
             phaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
             phaseProgressTracker?.HighlightMutationPhase();
+            ConfigureDraftHistoryUi();
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
             gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);

@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI.MycovariantDraft
@@ -27,18 +28,42 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         Complete
     }
 
+    internal sealed class ModalScrollInterceptor : MonoBehaviour, IScrollHandler
+    {
+        public ScrollRect TargetScrollRect { get; set; }
+
+        public void OnScroll(PointerEventData eventData)
+        {
+            if (eventData == null)
+            {
+                return;
+            }
+
+            if (TargetScrollRect != null && TargetScrollRect.isActiveAndEnabled)
+            {
+                TargetScrollRect.OnScroll(eventData);
+            }
+
+            eventData.Use();
+        }
+    }
+
     public class MycovariantDraftController : MonoBehaviour
     {
         private const string DefaultDraftTitle = "Choose a Mycovariant";
         private const string DefaultDraftBlurb = "Select a unique mycovariant mutation.";
         private const string DefaultHumanTurnBannerText = "Your turn to draft a Mycovariant!";
         private const string DefaultAiTurnBannerPrefix = "AI Drafting";
+        private const string DraftHistoryOverlayTitle = "Mycovariant Draft Log";
 
         private const float FeedEntryFontSize = 18f;
         private const float FeedIconSize = 36f;
         private const float FeedRowSpacing = 8f;
         private const int FeedRowPadding = 8;
         private const float FeedIconSpacerWidth = 8f;
+        private const float DraftHistoryOverlayWidth = 900f;
+        private const float DraftHistoryOverlayHeight = 680f;
+        private const float DraftHistoryEntryDetailFontSize = 18f;
         private const float CampaignAdaptationUtilityPanelHeight = 92f;
         private const float CampaignAdaptationUtilityPanelWidth = 840f;
         private const string CampaignAdaptationRedrawReadyLabel = "Use Spore Sifting";
@@ -84,6 +109,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private Transform draftFeedContentTransform;
         private TextMeshProUGUI currentPlayerEntryText;
         private int draftFeedEntryCount;
+        private readonly List<DraftHistoryEntry> draftHistoryEntries = new();
         private bool isFinishingDraftPhase;
         private bool isCampaignAdaptationDraft;
         private Action<AdaptationDefinition> onAdaptationPicked;
@@ -96,8 +122,22 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private bool campaignAdaptationRedrawConfirmArmed;
         private Func<IReadOnlyList<AdaptationDefinition>> onCampaignAdaptationRedrawRequested;
         private AudioSource soundEffectAudioSource;
+        private RectTransform draftHistoryOverlayRoot;
+        private CanvasGroup draftHistoryOverlayCanvasGroup;
+        private ScrollRect draftHistoryOverlayScrollRect;
+        private Transform draftHistoryOverlayContentTransform;
+        private TextMeshProUGUI draftHistoryEmptyStateText;
+        private Button draftHistoryCloseButton;
 
         private bool _cameraRecenteredThisDraftPhase = false;
+
+        private sealed class DraftHistoryEntry
+        {
+            public int Round { get; set; }
+            public int PlayerId { get; set; }
+            public string Announcement { get; set; }
+            public string Detail { get; set; }
+        }
 
         // Public entry point: starts draft phase
         public void StartDraft(
@@ -169,7 +209,52 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             ClearChoiceCards();
             ClearDraftMessages();
+            ClearDraftHistory();
             HideDraftUI();
+        }
+
+        public bool HasDraftHistory => draftHistoryEntries.Count > 0;
+
+        public void ShowDraftHistoryOverlay()
+        {
+            if (!HasDraftHistory)
+            {
+                return;
+            }
+
+            EnsureDraftHistoryOverlayUI();
+            RebuildDraftHistoryOverlay();
+
+            if (draftHistoryOverlayRoot == null || draftHistoryOverlayCanvasGroup == null)
+            {
+                return;
+            }
+
+            draftHistoryOverlayRoot.gameObject.SetActive(true);
+            draftHistoryOverlayRoot.SetAsLastSibling();
+            draftHistoryOverlayCanvasGroup.alpha = 1f;
+            draftHistoryOverlayCanvasGroup.blocksRaycasts = true;
+            draftHistoryOverlayCanvasGroup.interactable = true;
+
+            if (draftHistoryOverlayScrollRect != null)
+            {
+                draftHistoryOverlayScrollRect.normalizedPosition = new Vector2(0f, 1f);
+            }
+        }
+
+        public void HideDraftHistoryOverlay()
+        {
+            if (draftHistoryOverlayCanvasGroup != null)
+            {
+                draftHistoryOverlayCanvasGroup.alpha = 0f;
+                draftHistoryOverlayCanvasGroup.blocksRaycasts = false;
+                draftHistoryOverlayCanvasGroup.interactable = false;
+            }
+
+            if (draftHistoryOverlayRoot != null)
+            {
+                draftHistoryOverlayRoot.gameObject.SetActive(false);
+            }
         }
 
         public void StartCampaignAdaptationDraft(
@@ -319,7 +404,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             PlayDraftPickConfirmSound();
             GameManager.Instance.GameUI.GameLogRouter?.OnDraftPick(currentPlayer.PlayerName, picked.Name);
 
-            AddPlayerFeedEntry(currentPlayer, BuildPickAnnouncement(currentPlayer, picked));
+            string pickAnnouncement = BuildPickAnnouncement(currentPlayer, picked);
+            AddPlayerFeedEntry(currentPlayer, pickAnnouncement);
 
             GameManager.Instance.ResolveMycovariantDraftPick(currentPlayer, picked);
 
@@ -338,6 +424,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             if (playerMyco == null)
             {
                 Debug.LogError($"[MycovariantDraftController] PlayerMycovariant is null for {picked?.Name} ({picked?.Id}) and player {currentPlayer.PlayerId}. Aborting effect resolution.");
+                RecordDraftHistoryEntry(currentPlayer, pickAnnouncement, "Effect resolution could not be displayed.");
                 AnimatePickFeedback(picked, () => {
                     ReplacePickedCardAndContinue(picked);
                 });
@@ -357,7 +444,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 playerMyco,
                 () => {
                     gridVisualizer.RenderBoard(GameManager.Instance.Board);
-                    AddDraftResultMessage(currentPlayer, picked, playerMyco);
+                    string resultMessage = AddDraftResultMessage(currentPlayer, picked, playerMyco);
+                    RecordDraftHistoryEntry(currentPlayer, pickAnnouncement, resultMessage);
                     draftPanel.SetActive(true);
                     SetDraftState(DraftUIState.AnimatingPick);
                     AnimatePickFeedback(picked, () => {
@@ -1174,6 +1262,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             currentPlayerEntryText = null;
         }
 
+        private void ClearDraftHistory()
+        {
+            draftHistoryEntries.Clear();
+            HideDraftHistoryOverlay();
+            RebuildDraftHistoryOverlay();
+        }
+
         private void AddDraftMessage(string message)
         {
             AddGenericFeedEntry(message);
@@ -1314,40 +1409,394 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             GameManager.Instance?.GameUI?.GameLogRouter?.RecordAscusPrimacyDraftPriority(firstPlayer.PlayerId);
         }
 
-        private void AddDraftResultMessage(Player player, Mycovariant picked, PlayerMycovariant playerMyco)
+        private string AddDraftResultMessage(Player player, Mycovariant picked, PlayerMycovariant playerMyco)
+        {
+            string resultMessage = BuildDraftResultMessage(picked, playerMyco);
+            if (!string.IsNullOrWhiteSpace(resultMessage))
+            {
+                AppendToCurrentPlayerEntry(resultMessage);
+            }
+
+            return resultMessage;
+        }
+
+        private static string BuildDraftResultMessage(Mycovariant picked, PlayerMycovariant playerMyco)
         {
             if (playerMyco == null)
             {
-                AppendToCurrentPlayerEntry($"Mycelial pulse: {picked.Name} resolved.");
-                return;
+                return $"Mycelial pulse: {picked.Name} resolved.";
             }
 
             string countSummary = BuildEffectCountSummary(playerMyco);
             if (!string.IsNullOrEmpty(countSummary))
             {
-                AppendToCurrentPlayerEntry($"Impact: {countSummary}.");
-                return;
+                return $"Impact: {countSummary}.";
             }
 
             if (picked.Id == MycovariantIds.PlasmidBountyId)
             {
-                AppendToCurrentPlayerEntry($"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyMutationPointAward} mutation points.");
+                return $"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyMutationPointAward} mutation points.";
             }
-            else if (picked.Id == MycovariantIds.PlasmidBountyIIId)
+
+            if (picked.Id == MycovariantIds.PlasmidBountyIIId)
             {
-                AppendToCurrentPlayerEntry($"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyIIMutationPointAward} mutation points.");
+                return $"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyIIMutationPointAward} mutation points.";
             }
-            else if (picked.Id == MycovariantIds.PlasmidBountyIIIId)
+
+            if (picked.Id == MycovariantIds.PlasmidBountyIIIId)
             {
-                AppendToCurrentPlayerEntry($"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyIIIMutationPointAward} mutation points.");
+                return $"Plasmids absorbed: +{MycovariantGameBalance.PlasmidBountyIIIMutationPointAward} mutation points.";
             }
-            else if (picked.Type == MycovariantType.Passive)
+
+            if (picked.Type == MycovariantType.Passive)
             {
-                AppendToCurrentPlayerEntry("Passive trait established for the rest of the game.");
+                return "Passive trait established for the rest of the game.";
+            }
+
+            return $"Effect resolved: {picked.Name}.";
+        }
+
+        private void RecordDraftHistoryEntry(Player player, string announcement, string detail)
+        {
+            if (player == null || string.IsNullOrWhiteSpace(announcement))
+            {
+                return;
+            }
+
+            int round = GameManager.Instance?.Board?.CurrentRound ?? -1;
+            draftHistoryEntries.Add(new DraftHistoryEntry
+            {
+                Round = round,
+                PlayerId = player.PlayerId,
+                Announcement = announcement,
+                Detail = detail ?? string.Empty
+            });
+
+            if (draftHistoryOverlayRoot != null && draftHistoryOverlayRoot.gameObject.activeSelf)
+            {
+                RebuildDraftHistoryOverlay();
+            }
+        }
+
+        private void EnsureDraftHistoryOverlayUI()
+        {
+            if (draftHistoryOverlayRoot != null)
+            {
+                return;
+            }
+
+            Transform parent = draftPanel != null
+                ? draftPanel.GetComponentInParent<Canvas>()?.transform
+                : transform.parent;
+
+            if (parent == null)
+            {
+                return;
+            }
+
+            var overlayRootObject = new GameObject("UI_MycovariantDraftHistoryOverlay", typeof(RectTransform), typeof(CanvasGroup), typeof(Image));
+            overlayRootObject.transform.SetParent(parent, false);
+
+            draftHistoryOverlayRoot = overlayRootObject.GetComponent<RectTransform>();
+            draftHistoryOverlayRoot.anchorMin = Vector2.zero;
+            draftHistoryOverlayRoot.anchorMax = Vector2.one;
+            draftHistoryOverlayRoot.offsetMin = Vector2.zero;
+            draftHistoryOverlayRoot.offsetMax = Vector2.zero;
+
+            draftHistoryOverlayCanvasGroup = overlayRootObject.GetComponent<CanvasGroup>();
+            draftHistoryOverlayCanvasGroup.alpha = 0f;
+            draftHistoryOverlayCanvasGroup.blocksRaycasts = false;
+            draftHistoryOverlayCanvasGroup.interactable = false;
+
+            var overlayBackground = overlayRootObject.GetComponent<Image>();
+            overlayBackground.color = UIStyleTokens.Surface.OverlayDim;
+            overlayBackground.raycastTarget = true;
+
+            overlayRootObject.AddComponent<ModalScrollInterceptor>();
+
+            var panelObject = new GameObject("Panel", typeof(RectTransform), typeof(Image), typeof(Outline));
+            panelObject.transform.SetParent(overlayRootObject.transform, false);
+
+            var panelRect = panelObject.GetComponent<RectTransform>();
+            panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRect.pivot = new Vector2(0.5f, 0.5f);
+            panelRect.sizeDelta = new Vector2(DraftHistoryOverlayWidth, DraftHistoryOverlayHeight);
+            panelRect.anchoredPosition = Vector2.zero;
+
+            var panelImage = panelObject.GetComponent<Image>();
+            panelImage.color = UIStyleTokens.Surface.PanelPrimary;
+
+            var panelOutline = panelObject.GetComponent<Outline>();
+            panelOutline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.8f);
+            panelOutline.effectDistance = new Vector2(1f, -1f);
+
+            var panelScrollInterceptor = panelObject.AddComponent<ModalScrollInterceptor>();
+
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(panelObject.transform, false);
+
+            var titleRect = titleObject.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.offsetMin = new Vector2(22f, -58f);
+            titleRect.offsetMax = new Vector2(-90f, -16f);
+
+            var titleText = titleObject.GetComponent<TextMeshProUGUI>();
+            titleText.text = DraftHistoryOverlayTitle;
+            titleText.color = UIStyleTokens.Text.Primary;
+            titleText.fontSize = 30f;
+            titleText.fontStyle = FontStyles.Bold;
+            titleText.alignment = TextAlignmentOptions.Left;
+            titleText.raycastTarget = false;
+
+            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            closeObject.transform.SetParent(panelObject.transform, false);
+
+            var closeRect = closeObject.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(1f, 1f);
+            closeRect.anchorMax = new Vector2(1f, 1f);
+            closeRect.pivot = new Vector2(1f, 1f);
+            closeRect.sizeDelta = new Vector2(40f, 40f);
+            closeRect.anchoredPosition = new Vector2(-18f, -18f);
+
+            draftHistoryCloseButton = closeObject.GetComponent<Button>();
+            UIStyleTokens.Button.ApplyPanelSecondaryStyle(draftHistoryCloseButton);
+            draftHistoryCloseButton.onClick.RemoveAllListeners();
+            draftHistoryCloseButton.onClick.AddListener(HideDraftHistoryOverlay);
+
+            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            closeLabelObject.transform.SetParent(closeObject.transform, false);
+
+            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
+            closeLabelRect.anchorMin = Vector2.zero;
+            closeLabelRect.anchorMax = Vector2.one;
+            closeLabelRect.offsetMin = Vector2.zero;
+            closeLabelRect.offsetMax = Vector2.zero;
+
+            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
+            closeLabel.text = "X";
+            closeLabel.color = UIStyleTokens.Text.Primary;
+            closeLabel.fontSize = 22f;
+            closeLabel.fontStyle = FontStyles.Bold;
+            closeLabel.alignment = TextAlignmentOptions.Center;
+            closeLabel.raycastTarget = false;
+
+            UIStyleTokens.Button.SetButtonLabelColor(draftHistoryCloseButton, UIStyleTokens.Text.Primary);
+
+            var scrollObject = new GameObject("ScrollView", typeof(RectTransform), typeof(ScrollRect));
+            scrollObject.transform.SetParent(panelObject.transform, false);
+
+            var scrollRectTransform = scrollObject.GetComponent<RectTransform>();
+            scrollRectTransform.anchorMin = new Vector2(0f, 0f);
+            scrollRectTransform.anchorMax = new Vector2(1f, 1f);
+            scrollRectTransform.offsetMin = new Vector2(18f, 18f);
+            scrollRectTransform.offsetMax = new Vector2(-18f, -74f);
+
+            draftHistoryOverlayScrollRect = scrollObject.GetComponent<ScrollRect>();
+            draftHistoryOverlayScrollRect.horizontal = false;
+            draftHistoryOverlayScrollRect.vertical = true;
+            draftHistoryOverlayScrollRect.scrollSensitivity = 30f;
+            draftHistoryOverlayScrollRect.movementType = ScrollRect.MovementType.Clamped;
+            panelScrollInterceptor.TargetScrollRect = draftHistoryOverlayScrollRect;
+
+            var viewportObject = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(Mask));
+            viewportObject.transform.SetParent(scrollObject.transform, false);
+
+            var viewportRect = viewportObject.GetComponent<RectTransform>();
+            viewportRect.anchorMin = Vector2.zero;
+            viewportRect.anchorMax = Vector2.one;
+            viewportRect.offsetMin = Vector2.zero;
+            viewportRect.offsetMax = Vector2.zero;
+
+            var viewportImage = viewportObject.GetComponent<Image>();
+            viewportImage.color = new Color(0f, 0f, 0f, 0.01f);
+
+            var viewportMask = viewportObject.GetComponent<Mask>();
+            viewportMask.showMaskGraphic = false;
+
+            draftHistoryOverlayScrollRect.viewport = viewportRect;
+
+            var contentObject = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            contentObject.transform.SetParent(viewportObject.transform, false);
+
+            var contentRect = contentObject.GetComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0f, 1f);
+            contentRect.anchorMax = new Vector2(1f, 1f);
+            contentRect.pivot = new Vector2(0.5f, 1f);
+            contentRect.offsetMin = Vector2.zero;
+            contentRect.offsetMax = Vector2.zero;
+
+            var contentLayout = contentObject.GetComponent<VerticalLayoutGroup>();
+            contentLayout.childControlWidth = true;
+            contentLayout.childControlHeight = true;
+            contentLayout.childForceExpandWidth = true;
+            contentLayout.childForceExpandHeight = false;
+            contentLayout.spacing = 6f;
+            contentLayout.padding = new RectOffset(0, 0, 0, 0);
+
+            var contentFitter = contentObject.GetComponent<ContentSizeFitter>();
+            contentFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            draftHistoryOverlayContentTransform = contentObject.transform;
+            draftHistoryOverlayScrollRect.content = contentRect;
+
+            var emptyStateObject = new GameObject("EmptyState", typeof(RectTransform), typeof(TextMeshProUGUI));
+            emptyStateObject.transform.SetParent(panelObject.transform, false);
+
+            var emptyStateRect = emptyStateObject.GetComponent<RectTransform>();
+            emptyStateRect.anchorMin = new Vector2(0f, 0f);
+            emptyStateRect.anchorMax = new Vector2(1f, 1f);
+            emptyStateRect.offsetMin = new Vector2(48f, 48f);
+            emptyStateRect.offsetMax = new Vector2(-48f, -96f);
+
+            draftHistoryEmptyStateText = emptyStateObject.GetComponent<TextMeshProUGUI>();
+            draftHistoryEmptyStateText.text = "No draft history recorded yet.";
+            draftHistoryEmptyStateText.color = UIStyleTokens.Text.Secondary;
+            draftHistoryEmptyStateText.fontSize = 24f;
+            draftHistoryEmptyStateText.alignment = TextAlignmentOptions.Center;
+            draftHistoryEmptyStateText.raycastTarget = false;
+
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                titleText.font = TMP_Settings.defaultFontAsset;
+                closeLabel.font = TMP_Settings.defaultFontAsset;
+                draftHistoryEmptyStateText.font = TMP_Settings.defaultFontAsset;
+            }
+
+            overlayRootObject.SetActive(false);
+        }
+
+        private void RebuildDraftHistoryOverlay()
+        {
+            if (draftHistoryOverlayContentTransform == null || draftHistoryEmptyStateText == null)
+            {
+                return;
+            }
+
+            foreach (Transform child in draftHistoryOverlayContentTransform)
+            {
+                Destroy(child.gameObject);
+            }
+
+            for (int i = 0; i < draftHistoryEntries.Count; i++)
+            {
+                CreateDraftHistoryRow(draftHistoryEntries[i], i);
+            }
+
+            bool hasEntries = draftHistoryEntries.Count > 0;
+            draftHistoryEmptyStateText.gameObject.SetActive(!hasEntries);
+            if (draftHistoryOverlayScrollRect != null)
+            {
+                draftHistoryOverlayScrollRect.gameObject.SetActive(hasEntries);
+            }
+        }
+
+        private void CreateDraftHistoryRow(DraftHistoryEntry entry, int entryIndex)
+        {
+            if (draftHistoryOverlayContentTransform == null)
+            {
+                return;
+            }
+
+            Color bgColor = entryIndex % 2 == 0 ? UIStyleTokens.Surface.PanelSecondary : UIStyleTokens.Surface.PanelPrimary;
+
+            var rowObject = new GameObject($"DraftHistoryRow{entryIndex + 1}", typeof(RectTransform), typeof(Image), typeof(HorizontalLayoutGroup), typeof(ContentSizeFitter));
+            rowObject.transform.SetParent(draftHistoryOverlayContentTransform, false);
+
+            var rowImage = rowObject.GetComponent<Image>();
+            rowImage.color = bgColor;
+
+            var rowLayout = rowObject.GetComponent<HorizontalLayoutGroup>();
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = false;
+            rowLayout.spacing = FeedRowSpacing;
+            rowLayout.padding = new RectOffset(FeedRowPadding + 4, FeedRowPadding + 4, FeedRowPadding + 4, FeedRowPadding + 4);
+
+            var rowFitter = rowObject.GetComponent<ContentSizeFitter>();
+            rowFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            rowFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var iconSprite = gridVisualizer != null
+                ? gridVisualizer.GetTileForPlayer(entry.PlayerId)?.sprite
+                : null;
+
+            if (iconSprite != null)
+            {
+                var iconObject = new GameObject("PlayerIcon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+                iconObject.transform.SetParent(rowObject.transform, false);
+
+                var iconImage = iconObject.GetComponent<Image>();
+                iconImage.sprite = iconSprite;
+                iconImage.preserveAspect = true;
+
+                var iconLayout = iconObject.GetComponent<LayoutElement>();
+                iconLayout.preferredWidth = FeedIconSize;
+                iconLayout.preferredHeight = FeedIconSize;
+                iconLayout.minWidth = FeedIconSize;
+                iconLayout.minHeight = FeedIconSize;
             }
             else
             {
-                AppendToCurrentPlayerEntry($"Effect resolved: {picked.Name}.");
+                var spacerObject = new GameObject("IconSpacer", typeof(RectTransform), typeof(LayoutElement));
+                spacerObject.transform.SetParent(rowObject.transform, false);
+
+                var spacerLayout = spacerObject.GetComponent<LayoutElement>();
+                spacerLayout.preferredWidth = FeedIconSize;
+                spacerLayout.minWidth = FeedIconSize;
+            }
+
+            var textColumnObject = new GameObject("TextColumn", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
+            textColumnObject.transform.SetParent(rowObject.transform, false);
+
+            var textColumnLayout = textColumnObject.GetComponent<VerticalLayoutGroup>();
+            textColumnLayout.childControlWidth = true;
+            textColumnLayout.childControlHeight = true;
+            textColumnLayout.childForceExpandWidth = true;
+            textColumnLayout.childForceExpandHeight = false;
+            textColumnLayout.spacing = 2f;
+            textColumnLayout.padding = new RectOffset(0, 0, 0, 0);
+
+            var textColumnFitter = textColumnObject.GetComponent<ContentSizeFitter>();
+            textColumnFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            textColumnFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var textColumnElement = textColumnObject.GetComponent<LayoutElement>();
+            textColumnElement.flexibleWidth = 1f;
+
+            var titleObject = new GameObject("Announcement", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(textColumnObject.transform, false);
+
+            var titleText = titleObject.GetComponent<TextMeshProUGUI>();
+            string roundPrefix = entry.Round > 0 ? $"Round {entry.Round}: " : string.Empty;
+            titleText.text = roundPrefix + entry.Announcement;
+            titleText.fontSize = FeedEntryFontSize;
+            titleText.fontStyle = FontStyles.Bold;
+            titleText.color = UIStyleTokens.Text.Primary;
+            titleText.alignment = TextAlignmentOptions.TopLeft;
+            titleText.textWrappingMode = TextWrappingModes.Normal;
+            titleText.overflowMode = TextOverflowModes.Overflow;
+            titleText.raycastTarget = false;
+
+            var detailObject = new GameObject("Detail", typeof(RectTransform), typeof(TextMeshProUGUI));
+            detailObject.transform.SetParent(textColumnObject.transform, false);
+
+            var detailText = detailObject.GetComponent<TextMeshProUGUI>();
+            detailText.text = string.IsNullOrWhiteSpace(entry.Detail) ? "Resolution complete." : entry.Detail;
+            detailText.fontSize = DraftHistoryEntryDetailFontSize;
+            detailText.color = UIStyleTokens.Text.Secondary;
+            detailText.alignment = TextAlignmentOptions.TopLeft;
+            detailText.textWrappingMode = TextWrappingModes.Normal;
+            detailText.overflowMode = TextOverflowModes.Overflow;
+            detailText.raycastTarget = false;
+
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                titleText.font = TMP_Settings.defaultFontAsset;
+                detailText.font = TMP_Settings.defaultFontAsset;
             }
         }
 
