@@ -150,8 +150,8 @@ public class AggressotropicConduitMycovariantTests
         string description = MycovariantDescriptionFormatter.GetDraftPreviewDescription(myco, currentRound: 25);
 
         Assert.Contains("grow up to 3 tiles", description);
-        Assert.Contains("Current draft bonus: +2 tiles", description);
-        Assert.Contains("round 25", description);
+        Assert.DoesNotContain("Current draft bonus", description);
+        Assert.DoesNotContain("round 25", description);
     }
 
     [Fact]
@@ -168,8 +168,8 @@ public class AggressotropicConduitMycovariantTests
         string description = MycovariantDescriptionFormatter.GetOwnedTooltipDescription(myco);
 
         Assert.Contains("grow up to 4 tiles", description);
-        Assert.Contains("Locked-in bonus: +2 tiles", description);
-        Assert.Contains("round 25", description);
+        Assert.DoesNotContain("Locked-in bonus", description);
+        Assert.DoesNotContain("round 25", description);
     }
 
     private static FungalCell PlaceOwnedLivingCell(GameBoard board, Player owner, int tileId)

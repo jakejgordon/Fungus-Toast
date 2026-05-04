@@ -18,15 +18,9 @@ namespace FungusToast.Core.Mycovariants
             return mycovariant.Id switch
             {
                 var id when IsCornerConduit(id) => BuildCornerConduitDescription(
-                    GetEffectiveConduitTilesPerPhase(mycovariant.Id, currentRound),
-                    currentRound,
-                    GetDraftRoundBonusTiles(currentRound),
-                    lockedIn: false),
+                    GetEffectiveConduitTilesPerPhase(mycovariant.Id, currentRound)),
                 var id when IsAggressotropicConduit(id) => BuildAggressotropicConduitDescription(
-                    GetEffectiveConduitTilesPerPhase(mycovariant.Id, currentRound),
-                    currentRound,
-                    GetDraftRoundBonusTiles(currentRound),
-                    lockedIn: false),
+                    GetEffectiveConduitTilesPerPhase(mycovariant.Id, currentRound)),
                 _ => mycovariant.Description,
             };
         }
@@ -41,15 +35,9 @@ namespace FungusToast.Core.Mycovariants
             return playerMycovariant.Mycovariant.Id switch
             {
                 var id when IsCornerConduit(id) => BuildCornerConduitDescription(
-                    GetEffectiveConduitTilesPerPhase(playerMycovariant),
-                    playerMycovariant.DraftedRound,
-                    GetDraftRoundBonusTiles(playerMycovariant.DraftedRound),
-                    lockedIn: true),
+                    GetEffectiveConduitTilesPerPhase(playerMycovariant)),
                 var id when IsAggressotropicConduit(id) => BuildAggressotropicConduitDescription(
-                    GetEffectiveConduitTilesPerPhase(playerMycovariant),
-                    playerMycovariant.DraftedRound,
-                    GetDraftRoundBonusTiles(playerMycovariant.DraftedRound),
-                    lockedIn: true),
+                    GetEffectiveConduitTilesPerPhase(playerMycovariant)),
                 _ => playerMycovariant.Mycovariant.Description,
             };
         }
@@ -92,10 +80,10 @@ namespace FungusToast.Core.Mycovariants
         }
 
         public static string BuildGenericCornerConduitDescription(int tilesPerPhase)
-            => BuildCornerConduitDescription(tilesPerPhase, round: 0, bonusTiles: 0, lockedIn: false);
+            => BuildCornerConduitDescription(tilesPerPhase);
 
         public static string BuildGenericAggressotropicConduitDescription(int tilesPerPhase)
-            => BuildAggressotropicConduitDescription(tilesPerPhase, round: 0, bonusTiles: 0, lockedIn: false);
+            => BuildAggressotropicConduitDescription(tilesPerPhase);
 
         public static bool IsCornerConduit(int mycovariantId)
             => mycovariantId == MycovariantIds.CornerConduitIId
@@ -107,29 +95,10 @@ namespace FungusToast.Core.Mycovariants
                 || mycovariantId == MycovariantIds.AggressotropicConduitIIId
                 || mycovariantId == MycovariantIds.AggressotropicConduitIIIId;
 
-        private static string BuildCornerConduitDescription(int tilesPerPhase, int round, int bonusTiles, bool lockedIn)
-        {
-            string bonusText = BuildRoundBonusSuffix(round, bonusTiles, lockedIn);
-            return $"Before each growth phase, grow up to {tilesPerPhase} tiles from your starting spore toward the nearest corner. Skips your living cells and enemy Resistant cells. Effect is more powerful if drafted later in the game.{bonusText}";
-        }
+        private static string BuildCornerConduitDescription(int tilesPerPhase)
+            => $"Before each growth phase, grow up to {tilesPerPhase} tiles from your starting spore toward the nearest corner. Skips your living cells and enemy Resistant cells. Effect is more powerful if drafted later in the game.";
 
-        private static string BuildAggressotropicConduitDescription(int tilesPerPhase, int round, int bonusTiles, bool lockedIn)
-        {
-            string bonusText = BuildRoundBonusSuffix(round, bonusTiles, lockedIn);
-            return $"Before each growth phase, grow up to {tilesPerPhase} tiles from your starting spore toward the enemy starting spore with the most living cells (random tie-break). The last cell placed becomes Resistant. Skips your living cells and enemy Resistant cells. Stacks with other Aggressotropic Mycovariants. Effect is more powerful if drafted later in the game.{bonusText}";
-        }
-
-        private static string BuildRoundBonusSuffix(int round, int bonusTiles, bool lockedIn)
-        {
-            if (round <= 0 || bonusTiles <= 0)
-            {
-                return string.Empty;
-            }
-
-            string tileLabel = bonusTiles == 1 ? "tile" : "tiles";
-            return lockedIn
-                ? $" Locked-in bonus: +{bonusTiles} {tileLabel} from drafting this on round {round}."
-                : $" Current draft bonus: +{bonusTiles} {tileLabel} at round {round}.";
-        }
+        private static string BuildAggressotropicConduitDescription(int tilesPerPhase)
+            => $"Before each growth phase, grow up to {tilesPerPhase} tiles from your starting spore toward the enemy starting spore with the most living cells (random tie-break). The last cell placed becomes Resistant. Skips your living cells and enemy Resistant cells. Stacks with other Aggressotropic Mycovariants. Effect is more powerful if drafted later in the game.";
     }
 }
