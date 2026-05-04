@@ -206,6 +206,7 @@ public static class MycovariantEffectProcessor
         if (player.PlayerType == PlayerTypeEnum.Human)
         {
             player.AddMutationPoints(MycovariantGameBalance.AscusBaitMutationPointAward);
+            playerMyco.IncrementEffectCount(MycovariantEffectType.MpBonus, MycovariantGameBalance.AscusBaitMutationPointAward);
             playerMyco.MarkTriggered();
             return 0;
         }
@@ -221,6 +222,11 @@ public static class MycovariantEffectProcessor
             int j = rng.Next(i, livingCells.Count);
             (livingCells[i], livingCells[j]) = (livingCells[j], livingCells[i]);
             board.KillFungalCell(livingCells[i], DeathReason.AscusBait);
+        }
+
+        if (killCount > 0)
+        {
+            playerMyco.IncrementEffectCount(MycovariantEffectType.AscusBaitSelfCullKills, killCount);
         }
 
         playerMyco.MarkTriggered();
@@ -256,6 +262,11 @@ public static class MycovariantEffectProcessor
         foreach (var cell in resistantCells)
         {
             cell.RemoveResistance();
+        }
+
+        if (resistantCells.Count > 0)
+        {
+            playerMyco.IncrementEffectCount(MycovariantEffectType.SporophoreDecoyResistanceLosses, resistantCells.Count);
         }
 
         playerMyco.MarkTriggered();

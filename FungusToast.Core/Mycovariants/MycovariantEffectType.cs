@@ -9,6 +9,8 @@
         Poisoned,
         Toxified,
         MpBonus,
+        AscusBaitSelfCullKills,
+        SporophoreDecoyResistanceLosses,
         Neutralized,
         Neutralizations,
         Bastioned,

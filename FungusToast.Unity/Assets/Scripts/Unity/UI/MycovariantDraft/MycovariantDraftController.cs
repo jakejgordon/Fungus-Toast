@@ -404,9 +404,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             PlayDraftPickConfirmSound();
             GameManager.Instance.GameUI.GameLogRouter?.OnDraftPick(currentPlayer.PlayerName, picked.Name);
 
-            string pickAnnouncement = BuildPickAnnouncement(currentPlayer, picked);
-            AddPlayerFeedEntry(currentPlayer, pickAnnouncement);
-
             GameManager.Instance.ResolveMycovariantDraftPick(currentPlayer, picked);
 
             if (!picked.IsUniversal)
@@ -420,6 +417,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 float score = picked.AIScore != null ? picked.AIScore(currentPlayer, GameManager.Instance.Board) : MycovariantAIGameBalance.DefaultAIScore;
                 playerMyco.AIScoreAtDraft = score;
             }
+
+            string pickAnnouncement = BuildPickAnnouncement(currentPlayer, picked, playerMyco);
+            AddPlayerFeedEntry(currentPlayer, pickAnnouncement);
 
             if (playerMyco == null)
             {
@@ -444,8 +444,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 playerMyco,
                 () => {
                     gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                    string resolvedAnnouncement = BuildPickAnnouncement(currentPlayer, picked, playerMyco);
+                    ReplaceCurrentPlayerEntry(resolvedAnnouncement);
                     string resultMessage = AddDraftResultMessage(currentPlayer, picked, playerMyco);
-                    RecordDraftHistoryEntry(currentPlayer, pickAnnouncement, resultMessage);
+                    RecordDraftHistoryEntry(currentPlayer, resolvedAnnouncement, resultMessage);
                     draftPanel.SetActive(true);
                     SetDraftState(DraftUIState.AnimatingPick);
                     AnimatePickFeedback(picked, () => {
@@ -1314,6 +1316,17 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
         }
 
+        private void ReplaceCurrentPlayerEntry(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message) || currentPlayerEntryText == null)
+            {
+                return;
+            }
+
+            currentPlayerEntryText.text = message;
+            StartCoroutine(ScrollToBottomNextFrame());
+        }
+
         private GameObject CreateFeedRow(Sprite icon, string message)
         {
             bool isEven = draftFeedEntryCount % 2 == 0;
@@ -1411,7 +1424,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private string AddDraftResultMessage(Player player, Mycovariant picked, PlayerMycovariant playerMyco)
         {
-            string resultMessage = BuildDraftResultMessage(picked, playerMyco);
+            string resultMessage = BuildDraftResultMessage(player, picked, playerMyco);
             if (!string.IsNullOrWhiteSpace(resultMessage))
             {
                 AppendToCurrentPlayerEntry(resultMessage);
@@ -1420,7 +1433,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             return resultMessage;
         }
 
-        private static string BuildDraftResultMessage(Mycovariant picked, PlayerMycovariant playerMyco)
+        private static string BuildDraftResultMessage(Player player, Mycovariant picked, PlayerMycovariant playerMyco)
         {
             if (playerMyco == null)
             {
@@ -1800,9 +1813,45 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
         }
 
-        private static string BuildPickAnnouncement(Player player, Mycovariant picked)
+        private static string BuildPickAnnouncement(Player player, Mycovariant picked, PlayerMycovariant playerMyco)
         {
-            string categoryFlavor = picked.Category switch
+            string categoryFlavor = GetPickFlavor(player, picked, playerMyco);
+            return $"{player.PlayerName} drafted {picked.Name} — {categoryFlavor}.";
+        }
+
+        private static string GetPickFlavor(Player player, Mycovariant picked, PlayerMycovariant playerMyco)
+        {
+            if (player != null && picked != null && picked.IsBait)
+            {
+                int effectCount = GetPrimaryEffectCount(playerMyco, picked.Id);
+                return picked.Id switch
+                {
+                    MycovariantIds.AscusBaitId when player.PlayerType == PlayerTypeEnum.Human => "evolution economy just accelerated",
+                    MycovariantIds.AscusBaitId => effectCount > 0
+                        ? $"{effectCount} cells just self-culled"
+                        : "the colony just culled itself",
+                    MycovariantIds.SporophoreDecoyId when player.PlayerType == PlayerTypeEnum.Human => "evolution economy just accelerated",
+                    MycovariantIds.SporophoreDecoyId => effectCount > 0
+                        ? $"{effectCount} resistant cells just lost their shell"
+                        : "resistant defenses just collapsed",
+                    MycovariantIds.SporalSnareId when player.PlayerType == PlayerTypeEnum.Human => "evolution economy just accelerated",
+                    MycovariantIds.SporalSnareId => "human growth just punched through their lane",
+                    MycovariantIds.PerisporeCrownId when player.PlayerType == PlayerTypeEnum.Human => "evolution economy just accelerated",
+                    MycovariantIds.PerisporeCrownId => "a toxin crown just bloomed around their spore",
+                    _ => picked.Category switch
+                    {
+                        MycovariantCategory.Growth => "growth lines are expanding",
+                        MycovariantCategory.Fungicide => "toxin pressure is rising",
+                        MycovariantCategory.Resistance => "defenses are hardening",
+                        MycovariantCategory.Reclamation => "the dead are being recycled",
+                        MycovariantCategory.Economy => "evolution economy just accelerated",
+                        MycovariantCategory.Defense => "defensive chemistry is online",
+                        _ => "the colony strategy just shifted"
+                    }
+                };
+            }
+
+            return picked.Category switch
             {
                 MycovariantCategory.Growth => "growth lines are expanding",
                 MycovariantCategory.Fungicide => "toxin pressure is rising",
@@ -1812,8 +1861,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 MycovariantCategory.Defense => "defensive chemistry is online",
                 _ => "the colony strategy just shifted"
             };
-
-            return $"{player.PlayerName} drafted {picked.Name} — {categoryFlavor}.";
         }
 
         private static string BuildEffectCountSummary(PlayerMycovariant playerMyco)
@@ -1840,6 +1887,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 MycovariantEffectType.Reclaimed => "reclaimed",
                 MycovariantEffectType.Poisoned => "poisoned",
                 MycovariantEffectType.Toxified => "toxified",
+                MycovariantEffectType.MpBonus => "mutation points gained",
+                MycovariantEffectType.AscusBaitSelfCullKills => "cells self-culled",
+                MycovariantEffectType.SporophoreDecoyResistanceLosses => "resistant cells stripped",
                 MycovariantEffectType.CytolyticBurstKills => "kills",
                 MycovariantEffectType.CytolyticBurstToxins => "toxins spawned",
                 MycovariantEffectType.BallistosporeDischarge => "ballistospores dropped",
@@ -1852,6 +1902,25 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 MycovariantEffectType.SecondReclamationAttempts => "second reclaim attempts",
                 MycovariantEffectType.ExistingExtensions => "toxin cycles extended",
                 _ => effectType.ToString()
+            };
+        }
+
+        private static int GetPrimaryEffectCount(PlayerMycovariant playerMyco, int mycovariantId)
+        {
+            if (playerMyco?.EffectCounts == null)
+            {
+                return 0;
+            }
+
+            return mycovariantId switch
+            {
+                MycovariantIds.AscusBaitId => playerMyco.EffectCounts.TryGetValue(MycovariantEffectType.AscusBaitSelfCullKills, out int selfCullKills)
+                    ? selfCullKills
+                    : 0,
+                MycovariantIds.SporophoreDecoyId => playerMyco.EffectCounts.TryGetValue(MycovariantEffectType.SporophoreDecoyResistanceLosses, out int resistanceLosses)
+                    ? resistanceLosses
+                    : 0,
+                _ => 0
             };
         }
 
