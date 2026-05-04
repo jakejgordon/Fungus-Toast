@@ -202,6 +202,7 @@ Notes:
 - On dark panels or overlays, secondary buttons should not reuse light primary fills by default. Prefer a dark raised surface treatment such as `Surface.PanelElevated` with `Text.Primary` so compact table actions and dismiss controls remain readable at a glance.
 - Runtime-built buttons must receive an explicit active label color after styling passes. Do not assume inherited TMP defaults will remain contrast-safe.
 - Interactive card-style controls on dark panels should expose a gentle hover highlight so mouse users can immediately tell they are actionable. Keep the hover state subtle and clearly weaker than the selected state.
+- Compact dark utility buttons should still use a clearly visible hover state. If the control is small or sits in a dense header, increase the hover contrast enough that the button reads as clickable at a glance rather than relying on a barely perceptible surface shift.
 
 ### 5.3 Dropdown/Input Readability
 - Dropdown caption and option text must use `Button.Text.Default` on light dropdown surfaces.

@@ -196,6 +196,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             UIStyleTokens.Button.ApplyStyle(spendPointsButton, useSelectedAsNormal: true);
             UIStyleTokens.Button.SetButtonLabelColor(spendPointsButton, UIStyleTokens.Button.TextDefault);
+            StyleSpendPointsButton();
 
             if (presentationSpeedButton != null)
             {
@@ -1432,13 +1433,10 @@ namespace FungusToast.Unity.UI.MutationTree
 
             var rect = button.GetComponent<RectTransform>();
             rect.SetParent(headerCenterSlotRect, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = Vector2.zero;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
         }
 
         private void MoveButtonToHeaderRightSlot(Button button)
@@ -1450,13 +1448,10 @@ namespace FungusToast.Unity.UI.MutationTree
 
             var rect = button.GetComponent<RectTransform>();
             rect.SetParent(headerRightSlotRect, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
+            rect.anchorMin = new Vector2(1f, 0.5f);
+            rect.anchorMax = new Vector2(1f, 0.5f);
             rect.pivot = new Vector2(1f, 0.5f);
             rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = Vector2.zero;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
         }
 
         private void WireSpendPointsTooltip()
@@ -1555,7 +1550,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             var colors = storePointsButton.colors;
             colors.normalColor = UIStyleTokens.Surface.PanelElevated;
-            colors.highlightedColor = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Accent.Spore, 0.22f);
+            colors.highlightedColor = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Accent.Spore, 0.55f);
             colors.pressedColor = UIStyleTokens.Surface.PanelPrimary;
             colors.selectedColor = colors.highlightedColor;
             colors.fadeDuration = 0.08f;
@@ -1568,7 +1563,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 outline = storePointsButton.gameObject.AddComponent<Outline>();
             }
 
-            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.45f);
+            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.7f);
             outline.effectDistance = new Vector2(1f, -1f);
 
             var layout = storePointsButton.GetComponent<LayoutElement>();
@@ -1598,6 +1593,12 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
+            var legacyStoreContentRoot = presentationSpeedButton.transform.Find("StoreMutationPointsButtonContent");
+            if (legacyStoreContentRoot != null)
+            {
+                Destroy(legacyStoreContentRoot.gameObject);
+            }
+
             UIStyleTokens.Button.ApplySecondaryMenuAction(
                 presentationSpeedButton,
                 PresentationSpeedButtonMinWidth,
@@ -1607,7 +1608,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             var colors = presentationSpeedButton.colors;
             colors.normalColor = UIStyleTokens.Surface.PanelElevated;
-            colors.highlightedColor = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Accent.Spore, 0.24f);
+            colors.highlightedColor = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Accent.Spore, 0.58f);
             colors.pressedColor = UIStyleTokens.Surface.PanelPrimary;
             colors.selectedColor = colors.highlightedColor;
             colors.fadeDuration = 0.08f;
@@ -1620,7 +1621,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 outline = presentationSpeedButton.gameObject.AddComponent<Outline>();
             }
 
-            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.4f);
+            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.72f);
             outline.effectDistance = new Vector2(1f, -1f);
 
             var layout = presentationSpeedButton.GetComponent<LayoutElement>();
@@ -1646,6 +1647,30 @@ namespace FungusToast.Unity.UI.MutationTree
             RefreshHeaderActionButtonWidths();
         }
 
+        private void StyleSpendPointsButton()
+        {
+            if (spendPointsButton == null)
+            {
+                return;
+            }
+
+            var colors = spendPointsButton.colors;
+            colors.normalColor = UIStyleTokens.Button.BackgroundSelected;
+            colors.highlightedColor = Color.Lerp(UIStyleTokens.Button.BackgroundSelected, Color.white, 0.8f);
+            colors.pressedColor = UIStyleTokens.Button.BackgroundPressed;
+            colors.selectedColor = colors.highlightedColor;
+            colors.fadeDuration = 0.08f;
+            spendPointsButton.transition = Selectable.Transition.ColorTint;
+            spendPointsButton.colors = colors;
+
+            if (buttonOutline != null)
+            {
+                buttonOutline.enabled = spendPointsButton.interactable;
+                buttonOutline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.7f);
+                buttonOutline.effectDistance = new Vector2(1f, -1f);
+            }
+        }
+
         private void RefreshHeaderActionButtonWidths()
         {
             UpdateHeaderActionButtonWidth(storePointsButton, headerCenterSlotRect, StoreButtonMinWidth);
@@ -1662,13 +1687,29 @@ namespace FungusToast.Unity.UI.MutationTree
             Canvas.ForceUpdateCanvases();
 
             float preferredWidth = minWidth;
-            var contentRoot = button.GetComponentsInChildren<HorizontalLayoutGroup>(true)
-                .FirstOrDefault(layout => layout != null && layout.transform.parent == button.transform);
+            var contentRoot = GetHeaderActionButtonContentRoot(button);
             if (contentRoot != null)
             {
-                preferredWidth = Mathf.Max(
-                    minWidth,
-                    LayoutUtility.GetPreferredWidth(contentRoot.GetComponent<RectTransform>()) + (HeaderButtonHorizontalPadding * 2f));
+                float contentWidth = 0f;
+                var contentRect = contentRoot;
+                var label = contentRoot.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (label != null)
+                {
+                    contentWidth += label.GetPreferredValues(label.text).x;
+                }
+
+                var icon = contentRoot.GetComponentInChildren<Image>(true);
+                if (icon != null && icon.gameObject.activeSelf)
+                {
+                    contentWidth += HeaderButtonIconSize;
+                    if (label != null)
+                    {
+                        contentWidth += HeaderButtonContentSpacing;
+                    }
+                }
+
+                contentWidth = Mathf.Max(contentWidth, LayoutUtility.GetPreferredWidth(contentRect));
+                preferredWidth = Mathf.Max(minWidth, Mathf.Ceil(contentWidth) + (HeaderButtonHorizontalPadding * 2f));
             }
 
             var slotLayout = slotRect.GetComponent<LayoutElement>();
@@ -1689,6 +1730,37 @@ namespace FungusToast.Unity.UI.MutationTree
 
             buttonLayout.minWidth = preferredWidth;
             buttonLayout.preferredWidth = preferredWidth;
+
+            if (button.TryGetComponent<RectTransform>(out var buttonRect))
+            {
+                buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, preferredWidth);
+                var preferredHeight = button == presentationSpeedButton
+                    ? PresentationSpeedButtonMinHeight
+                    : StoreButtonMinHeight;
+                buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, preferredHeight);
+            }
+        }
+
+        private RectTransform GetHeaderActionButtonContentRoot(Button button)
+        {
+            if (button == null)
+            {
+                return null;
+            }
+
+            if (button == storePointsButton)
+            {
+                return button.transform.Find("StoreMutationPointsButtonContent") as RectTransform;
+            }
+
+            if (button == presentationSpeedButton)
+            {
+                return button.transform.Find("TimeLapseButtonContent") as RectTransform;
+            }
+
+            return button.GetComponentsInChildren<HorizontalLayoutGroup>(true)
+                .FirstOrDefault(layout => layout != null && layout.transform.parent == button.transform)
+                ?.GetComponent<RectTransform>();
         }
 
         private TextMeshProUGUI ConfigureHeaderActionButtonContent(

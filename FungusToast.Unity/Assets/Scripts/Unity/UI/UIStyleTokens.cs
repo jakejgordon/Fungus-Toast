@@ -186,9 +186,9 @@ namespace FungusToast.Unity.UI
                 button.colors = new ColorBlock
                 {
                     normalColor = Surface.PanelElevated,
-                    highlightedColor = Surface.PanelSecondary,
+                    highlightedColor = Color.Lerp(Surface.PanelElevated, Accent.Spore, 0.38f),
                     pressedColor = Surface.PanelPrimary,
-                    selectedColor = Surface.PanelSecondary,
+                    selectedColor = Color.Lerp(Surface.PanelElevated, Accent.Spore, 0.38f),
                     disabledColor = new Color(Surface.PanelPrimary.r, Surface.PanelPrimary.g, Surface.PanelPrimary.b, 0.6f),
                     colorMultiplier = 1f,
                     fadeDuration = 0.1f
