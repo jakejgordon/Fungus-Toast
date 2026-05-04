@@ -29,7 +29,7 @@ namespace FungusToast.Simulation.Analysis
 
             foreach (var kv in avgDeathReasons.OrderByDescending(kv => kv.Value))
             {
-                string cause = kv.Key.ToString();
+                string cause = DeathReasonDisplayNames.GetDisplayName(kv.Key);
                 float avgCount = kv.Value;
                 float percent = totalDeaths > 0 ? avgCount / totalDeaths * 100f : 0f;
                 Console.WriteLine($"{cause,-30} | {avgCount,13:N1} | {percent,8:N1}%");
@@ -323,7 +323,7 @@ namespace FungusToast.Simulation.Analysis
 
             foreach (var kv in deathReasonCounts.OrderByDescending(kv => kv.Value))
             {
-                string cause = kv.Key.ToString();
+                string cause = DeathReasonDisplayNames.GetDisplayName(kv.Key);
                 float avgCount = gameCount > 0 ? (float)kv.Value / gameCount : 0f;
                 float percent = totalDeaths > 0 ? (float)kv.Value / totalDeaths * 100f : 0f;
                 Console.WriteLine($"{cause,-30} | {avgCount,13:N1} | {percent,8:N1}%");

@@ -712,23 +712,8 @@ namespace FungusToast.Unity.UI
         //  Display-name look-ups
         // ═══════════════════════════════════════════════════════════════════
 
-        private static string DeathReasonName(DeathReason r) => r switch
-        {
-            DeathReason.Age                       => "Old Age",
-            DeathReason.Randomness                => "Random Death",
-            DeathReason.PutrefactiveMycotoxin     => "Putrefactive Mycotoxin",
-            DeathReason.SporicidalBloom           => "Sporicidal Bloom",
-            DeathReason.MycotoxinPotentiation     => "Mycotoxin Potentiation",
-            DeathReason.HyphalVectoring           => "Chemotactic Beacon",
-            DeathReason.JettingMycelium           => "Jetting Mycelium",
-            DeathReason.Infested                  => "Infested",
-            DeathReason.Poisoned                  => "Poisoned",
-            DeathReason.MycotoxicLash             => "Mycotoxic Lash",
-            DeathReason.PutrefactiveCascade       => "Putrefactive Cascade",
-            DeathReason.PutrefactiveCascadePoison => "Putrefactive Cascade Poison",
-            DeathReason.Unknown                   => "Unknown",
-            _                                     => r.ToString()
-        };
+        private static string DeathReasonName(DeathReason r)
+            => DeathReasonDisplayNames.GetDisplayName(r);
 
     }
 }
