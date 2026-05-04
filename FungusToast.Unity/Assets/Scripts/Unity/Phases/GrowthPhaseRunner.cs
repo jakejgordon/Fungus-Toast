@@ -75,9 +75,6 @@ namespace FungusToast.Unity.Phases
             isRunning = true;
             phaseCycle = 0;
 
-            GameManager.Instance.GameUI.PhaseProgressTracker?.AdvanceToNextGrowthCycle(1);
-            GameManager.Instance.GameUI.PhaseBanner.Show("Growth Phase Begins!", 2f);
-
             roundContext = new RoundContext();
 
             StartCoroutine(RunNextCycle(activeRunVersion));
@@ -113,10 +110,15 @@ namespace FungusToast.Unity.Phases
 
             phaseCycle++;
             PlayGrowthCycleStartSound();
+            bool fastPresentationMode = GameManager.Instance != null && GameManager.Instance.IsFastRoundPresentationMode;
 
             var failedThisCycle = processor.ExecuteSingleCycle(roundContext);
             MergeFailedGrowths(failedThisCycle);
-            gridVisualizer.RenderBoard(board);
+            gridVisualizer.RenderBoard(board, suppressAnimations: fastPresentationMode);
+            float cycleDelaySeconds = GameManager.Instance != null
+                ? GameManager.Instance.GetRoundPresentationDelaySeconds(UIEffectConstants.TimeBetweenGrowthCycles)
+                : UIEffectConstants.TimeBetweenGrowthCycles;
+            yield return new WaitForSeconds(cycleDelaySeconds);
 
             if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
             {
@@ -173,6 +175,11 @@ namespace FungusToast.Unity.Phases
 
         private void PlayGrowthCycleStartSound()
         {
+            if (GameManager.Instance != null && GameManager.Instance.IsFastForwarding)
+            {
+                return;
+            }
+
             if (growthCycleStartClip == null)
             {
                 return;

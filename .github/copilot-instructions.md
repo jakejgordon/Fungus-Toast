@@ -50,6 +50,7 @@ Main projects:
 - No magic constants for tunable gameplay/UI values. Use the appropriate constants file.
 - Prefer minimal, scoped changes over opportunistic refactors.
 - When touching Unity UI, follow the established patterns in `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
+- When touching Unity UI visuals, layout, buttons, or contrast, explicitly consult `FungusToast.Core/docs/UI_STYLE_GUIDE.md` and use its button-role, readability, and spacing guidance instead of ad hoc styling.
 - When adding new docs, link them into the documentation hierarchy so they are discoverable.
 
 ## Build and Validation Expectations

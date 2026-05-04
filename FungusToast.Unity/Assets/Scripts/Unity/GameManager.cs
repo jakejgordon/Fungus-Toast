@@ -39,6 +39,12 @@ using FungusToast.Unity.Endgame;
 
 namespace FungusToast.Unity
 {
+    public enum RoundPresentationSpeedMode
+    {
+        Normal,
+        TimeLapse,
+    }
+
     public static class AlphaDataResetService
     {
         private const string AppliedResetTokenKey = "System.AlphaDataResetToken";
@@ -236,10 +242,14 @@ namespace FungusToast.Unity
 
         private bool isFastForwarding = false; 
         public bool IsFastForwarding => isFastForwarding; 
+        private RoundPresentationSpeedMode roundPresentationSpeedMode = RoundPresentationSpeedMode.Normal;
+        public RoundPresentationSpeedMode RoundPresentationSpeedMode => roundPresentationSpeedMode;
+        public bool IsFastRoundPresentationMode => roundPresentationSpeedMode == RoundPresentationSpeedMode.TimeLapse;
         private bool _fastForwardStarted = false;
         private bool initialMutationPointsAssigned = false;
         private bool skipMutationPointAssignmentForRoundStart;
         private bool pendingAlphaMutationOnboarding;
+        private int suppressedPhaseIntroFeedbackCount;
         private float nextUiStuckCheckTime;
         private bool hasApplicationFocus = true;
         private int currentLevelGameplaySeed;
@@ -309,6 +319,46 @@ namespace FungusToast.Unity
 
             nextUiStuckCheckTime = Time.unscaledTime + 0.5f;
             RecoverGameplayUiIfStuck();
+        }
+
+        public void CycleRoundPresentationSpeedMode()
+        {
+            SetRoundPresentationSpeedMode(
+                roundPresentationSpeedMode == RoundPresentationSpeedMode.TimeLapse
+                    ? RoundPresentationSpeedMode.Normal
+                    : RoundPresentationSpeedMode.TimeLapse);
+        }
+
+        public void SetRoundPresentationSpeedMode(RoundPresentationSpeedMode mode)
+        {
+            roundPresentationSpeedMode = mode;
+            gameUIManager?.MutationUIManager?.RefreshPresentationSpeedModeUI();
+        }
+
+        public float GetRoundPresentationDelaySeconds(float baseSeconds)
+        {
+            if (!IsFastRoundPresentationMode)
+            {
+                return baseSeconds;
+            }
+
+            return baseSeconds * UIEffectConstants.FastRoundPresentationDelayMultiplier;
+        }
+
+        internal void SuppressNextPhaseIntroFeedback(int count = 1)
+        {
+            suppressedPhaseIntroFeedbackCount = Mathf.Max(suppressedPhaseIntroFeedbackCount, count);
+        }
+
+        private bool ConsumeSuppressedPhaseIntroFeedback()
+        {
+            if (suppressedPhaseIntroFeedbackCount <= 0)
+            {
+                return false;
+            }
+
+            suppressedPhaseIntroFeedbackCount--;
+            return true;
         }
 
         private void OnApplicationFocus(bool hasFocus)
@@ -453,9 +503,17 @@ namespace FungusToast.Unity
                 OnAllHumansFinishedMutationTurn);
             fastForwardService = new FastForwardService(this, () => isFastForwarding, v => isFastForwarding = v, () => endgameService.GameEnded);
             fastForwardService.SetProgressCallbacks(
-                progress => { gameUIManager.LoadingScreen?.Show(progress); },
-                () => { gameUIManager.LoadingScreen?.FadeOut(); });
-            postGrowthVisualSequence = new PostGrowthVisualSequence(this, gridVisualizer, () => isFastForwarding, StartDecayPhase);
+                progress =>
+                {
+                    gameUIManager.LoadingScreen?.FadeOut();
+                    gameUIManager.PhaseBanner?.ShowPersistent(progress);
+                },
+                () =>
+                {
+                    gameUIManager.PhaseBanner?.HideImmediate();
+                    gameUIManager.LoadingScreen?.FadeOut();
+                });
+            postGrowthVisualSequence = new PostGrowthVisualSequence(this, gridVisualizer, () => isFastForwarding || IsFastRoundPresentationMode, StartDecayPhase);
             endgamePlayerStatisticsTracker = new EndgamePlayerStatisticsTracker();
             gameUIManager.GameLogRouter.SetEndgamePlayerStatisticsTracker(endgamePlayerStatisticsTracker);
             endgameService = new EndgameService(
@@ -483,7 +541,7 @@ namespace FungusToast.Unity
                 () => gameUIManager,
                 () => gridVisualizer,
                 () => humanPlayer,
-                () => isFastForwarding);
+                () => isFastForwarding || IsFastRoundPresentationMode);
         }
 
         #endregion
@@ -849,13 +907,17 @@ namespace FungusToast.Unity
 
         public void StartGrowthPhase()
         {
+            bool suppressIntroFeedback = isFastForwarding || ConsumeSuppressedPhaseIntroFeedback();
             gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
             gameUIManager.GameLogRouter?.OnPhaseStart("Growth");
             gameUIManager.GameLogManager?.OnLogSegmentStart("GrowthPhase");
             growthPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
             gridVisualizer.ClearNewlyGrownFlagsForNextGrowthPhase();
-            soundEffectService?.PlayOneShot(growthPhaseStartClip, growthPhaseStartVolume);
-            gameUIManager.PhaseBanner.Show("Growth Phase Begins!",2f);
+            if (!suppressIntroFeedback)
+            {
+                soundEffectService?.PlayOneShot(growthPhaseStartClip, growthPhaseStartVolume);
+                gameUIManager.PhaseBanner.Show("Growth Phase Begins!",2f);
+            }
             phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
             StartCoroutine(BeginGrowthPhaseAfterPreGrowthEffects());
         }
@@ -903,7 +965,8 @@ namespace FungusToast.Unity
                 Board.ConduitProjection -= BufferConduitProjection;
             }
 
-            if (!isFastForwarding && (chitinFortificationTileIds.Count > 0 || conduitProjections.Count > 0))
+            if (!(isFastForwarding || IsFastRoundPresentationMode)
+                && (chitinFortificationTileIds.Count > 0 || conduitProjections.Count > 0))
             {
                 if (chitinFortificationTileIds.Count > 0)
                 {
@@ -949,11 +1012,16 @@ namespace FungusToast.Unity
             {
                 return;
             }
+
+            bool suppressIntroFeedback = isFastForwarding || ConsumeSuppressedPhaseIntroFeedback();
             gameUIManager.GameLogRouter?.OnPhaseStart("Decay");
             gameUIManager.GameLogManager?.OnLogSegmentStart("DecayPhase");
             decayPhaseRunner.Initialize(Board, Board.Players, gridVisualizer);
-            soundEffectService?.PlayOneShot(decayPhaseStartClip, decayPhaseStartVolume);
-            gameUIManager.PhaseBanner.Show("Decay Phase Begins!",2f);
+            if (!suppressIntroFeedback)
+            {
+                soundEffectService?.PlayOneShot(decayPhaseStartClip, decayPhaseStartVolume);
+                gameUIManager.PhaseBanner.Show("Decay Phase Begins!",2f);
+            }
             phaseProgressTracker?.HighlightDecayPhase();
             decayPhaseRunner.StartDecayPhase(
                 growthPhaseRunner.FailedGrowthsByPlayerId,
@@ -1089,7 +1157,8 @@ namespace FungusToast.Unity
             }
             ui.RightSidebar?.UpdateRandomDecayChance(board.CurrentRound);
             ui.GameLogRouter?.OnPhaseStart("Mutation");
-            if (!pendingAlphaMutationOnboarding)
+            bool suppressIntroFeedback = isFastForwarding || ConsumeSuppressedPhaseIntroFeedback();
+            if (!pendingAlphaMutationOnboarding && !suppressIntroFeedback)
             {
                 soundEffectService?.PlayOneShot(mutationPhaseStartClip, mutationPhaseStartVolume);
                 gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
@@ -1297,7 +1366,8 @@ namespace FungusToast.Unity
                 draftStartMessage,
                 humanTurnBannerText,
                 aiTurnBannerPrefix);
-            if (countsTowardRoundCompletion && testingModeEnabled)
+            bool suppressIntroFeedback = isFastForwarding || ConsumeSuppressedPhaseIntroFeedback();
+            if (!suppressIntroFeedback && countsTowardRoundCompletion && testingModeEnabled)
             {
                 var tMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
                 var name = tMyco?.Name ?? "Unknown";
@@ -1305,7 +1375,7 @@ namespace FungusToast.Unity
                 gameUIManager.PhaseBanner.Show($"Testing: {name}",2f);
                 gameUIManager.GameLogRouter?.OnDraftPhaseStart(name);
             }
-            else
+            else if (!suppressIntroFeedback)
             {
                 soundEffectService?.PlayOneShot(draftPhaseStartClip, draftPhaseStartVolume);
                 gameUIManager.PhaseBanner.Show(phaseBannerMessage ?? "Mycovariant Draft Phase!",2f);
@@ -1672,10 +1742,7 @@ namespace FungusToast.Unity
             }
 
             bool willFastForward = testingModeEnabled && fastForwardRounds > 0 && !_fastForwardStarted;
-            if (!willFastForward)
-            {
-                gameUIManager.LoadingScreen?.FadeOut();
-            }
+            gameUIManager.LoadingScreen?.FadeOut();
 
             if (applyStartingSporeEffects && !skipTestingStartupEffects)
             {
@@ -2018,6 +2085,11 @@ namespace FungusToast.Unity
         public void SkipToNextTrack()
         {
             backgroundMusicService?.SkipToNextTrack();
+        }
+
+        public void RefreshMusicVolume()
+        {
+            backgroundMusicService?.RefreshVolume();
         }
 
         public string GetCurrentGameplayTrackName()

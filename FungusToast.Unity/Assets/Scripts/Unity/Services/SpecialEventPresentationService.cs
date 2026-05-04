@@ -16,7 +16,7 @@ namespace FungusToast.Unity
         private readonly Func<GameUIManager> getGameUIManager;
         private readonly Func<GridVisualizer> getGridVisualizer;
         private readonly Func<Player> getHumanPlayer;
-        private readonly Func<bool> isFastForwarding;
+        private readonly Func<bool> shouldSkipPresentation;
         private readonly Queue<SpecialBoardEventArgs> pendingImmediateEvents = new();
         private readonly Queue<SpecialBoardEventArgs> pendingPostDecayEvents = new();
 
@@ -26,12 +26,12 @@ namespace FungusToast.Unity
             Func<GameUIManager> getGameUIManager,
             Func<GridVisualizer> getGridVisualizer,
             Func<Player> getHumanPlayer,
-            Func<bool> isFastForwarding)
+            Func<bool> skipPresentation)
         {
             this.getGameUIManager = getGameUIManager;
             this.getGridVisualizer = getGridVisualizer;
             this.getHumanPlayer = getHumanPlayer;
-            this.isFastForwarding = isFastForwarding;
+            this.shouldSkipPresentation = skipPresentation;
         }
 
         public bool HasPendingEvents => pendingPostDecayEvents.Count > 0;
@@ -47,7 +47,7 @@ namespace FungusToast.Unity
 
         public void Enqueue(SpecialBoardEventArgs e)
         {
-            if (e == null || isFastForwarding())
+            if (e == null || shouldSkipPresentation())
             {
                 return;
             }
@@ -86,7 +86,7 @@ namespace FungusToast.Unity
 
         public IEnumerator PresentPendingImmediate()
         {
-            if (isPresenting || pendingImmediateEvents.Count == 0 || isFastForwarding())
+            if (isPresenting || pendingImmediateEvents.Count == 0 || shouldSkipPresentation())
             {
                 yield break;
             }
@@ -127,7 +127,7 @@ namespace FungusToast.Unity
 
         public IEnumerator PresentPendingAfterDecayRender()
         {
-            if (isPresenting || pendingPostDecayEvents.Count == 0 || isFastForwarding())
+            if (isPresenting || pendingPostDecayEvents.Count == 0 || shouldSkipPresentation())
             {
                 yield break;
             }

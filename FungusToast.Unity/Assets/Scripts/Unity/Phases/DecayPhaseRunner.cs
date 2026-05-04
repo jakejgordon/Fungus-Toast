@@ -122,17 +122,22 @@ namespace FungusToast.Unity.Phases
                 yield break;
             }
 
+            bool fastPresentationMode = GameManager.Instance != null && GameManager.Instance.IsFastRoundPresentationMode;
+
             DeathEngine.ExecuteDeathCycle(activeBoard, failedGrowthsByPlayerId, rng, simulationObserver);
             activeBoard.OnPostDecayPhase();
 
-            yield return new WaitForSeconds(UIEffectConstants.TimeBeforeDecayRender);
+            float preRenderDelaySeconds = GameManager.Instance != null
+                ? GameManager.Instance.GetRoundPresentationDelaySeconds(UIEffectConstants.TimeBeforeDecayRender)
+                : UIEffectConstants.TimeBeforeDecayRender;
+            yield return new WaitForSeconds(preRenderDelaySeconds);
 
             if (activeRunVersion != runVersion)
             {
                 yield break;
             }
 
-            activeGridVisualizer.RenderBoard(activeBoard);
+            activeGridVisualizer.RenderBoard(activeBoard, suppressAnimations: fastPresentationMode);
 
 			yield return activeGridVisualizer.WaitForAllAnimations();
 
@@ -158,7 +163,10 @@ namespace FungusToast.Unity.Phases
             }
             else
             {
-                yield return new WaitForSeconds(UIEffectConstants.TimeAfterDecayRender);
+                float postRenderDelaySeconds = GameManager.Instance != null
+                    ? GameManager.Instance.GetRoundPresentationDelaySeconds(UIEffectConstants.TimeAfterDecayRender)
+                    : UIEffectConstants.TimeAfterDecayRender;
+                yield return new WaitForSeconds(postRenderDelaySeconds);
             }
 
             if (activeRunVersion != runVersion)

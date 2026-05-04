@@ -14,7 +14,7 @@ namespace FungusToast.Unity
     {
         private readonly GameManager gameManager;
         private readonly GridVisualizer grid;
-        private readonly System.Func<bool> isFastForwarding;
+        private readonly System.Func<bool> shouldSkipPresentation;
         private readonly System.Action startDecayPhase;
 
         private readonly Dictionary<int, List<int>> regenReclaimBuffer = new();
@@ -27,8 +27,13 @@ namespace FungusToast.Unity
         private bool sequenceRunning = false;
         private GameBoard registeredBoard;
 
-        public PostGrowthVisualSequence(GameManager gm, GridVisualizer grid, System.Func<bool> fastForwardFlag, System.Action startDecayPhase)
-        { gameManager = gm; this.grid = grid; isFastForwarding = fastForwardFlag; this.startDecayPhase = startDecayPhase; }
+        public PostGrowthVisualSequence(GameManager gm, GridVisualizer grid, System.Func<bool> skipPresentationFlag, System.Action startDecayPhase)
+        {
+            gameManager = gm;
+            this.grid = grid;
+            shouldSkipPresentation = skipPresentationFlag;
+            this.startDecayPhase = startDecayPhase;
+        }
 
         public void Register(GameBoard board)
         {
@@ -74,7 +79,7 @@ namespace FungusToast.Unity
 
         private void OnResistanceAppliedBatch_Buffer(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
         {
-            if (isFastForwarding() || tileIds == null || tileIds.Count == 0)
+            if (shouldSkipPresentation() || tileIds == null || tileIds.Count == 0)
             {
                 return;
             }
@@ -131,7 +136,7 @@ namespace FungusToast.Unity
 
         private void OnDirectedVectorSurge_Buffer(GameBoard.DirectedVectorSurgeEventArgs e)
         {
-            if (isFastForwarding() || e == null || e.AffectedTileCount <= 0)
+            if (shouldSkipPresentation() || e == null || e.AffectedTileCount <= 0)
             {
                 return;
             }
@@ -141,13 +146,23 @@ namespace FungusToast.Unity
 
         private void OnPostGrowthPhase_StartSequence()
         {
-            if (isFastForwarding()) return;
+            if (shouldSkipPresentation()) return;
             resistantBaseline = new HashSet<int>(gameManager.Board.AllTiles().Where(t => t.FungalCell?.IsAlive == true && t.FungalCell.IsResistant).Select(t => t.TileId));
         }
 
         private void OnPostGrowthPhaseCompleted_CaptureHrt()
         {
-            if (isFastForwarding()) { postGrowthHrtNewResistantTiles.Clear(); return; }
+            if (shouldSkipPresentation())
+            {
+                postGrowthHrtNewResistantTiles.Clear();
+                if (!sequenceRunning)
+                {
+                    sequenceRunning = true;
+                    gameManager.StartCoroutine(RunSequence());
+                }
+                return;
+            }
+
             var alreadyBufferedResistanceTiles = GetBufferedResistanceTileIds();
             var now = gameManager.Board.AllTiles().Where(t => t.FungalCell?.IsAlive == true && t.FungalCell.IsResistant).Select(t => t.TileId).ToList();
             postGrowthHrtNewResistantTiles.Clear();
@@ -185,7 +200,7 @@ namespace FungusToast.Unity
 
         private IEnumerator RunSequence()
         {
-            if (isFastForwarding()) { ClearBuffers(); sequenceRunning = false; startDecayPhase(); yield break; }
+            if (shouldSkipPresentation()) { ClearBuffers(); sequenceRunning = false; startDecayPhase(); yield break; }
 
             yield return grid.WaitForAllAnimations();
             grid.RenderBoard(gameManager.Board, suppressAnimations: true);

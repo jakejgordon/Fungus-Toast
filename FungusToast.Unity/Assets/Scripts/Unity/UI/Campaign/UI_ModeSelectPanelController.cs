@@ -245,6 +245,7 @@ namespace FungusToast.Unity.UI.Campaign
         private void OnSettingsMusicClicked()
         {
             MusicSettings.CycleVolumeForward();
+            GameManager.Instance?.RefreshMusicVolume();
             RefreshSettingsAudioLabels();
         }
 

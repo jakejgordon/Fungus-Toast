@@ -48,6 +48,21 @@ namespace FungusToast.Unity.UI
             StartCoroutine(FadeInOut(duration));
         }
 
+        public void ShowPersistent(string text)
+        {
+            StopAllCoroutines();
+
+            if (bannerText != null)
+            {
+                bannerText.text = text;
+            }
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 1f;
+            }
+        }
+
         public void HideImmediate()
         {
             StopAllCoroutines();

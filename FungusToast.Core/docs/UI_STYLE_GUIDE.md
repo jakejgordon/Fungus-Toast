@@ -269,6 +269,8 @@ Notes:
 ### 6.3 Mutation Tree
 - Keep category accents and dark tree baseline; align text/button states with global tokens.
 - Store/bank actions use primary action style; less critical actions use secondary.
+- Compact mutation-tree header actions such as `Store Mutation Points` and `Time-Lapse` should auto-size to their icon-plus-label content instead of clipping or relying on ellipsis when the header has room.
+- These compact mutation-tree header actions should use the same dark raised secondary treatment as other dark-panel utility controls, with a visible but still subtle hover highlight that clearly reads as interactive.
 - First-run mutation-tree guidance should use a dismissible modal, not a toast, because the player is being taught a core turn decision.
 
 ### 6.4 Tooltips + Logs

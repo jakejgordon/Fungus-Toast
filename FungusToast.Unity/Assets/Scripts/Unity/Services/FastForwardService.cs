@@ -43,6 +43,11 @@ namespace FungusToast.Unity
         public void SetProgressCallbacks(Action<string> progress, Action complete) { onProgress = progress; onComplete = complete; }
         public void StartFastForward(int target, bool skipToEnd, int? testingMycoId) { gameManager.StartCoroutine(FastForwardRoutine(target, skipToEnd, testingMycoId)); }
 
+        private static string BuildFastForwardProgressLabel(int currentLevel, int targetLevel)
+        {
+            return $"Round {Math.Min(currentLevel, targetLevel)}/{targetLevel}";
+        }
+
         private IEnumerator FastForwardRoutine(int fastForwardRounds, bool skipToEnd, int? testingMycoId)
         {
             var board = gameManager.Board; var ui = gameManager.GameUI; var mutationMgr = gameManager.GetMutationManager();
@@ -65,11 +70,11 @@ namespace FungusToast.Unity
             {
                 // Report progress via callback so GameManager can update its loading screen directly.
                 // Yield a frame AFTER reporting and BEFORE heavy computation so Unity renders the text.
-                onProgress?.Invoke($"Fast-forwarding\u2026 Round {board.CurrentRound} / {targetRound}");
+                onProgress?.Invoke(BuildFastForwardProgressLabel(board.CurrentRound, targetRound));
                 yield return null; // let Unity render the initial status text
                 while (board.CurrentRound < targetRound && iterations < desiredRounds && !gameEndedFunc())
                 {
-                    onProgress?.Invoke($"Fast-forwarding\u2026 Round {board.CurrentRound} / {targetRound}");
+                    onProgress?.Invoke(BuildFastForwardProgressLabel(board.CurrentRound, targetRound));
                     yield return null; // render status before heavy computation
                     yield return RunSilentGrowthPhase(board);
                     yield return RunSilentDecayPhase(board);
@@ -90,7 +95,8 @@ namespace FungusToast.Unity
                 gameManager.gridVisualizer.RenderBoard(board, true); ui.RightSidebar?.UpdatePlayerSummaries(board.Players); ui.RightSidebar?.SortPlayerSummaryRows(board.Players); float occupancy = board.GetOccupiedTileRatio() * 100f; ui.RightSidebar?.SetRoundAndOccupancy(board.CurrentRound, occupancy); ui.MoldProfileRoot?.ApplyDeferredRefreshIfNeeded();
                 if (skipToEnd) { gameManager.TriggerEndGameFromFastForward(); yield break; }
                 gameManager.ArmImmediateFinalRoundAfterFastForward();
-                if (testingMycoId.HasValue) gameManager.StartMycovariantDraftPhase(); else { string msg = treatAsTargetRound ? $"Reached Round {board.CurrentRound}" : $"Fast-forwarded {board.CurrentRound - startingRound} rounds"; ui.PhaseBanner.Show(msg, 2f); gameManager.StartNextRound(); }
+                gameManager.SuppressNextPhaseIntroFeedback();
+                if (testingMycoId.HasValue) gameManager.StartMycovariantDraftPhase(); else { gameManager.StartNextRound(); }
             }
             finally
             {

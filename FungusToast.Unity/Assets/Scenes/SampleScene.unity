@@ -116744,6 +116744,8 @@ MonoBehaviour:
   dockButtonText: {fileID: 1677498023}
   mutationPointsCounterText: {fileID: 541730892}
   storePointsButton: {fileID: 1388654716}
+  storePointsButtonIcon: {fileID: -3083825033370468877, guid: a4458004309240c4c97d2f6ffe39db11, type: 3}
+  presentationSpeedButtonIcon: {fileID: 3831208137149316737, guid: a64e96172fa1eb7479d3273d14224b80, type: 3}
   mutationUpgradeSuccessClip: {fileID: 8300000, guid: 871d52f60a2a4cb9a31fcffbaa5a87d7, type: 3}
   mutationUpgradeSuccessVolume: 1
   mutationStorePointsClip: {fileID: 8300000, guid: 56a96171dbfe1444788af0082dffa3f7, type: 3}

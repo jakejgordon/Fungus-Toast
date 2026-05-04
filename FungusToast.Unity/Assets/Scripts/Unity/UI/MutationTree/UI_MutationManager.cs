@@ -23,11 +23,21 @@ namespace FungusToast.Unity.UI.MutationTree
         private const string MutationTreeGuidanceSeenKey = "Onboarding.AlphaMutationTreeGuidanceSeen";
         private const string SpendPointsTooltipText = "Open your upgrades and spend your mutation points now.";
         private const string StorePointsTooltipText = "Store your unspent mutation points.\nThey carry over to the next turn,\nso you can save for stronger upgrades.";
+        private const string NormalSpeedTooltipText = "Standard pacing keeps the full growth and decay presentation sequence.";
+        private const string TimeLapseTooltipText = "Skips most animations and speeds up growth cycles to reduce time between turns.";
         private const string FirstTreeGuidanceToastText = "Hover upgrades to inspect them, then click an affordable one to buy it.\n\nIf you want stronger upgrades later, use Store Mutation Points at the top of this panel.";
         private const float SpendButtonMinWidth = 220f;
         private const float SpendButtonMinHeight = 40f;
         private const float StoreButtonMinWidth = 220f;
         private const float StoreButtonMinHeight = 36f;
+        private const float PresentationSpeedButtonMinWidth = 220f;
+        private const float PresentationSpeedButtonMinHeight = 36f;
+        private const float HeaderControlsHeight = 40f;
+        private const float HeaderControlsHorizontalInset = 16f;
+        private const float HeaderControlsSpacing = 12f;
+        private const float HeaderButtonIconSize = 18f;
+        private const float HeaderButtonContentSpacing = 8f;
+        private const float HeaderButtonHorizontalPadding = 18f;
         private const float MutationPanelMaxWidth = 1125f;
         private const float MutationPanelTopInsetPadding = 6f;
 
@@ -52,6 +62,8 @@ namespace FungusToast.Unity.UI.MutationTree
         [Header("UI Wiring")]
         [SerializeField] private TextMeshProUGUI mutationPointsCounterText;
         [SerializeField] private Button storePointsButton;
+        [SerializeField] private Sprite storePointsButtonIcon;
+        [SerializeField] private Sprite presentationSpeedButtonIcon;
         [SerializeField] private AudioClip mutationUpgradeSuccessClip = null;
         [SerializeField, Range(0f, 1f)] private float mutationUpgradeSuccessVolume = 1f;
         [SerializeField] private AudioClip mutationStorePointsClip = null;
@@ -82,7 +94,16 @@ namespace FungusToast.Unity.UI.MutationTree
         private bool isSliding = false;
         private bool hasDismissedTreeGuidanceThisGame;
         private TooltipTrigger spendPointsTooltipTrigger;
+        private TooltipTrigger presentationSpeedTooltipTrigger;
         private AudioSource soundEffectAudioSource;
+        private Button presentationSpeedButton;
+        private TextMeshProUGUI presentationSpeedButtonText;
+        private Image storePointsButtonIconImage;
+        private Image presentationSpeedButtonIconImage;
+        private RectTransform headerControlsRowRect;
+        private RectTransform headerLeftSlotRect;
+        private RectTransform headerCenterSlotRect;
+        private RectTransform headerRightSlotRect;
 
         private Player humanPlayer;
         private bool humanTurnEnded = false;
@@ -127,6 +148,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private void OnEnable()
         {
             SetDockButtonVisible(true);
+            RefreshPresentationSpeedModeUI();
             RefreshResponsiveMutationPanelLayout();
             StartCoroutine(RefreshResponsiveMutationPanelLayoutNextFrame());
         }
@@ -159,6 +181,8 @@ namespace FungusToast.Unity.UI.MutationTree
             // ── Apply the dark panel theme to all backgrounds ──
             ApplyPanelTheme();
 
+            EnsurePresentationSpeedButton();
+            EnsureHeaderControlsRow();
             ApplyActionStyles();
             RestoreActionRowLayout();
             WireSpendPointsTooltip();
@@ -173,9 +197,15 @@ namespace FungusToast.Unity.UI.MutationTree
             UIStyleTokens.Button.ApplyStyle(spendPointsButton, useSelectedAsNormal: true);
             UIStyleTokens.Button.SetButtonLabelColor(spendPointsButton, UIStyleTokens.Button.TextDefault);
 
+            if (presentationSpeedButton != null)
+            {
+                StylePresentationSpeedButton();
+            }
+
             if (mutationPointsCounterText != null)
             {
                 mutationPointsCounterText.color = MutationTreeColors.PrimaryText;
+                mutationPointsCounterText.alignment = TextAlignmentOptions.MidlineLeft;
             }
         }
 
@@ -248,6 +278,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             ResetPulse();
+            RefreshPresentationSpeedModeUI();
             RestoreActionRowLayout();
         }
 
@@ -312,6 +343,7 @@ namespace FungusToast.Unity.UI.MutationTree
         public void StartNewMutationPhase()
         {
             humanTurnEnded = false;
+            RefreshPresentationSpeedModeUI();
         }
 
         public void OnSpendPointsClicked()
@@ -1281,6 +1313,152 @@ namespace FungusToast.Unity.UI.MutationTree
             trigger.SetStaticText(StorePointsTooltipText);
         }
 
+        private void EnsurePresentationSpeedButton()
+        {
+            if (presentationSpeedButton != null)
+            {
+                return;
+            }
+
+            Button templateButton = storePointsButton != null ? storePointsButton : spendPointsButton;
+            if (templateButton == null)
+            {
+                return;
+            }
+
+            GameObject buttonObject = Instantiate(templateButton.gameObject, templateButton.transform.parent);
+            buttonObject.name = "PhaseSpeedButton";
+            buttonObject.transform.SetSiblingIndex(templateButton.transform.GetSiblingIndex() + 1);
+
+            presentationSpeedButton = buttonObject.GetComponent<Button>();
+            presentationSpeedButtonText = buttonObject.GetComponentInChildren<TextMeshProUGUI>(true);
+
+            presentationSpeedButton.onClick.RemoveAllListeners();
+            presentationSpeedButton.onClick.AddListener(OnPresentationSpeedButtonClicked);
+
+            StylePresentationSpeedButton();
+            WirePresentationSpeedTooltip();
+            RefreshPresentationSpeedModeUI();
+        }
+
+        private void EnsureHeaderControlsRow()
+        {
+            if (mutationTreeRect == null)
+            {
+                CacheMutationPanelLayoutReferences();
+            }
+
+            if (mutationTreeRect == null || mutationPointsCounterText == null || storePointsButton == null || presentationSpeedButton == null)
+            {
+                return;
+            }
+
+            if (headerControlsRowRect == null)
+            {
+                var rowObject = new GameObject("UI_MutationHeaderControlsRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+                headerControlsRowRect = rowObject.GetComponent<RectTransform>();
+                headerControlsRowRect.SetParent(mutationTreeRect, false);
+                headerControlsRowRect.SetAsLastSibling();
+                headerControlsRowRect.anchorMin = new Vector2(0f, 1f);
+                headerControlsRowRect.anchorMax = new Vector2(1f, 1f);
+                headerControlsRowRect.pivot = new Vector2(0.5f, 0.5f);
+                headerControlsRowRect.anchoredPosition = new Vector2(0f, -20f);
+                headerControlsRowRect.sizeDelta = new Vector2(-(HeaderControlsHorizontalInset * 2f), HeaderControlsHeight);
+
+                var rowLayout = rowObject.GetComponent<HorizontalLayoutGroup>();
+                rowLayout.padding = new RectOffset(0, 0, 0, 0);
+                rowLayout.spacing = HeaderControlsSpacing;
+                rowLayout.childAlignment = TextAnchor.MiddleCenter;
+                rowLayout.childControlWidth = true;
+                rowLayout.childControlHeight = true;
+                rowLayout.childForceExpandWidth = false;
+                rowLayout.childForceExpandHeight = false;
+            }
+
+            headerLeftSlotRect ??= CreateHeaderSlot("UI_MutationHeaderLeftSlot", flexibleWidth: 1f, preferredWidth: 0f);
+            headerCenterSlotRect ??= CreateHeaderSlot("UI_MutationHeaderCenterSlot", flexibleWidth: 0f, preferredWidth: StoreButtonMinWidth);
+            headerRightSlotRect ??= CreateHeaderSlot("UI_MutationHeaderRightSlot", flexibleWidth: 0f, preferredWidth: PresentationSpeedButtonMinWidth);
+
+            MoveLabelToHeaderLeftSlot();
+            MoveButtonToHeaderCenterSlot(storePointsButton);
+            MoveButtonToHeaderRightSlot(presentationSpeedButton);
+            RefreshHeaderActionButtonWidths();
+        }
+
+        private RectTransform CreateHeaderSlot(string name, float flexibleWidth, float preferredWidth)
+        {
+            var slotObject = new GameObject(name, typeof(RectTransform), typeof(LayoutElement));
+            var slotRect = slotObject.GetComponent<RectTransform>();
+            slotRect.SetParent(headerControlsRowRect, false);
+            slotRect.anchorMin = Vector2.zero;
+            slotRect.anchorMax = Vector2.one;
+            slotRect.pivot = new Vector2(0.5f, 0.5f);
+            slotRect.sizeDelta = Vector2.zero;
+
+            var layoutElement = slotObject.GetComponent<LayoutElement>();
+            layoutElement.flexibleWidth = flexibleWidth;
+            layoutElement.preferredWidth = preferredWidth;
+            layoutElement.minHeight = HeaderControlsHeight;
+
+            return slotRect;
+        }
+
+        private void MoveLabelToHeaderLeftSlot()
+        {
+            var labelRect = mutationPointsCounterText != null ? mutationPointsCounterText.rectTransform : null;
+            if (labelRect == null || headerLeftSlotRect == null)
+            {
+                return;
+            }
+
+            labelRect.SetParent(headerLeftSlotRect, false);
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.pivot = new Vector2(0f, 0.5f);
+            labelRect.anchoredPosition = Vector2.zero;
+            labelRect.sizeDelta = Vector2.zero;
+            mutationPointsCounterText.alignment = TextAlignmentOptions.MidlineLeft;
+            mutationPointsCounterText.enableAutoSizing = false;
+            mutationPointsCounterText.overflowMode = TextOverflowModes.Ellipsis;
+            mutationPointsCounterText.raycastTarget = false;
+        }
+
+        private void MoveButtonToHeaderCenterSlot(Button button)
+        {
+            if (button == null || headerCenterSlotRect == null)
+            {
+                return;
+            }
+
+            var rect = button.GetComponent<RectTransform>();
+            rect.SetParent(headerCenterSlotRect, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = Vector2.zero;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+        }
+
+        private void MoveButtonToHeaderRightSlot(Button button)
+        {
+            if (button == null || headerRightSlotRect == null)
+            {
+                return;
+            }
+
+            var rect = button.GetComponent<RectTransform>();
+            rect.SetParent(headerRightSlotRect, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(1f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = Vector2.zero;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+        }
+
         private void WireSpendPointsTooltip()
         {
             if (spendPointsButton == null)
@@ -1296,6 +1474,22 @@ namespace FungusToast.Unity.UI.MutationTree
 
             spendPointsTooltipTrigger.SetStaticText(SpendPointsTooltipText);
             spendPointsTooltipTrigger.SetAutoPlacementOffsetX(60f);
+        }
+
+        private void WirePresentationSpeedTooltip()
+        {
+            if (presentationSpeedButton == null)
+            {
+                return;
+            }
+
+            presentationSpeedTooltipTrigger = presentationSpeedButton.GetComponent<TooltipTrigger>();
+            if (presentationSpeedTooltipTrigger == null)
+            {
+                presentationSpeedTooltipTrigger = presentationSpeedButton.gameObject.AddComponent<TooltipTrigger>();
+            }
+
+            presentationSpeedTooltipTrigger.SetAutoPlacementOffsetX(60f);
         }
 
         private void ConfigurePlayerHoverTargets(int playerId, bool hasVisibleIcon)
@@ -1352,64 +1546,332 @@ namespace FungusToast.Unity.UI.MutationTree
         /// </summary>
         private void StyleStorePointsButton()
         {
-            UIStyleTokens.Button.ApplyStyle(storePointsButton);
-            UIStyleTokens.Button.SetButtonLabelColor(storePointsButton, UIStyleTokens.Button.TextDefault);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(
+                storePointsButton,
+                StoreButtonMinWidth,
+                preferredHeight: StoreButtonMinHeight,
+                minHeight: StoreButtonMinHeight);
+            UIStyleTokens.Button.SetButtonLabelColor(storePointsButton, UIStyleTokens.Text.Primary);
 
-            // Button background — high contrast against top bar so it reads as interactive
-            var btnImage = storePointsButton.GetComponent<Image>();
-            if (btnImage != null)
+            var colors = storePointsButton.colors;
+            colors.normalColor = UIStyleTokens.Surface.PanelElevated;
+            colors.highlightedColor = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Accent.Spore, 0.22f);
+            colors.pressedColor = UIStyleTokens.Surface.PanelPrimary;
+            colors.selectedColor = colors.highlightedColor;
+            colors.fadeDuration = 0.08f;
+            storePointsButton.transition = Selectable.Transition.ColorTint;
+            storePointsButton.colors = colors;
+
+            var outline = storePointsButton.GetComponent<Outline>();
+            if (outline == null)
             {
-                Color ctaBase = Color.Lerp(MutationTreeColors.ButtonHighlight, MutationTreeColors.PulseOutline, 0.18f);
-                btnImage.color = ctaBase;
-                btnImage.raycastTarget = true;
-
-                var border = storePointsButton.GetComponent<Outline>();
-                if (border == null)
-                    border = storePointsButton.gameObject.AddComponent<Outline>();
-                border.effectColor = new Color(
-                    MutationTreeColors.PulseOutline.r,
-                    MutationTreeColors.PulseOutline.g,
-                    MutationTreeColors.PulseOutline.b,
-                    0.65f);
-                border.effectDistance = new Vector2(1f, -1f);
+                outline = storePointsButton.gameObject.AddComponent<Outline>();
             }
 
-            // Ensure minimum clickable footprint (44px+ recommended touch target)
+            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.45f);
+            outline.effectDistance = new Vector2(1f, -1f);
+
             var layout = storePointsButton.GetComponent<LayoutElement>();
             if (layout == null)
                 layout = storePointsButton.gameObject.AddComponent<LayoutElement>();
             layout.minHeight = Mathf.Max(layout.minHeight, StoreButtonMinHeight);
             layout.minWidth = Mathf.Max(layout.minWidth, StoreButtonMinWidth);
+            layout.preferredHeight = Mathf.Max(layout.preferredHeight, StoreButtonMinHeight);
+            layout.preferredWidth = Mathf.Max(layout.preferredWidth, StoreButtonMinWidth);
 
-            // Button color block for hover / press states
-            var colors = storePointsButton.colors;
-            Color normal = Color.Lerp(MutationTreeColors.ButtonHighlight, MutationTreeColors.PulseOutline, 0.18f);
-            colors.normalColor      = normal;
-            colors.highlightedColor = Color.Lerp(normal, MutationTreeColors.PrimaryText, 0.30f);
-            colors.pressedColor     = MutationTreeColors.ButtonPressed;
-            colors.selectedColor    = colors.highlightedColor;
-            colors.disabledColor    = new Color(
-                MutationTreeColors.SecondaryText.r,
-                MutationTreeColors.SecondaryText.g,
-                MutationTreeColors.SecondaryText.b,
-                0.45f);
-            colors.colorMultiplier  = 1.05f;
-            colors.fadeDuration     = 0.08f;
-            storePointsButton.transition = Selectable.Transition.ColorTint;
-            storePointsButton.colors = colors;
+            ConfigureHeaderActionButtonContent(
+                storePointsButton,
+                ref storePointsButtonIconImage,
+                "Store Mutation Points",
+                "StoreMutationPointsButtonContent",
+                "StoreMutationPointsButtonIcon",
+                storePointsButtonIcon,
+                UIStyleTokens.Text.Primary,
+                UIStyleTokens.Accent.Spore);
+            RefreshHeaderActionButtonWidths();
+        }
 
-            // Text — bold, bright, and action-oriented
-            var btnText = storePointsButton.GetComponentInChildren<TextMeshProUGUI>();
-            if (btnText != null)
+        private void StylePresentationSpeedButton()
+        {
+            if (presentationSpeedButton == null)
             {
-                btnText.color = MutationTreeColors.PrimaryText;
-                btnText.fontStyle = FontStyles.Bold;
-                btnText.characterSpacing = 1.2f;
-                btnText.margin = new Vector4(10f, 3f, 10f, 3f);
+                return;
+            }
 
-                // Prepend a bank/save icon using TMP rich text (downward arrow into tray)
-                if (!btnText.text.StartsWith("<"))
-                    btnText.text = "<b>[</b><size=80%>\u2193</size><b>]</b> " + btnText.text;
+            UIStyleTokens.Button.ApplySecondaryMenuAction(
+                presentationSpeedButton,
+                PresentationSpeedButtonMinWidth,
+                preferredHeight: PresentationSpeedButtonMinHeight,
+                minHeight: PresentationSpeedButtonMinHeight);
+            UIStyleTokens.Button.SetButtonLabelColor(presentationSpeedButton, UIStyleTokens.Text.Primary);
+
+            var colors = presentationSpeedButton.colors;
+            colors.normalColor = UIStyleTokens.Surface.PanelElevated;
+            colors.highlightedColor = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Accent.Spore, 0.24f);
+            colors.pressedColor = UIStyleTokens.Surface.PanelPrimary;
+            colors.selectedColor = colors.highlightedColor;
+            colors.fadeDuration = 0.08f;
+            presentationSpeedButton.transition = Selectable.Transition.ColorTint;
+            presentationSpeedButton.colors = colors;
+
+            var outline = presentationSpeedButton.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = presentationSpeedButton.gameObject.AddComponent<Outline>();
+            }
+
+            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.4f);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            var layout = presentationSpeedButton.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = presentationSpeedButton.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layout.minHeight = Mathf.Max(layout.minHeight, PresentationSpeedButtonMinHeight);
+            layout.minWidth = Mathf.Max(layout.minWidth, PresentationSpeedButtonMinWidth);
+            layout.preferredHeight = Mathf.Max(layout.preferredHeight, PresentationSpeedButtonMinHeight);
+            layout.preferredWidth = Mathf.Max(layout.preferredWidth, PresentationSpeedButtonMinWidth);
+
+            presentationSpeedButtonText = ConfigureHeaderActionButtonContent(
+                presentationSpeedButton,
+                ref presentationSpeedButtonIconImage,
+                "Time-Lapse",
+                "TimeLapseButtonContent",
+                "TimeLapseButtonIcon",
+                presentationSpeedButtonIcon,
+                UIStyleTokens.Text.Primary,
+                UIStyleTokens.Text.Primary);
+            RefreshHeaderActionButtonWidths();
+        }
+
+        private void RefreshHeaderActionButtonWidths()
+        {
+            UpdateHeaderActionButtonWidth(storePointsButton, headerCenterSlotRect, StoreButtonMinWidth);
+            UpdateHeaderActionButtonWidth(presentationSpeedButton, headerRightSlotRect, PresentationSpeedButtonMinWidth);
+        }
+
+        private void UpdateHeaderActionButtonWidth(Button button, RectTransform slotRect, float minWidth)
+        {
+            if (button == null || slotRect == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+
+            float preferredWidth = minWidth;
+            var contentRoot = button.GetComponentsInChildren<HorizontalLayoutGroup>(true)
+                .FirstOrDefault(layout => layout != null && layout.transform.parent == button.transform);
+            if (contentRoot != null)
+            {
+                preferredWidth = Mathf.Max(
+                    minWidth,
+                    LayoutUtility.GetPreferredWidth(contentRoot.GetComponent<RectTransform>()) + (HeaderButtonHorizontalPadding * 2f));
+            }
+
+            var slotLayout = slotRect.GetComponent<LayoutElement>();
+            if (slotLayout == null)
+            {
+                slotLayout = slotRect.gameObject.AddComponent<LayoutElement>();
+            }
+
+            slotLayout.minWidth = preferredWidth;
+            slotLayout.preferredWidth = preferredWidth;
+            slotLayout.flexibleWidth = 0f;
+
+            var buttonLayout = button.GetComponent<LayoutElement>();
+            if (buttonLayout == null)
+            {
+                buttonLayout = button.gameObject.AddComponent<LayoutElement>();
+            }
+
+            buttonLayout.minWidth = preferredWidth;
+            buttonLayout.preferredWidth = preferredWidth;
+        }
+
+        private TextMeshProUGUI ConfigureHeaderActionButtonContent(
+            Button button,
+            ref Image iconImage,
+            string labelText,
+            string contentRootName,
+            string iconObjectName,
+            Sprite iconSprite,
+            Color labelColor,
+            Color iconColor)
+        {
+            if (button == null)
+            {
+                return null;
+            }
+
+            var contentRoot = button.transform.Find(contentRootName) as RectTransform;
+            if (contentRoot == null)
+            {
+                var contentRootObject = new GameObject(contentRootName, typeof(RectTransform));
+                contentRoot = contentRootObject.GetComponent<RectTransform>();
+                contentRoot.SetParent(button.transform, false);
+                contentRoot.anchorMin = new Vector2(0.5f, 0.5f);
+                contentRoot.anchorMax = new Vector2(0.5f, 0.5f);
+                contentRoot.pivot = new Vector2(0.5f, 0.5f);
+                contentRoot.anchoredPosition = Vector2.zero;
+            }
+
+            var contentLayout = contentRoot.gameObject.GetComponent<HorizontalLayoutGroup>();
+            if (contentLayout == null)
+            {
+                contentLayout = contentRoot.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            contentLayout.spacing = HeaderButtonContentSpacing;
+            contentLayout.padding = new RectOffset(0, 0, 0, 0);
+            contentLayout.childAlignment = TextAnchor.MiddleCenter;
+            contentLayout.childControlWidth = true;
+            contentLayout.childControlHeight = true;
+            contentLayout.childForceExpandWidth = false;
+            contentLayout.childForceExpandHeight = false;
+
+            var fitter = contentRoot.gameObject.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                fitter = contentRoot.gameObject.AddComponent<ContentSizeFitter>();
+            }
+
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            TextMeshProUGUI label = contentRoot.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (label == null)
+            {
+                label = button.GetComponentsInChildren<TextMeshProUGUI>(true)
+                    .FirstOrDefault(candidate => candidate.transform != contentRoot);
+            }
+
+            if (label == null)
+            {
+                var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+                label = labelObject.GetComponent<TextMeshProUGUI>();
+            }
+
+            label.transform.SetParent(contentRoot, false);
+            label.gameObject.name = "Label";
+            label.text = labelText;
+            label.fontSize = 18f;
+            label.fontStyle = FontStyles.Bold;
+            label.characterSpacing = 0.5f;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.overflowMode = TextOverflowModes.Ellipsis;
+            label.alignment = TextAlignmentOptions.Center;
+            label.color = labelColor;
+            label.margin = Vector4.zero;
+            label.raycastTarget = false;
+
+            var labelLayout = label.GetComponent<LayoutElement>();
+            if (labelLayout == null)
+            {
+                labelLayout = label.gameObject.AddComponent<LayoutElement>();
+            }
+
+            labelLayout.minHeight = 24f;
+            labelLayout.preferredHeight = 24f;
+            labelLayout.flexibleWidth = 0f;
+            labelLayout.flexibleHeight = 0f;
+
+            iconImage = EnsureHeaderActionButtonIcon(contentRoot, iconObjectName, iconImage, iconSprite, iconColor);
+            if (iconImage != null)
+            {
+                iconImage.transform.SetSiblingIndex(0);
+            }
+
+            label.transform.SetSiblingIndex(iconImage != null ? 1 : 0);
+            return label;
+        }
+
+        private Image EnsureHeaderActionButtonIcon(
+            RectTransform contentRoot,
+            string iconObjectName,
+            Image existingIconImage,
+            Sprite iconSprite,
+            Color iconColor)
+        {
+            if (contentRoot == null)
+            {
+                return null;
+            }
+
+            if (iconSprite == null)
+            {
+                if (existingIconImage != null)
+                {
+                    existingIconImage.gameObject.SetActive(false);
+                }
+
+                return existingIconImage;
+            }
+
+            if (existingIconImage == null)
+            {
+                var iconObject = new GameObject(iconObjectName, typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+                iconObject.transform.SetParent(contentRoot, false);
+                existingIconImage = iconObject.GetComponent<Image>();
+            }
+
+            existingIconImage.gameObject.SetActive(true);
+            existingIconImage.gameObject.name = iconObjectName;
+            existingIconImage.sprite = iconSprite;
+            existingIconImage.color = iconColor;
+            existingIconImage.preserveAspect = true;
+            existingIconImage.raycastTarget = false;
+
+            var iconLayout = existingIconImage.GetComponent<LayoutElement>();
+            if (iconLayout == null)
+            {
+                iconLayout = existingIconImage.gameObject.AddComponent<LayoutElement>();
+            }
+
+            iconLayout.minWidth = HeaderButtonIconSize;
+            iconLayout.preferredWidth = HeaderButtonIconSize;
+            iconLayout.minHeight = HeaderButtonIconSize;
+            iconLayout.preferredHeight = HeaderButtonIconSize;
+            iconLayout.flexibleWidth = 0f;
+            iconLayout.flexibleHeight = 0f;
+            return existingIconImage;
+        }
+
+        private void OnPresentationSpeedButtonClicked()
+        {
+            GameManager.Instance?.CycleRoundPresentationSpeedMode();
+            RefreshPresentationSpeedModeUI();
+        }
+
+        public void RefreshPresentationSpeedModeUI()
+        {
+            if (presentationSpeedButton == null)
+            {
+                return;
+            }
+
+            RoundPresentationSpeedMode mode = GameManager.Instance != null
+                ? GameManager.Instance.RoundPresentationSpeedMode
+                : RoundPresentationSpeedMode.Normal;
+
+            if (presentationSpeedButtonText != null)
+            {
+                presentationSpeedButtonText.text = mode == RoundPresentationSpeedMode.TimeLapse
+                    ? "Time-Lapse: On"
+                    : "Time-Lapse: Off";
+                presentationSpeedButtonText.fontStyle = FontStyles.Bold;
+            }
+
+            RefreshHeaderActionButtonWidths();
+
+            if (presentationSpeedTooltipTrigger != null)
+            {
+                presentationSpeedTooltipTrigger.SetStaticText(
+                    mode == RoundPresentationSpeedMode.TimeLapse
+                        ? TimeLapseTooltipText
+                        : NormalSpeedTooltipText);
             }
         }
 
@@ -1551,14 +2013,18 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void RestoreActionRowLayout()
         {
+            EnsureHeaderControlsRow();
             RestoreSpendButtonLayout();
             RestoreStoreButtonLayout();
+            RestorePresentationSpeedButtonLayout();
 
             if (mutationPointsCounterText != null)
             {
                 mutationPointsCounterText.transform.localScale = originalCounterScale;
             }
 
+            RefreshHeaderActionButtonWidths();
+            ForceLayoutRebuild(headerControlsRowRect);
             ForceLayoutRebuild(spendPointsButton != null ? spendPointsButton.transform.parent as RectTransform : null);
         }
 
@@ -1608,9 +2074,28 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             layout.minWidth = Mathf.Max(layout.minWidth, StoreButtonMinWidth);
-            layout.preferredWidth = Mathf.Max(layout.preferredWidth, StoreButtonMinWidth);
             layout.minHeight = Mathf.Max(layout.minHeight, StoreButtonMinHeight);
             layout.preferredHeight = Mathf.Max(layout.preferredHeight, StoreButtonMinHeight);
+        }
+
+        private void RestorePresentationSpeedButtonLayout()
+        {
+            if (presentationSpeedButton == null)
+            {
+                return;
+            }
+
+            presentationSpeedButton.gameObject.SetActive(true);
+
+            var layout = presentationSpeedButton.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = presentationSpeedButton.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layout.minWidth = Mathf.Max(layout.minWidth, PresentationSpeedButtonMinWidth);
+            layout.minHeight = Mathf.Max(layout.minHeight, PresentationSpeedButtonMinHeight);
+            layout.preferredHeight = Mathf.Max(layout.preferredHeight, PresentationSpeedButtonMinHeight);
         }
 
         private static void ForceLayoutRebuild(RectTransform rowRect)

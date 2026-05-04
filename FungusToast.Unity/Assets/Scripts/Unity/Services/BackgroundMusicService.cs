@@ -590,6 +590,19 @@ namespace FungusToast.Unity
             }
         }
 
+        public void RefreshVolume()
+        {
+            if (titleAudioSource != null)
+            {
+                titleAudioSource.volume = MusicSettings.GetEffectiveVolume(titleBaseVolume);
+            }
+
+            if (musicAudioSource != null)
+            {
+                musicAudioSource.volume = shouldPlay && !audioSourcePaused ? GetCurrentVolume() : 0f;
+            }
+        }
+
         public AudioClip GetCurrentGameplayTrack()
         {
             return musicAudioSource != null ? musicAudioSource.clip : null;

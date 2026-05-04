@@ -1718,6 +1718,7 @@ namespace FungusToast.Unity.UI.GameStart
         private void OnMusicVolumeClicked()
         {
             MusicSettings.CycleVolumeForward();
+            GameManager.Instance?.RefreshMusicVolume();
             RefreshAudioSettingsControls();
         }
 
