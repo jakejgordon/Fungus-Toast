@@ -1457,9 +1457,10 @@ namespace FungusToast.Unity
             {
                 pm.DraftedRound = Board?.CurrentRound ?? 0;
             }
-            if (pm != null && picked.AutoMarkTriggered)
+            var board = Board;
+            if (pm != null && picked.AutoMarkTriggered && board != null)
             {
-                picked.ApplyEffect?.Invoke(pm, Board, rng, gameUIManager.GameLogRouter);
+                picked.ApplyEffect?.Invoke(pm, board, rng, gameUIManager.GameLogRouter);
             }
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
         }
