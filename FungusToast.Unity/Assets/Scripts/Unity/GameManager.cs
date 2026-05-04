@@ -1453,11 +1453,30 @@ namespace FungusToast.Unity
             }
 
             var pm = player.PlayerMycovariants.LastOrDefault(x => x.MycovariantId == picked.Id);
+            if (pm != null)
+            {
+                pm.DraftedCampaignLevelDisplay = GetCurrentDraftCampaignLevelDisplay();
+            }
             if (pm != null && picked.AutoMarkTriggered)
             {
                 picked.ApplyEffect?.Invoke(pm, Board, rng, gameUIManager.GameLogRouter);
             }
             gameUIManager.RightSidebar?.UpdatePlayerSummaries(players);
+        }
+
+        private int GetCurrentDraftCampaignLevelDisplay()
+        {
+            if (CurrentGameMode != GameMode.Campaign)
+            {
+                return 0;
+            }
+
+            if (campaignController?.State != null)
+            {
+                return campaignController.State.levelIndex + 1;
+            }
+
+            return testingModeEnabled ? testingCampaignLevelIndex + 1 : 0;
         }
 
         private bool ShouldResolveTropicLysisAfterDraftChain()

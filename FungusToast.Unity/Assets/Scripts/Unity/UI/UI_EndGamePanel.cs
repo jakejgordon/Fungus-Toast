@@ -3280,7 +3280,8 @@ namespace FungusToast.Unity.UI
             string flavor = string.IsNullOrWhiteSpace(playerMycovariant.Mycovariant.FlavorText)
                 ? string.Empty
                 : $"\n\n<i>{playerMycovariant.Mycovariant.FlavorText}</i>";
-            return $"<b>{playerMycovariant.Mycovariant.Name}</b>\n<i>{BuildMycovariantMetaText(playerMycovariant)}</i>\n\n{playerMycovariant.Mycovariant.Description}{flavor}";
+            string description = MycovariantDescriptionFormatter.GetOwnedTooltipDescription(playerMycovariant);
+            return $"<b>{playerMycovariant.Mycovariant.Name}</b>\n<i>{BuildMycovariantMetaText(playerMycovariant)}</i>\n\n{description}{flavor}";
         }
 
         private static string BuildAdaptationTooltip(PlayerAdaptation playerAdaptation)

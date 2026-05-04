@@ -39,4 +39,26 @@ public class CornerConduitMycovariantTests
         Assert.Equal(GrowthSource.CornerConduit, board.GetCell(6)!.SourceOfGrowth);
         Assert.Equal(GrowthSource.CornerConduit, board.GetCell(0)!.SourceOfGrowth);
     }
+
+    [Fact]
+    public void OnPreGrowthPhase_CornerConduit_adds_locked_in_bonus_tiles_from_draft_level()
+    {
+        var board = new GameBoard(width: 7, height: 7, playerCount: 1);
+        var owner = new Player(0, "P0", PlayerTypeEnum.AI);
+        board.Players.Add(owner);
+        board.PlaceInitialSpore(playerId: owner.PlayerId, x: 3, y: 3);
+        owner.AddMycovariant(new Mycovariant { Id = MycovariantIds.CornerConduitIIId, Name = "Corner Conduit II" });
+        var myco = owner.GetMycovariant(MycovariantIds.CornerConduitIIId)!;
+        myco.DraftedCampaignLevelDisplay = 20;
+
+        MycovariantEffectProcessor.OnPreGrowthPhase_CornerConduit(
+            board,
+            board.Players,
+            new Random(123),
+            new TestSimulationObserver());
+
+        Assert.Equal(owner.PlayerId, board.GetCell(16)!.OwnerPlayerId);
+        Assert.Equal(owner.PlayerId, board.GetCell(8)!.OwnerPlayerId);
+        Assert.Equal(owner.PlayerId, board.GetCell(0)!.OwnerPlayerId);
+    }
 }

@@ -27,6 +27,12 @@ namespace FungusToast.Core.Players
         /// </summary>
         public float? AIScoreAtDraft { get; set; }
 
+        /// <summary>
+        /// The 1-based campaign level on which this mycovariant was drafted.
+        /// Zero means the value was not captured (for example, non-campaign contexts or legacy saves).
+        /// </summary>
+        public int DraftedCampaignLevelDisplay { get; set; }
+
         public Action<int, int>? ColonizeHandler;
 
 

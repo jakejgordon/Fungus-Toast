@@ -191,6 +191,6 @@ namespace FungusToast.Core.Mycovariants
         };
 
         private static string CreateAggressotropicConduitDescription(int tilesPerPhase)
-            => $"Before each growth phase, grow up to {tilesPerPhase} tiles from your starting spore toward the enemy starting spore with the most living cells (random tie-break). The last cell placed becomes Resistant. Skips your living cells and enemy Resistant cells. Stacks with other Aggressotropic Mycovariants.";
+            => MycovariantDescriptionFormatter.BuildGenericAggressotropicConduitDescription(tilesPerPhase);
     }
 }

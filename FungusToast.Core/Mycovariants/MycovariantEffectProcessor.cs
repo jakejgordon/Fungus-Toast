@@ -1747,12 +1747,7 @@ public static class MycovariantEffectProcessor
         if (myco == null) return; // Player has none of the Corner Conduit tiers
         if (!player.StartingTileId.HasValue) return;
 
-        int quota = myco.MycovariantId switch
-        {
-            var id when id == MycovariantIds.CornerConduitIIIId => MycovariantGameBalance.CornerConduitIIIReplacementsPerPhase,
-            var id when id == MycovariantIds.CornerConduitIIId => MycovariantGameBalance.CornerConduitIIReplacementsPerPhase,
-            _ => MycovariantGameBalance.CornerConduitIReplacementsPerPhase
-        };
+        int quota = MycovariantDescriptionFormatter.GetEffectiveConduitTilesPerPhase(myco);
         if (quota <= 0) return;
 
         int startTile = player.StartingTileId.Value;
@@ -1929,9 +1924,9 @@ public static class MycovariantEffectProcessor
 
         // Sum quotas from all owned tiers
         int quota = 0;
-        if (tierI != null) quota += MycovariantGameBalance.AggressotropicConduitIReplacementsPerPhase;
-        if (tierII != null) quota += MycovariantGameBalance.AggressotropicConduitIIReplacementsPerPhase;
-        if (tierIII != null) quota += MycovariantGameBalance.AggressotropicConduitIIIReplacementsPerPhase;
+        if (tierI != null) quota += MycovariantDescriptionFormatter.GetEffectiveConduitTilesPerPhase(tierI);
+        if (tierII != null) quota += MycovariantDescriptionFormatter.GetEffectiveConduitTilesPerPhase(tierII);
+        if (tierIII != null) quota += MycovariantDescriptionFormatter.GetEffectiveConduitTilesPerPhase(tierIII);
         if (quota <= 0) return;
 
         // Use highest tier for recording (III > II > I)

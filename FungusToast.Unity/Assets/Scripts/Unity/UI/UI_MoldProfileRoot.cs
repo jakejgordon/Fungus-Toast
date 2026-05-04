@@ -674,7 +674,7 @@ namespace FungusToast.Unity.UI
             var iconObject = CreateIconObject($"UI_Mycovariant_{definition.Id}", mycovariantIconGridRoot, mycovariantIconObjects, MycovariantArtRepository.GetIcon(definition));
 
             var provider = iconObject.AddComponent<MycovariantTooltipProvider>();
-            provider.Initialize(definition);
+            provider.Initialize(playerMycovariant);
 
             var trigger = iconObject.AddComponent<TooltipTrigger>();
             trigger.SetDynamicProvider(provider);

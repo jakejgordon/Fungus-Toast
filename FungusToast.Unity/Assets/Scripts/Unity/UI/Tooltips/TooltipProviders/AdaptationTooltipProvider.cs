@@ -42,10 +42,18 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
     public class MycovariantTooltipProvider : UnityEngine.MonoBehaviour, ITooltipContentProvider
     {
         private Mycovariant mycovariant;
+        private PlayerMycovariant playerMycovariant;
 
         public void Initialize(Mycovariant definition)
         {
             mycovariant = definition;
+            playerMycovariant = null;
+        }
+
+        public void Initialize(PlayerMycovariant ownedMycovariant)
+        {
+            playerMycovariant = ownedMycovariant;
+            mycovariant = ownedMycovariant?.Mycovariant;
         }
 
         public string GetTooltipText()
@@ -55,7 +63,11 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
                 return "<b>Mycovariant</b>\nUnset";
             }
 
-            return $"<b>{mycovariant.Name}</b>\n<i>Mycovariant · {mycovariant.Category}</i>\n\n{mycovariant.Description}";
+            string description = playerMycovariant != null
+                ? MycovariantDescriptionFormatter.GetOwnedTooltipDescription(playerMycovariant)
+                : mycovariant.Description;
+
+            return $"<b>{mycovariant.Name}</b>\n<i>Mycovariant · {mycovariant.Category}</i>\n\n{description}";
         }
     }
 

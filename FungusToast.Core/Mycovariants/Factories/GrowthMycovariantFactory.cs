@@ -100,7 +100,7 @@ namespace FungusToast.Core.Mycovariants
         };
 
         private static string CreateCornerConduitDescription(int tilesPerPhase)
-            => $"Before each growth phase, grow up to {tilesPerPhase} tiles from your starting spore toward the nearest corner. Skips your living cells and enemy Resistant cells.";
+            => MycovariantDescriptionFormatter.BuildGenericCornerConduitDescription(tilesPerPhase);
 
         private static float CornerConduitScore(Players.Player player, Board.GameBoard board, float high, float mid, float low)
         {

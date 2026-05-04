@@ -107,6 +107,59 @@ public class AggressotropicConduitMycovariantTests
         Assert.Equal(1, tierII.EffectCounts[MycovariantEffectType.AggressotropicConduitResistantPlacements]);
     }
 
+    [Fact]
+    public void OnPreGrowthPhase_AggressotropicConduit_uses_each_tier_locked_in_bonus_from_draft_level()
+    {
+        var board = new GameBoard(width: 10, height: 1, playerCount: 2);
+        var owner = new Player(0, "P0", PlayerTypeEnum.AI);
+        var enemy = new Player(1, "P1", PlayerTypeEnum.AI);
+        board.Players.Add(owner);
+        board.Players.Add(enemy);
+
+        board.PlaceInitialSpore(playerId: owner.PlayerId, x: 0, y: 0);
+        board.PlaceInitialSpore(playerId: enemy.PlayerId, x: 9, y: 0);
+
+        owner.AddMycovariant(new Mycovariant { Id = MycovariantIds.AggressotropicConduitIId, Name = "Aggressotropic Conduit I" });
+        owner.AddMycovariant(new Mycovariant { Id = MycovariantIds.AggressotropicConduitIIId, Name = "Aggressotropic Conduit II" });
+        var tierI = owner.GetMycovariant(MycovariantIds.AggressotropicConduitIId)!;
+        var tierII = owner.GetMycovariant(MycovariantIds.AggressotropicConduitIIId)!;
+        tierI.DraftedCampaignLevelDisplay = 20; // +1
+        tierII.DraftedCampaignLevelDisplay = 30; // +3
+
+        MycovariantEffectProcessor.OnPreGrowthPhase_AggressotropicConduit(
+            board,
+            board.Players,
+            new Random(123),
+            new TestSimulationObserver());
+
+        for (int tileId = 1; tileId <= 7; tileId++)
+        {
+            Assert.Equal(owner.PlayerId, board.GetCell(tileId)!.OwnerPlayerId);
+        }
+
+        Assert.True(board.GetCell(7)!.IsResistant);
+        Assert.Equal(7, tierII.EffectCounts[MycovariantEffectType.AggressotropicConduitColonizations]);
+        Assert.Equal(1, tierII.EffectCounts[MycovariantEffectType.AggressotropicConduitResistantPlacements]);
+    }
+
+    [Fact]
+    public void Owned_tooltip_description_shows_locked_in_bonus_details()
+    {
+        var myco = new PlayerMycovariant(
+            playerId: 0,
+            mycovariantId: MycovariantIds.AggressotropicConduitIIId,
+            mycovariant: new Mycovariant { Id = MycovariantIds.AggressotropicConduitIIId, Name = "Aggressotropic Conduit II" })
+        {
+            DraftedCampaignLevelDisplay = 30,
+        };
+
+        string description = MycovariantDescriptionFormatter.GetOwnedTooltipDescription(myco);
+
+        Assert.Contains("grow up to 5 tiles", description);
+        Assert.Contains("Locked-in bonus: +3 tiles", description);
+        Assert.Contains("campaign level 30", description);
+    }
+
     private static FungalCell PlaceOwnedLivingCell(GameBoard board, Player owner, int tileId)
     {
         var cell = new FungalCell(ownerPlayerId: owner.PlayerId, tileId: tileId, source: GrowthSource.InitialSpore, lastOwnerPlayerId: null);
