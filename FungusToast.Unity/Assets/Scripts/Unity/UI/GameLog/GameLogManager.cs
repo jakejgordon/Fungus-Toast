@@ -663,7 +663,7 @@ namespace FungusToast.Unity.UI.GameLog
             GrowthSource.SeptalAlarm => "Septal Alarm",
             GrowthSource.DistalSpore => "Distal Spore",
             GrowthSource.Manual => "Manual placement",
-            _ => src.ToString()
+            _ => GrowthSourceDisplayNames.GetDisplayName(src)
         };
 
         private static string JoinWithAnd(IReadOnlyList<string> parts)
@@ -686,24 +686,8 @@ namespace FungusToast.Unity.UI.GameLog
             return string.Join(", ", parts.Take(parts.Count - 1)) + ", and " + parts[^1];
         }
 
-        private static string DeathReasonName(DeathReason reason) => reason switch
-        {
-            DeathReason.Age => "Old Age",
-            DeathReason.Randomness => "Random Death",
-            DeathReason.PutrefactiveMycotoxin => "Putrefactive Mycotoxin",
-            DeathReason.SporicidalBloom => "Sporicidal Bloom",
-            DeathReason.MycotoxinPotentiation => "Mycotoxin Potentiation",
-            DeathReason.HyphalVectoring => "Chemotactic Beacon",
-            DeathReason.JettingMycelium => "Jetting Mycelium",
-            DeathReason.Infested => "Infested",
-            DeathReason.Poisoned => "Poisoned",
-            DeathReason.MycotoxicLash => "Mycotoxic Lash",
-            DeathReason.PutrefactiveCascade => "Putrefactive Cascade",
-            DeathReason.PutrefactiveCascadePoison => "Putrefactive Cascade Poison",
-            DeathReason.CytolyticBurst => "Cytolytic Burst",
-            DeathReason.Unknown => "Unknown",
-            _ => reason.ToString()
-        };
+        private static string DeathReasonName(DeathReason reason)
+            => DeathReasonDisplayNames.GetDisplayName(reason);
 
         public void SetActiveHumanPlayer(int newHumanPlayerId, GameBoard currentBoard)
         {

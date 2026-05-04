@@ -1,3 +1,5 @@
+using FungusToast.Core.Formatting;
+
 namespace FungusToast.Core.Growth
 {
     public static class GrowthSourceDisplayNames
@@ -43,7 +45,7 @@ namespace FungusToast.Core.Growth
             GrowthSource.PerisporeCrown => "Perispore Crown",
             GrowthSource.SporemealPatch => "Sporemeal Patch",
             GrowthSource.ConidiaAscent => "Conidia Ascent",
-            _ => source.ToString()
+            _ => DisplayNameHumanizer.HumanizeIdentifier(source.ToString())
         };
     }
 }
