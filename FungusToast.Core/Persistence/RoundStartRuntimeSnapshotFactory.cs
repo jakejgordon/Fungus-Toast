@@ -169,7 +169,8 @@ public static class RoundStartRuntimeSnapshotFactory
                     MycovariantId = mycovariant.MycovariantId,
                     HasTriggered = mycovariant.HasTriggered,
                     AIScoreAtDraft = mycovariant.AIScoreAtDraft,
-                    DraftedCampaignLevelDisplay = mycovariant.DraftedCampaignLevelDisplay,
+                    DraftedRound = mycovariant.DraftedRound,
+                    DraftedCampaignLevelDisplay = mycovariant.DraftedRound,
                     EffectCounts = mycovariant.EffectCounts
                         .OrderBy(effect => effect.Key)
                         .Select(effect => new MycovariantEffectCountSnapshot
@@ -292,7 +293,9 @@ public static class RoundStartRuntimeSnapshotFactory
             var playerMycovariant = new PlayerMycovariant(player.PlayerId, mycovariant.Id, mycovariant)
             {
                 AIScoreAtDraft = mycovariantSnapshot.AIScoreAtDraft,
-                DraftedCampaignLevelDisplay = mycovariantSnapshot.DraftedCampaignLevelDisplay,
+                DraftedRound = mycovariantSnapshot.DraftedRound > 0
+                    ? mycovariantSnapshot.DraftedRound
+                    : mycovariantSnapshot.DraftedCampaignLevelDisplay,
             };
 
             if (mycovariantSnapshot.HasTriggered)

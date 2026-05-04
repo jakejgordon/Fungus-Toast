@@ -384,12 +384,14 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             ClearChoiceCards();
 
+            int currentRound = GameManager.Instance?.Board?.CurrentRound ?? 0;
+
             foreach (var m in choices)
             {
                 CreateChoiceCard(
                     m,
                     m.Name,
-                    m.Description,
+                    MycovariantDescriptionFormatter.GetDraftPreviewDescription(m, currentRound),
                     MycovariantArtRepository.GetIcon(m),
                     () => OnChoicePicked(m),
                     highlight: false);

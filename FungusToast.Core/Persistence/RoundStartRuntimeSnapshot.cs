@@ -95,6 +95,7 @@ public sealed class PlayerMycovariantSnapshot
     public bool HasTriggered;
     public bool HasAIScoreAtDraft;
     public float AIScoreAtDraftValue;
+    public int DraftedRound;
     public int DraftedCampaignLevelDisplay;
     public List<MycovariantEffectCountSnapshot> EffectCounts = new();
 
