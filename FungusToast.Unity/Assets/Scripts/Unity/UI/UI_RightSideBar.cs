@@ -8,6 +8,7 @@ using FungusToast.Core.Board;
 using FungusToast.Unity.Grid; // Needed for GridVisualizer
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
+using FungusToast.Unity.UI.GameLog;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders; // ensure provider namespace is imported
 using UnityEngine.UI;
@@ -20,6 +21,8 @@ namespace FungusToast.Unity.UI
         private const string ScoreboardCoachmarkTitleText = "How to Win";
         private const string ScoreboardCoachmarkBodyText = "This scoreboard is the clearest way to see who is ahead.\n\nWatch the Alive column. When the toast fills up and the game ends, the colony with the most living cells wins.";
         private const string DraftHistoryButtonLabel = "View Draft Log";
+        private const float RoundAndOccupancyBottomTrim = 10f;
+        private const float PlayerSummaryRowSpacing = 5f;
         private const float TopStatsScale = 1.18f;
         private const float SummaryHeaderScale = 1.10f;
         private const float SummaryIconColumnWidth = 50f;
@@ -43,9 +46,7 @@ namespace FungusToast.Unity.UI
         private TextMeshProUGUI scoreboardCoachmarkTitleTextLabel;
         private TextMeshProUGUI scoreboardCoachmarkBodyTextLabel;
         private Button scoreboardCoachmarkCloseButton;
-        private RectTransform draftHistoryButtonRoot;
-        private Button draftHistoryButton;
-        private TextMeshProUGUI draftHistoryButtonLabel;
+        private UI_GameLogPanel draftHistoryLogPanel;
         private Action onDraftHistoryRequested;
         private Func<bool> canOpenDraftHistory;
         private bool hasDismissedScoreboardCoachmarkThisGame;
@@ -72,6 +73,7 @@ namespace FungusToast.Unity.UI
                 ApplyTextScale(roundAndOccupancyText, TopStatsScale);
                 roundAndOccupancyText.fontStyle = FontStyles.Bold;
                 ConfigureSingleLineAutosize(roundAndOccupancyText);
+                ApplyRoundAndOccupancyLayout();
             }
 
             if (randomDecayChanceText != null)
@@ -134,6 +136,32 @@ namespace FungusToast.Unity.UI
 
             layoutGroup.padding.left = SummaryHorizontalInset;
             layoutGroup.padding.right = SummaryHorizontalInset;
+            layoutGroup.spacing = PlayerSummaryRowSpacing;
+        }
+
+        private void ApplyRoundAndOccupancyLayout()
+        {
+            if (roundAndOccupancyText == null)
+            {
+                return;
+            }
+
+            var layoutElement = roundAndOccupancyText.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = roundAndOccupancyText.gameObject.AddComponent<LayoutElement>();
+            }
+
+            roundAndOccupancyText.ForceMeshUpdate();
+
+            float heightReduction = roundAndOccupancyText.textInfo.lineCount > 1
+                ? RoundAndOccupancyBottomTrim
+                : 0f;
+            float preferredHeight = Mathf.Max(0f, roundAndOccupancyText.preferredHeight - heightReduction);
+
+            layoutElement.minHeight = preferredHeight;
+            layoutElement.preferredHeight = preferredHeight;
+            layoutElement.flexibleHeight = -1f;
         }
 
         private void ApplyPlayerSummaryHeaderReadability()
@@ -256,18 +284,17 @@ namespace FungusToast.Unity.UI
 
         public void RefreshDraftHistoryAvailability()
         {
-            if (draftHistoryButtonRoot == null)
+            EnsureDraftHistoryButtonUi();
+            if (draftHistoryLogPanel == null)
             {
                 return;
             }
 
             bool isAvailable = onDraftHistoryRequested != null && canOpenDraftHistory?.Invoke() == true;
-            draftHistoryButtonRoot.gameObject.SetActive(isAvailable);
-
-            if (draftHistoryButton != null)
-            {
-                draftHistoryButton.interactable = isAvailable;
-            }
+            draftHistoryLogPanel.ConfigureTopActionButton(
+                DraftHistoryButtonLabel,
+                isAvailable ? onDraftHistoryRequested : null,
+                isAvailable);
         }
 
         public void InitializePlayerSummaries(List<Player> players)
@@ -591,13 +618,14 @@ namespace FungusToast.Unity.UI
         {
             string mycovariantDraftTiming = BuildMycovariantDraftTimingText(round);
             roundAndOccupancyText.text = $"<b>Round:</b> {round}\n<b>Occupancy:</b> {occupancy:F2}%\n<b>Mycovariant Draft:</b> {mycovariantDraftTiming}";
+            ApplyRoundAndOccupancyLayout();
             UpdateRandomDecayChance(round); // update dynamic label each round update
             RefreshDraftHistoryAvailability();
         }
 
         private void EnsureDraftHistoryButtonUi()
         {
-            if (draftHistoryButtonRoot != null || roundAndOccupancyText == null)
+            if (draftHistoryLogPanel != null || roundAndOccupancyText == null)
             {
                 return;
             }
@@ -606,51 +634,9 @@ namespace FungusToast.Unity.UI
                 ? roundAndOccupancyText.transform.parent
                 : transform;
 
-            var buttonObject = new GameObject("UI_ViewDraftHistoryButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
-            buttonObject.transform.SetParent(parent, false);
-            buttonObject.transform.SetSiblingIndex(roundAndOccupancyText.transform.GetSiblingIndex() + 1);
-
-            draftHistoryButtonRoot = buttonObject.GetComponent<RectTransform>();
-            draftHistoryButtonRoot.anchorMin = new Vector2(0f, 1f);
-            draftHistoryButtonRoot.anchorMax = new Vector2(1f, 1f);
-            draftHistoryButtonRoot.pivot = new Vector2(0.5f, 1f);
-            draftHistoryButtonRoot.sizeDelta = new Vector2(0f, 36f);
-
-            var buttonLayout = buttonObject.GetComponent<LayoutElement>();
-            buttonLayout.minHeight = 36f;
-            buttonLayout.preferredHeight = 40f;
-            buttonLayout.flexibleWidth = 1f;
-
-            draftHistoryButton = buttonObject.GetComponent<Button>();
-            UIStyleTokens.Button.ApplyPanelSecondaryStyle(draftHistoryButton);
-            draftHistoryButton.onClick.RemoveAllListeners();
-            draftHistoryButton.onClick.AddListener(() => onDraftHistoryRequested?.Invoke());
-
-            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            labelObject.transform.SetParent(buttonObject.transform, false);
-
-            var labelRect = labelObject.GetComponent<RectTransform>();
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = new Vector2(8f, 4f);
-            labelRect.offsetMax = new Vector2(-8f, -4f);
-
-            draftHistoryButtonLabel = labelObject.GetComponent<TextMeshProUGUI>();
-            draftHistoryButtonLabel.text = DraftHistoryButtonLabel;
-            draftHistoryButtonLabel.color = UIStyleTokens.Text.Primary;
-            draftHistoryButtonLabel.fontStyle = FontStyles.Bold;
-            draftHistoryButtonLabel.fontSize = 18f;
-            draftHistoryButtonLabel.alignment = TextAlignmentOptions.Center;
-            draftHistoryButtonLabel.raycastTarget = false;
-
-            UIStyleTokens.Button.SetButtonLabelColor(draftHistoryButton, UIStyleTokens.Text.Primary);
-
-            if (TMP_Settings.defaultFontAsset != null)
-            {
-                draftHistoryButtonLabel.font = TMP_Settings.defaultFontAsset;
-            }
-
-            draftHistoryButtonRoot.gameObject.SetActive(false);
+            draftHistoryLogPanel = parent
+                .GetComponentsInChildren<UI_GameLogPanel>(true)
+                .FirstOrDefault(panel => panel.transform.parent == parent);
         }
 
         private void UpdateRoundAndOccupancyTooltip()

@@ -66,19 +66,30 @@ namespace FungusToast.Unity.UI
 
                 if (playerActivityLogPanel == null)
                 {
-                    return;
+                        return;
                 }
 
-                var layoutElement = playerActivityLogPanel.GetComponent<LayoutElement>();
-                if (layoutElement == null)
-                {
-                    layoutElement = playerActivityLogPanel.gameObject.AddComponent<LayoutElement>();
-                }
-
-                layoutElement.minHeight = FlexibleLogMinHeight;
-                layoutElement.preferredHeight = -1f;
-                layoutElement.flexibleHeight = 1f;
+                    ApplyFlexibleLogLayout(playerActivityLogPanel);
+                    ApplyFlexibleLogLayout(globalEventsLogPanel);
             }
+
+                private static void ApplyFlexibleLogLayout(UI_GameLogPanel logPanel)
+                {
+                    if (logPanel == null)
+                    {
+                        return;
+                    }
+
+                    var layoutElement = logPanel.GetComponent<LayoutElement>();
+                    if (layoutElement == null)
+                    {
+                        layoutElement = logPanel.gameObject.AddComponent<LayoutElement>();
+                    }
+
+                    layoutElement.minHeight = FlexibleLogMinHeight;
+                    layoutElement.preferredHeight = -1f;
+                    layoutElement.flexibleHeight = 1f;
+                }
 
         // ── Core accessors ──
         public UI_MutationManager MutationUIManager => mutationUIManager;

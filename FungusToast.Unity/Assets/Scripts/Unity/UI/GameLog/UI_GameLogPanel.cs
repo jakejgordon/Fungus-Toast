@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,6 +10,10 @@ namespace FungusToast.Unity.UI.GameLog
 {
     public class UI_GameLogPanel : MonoBehaviour
     {
+        private const float TopActionRowHeight = 40f;
+        private const float TopActionRowVerticalOffset = 8f;
+        private const float TopActionReservedHeight = 45f;
+
         [Header("UI References")]
         [SerializeField] private ScrollRect scrollRect;
         [SerializeField] private Transform contentParent;
@@ -29,9 +34,17 @@ namespace FungusToast.Unity.UI.GameLog
         private bool subscribed = false; // prevent double subscription
         private bool pendingLayoutRebuild = false; // coalesce multiple adds per frame
         private int pendingBottomScrollFrames = 0;
+        private RectTransform topActionRowRoot;
+        private Button topActionButton;
+        private TextMeshProUGUI topActionButtonLabel;
+        private RectTransform headerRoot;
+        private RectTransform scrollViewRoot;
+        private Vector2 headerOriginalAnchoredPosition;
+        private Vector2 scrollViewOriginalOffsetMax;
 
         private void Awake()
         {
+            EnsureTopActionUi();
             ApplyStyle();
 
             if (clearButton != null)
@@ -101,7 +114,41 @@ namespace FungusToast.Unity.UI.GameLog
                 UIStyleTokens.Button.ApplyStyle(clearButton);
             }
 
+            if (topActionButton != null)
+            {
+                UIStyleTokens.Button.ApplyPanelSecondaryStyle(topActionButton);
+                UIStyleTokens.Button.SetButtonLabelColor(topActionButton, UIStyleTokens.Text.Primary);
+            }
+
+            if (topActionButtonLabel != null)
+            {
+                topActionButtonLabel.color = UIStyleTokens.Text.Primary;
+            }
+
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 22f);
+        }
+
+        public void ConfigureTopActionButton(string label, Action onClick, bool isVisible)
+        {
+            EnsureTopActionUi();
+            if (topActionRowRoot == null || topActionButton == null || topActionButtonLabel == null)
+            {
+                return;
+            }
+
+            topActionButton.onClick.RemoveAllListeners();
+            if (onClick != null)
+            {
+                topActionButton.onClick.AddListener(() => onClick());
+            }
+
+            topActionButtonLabel.text = label ?? string.Empty;
+
+            bool shouldShow = isVisible && onClick != null;
+            topActionButton.interactable = shouldShow;
+            topActionRowRoot.gameObject.SetActive(shouldShow);
+            ApplyTopActionLayout(shouldShow);
+            ForceLayoutRefreshImmediate();
         }
 
         private static void ApplyImageColor(Image image, Color color)
@@ -280,6 +327,11 @@ namespace FungusToast.Unity.UI.GameLog
 
         private void ForceLayoutRefreshImmediate()
         {
+            if (transform is RectTransform rootRect)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(rootRect);
+            }
+
             if (contentParent == null) return;
 
             Canvas.ForceUpdateCanvases();
@@ -321,6 +373,81 @@ namespace FungusToast.Unity.UI.GameLog
                 Canvas.ForceUpdateCanvases();
                 scrollRect.verticalNormalizedPosition = 1f;
             }
+        }
+
+        private void EnsureTopActionUi()
+        {
+            if (topActionRowRoot != null)
+            {
+                return;
+            }
+
+            headerRoot = transform.Find("UI_GameLogPanelHeader") as RectTransform;
+            scrollViewRoot = transform.Find("UI_GameLogPanelScrollView") as RectTransform;
+            if (headerRoot == null || scrollViewRoot == null)
+            {
+                return;
+            }
+
+            headerOriginalAnchoredPosition = headerRoot.anchoredPosition;
+            scrollViewOriginalOffsetMax = scrollViewRoot.offsetMax;
+
+            var rowObject = new GameObject("UI_GameLogPanelTopActionRow", typeof(RectTransform));
+            rowObject.transform.SetParent(transform, false);
+            rowObject.transform.SetSiblingIndex(0);
+
+            topActionRowRoot = rowObject.GetComponent<RectTransform>();
+            topActionRowRoot.anchorMin = new Vector2(0f, 1f);
+            topActionRowRoot.anchorMax = new Vector2(1f, 1f);
+            topActionRowRoot.pivot = new Vector2(0.5f, 1f);
+            topActionRowRoot.offsetMin = new Vector2(0f, -(TopActionRowHeight - TopActionRowVerticalOffset));
+            topActionRowRoot.offsetMax = new Vector2(0f, TopActionRowVerticalOffset);
+
+            var buttonObject = new GameObject("Button", typeof(RectTransform), typeof(Image), typeof(Button));
+            buttonObject.transform.SetParent(topActionRowRoot, false);
+
+            var buttonRect = buttonObject.GetComponent<RectTransform>();
+            buttonRect.anchorMin = Vector2.zero;
+            buttonRect.anchorMax = Vector2.one;
+            buttonRect.offsetMin = new Vector2(4f, 2f);
+            buttonRect.offsetMax = new Vector2(-4f, -2f);
+
+            topActionButton = buttonObject.GetComponent<Button>();
+
+            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(buttonObject.transform, false);
+
+            var labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(8f, 4f);
+            labelRect.offsetMax = new Vector2(-8f, -4f);
+
+            topActionButtonLabel = labelObject.GetComponent<TextMeshProUGUI>();
+            topActionButtonLabel.fontStyle = FontStyles.Bold;
+            topActionButtonLabel.fontSize = 18f;
+            topActionButtonLabel.alignment = TextAlignmentOptions.Center;
+            topActionButtonLabel.raycastTarget = false;
+
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                topActionButtonLabel.font = TMP_Settings.defaultFontAsset;
+            }
+
+            topActionRowRoot.gameObject.SetActive(false);
+            ApplyTopActionLayout(false);
+        }
+
+        private void ApplyTopActionLayout(bool showTopAction)
+        {
+            if (headerRoot == null || scrollViewRoot == null)
+            {
+                return;
+            }
+
+            float verticalOffset = showTopAction ? TopActionReservedHeight : 0f;
+            headerRoot.anchoredPosition = headerOriginalAnchoredPosition + new Vector2(0f, -verticalOffset);
+            scrollViewRoot.offsetMax = scrollViewOriginalOffsetMax + new Vector2(0f, -verticalOffset);
         }
     }
 }
