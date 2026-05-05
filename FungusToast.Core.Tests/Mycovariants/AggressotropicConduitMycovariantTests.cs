@@ -65,6 +65,61 @@ public class AggressotropicConduitMycovariantTests
     }
 
     [Fact]
+    public void OnPreGrowthPhase_AggressotropicConduit_reclaims_dead_cells_even_when_other_path_tiles_are_skipped()
+    {
+        var board = new GameBoard(width: 7, height: 1, playerCount: 2);
+        var owner = new Player(0, "P0", PlayerTypeEnum.AI);
+        var enemy = new Player(1, "P1", PlayerTypeEnum.AI);
+        board.Players.Add(owner);
+        board.Players.Add(enemy);
+
+        board.PlaceInitialSpore(playerId: owner.PlayerId, x: 0, y: 0);
+        board.PlaceInitialSpore(playerId: enemy.PlayerId, x: 6, y: 0);
+
+        owner.AddMycovariant(new Mycovariant { Id = MycovariantIds.AggressotropicConduitIIId, Name = "Aggressotropic Conduit II" });
+        var ownerMyco = owner.GetMycovariant(MycovariantIds.AggressotropicConduitIIId)!;
+
+        PlaceOwnedLivingCell(board, owner, tileId: 1);
+
+        var deadFriendly = PlaceOwnedLivingCell(board, owner, tileId: 2);
+        deadFriendly.Kill(FungusToast.Core.Death.DeathReason.Age);
+
+        PlaceOwnedLivingCell(board, enemy, tileId: 3).MakeResistant();
+
+        var deadEnemy = PlaceOwnedLivingCell(board, enemy, tileId: 4);
+        deadEnemy.Kill(FungusToast.Core.Death.DeathReason.Age);
+
+        GameBoard.ConduitProjectionEventArgs? projection = null;
+        board.ConduitProjection += e => projection = e;
+
+        MycovariantEffectProcessor.OnPreGrowthPhase_AggressotropicConduit(
+            board,
+            board.Players,
+            new Random(123),
+            new TestSimulationObserver());
+
+        Assert.Equal(owner.PlayerId, board.GetCell(2)!.OwnerPlayerId);
+        Assert.True(board.GetCell(2)!.IsAlive);
+        Assert.Equal(GrowthSource.AggressotropicConduit, board.GetCell(2)!.SourceOfGrowth);
+
+        Assert.True(board.GetCell(3)!.IsResistant);
+        Assert.Equal(enemy.PlayerId, board.GetCell(3)!.OwnerPlayerId);
+
+        Assert.Equal(owner.PlayerId, board.GetCell(4)!.OwnerPlayerId);
+        Assert.True(board.GetCell(4)!.IsAlive);
+        Assert.True(board.GetCell(4)!.IsResistant);
+        Assert.Equal(GrowthSource.AggressotropicConduit, board.GetCell(4)!.SourceOfGrowth);
+
+        Assert.NotNull(projection);
+        Assert.Equal(new[] { 0, 1, 2, 3, 4 }, projection!.PathTileIds);
+        Assert.Equal(new[] { 2, 4 }, projection.AffectedTileIds);
+        Assert.Equal(4, projection.FinalLandingTileId);
+
+        Assert.Equal(2, ownerMyco.EffectCounts[MycovariantEffectType.AggressotropicConduitReclaims]);
+        Assert.Equal(1, ownerMyco.EffectCounts[MycovariantEffectType.AggressotropicConduitResistantPlacements]);
+    }
+
+    [Fact]
     public void OnPreGrowthPhase_AggressotropicConduit_stacks_tile_quota_but_only_makes_one_last_tile_resistant()
     {
         var board = new GameBoard(width: 6, height: 1, playerCount: 2);
@@ -150,6 +205,7 @@ public class AggressotropicConduitMycovariantTests
         string description = MycovariantDescriptionFormatter.GetDraftPreviewDescription(myco, currentRound: 25);
 
         Assert.Contains("grow up to 3 tiles", description);
+        Assert.Contains("reclaiming dead cells along the path", description);
         Assert.DoesNotContain("Current draft bonus", description);
         Assert.DoesNotContain("round 25", description);
     }
@@ -168,6 +224,7 @@ public class AggressotropicConduitMycovariantTests
         string description = MycovariantDescriptionFormatter.GetOwnedTooltipDescription(myco);
 
         Assert.Contains("grow up to 4 tiles", description);
+        Assert.Contains("reclaiming dead cells along the path", description);
         Assert.DoesNotContain("Locked-in bonus", description);
         Assert.DoesNotContain("round 25", description);
     }

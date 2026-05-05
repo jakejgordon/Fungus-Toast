@@ -99,6 +99,6 @@ namespace FungusToast.Core.Mycovariants
             => $"Before each growth phase, grow up to {tilesPerPhase} tiles from your starting spore toward the nearest corner. Skips your living cells and enemy Resistant cells. Effect is more powerful if drafted later in the game.";
 
         private static string BuildAggressotropicConduitDescription(int tilesPerPhase)
-            => $"Before each growth phase, grow up to {tilesPerPhase} tiles from your starting spore toward the enemy starting spore with the most living cells (random tie-break). The last cell placed becomes Resistant. Skips your living cells and enemy Resistant cells. Stacks with other Aggressotropic Mycovariants. Effect is more powerful if drafted later in the game.";
+            => $"Before each growth phase, grow up to {tilesPerPhase} tiles from your starting spore toward the enemy starting spore with the most living cells (random tie-break), reclaiming dead cells along the path. The last cell placed becomes Resistant. Skips your living cells and enemy Resistant cells. Stacks with other Aggressotropic Mycovariants. Effect is more powerful if drafted later in the game.";
     }
 }
