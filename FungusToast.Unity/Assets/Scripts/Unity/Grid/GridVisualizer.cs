@@ -804,7 +804,7 @@ namespace FungusToast.Unity.Grid
 
         private void HandleToxinPlaced(object sender, ToxinPlacedEventArgs e)
         {
-            if (!ReferenceEquals(sender, board))
+            if (ShouldSuppressBoardEventPresentation() || !ReferenceEquals(sender, board))
             {
                 return;
             }
@@ -814,7 +814,7 @@ namespace FungusToast.Unity.Grid
 
         private void HandleCellReclaimed(int playerId, int tileId, GrowthSource source)
         {
-            if (board == null)
+            if (ShouldSuppressBoardEventPresentation() || board == null)
             {
                 return;
             }
@@ -824,7 +824,7 @@ namespace FungusToast.Unity.Grid
 
         private void HandleResistanceAppliedBatch(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
         {
-            if (board == null || source != GrowthSource.ThanatrophicRebound || tileIds == null)
+            if (ShouldSuppressBoardEventPresentation() || board == null || source != GrowthSource.ThanatrophicRebound || tileIds == null)
             {
                 return;
             }
@@ -837,7 +837,7 @@ namespace FungusToast.Unity.Grid
 
         private void HandleCellInfested(int playerId, int tileId, int oldOwnerId, GrowthSource source)
         {
-            if (board == null)
+            if (ShouldSuppressBoardEventPresentation() || board == null)
             {
                 return;
             }
@@ -847,7 +847,7 @@ namespace FungusToast.Unity.Grid
 
         private void HandleCellOvergrown(int playerId, int tileId, int oldOwnerId, GrowthSource source)
         {
-            if (board == null)
+            if (ShouldSuppressBoardEventPresentation() || board == null)
             {
                 return;
             }
@@ -857,7 +857,7 @@ namespace FungusToast.Unity.Grid
 
         private void HandleCreepingMoldMove(int playerId, int fromTileId, int toTileId)
         {
-            if (board == null || fromTileId < 0 || toTileId < 0 || fromTileId == toTileId)
+            if (ShouldSuppressBoardEventPresentation() || board == null || fromTileId < 0 || toTileId < 0 || fromTileId == toTileId)
             {
                 return;
             }
@@ -867,7 +867,7 @@ namespace FungusToast.Unity.Grid
 
         private void HandleHyphalGrowthVisualized(GameBoard.HyphalGrowthVisualEventArgs e)
         {
-            if (board == null || e == null || e.SourceTileId < 0 || e.DestinationTileId < 0 || e.SourceTileId == e.DestinationTileId)
+            if (ShouldSuppressBoardEventPresentation() || board == null || e == null || e.SourceTileId < 0 || e.DestinationTileId < 0 || e.SourceTileId == e.DestinationTileId)
             {
                 return;
             }
@@ -877,7 +877,7 @@ namespace FungusToast.Unity.Grid
 
         private void HandleChemobeaconPlaced(int playerId, int tileId)
         {
-            if (board == null || overlayTilemap == null || moldTilemap == null)
+            if (ShouldSuppressBoardEventPresentation() || board == null || overlayTilemap == null || moldTilemap == null)
             {
                 return;
             }
@@ -889,6 +889,11 @@ namespace FungusToast.Unity.Grid
 
         private void HandleChemobeaconExpired(int playerId, int tileId)
         {
+            if (ShouldSuppressBoardEventPresentation())
+            {
+                return;
+            }
+
             ClearChemobeaconOverlay(tileId);
             RefreshMoldIdleCacheForTile(tileId);
             cellStateAnimationController?.StartChemobeaconExpiryAnimation(playerId, tileId);
@@ -896,12 +901,15 @@ namespace FungusToast.Unity.Grid
 
         private void HandleToxinExpired(object sender, ToxinExpiredEventArgs e)
         {
-            if (!ReferenceEquals(sender, board))
+            if (ShouldSuppressBoardEventPresentation() || !ReferenceEquals(sender, board))
             {
                 return;
             }
             cellStateAnimationController?.CaptureToxinExpirySnapshot(e);
         }
+
+        private static bool ShouldSuppressBoardEventPresentation()
+            => GameManager.Instance != null && GameManager.Instance.IsFastForwarding;
 
         private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos) => boardStateRenderer?.RenderFungalCellOverlay(tile, pos);
 
