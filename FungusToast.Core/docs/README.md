@@ -17,6 +17,7 @@ These are the main task-entry documents and are also referenced from `.github/co
 - `MYCOVARIANT_HELPER.md` — entry point for all Mycovariant work
 - `ADAPTATION_HELPER.md` — entry point for all Adaptation work
 - `CAMPAIGN_HELPER.md` — campaign systems and progression context
+- `SAVE_COMPATIBILITY.md` — canonical save/resume compatibility, breaking-change risk, and migration guidance
 - `DOMINANCE_DIAGNOSIS_WORKFLOW.md` — controlled analysis workflow for explaining dominance
 - `GAME_BALANCE_CONSTANTS.md` — canonical gameplay balance levers and tuning guidance
 - `SOUNDS.md` — sound trigger planning, storage conventions, and audio implementation guidance

@@ -15,6 +15,7 @@ This file is the top-level router for AI-assisted development in this repository
 - **Mycovariant authoring:** `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`
 - **Adaptation authoring:** `FungusToast.Core/docs/ADAPTATION_HELPER.md`
 - **Campaign systems and progression context:** `FungusToast.Core/docs/CAMPAIGN_HELPER.md`
+- **Save/resume compatibility, migrations, and breaking-change risks:** `FungusToast.Core/docs/SAVE_COMPATIBILITY.md`
 - **Campaign modernization / recent curated roster tuning results:** `docs/campaign-modernization-2026-03-27.md`
 - **Moldiness meta-progression design and implementation helper:** `docs/MOLDINESS_HELPER.md`
 - **Dominance diagnosis / controlled balance investigation:** `FungusToast.Core/docs/DOMINANCE_DIAGNOSIS_WORKFLOW.md`
@@ -118,7 +119,7 @@ Use this precedence order when multiple docs seem relevant:
 - Simulation/balance tasks → `SIMULATION_HELPER.md`
 - Mutation work → `NEW_MUTATION_HELPER.md`
 - Mycovariant work → `MYCOVARIANT_HELPER.md`
-- Adaptation/campaign work → `ADAPTATION_HELPER.md`, `CAMPAIGN_HELPER.md`, and `docs/MOLDINESS_HELPER.md` for moldiness-specific progression work
+- Adaptation/campaign work → `ADAPTATION_HELPER.md`, `CAMPAIGN_HELPER.md`, `SAVE_COMPATIBILITY.md`, and `docs/MOLDINESS_HELPER.md` for moldiness-specific progression work
 - AI strategy work → `AI_STRATEGY_AUTHORING.md`
 - UI/service/tooltip/pooling work → `UI_ARCHITECTURE_HELPER.md` and `UI_STYLE_GUIDE.md`
 - Sound planning / audio trigger work → `SOUNDS.md`, `UI_ARCHITECTURE_HELPER.md`, and `ARCHITECTURE_OVERVIEW.md`

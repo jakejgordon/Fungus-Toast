@@ -1,6 +1,6 @@
 # Campaign Helper
 
-See also: [README.md](README.md) for the full documentation hierarchy and [ADAPTATION_HELPER.md](ADAPTATION_HELPER.md) for Adaptation-specific workflow.
+See also: [README.md](README.md) for the full documentation hierarchy, [ADAPTATION_HELPER.md](ADAPTATION_HELPER.md) for Adaptation-specific workflow, and [SAVE_COMPATIBILITY.md](SAVE_COMPATIBILITY.md) for the canonical save/resume compatibility and breaking-change guidance.
 
 This guide documents the current Campaign mode vision and where to configure progression, AI lineup/pools, campaign tiers, and adaptation rewards.
 
@@ -28,6 +28,9 @@ Important fields:
 
 Save file:
 - `Application.persistentDataPath/campaign_save.json`
+
+Compatibility guidance:
+- Use `SAVE_COMPATIBILITY.md` as the canonical reference for save/resume breaking-change risk, compatibility review, and migration expectations.
 
 ## Adaptations
 
