@@ -49,8 +49,8 @@ namespace FungusToast.Unity
             }
 
             enabled = value;
-            PlayerPrefs.SetInt(EnabledKey, enabled ? 1 : 0);
-            PlayerPrefs.Save();
+            ScopedPlayerPrefs.SetInt(EnabledKey, enabled ? 1 : 0);
+            ScopedPlayerPrefs.Save();
         }
 
         public static void CycleVolumeForward()
@@ -81,8 +81,8 @@ namespace FungusToast.Unity
             }
 
             volume = clampedValue;
-            PlayerPrefs.SetFloat(VolumeKey, volume);
-            PlayerPrefs.Save();
+            ScopedPlayerPrefs.SetFloat(VolumeKey, volume);
+            ScopedPlayerPrefs.Save();
         }
 
         public static float GetEffectiveVolume(float baseVolume)
@@ -103,8 +103,8 @@ namespace FungusToast.Unity
                 return;
             }
 
-            enabled = PlayerPrefs.GetInt(EnabledKey, 1) != 0;
-            volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 1f));
+            enabled = ScopedPlayerPrefs.GetInt(EnabledKey, 1) != 0;
+            volume = Mathf.Clamp01(ScopedPlayerPrefs.GetFloat(VolumeKey, 1f));
             loaded = true;
         }
     }
@@ -155,8 +155,8 @@ namespace FungusToast.Unity
             }
 
             volume = clampedValue;
-            PlayerPrefs.SetFloat(VolumeKey, volume);
-            PlayerPrefs.Save();
+            ScopedPlayerPrefs.SetFloat(VolumeKey, volume);
+            ScopedPlayerPrefs.Save();
         }
 
         public static float GetEffectiveVolume(float baseVolume)
@@ -172,7 +172,7 @@ namespace FungusToast.Unity
                 return;
             }
 
-            volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, 0.75f));
+            volume = Mathf.Clamp01(ScopedPlayerPrefs.GetFloat(VolumeKey, 0.75f));
             loaded = true;
         }
     }

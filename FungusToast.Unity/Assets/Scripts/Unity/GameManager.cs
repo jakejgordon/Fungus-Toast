@@ -45,6 +45,200 @@ namespace FungusToast.Unity
         TimeLapse,
     }
 
+    internal static class ScopedStorage
+    {
+        private const string ProductionDirectoryName = "production";
+
+        public static bool UsesProductionScope => !Application.isEditor && !Debug.isDebugBuild;
+
+        public static string ScopeName => UsesProductionScope ? "production" : "development";
+
+        public static string PersistentDataDirectory
+        {
+            get
+            {
+                if (!UsesProductionScope)
+                {
+                    return Application.persistentDataPath;
+                }
+
+                string productionDirectory = Path.Combine(Application.persistentDataPath, ProductionDirectoryName);
+                Directory.CreateDirectory(productionDirectory);
+                return productionDirectory;
+            }
+        }
+
+        public static string ResolvePersistentDataPath(string fileName)
+        {
+            return Path.Combine(PersistentDataDirectory, fileName);
+        }
+
+        public static string ResolveLegacyPersistentDataPath(string fileName)
+        {
+            return Path.Combine(Application.persistentDataPath, fileName);
+        }
+
+        public static void ClearPersistentData()
+        {
+            string persistentDataDirectory = PersistentDataDirectory;
+            if (string.IsNullOrWhiteSpace(persistentDataDirectory) || !Directory.Exists(persistentDataDirectory))
+            {
+                return;
+            }
+
+            foreach (string filePath in Directory.GetFiles(persistentDataDirectory))
+            {
+                File.Delete(filePath);
+            }
+
+            foreach (string directoryPath in Directory.GetDirectories(persistentDataDirectory))
+            {
+                Directory.Delete(directoryPath, recursive: true);
+            }
+
+            if (UsesProductionScope)
+            {
+                using IEnumerator<string> remainingEntries = Directory.EnumerateFileSystemEntries(persistentDataDirectory).GetEnumerator();
+                if (!remainingEntries.MoveNext())
+                {
+                    Directory.Delete(persistentDataDirectory);
+                }
+            }
+        }
+
+        public static string ScopePlayerPrefsKey(string key)
+        {
+            return UsesProductionScope ? $"Production::{key}" : key;
+        }
+    }
+
+    internal static class ScopedPlayerPrefs
+    {
+        private const char IndexSeparator = '\n';
+        private const string IndexKey = "System.ScopedPlayerPrefsIndex";
+
+        public static int GetInt(string key, int defaultValue = 0)
+        {
+            string scopedKey = ScopedStorage.ScopePlayerPrefsKey(key);
+            if (!ScopedStorage.UsesProductionScope || PlayerPrefs.HasKey(scopedKey) || !PlayerPrefs.HasKey(key))
+            {
+                return PlayerPrefs.GetInt(scopedKey, defaultValue);
+            }
+
+            int legacyValue = PlayerPrefs.GetInt(key, defaultValue);
+            TrackKey(key);
+            PlayerPrefs.SetInt(scopedKey, legacyValue);
+            PlayerPrefs.Save();
+            return legacyValue;
+        }
+
+        public static float GetFloat(string key, float defaultValue = 0f)
+        {
+            string scopedKey = ScopedStorage.ScopePlayerPrefsKey(key);
+            if (!ScopedStorage.UsesProductionScope || PlayerPrefs.HasKey(scopedKey) || !PlayerPrefs.HasKey(key))
+            {
+                return PlayerPrefs.GetFloat(scopedKey, defaultValue);
+            }
+
+            float legacyValue = PlayerPrefs.GetFloat(key, defaultValue);
+            TrackKey(key);
+            PlayerPrefs.SetFloat(scopedKey, legacyValue);
+            PlayerPrefs.Save();
+            return legacyValue;
+        }
+
+        public static string GetString(string key, string defaultValue = "")
+        {
+            string scopedKey = ScopedStorage.ScopePlayerPrefsKey(key);
+            if (!ScopedStorage.UsesProductionScope || PlayerPrefs.HasKey(scopedKey) || !PlayerPrefs.HasKey(key))
+            {
+                return PlayerPrefs.GetString(scopedKey, defaultValue);
+            }
+
+            string legacyValue = PlayerPrefs.GetString(key, defaultValue);
+            TrackKey(key);
+            PlayerPrefs.SetString(scopedKey, legacyValue);
+            PlayerPrefs.Save();
+            return legacyValue;
+        }
+
+        public static void SetInt(string key, int value)
+        {
+            TrackKey(key);
+            PlayerPrefs.SetInt(ScopedStorage.ScopePlayerPrefsKey(key), value);
+        }
+
+        public static void SetFloat(string key, float value)
+        {
+            TrackKey(key);
+            PlayerPrefs.SetFloat(ScopedStorage.ScopePlayerPrefsKey(key), value);
+        }
+
+        public static void SetString(string key, string value)
+        {
+            TrackKey(key);
+            PlayerPrefs.SetString(ScopedStorage.ScopePlayerPrefsKey(key), value);
+        }
+
+        public static void Save()
+        {
+            PlayerPrefs.Save();
+        }
+
+        public static void DeleteTrackedKeys()
+        {
+            foreach (string key in GetTrackedKeys())
+            {
+                PlayerPrefs.DeleteKey(ScopedStorage.ScopePlayerPrefsKey(key));
+            }
+
+            PlayerPrefs.DeleteKey(GetScopedIndexKey());
+            PlayerPrefs.Save();
+        }
+
+        private static void TrackKey(string key)
+        {
+            HashSet<string> trackedKeys = GetTrackedKeys();
+            if (!trackedKeys.Add(key))
+            {
+                return;
+            }
+
+            SaveTrackedKeys(trackedKeys);
+        }
+
+        private static HashSet<string> GetTrackedKeys()
+        {
+            string raw = PlayerPrefs.GetString(GetScopedIndexKey(), string.Empty);
+            var trackedKeys = new HashSet<string>(StringComparer.Ordinal);
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return trackedKeys;
+            }
+
+            string[] parts = raw.Split(IndexSeparator);
+            for (int index = 0; index < parts.Length; index++)
+            {
+                if (!string.IsNullOrWhiteSpace(parts[index]))
+                {
+                    trackedKeys.Add(parts[index]);
+                }
+            }
+
+            return trackedKeys;
+        }
+
+        private static void SaveTrackedKeys(HashSet<string> trackedKeys)
+        {
+            PlayerPrefs.SetString(GetScopedIndexKey(), string.Join(IndexSeparator.ToString(), trackedKeys));
+        }
+
+        private static string GetScopedIndexKey()
+        {
+            return ScopedStorage.ScopePlayerPrefsKey(IndexKey);
+        }
+    }
+
     public static class AlphaDataResetService
     {
         private const string AppliedResetTokenKey = "System.AlphaDataResetToken";
@@ -57,13 +251,13 @@ namespace FungusToast.Unity
                 return;
             }
 
-            var appliedToken = PlayerPrefs.GetString(AppliedResetTokenKey, string.Empty);
+            var appliedToken = ScopedPlayerPrefs.GetString(AppliedResetTokenKey, string.Empty);
             if (string.Equals(appliedToken, CurrentResetToken, StringComparison.Ordinal))
             {
                 return;
             }
 
-            Debug.Log($"[AlphaDataReset] Applying one-time alpha data reset token '{CurrentResetToken}'.");
+            Debug.Log($"[AlphaDataReset] Applying one-time alpha data reset token '{CurrentResetToken}' for {ScopedStorage.ScopeName} storage.");
 
             try
             {
@@ -74,30 +268,16 @@ namespace FungusToast.Unity
                 Debug.LogWarning($"[AlphaDataReset] Failed to fully clear persistent data directory: {exception.Message}\n{exception}");
             }
 
-            PlayerPrefs.DeleteAll();
-            PlayerPrefs.SetString(AppliedResetTokenKey, CurrentResetToken);
-            PlayerPrefs.Save();
+            ScopedPlayerPrefs.DeleteTrackedKeys();
+            ScopedPlayerPrefs.SetString(AppliedResetTokenKey, CurrentResetToken);
+            ScopedPlayerPrefs.Save();
 
-            Debug.Log("[AlphaDataReset] Cleared PlayerPrefs and persistent data for alpha compatibility.");
+            Debug.Log($"[AlphaDataReset] Cleared scoped PlayerPrefs and persistent data for {ScopedStorage.ScopeName} alpha compatibility.");
         }
 
         private static void ClearPersistentDataDirectory()
         {
-            var persistentDataPath = Application.persistentDataPath;
-            if (string.IsNullOrWhiteSpace(persistentDataPath) || !Directory.Exists(persistentDataPath))
-            {
-                return;
-            }
-
-            foreach (var filePath in Directory.GetFiles(persistentDataPath))
-            {
-                File.Delete(filePath);
-            }
-
-            foreach (var directoryPath in Directory.GetDirectories(persistentDataPath))
-            {
-                Directory.Delete(directoryPath, recursive: true);
-            }
+            ScopedStorage.ClearPersistentData();
         }
     }
 
@@ -1237,8 +1417,8 @@ namespace FungusToast.Unity
             gameUIManager.PhaseBanner.Show(AlphaMutationOnboardingBannerText, 5.5f);
             if (!ShouldForceFirstGameExperience)
             {
-                PlayerPrefs.SetInt(AlphaMutationOnboardingSeenKey, 1);
-                PlayerPrefs.Save();
+                ScopedPlayerPrefs.SetInt(AlphaMutationOnboardingSeenKey, 1);
+                ScopedPlayerPrefs.Save();
             }
         }
 
@@ -1257,7 +1437,7 @@ namespace FungusToast.Unity
                 && humanPlayers.Count > 0
                 && !isFastForwarding
                 && !testingModeEnabled
-                && PlayerPrefs.GetInt(AlphaMutationOnboardingSeenKey, 0) == 0;
+                && ScopedPlayerPrefs.GetInt(AlphaMutationOnboardingSeenKey, 0) == 0;
         }
 
         #endregion

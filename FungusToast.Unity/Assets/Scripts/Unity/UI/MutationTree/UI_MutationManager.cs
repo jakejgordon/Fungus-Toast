@@ -1509,7 +1509,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            if (!forceFirstGame && PlayerPrefs.GetInt(MutationTreeGuidanceSeenKey, 0) != 0)
+            if (!forceFirstGame && ScopedPlayerPrefs.GetInt(MutationTreeGuidanceSeenKey, 0) != 0)
             {
                 return;
             }
@@ -1530,8 +1530,8 @@ namespace FungusToast.Unity.UI.MutationTree
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
             if (!forceFirstGame)
             {
-                PlayerPrefs.SetInt(MutationTreeGuidanceSeenKey, 1);
-                PlayerPrefs.Save();
+                ScopedPlayerPrefs.SetInt(MutationTreeGuidanceSeenKey, 1);
+                ScopedPlayerPrefs.Save();
             }
         }
 

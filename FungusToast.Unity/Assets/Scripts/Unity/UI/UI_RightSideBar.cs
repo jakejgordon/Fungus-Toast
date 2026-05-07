@@ -438,7 +438,7 @@ namespace FungusToast.Unity.UI
 
             var gameManager = GameManager.Instance;
             bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
-            if (!forceFirstGame && PlayerPrefs.GetInt(ScoreboardCoachmarkSeenKey, 0) != 0)
+            if (!forceFirstGame && ScopedPlayerPrefs.GetInt(ScoreboardCoachmarkSeenKey, 0) != 0)
             {
                 return;
             }
@@ -587,8 +587,8 @@ namespace FungusToast.Unity.UI
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
             if (!forceFirstGame)
             {
-                PlayerPrefs.SetInt(ScoreboardCoachmarkSeenKey, 1);
-                PlayerPrefs.Save();
+                ScopedPlayerPrefs.SetInt(ScoreboardCoachmarkSeenKey, 1);
+                ScopedPlayerPrefs.Save();
             }
 
             HideScoreboardCoachmarkImmediate(false);

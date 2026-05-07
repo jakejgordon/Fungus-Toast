@@ -25,7 +25,9 @@ This doc exists to make those risks visible before changes ship.
 ## Current persistence surfaces
 
 ### Campaign meta save
-- File: `Application.persistentDataPath/campaign_save.json`
+- File: `Application.persistentDataPath/campaign_save.json` in editor/debug development runs
+- File: `Application.persistentDataPath/production/campaign_save.json` in non-debug production builds
+- Existing production installs migrate the legacy root save into the production path on first launch after this storage split ships.
 - Save model: `FungusToast.Unity/Assets/Scripts/Unity/Campaign/CampaignState.cs`
 - Save/load service: `FungusToast.Unity/Assets/Scripts/Unity/Campaign/CampaignSaveService.cs`
 
@@ -51,7 +53,9 @@ This stores round-start gameplay state such as:
 - RNG state for deterministic resume
 
 ### Non-campaign hotseat save
-- File: `Application.persistentDataPath/solo_save.json`
+- File: `Application.persistentDataPath/solo_save.json` in editor/debug development runs
+- File: `Application.persistentDataPath/production/solo_save.json` in non-debug production builds
+- Existing production installs migrate the legacy root save into the production path on first launch after this storage split ships.
 - Save model/service: `FungusToast.Unity/Assets/Scripts/Unity/Campaign/CampaignSaveService.cs` (`SoloGameSaveState`, `SoloGameSaveService`)
 
 This uses the same runtime snapshot compatibility rules as campaign mid-level resume.

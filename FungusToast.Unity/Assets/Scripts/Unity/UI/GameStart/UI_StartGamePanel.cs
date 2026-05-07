@@ -1745,7 +1745,7 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void LoadPersistedMenuState()
         {
-            bool testingEnabled = PlayerPrefs.GetInt(DevelopmentTestingEnabledPrefsKey, 0) != 0;
+            bool testingEnabled = ScopedPlayerPrefs.GetInt(DevelopmentTestingEnabledPrefsKey, 0) != 0;
             isAdvancedOptionsExpanded = true;
             testingCardController?.SetTestingEnabled(testingEnabled);
             ApplyAdvancedVisibility();
@@ -1754,9 +1754,9 @@ namespace FungusToast.Unity.UI.GameStart
         private void SavePersistedMenuState()
         {
             bool testingEnabled = testingCardController != null && testingCardController.IsTestingEnabled;
-            PlayerPrefs.SetInt(AdvancedOptionsExpandedPrefsKey, 1);
-            PlayerPrefs.SetInt(DevelopmentTestingEnabledPrefsKey, testingEnabled ? 1 : 0);
-            PlayerPrefs.Save();
+            ScopedPlayerPrefs.SetInt(AdvancedOptionsExpandedPrefsKey, 1);
+            ScopedPlayerPrefs.SetInt(DevelopmentTestingEnabledPrefsKey, testingEnabled ? 1 : 0);
+            ScopedPlayerPrefs.Save();
         }
 
         private void ApplyAdvancedVisibility()

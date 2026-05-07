@@ -12,14 +12,16 @@ namespace FungusToast.Unity.Campaign
     public static class CampaignSaveService
     {
         private const string FileName = "campaign_save.json";
-        private static string SavePath => Path.Combine(Application.persistentDataPath, FileName);
+        private static string SavePath => ScopedStorage.ResolvePersistentDataPath(FileName);
+        private static string LegacySavePath => ScopedStorage.ResolveLegacyPersistentDataPath(FileName);
 
-        public static bool Exists() => File.Exists(SavePath);
+        public static bool Exists() => File.Exists(SavePath) || File.Exists(LegacySavePath);
 
         public static CampaignState Load()
         {
             try
             {
+                MigrateLegacySaveIfNeeded();
                 if (!Exists()) return null;
                 var json = File.ReadAllText(SavePath);
                 if (string.IsNullOrWhiteSpace(json)) return null;
@@ -37,6 +39,7 @@ namespace FungusToast.Unity.Campaign
             if (state == null) return;
             try
             {
+                MigrateLegacySaveIfNeeded();
                 var json = JsonUtility.ToJson(state, prettyPrint: true);
                 var tmpPath = SavePath + ".tmp";
                 File.WriteAllText(tmpPath, json);
@@ -56,12 +59,25 @@ namespace FungusToast.Unity.Campaign
             try
             {
                 if (Exists()) File.Delete(SavePath);
+                if (ScopedStorage.UsesProductionScope && File.Exists(LegacySavePath)) File.Delete(LegacySavePath);
                 Debug.Log("[CampaignSaveService] Deleted campaign save.");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[CampaignSaveService] Failed to delete campaign save: {ex.Message}\n{ex}");
             }
+        }
+
+        private static void MigrateLegacySaveIfNeeded()
+        {
+            if (!ScopedStorage.UsesProductionScope || File.Exists(SavePath) || !File.Exists(LegacySavePath))
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(SavePath)!);
+            File.Move(LegacySavePath, SavePath);
+            Debug.Log($"[CampaignSaveService] Migrated legacy campaign save to production storage at {SavePath}");
         }
     }
 }
@@ -96,14 +112,16 @@ namespace FungusToast.Unity.Save
     public static class SoloGameSaveService
     {
         private const string FileName = "solo_save.json";
-        private static string SavePath => Path.Combine(Application.persistentDataPath, FileName);
+        private static string SavePath => ScopedStorage.ResolvePersistentDataPath(FileName);
+        private static string LegacySavePath => ScopedStorage.ResolveLegacyPersistentDataPath(FileName);
 
-        public static bool Exists() => File.Exists(SavePath);
+        public static bool Exists() => File.Exists(SavePath) || File.Exists(LegacySavePath);
 
         public static SoloGameSaveState Load()
         {
             try
             {
+                MigrateLegacySaveIfNeeded();
                 if (!Exists())
                 {
                     return null;
@@ -133,6 +151,7 @@ namespace FungusToast.Unity.Save
 
             try
             {
+                MigrateLegacySaveIfNeeded();
                 var json = JsonUtility.ToJson(state, prettyPrint: true);
                 var tmpPath = SavePath + ".tmp";
                 File.WriteAllText(tmpPath, json);
@@ -159,12 +178,29 @@ namespace FungusToast.Unity.Save
                     File.Delete(SavePath);
                 }
 
+                if (ScopedStorage.UsesProductionScope && File.Exists(LegacySavePath))
+                {
+                    File.Delete(LegacySavePath);
+                }
+
                 Debug.Log("[SoloGameSaveService] Deleted solo save.");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[SoloGameSaveService] Failed to delete solo save: {ex.Message}\n{ex}");
             }
+        }
+
+        private static void MigrateLegacySaveIfNeeded()
+        {
+            if (!ScopedStorage.UsesProductionScope || File.Exists(SavePath) || !File.Exists(LegacySavePath))
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(SavePath)!);
+            File.Move(LegacySavePath, SavePath);
+            Debug.Log($"[SoloGameSaveService] Migrated legacy solo save to production storage at {SavePath}");
         }
     }
 

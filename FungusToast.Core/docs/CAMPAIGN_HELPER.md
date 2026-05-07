@@ -27,7 +27,8 @@ Important fields:
 - `boardPresetId`, `boardWidth`, `boardHeight`
 
 Save file:
-- `Application.persistentDataPath/campaign_save.json`
+- `Application.persistentDataPath/campaign_save.json` for editor/debug development runs
+- `Application.persistentDataPath/production/campaign_save.json` for non-debug production builds
 
 Compatibility guidance:
 - Use `SAVE_COMPATIBILITY.md` as the canonical reference for save/resume breaking-change risk, compatibility review, and migration expectations.
