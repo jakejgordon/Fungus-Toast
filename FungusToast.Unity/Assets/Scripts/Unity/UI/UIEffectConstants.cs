@@ -296,7 +296,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Multiplier applied to fixed phase waits when round presentation fast mode is enabled.
         /// </summary>
-        public const float FastRoundPresentationDelayMultiplier = 0.2f;
+        public const float FastRoundPresentationDelayMultiplier = 0.16f;
 
         /// <summary>
         /// Hold duration passed to the phase banner so the total Conidial Relay overlay reads for roughly 1.5 seconds including fade in/out.

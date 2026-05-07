@@ -20,6 +20,7 @@ Any new gameplay animation entry point should be added to this file when introdu
 | Starting tile ping highlight (occasionally shown) | `TriggerStartingTilePing(playerId)` / hover path `StartStartingTileHoverPing(playerId)` → `RunStartingTilePing()` / `RunLoopingStartingTilePing()` | (helper in `RingHighlightHelper`) | `StartingTilePingDurationSeconds` with `StartingTilePing*` radius, fade, and band-color constants |
 
 ## Notes
+- Phase timing diagnostics are compiled out by default; define `FT_PHASE_TIMING` in Core and Unity to re-enable them.
 - Reclaim FULL sub‑phases (rise / hold / swap / settle) proportions come from base constants (`RegenerativeHyphae*DurationSeconds` + `RegenerativeHyphaeHoldBaseSeconds`). When you pass `explicitTotalSeconds`, those portions are applied linearly.
 - Lite reclaim uses only rise + swap (same proportional logic limited to those two components).
 - Timing context (`SetPostGrowthTiming`) can override reclaim (rise / hold / swap / settle / lite total) and resistance pulse totals directly.

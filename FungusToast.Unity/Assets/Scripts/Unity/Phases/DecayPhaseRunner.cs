@@ -122,10 +122,16 @@ namespace FungusToast.Unity.Phases
                 yield break;
             }
 
+            double decayStart = Time.realtimeSinceStartupAsDouble;
             bool fastPresentationMode = GameManager.Instance != null && GameManager.Instance.IsFastRoundPresentationMode;
 
+            double stepStart = Time.realtimeSinceStartupAsDouble;
             DeathEngine.ExecuteDeathCycle(activeBoard, failedGrowthsByPlayerId, rng, simulationObserver);
+            LogPhaseTiming($"Decay start: ExecuteDeathCycle took {FormatElapsedMs(stepStart)} ms.");
+
+            stepStart = Time.realtimeSinceStartupAsDouble;
             activeBoard.OnPostDecayPhase();
+            LogPhaseTiming($"Decay start: OnPostDecayPhase callbacks took {FormatElapsedMs(stepStart)} ms.");
 
             float preRenderDelaySeconds = GameManager.Instance != null
                 ? GameManager.Instance.GetRoundPresentationDelaySeconds(UIEffectConstants.TimeBeforeDecayRender)
@@ -137,15 +143,22 @@ namespace FungusToast.Unity.Phases
                 yield break;
             }
 
+            stepStart = Time.realtimeSinceStartupAsDouble;
             activeGridVisualizer.RenderBoard(activeBoard, suppressAnimations: fastPresentationMode);
+            LogPhaseTiming($"Decay phase: render after death processing took {FormatElapsedMs(stepStart)} ms.");
 
+			stepStart = Time.realtimeSinceStartupAsDouble;
 			yield return activeGridVisualizer.WaitForAllAnimations();
+			LogPhaseTiming($"Decay phase: waited {FormatElapsedMs(stepStart)} ms for render animations.");
 
             if (septalAlarmResistanceTiles.Count > 0)
             {
+                stepStart = Time.realtimeSinceStartupAsDouble;
+                int tileCount = septalAlarmResistanceTiles.Count;
                 activeGridVisualizer.PlayResistancePulseBatchScaled(septalAlarmResistanceTiles, 0.45f);
                 yield return activeGridVisualizer.WaitForAllAnimations();
                 septalAlarmResistanceTiles.Clear();
+                LogPhaseTiming($"Decay phase: Septal Alarm pulses ({tileCount} tiles) took {FormatElapsedMs(stepStart)} ms.");
             }
 
             if (activeRunVersion != runVersion)
@@ -159,7 +172,9 @@ namespace FungusToast.Unity.Phases
             bool hadSpecialEvents = activeSpecialEventPresentationService != null && activeSpecialEventPresentationService.HasPendingEvents;
             if (hadSpecialEvents)
             {
+                stepStart = Time.realtimeSinceStartupAsDouble;
                 yield return activeSpecialEventPresentationService.PresentPendingAfterDecayRender();
+                LogPhaseTiming($"Decay phase: post-render special event presentation took {FormatElapsedMs(stepStart)} ms.");
             }
             else
             {
@@ -174,8 +189,19 @@ namespace FungusToast.Unity.Phases
                 yield break;
             }
 
+            LogPhaseTiming($"Decay phase total before round completion took {FormatElapsedMs(decayStart)} ms.");
             GameManager.Instance.OnRoundComplete();
         }
+
+        // Define FT_PHASE_TIMING to re-enable these troubleshooting logs.
+        [System.Diagnostics.Conditional("FT_PHASE_TIMING")]
+        private static void LogPhaseTiming(string message)
+        {
+            Debug.Log($"[PhaseTiming] {message}");
+        }
+
+        private static string FormatElapsedMs(double startTime)
+            => ((Time.realtimeSinceStartupAsDouble - startTime) * 1000d).ToString("F1");
 
     }
 

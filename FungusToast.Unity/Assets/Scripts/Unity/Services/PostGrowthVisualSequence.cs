@@ -200,23 +200,32 @@ namespace FungusToast.Unity
 
         private IEnumerator RunSequence()
         {
-            if (shouldSkipPresentation()) { ClearBuffers(); sequenceRunning = false; startDecayPhase(); yield break; }
+            double sequenceStart = Time.realtimeSinceStartupAsDouble;
+            if (shouldSkipPresentation()) { ClearBuffers(); sequenceRunning = false; LogPhaseTiming($"Post-growth sequence skipped after {FormatElapsedMs(sequenceStart)} ms."); startDecayPhase(); yield break; }
 
+            double stepStart = Time.realtimeSinceStartupAsDouble;
             yield return grid.WaitForAllAnimations();
+            LogPhaseTiming($"Post-growth sequence: waited {FormatElapsedMs(stepStart)} ms for in-flight animations before buffered effects.");
+
+            stepStart = Time.realtimeSinceStartupAsDouble;
             grid.RenderBoard(gameManager.Board, suppressAnimations: true);
+            LogPhaseTiming($"Post-growth sequence: suppress-animation render took {FormatElapsedMs(stepStart)} ms.");
 
             // (Currently regen + resistance placeholders; actual population of buffers would be wired similarly to original code)
             if (regenReclaimBuffer.Count > 0)
             {
+                stepStart = Time.realtimeSinceStartupAsDouble;
                 foreach (var kvp in regenReclaimBuffer)
                 {
                     var ids = kvp.Value; if (ids.Count == 0) continue; grid.PlayRegenerativeHyphaeReclaimBatch(ids, 1f, UIEffectConstants.RegenerativeHyphaeReclaimTotalDurationSeconds);
                 }
                 yield return grid.WaitForAllAnimations();
+                LogPhaseTiming($"Post-growth sequence: regenerative reclaim batch ({regenReclaimBuffer.Sum(entry => entry.Value.Count)} tiles) took {FormatElapsedMs(stepStart)} ms.");
                 regenReclaimBuffer.Clear();
             }
             if (directedVectorSurges.Count > 0)
             {
+                stepStart = Time.realtimeSinceStartupAsDouble;
                 bool multipleSurges = directedVectorSurges.Count > 1;
                 foreach (var surge in directedVectorSurges)
                 {
@@ -244,18 +253,27 @@ namespace FungusToast.Unity
                 }
 
                 directedVectorSurges.Clear();
+                LogPhaseTiming($"Post-growth sequence: directed vector surge presentation took {FormatElapsedMs(stepStart)} ms.");
             }
             if (postGrowthResistanceTiles.Count > 0)
             {
+                stepStart = Time.realtimeSinceStartupAsDouble;
+                int tileCount = postGrowthResistanceTiles.Count;
                 grid.PlayResistancePulseBatchScaled(postGrowthResistanceTiles, 0.5f); yield return grid.WaitForAllAnimations(); postGrowthResistanceTiles.Clear();
+                LogPhaseTiming($"Post-growth sequence: general resistance pulses ({tileCount} tiles) took {FormatElapsedMs(stepStart)} ms.");
             }
             if (crustalCallusResistanceTiles.Count > 0)
             {
+                stepStart = Time.realtimeSinceStartupAsDouble;
+                int tileCount = crustalCallusResistanceTiles.Count;
                 gameManager.GameUI?.GameLogRouter?.RecordCrustalCallusResistance(gameManager.GetPrimaryHumanInternal().PlayerId, crustalCallusResistanceTiles.Count);
                 grid.PlayResistancePulseBatchScaled(crustalCallusResistanceTiles, 0.5f); yield return grid.WaitForAllAnimations(); crustalCallusResistanceTiles.Clear();
+                LogPhaseTiming($"Post-growth sequence: Crustal Callus resistance pulses ({tileCount} tiles) took {FormatElapsedMs(stepStart)} ms.");
             }
             if (aegisHyphaeResistanceTiles.Count > 0)
             {
+                stepStart = Time.realtimeSinceStartupAsDouble;
+                int tileCount = aegisHyphaeResistanceTiles.Count;
                 gameManager.GameUI?.PhaseBanner?.Show(
                     aegisHyphaeResistanceTiles.Count == 1
                         ? "Aegis Hyphae fortifies 1 new cell!"
@@ -263,13 +281,17 @@ namespace FungusToast.Unity
                     UIEffectConstants.AegisHyphaeBannerHoldSeconds);
                 gameManager.GameUI?.GameLogRouter?.RecordAegisHyphaeResistance(gameManager.GetPrimaryHumanInternal().PlayerId, aegisHyphaeResistanceTiles.Count);
                 grid.PlayResistancePulseBatchScaled(aegisHyphaeResistanceTiles, 0.65f); yield return grid.WaitForAllAnimations(); aegisHyphaeResistanceTiles.Clear();
+                LogPhaseTiming($"Post-growth sequence: Aegis Hyphae resistance pulses ({tileCount} tiles) took {FormatElapsedMs(stepStart)} ms.");
             }
             bool anyPlayerHasHrt = gameManager.Board.Players.Any(p => p.GetMycovariant(MycovariantIds.HyphalResistanceTransferId) != null);
             if (anyPlayerHasHrt && postGrowthHrtNewResistantTiles.Count > 0)
             {
+                stepStart = Time.realtimeSinceStartupAsDouble;
+                int tileCount = postGrowthHrtNewResistantTiles.Count;
                 grid.PlayResistancePulseBatchScaled(postGrowthHrtNewResistantTiles, 0.35f); yield return grid.WaitForAllAnimations();
+                LogPhaseTiming($"Post-growth sequence: Hyphal Resistance Transfer pulses ({tileCount} tiles) took {FormatElapsedMs(stepStart)} ms.");
             }
-            postGrowthHrtNewResistantTiles.Clear(); sequenceRunning = false; startDecayPhase();
+            postGrowthHrtNewResistantTiles.Clear(); sequenceRunning = false; LogPhaseTiming($"Post-growth sequence total before decay start took {FormatElapsedMs(sequenceStart)} ms."); startDecayPhase();
         }
 
         private void ClearBuffers()
@@ -277,5 +299,15 @@ namespace FungusToast.Unity
             grid.RevealDeferredResistanceOverlays(crustalCallusResistanceTiles);
             regenReclaimBuffer.Clear(); postGrowthResistanceTiles.Clear(); postGrowthHrtNewResistantTiles.Clear(); crustalCallusResistanceTiles.Clear(); aegisHyphaeResistanceTiles.Clear(); directedVectorSurges.Clear();
         }
+
+        // Define FT_PHASE_TIMING to re-enable these troubleshooting logs.
+        [System.Diagnostics.Conditional("FT_PHASE_TIMING")]
+        private static void LogPhaseTiming(string message)
+        {
+            Debug.Log($"[PhaseTiming] {message}");
+        }
+
+        private static string FormatElapsedMs(double startTime)
+            => ((Time.realtimeSinceStartupAsDouble - startTime) * 1000d).ToString("F1");
     }
 }

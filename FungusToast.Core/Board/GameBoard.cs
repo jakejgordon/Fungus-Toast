@@ -1046,15 +1046,32 @@ namespace FungusToast.Core.Board
         {
             float dropChance = player.GetMutationEffect(MutationType.Necrosporulation);
             if (dropChance <= 0f || rng.NextDouble() > dropChance) return;
-            var candidates = AllTiles().Where(t => !t.IsOccupiedForSporePlacement && !IsTileBlockedForOccupation(t.TileId)).OrderBy(_ => rng.NextDouble()).ToList();
-            foreach (var tile in candidates)
+
+            int selectedTileId = -1;
+            int validCandidateCount = 0;
+            foreach (var tile in AllTiles())
             {
-                if (SpawnSporeForPlayer(player, tile.TileId, GrowthSource.Necrosporulation))
+                if (tile.IsOccupiedForSporePlacement || IsTileBlockedForOccupation(tile.TileId))
                 {
-                    OnSporeDrop(player.PlayerId, tile.TileId, MutationType.Necrosporulation);
-                    observer.ReportNecrosporeDrop(player.PlayerId, 1);
-                    return;
+                    continue;
                 }
+
+                validCandidateCount++;
+                if (rng.Next(validCandidateCount) == 0)
+                {
+                    selectedTileId = tile.TileId;
+                }
+            }
+
+            if (selectedTileId < 0)
+            {
+                return;
+            }
+
+            if (SpawnSporeForPlayer(player, selectedTileId, GrowthSource.Necrosporulation))
+            {
+                OnSporeDrop(player.PlayerId, selectedTileId, MutationType.Necrosporulation);
+                observer.ReportNecrosporeDrop(player.PlayerId, 1);
             }
         }
         #endregion

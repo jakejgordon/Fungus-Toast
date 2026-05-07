@@ -89,17 +89,28 @@ namespace FungusToast.Unity.Phases
 
             if (phaseCycle >= GameBalance.TotalGrowthCycles)
             {
+                double phaseCompletionStart = Time.realtimeSinceStartupAsDouble;
+
                 // === Post-Growth Mutation Effects ===
+                double stepStart = phaseCompletionStart;
                 board.OnPostGrowthPhase();
+                LogPhaseTiming($"Growth completion: OnPostGrowthPhase took {FormatElapsedMs(stepStart)} ms.");
 
                 // Apply Hyphal Resistance Transfer effect after growth phase
+                stepStart = Time.realtimeSinceStartupAsDouble;
                 MycovariantEffectProcessor.OnPostGrowthPhase_HyphalResistanceTransfer(board, board.Players, rng, observer);
+                LogPhaseTiming($"Growth completion: Hyphal Resistance Transfer processing took {FormatElapsedMs(stepStart)} ms.");
 
                 // NOW signal completion so listeners (e.g. GameManager OnPostGrowthPhaseCompleted_CaptureHrt) run
+                stepStart = Time.realtimeSinceStartupAsDouble;
                 board.OnPostGrowthPhaseCompleted();
+                LogPhaseTiming($"Growth completion: OnPostGrowthPhaseCompleted callbacks took {FormatElapsedMs(stepStart)} ms.");
 
                 // Sort player summary rows at the end of growth phase
+                stepStart = Time.realtimeSinceStartupAsDouble;
                 GameManager.Instance.GameUI.RightSidebar?.SortPlayerSummaryRows(board.Players);
+                LogPhaseTiming($"Growth completion: sidebar sort took {FormatElapsedMs(stepStart)} ms.");
+                LogPhaseTiming($"Growth completion total before decay handoff took {FormatElapsedMs(phaseCompletionStart)} ms.");
 
                 isRunning = false;
 
@@ -134,7 +145,7 @@ namespace FungusToast.Unity.Phases
             GameManager.Instance.GameUI.PhaseProgressTracker?.AdvanceToNextGrowthCycle(phaseCycle);
             GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(board.Players);
 
-            yield return new WaitForSeconds(UIEffectConstants.TimeBetweenGrowthCycles);
+            yield return new WaitForSeconds(cycleDelaySeconds);
 
             if (activeRunVersion != runVersion)
             {
@@ -175,9 +186,18 @@ namespace FungusToast.Unity.Phases
 
         private void PlayGrowthCycleStartSound()
         {
-            if (GameManager.Instance != null && GameManager.Instance.IsFastForwarding)
+            var gameManager = GameManager.Instance;
+            if (gameManager != null)
             {
-                return;
+                if (gameManager.IsFastForwarding)
+                {
+                    return;
+                }
+
+                if (gameManager.IsFastRoundPresentationMode && phaseCycle > 1)
+                {
+                    return;
+                }
             }
 
             if (growthCycleStartClip == null)
@@ -194,6 +214,16 @@ namespace FungusToast.Unity.Phases
 
             soundEffectAudioSource.PlayOneShot(growthCycleStartClip, effectiveVolume);
         }
+
+        // Define FT_PHASE_TIMING to re-enable these troubleshooting logs.
+        [System.Diagnostics.Conditional("FT_PHASE_TIMING")]
+        private static void LogPhaseTiming(string message)
+        {
+            Debug.Log($"[PhaseTiming] {message}");
+        }
+
+        private static string FormatElapsedMs(double startTime)
+            => ((Time.realtimeSinceStartupAsDouble - startTime) * 1000d).ToString("F1");
 
     }
 }
