@@ -953,6 +953,13 @@ namespace FungusToast.Unity
                 return false;
             }
 
+            if (gameUIManager?.MutationUIManager != null)
+            {
+                gameUIManager.MutationUIManager.SetSpendPointsButtonInteractable(false);
+                gameUIManager.MutationUIManager.SetSpendPointsButtonVisible(false);
+                gameUIManager.MutationUIManager.gameObject.SetActive(false);
+            }
+
             mycovariantDraftController.StartCampaignAdaptationDraft(
                 choices,
                 selected =>

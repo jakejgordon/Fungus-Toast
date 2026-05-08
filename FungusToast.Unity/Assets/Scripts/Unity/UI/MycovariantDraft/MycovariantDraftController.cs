@@ -8,6 +8,7 @@ using FungusToast.Unity.Effects;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI.Campaign;
 using FungusToast.Unity.UI.Tooltips;
+using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -66,10 +67,16 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private const float DraftHistoryEntryDetailFontSize = 18f;
         private const float CampaignAdaptationUtilityPanelHeight = 92f;
         private const float CampaignAdaptationUtilityPanelWidth = 840f;
+        private const float CampaignAdaptationSummaryPanelWidth = 840f;
+        private const float CampaignAdaptationSummaryPanelMinHeight = 82f;
+        private const float CampaignAdaptationSummaryIconSize = 34f;
+        private const float CampaignAdaptationSummaryIconPadding = 4f;
         private const string CampaignAdaptationRedrawReadyLabel = "Use Spore Sifting";
         private const string CampaignAdaptationRedrawConfirmLabel = "Confirm Redraw";
         private const string CampaignAdaptationRedrawUsedLabel = "Spore Sifting Used";
         private const string CampaignAdaptationRedrawTooltipText = "You unlocked the Spore Sifting moldiness reward, allowing you to redraw all Mycovariants to present new draft options once per level.";
+        private const string DraftFeedTitle = "Draft Feed";
+        private const string CampaignAdaptationSummaryTitle = "Current Adaptations";
 
         [Header("UI References")]
         [SerializeField] private GameObject draftPanel; // Main draft panel root
@@ -117,6 +124,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private TextMeshProUGUI campaignAdaptationUtilityStatusText;
         private Button campaignAdaptationRedrawButton;
         private TextMeshProUGUI campaignAdaptationRedrawButtonText;
+        private GameObject campaignAdaptationSummaryRoot;
+        private TextMeshProUGUI campaignAdaptationSummaryTitleText;
+        private RectTransform campaignAdaptationSummaryIconRow;
+        private readonly List<GameObject> campaignAdaptationSummaryIconObjects = new();
         private bool showCampaignAdaptationRedrawControl;
         private bool campaignAdaptationRedrawAvailable;
         private bool campaignAdaptationRedrawConfirmArmed;
@@ -138,6 +149,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             public string Announcement { get; set; }
             public string Detail { get; set; }
         }
+
+        public bool IsDraftUiVisible => draftPanel != null && draftPanel.activeInHierarchy;
 
         // Public entry point: starts draft phase
         public void StartDraft(
@@ -168,6 +181,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             MycovariantDraftManager.MarkLastAiDrafterForCurrentDraft(players, draftOrder);
 
             EnsureDraftMessageUI();
+            SetDraftMessagePanelTitle(DraftFeedTitle);
             ClearDraftMessages();
             AddDraftMessage(this.draftStartMessage);
             TryAnnounceAscusPrimacyDraftPriority();
@@ -275,6 +289,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             isFinishingDraftPhase = false;
 
             EnsureDraftMessageUI();
+            SetDraftMessagePanelTitle(GetCampaignAdaptationDraftFeedTitle());
             ClearDraftMessages();
             AddDraftMessage("Victory secured. Choose an Adaptation to evolve your colony for the rest of this campaign.");
 
@@ -289,6 +304,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 draftOrderRow.gameObject.SetActive(false);
             }
             PopulateAdaptationChoices(choices);
+            PopulateCampaignAdaptationSummary();
             SetDraftState(DraftUIState.HumanTurn);
         }
 
@@ -940,6 +956,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 draftOrderRow.gameObject.SetActive(true);
             }
             uiState = DraftUIState.Idle;
+            if (campaignAdaptationSummaryRoot != null)
+            {
+                campaignAdaptationSummaryRoot.SetActive(false);
+            }
             RefreshCampaignAdaptationUtilityUi();
         }
 
@@ -1058,6 +1078,230 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             campaignAdaptationUtilityRoot.SetActive(false);
         }
 
+        private void EnsureCampaignAdaptationSummaryUi()
+        {
+            if (choiceContainer == null || choiceContainer.parent == null || campaignAdaptationSummaryRoot != null)
+            {
+                return;
+            }
+
+            campaignAdaptationSummaryRoot = new GameObject(
+                "CampaignAdaptationSummaryRoot",
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(LayoutElement),
+                typeof(VerticalLayoutGroup));
+            campaignAdaptationSummaryRoot.transform.SetParent(choiceContainer.parent, false);
+
+            var rootRect = campaignAdaptationSummaryRoot.GetComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0.5f, 1f);
+            rootRect.anchorMax = new Vector2(0.5f, 1f);
+            rootRect.pivot = new Vector2(0.5f, 0.5f);
+            rootRect.sizeDelta = new Vector2(CampaignAdaptationSummaryPanelWidth, CampaignAdaptationSummaryPanelMinHeight);
+
+            var layoutElement = campaignAdaptationSummaryRoot.GetComponent<LayoutElement>();
+            layoutElement.preferredWidth = CampaignAdaptationSummaryPanelWidth;
+            layoutElement.minWidth = CampaignAdaptationSummaryPanelWidth;
+            layoutElement.minHeight = CampaignAdaptationSummaryPanelMinHeight;
+
+            var rootImage = campaignAdaptationSummaryRoot.GetComponent<Image>();
+            var backgroundColor = UIStyleTokens.Surface.PanelSecondary;
+            backgroundColor.a = 0.94f;
+            rootImage.color = backgroundColor;
+            rootImage.raycastTarget = true;
+
+            var layout = campaignAdaptationSummaryRoot.GetComponent<VerticalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.padding = new RectOffset(16, 16, 10, 12);
+            layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(campaignAdaptationSummaryRoot.transform, false);
+            var titleLayout = titleObject.GetComponent<LayoutElement>();
+            titleLayout.preferredHeight = 20f;
+            titleLayout.minHeight = 20f;
+            campaignAdaptationSummaryTitleText = titleObject.GetComponent<TextMeshProUGUI>();
+            campaignAdaptationSummaryTitleText.text = CampaignAdaptationSummaryTitle;
+            campaignAdaptationSummaryTitleText.fontSize = 15f;
+            campaignAdaptationSummaryTitleText.fontStyle = FontStyles.Bold;
+            campaignAdaptationSummaryTitleText.color = UIStyleTokens.Text.Primary;
+            campaignAdaptationSummaryTitleText.alignment = TextAlignmentOptions.Left;
+            campaignAdaptationSummaryTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+
+            var iconRowObject = new GameObject(
+                "IconRow",
+                typeof(RectTransform),
+                typeof(LayoutElement),
+                typeof(HorizontalLayoutGroup));
+            iconRowObject.transform.SetParent(campaignAdaptationSummaryRoot.transform, false);
+            campaignAdaptationSummaryIconRow = iconRowObject.GetComponent<RectTransform>();
+            var iconRowLayout = iconRowObject.GetComponent<LayoutElement>();
+            iconRowLayout.preferredHeight = CampaignAdaptationSummaryIconSize;
+            iconRowLayout.minHeight = CampaignAdaptationSummaryIconSize;
+
+            var horizontalLayout = iconRowObject.GetComponent<HorizontalLayoutGroup>();
+            horizontalLayout.spacing = 6f;
+            horizontalLayout.childAlignment = TextAnchor.MiddleLeft;
+            horizontalLayout.childControlWidth = false;
+            horizontalLayout.childControlHeight = false;
+            horizontalLayout.childForceExpandWidth = false;
+            horizontalLayout.childForceExpandHeight = false;
+
+            campaignAdaptationSummaryRoot.SetActive(false);
+        }
+
+        private void PopulateCampaignAdaptationSummary()
+        {
+            EnsureCampaignAdaptationSummaryUi();
+            ClearCampaignAdaptationSummaryIcons();
+
+            if (campaignAdaptationSummaryRoot == null || campaignAdaptationSummaryIconRow == null)
+            {
+                return;
+            }
+
+            var currentAdaptations = ResolveCurrentCampaignAdaptations();
+            bool shouldShow = isCampaignAdaptationDraft && currentAdaptations.Count > 0;
+            campaignAdaptationSummaryRoot.SetActive(shouldShow);
+            if (!shouldShow)
+            {
+                return;
+            }
+
+            campaignAdaptationSummaryRoot.transform.SetSiblingIndex(choiceContainer.GetSiblingIndex() + 1);
+            if (campaignAdaptationSummaryTitleText != null)
+            {
+                campaignAdaptationSummaryTitleText.text = $"{CampaignAdaptationSummaryTitle} ({currentAdaptations.Count})";
+            }
+
+            for (int i = 0; i < currentAdaptations.Count; i++)
+            {
+                CreateCampaignAdaptationSummaryIcon(currentAdaptations[i]);
+            }
+
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(campaignAdaptationSummaryIconRow);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(campaignAdaptationSummaryRoot.GetComponent<RectTransform>());
+        }
+
+        private List<AdaptationDefinition> ResolveCurrentCampaignAdaptations()
+        {
+            var resolvedAdaptations = new List<AdaptationDefinition>();
+            var seenIds = new HashSet<string>(StringComparer.Ordinal);
+
+            var selectedIds = GameManager.Instance?.CampaignController?.State?.selectedAdaptationIds;
+            if (selectedIds != null)
+            {
+                for (int i = 0; i < selectedIds.Count; i++)
+                {
+                    string adaptationId = selectedIds[i];
+                    if (string.IsNullOrWhiteSpace(adaptationId) || !seenIds.Add(adaptationId))
+                    {
+                        continue;
+                    }
+
+                    if (AdaptationRepository.TryGetById(adaptationId, out var adaptation))
+                    {
+                        resolvedAdaptations.Add(adaptation);
+                    }
+                }
+            }
+
+            if (resolvedAdaptations.Count > 0)
+            {
+                return resolvedAdaptations;
+            }
+
+            var humanPlayer = GameManager.Instance?.Board?.Players?.FirstOrDefault(player => player.PlayerType == PlayerTypeEnum.Human);
+            if (humanPlayer?.PlayerAdaptations == null)
+            {
+                return resolvedAdaptations;
+            }
+
+            for (int i = 0; i < humanPlayer.PlayerAdaptations.Count; i++)
+            {
+                var playerAdaptation = humanPlayer.PlayerAdaptations[i];
+                var adaptation = playerAdaptation?.Adaptation;
+                if (adaptation == null || !seenIds.Add(adaptation.Id))
+                {
+                    continue;
+                }
+
+                resolvedAdaptations.Add(adaptation);
+            }
+
+            return resolvedAdaptations;
+        }
+
+        private void CreateCampaignAdaptationSummaryIcon(AdaptationDefinition adaptation)
+        {
+            if (campaignAdaptationSummaryIconRow == null || adaptation == null)
+            {
+                return;
+            }
+
+            var iconObject = new GameObject(
+                $"CampaignAdaptation_{adaptation.Id}",
+                typeof(RectTransform),
+                typeof(LayoutElement),
+                typeof(Image));
+            iconObject.transform.SetParent(campaignAdaptationSummaryIconRow, false);
+            campaignAdaptationSummaryIconObjects.Add(iconObject);
+
+            var rect = iconObject.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(CampaignAdaptationSummaryIconSize, CampaignAdaptationSummaryIconSize);
+
+            var layout = iconObject.GetComponent<LayoutElement>();
+            layout.preferredWidth = CampaignAdaptationSummaryIconSize;
+            layout.preferredHeight = CampaignAdaptationSummaryIconSize;
+            layout.minWidth = CampaignAdaptationSummaryIconSize;
+            layout.minHeight = CampaignAdaptationSummaryIconSize;
+
+            var background = iconObject.GetComponent<Image>();
+            var backgroundColor = UIStyleTokens.Surface.PanelPrimary;
+            backgroundColor.a = 0.9f;
+            background.color = backgroundColor;
+            background.raycastTarget = true;
+
+            var artObject = new GameObject("Art", typeof(RectTransform), typeof(Image));
+            artObject.transform.SetParent(iconObject.transform, false);
+            var artRect = artObject.GetComponent<RectTransform>();
+            artRect.anchorMin = Vector2.zero;
+            artRect.anchorMax = Vector2.one;
+            artRect.offsetMin = new Vector2(CampaignAdaptationSummaryIconPadding, CampaignAdaptationSummaryIconPadding);
+            artRect.offsetMax = new Vector2(-CampaignAdaptationSummaryIconPadding, -CampaignAdaptationSummaryIconPadding);
+
+            var artImage = artObject.GetComponent<Image>();
+            artImage.sprite = AdaptationArtRepository.GetIcon(adaptation);
+            artImage.preserveAspect = true;
+            artImage.enabled = artImage.sprite != null;
+            artImage.raycastTarget = false;
+
+            var provider = iconObject.AddComponent<AdaptationTooltipProvider>();
+            provider.Initialize(adaptation);
+
+            var trigger = iconObject.GetComponent<TooltipTrigger>() ?? iconObject.AddComponent<TooltipTrigger>();
+            trigger.SetDynamicProvider(provider);
+            trigger.SetAutoPlacementOffsetX(20f);
+        }
+
+        private void ClearCampaignAdaptationSummaryIcons()
+        {
+            for (int i = 0; i < campaignAdaptationSummaryIconObjects.Count; i++)
+            {
+                if (campaignAdaptationSummaryIconObjects[i] != null)
+                {
+                    Destroy(campaignAdaptationSummaryIconObjects[i]);
+                }
+            }
+
+            campaignAdaptationSummaryIconObjects.Clear();
+        }
+
         private void RefreshCampaignAdaptationUtilityUi()
         {
             bool shouldShow = isCampaignAdaptationDraft && showCampaignAdaptationRedrawControl;
@@ -1148,6 +1392,33 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             SetDraftState(DraftUIState.HumanTurn);
         }
 
+        private void SetDraftMessagePanelTitle(string title)
+        {
+            if (draftMessageTitleText == null)
+            {
+                return;
+            }
+
+            draftMessageTitleText.text = string.IsNullOrWhiteSpace(title) ? DraftFeedTitle : title;
+        }
+
+        private string GetCampaignAdaptationDraftFeedTitle()
+        {
+            int nextLevelDisplay = 1;
+            var campaignController = GameManager.Instance?.CampaignController;
+
+            if (campaignController?.State?.levelIndex >= 0)
+            {
+                nextLevelDisplay = campaignController.State.levelIndex + 2;
+            }
+            else if (campaignController != null && campaignController.TryGetPendingVictorySnapshot(out var pendingSnapshot) && pendingSnapshot != null)
+            {
+                nextLevelDisplay = pendingSnapshot.clearedLevelDisplay + 1;
+            }
+
+            return $"Level {nextLevelDisplay} Victory!";
+        }
+
         private void EnsureDraftMessageUI()
         {
             if (draftMessagePanel != null && draftFeedScrollRect != null)
@@ -1178,7 +1449,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 var titleGO = new GameObject("DraftMessageTitle", typeof(RectTransform));
                 titleGO.transform.SetParent(draftMessagePanel.transform, false);
                 draftMessageTitleText = titleGO.AddComponent<TextMeshProUGUI>();
-                draftMessageTitleText.text = "Draft Feed";
+                draftMessageTitleText.text = DraftFeedTitle;
                 draftMessageTitleText.fontSize = 28f;
                 draftMessageTitleText.fontStyle = FontStyles.Bold;
                 draftMessageTitleText.color = UIStyleTokens.Text.Primary;

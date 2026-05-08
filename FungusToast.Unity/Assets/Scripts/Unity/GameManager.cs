@@ -404,6 +404,7 @@ namespace FungusToast.Unity
 
         private bool isInDraftPhase = false; 
         public bool IsDraftPhaseActive => isInDraftPhase; 
+        public bool IsDraftOverlayVisible => mycovariantDraftController != null && mycovariantDraftController.IsDraftUiVisible;
         private int lastCompletedMycovariantDraftRound = -1;
         private bool activeDraftCountsTowardRoundCompletion;
         private bool isMycovariantDraftChainActive;

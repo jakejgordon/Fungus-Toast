@@ -349,7 +349,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void OnSpendPointsClicked()
         {
-            if (isSliding || pendingTargetedSurgeSelection != null) return;
+            if (isSliding || pendingTargetedSurgeSelection != null || ShouldSuppressSpendPointsButton()) return;
 
             // Initialize if not already done
             if (humanPlayer == null && GameManager.Instance != null && GameManager.Instance.Board.Players.Count > 0)
@@ -367,8 +367,9 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (spendPointsButton != null)
             {
-                spendPointsButton.gameObject.SetActive(visible);
-                if (visible)
+                bool shouldShow = visible && !ShouldSuppressSpendPointsButton();
+                spendPointsButton.gameObject.SetActive(shouldShow);
+                if (shouldShow)
                 {
                     RestoreActionRowLayout();
                 }
@@ -601,6 +602,18 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (spendPointsButton == null || buttonOutline == null || humanPlayer == null)
                 return;
+
+            if (ShouldSuppressSpendPointsButton())
+            {
+                spendPointsButton.gameObject.SetActive(false);
+                spendPointsButton.interactable = false;
+                buttonOutline.enabled = false;
+
+                if (mutationPointsCounterText != null)
+                    mutationPointsCounterText.text = $"Mutation Points: {humanPlayer.MutationPoints}";
+
+                return;
+            }
 
             if (pendingTargetedSurgeSelection != null)
             {
@@ -1120,7 +1133,21 @@ namespace FungusToast.Unity.UI.MutationTree
         public void SetSpendPointsButtonInteractable(bool interactable)
         {
             if (spendPointsButton != null)
-                spendPointsButton.interactable = interactable;
+                spendPointsButton.interactable = interactable && !ShouldSuppressSpendPointsButton();
+        }
+
+        private bool ShouldSuppressSpendPointsButton()
+        {
+            var manager = GameManager.Instance;
+            if (manager == null)
+            {
+                return false;
+            }
+
+            bool endgameVisible = manager.GameUI?.EndGamePanel != null
+                && manager.GameUI.EndGamePanel.gameObject.activeInHierarchy;
+
+            return endgameVisible || manager.IsDraftOverlayVisible;
         }
 
         // Highlights unmet prerequisite nodes for a hovered mutation
