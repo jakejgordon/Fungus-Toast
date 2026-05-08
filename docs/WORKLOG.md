@@ -33,18 +33,25 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** tighten `Spore Sifting` so it only applies to Mycovariant drafts, not campaign Adaptation or Moldiness reward flows.
+- **Current focus:** make campaign victory feel more satisfying with a dedicated victory message, a larger moldiness payout, and a clear longer-term hook for difficulty unlocks.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
 
-1. Add a new permanent moldiness unlock named `Spore Sifting`.
-2. Make it grant exactly **one Mycovariant draft redraw per campaign level**.
-3. Surface the ability clearly in the Mycovariant draft UI with a dedicated non-card control, visible remaining-use state, and confirmation before use.
-4. Track/reset usage cleanly at the campaign level boundary so it cannot be spammed across multiple drafts in the same level.
-5. Validate behavior across Mycovariant draft flow, and ensure it does not appear in Adaptation or Moldiness reward flows before balancing further.
+1. Add a fun dedicated campaign-victory message on the final campaign clear.
+2. Increase the final campaign-victory moldiness reward to feel meaningfully better than the penultimate level reward, with **2x that prior reward** as the current target.
+3. Keep the implementation scoped to data already available at victory time; do not depend on cross-campaign stat tracking yet.
+4. Longer term, unlock the next difficulty level when the campaign is completed victoriously.
 
 ## Pending Tasks
+
+- **Improve campaign victory payoff**
+  - **Immediate scope:**
+    - show a dedicated fun final-victory message
+    - award a noticeably larger final moldiness payout
+  - **Current payout target:** final campaign victory should grant about **2x the moldiness reward of the second-to-last level**
+  - **Implementation constraint:** only assume access to the just-finished level result plus the player's chosen adaptations; no campaign-wide stat history yet
+  - **Later follow-up:** unlock the next difficulty level after a victorious campaign clear
 
 - **Implement `Spore Sifting` permanent campaign upgrade**
   - **Product decision:** this is the next moldiness permanent upgrade after `Strain Profiling`.
