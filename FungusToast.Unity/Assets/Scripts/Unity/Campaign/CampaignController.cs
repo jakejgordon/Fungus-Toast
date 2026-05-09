@@ -1345,9 +1345,7 @@ namespace FungusToast.Unity.Campaign
         {
             if (spec.HasBossPool)
             {
-                int seed = unchecked((State.seed * 397) ^ levelIndex);
-                var random = new System.Random(seed);
-                int idx = random.Next(spec.bossBoardPresets.Count);
+                int idx = CampaignRunDeterminism.PickBossPresetIndex(State.seed, levelIndex, spec.bossBoardPresets.Count);
                 return spec.bossBoardPresets[idx];
             }
             return spec.boardPreset;
@@ -1408,10 +1406,9 @@ namespace FungusToast.Unity.Campaign
             }
 
             int desiredCount = Mathf.Min(preset.pooledAiPlayerCount, uniqueEligible.Count);
-            int presetHash = GetStableStringHash(preset.presetId);
             int seed = State != null
-                ? unchecked((State.seed * 397) ^ levelIndex ^ presetHash)
-                : unchecked(levelIndex ^ presetHash);
+                ? CampaignRunDeterminism.GetPooledAiSelectionSeed(State.seed, levelIndex, preset.presetId)
+                : CampaignRunDeterminism.GetPooledAiSelectionSeed(0, levelIndex, preset.presetId);
             var random = new System.Random(seed);
             var shuffled = uniqueEligible.OrderBy(_ => random.Next()).ToList();
             resolved.AddRange(shuffled.Take(desiredCount));
@@ -1425,23 +1422,5 @@ namespace FungusToast.Unity.Campaign
                 || AIRoster.ProvenStrategiesByName.ContainsKey(normalizedName);
         }
 
-        private static int GetStableStringHash(string value)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                return 0;
-            }
-
-            unchecked
-            {
-                int hash = 23;
-                foreach (char c in value)
-                {
-                    hash = (hash * 31) + c;
-                }
-
-                return hash;
-            }
-        }
     }
 }
