@@ -72,6 +72,10 @@ namespace FungusToast.Unity.UI
         private const float CampaignMoldinessSummaryPanelPreferredWidth = 288f;
         private const float CampaignMoldinessSummaryTextWidth = 248f;
         private const float CampaignMoldinessSummaryToastGridWidth = 188f;
+        private const float CampaignMoldinessAwardPulseScaleMultiplier = 1.08f;
+        private const float CampaignMoldinessAwardPulseStrength = 0.08f;
+        private const float CampaignMoldinessAwardPulseSpeed = 2.6f;
+        private const float CampaignMoldinessAwardPulseMinAlpha = 0.82f;
         private const float EndGameConfirmationPrimaryButtonWidth = 500f;
         private const float EndGameConfirmationCompactButtonWidth = 330f;
         private const float EndGameConfirmationButtonHeight = 56f;
@@ -124,6 +128,9 @@ namespace FungusToast.Unity.UI
         private CampaignVictorySnapshot cachedCampaignVictorySnapshot;
         private TextMeshProUGUI defeatCarryoverSelectionStatusLabel;
         private readonly List<Image> moldinessSummaryToastTiles = new();
+        private TextMeshProUGUI pulsingMoldinessAwardLabel;
+        private Vector3 pulsingMoldinessAwardBaseScale = Vector3.one;
+        private Color pulsingMoldinessAwardBaseColor = Color.white;
         private readonly List<Component> legacyResultsHeaderCandidates = new();
         private RectTransform endGameLayoutContainer;
         private RectTransform endGameContentShellRoot;
@@ -238,6 +245,8 @@ namespace FungusToast.Unity.UI
 
         private void Update()
         {
+            UpdateCampaignMoldinessAwardPulse();
+
             if (!Application.isPlaying || !IsDetailsModalOpen || !UnityInputAdapter.WasEscapePressedThisFrame())
             {
                 return;
@@ -341,6 +350,7 @@ namespace FungusToast.Unity.UI
         /* ─────────── Public API (generic solo / hotseat) ─────────── */
         public void ShowResults(List<Player> ranked, GameBoard board, EndgamePlayerStatisticsSnapshot playerStatistics = null)
         {
+            ResetCampaignMoldinessAwardPulse();
             SetPostAdaptationConfirmationState(false);
             showCampaignLossActionStack = false;
             ShowResultsInternal(ranked, board, playerStatistics, useCampaignTopSpacer: false);
@@ -372,6 +382,7 @@ namespace FungusToast.Unity.UI
             IReadOnlyList<AdaptationDefinition> defeatCarryoverOptions = null,
             int defeatCarryoverCapacity = 0)
         {
+            ResetCampaignMoldinessAwardPulse();
             SetPostAdaptationConfirmationState(false);
             requiresAdaptationBeforeContinue = false;
             requiresDefeatCarryoverSelection = false;
@@ -1259,6 +1270,8 @@ namespace FungusToast.Unity.UI
 
         private void BuildCampaignMoldinessSummaryContent(CampaignVictorySnapshot snapshot, bool victory, Transform parentOverride = null)
         {
+            ResetCampaignMoldinessAwardPulse();
+
             var parent = parentOverride ?? resultsContainer;
             if (parent == null || snapshot == null)
             {
@@ -1304,6 +1317,7 @@ namespace FungusToast.Unity.UI
                 FontStyles.Bold);
             ApplyCarryoverInfoTextWidth(title, CampaignMoldinessSummaryTextWidth);
             title.alignment = TextAlignmentOptions.Center;
+            ConfigureCampaignMoldinessAwardPulse(title, victory && snapshot.moldinessAwarded > 0);
 
             var status = CreateCarryoverInfoText(root.transform,
                 $"Moldiness Level {currentLevel}  •  {progressAfter} / {threshold} to next threshold",
@@ -2404,6 +2418,7 @@ namespace FungusToast.Unity.UI
         private void HideInstant()
         {
             StopAllCoroutines();
+            ResetCampaignMoldinessAwardPulse();
             HidePlayerDetails();
             SetPostAdaptationConfirmationState(false);
             ApplyPendingRewardBackgroundMode(false);
@@ -2425,6 +2440,57 @@ namespace FungusToast.Unity.UI
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
             gameObject.SetActive(false);
+        }
+
+        private void ConfigureCampaignMoldinessAwardPulse(TextMeshProUGUI label, bool enablePulse)
+        {
+            ResetCampaignMoldinessAwardPulse();
+
+            if (!enablePulse || label == null)
+            {
+                return;
+            }
+
+            pulsingMoldinessAwardLabel = label;
+            pulsingMoldinessAwardBaseScale = label.rectTransform.localScale;
+            pulsingMoldinessAwardBaseColor = label.color;
+        }
+
+        private void UpdateCampaignMoldinessAwardPulse()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            if (pulsingMoldinessAwardLabel == null)
+            {
+                pulsingMoldinessAwardLabel = null;
+                return;
+            }
+
+            float pulse = Mathf.Sin(Time.unscaledTime * CampaignMoldinessAwardPulseSpeed);
+            float normalizedPulse = (pulse + 1f) * 0.5f;
+            float scale = 1f + (pulse * CampaignMoldinessAwardPulseStrength);
+            float alpha = Mathf.Lerp(CampaignMoldinessAwardPulseMinAlpha, 1f, normalizedPulse);
+            pulsingMoldinessAwardLabel.rectTransform.localScale = pulsingMoldinessAwardBaseScale * (CampaignMoldinessAwardPulseScaleMultiplier * scale);
+
+            Color pulsingColor = pulsingMoldinessAwardBaseColor;
+            pulsingColor.a = pulsingMoldinessAwardBaseColor.a * alpha;
+            pulsingMoldinessAwardLabel.color = pulsingColor;
+        }
+
+        private void ResetCampaignMoldinessAwardPulse()
+        {
+            if (pulsingMoldinessAwardLabel != null)
+            {
+                pulsingMoldinessAwardLabel.rectTransform.localScale = pulsingMoldinessAwardBaseScale;
+                pulsingMoldinessAwardLabel.color = pulsingMoldinessAwardBaseColor;
+            }
+
+            pulsingMoldinessAwardLabel = null;
+            pulsingMoldinessAwardBaseScale = Vector3.one;
+            pulsingMoldinessAwardBaseColor = Color.white;
         }
 
         private void ConfigurePendingDefeatCarryoverEvent(
