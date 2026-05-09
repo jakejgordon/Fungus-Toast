@@ -1039,7 +1039,7 @@ namespace FungusToast.Unity.UI.Campaign
                 return;
             }
 
-            MoldinessProgressSnapshot snapshot = campaignController.MoldinessProgress;
+            FungusToast.Unity.Campaign.MoldinessProgressSnapshot snapshot = campaignController.MoldinessProgress;
             int level = snapshot.CurrentTierIndex + 1;
             int threshold = Math.Max(1, snapshot.CurrentThreshold);
             int progress = Mathf.Clamp(snapshot.CurrentProgress, 0, threshold);
