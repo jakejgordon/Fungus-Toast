@@ -34,7 +34,10 @@ Campaign new-run flow now supports unlocked higher starting difficulties.
 
 - The campaign panel exposes start-difficulty choices during the mold-selection step.
 - Full campaign clears unlock the next authored start-difficulty option.
-- The current authored start points are coarse campaign-depth bands rather than a separate parallel progression asset.
+- The current authored start points are shallow campaign-depth skips rather than a separate parallel progression asset.
+- Current authored starts are: `Training = Campaign0`, `Easy = Campaign3`, `Medium = Campaign4`, `Hard = Campaign5`, `Elite = Campaign6`, `Boss = Campaign7`.
+- Starting deeper does not retroactively grant the skipped victories' Adaptation drafts or other per-level rewards; the player begins with only what a fresh run normally has plus any persistent campaign meta unlocks.
+- This is why the current system can reasonably keep the `difficulty` label even before future AI/mechanics-based difficulty work lands.
 - Development testing level overrides still bypass this system and remain testing-only.
 
 Save file:

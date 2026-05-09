@@ -1902,6 +1902,7 @@ namespace FungusToast.Unity.UI.Campaign
             return $"<b>{option.Label}</b>\n\n"
                 + $"Starts a new campaign at <b>Level {option.StartLevelDisplay}</b>, using the normal authored board, opponents, and rewards for that later point in the campaign.\n\n"
                 + "This does <b>not</b> currently apply a separate global stat multiplier or a special ruleset. Right now it is a lighter progression shortcut that starts a little deeper into the existing campaign.\n\n"
+                + "You also do <b>not</b> retroactively earn the skipped levels' adaptation drafts or other victory rewards, so the deeper start is still tougher than a full run from Training.\n\n"
                 + availability;
         }
 
