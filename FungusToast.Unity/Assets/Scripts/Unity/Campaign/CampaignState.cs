@@ -41,6 +41,7 @@ namespace FungusToast.Unity.Campaign
     public class CampaignVictorySnapshot
     {
         public int clearedLevelDisplay;
+        public bool isFinalCampaignVictory;
         public int moldinessAwarded;
         public int moldinessProgressBeforeAward;
         public int moldinessProgressAfterAward;

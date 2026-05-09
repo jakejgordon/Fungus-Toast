@@ -33,8 +33,8 @@ namespace FungusToast.Unity.UI.Campaign
         private const float MoldinessSummaryTextWidth = 400f;
         private const float MoldinessSummaryToastGridWidth = 200f;
         private const float MoldinessUnlockedRewardsGridWidth = 400f;
-        private const string CampaignStartDifficultyTitleText = "Choose your starting difficulty.";
-        private const string MoldSelectionTitleText = "Choose your mold icon for this campaign run.";
+        private const string CampaignStartDifficultyTitleText = "Choose Your Starting Difficulty";
+        private const string MoldSelectionTitleText = "Choose Your Mold Icon for This Campaign Run";
 
         private static readonly string[] MoldDisplayNames =
         {

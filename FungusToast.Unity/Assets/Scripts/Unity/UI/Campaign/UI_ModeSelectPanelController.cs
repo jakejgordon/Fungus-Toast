@@ -29,7 +29,7 @@ namespace FungusToast.Unity.UI.Campaign
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
-        private const string AlphaHeadingText = "Alpha test build";
+        private const string AlphaHeadingText = "Alpha Test Build";
         private const string AlphaSummaryCopy = "Alpha build for testing. Hotseat and campaign are both available; progression and balance are still in flux.";
         private const string CreditsHeadingText = "Special Credits";
         private const string ArtworkHeadingText = "Artwork";

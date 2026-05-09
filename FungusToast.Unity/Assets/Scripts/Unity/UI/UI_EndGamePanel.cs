@@ -430,14 +430,14 @@ namespace FungusToast.Unity.UI
                 {
                     // defeat – show lost level index (1-based)
                     outcomeLabel.text =
-                        $"<color=#{ToHex(UIStyleTokens.State.Danger)}><b>Campaign lost</b></color>\n" +
+                        $"<color=#{ToHex(UIStyleTokens.State.Danger)}><b>Campaign Lost</b></color>\n" +
                         $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Level {lostLevelDisplay}</color></size>\n" +
                         $"<size=22><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Oh no! You just weren't moldy enough.</color></size>";
                 }
                 else if (finalLevel)
                 {
                     outcomeLabel.text =
-                            $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>The toast is yours</b></color>\n" +
+                            $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>The Toast Is Yours</b></color>\n" +
                             $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Your colony has fully bloomed into a crumb-crushing fungal legend. Campaign conquered.</color></size>";
                 }
                 else
@@ -447,7 +447,7 @@ namespace FungusToast.Unity.UI
                         ? "Claim your moldiness rewards before the normal adaptation draft."
                         : "Select an Adaptation to continue the campaign.";
                     outcomeLabel.text =
-                        $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Level {completedLevelDisplay} cleared</b></color>\n" +
+                        $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Level {completedLevelDisplay} Cleared</b></color>\n" +
                         $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>{subtitle}</color></size>";
                 }
             }
@@ -692,6 +692,7 @@ namespace FungusToast.Unity.UI
         {
             snapshot ??= new CampaignVictorySnapshot();
             snapshot.clearedLevelDisplay = levelDisplay;
+            snapshot.isFinalCampaignVictory = victory && finalLevel;
 
             var moldinessState = GameManager.Instance?.CampaignController?.State?.moldiness;
             var moldinessSnapshot = GetSnapshot(moldinessState);
@@ -741,7 +742,7 @@ namespace FungusToast.Unity.UI
                     ? "Your preserved spores are waiting. Choose which adaptations carry into the next run."
                     : $"Choose {defeatCarryoverSelectionCapacity} adaptation{Pluralize(defeatCarryoverSelectionCapacity)} to carry into your next run.";
                 outcomeLabel.text =
-                    $"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Preserve your spores</b></color>\n" +
+                    $"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Preserve Your Spores</b></color>\n" +
                     $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>{subtitle}</color></size>";
             }
 
@@ -820,7 +821,7 @@ namespace FungusToast.Unity.UI
                     ? "Choose one moldiness reward before the normal adaptation draft."
                     : "No moldiness rewards are available for this threshold. Continue to move on.";
                 outcomeLabel.text =
-                    $"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Moldiness threshold reached</b></color>\n" +
+                    $"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Moldiness Threshold Reached</b></color>\n" +
                     $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>{subtitle}</color></size>";
             }
 
@@ -870,7 +871,7 @@ namespace FungusToast.Unity.UI
             if (outcomeLabel != null)
             {
                 outcomeLabel.text =
-                    $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Level {snapshot.clearedLevelDisplay} cleared</b></color>\n" +
+                    $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Level {snapshot.clearedLevelDisplay} Cleared</b></color>\n" +
                     $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Select an Adaptation to continue the campaign.</color></size>";
             }
 
@@ -1317,7 +1318,7 @@ namespace FungusToast.Unity.UI
                 FontStyles.Bold);
             ApplyCarryoverInfoTextWidth(title, CampaignMoldinessSummaryTextWidth);
             title.alignment = TextAlignmentOptions.Center;
-            ConfigureCampaignMoldinessAwardPulse(title, victory && snapshot.moldinessAwarded > 0);
+            ConfigureCampaignMoldinessAwardPulse(title, snapshot.isFinalCampaignVictory && snapshot.moldinessAwarded > 0);
 
             var status = CreateCarryoverInfoText(root.transform,
                 $"Moldiness Level {currentLevel}  •  {progressAfter} / {threshold} to next threshold",
@@ -2365,7 +2366,7 @@ namespace FungusToast.Unity.UI
             if (outcomeLabel != null)
             {
                 outcomeLabel.text =
-                    $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Adaptation secured</b></color>\n" +
+                    $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Adaptation Secured</b></color>\n" +
                     $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Continue when you are ready for the next level.</color></size>";
             }
 

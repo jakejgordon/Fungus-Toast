@@ -1874,7 +1874,7 @@ namespace FungusToast.Unity.UI.GameStart
         {
             if (moldSelectionTitleLabel != null)
             {
-                moldSelectionTitleLabel.text = "Choose a unique mold icon for each human player.";
+                moldSelectionTitleLabel.text = "Choose a Unique Mold Icon for Each Human Player";
             }
 
             if (moldSelectionStatusLabel != null)

@@ -53,7 +53,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
     {
         private const string DefaultDraftTitle = "Choose a Mycovariant";
         private const string DefaultDraftBlurb = "Select a unique mycovariant mutation.";
-        private const string DefaultHumanTurnBannerText = "Your turn to draft a Mycovariant!";
+        private const string DefaultHumanTurnBannerText = "Your Turn to Draft a Mycovariant!";
         private const string DefaultAiTurnBannerPrefix = "AI Drafting";
         private const string DraftHistoryOverlayTitle = "Mycovariant Draft Log";
 

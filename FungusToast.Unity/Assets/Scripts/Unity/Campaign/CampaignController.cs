@@ -257,6 +257,7 @@ namespace FungusToast.Unity.Campaign
             snapshot = new CampaignVictorySnapshot
             {
                 clearedLevelDisplay = Math.Max(1, State.levelIndex + 1),
+                isFinalCampaignVictory = State.campaignCompleted,
                 moldinessAwarded = 0,
                 moldinessProgressBeforeAward = moldinessSnapshot.CurrentProgress,
                 moldinessProgressAfterAward = moldinessSnapshot.CurrentProgress,

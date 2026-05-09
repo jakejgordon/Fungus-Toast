@@ -112,6 +112,8 @@ Notes:
 
 ### Text Rules
 - Use sentence case for instructional labels.
+- Use Title Case for short, standalone screen titles and hero headings, including menu titles, major modal titles, pause titles, and victory/defeat banners.
+- Keep subtitles, helper text, confirmation prompts, and other explanatory copy in sentence case even when paired with a Title Case heading.
 - Keep button labels short and verb-oriented.
 - Avoid all-caps except tiny overline/meta labels.
 - Avoid abbreviations when the full word fits in the available UI space; prefer full wording to reduce ambiguity (especially for non-native English readers).
