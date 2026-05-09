@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
+using CoreCampaign = FungusToast.Core.Campaign;
 
 namespace FungusToast.Unity.Campaign
 {
@@ -81,18 +81,6 @@ namespace FungusToast.Unity.Campaign
 
     public static class MoldinessProgression
     {
-        private const int FinalCampaignVictoryRewardMultiplier = 2;
-
-        private static readonly int[] RewardByClearedLevelDisplay =
-        {
-            1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
-        };
-
-        private static readonly int[] ThresholdsByTier =
-        {
-            6, 9, 12, 15, 18, 21, 24, 27, 30, 34
-        };
-
         public static MoldinessProgressionState CreateDefaultState()
         {
             return new MoldinessProgressionState();
@@ -100,49 +88,23 @@ namespace FungusToast.Unity.Campaign
 
         public static int GetRewardForClearedLevel(int clearedLevelDisplay, bool isFinalCampaignVictory = false)
         {
-            if (clearedLevelDisplay <= 0)
-            {
-                return 0;
-            }
-
-            int index = Mathf.Clamp(clearedLevelDisplay - 1, 0, RewardByClearedLevelDisplay.Length - 1);
-            int reward = RewardByClearedLevelDisplay[index];
-            if (!isFinalCampaignVictory || index == 0)
-            {
-                return reward;
-            }
-
-            int previousReward = RewardByClearedLevelDisplay[index - 1];
-            return Math.Max(reward, previousReward * FinalCampaignVictoryRewardMultiplier);
+            return CoreCampaign.MoldinessProgression.GetRewardForClearedLevel(clearedLevelDisplay, isFinalCampaignVictory);
         }
 
         public static int GetThresholdForTier(int tierIndex)
         {
-            if (tierIndex < 0)
-            {
-                tierIndex = 0;
-            }
-
-            if (tierIndex < ThresholdsByTier.Length)
-            {
-                return ThresholdsByTier[tierIndex];
-            }
-
-            int overflowTierIndex = tierIndex - ThresholdsByTier.Length + 1;
-            return ThresholdsByTier[ThresholdsByTier.Length - 1] + (overflowTierIndex * 4);
+            return CoreCampaign.MoldinessProgression.GetThresholdForTier(tierIndex);
         }
 
         public static MoldinessProgressSnapshot GetSnapshot(MoldinessProgressionState state)
         {
-            state ??= CreateDefaultState();
-            state.pendingUnlockTriggers ??= new List<MoldinessUnlockTrigger>();
-
+            var snapshot = CoreCampaign.MoldinessProgression.GetSnapshot(ToCoreState(state));
             return new MoldinessProgressSnapshot(
-                state.currentProgress,
-                state.currentTierIndex,
-                GetThresholdForTier(state.currentTierIndex),
-                state.lifetimeEarned,
-                state.pendingUnlockTriggers.Count);
+                snapshot.CurrentProgress,
+                snapshot.CurrentTierIndex,
+                snapshot.CurrentThreshold,
+                snapshot.LifetimeEarned,
+                snapshot.PendingUnlockCount);
         }
 
         public static MoldinessAwardResult AwardForLevelClear(
@@ -150,63 +112,155 @@ namespace FungusToast.Unity.Campaign
             int clearedLevelDisplay,
             bool isFinalCampaignVictory = false)
         {
-            state ??= CreateDefaultState();
-            int amount = GetRewardForClearedLevel(clearedLevelDisplay, isFinalCampaignVictory);
-            return ApplyAward(state, amount);
+            var targetState = state ?? CreateDefaultState();
+            var coreState = ToCoreState(targetState);
+            var result = CoreCampaign.MoldinessProgression.AwardForLevelClear(coreState, clearedLevelDisplay, isFinalCampaignVictory);
+            ApplyCoreState(coreState, targetState);
+            return FromCoreResult(result);
         }
 
         public static MoldinessAwardResult ApplyAward(MoldinessProgressionState state, int amount)
         {
-            state ??= CreateDefaultState();
-            state.pendingUnlockTriggers ??= new List<MoldinessUnlockTrigger>();
+            var targetState = state ?? CreateDefaultState();
+            var coreState = ToCoreState(targetState);
+            var result = CoreCampaign.MoldinessProgression.ApplyAward(coreState, amount);
+            ApplyCoreState(coreState, targetState);
+            return FromCoreResult(result);
+        }
 
-            int safeAmount = Mathf.Max(0, amount);
-            int previousProgress = state.currentProgress;
-            int previousTierIndex = state.currentTierIndex;
-
-            if (safeAmount == 0)
+        private static MoldinessAwardResult FromCoreResult(CoreCampaign.MoldinessAwardResult result)
+        {
+            var triggers = new List<MoldinessUnlockTrigger>();
+            if (result.UnlockTriggers != null)
             {
-                return new MoldinessAwardResult(
-                    0,
-                    previousProgress,
-                    state.currentProgress,
-                    previousTierIndex,
-                    state.currentTierIndex,
-                    GetThresholdForTier(state.currentTierIndex),
-                    state.lifetimeEarned,
-                    Array.Empty<MoldinessUnlockTrigger>());
-            }
-
-            state.currentProgress += safeAmount;
-            state.lifetimeEarned += safeAmount;
-
-            var newTriggers = new List<MoldinessUnlockTrigger>();
-            while (state.currentProgress >= GetThresholdForTier(state.currentTierIndex))
-            {
-                int threshold = GetThresholdForTier(state.currentTierIndex);
-                state.currentProgress -= threshold;
-
-                var trigger = new MoldinessUnlockTrigger
+                foreach (var trigger in result.UnlockTriggers)
                 {
-                    tierIndex = state.currentTierIndex,
-                    threshold = threshold,
-                    overflowAfterUnlock = state.currentProgress
-                };
-
-                newTriggers.Add(trigger);
-                state.pendingUnlockTriggers.Add(trigger);
-                state.currentTierIndex++;
+                    triggers.Add(new MoldinessUnlockTrigger
+                    {
+                        tierIndex = trigger.tierIndex,
+                        threshold = trigger.threshold,
+                        overflowAfterUnlock = trigger.overflowAfterUnlock
+                    });
+                }
             }
 
             return new MoldinessAwardResult(
-                safeAmount,
-                previousProgress,
-                state.currentProgress,
-                previousTierIndex,
-                state.currentTierIndex,
-                GetThresholdForTier(state.currentTierIndex),
-                state.lifetimeEarned,
-                newTriggers);
+                result.AmountAwarded,
+                result.PreviousProgress,
+                result.NewProgress,
+                result.PreviousTierIndex,
+                result.NewTierIndex,
+                result.CurrentThreshold,
+                result.LifetimeEarned,
+                triggers);
+        }
+
+        private static CoreCampaign.MoldinessProgressionState ToCoreState(MoldinessProgressionState state)
+        {
+            state ??= CreateDefaultState();
+
+            return new CoreCampaign.MoldinessProgressionState
+            {
+                currentProgress = state.currentProgress,
+                currentTierIndex = state.currentTierIndex,
+                lifetimeEarned = state.lifetimeEarned,
+                highestUnlockedCampaignStartDifficultyIndex = state.highestUnlockedCampaignStartDifficultyIndex,
+                pendingUnlockTriggers = CopyTriggersToCore(state.pendingUnlockTriggers),
+                unlockLevel = state.unlockLevel,
+                failedRunAdaptationCarryoverCount = state.failedRunAdaptationCarryoverCount,
+                unlockedRewardIds = state.unlockedRewardIds != null ? new List<string>(state.unlockedRewardIds) : new List<string>(),
+                unlockedAdaptationIds = state.unlockedAdaptationIds != null ? new List<string>(state.unlockedAdaptationIds) : new List<string>(),
+                unlockedMycovariantIds = state.unlockedMycovariantIds != null ? new List<int>(state.unlockedMycovariantIds) : new List<int>(),
+                pendingUnlockChoice = state.pendingUnlockChoice == null
+                    ? null
+                    : new CoreCampaign.MoldinessUnlockChoiceState
+                    {
+                        triggerTierIndex = state.pendingUnlockChoice.triggerTierIndex,
+                        offeredUnlockIds = state.pendingUnlockChoice.offeredUnlockIds != null
+                            ? new List<string>(state.pendingUnlockChoice.offeredUnlockIds)
+                            : new List<string>()
+                    }
+            };
+        }
+
+        private static void ApplyCoreState(CoreCampaign.MoldinessProgressionState source, MoldinessProgressionState target)
+        {
+            if (source == null || target == null)
+            {
+                return;
+            }
+
+            target.currentProgress = source.currentProgress;
+            target.currentTierIndex = source.currentTierIndex;
+            target.lifetimeEarned = source.lifetimeEarned;
+            target.highestUnlockedCampaignStartDifficultyIndex = source.highestUnlockedCampaignStartDifficultyIndex;
+            target.pendingUnlockTriggers = CopyTriggersFromCore(source.pendingUnlockTriggers);
+            target.unlockLevel = source.unlockLevel;
+            target.failedRunAdaptationCarryoverCount = source.failedRunAdaptationCarryoverCount;
+            target.unlockedRewardIds = source.unlockedRewardIds != null ? new List<string>(source.unlockedRewardIds) : new List<string>();
+            target.unlockedAdaptationIds = source.unlockedAdaptationIds != null ? new List<string>(source.unlockedAdaptationIds) : new List<string>();
+            target.unlockedMycovariantIds = source.unlockedMycovariantIds != null ? new List<int>(source.unlockedMycovariantIds) : new List<int>();
+            target.pendingUnlockChoice = source.pendingUnlockChoice == null
+                ? null
+                : new MoldinessUnlockChoiceState
+                {
+                    triggerTierIndex = source.pendingUnlockChoice.triggerTierIndex,
+                    offeredUnlockIds = source.pendingUnlockChoice.offeredUnlockIds != null
+                        ? new List<string>(source.pendingUnlockChoice.offeredUnlockIds)
+                        : new List<string>()
+                };
+        }
+
+        private static List<CoreCampaign.MoldinessUnlockTrigger> CopyTriggersToCore(IReadOnlyList<MoldinessUnlockTrigger> triggers)
+        {
+            var copy = new List<CoreCampaign.MoldinessUnlockTrigger>();
+            if (triggers == null)
+            {
+                return copy;
+            }
+
+            foreach (var trigger in triggers)
+            {
+                if (trigger == null)
+                {
+                    continue;
+                }
+
+                copy.Add(new CoreCampaign.MoldinessUnlockTrigger
+                {
+                    tierIndex = trigger.tierIndex,
+                    threshold = trigger.threshold,
+                    overflowAfterUnlock = trigger.overflowAfterUnlock
+                });
+            }
+
+            return copy;
+        }
+
+        private static List<MoldinessUnlockTrigger> CopyTriggersFromCore(IReadOnlyList<CoreCampaign.MoldinessUnlockTrigger> triggers)
+        {
+            var copy = new List<MoldinessUnlockTrigger>();
+            if (triggers == null)
+            {
+                return copy;
+            }
+
+            foreach (var trigger in triggers)
+            {
+                if (trigger == null)
+                {
+                    continue;
+                }
+
+                copy.Add(new MoldinessUnlockTrigger
+                {
+                    tierIndex = trigger.tierIndex,
+                    threshold = trigger.threshold,
+                    overflowAfterUnlock = trigger.overflowAfterUnlock
+                });
+            }
+
+            return copy;
         }
     }
 }

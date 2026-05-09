@@ -187,7 +187,7 @@ public class StartingAdaptationTests
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Boss level seed determinism (the seed math from CampaignController)
+    // Boss level seed determinism
     // ─────────────────────────────────────────────────────────────────────────
 
     [Fact]
@@ -277,12 +277,10 @@ public class StartingAdaptationTests
     }
 
     /// <summary>
-    /// Mirrors the boss-index derivation in CampaignController.ResolveBoardPreset.
-    /// seed = unchecked((runSeed * 397) ^ levelIndex)
+    /// Uses the shared campaign determinism helper so the tests hit the production seed logic directly.
     /// </summary>
     private static int PickBossIndex(int runSeed, int levelIndex, int bossCount)
     {
-        int seed = unchecked((runSeed * 397) ^ levelIndex);
-        return new Random(seed).Next(bossCount);
+        return CampaignRunDeterminism.PickBossPresetIndex(runSeed, levelIndex, bossCount);
     }
 }
