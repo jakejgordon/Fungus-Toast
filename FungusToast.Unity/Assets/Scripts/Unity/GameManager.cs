@@ -735,9 +735,9 @@ namespace FungusToast.Unity
             gameStartService?.StartHotseatGame(numberOfPlayers);
         }
 
-        public void StartCampaignNew(int humanMoldIndex = 0)
+        public void StartCampaignNew(int humanMoldIndex = 0, int? startLevelIndex = null)
         {
-            gameStartService?.StartCampaignNew(humanMoldIndex);
+            gameStartService?.StartCampaignNew(humanMoldIndex, startLevelIndex);
         }
 
         public void StartCampaignResume()

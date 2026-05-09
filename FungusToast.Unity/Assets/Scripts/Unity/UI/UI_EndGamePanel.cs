@@ -400,7 +400,7 @@ namespace FungusToast.Unity.UI
 
             int levelDisplay = victory ? completedLevelDisplay : lostLevelDisplay;
             showCampaignLossActionStack = !victory;
-            var presentationSnapshot = EnsureCampaignOutcomePresentationSnapshot(campaignSnapshot, victory, levelDisplay);
+            var presentationSnapshot = EnsureCampaignOutcomePresentationSnapshot(campaignSnapshot, victory, finalLevel, levelDisplay);
             cachedCampaignVictorySnapshot = presentationSnapshot;
 
             if (!victory)
@@ -673,7 +673,11 @@ namespace FungusToast.Unity.UI
             StartCoroutine(FadeCanvasGroup(1f, 0.25f));
         }
 
-        private static CampaignVictorySnapshot EnsureCampaignOutcomePresentationSnapshot(CampaignVictorySnapshot snapshot, bool victory, int levelDisplay)
+        private static CampaignVictorySnapshot EnsureCampaignOutcomePresentationSnapshot(
+            CampaignVictorySnapshot snapshot,
+            bool victory,
+            bool finalLevel,
+            int levelDisplay)
         {
             snapshot ??= new CampaignVictorySnapshot();
             snapshot.clearedLevelDisplay = levelDisplay;
@@ -681,7 +685,7 @@ namespace FungusToast.Unity.UI
             var moldinessState = GameManager.Instance?.CampaignController?.State?.moldiness;
             var moldinessSnapshot = GetSnapshot(moldinessState);
 
-            snapshot.moldinessAwarded = victory ? GetRewardForClearedLevel(levelDisplay) : 0;
+            snapshot.moldinessAwarded = victory ? GetRewardForClearedLevel(levelDisplay, finalLevel) : 0;
             snapshot.moldinessProgressAfterAward = moldinessSnapshot.CurrentProgress;
             snapshot.moldinessThresholdAfterAward = moldinessSnapshot.CurrentThreshold;
             snapshot.moldinessTierAfterAward = moldinessSnapshot.CurrentTierIndex;

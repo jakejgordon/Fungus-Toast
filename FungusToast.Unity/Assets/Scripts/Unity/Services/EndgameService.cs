@@ -1007,7 +1007,7 @@ namespace FungusToast.Unity
             initializeRestoredGame(soloSave.runtimeSnapshot, soloSave.randomState, soloSave.gameplaySeed);
         }
 
-        public void StartCampaignNew(int humanMoldIndex = 0)
+        public void StartCampaignNew(int humanMoldIndex = 0, int? startLevelIndex = null)
         {
             var campaignController = getCampaignController();
             if (campaignController == null)
@@ -1031,13 +1031,17 @@ namespace FungusToast.Unity
                 }
             }
 
-            int? levelOverride = GameManager.Instance != null && GameManager.Instance.IsTestingModeEnabled
+            int? levelOverride = isTestingLevelOverride
                 ? GameManager.Instance.TestingCampaignLevelIndex
-                : null;
+                : startLevelIndex;
             IReadOnlyList<string> forcedStartingAdaptationIds = GameManager.Instance != null && GameManager.Instance.IsTestingModeEnabled
                 ? GameManager.Instance.TestingForcedStartingAdaptationIds
                 : null;
-            campaignController.StartNew(humanMoldIndex, levelOverride, forcedStartingAdaptationIds);
+            campaignController.StartNew(
+                humanMoldIndex,
+                levelOverride,
+                forcedStartingAdaptationIds,
+                treatLevelOverrideAsFreshRunWithoutPersistentState: isTestingLevelOverride);
             setGameMode(GameMode.Campaign);
             StartCampaignGameplay(campaignController);
         }

@@ -33,25 +33,17 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** make campaign victory feel more satisfying with a dedicated victory message, a larger moldiness payout, and a clear longer-term hook for difficulty unlocks.
+- **Current focus:** implement `Spore Sifting` as the next moldiness permanent upgrade, scoped to Mycovariant drafts only.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
 
-1. Add a fun dedicated campaign-victory message on the final campaign clear.
-2. Increase the final campaign-victory moldiness reward to feel meaningfully better than the penultimate level reward, with **2x that prior reward** as the current target.
-3. Keep the implementation scoped to data already available at victory time; do not depend on cross-campaign stat tracking yet.
-4. Longer term, unlock the next difficulty level when the campaign is completed victoriously.
+1. Add a persistent `Spore Sifting` moldiness unlock definition in the existing reward catalog.
+2. Track once-per-level redraw consumption separately from permanent ownership.
+3. Add a clear redraw control to the Mycovariant draft flow, with confirmation before spending it.
+4. Keep the MVP strictly on Mycovariant drafts with no bleed into Adaptation or Moldiness reward flows.
 
 ## Pending Tasks
-
-- **Improve campaign victory payoff**
-  - **Immediate scope:**
-    - show a dedicated fun final-victory message
-    - award a noticeably larger final moldiness payout
-  - **Current payout target:** final campaign victory should grant about **2x the moldiness reward of the second-to-last level**
-  - **Implementation constraint:** only assume access to the just-finished level result plus the player's chosen adaptations; no campaign-wide stat history yet
-  - **Later follow-up:** unlock the next difficulty level after a victorious campaign clear
 
 - **Implement `Spore Sifting` permanent campaign upgrade**
   - **Product decision:** this is the next moldiness permanent upgrade after `Strain Profiling`.
@@ -98,12 +90,13 @@ Use the following minimal workflow to preserve working memory across sessions:
 - Moldiness was chosen as the campaign meta-currency name.
 - Moldiness progression foundation is committed in `90b81d3` and the first unlock-plumbing prototype is committed in `32b2b44`.
 - Current moldiness prototype in repo:
-  - level clears award persistent moldiness using rewards `1,1,2,2,3,3,4,4,5,5,6,6,7,7,8`
+  - level clears award persistent moldiness using rewards `1,1,2,2,3,3,4,4,5,5,6,6,7,7`, and the final campaign clear now grants a dedicated victory bonus that currently lands at `14`
   - threshold tiers are `6,9,12,15,18,21,24,27,30,34`, then continue with `+4` growth beyond the table
   - overflow carries over and multiple unlock thresholds can trigger from one award
   - moldiness rewards now block the normal adaptation draft until resolved instead of auto-applying silently
   - defeat carryover selection now blocks defeat reset when the player has carryover capacity
   - pending-threshold reward generation now correctly considers newly triggered unlock levels, so level-appropriate rewards appear immediately on threshold reach
+  - victorious full campaign clears now unlock the next campaign start difficulty, and the campaign start screen exposes the unlocked difficulty starts directly on the mold-selection step
 - Completed moldiness UI/presentation work now in repo:
   - moldiness reward cards render visibly and can be selected on the endgame panel (`fcad81d`)
   - campaign menu moldiness summary card exists as the primary persistent home for moldiness state outside gameplay (`d71f2c3`)
@@ -152,4 +145,8 @@ Use the following minimal workflow to preserve working memory across sessions:
   - pending moldiness reward overlays were narrowed and centered, with right-sidebar suppression for the resume flow
   - mode select now surfaces `Campaign (Pending Reward)` and routes into pending reward resolution
   - pending reward claims entered from mode select now return to the campaign menu instead of jumping straight into gameplay
+- Latest completed campaign-victory payoff work from 2026-05-08:
+  - final campaign clear now uses dedicated victory copy on the campaign end panel
+  - final campaign clear now awards a larger moldiness payout tuned to about `2x` the penultimate reward
+  - victorious full clears now unlock the next campaign start difficulty, and the campaign panel exposes unlocked start difficulties on the new-run flow
 - Immediate next implementation target: keep `Spore Sifting` scoped to Mycovariant drafts only, with a once-per-level full redraw and no bleed into Adaptation or Moldiness reward flows.

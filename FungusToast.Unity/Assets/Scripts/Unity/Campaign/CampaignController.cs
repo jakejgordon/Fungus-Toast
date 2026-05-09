@@ -16,6 +16,33 @@ namespace FungusToast.Unity.Campaign
     /// </summary>
     public class CampaignController
     {
+        public readonly struct CampaignStartDifficultyOption
+        {
+            public CampaignStartDifficultyOption(CampaignDifficulty difficulty, string label, int startLevelIndex)
+            {
+                Difficulty = difficulty;
+                Label = label ?? difficulty.ToString();
+                StartLevelIndex = Mathf.Max(0, startLevelIndex);
+            }
+
+            public CampaignDifficulty Difficulty { get; }
+            public string Label { get; }
+            public int StartLevelIndex { get; }
+            public int StartLevelDisplay => StartLevelIndex + 1;
+        }
+
+        // These start points are a temporary lightweight progression: unlocked difficulties
+        // begin a little deeper into the authored campaign rather than redefining AI/mechanics.
+        private static readonly CampaignStartDifficultyOption[] CampaignStartDifficultyOptions =
+        {
+            new(CampaignDifficulty.Training, "Training", 0),
+            new(CampaignDifficulty.Easy, "Easy", 3),
+            new(CampaignDifficulty.Medium, "Medium", 4),
+            new(CampaignDifficulty.Hard, "Hard", 5),
+            new(CampaignDifficulty.Elite, "Elite", 6),
+            new(CampaignDifficulty.Boss, "Boss", 7)
+        };
+
         private readonly CampaignProgression progression;
         public CampaignState State { get; private set; }
 
@@ -73,14 +100,38 @@ namespace FungusToast.Unity.Campaign
                 forcedMycovariantId);
         }
 
-        public void StartNew(int humanMoldIndex = 0, int? levelIndexOverride = null, IReadOnlyList<string> temporaryTestingAdaptationIds = null)
+        public IReadOnlyList<CampaignStartDifficultyOption> GetCampaignStartDifficultyOptions()
+        {
+            return CampaignStartDifficultyOptions
+                .Where(option => option.StartLevelIndex < progression.MaxLevels)
+                .ToArray();
+        }
+
+        public int GetHighestUnlockedCampaignStartDifficultyIndex()
+        {
+            var options = GetCampaignStartDifficultyOptions();
+            if (options.Count == 0)
+            {
+                return 0;
+            }
+
+            var progressionState = GetPersistentCampaignStateForNewRun()?.moldiness;
+            int unlockedIndex = progressionState?.highestUnlockedCampaignStartDifficultyIndex ?? 0;
+            return Mathf.Clamp(unlockedIndex, 0, options.Count - 1);
+        }
+
+        public void StartNew(
+            int humanMoldIndex = 0,
+            int? levelIndexOverride = null,
+            IReadOnlyList<string> temporaryTestingAdaptationIds = null,
+            bool treatLevelOverrideAsFreshRunWithoutPersistentState = false)
         {
             if (progression.MaxLevels == 0) throw new InvalidOperationException("CampaignProgression has no levels defined.");
 
             int targetLevelIndex = Mathf.Clamp(levelIndexOverride ?? 0, 0, progression.MaxLevels - 1);
-            bool isLevelOverrideRun = targetLevelIndex > 0;
-            var previousState = isLevelOverrideRun ? null : State ?? CampaignSaveService.Load();
-            var carryoverAdaptationIds = isLevelOverrideRun
+            bool isTestingLevelOverrideRun = treatLevelOverrideAsFreshRunWithoutPersistentState && targetLevelIndex > 0;
+            var previousState = isTestingLevelOverrideRun ? null : GetPersistentCampaignStateForNewRun();
+            var carryoverAdaptationIds = isTestingLevelOverrideRun
                 ? new List<string>()
                 : GetCarryoverAdaptationIdsForNewCampaignStart(previousState);
             var persistentMoldinessState = previousState?.moldiness ?? MoldinessProgression.CreateDefaultState();
@@ -365,7 +416,12 @@ namespace FungusToast.Unity.Campaign
 
             // Victory path
             int clearedLevelDisplay = State.levelIndex + 1;
-            var moldinessAward = MoldinessProgression.AwardForLevelClear(State.moldiness, clearedLevelDisplay);
+            int nextIndex = State.levelIndex + 1;
+            bool isFinalCampaignVictory = nextIndex >= progression.MaxLevels;
+            var moldinessAward = MoldinessProgression.AwardForLevelClear(
+                State.moldiness,
+                clearedLevelDisplay,
+                isFinalCampaignVictory);
             LogMoldinessAward(clearedLevelDisplay, moldinessAward);
             State.pendingVictorySnapshot ??= new CampaignVictorySnapshot();
             State.pendingVictorySnapshot.clearedLevelDisplay = clearedLevelDisplay;
@@ -377,10 +433,10 @@ namespace FungusToast.Unity.Campaign
             State.pendingVictorySnapshot.moldinessTierAfterAward = moldinessAward.NewTierIndex;
             State.pendingVictorySnapshot.pendingMoldinessUnlockCount = State.moldiness?.pendingUnlockTriggers?.Count ?? 0;
 
-            int nextIndex = State.levelIndex + 1;
             if (nextIndex >= progression.MaxLevels)
             {
                 // Final victory.
+                bool unlockedNewCampaignStartDifficulty = TryUnlockNextCampaignStartDifficulty(out var unlockedDifficulty);
                 ClearGameplayCheckpoint(saveAfterClear: false);
                 ClearTemporaryTestingAdaptations(saveAfterClear: false);
                 State.pendingAdaptationSelection = false;
@@ -389,6 +445,10 @@ namespace FungusToast.Unity.Campaign
                 State.pendingVictorySnapshot = null;
                 CampaignSaveService.Save(State);
                 Debug.Log($"[CampaignController] Campaign completed! RunId={State.runId} Levels={progression.MaxLevels}");
+                if (unlockedNewCampaignStartDifficulty)
+                {
+                    Debug.Log($"[CampaignController] Unlocked campaign start difficulty '{unlockedDifficulty.Label}' (starts at level {unlockedDifficulty.StartLevelDisplay}).");
+                }
                 return;
             }
 
@@ -1188,6 +1248,37 @@ namespace FungusToast.Unity.Campaign
             }
 
             return GetEligibleDefeatCarryoverAdaptationIds(previousState.selectedAdaptationIds ?? new List<string>());
+        }
+
+        private CampaignState GetPersistentCampaignStateForNewRun()
+        {
+            return State ?? CampaignSaveService.Load();
+        }
+
+        private bool TryUnlockNextCampaignStartDifficulty(out CampaignStartDifficultyOption unlockedOption)
+        {
+            unlockedOption = default;
+            if (State?.moldiness == null)
+            {
+                return false;
+            }
+
+            var options = GetCampaignStartDifficultyOptions();
+            if (options.Count == 0)
+            {
+                return false;
+            }
+
+            int currentIndex = Mathf.Clamp(State.moldiness.highestUnlockedCampaignStartDifficultyIndex, 0, options.Count - 1);
+            int nextIndex = Mathf.Min(currentIndex + 1, options.Count - 1);
+            if (nextIndex <= currentIndex)
+            {
+                return false;
+            }
+
+            State.moldiness.highestUnlockedCampaignStartDifficultyIndex = nextIndex;
+            unlockedOption = options[nextIndex];
+            return true;
         }
 
         private static bool IsEligibleDefeatCarryoverAdaptationId(string adaptationId)

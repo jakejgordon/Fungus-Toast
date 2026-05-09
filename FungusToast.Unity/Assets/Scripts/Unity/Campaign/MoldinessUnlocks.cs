@@ -373,6 +373,12 @@ namespace FungusToast.Unity.Campaign
                 changed = true;
             }
 
+            if (progressionState.highestUnlockedCampaignStartDifficultyIndex < 0)
+            {
+                progressionState.highestUnlockedCampaignStartDifficultyIndex = 0;
+                changed = true;
+            }
+
             bool removedLegacyRewardId = progressionState.unlockedRewardIds.RemoveAll(id =>
                 string.Equals(id, MoldinessUnlockCatalog.LegacySporesInReserveRewardId, StringComparison.Ordinal)) > 0;
             if (removedLegacyRewardId)

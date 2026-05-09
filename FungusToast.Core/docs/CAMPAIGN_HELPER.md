@@ -12,6 +12,7 @@ Campaign is a roguelike-style run:
 - Winning a non-final level grants an Adaptation draft (3 choices, pick 1, no duplicates across the run).
 - After selecting an Adaptation, player can Continue Campaign or return to Main Menu.
 - Final level win shows completion messaging.
+- Victorious full campaign clears now also unlock deeper campaign start difficulties for future runs.
 
 ## Current Data Model
 
@@ -25,6 +26,16 @@ Important fields:
 - `campaignCompleted`: true after final victory
 - `pendingVictorySnapshot`: persisted endgame snapshot shown when resuming into a pending adaptation pick
 - `boardPresetId`, `boardWidth`, `boardHeight`
+- `moldiness.highestUnlockedCampaignStartDifficultyIndex`: persistent meta-progression state that gates which campaign start difficulties the player can choose for a new run
+
+## Campaign Start Difficulties
+
+Campaign new-run flow now supports unlocked higher starting difficulties.
+
+- The campaign panel exposes start-difficulty choices during the mold-selection step.
+- Full campaign clears unlock the next authored start-difficulty option.
+- The current authored start points are coarse campaign-depth bands rather than a separate parallel progression asset.
+- Development testing level overrides still bypass this system and remain testing-only.
 
 Save file:
 - `Application.persistentDataPath/campaign_save.json` for editor/debug development runs

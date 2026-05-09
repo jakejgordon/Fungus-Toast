@@ -10,6 +10,7 @@ namespace FungusToast.Unity.Campaign
         public int currentProgress;
         public int currentTierIndex;
         public int lifetimeEarned;
+        public int highestUnlockedCampaignStartDifficultyIndex;
         public List<MoldinessUnlockTrigger> pendingUnlockTriggers = new();
         public int unlockLevel;
         public int failedRunAdaptationCarryoverCount;
@@ -80,6 +81,8 @@ namespace FungusToast.Unity.Campaign
 
     public static class MoldinessProgression
     {
+        private const int FinalCampaignVictoryRewardMultiplier = 2;
+
         private static readonly int[] RewardByClearedLevelDisplay =
         {
             1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8
@@ -95,7 +98,7 @@ namespace FungusToast.Unity.Campaign
             return new MoldinessProgressionState();
         }
 
-        public static int GetRewardForClearedLevel(int clearedLevelDisplay)
+        public static int GetRewardForClearedLevel(int clearedLevelDisplay, bool isFinalCampaignVictory = false)
         {
             if (clearedLevelDisplay <= 0)
             {
@@ -103,7 +106,14 @@ namespace FungusToast.Unity.Campaign
             }
 
             int index = Mathf.Clamp(clearedLevelDisplay - 1, 0, RewardByClearedLevelDisplay.Length - 1);
-            return RewardByClearedLevelDisplay[index];
+            int reward = RewardByClearedLevelDisplay[index];
+            if (!isFinalCampaignVictory || index == 0)
+            {
+                return reward;
+            }
+
+            int previousReward = RewardByClearedLevelDisplay[index - 1];
+            return Math.Max(reward, previousReward * FinalCampaignVictoryRewardMultiplier);
         }
 
         public static int GetThresholdForTier(int tierIndex)
@@ -135,10 +145,13 @@ namespace FungusToast.Unity.Campaign
                 state.pendingUnlockTriggers.Count);
         }
 
-        public static MoldinessAwardResult AwardForLevelClear(MoldinessProgressionState state, int clearedLevelDisplay)
+        public static MoldinessAwardResult AwardForLevelClear(
+            MoldinessProgressionState state,
+            int clearedLevelDisplay,
+            bool isFinalCampaignVictory = false)
         {
             state ??= CreateDefaultState();
-            int amount = GetRewardForClearedLevel(clearedLevelDisplay);
+            int amount = GetRewardForClearedLevel(clearedLevelDisplay, isFinalCampaignVictory);
             return ApplyAward(state, amount);
         }
 
