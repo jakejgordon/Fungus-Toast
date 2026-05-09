@@ -426,8 +426,8 @@ namespace FungusToast.Unity.UI
                 else if (finalLevel)
                 {
                     outcomeLabel.text =
-                        $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>Campaign complete</b></color>\n" +
-                        $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Congratulations you mycelial mastermind! You won the campaign!</color></size>";
+                            $"<color=#{ToHex(UIStyleTokens.State.Success)}><b>The toast is yours</b></color>\n" +
+                            $"<size={CampaignOutcomeSubtitleFontSize}><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Your colony has fully bloomed into a crumb-crushing fungal legend. Campaign conquered.</color></size>";
                 }
                 else
                 {
