@@ -13,6 +13,7 @@ using FungusToast.Unity.Grid;
 using FungusToast.Unity;
 using FungusToast.Unity.UI.MutationTree;
 using FungusToast.Unity.UI.Tooltips;
+using FungusToast.Unity.UI.Onboarding;
 using System.Linq;
 using FungusToast.Core.Metrics;
 
@@ -20,12 +21,10 @@ namespace FungusToast.Unity.UI.MutationTree
 {
     public class UI_MutationManager : MonoBehaviour
     {
-        private const string MutationTreeGuidanceSeenKey = "Onboarding.AlphaMutationTreeGuidanceSeen";
         private const string SpendPointsTooltipText = "Open your upgrades and spend your mutation points now.";
         private const string StorePointsTooltipText = "Store your unspent mutation points.\nThey carry over to the next turn,\nso you can save for stronger upgrades.";
         private const string NormalSpeedTooltipText = "Standard pacing keeps the full growth and decay presentation sequence.";
         private const string TimeLapseTooltipText = "Skips most animations and speeds up growth cycles to reduce time between turns.";
-        private const string FirstTreeGuidanceToastText = "Hover upgrades to inspect them, then click an affordable one to buy it.\n\nIf you want stronger upgrades later, use Store Mutation Points at the top of this panel.";
         private const float SpendButtonMinWidth = 220f;
         private const float SpendButtonMinHeight = 40f;
         private const float StoreButtonMinWidth = 220f;
@@ -1531,12 +1530,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private void ShowFirstTreeGuidanceToast()
         {
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
-            if (hasDismissedTreeGuidanceThisGame)
-            {
-                return;
-            }
-
-            if (!forceFirstGame && ScopedPlayerPrefs.GetInt(MutationTreeGuidanceSeenKey, 0) != 0)
+            if (!NewPlayerTooltipRules.ShouldShowMutationTreeGuidance(forceFirstGame, hasDismissedTreeGuidanceThisGame))
             {
                 return;
             }
@@ -1547,7 +1541,9 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            toastPresenter.ShowModalIfTreeOpen(FirstTreeGuidanceToastText, OnFirstTreeGuidanceDismissed);
+            toastPresenter.ShowModalIfTreeOpen(
+                NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.MutationTreeGuidance).Body,
+                OnFirstTreeGuidanceDismissed);
         }
 
         private void OnFirstTreeGuidanceDismissed()
@@ -1557,8 +1553,7 @@ namespace FungusToast.Unity.UI.MutationTree
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
             if (!forceFirstGame)
             {
-                ScopedPlayerPrefs.SetInt(MutationTreeGuidanceSeenKey, 1);
-                ScopedPlayerPrefs.Save();
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.MutationTreeGuidance);
             }
         }
 

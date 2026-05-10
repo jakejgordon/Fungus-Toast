@@ -11,15 +11,13 @@ using FungusToast.Core.Mutations;
 using FungusToast.Unity.UI.GameLog;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders; // ensure provider namespace is imported
+using FungusToast.Unity.UI.Onboarding;
 using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI
 {
     public class UI_RightSidebar : MonoBehaviour
     {
-        private const string ScoreboardCoachmarkSeenKey = "Onboarding.ScoreboardWinConditionSeen";
-        private const string ScoreboardCoachmarkTitleText = "How to Win";
-        private const string ScoreboardCoachmarkBodyText = "This scoreboard is the clearest way to see who is ahead.\n\nWatch the Alive column. When the toast fills up and the game ends, the colony with the most living cells wins.";
         private const string DraftHistoryButtonLabel = "View Draft Log";
         private const float RoundAndOccupancyBottomTrim = 10f;
         private const float PlayerSummaryRowSpacing = 5f;
@@ -431,19 +429,14 @@ namespace FungusToast.Unity.UI
 
         public void TryShowScoreboardWinConditionCoachmark(int currentRound)
         {
-            if (currentRound < 2 || hasDismissedScoreboardCoachmarkThisGame)
-            {
-                return;
-            }
-
             var gameManager = GameManager.Instance;
             bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
-            if (!forceFirstGame && ScopedPlayerPrefs.GetInt(ScoreboardCoachmarkSeenKey, 0) != 0)
-            {
-                return;
-            }
-
-            if (gameManager != null && gameManager.IsFastForwarding)
+            bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
+            if (!NewPlayerTooltipRules.ShouldShowScoreboardWinCondition(
+                    forceFirstGame,
+                    currentRound,
+                    hasDismissedScoreboardCoachmarkThisGame,
+                    isFastForwarding))
             {
                 return;
             }
@@ -454,7 +447,9 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            scoreboardCoachmarkBodyTextLabel.text = ScoreboardCoachmarkBodyText;
+            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.ScoreboardWinCondition);
+            scoreboardCoachmarkTitleTextLabel.text = definition.Title;
+            scoreboardCoachmarkBodyTextLabel.text = definition.Body;
             scoreboardCoachmarkRoot.gameObject.SetActive(true);
             scoreboardCoachmarkRoot.SetAsLastSibling();
             scoreboardCoachmarkCanvasGroup.alpha = 1f;
@@ -510,7 +505,7 @@ namespace FungusToast.Unity.UI
             titleRect.offsetMax = new Vector2(-52f, -12f);
 
             scoreboardCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
-            scoreboardCoachmarkTitleTextLabel.text = ScoreboardCoachmarkTitleText;
+            scoreboardCoachmarkTitleTextLabel.text = string.Empty;
             scoreboardCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
             scoreboardCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
             scoreboardCoachmarkTitleTextLabel.fontSize = 24f;
@@ -587,8 +582,7 @@ namespace FungusToast.Unity.UI
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
             if (!forceFirstGame)
             {
-                ScopedPlayerPrefs.SetInt(ScoreboardCoachmarkSeenKey, 1);
-                ScopedPlayerPrefs.Save();
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.ScoreboardWinCondition);
             }
 
             HideScoreboardCoachmarkImmediate(false);

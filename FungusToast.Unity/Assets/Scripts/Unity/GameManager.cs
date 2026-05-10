@@ -23,6 +23,7 @@ using FungusToast.Unity.UI.MycovariantDraft;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Hotseat;
 using FungusToast.Unity.UI.GameLog; // added for EnablePlayerSpecificFiltering
+using FungusToast.Unity.UI.Onboarding;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -283,10 +284,6 @@ namespace FungusToast.Unity
 
     public class GameManager : MonoBehaviour
     {
-        private const string AlphaMutationOnboardingSeenKey = "Onboarding.AlphaMutationPhaseSeen";
-        private const string MutationTreeGuidanceSeenKey = "Onboarding.AlphaMutationTreeGuidanceSeen";
-        private const string ScoreboardCoachmarkSeenKey = "Onboarding.ScoreboardWinConditionSeen";
-        private const string AlphaMutationOnboardingBannerText = "Goal: control the largest share of the toast.\nSpend mutation points for upgrades now or store them to save for stronger upgrades later.\nAfter that, your colony grows automatically.";
         private const string TropicLysisDisplayName = "Tropic Lysis";
 
         #region Inspector Fields
@@ -772,10 +769,7 @@ namespace FungusToast.Unity
 
         public void ResetDismissedTutorialTips()
         {
-            ScopedPlayerPrefs.SetInt(AlphaMutationOnboardingSeenKey, 0);
-            ScopedPlayerPrefs.SetInt(MutationTreeGuidanceSeenKey, 0);
-            ScopedPlayerPrefs.SetInt(ScoreboardCoachmarkSeenKey, 0);
-            ScopedPlayerPrefs.Save();
+            NewPlayerTooltipCatalog.ResetAllSeenFlags();
         }
         public bool IsCampaignAwaitingAdaptationSelection() =>
             gameStartService != null && gameStartService.IsCampaignAwaitingAdaptationSelection();
@@ -1428,30 +1422,26 @@ namespace FungusToast.Unity
             }
 
             pendingAlphaMutationOnboarding = false;
-            gameUIManager.PhaseBanner.Show(AlphaMutationOnboardingBannerText, 5.5f);
+            gameUIManager.PhaseBanner.Show(NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.AlphaMutationPhaseIntro).Body, 5.5f);
             if (!ShouldForceFirstGameExperience)
             {
-                ScopedPlayerPrefs.SetInt(AlphaMutationOnboardingSeenKey, 1);
-                ScopedPlayerPrefs.Save();
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.AlphaMutationPhaseIntro);
             }
         }
 
         private bool ShouldQueueAlphaMutationOnboarding()
         {
-            if (ShouldForceFirstGameExperience)
+            if (Board == null)
             {
-                return Board != null
-                    && Board.CurrentRound == 1
-                    && humanPlayers.Count > 0
-                    && !isFastForwarding;
+                return false;
             }
 
-            return Board != null
-                && Board.CurrentRound == 1
-                && humanPlayers.Count > 0
-                && !isFastForwarding
-                && !testingModeEnabled
-                && ScopedPlayerPrefs.GetInt(AlphaMutationOnboardingSeenKey, 0) == 0;
+            return NewPlayerTooltipRules.ShouldQueueAlphaMutationPhaseIntro(
+                ShouldForceFirstGameExperience,
+                Board.CurrentRound,
+                humanPlayers.Count,
+                isFastForwarding,
+                testingModeEnabled);
         }
 
         #endregion
