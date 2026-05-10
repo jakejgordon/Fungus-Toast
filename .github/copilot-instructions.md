@@ -27,6 +27,7 @@ If a task is unclear, use this routing order before making changes:
 - **Gameplay balance levers and canonical constants:** `FungusToast.Core/docs/GAME_BALANCE_CONSTANTS.md`
 - **Sound design, storage, and trigger guidance:** `FungusToast.Core/docs/SOUNDS.md`
 - **Unity UI architecture and service patterns:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`
+- **Tooltip taxonomy, onboarding guidance, hover tooltips, and board inspection tooltips:** `docs/ui/TOOLTIP_GUIDE.md`
 - **Unity UI style rules:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`
 - **Technical architecture context:** `FungusToast.Core/docs/ARCHITECTURE_OVERVIEW.md`
 - **Canonical gameplay terminology and state verbs:** `FungusToast.Core/docs/GAMEPLAY_TERMINOLOGY.md`
@@ -124,7 +125,7 @@ Use this precedence order when multiple docs seem relevant:
 - Mycovariant work → `MYCOVARIANT_HELPER.md`
 - Adaptation/campaign work → `ADAPTATION_HELPER.md`, `CAMPAIGN_HELPER.md`, `SAVE_COMPATIBILITY.md`, and `docs/MOLDINESS_HELPER.md` for moldiness-specific progression work
 - AI strategy work → `AI_STRATEGY_AUTHORING.md`
-- UI/service/tooltip/pooling work → `UI_ARCHITECTURE_HELPER.md` and `UI_STYLE_GUIDE.md`
+- UI/service/tooltip/pooling work → `UI_ARCHITECTURE_HELPER.md`, `docs/ui/TOOLTIP_GUIDE.md`, and `UI_STYLE_GUIDE.md`
 - Sound planning / audio trigger work → `SOUNDS.md`, `UI_ARCHITECTURE_HELPER.md`, and `ARCHITECTURE_OVERVIEW.md`
 - Deep architecture questions → `ARCHITECTURE_OVERVIEW.md`
 - Canonical gameplay terms and state-transition verbs → `GAMEPLAY_TERMINOLOGY.md`
