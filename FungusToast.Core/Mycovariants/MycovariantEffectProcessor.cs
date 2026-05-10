@@ -418,6 +418,7 @@ public static class MycovariantEffectProcessor
         if (draftingPlayer.PlayerType == PlayerTypeEnum.Human)
         {
             draftingPlayer.AddMutationPoints(MycovariantGameBalance.PerisporeCrownMutationPointAward);
+            observer.RecordPerisporeCrownHumanDraftBonus(draftingPlayer.PlayerId, MycovariantGameBalance.PerisporeCrownMutationPointAward);
             playerMyco.IncrementEffectCount(MycovariantEffectType.MpBonus, MycovariantGameBalance.PerisporeCrownMutationPointAward);
             playerMyco.MarkTriggered();
             return new PerisporeCrownResolution(

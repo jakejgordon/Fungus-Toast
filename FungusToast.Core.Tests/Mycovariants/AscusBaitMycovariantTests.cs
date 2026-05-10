@@ -141,12 +141,14 @@ public class AscusBaitMycovariantTests
         board.Players.Add(player);
         var mycovariant = MycovariantRepository.GetById(MycovariantIds.PerisporeCrownId);
         var playerMyco = new PlayerMycovariant(player.PlayerId, mycovariant.Id, mycovariant);
+        var observer = new TestSimulationObserver();
 
-        var result = MycovariantEffectProcessor.ResolvePerisporeCrown(playerMyco, board, new Random(123), new TestSimulationObserver());
+        var result = MycovariantEffectProcessor.ResolvePerisporeCrown(playerMyco, board, new Random(123), observer);
 
         Assert.NotNull(result);
         Assert.Equal(13, player.MutationPoints);
         Assert.Equal(MycovariantGameBalance.PerisporeCrownMutationPointAward, result!.MutationPointAward);
+        Assert.Equal(MycovariantGameBalance.PerisporeCrownMutationPointAward, observer.LastPerisporeCrownHumanDraftBonus);
         Assert.Equal(0, result.Radius);
         Assert.True(playerMyco.HasTriggered);
     }

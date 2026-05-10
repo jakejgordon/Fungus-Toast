@@ -81,6 +81,12 @@ namespace FungusToast.Unity.UI.GameLog
             mutationTreeToastPresenter?.ShowIfTreeOpen($"Apical Yield grants {bonusPoints} mutation {pointLabel}!");
         }
 
+        public void RecordPerisporeCrownHumanDraftBonus(int playerId, int mutationPointsAwarded)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordPerisporeCrownHumanDraftBonus(playerId, mutationPointsAwarded);
+        }
+
         public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints)
             => playerActivityLogManager?.RecordOntogenicRegressionFailureBonus(playerId, bonusPoints);
 

@@ -13,6 +13,7 @@ internal sealed class TestSimulationObserver : ISimulationObserver
     public int? LastPrimePulseTriggerRound { get; private set; }
     public int? LastPrimePulseMutationPointsAwarded { get; private set; }
     public int? LastApicalYieldBonus { get; private set; }
+    public int? LastPerisporeCrownHumanDraftBonus { get; private set; }
     public string? LastUpgradeSource { get; private set; }
     public int UpgradeEventCount { get; private set; }
     public int NecrophyticBloomReportCount { get; private set; }
@@ -21,6 +22,7 @@ internal sealed class TestSimulationObserver : ISimulationObserver
 
     public void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade) => LastMutationPointsSpent = pointsPerUpgrade;
     public void RecordApicalYieldBonus(int playerId, string mutationName, int bonusPoints) => LastApicalYieldBonus = bonusPoints;
+    public void RecordPerisporeCrownHumanDraftBonus(int playerId, int mutationPointsAwarded) => LastPerisporeCrownHumanDraftBonus = mutationPointsAwarded;
     public void RecordMutationUpgradeEvent(int playerId, int mutationId, string mutationName, MutationTier mutationTier, int oldLevel, int newLevel, int round, int mutationPointsBefore, int mutationPointsAfter, int pointsSpent, string upgradeSource)
     {
         UpgradeEventCount++;
