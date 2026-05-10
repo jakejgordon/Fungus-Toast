@@ -1271,7 +1271,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 return;
             }
 
-            mycovariantDraftCoachmarkRoot.anchoredPosition = localPoint + new Vector2(-10f, 18f);
+            mycovariantDraftCoachmarkRoot.anchoredPosition = new Vector2(-450f, localPoint.y + 18f);
         }
 
         private void OnMycovariantDraftCoachmarkDismissed()
