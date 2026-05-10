@@ -70,13 +70,17 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private const float CampaignAdaptationUtilityStatusWidth = 808f;
         private const float CampaignDraftUtilityButtonWidth = 330f;
         private const float CampaignDraftUtilityButtonHeight = 36f;
+        private const float CampaignDraftUtilityPanelAlpha = 0.96f;
         private const float CampaignAdaptationSummaryPanelWidth = 840f;
         private const float CampaignAdaptationSummaryPanelMinHeight = 82f;
         private const float CampaignAdaptationSummaryIconSize = 34f;
         private const float CampaignAdaptationSummaryIconPadding = 4f;
         private const float DraftContentPreferredHeight = 780f;
+        private const int DraftContentTopPadding = 20;
+        private const int DraftContentBottomPadding = 12;
+        private const float DraftContentVerticalSpacing = 10f;
         private const float DraftHeaderPreferredHeight = 56f;
-        private const float DraftBlurbPreferredHeight = 40f;
+        private const float DraftBlurbPreferredHeight = 30f;
         private const float DraftChoiceContainerPreferredHeight = 452f;
         private const float DraftCardPreferredWidth = 240f;
         private const float DraftCardPreferredHeight = 452f;
@@ -917,6 +921,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private void ApplyDraftLayoutSizing()
         {
             var contentRoot = choiceContainer?.parent as RectTransform;
+            var contentLayoutGroup = contentRoot != null ? contentRoot.GetComponent<VerticalLayoutGroup>() : null;
             if (contentRoot != null)
             {
                 contentRoot.sizeDelta = new Vector2(contentRoot.sizeDelta.x, DraftContentPreferredHeight);
@@ -928,17 +933,38 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 }
             }
 
+            if (contentLayoutGroup != null)
+            {
+                contentLayoutGroup.childAlignment = TextAnchor.UpperCenter;
+                contentLayoutGroup.spacing = DraftContentVerticalSpacing;
+                contentLayoutGroup.padding.top = DraftContentTopPadding;
+                contentLayoutGroup.padding.bottom = DraftContentBottomPadding;
+            }
+
+            var headerRoot = draftBannerText != null ? draftBannerText.transform.parent as RectTransform : null;
+            var headerRootLayout = headerRoot != null ? headerRoot.GetComponent<LayoutElement>() : null;
+            if (headerRoot != null)
+            {
+                headerRoot.sizeDelta = new Vector2(headerRoot.sizeDelta.x, DraftHeaderPreferredHeight);
+            }
+
+            if (headerRootLayout != null)
+            {
+                headerRootLayout.preferredHeight = DraftHeaderPreferredHeight;
+                headerRootLayout.minHeight = DraftHeaderPreferredHeight;
+            }
+
             var headerRect = draftBannerText != null ? draftBannerText.GetComponent<RectTransform>() : null;
             var headerLayout = draftBannerText != null ? draftBannerText.GetComponent<LayoutElement>() : null;
             if (headerRect != null)
             {
-                headerRect.sizeDelta = new Vector2(headerRect.sizeDelta.x, DraftHeaderPreferredHeight);
+                StretchDraftTextRect(headerRect);
             }
 
             if (headerLayout != null)
             {
-                headerLayout.preferredHeight = DraftHeaderPreferredHeight;
-                headerLayout.minHeight = DraftHeaderPreferredHeight;
+                headerLayout.preferredHeight = -1f;
+                headerLayout.minHeight = -1f;
             }
 
             var blurbRoot = draftBlurbText != null ? draftBlurbText.transform.parent as RectTransform : null;
@@ -958,13 +984,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             var blurbTextLayout = draftBlurbText != null ? draftBlurbText.GetComponent<LayoutElement>() : null;
             if (blurbTextRect != null)
             {
-                blurbTextRect.sizeDelta = new Vector2(blurbTextRect.sizeDelta.x, DraftBlurbPreferredHeight);
+                StretchDraftTextRect(blurbTextRect);
             }
 
             if (blurbTextLayout != null)
             {
-                blurbTextLayout.preferredHeight = DraftBlurbPreferredHeight;
-                blurbTextLayout.minHeight = DraftBlurbPreferredHeight;
+                blurbTextLayout.preferredHeight = -1f;
+                blurbTextLayout.minHeight = -1f;
             }
 
             var choiceContainerRect = choiceContainer as RectTransform;
@@ -978,6 +1004,21 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 Canvas.ForceUpdateCanvases();
                 LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
             }
+        }
+
+        private static void StretchDraftTextRect(RectTransform textRect)
+        {
+            if (textRect == null)
+            {
+                return;
+            }
+
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.pivot = new Vector2(0.5f, 0.5f);
+            textRect.anchoredPosition = Vector2.zero;
+            textRect.offsetMin = Vector2.zero;
+            textRect.offsetMax = Vector2.zero;
         }
 
         private void OnAdaptationChoicePicked(AdaptationDefinition picked)
@@ -1172,8 +1213,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             layoutElement.minHeight = CampaignAdaptationUtilityPanelHeight;
 
             var rootImage = campaignAdaptationUtilityRoot.GetComponent<Image>();
-            var backgroundColor = UIStyleTokens.Surface.PanelSecondary;
-            backgroundColor.a = 0.92f;
+            var backgroundColor = UIStyleTokens.Surface.PanelPrimary;
+            backgroundColor.a = CampaignDraftUtilityPanelAlpha;
             rootImage.color = backgroundColor;
             rootImage.raycastTarget = true;
 

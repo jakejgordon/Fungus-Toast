@@ -176,10 +176,12 @@ Notes:
 
 ### 5.1.4 Draft Utility Buttons
 - In draft overlays, optional utility actions that sit above or near the card row should generally be centered and narrower than the full draft content width.
+- Default semantic match: use the same panel-secondary utility-button family as Settings and Audio controls, not the light primary or neutral menu button fills.
 - Default recommendation for desktop: use a width that reads as an intentional control group rather than a page-level CTA, roughly `260-360px` when the draft surface is around `780-900px` wide.
 - Avoid full-width treatment for optional draft utilities unless the action is truly the only meaningful next step. A full-width button above the cards visually competes with the card choices and can misread as the main action of the screen.
 - If a draft utility uses confirmation-on-second-click behavior, keep the button footprint stable between idle and confirm states so the control does not jump or pull surrounding content.
 - Pair draft utility buttons with a short status line above or below the button. Prefer helper text for availability/used-state messaging instead of expanding the button itself.
+- Keep a clear resting-state value step between the surrounding utility strip and the button itself. Default dark-panel pattern: utility strip near `Surface.PanelPrimary`, button near `Surface.PanelElevated`, label in `Text.Primary`.
 - On dark draft panels, use a utility or scoped-action treatment first. Only use the affirmative green resting state when the control genuinely needs strong emphasis and does not obscure the fact that card selection is the primary outcome.
 
 ### 5.1.1 Buttons With Icons
