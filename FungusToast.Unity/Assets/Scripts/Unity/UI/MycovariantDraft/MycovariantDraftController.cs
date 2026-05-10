@@ -1263,15 +1263,15 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             Vector3[] corners = new Vector3[4];
             draftPanelRect.GetWorldCorners(corners);
-            Vector3 midLeftWorld = (corners[0] + corners[1]) * 0.5f;
+            Vector3 topLeftWorld = corners[1];
             Camera uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(uiCamera, midLeftWorld);
+            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(uiCamera, topLeftWorld);
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, screenPoint, uiCamera, out Vector2 localPoint))
             {
                 return;
             }
 
-            mycovariantDraftCoachmarkRoot.anchoredPosition = new Vector2(-450f, localPoint.y + 18f);
+            mycovariantDraftCoachmarkRoot.anchoredPosition = localPoint + new Vector2(-24f, -210f);
         }
 
         private void OnMycovariantDraftCoachmarkDismissed()
