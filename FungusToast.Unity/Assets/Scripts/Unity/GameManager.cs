@@ -351,6 +351,10 @@ namespace FungusToast.Unity
         [SerializeField] private AudioClip? titleTrackClip = null;
         [SerializeField, Range(0f, 1f)] private float titleTrackVolume = 1f;
         [SerializeField] private AudioMixerGroup? titleTrackMixerGroup = null;
+        [Header("Campaign Victory Track")]
+        [SerializeField] private AudioClip? campaignVictoryTrackClip = null;
+        [SerializeField, Range(0f, 1f)] private float campaignVictoryTrackVolume = 1f;
+        [SerializeField] private AudioMixerGroup? campaignVictoryTrackMixerGroup = null;
 
         [Header("Hotseat Config")] 
         public int configuredHumanPlayerCount =1; 
@@ -664,6 +668,7 @@ namespace FungusToast.Unity
             backgroundMusicService = new BackgroundMusicService(this, transform, () => !hasApplicationFocus);
             // Configure both gameplay and title music
             backgroundMusicService.ConfigureTitleTrack(titleTrackClip, titleTrackVolume, titleTrackMixerGroup);
+            backgroundMusicService.ConfigureVictoryTrack(campaignVictoryTrackClip, campaignVictoryTrackVolume, campaignVictoryTrackMixerGroup);
             ConfigureBackgroundMusicService();
 
             playerInitializer = new PlayerInitializer(
@@ -2282,6 +2287,16 @@ namespace FungusToast.Unity
         public void RefreshMusicVolume()
         {
             backgroundMusicService?.RefreshVolume();
+        }
+
+        public void StartCampaignVictoryMusic()
+        {
+            backgroundMusicService?.StartVictoryMusic();
+        }
+
+        public void StopCampaignVictoryMusic()
+        {
+            backgroundMusicService?.StopVictoryMusic();
         }
 
         public string GetCurrentGameplayTrackName()

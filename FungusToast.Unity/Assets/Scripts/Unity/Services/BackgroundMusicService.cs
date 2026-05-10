@@ -345,6 +345,7 @@ namespace FungusToast.Unity
     public class BackgroundMusicService
     {
         private const string AudioSourceObjectName = "BackgroundMusicAudioSource";
+        private const string VictoryAudioSourceObjectName = "CampaignVictoryMusicAudioSource";
         private const float EndOfTrackGraceSeconds = 0.1f;
 
         private readonly MonoBehaviour coroutineHost;
@@ -372,6 +373,11 @@ namespace FungusToast.Unity
         private AudioSource titleAudioSource;
         private float titleBaseVolume = 0.28f;
         private Coroutine titlePlaybackRoutine;
+        private AudioClip victoryClip;
+        private AudioMixerGroup victoryMixerGroup;
+        private AudioSource victoryAudioSource;
+        private float victoryBaseVolume = 0.28f;
+        private Coroutine victoryPlaybackRoutine;
 
         public BackgroundMusicService(MonoBehaviour coroutineHost, Transform audioRoot, Func<bool> getIsPaused)
         {
@@ -423,6 +429,7 @@ namespace FungusToast.Unity
 
             // If the title music is playing (main menu), stop it before starting gameplay music.
             StopTitleMusic();
+            StopVictoryMusic();
 
             EnsureAudioSource();
             shouldPlay = true;
@@ -453,6 +460,18 @@ namespace FungusToast.Unity
             }
         }
 
+        public void ConfigureVictoryTrack(AudioClip clip, float volume, AudioMixerGroup outputMixerGroup)
+        {
+            victoryClip = clip;
+            victoryMixerGroup = outputMixerGroup;
+            victoryBaseVolume = Mathf.Clamp01(volume);
+
+            if (victoryClip != null && victoryClip.loadState == AudioDataLoadState.Unloaded)
+            {
+                victoryClip.LoadAudioData();
+            }
+        }
+
         public void StartTitleMusic()
         {
             if (titleClip == null)
@@ -462,6 +481,7 @@ namespace FungusToast.Unity
 
             // Stop any gameplay music loop / coroutine first.
             StopGameplayMusic();
+            StopVictoryMusic();
             // If clip data is not yet loaded, load and wait for it before playing.
             if (titleClip.loadState == AudioDataLoadState.Unloaded)
             {
@@ -476,6 +496,37 @@ namespace FungusToast.Unity
             }
 
             PlayTitleImmediate();
+        }
+
+        public void StartVictoryMusic()
+        {
+            if (victoryClip == null)
+            {
+                return;
+            }
+
+            if (victoryAudioSource != null && victoryAudioSource.isPlaying && victoryAudioSource.clip == victoryClip)
+            {
+                victoryAudioSource.volume = MusicSettings.GetEffectiveVolume(victoryBaseVolume);
+                return;
+            }
+
+            StopTitleMusic();
+            StopGameplayMusic();
+
+            if (victoryClip.loadState == AudioDataLoadState.Unloaded)
+            {
+                victoryClip.LoadAudioData();
+            }
+
+            if (victoryClip.loadState == AudioDataLoadState.Loading)
+            {
+                StopVictoryPlaybackRoutine();
+                victoryPlaybackRoutine = coroutineHost.StartCoroutine(WaitForVictoryAndPlay());
+                return;
+            }
+
+            PlayVictoryImmediate();
         }
 
         private void StopTitlePlaybackRoutine()
@@ -503,6 +554,33 @@ namespace FungusToast.Unity
 
             PlayTitleImmediate();
             titlePlaybackRoutine = null;
+        }
+
+        private void StopVictoryPlaybackRoutine()
+        {
+            if (victoryPlaybackRoutine != null)
+            {
+                coroutineHost.StopCoroutine(victoryPlaybackRoutine);
+                victoryPlaybackRoutine = null;
+            }
+        }
+
+        private IEnumerator WaitForVictoryAndPlay()
+        {
+            while (victoryClip != null && victoryClip.loadState == AudioDataLoadState.Loading)
+            {
+                yield return null;
+            }
+
+            if (victoryClip == null || victoryClip.loadState == AudioDataLoadState.Failed)
+            {
+                Debug.LogWarning("[BackgroundMusicService] Campaign victory music failed to load or was null.");
+                victoryPlaybackRoutine = null;
+                yield break;
+            }
+
+            PlayVictoryImmediate();
+            victoryPlaybackRoutine = null;
         }
 
         private void PlayTitleImmediate()
@@ -535,6 +613,16 @@ namespace FungusToast.Unity
             titleAudioSource.Play();
         }
 
+        private void PlayVictoryImmediate()
+        {
+            EnsureVictoryAudioSource();
+            victoryAudioSource.clip = victoryClip;
+            victoryAudioSource.outputAudioMixerGroup = victoryMixerGroup;
+            victoryAudioSource.volume = MusicSettings.GetEffectiveVolume(victoryBaseVolume);
+            victoryAudioSource.loop = true;
+            victoryAudioSource.Play();
+        }
+
         public void StopTitleMusic()
         {
             StopTitlePlaybackRoutine();
@@ -550,6 +638,23 @@ namespace FungusToast.Unity
 
             titleAudioSource.clip = null;
             titleAudioSource.volume = 0f;
+        }
+
+        public void StopVictoryMusic()
+        {
+            StopVictoryPlaybackRoutine();
+            if (victoryAudioSource == null)
+            {
+                return;
+            }
+
+            if (victoryAudioSource.isPlaying)
+            {
+                victoryAudioSource.Stop();
+            }
+
+            victoryAudioSource.clip = null;
+            victoryAudioSource.volume = 0f;
         }
 
         public void StopGameplayMusic()
@@ -595,6 +700,11 @@ namespace FungusToast.Unity
             if (titleAudioSource != null)
             {
                 titleAudioSource.volume = MusicSettings.GetEffectiveVolume(titleBaseVolume);
+            }
+
+            if (victoryAudioSource != null)
+            {
+                victoryAudioSource.volume = MusicSettings.GetEffectiveVolume(victoryBaseVolume);
             }
 
             if (musicAudioSource != null)
@@ -851,6 +961,33 @@ namespace FungusToast.Unity
             musicAudioSource.loop = false;
             musicAudioSource.spatialBlend = 0f;
             musicAudioSource.outputAudioMixerGroup = mixerGroup;
+        }
+
+        private void EnsureVictoryAudioSource()
+        {
+            if (victoryAudioSource != null)
+            {
+                return;
+            }
+
+            Transform child = audioRoot.Find(VictoryAudioSourceObjectName);
+            if (child == null)
+            {
+                GameObject audioSourceObject = new GameObject(VictoryAudioSourceObjectName);
+                child = audioSourceObject.transform;
+                child.SetParent(audioRoot, false);
+            }
+
+            victoryAudioSource = child.GetComponent<AudioSource>();
+            if (victoryAudioSource == null)
+            {
+                victoryAudioSource = child.gameObject.AddComponent<AudioSource>();
+            }
+
+            victoryAudioSource.playOnAwake = false;
+            victoryAudioSource.loop = true;
+            victoryAudioSource.spatialBlend = 0f;
+            victoryAudioSource.outputAudioMixerGroup = victoryMixerGroup;
         }
 
         private float GetCurrentVolume()

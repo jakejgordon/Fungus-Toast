@@ -355,6 +355,7 @@ namespace FungusToast.Unity.UI
             ResetCampaignMoldinessAwardPulse();
             SetPostAdaptationConfirmationState(false);
             showCampaignLossActionStack = false;
+            SetCampaignVictoryMusicEnabled(false);
             ShowResultsInternal(ranked, board, playerStatistics, useCampaignTopSpacer: false);
             SetLegacyResultsHeaderVisibility(true);
             SetOutcomeBannerVisibility(false);
@@ -415,6 +416,7 @@ namespace FungusToast.Unity.UI
             showCampaignLossActionStack = !victory;
             var presentationSnapshot = EnsureCampaignOutcomePresentationSnapshot(campaignSnapshot, victory, finalLevel, levelDisplay);
             cachedCampaignVictorySnapshot = presentationSnapshot;
+            SetCampaignVictoryMusicEnabled(presentationSnapshot?.isFinalCampaignVictory == true);
 
             if (!victory)
             {
@@ -719,6 +721,7 @@ namespace FungusToast.Unity.UI
             int selectionCapacity,
             DefeatCarryoverEntryMode entryMode = DefeatCarryoverEntryMode.ImmediateLossScreen)
         {
+            SetCampaignVictoryMusicEnabled(false);
             SetPostAdaptationConfirmationState(false);
             ShowDefeatCarryoverSelectionRows(options, selectionCapacity);
             SetLegacyResultsHeaderVisibility(false);
@@ -815,6 +818,7 @@ namespace FungusToast.Unity.UI
             returnToCampaignMenuAfterMoldinessReward = returnToCampaignMenuAfterSelection;
             showPostAdaptationConfirmationAfterMoldinessRewardSelection = showAdaptationConfirmationAfterSelection;
             cachedCampaignVictorySnapshot = snapshot;
+            SetCampaignVictoryMusicEnabled(snapshot.isFinalCampaignVictory);
             selectedMoldinessRewardId = null;
             selectedMoldinessRewardVisual = null;
             defeatCarryoverSelectionCapacity = 0;
@@ -864,6 +868,7 @@ namespace FungusToast.Unity.UI
 
             cachedCampaignVictorySnapshot = snapshot;
             showPostAdaptationConfirmationAfterMoldinessRewardSelection = false;
+            SetCampaignVictoryMusicEnabled(snapshot.isFinalCampaignVictory);
             ShowSnapshotRows(snapshot);
             SetLegacyResultsHeaderVisibility(false);
             SetOutcomeBannerVisibility(true);
@@ -2395,6 +2400,7 @@ namespace FungusToast.Unity.UI
 
         private void ShowCampaignAdaptationSecuredConfirmation()
         {
+            SetCampaignVictoryMusicEnabled(false);
             requiresAdaptationBeforeContinue = false;
             showPostAdaptationConfirmationAfterMoldinessRewardSelection = false;
             showCampaignLossActionStack = false;
@@ -2456,6 +2462,7 @@ namespace FungusToast.Unity.UI
         {
             StopAllCoroutines();
             ResetCampaignMoldinessAwardPulse();
+            SetCampaignVictoryMusicEnabled(false);
             HidePlayerDetails();
             SetPostAdaptationConfirmationState(false);
             ApplyPendingRewardBackgroundMode(false);
@@ -2477,6 +2484,23 @@ namespace FungusToast.Unity.UI
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
             gameObject.SetActive(false);
+        }
+
+        private static void SetCampaignVictoryMusicEnabled(bool shouldPlay)
+        {
+            var manager = GameManager.Instance;
+            if (manager == null)
+            {
+                return;
+            }
+
+            if (shouldPlay)
+            {
+                manager.StartCampaignVictoryMusic();
+                return;
+            }
+
+            manager.StopCampaignVictoryMusic();
         }
 
         private void ConfigureCampaignMoldinessAwardPulse(TextMeshProUGUI label, bool enablePulse)

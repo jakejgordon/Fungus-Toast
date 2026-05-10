@@ -107248,6 +107248,9 @@ MonoBehaviour:
   titleTrackClip: {fileID: 8300000, guid: f95514be9099e9c4fab6e271d3ff1830, type: 3}
   titleTrackVolume: 1
   titleTrackMixerGroup: {fileID: 0}
+  campaignVictoryTrackClip: {fileID: 8300000, guid: 3d2e1b8c626ce0547904dd1e7ca789d9, type: 3}
+  campaignVictoryTrackVolume: 1
+  campaignVictoryTrackMixerGroup: {fileID: 0}
   configuredHumanPlayerCount: 1
   campaignProgression: {fileID: 11400000, guid: ddba19d3898f54445b37abdc3b92a2b7, type: 2}
   magnifyingGlass: {fileID: 325918930}

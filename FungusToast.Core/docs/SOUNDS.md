@@ -190,6 +190,14 @@ Current implementation details for standard gameplay-track wiring:
 - The title/menu music for the main menu and sub-menus should be a looping track that plays while the player is navigating menus before starting a game.
 - The current title track asset is: `title_track_mycophamus.mp3` and should be placed under `FungusToast.Unity/Assets/Audio/Music`.
 - The title track is expected to loop and respect the same music volume settings exposed in the main menu.
+
+### Campaign final-victory track
+
+- The final campaign victory screens use a dedicated looping track so the campaign clear lands differently from ordinary level wins.
+- The current final-victory track asset is: `campaign_victory_track_yer_a_moldy_winner_harry.mp3` under `FungusToast.Unity/Assets/Audio/Music`.
+- It should play only on final campaign victory end screens and any pending post-victory reward screens that are still presenting that same final campaign victory snapshot.
+- It is configured through serialized `GameManager` references, separate from the gameplay playlist and the title track.
+
 Default rule for future gameplay-track additions:
 
 - if the request is only to add another track to the existing gameplay rotation, prefer scene and importer updates over code changes
