@@ -1276,8 +1276,17 @@ namespace FungusToast.Unity
             gameUIManager.MutationUIManager?.gameObject.SetActive(false);
             PreparePendingCampaignSnapshotPresentation(campaignController, snapshot);
 
-            var offers = campaignController.GetPendingMoldinessUnlockOffers(getRng(), 3);
-            gameUIManager.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(snapshot, offers, returnToCampaignMenuAfterSelection);
+            string forcedUnlockId = GameManager.Instance != null
+                && GameManager.Instance.IsTestingModeEnabled
+                && GameManager.Instance.TestingForceMoldinessRewards
+                ? GameManager.Instance.TestingForcedMoldinessRewardId
+                : string.Empty;
+            var offers = campaignController.GetPendingMoldinessUnlockOffers(getRng(), 3, forcedUnlockId);
+            gameUIManager.EndGamePanel.ShowCampaignPendingMoldinessRewardSelection(
+                snapshot,
+                offers,
+                campaignController.State?.moldiness,
+                returnToCampaignMenuAfterSelection);
         }
 
         private void PreparePendingCampaignSnapshotPresentation(CampaignController campaignController, CampaignVictorySnapshot snapshot)

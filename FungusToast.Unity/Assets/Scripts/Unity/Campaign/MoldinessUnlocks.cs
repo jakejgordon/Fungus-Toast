@@ -429,13 +429,50 @@ namespace FungusToast.Unity.Campaign
             progressionState ??= MoldinessProgression.CreateDefaultState();
             NormalizeProgressionState(progressionState);
 
+            MoldinessUnlockDefinition forcedUnlock = null;
+            if (!string.IsNullOrWhiteSpace(forcedUnlockId)
+                && MoldinessUnlockCatalog.TryGetById(forcedUnlockId, out var forcedDefinition)
+                && forcedDefinition != null)
+            {
+                forcedUnlock = forcedDefinition;
+            }
+
             if (progressionState.pendingUnlockChoice != null && progressionState.pendingUnlockChoice.offeredUnlockIds?.Count > 0)
             {
-                return progressionState.pendingUnlockChoice.offeredUnlockIds
+                var pendingOffers = progressionState.pendingUnlockChoice.offeredUnlockIds
                     .Select(id => MoldinessUnlockCatalog.TryGetById(id, out var definition) ? definition : null)
                     .Where(definition => definition != null)
                     .Take(Math.Max(1, count))
                     .ToList();
+
+                if (forcedUnlock != null && !pendingOffers.Any(definition => string.Equals(definition.Id, forcedUnlock.Id, StringComparison.Ordinal)))
+                {
+                    int desiredCount = Math.Max(1, count);
+                    if (pendingOffers.Count == 0)
+                    {
+                        pendingOffers.Add(forcedUnlock);
+                    }
+                    else if (pendingOffers.Count < desiredCount)
+                    {
+                        pendingOffers.Add(forcedUnlock);
+                    }
+                    else
+                    {
+                        pendingOffers[pendingOffers.Count - 1] = forcedUnlock;
+                    }
+
+                    for (int i = pendingOffers.Count - 1; i > 0; i--)
+                    {
+                        int swapIndex = random.Next(i + 1);
+                        (pendingOffers[i], pendingOffers[swapIndex]) = (pendingOffers[swapIndex], pendingOffers[i]);
+                    }
+
+                    progressionState.pendingUnlockChoice.offeredUnlockIds = pendingOffers
+                        .Select(definition => definition.Id)
+                        .ToList();
+                }
+
+                return pendingOffers;
             }
 
             var ownedRewardIds = new HashSet<string>(progressionState.unlockedRewardIds, StringComparer.Ordinal);
@@ -453,15 +490,8 @@ namespace FungusToast.Unity.Campaign
                 .Where(definition => definition.Type != MoldinessUnlockType.UnlockMycovariant || !ownedMycovariantIds.Contains(definition.MycovariantId))
                 .ToList();
 
-            MoldinessUnlockDefinition forcedUnlock = null;
-            if (!string.IsNullOrWhiteSpace(forcedUnlockId)
-                && MoldinessUnlockCatalog.TryGetById(forcedUnlockId, out var forcedDefinition)
-                && forcedDefinition != null
-                && (forcedDefinition.IsRepeatable || !ownedRewardIds.Contains(forcedDefinition.Id))
-                && (forcedDefinition.Type != MoldinessUnlockType.UnlockAdaptation || !ownedAdaptationIds.Contains(forcedDefinition.AdaptationId))
-                && (forcedDefinition.Type != MoldinessUnlockType.UnlockMycovariant || !ownedMycovariantIds.Contains(forcedDefinition.MycovariantId)))
+            if (forcedUnlock != null)
             {
-                forcedUnlock = forcedDefinition;
                 if (!eligible.Any(definition => string.Equals(definition.Id, forcedUnlock.Id, StringComparison.Ordinal)))
                 {
                     eligible.Add(forcedUnlock);

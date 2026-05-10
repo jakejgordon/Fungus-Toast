@@ -79,6 +79,7 @@ namespace FungusToast.Unity.UI.Campaign
         private TextMeshProUGUI moldinessSummaryStatusLabel;
         private TextMeshProUGUI moldinessSummaryLifetimeLabel;
         private TextMeshProUGUI moldinessSummaryPendingLabel;
+        private MoldinessUnlockedRewardsStripController moldinessUnlockedRewardsStrip;
         private TextMeshProUGUI moldinessUnlockedRewardsLabel;
         private RectTransform moldinessUnlockedRewardsGridRoot;
         private GridLayoutGroup moldinessUnlockedRewardsGrid;
@@ -418,7 +419,7 @@ namespace FungusToast.Unity.UI.Campaign
             ConfigureMoldinessSummarySection();
             EnsureMoldinessSummaryHeader();
             EnsureMoldinessSummaryToastGrid();
-            EnsureMoldinessUnlockedRewardsGrid();
+            EnsureMoldinessUnlockedRewardsStrip();
             ReorderMoldinessSummaryContent();
         }
 
@@ -492,12 +493,21 @@ namespace FungusToast.Unity.UI.Campaign
                 FontStyles.Italic,
                 UIStyleTokens.State.Warning,
                 30f);
-            moldinessUnlockedRewardsLabel ??= CreateMoldinessSummaryText(
-                "UI_CampaignMoldinessUnlockedRewardsLabel",
-                18f,
-                FontStyles.Normal,
-                UIStyleTokens.Text.Secondary,
-                24f);
+        }
+
+        private void EnsureMoldinessUnlockedRewardsStrip()
+        {
+            if (moldinessSummarySectionRoot == null)
+            {
+                return;
+            }
+
+            moldinessUnlockedRewardsStrip ??= new MoldinessUnlockedRewardsStripController(
+                moldinessSummarySectionRoot,
+                "UI_CampaignMoldiness",
+                MoldinessUnlockedRewardsGridWidth,
+                GetMoldinessRewardIcon);
+            moldinessUnlockedRewardsStrip.EnsureBuilt();
         }
 
         private TextMeshProUGUI CreateMoldinessSummaryText(string objectName, float fontSize, FontStyles fontStyle, Color color, float minHeight)
@@ -650,8 +660,7 @@ namespace FungusToast.Unity.UI.Campaign
             moldinessSummaryLifetimeLabel?.transform.SetSiblingIndex(siblingIndex++);
             moldinessSummaryPendingLabel?.transform.SetSiblingIndex(siblingIndex++);
             moldinessSummaryToastGrid?.transform.SetSiblingIndex(siblingIndex++);
-            moldinessUnlockedRewardsLabel?.transform.SetSiblingIndex(siblingIndex++);
-            moldinessUnlockedRewardsGridRoot?.transform.SetSiblingIndex(siblingIndex);
+            moldinessUnlockedRewardsStrip?.RootTransform?.SetSiblingIndex(siblingIndex);
         }
 
         private void RefreshMoldinessUnlockedRewardsGrid(List<MoldinessUnlockDefinition> unlockedRewards)
@@ -1082,24 +1091,7 @@ namespace FungusToast.Unity.UI.Campaign
                 moldinessSummaryPendingLabel.text = string.Join("\n", pendingMessages);
             }
 
-            var unlockedRewards = campaignController.State?.moldiness?.unlockedRewardIds != null
-                ? campaignController.State.moldiness.unlockedRewardIds
-                    .Select(id => MoldinessUnlockCatalog.TryGetById(id, out var definition) ? definition : null)
-                    .Where(definition => definition != null)
-                    .OrderBy(GetMoldinessRewardCategorySortOrder)
-                    .ThenBy(definition => MoldinessUnlockCatalog.GetSortIndex(definition.Id))
-                    .ToList()
-                : new List<MoldinessUnlockDefinition>();
-
-            if (moldinessUnlockedRewardsLabel != null)
-            {
-                moldinessUnlockedRewardsLabel.gameObject.SetActive(unlockedRewards.Count > 0);
-                moldinessUnlockedRewardsLabel.text = unlockedRewards.Count > 0
-                    ? "Unlocked Rewards"
-                    : string.Empty;
-            }
-
-            RefreshMoldinessUnlockedRewardsGrid(unlockedRewards);
+            moldinessUnlockedRewardsStrip?.Refresh(campaignController.State?.moldiness);
 
             ApplyMoldinessSummaryToastPattern(progress, threshold, filledTileCount);
 

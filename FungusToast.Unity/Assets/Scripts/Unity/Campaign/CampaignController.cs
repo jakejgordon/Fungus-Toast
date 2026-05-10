@@ -523,7 +523,7 @@ namespace FungusToast.Unity.Campaign
             return true;
         }
 
-        public List<MoldinessUnlockDefinition> GetPendingMoldinessUnlockOffers(System.Random random, int count)
+        public List<MoldinessUnlockDefinition> GetPendingMoldinessUnlockOffers(System.Random random, int count, string forcedUnlockId = "")
         {
             if (State?.moldiness == null || State.moldiness.pendingUnlockTriggers == null || State.moldiness.pendingUnlockTriggers.Count == 0)
             {
@@ -531,7 +531,7 @@ namespace FungusToast.Unity.Campaign
             }
 
             bool hadPendingChoice = State.moldiness.pendingUnlockChoice?.offeredUnlockIds?.Count > 0;
-            var offers = MoldinessUnlockService.GenerateOffers(State.moldiness, random, count);
+            var offers = MoldinessUnlockService.GenerateOffers(State.moldiness, random, count, forcedUnlockId);
             bool generatedPendingChoice = !hadPendingChoice && State.moldiness.pendingUnlockChoice?.offeredUnlockIds?.Count > 0;
             if (generatedPendingChoice)
             {
@@ -598,7 +598,18 @@ namespace FungusToast.Unity.Campaign
             State.moldiness.pendingUnlockTriggers ??= new List<MoldinessUnlockTrigger>();
             if (State.moldiness.pendingUnlockTriggers.Count > 0)
             {
-                return true;
+                if (State.moldiness.pendingUnlockChoice?.offeredUnlockIds?.Count > 0)
+                {
+                    return true;
+                }
+
+                var existingPendingOffers = MoldinessUnlockService.GenerateOffers(State.moldiness, random, count, forcedUnlockId);
+                if (State.moldiness.pendingUnlockChoice?.offeredUnlockIds?.Count > 0)
+                {
+                    CampaignSaveService.Save(State);
+                }
+
+                return existingPendingOffers.Count > 0;
             }
 
             int triggerTierIndex = Math.Max(0, State.moldiness.unlockLevel - 1);

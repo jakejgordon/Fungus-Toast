@@ -21,6 +21,7 @@ using FungusToast.Core.Campaign;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using static FungusToast.Unity.Campaign.MoldinessProgression;
+using UnityMoldinessProgressionState = FungusToast.Unity.Campaign.MoldinessProgressionState;
 
 namespace FungusToast.Unity.UI
 {
@@ -72,6 +73,7 @@ namespace FungusToast.Unity.UI
         private const float CampaignMoldinessSummaryPanelPreferredWidth = 288f;
         private const float CampaignMoldinessSummaryTextWidth = 248f;
         private const float CampaignMoldinessSummaryToastGridWidth = 188f;
+        private const float CampaignMoldinessUnlockedRewardsGridWidth = 400f;
         private const float CampaignMoldinessAwardPulseScaleMultiplier = 1.08f;
         private const float CampaignMoldinessAwardPulseStrength = 0.08f;
         private const float CampaignMoldinessAwardPulseSpeed = 2.6f;
@@ -773,15 +775,17 @@ namespace FungusToast.Unity.UI
             ShowCampaignPendingMoldinessRewardSelection(
                 snapshot,
                 offers,
+                progressionState: null,
                 returnToCampaignMenuAfterSelection: false,
                 showAdaptationConfirmationAfterSelection: false);
         }
 
-        public void ShowCampaignPendingMoldinessRewardSelection(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers, bool returnToCampaignMenuAfterSelection)
+        public void ShowCampaignPendingMoldinessRewardSelection(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers, UnityMoldinessProgressionState progressionState, bool returnToCampaignMenuAfterSelection)
         {
             ShowCampaignPendingMoldinessRewardSelection(
                 snapshot,
                 offers,
+                progressionState,
                 returnToCampaignMenuAfterSelection,
                 showAdaptationConfirmationAfterSelection: false);
         }
@@ -789,6 +793,7 @@ namespace FungusToast.Unity.UI
         public void ShowCampaignPendingMoldinessRewardSelection(
             CampaignVictorySnapshot snapshot,
             IReadOnlyList<MoldinessUnlockDefinition> offers,
+            UnityMoldinessProgressionState progressionState,
             bool returnToCampaignMenuAfterSelection,
             bool showAdaptationConfirmationAfterSelection)
         {
@@ -798,7 +803,7 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            ShowMoldinessRewardSelectionRows(snapshot, offers);
+            ShowMoldinessRewardSelectionRows(snapshot, offers, progressionState);
             SetLegacyResultsHeaderVisibility(false);
             SetOutcomeBannerVisibility(true);
             ApplyPendingRewardBackgroundMode(true);
@@ -1004,7 +1009,7 @@ namespace FungusToast.Unity.UI
             canvasGroup.blocksRaycasts = true;
         }
 
-        private void ShowMoldinessRewardSelectionRows(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers)
+        private void ShowMoldinessRewardSelectionRows(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers, UnityMoldinessProgressionState progressionState)
         {
             PreparePanelForContentBuild();
             HidePlayerDetails();
@@ -1019,7 +1024,7 @@ namespace FungusToast.Unity.UI
             moldinessRewardOptionVisuals.Clear();
             selectedMoldinessRewardVisual = null;
             BuildCampaignTopSpacer();
-            BuildMoldinessRewardSelectionContent(snapshot, offers);
+            BuildMoldinessRewardSelectionContent(snapshot, offers, progressionState);
 
             ApplyControlReadabilityOverrides();
             resetResultsScrollPositionOnNextLayout = true;
@@ -1570,7 +1575,7 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        private void BuildMoldinessRewardSelectionContent(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers)
+        private void BuildMoldinessRewardSelectionContent(CampaignVictorySnapshot snapshot, IReadOnlyList<MoldinessUnlockDefinition> offers, UnityMoldinessProgressionState progressionState)
         {
             if (resultsContainer == null)
             {
@@ -1620,6 +1625,13 @@ namespace FungusToast.Unity.UI
             info.enableAutoSizing = true;
             info.fontSizeMax = 18f;
             info.fontSizeMin = 16f;
+
+            var unlockedRewardsStrip = new MoldinessUnlockedRewardsStripController(
+                root.transform,
+                "UI_EndGameMoldiness",
+                CampaignMoldinessUnlockedRewardsGridWidth,
+                GetMoldinessRewardIcon);
+            unlockedRewardsStrip.Refresh(progressionState);
 
             if (offers == null || offers.Count == 0)
             {
@@ -2284,6 +2296,7 @@ namespace FungusToast.Unity.UI
             if (requiresAdaptationBeforeContinue)
             {
                 var manager = GameManager.Instance;
+                ApplyPostVictoryTestingSettings(manager);
                 var campaignController = manager?.CampaignController;
                 if (campaignController != null && campaignController.HasPendingMoldinessUnlockChoice)
                 {
@@ -2295,10 +2308,14 @@ namespace FungusToast.Unity.UI
                     }
 
                     snapshot.pendingMoldinessUnlockCount = campaignController.State?.moldiness?.pendingUnlockTriggers?.Count ?? snapshot.pendingMoldinessUnlockCount;
-                    var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(campaignController.State?.seed ?? 0), 3);
+                    string forcedUnlockId = manager != null && manager.IsTestingModeEnabled && manager.TestingForceMoldinessRewards
+                        ? manager.TestingForcedMoldinessRewardId
+                        : string.Empty;
+                    var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(campaignController.State?.seed ?? 0), 3, forcedUnlockId);
                     ShowCampaignPendingMoldinessRewardSelection(
                         snapshot,
                         offers,
+                        campaignController.State?.moldiness,
                         returnToCampaignMenuAfterSelection: false,
                         showAdaptationConfirmationAfterSelection: false);
                     return;
@@ -2345,10 +2362,14 @@ namespace FungusToast.Unity.UI
                 }
 
                 snapshot.pendingMoldinessUnlockCount = campaignController.State?.moldiness?.pendingUnlockTriggers?.Count ?? snapshot.pendingMoldinessUnlockCount;
-                var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(campaignController.State?.seed ?? 0), 3);
+                string forcedUnlockId = manager != null && manager.IsTestingModeEnabled && manager.TestingForceMoldinessRewards
+                    ? manager.TestingForcedMoldinessRewardId
+                    : string.Empty;
+                var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(campaignController.State?.seed ?? 0), 3, forcedUnlockId);
                 ShowCampaignPendingMoldinessRewardSelection(
                     snapshot,
                     offers,
+                    campaignController.State?.moldiness,
                     returnToCampaignMenuAfterSelection: false,
                     showAdaptationConfirmationAfterSelection: true);
                 return;
@@ -4217,7 +4238,7 @@ namespace FungusToast.Unity.UI
                 SupportsBoardSizeOverride = false,
                 SupportsForcedAdaptation = true,
                 SupportsForceMoldinessRewards = true,
-                SupportsForcedMoldinessRewardSelection = false,
+                SupportsForcedMoldinessRewardSelection = true,
                 SupportsFirstGameToggle = false,
                 CardName = "UI_EndGameTestingCard",
                 ControlPrefix = "UI_EndGameTesting",
