@@ -1121,6 +1121,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.MycovariantDraftIntro);
             mycovariantDraftCoachmarkTitleTextLabel.text = definition.Title;
             mycovariantDraftCoachmarkBodyTextLabel.text = definition.Body;
+            PositionMycovariantDraftCoachmark();
             mycovariantDraftCoachmarkRoot.gameObject.SetActive(true);
             mycovariantDraftCoachmarkRoot.SetAsLastSibling();
             mycovariantDraftCoachmarkCanvasGroup.alpha = 1f;
@@ -1135,14 +1136,19 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 return;
             }
 
+            Transform parent = draftPanel.GetComponentInParent<Canvas>()?.transform ?? transform.parent;
+            if (parent == null)
+            {
+                return;
+            }
+
             var rootObject = new GameObject("UI_MycovariantDraftCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
-            rootObject.transform.SetParent(draftPanel.transform, false);
+            rootObject.transform.SetParent(parent, false);
 
             mycovariantDraftCoachmarkRoot = rootObject.GetComponent<RectTransform>();
-            mycovariantDraftCoachmarkRoot.anchorMin = new Vector2(1f, 0.5f);
-            mycovariantDraftCoachmarkRoot.anchorMax = new Vector2(1f, 0.5f);
+            mycovariantDraftCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            mycovariantDraftCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
             mycovariantDraftCoachmarkRoot.pivot = new Vector2(1f, 0.5f);
-            mycovariantDraftCoachmarkRoot.anchoredPosition = new Vector2(-26f, 22f);
             mycovariantDraftCoachmarkRoot.sizeDelta = new Vector2(320f, 200f);
 
             mycovariantDraftCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
@@ -1238,6 +1244,36 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             rootObject.SetActive(false);
         }
 
+        private void PositionMycovariantDraftCoachmark()
+        {
+            if (mycovariantDraftCoachmarkRoot == null || draftPanel == null)
+            {
+                return;
+            }
+
+            RectTransform draftPanelRect = draftPanel.GetComponent<RectTransform>();
+            RectTransform parentRect = mycovariantDraftCoachmarkRoot.parent as RectTransform;
+            Canvas canvas = draftPanel.GetComponentInParent<Canvas>();
+            if (draftPanelRect == null || parentRect == null || canvas == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+
+            Vector3[] corners = new Vector3[4];
+            draftPanelRect.GetWorldCorners(corners);
+            Vector3 midRightWorld = (corners[2] + corners[3]) * 0.5f;
+            Camera uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(uiCamera, midRightWorld);
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, screenPoint, uiCamera, out Vector2 localPoint))
+            {
+                return;
+            }
+
+            mycovariantDraftCoachmarkRoot.anchoredPosition = localPoint + new Vector2(-28f, 18f);
+        }
+
         private void OnMycovariantDraftCoachmarkDismissed()
         {
             hasDismissedMycovariantDraftCoachmarkThisGame = true;
@@ -1278,6 +1314,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             interactionBlocker.blocksRaycasts = true;
             interactionBlocker.alpha = 0.8f;
             uiState = DraftUIState.Idle;
+
+            if (mycovariantDraftCoachmarkRoot != null && mycovariantDraftCoachmarkRoot.gameObject.activeSelf)
+            {
+                PositionMycovariantDraftCoachmark();
+            }
 
             // Smoothly restore initial camera framing only once per draft start
             if (!_cameraRecenteredThisDraftPhase && GameManager.Instance?.cameraCenterer != null)
