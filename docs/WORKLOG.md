@@ -33,56 +33,16 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** implement `Spore Sifting` as the next moldiness permanent upgrade, scoped to Mycovariant drafts only.
+- **Current focus:** no active handoff right now; spore-sifting and campaign-update follow-ups are cleared out.
 - **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
 
 ## Current Plan
 
-1. Add a persistent `Spore Sifting` moldiness unlock definition in the existing reward catalog.
-2. Track once-per-level redraw consumption separately from permanent ownership.
-3. Add a clear redraw control to the Mycovariant draft flow, with confirmation before spending it.
-4. Keep the MVP strictly on Mycovariant drafts with no bleed into Adaptation or Moldiness reward flows.
+1. Start a new topic when ready.
 
 ## Pending Tasks
 
-- **Implement `Spore Sifting` permanent campaign upgrade**
-  - **Product decision:** this is the next moldiness permanent upgrade after `Strain Profiling`.
-  - **Name:** `Spore Sifting`
-  - **Concept:** a fungal-themed strategic reroll that improves draft consistency without directly buffing combat stats.
-  - **Exact behavior:**
-    - grants **1 redraw per level**, not per draft
-    - redraw replaces **all currently offered Mycovariant cards at once**
-    - can only be used **before** drafting one of the offered Mycovariants
-    - once used in a level, it is unavailable for the rest of that level's drafts
-    - usage should reset when the player starts the next campaign level/game
-  - **Why this version won:**
-    - cleaner and more legible than rerolling one card every draft
-    - less clicky and less balance-risky across the usual 3 to 4 drafts per level
-    - higher drama, better save-for-the-bad-roll gameplay, easier UI communication
-  - **Recommended implementation shape:**
-    - add a new moldiness unlock definition/card for `Spore Sifting`
-    - store persistent ownership in the existing moldiness unlock system
-    - store per-level consumed/not-consumed state separately from permanent ownership
-    - hook into the Mycovariant draft controller/service layer that generates the offer set so it can discard and regenerate the full offer set on command
-  - **UI requirements:**
-    - add a dedicated control separate from the Mycovariant draft cards, likely between the subtitle and the card row
-    - label it clearly, for example `Redraw Draft` with `Spore Sifting: 1 available this level`
-    - when spent, show persistent used-state text such as `Spore Sifting used this level`
-    - require a confirmation click/modal before consuming the redraw so the user cannot accidentally spend it while trying to draft a card
-    - avoid tiny per-card reroll icons or anything that could be confused with card selection
-    - if possible, animate old cards fading/shriveling away and new cards blooming in
-  - **Validation checklist for a fresh session:**
-    - verify the button only appears when the player owns `Spore Sifting`
-    - verify it appears on the relevant Mycovariant draft screens only
-    - verify it works for the full offered set, not a single card
-    - verify it cannot be used after picking a card from that draft
-    - verify it cannot be used twice in the same level across multiple Mycovariant drafts
-    - verify it resets correctly on the next level
-    - verify no accidental interaction with Adaptation reward resolution, pending Moldiness reward resolution, or testing overrides
-  - **Nice-to-have later, not MVP:**
-    - second stack/tier that grants 2 redraws per level
-    - richer fungal VFX/audio treatment
-    - broader routing/intel synergies with future campaign meta upgrades
+- None right now.
 
 ## Current Handoff
 
@@ -149,4 +109,4 @@ Use the following minimal workflow to preserve working memory across sessions:
   - final campaign clear now uses dedicated victory copy on the campaign end panel
   - final campaign clear now awards a larger moldiness payout tuned to about `2x` the penultimate reward
   - victorious full clears now unlock the next campaign start difficulty, and the campaign panel exposes unlocked start difficulties on the new-run flow
-- Immediate next implementation target: keep `Spore Sifting` scoped to Mycovariant drafts only, with a once-per-level full redraw and no bleed into Adaptation or Moldiness reward flows.
+- Spore-sifting planning and campaign-update follow-ups are considered complete for handoff purposes; leave them out of future pending-task lists unless they re-open.
