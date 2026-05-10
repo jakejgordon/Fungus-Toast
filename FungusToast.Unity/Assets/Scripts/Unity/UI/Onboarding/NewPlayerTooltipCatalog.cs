@@ -76,7 +76,7 @@ namespace FungusToast.Unity.UI.Onboarding
                 NewPlayerTooltipId.MycovariantDraftIntro,
                 "Onboarding.MycovariantDraftIntroSeen",
                 "Mycovariant Drafting",
-                "Mycovariants are special mutations that either improve your mold for the rest of the level or provide a one-time active boost that is applied immediately.",
+                "Mycovariants are special mutations that either improve your mold for the rest of the level or provide a one-time active boost immediately. Draft order goes from the fewest living cells to the most. Each drafted card is replaced by a random new one for the next player.",
                 NewPlayerTooltipSurface.DraftCoachmark,
                 "Show the first time the Mycovariant draft panel opens unless it has already been dismissed this game; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
             new NewPlayerTooltipDefinition(
