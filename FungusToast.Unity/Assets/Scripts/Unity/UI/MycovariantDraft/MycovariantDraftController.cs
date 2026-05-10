@@ -1251,10 +1251,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 return;
             }
 
-            RectTransform draftPanelRect = draftPanel.GetComponent<RectTransform>();
+            RectTransform anchorRect = choiceContainer?.parent as RectTransform;
             RectTransform parentRect = mycovariantDraftCoachmarkRoot.parent as RectTransform;
             Canvas canvas = draftPanel.GetComponentInParent<Canvas>();
-            if (draftPanelRect == null || parentRect == null || canvas == null)
+            if (anchorRect == null || parentRect == null || canvas == null)
             {
                 return;
             }
@@ -1262,7 +1262,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             Canvas.ForceUpdateCanvases();
 
             Vector3[] corners = new Vector3[4];
-            draftPanelRect.GetWorldCorners(corners);
+            anchorRect.GetWorldCorners(corners);
             Vector3 topLeftWorld = corners[1];
             Camera uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
             Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(uiCamera, topLeftWorld);
