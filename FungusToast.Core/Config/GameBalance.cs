@@ -167,7 +167,7 @@ namespace FungusToast.Core.Config
         public const float AnabolicInversionCatabolismCleanupMultiplier = 1f; // Max-level Anabolic Inversion cleanup bonus reduced; no extra multiplier vs larger players' toxins
 
         // Mycotropic Induction (Tier 3 Growth)
-        public const float MycotropicInductionEffectPerLevel = 0.25f;
+        public const float MycotropicInductionEffectPerLevel = 0.18f;
         public const int MycotropicInductionMaxLevel = 5;
 
         // Mimetic Resilience (Tier 3 MycelialSurges)
