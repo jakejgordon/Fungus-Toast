@@ -7,6 +7,7 @@ using FungusToast.Core.Players;
 using FungusToast.Unity.Effects;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI.Campaign;
+using FungusToast.Unity.UI.Onboarding;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using System;
@@ -156,6 +157,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private Transform draftHistoryOverlayContentTransform;
         private TextMeshProUGUI draftHistoryEmptyStateText;
         private Button draftHistoryCloseButton;
+        private RectTransform mycovariantDraftCoachmarkRoot;
+        private CanvasGroup mycovariantDraftCoachmarkCanvasGroup;
+        private TextMeshProUGUI mycovariantDraftCoachmarkTitleTextLabel;
+        private TextMeshProUGUI mycovariantDraftCoachmarkBodyTextLabel;
+        private Button mycovariantDraftCoachmarkCloseButton;
+        private bool hasDismissedMycovariantDraftCoachmarkThisGame;
 
         private bool _cameraRecenteredThisDraftPhase = false;
 
@@ -211,6 +218,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             ConfigureCampaignAdaptationRedrawControl(false, false, null);
             ConfigureCampaignMycovariantRedrawControl();
             ShowDraftUI();
+            TryShowMycovariantDraftCoachmark();
             BeginNextDraft();
         }
 
@@ -237,6 +245,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             campaignMycovariantRedrawAvailable = false;
             campaignMycovariantRedrawConfirmArmed = false;
             _cameraRecenteredThisDraftPhase = false;
+            hasDismissedMycovariantDraftCoachmarkThisGame = false;
 
             if (draftOrder != null)
             {
@@ -1094,6 +1103,173 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             soundEffectAudioSource.PlayOneShot(adaptationDraftPickConfirmClip, effectiveVolume);
         }
 
+        private void TryShowMycovariantDraftCoachmark()
+        {
+            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
+            bool isFastForwarding = GameManager.Instance != null && GameManager.Instance.IsFastForwarding;
+            if (!NewPlayerTooltipRules.ShouldShowMycovariantDraftIntro(forceFirstGame, hasDismissedMycovariantDraftCoachmarkThisGame, isFastForwarding))
+            {
+                return;
+            }
+
+            EnsureMycovariantDraftCoachmarkUi();
+            if (mycovariantDraftCoachmarkRoot == null || mycovariantDraftCoachmarkCanvasGroup == null)
+            {
+                return;
+            }
+
+            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.MycovariantDraftIntro);
+            mycovariantDraftCoachmarkTitleTextLabel.text = definition.Title;
+            mycovariantDraftCoachmarkBodyTextLabel.text = definition.Body;
+            mycovariantDraftCoachmarkRoot.gameObject.SetActive(true);
+            mycovariantDraftCoachmarkRoot.SetAsLastSibling();
+            mycovariantDraftCoachmarkCanvasGroup.alpha = 1f;
+            mycovariantDraftCoachmarkCanvasGroup.blocksRaycasts = true;
+            mycovariantDraftCoachmarkCanvasGroup.interactable = true;
+        }
+
+        private void EnsureMycovariantDraftCoachmarkUi()
+        {
+            if (mycovariantDraftCoachmarkRoot != null || draftPanel == null)
+            {
+                return;
+            }
+
+            var rootObject = new GameObject("UI_MycovariantDraftCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
+            rootObject.transform.SetParent(draftPanel.transform, false);
+
+            mycovariantDraftCoachmarkRoot = rootObject.GetComponent<RectTransform>();
+            mycovariantDraftCoachmarkRoot.anchorMin = new Vector2(1f, 0.5f);
+            mycovariantDraftCoachmarkRoot.anchorMax = new Vector2(1f, 0.5f);
+            mycovariantDraftCoachmarkRoot.pivot = new Vector2(1f, 0.5f);
+            mycovariantDraftCoachmarkRoot.anchoredPosition = new Vector2(-26f, 22f);
+            mycovariantDraftCoachmarkRoot.sizeDelta = new Vector2(320f, 200f);
+
+            mycovariantDraftCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
+            mycovariantDraftCoachmarkCanvasGroup.alpha = 0f;
+            mycovariantDraftCoachmarkCanvasGroup.blocksRaycasts = false;
+            mycovariantDraftCoachmarkCanvasGroup.interactable = false;
+
+            var background = rootObject.GetComponent<Image>();
+            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Accent.Spore, 0.14f);
+            backgroundColor.a = 0.97f;
+            background.color = backgroundColor;
+            background.raycastTarget = true;
+
+            var outline = rootObject.GetComponent<Outline>();
+            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.8f);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(rootObject.transform, false);
+            var titleRect = titleObject.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0.5f, 1f);
+            titleRect.offsetMin = new Vector2(14f, -48f);
+            titleRect.offsetMax = new Vector2(-52f, -12f);
+
+            mycovariantDraftCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
+            mycovariantDraftCoachmarkTitleTextLabel.text = string.Empty;
+            mycovariantDraftCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
+            mycovariantDraftCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
+            mycovariantDraftCoachmarkTitleTextLabel.fontSize = 22f;
+            mycovariantDraftCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
+            mycovariantDraftCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            mycovariantDraftCoachmarkTitleTextLabel.overflowMode = TextOverflowModes.Ellipsis;
+            mycovariantDraftCoachmarkTitleTextLabel.raycastTarget = false;
+
+            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
+            bodyObject.transform.SetParent(rootObject.transform, false);
+            var bodyRect = bodyObject.GetComponent<RectTransform>();
+            bodyRect.anchorMin = new Vector2(0f, 0f);
+            bodyRect.anchorMax = new Vector2(1f, 1f);
+            bodyRect.offsetMin = new Vector2(14f, 14f);
+            bodyRect.offsetMax = new Vector2(-14f, -50f);
+
+            mycovariantDraftCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
+            mycovariantDraftCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
+            mycovariantDraftCoachmarkBodyTextLabel.fontSize = 17f;
+            mycovariantDraftCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
+            mycovariantDraftCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
+            mycovariantDraftCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
+            mycovariantDraftCoachmarkBodyTextLabel.raycastTarget = false;
+
+            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            closeObject.transform.SetParent(rootObject.transform, false);
+            var closeRect = closeObject.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(1f, 1f);
+            closeRect.anchorMax = new Vector2(1f, 1f);
+            closeRect.pivot = new Vector2(1f, 1f);
+            closeRect.sizeDelta = new Vector2(34f, 34f);
+            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+
+            var closeImage = closeObject.GetComponent<Image>();
+            closeImage.color = UIStyleTokens.Surface.PanelElevated;
+
+            mycovariantDraftCoachmarkCloseButton = closeObject.GetComponent<Button>();
+            UIStyleTokens.Button.ApplyStyle(mycovariantDraftCoachmarkCloseButton);
+            mycovariantDraftCoachmarkCloseButton.onClick.RemoveAllListeners();
+            mycovariantDraftCoachmarkCloseButton.onClick.AddListener(OnMycovariantDraftCoachmarkDismissed);
+
+            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            closeLabelObject.transform.SetParent(closeObject.transform, false);
+            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
+            closeLabelRect.anchorMin = Vector2.zero;
+            closeLabelRect.anchorMax = Vector2.one;
+            closeLabelRect.offsetMin = Vector2.zero;
+            closeLabelRect.offsetMax = Vector2.zero;
+
+            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
+            closeLabel.text = "X";
+            closeLabel.color = UIStyleTokens.Text.Primary;
+            closeLabel.fontStyle = FontStyles.Bold;
+            closeLabel.fontSize = 20f;
+            closeLabel.alignment = TextAlignmentOptions.Center;
+            closeLabel.raycastTarget = false;
+
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                mycovariantDraftCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
+                mycovariantDraftCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
+                closeLabel.font = TMP_Settings.defaultFontAsset;
+            }
+
+            rootObject.SetActive(false);
+        }
+
+        private void OnMycovariantDraftCoachmarkDismissed()
+        {
+            hasDismissedMycovariantDraftCoachmarkThisGame = true;
+            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
+            if (!forceFirstGame)
+            {
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.MycovariantDraftIntro);
+            }
+
+            HideMycovariantDraftCoachmarkImmediate(false);
+        }
+
+        private void HideMycovariantDraftCoachmarkImmediate(bool resetSessionDismissal)
+        {
+            if (resetSessionDismissal)
+            {
+                hasDismissedMycovariantDraftCoachmarkThisGame = false;
+            }
+
+            if (mycovariantDraftCoachmarkCanvasGroup != null)
+            {
+                mycovariantDraftCoachmarkCanvasGroup.alpha = 0f;
+                mycovariantDraftCoachmarkCanvasGroup.blocksRaycasts = false;
+                mycovariantDraftCoachmarkCanvasGroup.interactable = false;
+            }
+
+            if (mycovariantDraftCoachmarkRoot != null)
+            {
+                mycovariantDraftCoachmarkRoot.gameObject.SetActive(false);
+            }
+        }
+
         private void ShowDraftUI()
         {
             draftPanel.SetActive(true);
@@ -1141,6 +1317,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 draftMessagePanel.SetActive(false);
             interactionBlocker.blocksRaycasts = false;
             interactionBlocker.alpha = 0f;
+            HideMycovariantDraftCoachmarkImmediate(false);
             if (draftOrderRow != null)
             {
                 draftOrderRow.gameObject.SetActive(true);

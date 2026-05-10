@@ -131,6 +131,7 @@ namespace FungusToast.Unity
                 isCountdownActive = true;
                 roundsRemainingUntilGameEnd = GameBalance.TurnsAfterEndGameTileOccupancyThresholdMet;
                 UpdateCountdownUI();
+                ui.RightSidebar?.TryShowEndgameCountdownCoachmark();
             }
             else if (isCountdownActive)
             {

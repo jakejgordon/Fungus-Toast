@@ -9,6 +9,8 @@ namespace FungusToast.Unity.UI.Onboarding
         AlphaMutationPhaseIntro,
         MutationTreeGuidance,
         ScoreboardWinCondition,
+        MycovariantDraftIntro,
+        EndgameCountdownIntro,
     }
 
     public enum NewPlayerTooltipSurface
@@ -16,6 +18,7 @@ namespace FungusToast.Unity.UI.Onboarding
         PhaseBanner,
         MutationTreeToast,
         SidebarCoachmark,
+        DraftCoachmark,
     }
 
     public sealed class NewPlayerTooltipDefinition
@@ -69,6 +72,20 @@ namespace FungusToast.Unity.UI.Onboarding
                 "This scoreboard is the clearest way to see who is ahead.\n\nWatch the Alive column. When the toast fills up and the game ends, the colony with the most living cells wins.",
                 NewPlayerTooltipSurface.SidebarCoachmark,
                 "Show on round 2 or later unless dismissed this game or while fast-forwarding; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
+            new NewPlayerTooltipDefinition(
+                NewPlayerTooltipId.MycovariantDraftIntro,
+                "Onboarding.MycovariantDraftIntroSeen",
+                "Mycovariant Drafting",
+                "Mycovariants are special mutations that either improve your mold for the rest of the level or provide a one-time active boost that is applied immediately.",
+                NewPlayerTooltipSurface.DraftCoachmark,
+                "Show the first time the Mycovariant draft panel opens unless it has already been dismissed this game; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
+            new NewPlayerTooltipDefinition(
+                NewPlayerTooltipId.EndgameCountdownIntro,
+                "Onboarding.EndgameCountdownIntroSeen",
+                "Game End Approaching",
+                "Once the board reaches a high occupancy threshold based on the map size, a 3-turn endgame countdown begins. When that countdown ends, the game is over and the player with the most living cells wins.",
+                NewPlayerTooltipSurface.SidebarCoachmark,
+                "Show the first time the endgame countdown begins unless it has already been dismissed this game; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
         };
 
         private static readonly Dictionary<NewPlayerTooltipId, NewPlayerTooltipDefinition> DefinitionsById = BuildDefinitionsById();
@@ -162,6 +179,32 @@ namespace FungusToast.Unity.UI.Onboarding
             }
 
             return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.ScoreboardWinCondition);
+        }
+
+        public static bool ShouldShowMycovariantDraftIntro(
+            bool forceFirstGameExperience,
+            bool hasDismissedThisGame,
+            bool isFastForwarding)
+        {
+            if (hasDismissedThisGame || isFastForwarding)
+            {
+                return false;
+            }
+
+            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.MycovariantDraftIntro);
+        }
+
+        public static bool ShouldShowEndgameCountdownIntro(
+            bool forceFirstGameExperience,
+            bool hasDismissedThisGame,
+            bool isFastForwarding)
+        {
+            if (hasDismissedThisGame || isFastForwarding)
+            {
+                return false;
+            }
+
+            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.EndgameCountdownIntro);
         }
     }
 }

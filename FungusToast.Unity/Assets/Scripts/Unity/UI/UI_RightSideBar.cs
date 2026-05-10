@@ -44,10 +44,16 @@ namespace FungusToast.Unity.UI
         private TextMeshProUGUI scoreboardCoachmarkTitleTextLabel;
         private TextMeshProUGUI scoreboardCoachmarkBodyTextLabel;
         private Button scoreboardCoachmarkCloseButton;
+        private RectTransform endgameCountdownCoachmarkRoot;
+        private CanvasGroup endgameCountdownCoachmarkCanvasGroup;
+        private TextMeshProUGUI endgameCountdownCoachmarkTitleTextLabel;
+        private TextMeshProUGUI endgameCountdownCoachmarkBodyTextLabel;
+        private Button endgameCountdownCoachmarkCloseButton;
         private UI_GameLogPanel draftHistoryLogPanel;
         private Action onDraftHistoryRequested;
         private Func<bool> canOpenDraftHistory;
         private bool hasDismissedScoreboardCoachmarkThisGame;
+        private bool hasDismissedEndgameCountdownCoachmarkThisGame;
 
         private Dictionary<int, PlayerSummaryRow> playerSummaryRows = new();
 
@@ -267,7 +273,9 @@ namespace FungusToast.Unity.UI
         {
             board = gameBoard;
             hasDismissedScoreboardCoachmarkThisGame = false;
+            hasDismissedEndgameCountdownCoachmarkThisGame = false;
             HideScoreboardCoachmarkImmediate(false);
+            HideEndgameCountdownCoachmarkImmediate(false);
             UpdateRoundAndOccupancyTooltip();
             RefreshDraftHistoryAvailability();
         }
@@ -425,6 +433,32 @@ namespace FungusToast.Unity.UI
                 endgameCountdownText.text = message;
                 endgameCountdownText.gameObject.SetActive(!string.IsNullOrEmpty(message));
             }
+        }
+
+        public void TryShowEndgameCountdownCoachmark()
+        {
+            var gameManager = GameManager.Instance;
+            bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
+            bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
+            if (!NewPlayerTooltipRules.ShouldShowEndgameCountdownIntro(forceFirstGame, hasDismissedEndgameCountdownCoachmarkThisGame, isFastForwarding))
+            {
+                return;
+            }
+
+            EnsureEndgameCountdownCoachmarkUi();
+            if (endgameCountdownCoachmarkRoot == null || endgameCountdownCoachmarkCanvasGroup == null)
+            {
+                return;
+            }
+
+            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.EndgameCountdownIntro);
+            endgameCountdownCoachmarkTitleTextLabel.text = definition.Title;
+            endgameCountdownCoachmarkBodyTextLabel.text = definition.Body;
+            endgameCountdownCoachmarkRoot.gameObject.SetActive(true);
+            endgameCountdownCoachmarkRoot.SetAsLastSibling();
+            endgameCountdownCoachmarkCanvasGroup.alpha = 1f;
+            endgameCountdownCoachmarkCanvasGroup.blocksRaycasts = true;
+            endgameCountdownCoachmarkCanvasGroup.interactable = true;
         }
 
         public void TryShowScoreboardWinConditionCoachmark(int currentRound)
@@ -605,6 +639,153 @@ namespace FungusToast.Unity.UI
             if (scoreboardCoachmarkRoot != null)
             {
                 scoreboardCoachmarkRoot.gameObject.SetActive(false);
+            }
+        }
+
+        private void EnsureEndgameCountdownCoachmarkUi()
+        {
+            if (endgameCountdownCoachmarkRoot != null)
+            {
+                return;
+            }
+
+            if (transform == null)
+            {
+                return;
+            }
+
+            var rootObject = new GameObject("UI_EndgameCountdownCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
+            rootObject.transform.SetParent(transform, false);
+
+            endgameCountdownCoachmarkRoot = rootObject.GetComponent<RectTransform>();
+            endgameCountdownCoachmarkRoot.anchorMin = new Vector2(0f, 1f);
+            endgameCountdownCoachmarkRoot.anchorMax = new Vector2(0f, 1f);
+            endgameCountdownCoachmarkRoot.pivot = new Vector2(1f, 1f);
+            endgameCountdownCoachmarkRoot.anchoredPosition = new Vector2(-16f, -52f);
+            endgameCountdownCoachmarkRoot.sizeDelta = new Vector2(380f, 205f);
+
+            endgameCountdownCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
+            endgameCountdownCoachmarkCanvasGroup.alpha = 0f;
+            endgameCountdownCoachmarkCanvasGroup.blocksRaycasts = false;
+            endgameCountdownCoachmarkCanvasGroup.interactable = false;
+
+            var background = rootObject.GetComponent<Image>();
+            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Warning, 0.18f);
+            backgroundColor.a = 0.98f;
+            background.color = backgroundColor;
+            background.raycastTarget = true;
+
+            var outline = rootObject.GetComponent<Outline>();
+            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.8f);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(rootObject.transform, false);
+            var titleRect = titleObject.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0.5f, 1f);
+            titleRect.offsetMin = new Vector2(14f, -48f);
+            titleRect.offsetMax = new Vector2(-52f, -12f);
+
+            endgameCountdownCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
+            endgameCountdownCoachmarkTitleTextLabel.text = string.Empty;
+            endgameCountdownCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
+            endgameCountdownCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
+            endgameCountdownCoachmarkTitleTextLabel.fontSize = 24f;
+            endgameCountdownCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
+            endgameCountdownCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            endgameCountdownCoachmarkTitleTextLabel.overflowMode = TextOverflowModes.Ellipsis;
+            endgameCountdownCoachmarkTitleTextLabel.raycastTarget = false;
+
+            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
+            bodyObject.transform.SetParent(rootObject.transform, false);
+            var bodyRect = bodyObject.GetComponent<RectTransform>();
+            bodyRect.anchorMin = new Vector2(0f, 0f);
+            bodyRect.anchorMax = new Vector2(1f, 1f);
+            bodyRect.offsetMin = new Vector2(14f, 14f);
+            bodyRect.offsetMax = new Vector2(-14f, -50f);
+
+            endgameCountdownCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
+            endgameCountdownCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
+            endgameCountdownCoachmarkBodyTextLabel.fontSize = 18f;
+            endgameCountdownCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
+            endgameCountdownCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
+            endgameCountdownCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
+            endgameCountdownCoachmarkBodyTextLabel.raycastTarget = false;
+
+            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            closeObject.transform.SetParent(rootObject.transform, false);
+            var closeRect = closeObject.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(1f, 1f);
+            closeRect.anchorMax = new Vector2(1f, 1f);
+            closeRect.pivot = new Vector2(1f, 1f);
+            closeRect.sizeDelta = new Vector2(34f, 34f);
+            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+
+            var closeImage = closeObject.GetComponent<Image>();
+            closeImage.color = UIStyleTokens.Surface.PanelElevated;
+
+            endgameCountdownCoachmarkCloseButton = closeObject.GetComponent<Button>();
+            UIStyleTokens.Button.ApplyStyle(endgameCountdownCoachmarkCloseButton);
+            endgameCountdownCoachmarkCloseButton.onClick.RemoveAllListeners();
+            endgameCountdownCoachmarkCloseButton.onClick.AddListener(OnEndgameCountdownCoachmarkDismissed);
+
+            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            closeLabelObject.transform.SetParent(closeObject.transform, false);
+            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
+            closeLabelRect.anchorMin = Vector2.zero;
+            closeLabelRect.anchorMax = Vector2.one;
+            closeLabelRect.offsetMin = Vector2.zero;
+            closeLabelRect.offsetMax = Vector2.zero;
+
+            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
+            closeLabel.text = "X";
+            closeLabel.color = UIStyleTokens.Text.Primary;
+            closeLabel.fontStyle = FontStyles.Bold;
+            closeLabel.fontSize = 20f;
+            closeLabel.alignment = TextAlignmentOptions.Center;
+            closeLabel.raycastTarget = false;
+
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                endgameCountdownCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
+                endgameCountdownCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
+                closeLabel.font = TMP_Settings.defaultFontAsset;
+            }
+
+            rootObject.SetActive(false);
+        }
+
+        private void OnEndgameCountdownCoachmarkDismissed()
+        {
+            hasDismissedEndgameCountdownCoachmarkThisGame = true;
+            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
+            if (!forceFirstGame)
+            {
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.EndgameCountdownIntro);
+            }
+
+            HideEndgameCountdownCoachmarkImmediate(false);
+        }
+
+        private void HideEndgameCountdownCoachmarkImmediate(bool resetSessionDismissal)
+        {
+            if (resetSessionDismissal)
+            {
+                hasDismissedEndgameCountdownCoachmarkThisGame = false;
+            }
+
+            if (endgameCountdownCoachmarkCanvasGroup != null)
+            {
+                endgameCountdownCoachmarkCanvasGroup.alpha = 0f;
+                endgameCountdownCoachmarkCanvasGroup.blocksRaycasts = false;
+                endgameCountdownCoachmarkCanvasGroup.interactable = false;
+            }
+
+            if (endgameCountdownCoachmarkRoot != null)
+            {
+                endgameCountdownCoachmarkRoot.gameObject.SetActive(false);
             }
         }
 
