@@ -52,7 +52,7 @@ namespace FungusToast.Unity.Campaign
         }
 
         public bool HasActiveRun => State != null;
-        public bool HasResumableRun => State != null && !State.requiresNewCampaignStart;
+        public bool HasResumableRun => State != null && !State.requiresNewCampaignStart && !State.campaignCompleted;
         public CampaignProgression.LevelSpec CurrentLevelSpec => (State != null && State.levelIndex < progression.MaxLevels) ? progression.Get(State.levelIndex) : null;
         public BoardPreset CurrentBoardPreset
         {
@@ -205,6 +205,11 @@ namespace FungusToast.Unity.Campaign
             State.pendingAdaptationDraftChoiceIds ??= new List<string>();
             State.temporaryTestingAdaptationIds ??= new List<string>();
             State.moldiness ??= MoldinessProgression.CreateDefaultState();
+            if (State.campaignCompleted)
+            {
+                State.requiresNewCampaignStart = true;
+            }
+
             bool normalizedMoldinessState = MoldinessUnlockService.NormalizeProgressionState(State.moldiness);
             bool normalizedPendingAdaptationDraftState = NormalizePendingAdaptationDraftState();
             if (!State.requiresNewCampaignStart)
@@ -443,6 +448,7 @@ namespace FungusToast.Unity.Campaign
                 State.pendingAdaptationSelection = false;
                 ResetPendingAdaptationDraftState(resetRedrawUsage: true);
                 State.campaignCompleted = true;
+                State.requiresNewCampaignStart = true;
                 State.pendingVictorySnapshot = null;
                 CampaignSaveService.Save(State);
                 Debug.Log($"[CampaignController] Campaign completed! RunId={State.runId} Levels={progression.MaxLevels}");

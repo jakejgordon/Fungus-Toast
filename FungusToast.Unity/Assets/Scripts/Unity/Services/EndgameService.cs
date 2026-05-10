@@ -884,7 +884,9 @@ namespace FungusToast.Unity
             }
 
             var savedState = CampaignSaveService.Load();
-            return savedState != null && !savedState.requiresNewCampaignStart;
+            return savedState != null
+                && !savedState.requiresNewCampaignStart
+                && !savedState.campaignCompleted;
         }
 
         public bool IsCampaignAwaitingAdaptationSelection()

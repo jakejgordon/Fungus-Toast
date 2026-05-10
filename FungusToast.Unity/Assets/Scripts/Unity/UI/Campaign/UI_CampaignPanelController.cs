@@ -1754,7 +1754,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (newButton != null)
             {
-                SetButtonText(newButton, selectingMold ? "Start Campaign" : hasResumableCampaignSave ? "New Campaign" : "Start Campaign");
+                SetButtonText(newButton, selectingMold ? "Start Campaign" : hasCampaignSave ? "New Campaign" : "Start Campaign");
                 newButton.interactable = !selectingMold || selectedCampaignMoldIndex.HasValue;
             }
 
